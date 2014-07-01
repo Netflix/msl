@@ -1,4 +1,0 @@
-msl
-===
-
-Message Security Layer
