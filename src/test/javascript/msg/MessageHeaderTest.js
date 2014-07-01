@@ -1,0 +1,6673 @@
+/**
+ * Copyright (c) 2012-2014 Netflix, Inc.  All rights reserved.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * Message header unit tests.
+ * 
+ * @author Wesley Miaw <wmiaw@netflix.com>
+ */
+describe("MessageHeader", function() {
+	/** JSON key entity authentication data. */
+	var KEY_ENTITY_AUTHENTICATION_DATA = "entityauthdata";
+	/** JSON key master token. */
+	var KEY_MASTER_TOKEN = "mastertoken";
+	/** JSON key header data. */
+	var KEY_HEADERDATA = "headerdata";
+	/** JSON key error data signature. */
+	var KEY_SIGNATURE = "signature";
+
+	// Message header data.
+    /** JSON key sender. */
+    var KEY_SENDER = "sender";
+    /** JSON key recipient. */
+    var KEY_RECIPIENT = "recipient";
+	/** JSON key message ID. */
+	var KEY_MESSAGE_ID = "messageid";
+    /** JSON key non-replayable ID. */
+    var KEY_NON_REPLAYABLE_ID = "nonreplayableid";
+	/** JSON key renewable flag. */
+	var KEY_RENEWABLE = "renewable";
+	/** JSON key handshake flag. */
+	var KEY_HANDSHAKE = "handshake";
+    /** JSON key capabilities. */
+    var KEY_CAPABILITIES = "capabilities";
+	/** JSON key key negotiation request. */
+	var KEY_KEY_REQUEST_DATA = "keyrequestdata";
+	/** JSON key key negotiation response. */
+	var KEY_KEY_RESPONSE_DATA = "keyresponsedata";
+	/** JSON key user authentication data. */
+	var KEY_USER_AUTHENTICATION_DATA = "userauthdata";
+	/** JSON key user ID token. */
+	var KEY_USER_ID_TOKEN = "useridtoken";
+	/** JSON key service tokens. */
+	var KEY_SERVICE_TOKENS = "servicetokens";
+
+	// Message header peer data.
+	/** JSON key peer master token. */
+	var KEY_PEER_MASTER_TOKEN = "peermastertoken";
+	/** JSON key peer user ID token. */
+	var KEY_PEER_USER_ID_TOKEN = "peeruseridtoken";
+	/** JSON key peer service tokens. */
+	var KEY_PEER_SERVICE_TOKENS = "peerservicetokens";
+
+	/** MSL trusted network context. */
+	var trustedNetCtx;
+	/** MSL peer-to-peer context. */
+	var p2pCtx;
+
+	var USER_AUTH_DATA = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL, MockEmailPasswordAuthenticationFactory.PASSWORD);
+
+    var ALGOS = [ MslConstants$CompressionAlgorithm.GZIP, MslConstants$CompressionAlgorithm.LZW ];
+    var LANGUAGES = [ "en-US" ];
+    
+    var RECIPIENT = "recipient";
+	var MESSAGE_ID = 1;
+	var NON_REPLAYABLE_ID = 1;
+	var RENEWABLE = true;
+	var HANDSHAKE = false;
+	
+    var CAPABILITIES = new MessageCapabilities(ALGOS, LANGUAGES);
+
+	var KEY_REQUEST_DATA = new Array();
+	var KEY_RESPONSE_DATA;
+	
+	var ENTITY_AUTH_DATA;
+	var PEER_ENTITY_AUTH_DATA;
+	var MASTER_TOKEN;
+	var USER_ID_TOKEN;
+	var PEER_MASTER_TOKEN;
+	var PEER_USER_ID_TOKEN;
+
+	var PEER_KEY_REQUEST_DATA = new Array();
+	var PEER_KEY_RESPONSE_DATA;
+	var CRYPTO_CONTEXTS = {};
+
+	// Shortcuts
+	var HeaderData = MessageHeader$HeaderData;
+	var HeaderPeerData = MessageHeader$HeaderPeerData;
+
+    /**
+     * A helper class for building message header data.
+     */
+	var HeaderDataBuilder = util.Class.create({
+	    /**
+         * Create a new header data builder with the default constant values
+         * and a random set of service tokens that may be bound to the provided
+         * master token and user ID token.
+         * 
+         * @param {MslContext} ctx MSL context.
+         * @param {?MasterToken} masterToken message header master token. May be null.
+         * @param {?UserIdToken} userIdToken message header user ID token. May be null.
+         * @param {boolean|Array.<ServiceToken>} serviceTokens true to create service tokens. Otherwise the
+         *        service token value will be set to null. Or the set of service tokens to use.
+         * @param {result: function(HeaderDataBuilder), error: function(Error)}
+         *        callback the callback will receive the header data builder or any
+         *        thrown exceptions.
+         * @throws MslEncodingException if there is an error encoding the JSON
+         *         data.
+         * @throws MslCryptoException if there is an error encrypting or signing
+         *         the token data.
+         * @throws MslException if there is an error compressing the data.
+         */
+        init: function init(ctx, masterToken, userIdToken, serviceTokens, callback) {
+            var self = this;
+            
+            AsyncExecutor(callback, function() {
+                if (typeof serviceTokens === 'boolean') {
+                    if (serviceTokens) {
+                        MslTestUtils.getServiceTokens(ctx, masterToken, userIdToken, {
+                            result: construct,
+                            error: callback.error,
+                        });
+                    } else {
+                        construct(null);
+                    }
+                } else {
+                    construct(serviceTokens);
+                }
+            }, self);
+            
+            function construct(tokens) {
+                AsyncExecutor(callback, function() {
+                    var values = [];
+                    values[KEY_RECIPIENT] = RECIPIENT;
+                    values[KEY_MESSAGE_ID] = MESSAGE_ID;
+                    values[KEY_NON_REPLAYABLE_ID] = NON_REPLAYABLE_ID;
+                    values[KEY_RENEWABLE] = RENEWABLE;
+                    values[KEY_HANDSHAKE] = HANDSHAKE;
+                    values[KEY_CAPABILITIES] = CAPABILITIES;
+                    values[KEY_KEY_REQUEST_DATA] = (!ctx.isPeerToPeer()) ? KEY_REQUEST_DATA : PEER_KEY_REQUEST_DATA;
+                    values[KEY_KEY_RESPONSE_DATA] = (!ctx.isPeerToPeer()) ? KEY_RESPONSE_DATA : PEER_KEY_RESPONSE_DATA;
+                    values[KEY_USER_AUTHENTICATION_DATA] = USER_AUTH_DATA;
+                    values[KEY_USER_ID_TOKEN] = userIdToken;
+                    values[KEY_SERVICE_TOKENS] = tokens;
+
+                    // Set properties.
+                    var props = {
+                        _values: { value: values, writable: false, enumerable: false, configurable: false }
+                    };
+                    Object.defineProperties(this, props);
+                    return this;
+                }, self);
+            }
+        },
+        
+        /**
+         * Set the value for the specified message data field.
+         * 
+         * @param {string} key message header field name.
+         * @param {*} value message header field value.
+         * @return {HeaderDataBuilder} the builder.
+         */
+        set: function set(key, value) {
+            this._values[key] = value;
+            return this;
+        },
+        
+        /**
+         * @return {?Array.<ServiceToken>} the current set of service tokens. May be null.
+         */
+        getServiceTokens: function getServiceTokens() {
+            return this._values[KEY_SERVICE_TOKENS];
+        },
+        
+        /**
+         * Builds a new header data container with the currently set values.
+         * 
+         * @return {HeaderData} the header data.
+         */
+        build: function build() {
+            var recipient = this._values[KEY_RECIPIENT];
+            var messageId = this._values[KEY_MESSAGE_ID];
+            var nonReplayableId = this._values[KEY_NON_REPLAYABLE_ID];
+            var renewable = this._values[KEY_RENEWABLE];
+            var handshake = this._values[KEY_HANDSHAKE];
+            var capabilities = this._values[KEY_CAPABILITIES];
+            var keyRequestData = this._values[KEY_KEY_REQUEST_DATA];
+            var keyResponseData = this._values[KEY_KEY_RESPONSE_DATA];
+            var userAuthData = this._values[KEY_USER_AUTHENTICATION_DATA];
+            var userIdToken = this._values[KEY_USER_ID_TOKEN];
+            var serviceTokens = this._values[KEY_SERVICE_TOKENS];
+            return new HeaderData(recipient, messageId, nonReplayableId, renewable, handshake, capabilities, keyRequestData, keyResponseData, userAuthData, userIdToken, serviceTokens);
+        }
+	});
+
+    /**
+     * Create a new header data builder with the default constant values
+     * and a random set of service tokens that may be bound to the provided
+     * master token and user ID token.
+     * 
+     * @param {MslContext} ctx MSL context.
+     * @param {?MasterToken} masterToken message header master token. May be null.
+     * @param {?UserIdToken} userIdToken message header user ID token. May be null.
+     * @param {boolean|Array.<ServiceToken>} serviceTokens true to create service tokens. Otherwise the
+     *        service token value will be set to null. Or the set of service tokens to use.
+     * @param {result: function(HeaderDataBuilder), error: function(Error)}
+     *        callback the callback will receive the header data builder or any
+     *        thrown exceptions.
+     * @throws MslEncodingException if there is an error encoding the JSON
+     *         data.
+     * @throws MslCryptoException if there is an error encrypting or signing
+     *         the token data.
+     * @throws MslException if there is an error compressing the data.
+     */
+	function HeaderDataBuilder$create(ctx, masterToken, userIdToken, serviceTokens, callback) {
+	    new HeaderDataBuilder(ctx, masterToken, userIdToken, serviceTokens, callback);
+	}
+
+	var initialized = false;
+	beforeEach(function() {
+		if (!initialized) {
+            runs(function() {
+                MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+                    result: function(c) { trustedNetCtx = c; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+                MockMslContext$create(EntityAuthenticationScheme.PSK, true, {
+                    result: function(c) { p2pCtx = c; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return trustedNetCtx && p2pCtx; }, "trustedNetCtx and p2pCtx", 100);
+            
+			runs(function() {
+				MslTestUtils.getMasterToken(trustedNetCtx, 1, 1, {
+					result: function(token) { MASTER_TOKEN = token; },
+					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+				});
+				MslTestUtils.getMasterToken(p2pCtx, 1, 2, {
+					result: function(token) { PEER_MASTER_TOKEN = token; },
+					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+				});
+				trustedNetCtx.getEntityAuthenticationData(null, {
+					result: function(authData) { ENTITY_AUTH_DATA = authData; },
+					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+				});
+				p2pCtx.getEntityAuthenticationData(null, {
+					result: function(authData) { PEER_ENTITY_AUTH_DATA = authData; },
+					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+				});
+			});
+			waitsFor(function() { return MASTER_TOKEN && PEER_MASTER_TOKEN && ENTITY_AUTH_DATA && PEER_ENTITY_AUTH_DATA; }, "master tokens and entity authentication data not received", 100);
+
+			runs(function() {
+				MslTestUtils.getUserIdToken(trustedNetCtx, MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory.USER, {
+					result: function(token) { USER_ID_TOKEN = token; },
+					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+				});
+				MslTestUtils.getUserIdToken(p2pCtx, PEER_MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory.USER, {
+					result: function(token) { PEER_USER_ID_TOKEN = token; },
+					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+				});
+
+				var keyRequestData = new SymmetricWrappedExchange$RequestData(SymmetricWrappedExchange$KeyId.PSK);
+				var factory = trustedNetCtx.getKeyExchangeFactory(keyRequestData.keyExchangeScheme);
+				factory.generateResponse(trustedNetCtx, keyRequestData, MASTER_TOKEN, {
+					result: function(keyxData) {
+						KEY_REQUEST_DATA.push(keyRequestData);
+						KEY_RESPONSE_DATA = keyxData.keyResponseData;
+					},
+					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+				});
+
+				var peerKeyRequestData = new SymmetricWrappedExchange$RequestData(SymmetricWrappedExchange$KeyId.PSK);
+				var peerFactory = p2pCtx.getKeyExchangeFactory(peerKeyRequestData.keyExchangeScheme);
+				peerFactory.generateResponse(p2pCtx, peerKeyRequestData, PEER_MASTER_TOKEN, {
+					result: function(peerKeyxData) {
+						PEER_KEY_REQUEST_DATA.push(peerKeyRequestData);
+						PEER_KEY_RESPONSE_DATA = peerKeyxData.keyResponseData;
+					},
+					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+				});
+			});
+			waitsFor(function() {
+				return USER_ID_TOKEN && PEER_USER_ID_TOKEN && KEY_REQUEST_DATA.length > 0 &&
+				KEY_RESPONSE_DATA && PEER_KEY_REQUEST_DATA.length > 0 && PEER_KEY_RESPONSE_DATA;
+			}, "user ID tokens and key exchange data not received", 100);
+			
+			runs(function() { initialized = true; });
+		}
+	});
+	
+	afterEach(function() {
+        trustedNetCtx.getMslStore().clearCryptoContexts();
+        trustedNetCtx.getMslStore().clearServiceTokens();
+        p2pCtx.getMslStore().clearCryptoContexts();
+        p2pCtx.getMslStore().clearServiceTokens();
+	});
+
+	it("ctor with entity authentication data", function() {
+		// Service tokens may be created with the key response data tokens. The
+		// key response data master token has the same serial number as the
+		// original master token so we can use the same user ID token.
+		var builder, peerServiceTokens;
+		runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(trustedNetCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+
+		var messageHeader;
+		runs(function() {
+		    var headerData = builder.build();
+			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+			MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+		runs(function() {
+			expect(messageHeader.isEncrypting()).toBeTruthy();
+			expect(messageHeader.nonReplayableId).toEqual(NON_REPLAYABLE_ID);
+			expect(messageHeader.isRenewable()).toEqual(RENEWABLE);
+			expect(messageHeader.isHandshake()).toEqual(HANDSHAKE);
+			expect(messageHeader.messageCapabilities).toEqual(CAPABILITIES);
+			expect(messageHeader.cryptoContext).not.toBeNull();
+			expect(messageHeader.entityAuthenticationData).toEqual(ENTITY_AUTH_DATA);
+			var keyRequestData = messageHeader.keyRequestData;
+			expect(Arrays$contains(keyRequestData, KEY_REQUEST_DATA)).toBeTruthy();
+			expect(messageHeader.keyResponseData).toEqual(KEY_RESPONSE_DATA);
+			expect(messageHeader.masterToken).toBeNull();
+			expect(messageHeader.sender).toBeNull();
+			expect(messageHeader.messageId).toEqual(MESSAGE_ID);
+			expect(messageHeader.peerMasterToken).toBeNull();
+			expect(messageHeader.peerServiceTokens.length).toEqual(0);
+			expect(messageHeader.peerUserIdToken).toBeNull();
+			var serviceTokens = builder.getServiceTokens();
+			expect(Arrays$contains(messageHeader.serviceTokens, serviceTokens)).toBeTruthy();
+			expect(messageHeader.userAuthenticationData).toEqual(USER_AUTH_DATA);
+			expect(messageHeader.userIdToken).toEqual(USER_ID_TOKEN);
+			expect(messageHeader.user).toEqual(USER_ID_TOKEN.user);
+		});
+	});
+
+    it("replayable ctor with entity authentication data", function() {
+        // Service tokens may be created with the key response data tokens. The
+        // key response data master token has the same serial number as the
+        // original master token so we can use the same user ID token.
+        var builder, peerServiceTokens;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            MslTestUtils.getServiceTokens(trustedNetCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+                result: function(tks) { peerServiceTokens = tks; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+
+        var messageHeader;
+        runs(function() {
+            builder.set(KEY_NON_REPLAYABLE_ID, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+            MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
+                result: function(token) { messageHeader = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+        runs(function() {
+            expect(messageHeader.isEncrypting()).toBeTruthy();
+            expect(messageHeader.nonReplayableId).toBeNull();
+            expect(messageHeader.isRenewable()).toEqual(RENEWABLE);
+			expect(messageHeader.isHandshake()).toEqual(HANDSHAKE);
+            expect(messageHeader.messageCapabilities).toEqual(CAPABILITIES);
+            expect(messageHeader.cryptoContext).not.toBeNull();
+            expect(messageHeader.entityAuthenticationData).toEqual(ENTITY_AUTH_DATA);
+            var keyRequestData = messageHeader.keyRequestData;
+            expect(Arrays$contains(keyRequestData, KEY_REQUEST_DATA)).toBeTruthy();
+            expect(messageHeader.keyResponseData).toEqual(KEY_RESPONSE_DATA);
+            expect(messageHeader.masterToken).toBeNull();
+            expect(messageHeader.sender).toBeNull();
+            expect(messageHeader.messageId).toEqual(MESSAGE_ID);
+            expect(messageHeader.peerMasterToken).toBeNull();
+            expect(messageHeader.peerServiceTokens.length).toEqual(0);
+            expect(messageHeader.peerUserIdToken).toBeNull();
+            var serviceTokens = builder.getServiceTokens();
+            expect(Arrays$contains(messageHeader.serviceTokens, serviceTokens)).toBeTruthy();
+            expect(messageHeader.userAuthenticationData).toEqual(USER_AUTH_DATA);
+            expect(messageHeader.userIdToken).toEqual(USER_ID_TOKEN);
+            expect(messageHeader.user).toEqual(USER_ID_TOKEN.user);
+        });
+    });
+
+	it("json string with entity authentication data is correct", function() {
+		// Service tokens may be created with the key response data tokens. The
+		// key response data master token has the same serial number as the
+		// original master token so we can use the same user ID token.
+		var builder, peerServiceTokens;
+		runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(trustedNetCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+
+		var messageHeader;
+		runs(function() {
+			var headerData = builder.build();
+			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+			MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+		var cryptoContext;
+		runs(function() {
+			var scheme = ENTITY_AUTH_DATA.scheme;
+			var factory = trustedNetCtx.getEntityAuthenticationFactory(scheme);
+			cryptoContext = factory.getCryptoContext(trustedNetCtx, ENTITY_AUTH_DATA);
+		});
+		waitsFor(function() { return cryptoContext; }, "cryptoContext not received", 100);
+
+        var headerdata = undefined, ciphertext = undefined, signature;
+        runs(function() {
+            var jsonString = JSON.stringify(messageHeader);
+            expect(jsonString).not.toBeNull();
+            var jo = JSON.parse(jsonString);
+            var entityAuthDataJo = jo[KEY_ENTITY_AUTHENTICATION_DATA];
+            expect(entityAuthDataJo).toEqual(JSON.parse(JSON.stringify(ENTITY_AUTH_DATA)));
+            expect(jo[KEY_MASTER_TOKEN]).toBeFalsy();
+            ciphertext = base64$decode(jo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    headerdata = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            signature = base64$decode(jo[KEY_SIGNATURE]);
+        });
+        waitsFor(function() { return headerdata && ciphertext && signature; }, "header data and ciphertext and signature not received", 100);
+		
+		var verified;
+		runs(function() {
+		    cryptoContext.verify(ciphertext, signature, {
+		        result: function(v) { verified = v; },
+		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		    });
+		});
+		waitsFor(function() { return verified !== undefined; }, "verified not received", 100);
+
+        runs(function() {
+            expect(headerdata[KEY_NON_REPLAYABLE_ID]).toEqual(NON_REPLAYABLE_ID);
+            expect(headerdata[KEY_RENEWABLE]).toEqual(RENEWABLE);
+            expect(headerdata[KEY_CAPABILITIES]).toEqual(JSON.parse(JSON.stringify(CAPABILITIES)));
+            expect(headerdata[KEY_KEY_REQUEST_DATA]).toEqual(JSON.parse(JSON.stringify(KEY_REQUEST_DATA)));
+            expect(headerdata[KEY_KEY_RESPONSE_DATA]).toEqual(JSON.parse(JSON.stringify(KEY_RESPONSE_DATA)));
+            expect(headerdata[KEY_SENDER]).toBeFalsy();
+            expect(parseInt(headerdata[KEY_MESSAGE_ID])).toEqual(MESSAGE_ID);
+            expect(headerdata[KEY_PEER_MASTER_TOKEN]).toBeFalsy();
+            expect(headerdata[KEY_PEER_SERVICE_TOKENS]).toBeFalsy();
+            expect(headerdata[KEY_PEER_USER_ID_TOKEN]).toBeFalsy();
+            var serviceTokens = builder.getServiceTokens();
+            expect(headerdata[KEY_SERVICE_TOKENS]).toEqual(JSON.parse(JSON.stringify(serviceTokens)));
+            expect(headerdata[KEY_USER_AUTHENTICATION_DATA]).toEqual(JSON.parse(JSON.stringify(USER_AUTH_DATA)));
+            expect(headerdata[KEY_USER_ID_TOKEN]).toEqual(JSON.parse(JSON.stringify(USER_ID_TOKEN)));
+        });
+	});
+
+    it("replayable json string with entity authentication data is correct", function() {
+        // Service tokens may be created with the key response data tokens. The
+        // key response data master token has the same serial number as the
+        // original master token so we can use the same user ID token.
+        var peerServiceTokens;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            MslTestUtils.getServiceTokens(trustedNetCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+                result: function(tks) { peerServiceTokens = tks; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+
+        var messageHeader;
+        runs(function() {
+            builder.set(KEY_NON_REPLAYABLE_ID, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+            MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
+                result: function(token) { messageHeader = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+        var cryptoContext;
+        runs(function() {
+            var scheme = ENTITY_AUTH_DATA.scheme;
+            var factory = trustedNetCtx.getEntityAuthenticationFactory(scheme);
+            cryptoContext = factory.getCryptoContext(trustedNetCtx, ENTITY_AUTH_DATA);
+        });
+        waitsFor(function() { return cryptoContext; }, "cryptoContext not received", 100);
+
+        var headerdata = undefined, ciphertext = undefined, signature;
+        runs(function() {
+            var jsonString = JSON.stringify(messageHeader);
+            expect(jsonString).not.toBeNull();
+            var jo = JSON.parse(jsonString);
+            var entityAuthDataJo = jo[KEY_ENTITY_AUTHENTICATION_DATA];
+            expect(entityAuthDataJo).toEqual(JSON.parse(JSON.stringify(ENTITY_AUTH_DATA)));
+            expect(jo[KEY_MASTER_TOKEN]).toBeFalsy();
+            ciphertext = base64$decode(jo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    headerdata = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            signature = base64$decode(jo[KEY_SIGNATURE]);
+        });
+        waitsFor(function() { return headerdata && ciphertext && signature; }, "header data and ciphertext and signature not received", 100);
+        
+        var verified;
+        runs(function() {
+            cryptoContext.verify(ciphertext, signature, {
+                result: function(v) { verified = v; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return verified !== undefined; }, "verified not received", 100);
+
+        runs(function() {
+            expect(headerdata[KEY_NON_REPLAYABLE_ID]).toBeFalsy();
+            expect(headerdata[KEY_RENEWABLE]).toEqual(RENEWABLE);
+            expect(headerdata[KEY_CAPABILITIES]).toEqual(JSON.parse(JSON.stringify(CAPABILITIES)));
+            expect(headerdata[KEY_KEY_REQUEST_DATA]).toEqual(JSON.parse(JSON.stringify(KEY_REQUEST_DATA)));
+            expect(headerdata[KEY_KEY_RESPONSE_DATA]).toEqual(JSON.parse(JSON.stringify(KEY_RESPONSE_DATA)));
+            expect(headerdata[KEY_SENDER]).toBeFalsy();
+            expect(parseInt(headerdata[KEY_MESSAGE_ID])).toEqual(MESSAGE_ID);
+            expect(headerdata[KEY_PEER_MASTER_TOKEN]).toBeFalsy();
+            expect(headerdata[KEY_PEER_SERVICE_TOKENS]).toBeFalsy();
+            expect(headerdata[KEY_PEER_USER_ID_TOKEN]).toBeFalsy();
+            var serviceTokens = builder.getServiceTokens();
+            expect(headerdata[KEY_SERVICE_TOKENS]).toEqual(JSON.parse(JSON.stringify(serviceTokens)));
+            expect(headerdata[KEY_USER_AUTHENTICATION_DATA]).toEqual(JSON.parse(JSON.stringify(USER_AUTH_DATA)));
+            expect(headerdata[KEY_USER_ID_TOKEN]).toEqual(JSON.parse(JSON.stringify(USER_ID_TOKEN)));
+        });
+    });
+
+	it("p2p ctor with entity authentication data", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+            HeaderDataBuilder$create(p2pCtx, null, null, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+
+			// Peer service tokens may be created with the key response data master
+			// token. The peer key response data master token has the same serial
+			// number as the original peer master token so we can use the same peer
+			// user ID token.
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+
+		var messageHeader;
+		runs(function() {
+			var headerData = builder.build();
+			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);    
+			MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+        runs(function() {
+            expect(messageHeader.isEncrypting()).toBeTruthy();
+            expect(messageHeader.nonReplayableId).toEqual(NON_REPLAYABLE_ID);
+            expect(messageHeader.isRenewable()).toEqual(RENEWABLE);
+			expect(messageHeader.isHandshake()).toEqual(HANDSHAKE);
+			expect(messageHeader.messageCapabilities).toEqual(CAPABILITIES);
+            expect(messageHeader.cryptoContext).not.toBeNull();
+            expect(messageHeader.entityAuthenticationData).toEqual(PEER_ENTITY_AUTH_DATA);
+            var keyRequestData = messageHeader.keyRequestData;
+            expect(Arrays$contains(keyRequestData, PEER_KEY_REQUEST_DATA)).toBeTruthy();
+            expect(messageHeader.keyResponseData).toEqual(PEER_KEY_RESPONSE_DATA);
+            expect(messageHeader.masterToken).toBeNull();
+            expect(messageHeader.sender).toBeNull();
+            expect(messageHeader.messageId).toEqual(MESSAGE_ID);
+            expect(messageHeader.peerMasterToken).toEqual(PEER_MASTER_TOKEN);
+            expect(Arrays$contains(messageHeader.peerServiceTokens, peerServiceTokens)).toBeTruthy();
+            expect(messageHeader.peerUserIdToken).toEqual(PEER_USER_ID_TOKEN);
+            var serviceTokens = builder.getServiceTokens();
+            expect(Arrays$contains(messageHeader.serviceTokens, serviceTokens)).toBeTruthy();
+            expect(messageHeader.userAuthenticationData).toEqual(USER_AUTH_DATA);
+            expect(messageHeader.userIdToken).toBeNull();
+            expect(messageHeader.user).toBeNull();
+        });
+	});
+
+    it("replayable p2p ctor with entity authentication data", function() {
+        var builder, peerServiceTokens;
+        runs(function() {
+            HeaderDataBuilder$create(p2pCtx, null, null, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+
+            // Peer service tokens may be created with the key response data master
+            // token. The peer key response data master token has the same serial
+            // number as the original peer master token so we can use the same peer
+            // user ID token.
+            MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+                result: function(tks) { peerServiceTokens = tks; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+
+        var messageHeader;
+        runs(function() {
+            builder.set(KEY_NON_REPLAYABLE_ID, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);    
+            MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+                result: function(token) { messageHeader = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+        runs(function() {
+            expect(messageHeader.isEncrypting()).toBeTruthy();
+            expect(messageHeader.nonReplayableId).toBeFalsy();
+            expect(messageHeader.isRenewable()).toEqual(RENEWABLE);
+			expect(messageHeader.isHandshake()).toEqual(HANDSHAKE);
+            expect(messageHeader.messageCapabilities).toEqual(CAPABILITIES);
+            expect(messageHeader.cryptoContext).not.toBeNull();
+            expect(messageHeader.entityAuthenticationData).toEqual(PEER_ENTITY_AUTH_DATA);
+            var keyRequestData = messageHeader.keyRequestData;
+            expect(Arrays$contains(keyRequestData, PEER_KEY_REQUEST_DATA)).toBeTruthy();
+            expect(messageHeader.keyResponseData).toEqual(PEER_KEY_RESPONSE_DATA);
+            expect(messageHeader.masterToken).toBeNull();
+            expect(messageHeader.sender).toBeNull();
+            expect(messageHeader.messageId).toEqual(MESSAGE_ID);
+            expect(messageHeader.peerMasterToken).toEqual(PEER_MASTER_TOKEN);
+            expect(Arrays$contains(messageHeader.peerServiceTokens, peerServiceTokens)).toBeTruthy();
+            expect(messageHeader.peerUserIdToken).toEqual(PEER_USER_ID_TOKEN);
+            var serviceTokens = builder.getServiceTokens();
+            expect(Arrays$contains(messageHeader.serviceTokens, serviceTokens)).toBeTruthy();
+            expect(messageHeader.userAuthenticationData).toEqual(USER_AUTH_DATA);
+            expect(messageHeader.userIdToken).toBeNull();
+            expect(messageHeader.user).toBeNull();
+        });
+    });
+
+	it("p2p json string with entity authentication data is correct", function() {
+		var peerServiceTokens;
+		runs(function() {
+            HeaderDataBuilder$create(p2pCtx, null, null, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+
+			// Peer service tokens may be created with the key response data master
+			// token. The peer key response data master token has the same serial
+			// number as the original peer master token so we can use the same peer
+			// user ID token.
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+
+		var messageHeader;
+		runs(function() {
+			var headerData = builder.build();
+			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+			MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+		var cryptoContext;
+		runs(function() {
+			var scheme = PEER_ENTITY_AUTH_DATA.scheme;
+			var factory = p2pCtx.getEntityAuthenticationFactory(scheme);
+			cryptoContext = factory.getCryptoContext(p2pCtx, PEER_ENTITY_AUTH_DATA);
+		});
+		waitsFor(function() { return cryptoContext; }, "cryptoContext not received", 100);
+
+		var headerdata = undefined, ciphertext = undefined, signature;
+        runs(function() {
+            var jsonString = JSON.stringify(messageHeader);
+            expect(jsonString).not.toBeNull();
+            var jo = JSON.parse(jsonString);
+            var entityAuthDataJo = jo[KEY_ENTITY_AUTHENTICATION_DATA];
+            expect(entityAuthDataJo).toEqual(JSON.parse(JSON.stringify(PEER_ENTITY_AUTH_DATA)));
+            expect(jo[KEY_MASTER_TOKEN]).toBeFalsy();
+            ciphertext = base64$decode(jo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    headerdata = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            signature = base64$decode(jo[KEY_SIGNATURE]);
+        });
+        waitsFor(function() { return headerdata && ciphertext && signature; }, "header data and ciphertext and signature not received", 100);
+		
+		var verified;
+		runs(function() {
+		    cryptoContext.verify(ciphertext, signature, {
+		        result: function(v) { verified = v; },
+		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		    });
+		});
+		waitsFor(function() { return verified !== undefined; }, "verified not received", 100);
+
+        runs(function() {
+            expect(headerdata[KEY_NON_REPLAYABLE_ID]).toEqual(NON_REPLAYABLE_ID);
+            expect(headerdata[KEY_RENEWABLE]).toEqual(RENEWABLE);
+            expect(headerdata[KEY_CAPABILITIES]).toEqual(JSON.parse(JSON.stringify(CAPABILITIES)));
+            expect(headerdata[KEY_KEY_REQUEST_DATA]).toEqual(JSON.parse(JSON.stringify(PEER_KEY_REQUEST_DATA)));
+            expect(headerdata[KEY_KEY_RESPONSE_DATA]).toEqual(JSON.parse(JSON.stringify(PEER_KEY_RESPONSE_DATA)));
+            expect(messageHeader.sender).toBeNull();
+            expect(parseInt(headerdata[KEY_MESSAGE_ID])).toEqual(MESSAGE_ID);
+            expect(headerdata[KEY_PEER_MASTER_TOKEN]).toEqual(JSON.parse(JSON.stringify(PEER_MASTER_TOKEN)));
+            expect(headerdata[KEY_PEER_SERVICE_TOKENS]).toEqual(JSON.parse(JSON.stringify(peerServiceTokens)));
+            expect(headerdata[KEY_PEER_USER_ID_TOKEN]).toEqual(JSON.parse(JSON.stringify(PEER_USER_ID_TOKEN)));
+            var serviceTokens = builder.getServiceTokens();
+            expect(headerdata[KEY_SERVICE_TOKENS]).toEqual(JSON.parse(JSON.stringify(serviceTokens)));
+            expect(headerdata[KEY_USER_AUTHENTICATION_DATA]).toEqual(JSON.parse(JSON.stringify(USER_AUTH_DATA)));
+            expect(headerdata[KEY_USER_ID_TOKEN]).toBeFalsy();
+        });
+	});
+
+    it("replayable p2p json string with entity authentication data is correct", function() {
+        var builder, peerServiceTokens;
+        runs(function() {
+            HeaderDataBuilder$create(p2pCtx, null, null, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+
+            // Peer service tokens may be created with the key response data master
+            // token. The peer key response data master token has the same serial
+            // number as the original peer master token so we can use the same peer
+            // user ID token.
+            MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+                result: function(tks) { peerServiceTokens = tks; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+
+        var messageHeader;
+        runs(function() {
+            builder.set(KEY_NON_REPLAYABLE_ID, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+            MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+                result: function(token) { messageHeader = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+        var cryptoContext;
+        runs(function() {
+            var scheme = PEER_ENTITY_AUTH_DATA.scheme;
+            var factory = p2pCtx.getEntityAuthenticationFactory(scheme);
+            cryptoContext = factory.getCryptoContext(p2pCtx, PEER_ENTITY_AUTH_DATA);
+        });
+        waitsFor(function() { return cryptoContext; }, "cryptoContext not received", 100);
+
+        var headerdata = undefined, ciphertext = undefined, signature;
+        runs(function() {
+            var jsonString = JSON.stringify(messageHeader);
+            expect(jsonString).not.toBeNull();
+            var jo = JSON.parse(jsonString);
+            var entityAuthDataJo = jo[KEY_ENTITY_AUTHENTICATION_DATA];
+            expect(entityAuthDataJo).toEqual(JSON.parse(JSON.stringify(PEER_ENTITY_AUTH_DATA)));
+            expect(jo[KEY_MASTER_TOKEN]).toBeFalsy();
+            ciphertext = base64$decode(jo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    headerdata = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            signature = base64$decode(jo[KEY_SIGNATURE]);
+        });
+        waitsFor(function() { return headerdata && ciphertext && signature; }, "header data and ciphertext and signature not received", 100);
+        
+        var verified;
+        runs(function() {
+            cryptoContext.verify(ciphertext, signature, {
+                result: function(v) { verified = v; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return verified !== undefined; }, "verified not received", 100);
+
+        runs(function() {
+            expect(headerdata[KEY_NON_REPLAYABLE_ID]).toBeFalsy();
+            expect(headerdata[KEY_RENEWABLE]).toEqual(RENEWABLE);
+            expect(headerdata[KEY_CAPABILITIES]).toEqual(JSON.parse(JSON.stringify(CAPABILITIES)));
+            expect(headerdata[KEY_KEY_REQUEST_DATA]).toEqual(JSON.parse(JSON.stringify(PEER_KEY_REQUEST_DATA)));
+            expect(headerdata[KEY_KEY_RESPONSE_DATA]).toEqual(JSON.parse(JSON.stringify(PEER_KEY_RESPONSE_DATA)));
+            expect(messageHeader.sender).toBeNull();
+            expect(parseInt(headerdata[KEY_MESSAGE_ID])).toEqual(MESSAGE_ID);
+            expect(headerdata[KEY_PEER_MASTER_TOKEN]).toEqual(JSON.parse(JSON.stringify(PEER_MASTER_TOKEN)));
+            expect(headerdata[KEY_PEER_SERVICE_TOKENS]).toEqual(JSON.parse(JSON.stringify(peerServiceTokens)));
+            expect(headerdata[KEY_PEER_USER_ID_TOKEN]).toEqual(JSON.parse(JSON.stringify(PEER_USER_ID_TOKEN)));
+            var serviceTokens = builder.getServiceTokens();
+            expect(headerdata[KEY_SERVICE_TOKENS]).toEqual(JSON.parse(JSON.stringify(serviceTokens)));
+            expect(headerdata[KEY_USER_AUTHENTICATION_DATA]).toEqual(JSON.parse(JSON.stringify(USER_AUTH_DATA)));
+            expect(headerdata[KEY_USER_ID_TOKEN]).toBeFalsy();
+        });
+    });
+
+	it("ctor with master token", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+			// Service tokens may be created with the key response data tokens. The
+			// key response data master token has the same serial number as the
+			// original master token so we can use the same user ID token.
+            HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(trustedNetCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+
+		var messageHeader;
+		runs(function() {
+			var headerData = builder.build();
+			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);    
+			MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+        runs(function() {
+            expect(messageHeader.isEncrypting()).toBeTruthy();
+            expect(messageHeader.nonReplayableId).toEqual(NON_REPLAYABLE_ID);
+            expect(messageHeader.isRenewable()).toEqual(RENEWABLE);
+			expect(messageHeader.isHandshake()).toEqual(HANDSHAKE);
+			expect(messageHeader.messageCapabilities).toEqual(CAPABILITIES);
+            expect(messageHeader.cryptoContext).not.toBeNull();
+            expect(messageHeader.entityAuthenticationData).toBeNull();
+            var keyRequestData = messageHeader.keyRequestData;
+            expect(Arrays$contains(keyRequestData, KEY_REQUEST_DATA)).toBeTruthy();
+            expect(messageHeader.keyResponseData).toEqual(KEY_RESPONSE_DATA);
+            expect(messageHeader.masterToken).toEqual(MASTER_TOKEN);
+            expect(messageHeader.sender).toEqual(ENTITY_AUTH_DATA.getIdentity());
+            expect(messageHeader.messageId).toEqual(MESSAGE_ID);
+            expect(messageHeader.peerMasterToken).toBeNull();
+            expect(messageHeader.peerServiceTokens.length).toEqual(0);
+            expect(messageHeader.peerUserIdToken).toBeNull();
+            var serviceTokens = builder.getServiceTokens();
+            expect(Arrays$contains(messageHeader.serviceTokens, serviceTokens)).toBeTruthy();
+            expect(messageHeader.userAuthenticationData).toEqual(USER_AUTH_DATA);
+            expect(messageHeader.userIdToken).toEqual(USER_ID_TOKEN);
+            expect(messageHeader.user).toEqual(USER_ID_TOKEN.user);
+        });
+	});
+
+	it("json is correct with master token", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+			// Service tokens may be created with the key response data tokens. The
+			// key response data master token has the same serial number as the
+			// original master token so we can use the same user ID token.
+            HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(trustedNetCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+
+		var messageHeader;
+		runs(function() {
+			var headerData = builder.build();
+			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+			MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+        var cryptoContext = undefined, headerdata = undefined, ciphertext = undefined, signature;
+        runs(function() {
+            cryptoContext = new SessionCryptoContext(trustedNetCtx, MASTER_TOKEN);
+            var jsonString = JSON.stringify(messageHeader);
+            expect(jsonString).not.toBeNull();
+            var jo = JSON.parse(jsonString);
+            expect(jo[KEY_ENTITY_AUTHENTICATION_DATA]).toBeFalsy();
+            var masterToken = jo[KEY_MASTER_TOKEN];
+            expect(masterToken).toEqual(JSON.parse(JSON.stringify(MASTER_TOKEN)));
+            ciphertext = base64$decode(jo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    headerdata = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            signature = base64$decode(jo[KEY_SIGNATURE]);
+        });
+        waitsFor(function() { return cryptoContext && headerdata && ciphertext && signature; }, "crypto context and header data and ciphertext and signature not received", 100);
+		
+		var verified;
+		runs(function() {
+		    cryptoContext.verify(ciphertext, signature, {
+		        result: function(v) { verified = v; },
+		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		    });
+		});
+		waitsFor(function() { return verified !== undefined; }, "verified not received", 100);
+
+        runs(function() {
+            expect(headerdata[KEY_NON_REPLAYABLE_ID]).toEqual(NON_REPLAYABLE_ID);
+            expect(headerdata[KEY_RENEWABLE]).toEqual(RENEWABLE);
+            expect(headerdata[KEY_CAPABILITIES]).toEqual(JSON.parse(JSON.stringify(CAPABILITIES)));
+            expect(headerdata[KEY_KEY_REQUEST_DATA]).toEqual(JSON.parse(JSON.stringify(KEY_REQUEST_DATA)));
+            expect(headerdata[KEY_KEY_RESPONSE_DATA]).toEqual(JSON.parse(JSON.stringify(KEY_RESPONSE_DATA)));
+            expect(headerdata[KEY_SENDER]).toEqual(ENTITY_AUTH_DATA.getIdentity());
+            expect(parseInt(headerdata[KEY_MESSAGE_ID])).toEqual(MESSAGE_ID);
+            expect(headerdata[KEY_PEER_MASTER_TOKEN]).toBeFalsy();
+            expect(headerdata[KEY_PEER_SERVICE_TOKENS]).toBeFalsy();
+            expect(headerdata[KEY_PEER_USER_ID_TOKEN]).toBeFalsy();
+            var serviceTokens = builder.getServiceTokens();
+            expect(headerdata[KEY_SERVICE_TOKENS]).toEqual(JSON.parse(JSON.stringify(serviceTokens)));
+            expect(headerdata[KEY_USER_AUTHENTICATION_DATA]).toEqual(JSON.parse(JSON.stringify(USER_AUTH_DATA)));
+            expect(headerdata[KEY_USER_ID_TOKEN]).toEqual(JSON.parse(JSON.stringify(USER_ID_TOKEN)));
+        });
+	});
+
+	it("p2p ctor with master token", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+			// The key response data master token has the same serial number as
+			// the original master token so we can use the same service tokens and
+			// user ID token.
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			// Peer service tokens may be created with the key response data master
+			// token. The peer key response data master token has the same serial
+			// number as the original peer master token so we can use the same peer
+			// user ID token.
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+
+		var messageHeader;
+		runs(function() {
+			var headerData = builder.build();
+			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);    
+			MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+        runs(function() {
+            expect(messageHeader.isEncrypting()).toBeTruthy();
+            expect(messageHeader.nonReplayableId).toEqual(NON_REPLAYABLE_ID);
+            expect(messageHeader.isRenewable()).toEqual(RENEWABLE);
+			expect(messageHeader.isHandshake()).toEqual(HANDSHAKE);
+			expect(messageHeader.messageCapabilities).toEqual(CAPABILITIES);
+            expect(messageHeader.cryptoContext).not.toBeNull();
+            expect(messageHeader.entityAuthenticationData).toBeNull();
+            var keyRequestData = messageHeader.keyRequestData;
+            expect(Arrays$contains(keyRequestData, PEER_KEY_REQUEST_DATA)).toBeTruthy();
+            expect(messageHeader.keyResponseData).toEqual(PEER_KEY_RESPONSE_DATA);
+            expect(messageHeader.masterToken).toEqual(MASTER_TOKEN);
+            expect(messageHeader.sender).toEqual(PEER_ENTITY_AUTH_DATA.getIdentity());
+            expect(messageHeader.messageId).toEqual(MESSAGE_ID);
+            expect(messageHeader.peerMasterToken).toEqual(PEER_MASTER_TOKEN);
+            expect(Arrays$contains(messageHeader.peerServiceTokens, peerServiceTokens)).toBeTruthy();
+            expect(messageHeader.peerUserIdToken).toEqual(PEER_USER_ID_TOKEN);
+            var serviceTokens = builder.getServiceTokens();
+            expect(Arrays$contains(messageHeader.serviceTokens, serviceTokens)).toBeTruthy();
+            expect(messageHeader.userAuthenticationData).toEqual(USER_AUTH_DATA);
+            expect(messageHeader.userIdToken).toEqual(USER_ID_TOKEN);
+            expect(messageHeader.user).toEqual(USER_ID_TOKEN.user);
+        });
+	});
+
+	it("p2p json string is correct with master token", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+			// The key response data master token has the same serial number as
+			// the original master token so we can use the same service tokens and
+			// user ID token.
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			// Peer service tokens may be created with the key response data master
+			// token. The peer key response data master token has the same serial
+			// number as the original peer master token so we can use the same peer
+			// user ID token.
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+		
+		var messageHeader;
+		runs(function() {
+			var headerData = builder.build();
+			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+			MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+		var cryptoContext = undefined, headerdata = undefined, ciphertext = undefined, signature;
+        runs(function() {
+            cryptoContext = new SessionCryptoContext(trustedNetCtx, MASTER_TOKEN);
+            var jsonString = JSON.stringify(messageHeader);
+            expect(jsonString).not.toBeNull();
+            var jo = JSON.parse(jsonString);
+            expect(jo[KEY_ENTITY_AUTHENTICATION_DATA]).toBeFalsy();
+            var masterToken = jo[KEY_MASTER_TOKEN];
+            expect(masterToken).toEqual(JSON.parse(JSON.stringify(MASTER_TOKEN)));
+            ciphertext = base64$decode(jo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    headerdata = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            signature = base64$decode(jo[KEY_SIGNATURE]);
+        });
+        waitsFor(function() { return cryptoContext && headerdata && ciphertext && signature; }, "crypto context and header data and ciphertext and signature not received", 100);
+		
+		var verified;
+		runs(function() {
+		    cryptoContext.verify(ciphertext, signature, {
+		        result: function(v) { verified = v; },
+		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		    });
+		});
+		waitsFor(function() { return verified !== undefined; }, "verified not received", 100);
+
+        runs(function() {
+            expect(headerdata[KEY_NON_REPLAYABLE_ID]).toEqual(NON_REPLAYABLE_ID);
+            expect(headerdata[KEY_RENEWABLE]).toEqual(RENEWABLE);
+            expect(headerdata[KEY_CAPABILITIES]).toEqual(JSON.parse(JSON.stringify(CAPABILITIES)));
+            expect(headerdata[KEY_KEY_REQUEST_DATA]).toEqual(JSON.parse(JSON.stringify(PEER_KEY_REQUEST_DATA)));
+            expect(headerdata[KEY_KEY_RESPONSE_DATA]).toEqual(JSON.parse(JSON.stringify(PEER_KEY_RESPONSE_DATA)));
+            expect(headerdata[KEY_SENDER]).toEqual(PEER_ENTITY_AUTH_DATA.getIdentity());
+            expect(parseInt(headerdata[KEY_MESSAGE_ID])).toEqual(MESSAGE_ID);
+            expect(headerdata[KEY_PEER_MASTER_TOKEN]).toEqual(JSON.parse(JSON.stringify(PEER_MASTER_TOKEN)));
+            expect(headerdata[KEY_PEER_SERVICE_TOKENS]).toEqual(JSON.parse(JSON.stringify(peerServiceTokens)));
+            expect(headerdata[KEY_PEER_USER_ID_TOKEN]).toEqual(JSON.parse(JSON.stringify(PEER_USER_ID_TOKEN)));
+            var serviceTokens = builder.getServiceTokens();
+            expect(headerdata[KEY_SERVICE_TOKENS]).toEqual(JSON.parse(JSON.stringify(serviceTokens)));
+            expect(headerdata[KEY_USER_AUTHENTICATION_DATA]).toEqual(JSON.parse(JSON.stringify(USER_AUTH_DATA)));
+            expect(headerdata[KEY_USER_ID_TOKEN]).toEqual(JSON.parse(JSON.stringify(USER_ID_TOKEN)));
+        });
+	});
+
+	it("ctor with entity authentication data and null arguments", function() {
+	    var builder;
+	    runs(function() {
+            HeaderDataBuilder$create(p2pCtx, null, null, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+	    });
+	    waitsFor(function() { return builder; }, "builder", 100);
+	    
+		var messageHeader;
+		runs(function() {
+		    builder.set(KEY_RECIPIENT, null);
+	        builder.set(KEY_CAPABILITIES, null);
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+	        builder.set(KEY_USER_AUTHENTICATION_DATA, null);
+			var headerData = builder.build();
+			var peerData = new HeaderPeerData(null, null, null);
+			MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+        runs(function() {
+            expect(messageHeader.isEncrypting()).toBeTruthy();
+            expect(messageHeader.nonReplayableId).toEqual(NON_REPLAYABLE_ID);
+            expect(messageHeader.isRenewable()).toEqual(RENEWABLE);
+			expect(messageHeader.isHandshake()).toEqual(HANDSHAKE);
+			expect(messageHeader.messageCapabilities).toBeNull();
+            expect(messageHeader.cryptoContext).not.toBeNull();
+            expect(messageHeader.entityAuthenticationData).toEqual(PEER_ENTITY_AUTH_DATA);
+            expect(messageHeader.keyRequestData.length).toEqual(0);
+            expect(messageHeader.keyResponseData).toBeNull();
+            expect(messageHeader.masterToken).toBeNull();
+            expect(messageHeader.sender).toBeNull();
+            expect(messageHeader.messageId).toEqual(MESSAGE_ID);
+            expect(messageHeader.peerMasterToken).toBeNull();
+            expect(messageHeader.peerServiceTokens.length).toEqual(0);
+            expect(messageHeader.peerUserIdToken).toBeNull();
+            expect(messageHeader.serviceTokens.length).toEqual(0);
+            expect(messageHeader.userAuthenticationData).toBeNull();
+            expect(messageHeader.userIdToken).toBeNull();
+            expect(messageHeader.user).toBeNull();
+        });
+	});
+
+	it("ctor with entity authentication data and empty arguments", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(p2pCtx, null, null, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+		var messageHeader;
+		runs(function() {
+            var serviceTokens = new Array();
+            var keyRequestData = new Array();
+            builder.set(KEY_RECIPIENT, null);
+            builder.set(KEY_CAPABILITIES, null);
+            builder.set(KEY_KEY_REQUEST_DATA, keyRequestData);
+            builder.set(KEY_KEY_RESPONSE_DATA, null);
+            builder.set(KEY_USER_AUTHENTICATION_DATA, null);
+            builder.set(KEY_SERVICE_TOKENS, serviceTokens);
+            var headerData = builder.build();
+			var peerServiceTokens = new Array();
+			var peerData = new HeaderPeerData(null, null, peerServiceTokens);
+			MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+        runs(function() {
+            expect(messageHeader.isEncrypting()).toBeTruthy();
+            expect(messageHeader.nonReplayableId).toEqual(NON_REPLAYABLE_ID);
+            expect(messageHeader.isRenewable()).toEqual(RENEWABLE);
+			expect(messageHeader.isHandshake()).toEqual(HANDSHAKE);
+			expect(messageHeader.messageCapabilities).toBeNull();
+            expect(messageHeader.cryptoContext).not.toBeNull();
+            expect(messageHeader.entityAuthenticationData).toEqual(PEER_ENTITY_AUTH_DATA);
+            expect(messageHeader.keyRequestData.length).toEqual(0);
+            expect(messageHeader.keyResponseData).toBeNull();
+            expect(messageHeader.masterToken).toBeNull();
+            expect(messageHeader.sender).toBeNull();
+            expect(messageHeader.messageId).toEqual(MESSAGE_ID);
+            expect(messageHeader.peerMasterToken).toBeNull();
+            expect(messageHeader.peerServiceTokens.length).toEqual(0);
+            expect(messageHeader.peerUserIdToken).toBeNull();
+            expect(messageHeader.serviceTokens.length).toEqual(0);
+            expect(messageHeader.userAuthenticationData).toBeNull();
+            expect(messageHeader.userIdToken).toBeNull();
+            expect(messageHeader.user).toBeNull();
+        });
+	});
+
+	it("ctor with master token and null arguments", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(p2pCtx, null, null, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+		var messageHeader;
+		runs(function() {
+            builder.set(KEY_RECIPIENT, null);
+            builder.set(KEY_CAPABILITIES, null);
+            builder.set(KEY_KEY_REQUEST_DATA, null);
+            builder.set(KEY_KEY_RESPONSE_DATA, null);
+            builder.set(KEY_USER_AUTHENTICATION_DATA, null);
+			var headerData = builder.build();
+			var peerData = new HeaderPeerData(null, null, null);
+			MessageHeader$create(p2pCtx, null, PEER_MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+        runs(function() {
+            expect(messageHeader.isEncrypting()).toBeTruthy();
+            expect(messageHeader.nonReplayableId).toEqual(NON_REPLAYABLE_ID);
+            expect(messageHeader.isRenewable()).toEqual(RENEWABLE);
+			expect(messageHeader.isHandshake()).toEqual(HANDSHAKE);
+			expect(messageHeader.messageCapabilities).toBeNull();
+            expect(messageHeader.cryptoContext).not.toBeNull();
+            expect(messageHeader.entityAuthenticationData).toBeNull();
+            expect(messageHeader.keyRequestData.length).toEqual(0);
+            expect(messageHeader.keyResponseData).toBeNull();
+            expect(messageHeader.masterToken).toEqual(PEER_MASTER_TOKEN);
+            expect(messageHeader.sender).toEqual(PEER_ENTITY_AUTH_DATA.getIdentity());
+            expect(messageHeader.messageId).toEqual(MESSAGE_ID);
+            expect(messageHeader.peerMasterToken).toBeNull();
+            expect(messageHeader.peerServiceTokens.length).toEqual(0);
+            expect(messageHeader.peerUserIdToken).toBeNull();
+            expect(messageHeader.serviceTokens.length).toEqual(0);
+            expect(messageHeader.userAuthenticationData).toBeNull();
+            expect(messageHeader.userIdToken).toBeNull();
+            expect(messageHeader.user).toBeNull();
+        });
+	});
+
+	it("ctor with master token and empty arguments", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(p2pCtx, null, null, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+		var messageHeader;
+		runs(function() {
+			var serviceTokens = new Array();
+			var keyRequestData = new Array();
+	        builder.set(KEY_RECIPIENT, null);
+	        builder.set(KEY_CAPABILITIES, null);
+	        builder.set(KEY_KEY_REQUEST_DATA, keyRequestData);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+	        builder.set(KEY_USER_AUTHENTICATION_DATA, null);
+	        builder.set(KEY_SERVICE_TOKENS, serviceTokens);
+			var headerData = builder.build();
+			var peerServiceTokens = new Array();
+			var peerData = new HeaderPeerData(null, null, peerServiceTokens);
+			MessageHeader$create(p2pCtx, null, PEER_MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+        runs(function() {
+            expect(messageHeader.isEncrypting()).toBeTruthy();
+            expect(messageHeader.nonReplayableId).toEqual(NON_REPLAYABLE_ID);
+            expect(messageHeader.isRenewable()).toEqual(RENEWABLE);
+			expect(messageHeader.isHandshake()).toEqual(HANDSHAKE);
+			expect(messageHeader.messageCapabilities).toBeNull();
+            expect(messageHeader.cryptoContext).not.toBeNull();
+            expect(messageHeader.entityAuthenticationData).toBeNull();
+            expect(messageHeader.keyRequestData.length).toEqual(0);
+            expect(messageHeader.keyResponseData).toBeNull();
+            expect(messageHeader.masterToken).toEqual(PEER_MASTER_TOKEN);
+            expect(messageHeader.sender).toEqual(PEER_ENTITY_AUTH_DATA.getIdentity());
+            expect(messageHeader.messageId).toEqual(MESSAGE_ID);
+            expect(messageHeader.peerMasterToken).toBeNull();
+            expect(messageHeader.peerServiceTokens.length).toEqual(0);
+            expect(messageHeader.peerUserIdToken).toBeNull();
+            expect(messageHeader.serviceTokens.length).toEqual(0);
+            expect(messageHeader.userAuthenticationData).toBeNull();
+            expect(messageHeader.userIdToken).toBeNull();
+            expect(messageHeader.user).toBeNull();
+        });
+	});
+
+	it("ctor with RSA entity authentication data is not encrypting", function() {
+		var rsaCtx;
+		runs(function() {
+		    MockMslContext$create(EntityAuthenticationScheme.RSA, false, {
+		        result: function(c) { rsaCtx = c; },
+		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		    });
+		});
+		waitsFor(function() { return rsaCtx; }, "rsaCtx", 100);
+
+		var entityAuthData;
+		runs(function() {
+			rsaCtx.getEntityAuthenticationData(null, {
+				result: function(x) { entityAuthData = x; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return entityAuthData; }, "entityAuthData not received", 100);
+
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(rsaCtx, MASTER_TOKEN, USER_ID_TOKEN, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+		var messageHeader;
+		runs(function() {
+			var headerData = builder.build();
+			var peerData = new HeaderPeerData(null, null, null);
+			MessageHeader$create(rsaCtx, entityAuthData, null, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+        runs(function() {
+    		expect(messageHeader.isEncrypting()).toBeFalsy();
+    	});
+	});
+
+	it("ctor missing both authentication data", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+	    var exception;
+	    runs(function() {
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+            MessageHeader$create(trustedNetCtx, null, null, headerData, peerData, {
+                result: function() {},
+                error: function(err) { exception = err; },
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 100);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslInternalException(MslError.NONE));
+		});
+	});
+
+	it("ctor with user ID token and null master token", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+	    var exception;
+	    runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+	        var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+            MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
+                result: function() {},
+                error: function(err) { exception = err; },
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 100);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslInternalException(MslError.NONE));
+		});
+	});
+
+	it("ctor with user ID token and mismatched master token", function() {
+		var userIdToken;
+		runs(function() {
+		    MslTestUtils.getUserIdToken(trustedNetCtx, PEER_MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory.USER, {
+		        result: function(t) { userIdToken = t; },
+		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		    });
+		});
+		waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, userIdToken, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+        var exception;
+	    runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+            MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
+                result: function() {},
+                error: function(err) { exception = err; },
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 100);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslInternalException(MslError.NONE));
+		});
+	});
+
+	it("ctor with service token and null master token", function() {
+		var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+		var exception;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+            MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
+                result: function() {},
+                error: function(err) { exception = err; },
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 100);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslInternalException(MslError.NONE));
+		});
+	});
+
+	it("ctor with service token and mismatched master token", function() {
+		var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, PEER_MASTER_TOKEN, null, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+		var exception;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+	        builder.set(KEY_USER_ID_TOKEN, USER_ID_TOKEN);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+            MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
+                result: function() {},
+                error: function(err) { exception = err; },
+            });
+        });
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslInternalException(MslError.NONE));
+		});
+	});
+
+	it("ctor with service token and null user ID token", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+		var exception;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+	        builder.set(KEY_USER_ID_TOKEN, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+            MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
+                result: function() {},
+                error: function(err) { exception = err; },
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 100);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslInternalException(MslError.NONE));
+		});
+	});
+
+	it("ctor with service token and mismatched user ID token", function() {
+		// Technically the implementation does not hit this check because it
+		// will bail out earlier, but in case the implementation changes the
+		// order of checks (which it should not) this test will catch it.
+		//
+		// We cannot construct inconsistent service tokens via the ServiceToken
+		// ctor, so pass in a mismatched user ID token.
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+
+		var exception;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+	        builder.set(KEY_USER_ID_TOKEN, PEER_USER_ID_TOKEN);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+            MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
+                result: function() {},
+                error: function(err) { exception = err; },
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 100);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslInternalException(MslError.NONE));
+		});
+	});
+
+	it("ctor with peer user ID token and null peer master token", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+	    var exception;
+	    runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, PEER_USER_ID_TOKEN, null);
+            MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+                result: function() {},
+                error: function(err) { exception = err; },
+            });
+        });
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslInternalException(MslError.NONE));
+		});
+	});
+
+	it("ctor with peer user ID token and mismatched peer master token", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+		var peerUserIdToken;
+		runs(function() {
+		    MslTestUtils.getUserIdToken(p2pCtx, MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory.USER, {
+		        result: function(t) { peerUserIdToken = t; },
+		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		    });
+		});
+		waitsFor(function() { return peerUserIdToken; }, "peerUserIdToken not received", 100);
+		
+		var exception;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, peerUserIdToken, null);
+            MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+                result: function() {},
+                error: function(err) { exception = err; },
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 100);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslInternalException(MslError.NONE));
+		});
+	});
+
+	it("ctor with peer service token and null master token", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+		var peerServiceTokens;
+		runs(function() {
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, null, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return peerServiceTokens; }, "peerServiceTokens not received", 100);
+		
+		var exception;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, peerServiceTokens);
+            MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+                result: function() {},
+                error: function(err) { exception = err; },
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 100);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslInternalException(MslError.NONE));
+		});
+	});
+
+	it("ctor with peer service token and mismatched master token", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+		var peerServiceTokens;
+		runs(function() {
+			MslTestUtils.getServiceTokens(p2pCtx, MASTER_TOKEN, null, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return peerServiceTokens; }, "peerServiceTokens not received", 100);
+		var exception;
+		
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, null, peerServiceTokens);
+            MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+                result: function() {},
+                error: function(err) { exception = err; },
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 100);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslInternalException(MslError.NONE));
+		});
+	});
+
+	it("ctor with peer service token and null user ID token", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+		var peerServiceTokens;
+		runs(function() {
+			MslTestUtils.getServiceTokens(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return peerServiceTokens; }, "peerServiceTokens not received", 100);
+		
+		var exception;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, null, peerServiceTokens);
+            MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+                result: function() {},
+                error: function(err) { exception = err; },
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 100);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslInternalException(MslError.NONE));
+		});
+	});
+
+	it("ctor with peer service token and mismatched user ID token", function() {
+		// Technically the implementation does not hit this check because it
+		// will bail out earlier, but in case the implementation changes the
+		// order of checks (which it should not) this test will catch it.
+		//
+		// We cannot construct inconsistent service tokens via the ServiceToken
+		// ctor, so pass in a mismatched user ID token.
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(p2pCtx, null, null, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+		var peerServiceTokens;
+		runs(function() {
+			MslTestUtils.getServiceTokens(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return peerServiceTokens; }, "peerServiceTokens not received", 100);
+		
+		var exception;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, USER_ID_TOKEN, peerServiceTokens);
+            MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+                result: function() {},
+                error: function(err) { exception = err; },
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 100);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslInternalException(MslError.NONE));
+		});
+	});
+
+	it("ctor with untrusted master token", function() {
+		var masterToken;
+		runs(function() {
+		    MslTestUtils.getUntrustedMasterToken(p2pCtx, {
+		        result: function(t) { masterToken = t; },
+		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		    });
+		});
+		waitsFor(function() { return masterToken; }, "masterToken not received", 100);
+
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(p2pCtx, null, null, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+		var exception;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, null);
+            MessageHeader$create(p2pCtx, null, masterToken, headerData, peerData, {
+                result: function() {},
+                error: function(err) { exception = err; },
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 100);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, MESSAGE_ID));
+		});
+	});
+
+	it("ctor with unsupported entity authentication scheme", function() {
+        var ctx;
+        runs(function() {
+            MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+                result: function(c) { ctx = c; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ctx; }, "ctx", 100);
+
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(ctx, null, null, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+        var exception;
+        runs(function() {
+            ctx.removeEntityAuthenticationFactory(ENTITY_AUTH_DATA.scheme);
+
+            builder.set(KEY_KEY_REQUEST_DATA, null);
+            builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+            MessageHeader$create(ctx, ENTITY_AUTH_DATA, null, headerData, peerData, {
+                result: function() {},
+                error: function(err) { exception = err; },
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 100);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslEntityAuthException(MslError.ENTITYAUTH_FACTORY_NOT_FOUND, MESSAGE_ID));
+		});
+	});
+
+	it("ctor with master token and cached crypto context", function() {
+		// We should be okay with an untrusted master token if a crypto context
+		// is associated with it.
+		var masterToken;
+		runs(function() {
+		    MslTestUtils.getUntrustedMasterToken(p2pCtx, {
+		        result: function(t) { masterToken = t; },
+		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		    });
+		});
+		waitsFor(function() { return masterToken; }, "masterToken not received", 100);
+		runs(function() {
+            var cryptoContext = new NullCryptoContext();
+            p2pCtx.getMslStore().setCryptoContext(masterToken, cryptoContext);
+        });
+
+		var userIdToken;
+		runs(function() {
+		    MslTestUtils.getUserIdToken(p2pCtx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER, {
+		        result: function(t) { userIdToken = t; },
+		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		    });
+		});
+		waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+		
+		var builder, peerServiceTokens;
+		runs(function() {
+		    HeaderDataBuilder$create(p2pCtx, masterToken, null, true, {
+		        result: function(x) { builder = x; },
+		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		    });
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+		
+		var messageHeader;
+		runs(function() {
+		    builder.set(KEY_USER_ID_TOKEN, userIdToken);
+			var headerData = builder.build();
+			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+			MessageHeader$create(p2pCtx, null, masterToken, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+        runs(function() {
+            expect(messageHeader.nonReplayableId).toEqual(NON_REPLAYABLE_ID);
+            expect(messageHeader.isRenewable()).toEqual(RENEWABLE);
+			expect(messageHeader.isHandshake()).toEqual(HANDSHAKE);
+            expect(messageHeader.cryptoContext).not.toBeNull();
+            expect(messageHeader.entityAuthenticationData).toBeNull();
+            var keyRequestData = messageHeader.keyRequestData;
+            expect(Arrays$contains(keyRequestData, PEER_KEY_REQUEST_DATA)).toBeTruthy();
+            expect(messageHeader.keyResponseData).toEqual(PEER_KEY_RESPONSE_DATA);
+            expect(messageHeader.masterToken).toEqual(masterToken);
+            expect(messageHeader.messageId).toEqual(MESSAGE_ID);
+            expect(messageHeader.peerMasterToken).toEqual(PEER_MASTER_TOKEN);
+            expect(Arrays$contains(messageHeader.peerServiceTokens, peerServiceTokens)).toBeTruthy();
+            expect(messageHeader.peerUserIdToken).toEqual(PEER_USER_ID_TOKEN);
+            var serviceTokens = builder.getServiceTokens();
+            expect(Arrays$contains(messageHeader.serviceTokens, serviceTokens)).toBeTruthy();
+            expect(messageHeader.userAuthenticationData).toEqual(USER_AUTH_DATA);
+            expect(messageHeader.userIdToken).toEqual(userIdToken);
+            expect(messageHeader.user).toEqual(userIdToken.user);
+        });
+	});
+
+	it("parseHeader with entity authentication data", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+			// Service tokens may be created with the key response data tokens. The
+			// key response data master token has the same serial number as the
+			// original master token so we can use the same user ID token.
+		    HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(trustedNetCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+		
+		var messageHeader;
+		runs(function() {
+			var headerData = builder.build();
+			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+			MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+		var header;
+		runs(function() {
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+			Header$parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+				result: function(h) { header = h; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+			});
+		});
+		waitsFor(function() { return header; }, "header not received", 200);
+		
+		runs(function() {
+            expect(header).not.toBeNull();
+            expect(header instanceof MessageHeader).toBeTruthy();
+            var joMessageHeader = header;
+    
+            expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
+            expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
+            expect(messageHeader.cryptoContext).not.toBeNull();
+            expect(joMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
+            var keyRequestData = messageHeader.keyRequestData;
+            var joKeyRequestData = joMessageHeader.keyRequestData;
+            expect(Arrays$contains(keyRequestData, joKeyRequestData)).toBeTruthy();
+            expect(Arrays$contains(joKeyRequestData, keyRequestData)).toBeTruthy();
+            expect(joMessageHeader.keyResponseData).toEqual(messageHeader.keyResponseData);
+            expect(joMessageHeader.masterToken).toEqual(messageHeader.masterToken);
+            expect(joMessageHeader.messageId).toEqual(messageHeader.messageId);
+            expect(messageHeader.peerMasterToken).toBeNull();
+            expect(messageHeader.peerServiceTokens.length).toEqual(0);
+            expect(messageHeader.peerUserIdToken).toBeNull();
+            var serviceTokens = messageHeader.serviceTokens;
+            var joServiceTokens = joMessageHeader.serviceTokens;
+            expect(Arrays$contains(serviceTokens, joServiceTokens)).toBeTruthy();
+            expect(Arrays$contains(joServiceTokens, serviceTokens)).toBeTruthy();
+            expect(joMessageHeader.userAuthenticationData).toEqual(messageHeader.userAuthenticationData);
+            expect(joMessageHeader.userIdToken).toEqual(messageHeader.userIdToken);
+            expect(joMessageHeader.user).toEqual(messageHeader.user);
+        });
+	});
+
+	it("p2p parseHeader with entity authentication data", function() {
+		// Service tokens may be created with the key response data tokens. The
+		// key response data master token has the same serial number as the
+		// original master token so we can use the same user ID token.
+		var builder, peerServiceTokens;
+		runs(function() {
+            HeaderDataBuilder$create(p2pCtx, null, null, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and peerServiceTokens not received", 100);
+		
+		var messageHeader;
+		runs(function() {
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+            MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+		var header;
+		runs(function() {
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+			Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+				result: function(h) { header = h; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+			});
+		});
+		waitsFor(function() { return header; }, "header not received", 200);
+		
+		runs(function() {
+            expect(header).not.toBeNull();
+            expect(header instanceof MessageHeader).toBeTruthy();
+            var joMessageHeader = header;
+    
+            expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
+            expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
+            expect(messageHeader.cryptoContext).not.toBeNull();
+            expect(joMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
+            var keyRequestData = messageHeader.keyRequestData;
+            var joKeyRequestData = joMessageHeader.keyRequestData;
+            expect(Arrays$contains(keyRequestData, joKeyRequestData)).toBeTruthy();
+            expect(Arrays$contains(joKeyRequestData, keyRequestData)).toBeTruthy();
+            expect(joMessageHeader.keyResponseData).toEqual(messageHeader.keyResponseData);
+            expect(joMessageHeader.masterToken).toEqual(messageHeader.masterToken);
+            expect(joMessageHeader.messageId).toEqual(messageHeader.messageId);
+            expect(joMessageHeader.peerMasterToken).toEqual(messageHeader.peerMasterToken);
+            var joPeerServiceTokens = joMessageHeader.peerServiceTokens;
+            expect(Arrays$contains(peerServiceTokens, joPeerServiceTokens)).toBeTruthy();
+            expect(Arrays$contains(joPeerServiceTokens, peerServiceTokens)).toBeTruthy();
+            expect(joMessageHeader.peerUserIdToken).toEqual(messageHeader.peerUserIdToken);
+            var serviceTokens = messageHeader.serviceTokens;
+            var joServiceTokens = joMessageHeader.serviceTokens;
+            expect(Arrays$contains(serviceTokens, joServiceTokens)).toBeTruthy();
+            expect(Arrays$contains(joServiceTokens, serviceTokens)).toBeTruthy();
+            expect(joMessageHeader.userAuthenticationData).toEqual(messageHeader.userAuthenticationData);
+            expect(joMessageHeader.userIdToken).toEqual(messageHeader.userIdToken);
+            expect(joMessageHeader.user).not.toBeNull();
+        });
+	});
+
+	it("parseHeader with master token", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(trustedNetCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+		
+		var messageHeader;
+		runs(function() {
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+            MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+		var header;
+		runs(function() {
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+			Header$parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+				result: function(h) { header = h; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+			});
+		});
+		waitsFor(function() { return header; }, "header not received", 200);
+		
+		runs(function() {
+            expect(header).not.toBeNull();
+            expect(header instanceof MessageHeader).toBeTruthy();
+            var joMessageHeader = header;
+    
+            expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
+            expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
+            expect(messageHeader.cryptoContext).not.toBeNull();
+            expect(joMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
+            var keyRequestData = messageHeader.keyRequestData;
+            var joKeyRequestData = joMessageHeader.keyRequestData;
+            expect(Arrays$contains(keyRequestData, joKeyRequestData)).toBeTruthy();
+            expect(Arrays$contains(joKeyRequestData, keyRequestData)).toBeTruthy();
+            expect(joMessageHeader.keyResponseData).toEqual(messageHeader.keyResponseData);
+            expect(joMessageHeader.masterToken).toEqual(messageHeader.masterToken);
+            expect(joMessageHeader.messageId).toEqual(messageHeader.messageId);
+            expect(joMessageHeader.peerMasterToken).toBeNull();
+            expect(joMessageHeader.peerServiceTokens.length).toEqual(0);
+            expect(joMessageHeader.peerUserIdToken).toBeNull();
+            var serviceTokens = messageHeader.serviceTokens;
+            var joServiceTokens = joMessageHeader.serviceTokens;
+            expect(Arrays$contains(serviceTokens, joServiceTokens)).toBeTruthy();
+            expect(Arrays$contains(joServiceTokens, serviceTokens)).toBeTruthy();
+            expect(joMessageHeader.userAuthenticationData).toEqual(messageHeader.userAuthenticationData);
+            expect(joMessageHeader.userIdToken).toEqual(messageHeader.userIdToken);
+            expect(joMessageHeader.user).toEqual(messageHeader.user);
+        });
+	});
+
+	it("p2p parseHeader with master token", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+				
+		var messageHeader;
+		runs(function() {
+            var headerData = builder.build();
+			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+			MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+		var header;
+		runs(function() {
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+			Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+				result: function(h) { header = h; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+			});
+		});
+		waitsFor(function() { return header; }, "header not received", 200);
+		
+		runs(function() {
+            expect(header).not.toBeNull();
+            expect(header instanceof MessageHeader).toBeTruthy();
+            var joMessageHeader = header;
+    
+            expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
+            expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
+            expect(messageHeader.cryptoContext).not.toBeNull();
+            expect(joMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
+            var keyRequestData = messageHeader.keyRequestData;
+            var joKeyRequestData = joMessageHeader.keyRequestData;
+            expect(Arrays$contains(keyRequestData, joKeyRequestData)).toBeTruthy();
+            expect(Arrays$contains(joKeyRequestData, keyRequestData)).toBeTruthy();
+            expect(joMessageHeader.keyResponseData).toEqual(messageHeader.keyResponseData);
+            expect(joMessageHeader.masterToken).toEqual(messageHeader.masterToken);
+            expect(joMessageHeader.messageId).toEqual(messageHeader.messageId);
+            expect(joMessageHeader.peerMasterToken).toEqual(messageHeader.peerMasterToken);
+            var joPeerServiceTokens = joMessageHeader.peerServiceTokens;
+            expect(Arrays$contains(peerServiceTokens, joPeerServiceTokens)).toBeTruthy();
+            expect(Arrays$contains(joPeerServiceTokens, peerServiceTokens)).toBeTruthy();
+            expect(joMessageHeader.peerUserIdToken).toEqual(messageHeader.peerUserIdToken);
+            var serviceTokens = messageHeader.serviceTokens;
+            var joServiceTokens = joMessageHeader.serviceTokens;
+            expect(Arrays$contains(serviceTokens, joServiceTokens)).toBeTruthy();
+            expect(Arrays$contains(joServiceTokens, serviceTokens)).toBeTruthy();
+            expect(joMessageHeader.userAuthenticationData).toEqual(messageHeader.userAuthenticationData);
+            expect(joMessageHeader.userIdToken).toEqual(messageHeader.userIdToken);
+            expect(joMessageHeader.user).toEqual(messageHeader.user);
+        });
+	});
+
+	it("parseHeader with user authentication data", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, null, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(trustedNetCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+		
+		var messageHeader;
+		runs(function() {
+			var headerData = builder.build();
+			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+			MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+		var header;
+		runs(function() {
+			var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+			Header$parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+				result: function(h) { header = h; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+			});
+		});
+		waitsFor(function() { return header; }, "header not received", 200);
+		
+		runs(function() {
+            expect(header).not.toBeNull();
+            expect(header instanceof MessageHeader).toBeTruthy();
+            var joMessageHeader = header;
+    
+            expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
+            expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
+            expect(messageHeader.cryptoContext).not.toBeNull();
+            expect(joMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
+            var keyRequestData = messageHeader.keyRequestData;
+            var joKeyRequestData = joMessageHeader.keyRequestData;
+            expect(Arrays$contains(keyRequestData, joKeyRequestData)).toBeTruthy();
+            expect(Arrays$contains(joKeyRequestData, keyRequestData)).toBeTruthy();
+            expect(joMessageHeader.keyResponseData).toEqual(messageHeader.keyResponseData);
+            expect(joMessageHeader.masterToken).toEqual(messageHeader.masterToken);
+            expect(joMessageHeader.messageId).toEqual(messageHeader.messageId);
+            expect(joMessageHeader.peerMasterToken).toBeNull();
+            expect(joMessageHeader.peerServiceTokens.length).toEqual(0);
+            expect(joMessageHeader.peerUserIdToken).toBeNull();
+            var serviceTokens = messageHeader.serviceTokens;
+            var joServiceTokens = joMessageHeader.serviceTokens;
+            expect(Arrays$contains(serviceTokens, joServiceTokens)).toBeTruthy();
+            expect(Arrays$contains(joServiceTokens, serviceTokens)).toBeTruthy();
+            expect(joMessageHeader.userAuthenticationData).toEqual(messageHeader.userAuthenticationData);
+            expect(joMessageHeader.userIdToken).toEqual(messageHeader.userIdToken);
+            expect(joMessageHeader.user).not.toBeNull();
+        });
+	});
+
+	it("p2p parseHeader with user authentication data", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, null, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+		
+		var messageHeader;
+		runs(function() {
+            var headerData = builder.build();
+			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+				MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+		var header;
+		runs(function() {
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+			Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+				result: function(h) { header = h; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+			});
+		});
+		waitsFor(function() { return header; }, "header not received", 200);
+		
+		runs(function() {
+            expect(header).not.toBeNull();
+            expect(header instanceof MessageHeader).toBeTruthy();
+            var joMessageHeader = header;
+    
+            expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
+            expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
+            expect(messageHeader.cryptoContext).not.toBeNull();
+            expect(joMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
+            var keyRequestData = messageHeader.keyRequestData;
+            var joKeyRequestData = joMessageHeader.keyRequestData;
+            expect(Arrays$contains(keyRequestData, joKeyRequestData)).toBeTruthy();
+            expect(Arrays$contains(joKeyRequestData, keyRequestData)).toBeTruthy();
+            expect(joMessageHeader.keyResponseData).toEqual(messageHeader.keyResponseData);
+            expect(joMessageHeader.masterToken).toEqual(messageHeader.masterToken);
+            expect(joMessageHeader.messageId).toEqual(messageHeader.messageId);
+            expect(joMessageHeader.peerMasterToken).toEqual(messageHeader.peerMasterToken);
+            var joPeerServiceTokens = joMessageHeader.peerServiceTokens;
+            expect(Arrays$contains(peerServiceTokens, joPeerServiceTokens)).toBeTruthy();
+            expect(Arrays$contains(joPeerServiceTokens, peerServiceTokens)).toBeTruthy();
+            expect(joMessageHeader.peerUserIdToken).toEqual(messageHeader.peerUserIdToken);
+            var serviceTokens = messageHeader.serviceTokens;
+            var joServiceTokens = joMessageHeader.serviceTokens;
+            expect(Arrays$contains(serviceTokens, joServiceTokens)).toBeTruthy();
+            expect(Arrays$contains(joServiceTokens, serviceTokens)).toBeTruthy();
+            expect(joMessageHeader.userAuthenticationData).toEqual(messageHeader.userAuthenticationData);
+            expect(joMessageHeader.userIdToken).toEqual(messageHeader.userIdToken);
+            expect(joMessageHeader.user).not.toBeNull();
+        });
+	});
+
+	it("parseHeader with untrusted master token", function() {
+		// We can first create a message header with an untrusted master token
+		// by having a cached crypto context.
+		var masterToken;
+		runs(function() {
+		    MslTestUtils.getUntrustedMasterToken(p2pCtx, {
+		        result: function(t) { masterToken = t; },
+		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		    });
+		});
+		waitsFor(function() { return masterToken; }, "masterToken not received", 100);
+
+		var userIdToken;
+		runs(function() {
+            var cryptoContext = new NullCryptoContext();
+            p2pCtx.getMslStore().setCryptoContext(masterToken, cryptoContext);
+            
+		    MslTestUtils.getUserIdToken(p2pCtx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER, {
+		        result: function(t) { userIdToken = t; },
+		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		    });
+		});
+		waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+		
+		var builder, peerServiceTokens;
+		runs(function() {
+            HeaderDataBuilder$create(p2pCtx, masterToken, null, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+		
+		var messageHeader;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+	        builder.set(KEY_USER_ID_TOKEN, userIdToken);
+			var headerData = builder.build();
+			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+				MessageHeader$create(p2pCtx, null, masterToken, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+        var exception;
+        runs(function() {
+            // Removing the cached crypto context means the master token must now
+            // be trusted when parsing a message header.
+            p2pCtx.getMslStore().clearCryptoContexts();
+    
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                result: function() {},
+                error: function(err) { exception = err; },
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 100);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED));
+		});
+	});
+
+	it("parseHeader with unsupported entity authentication scheme", function() {
+		// We can first create a message header when the entity authentication
+		// scheme is supported.
+		var ctx;
+		runs(function() {
+		    MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+		        result: function(c) { ctx = c; },
+		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		    });
+		});
+		waitsFor(function() { return ctx; }, "ctx", 100);
+		
+		var builder;
+		runs(function() {
+            HeaderDataBuilder$create(ctx, null, null, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+		});
+		waitsFor(function() { return builder; }, "builder", 100);
+		
+		var entityAuthData;
+		runs(function() {
+			ctx.getEntityAuthenticationData(null, {
+				result: function(x) { entityAuthData = x; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return entityAuthData; }, "entityAuthData not received", 100);
+		
+		var messageHeader;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+			var headerData = builder.build();
+			var peerData = new HeaderPeerData(null, null, null);
+			MessageHeader$create(ctx, entityAuthData, null, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+        var exception;
+        runs(function() {
+            // Removing support for the entity authentication scheme will now fail
+            // parsing of message headers.
+            ctx.removeEntityAuthenticationFactory(entityAuthData.scheme);
+    
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            Header$parseHeader(ctx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                result: function() {},
+                error: function(err) { exception = err; },
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 100);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslEntityAuthException(MslError.ENTITYAUTH_FACTORY_NOT_FOUND));
+		});
+	});
+
+	it("parseHeader with unsupported user authentication scheme", function() {
+		// We can first create a message header when the user authentication
+		// scheme is supported.
+		var ctx;
+		runs(function() {
+		    MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+		        result: function(c) { ctx = c; },
+		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		    });
+		});
+		waitsFor(function() { return ctx; }, "ctx", 100);
+        
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(ctx, null, null, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+		
+		var messageHeader;
+		runs(function() {
+		    builder.set(KEY_KEY_REQUEST_DATA, null);
+		    builder.set(KEY_KEY_RESPONSE_DATA, null);
+			var headerData = builder.build();
+			var peerData = new HeaderPeerData(null, null, null);
+			MessageHeader$create(ctx, null, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+        var exception =undefined;
+        runs(function() {
+            // Remove support for the user authentication scheme will now fail
+            // user authentication.
+            ctx.removeUserAuthenticationFactory(USER_AUTH_DATA.scheme);
+    
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            Header$parseHeader(ctx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                result: function() {},
+                error: function(err) { exception = err; },
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 100);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslUserAuthException(MslError.USERAUTH_FACTORY_NOT_FOUND, MESSAGE_ID));
+		});
+	});
+
+	it("parseHeader with master token and cached crypto context", function() {
+		// We should be okay with an untrusted master token if a crypto context
+		// is associated with it.
+		var masterToken;
+		runs(function() {
+		    MslTestUtils.getUntrustedMasterToken(p2pCtx, {
+		        result: function(t) { masterToken = t; },
+		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		    });
+		});
+		waitsFor(function() { return masterToken; }, "masterToken not received", 100);
+
+		var userIdToken;
+		runs(function() {
+            var cryptoContext = new NullCryptoContext();
+            p2pCtx.getMslStore().setCryptoContext(masterToken, cryptoContext);
+            
+		    MslTestUtils.getUserIdToken(p2pCtx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER, {
+		        result: function(t) { userIdToken = t; },
+		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		    });
+		});
+		waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+		
+		var builder, peerServiceTokens;
+		runs(function() {
+		    HeaderDataBuilder$create(p2pCtx, masterToken, null, true, {
+		        result: function(x) { builder = x; },
+		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		    });
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+		
+		var messageHeader;
+		runs(function() {
+		    builder.set(KEY_USER_ID_TOKEN, userIdToken);
+			var headerData = builder.build();
+			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+			MessageHeader$create(p2pCtx, null, masterToken, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+		var header;
+		runs(function() {
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+			Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+				result: function(h) { header = h; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+			});
+		});
+		waitsFor(function() { return header; }, "header not received", 200);
+		
+		runs(function() {
+            expect(header).not.toBeNull();
+            expect(header instanceof MessageHeader).toBeTruthy();
+            var joMessageHeader = header;
+    
+            expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
+            expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
+            expect(messageHeader.cryptoContext).not.toBeNull();
+            expect(joMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
+            var keyRequestData = messageHeader.keyRequestData;
+            var joKeyRequestData = joMessageHeader.keyRequestData;
+            expect(Arrays$contains(keyRequestData, joKeyRequestData)).toBeTruthy();
+            expect(Arrays$contains(joKeyRequestData, keyRequestData)).toBeTruthy();
+            expect(joMessageHeader.keyResponseData).toEqual(messageHeader.keyResponseData);
+            // The reconstructed untrusted service token won't pass tests for
+            // equality.
+            expect(joMessageHeader.masterToken).not.toBeNull();
+            expect(joMessageHeader.messageId).toEqual(messageHeader.messageId);
+            expect(joMessageHeader.peerMasterToken).toEqual(messageHeader.peerMasterToken);
+            var joPeerServiceTokens = joMessageHeader.peerServiceTokens;
+            expect(Arrays$contains(peerServiceTokens, joPeerServiceTokens)).toBeTruthy();
+            expect(Arrays$contains(joPeerServiceTokens, peerServiceTokens)).toBeTruthy();
+            expect(joMessageHeader.peerUserIdToken).toEqual(messageHeader.peerUserIdToken);
+            var serviceTokens = messageHeader.serviceTokens;
+            var joServiceTokens = joMessageHeader.serviceTokens;
+            expect(Arrays$contains(serviceTokens, joServiceTokens)).toBeTruthy();
+            expect(Arrays$contains(joServiceTokens, serviceTokens)).toBeTruthy();
+            expect(joMessageHeader.userAuthenticationData).toEqual(messageHeader.userAuthenticationData);
+            expect(joMessageHeader.userIdToken).toEqual(messageHeader.userIdToken);
+            expect(joMessageHeader.user).toEqual(messageHeader.user);
+        });
+	});
+
+	it("parseHeader with invalid entity authentication data", function() {
+	    var builder;
+	    runs(function() {
+	        HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+	    });
+	    waitsFor(function() { return builder; }, "builder", 100);
+	    
+		var messageHeader;
+		runs(function() {
+			var headerData = builder.build();
+			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, null);
+			MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+		var exception;
+		runs(function() {
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            messageHeaderJo[KEY_ENTITY_AUTHENTICATION_DATA] = "x";
+			Header$parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+				result: function() {},
+				error: function(err) { exception = err; },
+			});
+		});
+		waitsFor(function() { return exception; }, "exception not received", 100);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+		});
+	});
+
+	it("parseHeader missing both authentication data", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+		var messageHeader;
+		runs(function() {
+			var headerData = builder.build();
+			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, null);
+			MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+		var exception;
+		runs(function() {
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));    
+            delete messageHeaderJo[KEY_ENTITY_AUTHENTICATION_DATA];
+            delete messageHeaderJo[KEY_MASTER_TOKEN];
+			Header$parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+				result: function() {},
+				error: function(err) { exception = err; },
+			});
+		});
+		waitsFor(function() { return exception; }, "exception not received", 100);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslMessageException(MslError.MESSAGE_ENTITY_NOT_FOUND));
+		});
+	});
+
+	it("parseHeader with invalid master token", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+		var messageHeader;
+		runs(function() {
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, null);
+            MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+		var exception;
+		runs(function() {
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            messageHeaderJo[KEY_MASTER_TOKEN] = "x";
+			Header$parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+				result: function() {},
+				error: function(err) { exception = err; },
+			});
+		});
+		waitsFor(function() { return exception; }, "exception not received", 100);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+		});
+	});
+
+	it("parseHeader with missing signature", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+		var messageHeader;
+		runs(function() {
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, null);
+            MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+		var exception;
+		runs(function() {
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            expect(messageHeaderJo[KEY_SIGNATURE]).not.toBeNull();
+            delete messageHeaderJo[KEY_SIGNATURE];
+			Header$parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+				result: function() {},
+				error: function(err) { exception = err; },
+			});
+		});
+		waitsFor(function() { return exception; }, "exception not received", 100);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+		});
+	});
+
+    it("parseHeader with invalid signature", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+        var messageHeader;
+        runs(function() {
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, null);
+            MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
+                result: function(token) { messageHeader = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+        var exception;
+        runs(function() {
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            messageHeaderJo[KEY_SIGNATURE] = "x";
+            Header$parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                result: function() {},
+                error: function(err) { exception = err; },
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 100);
+        runs(function() {
+            var f = function() { throw exception; };
+            expect(f).toThrow(new MslMessageException(MslError.HEADER_SIGNATURE_INVALID));
+        });
+    });
+
+	it("parseHeader with incorrect signature", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, null, null, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+        var messageHeader;
+        runs(function() {
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+            MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+		var exception;
+		runs(function() {
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            messageHeaderJo[KEY_SIGNATURE] = "AAA=";
+			Header$parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+				result: function() {},
+				error: function(err) { exception = err; },
+			});
+		});
+		waitsFor(function() { return exception; }, "exception not received", 100);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslCryptoException(MslError.MESSAGE_ENTITYDATABASED_VERIFICATION_FAILED));
+		});
+	});
+
+	it("parseHeader with missing headerdata", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+        var messageHeader;
+        runs(function() {
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, null);
+            MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+		
+		var exception;
+		runs(function() {
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            expect(messageHeaderJo[KEY_HEADERDATA]).not.toBeNull();
+            delete messageHeaderJo[KEY_HEADERDATA];
+			Header$parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+				result: function() {},
+				error: function(err) { exception = err; },
+			});
+		});
+		waitsFor(function() { return exception; }, "exception not received", 100);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+		});
+	});
+
+	it("parseHeader with invalid headerdata", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+        var messageHeader;
+        runs(function() {
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, null);
+            MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+		var exception;
+		runs(function() {
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            messageHeaderJo[KEY_HEADERDATA] = "";
+			Header$parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+				result: function() {},
+				error: function(err) { exception = err; },
+			});
+		});
+		waitsFor(function() { return exception; }, "exception not received", 100);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslMessageException(MslError.HEADER_DATA_MISSING));
+		});
+	});
+
+	it("parseHeader with corrupt headerdata", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+        var messageHeader;
+        runs(function() {
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, null);
+            MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+		var exception;
+		runs(function() {
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            ++ciphertext[0];
+            messageHeaderJo[KEY_HEADERDATA] = base64$encode(ciphertext);
+			Header$parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+				result: function() {},
+				error: function(err) { exception = err; },
+			});
+		});
+		waitsFor(function() { return exception; }, "exception not received", 100);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslCryptoException(MslError.MESSAGE_MASTERTOKENBASED_VERIFICATION_FAILED));
+		});
+	});
+
+	it("p2p parseHeader with missing pairs(?) and entity authentication data", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(p2pCtx, null, null, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+		var messageHeader;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+	        builder.set(KEY_USER_AUTHENTICATION_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+            MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+		var header;
+		runs(function() {
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+			Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+				result: function(h) { header = h; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+			});
+		});
+		waitsFor(function() { return header; }, "header not received", 200);
+		
+		runs(function() {
+            expect(header).not.toBeNull();
+            expect(header instanceof MessageHeader).toBeTruthy();
+            var joMessageHeader = header;
+    
+            expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
+            expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
+            expect(messageHeader.cryptoContext).not.toBeNull();
+            expect(joMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
+            var keyRequestData = messageHeader.keyRequestData;
+            var joKeyRequestData = joMessageHeader.keyRequestData;
+            expect(Arrays$contains(keyRequestData, joKeyRequestData)).toBeTruthy();
+            expect(Arrays$contains(joKeyRequestData, keyRequestData)).toBeTruthy();
+            expect(joMessageHeader.keyResponseData).toEqual(messageHeader.keyResponseData);
+            expect(joMessageHeader.masterToken).toEqual(messageHeader.masterToken);
+            expect(joMessageHeader.messageId).toEqual(messageHeader.messageId);
+            expect(joMessageHeader.peerMasterToken).toEqual(messageHeader.peerMasterToken);
+            var peerServiceTokens = messageHeader.peerServiceTokens;
+            var joPeerServiceTokens = joMessageHeader.peerServiceTokens;
+            expect(Arrays$contains(peerServiceTokens, joPeerServiceTokens)).toBeTruthy();
+            expect(Arrays$contains(joPeerServiceTokens, peerServiceTokens)).toBeTruthy();
+            expect(joMessageHeader.peerUserIdToken).toEqual(messageHeader.peerUserIdToken);
+            var serviceTokens = messageHeader.serviceTokens;
+            var joServiceTokens = joMessageHeader.serviceTokens;
+            expect(Arrays$contains(serviceTokens, joServiceTokens)).toBeTruthy();
+            expect(Arrays$contains(joServiceTokens, serviceTokens)).toBeTruthy();
+            expect(joMessageHeader.userAuthenticationData).toEqual(messageHeader.userAuthenticationData);
+            expect(joMessageHeader.userIdToken).toEqual(messageHeader.userIdToken);
+            expect(joMessageHeader.user).toEqual(messageHeader.user);
+        });
+	});
+
+	it("p2p parseHeader with empty arrays and entity authentication data", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(p2pCtx, null, null, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+        var messageHeader;
+        runs(function() {
+            builder.set(KEY_KEY_REQUEST_DATA, null);
+            builder.set(KEY_KEY_RESPONSE_DATA, null);
+            builder.set(KEY_USER_AUTHENTICATION_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+			MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+		var cryptoContext;
+		runs(function() {
+            var scheme = PEER_ENTITY_AUTH_DATA.scheme;
+            var factory = p2pCtx.getEntityAuthenticationFactory(scheme);
+			cryptoContext = factory.getCryptoContext(p2pCtx, PEER_ENTITY_AUTH_DATA);
+		});
+		waitsFor(function() { return cryptoContext; }, "cryptoContext not received", 100);
+		
+		var header;
+		runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    headerdataJo[KEY_KEY_REQUEST_DATA] = new Array();
+                    headerdataJo[KEY_SERVICE_TOKENS] = new Array();
+                    headerdataJo[KEY_PEER_SERVICE_TOKENS] = new Array();
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function(h) { header = h; },
+                                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+		waitsFor(function() { return header; }, "header not received", 200);
+		
+		runs(function() {
+            expect(header).not.toBeNull();
+            expect(header instanceof MessageHeader).toBeTruthy();
+            var joMessageHeader = header;
+    
+            expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
+            expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
+            expect(messageHeader.cryptoContext).not.toBeNull();
+            expect(joMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
+            var keyRequestData = messageHeader.keyRequestData;
+            var joKeyRequestData = joMessageHeader.keyRequestData;
+            expect(Arrays$contains(keyRequestData, joKeyRequestData)).toBeTruthy();
+            expect(Arrays$contains(joKeyRequestData, keyRequestData)).toBeTruthy();
+            expect(joMessageHeader.keyResponseData).toEqual(messageHeader.keyResponseData);
+            expect(joMessageHeader.masterToken).toEqual(messageHeader.masterToken);
+            expect(joMessageHeader.messageId).toEqual(messageHeader.messageId);
+            expect(joMessageHeader.peerMasterToken).toEqual(messageHeader.peerMasterToken);
+            var peerServiceTokens = messageHeader.peerServiceTokens;
+            var joPeerServiceTokens = joMessageHeader.peerServiceTokens;
+            expect(Arrays$contains(peerServiceTokens, joPeerServiceTokens)).toBeTruthy();
+            expect(Arrays$contains(joPeerServiceTokens, peerServiceTokens)).toBeTruthy();
+            expect(joMessageHeader.peerUserIdToken).toEqual(messageHeader.peerUserIdToken);
+            var serviceTokens = messageHeader.serviceTokens;
+            var joServiceTokens = joMessageHeader.serviceTokens;
+            expect(Arrays$contains(serviceTokens, joServiceTokens)).toBeTruthy();
+            expect(Arrays$contains(joServiceTokens, serviceTokens)).toBeTruthy();
+            expect(joMessageHeader.userAuthenticationData).toEqual(messageHeader.userAuthenticationData);
+            expect(joMessageHeader.userIdToken).toEqual(messageHeader.userIdToken);
+            expect(joMessageHeader.user).toEqual(messageHeader.user);
+        });
+	});
+
+	it("p2p parseHeader with missing pairs(?) and master token", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(p2pCtx, null, null, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+        var messageHeader;
+        runs(function() {
+            builder.set(KEY_KEY_REQUEST_DATA, null);
+            builder.set(KEY_KEY_RESPONSE_DATA, null);
+            builder.set(KEY_USER_AUTHENTICATION_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+		var header;
+		runs(function() {
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+			Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+				result: function(h) { header = h; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+			});
+		});
+		waitsFor(function() { return header; }, "header not received", 200);
+		
+		runs(function() {
+            expect(header).not.toBeNull();
+            expect(header instanceof MessageHeader).toBeTruthy();
+            var joMessageHeader = header;
+    
+            expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
+            expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
+            expect(messageHeader.cryptoContext).not.toBeNull();
+            expect(joMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
+            var keyRequestData = messageHeader.keyRequestData;
+            var joKeyRequestData = joMessageHeader.keyRequestData;
+            expect(Arrays$contains(keyRequestData, joKeyRequestData)).toBeTruthy();
+            expect(Arrays$contains(joKeyRequestData, keyRequestData)).toBeTruthy();
+            expect(joMessageHeader.keyResponseData).toEqual(messageHeader.keyResponseData);
+            expect(joMessageHeader.masterToken).toEqual(messageHeader.masterToken);
+            expect(joMessageHeader.messageId).toEqual(messageHeader.messageId);
+            expect(joMessageHeader.peerMasterToken).toEqual(messageHeader.peerMasterToken);
+            var peerServiceTokens = messageHeader.peerServiceTokens;
+            var joPeerServiceTokens = joMessageHeader.peerServiceTokens;
+            expect(Arrays$contains(peerServiceTokens, joPeerServiceTokens)).toBeTruthy();
+            expect(Arrays$contains(joPeerServiceTokens, peerServiceTokens)).toBeTruthy();
+            expect(joMessageHeader.peerUserIdToken).toEqual(messageHeader.peerUserIdToken);
+            var serviceTokens = messageHeader.serviceTokens;
+            var joServiceTokens = joMessageHeader.serviceTokens;
+            expect(Arrays$contains(serviceTokens, joServiceTokens)).toBeTruthy();
+            expect(Arrays$contains(joServiceTokens, serviceTokens)).toBeTruthy();
+            expect(joMessageHeader.userAuthenticationData).toEqual(messageHeader.userAuthenticationData);
+            expect(joMessageHeader.userIdToken).toEqual(messageHeader.userIdToken);
+            expect(joMessageHeader.user).toEqual(messageHeader.user);
+        });
+	});
+
+	it("p2p parseHeader with empty arrays and master token", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(p2pCtx, null, null, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+        var messageHeader;
+        runs(function() {
+            builder.set(KEY_KEY_REQUEST_DATA, null);
+            builder.set(KEY_KEY_RESPONSE_DATA, null);
+            builder.set(KEY_USER_AUTHENTICATION_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+		
+		var header;
+		runs(function() {
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+    
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    headerdataJo[KEY_KEY_REQUEST_DATA] = new Array();
+                    headerdataJo[KEY_SERVICE_TOKENS] = new Array();
+                    headerdataJo[KEY_PEER_SERVICE_TOKENS] = new Array();
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function(h) { header = h; },
+                                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+		});
+		waitsFor(function() { return header; }, "header not received", 200);
+		
+		runs(function() {
+            expect(header).not.toBeNull();
+            expect(header instanceof MessageHeader).toBeTruthy();
+            var joMessageHeader = header;
+    
+            expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
+            expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
+            expect(messageHeader.cryptoContext).not.toBeNull();
+            expect(joMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
+            var keyRequestData = messageHeader.keyRequestData;
+            var joKeyRequestData = joMessageHeader.keyRequestData;
+            expect(Arrays$contains(keyRequestData, joKeyRequestData)).toBeTruthy();
+            expect(Arrays$contains(joKeyRequestData, keyRequestData)).toBeTruthy();
+            expect(joMessageHeader.keyResponseData).toEqual(messageHeader.keyResponseData);
+            expect(joMessageHeader.masterToken).toEqual(messageHeader.masterToken);
+            expect(joMessageHeader.messageId).toEqual(messageHeader.messageId);
+            expect(joMessageHeader.peerMasterToken).toEqual(messageHeader.peerMasterToken);
+            var peerServiceTokens = messageHeader.peerServiceTokens;
+            var joPeerServiceTokens = joMessageHeader.peerServiceTokens;
+            expect(Arrays$contains(peerServiceTokens, joPeerServiceTokens)).toBeTruthy();
+            expect(Arrays$contains(joPeerServiceTokens, peerServiceTokens)).toBeTruthy();
+            expect(joMessageHeader.peerUserIdToken).toEqual(messageHeader.peerUserIdToken);
+            var serviceTokens = messageHeader.serviceTokens;
+            var joServiceTokens = joMessageHeader.serviceTokens;
+            expect(Arrays$contains(serviceTokens, joServiceTokens)).toBeTruthy();
+            expect(Arrays$contains(joServiceTokens, serviceTokens)).toBeTruthy();
+            expect(joMessageHeader.userAuthenticationData).toEqual(messageHeader.userAuthenticationData);
+            expect(joMessageHeader.userIdToken).toEqual(messageHeader.userIdToken);
+            expect(joMessageHeader.user).toEqual(messageHeader.user);
+        });
+	});
+
+	it("parseHeader with user ID token and null master token", function() {
+		// Since removing the master token will prevent the header data from
+		// getting parsed, and removing the master token from the key exchange
+		// data will also prevent the header data from getting parsed, the only
+		// way to simulate this is to use entity authentication data and insert
+		// a user ID token.
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, null, null, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+
+		var messageHeader;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+			MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+		
+		var cryptoContext;
+		runs(function() {
+            var scheme = ENTITY_AUTH_DATA.scheme;
+            var factory = trustedNetCtx.getEntityAuthenticationFactory(scheme);
+			cryptoContext = factory.getCryptoContext(trustedNetCtx, ENTITY_AUTH_DATA);
+		});
+		waitsFor(function() { return cryptoContext; }, "cryptoContext not received", 100);
+        
+        var userIdToken;
+        runs(function() {
+            MslTestUtils.getUserIdToken(trustedNetCtx, MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory.USER, {
+                result: function(t) { userIdToken = t; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+
+		var exception;
+		runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    headerdataJo[KEY_USER_ID_TOKEN] = userIdToken;
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function() {},
+                                        error: function(err) { exception = err; },
+                                    });
+                                }, error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        }); 
+		waitsFor(function() { return exception; }, "exception not received", 300);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslException(MslError.NONE), MESSAGE_ID);
+		});
+	});
+
+	it("parseHeader with user ID token and mismatched master token", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+
+        var messageHeader;
+        runs(function() {
+            builder.set(KEY_KEY_REQUEST_DATA, null);
+            builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+		
+        var userIdToken;
+        runs(function() {
+            MslTestUtils.getUserIdToken(trustedNetCtx, PEER_MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory.USER, {
+                result: function(t) { userIdToken = t; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+
+		var exception;
+		runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(trustedNetCtx, MASTER_TOKEN);
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    headerdataJo[KEY_USER_ID_TOKEN] = userIdToken;
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function() {},
+                                        error: function(err) { exception = err; },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+		waitsFor(function() { return exception; }, "exception not received", 300);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslException(MslError.NONE), MESSAGE_ID);
+		});
+	});
+	
+	it("parseHeader with user ID token and mismatched user authentication data", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+
+        var messageHeader;
+        runs(function() {
+            builder.set(KEY_KEY_REQUEST_DATA, null);
+            builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+            MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
+                result: function(token) { messageHeader = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+        var userIdToken;
+        runs(function() {
+            MslTestUtils.getUserIdToken(trustedNetCtx, PEER_MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory.USER, {
+                result: function(t) { userIdToken = t; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        
+        var exception;
+        runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(trustedNetCtx, MASTER_TOKEN);
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    var userAuthData = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL_2, MockEmailPasswordAuthenticationFactory.PASSWORD_2);
+                    headerdataJo[KEY_USER_AUTHENTICATION_DATA] = userAuthData;
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function() {},
+                                        error: function(err) { exception = err; },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 300);
+        runs(function() {
+            var f = function() { throw exception; };
+            expect(f).toThrow(new MslUserAuthException(MslError.USERIDTOKEN_USERAUTH_DATA_MISMATCH), MESSAGE_ID);
+        });
+	});
+    
+	it("p2p parseHeader with peer user ID token and missing peer master token", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+		    HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+		        result: function(x) { builder = x; },
+		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		    });
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens  received", 100);
+		
+		var messageHeader;
+		runs(function() {
+		    builder.set(KEY_KEY_REQUEST_DATA, null);
+		    builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+        var exception;
+        runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    expect(headerdataJo[KEY_PEER_MASTER_TOKEN]).not.toBeNull();
+                    delete headerdataJo[KEY_PEER_MASTER_TOKEN];
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function() {},
+                                        error: function(err) { exception = err; },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 300);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslException(MslError.NONE), MESSAGE_ID);
+		});
+	});
+
+	it("p2p parseHeader with peer user ID token and mismatched peer master token", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+		
+		var messageHeader;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+        var exception;
+        runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    headerdataJo[KEY_PEER_MASTER_TOKEN] = MASTER_TOKEN;
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function() {},
+                                        error: function(err) { exception = err; },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 300);
+        runs(function() {
+            var f = function() { throw exception; };
+            expect(f).toThrow(new MslException(MslError.NONE));
+        });
+    });
+
+	it("parseHeader with service token and mismatched master token", function() {
+		var builder, mismatchedTokens;
+		runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(trustedNetCtx, PEER_MASTER_TOKEN, null, {
+				result: function(tks) { mismatchedTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && mismatchedTokens; }, "builder and service tokens not received", 100);
+
+		var messageHeader;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+        var exception;
+        runs(function() {            
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(trustedNetCtx, MASTER_TOKEN);
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    var serviceTokens = builder.getServiceTokens();
+                    mismatchedTokens.forEach(function(mismatchedToken) {
+                        serviceTokens.push(mismatchedToken);
+                    }, this);
+                    headerdataJo[KEY_SERVICE_TOKENS] = serviceTokens;
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function() {},
+                                        error: function(err) { exception = err; },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 300);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslException(MslError.NONE), MESSAGE_ID);
+		});
+	});
+
+	it("parseHeader with service token and mismatched user ID token", function() {
+        var userIdToken;
+		runs(function() {
+		    MslTestUtils.getUserIdToken(trustedNetCtx, MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory.USER, {
+		        result: function(t) { userIdToken = t; },
+		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		    });
+		});
+		waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+
+		var builder, mismatchedTokens;
+		runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, userIdToken, {
+				result: function(tks) { mismatchedTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && mismatchedTokens; }, "builder and service tokens not received", 100);
+
+		var messageHeader;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+		var exception;
+		runs(function() {
+		    // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(trustedNetCtx, MASTER_TOKEN);
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    var serviceTokens = builder.getServiceTokens();
+                    mismatchedTokens.forEach(function(mismatchedToken) {
+                        serviceTokens.push(mismatchedToken);
+                    }, this);
+                    headerdataJo[KEY_SERVICE_TOKENS] = serviceTokens;
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function() {},
+                                        error: function(err) { exception = err; },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+		waitsFor(function() { return exception; }, "exception not received", 300);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslException(MslError.NONE), MESSAGE_ID);
+		});
+	});
+
+	it("p2p parseHeader with peer service token and missing peer master token", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, null, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+		
+		var messageHeader;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, null, peerServiceTokens);
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+        var exception;
+        runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    expect(headerdataJo[KEY_PEER_MASTER_TOKEN]).not.toBeNull();
+                    delete headerdataJo[KEY_PEER_MASTER_TOKEN];
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function() {},
+                                        error: function(err) { exception = err; },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 300);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslException(MslError.NONE), MESSAGE_ID);
+		});
+	});
+
+	it("parseHeader with peer service token and mismatched peer master token", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, null, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+		
+		var messageHeader;
+		runs(function() {
+		    builder.set(KEY_KEY_REQUEST_DATA, null);
+		    builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, null, peerServiceTokens);
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+        var exception;
+        runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    headerdataJo[KEY_PEER_MASTER_TOKEN] = MASTER_TOKEN;
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function() {},
+                                        error: function(err) { exception = err; },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 300);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslException(MslError.NONE), MESSAGE_ID);
+		});
+	});
+
+	it("p2p parseHeader with peer service token and mismatched peer user ID token", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+		
+		var messageHeader;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+        
+        var userIdToken;
+        runs(function() {
+            MslTestUtils.getUserIdToken(p2pCtx, PEER_MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory.USER, {
+                result: function(t) { userIdToken = t; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+
+        var exception;
+        runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+
+                    // After modifying the header data we need to encrypt it.
+                    headerdataJo[KEY_PEER_USER_ID_TOKEN] = userIdToken;
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function() {},
+                                        error: function(err) { exception = err; },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 300);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslException(MslError.NONE), MESSAGE_ID);
+		});
+	});
+	
+	it("master token with different sender", function() {
+	    var masterToken;
+	    runs(function() {
+            var renewalWindow = new Date(Date.now() - 10000);
+            var expiration = new Date(Date.now() + 10000);
+            var encryptionKey = MockPresharedAuthenticationFactory.KPE;
+            var hmacKey = MockPresharedAuthenticationFactory.KPH;
+            MasterToken$create(trustedNetCtx, renewalWindow, expiration, 1, 1, null, "IDENTITY", encryptionKey, hmacKey, {
+                result: function(x) { masterToken = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+	    });
+        waitsFor(function() { return masterToken; }, "masterToken", 100);
+        
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, null, null, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+        var messageHeader;
+        runs(function() {
+            builder.set(KEY_KEY_REQUEST_DATA, null);
+            builder.set(KEY_KEY_RESPONSE_DATA, null);
+            builder.set(KEY_USER_AUTHENTICATION_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+            MessageHeader$create(trustedNetCtx, null, masterToken, headerData, peerData, {
+                result: function(token) { messageHeader = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+        
+        var ead;
+        runs(function() {
+            trustedNetCtx.getEntityAuthenticationData(null, {
+                result: function(x) { ead = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ead; }, "entity authentication data", 100);
+        
+        var header;
+        runs(function() {
+            expect(messageHeader.sender).toEqual(ead.getIdentity());
+            var jo = JSON.parse(JSON.stringify(messageHeader));
+            Header$parseHeader(trustedNetCtx, jo, null, {
+                result: function(h) { header = h; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return header; }, "header", 100);
+        
+        runs(function() {
+            expect(header instanceof MessageHeader).toBeTruthy();
+            
+            var joMessageHeader = header;
+            expect(joMessageHeader.sender).toEqual(messageHeader.sender);
+        });
+	});
+	
+	it("missing sender", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, null, null, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+        var messageHeader;
+        runs(function() {
+            builder.set(KEY_KEY_REQUEST_DATA, null);
+            builder.set(KEY_KEY_RESPONSE_DATA, null);
+            builder.set(KEY_USER_AUTHENTICATION_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+            MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+                result: function(token) { messageHeader = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+        
+        var exception;
+        runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    expect(headerdataJo[KEY_SENDER]).not.toBeNull();
+                    delete headerdataJo[KEY_SENDER];
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function() {},
+                                        error: function(err) { exception = err; },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 300);
+        runs(function() {
+            var f = function() { throw exception; };
+            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+        });
+	});
+
+	it("p2p parseHeader with missing message ID", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+		    HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+		        result: function(x) { builder = x; },
+		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		    });
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+		
+		var messageHeader;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+		var exception;
+        runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    expect(headerdataJo[KEY_MESSAGE_ID]).not.toBeNull();
+                    delete headerdataJo[KEY_MESSAGE_ID];
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function() {},
+                                        error: function(err) { exception = err; },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 300);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+		});
+	});
+
+	it("p2p parseHeader with invalid message ID", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+		
+		var messageHeader;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+		
+		var exception;
+        runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    headerdataJo[KEY_MESSAGE_ID] = "x";
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function() {},
+                                        error: function(err) { exception = err; },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 300);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+		});
+	});
+
+	it("ctor with negative message ID", function() {
+	    var builder;
+	    runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+	    });
+	    waitsFor(function() { return builder; }, "builder", 100);
+	    
+	    var exception;
+	    runs(function() {
+	        builder.set(KEY_MESSAGE_ID, -1);
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+            MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+                result: function() {},
+                error: function(err) { exception = err; },
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 100);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslInternalException(MslError.NONE));
+		});
+	});
+
+	it("ctor with too large message ID", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+	    var exception;
+	    runs(function() {
+	        builder.set(KEY_MESSAGE_ID, MslConstants$MAX_LONG_VALUE + 2);
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+            MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+                result: function() {},
+                error: function(err) { exception = err; },
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 100);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslInternalException(MslError.NONE));
+		});
+	});
+
+	it("parseHeader with negative message ID", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+		
+		var messageHeader;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+		var exception;
+        runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    headerdataJo[KEY_MESSAGE_ID] = -1;
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function() {},
+                                        error: function(err) { exception = err; },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 300);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslMessageException(MslError.MESSAGE_ID_OUT_OF_RANGE));
+		});
+	});
+
+	it("parseHeader with too large message ID", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+		
+		var messageHeader;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+		
+		var exception;
+        runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    headerdataJo[KEY_MESSAGE_ID] = MslConstants$MAX_LONG_VALUE + 2;
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function() {},
+                                        error: function(err) { exception = err; },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 300);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslMessageException(MslError.MESSAGE_ID_OUT_OF_RANGE));
+		});
+	});
+
+	it("parseHeader with invalid non-replayable", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+		
+		var messageHeader;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+		
+		var exception;
+        runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    headerdataJo[KEY_NON_REPLAYABLE_ID] = "x";
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function() {},
+                                        error: function(err) { exception = err; },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 300);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR, MESSAGE_ID));
+		});
+	});
+
+	it("parseHeader with missing renewable", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+		
+		var messageHeader;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+		
+		var exception;
+        runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    expect(headerdataJo[KEY_RENEWABLE]).not.toBeNull();
+                    delete headerdataJo[KEY_RENEWABLE];
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function() {},
+                                        error: function(err) { exception = err; },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 300);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR, MESSAGE_ID));
+		});
+	});
+
+	it("parseHeader with invalid renewable", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+		
+		var messageHeader;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+		var exception;
+        runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    headerdataJo[KEY_RENEWABLE] = "x";
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function() {},
+                                        error: function(err) { exception = err; },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 300);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR, MESSAGE_ID));
+		});
+	});
+
+    // FIXME It is okay for the handshake flag to be missing for now.
+	it("parseHeader with missing handshake", function() {
+	    var builder, peerServiceTokens;
+        runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+                result: function(tks) { peerServiceTokens = tks; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+        
+        var messageHeader;
+        runs(function() {
+            builder.set(KEY_KEY_REQUEST_DATA, null);
+            builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+            MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+                result: function(token) { messageHeader = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+        
+        var header;
+        //var exception;
+        runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    expect(headerdataJo[KEY_HANDSHAKE]).not.toBeNull();
+                    delete headerdataJo[KEY_HANDSHAKE];
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function(x) { header = x; },
+                                        error: function(err) { exception = err; },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        //waitsFor(function() { return exception; }, "exception not received", 300);
+        waitsFor(function() { return header; }, "header not received", 100);
+        
+        runs(function() {
+            //var f = function() { throw exception; };
+            //expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR, MESSAGE_ID));
+            expect(header.isHandshake()).toBeFalsy();
+        });
+	});
+	
+	it("parseHeader with invalid handshake", function() {
+	    var builder, peerServiceTokens;
+        runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+                result: function(tks) { peerServiceTokens = tks; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+        
+        var messageHeader;
+        runs(function() {
+            builder.set(KEY_KEY_REQUEST_DATA, null);
+            builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+            MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+                result: function(token) { messageHeader = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+        
+        var exception;
+        runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    headerdataJo[KEY_HANDSHAKE] = "x";
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function() {},
+                                        error: function(err) { exception = err; },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 300);
+        runs(function() {
+            var f = function() { throw exception; };
+            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR, MESSAGE_ID));
+        });
+	});
+	
+	it("parseHeader with invalid capabilities", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+		
+		var messageHeader;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+		
+		var exception;
+        runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    headerdataJo[KEY_CAPABILITIES] = "x";
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function() {},
+                                        error: function(err) { exception = err; },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 300);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR, MESSAGE_ID));
+		});
+	});
+
+	it("parseHeader with invalid key request data array", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+		
+		var messageHeader;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+		
+		var exception;
+        runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    headerdataJo[KEY_KEY_REQUEST_DATA] = "x";
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function() {},
+                                        error: function(err) { exception = err; },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 300);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslException(MslError.NONE), MESSAGE_ID);
+		});
+	});
+
+	it("parseHeader with invalid key request data", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+		
+		var messageHeader;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+		
+		var exception;
+        runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    var a = new Array();
+                    a.push("x");
+                    headerdataJo[KEY_PEER_SERVICE_TOKENS] = a;
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function() {},
+                                        error: function(err) { exception = err; },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 300);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslException(MslError.NONE), MESSAGE_ID);
+		});
+	});
+
+	it("parseHeader with invalid service tokens array", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+		
+		var messageHeader;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+		
+		var exception;
+        runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    headerdataJo[KEY_SERVICE_TOKENS] = "x";
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function() {},
+                                        error: function(err) { exception = err; },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 300);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslException(MslError.NONE), MESSAGE_ID);
+		});
+	});
+
+	it("parseHeader with invalid service token", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+		
+		var messageHeader;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+		
+		var exception;
+        runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    var a = new Array();
+                    a.push("x");
+                    headerdataJo[KEY_SERVICE_TOKENS] = a;
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function() {},
+                                        error: function(err) { exception = err; },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 300);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslException(MslError.NONE), MESSAGE_ID);
+		});
+	});
+
+	it("parseHeader with invalid peer service tokens array", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+		
+		var messageHeader;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+		
+		var exception;
+        runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    headerdataJo[KEY_PEER_SERVICE_TOKENS] = "x";
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function() {},
+                                        error: function(err) { exception = err; },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 300);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslException(MslError.NONE), MESSAGE_ID);
+		});
+	});
+
+	it("parseHeader with invalid peer service token", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+		
+		var messageHeader;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+		
+		var exception;
+        runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    var a = new Array();
+                    a.push("x");
+                    headerdataJo[KEY_PEER_SERVICE_TOKENS] = a;
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function() {},
+                                        error: function(err) { exception = err; },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 300);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslException(MslError.NONE), MESSAGE_ID);
+		});
+	});
+
+	it("parseHeader with invalid peer master token", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+		var messageHeader;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+		
+		var exception;
+        runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    headerdataJo[KEY_PEER_MASTER_TOKEN] = "x";
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function() {},
+                                        error: function(err) { exception = err; },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 300);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslException(MslError.NONE), MESSAGE_ID);
+		});
+	});
+
+	it("parseHeader with invalid peer user ID token", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+		
+		var messageHeader;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+		
+		var exception;
+        runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    headerdataJo[KEY_PEER_USER_ID_TOKEN] = "x";
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function() {},
+                                        error: function(err) { exception = err; },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 300);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslException(MslError.NONE), MESSAGE_ID);
+		});
+	});
+
+	it("parseHeader with invalid user authentication data", function() {
+		var builder, peerServiceTokens;
+		runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, null, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return builder && peerServiceTokens; }, "builder and service tokens not received", 100);
+		
+		var messageHeader;
+		runs(function() {
+	        builder.set(KEY_KEY_REQUEST_DATA, null);
+	        builder.set(KEY_KEY_RESPONSE_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+		
+		var exception;
+        runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    headerdataJo[KEY_USER_AUTHENTICATION_DATA] = "x";
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function() {},
+                                        error: function(err) { exception = err; },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 300);
+		runs(function() {
+			var f = function() { throw exception; };
+			expect(f).toThrow(new MslEncodingException(MslError.NONE), MESSAGE_ID);
+		});
+	});
+
+	xit("equals master token", function() {
+	    var builder;
+	    runs(function() {
+	        HeaderDataBuilder$create(trustedNetCtx, null, null, false, {
+	            result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+	    });
+	    waitsFor(function() { return builder; }, "builder", 100);
+	    
+		var masterTokenA, masterTokenB;
+		runs(function() {
+		    MslTestUtils.getMasterToken(trustedNetCtx, 1, 1, {
+		        result: function(t) { masterTokenA = t; },
+		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		    });
+		    MslTestUtils.getMasterToken(trustedNetCtx, 1, 2, {
+		        result: function(t) { masterTokenB = t; },
+		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		    });
+		});
+		waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens not received", 100);
+		
+		var messageHeaderA, messageHeaderB;
+		runs(function() {
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+			MessageHeader$create(trustedNetCtx, null, masterTokenA, headerData, peerData, {
+				result: function(token) { messageHeaderA = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+			MessageHeader$create(trustedNetCtx, null, masterTokenB, headerData, peerData, {
+				result: function(token) { messageHeaderB = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+        waitsFor(function() { return messageHeaderA && messageHeaderB; }, "message headers not received", 100);
+		var messageHeaderA2;
+		runs(function() {		
+            Header$parseHeader(trustedNetCtx, JSON.parse(JSON.stringify(messageHeaderA)), CRYPTO_CONTEXTS, {
+			    result: function(h) { messageHeaderA2 = h; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+		});
+		waitsFor(function() { return messageHeaderA2; }, "parsed header not received", 100);
+
+        runs(function() {
+            expect(messageHeaderA.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+    
+            expect(messageHeaderA.equals(messageHeaderB)).toBeFalsy();
+            expect(messageHeaderB.equals(messageHeaderA)).toBeFalsy();
+            expect(messageHeaderA.uniqueKey() != messageHeaderB.uniqueKey()).toBeTruthy();
+    
+            expect(messageHeaderA.equals(messageHeaderA2)).toBeTruthy();
+            expect(messageHeaderA2.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA2.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+        });
+	});
+
+	xit("equals entity authentication data", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, null, null, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+		var messageHeaderA, messageHeaderB;
+		runs(function() {
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);    
+            var entityAuthDataA = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN);
+            var entityAuthDataB = new ModelGroupAuthenticationData(MockModelGroupAuthenticationFactory.MGK_ESN);
+			MessageHeader$create(trustedNetCtx, entityAuthDataA, null, headerData, peerData, {
+				result: function(token) { messageHeaderA = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+			MessageHeader$create(trustedNetCtx, entityAuthDataB, null, headerData, peerData, {
+				result: function(token) { messageHeaderB = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+        waitsFor(function() { return messageHeaderA && messageHeaderB; }, "message headers not received", 100);
+		var messageHeaderA2;
+		runs(function() {		
+            Header$parseHeader(trustedNetCtx, JSON.parse(JSON.stringify(messageHeaderA)), CRYPTO_CONTEXTS, {
+			    result: function(h) { messageHeaderA2 = h; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+		});
+		waitsFor(function() { return messageHeaderA2; }, "parsed header not received", 100);
+
+        runs(function() {
+            expect(messageHeaderA.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+    
+            expect(messageHeaderA.equals(messageHeaderB)).toBeFalsy();
+            expect(messageHeaderB.equals(messageHeaderA)).toBeFalsy();
+            expect(messageHeaderA.uniqueKey() != messageHeaderB.uniqueKey()).toBeTruthy();
+    
+            expect(messageHeaderA.equals(messageHeaderA2)).toBeTruthy();
+            expect(messageHeaderA2.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA2.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+        });
+	});
+
+	xit("equals master token and entity authentication data", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, null, null, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+		var messageHeaderA, messageHeaderB;
+		runs(function() {
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeaderA = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+			MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
+				result: function(token) { messageHeaderB = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeaderA && messageHeaderB; }, "message headers not received", 100);
+		var messageHeaderA2;
+		runs(function() {
+		    Header$parseHeader(trustedNetCtx, JSON.parse(JSON.stringify(messageHeaderA)), CRYPTO_CONTEXTS, {
+			    result: function(h) { messageHeaderA2 = h; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+		});
+		waitsFor(function() { return messageHeaderA2; }, "parsed header not received", 100);
+
+        runs(function() {
+            expect(messageHeaderA.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+    
+            expect(messageHeaderA.equals(messageHeaderB)).toBeFalsy();
+            expect(messageHeaderB.equals(messageHeaderA)).toBeFalsy();
+            expect(messageHeaderA.uniqueKey() != messageHeaderB.uniqueKey()).toBeTruthy();
+    
+            expect(messageHeaderA.equals(messageHeaderA2)).toBeTruthy();
+            expect(messageHeaderA2.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA2.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+        });
+	});
+	
+	xit("equals sender", function() {
+	    var ctx;
+	    runs(function() {
+	        MockMslContext$create(EntityAuthenticationScheme.RSA, false, {
+	           result: function(x) { ctx = x; },
+	           error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+	    });
+	    waitsFor(function() { return ctx; }, "ctx", 100);
+	    
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, null, null, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+	    
+	    var messageHeaderA, messageHeaderB;
+        runs(function() {
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+            MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
+                result: function(token) { messageHeaderA = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            MessageHeader$create(ctx, null, MASTER_TOKEN, headerData, peerData, {
+                result: function(token) { messageHeaderB = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeaderA && messageHeaderB; }, "message headers not received", 100);
+        var messageHeaderA2;
+        runs(function() {
+            Header$parseHeader(trustedNetCtx, JSON.parse(JSON.stringify(messageHeaderA)), CRYPTO_CONTEXTS, {
+                result: function(h) { messageHeaderA2 = h; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return messageHeaderA2; }, "parsed header not received", 100);
+
+        runs(function() {
+            expect(messageHeaderA.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+    
+            expect(messageHeaderA.equals(messageHeaderB)).toBeFalsy();
+            expect(messageHeaderB.equals(messageHeaderA)).toBeFalsy();
+            expect(messageHeaderA.uniqueKey() != messageHeaderB.uniqueKey()).toBeTruthy();
+    
+            expect(messageHeaderA.equals(messageHeaderA2)).toBeTruthy();
+            expect(messageHeaderA2.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA2.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+        });
+	});
+
+	xit("equals message ID", function() {
+		var serviceTokens;
+		runs(function() {
+			MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, {
+				result: function(tks) { serviceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return serviceTokens; }, "serviceTokens not received", 100);
+        
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, null, USER_ID_TOKEN, serviceTokens, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+
+		var messageHeaderA, messageHeaderB;
+		runs(function() {
+            var headerDataA = builder.set(KEY_MESSAGE_ID, 1).build();
+            var headerDataB = builder.set(KEY_MESSAGE_ID, 2).build();
+            var peerData = new HeaderPeerData(null, null, null);
+			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
+				result: function(token) { messageHeaderA = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
+				result: function(token) { messageHeaderB = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+        waitsFor(function() { return messageHeaderA && messageHeaderB; }, "message headers not received", 100);
+		var messageHeaderA2;
+		runs(function() {
+		    Header$parseHeader(trustedNetCtx, JSON.parse(JSON.stringify(messageHeaderA)), CRYPTO_CONTEXTS, {
+			    result: function(h) { messageHeaderA2 = h; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+		});
+		waitsFor(function() { return messageHeaderA2; }, "parsed header not received", 100);
+
+        runs(function() {
+            expect(messageHeaderA.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+    
+            expect(messageHeaderA.equals(messageHeaderB)).toBeFalsy();
+            expect(messageHeaderB.equals(messageHeaderA)).toBeFalsy();
+            expect(messageHeaderA.uniqueKey() != messageHeaderB.uniqueKey()).toBeTruthy();
+    
+            expect(messageHeaderA.equals(messageHeaderA2)).toBeTruthy();
+            expect(messageHeaderA2.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA2.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+        });
+	});
+
+	xit("equals non-replayable", function() {
+		var serviceTokens;
+		runs(function() {
+			MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, {
+				result: function(tks) { serviceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return serviceTokens; }, "serviceTokens not received", 100);
+        
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, null, USER_ID_TOKEN, serviceTokens, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+
+		var messageHeaderA, messageHeaderB;
+		runs(function() {
+            var headerDataA = builder.set(KEY_NON_REPLAYABLE_ID, 1).build();
+            var headerDataB = builder.set(KEY_NON_REPLAYABLE_ID, 2).build();
+            var peerData = new HeaderPeerData(null, null, null);
+			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
+				result: function(token) { messageHeaderA = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
+				result: function(token) { messageHeaderB = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeaderA && messageHeaderB; }, "message headers not received", 100);
+		var messageHeaderA2;
+		runs(function() {		
+            Header$parseHeader(trustedNetCtx, JSON.parse(JSON.stringify(messageHeaderA)), CRYPTO_CONTEXTS, {
+			    result: function(h) { messageHeaderA2 = h; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+		});
+		waitsFor(function() { return messageHeaderA2; }, "parsed header not received", 100);
+
+        runs(function() {
+            expect(messageHeaderA.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+    
+            expect(messageHeaderA.equals(messageHeaderB)).toBeFalsy();
+            expect(messageHeaderB.equals(messageHeaderA)).toBeFalsy();
+            expect(messageHeaderA.uniqueKey() != messageHeaderB.uniqueKey()).toBeTruthy();
+    
+            expect(messageHeaderA.equals(messageHeaderA2)).toBeTruthy();
+            expect(messageHeaderA2.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA2.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+        });
+	});
+
+	xit("equals renewable", function() {
+		var serviceTokens;
+		runs(function() {
+			MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, {
+				result: function(tks) { serviceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return serviceTokens; }, "serviceTokens not received", 100);
+        
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, null, USER_ID_TOKEN, serviceTokens, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+
+		var messageHeaderA, messageHeaderB;
+		runs(function() {
+            var headerDataA = builder.set(KEY_RENEWABLE, true).build();
+            var headerDataB = builder.set(KEY_RENEWABLE, false).build();
+            var peerData = new HeaderPeerData(null, null, null);
+			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
+				result: function(token) { messageHeaderA = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
+				result: function(token) { messageHeaderB = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+        waitsFor(function() { return messageHeaderA && messageHeaderB; }, "message headers not received", 100);
+		var messageHeaderA2;
+		runs(function() {		
+            Header$parseHeader(trustedNetCtx, JSON.parse(JSON.stringify(messageHeaderA)), CRYPTO_CONTEXTS, {
+			    result: function(h) { messageHeaderA2 = h; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+		});
+		waitsFor(function() { return messageHeaderA2; }, "parsed header not received", 100);
+
+        runs(function() {
+            expect(messageHeaderA.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+    
+            expect(messageHeaderA.equals(messageHeaderB)).toBeFalsy();
+            expect(messageHeaderB.equals(messageHeaderA)).toBeFalsy();
+            expect(messageHeaderA.uniqueKey() != messageHeaderB.uniqueKey()).toBeTruthy();
+    
+            expect(messageHeaderA.equals(messageHeaderA2)).toBeTruthy();
+            expect(messageHeaderA2.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA2.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+        });
+	});
+	
+	xit("equals handshake", function() {
+        var serviceTokens;
+        runs(function() {
+            MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, {
+                result: function(tks) { serviceTokens = tks; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return serviceTokens; }, "serviceTokens not received", 100);
+        
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, null, USER_ID_TOKEN, serviceTokens, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+
+        var messageHeaderA, messageHeaderB;
+        runs(function() {
+            var headerDataA = builder.set(KEY_HANDSHAKE, true).build();
+            var headerDataB = builder.set(KEY_HANDSHAKE, false).build();
+            var peerData = new HeaderPeerData(null, null, null);
+            MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
+                result: function(token) { messageHeaderA = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
+                result: function(token) { messageHeaderB = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeaderA && messageHeaderB; }, "message headers not received", 100);
+        var messageHeaderA2;
+        runs(function() {       
+            Header$parseHeader(trustedNetCtx, JSON.parse(JSON.stringify(messageHeaderA)), CRYPTO_CONTEXTS, {
+                result: function(h) { messageHeaderA2 = h; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return messageHeaderA2; }, "parsed header not received", 100);
+
+        runs(function() {
+            expect(messageHeaderA.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+    
+            expect(messageHeaderA.equals(messageHeaderB)).toBeFalsy();
+            expect(messageHeaderB.equals(messageHeaderA)).toBeFalsy();
+            expect(messageHeaderA.uniqueKey() != messageHeaderB.uniqueKey()).toBeTruthy();
+    
+            expect(messageHeaderA.equals(messageHeaderA2)).toBeTruthy();
+            expect(messageHeaderA2.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA2.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+        });
+    });
+
+	xit("equals capabilities", function() {
+		var serviceTokens;
+		runs(function() {
+			MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, {
+				result: function(tks) { serviceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return serviceTokens; }, "serviceTokens not received", 100);
+        
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, null, USER_ID_TOKEN, serviceTokens, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+
+		var messageHeaderA, messageHeaderB;
+		runs(function() {
+			var capsA = new MessageCapabilities(ALGOS, LANGUAGES);
+	        var capsB = new MessageCapabilities(null, null);
+            var headerDataA = builder.set(KEY_CAPABILITIES, capsA).build();
+            var headerDataB = builder.set(KEY_CAPABILITIES, capsB).build();
+            var peerData = new HeaderPeerData(null, null, null);
+			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
+				result: function(token) { messageHeaderA = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
+				result: function(token) { messageHeaderB = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+        waitsFor(function() { return messageHeaderA && messageHeaderB; }, "message headers not received", 100);
+		var messageHeaderA2;
+		runs(function() {		
+            Header$parseHeader(trustedNetCtx, JSON.parse(JSON.stringify(messageHeaderA)), CRYPTO_CONTEXTS, {
+			    result: function(h) { messageHeaderA2 = h; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+		});
+		waitsFor(function() { return messageHeaderA2; }, "parsed header not received", 100);
+
+        runs(function() {
+            expect(messageHeaderA.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+    
+            expect(messageHeaderA.equals(messageHeaderB)).toBeFalsy();
+            expect(messageHeaderB.equals(messageHeaderA)).toBeFalsy();
+            expect(messageHeaderA.uniqueKey() != messageHeaderB.uniqueKey()).toBeTruthy();
+    
+            expect(messageHeaderA.equals(messageHeaderA2)).toBeTruthy();
+            expect(messageHeaderA2.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA2.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+        });
+	});
+
+	xit("equals key request data", function() {
+		var serviceTokens;
+		runs(function() {
+			MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, {
+				result: function(tks) { serviceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return serviceTokens; }, "serviceTokens not received", 100);
+        
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, null, USER_ID_TOKEN, serviceTokens, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+
+		var messageHeaderA, messageHeaderB, messageHeaderC;
+		runs(function() {
+            var keyRequestDataA = new Array();
+            keyRequestDataA.add(new SymmetricWrappedExchange.RequestData(KeyId.SESSION));
+            var keyRequestDataB = new Array();
+            keyRequestDataB.add(new SymmetricWrappedExchange.RequestData(KeyId.PSK));
+            var headerDataA = builder.set(KEY_KEY_REQUEST_DATA, keyRequestDataA).build();
+            var headerDataB = builder.set(KEY_KEY_REQUEST_DATA, keyRequestDataB).build();
+            var headerDataC = builder.set(KEY_KEY_REQUEST_DATA, null).build();
+            var peerData = new HeaderPeerData(null, null, null);
+			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
+				result: function(token) { messageHeaderA = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
+				result: function(token) { messageHeaderB = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataC, peerData, {
+				result: function(token) { messageHeaderC = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeaderA && messageHeaderB && messageHeaderC; }, "message headers not received", 100);
+		var messageHeaderA2;
+		runs(function() {		
+            Header$parseHeader(trustedNetCtx, JSON.parse(JSON.stringify(messageHeaderA)), CRYPTO_CONTEXTS, {
+			    result: function(h) { messageHeaderA2 = h; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+		});
+		waitsFor(function() { return messageHeaderA2; }, "parsed header not received", 100);
+
+        runs(function() {
+            expect(messageHeaderA.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+    
+            expect(messageHeaderA.equals(messageHeaderB)).toBeFalsy();
+            expect(messageHeaderB.equals(messageHeaderA)).toBeFalsy();
+            expect(messageHeaderA.uniqueKey() != messageHeaderB.uniqueKey()).toBeTruthy();
+    
+            expect(messageHeaderA.equals(messageHeaderC)).toBeFalsy();
+            expect(messageHeaderC.equals(messageHeaderA)).toBeFalsy();
+            expect(messageHeaderA.uniqueKey() != messageHeaderC.uniqueKey()).toBeTruthy();
+    
+            expect(messageHeaderA.equals(messageHeaderA2)).toBeTruthy();
+            expect(messageHeaderA2.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA2.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+        });
+	});
+
+	xit("equals key response data", function() {
+		var serviceTokens;
+		runs(function() {
+			MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, {
+				result: function(tks) { serviceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return serviceTokens; }, "serviceTokens not received", 100);
+		
+		var keyxDataA, keyxDataB;
+		runs(function() {
+            var keyRequestData = KEY_REQUEST_DATA.toArray(new KeyRequestData[0])[0];
+            var factory = trustedNetCtx.getKeyExchangeFactory(keyRequestData.getKeyExchangeScheme());		
+			factory.generateResponse(trustedNetCtx, keyRequestData, MASTER_TOKEN, {
+				result: function(x) { keyxDataA = x; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+			factory.generateResponse(trustedNetCtx, keyRequestData, MASTER_TOKEN, {
+				result: function(x) { keyxDataB = x; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return keyxDataA && keyxDataB; }, "key exchange data not received", 100);
+        
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, null, USER_ID_TOKEN, serviceTokens, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+		
+        var messageHeaderA, messageHeaderB, messageHeaderC;
+		runs(function() {
+            var keyResponseDataA = keyxDataA.keyResponseData;
+            var keyResponseDataB = keyxDataB.keyResponseData;
+            var headerDataA = builder.set(KEY_KEY_RESPONSE_DATA, keyResponseDataA).build();
+            var headerDataB = builder.set(KEY_KEY_RESPONSE_DATA, keyResponseDataB).build();
+            var headerDataC = builder.set(KEY_KEY_RESPONSE_DATA, null).build();
+            var peerData = new HeaderPeerData(null, null, null);
+			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
+				result: function(token) { messageHeaderA = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
+				result: function(token) { messageHeaderB = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataC, peerData, {
+				result: function(token) { messageHeaderC = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+        waitsFor(function() { return messageHeaderA && messageHeaderB && messageHeaderC; }, "message headers not received", 100);
+		var messageHeaderA2;
+		runs(function() {		
+            Header$parseHeader(trustedNetCtx, JSON.parse(JSON.stringify(messageHeaderA)), CRYPTO_CONTEXTS, {
+			    result: function(h) { messageHeaderA2 = h; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+		});
+		waitsFor(function() { return messageHeaderA2; }, "parsed header not received", 100);
+		
+        runs(function() {
+            expect(messageHeaderA.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+    
+            expect(messageHeaderA.equals(messageHeaderB)).toBeFalsy();
+            expect(messageHeaderB.equals(messageHeaderA)).toBeFalsy();
+            expect(messageHeaderA.uniqueKey() != messageHeaderB.uniqueKey()).toBeTruthy();
+    
+            expect(messageHeaderA.equals(messageHeaderC)).toBeFalsy();
+            expect(messageHeaderC.equals(messageHeaderA)).toBeFalsy();
+            expect(messageHeaderA.uniqueKey() != messageHeaderC.uniqueKey()).toBeTruthy();
+    
+            expect(messageHeaderA.equals(messageHeaderA2)).toBeTruthy();
+            expect(messageHeaderA2.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA2.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+        });
+	});
+
+	xit("equals user authentication data", function() {
+		var serviceTokens;
+		runs(function() {
+			MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, null, {
+				result: function(tks) { serviceTokens = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return serviceTokens; }, "serviceTokens not received", 100);
+        
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, null, null, serviceTokens, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+
+		var messageHeaderA, messageHeaderB, messageHeaderC;
+		runs(function() {
+            var userAuthDataA = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL + "A", MockEmailPasswordAuthenticationFactory.PASSWORD);
+            var userAuthDataB = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL + "B", MockEmailPasswordAuthenticationFactory.PASSWORD);
+            var headerDataA = builder.set(KEY_USER_AUTHENTICATION_DATA, userAuthDataA).build();
+            var headerDataB = builder.set(KEY_USER_AUTHENTICATION_DATA, userAuthDataB).build();
+            var headerDataC = builder.set(KEY_USER_AUTHENTICATION_DATA, null).build();
+            var peerData = new HeaderPeerData(null, null, null);
+			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
+				result: function(token) { messageHeaderA = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
+				result: function(token) { messageHeaderB = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataC, peerData, {
+				result: function(token) { messageHeaderC = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeaderA && messageHeaderB && messageHeaderC; }, "message headers not received", 100);
+
+        runs(function() {
+            expect(messageHeaderA.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+    
+            expect(messageHeaderA.equals(messageHeaderB)).toBeFalsy();
+            expect(messageHeaderB.equals(messageHeaderA)).toBeFalsy();
+            expect(messageHeaderA.uniqueKey() != messageHeaderB.uniqueKey()).toBeTruthy();
+    
+            expect(messageHeaderA.equals(messageHeaderC)).toBeFalsy();
+            expect(messageHeaderC.equals(messageHeaderA)).toBeFalsy();
+            expect(messageHeaderA.uniqueKey() != messageHeaderC.uniqueKey()).toBeTruthy();
+    
+            // This test does not include a parsed header to avoid requiring user
+            // authentication to succeed.
+        });
+	});
+
+	xit("equals user ID token", function() {
+		var userIdTokenA, userIdTokenB;
+		runs(function() {
+		    MslTestUtils.getUserIdToken(trustedNetCtx, MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory.USER, {
+		        result: function(t) { userIdTokenA = t; },
+		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		    });
+		    MslTestUtils.getUserIdToken(trustedNetCtx, MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory.USER, {
+		        result: function(t) { userIdTokenB = t; },
+		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		    });
+		});
+		waitsFor(function() { return userIdTokenA && userIdTokenB; }, "user ID tokens not received", 100);
+        
+        var builderA, builderB, builderC;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, null, userIdTokenA, null, {
+                result: function(x) { builderA = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            HeaderDataBuilder$create(trustedNetCtx, null, userIdTokenB, null, {
+                result: function(x) { builderB = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            HeaderDataBuilder$create(trustedNetCtx, null, null, null, {
+                result: function(x) { builderC = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builderA && builderB && builderC; }, "builders", 100);
+
+		var messageHeaderA, messageHeaderB, messageHeaderC;
+		runs(function() {
+            var headerDataA = builderA.build();
+            var headerDataB = builderB.build();
+            var headerDataC = builderC.build();
+            var peerData = new HeaderPeerData(null, null, null);
+			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
+				result: function(token) { messageHeaderA = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
+				result: function(token) { messageHeaderB = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataC, peerData, {
+				result: function(token) { messageHeaderC = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeaderA && messageHeaderB && messageHeaderC; }, "message headers not received", 100);
+		var messageHeaderA2;
+		runs(function() {
+		    Header$parseHeader(trustedNetCtx, JSON.parse(JSON.stringify(messageHeaderA)), CRYPTO_CONTEXTS, {
+			    result: function(h) { messageHeaderA2 = h; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+		});
+		waitsFor(function() { return messageHeaderA2; }, "parsed header not received", 100);
+
+        runs(function() {
+            expect(messageHeaderA.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+    
+            expect(messageHeaderA.equals(messageHeaderB)).toBeFalsy();
+            expect(messageHeaderB.equals(messageHeaderA)).toBeFalsy();
+            expect(messageHeaderA.uniqueKey() != messageHeaderB.uniqueKey()).toBeTruthy();
+    
+            expect(messageHeaderA.equals(messageHeaderC)).toBeFalsy();
+            expect(messageHeaderC.equals(messageHeaderA)).toBeFalsy();
+            expect(messageHeaderA.uniqueKey() != messageHeaderC.uniqueKey()).toBeTruthy();
+    
+            expect(messageHeaderA.equals(messageHeaderA2)).toBeTruthy();
+            expect(messageHeaderA2.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA2.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+        });
+	});
+
+	xit("equals service tokens", function() {
+        var builderA, builderB, builderC;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builderA = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builderB = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, false, {
+                result: function(x) { builderC = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builderA && builderB && builderC; }, "builders", 100);
+        
+		var messageHeaderA, messageHeaderB, messageHeaderC;
+		runs(function() {
+            var headerDataA = builderA.build();
+            var headerDataB = builderB.build();
+            var headerDataC = builderC.build();
+            var peerData = new HeaderPeerData(null, null, null);
+			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
+				result: function(token) { messageHeaderA = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
+				result: function(token) { messageHeaderB = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataC, peerData, {
+				result: function(token) { messageHeaderC = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeaderA && messageHeaderB && messageHeaderC; }, "message headers not received", 100);
+		var messageHeaderA2;
+        runs(function() {
+             Header$parseHeader(trustedNetCtx, JSON.parse(JSON.stringify(messageHeaderA)), CRYPTO_CONTEXTS, {
+                result: function(h) { messageHeaderA2 = h; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return messageHeaderA2; }, "parsed header not received", 100);
+
+        runs(function() {
+            expect(messageHeaderA.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+    
+            expect(messageHeaderA.equals(messageHeaderB)).toBeFalsy();
+            expect(messageHeaderB.equals(messageHeaderA)).toBeFalsy();
+            expect(messageHeaderA.uniqueKey() != messageHeaderB.uniqueKey()).toBeTruthy();
+    
+            expect(messageHeaderA.equals(messageHeaderC)).toBeFalsy();
+            expect(messageHeaderC.equals(messageHeaderA)).toBeFalsy();
+            expect(messageHeaderA.uniqueKey() != messageHeaderC.uniqueKey()).toBeTruthy();
+    
+            expect(messageHeaderA.equals(messageHeaderA2)).toBeTruthy();
+            expect(messageHeaderA2.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA2.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+        });
+	});
+
+	xit("equals peer master token", function() {
+		var peerMasterTokenA, peerMasterTokenB;
+		runs(function() {
+		    MslTestUtils.getMasterToken(p2pCtx, 1, 1, {
+		        result: function(t) { peerMasterTokenA = t; },
+		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		    });
+		    MslTestUtils.getMasterToken(p2pCtx, 1, 2, {
+		        result: function(t) { peerMasterTokenB = t; },
+		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		    });
+		});
+		waitsFor(function() { return peerMasterTokenA && peerMasterTokenB; }, "master tokens not received", 100);
+        
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+		var messageHeaderA, messageHeaderB, messageHeaderC;
+		runs(function() {
+            var headerData = builder.build();
+            var peerDataA = new HeaderPeerData(peerMasterTokenA, null, null);
+            var peerDataB = new HeaderPeerData(peerMasterTokenB, null, null);
+            var peerDataC = new HeaderPeerData(null, null, null);
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerDataA, {
+				result: function(token) { messageHeaderA = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerDataB, {
+				result: function(token) { messageHeaderB = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerDataC, {
+				result: function(token) { messageHeaderC = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+        waitsFor(function() { return messageHeaderA; }, "messageHeaderA not received", 100);
+		var messageHeaderA2;
+		runs(function() {
+		    Header$parseHeader(p2pCtx, JSON.parse(JSON.stringify(messageHeaderA)), CRYPTO_CONTEXTS, {
+				result: function(h) { messageHeaderA2 = h; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeaderA2; }, "parsed header not received", 100);
+
+        runs(function() {
+            expect(messageHeaderA.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+    
+            expect(messageHeaderA.equals(messageHeaderB)).toBeFalsy();
+            expect(messageHeaderB.equals(messageHeaderA)).toBeFalsy();
+            expect(messageHeaderA.uniqueKey() != messageHeaderB.uniqueKey()).toBeTruthy();
+    
+            expect(messageHeaderA.equals(messageHeaderC)).toBeFalsy();
+            expect(messageHeaderC.equals(messageHeaderA)).toBeFalsy();
+            expect(messageHeaderA.uniqueKey() != messageHeaderC.uniqueKey()).toBeTruthy();
+    
+            expect(messageHeaderA.equals(messageHeaderA2)).toBeTruthy();
+            expect(messageHeaderA2.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA2.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+        });
+	});
+
+	xit("equals peer user ID token", function() {
+		var peerUserIdTokenA, peerUserIdTokenB;
+		runs(function() {
+		    MslTestUtils.getUserIdToken(p2pCtx, PEER_MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory.USER, {
+		        result: function(t) { peerUserIdTokenA = t; },
+		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		    });
+		    MslTestUtils.getUserIdToken(p2pCtx, PEER_MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory.USER, {
+		        result: function(t) { peerUserIdTokenB = t; },
+		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		    });
+		});
+		waitsFor(function() { return peerUserIdTokenA && peerUserIdTokenB; }, "user ID tokens not received", 100);
+        
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+
+		var messageHeaderA, messageHeaderB, messageHeaderC;
+		runs(function() {
+            var headerData = builder.build();
+            var peerDataA = new HeaderPeerData(PEER_MASTER_TOKEN, peerUserIdTokenA, null);
+            var peerDataB = new HeaderPeerData(PEER_MASTER_TOKEN, peerUserIdTokenB, null);
+            var peerDataC = new HeaderPeerData(PEER_MASTER_TOKEN, null, null);
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerDataA, {
+				result: function(token) { messageHeaderA = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerDataB, {
+				result: function(token) { messageHeaderB = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerDataC, {
+				result: function(token) { messageHeaderC = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeaderA && messageHeaderB && messageHeaderC; }, "message headers not received", 100);
+		var messageHeaderA2;
+		runs(function() {
+		    Header$parseHeader(p2pCtx, JSON.parse(JSON.stringify(messageHeaderA)), CRYPTO_CONTEXTS, {
+				result: function(h) { messageHeaderA2 = h; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeaderA2; }, "parsed header not received", 100);
+
+        runs(function() {
+            expect(messageHeaderA.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+    
+            expect(messageHeaderA.equals(messageHeaderB)).toBeFalsy();
+            expect(messageHeaderB.equals(messageHeaderA)).toBeFalsy();
+            expect(messageHeaderA.uniqueKey() != messageHeaderB.uniqueKey()).toBeTruthy();
+    
+            expect(messageHeaderA.equals(messageHeaderC)).toBeFalsy();
+            expect(messageHeaderC.equals(messageHeaderA)).toBeFalsy();
+            expect(messageHeaderA.uniqueKey() != messageHeaderC.uniqueKey()).toBeTruthy();
+    
+            expect(messageHeaderA.equals(messageHeaderA2)).toBeTruthy();
+            expect(messageHeaderA2.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA2.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+        });
+	});
+
+	xit("equals peer service tokens", function() {
+		var peerServiceTokensA = undefined, peerServiceTokensB;
+		runs(function() {
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokensA = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
+				result: function(tks) { peerServiceTokensB = tks; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { peerServiceTokensA && peerServiceTokensB; }, "service tokens not received", 100);
+
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+		
+		var messageHeaderA, messageHeaderB, messageHeaderC;
+		runs(function() {
+            var headerData = builder.build();
+            var peerDataA = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokensA);
+            var peerDataB = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokensB);
+            var peerDataC = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, null);
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerDataA, {
+				result: function(token) { messageHeaderA = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerDataB, {
+				result: function(token) { messageHeaderB = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerDataC, {
+				result: function(token) { messageHeaderC = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeaderA && messageHeaderB && messageHeaderC; }, "message headers not received", 100);
+		var messageHeaderA2;
+		runs(function() {
+		    Header$parseHeader(p2pCtx, JSON.parse(JSON.stringify(messageHeaderA)), CRYPTO_CONTEXTS, {
+				result: function(h) { messageHeaderA2 = h; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeaderA2; }, "parsed header not received", 100);
+		
+        runs(function() {
+            expect(messageHeaderA.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+    
+            expect(messageHeaderA.equals(messageHeaderB)).toBeFalsy();
+            expect(messageHeaderB.equals(messageHeaderA)).toBeFalsy();
+            expect(messageHeaderA.uniqueKey() != messageHeaderB.uniqueKey()).toBeTruthy();
+    
+            expect(messageHeaderA.equals(messageHeaderC)).toBeFalsy();
+            expect(messageHeaderC.equals(messageHeaderA)).toBeFalsy();
+            expect(messageHeaderA.uniqueKey() != messageHeaderC.uniqueKey()).toBeTruthy();
+    
+            expect(messageHeaderA.equals(messageHeaderA2)).toBeTruthy();
+            expect(messageHeaderA2.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA2.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+		});
+	});
+
+	xit("equals object", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+		var messageHeader;
+		runs(function() {
+			var headerData = builder.build();
+			var peerData = new HeaderPeerData(null, null, null);
+			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
+				result: function(token) { messageHeader = token; },
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+		runs(function() {
+			expect(messageHeader.equals(null)).toBeFalsy();
+			expect(messageHeader.equals(MASTER_TOKEN)).toBeFalsy();
+			expect(messageHeader.uniqueKey() != MASTER_TOKEN.uniqueKey()).toBeTruthy();
+		});
+	});
+});
