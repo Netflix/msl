@@ -1,0 +1,9 @@
+com.netflix.msl
+com.netflix.msl.crypto
+com.netflix.msl.entityauth
+com.netflix.msl.io
+com.netflix.msl.keyx
+com.netflix.msl.msg
+com.netflix.msl.tokens
+com.netflix.msl.userauth
+com.netflix.msl.util

@@ -1,0 +1,15 @@
+-sourcepath src/main/java
+-classpath src/main/java
+-d javadoc
+-subpackages com.netflix
+-private
+-version
+-use
+-windowtitle "Message Security Layer Public API"
+-overview overview-public.html
+-link http://docs.oracle.com/javase/7/docs/api/
+-link http://junit.org/javadoc/4.11/
+-link http://www.json.org/javadoc/
+-header "Message Security Layer (MSL)"
+-footer "Message Security Layer (MSL)"
+-bottom "Copyright &#169; 2014 Netflix, Inc. All Rights Reserved."

@@ -1,0 +1,55 @@
+-sourcepath src/main/java
+-classpath src/main/java
+-d javadoc-public
+-version
+-use
+-windowtitle "Message Security Layer Public API"
+-overview overview-public.html
+-link http://docs.oracle.com/javase/7/docs/api/
+-link http://junit.org/javadoc/4.11/
+-link http://www.json.org/javadoc/
+-header "Message Security Layer (MSL)"
+-footer "Message Security Layer (MSL)"
+-bottom "Copyright &#169; 2014 Netflix, Inc. All Rights Reserved."
+
+src/main/java/com/netflix/msl/entityauth/EntityAuthenticationData.java
+src/main/java/com/netflix/msl/entityauth/EntityAuthenticationFactory.java
+src/main/java/com/netflix/msl/entityauth/EntityAuthenticationScheme.java
+src/main/java/com/netflix/msl/msg/ErrorHeader.java
+src/main/java/com/netflix/msl/msg/ErrorMessageRegistry.java
+src/main/java/com/netflix/msl/msg/FilterStreamFactory.java
+src/main/java/com/netflix/msl/msg/Header.java
+src/main/java/com/netflix/msl/crypto/ICryptoContext.java
+src/main/java/com/netflix/msl/keyx/KeyExchangeFactory.java
+src/main/java/com/netflix/msl/keyx/KeyExchangeScheme.java
+src/main/java/com/netflix/msl/keyx/KeyRequestData.java
+src/main/java/com/netflix/msl/keyx/KeyResponseData.java
+src/main/java/com/netflix/msl/tokens/MasterToken.java
+src/main/java/com/netflix/msl/msg/MessageCapabilities.java
+src/main/java/com/netflix/msl/msg/MessageContext.java
+src/main/java/com/netflix/msl/msg/MessageDebugContext.java
+src/main/java/com/netflix/msl/msg/MessageHeader.java
+src/main/java/com/netflix/msl/msg/MessageInputStream.java
+src/main/java/com/netflix/msl/msg/MessageServiceTokenBuilder.java
+src/main/java/com/netflix/msl/MslConstants.java
+src/main/java/com/netflix/msl/util/MslContext.java
+src/main/java/com/netflix/msl/msg/MslControl.java
+src/main/java/com/netflix/msl/MslCryptoException.java
+src/main/java/com/netflix/msl/MslEncodingException.java
+src/main/java/com/netflix/msl/MslEntityAuthException.java
+src/main/java/com/netflix/msl/MslError.java
+src/main/java/com/netflix/msl/MslErrorResponseException.java
+src/main/java/com/netflix/msl/MslException.java
+src/main/java/com/netflix/msl/MslInternalException.java
+src/main/java/com/netflix/msl/MslKeyExchangeException.java
+src/main/java/com/netflix/msl/MslMasterTokenException.java
+src/main/java/com/netflix/msl/MslMessageException.java
+src/main/java/com/netflix/msl/util/MslStore.java
+src/main/java/com/netflix/msl/MslUserAuthException.java
+src/main/java/com/netflix/msl/MslUserIdTokenException.java
+src/main/java/com/netflix/msl/tokens/ServiceToken.java
+src/main/java/com/netflix/msl/tokens/TokenFactory.java
+src/main/java/com/netflix/msl/userauth/UserAuthenticationData.java
+src/main/java/com/netflix/msl/userauth/UserAuthenticationFactory.java
+src/main/java/com/netflix/msl/userauth/UserAuthenticationScheme.java
+src/main/java/com/netflix/msl/tokens/UserIdToken.java
