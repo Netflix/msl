@@ -4,7 +4,7 @@ Message Security Layer (MSL) is an extensible and flexible secure messaging prot
 
 ## Documentation
 
-The [MSL Protocol](https://github.com/Netflix/msl/wiki/) provides a complete description of the protocol and implementation requirements. The [[Configuration Guide]] presents some common client and server MSL configurations.
+The [MSL Protocol](https://github.com/Netflix/msl/wiki/) provides a complete description of the protocol and implementation requirements. The [Configuration Guide](https://github.com/Netflix/msl/wiki/Configuration-Guide) presents some common client and server MSL configurations.
 
 The set of public interfaces and classes an application must implement and use is documented in the [Public Javadoc](http://netflix.github.com/msl/javadoc-public/). Documentation on all of the code, including internal classes and private methods, can be found in the full [Javadoc](http://netflix.github.com/msl/javadoc/).
 
