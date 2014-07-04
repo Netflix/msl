@@ -82,7 +82,7 @@ var AsymmetricWrappedExchange$ResponseData$parse;
      *   "keypairid" : "string",
      *   "mechanism" : "string",
      *   "publickey" : "base64"
-     * } where:
+     * }} where:
      * <ul>
      * <li>{@code keypairid} identifies the key pair for wrapping and unwrapping the session keys</li>
      * <li>{@code mechanism} the public key cryptographic mechanism of the key pair</li>
@@ -241,7 +241,7 @@ var AsymmetricWrappedExchange$ResponseData$parse;
      *   "keypairid" : "string",
      *   "encryptionkey" : "base64",
      *   "hmackey" : "base64"
-     * } where:
+     * }} where:
      * <ul>
      * <li>{@code keypairid} identifies the key pair for wrapping and unwrapping the session keys</li>
      * <li>{@code encryptionkey} the Base64-encoded wrapped session encryption key</li>

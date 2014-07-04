@@ -21,7 +21,7 @@
  * {@code {
  *   "#mandatory" : [ "identity" ],
  *   "identity" : "string"
- * } where:
+ * }} where:
  * <ul>
  * <li>{@code identity} is the entity identity</li>
  * </ul></p>

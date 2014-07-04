@@ -63,7 +63,7 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
      * {@code {
      *   "#mandatory" : [ "keyid" ],
      *   "keyid" : "string",
-     * } where:
+     * }} where:
      * <ul>
      * <li>{@code keyid} identifies the key that should be used to wrap the session keys</li>
      * </ul></p>
@@ -154,7 +154,7 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
      *   "keyid" : "string",
      *   "encryptionkey" : "base64",
      *   "hmackey" : "base64"
-     * } where:
+     * }} where:
      * <ul>
      * <li>{@code keyid} identifies the key that was used to wrap the session keys</li>
      * <li>{@code encryptionkey} the Base64-encoded wrapped session encryption key</li>

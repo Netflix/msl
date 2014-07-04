@@ -283,8 +283,8 @@ public interface MessageContext {
      * @throws MslEncodingException if there is an error encoding the service
      *         token JSON data.
      * @throws MslException if there is an error compressing the data.
-     * @see {@link com.netflix.msl.MslError#RESPONSE_REQUIRES_MASTERTOKEN}
-     * @see {@link com.netflix.msl.MslError#RESPONSE_REQUIRES_USERIDTOKEN}
+     * @see com.netflix.msl.MslError#RESPONSE_REQUIRES_MASTERTOKEN
+     * @see com.netflix.msl.MslError#RESPONSE_REQUIRES_USERIDTOKEN
      */
     public void updateServiceTokens(final MessageServiceTokenBuilder builder, final boolean handshake) throws MslMessageException, MslCryptoException, MslEncodingException, MslException;
     

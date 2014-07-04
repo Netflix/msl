@@ -22,7 +22,7 @@
  *   "#mandatory" : [ "identity", "pubkeyid" ],
  *   "identity" : "string",
  *   "pubkeyid" : "string"
- * } where:
+ * }} where:
  * <ul>
  * <li>{@code identity} is the entity identity</li>
  * <li>{@code pubkeyid} is the identity of the RSA public key associated with this identity</li>

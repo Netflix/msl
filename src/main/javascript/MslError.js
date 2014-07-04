@@ -31,10 +31,10 @@
  *
  * @param {number} internalCode internal error code.
  * @param {number} responseCode response error code.
- * @param {string} message developer-consumable error message.
+ * @param {string} msg developer-consumable error message.
  * @constructor
  */
-function MslError(internalCode, responseCode, message) {
+function MslError(internalCode, responseCode, msg) {
     /** Internal error code base value. */
     var BASE = 100000;
 
@@ -50,7 +50,7 @@ function MslError(internalCode, responseCode, message) {
     var props = {
             internalCode: { value: internalCode, writable: false, configurable: false },
             responseCode: { value: responseCode, writable: false, configurable: false },
-            message: { value: message, writable: false, configurable: false }
+            message: { value: msg, writable: false, configurable: false }
     };
 
     Object.defineProperties(this, props);

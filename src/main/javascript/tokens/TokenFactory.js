@@ -72,10 +72,10 @@ var TokenFactory = util.Class.create({
      * <p>Non-replayable IDs should be tracked by the master token entity
      * identity and serial number. Before accepting any non-replayable IDs the
      * largest value accepted so far shall be considered zero. The maximum non-
-     * replayable ID is equal to {@link MslConstants#MAX_LONG_VALUE} after
-     * which the IDs wrap around to zero. The wrap around must be considered
-     * when comparing the non-replayable ID to the largest non-replayable ID
-     * accepted so far.</p>
+     * replayable ID is equal to
+     * {@link com.netflix.msl.MslConstants#MAX_LONG_VALUE} which the IDs wrap
+     * around to zero. The wrap around must be considered when comparing the
+     * non-replayable ID to the largest non-replayable ID accepted so far.</p>
      * 
      * <p>It is also permitted to accept non-replayable IDs less than the
      * largest non-replayable ID accepted so far if those non-replayable IDs
@@ -92,7 +92,7 @@ var TokenFactory = util.Class.create({
      * @throws MslMasterTokenException if the master token is not trusted.
      * @throws MslException if there is an error comparing or updating the non-
      *         replayable ID associated with this master token.
-     * @see #createMasterToken(MslContext, String, CipherKey, CipherKey)
+     * @see #createMasterToken(MslContext, String, SecretKey, SecretKey)
      */
     acceptNonReplayableId: function(ctx, masterToken, nonReplayableId, callback) {},
     
@@ -123,7 +123,7 @@ var TokenFactory = util.Class.create({
 
     /**
      * <p>Check if the master token would be renewed by a call to
-     * {@link #renewMasterToken(MslContext, MasterToken, CipherKey, CipherKey)}.</p>
+     * {@link #renewMasterToken(MslContext, MasterToken, SecretKey, SecretKey)}.</p>
      * 
      * <p>This method should return the exact {@link MslError} identifying the
      * reason the master token will not be renewed.</p>
@@ -137,7 +137,7 @@ var TokenFactory = util.Class.create({
      * @throws MslMasterTokenException if the master token is not trusted.
      * @throws MslException if there is an error checking the master token
      *         renewability.
-     * @see #renewMasterToken(MslContext, MasterToken, CipherKey, CipherKey)
+     * @see #renewMasterToken(MslContext, MasterToken, SecretKey, SecretKey)
      */
     isMasterTokenRenewable: function(ctx, masterToken, callback) {},
     

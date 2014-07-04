@@ -30,7 +30,6 @@ import com.netflix.msl.util.MslContext;
  * <p>The {@link OAEPParameterSpec#DEFAULT} parameters are used for OAEP
  * encryption and decryption.</p>
  * 
- * @see https://tools.ietf.org/html/rfc5990
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class RsaCryptoContext extends AsymmetricCryptoContext {

@@ -61,8 +61,8 @@ public interface MslStore {
      * Return the next non-replayable ID of the provided master token.
      * 
      * Each call to this function should return the next largest number. The
-     * next largest number after {@link MslConstants#MAX_LONG_VALUE} is zero
-     * (0).
+     * next largest number after {@link com.netflix.msl.MslConstants#MAX_LONG_VALUE}
+     * is zero (0).
      * 
      * @return the next non-replayable ID.
      */

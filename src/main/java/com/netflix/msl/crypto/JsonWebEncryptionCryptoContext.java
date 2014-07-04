@@ -52,7 +52,7 @@ import com.netflix.msl.util.MslContext;
 /**
  * <p>This key exchange crypto context provides an implementation of the JSON
  * web encryption algorithm as defined in
- * {@link http://tools.ietf.org/html/draft-ietf-jose-json-web-encryption-08}.
+ * <a href="http://tools.ietf.org/html/draft-ietf-jose-json-web-encryption-08">JSON Web Encryption</a>.
  * It supports a limited subset of the algorithms.</p>
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
@@ -410,13 +410,11 @@ public class JsonWebEncryptionCryptoContext implements ICryptoContext {
     /** Support serialization formats. */
     public static enum Format {
         /**
-         * JSON Web Encryption JSON Serialization (JWE-JS)
-         * {@link http://tools.ietf.org/html/draft-jones-jose-jwe-json-serialization-04}
+         * <a href="http://tools.ietf.org/html/draft-jones-jose-jwe-json-serialization-04">JSON Web Encryption JSON Serialization (JWE-JS)</a>
          */
         JWE_JS,
         /**
-         * JSON Web Encryption Compact Serialization
-         * {@link http://tools.ietf.org/html/draft-ietf-jose-json-web-encryption-08}
+         * <a href="http://tools.ietf.org/html/draft-ietf-jose-json-web-encryption-08">JSON Web Encryption Compact Serialization</a>
          */
         JWE_CS
     }

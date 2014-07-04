@@ -787,7 +787,6 @@ var MslControl$MslChannel;
          * header.
          *
          * @param {MslContext} ctx MSL context.
-         * @param {MessageContext} msgCtx message context.
          * @param {?MasterToken} masterToken master for the service tokens.
          * @param {?UserIdToken} userIdToken user ID token for the service tokens.
          * @param {Array.<ServiceToken>} serviceTokens the service tokens to update.
@@ -909,7 +908,7 @@ var MslControl$MslChannel;
          * @param {ReceiveService|RespondService|RequestService} service the calling service.
          * @param {MslContext} ctx MSL context.
          * @param {MessageContext} msgCtx message context.
-         * @param {MessageHeader} requestHeader message header to respond to.
+         * @param {MessageHeader} request message header to respond to.
          * @param {number} lock acquisition timeout in milliseconds.
          * @param {{result: function({builder: MessageBuilder, tokenTicket: ?TokenTicket}),
          *         timeout: function(), error: function(Error)}} callback the
@@ -2026,7 +2025,7 @@ var MslControl$MslChannel;
          *        timeouts and any thrown exceptions.
          * @throws MslInterruptedException if interrupted while waiting to acquire
          *         a master token from a renewing thread.
-         * @see #releaseRenewalLock()
+         * @see #releaseRenewalLock(MslContext, BlockingQueue, MessageInputStream)
          */
         acquireRenewalLock: function acquireRenewalLock(service, ctx, msgCtx, queue, builderTokenTicket, timeout, callback) {
             var self = this;
@@ -2382,7 +2381,7 @@ var MslControl$MslChannel;
          * <p>This method should only be used by trusted network servers and peer-
          * to-peer entities to receive a request initiated by the remote entity.
          * The remote entity should have used
-         * {@link #request(MslContext, MessageContext, Url, MessageBuilder, int)}.<p>
+         * {@link #request(MslContext, MessageContext, Url, int)}.<p>
          *
          * <p>The returned {@code Future} will return the received
          * {@code MessageInputStream} on completion or {@code null} if a reply was
@@ -2488,7 +2487,7 @@ var MslControl$MslChannel;
          * to-peer entities after receiving a request via
          * {@link #receive(MslContext, MessageContext, InputStream, OutputStream, int)}.
          * The remote entity should have used
-         * {@link #request(MslContext, MessageContext, URL, MessageBuilder, int)}.</p>
+         * {@link #request(MslContext, MessageContext, URL, int)}.</p>
          *
          * <p>The returned {@code Future} will return true on success or false if
          * cancelled or interrupted. It may throw a {@code MslException} or

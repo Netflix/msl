@@ -263,7 +263,7 @@ public class MslError {
      *
      * @param internalCode internal error code.
      * @param responseCode response error code.
-     * @param message developer-consumable error message.
+     * @param msg developer-consumable error message.
      */
     protected MslError(final int internalCode, final ResponseCode responseCode, final String msg) {
         // Check for duplicates.

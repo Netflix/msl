@@ -48,7 +48,7 @@ import com.netflix.msl.util.JsonUtils;
 
 /**
  * This class implements the JSON web key structure as defined in
- * {@link http://tools.ietf.org/html/draft-ietf-jose-json-web-key-08}.
+ * <a href="http://tools.ietf.org/html/draft-ietf-jose-json-web-key-08>JSON Web Key</a>.
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
@@ -227,7 +227,7 @@ public class JsonWebKey implements JSONString {
      * Create a new JSON web key for a symmetric key with the specified
      * attributes.
      * 
-     * @param usages key usage. May be null.
+     * @param usage key usage. May be null.
      * @param algo key algorithm. May be null.
      * @param extractable true if the key is extractable.
      * @param id key ID. May be null.
@@ -499,7 +499,7 @@ public class JsonWebKey implements JSONString {
      * public or private key may be null if only one of the pair is stored in
      * this JSON web key.
      * 
-     * @returns the stored RSA key pair or null if the type is not RSA.
+     * @return the stored RSA key pair or null if the type is not RSA.
      */
     public KeyPair getRsaKeyPair() {
         return keyPair;

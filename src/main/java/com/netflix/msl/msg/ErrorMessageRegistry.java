@@ -41,7 +41,7 @@ public interface ErrorMessageRegistry {
      * Returns the user-consumable message associated with a given non-MSL
      * error, localized according to the list of preferred languages.
      * 
-     * @param error non-MSL error.
+     * @param err non-MSL error.
      * @param languages preferred languages as BCP-47 codes in descending
      *        order. May be {@code null}.
      * @return the localized user message or {@code null} if there is none.

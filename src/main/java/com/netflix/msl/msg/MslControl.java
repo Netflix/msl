@@ -925,7 +925,6 @@ public class MslControl {
      * header.
      * 
      * @param ctx MSL context.
-     * @param msgCtx message context.
      * @param masterToken master for the service tokens.
      * @param userIdToken user ID token for the service tokens.
      * @param serviceTokens the service tokens to update.
@@ -1021,7 +1020,7 @@ public class MslControl {
      * 
      * @param ctx MSL context.
      * @param msgCtx message context.
-     * @param requestHeader message header to respond to.
+     * @param request message header to respond to.
      * @return the message builder.
      * @throws MslMasterTokenException if the provided message's master token
      *         is not trusted.
@@ -1838,7 +1837,7 @@ public class MslControl {
      *         needed.
      * @throws InterruptedException if interrupted while waiting to acquire
      *         a master token from a renewing thread.
-     * @see #releaseRenewalLock()
+     * @see #releaseRenewalLock(MslContext, BlockingQueue, MessageInputStream)
      */
     private boolean acquireRenewalLock(final MslContext ctx, final MessageContext msgCtx, final BlockingQueue<MasterToken> queue, final MessageBuilder builder, final long timeout) throws InterruptedException {
         MasterToken masterToken = builder.getMasterToken();
@@ -2955,8 +2954,6 @@ public class MslControl {
          * @param in remote entity input stream.
          * @param out remote entity output stream.
          * @param timeout read acquisition timeout in milliseconds.
-         * @param msgCount number of messages that have already been sent or
-         *        received.
          */
         public RequestService(final MslContext ctx, final MessageContext msgCtx, final InputStream in, final OutputStream out, final int timeout) {
             this.ctx = ctx;
@@ -3398,7 +3395,7 @@ public class MslControl {
      * <p>This method should only be used by trusted network servers and peer-
      * to-peer entities to receive a request initiated by the remote entity.
      * The remote entity should have used
-     * {@link #request(MslContext, MessageContext, URL, MessageBuilder, int)}.<p>
+     * {@link #request(MslContext, MessageContext, URL, int)}.<p>
      * 
      * <p>The returned {@code Future} will return the received
      * {@code MessageInputStream} on completion or {@code null} if a reply was
@@ -3491,7 +3488,7 @@ public class MslControl {
      * to-peer entities after receiving a request via
      * {@link #receive(MslContext, MessageContext, InputStream, OutputStream, int)}.
      * The remote entity should have used
-     * {@link #request(MslContext, MessageContext, URL, MessageBuilder, int)}.</p>
+     * {@link #request(MslContext, MessageContext, URL, int)}.</p>
      * 
      * <p>The returned {@code Future} will return true on success or false if
      * cancelled or interrupted. It may throw a {@code MslException} or

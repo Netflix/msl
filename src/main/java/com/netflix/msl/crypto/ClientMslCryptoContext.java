@@ -24,7 +24,7 @@ import com.netflix.msl.MslInternalException;
  * and its other operations are no-ops.
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
- * @see MslContext#getMslCryptoContext()
+ * @see com.netflix.msl.util.MslContext#getMslCryptoContext()
  */
 public class ClientMslCryptoContext implements ICryptoContext {
     /* (non-Javadoc)
