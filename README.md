@@ -10,7 +10,7 @@ The set of public interfaces and classes an application must implement and use i
 
 ## Third-Party Libraries
 
-The Java MSL code base requires the [org.json](http://www.json.org/java/) library and the [JUnit 4](http://junit.org).
+The Java MSL code base requires the [org.json](http://www.json.org/java/) and [Bouncy Castle](http://www.bouncycastle.org) libraries and the unit tests require [JUnit 4](http://junit.org).
 
 The JavaScript MSL code base includes some third-party libraries within the lib/ directory, most notably the [Clarinet](https://github.com/dscape/clarinet) parser. The [jsrsasign](http://kjur.github.io/jsrsasign/) and [crypto-js](https://code.google.com/p/crypto-js/) libraries are currently included but are planned for removal.
 
