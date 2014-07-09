@@ -653,7 +653,7 @@ public class MslControl {
             }
             t = t.getCause();
         }
-        return false;   
+        return false;
     }
     
     /**
@@ -1016,7 +1016,7 @@ public class MslControl {
      * message but there is no user ID token set or the user ID token is not
      * bound to the and a user ID is provided by the message context the user
      * ID token for that user ID will be used to build the message if the user
-     * ID token is bound to the master token.</p> 
+     * ID token is bound to the master token.</p>
      * 
      * @param ctx MSL context.
      * @param msgCtx message context.
@@ -1108,7 +1108,7 @@ public class MslControl {
      * @param ctx MSL context.
      * @param msgCtx message context.
      * @param sent result of original sent message.
-     * @param errorHeader received error header. 
+     * @param errorHeader received error header.
      * @return the message builder and message context that should be used to
      *         re-send the original request in response to the received error
      *         or null if the error cannot be handled (i.e. should be returned
@@ -1228,7 +1228,11 @@ public class MslControl {
                 // request's master token then mark this message as renewable.
                 // During renewal lock acquisition we will either block until
                 // we acquire the renewal lock or receive a master token.
-                if (requestHeader.getMasterToken().equals(masterToken))
+                //
+                // Check for a missing master token in case the remote entity
+                // returned an incorrect error code.
+                final MasterToken requestMasterToken = requestHeader.getMasterToken();
+                if (requestMasterToken == null || requestMasterToken.equals(masterToken))
                     requestBuilder.setRenewable(true);
                 requestBuilder.setNonReplayable(resendMsgCtx.isNonReplayable());
                 return new ErrorResult(requestBuilder, resendMsgCtx);
@@ -1265,7 +1269,11 @@ public class MslControl {
                 // During send the application data will be delayed because the
                 // message is replayable but the message context indicates the
                 // application data must sent in a non-replayable message.
-                if (requestHeader.getMasterToken().equals(masterToken)) {
+                //
+                // Check for a missing master token in case the remote entity
+                // returned an incorrect error code.
+                final MasterToken requestMasterToken = requestHeader.getMasterToken();
+                if (requestMasterToken == null || requestMasterToken.equals(masterToken)) {
                     requestBuilder.setRenewable(true);
                     requestBuilder.setNonReplayable(false);
                 }
@@ -2119,7 +2127,7 @@ public class MslControl {
                 } catch (final Throwable rt) {
                     // If we were cancelled then return null.
                     if (cancelled(rt)) return null;
-                        
+                    
                     throw new MslErrorResponseException("Error receiving the message header.", rt, e);
                 }
                 throw e;
@@ -2136,7 +2144,7 @@ public class MslControl {
                 } catch (final Throwable rt) {
                     // If we were cancelled then return null.
                     if (cancelled(rt)) return null;
-                        
+                    
                     throw new MslErrorResponseException("Error receiving the message header.", rt, t);
                 }
                 throw new MslInternalException("Error receiving the message header.", t);
@@ -2167,7 +2175,7 @@ public class MslControl {
                 } catch (final Throwable rt) {
                     // If we were cancelled then return null.
                     if (cancelled(rt)) return null;
-                        
+                    
                     throw new MslErrorResponseException("Error peeking into the message payloads.", rt, t);
                 }
                 throw new MslInternalException("Error peeking into the message payloads.", t);
@@ -2219,7 +2227,7 @@ public class MslControl {
                 } catch (final Throwable rt) {
                     // If we were cancelled then return null.
                     if (cancelled(rt)) return null;
-                        
+                    
                     throw new MslErrorResponseException("Error creating an automatic handshake response.", rt, t);
                 }
                 throw new MslInternalException("Error creating an automatic handshake response.", t);
@@ -2297,7 +2305,7 @@ public class MslControl {
                     } catch (final Throwable rt) {
                         // If we were cancelled then return null.
                         if (cancelled(rt)) return null;
-                            
+                        
                         throw new MslErrorResponseException("Error sending an automatic handshake response.", rt, t);
                     }
                     throw new MslInternalException("Error sending an automatic handshake response.", t);
@@ -2555,7 +2563,7 @@ public class MslControl {
             }
             
             // If we performed a handshake then re-send the message over the
-            // same connection so this time the application can send its data.            
+            // same connection so this time the application can send its data.
             if (result.handshake) {
                 // Close the response as we are discarding it.
                 try {

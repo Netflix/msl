@@ -1187,7 +1187,10 @@ var MslControl$MslChannel;
                                                 // request's master token then mark this message as renewable.
                                                 // During renewal lock acquisition we will either block until
                                                 // we acquire the renewal lock or receive a master token.
-                                                if (requestHeader.masterToken.equals(masterToken))
+                                                //
+                                                // Check for a missing master token in case the error is incorrect
+                                                var requestMasterToken = requestHeader.masterToken;
+                                                if (!requestMasterToken || requestMasterToken.equals(masterToken))
                                                     requestBuilder.setRenewable(true);
                                                 requestBuilder.setNonReplayable(resendMsgCtx.isNonReplayable());
                                                 return {
@@ -1241,7 +1244,10 @@ var MslControl$MslChannel;
                                                 // During send the application data will be delayed because the
                                                 // message is replayable but the message context indicates the
                                                 // application data must sent in a non-replayable message.
-                                                if (requestHeader.masterToken.equals(masterToken)) {
+                                                //
+                                                // Check for a missing master token in case the error is incorrect
+                                                var requestMasterToken = requestHeader.masterToken;
+                                                if (!requestMasterToken || requestMasterToken.equals(masterToken)) {
                                                     requestBuilder.setRenewable(true);
                                                     requestBuilder.setNonReplayable(false);
                                                 }
