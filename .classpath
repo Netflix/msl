@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry excluding="lib/JSON-java/" kind="src" path="src/main/java"/>
+	<classpathentry kind="src" path="src/test/resources"/>
+	<classpathentry kind="src" path="src/main/java/lib/JSON-java"/>
+	<classpathentry kind="src" path="src/test/java"/>
+	<classpathentry kind="src" path="src/examples/java"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="lib" path="src/main/java/lib/bcprov-jdk15on-150.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
