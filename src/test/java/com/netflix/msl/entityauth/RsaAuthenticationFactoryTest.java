@@ -20,6 +20,7 @@ import static org.junit.Assert.assertTrue;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -67,6 +68,11 @@ public class RsaAuthenticationFactoryTest {
         ctx = null;
     }
     
+    @After
+    public void reset() {
+        authutils.reset();
+    }
+    
     @Test
     public void createData() throws MslEncodingException, MslEntityAuthException, JSONException, MslCryptoException {
         final RsaAuthenticationData data = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
@@ -105,6 +111,33 @@ public class RsaAuthenticationFactoryTest {
         thrown.expectMslError(MslError.RSA_PUBLICKEY_NOT_FOUND);
 
         final RsaAuthenticationData data = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, "x");
+        factory.getCryptoContext(ctx, data);
+    }
+    
+    @Test
+    public void localCryptoContext() throws MslCryptoException, MslEntityAuthException {
+        final MockRsaStore rsaStore = new MockRsaStore();
+        rsaStore.addPrivateKey(MockRsaAuthenticationFactory.RSA_PUBKEY_ID, MockRsaAuthenticationFactory.RSA_PRIVKEY);
+        final EntityAuthenticationFactory factory = new RsaAuthenticationFactory(MockRsaAuthenticationFactory.RSA_PUBKEY_ID, rsaStore, authutils);
+        
+        final RsaAuthenticationData data = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
+        final ICryptoContext cryptoContext = factory.getCryptoContext(ctx, data);
+        
+        final byte[] plaintext = new byte[16];
+        ctx.getRandom().nextBytes(plaintext);
+        cryptoContext.sign(plaintext);
+    }
+    
+    @Test
+    public void missingPrivateKey() throws MslCryptoException, MslEntityAuthException {
+        thrown.expect(MslEntityAuthException.class);
+        thrown.expectMslError(MslError.RSA_PRIVATEKEY_NOT_FOUND);
+        
+        final MockRsaStore rsaStore = new MockRsaStore();
+        rsaStore.addPublicKey(MockRsaAuthenticationFactory.RSA_PUBKEY_ID, MockRsaAuthenticationFactory.RSA_PUBKEY);
+        final EntityAuthenticationFactory factory = new RsaAuthenticationFactory(MockRsaAuthenticationFactory.RSA_PUBKEY_ID, rsaStore, authutils);
+        
+        final RsaAuthenticationData data = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
         factory.getCryptoContext(ctx, data);
     }
     

@@ -163,7 +163,8 @@ public class MslError {
     public static final MslError X509CERT_EXPIRED = new MslError(4028, ResponseCode.ENTITYDATA_REAUTH, "X.509 certificate is expired.");
     public static final MslError X509CERT_NOT_YET_VALID = new MslError(4029, ResponseCode.ENTITYDATA_REAUTH, "X.509 certificate is not yet valid.");
     public static final MslError X509CERT_INVALID = new MslError(4030, ResponseCode.ENTITYDATA_REAUTH, "X.509 certificate is invalid.");
-
+    public static final MslError RSA_PRIVATEKEY_NOT_FOUND = new MslError(4031, ResponseCode.ENTITYDATA_REAUTH, "RSA private key not found.");
+    
     // 5 User Authentication
     public static final MslError UNIDENTIFIED_USERAUTH_SCHEME = new MslError(5003, ResponseCode.FAIL, "Unable to identify user authentication scheme.");
     public static final MslError USERAUTH_FACTORY_NOT_FOUND = new MslError(5004, ResponseCode.FAIL, "No factory registered for user authentication scheme.");

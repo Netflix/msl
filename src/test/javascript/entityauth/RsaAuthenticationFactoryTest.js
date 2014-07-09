@@ -41,7 +41,7 @@ describe("RsaAuthenticationFactory", function() {
             runs(function() {
                 var rsaStore = new RsaStore();
                 rsaStore.addPublicKey(MockRsaAuthenticationFactory.RSA_PUBKEY_ID, MockRsaAuthenticationFactory.RSA_PUBKEY);
-                factory = new RsaAuthenticationFactory(rsaStore);
+                factory = new RsaAuthenticationFactory(null, rsaStore);
                 ctx.addEntityAuthenticationFactory(factory);
                 
                 initialized = true;
@@ -84,5 +84,34 @@ describe("RsaAuthenticationFactory", function() {
 	        factory.getCryptoContext(ctx, data);
 	    };
         expect(f).toThrow(new MslEntityAuthException(MslError.RSA_PUBLICKEY_NOT_FOUND));
+    });
+    
+    it("local crypto context", function() {
+        var rsaStore = new RsaStore();
+        rsaStore.addPrivateKey(MockRsaAuthenticationFactory.RSA_PUBKEY_ID, MockRsaAuthenticationFactory.RSA_PRIVKEY);
+        factory = new RsaAuthenticationFactory(MockRsaAuthenticationFactory.RSA_PUBKEY_ID, rsaStore);
+        ctx.addEntityAuthenticationFactory(factory);
+        
+        var data = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
+        var cryptoContext = factory.getCryptoContext(ctx, data);
+        
+        var plaintext = new Uint8Array(16);
+        ctx.getRandom().nextBytes(plaintext);
+        cryptoContext.sign(plaintext, {
+            result: function(ciphertext) {},
+            error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        });
+    });
+    
+    it("missing private key", function() {
+        var f = function() {
+            var rsaStore = new RsaStore();
+            rsaStore.addPublicKey(MockRsaAuthenticationFactory.RSA_PUBKEY_ID, MockRsaAuthenticationFactory.RSA_PUBKEY);
+            var factory = new RsaAuthenticationFactory(MockRsaAuthenticationFactory.RSA_PUBKEY_ID, rsaStore);
+            
+            var data = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
+            factory.getCryptoContext(ctx, data);
+        };
+        expect(f).toThrow(new MslEntityAuthException(MslError.RSA_PRIVATEKEY_NOT_FOUND));
     });
 });

@@ -20,11 +20,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -39,7 +42,10 @@ public class MockRsaStore implements RsaStore {
      */
     @Override
     public Set<String> getIdentities() {
-        return keys.keySet();
+        final Set<String> identities = new HashSet<>();
+        identities.addAll(keys.keySet());
+        identities.addAll(privateKeys.keySet());
+        return identities;
     }
 
     /* (non-Javadoc)
@@ -48,6 +54,13 @@ public class MockRsaStore implements RsaStore {
     @Override
     public PublicKey getPublicKey(final String identity) {
         return keys.get(identity);
+    }
+    
+    /* (non-Javadoc)
+     * @see com.netflix.msl.entityauth.RsaStore#getPrivateKey(java.lang.String)
+     */
+    public PrivateKey getPrivateKey(final String identity) {
+        return privateKeys.get(identity);
     }
 
     /**
@@ -86,7 +99,31 @@ public class MockRsaStore implements RsaStore {
             throw new IllegalArgumentException("Public key is not an instance of RSAPublicKey.");
         keys.put(identity, pubkey);
     }
+    
+    /**
+     * Add an RSA private key to the store.
+     * 
+     * @param identity RSA key pair identity.
+     * @param privkey RSA private key.
+     * @throws IllegalArgumentException if the private key is not a
+     *         {@link RSAPrivateKey}.
+     */
+    public void addPrivateKey(final String identity, final PrivateKey privkey) {
+        if (!(privkey instanceof RSAPrivateKey))
+            throw new IllegalArgumentException("Private key is not an instance of RSAPrivateKey.");
+        privateKeys.put(identity, privkey);
+    }
+    
+    /**
+     * <p>Clear the store of all public and private keys.</p>
+     */
+    public void clear() {
+        keys.clear();
+        privateKeys.clear();
+    }
 
     /** Public keys. */
-    private final Map<String,PublicKey> keys = new HashMap<String,PublicKey>();
+    private final Map<String,PublicKey> keys = new HashMap<>();
+    /** Private keys. */
+    private final Map<String,PrivateKey> privateKeys = new HashMap<>();
 }

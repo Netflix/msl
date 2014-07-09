@@ -15,6 +15,7 @@
  */
 package com.netflix.msl.entityauth;
 
+import java.security.PrivateKey;
 import java.security.PublicKey;
 
 import org.json.JSONObject;
@@ -31,19 +32,35 @@ import com.netflix.msl.util.AuthenticationUtils;
 import com.netflix.msl.util.MslContext;
 
 /**
- * RSA asymmetric keys entity authentication factory.
+ * <p>RSA asymmetric keys entity authentication factory.</p>
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class RsaAuthenticationFactory extends EntityAuthenticationFactory {
     /**
-     * Construct a new RSA asymmetric keys authentication factory instance.
+     * <p>Construct a new RSA asymmetric keys authentication factory
+     * instance.</p>
      * 
-     * @param store RSA public key store.
+     * @param store RSA key store.
      * @param authutils authentication utilities.
      */
     public RsaAuthenticationFactory(final RsaStore store, final AuthenticationUtils authutils) {
+        this(null, store, authutils);
+    }
+    
+    /**
+     * <p>Construct a new RSA asymmetric keys authentication factory instance
+     * with the specified key pair ID for the local entity. The RSA key store
+     * must contain a private key for the local entity (a public key is
+     * optional).</p>
+     * 
+     * @param keyPairId local entity key pair ID.
+     * @param store RSA key store.
+     * @param authutils authentication utilities.
+     */
+    public RsaAuthenticationFactory(final String keyPairId, final RsaStore store, final AuthenticationUtils authutils) {
         super(EntityAuthenticationScheme.RSA);
+        this.keyPairId = keyPairId;
         this.store = store;
         this.authutils = authutils;
     }
@@ -78,13 +95,22 @@ public class RsaAuthenticationFactory extends EntityAuthenticationFactory {
         // Extract RSA authentication data.
         final String pubkeyid = rad.getPublicKeyId();
         final PublicKey publicKey = store.getPublicKey(pubkeyid);
-        if (publicKey == null)
+        final PrivateKey privateKey = store.getPrivateKey(pubkeyid);
+        
+        // The local entity must have a private key.
+        if (pubkeyid.equals(keyPairId) && privateKey == null)
+            throw new MslEntityAuthException(MslError.RSA_PRIVATEKEY_NOT_FOUND, pubkeyid).setEntity(rad);
+        
+        // Remote entities must have a public key.
+        else if (!pubkeyid.equals(keyPairId) && publicKey == null)
             throw new MslEntityAuthException(MslError.RSA_PUBLICKEY_NOT_FOUND, pubkeyid).setEntity(rad);
         
         // Return the crypto context.
-        return new RsaCryptoContext(ctx, identity, null, publicKey, Mode.SIGN_VERIFY);
+        return new RsaCryptoContext(ctx, identity, privateKey, publicKey, Mode.SIGN_VERIFY);
     }
     
+    /** Local entity key pair ID. */
+    private final String keyPairId;
     /** RSA key store. */
     private final RsaStore store;
     /** Authentication utilities. */

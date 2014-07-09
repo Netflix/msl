@@ -15,11 +15,12 @@
  */
 package com.netflix.msl.entityauth;
 
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.Set;
 
 /**
- * An RSA public key store contains trusted RSA public keys.
+ * An RSA public key store contains trusted RSA public and private keys.
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
@@ -36,4 +37,12 @@ public interface RsaStore {
      * @return the public key of the identified key pair or null if not found.
      */
     public PublicKey getPublicKey(final String identity);
+    
+    /**
+     * Return the private key of the identified RSA key pair.
+     * 
+     * @param identity RSA key pair identity.
+     * @return the private key of the identified key pair or null if not found.
+     */
+    public PrivateKey getPrivateKey(final String identity);
 }

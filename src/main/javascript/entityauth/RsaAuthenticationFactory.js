@@ -22,16 +22,22 @@
  */
 var RsaAuthenticationFactory = EntityAuthenticationFactory.extend({
     /**
-     * <p>Construct a new RSA asymmetric keys authentication factory instance.</p>
+     * <p>Construct a new RSA asymmetric keys authentication factory
+     * instance.</p>
+     * 
+     * <p>If a key pair ID is specified for the local entity the RSA key store
+     * must contain a matching private key (a public key is optional).</p>
      *
+     * @param {?string} keyPairId local entity key pair ID.
      * @param {RsaStore} store RSA public key store.
      * @constructor
      */
-    init: function init(store) {
+    init: function init(keyPairId, store) {
         init.base.call(this, EntityAuthenticationScheme.RSA);
 
         // The properties.
         var props = {
+            keyPairId: { value: keyPairId, writable: false, enumerable: false, configurable: false },
             store: { value: store, writable: false, enumerable: false, configurable: false }
         };
         Object.defineProperties(this, props);
@@ -52,10 +58,17 @@ var RsaAuthenticationFactory = EntityAuthenticationFactory.extend({
         var identity = authdata.identity;
         var pubkeyid = authdata.publicKeyId;
         var publicKey = this.store.getPublicKey(pubkeyid);
-        if (!publicKey)
+        var privateKey = this.store.getPrivateKey(pubkeyid);
+        
+        // The local entity must have a private key.
+        if (pubkeyid == this.keyPairId && !privateKey)
+            throw new MslEntityAuthException(MslError.RSA_PRIVATEKEY_NOT_FOUND, pubkeyid).setEntity(authdata);
+        
+        // Remote entities must have a public key.
+        else if (pubkeyid != this.keyPairId && !publicKey)
             throw new MslEntityAuthException(MslError.RSA_PUBLICKEY_NOT_FOUND, pubkeyid).setEntity(authdata);
 
         // Return the crypto context.
-        return new RsaCryptoContext(ctx, identity, null, publicKey, RsaCryptoContext$Mode.SIGN_VERIFY);
+        return new RsaCryptoContext(ctx, identity, privateKey, publicKey, RsaCryptoContext$Mode.SIGN_VERIFY);
     },
 });

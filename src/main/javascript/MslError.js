@@ -190,7 +190,8 @@ util.Class.mixin(MslError,
     X509CERT_EXPIRED : new MslError(4028, MslConstants$ResponseCode.ENTITYDATA_REAUTH, "X.509 certificate is expired."),
     X509CERT_NOT_YET_VALID : new MslError(4029, MslConstants$ResponseCode.ENTITYDATA_REAUTH, "X.509 certificate is not yet valid."),
     X509CERT_INVALID : new MslError(4030, MslConstants$ResponseCode.ENTITYDATA_REAUTH, "X.509 certificate is invalid."),
-
+    RSA_PRIVATEKEY_NOT_FOUND : new MslError(4031, MslConstants$ResponseCode.ENTITYDATA_REAUTH, "RSA private key not found."),
+    
     // 5 User Authentication
     UNIDENTIFIED_USERAUTH_SCHEME : new MslError(5003, MslConstants$ResponseCode.FAIL, "Unable to identify user authentication scheme."),
     USERAUTH_FACTORY_NOT_FOUND : new MslError(5004, MslConstants$ResponseCode.FAIL, "No factory registered for user authentication scheme."),
