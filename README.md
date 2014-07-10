@@ -8,6 +8,14 @@ The [MSL Protocol](https://github.com/Netflix/msl/wiki/) provides a complete des
 
 The set of public interfaces and classes an application must implement and use is documented in the [Public Javadoc](http://netflix.github.com/msl/javadoc-public/). Documentation on all of the code, including internal classes and private methods, can be found in the full [Javadoc](http://netflix.github.com/msl/javadoc/).
 
+## Third-Party Libraries
+
+The Java MSL code base requires the [org.json](http://www.json.org/java/) and [Bouncy Castle](http://www.bouncycastle.org) libraries and the unit tests require [JUnit 4](http://junit.org).
+
+The JavaScript MSL code base includes some third-party libraries within the lib/ directory, most notably the [Clarinet](https://github.com/dscape/clarinet) parser. The [jsrsasign](http://kjur.github.io/jsrsasign/) and [crypto-js](https://code.google.com/p/crypto-js/) libraries are currently included but are planned for removal.
+
+All third-party libraries are subject to their respective license agreements.
+
 ## Getting Started
 
 ## LICENSE
