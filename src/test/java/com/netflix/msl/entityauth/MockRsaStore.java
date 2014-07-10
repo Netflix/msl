@@ -42,7 +42,7 @@ public class MockRsaStore implements RsaStore {
      */
     @Override
     public Set<String> getIdentities() {
-        final Set<String> identities = new HashSet<>();
+        final Set<String> identities = new HashSet<String>();
         identities.addAll(keys.keySet());
         identities.addAll(privateKeys.keySet());
         return identities;
@@ -123,7 +123,7 @@ public class MockRsaStore implements RsaStore {
     }
 
     /** Public keys. */
-    private final Map<String,PublicKey> keys = new HashMap<>();
+    private final Map<String,PublicKey> keys = new HashMap<String,PublicKey>();
     /** Private keys. */
-    private final Map<String,PrivateKey> privateKeys = new HashMap<>();
+    private final Map<String,PrivateKey> privateKeys = new HashMap<String,PrivateKey>();
 }
