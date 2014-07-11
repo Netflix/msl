@@ -2469,7 +2469,7 @@ public class MslControl {
          * @param msgCtx message context.
          * @param builder response message builder.
          * @param msgCount number of messages sent or received so far.
-         * @return a MSL channel if the response was sent or false if cancelled,
+         * @return a MSL channel if the response was sent or null if cancelled,
          *         interrupted, or if the response could not be sent encrypted
          *         or integrity protected when required, a user could not be
          *         attached due to lack of a master token, or if the maximum
@@ -2933,6 +2933,9 @@ public class MslControl {
         /** Number of messages sent or received so far. */
         private final int msgCount;
         
+        /** True if the maximum message count is hit. */
+        private boolean maxMessagesHit = false;
+        
         /**
          * Create a new message request service.
          * 
@@ -3049,6 +3052,7 @@ public class MslControl {
             // Make sure to release the master token lock.
             if (msgCount + 2 > MAX_MESSAGES) {
                 releaseMasterToken(builder.getMasterToken());
+                maxMessagesHit = true;
                 return null;
             }
             
@@ -3102,6 +3106,7 @@ public class MslControl {
                     // will be released when the service executes.
                     final RequestService service = new RequestService(ctx, resendMsgCtx, remoteEntity, requestBuilder, timeout, msgCount);
                     newChannel = service.call();
+                    maxMessagesHit = service.maxMessagesHit;
                 } else {
                     // Send the error response. Recursively execute this
                     // because it may take multiple messages to succeed with
@@ -3112,17 +3117,13 @@ public class MslControl {
                     newChannel = execute(resendMsgCtx, requestBuilder, timeout, msgCount);
                 }
                 
-                // If cancelled or the maximum message count was hit then
-                // return null.
-                if (newChannel == null)
-                    return null;
-                
-                // If there is no new response return the original error
-                // response.
-                if (newChannel.input == null)
+                // If the maximum message count was hit or if there is no new
+                // response then return the original error response.
+                if (maxMessagesHit || (newChannel != null && newChannel.input == null))
                     return new MslChannel(response, null);
-
-                // Return the new channel, which may contain an error.
+                
+                // Return the new channel, which may contain an error or be
+                // null if cancelled or interrupted.
                 return newChannel;
             }
             

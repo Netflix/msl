@@ -3230,7 +3230,7 @@ var MslControl$MslChannel;
          * @param {number} msgCount number of messages sent or received so far.
          * @param {{result: function(boolean), timeout: function(), error: function(Error)}}
          *        callback the callback will receive a MSL channel if the
-         *        response was sent or false if cancelled, interrupted, or if
+         *        response was sent or null if cancelled, interrupted, or if
          *        the response could not be sent encrypted or integrity
          *        protected when required, a user could not be attached due to
          *        lack of a master token, or if the maximum message count is
@@ -3451,7 +3451,6 @@ var MslControl$MslChannel;
                     result: function(builderTokenTicket) {
                         InterruptibleExecutor(callback, function() {
                             var builder = builderTokenTicket.builder;
-                            var tokenTicket = builderTokenTicket.tokenTicket;
 
                             // At most three messages would have been involved in the original
                             // receive.
@@ -3775,6 +3774,7 @@ var MslControl$MslChannel;
                 _tokenTicket: { value: tokenTicket, writable: true, enumerable: false, configurable: false },
                 _timeout: { value: timeout, writable: false, enumerable: false, configurable: false },
                 _msgCount: { value: msgCount, writable: false, enumerable: false, configurable: false },
+                _maxMessagesHit: { value: false, writable: true, enumerable: false, configurable: false },
                 _aborted: { value: false, writable: true, enumerable: false, configurable: false },
                 _abortFunc: { value: undefined, writable: true, enumerable: false, configurable: false }
             };
@@ -3840,6 +3840,7 @@ var MslControl$MslChannel;
                 if (msgCount + 2 > MAX_MESSAGES) {
                     var tokenTicket = builderTokenTicket.tokenTicket;
                     this._ctrl.releaseMasterToken(tokenTicket);
+                    this._maxMessagesHit = true;
                     return null;
                 }
 
@@ -3978,7 +3979,12 @@ var MslControl$MslChannel;
                                     // the service.
                                     this.setAbort(function() { service.abort(); });
                                     service.call({
-                                        result: function(newChannel) { processErrorResponse(result, newChannel); },
+                                        result: function(newChannel) {
+                                            InterruptibleExecutor(callback, function() {
+                                                this._maxMessagesHit = service._maxMessagesHit;
+                                                processErrorResponse(result, newChannel);
+                                            }, self);
+                                        },
                                         timeout: callback.timeout,
                                         error: callback.error,
                                     });
@@ -4025,17 +4031,13 @@ var MslControl$MslChannel;
 
                 function processErrorResponse(result, newChannel) {
                     InterruptibleExecutor(callback, function() {
-                        // If cancelled or the maximum message count was hit then
-                        // return null.
-                        if (!newChannel)
-                            return null;
-
-                        // If there is no new response return the original error
-                        // response.
-                        if (!newChannel.input)
+                        // If the maximum message count was hit or if there is no new
+                        // response then return the original error response.
+                        if (this._maxMessagesHit || (newChannel && !newChannel.input))
                             return new MslChannel(result.response, null);
-
-                        // Return the new channel, which may contain an error.
+                        
+                        // Return the new channel, which may contain an error or be
+                        // null if cancelled or interrupted.
                         return newChannel;
                     }, self);
                 }
