@@ -209,7 +209,7 @@ public class MessageInputStream extends InputStream {
                 throw new MslEncodingException(MslError.MESSAGE_FORMAT_ERROR);
             jo = (JSONObject)o;
         } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "header");
+            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "header", e);
         }
         this.header = Header.parseHeader(ctx, jo, cryptoContexts);
         

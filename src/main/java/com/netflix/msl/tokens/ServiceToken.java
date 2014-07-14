@@ -302,14 +302,14 @@ public class ServiceToken implements JSONString {
             try {
                 tokendata = DatatypeConverter.parseBase64Binary(serviceTokenJO.getString(KEY_TOKENDATA));
             } catch (final IllegalArgumentException e) {
-                throw new MslEncodingException(MslError.SERVICETOKEN_TOKENDATA_INVALID, "servicetoken " + serviceTokenJO.toString()).setEntity(masterToken).setUser(userIdToken);
+                throw new MslEncodingException(MslError.SERVICETOKEN_TOKENDATA_INVALID, "servicetoken " + serviceTokenJO.toString(), e).setEntity(masterToken).setUser(userIdToken);
             }
             if (tokendata == null || tokendata.length == 0)
                 throw new MslEncodingException(MslError.SERVICETOKEN_TOKENDATA_MISSING, "servicetoken " + serviceTokenJO.toString()).setEntity(masterToken).setUser(userIdToken);
             try {
                 signature = DatatypeConverter.parseBase64Binary(serviceTokenJO.getString(KEY_SIGNATURE));
             } catch (final IllegalArgumentException e) {
-                throw new MslEncodingException(MslError.SERVICETOKEN_SIGNATURE_INVALID, "servicetoken " + serviceTokenJO.toString()).setEntity(masterToken).setUser(userIdToken);
+                throw new MslEncodingException(MslError.SERVICETOKEN_SIGNATURE_INVALID, "servicetoken " + serviceTokenJO.toString(), e).setEntity(masterToken).setUser(userIdToken);
             }
             verified = (cryptoContext != null) ? cryptoContext.verify(tokendata, signature) : false;
         } catch (final JSONException e) {
