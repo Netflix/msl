@@ -83,19 +83,16 @@ var IHttpLocation = util.Class.create({
         /**
          * Return the response. This blocks until a response is available.
          *
-         * @param {number} timeout response timeout in milliseconds or -1 for
-         *        no timeout.
-         * @param {{result: function({success: boolean, content: Uint8Array, errorHttpCode: number, errorSubCode: number}),
-         *         timeout: function(), error: function(Error)}}
+         * @param {{result: function({success: boolean, content: Uint8Array, errorHttpCode: number, errorSubCode: number}), error: function(Error)}}
          *        callback the callback will receive the HTTP response or
-         *        undefined if the HTTP transaction was aborted, notified of
-         *        timeout or any thrown exceptions.
+         *        undefined if the HTTP transaction was aborted and notified of
+         *        any thrown exceptions.
          */
-        getResponse: function getResponse(timeout, callback) {
+        getResponse: function getResponse(callback) {
             var self = this;
-            this._responseQueue.poll(timeout, {
+            this._responseQueue.poll(-1, {
                 result: function(response) {
-                    InterruptibleExecutor(callback, function() {
+                    AsyncExecutor(callback, function() {
                         // If we received a response then stick it back onto the
                         // queue for the next requestor.
                         if (response)
@@ -104,15 +101,18 @@ var IHttpLocation = util.Class.create({
                     }, self);
                 },
                 timeout: function() {
-                    InterruptibleExecutor(callback, function() {
-                        this._response = { isTimeout: true };
+                    AsyncExecutor(callback, function() {
+                        // This should never happen but if it does inject an
+                        // error response and abort the request as an attempt
+                        // at cleanup.
+                        this._response = { isError: true };
                         this._responseQueue.add(this._response);
                         this.abort();
-                        callback.timeout();
+                        throw new MslInternalException("Timeout while waiting for HttpOutputStream.getResponse() despite no timeout being specified.");
                     }, self);
                 },
                 error: function(e) {
-                    InterruptibleExecutor(callback, function() {
+                    AsyncExecutor(callback, function() {
                         this._response = { isError: true };
                         this._responseQueue.add(this._response);
                         throw e;
@@ -277,7 +277,7 @@ var IHttpLocation = util.Class.create({
                     if (!closed) return new Uint8Array(0);
 
                     // Otherwise grab the response.
-                    this._out.getResponse(timeout, {
+                    this._out.getResponse({
                         result: function(result) {
                             InterruptibleExecutor(callback, function() {
                                 var content;
@@ -299,7 +299,6 @@ var IHttpLocation = util.Class.create({
                                     throw this._exception;
                                 }
 
-
                                 // this allows the stream to return already-parsed JSON
                                 if (result.response.json !== undefined) {
                                     this._json = result.response.json;
@@ -311,7 +310,6 @@ var IHttpLocation = util.Class.create({
                                 this._buffer.read(len, timeout, callback);
                             }, self);
                         },
-                        timeout: function() { callback.timeout(); },
                         error: function(e) { callback.error(e); }
                     });
                 }, self);

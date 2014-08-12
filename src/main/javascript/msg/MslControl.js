@@ -1633,7 +1633,7 @@ var MslControl$MslChannel;
                         service.setAbort(function() { response.abort(); });
 
                         // Wait until the input stream is ready.
-                        response.isReady(timeout, {
+                        response.isReady({
                             result: function(ready) {
                                 InterruptibleExecutor(callback, function() {
                                     // If aborted throw an exception.

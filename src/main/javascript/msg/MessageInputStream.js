@@ -791,22 +791,22 @@ var MessageInputStream$create;
 
         /**
          * Block until the message input stream successfully read the message
-         * header and been fully initialized.
+         * header and been fully initialized. The timeout callback will be
+         * triggered based off the timeout value provided to the constructor.
          *
-         * @param {number} timeout ready timeout in milliseconds.
          * @param {{result: function(boolean), timeout: function(), error: function(Error)}}
          *        callback the callback will receive true once the message
          *        input stream is ready or false if it has been aborted,
          *        notified of timeout, or any exceptions thrown during the
          *        message initialization.
          */
-        isReady: function isReady(timeout, callback) {
+        isReady: function isReady(callback) {
             var self = this;
 
             InterruptibleExecutor(callback, function() {
                 // If not ready wait until we are ready.
                 if (!this._ready) {
-                    this._readyQueue.poll(timeout, {
+                    this._readyQueue.poll(-1, {
                         result: function(elem) {
                             InterruptibleExecutor(callback, function() {
                                 // If aborted return false.
@@ -814,7 +814,11 @@ var MessageInputStream$create;
                                 perform();
                             }, self);
                         },
-                        timeout: function() { callback.timeout(); },
+                        timeout: function() {
+                            AsyncExecutor(callback, function() {
+                                throw new MslInternalException("Timeout while waiting for MessageInputStream.isReady() despite no timeout being specified.");
+                            });
+                        },
                         error: function(e) { callback.error(e); }
                     });
                 } else {
