@@ -8,6 +8,10 @@ The [MSL Protocol](https://github.com/Netflix/msl/wiki/) provides a complete des
 
 The set of public interfaces and classes an application must implement and use is documented in the [Public Javadoc](http://netflix.github.com/msl/javadoc-public/). Documentation on all of the code, including internal classes and private methods, can be found in the full [Javadoc](http://netflix.github.com/msl/javadoc/).
 
+## Security Review
+
+The protocol as documented has undergone a third-party security review by [Security Research Labs](https://srlabs.de). No security issues have been identified. The core capabilities of authentication, integrity protection, confidentiality, and non-replayability are supported.
+
 ## Third-Party Libraries
 
 The Java MSL code base requires the [org.json](http://www.json.org/java/) and [Bouncy Castle](http://www.bouncycastle.org) libraries and the unit tests require [JUnit 4](http://junit.org).
