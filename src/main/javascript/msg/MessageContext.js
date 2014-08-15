@@ -77,7 +77,7 @@ var MessageContext = util.Class.create({
      * 
      * @return {boolean} true if the application data must be integrity protected.
      */
-    isIntegrityProtected: function isIntegrityProtected() {},
+    isIntegrityProtected: function() {},
 
     /**
      * <p>Called to determine if a message should be marked as

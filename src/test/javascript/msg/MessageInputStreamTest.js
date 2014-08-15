@@ -349,9 +349,9 @@ describe("MessageInputStream", function() {
         
         var ready = false;
         runs(function() {
-            mis.isReady(TIMEOUT, {
+            mis.isReady({
                 result: function(r) { ready = r; },
-                timeout: function() { throw new Error("Timed out waiting for mis ready."); },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
@@ -412,9 +412,9 @@ describe("MessageInputStream", function() {
         
         var ready = false;
         runs(function() {
-            mis.isReady(TIMEOUT, {
+            mis.isReady({
                 result: function(r) { ready = r; },
-                timeout: function() { throw new Error("Timed out waiting for mis ready."); },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
@@ -473,9 +473,9 @@ describe("MessageInputStream", function() {
         
         var ready = false;
         runs(function() {
-            mis.isReady(TIMEOUT, {
+            mis.isReady({
                 result: function(r) { ready = r; },
-                timeout: function() { throw new Error("Timed out waiting for mis ready."); },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
@@ -549,9 +549,9 @@ describe("MessageInputStream", function() {
         
         var exception;
         runs(function() {
-            mis.isReady(TIMEOUT, {
+            mis.isReady({
                 result: function() {},
-                timeout: function() { throw new Error("Timed out waiting for mis ready."); },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
                 error: function(e) { exception = e; }
             });
         });
@@ -618,9 +618,9 @@ describe("MessageInputStream", function() {
         
         var exception;
         runs(function() {
-            mis.isReady(TIMEOUT, {
+            mis.isReady({
                 result: function() {},
-                timeout: function() { throw new Error("Timed out waiting for mis ready."); },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
                 error: function(e) { exception = e; }
             });
         });
@@ -654,9 +654,9 @@ describe("MessageInputStream", function() {
         
         var ready = false;
         runs(function() {
-            mis.isReady(TIMEOUT, {
+            mis.isReady({
                 result: function(r) { ready = r; },
-                timeout: function() { throw new Error("Timed out waiting for mis ready."); },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
@@ -726,9 +726,9 @@ describe("MessageInputStream", function() {
         
         var ready = false;
         runs(function() {
-            mis.isReady(TIMEOUT, {
+            mis.isReady({
                 result: function(r) { ready = r; },
-                timeout: function() { throw new Error("Timed out waiting for mis ready."); },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
@@ -811,9 +811,9 @@ describe("MessageInputStream", function() {
         
         var exception;
         runs(function() {
-            mis.isReady(TIMEOUT, {
+            mis.isReady({
                 result: function() {},
-                timeout: function() { throw new Error("Timed out waiting for mis ready."); },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
                 error: function(e) { exception = e; }
             });
         });
@@ -889,9 +889,9 @@ describe("MessageInputStream", function() {
         
         var exception;
         runs(function() {
-            mis.isReady(TIMEOUT, {
+            mis.isReady({
                 result: function() {},
-                timeout: function() { throw new Error("Timed out waiting for mis ready."); },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
                 error: function(e) { exception = e; }
             });
         });
@@ -937,7 +937,7 @@ describe("MessageInputStream", function() {
         
         var handshake;
         runs(function() {
-            mis.isReady(TIMEOUT, {
+            mis.isReady({
                 result: function(r) {
                     mis.isHandshake(TIMEOUT, {
                         result: function(x) { handshake = x; },
@@ -945,7 +945,7 @@ describe("MessageInputStream", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 },
-                timeout: function() { throw new Error("Timed out waiting for mis ready."); },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
@@ -1009,7 +1009,7 @@ describe("MessageInputStream", function() {
         
         var handshake;
         runs(function() {
-            mis.isReady(TIMEOUT, {
+            mis.isReady({
                 result: function(r) {
                     mis.isHandshake(TIMEOUT, {
                         result: function(x) { handshake = x; },
@@ -1017,7 +1017,7 @@ describe("MessageInputStream", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 },
-                timeout: function() { throw new Error("Timed out waiting for mis ready."); },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
@@ -1081,7 +1081,7 @@ describe("MessageInputStream", function() {
         
         var handshake;
         runs(function() {
-            mis.isReady(TIMEOUT, {
+            mis.isReady({
                 result: function(r) {
                     mis.isHandshake(TIMEOUT, {
                         result: function(x) { handshake = x; },
@@ -1089,7 +1089,7 @@ describe("MessageInputStream", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 },
-                timeout: function() { throw new Error("Timed out waiting for mis ready."); },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
@@ -1313,9 +1313,9 @@ describe("MessageInputStream", function() {
 
         var exception;
         runs(function() {
-        	mis.isReady(TIMEOUT, {
+        	mis.isReady({
         		result: function() {},
-        		timeout: function() { throw new Error("Timed out waiting for mis ready."); },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
         		error: function(e) { exception = e; }
         	});
         });
@@ -1370,9 +1370,9 @@ describe("MessageInputStream", function() {
 
         var exception;
         runs(function() {
-        	mis.isReady(TIMEOUT, {
+        	mis.isReady({
         		result: function() {},
-        		timeout: function() { throw new Error("Timed out waiting for mis ready."); },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
         		error: function(e) { exception = e; }
         	});
         });
@@ -1442,9 +1442,9 @@ describe("MessageInputStream", function() {
 
         var exception;
         runs(function() {
-        	mis.isReady(TIMEOUT, {
+        	mis.isReady({
         		result: function() {},
-        		timeout: function() { throw new Error("Timed out waiting for mis ready."); },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
         		error: function(e) { exception = e; }
         	});
         });
@@ -1678,9 +1678,9 @@ describe("MessageInputStream", function() {
 
         var exception;
         runs(function() {
-        	mis.isReady(TIMEOUT, {
+        	mis.isReady({
         		result: function() {},
-        		timeout: function() { throw new Error("Timed out waiting for mis ready."); },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
         		error: function(e) { exception = e; }
         	});
         });
@@ -1738,9 +1738,9 @@ describe("MessageInputStream", function() {
 
         var exception;
         runs(function() {
-        	mis.isReady(TIMEOUT, {
+        	mis.isReady({
         		result: function() {},
-        		timeout: function() { throw new Error("Timed out waiting for mis ready."); },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
         		error: function(e) { exception = e; }
         	});
         });
@@ -1871,9 +1871,9 @@ describe("MessageInputStream", function() {
 
         var exception;
         runs(function() {
-        	mis.isReady(TIMEOUT, {
+        	mis.isReady({
         		result: function() {},
-        		timeout: function() { throw new Error("Timed out waiting for mis ready."); },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
         		error: function(e) { exception = e; }
         	});
         });
@@ -1929,9 +1929,9 @@ describe("MessageInputStream", function() {
 
         var exception;
         runs(function() {
-        	mis.isReady(TIMEOUT, {
+        	mis.isReady({
         		result: function() {},
-        		timeout: function() { throw new Error("Timed out waiting for mis ready."); },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
         		error: function(e) { exception = e; }
         	});
         });
@@ -1976,9 +1976,9 @@ describe("MessageInputStream", function() {
 
         var exception;
         runs(function() {
-            mis.isReady(TIMEOUT, {
+            mis.isReady({
                 result: function() {},
-                timeout: function() { throw new Error("Timed out waiting for mis ready."); },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
                 error: function(e) { exception = e; }
             });
         });
@@ -2023,9 +2023,9 @@ describe("MessageInputStream", function() {
 
         var exception;
         runs(function() {
-            mis.isReady(TIMEOUT, {
+            mis.isReady({
                 result: function() {},
-                timeout: function() { throw new Error("Timed out waiting for mis ready."); },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
                 error: function(e) { exception = e; }
             });
         });
@@ -2070,9 +2070,9 @@ describe("MessageInputStream", function() {
 
         var exception;
         runs(function() {
-        	mis.isReady(TIMEOUT, {
+        	mis.isReady({
         		result: function() {},
-        		timeout: function() { throw new Error("Timed out waiting for mis ready."); },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
         		error: function(e) { exception = e; }
         	});
         });
@@ -2117,9 +2117,9 @@ describe("MessageInputStream", function() {
 
         var exception;
         runs(function() {
-        	mis.isReady(TIMEOUT, {
+        	mis.isReady({
         		result: function() {},
-        		timeout: function() { throw new Error("Timed out waiting for mis ready."); },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
         		error: function(e) { exception = e; }
         	});
         });
@@ -2186,9 +2186,9 @@ describe("MessageInputStream", function() {
         
         var exception;
         runs(function() {
-            mis.isReady(TIMEOUT, {
+            mis.isReady({
                 result: function() {},
-                timeout: function() { throw new Error("Timed out waiting for mis ready."); },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
                 error: function(e) { exception = e; }
             });
         })
@@ -2255,9 +2255,9 @@ describe("MessageInputStream", function() {
         
         var exception;
         runs(function() {
-            mis.isReady(TIMEOUT, {
+            mis.isReady({
                 result: function() {},
-                timeout: function() { throw new Error("Timed out waiting for mis ready."); },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
                 error: function(e) { exception = e; }
             });
         });
@@ -2328,9 +2328,9 @@ describe("MessageInputStream", function() {
             });
         }
         function ready(mis) {
-            mis.isReady(TIMEOUT, {
+            mis.isReady({
                 result: function() { throw new Error(i + ": Non-replayable ID " + nonReplayableId + " accepted with largest non-replayable ID " + largestNonReplayableId); },
-                timeout: function() { throw new Error("Timed out waiting for mis ready."); },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
                 error: function(exception) { check(exception); }
             });
         }
@@ -2371,12 +2371,16 @@ describe("MessageInputStream", function() {
             var largestNonReplayableIdA = MslConstants$MAX_LONG_VALUE - NON_REPLAYABLE_ID_WINDOW;
             var nonReplayableIdA = MslConstants$MAX_LONG_VALUE;
             iterate(0, nonReplayableIdA, largestNonReplayableIdA);
+        });
+        waitsFor(function() { return complete; }, "complete (wraparound)", 10000);
             
+        runs(function() {
+            complete = false;
             var largestNonReplayableIdB = MslConstants$MAX_LONG_VALUE;
             var nonReplayableIdB = NON_REPLAYABLE_ID_WINDOW - 1;
             iterate(0, nonReplayableIdB, largestNonReplayableIdB);
         });
-        waitsFor(function() { return complete; }, "complete", 10000);
+        waitsFor(function() { return complete; }, "complete (sequential)", 10000);
         
         var max = 2;
         function iterate(i, nonReplayableId, largestNonReplayableId) {
@@ -2408,10 +2412,10 @@ describe("MessageInputStream", function() {
             });
         }
         function ready(mis, i, nonReplayableId, largestNonReplayableId) {
-            mis.isReady(TIMEOUT, {
+            mis.isReady({
                 result: function(ready) { check(ready, i, nonReplayableId, largestNonReplayableId); },
-                timeout: function() { console.log(i, nonReplayableId, largestNonReplayableId); throw new Error("Timed out waiting for mis ready."); },
-                error: function(e) { throw new Error(i + ": Non-replayable ID " + nonReplayableId + " rejected with largest non-replayable ID " + largestNonReplayableId); }
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw new Error(i + ": Non-replayable ID " + nonReplayableId + " rejected with largest non-replayable ID " + largestNonReplayableId); }).not.toThrow(); }
             });
         }
         function check(ready, i, nonReplayableId, largestNonReplayableId) {
@@ -2478,9 +2482,9 @@ describe("MessageInputStream", function() {
 
         var exception;
         runs(function() {
-        	mis.isReady(TIMEOUT, {
+        	mis.isReady({
         		result: function() {},
-        		timeout: function() { throw new Error("Timed out waiting for mis ready."); },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
         		error: function(e) { exception = e; }
         	});
         });
@@ -2547,9 +2551,9 @@ describe("MessageInputStream", function() {
 
         var exception;
         runs(function() {
-        	mis.isReady(TIMEOUT, {
+        	mis.isReady({
         		result: function() {},
-        		timeout: function() { throw new Error("Timed out waiting for mis ready."); },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
         		error: function(e) { exception = e; }
         	});
         });
@@ -2583,9 +2587,9 @@ describe("MessageInputStream", function() {
         
         var ready = false;
         runs(function() {
-        	mis.isReady(TIMEOUT, {
+        	mis.isReady({
         		result: function(r) { ready = r; },
-        		timeout: function() { throw new Error("Timed out waiting for mis ready."); },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
@@ -2630,9 +2634,9 @@ describe("MessageInputStream", function() {
         
         var ready;
         runs(function() {
-            mis.isReady(TIMEOUT, {
+            mis.isReady({
                 result: function(r) { ready = r; },
-                timeout: function() { throw new Error("Timed out waiting for mis ready."); },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
@@ -2687,9 +2691,9 @@ describe("MessageInputStream", function() {
         
         var ready;
         runs(function() {
-            mis.isReady(TIMEOUT, {
+            mis.isReady({
                 result: function(r) { ready = r; },
-                timeout: function() { throw new Error("Timed out waiting for mis ready."); },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });

@@ -31,6 +31,13 @@ public class SimpleUser implements MslUser {
     public SimpleUser(final String userId) {
         this.userId = userId;
     }
+    
+    /**
+     * @return the user ID.
+     */
+    public String getUserId() {
+        return userId;
+    }
 
     /* (non-Javadoc)
      * @see com.netflix.msl.tokens.MslUser#getEncoded()

@@ -54,7 +54,7 @@ var TokenFactory = util.Class.create({
      * 
      * @param {MslContext} ctx MSL context.
      * @param {MasterToken} masterToken the master token to check.
-     * @return {{result: function(MslError), error: function(Error)}} callback
+     * @param {{result: function(MslError), error: function(Error)}} callback
      *        callback the callback functions that will receive {@code null} if
      *        the master token has not been revoked, a MSL error if it has, or
      *        or any thrown exceptions.
@@ -62,7 +62,7 @@ var TokenFactory = util.Class.create({
      * @throws MslException if there is an error performing the revocation
      *         check.
      */
-    isMasterTokenRevoked: function(ctx, masterToken) {},
+    isMasterTokenRevoked: function(ctx, masterToken, callback) {},
     
     /**
      * <p>Return true if the non-replayable ID is larger by no more than 65536

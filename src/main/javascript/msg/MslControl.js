@@ -297,7 +297,7 @@ var MslControl$MslChannel;
 
             // If there are no payloads ask the application message context to
             // write its data.
-            if (!this._payloads) {
+            if (!this._payloads || this._payloads.length == 0) {
                 write.base.call(this, output, timeout, callback);
                 return;
             }
@@ -1633,7 +1633,7 @@ var MslControl$MslChannel;
                         service.setAbort(function() { response.abort(); });
 
                         // Wait until the input stream is ready.
-                        response.isReady(timeout, {
+                        response.isReady({
                             result: function(ready) {
                                 InterruptibleExecutor(callback, function() {
                                     // If aborted throw an exception.

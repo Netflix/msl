@@ -17,6 +17,7 @@ package server.msg;
 
 import org.json.JSONObject;
 
+import server.SimpleConstants;
 import server.userauth.SimpleUser;
 
 /**
@@ -28,8 +29,15 @@ import server.userauth.SimpleUser;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class SimpleQuitRequest extends SimpleRequest {
+    /**
+     * <p>Create a new quit request.</p>
+     * 
+     * @param identity requesting entity identity.
+     * @param user requesting user. May be null.
+     * @param data
+     */
     public SimpleQuitRequest(final String identity, final SimpleUser user, final JSONObject data) {
-        super(Type.USER_PROFILE, identity, user);
+        super(Type.QUIT, identity, user);
     }
 
     /* (non-Javadoc)
@@ -49,7 +57,7 @@ public class SimpleQuitRequest extends SimpleRequest {
         
         // The request must come from the administrator.
         final SimpleUser user = getUser();
-        if (user == null) {
+        if (user == null || !SimpleConstants.ADMIN_USERNAME.equals(user.getUserId())) {
             response = "Error: only the administrator may terminate the server.";
         } else {
             response = "Terminating server.";
@@ -58,5 +66,4 @@ public class SimpleQuitRequest extends SimpleRequest {
         // Return the response.
         return new SimpleRespondMessageContext(getIdentity(), true, response);
     }
-
 }

@@ -550,7 +550,7 @@ public class MslControl {
         public void write(final MessageOutputStream output) throws IOException {
             // If there are no payloads ask the application message context to
             // write its data.
-            if (payloads == null) {
+            if (payloads == null || payloads.isEmpty()) {
                 appCtx.write(output);
                 return;
             }
