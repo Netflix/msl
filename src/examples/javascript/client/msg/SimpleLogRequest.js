@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 var SimpleLogRequest;
-var SimpleLogRequest.Severity;
+var SimpleLogRequest$Severity;
 
 (function() {
     "use strict";
@@ -27,7 +27,7 @@ var SimpleLogRequest.Severity;
     var KEY_MESSAGE = "message";
     
     /** Log message severity. */
-    var Severity = SimpleLogRequest.Severity = {
+    var Severity = SimpleLogRequest$Severity = {
         ERROR: "ERROR",
         WARN: "WARN",
         INFO: "INFO"

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 var SimpleKeyxManager;
-var SimpleKeyxManager.KeyPair;
+var SimpleKeyxManager$KeyPair;
 
 (function() {
     "use strict";
@@ -24,7 +24,7 @@ var SimpleKeyxManager.KeyPair;
      * 
      * @author Wesley Miaw <wmiaw@netflix.com>
      */
-    var KeyPair = SimpleKeyxManager.KeyPair = util.Class.create({
+    var KeyPair = SimpleKeyxManager$KeyPair = util.Class.create({
         /**
          * <p>Create a new key pair.</p>
          * 

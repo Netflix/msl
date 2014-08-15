@@ -19,7 +19,7 @@ var SimpleProfileRequest;
     "use strict";
     
     // Shortcuts.
-    var Type = SimpleRequest.Type;
+    var Type = SimpleRequest$Type;
     
     /**
      * <p>Request to return a user profile.</p>
@@ -33,7 +33,7 @@ var SimpleProfileRequest;
          * <p>Create a new user profile request.</p>
          */
         init: function init() {
-            super(this, Type.USER_PROFILE);
+            init.base.call(this, Type.USER_PROFILE);
         },
     
         /** @inheritDoc */

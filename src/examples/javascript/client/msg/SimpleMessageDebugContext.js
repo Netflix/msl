@@ -33,7 +33,7 @@ var SimpleMessageDebugContext;
                 _received: { value: receivedText, writable: false, enumerable: false, configurable: false },
             };
             Object.defineProperties(this, props);
-        }
+        },
         
         /** @inheritDoc */
         sentHeader: function sentHeader(header) {

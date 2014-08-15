@@ -22,7 +22,7 @@ var SimpleEchoRequest;
     var KEY_MESSAGE = "message";
     
     // Shortcuts.
-    var Type = SimpleRequest.Type;
+    var Type = SimpleRequest$Type;
 
     /**
      * <p>Request to echo the request message. The requesting entity identity and

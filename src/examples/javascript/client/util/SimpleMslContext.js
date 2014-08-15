@@ -26,19 +26,21 @@ var SimpleMslContext;
     SimpleMslContext = MslContext.extend({
         /**
          * <p>Create a new client MSL context.</p>
-         * 
+         *
+         * @param {string} local client entity identity.
+         * @param {RsaStore} remove server entity RSA store.
          * @param {SimpleKeyxManager} keyxMgr key exchange manager.
          * @param {function(string)} errorCallback key manager generation error
          *        callback.
          */
-        init: function init(keyxMgr, errorCallback) {
+        init: function init(clientId, rsaStore, keyxMgr, errorCallback) {
             // Message capabilities.
             var compressionAlgos = [ MslConstants$CompressionAlgorithm.LZW ];
             var languages = [ "US_en" ];
             var msgCaps = new MessageCapabilities(compressionAlgos, languages);
             
             // Entity authentication data.
-            var entityAuthData = new UnauthenticatedAuthenticationData(SimpleConstants.CLIENT_ID);
+            var entityAuthData = new UnauthenticatedAuthenticationData(clientId);
             
             // Entity authentication factories.
             var entityAuthFactories = {};
@@ -64,7 +66,7 @@ var SimpleMslContext;
                 _store: { value: store, writable: false, enumerable: false, configurable: false },
             };
             Object.defineProperties(this, props);
-        }
+        },
         
         /** @inheritDoc */
         getTime: function getTime() {

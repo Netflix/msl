@@ -19,7 +19,7 @@ var SimpleQuitRequest;
     "use strict";
 
     // Shortcuts.
-    var Type = SimpleRequest.Type;
+    var Type = SimpleRequest$Type;
     
     /**
      * <p>Request to terminate the server. Only the server administrator is

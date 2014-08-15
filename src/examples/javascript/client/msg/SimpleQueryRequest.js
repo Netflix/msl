@@ -22,7 +22,7 @@ var SimpleQueryRequest;
     var KEY_KEY = "key";
     
     // Shortcuts.
-    var Type = SimpleRequest.TYPE;
+    var Type = SimpleRequest$Type;
 
     /**
      * <p>Query for a data value. Some data values require a user identity for

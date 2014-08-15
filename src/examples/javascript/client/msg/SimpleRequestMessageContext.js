@@ -48,11 +48,11 @@ var SimpleRequestMessageContext;
                 _userAuthData: { value: userAuthData, writable: false, enumerable: false, configurable: false },
                 _request: { value: request, writable: false, enumerable: false, configurable: false },
                 _keyxMgr: { value: keyxMgr, writable: false, enumerable: false, configurable: false },
-                _dbgCtx: { value: dbgCtx, writable: false, enumerable: false, configurable: false }
+                _dbgCtx: { value: dbgCtx, writable: false, enumerable: false, configurable: false },
                 _errorCallback: { value: errorCallback, writable: false, enumerable: false, configurable: false },
             };
             Object.defineProperties(this, props);
-        }
+        },
         
         /** @inheritDoc */
         getCryptoContexts: function getCryptoContexts() {

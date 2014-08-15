@@ -33,30 +33,31 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 var SimpleRequest;
-var SimpleRequest.Type;
+var SimpleRequest$Type;
 
 (function() {
     "use strict";
+
+    /** JSON key type. */
+    var KEY_TYPE = "type";
+    /** JSON key data. */
+    var KEY_DATA = "data";
+
+    /** Request type. */
+    var Type = SimpleRequest$Type = {
+        /** Echo request data. */
+        ECHO: "ECHO",
+        /** Query for data. */
+        QUERY: "QUERY",
+        /** Provide log data. */
+        LOG: "LOG",
+        /** Return user profile. */
+        USER_PROFILE: "USER_PROFILE",
+        /** Terminate server execution. */
+        QUIT: "QUIT",
+    };
     
     SimpleRequest = util.Class.create({
-        /** JSON key type. */
-        var KEY_TYPE = "type";
-        /** JSON key data. */
-        var KEY_DATA = "data";
-        
-        /** Request type. */
-        var Type = SimpleRequest.Type = {
-            /** Echo request data. */
-            ECHO: "ECHO",
-            /** Query for data. */
-            QUERY: "QUERY",
-            /** Provide log data. */
-            LOG: "LOG",
-            /** Return user profile. */
-            USER_PROFILE: "USER_PROFILE",
-            /** Terminate server execution. */
-            QUIT: "QUIT",
-        };
         
         /**
          * <p>Create a simple request.</p>
@@ -74,7 +75,7 @@ var SimpleRequest.Type;
         /**
          * @return {object} the request data object.
          */
-        getData: function();
+        getData: function() {},
     
         /** @inheritDoc */
         toJSON: function toJSON() {
