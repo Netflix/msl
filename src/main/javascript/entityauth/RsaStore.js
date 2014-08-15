@@ -20,6 +20,9 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 var RsaStore = util.Class.create({
+    /**
+     * <p>Create a new RSA key store that contains no keys.</p>
+     */
     init: function init() {
         // Map of RSA keys by key pair identity.
         var publicKeys = {};
