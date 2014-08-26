@@ -17,8 +17,11 @@ package server.util;
 
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.SortedSet;
@@ -77,6 +80,37 @@ public class SimpleMslContext implements MslContext {
         (byte)0x83, (byte)0xb6, (byte)0x9a, (byte)0x15, (byte)0x80, (byte)0xd3, (byte)0x23, (byte)0xa2,
         (byte)0xe7, (byte)0x9d, (byte)0xd9, (byte)0xb2, (byte)0x26, (byte)0x26, (byte)0xb3, (byte)0xf6,
     };
+
+    /**
+     * Key exchange factory comparator.
+     */
+    private static class KeyExchangeFactoryComparator implements Comparator<KeyExchangeFactory> {
+        /** Scheme priorities. Lower values are higher priority. */
+        private final Map<KeyExchangeScheme,Integer> schemePriorities = new HashMap<KeyExchangeScheme,Integer>();
+
+        /**
+         * Create a new key exchange factory comparator.
+         */
+        public KeyExchangeFactoryComparator() {
+            schemePriorities.put(KeyExchangeScheme.JWK_LADDER, 0);
+            schemePriorities.put(KeyExchangeScheme.JWE_LADDER, 1);
+            schemePriorities.put(KeyExchangeScheme.DIFFIE_HELLMAN, 2);
+            schemePriorities.put(KeyExchangeScheme.SYMMETRIC_WRAPPED, 3);
+            schemePriorities.put(KeyExchangeScheme.ASYMMETRIC_WRAPPED, 4);
+        }
+
+        /* (non-Javadoc)
+         * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
+         */
+        @Override
+        public int compare(KeyExchangeFactory a, KeyExchangeFactory b) {
+            final KeyExchangeScheme schemeA = a.getScheme();
+            final KeyExchangeScheme schemeB = b.getScheme();
+            final Integer priorityA = schemePriorities.get(schemeA);
+            final Integer priorityB = schemePriorities.get(schemeB);
+            return priorityA.compareTo(priorityB);
+        }
+    }
     
     /**
      * <p>Create a new simple MSL context.</p>
@@ -114,7 +148,7 @@ public class SimpleMslContext implements MslContext {
         this.userAuthFactory = new EmailPasswordAuthenticationFactory(emailPasswordStore, authutils);
         
         // Key exchange factories.
-        this.keyxFactories = new TreeSet<KeyExchangeFactory>();
+        this.keyxFactories = new TreeSet<KeyExchangeFactory>(new KeyExchangeFactoryComparator());
         this.keyxFactories.add(new AsymmetricWrappedExchange(authutils));
     }
 
