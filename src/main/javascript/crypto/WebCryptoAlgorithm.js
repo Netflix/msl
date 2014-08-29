@@ -33,7 +33,7 @@ var WebCryptoAlgorithm = {
     /** generate/encrypt/decrypt */
     RSAES: { 'name': 'RSAES-PKCS1-v1_5' },
     /** generate */
-    RSASSA: { 'name': 'RSASSA-PKCS1-v1_5' },
+    RSASSA: { 'name': 'RSASSA-PKCS1-v1_5', 'hash': { 'name': 'SHA-1' } },
     /** sign/verify */
     RSASSA_SHA256: { 'name': 'RSASSA-PKCS1-v1_5', 'hash': { 'name': 'SHA-256' } },
     RSASSA_SHA1: { 'name': 'RSASSA-PKCS1-v1_5', 'hash': { 'name': 'SHA-1' } },

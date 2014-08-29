@@ -73,7 +73,7 @@ var MslTestUtils$Algorithm;
                 var onerror = function(e) {
                     callback.error(new Error("error creating RSA keys"));
                 };
-                mslCrypto["generateKey"]({ 'name': algo['name'], 'modulusLength': length, 'publicExponent': new Uint8Array([0x01, 0x00, 0x01]), }, false, usages)
+                mslCrypto["generateKey"]({ 'name': algo['name'], 'hash': algo['hash'], 'modulusLength': length, 'publicExponent': new Uint8Array([0x01, 0x00, 0x01]), }, false, usages)
                     .then(oncomplete, onerror);
 
             });

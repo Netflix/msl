@@ -26,6 +26,10 @@ var WebCryptoUsage = {
     WRAP_UNWRAP: [ 'wrap', 'unwrap' ],
     /** sign/verify */
     SIGN_VERIFY: [ 'sign', 'verify' ],
+    /** sign */
+    SIGN: [ 'sign' ],
+    /** verify */
+    VERIFY: [ 'verify' ],
     /** derive key */
     DERIVE_KEY: [ 'deriveKey' ],
 };

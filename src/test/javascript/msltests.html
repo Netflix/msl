@@ -25,6 +25,9 @@
     	} else if (webCryptoEnv == 'ppapi') {
     	    // Plugin
 	        document.write('<scr' + 'ipt type="text/javascript" src="http://cadmium.netflix.com/cadmium/dev/Plugin/NfWebCrypto/linux/release/Latest/nfcrypto.js"></scr' + 'ipt>');
+	    } else {
+            nfCrypto = window.crypto;
+	        window.nfCrypto = nfCrypto;
 	    }
 	    // else Web Crypto
     }
