@@ -34,7 +34,7 @@ var SimpleLogRequest$Severity;
     };
     
     // Shortcuts.
-    var Type = SimpleRequest.Type;
+    var Type = SimpleRequest$Type;
     
     /**
      * <p>Request to log a message.</p>

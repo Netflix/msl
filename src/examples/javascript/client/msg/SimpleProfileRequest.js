@@ -28,7 +28,7 @@ var SimpleProfileRequest;
      * 
      * @author Wesley Miaw <wmiaw@netflix.com>
      */
-    var SimpleProfileRequest = SimpleRequest.extend({
+    SimpleProfileRequest = SimpleRequest.extend({
         /**
          * <p>Create a new user profile request.</p>
          */

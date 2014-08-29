@@ -19,7 +19,7 @@ var SimpleRequestMessageContext;
     "use strict";
     
     // Shortcuts.
-    var Type = SimpleRequest.Type;
+    var Type = SimpleRequest$Type;
     var Mechanism = AsymmetricWrappedExchange$Mechanism;
     var RequestData = AsymmetricWrappedExchange$RequestData;
 
@@ -39,7 +39,7 @@ var SimpleRequestMessageContext;
          * @param {SimpleKeyxManager} keyxMgr key exchange manager.
          * @param {?MessageDebugContext} dbgCtx message debug context. May be
          *        {@code null}.
-         * @param {function(string)} errorCallback message error callback.
+         * @param {function(string|Error)} errorCallback message error callback.
          */
         init: function init(userId, userAuthData, request, keyxMgr, dbgCtx, errorCallback) {
             // Set properties.
@@ -90,6 +90,8 @@ var SimpleRequestMessageContext;
         
         /** @inheritDoc */
         isRequestingTokens: function() {
+            if (this._request.type == Type.LOG)
+                return true;
             return false;
         },
     

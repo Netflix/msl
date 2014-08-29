@@ -34,7 +34,7 @@ var SimpleQuitRequest;
          * <p>Create a new quit request.</p>
          */
         init: function init() {
-            init.base.call(Type.QUIT);
+            init.base.call(this, Type.QUIT);
         },
     
         /** @inheritDoc */

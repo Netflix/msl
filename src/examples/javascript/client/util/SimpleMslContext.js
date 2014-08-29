@@ -30,8 +30,8 @@ var SimpleMslContext;
          * @param {string} local client entity identity.
          * @param {RsaStore} remove server entity RSA store.
          * @param {SimpleKeyxManager} keyxMgr key exchange manager.
-         * @param {function(string)} errorCallback key manager generation error
-         *        callback.
+         * @param {function(string|Error)} errorCallback key manager generation
+         *        error callback.
          */
         init: function init(clientId, rsaStore, keyxMgr, errorCallback) {
             // Message capabilities.
@@ -90,7 +90,7 @@ var SimpleMslContext;
     
         /** @inheritDoc */
         getEntityAuthenticationData: function getEntityAuthenticationData(reauthCode, callback) {
-            return this._entityAuthData;
+            callback.result(this._entityAuthData);
         },
     
         /** @inheritDoc */

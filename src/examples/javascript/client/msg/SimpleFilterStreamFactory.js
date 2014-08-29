@@ -66,11 +66,13 @@ var SimpleFilterStreamFactory;
             
             this._input.read(len, timeout, {
                 result: function(data) {
-                    self._target.innerHTML += textEncoding$getString(data, MslConstants$DEFAULT_CHARSET);
+                    if (data)
+                        self._target.innerHTML += textEncoding$getString(data, MslConstants$DEFAULT_CHARSET);
                     callback.result(data);
                 },
                 timeout: function(data) {
-                    self._target.innerHTML += textEncoding$getString(data, MslConstants$DEFAULT_CHARSET);
+                    if (data)
+                        self._target.innerHTML += textEncoding$getString(data, MslConstants$DEFAULT_CHARSET);
                     callback.timeout(data);
                 },
                 error: callback.error,
@@ -142,12 +144,12 @@ var SimpleFilterStreamFactory;
         
         /** @inheritDoc */
         getInputStream: function getInputStream(input) {
-            return new TextInputStream(_received, input);
+            return new TextInputStream(this._received, input);
         },
         
         /** @inheritDoc */
         getOutputStream: function getOutputStream(output) {
-            return new TextOutputStream(_sent, output);
+            return new TextOutputStream(this._sent, output);
         },
     });
 })();

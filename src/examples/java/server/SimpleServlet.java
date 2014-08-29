@@ -21,6 +21,7 @@ import java.io.OutputStream;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.Security;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.HashMap;
@@ -28,11 +29,14 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.bind.DatatypeConverter;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.json.JSONObject;
 
 import server.entityauth.SimpleRsaStore;
@@ -43,6 +47,9 @@ import server.userauth.SimpleEmailPasswordStore;
 import server.userauth.SimpleUser;
 import server.util.SimpleMslContext;
 
+import com.netflix.msl.crypto.ICryptoContext;
+import com.netflix.msl.crypto.JcaAlgorithm;
+import com.netflix.msl.crypto.SymmetricCryptoContext;
 import com.netflix.msl.entityauth.RsaStore;
 import com.netflix.msl.msg.ConsoleFilterStreamFactory;
 import com.netflix.msl.msg.ErrorHeader;
@@ -70,8 +77,28 @@ public class SimpleServlet extends HttpServlet {
     /** Line separator. */
     private static final String NEWLINE = System.lineSeparator();
     
+    /** Service token key set ID. */
+    private static final String ST_KEYSET_ID = "serviceTokenKeySetId";
+    /** Service token encryption key. */
+    private static final byte[] ST_ENCRYPTION_KEY = new byte[] {
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+        0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F
+    };
+    /** Service token HMAC key. */
+    private static final byte[] ST_HMAC_KEY = new byte[] {
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+        0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
+        0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+        0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F
+    };
+    
     /** "Quit" state. */
     private static boolean QUIT = false;
+    
+    // Add BouncyCastle provider.
+    static {
+        Security.addProvider(new BouncyCastleProvider());
+    }
     
     /**
      * <p>Create a new servlet instance and initialize its static, immutable
@@ -106,6 +133,12 @@ public class SimpleServlet extends HttpServlet {
         // Since this is an example process all requests on the calling thread.
         this.ctrl = new MslControl(0);
         ctrl.setFilterFactory(new ConsoleFilterStreamFactory());
+        
+        // Use one crypto context for all service tokens.
+        final SecretKey encryptionKey = new SecretKeySpec(ST_ENCRYPTION_KEY, JcaAlgorithm.AES);
+        final SecretKey hmacKey = new SecretKeySpec(ST_HMAC_KEY, JcaAlgorithm.HMAC_SHA256);
+        final ICryptoContext stCryptoContext = new SymmetricCryptoContext(this.ctx, ST_KEYSET_ID, encryptionKey, hmacKey, null);
+        cryptoContexts.put("", stCryptoContext);
     }
     
     /* (non-Javadoc)
@@ -113,14 +146,18 @@ public class SimpleServlet extends HttpServlet {
      */
     @Override
     protected void doPost(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
+        // Allow requests from anywhere.
+        resp.setHeader("Access-Control-Allow-Origin", "*");
+        
         // If "quit" then return HTTP status code 401.
         if (QUIT) {
+            System.out.println("Returning 401.");
             resp.sendError(HttpServletResponse.SC_GONE, "MSL servlet terminated.");
             return;
         }
         
         //  Set up the receive MSL message context.
-        final MessageContext rcvMsgCtx = new SimpleReceiveMessageContext();
+        final MessageContext rcvMsgCtx = new SimpleReceiveMessageContext(cryptoContexts);
 
         // Receive a request.
         final InputStream in = req.getInputStream();
@@ -153,24 +190,28 @@ public class SimpleServlet extends HttpServlet {
             // Parse request.
             final String identity = request.getIdentity();
             final SimpleUser user = (SimpleUser)request.getUser();
-            simpleRequest = SimpleRequest.parse(identity, user, request);
+            simpleRequest = SimpleRequest.parse(identity, user, request, cryptoContexts);
 
             // Output the request.
             final String requestJson = simpleRequest.toJSONString();
             final JSONObject requestJo = new JSONObject(requestJson);
-            System.out.println("REQUEST" + NEWLINE +
+            System.out.println(NEWLINE + "REQUEST" + NEWLINE +
                 "======" + NEWLINE +
                 requestJo.toString(4) + NEWLINE +
                 "======");
 
             // Execute.
             responseMsgCtx = simpleRequest.execute();
+
+            // If the request type was quit then remember it.
+            if (SimpleRequest.Type.QUIT.equals(simpleRequest.getType()))
+                QUIT = true;
         } catch (final Exception e) {
             e.printStackTrace(System.err);
+            // FIXME: Remove encryption requirement.
             // Encryption is required to avoid accidentally leaking
             // information in the error message.
             responseMsgCtx = new SimpleRespondMessageContext(null, true, e.getMessage());
-            return;
         }
 
         // Send response. We don't need the MslChannel because we are not
@@ -187,18 +228,16 @@ public class SimpleServlet extends HttpServlet {
         }
 
         // Output the response.
-        System.out.println("RESPONSE" + NEWLINE +
+        System.out.println(NEWLINE + "RESPONSE" + NEWLINE +
             "========" + NEWLINE +
             responseMsgCtx.getData() + NEWLINE +
             "========");
-
-        // If the request type was quit then exit.
-        if (SimpleRequest.Type.QUIT.equals(simpleRequest.getType()))
-            QUIT = true;
     }
     
     /** MSL context. */
     private final MslContext ctx;
     /** MSL control. */
     private final MslControl ctrl;
+    /** Service token crypto contexts. */
+    private final Map<String,ICryptoContext> cryptoContexts = new HashMap<String,ICryptoContext>();
 }

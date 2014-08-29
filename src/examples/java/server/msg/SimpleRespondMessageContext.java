@@ -16,10 +16,15 @@
 package server.msg;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
 import com.netflix.msl.MslConstants;
+import com.netflix.msl.MslConstants.CompressionAlgorithm;
+import com.netflix.msl.MslCryptoException;
+import com.netflix.msl.MslEncodingException;
+import com.netflix.msl.MslException;
 import com.netflix.msl.MslKeyExchangeException;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.keyx.KeyRequestData;
@@ -37,6 +42,38 @@ import com.netflix.msl.userauth.UserAuthenticationData;
  */
 public class SimpleRespondMessageContext implements MessageContext {
     /**
+     * <p>Service token container.</p>
+     */
+    public static class Token {
+        /**
+         * <p>Define a new service token for inclusion in the response message.
+         * If the service token should be entity- or user-bound but cannot be,
+         * the maximum binding possible is used but the service token is
+         * included in the response.</p>
+         * 
+         * @param name service token name.
+         * @param data service token application data.
+         * @param entityBound true if the service token should be entity-bound.
+         * @param userBound true if the service token should be user-bound.
+         */
+        public Token(final String name, final String data, final boolean entityBound, final boolean userBound) {
+            this.name = name;
+            this.data = data;
+            this.entityBound = entityBound;
+            this.userBound = userBound;
+        }
+        
+        /** Service token name. */
+        public final String name;
+        /** Service token application data. */
+        public final String data;
+        /** Service token should be entity-bound. */
+        public final boolean entityBound;
+        /** Service token should be user-bound. */
+        public final boolean userBound;
+    }
+    
+    /**
      * <p>Create a new response message context with the specified
      * properties.</p>
      * 
@@ -48,6 +85,26 @@ public class SimpleRespondMessageContext implements MessageContext {
         this.recipient = recipient;
         this.encrypted = encrypted;
         this.data = data;
+        this.tokens = Collections.emptySet();
+        this.cryptoContexts = Collections.emptyMap();
+    }
+    
+    /**
+     * <p>Create a new response message context with the specified
+     * properties.</p>
+     * 
+     * @param recipient requesting entity identity.
+     * @param encrypted true if the response data must be encrypted.
+     * @param data application response data.
+     * @param tokens application service tokens.
+     * @param cryptoContexts application service token crypto contexts.
+     */
+    public SimpleRespondMessageContext(final String recipient, final boolean encrypted, final String data, final Set<Token> tokens, final Map<String,ICryptoContext> cryptoContexts) {
+        this.recipient = recipient;
+        this.encrypted = encrypted;
+        this.data = data;
+        this.tokens = tokens;
+        this.cryptoContexts = Collections.unmodifiableMap(cryptoContexts);
     }
     
     /* (non-Javadoc)
@@ -55,7 +112,7 @@ public class SimpleRespondMessageContext implements MessageContext {
      */
     @Override
     public Map<String, ICryptoContext> getCryptoContexts() {
-        return null;
+        return cryptoContexts;
     }
 
     /* (non-Javadoc)
@@ -134,7 +191,20 @@ public class SimpleRespondMessageContext implements MessageContext {
      * @see com.netflix.msl.msg.MessageContext#updateServiceTokens(com.netflix.msl.msg.MessageServiceTokenBuilder, boolean)
      */
     @Override
-    public void updateServiceTokens(final MessageServiceTokenBuilder builder, final boolean handshake) {
+    public void updateServiceTokens(final MessageServiceTokenBuilder builder, final boolean handshake) throws MslEncodingException, MslCryptoException, MslException {
+        if (handshake)
+            return;
+        
+        for (final Token token : tokens) {
+            final String name = token.name;
+            final byte[] data = token.data.getBytes(MslConstants.DEFAULT_CHARSET);
+            if (token.userBound && builder.isPrimaryUserIdTokenAvailable())
+                builder.addUserBoundPrimaryServiceToken(name, data, true, CompressionAlgorithm.GZIP);
+            else if (token.entityBound && builder.isPrimaryMasterTokenAvailable())
+                builder.addMasterBoundPrimaryServiceToken(name, data, true, CompressionAlgorithm.GZIP);
+            else
+                builder.addUnboundPrimaryServiceToken(name, data, true, CompressionAlgorithm.GZIP);
+        }
     }
 
     /* (non-Javadoc)
@@ -161,10 +231,14 @@ public class SimpleRespondMessageContext implements MessageContext {
         return data;
     }
 
+    /** Service token crypto contexts. */
+    private final Map<String,ICryptoContext> cryptoContexts;
     /** Recipient entity identity. */
     private final String recipient;
     /** True if the response data must be encrypted. */
     private final boolean encrypted;
     /** Response data. */
     private final String data;
+    /** Service tokens. */
+    private final Set<Token> tokens;
 }

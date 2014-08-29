@@ -81,7 +81,7 @@ var SimpleRequest$Type;
         toJSON: function toJSON() {
             var jo = {};
             jo[KEY_TYPE] = this.type;
-            jo[KEY_DATA] = getData();
+            jo[KEY_DATA] = this.getData();
             return jo;
         },
     });

@@ -16,6 +16,7 @@
 package server.msg;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -35,12 +36,21 @@ import com.netflix.msl.userauth.UserAuthenticationData;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class SimpleReceiveMessageContext implements MessageContext {
+    /**
+     * <p>Create a new receive message context.</p>
+     * 
+     * @param cryptoContexts service token crypto contexts.
+     */
+    public SimpleReceiveMessageContext(final Map<String,ICryptoContext> cryptoContexts) {
+        this.cryptoContexts = Collections.unmodifiableMap(cryptoContexts);
+    }
+    
     /* (non-Javadoc)
      * @see com.netflix.msl.msg.MessageContext#getCryptoContexts()
      */
     @Override
     public Map<String, ICryptoContext> getCryptoContexts() {
-        return null;
+        return cryptoContexts;
     }
 
     /* (non-Javadoc)
@@ -136,4 +146,7 @@ public class SimpleReceiveMessageContext implements MessageContext {
     public MessageDebugContext getDebugContext() {
         return null;
     }
+
+    /** Service token crypto contexts. */
+    private final Map<String,ICryptoContext> cryptoContexts;
 }

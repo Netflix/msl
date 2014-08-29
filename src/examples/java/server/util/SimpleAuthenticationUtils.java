@@ -21,8 +21,9 @@ import com.netflix.msl.userauth.UserAuthenticationScheme;
 import com.netflix.msl.util.AuthenticationUtils;
 
 /**
- * <p>Restrict clients to preshared keys entity authentication and the local
- * server to RSA entity authentication.</p>
+ * <p>Restrict clients to unauthenticated entity authentication and the local
+ * server to RSA entity authentication. Restrict key exchange to asymmetric
+ * wrapped key exchange.</p>
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
@@ -51,7 +52,7 @@ public class SimpleAuthenticationUtils implements AuthenticationUtils {
     @Override
     public boolean isSchemePermitted(final String identity, final EntityAuthenticationScheme scheme) {
         return (serverId.equals(identity) && EntityAuthenticationScheme.RSA.equals(scheme)) ||
-            EntityAuthenticationScheme.PSK.equals(scheme);
+            EntityAuthenticationScheme.NONE.equals(scheme);
     }
 
     /* (non-Javadoc)
@@ -59,7 +60,7 @@ public class SimpleAuthenticationUtils implements AuthenticationUtils {
      */
     @Override
     public boolean isSchemePermitted(final String identity, final UserAuthenticationScheme scheme) {
-        return false;
+        return (!serverId.equals(identity) && UserAuthenticationScheme.EMAIL_PASSWORD.equals(scheme));
     }
 
     /* (non-Javadoc)
@@ -67,7 +68,7 @@ public class SimpleAuthenticationUtils implements AuthenticationUtils {
      */
     @Override
     public boolean isSchemePermitted(final String identity, final KeyExchangeScheme scheme) {
-        return false;
+        return KeyExchangeScheme.ASYMMETRIC_WRAPPED.equals(scheme);
     }
     
     /** Local server entity identity. */

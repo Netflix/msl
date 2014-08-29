@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 var SimpleKeyxManager;
+var SimpleKeyxManager$create;
 var SimpleKeyxManager$KeyPair;
 
 (function() {
@@ -51,17 +52,33 @@ var SimpleKeyxManager$KeyPair;
      */
     SimpleKeyxManager = util.Class.create({
         /**
-         * <p>Create a new asymmetric wrapped key exchange manager. There are
-         * no initial keys; if you wish to generate a key pair then you must
-         * call {@link #generate()}</p>
+         * <p>Create a new asymmetric wrapped key exchange manager. A pair of
+         * initial keys will be generated.</p>
+         * 
+         * @param {{result: function(SimpleKeyxManager), error: function(Error)}}
+         *        callback the callback that will receive the key manager or
+         *        any thrown exceptions.
          */
-        init: function init() {
-            // Set properties.
-            var props = {
-                _pubkey: { value: null, writable: true, enumerable: false, configurable: false },
-                _privkey: { value: null, writable: true, enumerable: false, configurable: false },
-            };
-            Object.defineProperties(this, props);
+        init: function init(callback) {
+            var self = this;
+            
+            AsyncExecutor(callback, function() {
+                // Set properties.
+                var props = {
+                    _pubkey: { value: null, writable: true, enumerable: false, configurable: false },
+                    _privkey: { value: null, writable: true, enumerable: false, configurable: false },
+                };
+                Object.defineProperties(this, props);
+                
+                // Generate the initial keys.
+                this.regenerate({
+                    result: function(success) {
+                        // Return the key manager.
+                        callback.result(self);
+                    },
+                    error: callback.error,
+                });
+            }, self);
         },
         
         /**
@@ -76,7 +93,7 @@ var SimpleKeyxManager$KeyPair;
         /**
          * <p>Regenerate the current key pair.</p>
          * 
-         * @param {result: function(boolean), error: function(Error)}
+         * @param {{result: function(boolean), error: function(Error)}}
          *        callback the callback that will receive true on success or
          *        any thrown exceptions.
          */
@@ -108,11 +125,16 @@ var SimpleKeyxManager$KeyPair;
                 };
                 mslCrypto["generateKey"]({
                     'name': WebCryptoAlgorithm.RSA_OAEP['name'],
-                    'modulusLength': 1024,
+                    'modulusLength': 2048,
                     'publicExponent': new Uint8Array([0x01, 0x00, 0x01]),
+                    'hash': WebCryptoAlgorithm.RSA_OAEP['hash'],
                 }, false, WebCryptoUsage.WRAP_UNWRAP)
                     .then(oncomplete, onerror);
             }, self);
         }
     });
+    
+    SimpleKeyxManager$create = function SimpleKeyxManager$create(callback) {
+        new SimpleKeyxManager(callback);
+    };
 })();

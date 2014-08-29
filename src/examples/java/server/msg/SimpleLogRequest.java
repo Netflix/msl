@@ -15,11 +15,20 @@
  */
 package server.msg;
 
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.netflix.msl.MslConstants;
+import com.netflix.msl.crypto.ICryptoContext;
+import com.netflix.msl.tokens.ServiceToken;
+
+import server.msg.SimpleRespondMessageContext.Token;
 import server.userauth.SimpleUser;
 
 /**
@@ -56,16 +65,21 @@ public class SimpleLogRequest extends SimpleRequest {
         INFO
     }
     
+    /** Log data service token name. */
+    public static final String SERVICETOKEN_LOGDATA_NAME = "server.logdata";
+    
     /**
      * <p>Create a new log request.</p>
      * 
      * @param identity requesting entity identity.
      * @param user requesting user. May be null.
      * @param data the request data object.
+     * @param tokens service tokens.
+     * @param cryptoContext service token crypto contexts.
      * @throws SimpleRequestParseException if there is an error parsing the
      *         request data.
      */
-    public SimpleLogRequest(final String identity, final SimpleUser user, final JSONObject data) throws SimpleRequestParseException {
+    public SimpleLogRequest(final String identity, final SimpleUser user, final JSONObject data, final Set<ServiceToken> tokens, final Map<String,ICryptoContext> cryptoContexts) throws SimpleRequestParseException {
         super(Type.LOG, identity, user);
         final String severityString;
         try {
@@ -80,6 +94,17 @@ public class SimpleLogRequest extends SimpleRequest {
         } catch (final IllegalArgumentException e) {
             throw new SimpleRequestParseException("Unknown severity " + severityString + ".", e);
         }
+        String logdata = null;
+        for (final ServiceToken token : tokens) {
+            if (!token.isDecrypted())
+                continue;
+            if (SERVICETOKEN_LOGDATA_NAME.equals(token.getName())) {
+                logdata = new String(token.getData(), MslConstants.DEFAULT_CHARSET);
+                break;
+            }
+        }
+        this.logdata = logdata;
+        this.cryptoContexts = Collections.unmodifiableMap(cryptoContexts);
     }
     
     /**
@@ -122,10 +147,17 @@ public class SimpleLogRequest extends SimpleRequest {
      */
     @Override
     public SimpleRespondMessageContext execute() {
-        System.out.println("Log " + getUser() + "@" + getIdentity() + ": " +
-            new Date(timestamp) + " [" + severity.name() + "] " + message);
+        final String newMessage = "Log " + getUser() + "@" + getIdentity() + ": " +
+            new Date(timestamp) + " [" + severity.name() + "] " + message;
+        final String allMessages = (logdata != null)
+            ? logdata + System.lineSeparator() + newMessage
+            : newMessage;
         
-        return new SimpleRespondMessageContext(getIdentity(), false, "success");
+        System.out.println(newMessage);
+        
+        final Set<Token> tokens = new HashSet<Token>();
+        tokens.add(new Token(SERVICETOKEN_LOGDATA_NAME, allMessages, true, true));
+        return new SimpleRespondMessageContext(getIdentity(), false, allMessages, tokens, cryptoContexts);
     }
 
     /** Timestamp in seconds since the UNIX epoch. */
@@ -134,4 +166,9 @@ public class SimpleLogRequest extends SimpleRequest {
     private final Severity severity;
     /** Message. */
     private final String message;
+    /** Previous log data. */
+    private final String logdata;
+    
+    /** Service token crypto contexts. */
+    private final Map<String,ICryptoContext> cryptoContexts;
 }

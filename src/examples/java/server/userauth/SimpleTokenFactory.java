@@ -126,7 +126,16 @@ public class SimpleTokenFactory implements TokenFactory {
             serialNumber = ctx.getRandom().nextLong();
         } while (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE);
         final JSONObject issuerData = null;
-        return new MasterToken(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey);
+        final MasterToken masterToken = new MasterToken(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey);
+        
+        // Remember the sequence number.
+        //
+        // This is not perfect, since it's possible a smaller value will
+        // overwrite a larger value, but it's good enough for the example.
+        mtSequenceNumbers.put(identity, sequenceNumber);
+        
+        // Return the new master token.
+        return masterToken;
     }
 
     /* (non-Javadoc)

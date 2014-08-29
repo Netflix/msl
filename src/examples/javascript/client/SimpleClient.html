@@ -23,26 +23,12 @@
     var cryptoSubtle;
 	if (window.msCrypto) {
 	    cryptoSubtle = window.msCrypto.subtle;
+	    nfCrypto = window.msCrypto;
 	} else {
 	    cryptoSubtle = window.crypto.subtle;
+	    nfCrypto = window.crypto;
 	}
 </script>
-
-<!-- crypto-js -->
-<!--
-<script src="../../../main/javascript/lib/crypto-js/components/core.js"></script>
-<script src="../../../main/javascript/lib/crypto-js/components/enc-base64.js"></script>
-<script src="../../../main/javascript/lib/crypto-js/components/lib-typedarrays.js"></script>
-<script src="../../../main/javascript/lib/crypto-js/components/cipher-core.js"></script>
-<script src="../../../main/javascript/lib/crypto-js/components/x64-core.js"></script>
-<script src="../../../main/javascript/lib/crypto-js/components/aes.js"></script>
-<script src="../../../main/javascript/lib/crypto-js/components/mode-ecb.js"></script>
-<script src="../../../main/javascript/lib/crypto-js/components/pad-nopadding.js"></script>
-<script src="../../../main/javascript/lib/crypto-js/components/sha256.js"></script>
-<script src="../../../main/javascript/lib/crypto-js/components/sha512.js"></script>
-<script src="../../../main/javascript/lib/crypto-js/components/sha384.js"></script>
-<script src="../../../main/javascript/lib/crypto-js/components/hmac.js"></script>
--->
 
 <!-- clarinet -->
 <script src="../../../main/javascript/lib/clarinet.js"></script>
@@ -76,6 +62,9 @@
 <script type="text/javascript" src="../../../main/javascript/MslUserAuthException.js"></script>
 <script type="text/javascript" src="../../../main/javascript/MslUserIdTokenException.js"></script>
 <script type="text/javascript" src="../../../main/javascript/crypto/WebCryptoAdapter.js"></script>
+<script type="text/javascript">
+MslCrypto$setWebCryptoVersion(MslCrypto$WebCryptoVersion.LATEST);
+</script>
 <script type="text/javascript" src="../../../main/javascript/crypto/WebCryptoAlgorithm.js"></script>
 <script type="text/javascript" src="../../../main/javascript/crypto/WebCryptoUsage.js"></script>
 <script type="text/javascript" src="../../../main/javascript/crypto/CipherKey.js"></script>
@@ -163,29 +152,52 @@
 
 <!-- Page Script -->
 <script type="text/javascript">
-function errorCallback(msg) {
+function errorCallback(msgOrError) {
     var error = document.getElementById('error');
     var errortext = document.getElementById('errortext');
-    errortext.innerHTML = "<b>ERROR:</b> " + msg;
+    
+    var msg;
+    if (typeof msgOrError === 'string') {
+        console.log(msgOrError);
+        msg = "<b>Error:</b> " + msgOrError;
+    } else if (msgOrError instanceof Error) {
+        console.log(msgOrError.stack);
+        msg = "<b>Exception:</b><br/><textarea cols='108' rows='12' readonly='readonly'>" + msgOrError.stack + "</textarea>";
+    } else {
+        console.log(msgOrError);
+        msg = "<b>Unknown error:</b> " + msgOrError;
+    }
+    errortext.innerHTML = msg;
     error.style.visibility = 'visible';
 }
 
 var client;
-SimpleClient$create(errorCallback, {
-    result: function(c) {
-        alert(c);
-        client = c;
-        ready();
-    },
-    error: function(e) {
-        errorCallback(e.message);
-    }
-});
+var dbgCtx;
+function onload() {
+    var sentText = document.getElementById('sent');
+    var receivedText = document.getElementById('received');
+    
+    // Create message debug context.
+    dbgCtx = new SimpleMessageDebugContext(sentText, receivedText);
+    
+    // Create client.
+    var factory = new SimpleFilterStreamFactory(sentText, receivedText);
+	SimpleClient$create(factory, {
+	    result: function(c) {
+	        client = c;
+	        ready();
+	    },
+	    error: errorCallback,
+	});
+}
 
-function checkUsername(username) {
-    // If the given user is logged in then clear and disable the password field, and enable the logout button.
+function checkUsername() {
+    var usernameField = document.getElementById('username');
     var passwordField = document.getElementById('password');
-    var logoutButton = document.getElemenById('logout');
+    var logoutButton = document.getElementById('logout');
+
+    // If the given user is logged in then clear and disable the password field, and enable the logout button.
+    var username = usernameField.value;
     if (client.isLoggedIn(username)) {
         passwordField.value = '';
         passwordField.disabled = true;
@@ -196,20 +208,29 @@ function checkUsername(username) {
     }
 }
 
-function logout(username) {
+function logoutUser() {
+    var usernameField = document.getElementById('username');
+    var username = usernameField.value;
     client.logout(username);
-    checkUsername(username);
+    checkUsername();
 }
 
 function setRequestType(type) {
     var text = document.getElementById('text');
+    var severity = document.getElementById('severity');
     var word = document.getElementById('word');
+    
     text.disabled = true;
+    severity.disabled = true;
     word.disabled = true;
+    
     switch (type) {
         case 'echo':
+            text.disabled = false;
+            break;
         case 'log':
             text.disabled = false;
+            severity.disabled = false;
             break;
         case 'query':
             word.disabled = false;
@@ -220,12 +241,130 @@ function setRequestType(type) {
 }
 
 function ready() {
-    var sendButton = document.getElementById('send');
-    sendButton.disabled = false;
+    var performButton = document.getElementById('perform');
+    performButton.disabled = false;
+}
+
+function sendRequest() {
+    // Grab the request data.
+    var username = document.getElementById('username').value;
+    var password = document.getElementById('password').value;
+    var type = document.getElementById('type').value;
+    var text = document.getElementById('text').value;
+    var severity = document.getElementById('severity').value;
+    var word = document.getElementById('word').value;
+    var url = document.getElementById('url').value;
+    
+    // Null username and password if empty.
+    if (username.trim().length == 0) username = null;
+    if (password.trim().length == 0) password = null;
+    
+    // Create the request.
+    var request;
+    switch (type) {
+        case 'echo':
+            request = new SimpleEchoRequest(text);
+            break;
+        case 'log':
+            var timestamp = new Date().getTime();
+            request = new SimpleLogRequest(timestamp, severity, text);
+            break;
+        case 'profile':
+            request = new SimpleProfileRequest();
+            break;
+        case 'query':
+            request = new SimpleQueryRequest(word);
+            break;
+        case 'quit':
+            request = new SimpleQuitRequest();
+            break;
+        default:
+            errorCallback("Request type [" + type + "] is not recognized.");
+            return;
+    }
+    
+    // Clear the response field.
+    var responseText = document.getElementById('response');
+    responseText.innerHTML = '';
+    
+    // Send the request.
+    var performButton = document.getElementById('perform');
+    var originalValue = performButton.value;
+    var originalClick = performButton.onclick;
+    client.send(url, username, password, request, dbgCtx, {
+        result: function(channel) {
+            performButton.value = originalValue;
+            performButton.onclick = originalClick;
+            
+            // Check if cancelled or interrupted.
+            if (!channel)
+                return;
+            
+            // Handle errors.
+            var mis = channel.input;
+            var errorHeader = mis.getErrorHeader();
+            if (errorHeader) {
+                var errorMsg = errorHeader.errorCode + " (" + errorHeader.internalCode + "): " + errorHeader.errorMessage;
+                if (errorHeader.userMessage)
+                    errorMsg += "<br/>" + errorHeader.userMessage;
+                errorCallback(errorMsg);
+                return;
+            }
+            
+            // Otherwise display the response.
+            showResponse(mis);
+            
+            // Check the username in case we logged in.
+            checkUsername();
+        },
+        error: function(e) {
+            performButton.value = originalValue;
+            performButton.onclick = originalClick;
+            errorCallback(e);
+        }
+    });
+    performButton.value = "Cancel";
+    performButton.onclick = cancelRequest;
+}
+
+function cancelRequest() {
+    client.cancel();
+}
+
+function clearSentReceived() {
+    document.getElementById('sent').innerHTML = '';
+    document.getElementById('received').innerHTML = '';
+}
+
+function showResponse(mis) {
+    var responseText = document.getElementById('response');
+    mis.read(-1, SimpleConstants.TIMEOUT_MS, {
+        result: function(bytes) {
+            // Stop on end-of-stream.
+            if (!bytes)
+                return;
+            
+            // Convert the bytes to text and update the response field.
+            var s = textEncoding$getString(bytes, MslConstants$DEFAULT_CHARSET);
+            responseText.innerHTML += s;
+            
+            // Continue reading.
+            showResponse(mis);
+        },
+        timeout: function(bytes) {
+            // Convert the bytes to text and update the response field.
+            var s = textEncoding$getString(bytes, MslConstants$DEFAULT_CHARSET);
+            responseText.innerHTML += s;
+            
+            // Notify of timeout.
+            errorCallback("Timed out reading the response.");
+        },
+        error: errorCallback,
+    })
 }
 </script>
 </head>
-<body>
+<body onload="onload();">
 
 <h1>Example JavaScript Client</h1>
 
@@ -234,7 +373,7 @@ function ready() {
     <form><input type="submit" value="OK" onclick="javascript:document.getElementById('error').style.visibility = 'hidden';"/></form>
 </div>
 
-<form>
+<form onsubmit="return false;">
 
 <table cellspacing="4" style="border: 4px solid grey;" width="800">
     <tr><td colspan="3" style="border-bottom: 1px dotted grey;"><b>User Authentication</b></td></tr>
@@ -245,7 +384,7 @@ function ready() {
         In that case, the password field will be disabled. You may discard a user's authentication
         credentials and "logout" by clicking on the "Logout" button.</p></td>
         <td rowspan="3">
-            <table border="1" cellpadding="4" hspace="40">
+            <table border="1" cellpadding="4" style="margin-left: 40px; margin-right: 40px">
                 <caption>User Accounts</caption>
                 <tr><th>Username</th><th>Password</th><th>Admin</th></tr>
                 <script type="text/javascript">
@@ -260,11 +399,11 @@ function ready() {
             </table>
         </td>
     </tr>
-    <tr><td><b>Username:</b></td><td><input type="text" id="username" name="username" width="10" onchange="javascript:checkUsername(this.value);"/></td></tr>
-    <tr><td><b>Password:</b></td><td><input type="text" id="password" name="password" width="10"/><input type="submit" id="logout" value="Logout" onclick="javascript:logout(document.getElementById('username').value);" disabled="true"></td></tr>
+    <tr><td><b>Username:</b></td><td><input type="text" id="username" name="username" width="10" onchange="javascript:checkUsername();"/></td></tr>
+    <tr><td><b>Password:</b></td><td><input type="text" id="password" name="password" width="10"/><input type="submit" id="logout" value="Logout" onclick="logoutUser();" disabled="disabled"></td></tr>
 </table>
 
-<table cellspacing="4" style="border: 4px solid grey;" vspace="20" width="800">
+<table cellspacing="4" style="border: 4px solid grey; margin-top: 20px; margin-bottom: 20px" width="800">
     <tr><td colspan="2" style="border-bottom: 1px dotted grey;"><b>Request</b></td></tr>
     <tr><td colspan="2"><p>Select a request type.</p>
         <p>For echo and log message requests, type some text into the echo or log message text field.<br/>
@@ -285,6 +424,14 @@ function ready() {
         <td><textarea id="text" cols="40" rows="4"></textarea></td>
     </tr>
     <tr valign="middle">
+        <td><b>Log Message Severity:</b></td>
+        <td><select id="severity" disabled="disabled">
+            <option value="INFO">Informational</option>
+            <option value="WARN">Warning</option>
+            <option value="ERROR">Error</option>
+        </select></td>
+    </tr>
+    <tr valign="middle">
         <td><b>Word:</b></td>
         <td><select id="word" disabled="disabled">
             <script type="text/javascript">
@@ -299,21 +446,25 @@ function ready() {
         </select></td>
     </tr>
     <tr valign="middle">
-        <td></td>
+        <td>&nbsp;</td>
         <td>If a user appears in parenthesis, only that user is authorized to lookup the word.</td>
     </tr>
     <tr valign="middle">
-        <td><input type="submit" id="send" value="Send Request To:" onclick="javascript:send();" disabled="disabled"/></td>
+        <td><input type="button" id="perform" value="Send Request To:" onclick="sendRequest();" disabled="disabled"/></td>
         <td>
         <script type="text/javascript">
-            document.write('<input type="text" id="url" size="40" value="http://localhost:' + SimpleConstants.SERVER_PORT + '/"/>');
+            document.write('<input type="text" id="url" size="40" value="http://localhost:' + SimpleConstants.SERVER_PORT + '/msl/"/>');
         </script>
         </td>
     </tr>
 </table>
 
-<table cellspacing="4" style="border: 2px solid lightgrey" vspace="20" width="800">
-    <tr><td colspan="2" style="border-bottom: 1px dotted grey;"><b>MSL Messages</b></td></tr>
+<table cellspacing="4" style="border: 4px solid grey; margin-top: 20px; margin-bottom: 20px" width="800">
+    <tr><td colspan="2" style="border-bottom: 1px dotted grey;"><b>Response</b></td></tr>
+    <tr><td colspan="2"><textarea id="response" cols="108" rows="12"></textarea></td></tr>
+</table>
+<table cellspacing="4" style="border: 2px solid lightgrey; margin-top: 20px; margin-bottom: 20px" width="800">
+    <tr><td colspan="2" style="border-bottom: 1px dotted grey;"><b>MSL Messages</b><input type="button" value="Clear" onclick="clearSentReceived();" style="float: right;"/></td></tr>
     <tr>
         <td><b>Sent:</b><br/><textarea id="sent" cols="50" rows="40" readonly="readonly"></textarea></td>
         <td><b>Received:</b><br/><textarea id="received" cols="50" rows="40" readonly="readonly"></textarea></td>

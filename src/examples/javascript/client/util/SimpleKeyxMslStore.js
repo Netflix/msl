@@ -30,10 +30,12 @@ var SimpleKeyxMslStore;
          * <p>Create a new key exchange-aware MSL store.</p>
          * 
          * @param {SimpleKeyxManager} keyxMgr key exchange manager.
-         * @param {function(string)} errorCallback key manager generation error
+         * @param {function(string|Error)} errorCallback key manager generation error
          *        callback.
          */
         init: function init(keyxMgr, errorCallback) {
+            init.base.call(this);
+            
             // Set properties.
             var props = {
                 _keyxMgr: { value: keyxMgr, writable: false, enumerable: false, configurable: false },
@@ -48,14 +50,12 @@ var SimpleKeyxMslStore;
 
             // If we receive a new master token then trigger key request data
             // generation.
-            _keyxManager.regenerate({
+            this._keyxMgr.regenerate({
                 result: function(success) {
                     if (!success)
                         this._errorCallback("Failed to regenerate key exchange data.");
                 },
-                error: function(e) {
-                    this._errorCallback("Error regenerating key exchange data: " + e.message + ".");
-                }
+                error: errorCallback,
             });
         }
     });

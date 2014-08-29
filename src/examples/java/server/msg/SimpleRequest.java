@@ -16,15 +16,20 @@
 package server.msg;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Map;
+import java.util.Set;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONString;
 
 import com.netflix.msl.MslConstants;
+import com.netflix.msl.crypto.ICryptoContext;
+import com.netflix.msl.msg.MessageHeader;
+import com.netflix.msl.msg.MessageInputStream;
+import com.netflix.msl.tokens.ServiceToken;
 
 import server.userauth.SimpleUser;
 
@@ -73,6 +78,7 @@ public abstract class SimpleRequest implements JSONString {
      * @param identity request entity identity.
      * @param user request user. May be null.
      * @param request request data.
+     * @param cryptoContexts service token crypto contexts.
      * @return the parsed request.
      * @throws IOException if there is an error reading from the input stream.
      * @throws SimpleRequestUnknownException if the request cannot be
@@ -82,7 +88,7 @@ public abstract class SimpleRequest implements JSONString {
      * @throws SimpleRequestUserException if the request type requires a user
      *         but there is none provided.
      */
-    public static SimpleRequest parse(final String identity, final SimpleUser user, final InputStream request) throws SimpleRequestUnknownException, SimpleRequestParseException, SimpleRequestUserException, IOException {
+    public static SimpleRequest parse(final String identity, final SimpleUser user, final MessageInputStream request, final Map<String,ICryptoContext> cryptoContexts) throws SimpleRequestUnknownException, SimpleRequestParseException, SimpleRequestUserException, IOException {
         // Read request JSON.
         final StringBuilder jsonBuilder = new StringBuilder();
         final Reader r = new InputStreamReader(request, MslConstants.DEFAULT_CHARSET);
@@ -124,7 +130,9 @@ public abstract class SimpleRequest implements JSONString {
             case QUERY:
                 return new SimpleQueryRequest(identity, user, data);
             case LOG:
-                return new SimpleLogRequest(identity, user, data);
+                final MessageHeader header = request.getMessageHeader();
+                final Set<ServiceToken> tokens = header.getServiceTokens();
+                return new SimpleLogRequest(identity, user, data, tokens, cryptoContexts);
             case USER_PROFILE:
                 return new SimpleProfileRequest(identity, user, data);
             case QUIT:

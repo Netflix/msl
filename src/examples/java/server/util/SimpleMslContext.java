@@ -141,7 +141,7 @@ public class SimpleMslContext implements MslContext {
         
         // Entity authentication factories.
         this.entityAuthFactories = new HashSet<EntityAuthenticationFactory>();
-        this.entityAuthFactories.add(new RsaAuthenticationFactory(rsaStore, authutils));
+        this.entityAuthFactories.add(new RsaAuthenticationFactory(serverId, rsaStore, authutils));
         this.entityAuthFactories.add(new UnauthenticatedAuthenticationFactory(authutils));
         
         // User authentication factories.
