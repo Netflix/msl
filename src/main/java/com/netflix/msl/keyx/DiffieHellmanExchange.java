@@ -68,20 +68,33 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
     private static final String KEY_PUBLIC_KEY = "publickey";
     
     /**
-     * If the provided byte array begins with a null byte this function simply
-     * returns the original array. Otherwise a new array is created that is a
-     * copy of the original array with a null byte prepended, and this new array
-     * is returned.
+     * If the provided byte array begins with one and only one null byte this
+     * function simply returns the original array. Otherwise a new array is
+     * created that is a copy of the original array with exactly one null byte
+     * in position zero, and this new array is returned.
      * 
      * @param b the original array.
      * @return the resulting byte array.
      */
-    private static byte[] prependNullByte(final byte[] b) {
-        if (b[0] == 0x00)
+    private static byte[] correctNullBytes(final byte[] b) {
+        // Count the number of leading nulls.
+        int leadingNulls = 0;
+        for (int i = 0; i < b.length; ++i) {
+            if (b[i] != 0x00)
+                break;
+            ++leadingNulls;
+        }
+        
+        // If there is exactly one leading null, return the original array.
+        if (leadingNulls == 1)
             return b;
-        final byte[] result = new byte[b.length + 1];
+        
+        // Create a copy of the non-null bytes and prepend exactly one null
+        // byte.
+        final int copyLength = b.length - leadingNulls;
+        final byte[] result = new byte[copyLength + 1];
         result[0] = 0x00;
-        System.arraycopy(b, 0, result, 1, b.length);
+        System.arraycopy(b, leadingNulls, result, 1, copyLength);
         return result;
     }
 
@@ -130,7 +143,7 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
             try {
                 parametersId = keyDataJO.getString(KEY_PARAMETERS_ID);
                 final byte[] publicKeyY = DatatypeConverter.parseBase64Binary(keyDataJO.getString(KEY_PUBLIC_KEY));
-                publicKey = new BigInteger(prependNullByte(publicKeyY));
+                publicKey = new BigInteger(correctNullBytes(publicKeyY));
             } catch (final JSONException e) {
                 throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + keyDataJO.toString(), e);
             } catch (final NullPointerException e) {
@@ -148,7 +161,7 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
             final JSONObject jsonObj = new JSONObject();
             jsonObj.put(KEY_PARAMETERS_ID, parametersId);
             final byte[] publicKeyY = publicKey.toByteArray();
-            jsonObj.put(KEY_PUBLIC_KEY, DatatypeConverter.printBase64Binary(prependNullByte(publicKeyY)));
+            jsonObj.put(KEY_PUBLIC_KEY, DatatypeConverter.printBase64Binary(correctNullBytes(publicKeyY)));
             return jsonObj;
         }
 
@@ -259,7 +272,7 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
             try {
                 parametersId = keyDataJO.getString(KEY_PARAMETERS_ID);
                 final byte[] publicKeyY = DatatypeConverter.parseBase64Binary(keyDataJO.getString(KEY_PUBLIC_KEY));
-                publicKey = new BigInteger(prependNullByte(publicKeyY));
+                publicKey = new BigInteger(correctNullBytes(publicKeyY));
             } catch (final JSONException e) {
                 throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + keyDataJO.toString(), e);
             } catch (final NullPointerException e) {
@@ -290,7 +303,7 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
             final JSONObject jsonObj = new JSONObject();
             jsonObj.put(KEY_PARAMETERS_ID, parametersId);
             final byte[] publicKeyY = publicKey.toByteArray();
-            jsonObj.put(KEY_PUBLIC_KEY, DatatypeConverter.printBase64Binary(prependNullByte(publicKeyY)));
+            jsonObj.put(KEY_PUBLIC_KEY, DatatypeConverter.printBase64Binary(correctNullBytes(publicKeyY)));
             return jsonObj;
         }
 
@@ -362,7 +375,7 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
             final KeyAgreement agreement = CryptoCache.getKeyAgreement("DiffieHellman");
             agreement.init(privateKey, params);
             agreement.doPhase(publicKey, true);
-            sharedSecret = prependNullByte(agreement.generateSecret());
+            sharedSecret = correctNullBytes(agreement.generateSecret());
         } catch (final NoSuchAlgorithmException e) {
             throw new MslInternalException("DiffieHellman algorithm not found.", e);
         } catch (final InvalidKeyException e) {

@@ -270,22 +270,34 @@ var DiffieHellmanExchange$ResponseData$parse;
     };
     
     /**
-     * If the provided byte array begins with a null byte this function simply
-     * returns the original array. Otherwise a new array is created that is a
-     * copy of the original array with a null byte prepended, and this new array
-     * is returned.
+     * If the provided byte array begins with one and only one null byte this
+     * function simply returns the original array. Otherwise a new array is
+     * created that is a copy of the original array with exactly one null byte
+     * in position zero, and this new array is returned.
      * 
      * @param {Uint8Array} b the original array.
      * @return {Uint8Array} the resulting byte array.
      */
-    function prependNullByte(b) {
-        var result = b;
-        if (result && result.length && result[0]) {
-            result = new Uint8Array(b.length + 1);
-            result[0] = 0x00;
-            result.set(b, 1);
-         }
-         return result;
+    function correctNullBytes(b) {
+        // Count the number of leading nulls.
+        var leadingNulls = 0;
+        for (var i = 0; i < b.length; ++i) {
+            if (b[i] != 0x00)
+                break;
+            ++leadingNulls;
+        }
+        
+        // If there is exactly one leading null, return the original array.
+        if (leadingNulls == 1)
+            return b;
+        
+        // Create a copy of the non-null bytes and prepend exactly one null
+        // byte.
+        var copyLength = b.length - leadingNulls;
+        var result = new Uint8Array(copyLength + 1);
+        result[0] = 0x00;
+        result.set(b.subarray(leadingNulls), 1);
+        return result;
     }
 
     DiffieHellmanExchange = KeyExchangeFactory.extend({
@@ -343,7 +355,7 @@ var DiffieHellmanExchange$ResponseData$parse;
             
             function computeSha384(sharedSecret) {
                 AsyncExecutor(callback, function() {
-                    sharedSecret = prependNullByte(sharedSecret);
+                    sharedSecret = correctNullBytes(sharedSecret);
                     var oncomplete = createKeys;
                     var onerror = function(e) {
                         callback.error(new MslCryptoException(MslError.DIGEST_ERROR, "Error computing SHA-384 of shared secret.", e));
