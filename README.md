@@ -28,6 +28,8 @@ The Java MSL code base includes project files for [Eclipse](http://www.eclipse.o
 
 An example server is provided under [src/examples/java/server/](src/examples/java/server/). The Eclipse project is a web project that can be deployed onto a Tomcat server. The example server is a J2EE servlet that will respond to requests from the example JavaScript client. The example server MSL configuration is specific to this server and should not be used to configure your application, but it can be used as the basis for doing so.
 
+You may need to install the [Java Cryptography Extension (JCE) Unlimited Strength Jurisdiction Policy Files](http://www.oracle.com/technetwork/java/javase/downloads/) to use cryptographic keys above a certain size.
+
 ### JavaScript
 
 The JavaScript MSL code base assumes a JavaScript execution environment that supports the latest [Web Crypto API](http://www.w3.org/TR/WebCryptoAPI/) specification. If you are using a web browser you may need to enable experimental features or feature flags to enable Web Crypto.
@@ -38,6 +40,8 @@ For earlier versions: <code>chrome://flags/#enable-experimental-web-platform-fea
 - Internet Explorer 11+  
 For earlier versions: <code>about:config dom.webcrypto.enabled</code>
 - Safari 8+
+
+Your browser may not support all Web Crypto API algorithms, key sizes, and features. If you encounter a problem with a Web Crypto operation please check the release notes for your browser version to determine if it supports what you are trying to do.
 
 To include the JavaScript MSL stack in your JavaScript application you must include all of the MSL JavaScript source files required by your MSL configuration. You must also specify the version of Web Crypto provided by your JavaScript execution environment by calling <code>MslCrypto$setWebCryptoVersion()</code> after loading the contents of <code>WebCryptoAdapter.js</code>. An example list of the required source files and use of <code>MslCrypto$setWebCryptoVersion()</code> can be found in [src/test/javascript/msltests.html](src/test/javascript/msltests.html).
 
