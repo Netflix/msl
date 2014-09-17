@@ -169,6 +169,7 @@ function errorCallback(msgOrError) {
     }
     errortext.innerHTML = msg;
     error.style.visibility = 'visible';
+    error.style.position = 'relative';
 }
 
 var client;
@@ -368,9 +369,9 @@ function showResponse(mis) {
 
 <h1>Example JavaScript Client</h1>
 
-<div id="error" style="width: 780px; background-color: yellow; border: 2px black solid; padding: 0.5em; margin-bottom: 1em; visibility: hidden">
+<div id="error" style="width: 780px; background-color: yellow; border: 2px black solid; padding: 0.5em; margin-bottom: 1em; visibility: hidden; position: absolute;">
     <div id="errortext" style="margin-bottom: 0.25em"></div>
-    <form><input type="submit" value="OK" onclick="javascript:document.getElementById('error').style.visibility = 'hidden';"/></form>
+    <form><input type="submit" value="OK" onclick="var error = javascript:document.getElementById('error'); error.style.visibility = 'hidden'; error.style.position = 'absolute';"/></form>
 </div>
 
 <form onsubmit="return false;">
