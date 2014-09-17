@@ -103,7 +103,17 @@ var Random;
          *        bytes.
          */
         nextBytes: function nextBytes(buffer) {
-            nfCrypto.getRandomValues(buffer);
+            // The API maximum is 65536. Iterate over the buffer until we fill
+            // it.
+            var offset = 0;
+            while (true) {
+                var length = Math.min(65536, buffer.length - offset);
+                if (length == 0) break;
+                var view = new Uint8Array(length);
+                nfCrypto.getRandomValues(view);
+                buffer.set(view, offset);
+                offset += length;
+            }
         }
     });
 })();

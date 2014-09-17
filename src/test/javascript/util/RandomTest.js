@@ -95,4 +95,18 @@ describe("Random", function() {
             diff += (xor & (1 << j)) ? 1 : -1;
         expect(Math.abs(diff)).toBeLessThan(3);
     });
+    
+    it("large bytes", function() {
+        var b = new Uint8Array(2.5 * 65536);
+        random.nextBytes(b);
+        
+        var xor = 0;
+        for (var i = 0; i < b.length; ++i) {
+            xor ^= b[i];
+        }
+        var diff = 0;
+        for (var j = 0; j < 8; ++j)
+            diff += (xor & (1 << j)) ? 1 : -1;
+        expect(Math.abs(diff)).toBeLessThan(3);
+    });
 });
