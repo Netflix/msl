@@ -44,6 +44,7 @@ import com.netflix.msl.MslMessageException;
 import com.netflix.msl.MslUserAuthException;
 import com.netflix.msl.MslUserIdTokenException;
 import com.netflix.msl.crypto.ICryptoContext;
+import com.netflix.msl.crypto.SessionCryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeScheme;
@@ -100,6 +101,12 @@ public class MessageInputStream extends InputStream {
         // If there is no key response data then return null.
         if (keyResponse == null)
             return null;
+        
+        // If the key response data master token is decrypted then use the
+        // master token keys to create the crypto context.
+        final MasterToken keyxMasterToken = keyResponse.getMasterToken();
+        if (keyxMasterToken.isDecrypted())
+            return new SessionCryptoContext(ctx, keyxMasterToken);
 
         // Perform the key exchange.
         final KeyExchangeScheme responseScheme = keyResponse.getKeyExchangeScheme();

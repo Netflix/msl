@@ -64,6 +64,7 @@ import com.netflix.msl.MslUserAuthException;
 import com.netflix.msl.MslUserIdTokenException;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.crypto.JcaAlgorithm;
+import com.netflix.msl.crypto.NullCryptoContext;
 import com.netflix.msl.crypto.SessionCryptoContext;
 import com.netflix.msl.crypto.SymmetricCryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
@@ -125,6 +126,20 @@ public class MessageInputStreamTest {
     private static final long MSG_ID = 42;
     private static final boolean END_OF_MSG = true;
     private static final byte[] DATA = new byte[32];
+    
+    /**
+     * A crypto context that always returns false for verify. The other crypto
+     * operations are no-ops.
+     */
+    private static class RejectingCryptoContext extends NullCryptoContext {
+        /* (non-Javadoc)
+         * @see com.netflix.msl.crypto.NullCryptoContext#verify(byte[], byte[])
+         */
+        @Override
+        public boolean verify(byte[] data, byte[] signature) throws MslCryptoException {
+            return false;
+        }
+    }
     
     /**
      * Increments the provided non-replayable ID by 1, wrapping around to zero
@@ -510,23 +525,32 @@ public class MessageInputStreamTest {
     
     @Test
     public void missingKeyRequestData() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, IOException, MslException {
+        // We need to replace the MSL crypto context before parsing the message
+        // so create a local MSL context.
+        final MockMslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, true);
+        
         thrown.expect(MslKeyExchangeException.class);
         thrown.expectMslError(MslError.KEYX_RESPONSE_REQUEST_MISMATCH);
         thrown.expectMessageId(MSG_ID);
 
         final HeaderData headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
-        final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
-        final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
+        final EntityAuthenticationData entityAuthData = ctx.getEntityAuthenticationData(null);
+        final MessageHeader messageHeader = new MessageHeader(ctx, entityAuthData, null, headerData, peerData);
         
+        ctx.setMslCryptoContext(new RejectingCryptoContext());
         final InputStream is = generateInputStream(messageHeader, payloads);
         final Set<KeyRequestData> keyRequestData = Collections.emptySet();
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, keyRequestData, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(ctx, is, MslConstants.DEFAULT_CHARSET, keyRequestData, cryptoContexts);
         mis.close();
     }
     
     @Test
     public void incompatibleKeyRequestData() throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslEntityAuthException, MslMasterTokenException, MslMessageException, MslUserAuthException, IOException, MslException {
+        // We need to replace the MSL crypto context before parsing the message
+        // so create a local MSL context.
+        final MockMslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, true);
+        
         thrown.expect(MslKeyExchangeException.class);
         thrown.expectMslError(MslError.KEYX_RESPONSE_REQUEST_MISMATCH);
         thrown.expectMessageId(MSG_ID);
@@ -535,17 +559,18 @@ public class MessageInputStreamTest {
         keyRequestData.add(new SymmetricWrappedExchange.RequestData(KeyId.SESSION));
 
         final KeyRequestData keyRequest = new SymmetricWrappedExchange.RequestData(KeyId.PSK);
-        final KeyExchangeFactory factory = trustedNetCtx.getKeyExchangeFactory(keyRequest.getKeyExchangeScheme());
-        final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
-        final KeyExchangeData keyExchangeData = factory.generateResponse(trustedNetCtx, keyRequest, entityAuthData.getIdentity());
+        final KeyExchangeFactory factory = ctx.getKeyExchangeFactory(keyRequest.getKeyExchangeScheme());
+        final EntityAuthenticationData entityAuthData = ctx.getEntityAuthenticationData(null);
+        final KeyExchangeData keyExchangeData = factory.generateResponse(ctx, keyRequest, entityAuthData.getIdentity());
         final KeyResponseData keyResponseData = keyExchangeData.keyResponseData;
         
         final HeaderData headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, keyResponseData, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
-        final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
-        
+        final MessageHeader messageHeader = new MessageHeader(ctx, entityAuthData, null, headerData, peerData);
+
+        ctx.setMslCryptoContext(new RejectingCryptoContext());
         final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, keyRequestData, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(ctx, is, MslConstants.DEFAULT_CHARSET, keyRequestData, cryptoContexts);
         mis.close();
     }
     

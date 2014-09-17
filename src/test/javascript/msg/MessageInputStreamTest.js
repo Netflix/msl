@@ -60,6 +60,17 @@ describe("MessageInputStream", function() {
     var HeaderPeerData = MessageHeader$HeaderPeerData;
     
     /**
+     * A crypto context that always returns false for verify. The other crypto
+     * operations are no-ops.
+     */
+    var RejectingCryptoContext = NullCryptoContext.extend({
+        /** @inheritDoc */
+        verify: function verify(data, signature, callback) {
+            callback.result(false);
+        },
+    });
+    
+    /**
      * Increments the provided non-replayable ID by 1, wrapping around to zero
      * if the provided value is equal to {@link MslConstants#MAX_LONG_VALUE}.
      * 
@@ -1328,9 +1339,20 @@ describe("MessageInputStream", function() {
     });
     
     it("missing key request data for message with key response data", function() {
+        // We need to replace the MSL crypto context before parsing the message
+        // so create a local MSL context.
+        var ctx;
+        runs(function() {
+            MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+                result: function(c) { ctx = c; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ctx; }, "ctx not received", 100);
+        
         var entityAuthData;
         runs(function() {
-            trustedNetCtx.getEntityAuthenticationData(null, {
+            ctx.getEntityAuthenticationData(null, {
                 result: function(x) { entityAuthData = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1341,7 +1363,7 @@ describe("MessageInputStream", function() {
         runs(function() {
             var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
-            MessageHeader$create(trustedNetCtx, entityAuthData, null, headerData, peerData, {
+            MessageHeader$create(ctx, entityAuthData, null, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1350,6 +1372,7 @@ describe("MessageInputStream", function() {
         
         var is;
         runs(function() {
+            ctx.setMslCryptoContext(new RejectingCryptoContext());
             generateInputStream(messageHeader, payloads, {
                 result: function(x) { is = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1360,8 +1383,8 @@ describe("MessageInputStream", function() {
         var mis;
         runs(function() {
             var keyRequestData = new Array();
-            MessageInputStream$create(trustedNetCtx, is, MslConstants$DEFAULT_CHARSET, keyRequestData, cryptoContexts, TIMEOUT, {
-            	result: function(x) { mis = x; },
+            MessageInputStream$create(ctx, is, MslConstants$DEFAULT_CHARSET, keyRequestData, cryptoContexts, TIMEOUT, {
+                result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1370,11 +1393,11 @@ describe("MessageInputStream", function() {
 
         var exception;
         runs(function() {
-        	mis.isReady({
-        		result: function() {},
+            mis.isReady({
+                result: function() {},
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
-        		error: function(e) { exception = e; }
-        	});
+                error: function(e) { exception = e; }
+            });
         });
         waitsFor(function() { return exception; }, "exception", 100);
 
@@ -1389,9 +1412,20 @@ describe("MessageInputStream", function() {
         keyRequestData.push(new SymmetricWrappedExchange$RequestData(SymmetricWrappedExchange$KeyId.MGK));
         keyRequestData.push(new SymmetricWrappedExchange$RequestData(SymmetricWrappedExchange$KeyId.SESSION));
         
+        // We need to replace the MSL crypto context before parsing the message
+        // so create a local MSL context.
+        var ctx;
+        runs(function() {
+            MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+                result: function(c) { ctx = c; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ctx; }, "ctx not received", 100);
+        
         var entityAuthData;
         runs(function() {
-            trustedNetCtx.getEntityAuthenticationData(null, {
+            ctx.getEntityAuthenticationData(null, {
                 result: function(x) { entityAuthData = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1401,8 +1435,8 @@ describe("MessageInputStream", function() {
         var keyExchangeData;
         runs(function() {
             var keyRequest = new SymmetricWrappedExchange$RequestData(SymmetricWrappedExchange$KeyId.PSK);
-            var factory = trustedNetCtx.getKeyExchangeFactory(keyRequest.keyExchangeScheme);
-            factory.generateResponse(trustedNetCtx, keyRequest, entityAuthData.getIdentity(), {
+            var factory = ctx.getKeyExchangeFactory(keyRequest.keyExchangeScheme);
+            factory.generateResponse(ctx, keyRequest, entityAuthData.getIdentity(), {
                 result: function(x) { keyExchangeData = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1414,7 +1448,7 @@ describe("MessageInputStream", function() {
             var keyResponseData = keyExchangeData.keyResponseData;
             var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, keyResponseData, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
-            MessageHeader$create(trustedNetCtx, entityAuthData, null, headerData, peerData, {
+            MessageHeader$create(ctx, entityAuthData, null, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1423,6 +1457,7 @@ describe("MessageInputStream", function() {
         
         var is;
         runs(function() {
+            ctx.setMslCryptoContext(new RejectingCryptoContext());
             generateInputStream(messageHeader, payloads, {
                 result: function(x) { is = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1432,8 +1467,8 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(trustedNetCtx, is, MslConstants$DEFAULT_CHARSET, keyRequestData, cryptoContexts, TIMEOUT, {
-            	result: function(x) { mis = x; },
+            MessageInputStream$create(ctx, is, MslConstants$DEFAULT_CHARSET, keyRequestData, cryptoContexts, TIMEOUT, {
+                result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1442,11 +1477,11 @@ describe("MessageInputStream", function() {
 
         var exception;
         runs(function() {
-        	mis.isReady({
-        		result: function() {},
+            mis.isReady({
+                result: function() {},
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
-        		error: function(e) { exception = e; }
-        	});
+                error: function(e) { exception = e; }
+            });
         });
         waitsFor(function() { return exception; }, "exception", 100);
 

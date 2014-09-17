@@ -33,22 +33,6 @@ var MessageInputStream$create;
     "use strict";
 
     /**
-     * Delay time between read attempts in milliseconds.
-     *
-     * @const
-     * @type {number}
-     */
-    var READ_DELAY = 10;
-
-    /**
-     * Maximum JSON value size in characters (10MB).
-     *
-     * @const
-     * @type {number}
-     */
-    var MAX_CHARACTERS = 10 * 1024 * 1024;
-
-    /**
      * <p>Return the crypto context resulting from key response data contained
      * in the provided header.</p>
      *
@@ -82,6 +66,12 @@ var MessageInputStream$create;
             // If there is no key response data then return null.
             if (!keyResponse)
                 return null;
+            
+            // If the key response data master token is decrypted then use the
+            // master token keys to create the crypto context.
+            var keyxMasterToken = keyResponse.masterToken;
+            if (keyxMasterToken.isDecrypted())
+                return new SessionCryptoContext(ctx, keyxMasterToken);
 
             // Perform the key exchange.
             var responseScheme = keyResponse.keyExchangeScheme;

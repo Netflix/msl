@@ -150,7 +150,21 @@ public abstract class Header implements JSONString {
             // Process message headers.
             if (headerJO.has(KEY_HEADERDATA)) {
                 final String headerdata = headerJO.getString(KEY_HEADERDATA);
-                return new MessageHeader(ctx, headerdata, entityAuthData, masterToken, signature, cryptoContexts);
+                final MessageHeader messageHeader = new MessageHeader(ctx, headerdata, entityAuthData, masterToken, signature, cryptoContexts);
+                
+                // Make sure the header was verified and decrypted.
+                //
+                // Throw different errors depending on whether or not a master
+                // token was used.
+                if (!messageHeader.isDecrypted()) {
+                    if (masterToken != null)
+                        throw new MslCryptoException(MslError.MESSAGE_MASTERTOKENBASED_VERIFICATION_FAILED).setEntity(masterToken);
+                    else
+                        throw new MslCryptoException(MslError.MESSAGE_ENTITYDATABASED_VERIFICATION_FAILED).setEntity(entityAuthData);
+                }
+                
+                // Return the header.
+                return messageHeader;
             }
             
             // Process error headers.

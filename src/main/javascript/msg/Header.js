@@ -166,13 +166,37 @@ var Header$KEY_SIGNATURE;
                 if (masterTokenJo) {
                     MasterToken$parse(ctx, masterTokenJo, {
                         result: function(masterToken) {
-                            MessageHeader$parse(ctx, headerdata, entityAuthData, masterToken, signature, cryptoContexts, callback);
+                            MessageHeader$parse(ctx, headerdata, entityAuthData, masterToken, signature, cryptoContexts, {
+                                result: function(messageHeader) {
+                                    AsyncExecutor(callback, function() {
+                                        // Make sure the header was verified and decrypted.
+                                        if (!messageHeader.isDecrypted())
+                                            throw new MslCryptoException(MslError.MESSAGE_MASTERTOKENBASED_VERIFICATION_FAILED).setEntity(masterToken);
+                                        
+                                        // Return the header.
+                                        return messageHeader;
+                                    });
+                                },
+                                error: callback.error,
+                            });
                         },
-                        error: function(err) { callback.error(err); }
+                        error: callback.error,
                     });
                     return;
                 } else {
-                    MessageHeader$parse(ctx, headerdata, entityAuthData, null, signature, cryptoContexts, callback);
+                    MessageHeader$parse(ctx, headerdata, entityAuthData, null, signature, cryptoContexts, {
+                        result: function(messageHeader) {
+                            AsyncExecutor(callback, function() {
+                                // Make sure the header was verified and decrypted.
+                                if (!messageHeader.isDecrypted())
+                                    throw new MslCryptoException(MslError.MESSAGE_ENTITYDATABASED_VERIFICATION_FAILED).setEntity(entityAuthData);
+                                
+                                // Return the header.
+                                return messageHeader;
+                            });
+                        },
+                        error: callback.error,
+                    });
                     return;
                 }
             }

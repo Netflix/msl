@@ -402,9 +402,10 @@ public class MessageHeader extends Header {
         
         // Encrypt and sign the header data.
         try {
-            final byte[] plaintext = headerJO.toString().getBytes(MslConstants.DEFAULT_CHARSET);
+            this.plaintext = headerJO.toString().getBytes(MslConstants.DEFAULT_CHARSET);
             this.headerdata = this.messageCryptoContext.encrypt(plaintext);
             this.signature = this.messageCryptoContext.sign(this.headerdata);
+            this.verified = true;
         } catch (final MslCryptoException e) {
             e.setEntity(this.masterToken);
             e.setEntity(this.entityAuthData);
@@ -460,7 +461,6 @@ public class MessageHeader extends Header {
      * @throws MslException if a token is improperly bound to another token.
      */
     protected MessageHeader(final MslContext ctx, final String headerdata, final EntityAuthenticationData entityAuthData, final MasterToken masterToken, final byte[] signature, final Map<String,ICryptoContext> cryptoContexts) throws MslEncodingException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslMasterTokenException, MslMessageException, MslEntityAuthException, MslException {
-        final byte[] plaintext;
         try {
             this.entityAuthData = (masterToken == null) ? entityAuthData : null;
             this.masterToken = masterToken;
@@ -507,15 +507,8 @@ public class MessageHeader extends Header {
             }
             if (this.headerdata == null || this.headerdata.length == 0)
                 throw new MslMessageException(MslError.HEADER_DATA_MISSING, headerdata).setEntity(masterToken).setEntity(entityAuthData);
-            if (!this.messageCryptoContext.verify(this.headerdata, this.signature)) {
-                // Throw different errors depending on whether or not a master
-                // token was used.
-                if (masterToken != null)
-                    throw new MslCryptoException(MslError.MESSAGE_MASTERTOKENBASED_VERIFICATION_FAILED).setEntity(masterToken).setEntity(entityAuthData);
-                else
-                    throw new MslCryptoException(MslError.MESSAGE_ENTITYDATABASED_VERIFICATION_FAILED).setEntity(masterToken).setEntity(entityAuthData);
-            }
-            plaintext = this.messageCryptoContext.decrypt(this.headerdata);
+            this.verified = this.messageCryptoContext.verify(this.headerdata, this.signature);
+            this.plaintext = (this.verified) ? this.messageCryptoContext.decrypt(this.headerdata) : null;
         } catch (final MslCryptoException e) {
             e.setEntity(masterToken);
             e.setEntity(entityAuthData);
@@ -524,6 +517,28 @@ public class MessageHeader extends Header {
             e.setEntity(masterToken);
             e.setEntity(entityAuthData);
             throw e;
+        }
+        
+        // If verification failed we cannot parse the plaintext.
+        if (this.plaintext == null) {
+            this.messageId = 1;
+            this.sender = null;
+            this.recipient = null;
+            this.keyResponseData = null;
+            this.userIdToken = null;
+            this.userAuthData = null;
+            this.user = null;
+            this.serviceTokens = Collections.emptySet();
+            this.nonReplayableId = null;
+            this.nonReplayable = false;
+            this.renewable = false;
+            this.handshake = false;
+            this.capabilities = null;
+            this.keyRequestData = Collections.emptySet();
+            this.peerMasterToken = null;
+            this.peerUserIdToken = null;
+            this.peerServiceTokens = Collections.emptySet();
+            return;
         }
         
         final String headerdataJson = new String(plaintext, MslConstants.DEFAULT_CHARSET);
@@ -681,7 +696,7 @@ public class MessageHeader extends Header {
             } else {
                 this.peerMasterToken = null;
                 this.peerUserIdToken = null;
-                this.peerServiceTokens = Collections.unmodifiableSet(new HashSet<ServiceToken>());
+                this.peerServiceTokens = Collections.emptySet();
             }
         } catch (final JSONException e) {
             throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJO.toString(), e)
@@ -698,6 +713,25 @@ public class MessageHeader extends Header {
             e.setMessageId(this.messageId);
             throw e;
         }
+    }
+
+    /**
+     * <p>Returns true if the header data has been decrypted and parsed. If
+     * this method returns false then the other methods that return the header
+     * data will return {@code null}, {@code false}, or empty collections
+     * instead of the actual header data.</p>
+     * 
+     * @return true if the decrypted content is available. (Implies verified.)
+     */
+    public boolean isDecrypted() {
+        return plaintext != null;
+    }
+
+    /**
+     * @return true if the token has been verified.
+     */
+    public boolean isVerified() {
+        return verified;
     }
     
     /**
@@ -977,6 +1011,8 @@ public class MessageHeader extends Header {
     private final MasterToken masterToken;
     /** Header data (ciphertext). */
     private final byte[] headerdata;
+    /** Header data (plaintext) */
+    private final byte[] plaintext;
     /** Signature. */
     private final byte[] signature;
     
@@ -1019,4 +1055,7 @@ public class MessageHeader extends Header {
     
     /** Message crypto context. */
     private final ICryptoContext messageCryptoContext;
+    
+    /** Message header is verified. */
+    private final boolean verified;
 }

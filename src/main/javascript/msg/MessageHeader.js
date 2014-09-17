@@ -257,16 +257,20 @@ var MessageHeader$HeaderPeerData;
      * @param {string} sender message sender.
      * @param {ICryptoContext} messageCryptoContext message crypto context.
      * @param {Uint8Array} headerdata raw header data.
+     * @param {Uint8Array} plaintext decrypted header data.
      * @param {Uint8Array} signature raw signature.
+     * @param {boolean} verified true if the headerdata was verified.
      * @param {number} legacy non-replayable boolean.
      * @constructor
      */
-    function CreationData(user, sender, messageCryptoContext, headerdata, signature, nonReplayable) {
+    function CreationData(user, sender, messageCryptoContext, headerdata, plaintext, signature, verified, nonReplayable) {
         this.user = user;
         this.sender = sender;
         this.messageCryptoContext = messageCryptoContext;
         this.headerdata = headerdata;
+        this.plaintext = plaintext;
         this.signature = signature;
+        this.verified = verified;
         this.nonReplayable = nonReplayable;
     };
 
@@ -294,7 +298,9 @@ var MessageHeader$HeaderPeerData;
      * @param {boolean} renewable
      * @param {MessageCapabilities} capabilities
      * @param {Uint8Array} headerdata
+     * @param {Uint8Array} plaintext
      * @param {Uint8Array} signature
+     * @param {boolean} verified
      * @return {object} the properties configuration.
      */
     function buildProperties(ctx, messageCryptoContext, user,
@@ -302,7 +308,8 @@ var MessageHeader$HeaderPeerData;
             keyRequestData, keyResponseData,
             userAuthData, userIdToken, serviceTokens,
             peerMasterToken, peerUserIdToken, peerServiceTokens,
-            nonReplayableId, nonReplayable, renewable, handshake, capabilities, headerdata, signature)
+            nonReplayableId, nonReplayable, renewable, handshake, capabilities,
+            headerdata, plaintext, signature, verified)
     {
         // The properties.
         return {
@@ -374,7 +381,9 @@ var MessageHeader$HeaderPeerData;
             renewable: { value: renewable, writable: false, enumerable: false, configurable: false },
             handshake: { value: handshake, writable: false, enumerable: false, configurable: false },
             headerdata: { value: headerdata, writable: false, enumerable: false, configurable: false },
+            plaintext: { value: plaintext, writable: false, enumerable: false, configurable: false },
             signature: { value: signature, writable: false, enumerable: false, configurable: false },
+            verified: { value: verified, writable: false, enumerable: false, configurable: false },
         };
     }
 
@@ -593,7 +602,8 @@ var MessageHeader$HeaderPeerData;
                                                     masterToken, sender, recipient, messageId, keyRequestData, keyResponseData,
                                                     userAuthData, userIdToken, serviceTokens,
                                                     peerMasterToken, peerUserIdToken, peerServiceTokens,
-                                                    nonReplayableId, nonReplayable, renewable, handshake, capabilities, headerdata, signature);
+                                                    nonReplayableId, nonReplayable, renewable, handshake, capabilities,
+                                                    headerdata, plaintext, signature, true);
                                                 Object.defineProperties(this, props);
                                                 return this;
                                             }, self);
@@ -630,19 +640,41 @@ var MessageHeader$HeaderPeerData;
                         var user = creationData.user;
                         var messageCryptoContext = creationData.messageCryptoContext;
                         var headerdata = creationData.headerdata;
+                        var plaintext = creationData.plaintext;
                         var signature = creationData.signature;
+                        var verified = creationData.verified;
                         nonReplayable = creationData.nonReplayable;
 
                         var props = buildProperties(ctx, messageCryptoContext, user, entityAuthData,
                             masterToken, sender, recipient, messageId, keyRequestData, keyResponseData,
                             userAuthData, userIdToken, serviceTokens,
                             peerMasterToken, peerUserIdToken, peerServiceTokens,
-                            nonReplayableId, nonReplayable, renewable, handshake, capabilities, headerdata, signature);
+                            nonReplayableId, nonReplayable, renewable, handshake, capabilities,
+                            headerdata, plaintext, signature, verified);
                         Object.defineProperties(this, props);
                         return this;
                     }
                 }, self);
             }
+        },
+
+        /**
+         * <p>Returns true if the header data has been decrypted and parsed. If
+         * this method returns false then the other methods that return the header
+         * data will return {@code null}, {@code false}, or empty collections
+         * instead of the actual header data.</p>
+         * 
+         * @return {boolean} true if the decrypted content is available. (Implies verified.)
+         */
+        isDecrypted: function isDecrypted() {
+            return (this.plaintext) ? true : false;
+        },
+
+        /**
+         * @return {boolean} true if the token has been verified.
+         */
+        isVerified: function isVerified() {
+            return this.verified;
         },
 
         /**
@@ -1044,33 +1076,36 @@ var MessageHeader$HeaderPeerData;
             messageCryptoContext.verify(headerdata, signature, {
                 result: function(verified) {
                     AsyncExecutor(callback, function() {
-                        if (!verified) {
-                            // Throw different errors depending on whether or not a master
-                            // token was used.
-                            if (masterToken)
-                                throw new MslCryptoException(MslError.MESSAGE_MASTERTOKENBASED_VERIFICATION_FAILED);
-                            else
-                                throw new MslCryptoException(MslError.MESSAGE_ENTITYDATABASED_VERIFICATION_FAILED);
+                        if (verified) {
+                            messageCryptoContext.decrypt(headerdata, {
+                                result: function(plaintext) {
+                                    AsyncExecutor(callback, function() {
+                                        var headerdataJson = textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET);
+                                        reconstructHeader(messageCryptoContext, headerdata, plaintext, signature, verified, headerdataJson);
+                                    });
+                                },
+                                error: callback.error,
+                            });
+                        } else {
+                            reconstructHeader(messageCryptoContext, null, null, signature, verified, null);
                         }
-                        
-                        // Decrypt the header data.
-                        messageCryptoContext.decrypt(headerdata, {
-                            result: function(plaintext) {
-                                AsyncExecutor(callback, function() {
-                                    var headerdataJson = textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET);
-                                    reconstructHeader(messageCryptoContext, headerdataJson);
-                                });
-                            },
-                            error: function(e) { callback.error(e); },
-                        });
                     });
                 },
-                error: function(e) { callback.error(e); },
+                error: callback.error,
             });
         });
-        
-        function reconstructHeader(messageCryptoContext, headerdataJson) {
+
+        function reconstructHeader(messageCryptoContext, headerdata, plaintext, signature, verified, headerdataJson) {
             AsyncExecutor(callback, function() {
+                // If verification failed we cannot parse the plaintext.
+                if (!plaintext) {
+                    var headerData = new HeaderData(null, 1, null, false, false, null, [], null, null, null, []);
+                    var headerPeerData = new HeaderPeerData(null, null, []);
+                    var creationData = new CreationData(null, null, messageCryptoContext, headerdata, plaintext, signature, verified, false);
+                    new MessageHeader(ctx, entityAuthData, masterToken, headerData, headerPeerData, creationData, callback);
+                    return;
+                }
+                
                 // Reconstruct header JSON object.
                 var headerdataJO;
                 try {
@@ -1207,7 +1242,7 @@ var MessageHeader$HeaderPeerData;
                                                                                             keyRequestData, keyResponseData, userAuthData, userIdToken,
                                                                                             serviceTokens);
                                                                                     var headerPeerData = new HeaderPeerData(peerMasterToken, peerUserIdToken, peerServiceTokens);
-                                                                                    var creationData = new CreationData(user, sender, messageCryptoContext, headerdata, signature, nonReplayable);
+                                                                                    var creationData = new CreationData(user, sender, messageCryptoContext, headerdata, plaintext, signature, verified, nonReplayable);
                                                                                     new MessageHeader(ctx, entityAuthData, masterToken, headerData, headerPeerData, creationData, callback);
                                                                                 });
                                                                             },
