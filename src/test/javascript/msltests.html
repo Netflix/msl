@@ -100,7 +100,7 @@
 <script type="text/javascript" src="../../main/javascript/crypto/WebCryptoAdapter.js"></script>
 <script>
 var webCryptoVersion;
-if (webCryptoEnv == 'ppapi') webCryptoVersion = MslCrypto$WebCryptoVersion.LEGACY;
+if (webCryptoEnv == 'ppapi' || window.msCrypto) webCryptoVersion = MslCrypto$WebCryptoVersion.LEGACY;
 else if (webCryptoEnv == 'pnacl') webCryptoVersion = MslCrypto$WebCryptoVersion.V2014_01;
 else webCryptoVersion = MslCrypto$WebCryptoVersion.LATEST;
 MslCrypto$setWebCryptoVersion(webCryptoVersion);

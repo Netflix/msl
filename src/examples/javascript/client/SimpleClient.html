@@ -63,7 +63,11 @@
 <script type="text/javascript" src="../../../main/javascript/MslUserIdTokenException.js"></script>
 <script type="text/javascript" src="../../../main/javascript/crypto/WebCryptoAdapter.js"></script>
 <script type="text/javascript">
-MslCrypto$setWebCryptoVersion(MslCrypto$WebCryptoVersion.LATEST);
+if (window.msCrypto) {
+	MslCrypto$setWebCryptoVersion(MslCrypto$WebCryptoVersion.LEGACY);
+} else {
+	MslCrypto$setWebCryptoVersion(MslCrypto$WebCryptoVersion.LATEST);
+}
 </script>
 <script type="text/javascript" src="../../../main/javascript/crypto/WebCryptoAlgorithm.js"></script>
 <script type="text/javascript" src="../../../main/javascript/crypto/WebCryptoUsage.js"></script>
