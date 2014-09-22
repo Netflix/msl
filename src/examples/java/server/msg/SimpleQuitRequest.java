@@ -52,13 +52,13 @@ public class SimpleQuitRequest extends SimpleRequest {
      * @see server.msg.SimpleRequest#execute()
      */
     @Override
-    public SimpleRespondMessageContext execute() {
+    public SimpleRespondMessageContext execute() throws SimpleRequestUserException {
         final String response;
         
         // The request must come from the administrator.
         final SimpleUser user = getUser();
         if (user == null || !SimpleConstants.ADMIN_USERNAME.equals(user.getUserId())) {
-            response = "Error: only the administrator may terminate the server.";
+            throw new SimpleRequestUserException("Error: only the administrator may terminate the server.");
         } else {
             response = "Terminating server.";
         }

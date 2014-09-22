@@ -80,7 +80,7 @@ public class SimpleQueryRequest extends SimpleRequest {
      * @see server.msg.SimpleRequest#execute()
      */
     @Override
-    public SimpleRespondMessageContext execute() {
+    public SimpleRespondMessageContext execute() throws SimpleRequestUserException, SimpleRequestExecutionException {
         // Pull requesting user.
         final SimpleUser user = getUser();
         final String username = (user != null) ? user.toString() : null;
@@ -90,7 +90,7 @@ public class SimpleQueryRequest extends SimpleRequest {
             if (data[1].equals(key)) {
                 final String response;
                 if (data[0] != null && !data[0].equals(username))
-                    response = "Error: access restricted to user " + data[0] + ".";
+                    throw new SimpleRequestUserException("Error: access restricted to user " + data[0] + ".");
                 else
                     response = data[2];
                 return new SimpleRespondMessageContext(getIdentity(), true, response);
@@ -98,7 +98,7 @@ public class SimpleQueryRequest extends SimpleRequest {
         }
         
         // Data key not found.
-        return new SimpleRespondMessageContext(getIdentity(), true, "Error: no data found for key " + key + ".");
+        throw new SimpleRequestExecutionException("Error: no data found for key " + key + ".");
     }
 
     /** Data key. */
