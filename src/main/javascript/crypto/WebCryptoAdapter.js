@@ -58,6 +58,11 @@ function MslCrypto$setWebCryptoVersion(version) {
     
     // Default to the latest Web Crypto version.
     mslCrypto$version = WebCryptoVersion.LATEST;
+    
+    // Safari requires SPKI to be converted to JWK for import.
+    var SAFARI = (navigator &&
+        (navigator.vendor && navigator.vendor.indexOf("Apple") != -1) &&
+        (navigator.userAgent && navigator.userAgent.indexOf("Safari") != -1));
 
     // If extractable is not specified, default to false
     function normalizeExtractable(extractable) {
@@ -239,6 +244,11 @@ function MslCrypto$setWebCryptoVersion(version) {
         },
 
         'importKey': function(format, keyData, algorithm, extractable, keyUsage) {
+            // Convert SPKI to a JWK object in Safari.
+            if (SAFARI && format == 'spki') {
+                keyData = ASN1.rsaDerToJwk(keyData);
+            }
+            
             var ext = normalizeExtractable(extractable);
             var ku = normalizeKeyUsage(keyUsage);
             switch (mslCrypto$version) {
