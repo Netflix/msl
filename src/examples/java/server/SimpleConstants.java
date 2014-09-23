@@ -33,20 +33,42 @@ public class SimpleConstants {
     
     /** Server entity ID. */
     public static final String SERVER_ID = "SimpleMslServer";
-    /** Server 1024-bit RSA public key. */
+    /** Server 2048-bit RSA public key. */
     public static String RSA_PUBKEY_B64 = 
-        "MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALeJpiH5nikd3XeAo2rHjLJVVChM/p6l" +
-        "VnQHyFh77w0Efbppi1P1pNy8BxJ++iFKt2dV/4ZKkUKqtlIu3KX19kcCAwEAAQ==";
-    /** Server 1024-bit RSA private key. */
+        "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4feorj/FWQi8AhbvjK3G" +
+        "L31ct6N+Ad/3FwqNsa4vAsfPmilLRx0DWhkxRycetmQEAa+1THyNCzobIduQE3UY" +
+        "8NtdOiy1S3BtHDoiSNEITFPAs0l2OAZ2ZUv0KIr9sLWAznlXMclLOBXtLOQMCs2e" +
+        "Ey4MO1m9uLywwc2SuAfoZe+wjEIauyoQK/M5miA0fbaEn4H+3m5aiP3Lb1X5Ss4b" +
+        "4tuu0ENsO/ebgMx2ltZ4b9dkzA65DM6XxEC60jK1AW+/wvFb4+iPQqrA7mdiZWsp" +
+        "zqMRTaAUDHKJo2LFBc6N0/wuTsXczHx6TYz5b2hrI6N+O7EEuxirAaU+xU7XEqv2" +
+        "dQIDAQAB";
+    /** Server 2048-bit RSA private key. */
     public static String RSA_PRIVKEY_B64 =
-        "MIIBVgIBADANBgkqhkiG9w0BAQEFAASCAUAwggE8AgEAAkEAt4mmIfmeKR3dd4Cj" +
-        "aseMslVUKEz+nqVWdAfIWHvvDQR9ummLU/Wk3LwHEn76IUq3Z1X/hkqRQqq2Ui7c" +
-        "pfX2RwIDAQABAkEAlB6YXq7uv0wE4V6Fg7VLjNhkNKn+itXwMW/eddp/D8cC4QbH" +
-        "+0Ejt0e3F+YcY0RBsTUk7hz89VW7BtpjXRrU0QIhAOyjvUsihGzImq+WDiEWvnXX" +
-        "lVaUaJXaaNElE37V/BE1AiEAxo25k2z2SDbFC904Zk020kISi95KNNv5ceEFcGu0" +
-        "dQsCIQDUgj7uCHNv1b7ETDcoE+q6nP2poOFDIb7bgzY8wyH4uQIgf+02YO82auam" +
-        "5HL+8KLVLHkXm/h31UDZoe66Y2lxlmsCIQC+cKulQATpKNnMV1RVtpH07A0+X72s" +
-        "wpu2pmaRSYgw/w==";
+        "MIIEowIBAAKCAQEA4feorj/FWQi8AhbvjK3GL31ct6N+Ad/3FwqNsa4vAsfPmilL" +
+        "Rx0DWhkxRycetmQEAa+1THyNCzobIduQE3UY8NtdOiy1S3BtHDoiSNEITFPAs0l2" +
+        "OAZ2ZUv0KIr9sLWAznlXMclLOBXtLOQMCs2eEy4MO1m9uLywwc2SuAfoZe+wjEIa" +
+        "uyoQK/M5miA0fbaEn4H+3m5aiP3Lb1X5Ss4b4tuu0ENsO/ebgMx2ltZ4b9dkzA65" +
+        "DM6XxEC60jK1AW+/wvFb4+iPQqrA7mdiZWspzqMRTaAUDHKJo2LFBc6N0/wuTsXc" +
+        "zHx6TYz5b2hrI6N+O7EEuxirAaU+xU7XEqv2dQIDAQABAoIBAQCh/pEv8knBbXCT" +
+        "Muwi90VYMFAy2oNwRqZ2Hzu7gHr1TFd5VldAMP2BLwRT1SjAau0wZE3d+oCG5u4i" +
+        "lKwyNsVdjnXESd7iqUOfc9G2UBzZ00UXgve8bG2eaxgrpJEAiO5Bl126NGu3VojE" +
+        "oOw9JnFHoMBmIAzSDnvNRFoFkq25vQYAG45l9ZeNJv8mJaJG5+DNr6xbAE5PmROc" +
+        "qyDL7RrfSqLxALhgZzLjVAP99fBGpOw2dCGKbQRzkUY0bojO19G3UUtf3HCI005i" +
+        "kYHuAPdvu4+AteOvKdnDeMcT1pDxiNZKO+kXumIGYaKul2k6t9UpsRvCSmrthFZx" +
+        "t8izGEehAoGBAPJ7YiK6W6NrgVyW5PaDtDRTrwZb/1G/K+jvCzHhV8/X5KfmjsaA" +
+        "kT5m2WS1/rMwJoyc45GmTyyy6reGqLs5zAdUVicRKjZZaQnj00QXHRlmAEiDtx2T" +
+        "b0cagryVf79Ma5FgyOMmqHjS5Pob7RvI4UyzVhR/pYmOrqxWGZgmRlxNAoGBAO6Q" +
+        "lfXvbL9JKZ3HXIVbrXS5QToACnQf19QH05LPJG4jni7ycoTZFOiFmJodP5ca+Gug" +
+        "TLlPaeVu52dlbXM1k32tV+0ui6vn0ErE8ZsXTjbZ/KInx4munWrLP8w3Ju8MHPPl" +
+        "sEgmeggL0xBtt5BFRKus0SWwImZ9rIzxFXdbanbJAoGAOrP4LCQlr0iFht7ZC30T" +
+        "EV/5DXcUNrwrazcD5M2DLsQ7jRJaGmBhyVOo6aLNyJ+tlXkd9tLmdBHUlR26l6kE" +
+        "Zfna6ZZUO9glf8lyChf2aYGyK9wHZtecpwAaCoG+7ZcYq5dcyvE+9BFKcep02rcl" +
+        "JCZ+fnPwpX6vdvVZOOZ7PjkCgYAGMv2imWkjA1ywe+i8kmhMey/luPCMmfM60EVA" +
+        "MF/K+OP4ZlZxe06eyDHx90aav5mq+kxkGFsxGhOrTSht8Pt3LZT2VdpNSkXQW5PH" +
+        "qvBeXoXBFPWLb10p1ERBI0HAvnjWIabWCSHsqZn/eEpn1lT1fRUmPJB4R1W/h9g9" +
+        "9MMseQKBgBVp+6dU2Rdf1jzwzDH3IRDIVgWeqLlQucbVr/Fipjooioq6nxH2oHUB" +
+        "2Qmq7FjYLKfKdaIRRoJhgeUhjVOVdjyIKVhLlBYpztr48jrMD5e4ykvKdAV2tlNv" +
+        "B/b+6sSJkqh7Qm6CMO29m+dE2PJBZCzviTkBMOzyme71phGsh//C";
 
     /** Email/Password set. */
     public static String[][] EMAIL_PASSWORDS = {
