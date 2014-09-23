@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 var Random;
+var Random$setCrypto;
 
 (function() {
     "use strict";
@@ -22,6 +23,23 @@ var Random;
     var SHIFT_24 = 0x1000000;
     // Minimum integer.
     var MIN_LONG_VALUE = 0 - MslConstants$MAX_LONG_VALUE;
+    
+    // Determine nfCrypto.
+    var nfCrypto;
+    if (window.msCrypto) {
+    	nfCrypto = window.msCrypto;
+    } else {
+    	nfCrypto = window.crypto;
+    }
+    
+    /**
+     * Override the crypto interface providing the function getRandomValues().
+     * 
+     * @param {object} the new crypto interface.
+     */
+    Random$setCrypto = function Random$setCrypto(crypto) {
+    	nfCrypto = crypto;
+    };
     
     /**
      * @param min minimum value.

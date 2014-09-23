@@ -8,35 +8,6 @@
 <script type="text/javascript" src="../../test/javascript/lib/jasmine/jasmine.js"></script>
 <script type="text/javascript" src="../../test/javascript/lib/jasmine/jasmine-html.js"></script>
 
-<script type="text/javascript">
-	var webCryptoEnv;
-    if (window.msCrypto) {
-        window.nfCrypto = window.msCrypto;
-    } else {
-    	function loadPageVar(sVar) {
-		    return decodeURI(window.location.search.replace(new RegExp("^(?:.*[&\\?]" + encodeURI(sVar).replace(/[\.\+\*]/g, "\\$&") + "(?:\\=([^&]*))?)?.*$", "i"), "$1"));
-		}
-    	webCryptoEnv = loadPageVar('wcenv');
-    	
-    	if (webCryptoEnv == 'pnacl') {
-    		// PNaCl
-    		document.write('<scr' + 'ipt type="text/javascript" src="http://cadmium.netflix.com/cadmium/pnacl/nfcrypto_pnacl.js"></scr' + 'ipt>');
-    		document.write('<scr' + 'ipt type="text/javascript" src="http://cadmium.netflix.com/cadmium/pnacl/nfcrypto_promise.js"></scr' + 'ipt>');
-    	} else if (webCryptoEnv == 'ppapi') {
-    	    // Plugin
-	        document.write('<scr' + 'ipt type="text/javascript" src="http://cadmium.netflix.com/cadmium/dev/Plugin/NfWebCrypto/linux/release/Latest/nfcrypto.js"></scr' + 'ipt>');
-	    } else {
-	        // Web Crypto
-            nfCrypto = window.crypto;
-	        window.nfCrypto = nfCrypto;
-	    }
-    }
-</script>
-
-<script type="text/javascript">
-    var cryptoSubtle = window.nfCrypto.subtle;
-</script>
-
 <!-- crypto-js -->
 <script src="../../main/javascript/lib/crypto-js/components/core.js"></script>
 <script src="../../main/javascript/lib/crypto-js/components/enc-base64.js"></script>
@@ -100,12 +71,25 @@
 <script type="text/javascript" src="../../main/javascript/MslUserAuthException.js"></script>
 <script type="text/javascript" src="../../main/javascript/MslUserIdTokenException.js"></script>
 <script type="text/javascript" src="../../main/javascript/crypto/WebCryptoAdapter.js"></script>
-<script>
-if (webCryptoEnv == 'ppapi') {
-    MslCrypto$setWebCryptoVersion(MslCrypto$WebCryptoVersion.LEGACY);
-} else if (webCryptoEnv == 'pnacl') {
-    MslCrypto$setWebCryptoVersion(MslCrypto$WebCryptoVersion.V2014_01);
-}
+<script type="text/javascript">
+	// Change crypto if an override environment is set.
+	function loadPageVar(sVar) {
+	    return decodeURI(window.location.search.replace(new RegExp("^(?:.*[&\\?]" + encodeURI(sVar).replace(/[\.\+\*]/g, "\\$&") + "(?:\\=([^&]*))?)?.*$", "i"), "$1"));
+	}
+   	var webCryptoEnv = loadPageVar('wcenv');
+   	
+   	if (webCryptoEnv == 'pnacl') {
+   		// PNaCl
+   		document.write('<scr' + 'ipt type="text/javascript" src="http://cadmium.netflix.com/cadmium/pnacl/nfcrypto_pnacl.js"></scr' + 'ipt>');
+   		document.write('<scr' + 'ipt type="text/javascript" src="http://cadmium.netflix.com/cadmium/pnacl/nfcrypto_promise.js"></scr' + 'ipt>');
+   		Random$setCrypto(nfCrypto);
+   		MslCrypto$setWebCryptoVersion(MslCrypto$WebCryptoVersion.LEGACY);
+   	} else if (webCryptoEnv == 'ppapi') {
+   	    // Plugin
+        document.write('<scr' + 'ipt type="text/javascript" src="http://cadmium.netflix.com/cadmium/dev/Plugin/NfWebCrypto/linux/release/Latest/nfcrypto.js"></scr' + 'ipt>');
+   	    Random$setCrypto(nfCrypto);
+   	    MslCrypto$setWebCryptoVersion(MslCrypto$WebCryptoVersion.V2014_01);
+   	}
 </script>
 <script type="text/javascript" src="../../main/javascript/crypto/WebCryptoAlgorithm.js"></script>
 <script type="text/javascript" src="../../main/javascript/crypto/WebCryptoUsage.js"></script>

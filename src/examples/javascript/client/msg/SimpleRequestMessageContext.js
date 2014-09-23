@@ -129,8 +129,9 @@ var SimpleRequestMessageContext;
         /** @inheritDoc */
         getKeyRequestData: function(callback) {
             AsyncExecutor(callback, function() {
+            	var mechanism = this._keyxMgr.getMechanism();
                 var keyPair = this._keyxMgr.getKeyPair();
-                var request = new RequestData("keyPairId", Mechanism.JWK_RSA, keyPair.publicKey, keyPair.privateKey);
+                var request = new RequestData("keyPairId", mechanism, keyPair.publicKey, keyPair.privateKey);
                 return [ request ];
             }, this);
         },

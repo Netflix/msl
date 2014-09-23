@@ -55,16 +55,19 @@ var SimpleKeyxManager$KeyPair;
          * <p>Create a new asymmetric wrapped key exchange manager. A pair of
          * initial keys will be generated.</p>
          * 
+         * @param {AsymmetricWrappedExchange$Mechanism} mechanism the key
+         *        mechanism to use.
          * @param {{result: function(SimpleKeyxManager), error: function(Error)}}
          *        callback the callback that will receive the key manager or
          *        any thrown exceptions.
          */
-        init: function init(callback) {
+        init: function init(mechanism, callback) {
             var self = this;
             
             AsyncExecutor(callback, function() {
                 // Set properties.
                 var props = {
+                	_mechanism: { value: mechanism, writable: false, enumerable: false, configurable: false },
                     _pubkey: { value: null, writable: true, enumerable: false, configurable: false },
                     _privkey: { value: null, writable: true, enumerable: false, configurable: false },
                 };
@@ -79,6 +82,16 @@ var SimpleKeyxManager$KeyPair;
                     error: callback.error,
                 });
             }, self);
+        },
+        
+        /**
+         * <p>Return the key exchange mechanism.</p>
+         * 
+         * @return {AsymmetricWrappedExchange$Mechanism} the key exchange
+         *         mechanism.
+         */
+        getMechanism: function getMechanism() {
+        	return this._mechanism;
         },
         
         /**
@@ -133,8 +146,18 @@ var SimpleKeyxManager$KeyPair;
             }, self);
         }
     });
-    
-    SimpleKeyxManager$create = function SimpleKeyxManager$create(callback) {
-        new SimpleKeyxManager(callback);
+
+    /**
+     * <p>Create a new asymmetric wrapped key exchange manager. A pair of
+     * initial keys will be generated.</p>
+     * 
+     * @param {AsymmetricWrappedExchange$Mechanism} mechanism the key
+     *        mechanism to use.
+     * @param {{result: function(SimpleKeyxManager), error: function(Error)}}
+     *        callback the callback that will receive the key manager or
+     *        any thrown exceptions.
+     */
+    SimpleKeyxManager$create = function SimpleKeyxManager$create(mechanism, callback) {
+        new SimpleKeyxManager(mechanism, callback);
     };
 })();

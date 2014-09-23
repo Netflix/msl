@@ -44,7 +44,7 @@ For earlier versions: <code>about:config dom.webcrypto.enabled</code>
 
 Your browser may not support all Web Crypto API algorithms, key sizes, and features. If you encounter a problem with a Web Crypto operation please check the release notes for your browser version to determine if it supports what you are trying to do.
 
-To include the JavaScript MSL stack in your JavaScript application you must include all of the MSL JavaScript source files required by your MSL configuration. You must also specify the version of Web Crypto provided by your JavaScript execution environment by calling <code>MslCrypto$setWebCryptoVersion()</code> after loading the contents of <code>WebCryptoAdapter.js</code>. An example list of the required source files and use of <code>MslCrypto$setWebCryptoVersion()</code> can be found in [src/test/javascript/msltests.html](src/test/javascript/msltests.html).
+To include the JavaScript MSL stack in your JavaScript application you must include all of the MSL JavaScript source files required by your MSL configuration. An example list of the required source files can be found in [src/test/javascript/msltests.html](src/test/javascript/msltests.html).
 
 An example client is provided under [src/examples/javascript/client/](src/examples/javascript/client/). The example client is a web page that will send requests to the example Java server. The example client MSL configuration is specific to this client and should not be used to configure your appplication, but it can be used as the basis for doing so.
 

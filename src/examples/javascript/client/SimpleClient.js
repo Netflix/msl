@@ -42,11 +42,11 @@ var SimpleClient$create;
             
             InterruptibleExecutor(callback, function() {
                 var xhr = new XMLHttpRequest();
-                xhr.timeout = timeout;
                 xhr.onload = function onload() {
                     callback.result({body: this.responseText});
                 };
                 xhr.open("POST", this._endpoint);
+                xhr.timeout = timeout;
                 xhr.send(request.body);
             }, self);
         },
@@ -74,36 +74,41 @@ var SimpleClient$create;
             // Import the server RSA public key.
             PublicKey$import(SimpleConstants.RSA_PUBKEY_B64, WebCryptoAlgorithm.RSASSA_SHA256, WebCryptoUsage.VERIFY, {
                 result: function(publicKey) {
-                    // Create the key manager.
-                    SimpleKeyxManager$create({
-                        result: function(keyxMgr) {
-                            AsyncExecutor(callback, function() {
-                                // Create the RSA key store.
-                                var rsaStore = new RsaStore();
-                                rsaStore.addPublicKey(SimpleConstants.SERVER_ID, publicKey);
-
-                                // Set up the MSL context.
-                                var ctx = new SimpleMslContext(SimpleConstants.CLIENT_ID, rsaStore, keyxMgr, errorCallback);
-
-                                // Create the MSL control.
-                                var ctrl = new MslControl();
-                                ctrl.setFilterFactory(factory);
-
-                                // Set properties.
-                                var props = {
-                                    _keyxMgr: { value: keyxMgr, writable: false, enumerable: false, configurable: false },
-                                    _ctx: { value: ctx, writable: false, enumerable: false, configurable: false },
-                                    _ctrl: { value: ctrl, writable: false, enumerable: false, configurable: false },
-                                    _cancelFunc: { value: null, writable: true, enumerable: false, configurable: false },
-                                };
-                                Object.defineProperties(this, props);
-
-                                // Return the client.
-                                return this;
-                            }, self);
-                        },
-                        error: callback.error,
-                    });
+                	AsyncExecutor(callback, function() {
+	                    // Create the key manager.
+	                	var mechanism = (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY)
+	                		? AsymmetricWrappedExchange$Mechanism.JWE_RSA
+	                		: AsymmetricWrappedExchange$Mechanism.JWK_RSA;
+	                    SimpleKeyxManager$create(mechanism, {
+	                        result: function(keyxMgr) {
+	                            AsyncExecutor(callback, function() {
+	                                // Create the RSA key store.
+	                                var rsaStore = new RsaStore();
+	                                rsaStore.addPublicKey(SimpleConstants.SERVER_ID, publicKey);
+	
+	                                // Set up the MSL context.
+	                                var ctx = new SimpleMslContext(SimpleConstants.CLIENT_ID, rsaStore, keyxMgr, errorCallback);
+	
+	                                // Create the MSL control.
+	                                var ctrl = new MslControl();
+	                                ctrl.setFilterFactory(factory);
+	
+	                                // Set properties.
+	                                var props = {
+	                                    _keyxMgr: { value: keyxMgr, writable: false, enumerable: false, configurable: false },
+	                                    _ctx: { value: ctx, writable: false, enumerable: false, configurable: false },
+	                                    _ctrl: { value: ctrl, writable: false, enumerable: false, configurable: false },
+	                                    _cancelFunc: { value: null, writable: true, enumerable: false, configurable: false },
+	                                };
+	                                Object.defineProperties(this, props);
+	
+	                                // Return the client.
+	                                return this;
+	                            }, self);
+	                        },
+	                        error: callback.error,
+	                    });
+                	}, self);
                 },
                 error: callback.error,
             });
