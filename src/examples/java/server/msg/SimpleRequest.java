@@ -185,8 +185,12 @@ public abstract class SimpleRequest implements JSONString {
      * <p>Executes the operation and returns the response.
      * 
      * @return the response.
+     * @throws SimpleRequestUserException if the request type requires a user
+     *         but there is none provided.
+     * @throws SimpleRequestExecutionException if there is an error executing
+     *         the request.
      */
-    public abstract SimpleRespondMessageContext execute();
+    public abstract SimpleRespondMessageContext execute() throws SimpleRequestUserException, SimpleRequestExecutionException;
 
     /* (non-Javadoc)
      * @see org.json.JSONString#toJSONString()

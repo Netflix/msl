@@ -24,6 +24,9 @@
 	if (window.msCrypto) {
 	    cryptoSubtle = window.msCrypto.subtle;
 	    nfCrypto = window.msCrypto;
+	} else if (window.crypto && window.crypto.webkitSubtle) {
+	    cryptoSubtle = window.crypto.webkitSubtle;
+	    nfCrypto = window.crypto;
 	} else {
 	    cryptoSubtle = window.crypto.subtle;
 	    nfCrypto = window.crypto;
@@ -34,6 +37,7 @@
 <script src="../../../main/javascript/lib/clarinet.js"></script>
 
 <!-- libraries -->
+<script src="../../../main/javascript/lib/asnjwk.concat.js"></script>
 <script src="../../../main/javascript/lib/base64.js"></script>
 <script src="../../../main/javascript/lib/lzw.js"></script>
 <script src="../../../main/javascript/lib/promise.js"></script>
@@ -63,13 +67,6 @@
 <script type="text/javascript" src="../../../main/javascript/MslUserAuthException.js"></script>
 <script type="text/javascript" src="../../../main/javascript/MslUserIdTokenException.js"></script>
 <script type="text/javascript" src="../../../main/javascript/crypto/WebCryptoAdapter.js"></script>
-<script type="text/javascript">
-if (window.msCrypto) {
-	MslCrypto$setWebCryptoVersion(MslCrypto$WebCryptoVersion.LEGACY);
-} else {
-	MslCrypto$setWebCryptoVersion(MslCrypto$WebCryptoVersion.LATEST);
-}
-</script>
 <script type="text/javascript" src="../../../main/javascript/crypto/WebCryptoAlgorithm.js"></script>
 <script type="text/javascript" src="../../../main/javascript/crypto/WebCryptoUsage.js"></script>
 <script type="text/javascript" src="../../../main/javascript/crypto/CipherKey.js"></script>

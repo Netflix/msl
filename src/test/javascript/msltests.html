@@ -70,6 +70,7 @@
 <script src="../../main/javascript/lib/jsrsasign/x509-1.1.js"></script>
 
 <!-- libraries -->
+<script src="../../main/javascript/lib/asnjwk.concat.js"></script>
 <script src="../../main/javascript/lib/base64.js"></script>
 <script src="../../main/javascript/lib/lzw.js"></script>
 <script src="../../main/javascript/lib/promise.js"></script>
@@ -100,11 +101,11 @@
 <script type="text/javascript" src="../../main/javascript/MslUserIdTokenException.js"></script>
 <script type="text/javascript" src="../../main/javascript/crypto/WebCryptoAdapter.js"></script>
 <script>
-var webCryptoVersion;
-if (webCryptoEnv == 'ppapi' || window.msCrypto) webCryptoVersion = MslCrypto$WebCryptoVersion.LEGACY;
-else if (webCryptoEnv == 'pnacl') webCryptoVersion = MslCrypto$WebCryptoVersion.V2014_01;
-else webCryptoVersion = MslCrypto$WebCryptoVersion.LATEST;
-MslCrypto$setWebCryptoVersion(webCryptoVersion);
+if (webCryptoEnv == 'ppapi') {
+    MslCrypto$setWebCryptoVersion(MslCrypto$WebCryptoVersion.LEGACY);
+} else if (webCryptoEnv == 'pnacl') {
+    MslCrypto$setWebCryptoVersion(MslCrypto$WebCryptoVersion.V2014_01);
+}
 </script>
 <script type="text/javascript" src="../../main/javascript/crypto/WebCryptoAlgorithm.js"></script>
 <script type="text/javascript" src="../../main/javascript/crypto/WebCryptoUsage.js"></script>
