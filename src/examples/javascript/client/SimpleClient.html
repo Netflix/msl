@@ -13,25 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 -->
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE html>
 <html>
 <head>
 <title>Example Client</title>
-
-<script type="text/javascript">
-    var cryptoSubtle;
-	if (window.msCrypto) {
-	    cryptoSubtle = window.msCrypto.subtle;
-	    nfCrypto = window.msCrypto;
-	} else if (window.crypto && window.crypto.webkitSubtle) {
-	    cryptoSubtle = window.crypto.webkitSubtle;
-	    nfCrypto = window.crypto;
-	} else {
-	    cryptoSubtle = window.crypto.subtle;
-	    nfCrypto = window.crypto;
-	}
-</script>
 
 <!-- clarinet -->
 <script src="../../../main/javascript/lib/clarinet.js"></script>
@@ -373,7 +358,7 @@ function showResponse(mis) {
 
 <div id="error" style="width: 780px; background-color: yellow; border: 2px black solid; padding: 0.5em; margin-bottom: 1em; visibility: hidden; position: absolute;">
     <div id="errortext" style="margin-bottom: 0.25em"></div>
-    <form><input type="submit" value="OK" onclick="var error = javascript:document.getElementById('error'); error.style.visibility = 'hidden'; error.style.position = 'absolute';"/></form>
+    <form><input type="submit" value="OK" onclick="var error = document.getElementById('error'); error.style.visibility = 'hidden'; error.style.position = 'absolute';"/></form>
 </div>
 
 <form onsubmit="return false;">

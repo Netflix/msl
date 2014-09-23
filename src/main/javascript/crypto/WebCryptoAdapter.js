@@ -21,18 +21,10 @@
  * @author Kevin Gallagher <keving@netflix.com>
  */
 var mslCrypto;
-var mslCrypto$version;
 var MslCrypto$WebCryptoVersion;
-
-/**
- * <p>Set the Web Crypto version that should be used by MSL. This method must
- * be called before Web Crypto will work.</p>
- * 
- * @param {MslCrypto$WebCryptoVersion} version Web Crypto version to use.
- */
-function MslCrypto$setWebCryptoVersion(version) {
-    mslCrypto$version = version;
-}
+var MslCrypto$setWebCryptoVersion;
+var MslCrypto$getWebCryptoVersion;
+var MslCrypto$setCryptoSubtle;
 
 (function(){
     "use strict";
@@ -63,11 +55,47 @@ function MslCrypto$setWebCryptoVersion(version) {
     Object.freeze(MslCrypto$WebCryptoVersion);
     
     // Default to the latest Web Crypto version.
-    mslCrypto$version = WebCryptoVersion.LATEST;
+    var mslCrypto$version = WebCryptoVersion.LATEST;
+
+    /**
+     * <p>Set the Web Crypto version that should be used by MSL. This will
+     * override the default version detected.</p>
+     * 
+     * @param {MslCrypto$WebCryptoVersion} version Web Crypto version to use.
+     */
+    MslCrypto$setWebCryptoVersion = function MslCrypto$setWebCryptoVersion(version) {
+        mslCrypto$version = version;
+    };
     
-    // Detect Safari.
-    if (window.crypto && window.crypto.webkitSubtle)
-        mslCrypto$version = WebCryptoVersion.V2014_02_SAFARI;
+    /**
+     * <p>Return the Web Crypto version that is being used.</p>
+     * 
+     * @return {MslCrypto$WebCryptoVersion} the Web Crypto version in use.
+     */
+    MslCrypto$getWebCryptoVersion = function MslCrypto$getWebCryptoVersion() {
+    	return mslCrypto$version;
+    };
+    
+    // Determine crypto subtle.
+    var nfCryptoSubtle;
+    if (window.msCrypto) {
+    	nfCryptoSubtle = window.msCrypto.subtle;
+    	MslCrypto$setWebCryptoVersion(MslCrypto$WebCryptoVersion.LEGACY);
+    } else if (window.crypto.webkitSubtle) {
+    	nfCryptoSubtle = window.crypto.webkitSubtle;
+    	MslCrypto$setWebCryptoVersion(MslCrypto$WebCryptoVersion.V2014_02_SAFARI);
+    } else {
+    	nfCryptoSubtle = window.crypto.subtle;
+    }
+
+    /**
+     * Override the crypto subtle interface providing the Web Crypto API.
+     * 
+     * @param {object} the new crypto subtle interface.
+     */
+    MslCrypto$setCryptoSubtle = function MslCrypto$setCryptoSubtle(cryptoSubtle) {
+    	nfCryptoSubtle = cryptoSubtle;
+    };
 
     // If extractable is not specified, default to false
     function normalizeExtractable(extractable) {
@@ -105,25 +133,31 @@ function MslCrypto$setWebCryptoVersion(version) {
         }
     }
     
+    // If the native operation type is not a Promise, wrap it inside one.
+    function promisedOperation(op) {
+    	if (!op.then) {
+    		return new Promise(function(resolve, reject) {
+    			op.oncomplete = function(e) {
+    				resolve(e.target.result);
+    			};
+    			op.onerror = function(e) {
+    				reject(e);
+    			};
+    		});
+    	}
+    }
+    
     mslCrypto = {
         'encrypt': function(algorithm, key, buffer) {
             switch (mslCrypto$version) {
                 case WebCryptoVersion.LEGACY:
-                    return new Promise(function(resolve, reject) {
-                        var op = nfCrypto.encrypt(algorithm, key, buffer);
-                        op.oncomplete = function(e) {
-                            resolve(e.target.result);
-                        };
-                        op.onerror = function(e) {
-                            reject(e);
-                        };
-                    });
                 case WebCryptoVersion.V2014_01:
                 case WebCryptoVersion.V2014_02:
                 case WebCryptoVersion.V2014_02_SAFARI:
                     // Return an ArrayBufferView instead of the ArrayBuffer as a workaround for
                     // MSL-164.
-                    return cryptoSubtle.encrypt(algorithm, key, buffer);
+                	var op = nfCryptoSubtle.encrypt(algorithm, key, buffer);
+                    return promisedOperation(op);
                 default:
                     throw new Error("Unsupported Web Crypto version " + WEB_CRYPTO_VERSION + ".");
             }
@@ -132,19 +166,11 @@ function MslCrypto$setWebCryptoVersion(version) {
         'decrypt': function(algorithm, key, buffer) {
             switch (mslCrypto$version) {
                 case WebCryptoVersion.LEGACY:
-                    return new Promise(function(resolve, reject) {
-                        var op = nfCrypto.decrypt(algorithm, key, buffer);
-                        op.oncomplete = function(e) {
-                            resolve(e.target.result);
-                        };
-                        op.onerror = function(e) {
-                            reject(e);
-                        };
-                    });
                 case WebCryptoVersion.V2014_01:
                 case WebCryptoVersion.V2014_02:
                 case WebCryptoVersion.V2014_02_SAFARI:
-                    return cryptoSubtle.decrypt(algorithm, key, buffer);
+                    var op = nfCryptoSubtle.decrypt(algorithm, key, buffer);
+                    return promisedOperation(op);
                default:
                     throw new Error("Unsupported Web Crypto version " + WEB_CRYPTO_VERSION + ".");
             }
@@ -153,19 +179,11 @@ function MslCrypto$setWebCryptoVersion(version) {
         'sign': function(algorithm, key, buffer) {
             switch (mslCrypto$version) {
                 case WebCryptoVersion.LEGACY:
-                    return new Promise(function(resolve, reject) {
-                        var op = nfCrypto.sign(algorithm, key, buffer);
-                        op.oncomplete = function(e) {
-                            resolve(e.target.result);
-                        };
-                        op.onerror = function(e) {
-                            reject(e);
-                        };
-                    });
                 case WebCryptoVersion.V2014_01:
                 case WebCryptoVersion.V2014_02:
                 case WebCryptoVersion.V2014_02_SAFARI:
-                    return cryptoSubtle.sign(algorithm, key, buffer);
+                    var op = nfCryptoSubtle.sign(algorithm, key, buffer);
+                    return promisedOperation(op);
                 default:
                     throw new Error("Unsupported Web Crypto version " + WEB_CRYPTO_VERSION + ".");
             }
@@ -174,19 +192,11 @@ function MslCrypto$setWebCryptoVersion(version) {
         'verify': function(algorithm, key, signature, buffer) {
             switch (mslCrypto$version) {
                 case WebCryptoVersion.LEGACY:
-                    return new Promise(function(resolve, reject) {
-                        var op = nfCrypto.verify(algorithm, key, signature, buffer);
-                        op.oncomplete = function(e) {
-                            resolve(e.target.result);
-                        };
-                        op.onerror = function(e) {
-                            reject(e);
-                        };
-                    });
                 case WebCryptoVersion.V2014_01:
                 case WebCryptoVersion.V2014_02:
                 case WebCryptoVersion.V2014_02_SAFARI:
-                    return cryptoSubtle.verify(algorithm, key, signature, buffer);
+                    var op = nfCryptoSubtle.verify(algorithm, key, signature, buffer);
+                    return promisedOperation(op);
                 default:
                     throw new Error("Unsupported Web Crypto version " + WEB_CRYPTO_VERSION + ".");
             }
@@ -195,19 +205,11 @@ function MslCrypto$setWebCryptoVersion(version) {
         'digest': function(algorithm, buffer) {
             switch (mslCrypto$version) {
                 case WebCryptoVersion.LEGACY:
-                    return new Promise(function(resolve, reject) {
-                        var op = cryptoSubtle.digest(algorithm, buffer);
-                        op.oncomplete = function(e) {
-                            resolve(e.target.result);
-                        };
-                        op.onerror = function(e) {
-                            reject(e);
-                        };
-                    });
                 case WebCryptoVersion.V2014_01:
                 case WebCryptoVersion.V2014_02:
                 case WebCryptoVersion.V2014_02_SAFARI:
-                    return cryptoSubtle.digest(algorithm, buffer);
+                    var op = nfCryptoSubtle.digest(algorithm, buffer);
+                    return promisedOperation(op);
                 default:
                     throw new Error("Unsupported Web Crypto version " + WEB_CRYPTO_VERSION + ".");
             }
@@ -218,19 +220,11 @@ function MslCrypto$setWebCryptoVersion(version) {
             var ku = normalizeKeyUsage(keyUsage);
             switch (mslCrypto$version) {
                 case WebCryptoVersion.LEGACY:
-                    return new Promise(function(resolve, reject) {
-                        var op = nfCrypto.generateKey(algorithm, ext, ku);
-                        op.oncomplete = function(e) {
-                            resolve(e.target.result);
-                        };
-                        op.onerror = function(e) {
-                            reject(e);
-                        };
-                    });
                 case WebCryptoVersion.V2014_01:
                 case WebCryptoVersion.V2014_02:
                 case WebCryptoVersion.V2014_02_SAFARI:
-                    return cryptoSubtle.generateKey(algorithm, ext, ku);
+                    var op = nfCryptoSubtle.generateKey(algorithm, ext, ku);
+                    return promisedOperation(op);
                 default:
                     throw new Error("Unsupported Web Crypto version " + WEB_CRYPTO_VERSION + ".");
             }
@@ -241,19 +235,11 @@ function MslCrypto$setWebCryptoVersion(version) {
             var ku = normalizeKeyUsage(keyUsage);
             switch (mslCrypto$version) {
                 case WebCryptoVersion.LEGACY:
-                    return new Promise(function(resolve, reject) {
-                        var op = nfCrypto.deriveKey(algorithm, baseKey, derivedKeyAlgorithm, ext, ku);
-                        op.oncomplete = function(e) {
-                            resolve(e.target.result);
-                        };
-                        op.onerror = function(e) {
-                            reject(e);
-                        };
-                    });
                 case WebCryptoVersion.V2014_01:
                 case WebCryptoVersion.V2014_02:
                 case WebCryptoVersion.V2014_02_SAFARI:
-                    return cryptoSubtle.deriveKey(algorithm, baseKey, derivedKeyAlgorithm, ext, ku);
+                    var op = nfCryptoSubtle.deriveKey(algorithm, baseKey, derivedKeyAlgorithm, ext, ku);
+                    return promisedOperation(op);
                 default:
                     throw new Error("Unsupported Web Crypto version " + WEB_CRYPTO_VERSION + ".");
             }
@@ -264,18 +250,10 @@ function MslCrypto$setWebCryptoVersion(version) {
             var ku = normalizeKeyUsage(keyUsage);
             switch (mslCrypto$version) {
                 case WebCryptoVersion.LEGACY:
-                    return new Promise(function(resolve, reject) {
-                        var op = nfCrypto.importKey(format, keyData, algorithm, ext, ku);
-                        op.oncomplete = function(e) {
-                            resolve(e.target.result);
-                        };
-                        op.onerror = function(e) {
-                            reject(e);
-                        };
-                    });
                 case WebCryptoVersion.V2014_01:
                 case WebCryptoVersion.V2014_02:
-                    return cryptoSubtle.importKey(format, keyData, algorithm, ext, ku);
+                    var op = nfCryptoSubtle.importKey(format, keyData, algorithm, ext, ku);
+                    return promisedOperation(op);
                 case WebCryptoVersion.V2014_02_SAFARI:
                     if (format == 'spki' || format == 'pkcs8') {
                         return Promise.resolve().then(function() {
@@ -287,11 +265,10 @@ function MslCrypto$setWebCryptoVersion(version) {
                             }
                             var jwk = JSON.stringify(jwkObj);
                             return cryptoSubtle.importKey('jwk', utf8$getBytes(jwk), algorithm, ext, ku);
-                        }).catch(function(e){
-                           throw e; 
                         });
                     } else {
-                        return cryptoSubtle.importKey(format, keyData, algorithm, ext, ku);
+                        var op = cryptoSubtle.importKey(format, keyData, algorithm, ext, ku);
+						return promisedOperation(op);
                     }
                 default:
                     throw new Error("Unsupported Web Crypto version " + WEB_CRYPTO_VERSION + ".");
@@ -301,22 +278,14 @@ function MslCrypto$setWebCryptoVersion(version) {
         'exportKey': function(format, key) {
             switch (mslCrypto$version) {
                 case WebCryptoVersion.LEGACY:
-                    return new Promise(function(resolve, reject) {
-                        var op = nfCrypto.exportKey(format, key);
-                        op.oncomplete = function(e) {
-                            var res = e.target.result;
-                            resolve(res);
-                        };
-                        op.onerror = function(e) {
-                            reject(e);
-                        };
-                    });
                 case WebCryptoVersion.V2014_01:
                 case WebCryptoVersion.V2014_02:
-                    return cryptoSubtle.exportKey(format, key);
+                    var op = nfCryptoSubtle.exportKey(format, key);
+                    return promisedOperation(op);
                 case WebCryptoVersion.V2014_02_SAFARI:
                     if (format == 'spki' || format == 'pkcs8') {
-                        return cryptoSubtle.exportKey('jwk', key).then(function (result) {
+						var op = cryptoSubtle.exportKey('jwk', key);
+                        return promisedOperation(op).then(function (result) {
                             var jwkObj = JSON.parse(utf8$getString(new Uint8Array(result)));
                             var rsaKey = ASN1.jwkToRsaDer(jwkObj);
                             if (!rsaKey) {
@@ -325,7 +294,8 @@ function MslCrypto$setWebCryptoVersion(version) {
                             return rsaKey.getDer().buffer;
                         });
                     } else {
-                        return cryptoSubtle.exportKey(format, key);
+                        var op = cryptoSubtle.exportKey(format, key);
+						return promisedOperation(op);
                     }
                 default:
                     throw new Error("Unsupported Web Crypto version " + WEB_CRYPTO_VERSION + ".");
@@ -333,45 +303,37 @@ function MslCrypto$setWebCryptoVersion(version) {
         },
 
         'wrapKey': function(format, keyToWrap, wrappingKey, wrappingAlgorithm) {
+        	var op;
             switch (mslCrypto$version) {
                 case WebCryptoVersion.LEGACY:
-                    return new Promise(function(resolve, reject) {
-                        var op = cryptoSubtle.wrapKey(keyToWrap, wrappingKey, wrappingAlgorithm);
-                        op.oncomplete = function(e) {
-                            resolve(e.target.result);
-                        };
-                        op.onerror = function(e) {
-                            reject(e);
-                        };
-                    });
+                    op = nfCryptoSubtle.wrapKey(keyToWrap, wrappingKey, wrappingAlgorithm);
+                    break;
                 case WebCryptoVersion.V2014_01:
                 case WebCryptoVersion.V2014_02:
                 case WebCryptoVersion.V2014_02_SAFARI:
-                    return cryptoSubtle.wrapKey(format, keyToWrap, wrappingKey, wrappingAlgorithm);
+                    op = nfCryptoSubtle.wrapKey(format, keyToWrap, wrappingKey, wrappingAlgorithm);
+                    break;
                 default:
                     throw new Error("Unsupported Web Crypto version " + WEB_CRYPTO_VERSION + ".");
             }
+            return promisedOperation(op);
         },
 
         'unwrapKey': function(format, wrappedKey, unwrappingKey, unwrapAlgorithm, unwrappedKeyAlgorithm, extractable, usage) {
+        	var op;
             switch (mslCrypto$version) {
                 case WebCryptoVersion.LEGACY:
-                    return new Promise(function(resolve, reject) {
-                        var op = cryptoSubtle.unwrapKey(wrappedKey, unwrapAlgorithm, unwrappingKey);
-                        op.oncomplete = function(e) {
-                            resolve(e.target.result);
-                        };
-                        op.onerror = function(e) {
-                            reject(e);
-                        };
-                    });
+                    op = nfCryptoSubtle.unwrapKey(wrappedKey, unwrappedKeyAlgorithm, unwrappingKey);
+                    break;
                 case WebCryptoVersion.V2014_01:
                 case WebCryptoVersion.V2014_02:
                 case WebCryptoVersion.V2014_02_SAFARI:
-                    return cryptoSubtle.unwrapKey(format, wrappedKey, unwrappingKey, unwrapAlgorithm, unwrappedKeyAlgorithm, normalizeExtractable(extractable), normalizeKeyUsage(usage));
+                    op = nfCryptoSubtle.unwrapKey(format, wrappedKey, unwrappingKey, unwrapAlgorithm, unwrappedKeyAlgorithm, normalizeExtractable(extractable), normalizeKeyUsage(usage));
+                    break;
                 default:
                     throw new Error("Unsupported Web Crypto version " + WEB_CRYPTO_VERSION + ".");
             }
+            return promisedOperation(op);
         },
     };
 })();
