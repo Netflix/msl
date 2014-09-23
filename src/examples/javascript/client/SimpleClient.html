@@ -358,7 +358,7 @@ function showResponse(mis) {
 
 <div id="error" style="width: 780px; background-color: yellow; border: 2px black solid; padding: 0.5em; margin-bottom: 1em; visibility: hidden; position: absolute;">
     <div id="errortext" style="margin-bottom: 0.25em"></div>
-    <form><input type="submit" value="OK" onclick="var error = document.getElementById('error'); error.style.visibility = 'hidden'; error.style.position = 'absolute';"/></form>
+    <form><input type="button" value="OK" onclick="var error = document.getElementById('error'); error.style.visibility = 'hidden'; error.style.position = 'absolute';"/></form>
 </div>
 
 <form onsubmit="return false;">
@@ -392,7 +392,7 @@ function showResponse(mis) {
 </table>
 
 <table cellspacing="4" style="border: 4px solid grey; margin-top: 20px; margin-bottom: 20px" width="800">
-    <tr><td colspan="2" style="border-bottom: 1px dotted grey;"><b>Request</b></td></tr>
+    <tr><td colspan="2" style="border-bottom: 1px dotted grey;"><b>Application Request</b></td></tr>
     <tr><td colspan="2"><p>Select a request type.</p>
         <p>For echo and log message requests, type some text into the echo or log message text field.<br/>
         For word lookups, select a word from the popup menu. Some words can only be looked up by specific users.</p>
@@ -445,14 +445,21 @@ function showResponse(mis) {
         </script>
         </td>
     </tr>
+    <tr valign="middle">
+        <td>&nbsp;</td>
+        <td>Change this to point to your example Java server, if the default value is incorrect.</td>
+    </tr>
 </table>
 
 <table cellspacing="4" style="border: 4px solid grey; margin-top: 20px; margin-bottom: 20px" width="800">
-    <tr><td colspan="2" style="border-bottom: 1px dotted grey;"><b>Response</b></td></tr>
+    <tr><td colspan="2" style="border-bottom: 1px dotted grey;"><b>Application Response</b></td></tr>
     <tr><td colspan="2"><textarea id="response" cols="108" rows="12"></textarea></td></tr>
 </table>
 <table cellspacing="4" style="border: 2px solid lightgrey; margin-top: 20px; margin-bottom: 20px" width="800">
-    <tr><td colspan="2" style="border-bottom: 1px dotted grey;"><b>MSL Messages</b><input type="button" value="Clear" onclick="clearSentReceived();" style="float: right;"/></td></tr>
+    <tr><td colspan="2" style="border-bottom: 1px dotted grey;">
+        <b>MSL Messages</b><input type="button" value="Clear" onclick="clearSentReceived();" style="float: right;"/><br/>
+        The raw MSL messages as seen over the wire.
+    </td></tr>
     <tr>
         <td><b>Sent:</b><br/><textarea id="sent" cols="50" rows="40" readonly="readonly"></textarea></td>
         <td><b>Received:</b><br/><textarea id="received" cols="50" rows="40" readonly="readonly"></textarea></td>

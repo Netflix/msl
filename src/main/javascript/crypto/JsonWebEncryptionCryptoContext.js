@@ -71,13 +71,15 @@ var JsonWebEncryptionCryptoContext$Encryption;
          *         algorithm is unsupported.
          */
         init: function init(ctx, algo, enc, key, publicKey) {
-            var wrapKey, unwrapKey;
+            var transform, wrapKey, unwrapKey;
             switch (algo) {
                 case Algorithm.RSA_OAEP:
+                    transform = WebCryptoAlgorithm.RSA_OAEP;
                     wrapKey = publicKey && (publicKey.rawKey || publicKey);
                     unwrapKey = key && (key.rawKey || key);
                     break;
                 case Algorithm.A128KW:
+                    transform = WebCryptoAlgorithm.A128KW;
                     wrapKey = unwrapKey = key && (key.rawKey || key);
                     break;
                 default:
@@ -87,7 +89,7 @@ var JsonWebEncryptionCryptoContext$Encryption;
             // The properties.
             var props = {
                 _ctx: { value: ctx, writable: false, enumerable: false, configurable: false },
-                _algo: { value: algo, writable: false, enumerable: false, configurable: false },
+                _transform: { value: transform, writable: false, enumerable: false, configurable: false },
                 _enc: {value: enc, writable: false, enumerable: false, configurable: false },
                 _wrapKey: { value: wrapKey, writable: false, enumerable: false, configurable: false },
                 _unwrapKey: { value: unwrapKey, writable: false, enumerable: false, configurable: false }
@@ -114,7 +116,9 @@ var JsonWebEncryptionCryptoContext$Encryption;
                 var onerror = function(error) {
                     callback.error(new MslCryptoException(MslError.WRAP_ERROR));
                 };
-                mslCrypto['wrapKey']('jwe+jwk', key.rawKey, this._wrapKey, this._wrapKey.algorithm)
+                // Use the transform instead of the wrap key algorithm in case
+                // the key algorithm is missing some fields.
+                mslCrypto['wrapKey']('jwe+jwk', key.rawKey, this._wrapKey, this._transform)
                     .then(oncomplete, onerror);
             }, this);
         },
@@ -128,7 +132,9 @@ var JsonWebEncryptionCryptoContext$Encryption;
                 var onerror = function() {
                     callback.error(new MslCryptoException(MslError.UNWRAP_ERROR));
                 };
-                mslCrypto['unwrapKey']('jwe+jwk', data, this._unwrapKey, this._unwrapKey.algorithm, algo, false, usages)
+                // Use the transform instead of the wrap key algorithm in case
+                // the key algorithm is missing some fields.
+                mslCrypto['unwrapKey']('jwe+jwk', data, this._unwrapKey, this._transform, algo, false, usages)
                     .then(oncomplete, onerror);
             }, this);
 

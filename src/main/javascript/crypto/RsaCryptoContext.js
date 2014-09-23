@@ -222,6 +222,8 @@ var RsaCryptoContext$Mode;
                 var onerror = function(e) {
                     callback.error(new MslCryptoException(MslError.WRAP_ERROR));
                 };
+                // Use the transform instead of the wrap key algorithm in case
+                // the key algorithm is missing some fields.
                 mslCrypto['wrapKey']('jwk', key.rawKey, this.publicKey, this.wrapTransform)
                     .then(oncomplete, onerror);
             }, this);
@@ -237,7 +239,9 @@ var RsaCryptoContext$Mode;
                 var onerror = function(e) {
                     callback.error(new MslCryptoException(MslError.UNWRAP_ERROR));
                 };
-                mslCrypto['unwrapKey']('jwk', data, this.privateKey, this.privateKey.algorithm, algo, false, usages)
+                // Use the transform instead of the wrap key algorithm in case
+                // the key algorithm is missing some fields.
+                mslCrypto['unwrapKey']('jwk', data, this.privateKey, this.wrapTransform, algo, false, usages)
                     .then(oncomplete, onerror);
             }, this);
 

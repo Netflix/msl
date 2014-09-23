@@ -19,6 +19,7 @@
  * Web Crypto specification.</p>
  * 
  * @author Kevin Gallagher <keving@netflix.com>
+ * @author Wesley Miaw <wmiaw@netflix.com>
  */
 var mslCrypto;
 var MslCrypto$WebCryptoVersion;
@@ -265,10 +266,10 @@ var MslCrypto$setCryptoSubtle;
                                 throw new Error("Could not make valid JWK from DER input");
                             }
                             var jwk = JSON.stringify(jwkObj);
-                            return cryptoSubtle.importKey('jwk', utf8$getBytes(jwk), algorithm, ext, ku);
+                            return nfCryptoSubtle.importKey('jwk', utf8$getBytes(jwk), algorithm, ext, ku);
                         });
                     } else {
-                        var op = cryptoSubtle.importKey(format, keyData, algorithm, ext, ku);
+                        var op = nfCryptoSubtle.importKey(format, keyData, algorithm, ext, ku);
 						return promisedOperation(op);
                     }
                 default:
@@ -285,7 +286,7 @@ var MslCrypto$setCryptoSubtle;
                     return promisedOperation(op);
                 case WebCryptoVersion.V2014_02_SAFARI:
                     if (format == 'spki' || format == 'pkcs8') {
-						var op = cryptoSubtle.exportKey('jwk', key);
+						var op = nfCryptoSubtle.exportKey('jwk', key);
                         return promisedOperation(op).then(function (result) {
                             var jwkObj = JSON.parse(utf8$getString(new Uint8Array(result)));
                             var rsaKey = ASN1.jwkToRsaDer(jwkObj);
@@ -295,7 +296,7 @@ var MslCrypto$setCryptoSubtle;
                             return rsaKey.getDer().buffer;
                         });
                     } else {
-                        var op = cryptoSubtle.exportKey(format, key);
+                        var op = nfCryptoSubtle.exportKey(format, key);
 						return promisedOperation(op);
                     }
                 default:
@@ -329,7 +330,9 @@ var MslCrypto$setCryptoSubtle;
                 case WebCryptoVersion.V2014_01:
                 case WebCryptoVersion.V2014_02:
                 case WebCryptoVersion.V2014_02_SAFARI:
-                    op = nfCryptoSubtle.unwrapKey(format, wrappedKey, unwrappingKey, unwrapAlgorithm, unwrappedKeyAlgorithm, normalizeExtractable(extractable), normalizeKeyUsage(usage));
+                    var ext = normalizeExtractable(extractable);
+                    var ku = normalizeKeyUsage(usage);
+                    op = nfCryptoSubtle.unwrapKey(format, wrappedKey, unwrappingKey, unwrapAlgorithm, unwrappedKeyAlgorithm, ext, ku);
                     break;
                 default:
                     throw new Error("Unsupported Web Crypto version " + WEB_CRYPTO_VERSION + ".");
