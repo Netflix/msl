@@ -145,6 +145,7 @@ var MslCrypto$setCryptoSubtle;
     			};
     		});
     	}
+    	return op;
     }
     
     mslCrypto = {
