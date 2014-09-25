@@ -162,6 +162,10 @@ function errorCallback(msgOrError) {
 var client;
 var dbgCtx;
 function onload() {
+    // Enable selected tab.
+    setRequestType('echo');
+    
+    // Grab sent and received text areas.
     var sentText = document.getElementById('sent');
     var receivedText = document.getElementById('received');
     
@@ -204,28 +208,34 @@ function logoutUser() {
 }
 
 function setRequestType(type) {
-    var text = document.getElementById('text');
-    var severity = document.getElementById('severity');
-    var word = document.getElementById('word');
+    // Unselect the request tabs.
+    var tabs = document.getElementsByClassName('tab');
+    for (var i = 0; i < tabs.length; ++i)
+        tabs[i].className = "";
     
-    text.disabled = true;
-    severity.disabled = true;
-    word.disabled = true;
+    // Select the request tab.
+    var tab = document.getElementById(type);
+    tab.className = "tab selected";
     
-    switch (type) {
-        case 'echo':
-            text.disabled = false;
-            break;
-        case 'log':
-            text.disabled = false;
-            severity.disabled = false;
-            break;
-        case 'query':
-            word.disabled = false;
-            break;
-        default:
-            break;
-    }
+    // Disable all fields.
+    var fieldElements = document.getElementsByClassName('field');
+    for (var i = 0; i < fieldElements.length; ++i) {
+        var field = fieldElements[i];
+        field.style.visibility = 'hidden';
+        field.style.position = 'absolute';
+    };
+    
+    // Enable the selected field.
+    var enabledElements = document.getElementsByClassName(type);
+    for (var i = 0; i < enabledElements.length; ++i) {
+        var field = enabledElements[i];
+        field.style.position = 'relative';
+        field.style.visibility = 'visible';
+    };
+    
+    // Set the request type.
+    var typeField = document.getElementById('type');
+    typeField.value = type;
 }
 
 function ready() {
@@ -351,23 +361,87 @@ function showResponse(mis) {
     })
 }
 </script>
+
+<style type="text/css">
+div#error {
+    position: absolute;
+    width: 780px;
+    background-color: yellow;
+    border: 2px solid black;
+    padding: 0.5em;
+    margin-bottom: 1em;
+    visibility: hidden;
+}
+
+div#errortext {
+    margin-bottom: 0.25em;
+}
+
+table.container {
+    width: 800px;
+    border: 4px solid grey;
+    border-spacing: 4px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+table.debug {
+    border: 2px solid lightgrey;
+}
+
+tr {
+    vertical-align: top;
+}
+
+td.title {
+    border-bottom: 1px dotted grey;
+}
+
+ul.tabs {
+    padding: 0;
+    margin: 0;
+}
+
+ul.tabs li {
+    display: inline;
+    padding-left: 0.25em;
+    padding-right: 1em;
+    background-color: white;
+    border: 1px solid black;
+}
+
+ul.tabs li.selected {
+    background-color: lightgrey;
+}
+
+div.request {
+    height: 7em;
+    padding: 0.5em;
+    border: 1px solid black;
+}
+
+input#clear {
+    float: right;
+}
+</style>
 </head>
 <body onload="onload();">
 
 <h1>Example JavaScript Client</h1>
 
-<div id="error" style="width: 780px; background-color: yellow; border: 2px black solid; padding: 0.5em; margin-bottom: 1em; visibility: hidden; position: absolute;">
-    <div id="errortext" style="margin-bottom: 0.25em"></div>
+<div id="error">
+    <div id="errortext"></div>
     <form><input type="button" value="OK" onclick="var error = document.getElementById('error'); error.style.visibility = 'hidden'; error.style.position = 'absolute';"/></form>
 </div>
 
 <form onsubmit="return false;">
 
-<table cellspacing="4" style="border: 4px solid grey;" width="800">
-    <tr><td colspan="3" style="border-bottom: 1px dotted grey;"><b>User Authentication</b></td></tr>
+<table class="container">
+    <tr><td colspan="3" class="title"><b>Application Request</b></td></tr>
     <tr>
         <td colspan="2">
-        <p>Enter a username and password to send a message as a specific user.</p>
+        <p>Enter a username and password to send a message as a specific user. Leave the username
+        blank to send a message without associating it with a user.</p>
         <p>The password is optional if you have already sent a message authenticated as that user.
         In that case, the password field will be disabled. You may discard a user's authentication
         credentials and "logout" by clicking on the "Logout" button.</p></td>
@@ -389,75 +463,74 @@ function showResponse(mis) {
     </tr>
     <tr><td><b>Username:</b></td><td><input type="text" id="username" name="username" width="10" onchange="javascript:checkUsername();"/></td></tr>
     <tr><td><b>Password:</b></td><td><input type="text" id="password" name="password" width="10"/><input type="submit" id="logout" value="Logout" onclick="logoutUser();" disabled="disabled"></td></tr>
-</table>
-
-<table cellspacing="4" style="border: 4px solid grey; margin-top: 20px; margin-bottom: 20px" width="800">
-    <tr><td colspan="2" style="border-bottom: 1px dotted grey;"><b>Application Request</b></td></tr>
-    <tr><td colspan="2"><p>Select a request type.</p>
-        <p>For echo and log message requests, type some text into the echo or log message text field.<br/>
-        For word lookups, select a word from the popup menu. Some words can only be looked up by specific users.</p>
-        <p>When you are ready, click on the <b>'Send Request To:'</b> button.</p></td>
-    </tr>
-    <tr valign="middle"><td><b>Type:</b></td>
-        <td><select id="type" onchange="javascript:setRequestType(this.value);">
-            <option value="echo">Echo Text</option>
-            <option value="log">Log Message</option>
-            <option value="profile">Get Profile</option>
-            <option value="query">Lookup Word</option>
-            <option value="quit">Terminate Server</option>
-        </select></td>
-    </tr>
-    <tr valign="middle">
-        <td><b>Echo Text or Log Message:</b></td>
-        <td><textarea id="text" cols="40" rows="4"></textarea></td>
-    </tr>
-    <tr valign="middle">
-        <td><b>Log Message Severity:</b></td>
-        <td><select id="severity" disabled="disabled">
-            <option value="INFO">Informational</option>
-            <option value="WARN">Warning</option>
-            <option value="ERROR">Error</option>
-        </select></td>
-    </tr>
-    <tr valign="middle">
-        <td><b>Word:</b></td>
-        <td><select id="word" disabled="disabled">
-            <script type="text/javascript">
-                for (var i = 0; i < SimpleConstants.QUERY_DATA.length; ++i) {
-                    var userWord = SimpleConstants.QUERY_DATA[i];
-                    var user = userWord[0];
-                    var word = userWord[1];
-                    var displayWord = word + ((user) ? " (" + user + ")" : "");
-                    document.write("<option value='" + word + "'>" + displayWord + "</option>");
-                }
-            </script>
-        </select></td>
-    </tr>
-    <tr valign="middle">
-        <td>&nbsp;</td>
-        <td>If a user appears in parenthesis, only that user is authorized to lookup the word.</td>
-    </tr>
-    <tr valign="middle">
+    <tr><td colspan="3">
+        <input type="hidden" id="type" name="type" value=""/>
+        <ul class="tabs">
+            <li id="echo" class="tab" onclick="javascript:setRequestType('echo')">Echo Text</li>
+            <li id="log" class="tab" onclick="javascript:setRequestType('log')">Log Message</li>
+            <li id="profile" class="tab" onclick="javascript:setRequestType('profile')">Get Profile</li>
+            <li id="query" class="tab" onclick="javascript:setRequestType('query')">Lookup Word</li>
+            <li id="quit" class="tab" onclick="javascript:setRequestType('quit')">Terminate Server</li>
+        </ul>
+        <div class="request">
+            <table>
+	            <tr class="field log" style="position: absolute; visibility: hidden;">
+	                <td><b>Severity:</b></td>
+	                <td><select id="severity">
+	                    <option value="INFO">Informational</option>
+	                    <option value="WARN">Warning</option>
+	                    <option value="ERROR">Error</option>
+	                </select></td>
+	            </tr>
+			    <tr class="field echo log" style="position: absolute; visibility: hidden;">
+			        <td><b>Text:</b></td>
+			        <td><textarea id="text" cols="40" rows="4"></textarea></td>
+			    </tr>
+                <tr class="field profile" style="position: absolute; visibility: hidden">
+                    <td colspan="2">The message user profile will be returned.</td>
+                </tr>
+			    <tr class="field query" style="position: absolute; visibility: hidden;">
+			        <td colspan="2">If a user appears in parenthesis, only that user is authorized to lookup the word.</td>
+	            </tr>
+			    <tr class="field query" style="position: absolute; visibility: hidden;">
+			        <td><b>Word:</b></td>
+			        <td><select id="word">
+			            <script type="text/javascript">
+			                for (var i = 0; i < SimpleConstants.QUERY_DATA.length; ++i) {
+			                    var userWord = SimpleConstants.QUERY_DATA[i];
+			                    var user = userWord[0];
+			                    var word = userWord[1];
+			                    var displayWord = word + ((user) ? " (" + user + ")" : "");
+			                    document.write("<option value='" + word + "'>" + displayWord + "</option>");
+			                }
+			            </script>
+			        </select></td>
+			    </tr>
+			    <tr class="field quit" style="position: absolute; visibility: hidden">
+			        <td colspan="2">Only the administrator is authorized to terminate the server.</td>
+			    </tr>
+		    </table>
+        </div>
+    </td></tr>
+    <tr>
         <td><input type="button" id="perform" value="Send Request To:" onclick="sendRequest();" disabled="disabled"/></td>
         <td>
         <script type="text/javascript">
             document.write('<input type="text" id="url" size="40" value="http://localhost:' + SimpleConstants.SERVER_PORT + '/msl/"/>');
         </script>
         </td>
-    </tr>
-    <tr valign="middle">
-        <td>&nbsp;</td>
         <td>Change this to point to your example Java server, if the default value is incorrect.</td>
     </tr>
 </table>
 
-<table cellspacing="4" style="border: 4px solid grey; margin-top: 20px; margin-bottom: 20px" width="800">
-    <tr><td colspan="2" style="border-bottom: 1px dotted grey;"><b>Application Response</b></td></tr>
+<table class="container">
+    <tr><td colspan="2" class="title"><b>Application Response</b></td></tr>
     <tr><td colspan="2"><textarea id="response" cols="108" rows="12"></textarea></td></tr>
 </table>
-<table cellspacing="4" style="border: 2px solid lightgrey; margin-top: 20px; margin-bottom: 20px" width="800">
-    <tr><td colspan="2" style="border-bottom: 1px dotted grey;">
-        <b>MSL Messages</b><input type="button" value="Clear" onclick="clearSentReceived();" style="float: right;"/><br/>
+
+<table cellspacing="4" class="container debug">
+    <tr><td colspan="2" class="title">
+        <b>MSL Messages</b><input id="clear" type="button" value="Clear" onclick="clearSentReceived();"/><br/>
         The raw MSL messages as seen over the wire.
     </td></tr>
     <tr>
