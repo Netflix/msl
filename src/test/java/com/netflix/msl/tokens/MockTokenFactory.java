@@ -99,31 +99,33 @@ public class MockTokenFactory implements TokenFactory {
      * @see com.netflix.msl.tokens.TokenFactory#acceptNonReplayableId(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, long)
      */
     @Override
-    public boolean acceptNonReplayableId(final MslContext ctx, final MasterToken masterToken, final long nonReplayableId) throws MslMasterTokenException, MslException {
+    public MslError acceptNonReplayableId(final MslContext ctx, final MasterToken masterToken, final long nonReplayableId) throws MslMasterTokenException, MslException {
         if (!masterToken.isDecrypted())
             throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, masterToken);
         if (nonReplayableId < 0 || nonReplayableId > MslConstants.MAX_LONG_VALUE)
             throw new MslException(MslError.NONREPLAYABLE_ID_OUT_OF_RANGE, "nonReplayableId " + nonReplayableId);
         
-        // Reject if the non-replayable ID is equal or larger than more than
-        // the acceptance window.
-        if (nonReplayableId == largestNonReplayableId ||
-            nonReplayableId - NON_REPLAYABLE_ID_WINDOW > largestNonReplayableId)
-        {
-            return false;
-        }
+        // Reject if the non-replayable ID is equal. The sender can recover by
+        // incrementing once.
+        if (nonReplayableId == largestNonReplayableId)
+            return MslError.MESSAGE_REPLAYED;
         
-        // If the non-replayable ID is smaller reject it unless it is within
-        // the wrap-around window.
+        // Reject if the non-replayable ID is larger than more than the
+        // acceptance window. The sender cannot recover quickly.
+        if (nonReplayableId - NON_REPLAYABLE_ID_WINDOW > largestNonReplayableId)
+            return MslError.MESSAGE_REPLAYED_UNRECOVERABLE;
+        
+        // If the non-replayable ID is smaller reject it if it is outside the
+        // wrap-around window. The sender cannot recover quickly.
         if (nonReplayableId < largestNonReplayableId) {
             final long cutoff = largestNonReplayableId - MslConstants.MAX_LONG_VALUE + NON_REPLAYABLE_ID_WINDOW;
             if (nonReplayableId >= cutoff)
-                return false;
+                return MslError.MESSAGE_REPLAYED_UNRECOVERABLE;
         }
         
         // Accept the non-replayable ID.
         largestNonReplayableId = nonReplayableId;
-        return true;
+        return null;
     }
     
     /* (non-Javadoc)

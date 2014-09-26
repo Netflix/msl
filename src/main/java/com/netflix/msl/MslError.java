@@ -207,7 +207,7 @@ public class MslError {
     public static final MslError PAYLOAD_SEQUENCE_NUMBER_OUT_OF_RANGE = new MslError(6019, ResponseCode.FAIL, "Payload chunk sequence number is out of range.");
     public static final MslError PAYLOAD_MESSAGE_ID_OUT_OF_RANGE = new MslError(6020, ResponseCode.FAIL, "Payload chunk message ID is out of range.");
     public static final MslError MESSAGE_REPLAYED = new MslError(6021, ResponseCode.REPLAYED, "Non-replayable message replayed.");
-    public static final MslError INCOMPLETE_NONREPLAYABLE_MESSAGE = new MslError(6022, ResponseCode.FAIL, "Non-replayable message sent non-renewable or without key request data or without a master token.");
+    public static final MslError INCOMPLETE_NONREPLAYABLE_MESSAGE = new MslError(6022, ResponseCode.FAIL, "Non-replayable message sent without a master token.");
     public static final MslError HEADER_SIGNATURE_INVALID = new MslError(6023, ResponseCode.FAIL, "Invalid Header signature.");
     public static final MslError HEADER_DATA_INVALID = new MslError(6024, ResponseCode.FAIL, "Invalid header data.");
     public static final MslError PAYLOAD_INVALID = new MslError(6025, ResponseCode.FAIL, "Invalid payload.");
@@ -225,6 +225,7 @@ public class MslError {
     public static final MslError MESSAGE_RECIPIENT_MISMATCH = new MslError(6037, ResponseCode.FAIL, "Message recipient does not match local identity.");
     public static final MslError MESSAGE_ENTITYDATABASED_VERIFICATION_FAILED = new MslError(6038, ResponseCode.ENTITYDATA_REAUTH, "Message header entity-based signature verification failed.");
     public static final MslError MESSAGE_MASTERTOKENBASED_VERIFICATION_FAILED = new MslError(6039, ResponseCode.ENTITY_REAUTH, "Message header master token-based signature verification failed.");
+    public static final MslError MESSAGE_REPLAYED_UNRECOVERABLE = new MslError(6040, ResponseCode.ENTITY_REAUTH, "Non-replayable message replayed with a sequence number that is too far out of sync to recover.");
 
     // 7 Key Exchange
     public static final MslError UNIDENTIFIED_KEYX_SCHEME = new MslError(7000, ResponseCode.FAIL, "Unable to identify key exchange scheme.");

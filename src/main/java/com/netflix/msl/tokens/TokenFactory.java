@@ -89,16 +89,23 @@ public interface TokenFactory {
      * should be limited in size based on a reasonable expectation for the the
      * number of concurrent non-replayable messages the entity may create.</p>
      * 
+     * <p>This method should return {@link MslError.MESSAGE_REPLAYED} if the
+     * master token entity can be expected to provide an acceptable non-
+     * replayable ID given the chance to do so. If there is no such expectation
+     * this method should return
+     * {@link MslError.MESSAGE_REPLAYED_UNRECOVERABLE}.</p>
+     * 
      * @param ctx MSL context.
      * @param masterToken the master token.
      * @param nonReplayableId non-replayable ID.
-     * @return true if the non-replayable ID has been accepted.
+     * @return {@code null} if the non-replayable ID has been accepted.
+     *         Otherwise return a MSL error.
      * @throws MslMasterTokenException if the master token is not trusted.
      * @throws MslException if there is an error comparing or updating the non-
      *         replayable ID associated with this master token.
      * @see #createMasterToken(MslContext, String, SecretKey, SecretKey)
      */
-    public boolean acceptNonReplayableId(final MslContext ctx, final MasterToken masterToken, final long nonReplayableId) throws MslMasterTokenException, MslException;
+    public MslError acceptNonReplayableId(final MslContext ctx, final MasterToken masterToken, final long nonReplayableId) throws MslMasterTokenException, MslException;
 
     /**
      * <p>Create a new master token with the specified identity and session

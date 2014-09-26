@@ -50,8 +50,8 @@ public class ClientTokenFactory implements TokenFactory {
      * @see com.netflix.msl.tokens.TokenFactory#acceptNonReplayableId(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, long)
      */
     @Override
-    public boolean acceptNonReplayableId(final MslContext ctx, final MasterToken masterToken, final long nonReplayableId) {
-        return true;
+    public MslError acceptNonReplayableId(final MslContext ctx, final MasterToken masterToken, final long nonReplayableId) {
+        return null;
     }
 
     /* (non-Javadoc)

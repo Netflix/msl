@@ -598,9 +598,9 @@ var MessageInputStream$create;
                             // sender.
                             var factory = ctx.getTokenFactory();
                             factory.acceptNonReplayableId(ctx, masterToken, nonReplayableId, {
-                                result: function(accepted) {
-                                    if (!accepted) {
-                                        self._errored = new MslMessageException(MslError.MESSAGE_REPLAYED, JSON.stringify(messageHeader))
+                                result: function(replayed) {
+                                    if (replayed) {
+                                        self._errored = new MslMessageException(replayed, JSON.stringify(messageHeader))
                                         .setEntity(masterToken)
                                         .setUser(messageHeader.userIdToken)
                                         .setUser(messageHeader.userAuthenticationData)

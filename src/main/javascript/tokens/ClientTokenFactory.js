@@ -35,7 +35,7 @@ var ClientTokenFactory = TokenFactory.extend({
     
     /** @inheritDoc */
     acceptNonReplayableId: function acceptNonReplayableId(ctx, masterToken, nonReplayableId, callback) {
-        callback.result(true);
+        callback.result(null);
     },
     
     /** @inheritDoc */

@@ -83,12 +83,19 @@ var TokenFactory = util.Class.create({
      * should be limited in size based on a reasonable expectation for the the
      * number of concurrent non-replayable messages the entity may create.</p>
      * 
+     * <p>This method should return {@link MslError.MESSAGE_REPLAYED} if the
+     * master token entity can be expected to provide an acceptable non-
+     * replayable ID given the chance to do so. If there is no such expectation
+     * this method should return
+     * {@link MslError.MESSAGE_REPLAYED_UNRECOVERABLE}.</p>
+     * 
      * @param {MslContext} ctx MSL context.
      * @param {MasterToken} masterToken the master token.
      * @param {number} nonReplayableId non-replayable ID.
-     * @param {{result: function(boolean), error: function(Error)}} callback
-     *        the callback that will receive true if the non-replayable ID has
-     *        been accepted, false if it will not, or any thrown exceptions.
+     * @param {{result: function(MslError), error: function(Error)}} callback
+     *        the callback that will receive {@code null} if the non-replayable
+     *        ID has been accepted, a MslError if it is not accepted, or any
+     *        thrown exceptions.
      * @throws MslMasterTokenException if the master token is not trusted.
      * @throws MslException if there is an error comparing or updating the non-
      *         replayable ID associated with this master token.

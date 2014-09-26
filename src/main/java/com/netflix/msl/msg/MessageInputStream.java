@@ -327,8 +327,9 @@ public class MessageInputStream extends InputStream {
                 // If the non-replayable ID is not accepted then notify the
                 // sender.
                 final TokenFactory factory = ctx.getTokenFactory();
-                if (!factory.acceptNonReplayableId(ctx, masterToken, nonReplayableId))
-                    throw new MslMessageException(MslError.MESSAGE_REPLAYED, messageHeader.toJSONString());
+                final MslError replayed = factory.acceptNonReplayableId(ctx, masterToken, nonReplayableId);
+                if (replayed != null)
+                    throw new MslMessageException(replayed, messageHeader.toJSONString());
             }
         } catch (final MslException e) {
             if (this.header instanceof MessageHeader) {
