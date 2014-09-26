@@ -1210,6 +1210,10 @@ var MslControl$MslChannel;
                     }
                     case MslConstants$ResponseCode.REPLAYED:
                     {
+                        // TODO: The master token-oriented logic remains to support the
+                        // legacy non-replayable flag implementation. It can be removed
+                        // once support for the flag is removed.
+                        //
                         // This error will only be received if the previous request's
                         // master token has an old sequence number. If a new master
                         // token was issued then we know that this old master token's
