@@ -105,16 +105,20 @@ public class MockTokenFactory implements TokenFactory {
         if (nonReplayableId < 0 || nonReplayableId > MslConstants.MAX_LONG_VALUE)
             throw new MslException(MslError.NONREPLAYABLE_ID_OUT_OF_RANGE, "nonReplayableId " + nonReplayableId);
         
-        // Reject if the non-replayable ID is equal. The sender can recover by
-        // incrementing once.
-        if (nonReplayableId == largestNonReplayableId)
+        // Reject if the non-replayable ID is equal or just a few messages
+        // behind. The sender can recover by incrementing.
+        final long catchupWindow = MslConstants.MAX_MESSAGES / 2;
+        if (nonReplayableId <= largestNonReplayableId &&
+            nonReplayableId > largestNonReplayableId - catchupWindow)
+        {
             return MslError.MESSAGE_REPLAYED;
+        }
         
-        // Reject if the non-replayable ID is larger than more than the
+        // Reject if the non-replayable ID is larger by more than the
         // acceptance window. The sender cannot recover quickly.
         if (nonReplayableId - NON_REPLAYABLE_ID_WINDOW > largestNonReplayableId)
             return MslError.MESSAGE_REPLAYED_UNRECOVERABLE;
-        
+
         // If the non-replayable ID is smaller reject it if it is outside the
         // wrap-around window. The sender cannot recover quickly.
         if (nonReplayableId < largestNonReplayableId) {

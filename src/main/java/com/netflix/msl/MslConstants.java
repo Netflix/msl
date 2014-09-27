@@ -30,6 +30,14 @@ public abstract class MslConstants {
     /** Maximum long integer value (2^53 limited by JavaScript). */
     public static final long MAX_LONG_VALUE = 9007199254740992L;
     
+    /**
+     * The maximum number of MSL messages (requests sent or responses received)
+     * to allow before giving up. Six exchanges, or twelve total messages,
+     * should be sufficient to capture all possible error recovery and
+     * handshake requirements in both trusted network and peer-to-peer modes.
+     */
+    public static final int MAX_MESSAGES = 12;
+    
     /** Compression algorithm. */
     public static enum CompressionAlgorithm {
         // In order of most preferred to least preferred.

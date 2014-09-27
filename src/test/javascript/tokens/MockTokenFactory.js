@@ -107,12 +107,16 @@ var MockTokenFactory;
                 if (nonReplayableId < 0 || nonReplayableId > MslConstants$MAX_LONG_VALUE)
                     throw new MslException(MslError.NONREPLAYABLE_ID_OUT_OF_RANGE, "nonReplayableId " + nonReplayableId);
 
-                // Reject if the non-replayable ID is equal. The sender can recover by
-                // incrementing once.
-                if (nonReplayableId == this._largestNonReplayableId)
+                // Reject if the non-replayable ID is equal or just a few messages
+                // behind. The sender can recover by incrementing.
+                var catchupWindow = Math.floor(MslConstants$MAX_MESSAGES / 2);
+                if (nonReplayableId <= this._largestNonReplayableId &&
+                    nonReplayableId > this._largestNonReplayableId - catchupWindow)
+                {
                     return MslError.MESSAGE_REPLAYED;
+                }
 
-                // Reject if the non-replayable ID is larger than more than the
+                // Reject if the non-replayable ID is larger by more than the
                 // acceptance window. The sender cannot recover quickly.
                 if (nonReplayableId - NON_REPLAYABLE_ID_WINDOW > this._largestNonReplayableId)
                     return MslError.MESSAGE_REPLAYED_UNRECOVERABLE;

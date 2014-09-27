@@ -622,14 +622,6 @@ public class MslControl {
     }
     
     /**
-     * The maximum number of MSL messages (requests sent or responses received)
-     * to allow before giving up. Six exchanges, or twelve total messages,
-     * should be sufficient to capture all possible error recovery and
-     * handshake requirements in both trusted network and peer-to-peer modes.
-     */
-    private static final int MAX_MESSAGES = 12;
-    
-    /**
      * Returns true if the current thread has been interrupted as indicated by
      * the {@code Thread#isInterrupted()} method or the type of caught
      * throwable.
@@ -2405,7 +2397,7 @@ public class MslControl {
                 final MessageDebugContext debugCtx = msgCtx.getDebugContext();
                 
                 // Do nothing if we cannot send one more message.
-                if (msgCount + 1 > MAX_MESSAGES)
+                if (msgCount + 1 > MslConstants.MAX_MESSAGES)
                     return null;
                 
                 // If the response must be encrypted or integrity protected but
@@ -2491,7 +2483,7 @@ public class MslControl {
             // Do nothing if we cannot send and receive two more messages.
             //
             // Make sure to release the master token lock.
-            if (msgCount + 2 > MAX_MESSAGES) {
+            if (msgCount + 2 > MslConstants.MAX_MESSAGES) {
                 releaseMasterToken(builder.getMasterToken());
                 return null;
             }
@@ -3054,7 +3046,7 @@ public class MslControl {
             // Do not do anything if cannot send and receive two more messages.
             //
             // Make sure to release the master token lock.
-            if (msgCount + 2 > MAX_MESSAGES) {
+            if (msgCount + 2 > MslConstants.MAX_MESSAGES) {
                 releaseMasterToken(builder.getMasterToken());
                 maxMessagesHit = true;
                 return null;

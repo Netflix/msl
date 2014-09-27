@@ -21,6 +21,7 @@
  */
 var MslConstants$DEFAULT_CHARSET;
 var MslConstants$MAX_LONG_VALUE;
+var MslConstants$MAX_MESSAGES;
 var MslConstants$CompressionAlgorithm;
 var MslConstants$CompressionAlgorithm$getPreferredAlgorithm;
 var MslConstants$CipherSpec;
@@ -37,6 +38,17 @@ var MslConstants$ResponseCode;
     
     /** Maximum long integer value (2^53 limited by JavaScript). */
     MslConstants$MAX_LONG_VALUE = 9007199254740992;
+
+    /**
+     * The maximum number of MSL messages (requests sent or responses received)
+     * to allow before giving up. Six exchanges, or twelve total messages,
+     * should be sufficient to capture all possible error recovery and
+     * handshake requirements in both trusted network and peer-to-peer modes.
+     *
+     * @type {number}
+     * @const
+     */
+    MslConstants$MAX_MESSAGES = 12;
     
     /**
      * Compression algorithm.

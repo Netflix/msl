@@ -88,13 +88,17 @@ public class SimpleTokenFactory implements TokenFactory {
             nonReplayableIds.put(key, nonReplayableId);
             return null;
         }
-
-        // Reject if the non-replayable ID is equal. The sender can recover by
-        // incrementing once.
-        if (nonReplayableId == largestNonReplayableId)
+        
+        // Reject if the non-replayable ID is equal or just a few messages
+        // behind. The sender can recover by incrementing.
+        final long catchupWindow = MslConstants.MAX_MESSAGES / 2;
+        if (nonReplayableId <= largestNonReplayableId &&
+            nonReplayableId > largestNonReplayableId - catchupWindow)
+        {
             return MslError.MESSAGE_REPLAYED;
+        }
 
-        // Reject if the non-replayable ID is larger than more than the
+        // Reject if the non-replayable ID is larger by more than the
         // acceptance window. The sender cannot recover quickly.
         if (nonReplayableId - NON_REPLAYABLE_ID_WINDOW > largestNonReplayableId)
             return MslError.MESSAGE_REPLAYED_UNRECOVERABLE;
