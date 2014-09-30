@@ -58,7 +58,8 @@ public interface TokenFactory {
      * renewability of the master token.</p>
      * 
      * <p>This method should return the exact {@link MslError} identifying the
-     * reason the master token has been revoked.</p>
+     * reason the master token has been revoked. The response code associated
+     * with the error will be honored.</p>
      * 
      * @param ctx MSL context.
      * @param masterToken the master token to check.
@@ -89,11 +90,12 @@ public interface TokenFactory {
      * should be limited in size based on a reasonable expectation for the the
      * number of concurrent non-replayable messages the entity may create.</p>
      * 
-     * <p>This method should return {@link MslError.MESSAGE_REPLAYED} if the
-     * master token entity can be expected to provide an acceptable non-
-     * replayable ID given the chance to do so. If there is no such expectation
-     * this method should return
-     * {@link MslError.MESSAGE_REPLAYED_UNRECOVERABLE}.</p>
+     * <p>This method should return the exact {@link MslError} identifying the
+     * reason the non-replayable ID was rejected. The response code associated
+     * with the error will be honored. If the master token entity cannot be
+     * expected to recover if the message is sent with a new non-replayable ID
+     * then the response code {@link ResponseCode.ENTITYDATA_REAUTH} should be
+     * used.</p>
      * 
      * @param ctx MSL context.
      * @param masterToken the master token.
@@ -104,6 +106,8 @@ public interface TokenFactory {
      * @throws MslException if there is an error comparing or updating the non-
      *         replayable ID associated with this master token.
      * @see #createMasterToken(MslContext, String, SecretKey, SecretKey)
+     * @see MslError.MESSAGE_REPLAYED
+     * @see MslError.MESSAGE_REPLAYED_UNRECOVERABLE
      */
     public MslError acceptNonReplayableId(final MslContext ctx, final MasterToken masterToken, final long nonReplayableId) throws MslMasterTokenException, MslException;
 
