@@ -464,7 +464,7 @@ var MessageBuilder$createErrorResponse;
                         else {
                             var random = ctx.getRandom();
                             do {
-                                messageId = random.nextInt();
+                                messageId = random.nextLong();
                             } while (messageId < 0 || messageId > MslConstants$MAX_LONG_VALUE);
                         }
                         var errorCode = error.responseCode;

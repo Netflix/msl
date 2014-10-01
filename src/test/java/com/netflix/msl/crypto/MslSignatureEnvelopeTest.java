@@ -87,7 +87,7 @@ public class MslSignatureEnvelopeTest {
             final MslSignatureEnvelope envelope = new MslSignatureEnvelope(SIGNATURE);
             final byte[] envelopeBytes = envelope.getBytes();
             assertNotNull(envelopeBytes);
-            assertEquals(SIGNATURE, envelopeBytes);
+            assertArrayEquals(SIGNATURE, envelopeBytes);
         }
     }
     

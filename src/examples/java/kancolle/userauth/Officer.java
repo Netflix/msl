@@ -63,7 +63,7 @@ public class Officer implements MslUser {
     public boolean equals(final Object obj) {
         if (obj == this) return true;
         if (!(obj instanceof Officer)) return false;
-        final Officer that = (Officer)this;
+        final Officer that = (Officer)obj;
         return this.name.equals(that.name);
     }
 

@@ -880,7 +880,7 @@ public class ServiceTokenTest {
         final ServiceToken serviceToken = new ServiceToken(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT);
         assertFalse(serviceToken.equals(null));
         assertFalse(serviceToken.equals(DATA));
-        assertTrue(serviceToken.hashCode() != DATA.hashCode());
+        assertTrue(serviceToken.hashCode() != Arrays.hashCode(DATA));
     }
     
     /** MSL context. */

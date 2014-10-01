@@ -70,7 +70,7 @@ public class EmailPasswordAuthenticationFactory extends UserAuthenticationFactor
         // Extract and check email and password values.
         final String epadEmail = epad.getEmail();
         final String epadPassword = epad.getPassword();
-        if (epadEmail == null || epadEmail == null)
+        if (epadEmail == null || epadPassword == null)
             throw new MslUserAuthException(MslError.EMAILPASSWORD_BLANK).setUser(epad);
         final String email = epadEmail.trim();
         final String password = epadPassword.trim();

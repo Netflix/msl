@@ -961,7 +961,7 @@ public class MessageHeader extends Header {
                 recipient == that.recipient) &&
                messageId == that.messageId &&
                (nonReplayableId != null && nonReplayableId.equals(that.nonReplayableId) ||
-                nonReplayableId == that.nonReplayableId) &&
+                nonReplayableId == null && that.nonReplayableId == null) &&
                nonReplayable == that.nonReplayable &&
                renewable == that.renewable &&
                handshake == that.handshake &&

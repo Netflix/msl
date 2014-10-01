@@ -182,7 +182,7 @@ public class JsonWebEncryptionLadderExchangeSuite {
             final RequestData req = new RequestData(Mechanism.WRAP, WRAPDATA);
             assertEquals(KeyExchangeScheme.JWE_LADDER, req.getKeyExchangeScheme());
             assertEquals(Mechanism.WRAP, req.getMechanism());
-            assertEquals(WRAPDATA, req.getWrapdata());
+            assertArrayEquals(WRAPDATA, req.getWrapdata());
             final JSONObject keydata = req.getKeydata();
             assertNotNull(keydata);
             
@@ -825,7 +825,7 @@ public class JsonWebEncryptionLadderExchangeSuite {
             
             final byte[] wrapdata = repository.getWrapdata();
             assertNotNull(wrapdata);
-            assertEquals(((ResponseData)resp).getWrapdata(), wrapdata);
+            assertArrayEquals(((ResponseData)resp).getWrapdata(), wrapdata);
             
             assertNull(repository.getCryptoContext(WRAPDATA));
             
@@ -871,7 +871,7 @@ public class JsonWebEncryptionLadderExchangeSuite {
             
             final byte[] wrapdata = repository.getWrapdata();
             assertNotNull(wrapdata);
-            assertEquals(((ResponseData)resp).getWrapdata(), wrapdata);
+            assertArrayEquals(((ResponseData)resp).getWrapdata(), wrapdata);
             
             final byte[] data = new byte[32];
             random.nextBytes(data);
@@ -974,7 +974,7 @@ public class JsonWebEncryptionLadderExchangeSuite {
             // First get the new crypto context. This installs the returned
             // wrapping key in the repository.
             repository.addCryptoContext(WRAPDATA, WRAP_CRYPTO_CONTEXT);
-            assertEquals(WRAPDATA, repository.getWrapdata());
+            assertArrayEquals(WRAPDATA, repository.getWrapdata());
             factory.getCryptoContext(pskCtx, req, resp, null);
             assertFalse(Arrays.equals(WRAPDATA, repository.getWrapdata()));
             

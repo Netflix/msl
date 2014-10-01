@@ -388,7 +388,7 @@ public class MessageBuilder {
         else {
             final Random random = ctx.getRandom();
             do {
-                messageId = random.nextInt();
+                messageId = random.nextLong();
             } while (messageId < 0 || messageId > MslConstants.MAX_LONG_VALUE);
         }
         final ResponseCode errorCode = error.getResponseCode();
