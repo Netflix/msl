@@ -864,7 +864,7 @@ public class MessageInputStreamTest {
                 mis = new MessageInputStream(ctx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
                 fail(i + ": Non-replayable ID " + nonReplayableId + " accepted with largest non-replayable ID " + largestNonReplayableId);
             } catch (final MslMessageException e) {
-                assertEquals(MslError.MESSAGE_REPLAYED, e.getError());
+                assertEquals(MslError.MESSAGE_REPLAYED_UNRECOVERABLE, e.getError());
                 assertEquals((Long)MSG_ID, e.getMessageId());
             } finally {
                 if (mis != null) mis.close();

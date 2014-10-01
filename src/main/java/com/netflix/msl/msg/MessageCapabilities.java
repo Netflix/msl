@@ -17,7 +17,7 @@ package com.netflix.msl.msg;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
@@ -68,7 +68,7 @@ public class MessageCapabilities implements JSONString {
             return null;
         
         // Compute the intersection of compression algorithms.
-        final Set<CompressionAlgorithm> compressionAlgos = new HashSet<CompressionAlgorithm>();
+        final Set<CompressionAlgorithm> compressionAlgos = EnumSet.noneOf(CompressionAlgorithm.class);
         compressionAlgos.addAll(mc1.compressionAlgos);
         compressionAlgos.retainAll(mc2.compressionAlgos);
         
@@ -89,7 +89,7 @@ public class MessageCapabilities implements JSONString {
      *        order. May be {@code null}.
      */
     public MessageCapabilities(final Set<CompressionAlgorithm> compressionAlgos, final List<String> languages) {
-        this.compressionAlgos = Collections.unmodifiableSet(compressionAlgos != null ? compressionAlgos : new HashSet<CompressionAlgorithm>());
+        this.compressionAlgos = Collections.unmodifiableSet(compressionAlgos != null ? compressionAlgos : EnumSet.noneOf(CompressionAlgorithm.class));
         this.languages = Collections.unmodifiableList(languages != null ? languages : new ArrayList<String>());
     }
     
@@ -103,7 +103,7 @@ public class MessageCapabilities implements JSONString {
     public MessageCapabilities(final JSONObject capabilitiesJO) throws MslEncodingException {
         try {
             // Extract compression algorithms.
-            final Set<CompressionAlgorithm> compressionAlgos = new HashSet<CompressionAlgorithm>();
+            final Set<CompressionAlgorithm> compressionAlgos = EnumSet.noneOf(CompressionAlgorithm.class);
             final JSONArray algos = capabilitiesJO.optJSONArray(KEY_COMPRESSION_ALGOS);
             for (int i = 0; algos != null && i < algos.length(); ++i) {
                 final String algo = algos.getString(i);

@@ -1273,7 +1273,7 @@ public class MessageBuilderSuite {
             final KeyPair rsaKeyPair = rsaGenerator.generateKeyPair();
             RSA_PUBLIC_KEY = rsaKeyPair.getPublic();
             RSA_PRIVATE_KEY = rsaKeyPair.getPrivate();
-            ISSUER_DATA = new JSONObject("{ issuerid = 17 }");
+            ISSUER_DATA = new JSONObject("{ 'issuerid' : 17 }");
             USER = MockEmailPasswordAuthenticationFactory.USER;
         }
         

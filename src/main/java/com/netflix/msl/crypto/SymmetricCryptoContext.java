@@ -74,8 +74,7 @@ public class SymmetricCryptoContext implements ICryptoContext {
      */
     private static byte[] msb(final int bytes, final byte[] w) {
         final byte[] msb = new byte[bytes];
-        for (int i = 0; i < bytes; ++i)
-            msb[i] = w[i];
+        System.arraycopy(w, 0, msb, 0, bytes);
         return msb;
     }
     

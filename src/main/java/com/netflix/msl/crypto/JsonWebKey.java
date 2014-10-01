@@ -29,6 +29,7 @@ import java.security.spec.RSAPrivateKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -370,7 +371,7 @@ public class JsonWebKey implements JSONString {
             throw new MslCryptoException(MslError.UNIDENTIFIED_JWK_USAGE, usageName, e);
         }
         if (keyOpsNames != null) {
-            final Set<KeyOp> keyOps = new HashSet<KeyOp>();
+            final Set<KeyOp> keyOps = EnumSet.noneOf(KeyOp.class);
             for (final String keyOpName : keyOpsNames) {
                 try {
                     keyOps.add(KeyOp.valueOf(keyOpName));

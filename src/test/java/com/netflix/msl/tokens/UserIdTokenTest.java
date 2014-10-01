@@ -93,7 +93,7 @@ public class UserIdTokenTest {
     public static void setup() throws MslEncodingException, MslCryptoException, JSONException {
         ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
         MASTER_TOKEN = MslTestUtils.getMasterToken(ctx, 1, 1);
-        ISSUER_DATA = new JSONObject("{ issuerid = 17 }");
+        ISSUER_DATA = new JSONObject("{ 'issuerid' : 17 }");
         USER = MockEmailPasswordAuthenticationFactory.USER;
     }
     

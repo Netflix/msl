@@ -38,7 +38,7 @@ public abstract class KeyExchangeFactory {
      * The key exchange data struct contains key response data and a crypto
      * context for the exchanged keys.
      */
-    public class KeyExchangeData {
+    public static class KeyExchangeData {
         /**
          * Create a new key key exhange data struct with the provided key
          * response data, master token, and crypto context.

@@ -112,7 +112,7 @@ public class MasterTokenTest {
     @BeforeClass
     public static void setup() throws MslEncodingException, MslCryptoException, JSONException {
         ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
-        ISSUER_DATA = new JSONObject("{ issuerid = 17 }");
+        ISSUER_DATA = new JSONObject("{ 'issuerid' : 17 }");
     }
     
     @AfterClass

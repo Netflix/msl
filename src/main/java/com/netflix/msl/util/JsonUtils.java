@@ -87,10 +87,10 @@ public class JsonUtils {
             final int toPad = 4 - (modified.length() % 4);
             if (toPad == 0 || toPad == 4)
                 return DatatypeConverter.parseBase64Binary(modified);
-            String padded = modified;
+            final StringBuilder padded = new StringBuilder(modified);
             for (int i = 0; i < toPad; ++i)
-                padded += CHAR_EQUALS;
-            return DatatypeConverter.parseBase64Binary(padded);
+                padded.append(CHAR_EQUALS);
+            return DatatypeConverter.parseBase64Binary(padded.toString());
         } catch (final IllegalArgumentException e) {
             return null;
         }

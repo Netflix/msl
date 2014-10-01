@@ -503,7 +503,7 @@ public class MessageHeader extends Header {
             try {
                 this.headerdata = DatatypeConverter.parseBase64Binary(headerdata);
             } catch (final IllegalArgumentException e) {
-                throw new MslMessageException(MslError.HEADER_DATA_INVALID, headerdata).setEntity(masterToken).setEntity(entityAuthData);
+                throw new MslMessageException(MslError.HEADER_DATA_INVALID, headerdata, e).setEntity(masterToken).setEntity(entityAuthData);
             }
             if (this.headerdata == null || this.headerdata.length == 0)
                 throw new MslMessageException(MslError.HEADER_DATA_MISSING, headerdata).setEntity(masterToken).setEntity(entityAuthData);
@@ -960,7 +960,8 @@ public class MessageHeader extends Header {
                (recipient != null && recipient.equals(that.recipient) ||
                 recipient == that.recipient) &&
                messageId == that.messageId &&
-               nonReplayableId == that.nonReplayableId &&
+               (nonReplayableId != null && nonReplayableId.equals(that.nonReplayableId) ||
+                nonReplayableId == that.nonReplayableId) &&
                nonReplayable == that.nonReplayable &&
                renewable == that.renewable &&
                handshake == that.handshake &&
@@ -990,7 +991,7 @@ public class MessageHeader extends Header {
             ((sender != null) ? sender.hashCode() : 0) ^
             ((recipient != null) ? recipient.hashCode() : 0) ^
             Long.valueOf(messageId).hashCode() ^
-            ((nonReplayableId != null) ? Long.valueOf(nonReplayableId).hashCode() : 0) ^
+            ((nonReplayableId != null) ? nonReplayableId.hashCode() : 0) ^
             Boolean.valueOf(nonReplayable).hashCode() ^
             Boolean.valueOf(renewable).hashCode() ^
             Boolean.valueOf(handshake).hashCode() ^

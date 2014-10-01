@@ -99,7 +99,7 @@ public class EntityAuthenticationDataTest {
         final MockMslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
         ctx.removeEntityAuthenticationFactory(EntityAuthenticationScheme.NONE);
         final JSONObject jo = new JSONObject();
-        jo.put(KEY_SCHEME, EntityAuthenticationScheme.NONE);
+        jo.put(KEY_SCHEME, EntityAuthenticationScheme.NONE.name());
         jo.put(KEY_AUTHDATA, new JSONObject());
         EntityAuthenticationData.create(ctx, jo);
     }

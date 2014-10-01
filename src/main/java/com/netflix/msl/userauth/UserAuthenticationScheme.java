@@ -33,6 +33,8 @@ public class UserAuthenticationScheme {
     
     /** Email/password. */
     public static final UserAuthenticationScheme EMAIL_PASSWORD = new UserAuthenticationScheme("EMAIL_PASSWORD");
+    /** User ID token. */
+    public static final UserAuthenticationScheme USER_ID_TOKEN = new UserAuthenticationScheme("USER_ID_TOKEN");
     
     /**
      * Define a user authentication scheme with the specified name.

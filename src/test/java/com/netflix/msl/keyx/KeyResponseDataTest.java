@@ -137,7 +137,7 @@ public class KeyResponseDataTest {
         ctx.removeKeyExchangeFactories(KeyExchangeScheme.ASYMMETRIC_WRAPPED);
         final JSONObject jo = new JSONObject();
         jo.put(KEY_MASTER_TOKEN, new JSONObject(MASTER_TOKEN.toJSONString()));
-        jo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED);
+        jo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED.name());
         jo.put(KEY_KEYDATA, new JSONObject());
         KeyResponseData.create(ctx, jo);
     }

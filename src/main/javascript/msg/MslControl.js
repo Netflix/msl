@@ -2836,7 +2836,7 @@ var MslControl$MslChannel;
 
                                // We couldn't read, but maybe we can write an error response.
                                var recipient = request.getIdentity();
-                               var requestMessageId = (requestHeader) ? requestHeader.messageId : null;
+                               var requestMessageId = requestHeader.messageId;
                                var mslError = MslError.INTERNAL_EXCEPTION;
                                var toThrow = new MslInternalException("Error peeking into the message payloads.");
                                sendError(this, this._ctx, this._msgCtx.getDebugContext(), recipient, requestMessageId, mslError, null, this._output, this._timeout, {
@@ -2928,7 +2928,7 @@ var MslControl$MslChannel;
                                     userMessage = this._ctrl.messageRegistry.getUserMessage(mslError, languages);
                                     toThrow = e;
                                 } else {
-                                    requestMessageId = (requestHeader) ? requestHeader.messageId : null;
+                                    requestMessageId = requestHeader.messageId;
                                     mslError = MslError.INTERNAL_EXCEPTION;
                                     userMessage = null;
                                     toThrow = new MslInternalException("Error creating an automatic handshake response.", e);
@@ -2986,17 +2986,17 @@ var MslControl$MslChannel;
                                 if (e instanceof MslException) {
                                     requestMessageId = e.messageId;
                                     mslError = e.error;
-                                    var caps = (requestHeader) ? requestHeader.messageCapabilities : null;
+                                    var caps = requestHeader.messageCapabilities;
                                     var languages = (caps) ? caps.languages : null;
                                     userMessage = this._ctrl.messageRegistry.getUserMessage(mslError, languages);
                                     toThrow = e;
                                 } else if (e instanceof MslIoException) {
-                                    requestMessageId = (requestHeader) ? requestHeader.messageId : null;
+                                    requestMessageId = requestHeader.messageId;
                                     mslError = MslError.MSL_COMMS_FAILURE;
                                     userMessage = null;
                                     toThrow = e;
                                 } else {
-                                    requestMessageId = (requestHeader) ? requestHeader.messageId : null;
+                                    requestMessageId = requestHeader.messageId;
                                     mslError = MslError.INTERNAL_EXCEPTION;
                                     userMessage = null;
                                     toThrow = new MslInternalException("Error sending an automatic handshake response.", e);

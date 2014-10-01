@@ -100,7 +100,7 @@ public class UserAuthenticationDataTest {
         final MockMslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
         ctx.removeUserAuthenticationFactory(UserAuthenticationScheme.EMAIL_PASSWORD);
         final JSONObject jo = new JSONObject();
-        jo.put(KEY_SCHEME, UserAuthenticationScheme.EMAIL_PASSWORD);
+        jo.put(KEY_SCHEME, UserAuthenticationScheme.EMAIL_PASSWORD.name());
         jo.put(KEY_AUTHDATA, new JSONObject());
         UserAuthenticationData.create(ctx, null, jo);
     }

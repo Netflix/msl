@@ -472,9 +472,11 @@ public class MessageInputStream extends InputStream {
         // message or not. This also implies the current payload is null.
         if (handshake == null) {
             try {
+                // nextData() will set the value of handshake if a payload is
+                // found.
                 currentPayload = nextData();
                 if (currentPayload == null)
-                    handshake = false;
+                    handshake = Boolean.FALSE;
             } catch (final MslException e) {
                 // Save the exception to be thrown next time read() is called.
                 readException = new IOException("Error reading the payload chunk.", e);

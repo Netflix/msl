@@ -867,6 +867,8 @@ var MessageInputStream$create;
                 // If we haven't read a payload we don't know if this is a handshake
                 // message or not. This also implies the current payload is null.
                 if (this._handshake == null) {
+                    // nextData() will set the value of handshake if a payload is
+                    // found.
                     this.nextData(timeout, {
                         result: function(payload) {
                             InterruptibleExecutor(callback, function() {

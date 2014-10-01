@@ -2163,7 +2163,7 @@ public class MslControl {
                 // Try to send an error response.
                 try {
                     final String recipient = request.getIdentity();
-                    final Long requestMessageId = (requestHeader != null) ? requestHeader.getMessageId() : null;
+                    final Long requestMessageId = requestHeader.getMessageId();
                     final ErrorHeader errorHeader = MessageBuilder.createErrorResponse(ctx, recipient, requestMessageId, MslError.INTERNAL_EXCEPTION, null);
                     if (debugCtx != null) debugCtx.sentHeader(errorHeader);
                     final MessageOutputStream response = new MessageOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
@@ -2215,7 +2215,7 @@ public class MslControl {
                 // Try to send an error response.
                 try {
                     final String recipient = request.getIdentity();
-                    final Long requestMessageId = (requestHeader != null) ? requestHeader.getMessageId() : null;
+                    final Long requestMessageId = requestHeader.getMessageId();
                     final ErrorHeader errorHeader = MessageBuilder.createErrorResponse(ctx, recipient, requestMessageId, MslError.INTERNAL_EXCEPTION, null);
                     if (debugCtx != null) debugCtx.sentHeader(errorHeader);
                     final MessageOutputStream response = new MessageOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
@@ -2251,7 +2251,7 @@ public class MslControl {
                     // Try to send an error response.
                     try {
                         final String recipient = request.getIdentity();
-                        final Long requestMessageId = (requestHeader != null) ? requestHeader.getMessageId() : null;
+                        final Long requestMessageId = requestHeader.getMessageId();
                         final MslError error = e.getError();
                         final MessageCapabilities caps = requestHeader.getMessageCapabilities();
                         final List<String> languages = (caps != null) ? caps.getLanguages() : null;
@@ -2274,7 +2274,7 @@ public class MslControl {
                     // Maybe we can send an error response.
                     try {
                         final String recipient = request.getIdentity();
-                        final Long requestMessageId = (requestHeader != null) ? requestHeader.getMessageId() : null;
+                        final Long requestMessageId = requestHeader.getMessageId();
                         final ErrorHeader errorHeader = MessageBuilder.createErrorResponse(ctx, recipient, requestMessageId, MslError.MSL_COMMS_FAILURE, null);
                         if (debugCtx != null) debugCtx.sentHeader(errorHeader);
                         final MessageOutputStream response = new MessageOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
@@ -2293,7 +2293,7 @@ public class MslControl {
                     // Try to send an error response.
                     try {
                         final String recipient = request.getIdentity();
-                        final Long requestMessageId = (requestHeader != null) ? requestHeader.getMessageId() : null;
+                        final Long requestMessageId = requestHeader.getMessageId();
                         final ErrorHeader errorHeader = MessageBuilder.createErrorResponse(ctx, recipient, requestMessageId, MslError.INTERNAL_EXCEPTION, null);
                         if (debugCtx != null) debugCtx.sentHeader(errorHeader);
                         final MessageOutputStream response = new MessageOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
@@ -2805,7 +2805,7 @@ public class MslControl {
                 response.close();
                 
                 // Success.
-                return true;
+                return Boolean.TRUE;
             } catch (final MslException e) {
                 // If we were cancelled then return false.
                 if (cancelled(e)) return false;

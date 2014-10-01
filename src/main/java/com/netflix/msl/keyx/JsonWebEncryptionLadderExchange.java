@@ -645,7 +645,7 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
         try {
             wrapJwk = new JsonWebKey(new JSONObject(wrapJwkJson));
         } catch (final JSONException e) {
-            throw new MslKeyExchangeException(MslError.INVALID_JWK, wrapJwkJson).setEntity(entityAuthData);
+            throw new MslKeyExchangeException(MslError.INVALID_JWK, wrapJwkJson, e).setEntity(entityAuthData);
         }
         final SecretKey wrapKey = wrapJwk.getSecretKey();
         
@@ -660,13 +660,13 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
         try {
             encryptionJwk = new JsonWebKey(new JSONObject(encryptionJwkJson));
         } catch (final JSONException e) {
-            throw new MslKeyExchangeException(MslError.INVALID_JWK, encryptionJwkJson).setEntity(entityAuthData);
+            throw new MslKeyExchangeException(MslError.INVALID_JWK, encryptionJwkJson, e).setEntity(entityAuthData);
         }
         final JsonWebKey hmacJwk;
         try {
             hmacJwk = new JsonWebKey(new JSONObject(hmacJwkJson));
         } catch (final JSONException e) {
-            throw new MslKeyExchangeException(MslError.INVALID_JWK, hmacJwkJson).setEntity(entityAuthData);
+            throw new MslKeyExchangeException(MslError.INVALID_JWK, hmacJwkJson, e).setEntity(entityAuthData);
         }
         
         // Deliver wrap data to wrap key repository.

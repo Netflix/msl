@@ -101,7 +101,7 @@ public class KeyRequestDataTest {
         final MockMslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
         ctx.removeKeyExchangeFactories(KeyExchangeScheme.ASYMMETRIC_WRAPPED);
         final JSONObject jo = new JSONObject();
-        jo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED);
+        jo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED.name());
         jo.put(KEY_KEYDATA, new JSONObject());
         KeyRequestData.create(ctx, jo);
     }

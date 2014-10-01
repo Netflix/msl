@@ -142,7 +142,7 @@ public abstract class KeyResponseData implements JSONString {
             return new JSONStringer()
                 .object()
                     .key(KEY_MASTER_TOKEN).value(masterToken)
-                    .key(KEY_SCHEME).value(scheme)
+                    .key(KEY_SCHEME).value(scheme.name())
                     .key(KEY_KEYDATA).value(getKeydata())
                 .endObject()
                 .toString();

@@ -124,7 +124,7 @@ public abstract class KeyRequestData implements JSONString {
         try {
             return new JSONStringer()
                 .object()
-                    .key(KEY_SCHEME).value(scheme)
+                    .key(KEY_SCHEME).value(scheme.name())
                     .key(KEY_KEYDATA).value(getKeydata())
                 .endObject()
                 .toString();

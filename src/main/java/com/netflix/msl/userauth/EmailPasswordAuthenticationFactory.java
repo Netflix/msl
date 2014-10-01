@@ -68,13 +68,14 @@ public class EmailPasswordAuthenticationFactory extends UserAuthenticationFactor
             throw new MslUserAuthException(MslError.USERAUTH_INCORRECT_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + this.getScheme()).setUser(data);
 
         // Extract and check email and password values.
-        final String email = epad.getEmail();
-        final String password = epad.getPassword();
-        if (email == null || email.trim().length() == 0 ||
-            password == null || password.trim().length() == 0)
-        {
+        final String epadEmail = epad.getEmail();
+        final String epadPassword = epad.getPassword();
+        if (epadEmail == null || epadEmail == null)
             throw new MslUserAuthException(MslError.EMAILPASSWORD_BLANK).setUser(epad);
-        }
+        final String email = epadEmail.trim();
+        final String password = epadPassword.trim();
+        if (email.isEmpty() || password.isEmpty())
+            throw new MslUserAuthException(MslError.EMAILPASSWORD_BLANK).setUser(epad);
 
         // Authenticate the user.
         final MslUser user = store.isUser(email, password);

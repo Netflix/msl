@@ -112,7 +112,7 @@ public abstract class UserAuthenticationData implements JSONString {
         try {
             return new JSONStringer()
                 .object()
-                    .key(KEY_SCHEME).value(scheme)
+                    .key(KEY_SCHEME).value(scheme.name())
                     .key(KEY_AUTHDATA).value(getAuthData())
                 .endObject()
                 .toString();

@@ -123,9 +123,9 @@ public class X509Store {
      * @throws CertificateException if an issuer certificate cannot be found.
      */
     private boolean isPermittedByIssuer(final X509Certificate cert) throws CertificateException {
-        // Get the issuer chain.
+        // Get the issuer chain. It should never be empty.
         final List<X509Certificate> issuerChain = getIssuerChain(cert);
-        if (issuerChain == null)
+        if (issuerChain.isEmpty())
             return false;
         
         // If at any point in the chain we see a path length set, we use "lazy"
@@ -236,7 +236,7 @@ public class X509Store {
      */
     public void addTrusted(List<X509Certificate> chain) throws CertificateExpiredException, CertificateNotYetValidException, CertificateException, NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException, SignatureException {
         // Do nothing if the chain is null or empty.
-        if (chain == null || chain.size() == 0)
+        if (chain == null || chain.isEmpty())
             return;
         
         // Verify that the root certificate is self-signed and add it.

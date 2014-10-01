@@ -739,7 +739,7 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
         try {
             cryptoContext = new SessionCryptoContext(ctx, masterToken);
         } catch (final MslMasterTokenException e) {
-            throw new MslInternalException("Master token constructed by token factory is not trusted.");
+            throw new MslInternalException("Master token constructed by token factory is not trusted.", e);
         }
         
         // Return the key exchange data.

@@ -128,12 +128,12 @@ public abstract class EntityAuthenticationData implements JSONString {
         try {
             return new JSONStringer()
                 .object()
-                    .key(KEY_SCHEME).value(this.scheme)
+                    .key(KEY_SCHEME).value(scheme.name())
                     .key(KEY_AUTHDATA).value(getAuthData())
                 .endObject()
                 .toString();
         } catch (final JSONException e) {
-            throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.");
+            throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);
         } catch (final MslEncodingException e) {
             throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);
         }
