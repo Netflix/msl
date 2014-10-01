@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- Ignore code that we explicitly want. -->
+    <Match>
+        <Bug pattern="SPP_EQUALS_ON_ENUM,CC_CYCLOMATIC_COMPLEXITY,EXS_EXCEPTION_SOFTENING_HAS_CHECKED,EXS_EXCEPTION_SOFTENING_NO_CHECKED,EXS_EXCEPTION_SOFTENING_NO_CONSTRAINTS"/>
+    </Match>
+
+    <!-- Ignore all bugs except JUnit bugs in test classes. -->
+    <Match>
+        <Source name="~.*/test/.*"/>
+        <Not>
+            <Bug code="IJU"/>
+        </Not>
+    </Match>
+    
+    <!-- Ignore all bugs in org.json. -->
+    <Match>
+        <Class name="~org\.json\..*"/>
+    </Match>
+</FindBugsFilter>
