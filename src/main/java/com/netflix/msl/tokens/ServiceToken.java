@@ -193,7 +193,6 @@ public class ServiceToken implements JSONString {
             plaintext = data;
         }
         
-        this.ctx = ctx;
         this.name = name;
         this.mtSerialNumber = (masterToken != null) ? masterToken.getSerialNumber() : -1;
         this.uitSerialNumber = (userIdToken != null) ? userIdToken.getSerialNumber() : -1;
@@ -295,8 +294,6 @@ public class ServiceToken implements JSONString {
      *         error uncompressing the data.
      */
     public ServiceToken(final MslContext ctx, final JSONObject serviceTokenJO, final MasterToken masterToken, final UserIdToken userIdToken, final ICryptoContext cryptoContext) throws MslCryptoException, MslEncodingException, MslException {
-        this.ctx = ctx;
-        
         // Verify the JSON representation.
         try {
             try {
@@ -507,10 +504,6 @@ public class ServiceToken implements JSONString {
     public boolean isUnbound() {
         return mtSerialNumber == -1 && uitSerialNumber == -1;
     }
-    
-    /** MSL context. */
-    @SuppressWarnings("unused")
-    private final MslContext ctx;
     
     /** Token data. */
     private final byte[] tokendata;

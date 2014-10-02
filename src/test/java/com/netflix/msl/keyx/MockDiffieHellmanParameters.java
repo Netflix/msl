@@ -33,7 +33,7 @@ public class MockDiffieHellmanParameters implements DiffieHellmanParameters {
     private static BigInteger g = new BigInteger("02", 16);
     
     /** Default parameter ID. */
-    public static String DEFAULT_ID = "default1";
+    public static final String DEFAULT_ID = "default1";
     
     /**
      * Returns the default test parameters containing a single set of Diffie-

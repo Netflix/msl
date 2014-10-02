@@ -35,7 +35,7 @@ public class MessageProcessor {
     /** Newline character. */
     private static final String NEWLINE = System.lineSeparator();
     /** Space character. */
-    private static final String SPACE = " ";
+    private static final char SPACE = ' ';
     
     /**
      * <p>Acknowledgements are identifed by the string "ACK".</p>

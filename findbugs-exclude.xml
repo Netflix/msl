@@ -2,15 +2,71 @@
 <FindBugsFilter>
     <!-- Ignore code that we explicitly want. -->
     <Match>
-        <Bug pattern="SPP_EQUALS_ON_ENUM,CC_CYCLOMATIC_COMPLEXITY,EXS_EXCEPTION_SOFTENING_HAS_CHECKED,EXS_EXCEPTION_SOFTENING_NO_CHECKED,EXS_EXCEPTION_SOFTENING_NO_CONSTRAINTS"/>
+        <Or>
+            <!-- Style choices. -->
+            <Bug pattern="SPP_EQUALS_ON_ENUM,CC_CYCLOMATIC_COMPLEXITY"/>
+            <!-- Runtime exception behavior. -->
+            <Bug pattern="EXS_EXCEPTION_SOFTENING_HAS_CHECKED,EXS_EXCEPTION_SOFTENING_NO_CHECKED,EXS_EXCEPTION_SOFTENING_NO_CONSTRAINTS,REC_CATCH_EXCEPTION"/>
+            <!-- Serialization not needed. -->
+            <Bug code="Se"/>
+            <!-- Trust the application. -->
+            <Bug code="EI,EI2"/>
+            <!-- Not really mistakes. -->
+            <Bug pattern="DE_MIGHT_IGNORE,DLS_DEAD_LOCAL_STORE,HSC_HUGE_SHARED_STRING_CONSTANT,RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
+        </Or>
+    </Match>
+    
+    <!-- Specific exclusions, that exist for reasons. -->
+    <Match>
+        <Class name="com.netflix.msl.msg.MessageInputStream"/>
+        <Method name="finalize"/>
+        <Bug pattern="FI_USELESS"/>
+    </Match>
+    <Match>
+        <Class name="com.netflix.msl.test.ExpectedMslException"/>
+        <Bug pattern="NM_CLASS_NOT_EXCEPTION"/>
+    </Match>
+    <Match>
+        <Class name="com.netflix.msl.util.JsonUtils"/>
+        <Method name="b64urlDecode"/>
+        <Bug pattern="PZLA_PREFER_ZERO_LENGTH_ARRAYS"/>
+    </Match>
+    
+    <!-- Example exclusions. -->
+    <Match>
+        <Class name="server.userauth.SimpleTokenFactory"/>
+        <Or>
+            <Bug pattern="AT_OPERATION_SEQUENCE_ON_CONCURRENT_ABSTRACTION"/>
+            <Bug code="NP"/>
+        </Or>
+    </Match>
+    <Match>
+        <Class name="server.SimpleServlet"/>
+        <Method name="doPost"/>
+        <Bug pattern="ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD"/>
+    </Match>
+    <Match>
+        <Class name="server.SimpleConstants"/>
+        <Bug pattern="MS_PKGPROTECT,MS_MUTABLE_ARRAY"/>
+    </Match>
+    
+    <!-- KanColle example is incomplete. -->
+    <Match>
+        <Class name="~kancolle\..*"/>
     </Match>
 
     <!-- Ignore all bugs except JUnit bugs in test classes. -->
     <Match>
-        <Source name="~.*/test/.*"/>
-        <Not>
-            <Bug code="IJU"/>
-        </Not>
+        <Or>
+            <Class name="~.*Mock.*"/>
+            <Class name="~.*(Test|Suite)"/>
+            <Class name="~.*(Test|Suite)\$.*"/>
+            <Class name="com.netflix.msl.util.MslTestUtils"/>
+        </Or>
+        <Or>
+            <Not><Bug code="IJU"/></Not>
+            <Bug code="NP"/>
+        </Or>
     </Match>
     
     <!-- Ignore all bugs in org.json. -->

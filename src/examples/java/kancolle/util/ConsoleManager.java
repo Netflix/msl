@@ -90,7 +90,7 @@ public class ConsoleManager extends Thread {
     public void out(final String author, final String text) {
         io.lock();
         try {
-            final String s = new String("[" + author + "] " + text);
+            final String s = "[" + author + "] " + text;
             output.add(s);
             work.signal();
         } finally {
@@ -110,7 +110,7 @@ public class ConsoleManager extends Thread {
         io.lock();
         try {
             // Prompt for input.
-            prompt = new String("[" + author + "] " + text + ": ");
+            prompt = "[" + author + "] " + text + ": ";
             work.signal();
             
             // Grab captured input.

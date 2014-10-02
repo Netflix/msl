@@ -55,7 +55,7 @@ import kancolle.util.KanmusuMslContext;
  */
 public class Kanmusu extends Thread {
     /** Ping interval in milliseconds. */
-    private final long PING_INTERVAL = 10000;
+    private static final long PING_INTERVAL = 10000;
     
     /**
      * Request container struct.

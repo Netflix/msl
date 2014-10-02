@@ -65,9 +65,9 @@ public class MockRsaAuthenticationFactory extends EntityAuthenticationFactory {
     /** RSA public key ID. */
     public static final String RSA_PUBKEY_ID = "mockRSAKeyId";
     /** RSA public key. */
-    public static PublicKey RSA_PUBKEY;
+    public static final PublicKey RSA_PUBKEY;
     /** RSA private key. */
-    public static PrivateKey RSA_PRIVKEY;
+    public static final PrivateKey RSA_PRIVKEY;
     
     static {
         Security.addProvider(new BouncyCastleProvider());

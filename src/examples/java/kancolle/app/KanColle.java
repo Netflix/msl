@@ -112,7 +112,7 @@ public class KanColle {
         // Handle JAR loads.
         if (dir.getProtocol().equals("jar")) {
             // Courtesy {@link http://stackoverflow.com/questions/6247144/how-to-load-a-folder-from-a-jar}
-            final String jarPath = dir.getPath().substring(5, dir.getPath().indexOf("!"));
+            final String jarPath = dir.getPath().substring(5, dir.getPath().indexOf('!'));
             final JarFile jar = new JarFile(URLDecoder.decode(jarPath, "UTF-8"));
             try {
                 final Enumeration<JarEntry> entries = jar.entries();
@@ -122,7 +122,7 @@ public class KanColle {
                     if (name.startsWith(directory)) {
                         final String entry = name.substring(directory.length());
                         // Skip sub-directories.
-                        final int checkSubdir = entry.indexOf("/");
+                        final int checkSubdir = entry.indexOf('/');
                         if (checkSubdir >= 0)
                             continue;
                         result.add(name);

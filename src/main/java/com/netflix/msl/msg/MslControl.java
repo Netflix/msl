@@ -809,32 +809,30 @@ public class MslControl {
         //
         // TODO it would be nice to do this on another thread to avoid delaying
         // the application.
-        if (masterToken != null) {
-            final ReadWriteLock newLock = new ReentrantReadWriteLock();
-            final ReadWriteLock oldLock = masterTokenLocks.putIfAbsent(masterToken, newLock);
-            
-            // ReentrantReadWriteLock requires us to release the read lock if
-            // we are holding it before acquiring the write lock. If there is
-            // an old lock then we are already holding the read lock. Otherwise
-            // no one is holding any locks.
-            final Lock writeLock;
-            if (oldLock != null) {
-                oldLock.readLock().unlock();
-                writeLock = oldLock.writeLock();
-            } else {
-                writeLock = newLock.writeLock();
-            }
-            writeLock.lockInterruptibly();
-            try {
-                ctx.getMslStore().removeCryptoContext(masterToken);
-            } finally {
-                // It should be okay to delete this read/write lock because no
-                // one should be using the deleted master token anymore; a new
-                // master token would have been received before deleting the
-                // old one.
-                masterTokenLocks.remove(masterToken);
-                writeLock.unlock();
-            }
+        final ReadWriteLock newLock = new ReentrantReadWriteLock();
+        final ReadWriteLock oldLock = masterTokenLocks.putIfAbsent(masterToken, newLock);
+
+        // ReentrantReadWriteLock requires us to release the read lock if
+        // we are holding it before acquiring the write lock. If there is
+        // an old lock then we are already holding the read lock. Otherwise
+        // no one is holding any locks.
+        final Lock writeLock;
+        if (oldLock != null) {
+            oldLock.readLock().unlock();
+            writeLock = oldLock.writeLock();
+        } else {
+            writeLock = newLock.writeLock();
+        }
+        writeLock.lockInterruptibly();
+        try {
+            ctx.getMslStore().removeCryptoContext(masterToken);
+        } finally {
+            // It should be okay to delete this read/write lock because no
+            // one should be using the deleted master token anymore; a new
+            // master token would have been received before deleting the
+            // old one.
+            masterTokenLocks.remove(masterToken);
+            writeLock.unlock();
         }
     }
     
@@ -1328,6 +1326,7 @@ public class MslControl {
             }
             default:
                 // No cleanup required.
+                break;
         }
     }
     

@@ -34,7 +34,7 @@ public class SimpleConstants {
     /** Server entity ID. */
     public static final String SERVER_ID = "SimpleMslServer";
     /** Server 2048-bit RSA public key. */
-    public static String RSA_PUBKEY_B64 = 
+    public static final String RSA_PUBKEY_B64 = 
         "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4feorj/FWQi8AhbvjK3G" +
         "L31ct6N+Ad/3FwqNsa4vAsfPmilLRx0DWhkxRycetmQEAa+1THyNCzobIduQE3UY" +
         "8NtdOiy1S3BtHDoiSNEITFPAs0l2OAZ2ZUv0KIr9sLWAznlXMclLOBXtLOQMCs2e" +
@@ -43,7 +43,7 @@ public class SimpleConstants {
         "zqMRTaAUDHKJo2LFBc6N0/wuTsXczHx6TYz5b2hrI6N+O7EEuxirAaU+xU7XEqv2" +
         "dQIDAQAB";
     /** Server 2048-bit RSA private key. */
-    public static String RSA_PRIVKEY_B64 =
+    public static final String RSA_PRIVKEY_B64 =
         "MIIEowIBAAKCAQEA4feorj/FWQi8AhbvjK3GL31ct6N+Ad/3FwqNsa4vAsfPmilL" +
         "Rx0DWhkxRycetmQEAa+1THyNCzobIduQE3UY8NtdOiy1S3BtHDoiSNEITFPAs0l2" +
         "OAZ2ZUv0KIr9sLWAznlXMclLOBXtLOQMCs2eEy4MO1m9uLywwc2SuAfoZe+wjEIa" +
@@ -71,7 +71,7 @@ public class SimpleConstants {
         "B/b+6sSJkqh7Qm6CMO29m+dE2PJBZCzviTkBMOzyme71phGsh//C";
 
     /** Email/Password set. */
-    public static String[][] EMAIL_PASSWORDS = {
+    public static final String[][] EMAIL_PASSWORDS = {
         { "kirito", "asuna" },
         { "chie", "shuhei" },
         { "hideki", "chi" },
@@ -80,7 +80,7 @@ public class SimpleConstants {
     public static final String ADMIN_USERNAME = "kirito";
     
     /** User profiles. */
-    public static Map<String,JSONObject> PROFILES = new HashMap<String,JSONObject>();
+    public static final Map<String,JSONObject> PROFILES = new HashMap<String,JSONObject>();
     static {
         final String KEY_NAME = "name";
         final String KEY_SEX = "sex";
@@ -122,7 +122,7 @@ public class SimpleConstants {
      * If the first value is not null, only the listed user has permission to
      * access the data value.
      */
-    public static String[][] QUERY_DATA = {
+    public static final String[][] QUERY_DATA = {
         { null, "cat", "neko" },
         { "chie", "alien", "uchujin" },
         { "kirito", "sword", "tsurugi" },
