@@ -98,11 +98,11 @@ public class JsonWebKeyTest {
     
     // Expected key operations JSON arrays.
     /** Sign/verify. */
-    private static final JSONArray JA_SIGN_VERIFY = new JSONArray(Arrays.asList(KeyOp.sign.name(), KeyOp.verify.name()));
+    private static final JSONArray JA_SIGN_VERIFY = new JSONArray(Arrays.asList(KeyOp.sign.name(), KeyOp.verify.name()).toArray());
     /** Encrypt/decrypt. */
-    private static final JSONArray JA_ENCRYPT_DECRYPT = new JSONArray(Arrays.asList(KeyOp.encrypt.name(), KeyOp.verify.name()));
+    private static final JSONArray JA_ENCRYPT_DECRYPT = new JSONArray(Arrays.asList(KeyOp.encrypt.name(), KeyOp.verify.name()).toArray());
     /** Wrap/unwrap. */
-    private static final JSONArray JA_WRAP_UNWRAP = new JSONArray(Arrays.asList(KeyOp.wrapKey.name(), KeyOp.unwrapKey.name()));
+    private static final JSONArray JA_WRAP_UNWRAP = new JSONArray(Arrays.asList(KeyOp.wrapKey.name(), KeyOp.unwrapKey.name()).toArray());
     
     /** Null usage. */
     private static final Usage NULL_USAGE = null;
@@ -638,7 +638,7 @@ public class JsonWebKeyTest {
         final JsonWebKey jwk = new JsonWebKey(NULL_KEYOPS, null, false, null, SECRET_KEY);
         final JSONObject jo = new JSONObject(jwk.toJSONString());
         
-        jo.put(KEY_KEY_OPS, new JSONArray(Arrays.asList(KeyOp.encrypt.name(), "x", KeyOp.decrypt.name())));
+        jo.put(KEY_KEY_OPS, new JSONArray(Arrays.asList(KeyOp.encrypt.name(), "x", KeyOp.decrypt.name()).toArray()));
         
         new JsonWebKey(jo);
     }
