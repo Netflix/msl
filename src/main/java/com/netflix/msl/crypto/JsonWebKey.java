@@ -49,7 +49,7 @@ import com.netflix.msl.util.JsonUtils;
 
 /**
  * This class implements the JSON web key structure as defined in
- * <a href="http://tools.ietf.org/html/draft-ietf-jose-json-web-key-08>JSON Web Key</a>.
+ * <a href="http://tools.ietf.org/html/draft-ietf-jose-json-web-key-08">JSON Web Key</a>.
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
