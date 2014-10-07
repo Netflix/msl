@@ -22,7 +22,7 @@
 // Do not run these tests unless using legacy Web Crypto.
 describe("JsonWebEncryptionCryptoContext", function() {
 // Do nothing unless executing in the legacy Web Crypto environment.
-if (mslCrypto$version == MslCrypto$WebCryptoVersion.LEGACY) {
+if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
     /** Encoding charset. */
     var UTF_8 = "utf-8";
 

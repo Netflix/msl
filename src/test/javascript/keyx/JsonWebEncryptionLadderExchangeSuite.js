@@ -21,7 +21,7 @@
  */
 describe("JsonWebEncryptionLadderExchange", function() {
 // Do nothing unless executing in the legacy Web Crypto environment.
-if (mslCrypto$version == MslCrypto$WebCryptoVersion.LEGACY) {
+if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
     /** JSON key key exchange scheme. */
     var KEY_SCHEME = "scheme";
     /** JSON key key request data. */

@@ -104,7 +104,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
                 
-                if (mslCrypto$version == MslCrypto$WebCryptoVersion.LEGACY) {
+                if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
                     // These keys will not be used in the legacy unit tests.
                     RSAES_PUBLIC_KEY = true;
                     RSAES_PRIVATE_KEY = true;
@@ -154,7 +154,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
 
         function keyxRequestData() {
             var params = [];
-            if (mslCrypto$version == MslCrypto$WebCryptoVersion.LEGACY) {
+            if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
                 params.push([ Mechanism.JWE_RSA ]);
                 params.push([ Mechanism.JWEJS_RSA ]);
             } else {
@@ -780,7 +780,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
         
         function keyxFactoryData() {
             var params = [];
-            if (mslCrypto$version == MslCrypto$WebCryptoVersion.LEGACY) {
+            if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
                 params.push([ Mechanism.JWE_RSA ]);
                 params.push([ Mechanism.JWEJS_RSA ]);
             } else {

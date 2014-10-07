@@ -45,7 +45,6 @@ import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.tokens.ServiceToken;
 import com.netflix.msl.tokens.UserIdToken;
-import com.netflix.msl.userauth.MockEmailPasswordAuthenticationFactory;
 
 /**
  * Helper functions common to many unit tests.

@@ -75,13 +75,14 @@ public class MockEmailPasswordAuthenticationFactory extends UserAuthenticationFa
         final EmailPasswordAuthenticationData epad = (EmailPasswordAuthenticationData)data;
 
         // Extract and check email and password values.
-        final String email = epad.getEmail();
-        final String password = epad.getPassword();
-        if (email == null || email.trim().isEmpty() ||
-            password == null || password.trim().isEmpty())
-        {
+        final String epadEmail = epad.getEmail();
+        final String epadPassword = epad.getPassword();
+        if (epadEmail == null || epadPassword == null)
             throw new MslUserAuthException(MslError.EMAILPASSWORD_BLANK).setUser(epad);
-        }
+        final String email = epadEmail.trim();
+        final String password = epadPassword.trim();
+        if (email.isEmpty() || password.isEmpty())
+            throw new MslUserAuthException(MslError.EMAILPASSWORD_BLANK).setUser(epad);
         
         // Identify the user.
         final MslUser user;

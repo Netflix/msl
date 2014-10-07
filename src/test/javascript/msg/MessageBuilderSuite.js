@@ -2313,7 +2313,7 @@ describe("MessageBuilder", function() {
             
 		    if (!initialized) {
 		        runs(function() {
-		            var algo = (mslCrypto$version == MslCrypto$WebCryptoVersion.LEGACY) ? WebCryptoAlgorithm.RSA_OAEP : WebCryptoAlgorithm.RSAES;
+		            var algo = (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) ? WebCryptoAlgorithm.RSA_OAEP : WebCryptoAlgorithm.RSAES;
 		            MslTestUtils.generateRsaKeys(algo, WebCryptoUsage.WRAP_UNWRAP, 512, {
 		                result: function(publicKey, privateKey) {
 		                    RSA_PUBLIC_KEY = publicKey;

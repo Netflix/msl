@@ -2371,7 +2371,7 @@ describe("MessageInputStream", function() {
         }
         function check(exception) {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslMessageException(MslError.MESSAGE_REPLAYED, messageid = MSG_ID));
+            expect(f).toThrow(new MslMessageException(MslError.MESSAGE_REPLAYED_UNRECOVERABLE, messageid = MSG_ID));
             
             largestNonReplayableId = incrementNonReplayableId(largestNonReplayableId);
             nonReplayableId = incrementNonReplayableId(nonReplayableId);

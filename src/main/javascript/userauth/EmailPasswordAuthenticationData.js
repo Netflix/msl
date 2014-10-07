@@ -34,6 +34,8 @@ var EmailPasswordAuthenticationData;
 var EmailPasswordAuthenticationData$parse;
 
 (function() {
+    "use strict";
+    
     /**
      * JSON email key.
      * @const

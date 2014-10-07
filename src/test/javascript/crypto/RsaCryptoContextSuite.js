@@ -474,7 +474,7 @@ describe("RsaCryptoContext", function() {
     });
     
     function wrapUnwrapData() {
-        if (mslCrypto$version == MslCrypto$WebCryptoVersion.LEGACY)
+        if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY)
             return [];
         return [
             [ WebCryptoAlgorithm.RSA_OAEP, RsaCryptoContext$Mode.WRAP_UNWRAP_OAEP ],
