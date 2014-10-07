@@ -22,11 +22,12 @@ import java.util.Set;
 
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.keyx.KeyExchangeScheme;
+import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
 import com.netflix.msl.util.AuthenticationUtils;
 
 /**
- * Test entity authentication utilities.
+ * Test authentication utilities.
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
@@ -38,6 +39,7 @@ public class MockAuthenticationUtils implements AuthenticationUtils {
         revokedEntityIdentities.clear();
         revokedEntityAuthSchemes.clear();
         revokedUserAuthSchemes.clear();
+        revokedEntityUserAuthSchemes.clear();
         revokedKeyxSchemes.clear();
     }
     
@@ -122,6 +124,50 @@ public class MockAuthenticationUtils implements AuthenticationUtils {
         return (!revokedUserAuthSchemes.containsKey(identity) ||
             !revokedUserAuthSchemes.get(identity).contains(scheme));
     }
+    
+    /**
+     * @param identity the entity identity.
+     * @param user the MSL user.
+     * @param scheme the scheme to permit.
+     */
+    public void permitScheme(final String identity, final MslUser user, final UserAuthenticationScheme scheme) {
+        final Map<MslUser,Set<UserAuthenticationScheme>> entityUsers = revokedEntityUserAuthSchemes.get(identity);
+        if (entityUsers == null) return;
+        final Set<UserAuthenticationScheme> revokedSchemes = entityUsers.get(user);
+        if (revokedSchemes == null) return;
+        revokedSchemes.remove(scheme);
+    }
+    
+    /**
+     * @param identity the entity identity.
+     * @param user the MSL user.
+     * @param scheme the scheme to disallow.
+     */
+    public void disallowScheme(final String identity, final MslUser user, final UserAuthenticationScheme scheme) {
+        Map<MslUser,Set<UserAuthenticationScheme>> entityUsers = revokedEntityUserAuthSchemes.get(identity);
+        if (entityUsers == null) {
+            entityUsers = new HashMap<MslUser,Set<UserAuthenticationScheme>>();
+            revokedEntityUserAuthSchemes.put(identity, entityUsers);
+        }
+        Set<UserAuthenticationScheme> revokedSchemes = entityUsers.get(user);
+        if (revokedSchemes == null) {
+            revokedSchemes = new HashSet<UserAuthenticationScheme>();
+            entityUsers.put(user, revokedSchemes);
+        }
+        revokedSchemes.add(scheme);
+    }
+    
+    /* (non-Javadoc)
+     * @see com.netflix.msl.util.AuthenticationUtils#isSchemePermitted(java.lang.String, com.netflix.msl.tokens.MslUser, com.netflix.msl.userauth.UserAuthenticationScheme)
+     */
+    @Override
+    public boolean isSchemePermitted(final String identity, final MslUser user, final UserAuthenticationScheme scheme) {
+        final Map<MslUser,Set<UserAuthenticationScheme>> entityUsers = revokedEntityUserAuthSchemes.get(identity);
+        if (entityUsers == null) return true;
+        final Set<UserAuthenticationScheme> revokedSchemes = entityUsers.get(user);
+        if (revokedSchemes == null) return true;
+        return !revokedSchemes.contains(scheme);
+    }
 
     /**
      * @param identity the entity identity.
@@ -159,6 +205,8 @@ public class MockAuthenticationUtils implements AuthenticationUtils {
     private final Map<String,Set<EntityAuthenticationScheme>> revokedEntityAuthSchemes = new HashMap<String,Set<EntityAuthenticationScheme>>();
     /** Revoked user authentication schemes. */
     private final Map<String,Set<UserAuthenticationScheme>> revokedUserAuthSchemes = new HashMap<String,Set<UserAuthenticationScheme>>();
+    /** Revoked entity-user authentication schemes. */
+    private final Map<String,Map<MslUser,Set<UserAuthenticationScheme>>> revokedEntityUserAuthSchemes = new HashMap<String,Map<MslUser,Set<UserAuthenticationScheme>>>();
     /** Revoked key exchange schemes. */
     private final Map<String,Set<KeyExchangeScheme>> revokedKeyxSchemes = new HashMap<String,Set<KeyExchangeScheme>>();
 }

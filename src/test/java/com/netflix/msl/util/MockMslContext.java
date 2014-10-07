@@ -58,6 +58,7 @@ import com.netflix.msl.msg.MessageCapabilities;
 import com.netflix.msl.tokens.MockTokenFactory;
 import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.userauth.MockEmailPasswordAuthenticationFactory;
+import com.netflix.msl.userauth.MockUserIdTokenAuthenticationFactory;
 import com.netflix.msl.userauth.UserAuthenticationFactory;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
 
@@ -166,6 +167,7 @@ public class MockMslContext implements MslContext {
 
         userAuthFactories = new HashMap<UserAuthenticationScheme,UserAuthenticationFactory>();
         userAuthFactories.put(UserAuthenticationScheme.EMAIL_PASSWORD, new MockEmailPasswordAuthenticationFactory());
+        userAuthFactories.put(UserAuthenticationScheme.USER_ID_TOKEN, new MockUserIdTokenAuthenticationFactory());
         
         keyxFactories = new TreeSet<KeyExchangeFactory>(new KeyExchangeFactoryComparator());
         keyxFactories.add(new AsymmetricWrappedExchange(authutils));

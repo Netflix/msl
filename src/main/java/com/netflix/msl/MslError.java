@@ -180,9 +180,10 @@ public class MslError {
     public static final MslError USERAUTH_MASTERTOKEN_NOT_DECRYPTED = new MslError(5025, ResponseCode.USERDATA_REAUTH, "User authentication data master token is not decrypted or verified.");
     public static final MslError USERAUTH_USERIDTOKEN_MISSING = new MslError(5030, ResponseCode.USERDATA_REAUTH, "User authentication required user ID token is missing.");
     public static final MslError USERAUTH_ENTITY_MISMATCH = new MslError(5032, ResponseCode.USERDATA_REAUTH, "User authentication data does not match entity identity.");
-    public static final MslError USERAUTH_INCORRECT_DATA = new MslError(5033, ResponseCode.FAIL, "Entity used incorrect user authentication data type.");
+    public static final MslError USERAUTH_ENTITY_INCORRECT_DATA = new MslError(5033, ResponseCode.FAIL, "Entity used incorrect user authentication data type.");
     public static final MslError USER_REJECTED_BY_APP = new MslError(5037, ResponseCode.USERDATA_REAUTH, "User is rejected by the application.");
     public static final MslError USERIDTOKEN_IDENTITY_NOT_ASSOCIATED_WITH_ENTITY = new MslError(5040, ResponseCode.USERDATA_REAUTH, "The entity is not associated with the user.");
+    public static final MslError USERAUTH_ENTITYUSER_INCORRECT_DATA = new MslError(5041, ResponseCode.USERDATA_REAUTH, "Entity and user combination used incorrect user authentication data type.");
     
     // 6 Message
     public static final MslError UNSUPPORTED_COMPRESSION = new MslError(6000, ResponseCode.FAIL, "Unsupported compression algorithm.");

@@ -52,6 +52,7 @@ var UserAuthenticationScheme$getScheme;
     ({
         /** Email/password. */
         EMAIL_PASSWORD : new UserAuthenticationScheme("EMAIL_PASSWORD"),
+        USER_ID_TOKEN : new UserAuthenticationScheme("USER_ID_TOKEN"),
     }));
     Object.freeze(UserAuthenticationScheme);
 

@@ -38,7 +38,8 @@ describe("EmailPasswordAuthenticationFactory", function() {
             runs(function() {
                 var store = new MockEmailPasswordStore();
                 store.addUser(MockEmailPasswordAuthenticationFactory.EMAIL, MockEmailPasswordAuthenticationFactory.PASSWORD, MockEmailPasswordAuthenticationFactory.USER);
-                factory = new EmailPasswordAuthenticationFactory(store);
+                var authutils = new MockAuthenticationUtils();
+                factory = new EmailPasswordAuthenticationFactory(store, authutils);
                 
                 MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
                     result: function(c) { ctx = c; },

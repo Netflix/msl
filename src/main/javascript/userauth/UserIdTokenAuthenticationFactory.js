@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,21 @@
  */
 
 /**
- * Email/password-based user authentication factory.
- *
+ * User ID token-based user authentication factory.
+ * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var EmailPasswordAuthenticationFactory = UserAuthenticationFactory.extend({
+var UserIdTokenAuthenticationFactory = UserAuthenticationFactory.extend({
     /**
-     * Construct a new email/password-based user authentication factory.
+     * Construct a new user ID token-based user authentication factory.
      * 
-     * @param {EmailPasswordStore} store email/password store.
      * @param {AuthenticationUtils} authutils authentication utilities.
      */
-    init: function init(store, authutils) {
-        init.base.call(this, UserAuthenticationScheme.EMAIL_PASSWORD);
+    init: function init(authutils) {
+        init.base.call(this, UserAuthenticationScheme.USER_ID_TOKEN);
         
         // The properties.
         var props = {
-            _store: { value: store, writable: false, enumerable: false, configurable: false },
             _authutils: { value: authutils, writable: false, enumerable: false, configurable: false },
         };
         Object.defineProperties(this, props);
@@ -39,35 +37,33 @@ var EmailPasswordAuthenticationFactory = UserAuthenticationFactory.extend({
 
     /** @inheritDoc */
     createData: function createData(ctx, masterToken, userAuthJO, callback) {
-        AsyncExecutor(callback, function() {
-            return EmailPasswordAuthenticationData$parse(userAuthJO);
-        });
+        UserIdTokenAuthenticationData$parse(ctx, userAuthJO, callback);
     },
 
     /** @inheritDoc */
     authenticate: function authenticate(ctx, identity, data, userIdToken) {
         // Make sure we have the right kind of user authentication data.
-        if (!(data instanceof EmailPasswordAuthenticationData))
+        if (!(data instanceof UserIdTokenAuthenticationData))
             throw new MslInternalException("Incorrect authentication data type " + data + ".");
-        var epad = data;
-
+        var uita = data;
+     
         // Verify the scheme is permitted.
         if(!this._authutils.isSchemePermitted(identity, this.scheme))
             throw new MslUserAuthException(MslError.USERAUTH_ENTITY_INCORRECT_DATA, "Authentication scheme " + this.scheme + " not permitted for entity " + identity + ".").setUser(data);
-
-        // Extract and check email and password values.
-        var email = epad.email;
-        var password = epad.password;
-        if (!email || email.trim().length == 0 ||
-            !password || password.trim().length == 0)
-        {
-            throw new MslUserAuthException(MslError.EMAILPASSWORD_BLANK).setUser(epad);
-        }
+        
+        // Extract and check master token.
+        var uitaMasterToken = uita.masterToken;
+        var uitaIdentity = uitaMasterToken.identity;
+        if (!uitaIdentity)
+            throw new MslUserAuthException(MslError.USERAUTH_MASTERTOKEN_NOT_DECRYPTED).setUser(uita);
+        if (identity != uitaIdentity)
+            throw new MslUserAuthException(MslError.USERAUTH_ENTITY_MISMATCH, "entity identity " + identity + "; uad identity " + uitaIdentity).setUser(uita);
         
         // Authenticate the user.
-        var user = this._store.isUser(email, password);
-        if (user == null)
-            throw new MslUserAuthException(MslError.EMAILPASSWORD_INCORRECT).setUser(epad);
+        var uitaUserIdToken = uita.userIdToken;
+        var user = uitaUserIdToken.user;
+        if (!user)
+            throw new MslUserAuthException(MslError.USERAUTH_USERIDTOKEN_NOT_DECRYPTED).setUser(uita);
         
         // Verify the scheme is still permitted.
         if (!this._authutils.isSchemePermitted(identity, user, this.scheme))
@@ -77,7 +73,7 @@ var EmailPasswordAuthenticationFactory = UserAuthenticationFactory.extend({
         if (userIdToken) {
             var uitUser = userIdToken.user;
             if (!user.equals(uitUser))
-                throw new MslUserAuthException(MslError.USERIDTOKEN_USERAUTH_DATA_MISMATCH, "uad user " + user + "; uit user " + uitUser).setUser(epad);
+                throw new MslUserAuthException(MslError.USERIDTOKEN_USERAUTH_DATA_MISMATCH, "uad user " + user + "; uit user " + uitUser);
         }
         
         // Return the user.

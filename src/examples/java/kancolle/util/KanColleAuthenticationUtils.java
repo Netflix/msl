@@ -26,6 +26,7 @@ import kancolle.userauth.OfficerDatabase.Status;
 import com.netflix.msl.MslError;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.keyx.KeyExchangeScheme;
+import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
 import com.netflix.msl.util.AuthenticationUtils;
 
@@ -169,6 +170,15 @@ public class KanColleAuthenticationUtils implements AuthenticationUtils {
      */
     @Override
     public boolean isSchemePermitted(final String identity, final UserAuthenticationScheme scheme) {
+        // All configured user authentication schemes are permitted.
+        return true;
+    }
+    
+    /* (non-Javadoc)
+     * @see com.netflix.msl.util.AuthenticationUtils#isSchemePermitted(java.lang.String, com.netflix.msl.tokens.MslUser, com.netflix.msl.userauth.UserAuthenticationScheme)
+     */
+    @Override
+    public boolean isSchemePermitted(final String identity, final MslUser user, final UserAuthenticationScheme scheme) {
         // All configured user authentication schemes are permitted.
         return true;
     }

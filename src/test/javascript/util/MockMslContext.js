@@ -85,6 +85,7 @@ var MockMslContext$create;
 		    function syncUserAuthFactories(entityAuthFactories, userAuthFactories) {
 		        var userAuthFactories = {};
 		        userAuthFactories[UserAuthenticationScheme.EMAIL_PASSWORD.name] = new MockEmailPasswordAuthenticationFactory();
+		        userAuthFactories[UserAuthenticationScheme.USER_ID_TOKEN.name] = new MockUserIdTokenAuthenticationFactory();
                 mslCryptoContext(entityAuthFactories, userAuthFactories);
 		    }
 		    function mslCryptoContext(entityAuthFactories, userAuthFactories) {

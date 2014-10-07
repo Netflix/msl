@@ -17,6 +17,7 @@ package server.util;
 
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.keyx.KeyExchangeScheme;
+import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
 import com.netflix.msl.util.AuthenticationUtils;
 
@@ -61,6 +62,14 @@ public class SimpleAuthenticationUtils implements AuthenticationUtils {
     @Override
     public boolean isSchemePermitted(final String identity, final UserAuthenticationScheme scheme) {
         return (!serverId.equals(identity) && UserAuthenticationScheme.EMAIL_PASSWORD.equals(scheme));
+    }
+    
+    /* (non-Javadoc)
+     * @see com.netflix.msl.util.AuthenticationUtils#isSchemePermitted(java.lang.String, com.netflix.msl.tokens.MslUser, com.netflix.msl.userauth.UserAuthenticationScheme)
+     */
+    @Override
+    public boolean isSchemePermitted(final String identity, final MslUser user, final UserAuthenticationScheme scheme) {
+        return true;
     }
 
     /* (non-Javadoc)
