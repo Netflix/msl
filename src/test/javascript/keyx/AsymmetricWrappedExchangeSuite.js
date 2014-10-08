@@ -95,7 +95,10 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                
+            });
+            waitsFor(function() { return "ctx"; }, "ctx", 300);
+            
+            runs(function() {
                 MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSA_OAEP, WebCryptoUsage.WRAP_UNWRAP, 2048, {
                     result: function(publicKey, privateKey) {
                         RSA_OAEP_PUBLIC_KEY = publicKey;
@@ -103,8 +106,11 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                
-                if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
+            });
+            waitsFor(function() { return RSA_OAEP_PUBLIC_KEY && RSA_OAEP_PRIVATE_KEY; }, "RSA-OAEP keys", 2500);
+            
+            runs(function() {
+                if (MslCrypto$getWebCryptoVersion() != MslCrypto$WebCryptoVersion.V2014_01) {
                     // These keys will not be used in the legacy unit tests.
                     RSAES_PUBLIC_KEY = true;
                     RSAES_PRIVATE_KEY = true;
@@ -118,7 +124,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     });
                 }
             });
-            waitsFor(function() { return ctx && RSA_OAEP_PUBLIC_KEY && RSA_OAEP_PRIVATE_KEY && RSAES_PUBLIC_KEY && RSAES_PRIVATE_KEY; }, "ctx and RSA keypair", 1500);
+            waitsFor(function() { return RSAES_PUBLIC_KEY && RSAES_PRIVATE_KEY; }, "RSAES keys", 2500);
             
     		runs(function() {
     			MslTestUtils.getMasterToken(ctx, 1, 1, {
@@ -154,12 +160,15 @@ describe("AsymmetricWrappedExchangeSuite", function() {
 
         function keyxRequestData() {
             var params = [];
-            if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
+            var webCryptoVersion = MslCrypto$getWebCryptoVersion();
+            if (webCryptoVersion == MslCrypto$WebCryptoVersion.LEGACY) {
                 params.push([ Mechanism.JWE_RSA ]);
                 params.push([ Mechanism.JWEJS_RSA ]);
-            } else {
+            } else if (webCryptoVersion == MslCrypto$WebCryptoVersion.V2014_01) {
                 params.push([ Mechanism.JWK_RSA ]);
                 params.push([ Mechanism.JWK_RSAES ]);
+            } else {
+                params.push([ Mechanism.JWK_RSA ]);
             }
             return params;
         }
@@ -780,12 +789,15 @@ describe("AsymmetricWrappedExchangeSuite", function() {
         
         function keyxFactoryData() {
             var params = [];
-            if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
+            var webCryptoVersion = MslCrypto$getWebCryptoVersion();
+            if (webCryptoVersion == MslCrypto$WebCryptoVersion.LEGACY) {
                 params.push([ Mechanism.JWE_RSA ]);
                 params.push([ Mechanism.JWEJS_RSA ]);
-            } else {
+            } else if (webCryptoVersion == MslCrypto$WebCryptoVersion.V2014_01) {
                 params.push([ Mechanism.JWK_RSA ]);
                 params.push([ Mechanism.JWK_RSAES ]);
+            } else {
+                params.push([ Mechanism.JWK_RSA ]);
             }
             return params;
         }
