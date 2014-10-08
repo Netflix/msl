@@ -191,7 +191,7 @@ var AsymmetricWrappedExchange$ResponseData$parse;
                 case Mechanism.JWEJS_RSA:
                 case Mechanism.JWK_RSA:
                 {
-                    PublicKey$import(encodedKey, WebCryptoAlgorithm.RSA_OAEP, WebCryptoUsage.WRAP_UNWRAP, {
+                    PublicKey$import(encodedKey, WebCryptoAlgorithm.RSA_OAEP, WebCryptoUsage.WRAP, {
                         result: function(publicKey) {
                             constructRequestData(keyPairId, mechanism, publicKey);
                         },
@@ -201,7 +201,7 @@ var AsymmetricWrappedExchange$ResponseData$parse;
                 }
                 case Mechanism.JWK_RSAES:
                 {
-                    PublicKey$import(encodedKey, WebCryptoAlgorithm.RSAES, WebCryptoUsage.WRAP_UNWRAP, {
+                    PublicKey$import(encodedKey, WebCryptoAlgorithm.RSAES, WebCryptoUsage.WRAP, {
                         result: function(publicKey) {
                             constructRequestData(keyPairId, mechanism, publicKey);
                         },

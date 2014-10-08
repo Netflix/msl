@@ -24,6 +24,10 @@ var WebCryptoUsage = {
     ENCRYPT_DECRYPT: [ 'encrypt', 'decrypt' ],
     /** wrap/unwrap */
     WRAP_UNWRAP: [ 'wrap', 'unwrap' ],
+    /** wrap */
+    WRAP: [ 'wrap'],
+    /** unwrap */
+    UNWRAP: [ 'unwrap' ],
     /** sign/verify */
     SIGN_VERIFY: [ 'sign', 'verify' ],
     /** sign */
