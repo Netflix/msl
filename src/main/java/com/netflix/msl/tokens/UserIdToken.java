@@ -316,6 +316,14 @@ public class UserIdToken implements JSONString {
     }
     
     /**
+     * @param now the time to compare against.
+     * @return true if the renewal window has been entered.
+     */
+    public boolean isRenewable(final Date now) {
+        return renewalWindow * MILLISECONDS_PER_SECOND <= now.getTime();
+    }
+    
+    /**
      * @return the expiration.
      */
     public Date getExpiration() {
@@ -327,6 +335,14 @@ public class UserIdToken implements JSONString {
      */
     public boolean isExpired() {
         return expiration * MILLISECONDS_PER_SECOND <= ctx.getTime();
+    }
+    
+    /**
+     * @param now the time to compare against.
+     * @return true if expired.
+     */
+    public boolean isExpired(final Date now) {
+        return expiration * MILLISECONDS_PER_SECOND <= now.getTime();
     }
     
     /**

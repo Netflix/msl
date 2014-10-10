@@ -360,12 +360,14 @@ var MasterToken$parse;
          * If this token was issued by the local entity then we assume its
          * clock at that time is in sync with the clock now.
          *
+         * @param {?Date} now the time to compare against.
          * @return {boolean} true if the renewal window has been entered.
          */
-        isRenewable: function isRenewable(ctx) {
+        isRenewable: function isRenewable(now) {
             if (!this.isVerified())
                 return true;
-            return this.renewalWindow.getTime() <= this.ctx.getTime();
+            var compareTime = (now) ? now.getTime() : this.ctx.getTime();
+            return this.renewalWindow.getTime() <= compareTime;
         },
 
         /**
@@ -375,12 +377,14 @@ var MasterToken$parse;
          * If this token was issued by the local entity then we assume its
          * clock at that time is in sync with the clock now.
          *
+         * @param {?Date} now the time to compare against.
          * @return {boolean} true if expired.
          */
-        isExpired: function isExpired(ctx) {
+        isExpired: function isExpired(now) {
             if (!this.isVerified())
                 return false;
-            return this.expiration.getTime() <= this.ctx.getTime();
+            var compareTime = (now) ? now.getTime() : this.ctx.getTime();
+            return this.expiration.getTime() <= compareTime;
         },
 
         /**

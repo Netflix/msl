@@ -20,6 +20,9 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("MessageHeader", function() {
+    /** Milliseconds per second. */
+    var MILLISECONDS_PER_SECOND = 1000;
+    
 	/** JSON key entity authentication data. */
 	var KEY_ENTITY_AUTHENTICATION_DATA = "entityauthdata";
 	/** JSON key master token. */
@@ -34,6 +37,8 @@ describe("MessageHeader", function() {
     var KEY_SENDER = "sender";
     /** JSON key recipient. */
     var KEY_RECIPIENT = "recipient";
+    /** JSON key timestamp. */
+    var KEY_TIMESTAMP = "timestamp";
 	/** JSON key message ID. */
 	var KEY_MESSAGE_ID = "messageid";
     /** JSON key non-replayable ID. */
@@ -62,6 +67,30 @@ describe("MessageHeader", function() {
 	var KEY_PEER_USER_ID_TOKEN = "peeruseridtoken";
 	/** JSON key peer service tokens. */
 	var KEY_PEER_SERVICE_TOKENS = "peerservicetokens";
+    
+    /**
+     * Checks if the given timestamp is close to "now".
+     * 
+     * @param {Date} timestamp the timestamp to compare.
+     * @return {boolean} true if the timestamp is about now.
+     */
+    function isAboutNow(timestamp) {
+        var now = Date.now();
+        var time = timestamp.getTime();
+        return (now - 1000 <= time && time <= now + 1000);
+    }
+
+    /**
+     * Checks if the given timestamp is close to "now".
+     * 
+     * @param {number} seconds the timestamp to compare in seconds since the epoch.
+     * @return {boolean} true if the timestamp is about now.
+     */
+    function isAboutNowSeconds(seconds) {
+        var now = Date.now();
+        var time = seconds * MILLISECONDS_PER_SECOND;
+        return (now - 1000 <= time && time <= now + 1000);
+    }
 
 	/** MSL trusted network context. */
 	var trustedNetCtx;
@@ -350,6 +379,8 @@ describe("MessageHeader", function() {
 			expect(messageHeader.keyResponseData).toEqual(KEY_RESPONSE_DATA);
 			expect(messageHeader.masterToken).toBeNull();
 			expect(messageHeader.sender).toBeNull();
+			expect(messageHeader.recipient).toEqual(RECIPIENT);
+			expect(isAboutNow(messageHeader.timestamp)).toBeTruthy();
 			expect(messageHeader.messageId).toEqual(MESSAGE_ID);
 			expect(messageHeader.peerMasterToken).toBeNull();
 			expect(messageHeader.peerServiceTokens.length).toEqual(0);
@@ -404,6 +435,8 @@ describe("MessageHeader", function() {
             expect(messageHeader.keyResponseData).toEqual(KEY_RESPONSE_DATA);
             expect(messageHeader.masterToken).toBeNull();
             expect(messageHeader.sender).toBeNull();
+            expect(messageHeader.recipient).toEqual(RECIPIENT);
+            expect(isAboutNow(messageHeader.timestamp)).toBeTruthy();
             expect(messageHeader.messageId).toEqual(MESSAGE_ID);
             expect(messageHeader.peerMasterToken).toBeNull();
             expect(messageHeader.peerServiceTokens.length).toEqual(0);
@@ -487,6 +520,8 @@ describe("MessageHeader", function() {
             expect(headerdata[KEY_KEY_REQUEST_DATA]).toEqual(JSON.parse(JSON.stringify(KEY_REQUEST_DATA)));
             expect(headerdata[KEY_KEY_RESPONSE_DATA]).toEqual(JSON.parse(JSON.stringify(KEY_RESPONSE_DATA)));
             expect(headerdata[KEY_SENDER]).toBeFalsy();
+            expect(headerdata[KEY_RECIPIENT]).toEqual(RECIPIENT);
+            expect(isAboutNowSeconds(headerdata[KEY_TIMESTAMP])).toBeTruthy();
             expect(parseInt(headerdata[KEY_MESSAGE_ID])).toEqual(MESSAGE_ID);
             expect(headerdata[KEY_PEER_MASTER_TOKEN]).toBeFalsy();
             expect(headerdata[KEY_PEER_SERVICE_TOKENS]).toBeFalsy();
@@ -570,6 +605,8 @@ describe("MessageHeader", function() {
             expect(headerdata[KEY_KEY_REQUEST_DATA]).toEqual(JSON.parse(JSON.stringify(KEY_REQUEST_DATA)));
             expect(headerdata[KEY_KEY_RESPONSE_DATA]).toEqual(JSON.parse(JSON.stringify(KEY_RESPONSE_DATA)));
             expect(headerdata[KEY_SENDER]).toBeFalsy();
+            expect(headerdata[KEY_RECIPIENT]).toEqual(RECIPIENT);
+            expect(isAboutNowSeconds(headerdata[KEY_TIMESTAMP])).toBeTruthy();
             expect(parseInt(headerdata[KEY_MESSAGE_ID])).toEqual(MESSAGE_ID);
             expect(headerdata[KEY_PEER_MASTER_TOKEN]).toBeFalsy();
             expect(headerdata[KEY_PEER_SERVICE_TOKENS]).toBeFalsy();
@@ -624,6 +661,8 @@ describe("MessageHeader", function() {
             expect(messageHeader.keyResponseData).toEqual(PEER_KEY_RESPONSE_DATA);
             expect(messageHeader.masterToken).toBeNull();
             expect(messageHeader.sender).toBeNull();
+            expect(messageHeader.recipient).toEqual(RECIPIENT);
+            expect(isAboutNow(messageHeader.timestamp)).toBeTruthy();
             expect(messageHeader.messageId).toEqual(MESSAGE_ID);
             expect(messageHeader.peerMasterToken).toEqual(PEER_MASTER_TOKEN);
             expect(Arrays$contains(messageHeader.peerServiceTokens, peerServiceTokens)).toBeTruthy();
@@ -680,6 +719,8 @@ describe("MessageHeader", function() {
             expect(messageHeader.keyResponseData).toEqual(PEER_KEY_RESPONSE_DATA);
             expect(messageHeader.masterToken).toBeNull();
             expect(messageHeader.sender).toBeNull();
+            expect(messageHeader.recipient).toEqual(RECIPIENT);
+            expect(isAboutNow(messageHeader.timestamp)).toBeTruthy();
             expect(messageHeader.messageId).toEqual(MESSAGE_ID);
             expect(messageHeader.peerMasterToken).toEqual(PEER_MASTER_TOKEN);
             expect(Arrays$contains(messageHeader.peerServiceTokens, peerServiceTokens)).toBeTruthy();
@@ -764,7 +805,9 @@ describe("MessageHeader", function() {
             expect(headerdata[KEY_CAPABILITIES]).toEqual(JSON.parse(JSON.stringify(CAPABILITIES)));
             expect(headerdata[KEY_KEY_REQUEST_DATA]).toEqual(JSON.parse(JSON.stringify(PEER_KEY_REQUEST_DATA)));
             expect(headerdata[KEY_KEY_RESPONSE_DATA]).toEqual(JSON.parse(JSON.stringify(PEER_KEY_RESPONSE_DATA)));
-            expect(messageHeader.sender).toBeNull();
+            expect(headerdata[KEY_SENDER]).toBeFalsy();
+            expect(headerdata[KEY_RECIPIENT]).toEqual(RECIPIENT);
+            expect(isAboutNowSeconds(headerdata[KEY_TIMESTAMP])).toBeTruthy();
             expect(parseInt(headerdata[KEY_MESSAGE_ID])).toEqual(MESSAGE_ID);
             expect(headerdata[KEY_PEER_MASTER_TOKEN]).toEqual(JSON.parse(JSON.stringify(PEER_MASTER_TOKEN)));
             expect(headerdata[KEY_PEER_SERVICE_TOKENS]).toEqual(JSON.parse(JSON.stringify(peerServiceTokens)));
@@ -850,6 +893,8 @@ describe("MessageHeader", function() {
             expect(headerdata[KEY_KEY_REQUEST_DATA]).toEqual(JSON.parse(JSON.stringify(PEER_KEY_REQUEST_DATA)));
             expect(headerdata[KEY_KEY_RESPONSE_DATA]).toEqual(JSON.parse(JSON.stringify(PEER_KEY_RESPONSE_DATA)));
             expect(messageHeader.sender).toBeNull();
+            expect(headerdata[KEY_RECIPIENT]).toEqual(RECIPIENT);
+            expect(isAboutNowSeconds(headerdata[KEY_TIMESTAMP])).toBeTruthy();
             expect(parseInt(headerdata[KEY_MESSAGE_ID])).toEqual(MESSAGE_ID);
             expect(headerdata[KEY_PEER_MASTER_TOKEN]).toEqual(JSON.parse(JSON.stringify(PEER_MASTER_TOKEN)));
             expect(headerdata[KEY_PEER_SERVICE_TOKENS]).toEqual(JSON.parse(JSON.stringify(peerServiceTokens)));
@@ -902,6 +947,8 @@ describe("MessageHeader", function() {
             expect(messageHeader.keyResponseData).toEqual(KEY_RESPONSE_DATA);
             expect(messageHeader.masterToken).toEqual(MASTER_TOKEN);
             expect(messageHeader.sender).toEqual(ENTITY_AUTH_DATA.getIdentity());
+            expect(messageHeader.recipient).toEqual(RECIPIENT);
+            expect(isAboutNow(messageHeader.timestamp)).toBeTruthy();
             expect(messageHeader.messageId).toEqual(MESSAGE_ID);
             expect(messageHeader.peerMasterToken).toBeNull();
             expect(messageHeader.peerServiceTokens.length).toEqual(0);
@@ -978,6 +1025,8 @@ describe("MessageHeader", function() {
             expect(headerdata[KEY_KEY_REQUEST_DATA]).toEqual(JSON.parse(JSON.stringify(KEY_REQUEST_DATA)));
             expect(headerdata[KEY_KEY_RESPONSE_DATA]).toEqual(JSON.parse(JSON.stringify(KEY_RESPONSE_DATA)));
             expect(headerdata[KEY_SENDER]).toEqual(ENTITY_AUTH_DATA.getIdentity());
+            expect(headerdata[KEY_RECIPIENT]).toEqual(RECIPIENT);
+            expect(isAboutNowSeconds(headerdata[KEY_TIMESTAMP])).toBeTruthy();
             expect(parseInt(headerdata[KEY_MESSAGE_ID])).toEqual(MESSAGE_ID);
             expect(headerdata[KEY_PEER_MASTER_TOKEN]).toBeFalsy();
             expect(headerdata[KEY_PEER_SERVICE_TOKENS]).toBeFalsy();
@@ -1034,6 +1083,8 @@ describe("MessageHeader", function() {
             expect(messageHeader.keyResponseData).toEqual(PEER_KEY_RESPONSE_DATA);
             expect(messageHeader.masterToken).toEqual(MASTER_TOKEN);
             expect(messageHeader.sender).toEqual(PEER_ENTITY_AUTH_DATA.getIdentity());
+            expect(messageHeader.recipient).toEqual(RECIPIENT);
+            expect(isAboutNow(messageHeader.timestamp)).toBeTruthy();
             expect(messageHeader.messageId).toEqual(MESSAGE_ID);
             expect(messageHeader.peerMasterToken).toEqual(PEER_MASTER_TOKEN);
             expect(Arrays$contains(messageHeader.peerServiceTokens, peerServiceTokens)).toBeTruthy();
@@ -1114,6 +1165,8 @@ describe("MessageHeader", function() {
             expect(headerdata[KEY_KEY_REQUEST_DATA]).toEqual(JSON.parse(JSON.stringify(PEER_KEY_REQUEST_DATA)));
             expect(headerdata[KEY_KEY_RESPONSE_DATA]).toEqual(JSON.parse(JSON.stringify(PEER_KEY_RESPONSE_DATA)));
             expect(headerdata[KEY_SENDER]).toEqual(PEER_ENTITY_AUTH_DATA.getIdentity());
+            expect(headerdata[KEY_RECIPIENT]).toEqual(RECIPIENT);
+            expect(isAboutNowSeconds(headerdata[KEY_TIMESTAMP])).toBeTruthy();
             expect(parseInt(headerdata[KEY_MESSAGE_ID])).toEqual(MESSAGE_ID);
             expect(headerdata[KEY_PEER_MASTER_TOKEN]).toEqual(JSON.parse(JSON.stringify(PEER_MASTER_TOKEN)));
             expect(headerdata[KEY_PEER_SERVICE_TOKENS]).toEqual(JSON.parse(JSON.stringify(peerServiceTokens)));
@@ -1163,6 +1216,8 @@ describe("MessageHeader", function() {
             expect(messageHeader.keyResponseData).toBeNull();
             expect(messageHeader.masterToken).toBeNull();
             expect(messageHeader.sender).toBeNull();
+            expect(messageHeader.recipient).toBeNull();
+            expect(isAboutNow(messageHeader.timestamp)).toBeTruthy();
             expect(messageHeader.messageId).toEqual(MESSAGE_ID);
             expect(messageHeader.peerMasterToken).toBeNull();
             expect(messageHeader.peerServiceTokens.length).toEqual(0);
@@ -1216,6 +1271,8 @@ describe("MessageHeader", function() {
             expect(messageHeader.keyResponseData).toBeNull();
             expect(messageHeader.masterToken).toBeNull();
             expect(messageHeader.sender).toBeNull();
+            expect(messageHeader.recipient).toBeNull();
+            expect(isAboutNow(messageHeader.timestamp)).toBeTruthy();
             expect(messageHeader.messageId).toEqual(MESSAGE_ID);
             expect(messageHeader.peerMasterToken).toBeNull();
             expect(messageHeader.peerServiceTokens.length).toEqual(0);
@@ -1265,6 +1322,8 @@ describe("MessageHeader", function() {
             expect(messageHeader.keyResponseData).toBeNull();
             expect(messageHeader.masterToken).toEqual(PEER_MASTER_TOKEN);
             expect(messageHeader.sender).toEqual(PEER_ENTITY_AUTH_DATA.getIdentity());
+            expect(messageHeader.recipient).toBeNull();
+            expect(isAboutNow(messageHeader.timestamp)).toBeTruthy();
             expect(messageHeader.messageId).toEqual(MESSAGE_ID);
             expect(messageHeader.peerMasterToken).toBeNull();
             expect(messageHeader.peerServiceTokens.length).toEqual(0);
@@ -1318,6 +1377,8 @@ describe("MessageHeader", function() {
             expect(messageHeader.keyResponseData).toBeNull();
             expect(messageHeader.masterToken).toEqual(PEER_MASTER_TOKEN);
             expect(messageHeader.sender).toEqual(PEER_ENTITY_AUTH_DATA.getIdentity());
+            expect(messageHeader.recipient).toBeNull();
+            expect(isAboutNow(messageHeader.timestamp)).toBeTruthy();
             expect(messageHeader.messageId).toEqual(MESSAGE_ID);
             expect(messageHeader.peerMasterToken).toBeNull();
             expect(messageHeader.peerServiceTokens.length).toEqual(0);
@@ -4129,7 +4190,7 @@ describe("MessageHeader", function() {
             builder.set(KEY_USER_AUTHENTICATION_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(null, null, null);
-            MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+            MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
                 result: function(token) { messageHeader = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -4139,7 +4200,7 @@ describe("MessageHeader", function() {
         var exception;
         runs(function() {
             // Before modifying the header data we need to decrypt it.
-            var cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
+            var cryptoContext = new SessionCryptoContext(trustedNetCtx, MASTER_TOKEN);
             var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
             var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
             cryptoContext.decrypt(ciphertext, {
@@ -4159,7 +4220,7 @@ describe("MessageHeader", function() {
                             cryptoContext.sign(headerdata, {
                                 result: function(signature) {
                                     messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
-                                    Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                    Header$parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
                                         result: function() {},
                                         error: function(err) { exception = err; },
                                     });
@@ -4179,6 +4240,137 @@ describe("MessageHeader", function() {
             expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
         });
 	});
+	
+	it("missing timestamp", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, null, null, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+        var messageHeader;
+        runs(function() {
+            builder.set(KEY_KEY_REQUEST_DATA, null);
+            builder.set(KEY_KEY_RESPONSE_DATA, null);
+            builder.set(KEY_USER_AUTHENTICATION_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+            MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
+                result: function(token) { messageHeader = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+        
+        var header;
+        runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(trustedNetCtx, MASTER_TOKEN);
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    expect(headerdataJo[KEY_TIMESTAMP]).not.toBeNull();
+                    delete headerdataJo[KEY_TIMESTAMP];
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function(x) { header = x; },
+                                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return header; }, "header", 300);
+    });
+
+    it("invalid timestamp", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, null, null, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+        var messageHeader;
+        runs(function() {
+            builder.set(KEY_KEY_REQUEST_DATA, null);
+            builder.set(KEY_KEY_RESPONSE_DATA, null);
+            builder.set(KEY_USER_AUTHENTICATION_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+            MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+                result: function(token) { messageHeader = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+        
+        var exception;
+        runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            var ciphertext = base64$decode(messageHeaderJo[KEY_HEADERDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var headerdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+        
+                    // After modifying the header data we need to encrypt it.
+                    headerdataJo[KEY_TIMESTAMP] = "x";
+                    var json = JSON.stringify(headerdataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(headerdata) {
+                            messageHeaderJo[KEY_HEADERDATA] = base64$encode(headerdata);
+                    
+                            // The header data must be signed or it will not be processed.
+                            cryptoContext.sign(headerdata, {
+                                result: function(signature) {
+                                    messageHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+                                    Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function() {},
+                                        error: function(e) { exception = e; },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 300);
+        runs(function() {
+            var f = function() { throw exception; };
+            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+        });
+    });
 
 	it("p2p parseHeader with missing message ID", function() {
 		var builder, peerServiceTokens;
@@ -5790,6 +5982,112 @@ describe("MessageHeader", function() {
             expect(messageHeaderA2.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
         });
 	});
+    
+    xit("equals recipient", function() {
+        var serviceTokens;
+        runs(function() {
+            MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, {
+                result: function(tks) { serviceTokens = tks; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return serviceTokens; }, "serviceTokens not received", 100);
+        
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, null, USER_ID_TOKEN, serviceTokens, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+
+        var messageHeaderA, messageHeaderB;
+        runs(function() {
+            var headerDataA = builder.set(KEY_RECIPIENT, "recipientA").build();
+            var headerDataB = builder.set(KEY_RECIPIENT, "recipientB").build();
+            var peerData = new HeaderPeerData(null, null, null);
+            MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
+                result: function(token) { messageHeaderA = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
+                result: function(token) { messageHeaderB = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeaderA && messageHeaderB; }, "message headers not received", 100);
+        var messageHeaderA2;
+        runs(function() {
+            Header$parseHeader(trustedNetCtx, JSON.parse(JSON.stringify(messageHeaderA)), CRYPTO_CONTEXTS, {
+                result: function(h) { messageHeaderA2 = h; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return messageHeaderA2; }, "parsed header not received", 100);
+
+        runs(function() {
+            expect(messageHeaderA.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+    
+            expect(messageHeaderA.equals(messageHeaderB)).toBeFalsy();
+            expect(messageHeaderB.equals(messageHeaderA)).toBeFalsy();
+            expect(messageHeaderA.uniqueKey() != messageHeaderB.uniqueKey()).toBeTruthy();
+    
+            expect(messageHeaderA.equals(messageHeaderA2)).toBeTruthy();
+            expect(messageHeaderA2.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA2.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+        });
+    });
+    
+    xit("equals timestamp", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, null, null, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+        var messageHeaderA, messageHeaderB;
+        runs(function() {
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+            MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
+                result: function(token) { messageHeaderA = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            setTimeout(MILLISECONDS_PER_SECOND, function() {
+                MessageHeader$create(ctx, null, MASTER_TOKEN, headerData, peerData, {
+                    result: function(token) { messageHeaderB = token; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+        });
+        waitsFor(function() { return messageHeaderA && messageHeaderB; }, "message headers not received", 2000);
+        var messageHeaderA2;
+        runs(function() {
+            Header$parseHeader(trustedNetCtx, JSON.parse(JSON.stringify(messageHeaderA)), CRYPTO_CONTEXTS, {
+                result: function(h) { messageHeaderA2 = h; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return messageHeaderA2; }, "parsed header not received", 100);
+
+        runs(function() {
+            expect(messageHeaderA.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+    
+            expect(messageHeaderA.equals(messageHeaderB)).toBeFalsy();
+            expect(messageHeaderB.equals(messageHeaderA)).toBeFalsy();
+            expect(messageHeaderA.uniqueKey() != messageHeaderB.uniqueKey()).toBeTruthy();
+    
+            expect(messageHeaderA.equals(messageHeaderA2)).toBeTruthy();
+            expect(messageHeaderA2.equals(messageHeaderA)).toBeTruthy();
+            expect(messageHeaderA2.uniqueKey()).toEqual(messageHeaderA.uniqueKey());
+        });
+    });
 
 	xit("equals message ID", function() {
 		var serviceTokens;

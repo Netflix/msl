@@ -93,6 +93,9 @@ import com.netflix.msl.util.MslTestUtils;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class MessageHeaderTest {
+    /** Milliseconds per second. */
+    private static final long MILLISECONDS_PER_SECOND = 1000;
+    
     /** JSON key entity authentication data. */
     private static final String KEY_ENTITY_AUTHENTICATION_DATA = "entityauthdata";
     /** JSON key master token. */
@@ -107,6 +110,8 @@ public class MessageHeaderTest {
     private static final String KEY_SENDER = "sender";
     /** JSON key recipient. */
     private static final String KEY_RECIPIENT = "recipient";
+    /** JSON key timestamp. */
+    private static final String KEY_TIMESTAMP = "timestamp";
     /** JSON key message ID. */
     private static final String KEY_MESSAGE_ID = "messageid";
     /** JSON key non-replayable ID. */
@@ -135,6 +140,30 @@ public class MessageHeaderTest {
     private static final String KEY_PEER_USER_ID_TOKEN = "peeruseridtoken";
     /** JSON key peer service tokens. */
     private static final String KEY_PEER_SERVICE_TOKENS = "peerservicetokens";
+    
+    /**
+     * Checks if the given timestamp is close to "now".
+     * 
+     * @param timestamp the timestamp to compare.
+     * @return true if the timestamp is about now.
+     */
+    private static boolean isAboutNow(final Date timestamp) {
+        final long now = System.currentTimeMillis();
+        final long time = timestamp.getTime();
+        return (now - 1000 <= time && time <= now + 1000);
+    }
+
+    /**
+     * Checks if the given timestamp is close to "now".
+     * 
+     * @param seconds the timestamp to compare in seconds since the epoch.
+     * @return true if the timestamp is about now.
+     */
+    private static boolean isAboutNowSeconds(final long seconds) {
+        final long now = System.currentTimeMillis();
+        final long time = seconds * MILLISECONDS_PER_SECOND;
+        return (now - 1000 <= time && time <= now + 1000);
+    }
     
     private static final Set<CompressionAlgorithm> ALGOS = new HashSet<CompressionAlgorithm>();
     private static final List<String> LANGUAGES = Arrays.asList(new String[] {"en-US"});
@@ -334,6 +363,8 @@ public class MessageHeaderTest {
         assertEquals(KEY_RESPONSE_DATA, messageHeader.getKeyResponseData());
         assertNull(messageHeader.getMasterToken());
         assertNull(messageHeader.getSender());
+        assertEquals(RECIPIENT, messageHeader.getRecipient());
+        assertTrue(isAboutNow(messageHeader.getTimestamp()));
         assertEquals(MESSAGE_ID, messageHeader.getMessageId());
         assertNull(messageHeader.getPeerMasterToken());
         assertTrue(messageHeader.getPeerServiceTokens().isEmpty());
@@ -370,6 +401,8 @@ public class MessageHeaderTest {
         assertEquals(KEY_RESPONSE_DATA, messageHeader.getKeyResponseData());
         assertNull(messageHeader.getMasterToken());
         assertNull(messageHeader.getSender());
+        assertEquals(RECIPIENT, messageHeader.getRecipient());
+        assertTrue(isAboutNow(messageHeader.getTimestamp()));
         assertEquals(MESSAGE_ID, messageHeader.getMessageId());
         assertNull(messageHeader.getPeerMasterToken());
         assertTrue(messageHeader.getPeerServiceTokens().isEmpty());
@@ -416,6 +449,8 @@ public class MessageHeaderTest {
         assertTrue(JsonUtils.equals(JsonUtils.createArray(KEY_REQUEST_DATA), headerdata.getJSONArray(KEY_KEY_REQUEST_DATA)));
         assertTrue(JsonUtils.equals(new JSONObject(KEY_RESPONSE_DATA.toJSONString()), headerdata.getJSONObject(KEY_KEY_RESPONSE_DATA)));
         assertFalse(headerdata.has(KEY_SENDER));
+        assertEquals(RECIPIENT, headerdata.getString(KEY_RECIPIENT));
+        assertTrue(isAboutNowSeconds(headerdata.getLong(KEY_TIMESTAMP)));
         assertEquals(MESSAGE_ID, headerdata.getLong(KEY_MESSAGE_ID));
         assertFalse(headerdata.has(KEY_PEER_MASTER_TOKEN));
         assertFalse(headerdata.has(KEY_PEER_SERVICE_TOKENS));
@@ -462,6 +497,8 @@ public class MessageHeaderTest {
         assertTrue(JsonUtils.equals(JsonUtils.createArray(KEY_REQUEST_DATA), headerdata.getJSONArray(KEY_KEY_REQUEST_DATA)));
         assertTrue(JsonUtils.equals(new JSONObject(KEY_RESPONSE_DATA.toJSONString()), headerdata.getJSONObject(KEY_KEY_RESPONSE_DATA)));
         assertFalse(headerdata.has(KEY_SENDER));
+        assertEquals(RECIPIENT, headerdata.getString(KEY_RECIPIENT));
+        assertTrue(isAboutNowSeconds(headerdata.getLong(KEY_TIMESTAMP)));
         assertEquals(MESSAGE_ID, headerdata.getLong(KEY_MESSAGE_ID));
         assertFalse(headerdata.has(KEY_PEER_MASTER_TOKEN));
         assertFalse(headerdata.has(KEY_PEER_SERVICE_TOKENS));
@@ -497,6 +534,8 @@ public class MessageHeaderTest {
         assertEquals(PEER_KEY_RESPONSE_DATA, messageHeader.getKeyResponseData());
         assertNull(messageHeader.getMasterToken());
         assertNull(messageHeader.getSender());
+        assertEquals(RECIPIENT, messageHeader.getRecipient());
+        assertTrue(isAboutNow(messageHeader.getTimestamp()));
         assertEquals(MESSAGE_ID, messageHeader.getMessageId());
         assertEquals(PEER_MASTER_TOKEN, messageHeader.getPeerMasterToken());
         assertTrue(messageHeader.getPeerServiceTokens().containsAll(peerServiceTokens));
@@ -534,6 +573,8 @@ public class MessageHeaderTest {
         assertEquals(PEER_KEY_RESPONSE_DATA, messageHeader.getKeyResponseData());
         assertNull(messageHeader.getMasterToken());
         assertNull(messageHeader.getSender());
+        assertEquals(RECIPIENT, messageHeader.getRecipient());
+        assertTrue(isAboutNow(messageHeader.getTimestamp()));
         assertEquals(MESSAGE_ID, messageHeader.getMessageId());
         assertEquals(PEER_MASTER_TOKEN, messageHeader.getPeerMasterToken());
         assertTrue(messageHeader.getPeerServiceTokens().containsAll(peerServiceTokens));
@@ -581,6 +622,8 @@ public class MessageHeaderTest {
         assertTrue(JsonUtils.equals(JsonUtils.createArray(PEER_KEY_REQUEST_DATA), headerdata.getJSONArray(KEY_KEY_REQUEST_DATA)));
         assertTrue(JsonUtils.equals(new JSONObject(PEER_KEY_RESPONSE_DATA.toJSONString()), headerdata.getJSONObject(KEY_KEY_RESPONSE_DATA)));
         assertFalse(headerdata.has(KEY_SENDER));
+        assertEquals(RECIPIENT, headerdata.getString(KEY_RECIPIENT));
+        assertTrue(isAboutNowSeconds(headerdata.getLong(KEY_TIMESTAMP)));
         assertEquals(MESSAGE_ID, headerdata.getLong(KEY_MESSAGE_ID));
         assertTrue(JsonUtils.equals(new JSONObject(PEER_MASTER_TOKEN.toJSONString()), headerdata.getJSONObject(KEY_PEER_MASTER_TOKEN)));
         assertTrue(JsonUtils.equals(JsonUtils.createArray(peerServiceTokens), headerdata.getJSONArray(KEY_PEER_SERVICE_TOKENS)));
@@ -628,6 +671,8 @@ public class MessageHeaderTest {
         assertTrue(JsonUtils.equals(JsonUtils.createArray(PEER_KEY_REQUEST_DATA), headerdata.getJSONArray(KEY_KEY_REQUEST_DATA)));
         assertTrue(JsonUtils.equals(new JSONObject(PEER_KEY_RESPONSE_DATA.toJSONString()), headerdata.getJSONObject(KEY_KEY_RESPONSE_DATA)));
         assertFalse(headerdata.has(KEY_SENDER));
+        assertEquals(RECIPIENT, headerdata.getString(KEY_RECIPIENT));
+        assertTrue(isAboutNowSeconds(headerdata.getLong(KEY_TIMESTAMP)));
         assertEquals(MESSAGE_ID, headerdata.getLong(KEY_MESSAGE_ID));
         assertTrue(JsonUtils.equals(new JSONObject(PEER_MASTER_TOKEN.toJSONString()), headerdata.getJSONObject(KEY_PEER_MASTER_TOKEN)));
         assertTrue(JsonUtils.equals(JsonUtils.createArray(peerServiceTokens), headerdata.getJSONArray(KEY_PEER_SERVICE_TOKENS)));
@@ -662,6 +707,8 @@ public class MessageHeaderTest {
         assertEquals(KEY_RESPONSE_DATA, messageHeader.getKeyResponseData());
         assertEquals(MASTER_TOKEN, messageHeader.getMasterToken());
         assertEquals(entityAuthData.getIdentity(), messageHeader.getSender());
+        assertEquals(RECIPIENT, messageHeader.getRecipient());
+        assertTrue(isAboutNow(messageHeader.getTimestamp()));
         assertEquals(MESSAGE_ID, messageHeader.getMessageId());
         assertNull(messageHeader.getPeerMasterToken());
         assertTrue(messageHeader.getPeerServiceTokens().isEmpty());
@@ -706,6 +753,8 @@ public class MessageHeaderTest {
         assertTrue(JsonUtils.equals(JsonUtils.createArray(KEY_REQUEST_DATA), headerdata.getJSONArray(KEY_KEY_REQUEST_DATA)));
         assertTrue(JsonUtils.equals(new JSONObject(KEY_RESPONSE_DATA.toJSONString()), headerdata.getJSONObject(KEY_KEY_RESPONSE_DATA)));
         assertEquals(entityAuthData.getIdentity(), headerdata.getString(KEY_SENDER));
+        assertEquals(RECIPIENT, headerdata.getString(KEY_RECIPIENT));
+        assertTrue(isAboutNowSeconds(headerdata.getLong(KEY_TIMESTAMP)));
         assertEquals(MESSAGE_ID, headerdata.getLong(KEY_MESSAGE_ID));
         assertFalse(headerdata.has(KEY_PEER_MASTER_TOKEN));
         assertFalse(headerdata.has(KEY_PEER_SERVICE_TOKENS));
@@ -744,6 +793,8 @@ public class MessageHeaderTest {
         assertEquals(PEER_KEY_RESPONSE_DATA, messageHeader.getKeyResponseData());
         assertEquals(MASTER_TOKEN, messageHeader.getMasterToken());
         assertEquals(entityAuthData.getIdentity(), messageHeader.getSender());
+        assertEquals(RECIPIENT, messageHeader.getRecipient());
+        assertTrue(isAboutNow(messageHeader.getTimestamp()));
         assertEquals(MESSAGE_ID, messageHeader.getMessageId());
         assertEquals(PEER_MASTER_TOKEN, messageHeader.getPeerMasterToken());
         assertTrue(messageHeader.getPeerServiceTokens().containsAll(peerServiceTokens));
@@ -792,6 +843,8 @@ public class MessageHeaderTest {
         assertTrue(JsonUtils.equals(JsonUtils.createArray(PEER_KEY_REQUEST_DATA), headerdata.getJSONArray(KEY_KEY_REQUEST_DATA)));
         assertTrue(JsonUtils.equals(new JSONObject(PEER_KEY_RESPONSE_DATA.toJSONString()), headerdata.getJSONObject(KEY_KEY_RESPONSE_DATA)));
         assertEquals(entityAuthData.getIdentity(), headerdata.getString(KEY_SENDER));
+        assertEquals(RECIPIENT, headerdata.getString(KEY_RECIPIENT));
+        assertTrue(isAboutNowSeconds(headerdata.getLong(KEY_TIMESTAMP)));
         assertEquals(MESSAGE_ID, headerdata.getLong(KEY_MESSAGE_ID));
         assertTrue(JsonUtils.equals(new JSONObject(PEER_MASTER_TOKEN.toJSONString()), headerdata.getJSONObject(KEY_PEER_MASTER_TOKEN)));
         assertTrue(JsonUtils.equals(JsonUtils.createArray(peerServiceTokens), headerdata.getJSONArray(KEY_PEER_SERVICE_TOKENS)));
@@ -826,6 +879,8 @@ public class MessageHeaderTest {
         assertNull(messageHeader.getKeyResponseData());
         assertNull(messageHeader.getMasterToken());
         assertNull(messageHeader.getSender());
+        assertNull(messageHeader.getRecipient());
+        assertTrue(isAboutNow(messageHeader.getTimestamp()));
         assertEquals(MESSAGE_ID, messageHeader.getMessageId());
         assertNull(messageHeader.getPeerMasterToken());
         assertTrue(messageHeader.getPeerServiceTokens().isEmpty());
@@ -864,6 +919,8 @@ public class MessageHeaderTest {
         assertNull(messageHeader.getKeyResponseData());
         assertNull(messageHeader.getMasterToken());
         assertNull(messageHeader.getSender());
+        assertNull(messageHeader.getRecipient());
+        assertTrue(isAboutNow(messageHeader.getTimestamp()));
         assertEquals(MESSAGE_ID, messageHeader.getMessageId());
         assertNull(messageHeader.getPeerMasterToken());
         assertTrue(messageHeader.getPeerServiceTokens().isEmpty());
@@ -897,6 +954,8 @@ public class MessageHeaderTest {
         assertNull(messageHeader.getKeyResponseData());
         assertEquals(MASTER_TOKEN, messageHeader.getMasterToken());
         assertEquals(p2pCtx.getEntityAuthenticationData(null).getIdentity(), messageHeader.getSender());
+        assertNull(messageHeader.getRecipient());
+        assertTrue(isAboutNow(messageHeader.getTimestamp()));
         assertEquals(MESSAGE_ID, messageHeader.getMessageId());
         assertNull(messageHeader.getPeerMasterToken());
         assertTrue(messageHeader.getPeerServiceTokens().isEmpty());
@@ -934,6 +993,8 @@ public class MessageHeaderTest {
         assertNull(messageHeader.getKeyResponseData());
         assertEquals(MASTER_TOKEN, messageHeader.getMasterToken());
         assertEquals(p2pCtx.getEntityAuthenticationData(null).getIdentity(), messageHeader.getSender());
+        assertNull(messageHeader.getRecipient());
+        assertTrue(isAboutNow(messageHeader.getTimestamp()));
         assertEquals(MESSAGE_ID, messageHeader.getMessageId());
         assertNull(messageHeader.getPeerMasterToken());
         assertTrue(messageHeader.getPeerServiceTokens().isEmpty());
@@ -2304,6 +2365,67 @@ public class MessageHeaderTest {
     }
     
     @Test
+    public void missingTimestamp() throws JSONException, MslKeyExchangeException, MslUserAuthException, MslException {
+        final HeaderDataBuilder builder = new HeaderDataBuilder(trustedNetCtx, null, null, false);
+        builder.set(KEY_KEY_REQUEST_DATA, null);
+        builder.set(KEY_KEY_RESPONSE_DATA, null);
+        builder.set(KEY_USER_AUTHENTICATION_DATA, null);
+        final HeaderData headerData = builder.build();
+        final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
+        final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData);
+        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        
+        // Before modifying the header data we need to decrypt it.
+        final ICryptoContext cryptoContext = new SessionCryptoContext(trustedNetCtx, MASTER_TOKEN);
+        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(messageHeaderJo.getString(KEY_HEADERDATA));
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
+        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        
+        // After modifying the header data we need to encrypt it.
+        assertNotNull(headerdataJo.remove(KEY_TIMESTAMP));
+        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
+        messageHeaderJo.put(KEY_HEADERDATA, DatatypeConverter.printBase64Binary(headerdata));
+        
+        // The header data must be signed or it will not be processed.
+        final byte[] signature = cryptoContext.sign(headerdata);
+        messageHeaderJo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        
+        Header.parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+    }
+    
+    @Test
+    public void invalidTimestamp() throws JSONException, MslKeyExchangeException, MslUserAuthException, MslException {
+        thrown.expect(MslEncodingException.class);
+        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+
+        final HeaderDataBuilder builder = new HeaderDataBuilder(trustedNetCtx, null, null, false);
+        builder.set(KEY_KEY_REQUEST_DATA, null);
+        builder.set(KEY_KEY_RESPONSE_DATA, null);
+        builder.set(KEY_USER_AUTHENTICATION_DATA, null);
+        final HeaderData headerData = builder.build();
+        final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
+        final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData);
+        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        
+        // Before modifying the header data we need to decrypt it.
+        final ICryptoContext cryptoContext = new SessionCryptoContext(trustedNetCtx, MASTER_TOKEN);
+        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(messageHeaderJo.getString(KEY_HEADERDATA));
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
+        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        
+        // After modifying the header data we need to encrypt it.
+        headerdataJo.put(KEY_TIMESTAMP, "x");
+        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
+        messageHeaderJo.put(KEY_HEADERDATA, DatatypeConverter.printBase64Binary(headerdata));
+        
+        // The header data must be signed or it will not be processed.
+        final byte[] signature = cryptoContext.sign(headerdata);
+        messageHeaderJo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        
+        Header.parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+    }
+    
+    @Test
     public void missingMessageIdParseHeader() throws UnsupportedEncodingException, JSONException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.JSON_PARSE_ERROR);
@@ -3062,6 +3184,52 @@ public class MessageHeaderTest {
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeaderA = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData);
         final MessageHeader messageHeaderB = new MessageHeader(ctx, null, MASTER_TOKEN, headerData, peerData);
+        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, new JSONObject(messageHeaderA.toJSONString()), CRYPTO_CONTEXTS);
+        
+        assertTrue(messageHeaderA.equals(messageHeaderA));
+        assertEquals(messageHeaderA.hashCode(), messageHeaderA.hashCode());
+        
+        assertFalse(messageHeaderA.equals(messageHeaderB));
+        assertFalse(messageHeaderB.equals(messageHeaderA));
+        assertTrue(messageHeaderA.hashCode() != messageHeaderB.hashCode());
+        
+        assertTrue(messageHeaderA.equals(messageHeaderA2));
+        assertTrue(messageHeaderA2.equals(messageHeaderA));
+        assertEquals(messageHeaderA.hashCode(), messageHeaderA2.hashCode());
+    }
+    
+    @Test
+    public void equalsRecipient() throws MslEncodingException, MslCryptoException, MslException {
+        final Set<ServiceToken> serviceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
+        final HeaderData headerDataA = new HeaderDataBuilder(trustedNetCtx, USER_ID_TOKEN, serviceTokens).set(KEY_RECIPIENT, "recipientA").build();
+        final HeaderData headerDataB = new HeaderDataBuilder(trustedNetCtx, USER_ID_TOKEN, serviceTokens).set(KEY_RECIPIENT, "recipientB").build();
+        final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
+        
+        final MessageHeader messageHeaderA = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData);
+        final MessageHeader messageHeaderB = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData);
+        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, new JSONObject(messageHeaderA.toJSONString()), CRYPTO_CONTEXTS);
+        
+        assertTrue(messageHeaderA.equals(messageHeaderA));
+        assertEquals(messageHeaderA.hashCode(), messageHeaderA.hashCode());
+        
+        assertFalse(messageHeaderA.equals(messageHeaderB));
+        assertFalse(messageHeaderB.equals(messageHeaderA));
+        assertTrue(messageHeaderA.hashCode() != messageHeaderB.hashCode());
+        
+        assertTrue(messageHeaderA.equals(messageHeaderA2));
+        assertTrue(messageHeaderA2.equals(messageHeaderA));
+        assertEquals(messageHeaderA.hashCode(), messageHeaderA2.hashCode());
+    }
+    
+    @Test
+    public void equalsTimestamp() throws MslEncodingException, MslCryptoException, MslException, InterruptedException {
+        final HeaderDataBuilder builder = new HeaderDataBuilder(trustedNetCtx, null, null, false);
+        final HeaderData headerData = builder.build();
+        final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
+        
+        final MessageHeader messageHeaderA = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData);
+        Thread.sleep(MILLISECONDS_PER_SECOND);
+        final MessageHeader messageHeaderB = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData);
         final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, new JSONObject(messageHeaderA.toJSONString()), CRYPTO_CONTEXTS);
         
         assertTrue(messageHeaderA.equals(messageHeaderA));

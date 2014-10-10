@@ -20,6 +20,7 @@
  * errordata = {
  *   "#mandatory" : [ "messageid", "errorcode" ],
  *   "recipient" : "string",
+ *   "timestamp" : "int64(0,2^53^)",
  *   "messageid" : "int64(0,-)",
  *   "errorcode" : "int32(0,-)",
  *   "internalcode" : "int32(0,-)",
@@ -28,6 +29,7 @@
  * }} where:
  * <ul>
  * <li>{@code recipient} is the intended recipient's entity identity</li>
+ * <li>{@code timestamp} is the sender time when the header is created in seconds since the UNIX epoch</li>
  * <li>{@code messageid} is the message ID</li>
  * <li>{@code errorcode} is the error code</li>
  * <li>{@code internalcode} is an service-specific error code</li>
@@ -43,6 +45,9 @@ var ErrorHeader$parse;
 
 (function() {
     "use strict";
+    
+    /** Milliseconds per second. */
+    var MILLISECONDS_PER_SECOND = 1000;
 
     // Message error data.
     /**
@@ -51,6 +56,12 @@ var ErrorHeader$parse;
      * @type {string}
      */
     var KEY_RECIPIENT = "recipient";
+    /**
+     * JSON key timestamp.
+     * @const
+     * @type {string}
+     */
+    var KEY_TIMESTAMP = "timestamp";
     /**
      * JSON key message ID.
      * @const
@@ -87,11 +98,13 @@ var ErrorHeader$parse;
      *
      * @param {Uint8Array} errordata raw error data.
      * @param {Uint8Array} signature raw signature.
+     * @param {number} timestamp creation timestamp.
      * @constructor
      */
-    function CreationData(errordata, signature) {
+    function CreationData(errordata, signature, timestamp) {
         this.errordata = errordata;
         this.signature = signature;
+        this.timestamp = timestamp;
     }
 
     ErrorHeader = util.Class.create({
@@ -138,9 +151,12 @@ var ErrorHeader$parse;
 
                 // Construct the error data.
                 if (!creationData) {
+                    var timestamp = new Date(ctx.getTime() / MILLISECONDS_PER_SECOND * MILLISECONDS_PER_SECOND);
+                    
                     // Construct the JSON.
                     var errorJO = {};
                     if (recipient) errorJO[KEY_RECIPIENT] = recipient;
+                    errorJO[KEY_TIMESTAMP] = timestamp.getTime() / MILLISECONDS_PER_SECOND;
                     errorJO[KEY_MESSAGE_ID] = messageId;
                     errorJO[KEY_ERROR_CODE] = errorCode;
                     if (internalCode > 0) errorJO[KEY_INTERNAL_CODE] = internalCode;
@@ -170,15 +186,16 @@ var ErrorHeader$parse;
                                         AsyncExecutor(callback, function() {
                                             // The properties.
                                             var props = {
-                                                    entityAuthenticationData: { value: entityAuthData, writable: false, configurable: false },
-                                                    recipient: { value: recipient, writable: false, configurable: false },
-                                                    messageId: { value: messageId, writable: false, configurable: false },
-                                                    errorCode: { value: errorCode, writable: false, configurable: false },
-                                                    internalCode: { value: internalCode, writable: false, configurable: false },
-                                                    errorMessage: { value: errorMsg, writable: false, configurable: false },
-                                                    userMessage: { value: userMsg, writable: false, configurable: false },
-                                                    errordata: { value: errordata, writable: false, enumerable: false, configurable: false },
-                                                    signature: { value: signature, writable: false, enumerable: false, configurable: false }
+                                                entityAuthenticationData: { value: entityAuthData, writable: false, configurable: false },
+                                                recipient: { value: recipient, writable: false, configurable: false },
+                                                timestamp: { value: timestamp, writable: false, configurable: false },
+                                                messageId: { value: messageId, writable: false, configurable: false },
+                                                errorCode: { value: errorCode, writable: false, configurable: false },
+                                                internalCode: { value: internalCode, writable: false, configurable: false },
+                                                errorMessage: { value: errorMsg, writable: false, configurable: false },
+                                                userMessage: { value: userMsg, writable: false, configurable: false },
+                                                errordata: { value: errordata, writable: false, enumerable: false, configurable: false },
+                                                signature: { value: signature, writable: false, enumerable: false, configurable: false }
                                             };
                                             Object.defineProperties(this, props);
                                             return this;
@@ -207,20 +224,22 @@ var ErrorHeader$parse;
                         }
                     });
                 } else {
+                    var timestamp = creationData.timestamp;
                     var errordata = creationData.errordata;
                     var signature = creationData.signature;
 
                     // The properties.
                     var props = {
-                            entityAuthenticationData: { value: entityAuthData, writable: false, configurable: false },
-                            recipient: { value: recipient, writable: false, configurable: false },
-                            messageId: { value: messageId, writable: false, configurable: false },
-                            errorCode: { value: errorCode, writable: false, configurable: false },
-                            internalCode: { value: internalCode, writable: false, configurable: false },
-                            errorMessage: { value: errorMsg, writable: false, configurable: false },
-                            userMessage: { value: userMsg, writable: false, configurable: false },
-                            errordata: { value: errordata, writable: false, enumerable: false, configurable: false },
-                            signature: { value: signature, writable: false, enumerable: false, configurable: false }
+                        entityAuthenticationData: { value: entityAuthData, writable: false, configurable: false },
+                        recipient: { value: recipient, writable: false, configurable: false },
+                        timestamp: { value: timestamp, writable: false, configurable: false },
+                        messageId: { value: messageId, writable: false, configurable: false },
+                        errorCode: { value: errorCode, writable: false, configurable: false },
+                        internalCode: { value: internalCode, writable: false, configurable: false },
+                        errorMessage: { value: errorMsg, writable: false, configurable: false },
+                        userMessage: { value: userMsg, writable: false, configurable: false },
+                        errordata: { value: errordata, writable: false, enumerable: false, configurable: false },
+                        signature: { value: signature, writable: false, enumerable: false, configurable: false }
                     };
                     Object.defineProperties(this, props);
                     return this;
@@ -335,6 +354,7 @@ var ErrorHeader$parse;
 
                                     // Pull the error data.
                                     var recipient = (errordataJO[KEY_RECIPIENT] !== undefined) ? errordataJO[KEY_RECIPIENT] : null;
+                                    var timestampSeconds = (errordataJO[KEY_TIMESTAMP] !== undefined) ? errordataJO[KEY_TIMESTAMP] : null;
                                     var messageId = parseInt(errordataJO[KEY_MESSAGE_ID]);
                                     var errorCode = parseInt(errordataJO[KEY_ERROR_CODE]);
                                     var internalCode = parseInt(errordataJO[KEY_INTERNAL_CODE]);
@@ -343,6 +363,7 @@ var ErrorHeader$parse;
 
                                     // Verify the error data.
                                     if ((recipient && typeof recipient !== 'string') ||
+                                        (timestampSeconds && typeof timestampSeconds !== 'number') ||
                                         !messageId || messageId != messageId ||
                                         !errorCode || errorCode != errorCode ||
                                         (errordataJO[KEY_INTERNAL_CODE] && internalCode != internalCode) ||
@@ -376,7 +397,8 @@ var ErrorHeader$parse;
                                     }
 
                                     // Return the error header.
-                                    var creationData = new CreationData(errordata, signature);
+                                    var timestamp = new Date(timestampSeconds * MILLISECONDS_PER_SECOND);
+                                    var creationData = new CreationData(errordata, signature, timestamp);
                                     new ErrorHeader(ctx, entityAuthData, recipient, messageId, errorCode, internalCode, errorMsg, userMsg, creationData, callback);
                                 });
                             },

@@ -1235,8 +1235,19 @@ describe("UserIdToken", function() {
         });
         waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
         runs(function() {
+            var now = new Date();
 	        expect(userIdToken.isRenewable()).toBeTruthy();
-	        expect(userIdToken.isExpired()).toBeFalsy();
+            expect(userIdToken.isRenewable(now)).toBeTruthy();
+            expect(userIdToken.isExpired()).toBeFalsy();
+	        expect(userIdToken.isExpired(now)).toBeFalsy();
+            
+            var before = new Date(renewalWindow.getTime() - 1000);
+            expect(userIdToken.isRenewable(before)).toBeFalsy();
+            expect(userIdToken.isExpired(before)).toBeFalsy();
+            
+            var after = new Date(expiration.getTime() + 1000);
+            expect(userIdToken.isRenewable(after)).toBeTruthy();
+            expect(userIdToken.isExpired(after)).toBeTruthy();
         });
     });
 
@@ -1252,8 +1263,19 @@ describe("UserIdToken", function() {
         });
         waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
         runs(function() {
+            var now = new Date();
 	        expect(userIdToken.isRenewable()).toBeTruthy();
-	        expect(userIdToken.isExpired()).toBeTruthy();
+            expect(userIdToken.isRenewable(now)).toBeTruthy();
+            expect(userIdToken.isExpired()).toBeTruthy();
+	        expect(userIdToken.isExpired(now)).toBeTruthy();
+            
+            var before = new Date(renewalWindow.getTime() - 1000);
+            expect(userIdToken.isRenewable(before)).toBeFalsy();
+            expect(userIdToken.isExpired(before)).toBeFalsy();
+            
+            var after = new Date(expiration.getTime() + 1000);
+            expect(userIdToken.isRenewable(after)).toBeTruthy();
+            expect(userIdToken.isExpired(after)).toBeTruthy();
         });
     });
 
@@ -1269,8 +1291,19 @@ describe("UserIdToken", function() {
         });
         waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
         runs(function() {
+            var now = new Date();
 	        expect(userIdToken.isRenewable()).toBeFalsy();
-	        expect(userIdToken.isExpired()).toBeFalsy();
+            expect(userIdToken.isRenewable(now)).toBeFalsy();
+            expect(userIdToken.isExpired()).toBeFalsy();
+	        expect(userIdToken.isExpired(now)).toBeFalsy();
+            
+            var before = new Date(renewalWindow.getTime() - 1000);
+            expect(userIdToken.isRenewable(before)).toBeFalsy();
+            expect(userIdToken.isExpired(before)).toBeFalsy();
+            
+            var after = new Date(expiration.getTime() + 1000);
+            expect(userIdToken.isRenewable(after)).toBeTruthy();
+            expect(userIdToken.isExpired(after)).toBeTruthy();
         });
     });
 

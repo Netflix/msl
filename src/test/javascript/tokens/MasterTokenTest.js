@@ -1374,8 +1374,19 @@ describe("MasterToken", function() {
         });
         waitsFor(function() { return masterToken; }, "masterToken not received", 500);
         runs(function() {
+            var now = new Date();
 	        expect(masterToken.isRenewable()).toBeTruthy();
-	        expect(masterToken.isExpired()).toBeFalsy();
+            expect(masterToken.isRenewable(now)).toBeTruthy();
+            expect(masterToken.isExpired()).toBeFalsy();
+	        expect(masterToken.isExpired(now)).toBeFalsy();
+	        
+	        var before = new Date(renewalWindow.getTime() - 1000);
+	        expect(masterToken.isRenewable(before)).toBeFalsy();
+	        expect(masterToken.isExpired(before)).toBeFalsy();
+	        
+	        var after = new Date(expiration.getTime() + 1000);
+	        expect(masterToken.isRenewable(after)).toBeTruthy();
+            expect(masterToken.isExpired(after)).toBeTruthy();
         });
     });
     
@@ -1391,16 +1402,27 @@ describe("MasterToken", function() {
         });
         waitsFor(function() { return masterToken; }, "masterToken not received", 500);
         runs(function() {
+            var now = new Date();
 	        expect(masterToken.isRenewable()).toBeTruthy();
-	        expect(masterToken.isExpired()).toBeTruthy();
+            expect(masterToken.isRenewable(now)).toBeTruthy();
+            expect(masterToken.isExpired()).toBeTruthy();
+	        expect(masterToken.isExpired(now)).toBeTruthy();
+            
+            var before = new Date(renewalWindow.getTime() - 1000);
+            expect(masterToken.isRenewable(before)).toBeFalsy();
+            expect(masterToken.isExpired(before)).toBeFalsy();
+            
+            var after = new Date(expiration.getTime() + 1000);
+            expect(masterToken.isRenewable(after)).toBeTruthy();
+            expect(masterToken.isExpired(after)).toBeTruthy();
         });
     });
     
     it("not renewable or expired", function() {
+        var renewalWindow = new Date(Date.now() + 1000);
+        var expiration = new Date(Date.now() + 2000);
         var masterToken;
         runs(function() {
-            var renewalWindow = new Date(Date.now() + 1000);
-            var expiration = new Date(Date.now() + 2000);
             MasterToken$create(ctx, renewalWindow, expiration, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1408,8 +1430,19 @@ describe("MasterToken", function() {
         });
         waitsFor(function() { return masterToken; }, "masterToken not received", 500);
         runs(function() {
+            var now = new Date();
 	        expect(masterToken.isRenewable()).toBeFalsy();
-	        expect(masterToken.isExpired()).toBeFalsy();
+            expect(masterToken.isRenewable(now)).toBeFalsy();
+            expect(masterToken.isExpired()).toBeFalsy();
+	        expect(masterToken.isExpired(now)).toBeFalsy();
+            
+            var before = new Date(renewalWindow.getTime() - 1000);
+            expect(masterToken.isRenewable(before)).toBeFalsy();
+            expect(masterToken.isExpired(before)).toBeFalsy();
+            
+            var after = new Date(expiration.getTime() + 1000);
+            expect(masterToken.isRenewable(after)).toBeTruthy();
+            expect(masterToken.isExpired(after)).toBeTruthy();
         });
     });
     

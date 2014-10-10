@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Map;
 
 import javax.xml.bind.DatatypeConverter;
@@ -61,6 +62,9 @@ import com.netflix.msl.util.MslContext;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class ErrorHeaderTest {
+    /** Milliseconds per second. */
+    private static final long MILLISECONDS_PER_SECOND = 1000;
+    
     /** JSON key entity authentication data. */
     private static final String KEY_ENTITY_AUTHENTICATION_DATA = "entityauthdata";
     /** JSON key error data. */
@@ -71,6 +75,8 @@ public class ErrorHeaderTest {
     // Message error data.
     /** JSON key recipient. */
     private static final String KEY_RECIPIENT = "recipient";
+    /** JSON key timestamp. */
+    private static final String KEY_TIMESTAMP = "timestamp";
     /** JSON key message ID. */
     private static final String KEY_MESSAGE_ID = "messageid";
     /** JSON key error code. */
@@ -81,6 +87,30 @@ public class ErrorHeaderTest {
     private static final String KEY_ERROR_MESSAGE = "errormsg";
     /** JSON key user message. */
     private static final String KEY_USER_MESSAGE = "usermsg";
+    
+    /**
+     * Checks if the given timestamp is close to "now".
+     * 
+     * @param timestamp the timestamp to compare.
+     * @return true if the timestamp is about now.
+     */
+    private static boolean isAboutNow(final Date timestamp) {
+        final long now = System.currentTimeMillis();
+        final long time = timestamp.getTime();
+        return (now - 1000 <= time && time <= now + 1000);
+    }
+
+    /**
+     * Checks if the given timestamp is close to "now".
+     * 
+     * @param seconds the timestamp to compare in seconds since the epoch.
+     * @return true if the timestamp is about now.
+     */
+    private static boolean isAboutNowSeconds(final long seconds) {
+        final long now = System.currentTimeMillis();
+        final long time = seconds * MILLISECONDS_PER_SECOND;
+        return (now - 1000 <= time && time <= now + 1000);
+    }
     
     @Rule
     public ExpectedMslException thrown = ExpectedMslException.none();
@@ -125,6 +155,7 @@ public class ErrorHeaderTest {
         assertEquals(MESSAGE_ID, errorHeader.getMessageId());
         assertEquals(USER_MSG, errorHeader.getUserMessage());
         assertEquals(RECIPIENT, errorHeader.getRecipient());
+        assertTrue(isAboutNow(errorHeader.getTimestamp()));
     }
     
     @Test
@@ -148,6 +179,7 @@ public class ErrorHeaderTest {
         assertEquals(INTERNAL_CODE, errordata.getInt(KEY_INTERNAL_CODE));
         assertEquals(ERROR_MSG, errordata.getString(KEY_ERROR_MESSAGE));
         assertEquals(USER_MSG, errordata.getString(KEY_USER_MESSAGE));
+        assertTrue(isAboutNowSeconds(errordata.getLong(KEY_TIMESTAMP)));
     }
     
     @Test
@@ -167,6 +199,7 @@ public class ErrorHeaderTest {
         assertTrue(cryptoContext.verify(ciphertext, signature));
 
         assertEquals(RECIPIENT, errordata.getString(KEY_RECIPIENT));
+        assertTrue(isAboutNowSeconds(errordata.getLong(KEY_TIMESTAMP)));
         assertEquals(MESSAGE_ID, errordata.getLong(KEY_MESSAGE_ID));
         assertEquals(ERROR_CODE.intValue(), errordata.getInt(KEY_ERROR_CODE));
         assertFalse(errordata.has(KEY_INTERNAL_CODE));
@@ -191,6 +224,7 @@ public class ErrorHeaderTest {
         assertTrue(cryptoContext.verify(ciphertext, signature));
 
         assertFalse(errordata.has(KEY_RECIPIENT));
+        assertTrue(isAboutNowSeconds(errordata.getLong(KEY_TIMESTAMP)));
         assertEquals(MESSAGE_ID, errordata.getLong(KEY_MESSAGE_ID));
         assertEquals(ERROR_CODE.intValue(), errordata.getInt(KEY_ERROR_CODE));
         assertEquals(INTERNAL_CODE, errordata.getInt(KEY_INTERNAL_CODE));
@@ -215,6 +249,7 @@ public class ErrorHeaderTest {
         assertTrue(cryptoContext.verify(ciphertext, signature));
 
         assertEquals(RECIPIENT, errordata.getString(KEY_RECIPIENT));
+        assertTrue(isAboutNowSeconds(errordata.getLong(KEY_TIMESTAMP)));
         assertEquals(MESSAGE_ID, errordata.getLong(KEY_MESSAGE_ID));
         assertEquals(ERROR_CODE.intValue(), errordata.getInt(KEY_ERROR_CODE));
         assertEquals(INTERNAL_CODE, errordata.getInt(KEY_INTERNAL_CODE));
@@ -239,6 +274,7 @@ public class ErrorHeaderTest {
         assertTrue(cryptoContext.verify(ciphertext, signature));
 
         assertEquals(RECIPIENT, errordata.getString(KEY_RECIPIENT));
+        assertTrue(isAboutNowSeconds(errordata.getLong(KEY_TIMESTAMP)));
         assertEquals(MESSAGE_ID, errordata.getLong(KEY_MESSAGE_ID));
         assertEquals(ERROR_CODE.intValue(), errordata.getInt(KEY_ERROR_CODE));
         assertEquals(INTERNAL_CODE, errordata.getInt(KEY_INTERNAL_CODE));
@@ -256,6 +292,7 @@ public class ErrorHeaderTest {
         final ErrorHeader joErrorHeader = (ErrorHeader)header;
         
         assertEquals(errorHeader.getEntityAuthenticationData(), joErrorHeader.getEntityAuthenticationData());
+        assertEquals(errorHeader.getTimestamp(), joErrorHeader.getTimestamp());
         assertEquals(errorHeader.getErrorCode(), joErrorHeader.getErrorCode());
         assertEquals(errorHeader.getErrorMessage(), joErrorHeader.getErrorMessage());
         assertEquals(errorHeader.getInternalCode(), joErrorHeader.getInternalCode());
@@ -384,6 +421,57 @@ public class ErrorHeaderTest {
         errorHeaderJo.put(KEY_ERRORDATA, DatatypeConverter.printBase64Binary(ciphertext));
         final byte[] signature = cryptoContext.sign(ciphertext);
         errorHeaderJo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        
+        Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
+    }
+    
+    @Test
+    public void missingTimestamp() throws MslKeyExchangeException, MslUserAuthException, MslException {
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final JSONObject errorHeaderJo = new JSONObject(errorHeader.toJSONString());
+
+        // Before modifying the error data we need to decrypt it.
+        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(errorHeaderJo.getString(KEY_ERRORDATA));
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
+        final JSONObject errordata = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        
+        // After modifying the error data we need to encrypt it.
+        assertNotNull(errordata.remove(KEY_TIMESTAMP));
+        final byte[] modifiedPlaintext = errordata.toString().getBytes(MslConstants.DEFAULT_CHARSET);
+        final byte[] modifiedCiphertext = cryptoContext.encrypt(modifiedPlaintext);
+        errorHeaderJo.put(KEY_ERRORDATA, DatatypeConverter.printBase64Binary(modifiedCiphertext));
+        
+        // The error data must be signed otherwise the error data will not be
+        // processed.
+        final byte[] modifiedSignature = cryptoContext.sign(modifiedCiphertext);
+        errorHeaderJo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(modifiedSignature));
+
+        Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
+    }
+    
+    @Test
+    public void invalidTimestamp() throws MslKeyExchangeException, MslUserAuthException, MslException {
+        thrown.expect(MslEncodingException.class);
+        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final JSONObject errorHeaderJo = new JSONObject(errorHeader.toJSONString());
+
+        // Before modifying the error data we need to decrypt it.
+        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(errorHeaderJo.getString(KEY_ERRORDATA));
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
+        final JSONObject errordata = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+
+        // After modifying the error data we need to encrypt it.
+        errordata.put(KEY_TIMESTAMP, "x");
+        final byte[] modifiedPlaintext = errordata.toString().getBytes(MslConstants.DEFAULT_CHARSET);
+        final byte[] modifiedCiphertext = cryptoContext.encrypt(modifiedPlaintext);
+        errorHeaderJo.put(KEY_ERRORDATA, DatatypeConverter.printBase64Binary(modifiedCiphertext));
+
+        // The error data must be signed otherwise the error data will not be
+        // processed.
+        final byte[] modifiedSignature = cryptoContext.sign(modifiedCiphertext);
+        errorHeaderJo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(modifiedSignature));
         
         Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
     }
@@ -699,6 +787,25 @@ public class ErrorHeaderTest {
         final String recipientB = "B";
         final ErrorHeader errorHeaderA = new ErrorHeader(ctx, ENTITY_AUTH_DATA, recipientA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         final ErrorHeader errorHeaderB = new ErrorHeader(ctx, ENTITY_AUTH_DATA, recipientB, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeaderA2 = (ErrorHeader)Header.parseHeader(ctx, new JSONObject(errorHeaderA.toJSONString()), CRYPTO_CONTEXTS);
+
+        assertTrue(errorHeaderA.equals(errorHeaderA));
+        assertEquals(errorHeaderA.hashCode(), errorHeaderA.hashCode());
+        
+        assertFalse(errorHeaderA.equals(errorHeaderB));
+        assertFalse(errorHeaderB.equals(errorHeaderA));
+        assertTrue(errorHeaderA.hashCode() != errorHeaderB.hashCode());
+        
+        assertTrue(errorHeaderA.equals(errorHeaderA2));
+        assertTrue(errorHeaderA2.equals(errorHeaderA));
+        assertEquals(errorHeaderA.hashCode(), errorHeaderA2.hashCode());
+    }
+    
+    @Test
+    public void equalsTimestamp() throws InterruptedException, MslKeyExchangeException, MslUserAuthException, JSONException, MslException {
+        final ErrorHeader errorHeaderA = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        Thread.sleep(MILLISECONDS_PER_SECOND);
+        final ErrorHeader errorHeaderB = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         final ErrorHeader errorHeaderA2 = (ErrorHeader)Header.parseHeader(ctx, new JSONObject(errorHeaderA.toJSONString()), CRYPTO_CONTEXTS);
 
         assertTrue(errorHeaderA.equals(errorHeaderA));

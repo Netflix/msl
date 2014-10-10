@@ -36,6 +36,7 @@
  *   "#mandatory" : [ "messageid", "renewable", "handshake" ],
  *   "sender" : "string",
  *   "recipient" : "string",
+ *   "timestamp" : "int64(0,2^53^)",
  *   "messageid" : "int64(0,2^53^)",
  *   "nonreplayableid" : "int64(0,2^53^)",
  *   "nonreplayable" : "boolean",
@@ -54,6 +55,7 @@
  * <ul>
  * <li>{@code sender} is the sender entity identity</li>
  * <li>{@code recipient} is the intended recipient's entity identity</li>
+ * <li>{@code timestamp} is the sender time when the header is created in seconds since the UNIX epoch</li>
  * <li>{@code messageid} is the message ID</li>
  * <li>{@code nonreplayableid} is the non-replayable ID</li>
  * <li>{@code nonreplayable} indicates if the message is nonreplayable</li>
@@ -79,6 +81,9 @@ var MessageHeader$HeaderData;
 var MessageHeader$HeaderPeerData;
 
 (function() {
+    /** Milliseconds per second. */
+    var MILLISECONDS_PER_SECOND = 1000;
+    
     // Message header data.
     /**
      * JSON key sender.
@@ -92,6 +97,12 @@ var MessageHeader$HeaderPeerData;
      * @type {string}
      */
     var KEY_RECIPIENT = "recipient";
+    /**
+     * JSON key timestamp.
+     * @const
+     * @type {number}
+     */
+    var KEY_TIMESTAMP = "timestamp";
     /**
      * JSON key message ID.
      * @const
@@ -255,6 +266,7 @@ var MessageHeader$HeaderPeerData;
      *
      * @param {MslUser} user MSL user.
      * @param {string} sender message sender.
+     * @param {Date} timestamp.
      * @param {ICryptoContext} messageCryptoContext message crypto context.
      * @param {Uint8Array} headerdata raw header data.
      * @param {Uint8Array} plaintext decrypted header data.
@@ -263,9 +275,10 @@ var MessageHeader$HeaderPeerData;
      * @param {number} legacy non-replayable boolean.
      * @constructor
      */
-    function CreationData(user, sender, messageCryptoContext, headerdata, plaintext, signature, verified, nonReplayable) {
+    function CreationData(user, sender, timestamp, messageCryptoContext, headerdata, plaintext, signature, verified, nonReplayable) {
         this.user = user;
         this.sender = sender;
+        this.timestamp = timestamp;
         this.messageCryptoContext = messageCryptoContext;
         this.headerdata = headerdata;
         this.plaintext = plaintext;
@@ -284,6 +297,7 @@ var MessageHeader$HeaderPeerData;
      * @param {MasterToken} masterToken
      * @param {string} sender
      * @param {string} recipient
+     * @param {Date} timestamp
      * @param {number} messageId
      * @param {Array.<KeyRequestData>} keyRequestData
      * @param {KeyResponseData} keyResponseData
@@ -304,7 +318,7 @@ var MessageHeader$HeaderPeerData;
      * @return {object} the properties configuration.
      */
     function buildProperties(ctx, messageCryptoContext, user,
-            entityAuthData, masterToken, sender, recipient, messageId,
+            entityAuthData, masterToken, sender, recipient, timestamp, messageId,
             keyRequestData, keyResponseData,
             userAuthData, userIdToken, serviceTokens,
             peerMasterToken, peerUserIdToken, peerServiceTokens,
@@ -339,6 +353,7 @@ var MessageHeader$HeaderPeerData;
             masterToken: { value: masterToken, writable: false, configurable: false },
             sender: { value: sender, writable: false, configurable: false },
             recipient: { value: recipient, writable: false, configurable: false },
+            timestamp: { value: timestamp, writable: false, configurable: false },
             messageId: { value: messageId, writable: false, configurable: false },
             nonReplayableId: { value: nonReplayableId, writable: false, configurable: false },
             keyRequestData: { value: keyRequestData, writable: false, configurable: false },
@@ -555,11 +570,15 @@ var MessageHeader$HeaderPeerData;
                     if (!creationData) {
                         // Grab the user.
                         var user = (userIdToken) ? userIdToken.user : null;
+                        
+                        // Set the creation timestamp.
+                        var timestamp = new Date(ctx.getTime() / MILLISECONDS_PER_SECOND * MILLISECONDS_PER_SECOND);
 
                         // Construct the JSON.
                         var headerJO = {};
                         if (sender) headerJO[KEY_SENDER] = sender;
                         if (recipient) headerJO[KEY_RECIPIENT] = recipient;
+                        headerJO[KEY_TIMESTAMP] = timestamp.getTime() / MILLISECONDS_PER_SECOND;
                         headerJO[KEY_MESSAGE_ID] = messageId;
                         headerJO[KEY_NON_REPLAYABLE] = nonReplayable;
                         if (typeof nonReplayableId === 'number') headerJO[KEY_NON_REPLAYABLE_ID] = nonReplayableId;
@@ -599,7 +618,8 @@ var MessageHeader$HeaderPeerData;
                                         result: function(signature) {
                                             AsyncExecutor(callback, function() {
                                                 var props = buildProperties(ctx, messageCryptoContext, user, entityAuthData,
-                                                    masterToken, sender, recipient, messageId, keyRequestData, keyResponseData,
+                                                    masterToken, sender, recipient, timestamp, messageId,
+                                                    keyRequestData, keyResponseData,
                                                     userAuthData, userIdToken, serviceTokens,
                                                     peerMasterToken, peerUserIdToken, peerServiceTokens,
                                                     nonReplayableId, nonReplayable, renewable, handshake, capabilities,
@@ -638,6 +658,7 @@ var MessageHeader$HeaderPeerData;
                         });
                     } else {
                         var user = creationData.user;
+                        var timestamp = creationData.timestamp;
                         var messageCryptoContext = creationData.messageCryptoContext;
                         var headerdata = creationData.headerdata;
                         var plaintext = creationData.plaintext;
@@ -646,7 +667,8 @@ var MessageHeader$HeaderPeerData;
                         nonReplayable = creationData.nonReplayable;
 
                         var props = buildProperties(ctx, messageCryptoContext, user, entityAuthData,
-                            masterToken, sender, recipient, messageId, keyRequestData, keyResponseData,
+                            masterToken, sender, recipient, timestamp, messageId,
+                            keyRequestData, keyResponseData,
                             userAuthData, userIdToken, serviceTokens,
                             peerMasterToken, peerUserIdToken, peerServiceTokens,
                             nonReplayableId, nonReplayable, renewable, handshake, capabilities,
@@ -1101,7 +1123,7 @@ var MessageHeader$HeaderPeerData;
                 if (!plaintext) {
                     var headerData = new HeaderData(null, 1, null, false, false, null, [], null, null, null, []);
                     var headerPeerData = new HeaderPeerData(null, null, []);
-                    var creationData = new CreationData(null, null, messageCryptoContext, headerdata, plaintext, signature, verified, false);
+                    var creationData = new CreationData(null, null, null, messageCryptoContext, headerdata, plaintext, signature, verified, false);
                     new MessageHeader(ctx, entityAuthData, masterToken, headerData, headerPeerData, creationData, callback);
                     return;
                 }
@@ -1133,6 +1155,10 @@ var MessageHeader$HeaderPeerData;
                 var recipient = (headerdataJO[KEY_RECIPIENT] !== 'undefined') ? headerdataJO[KEY_RECIPIENT] : null;
                 if (recipient && typeof recipient !== 'string')
                     throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson).setEntity(masterToken).setEntity(entityAuthData).setMessageId(messageId);
+                var timestampSeconds = (headerdataJO[KEY_TIMESTAMP] !== 'undefined') ? headerdataJO[KEY_TIMESTAMP] : null;
+                if (timestampSeconds && typeof timestampSeconds !== 'number')
+                    throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson).setEntity(masterToken).setEntity(entityAuthData).setMessageId(messageId);
+                var timestamp = new Date(timestampSeconds * MILLISECONDS_PER_SECOND);
 
                 // Pull and verify key response data.
                 var keyResponseDataJo = headerdataJO[KEY_KEY_RESPONSE_DATA];
@@ -1242,7 +1268,7 @@ var MessageHeader$HeaderPeerData;
                                                                                             keyRequestData, keyResponseData, userAuthData, userIdToken,
                                                                                             serviceTokens);
                                                                                     var headerPeerData = new HeaderPeerData(peerMasterToken, peerUserIdToken, peerServiceTokens);
-                                                                                    var creationData = new CreationData(user, sender, messageCryptoContext, headerdata, plaintext, signature, verified, nonReplayable);
+                                                                                    var creationData = new CreationData(user, sender, timestamp, messageCryptoContext, headerdata, plaintext, signature, verified, nonReplayable);
                                                                                     new MessageHeader(ctx, entityAuthData, masterToken, headerData, headerPeerData, creationData, callback);
                                                                                 });
                                                                             },

@@ -785,8 +785,19 @@ public class MasterTokenTest {
         final Date expiration = new Date(System.currentTimeMillis() + 1000);
         final MasterToken masterToken = new MasterToken(ctx, renewalWindow, expiration, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY);
         
+        final Date now = new Date();
         assertTrue(masterToken.isRenewable());
+        assertTrue(masterToken.isRenewable(now));
         assertFalse(masterToken.isExpired());
+        assertFalse(masterToken.isExpired(now));
+        
+        final Date before = new Date(renewalWindow.getTime() - 1000);
+        assertFalse(masterToken.isRenewable(before));
+        assertFalse(masterToken.isExpired(before));
+        
+        final Date after = new Date(expiration.getTime() + 1000);
+        assertTrue(masterToken.isRenewable(after));
+        assertTrue(masterToken.isExpired(after));
     }
     
     @Test
@@ -795,8 +806,19 @@ public class MasterTokenTest {
         final Date expiration = new Date();
         final MasterToken masterToken = new MasterToken(ctx, renewalWindow, expiration, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY);
         
+        final Date now = new Date();
         assertTrue(masterToken.isRenewable());
+        assertTrue(masterToken.isRenewable(now));
         assertTrue(masterToken.isExpired());
+        assertTrue(masterToken.isExpired(now));
+        
+        final Date before = new Date(renewalWindow.getTime() - 1000);
+        assertFalse(masterToken.isRenewable(before));
+        assertFalse(masterToken.isExpired(before));
+        
+        final Date after = new Date(expiration.getTime() + 1000);
+        assertTrue(masterToken.isRenewable(after));
+        assertTrue(masterToken.isExpired(after));
     }
     
     @Test
@@ -805,8 +827,19 @@ public class MasterTokenTest {
         final Date expiration = new Date(System.currentTimeMillis() + 2000);
         final MasterToken masterToken = new MasterToken(ctx, renewalWindow, expiration, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY);
         
+        final Date now = new Date();
         assertFalse(masterToken.isRenewable());
+        assertFalse(masterToken.isRenewable(now));
         assertFalse(masterToken.isExpired());
+        assertFalse(masterToken.isExpired(now));
+        
+        final Date before = new Date(renewalWindow.getTime() - 1000);
+        assertFalse(masterToken.isRenewable(before));
+        assertFalse(masterToken.isExpired(before));
+        
+        final Date after = new Date(expiration.getTime() + 1000);
+        assertTrue(masterToken.isRenewable(after));
+        assertTrue(masterToken.isExpired(after));
     }
     
     @Test
