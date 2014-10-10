@@ -364,8 +364,6 @@ var MasterToken$parse;
          * @return {boolean} true if the renewal window has been entered.
          */
         isRenewable: function isRenewable(now) {
-            if (!this.isVerified())
-                return true;
             var compareTime = (now) ? now.getTime() : this.ctx.getTime();
             return this.renewalWindow.getTime() <= compareTime;
         },
@@ -381,8 +379,6 @@ var MasterToken$parse;
          * @return {boolean} true if expired.
          */
         isExpired: function isExpired(now) {
-            if (!this.isVerified())
-                return false;
             var compareTime = (now) ? now.getTime() : this.ctx.getTime();
             return this.expiration.getTime() <= compareTime;
         },

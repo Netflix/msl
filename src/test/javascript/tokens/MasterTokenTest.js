@@ -969,7 +969,7 @@ describe("MasterToken", function() {
         runs(function() {
 	        expect(joMasterToken.isDecrypted()).toBeFalsy();
 	        expect(joMasterToken.isVerified()).toBeFalsy();
-	        expect(joMasterToken.isRenewable()).not.toEqual(masterToken.isRenewable());
+	        expect(joMasterToken.isRenewable()).toEqual(masterToken.isRenewable());
 	        expect(joMasterToken.isExpired()).toEqual(masterToken.isExpired());
 	        expect(joMasterToken.isNewerThan(masterToken)).toBeFalsy();
 	        expect(masterToken.isNewerThan(joMasterToken)).toBeFalsy();
