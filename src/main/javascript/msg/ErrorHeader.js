@@ -98,13 +98,13 @@ var ErrorHeader$parse;
      *
      * @param {Uint8Array} errordata raw error data.
      * @param {Uint8Array} signature raw signature.
-     * @param {number} timestamp creation timestamp.
+     * @param {number} timestampSeconds creation timestamp in seconds since the epoch.
      * @constructor
      */
-    function CreationData(errordata, signature, timestamp) {
+    function CreationData(errordata, signature, timestampSeconds) {
         this.errordata = errordata;
         this.signature = signature;
-        this.timestamp = timestamp;
+        this.timestampSeconds = timestampSeconds;
     }
 
     ErrorHeader = util.Class.create({
@@ -151,12 +151,12 @@ var ErrorHeader$parse;
 
                 // Construct the error data.
                 if (!creationData) {
-                    var timestamp = new Date(ctx.getTime() / MILLISECONDS_PER_SECOND * MILLISECONDS_PER_SECOND);
+                    var timestampSeconds = ctx.getTime() / MILLISECONDS_PER_SECOND;
                     
                     // Construct the JSON.
                     var errorJO = {};
                     if (recipient) errorJO[KEY_RECIPIENT] = recipient;
-                    errorJO[KEY_TIMESTAMP] = timestamp.getTime() / MILLISECONDS_PER_SECOND;
+                    errorJO[KEY_TIMESTAMP] = timestampSeconds;
                     errorJO[KEY_MESSAGE_ID] = messageId;
                     errorJO[KEY_ERROR_CODE] = errorCode;
                     if (internalCode > 0) errorJO[KEY_INTERNAL_CODE] = internalCode;
@@ -188,7 +188,7 @@ var ErrorHeader$parse;
                                             var props = {
                                                 entityAuthenticationData: { value: entityAuthData, writable: false, configurable: false },
                                                 recipient: { value: recipient, writable: false, configurable: false },
-                                                timestamp: { value: timestamp, writable: false, configurable: false },
+                                                timestampSeconds: { value: timestampSeconds, writable: false, enumerable: false, configurable: false },
                                                 messageId: { value: messageId, writable: false, configurable: false },
                                                 errorCode: { value: errorCode, writable: false, configurable: false },
                                                 internalCode: { value: internalCode, writable: false, configurable: false },
@@ -224,7 +224,7 @@ var ErrorHeader$parse;
                         }
                     });
                 } else {
-                    var timestamp = creationData.timestamp;
+                    var timestampSeconds = creationData.timestampSeconds;
                     var errordata = creationData.errordata;
                     var signature = creationData.signature;
 
@@ -232,7 +232,7 @@ var ErrorHeader$parse;
                     var props = {
                         entityAuthenticationData: { value: entityAuthData, writable: false, configurable: false },
                         recipient: { value: recipient, writable: false, configurable: false },
-                        timestamp: { value: timestamp, writable: false, configurable: false },
+                        timestampSeconds: { value: timestampSeconds, writable: false, enumerable: false, configurable: false },
                         messageId: { value: messageId, writable: false, configurable: false },
                         errorCode: { value: errorCode, writable: false, configurable: false },
                         internalCode: { value: internalCode, writable: false, configurable: false },
@@ -245,6 +245,13 @@ var ErrorHeader$parse;
                     return this;
                 };
             }, self);
+        },
+
+        /**
+        * @return {Date} gets the timestamp.
+        */
+        get timestamp() {
+            return new Date(this.timestampSeconds * MILLISECONDS_PER_SECOND);
         },
 
         /** @inheritDoc */
@@ -397,8 +404,7 @@ var ErrorHeader$parse;
                                     }
 
                                     // Return the error header.
-                                    var timestamp = new Date(timestampSeconds * MILLISECONDS_PER_SECOND);
-                                    var creationData = new CreationData(errordata, signature, timestamp);
+                                    var creationData = new CreationData(errordata, signature, timestampSeconds);
                                     new ErrorHeader(ctx, entityAuthData, recipient, messageId, errorCode, internalCode, errorMsg, userMsg, creationData, callback);
                                 });
                             },

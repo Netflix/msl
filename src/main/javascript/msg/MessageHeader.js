@@ -266,7 +266,7 @@ var MessageHeader$HeaderPeerData;
      *
      * @param {MslUser} user MSL user.
      * @param {string} sender message sender.
-     * @param {Date} timestamp.
+     * @param {number} timestampSeconds message timestamp in seconds since the epoch.
      * @param {ICryptoContext} messageCryptoContext message crypto context.
      * @param {Uint8Array} headerdata raw header data.
      * @param {Uint8Array} plaintext decrypted header data.
@@ -275,10 +275,10 @@ var MessageHeader$HeaderPeerData;
      * @param {number} legacy non-replayable boolean.
      * @constructor
      */
-    function CreationData(user, sender, timestamp, messageCryptoContext, headerdata, plaintext, signature, verified, nonReplayable) {
+    function CreationData(user, sender, timestampSeconds, messageCryptoContext, headerdata, plaintext, signature, verified, nonReplayable) {
         this.user = user;
         this.sender = sender;
-        this.timestamp = timestamp;
+        this.timestampSeconds = timestampSeconds;
         this.messageCryptoContext = messageCryptoContext;
         this.headerdata = headerdata;
         this.plaintext = plaintext;
@@ -297,7 +297,7 @@ var MessageHeader$HeaderPeerData;
      * @param {MasterToken} masterToken
      * @param {string} sender
      * @param {string} recipient
-     * @param {Date} timestamp
+     * @param {Date} timestampSeconds
      * @param {number} messageId
      * @param {Array.<KeyRequestData>} keyRequestData
      * @param {KeyResponseData} keyResponseData
@@ -318,7 +318,7 @@ var MessageHeader$HeaderPeerData;
      * @return {object} the properties configuration.
      */
     function buildProperties(ctx, messageCryptoContext, user,
-            entityAuthData, masterToken, sender, recipient, timestamp, messageId,
+            entityAuthData, masterToken, sender, recipient, timestampSeconds, messageId,
             keyRequestData, keyResponseData,
             userAuthData, userIdToken, serviceTokens,
             peerMasterToken, peerUserIdToken, peerServiceTokens,
@@ -353,7 +353,7 @@ var MessageHeader$HeaderPeerData;
             masterToken: { value: masterToken, writable: false, configurable: false },
             sender: { value: sender, writable: false, configurable: false },
             recipient: { value: recipient, writable: false, configurable: false },
-            timestamp: { value: timestamp, writable: false, configurable: false },
+            timestampSeconds: { value: timestampSeconds, writable: false, enumerable: false, configurable: false },
             messageId: { value: messageId, writable: false, configurable: false },
             nonReplayableId: { value: nonReplayableId, writable: false, configurable: false },
             keyRequestData: { value: keyRequestData, writable: false, configurable: false },
@@ -572,13 +572,13 @@ var MessageHeader$HeaderPeerData;
                         var user = (userIdToken) ? userIdToken.user : null;
                         
                         // Set the creation timestamp.
-                        var timestamp = new Date(ctx.getTime() / MILLISECONDS_PER_SECOND * MILLISECONDS_PER_SECOND);
+                        var timestampSeconds = ctx.getTime() / MILLISECONDS_PER_SECOND;
 
                         // Construct the JSON.
                         var headerJO = {};
                         if (sender) headerJO[KEY_SENDER] = sender;
                         if (recipient) headerJO[KEY_RECIPIENT] = recipient;
-                        headerJO[KEY_TIMESTAMP] = timestamp.getTime() / MILLISECONDS_PER_SECOND;
+                        headerJO[KEY_TIMESTAMP] = timestampSeconds;
                         headerJO[KEY_MESSAGE_ID] = messageId;
                         headerJO[KEY_NON_REPLAYABLE] = nonReplayable;
                         if (typeof nonReplayableId === 'number') headerJO[KEY_NON_REPLAYABLE_ID] = nonReplayableId;
@@ -618,7 +618,7 @@ var MessageHeader$HeaderPeerData;
                                         result: function(signature) {
                                             AsyncExecutor(callback, function() {
                                                 var props = buildProperties(ctx, messageCryptoContext, user, entityAuthData,
-                                                    masterToken, sender, recipient, timestamp, messageId,
+                                                    masterToken, sender, recipient, timestampSeconds, messageId,
                                                     keyRequestData, keyResponseData,
                                                     userAuthData, userIdToken, serviceTokens,
                                                     peerMasterToken, peerUserIdToken, peerServiceTokens,
@@ -658,7 +658,7 @@ var MessageHeader$HeaderPeerData;
                         });
                     } else {
                         var user = creationData.user;
-                        var timestamp = creationData.timestamp;
+                        var timestampSeconds = creationData.timestampSeconds;
                         var messageCryptoContext = creationData.messageCryptoContext;
                         var headerdata = creationData.headerdata;
                         var plaintext = creationData.plaintext;
@@ -667,7 +667,7 @@ var MessageHeader$HeaderPeerData;
                         nonReplayable = creationData.nonReplayable;
 
                         var props = buildProperties(ctx, messageCryptoContext, user, entityAuthData,
-                            masterToken, sender, recipient, timestamp, messageId,
+                            masterToken, sender, recipient, timestampSeconds, messageId,
                             keyRequestData, keyResponseData,
                             userAuthData, userIdToken, serviceTokens,
                             peerMasterToken, peerUserIdToken, peerServiceTokens,
@@ -678,6 +678,13 @@ var MessageHeader$HeaderPeerData;
                     }
                 }, self);
             }
+        },
+
+        /**
+        * @return {Date} gets the timestamp.
+        */
+        get timestamp() {
+            return new Date(this.timestampSeconds * MILLISECONDS_PER_SECOND);
         },
 
         /**
@@ -1158,8 +1165,7 @@ var MessageHeader$HeaderPeerData;
                 var timestampSeconds = (headerdataJO[KEY_TIMESTAMP] !== 'undefined') ? headerdataJO[KEY_TIMESTAMP] : null;
                 if (timestampSeconds && typeof timestampSeconds !== 'number')
                     throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson).setEntity(masterToken).setEntity(entityAuthData).setMessageId(messageId);
-                var timestamp = new Date(timestampSeconds * MILLISECONDS_PER_SECOND);
-
+                
                 // Pull and verify key response data.
                 var keyResponseDataJo = headerdataJO[KEY_KEY_RESPONSE_DATA];
                 if (keyResponseDataJo && typeof keyResponseDataJo !== 'object')
@@ -1268,7 +1274,7 @@ var MessageHeader$HeaderPeerData;
                                                                                             keyRequestData, keyResponseData, userAuthData, userIdToken,
                                                                                             serviceTokens);
                                                                                     var headerPeerData = new HeaderPeerData(peerMasterToken, peerUserIdToken, peerServiceTokens);
-                                                                                    var creationData = new CreationData(user, sender, timestamp, messageCryptoContext, headerdata, plaintext, signature, verified, nonReplayable);
+                                                                                    var creationData = new CreationData(user, sender, timestampSeconds, messageCryptoContext, headerdata, plaintext, signature, verified, nonReplayable);
                                                                                     new MessageHeader(ctx, entityAuthData, masterToken, headerData, headerPeerData, creationData, callback);
                                                                                 });
                                                                             },
