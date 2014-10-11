@@ -41,6 +41,7 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="org.hamcrest:hamcrest-library:1.3" level="project" />
+    <orderEntry type="library" name="javax.servlet:servlet-api:2.5" level="project" />
   </component>
 </module>
 
