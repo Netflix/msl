@@ -81,7 +81,7 @@ public class SimpleNavalPortDatabase implements NavalPortDatabase {
     }
 
     /** Naval port states by callsign. */
-    private final Map<String,Status> states = new HashMap<>();
+    private final Map<String,Status> states = new HashMap<String,Status>();
     /** Naval port code books by callsign. */
-    private final Map<String,CodeBook> books = new HashMap<>();
+    private final Map<String,CodeBook> books = new HashMap<String,CodeBook>();
 }

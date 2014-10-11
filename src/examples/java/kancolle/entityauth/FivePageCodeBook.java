@@ -50,7 +50,7 @@ public class FivePageCodeBook implements CodeBook {
         
         // Add words to the page until we hit the fifth newline.
         final StringTokenizer tokenizer = new StringTokenizer(text, " \t\n\r\f", true);
-        List<String> page = new ArrayList<>();
+        List<String> page = new ArrayList<String>();
         int lineNumber = 1;
         while (tokenizer.hasMoreTokens()) {
             final String token = tokenizer.nextToken();
@@ -65,7 +65,7 @@ public class FivePageCodeBook implements CodeBook {
                 ++lineNumber;
                 if (lineNumber % LINES_PER_PAGE == 0 && page.size() > 0) {
                     pages_words.add(page);
-                    page = new ArrayList<>();
+                    page = new ArrayList<String>();
                 }
                 continue;
             }
@@ -113,5 +113,5 @@ public class FivePageCodeBook implements CodeBook {
     }
 
     /** Pages and words. */
-    private final List<List<String>> pages_words = new ArrayList<>();
+    private final List<List<String>> pages_words = new ArrayList<List<String>>();
 }

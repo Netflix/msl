@@ -97,7 +97,7 @@ public class SimpleKanmusuDatabase implements KanmusuDatabase {
     }
 
     /** Kanmusu ship states by identity. */
-    private final Map<String,Status> states = new HashMap<>();
+    private final Map<String,Status> states = new HashMap<String,Status>();
     /** Kanmusu ship passphrases by identity. */
-    private final Map<String,String> passphrases = new HashMap<>();
+    private final Map<String,String> passphrases = new HashMap<String,String>();
 }

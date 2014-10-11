@@ -249,7 +249,7 @@ public class Kanmusu extends Thread {
     private long lastPing = 0;
     
     /** Queued requests. */
-    private final BlockingQueue<Request> requests = new LinkedBlockingQueue<>();
+    private final BlockingQueue<Request> requests = new LinkedBlockingQueue<Request>();
     
     /** Data lock. */
     private final Lock dataLock = new ReentrantLock();

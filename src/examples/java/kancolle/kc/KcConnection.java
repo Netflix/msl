@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class KcConnection extends URLConnection {
     /** Known servers. */
-    private static final Map<String, KanColleServer> servers = new ConcurrentHashMap<>();
+    private static final Map<String,KanColleServer> servers = new ConcurrentHashMap<String,KanColleServer>();
     
     /**
      * <p>Register a KanColle server. It can then be connected by using a URL

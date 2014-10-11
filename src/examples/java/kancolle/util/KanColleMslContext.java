@@ -182,11 +182,11 @@ public abstract class KanColleMslContext implements MslContext {
     /** Message capabilities. */
     private final MessageCapabilities messageCaps;
     /** Entity authentication factories by scheme. */
-    private final Map<EntityAuthenticationScheme,EntityAuthenticationFactory> entityAuthFactories = new HashMap<>();
+    private final Map<EntityAuthenticationScheme,EntityAuthenticationFactory> entityAuthFactories = new HashMap<EntityAuthenticationScheme,EntityAuthenticationFactory>();
     /** User authentication factories by scheme. */
-    private final Map<UserAuthenticationScheme,UserAuthenticationFactory> userAuthFactories = new HashMap<>();
+    private final Map<UserAuthenticationScheme,UserAuthenticationFactory> userAuthFactories = new HashMap<UserAuthenticationScheme,UserAuthenticationFactory>();
     /** Key exchange factories. */
-    private final SortedSet<KeyExchangeFactory> keyxFactories = new TreeSet<>(new KanColleKeyxComparator());
+    private final SortedSet<KeyExchangeFactory> keyxFactories = new TreeSet<KeyExchangeFactory>(new KanColleKeyxComparator());
     /** Token factory. */
     private final TokenFactory tokenFactory;
     /** MSL store. */

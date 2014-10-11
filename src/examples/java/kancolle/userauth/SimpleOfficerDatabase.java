@@ -78,7 +78,7 @@ public class SimpleOfficerDatabase implements OfficerDatabase {
     }
 
     /** Officer states by name. */
-    private final Map<String,Status> states = new HashMap<>();
+    private final Map<String,Status> states = new HashMap<String,Status>();
     /** Officer fingerprints by name. */
-    private final Map<String,byte[]> fingerprints = new HashMap<>();
+    private final Map<String,byte[]> fingerprints = new HashMap<String,byte[]>();
 }

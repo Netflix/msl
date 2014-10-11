@@ -48,7 +48,7 @@ public class KanColleDiffieHellmanParameters implements DiffieHellmanParameters 
      */
     @Override
     public Map<String,DHParameterSpec> getParameterSpecs() throws MslKeyExchangeException {
-        final Map<String,DHParameterSpec> params = new HashMap<>();
+        final Map<String,DHParameterSpec> params = new HashMap<String,DHParameterSpec>();
         params.put(PARAM_ID, paramSpec);
         return Collections.unmodifiableMap(params);
     }

@@ -230,7 +230,7 @@ public class MessageProcessor {
                 throw new MslMessageException(KanColleMslError.MSG_RECORDS_TRUNCATED, "expected " + count + "; received " + (lines.length - 1));
             
             // Read each record.
-            final List<String> records = new ArrayList<>();
+            final List<String> records = new ArrayList<String>();
             for (int i = 1; i <= count; ++i) {
                 // Grab the record number.
                 final String record = lines[i];
