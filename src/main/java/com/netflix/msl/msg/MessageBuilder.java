@@ -257,7 +257,7 @@ public class MessageBuilder {
                     // newest master token, or the message is non-replayable,
                     // then renew the master token.
                     final TokenFactory factory = ctx.getTokenFactory();
-                    if (masterToken.isRenewable() || masterToken.isExpired() || !factory.isNewestMasterToken(ctx, masterToken) || requestHeader.isNonReplayable())
+                    if (masterToken.isRenewable(null) || masterToken.isExpired(null) || !factory.isNewestMasterToken(ctx, masterToken) || requestHeader.isNonReplayable())
                         keyExchangeData = issueMasterToken(ctx, keyRequestData, masterToken, null);
                     // Otherwise we don't need to do anything special.
                     else
@@ -295,8 +295,8 @@ public class MessageBuilder {
                 // If the user ID token is renewable and the message is
                 // renewable, or it is expired, or it needs to be rebound
                 // to the new master token then renew the user ID token.
-                if ((userIdToken.isRenewable() && requestHeader.isRenewable()) ||
-                    userIdToken.isExpired() ||
+                if ((userIdToken.isRenewable(null) && requestHeader.isRenewable()) ||
+                    userIdToken.isExpired(null) ||
                     !userIdToken.isBoundTo(userAuthMasterToken))
                 {
                     final TokenFactory tokenFactory = ctx.getTokenFactory();

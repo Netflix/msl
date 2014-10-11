@@ -109,8 +109,8 @@ describe("MasterToken", function() {
         runs(function() {
 	        expect(masterToken.isDecrypted()).toBeTruthy();
 	        expect(masterToken.isVerified()).toBeTruthy();
-	        expect(masterToken.isRenewable()).toBeFalsy();
-	        expect(masterToken.isExpired()).toBeFalsy();
+	        expect(masterToken.isRenewable(null)).toBeFalsy();
+	        expect(masterToken.isExpired(null)).toBeFalsy();
 	        expect(masterToken.isNewerThan(masterToken)).toBeFalsy();
 	        expect(masterToken.encryptionKey.toByteArray()).toEqual(ENCRYPTION_KEY.toByteArray());
 	        expect(masterToken.expiration.getTime() / MILLISECONDS_PER_SECOND).toEqual(Math.floor(EXPIRATION.getTime() / MILLISECONDS_PER_SECOND));
@@ -136,8 +136,8 @@ describe("MasterToken", function() {
         runs(function() {
 	        expect(joMasterToken.isDecrypted()).toEqual(masterToken.isDecrypted());
 	        expect(joMasterToken.isVerified()).toEqual(masterToken.isVerified());
-	        expect(joMasterToken.isRenewable()).toEqual(masterToken.isRenewable());
-	        expect(joMasterToken.isExpired()).toEqual(masterToken.isExpired());
+	        expect(joMasterToken.isRenewable(null)).toEqual(masterToken.isRenewable(null));
+	        expect(joMasterToken.isExpired(null)).toEqual(masterToken.isExpired(null));
 	        expect(joMasterToken.isNewerThan(masterToken)).toBeFalsy();
 	        expect(masterToken.isNewerThan(joMasterToken)).toBeFalsy();
 	        expect(joMasterToken.encryptionKey.toByteArray()).toEqual(masterToken.encryptionKey.toByteArray());
@@ -969,8 +969,8 @@ describe("MasterToken", function() {
         runs(function() {
 	        expect(joMasterToken.isDecrypted()).toBeFalsy();
 	        expect(joMasterToken.isVerified()).toBeFalsy();
-	        expect(joMasterToken.isRenewable()).toEqual(masterToken.isRenewable());
-	        expect(joMasterToken.isExpired()).toEqual(masterToken.isExpired());
+	        expect(joMasterToken.isRenewable(null)).not.toEqual(masterToken.isRenewable(null));
+	        expect(joMasterToken.isExpired(null)).toEqual(masterToken.isExpired(null));
 	        expect(joMasterToken.isNewerThan(masterToken)).toBeFalsy();
 	        expect(masterToken.isNewerThan(joMasterToken)).toBeFalsy();
 	        expect(joMasterToken.encryptionKey).toBeNull();
@@ -1375,9 +1375,9 @@ describe("MasterToken", function() {
         waitsFor(function() { return masterToken; }, "masterToken not received", 500);
         runs(function() {
             var now = new Date();
-	        expect(masterToken.isRenewable()).toBeTruthy();
+	        expect(masterToken.isRenewable(null)).toBeTruthy();
             expect(masterToken.isRenewable(now)).toBeTruthy();
-            expect(masterToken.isExpired()).toBeFalsy();
+            expect(masterToken.isExpired(null)).toBeFalsy();
 	        expect(masterToken.isExpired(now)).toBeFalsy();
 	        
 	        var before = new Date(renewalWindow.getTime() - 1000);
@@ -1403,9 +1403,9 @@ describe("MasterToken", function() {
         waitsFor(function() { return masterToken; }, "masterToken not received", 500);
         runs(function() {
             var now = new Date();
-	        expect(masterToken.isRenewable()).toBeTruthy();
+	        expect(masterToken.isRenewable(null)).toBeTruthy();
             expect(masterToken.isRenewable(now)).toBeTruthy();
-            expect(masterToken.isExpired()).toBeTruthy();
+            expect(masterToken.isExpired(null)).toBeTruthy();
 	        expect(masterToken.isExpired(now)).toBeTruthy();
             
             var before = new Date(renewalWindow.getTime() - 1000);
@@ -1431,9 +1431,9 @@ describe("MasterToken", function() {
         waitsFor(function() { return masterToken; }, "masterToken not received", 500);
         runs(function() {
             var now = new Date();
-	        expect(masterToken.isRenewable()).toBeFalsy();
+	        expect(masterToken.isRenewable(null)).toBeFalsy();
             expect(masterToken.isRenewable(now)).toBeFalsy();
-            expect(masterToken.isExpired()).toBeFalsy();
+            expect(masterToken.isExpired(null)).toBeFalsy();
 	        expect(masterToken.isExpired(now)).toBeFalsy();
             
             var before = new Date(renewalWindow.getTime() - 1000);

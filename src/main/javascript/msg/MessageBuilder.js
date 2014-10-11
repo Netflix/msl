@@ -182,7 +182,7 @@ var MessageBuilder$createErrorResponse;
                     // If the master token is renewable/expired or not the
                     // newest master token, or the message is non-replayable,
                     // then renew the master token.
-                    if (masterToken.isRenewable() || masterToken.isExpired() || requestHeader.isNonReplayable()) {
+                    if (masterToken.isRenewable(null) || masterToken.isExpired(null) || requestHeader.isNonReplayable()) {
                         issueMasterToken(ctx, keyRequestData, masterToken, null, callback);
                     } else {
                         var factory = ctx.getTokenFactory();
@@ -288,8 +288,8 @@ var MessageBuilder$createErrorResponse;
                 // If the user ID token is renewable and the message is
                 // renewable, or it is expired, or it needs to be rebound
                 // to the new master token then renew the user ID token.
-                if ((userIdToken.isRenewable() && requestHeader.isRenewable()) ||
-                    userIdToken.isExpired() ||
+                if ((userIdToken.isRenewable(null) && requestHeader.isRenewable()) ||
+                    userIdToken.isExpired(null) ||
                     !userIdToken.isBoundTo(masterToken))
                 {
                     var tokenFactory = ctx.getTokenFactory();

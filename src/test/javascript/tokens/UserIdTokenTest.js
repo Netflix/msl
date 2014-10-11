@@ -90,8 +90,8 @@ describe("UserIdToken", function() {
         runs(function() {
 	        expect(userIdToken.isDecrypted()).toBeTruthy();
 	        expect(userIdToken.isVerified()).toBeTruthy();
-	        expect(userIdToken.isRenewable()).toBeFalsy();
-	        expect(userIdToken.isExpired()).toBeFalsy();
+	        expect(userIdToken.isRenewable(null)).toBeFalsy();
+	        expect(userIdToken.isExpired(null)).toBeFalsy();
 	        expect(userIdToken.isBoundTo(MASTER_TOKEN)).toBeTruthy();
 	        expect(userIdToken.issuerData).toEqual(ISSUER_DATA);
 	        expect(userIdToken.user).toEqual(USER);
@@ -116,8 +116,8 @@ describe("UserIdToken", function() {
         runs(function() {
 	        expect(joUserIdToken.isDecrypted()).toEqual(userIdToken.isDecrypted());
 	        expect(joUserIdToken.isVerified()).toEqual(userIdToken.isVerified());
-	        expect(joUserIdToken.isRenewable()).toEqual(userIdToken.isRenewable());
-	        expect(joUserIdToken.isExpired()).toEqual(userIdToken.isExpired());
+	        expect(joUserIdToken.isRenewable(null)).toEqual(userIdToken.isRenewable(null));
+	        expect(joUserIdToken.isExpired(null)).toEqual(userIdToken.isExpired(null));
 	        expect(joUserIdToken.isBoundTo(MASTER_TOKEN)).toBeTruthy();
 	        expect(joUserIdToken.issuerData).toEqual(userIdToken.issuerData);
 	        expect(joUserIdToken.user).toEqual(userIdToken.user);
@@ -1209,8 +1209,8 @@ describe("UserIdToken", function() {
         runs(function() {
 	        expect(joUserIdToken.isDecrypted()).toBeFalsy();
 	        expect(joUserIdToken.isVerified()).toBeFalsy();
-	        expect(joUserIdToken.isRenewable()).toEqual(userIdToken.isRenewable());
-	        expect(joUserIdToken.isExpired()).toEqual(userIdToken.isExpired());
+	        expect(joUserIdToken.isRenewable(null)).not.toEqual(userIdToken.isRenewable(null));
+	        expect(joUserIdToken.isExpired(null)).toEqual(userIdToken.isExpired(null));
 	        expect(joUserIdToken.isBoundTo(MASTER_TOKEN)).toEqual(userIdToken.isBoundTo(MASTER_TOKEN));
 	        expect(joUserIdToken.user).toBeNull();
 	        expect(joUserIdToken.expiration.getTime() / MILLISECONDS_PER_SECOND).toEqual(userIdToken.expiration.getTime() / MILLISECONDS_PER_SECOND);
@@ -1236,9 +1236,9 @@ describe("UserIdToken", function() {
         waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
         runs(function() {
             var now = new Date();
-	        expect(userIdToken.isRenewable()).toBeTruthy();
+	        expect(userIdToken.isRenewable(null)).toBeTruthy();
             expect(userIdToken.isRenewable(now)).toBeTruthy();
-            expect(userIdToken.isExpired()).toBeFalsy();
+            expect(userIdToken.isExpired(null)).toBeFalsy();
 	        expect(userIdToken.isExpired(now)).toBeFalsy();
             
             var before = new Date(renewalWindow.getTime() - 1000);
@@ -1264,9 +1264,9 @@ describe("UserIdToken", function() {
         waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
         runs(function() {
             var now = new Date();
-	        expect(userIdToken.isRenewable()).toBeTruthy();
+	        expect(userIdToken.isRenewable(null)).toBeTruthy();
             expect(userIdToken.isRenewable(now)).toBeTruthy();
-            expect(userIdToken.isExpired()).toBeTruthy();
+            expect(userIdToken.isExpired(null)).toBeTruthy();
 	        expect(userIdToken.isExpired(now)).toBeTruthy();
             
             var before = new Date(renewalWindow.getTime() - 1000);
@@ -1292,9 +1292,9 @@ describe("UserIdToken", function() {
         waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
         runs(function() {
             var now = new Date();
-	        expect(userIdToken.isRenewable()).toBeFalsy();
+	        expect(userIdToken.isRenewable(null)).toBeFalsy();
             expect(userIdToken.isRenewable(now)).toBeFalsy();
-            expect(userIdToken.isExpired()).toBeFalsy();
+            expect(userIdToken.isExpired(null)).toBeFalsy();
 	        expect(userIdToken.isExpired(now)).toBeFalsy();
             
             var before = new Date(renewalWindow.getTime() - 1000);

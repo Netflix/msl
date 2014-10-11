@@ -125,8 +125,8 @@ public class MasterTokenTest {
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY);
         assertTrue(masterToken.isDecrypted());
         assertTrue(masterToken.isVerified());
-        assertFalse(masterToken.isRenewable());
-        assertFalse(masterToken.isExpired());
+        assertFalse(masterToken.isRenewable(null));
+        assertFalse(masterToken.isExpired(null));
         assertFalse(masterToken.isNewerThan(masterToken));
         assertArrayEquals(ENCRYPTION_KEY.getEncoded(), masterToken.getEncryptionKey().getEncoded());
         assertEquals(EXPIRATION.getTime() / MILLISECONDS_PER_SECOND, masterToken.getExpiration().getTime() / MILLISECONDS_PER_SECOND);
@@ -143,8 +143,8 @@ public class MasterTokenTest {
         final MasterToken joMasterToken = new MasterToken(ctx, jo);
         assertEquals(masterToken.isDecrypted(), joMasterToken.isDecrypted());
         assertEquals(masterToken.isVerified(), joMasterToken.isVerified());
-        assertEquals(masterToken.isRenewable(), joMasterToken.isRenewable());
-        assertEquals(masterToken.isExpired(), joMasterToken.isExpired());
+        assertEquals(masterToken.isRenewable(null), joMasterToken.isRenewable(null));
+        assertEquals(masterToken.isExpired(null), joMasterToken.isExpired(null));
         assertFalse(joMasterToken.isNewerThan(masterToken));
         assertFalse(masterToken.isNewerThan(joMasterToken));
         assertArrayEquals(masterToken.getEncryptionKey().getEncoded(), joMasterToken.getEncryptionKey().getEncoded());
@@ -564,8 +564,8 @@ public class MasterTokenTest {
         final MasterToken joMasterToken = new MasterToken(ctx, jo);
         assertFalse(joMasterToken.isDecrypted());
         assertFalse(joMasterToken.isVerified());
-        assertEquals(masterToken.isRenewable(), joMasterToken.isRenewable());
-        assertEquals(masterToken.isExpired(), joMasterToken.isExpired());
+        assertNotEquals(masterToken.isRenewable(null), joMasterToken.isRenewable(null));
+        assertEquals(masterToken.isExpired(null), joMasterToken.isExpired(null));
         assertFalse(joMasterToken.isNewerThan(masterToken));
         assertFalse(masterToken.isNewerThan(joMasterToken));
         assertNull(joMasterToken.getEncryptionKey());
@@ -786,9 +786,9 @@ public class MasterTokenTest {
         final MasterToken masterToken = new MasterToken(ctx, renewalWindow, expiration, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY);
         
         final Date now = new Date();
-        assertTrue(masterToken.isRenewable());
+        assertTrue(masterToken.isRenewable(null));
         assertTrue(masterToken.isRenewable(now));
-        assertFalse(masterToken.isExpired());
+        assertFalse(masterToken.isExpired(null));
         assertFalse(masterToken.isExpired(now));
         
         final Date before = new Date(renewalWindow.getTime() - 1000);
@@ -807,9 +807,9 @@ public class MasterTokenTest {
         final MasterToken masterToken = new MasterToken(ctx, renewalWindow, expiration, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY);
         
         final Date now = new Date();
-        assertTrue(masterToken.isRenewable());
+        assertTrue(masterToken.isRenewable(null));
         assertTrue(masterToken.isRenewable(now));
-        assertTrue(masterToken.isExpired());
+        assertTrue(masterToken.isExpired(null));
         assertTrue(masterToken.isExpired(now));
         
         final Date before = new Date(renewalWindow.getTime() - 1000);
@@ -828,9 +828,9 @@ public class MasterTokenTest {
         final MasterToken masterToken = new MasterToken(ctx, renewalWindow, expiration, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY);
         
         final Date now = new Date();
-        assertFalse(masterToken.isRenewable());
+        assertFalse(masterToken.isRenewable(null));
         assertFalse(masterToken.isRenewable(now));
-        assertFalse(masterToken.isExpired());
+        assertFalse(masterToken.isExpired(null));
         assertFalse(masterToken.isExpired(now));
         
         final Date before = new Date(renewalWindow.getTime() - 1000);

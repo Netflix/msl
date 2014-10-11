@@ -1375,16 +1375,14 @@ public class MslControl {
     
     /**
      * <p>Return the current time of the remote entity (i.e. the remote peer-to-
-     * peer entity or the trusted services servers). If there is no reasonable
-     * knowledge of the remote entity time the local entity time is
-     * returned.</p>
+     * peer entity or the trusted services servers).</p>
      * 
      * @param ctx MSL context.
-     * @return the remote time.
+     * @return the remote time or {@code null} if unknown.
      */
     private Date getRemoteTime(final MslContext ctx) {
         final SynchronizedClock clock = remoteClocks.get(ctx);
-        return (clock != null) ? clock.getTime(ctx) : new Date(ctx.getTime());
+        return (clock != null) ? clock.getTime(ctx) : null;
     }
     
     /**

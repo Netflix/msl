@@ -2206,7 +2206,7 @@ public class MessageBuilderSuite {
             assertEquals(requestUserIdToken.getUser(), responseUserIdToken.getUser());
             assertEquals(requestUserIdToken.getMasterTokenSerialNumber(), responseUserIdToken.getMasterTokenSerialNumber());
             assertEquals(requestUserIdToken.getSerialNumber(), responseUserIdToken.getSerialNumber());
-            assertFalse(responseUserIdToken.isRenewable());
+            assertFalse(responseUserIdToken.isRenewable(null));
         }
         
         @Test
@@ -2247,7 +2247,7 @@ public class MessageBuilderSuite {
             assertEquals(requestUserIdToken.getUser(), responseUserIdToken.getUser());
             assertEquals(requestUserIdToken.getMasterTokenSerialNumber(), responseUserIdToken.getMasterTokenSerialNumber());
             assertEquals(requestUserIdToken.getSerialNumber(), responseUserIdToken.getSerialNumber());
-            assertFalse(responseUserIdToken.isRenewable());
+            assertFalse(responseUserIdToken.isRenewable(null));
         }
         
         @Test
@@ -2267,7 +2267,7 @@ public class MessageBuilderSuite {
             assertEquals(requestUserIdToken.getUser(), responseUserIdToken.getUser());
             assertEquals(requestUserIdToken.getMasterTokenSerialNumber(), responseUserIdToken.getMasterTokenSerialNumber());
             assertEquals(requestUserIdToken.getSerialNumber(), responseUserIdToken.getSerialNumber());
-            assertFalse(responseUserIdToken.isExpired());
+            assertFalse(responseUserIdToken.isExpired(null));
         }
         
         @Test
@@ -2286,7 +2286,7 @@ public class MessageBuilderSuite {
             assertEquals(requestUserIdToken.getUser(), responseUserIdToken.getUser());
             assertEquals(requestUserIdToken.getMasterTokenSerialNumber(), responseUserIdToken.getMasterTokenSerialNumber());
             assertEquals(requestUserIdToken.getSerialNumber(), responseUserIdToken.getSerialNumber());
-            assertFalse(responseUserIdToken.isExpired());
+            assertFalse(responseUserIdToken.isExpired(null));
         }
         
         @Test
@@ -2316,7 +2316,7 @@ public class MessageBuilderSuite {
             // have it.
             assertEquals(unverifiedUserIdToken.getMasterTokenSerialNumber(), responseUserIdToken.getMasterTokenSerialNumber());
             assertEquals(unverifiedUserIdToken.getSerialNumber(), responseUserIdToken.getSerialNumber());
-            assertTrue(responseUserIdToken.isExpired());
+            assertFalse(responseUserIdToken.isExpired(null));
         }
         
         @Test

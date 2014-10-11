@@ -1371,12 +1371,10 @@ var MslControl$MslChannel;
         
         /**
          * <p>Return the current time of the remote entity (i.e. the remote peer-to-
-         * peer entity or the trusted services servers). If there is no reasonable
-         * knowledge of the remote entity time the local entity time is
-         * returned.</p>
+         * peer entity or the trusted services servers).</p>
          * 
          * @param {MslContext} ctx MSL context.
-         * @return {Date} the remote time.
+         * @return {Date} the remote time or {@code null} if unknown.
          */
         getRemoteTime: function getRemoteTime(ctx) {
             var clock;
@@ -1387,7 +1385,7 @@ var MslControl$MslChannel;
                     break;
                 }
             }
-            return (clock) ? clock.getTime(ctx) : new Date(ctx.getTime());
+            return (clock) ? clock.getTime(ctx) : null;
         },
 
         /**

@@ -4674,7 +4674,7 @@ describe("MessageBuilder", function() {
 				expect(responseUserIdToken.user).toEqual(requestUserIdToken.user);
 				expect(responseUserIdToken.mtSerialNumber).toEqual(requestUserIdToken.mtSerialNumber);
 				expect(responseUserIdToken.serialNumber).toEqual(requestUserIdToken.serialNumber);
-				expect(responseUserIdToken.isRenewable()).toBeFalsy();
+				expect(responseUserIdToken.isRenewable(null)).toBeFalsy();
 			});
 		});
 
@@ -4795,7 +4795,7 @@ describe("MessageBuilder", function() {
 				expect(responseUserIdToken.user).toEqual(requestUserIdToken.user);
 				expect(responseUserIdToken.mtSerialNumber).toEqual(requestUserIdToken.mtSerialNumber);
 				expect(responseUserIdToken.serialNumber).toEqual(requestUserIdToken.serialNumber);
-				expect(responseUserIdToken.isRenewable()).toBeFalsy();
+				expect(responseUserIdToken.isRenewable(null)).toBeFalsy();
 			});
 		});
 
@@ -4855,7 +4855,7 @@ describe("MessageBuilder", function() {
 				expect(responseUserIdToken.user).toEqual(requestUserIdToken.user);
 				expect(responseUserIdToken.mtSerialNumber).toEqual(requestUserIdToken.mtSerialNumber);
 				expect(responseUserIdToken.serialNumber).toEqual(requestUserIdToken.serialNumber);
-				expect(responseUserIdToken.isExpired()).toBeFalsy();
+				expect(responseUserIdToken.isExpired(null)).toBeFalsy();
 			});
 		});
 		
@@ -4914,7 +4914,7 @@ describe("MessageBuilder", function() {
 				expect(responseUserIdToken.user).toEqual(requestUserIdToken.user);
 				expect(responseUserIdToken.mtSerialNumber).toEqual(requestUserIdToken.mtSerialNumber);
 				expect(responseUserIdToken.serialNumber).toEqual(requestUserIdToken.serialNumber);
-				expect(responseUserIdToken.isExpired()).toBeFalsy();
+				expect(responseUserIdToken.isExpired(null)).toBeFalsy();
 			});
 		});
 		
