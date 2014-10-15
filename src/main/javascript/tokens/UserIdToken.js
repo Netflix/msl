@@ -314,29 +314,53 @@ var UserIdToken$parse;
         },
 
         /**
-         * Always returns true if this token was issued by a different entity
-         * because we cannot know if the local entity time is correct.
+         * <p>Returns true if the user ID token renewal window has been entered.</p>
          *
-         * If this token was issued by the local entity then we assume its
-         * clock at that time is in sync with the clock now.
+         * <ul>
+         * <li>If a time is provided the renewal window value will be compared
+         * against the provided time.</li>
+         * <li>If the user ID token was issued by the local entity the renewal
+         * window value will be compared against the local entity time. We assume
+         * its clock at the time of issuance is in sync with the clock now.</li>
+         * <li>Otherwise the user ID token is considered renewable under the
+         * assumption that the local time is not synchronized with the master token
+         * issuing entity time.</li>
+         * </ul>
          *
+         * @param {?Date} now the time to compare against.
          * @return {boolean} true if the renewal window has been entered.
          */
-        isRenewable: function isRenewable() {
-            return this.renewalWindow.getTime() <= this.ctx.getTime();
+        isRenewable: function isRenewable(now) {
+            if (now)
+                return this.renewalWindow.getTime() <= now.getTime();
+            if (this.isVerified())
+                return this.renewalWindow.getTime() <= this.ctx.getTime();
+            return true;
         },
 
         /**
-         * Always returns false if this token was issued by a different entity
-         * because we cannot know if the local entity time is correct.
+         * <p>Returns true if the user ID token is expired.</p>
          *
-         * If this token was issued by the local entity then we assume its
-         * clock at that time is in sync with the clock now.
+         * <ul>
+         * <li>If a time is provided the expiration value will be compared against
+         * the provided time.</li>
+         * <li>If the user ID token was issued by the local entity the expiration
+         * value will be compared against the local entity time. We assume
+         * its clock at the time of issuance is in sync with the clock now.</li>
+         * <li>Otherwise the user ID token is considered not expired under the
+         * assumption that the local time is not synchronized with the token-
+         * issuing entity time.</li>
+         * </ul>
          *
+         * @param {?Date} now the time to compare against.
          * @return {boolean} true if expired.
          */
-        isExpired: function isExpired() {
-            return this.expiration.getTime() <= this.ctx.getTime();
+        isExpired: function isExpired(now) {
+            if (now)
+                return this.expiration.getTime() <= now.getTime();
+            if (this.isVerified())
+                return this.expiration.getTime() <= this.ctx.getTime();
+            return false;
         },
 
         /**

@@ -341,10 +341,28 @@ public class MasterToken implements JSONString {
     }
     
     /**
+     * <p>Returns true if the master token renewal window has been entered.</p>
+     *
+     * <ul>
+     * <li>If a time is provided the renewal window value will be compared
+     * against the provided time.</li>
+     * <li>If the master token was issued by the local entity the renewal
+     * window value will be compared against the local entity time. We assume
+     * its clock at the time of issuance is in sync with the clock now.</li>
+     * <li>Otherwise the master token is considered renewable under the
+     * assumption that the local time is not synchronized with the master token
+     * issuing entity time.</li>
+     * </ul>
+     *
+     * @param now the time to compare against. May be {@code null}.
      * @return true if the renewal window has been entered.
      */
-    public boolean isRenewable() {
-        return renewalWindow * MILLISECONDS_PER_SECOND <= ctx.getTime();
+    public boolean isRenewable(final Date now) {
+        if (now != null)
+            return renewalWindow * MILLISECONDS_PER_SECOND <= now.getTime();
+        if (isVerified())
+            return renewalWindow * MILLISECONDS_PER_SECOND <= ctx.getTime();
+        return true;
     }
     
     /**
@@ -355,10 +373,28 @@ public class MasterToken implements JSONString {
     }
     
     /**
+     * <p>Returns true if the master token is expired.</p>
+     *
+     * <ul>
+     * <li>If a time is provided the expiration value will be compared against
+     * the provided time.</li>
+     * <li>If the master token was issued by the local entity the expiration
+     * value will be compared against the local entity time. We assume
+     * its clock at the time of issuance is in sync with the clock now.</li>
+     * <li>Otherwise the master token is considered not expired under the
+     * assumption that the local time is not synchronized with the token-
+     * issuing entity time.</li>
+     * </ul>
+     *
+     * @param now the time to compare against.
      * @return true if expired.
      */
-    public boolean isExpired() {
-        return expiration * MILLISECONDS_PER_SECOND <= ctx.getTime();
+    public boolean isExpired(final Date now) {
+        if (now != null)
+            return expiration * MILLISECONDS_PER_SECOND <= now.getTime();
+        if (isVerified())
+            return expiration * MILLISECONDS_PER_SECOND <= ctx.getTime();
+        return false;
     }
     
     /**

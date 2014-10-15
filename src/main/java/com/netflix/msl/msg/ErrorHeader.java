@@ -15,6 +15,8 @@
  */
 package com.netflix.msl.msg;
 
+import java.util.Date;
+
 import javax.xml.bind.DatatypeConverter;
 
 import org.json.JSONException;
@@ -40,7 +42,8 @@ import com.netflix.msl.util.MslContext;
  * errordata = {
  *   "#mandatory" : [ "messageid", "errorcode" ],
  *   "recipient" : "string",
- *   "messageid" : "int64(0,-)",
+ *   "timestamp" : "int64(0,2^53^)",
+ *   "messageid" : "int64(0,2^53^)",
  *   "errorcode" : "int32(0,-)",
  *   "internalcode" : "int32(0,-)",
  *   "errormsg" : "string",
@@ -48,6 +51,7 @@ import com.netflix.msl.util.MslContext;
  * }} where:
  * <ul>
  * <li>{@code recipient} is the intended recipient's entity identity</li>
+ * <li>{@code timestamp} is the sender time when the header is created in seconds since the UNIX epoch</li>
  * <li>{@code messageid} is the message ID</li>
  * <li>{@code errorcode} is the error code</li>
  * <li>{@code internalcode} is an service-specific error code</li>
@@ -58,9 +62,14 @@ import com.netflix.msl.util.MslContext;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class ErrorHeader extends Header {
+    /** Milliseconds per second. */
+    private static final long MILLISECONDS_PER_SECOND = 1000;
+    
     // Message error data.
     /** JSON key recipient. */
     private static final String KEY_RECIPIENT = "recipient";
+    /** JSON key timestamp. */
+    private static final String KEY_TIMESTAMP = "timestamp";
     /** JSON key message ID. */
     private static final String KEY_MESSAGE_ID = "messageid";
     /** JSON key error code. */
@@ -98,6 +107,7 @@ public class ErrorHeader extends Header {
     public ErrorHeader(final MslContext ctx, final EntityAuthenticationData entityAuthData, final String recipient, final long messageId, final ResponseCode errorCode, final int internalCode, final String errorMsg, final String userMsg) throws MslEncodingException, MslCryptoException, MslEntityAuthException, MslMessageException {
         this.entityAuthData = entityAuthData;
         this.recipient = recipient;
+        this.timestamp = ctx.getTime() / MILLISECONDS_PER_SECOND;
         this.messageId = messageId;
         this.errorCode = errorCode;
         this.internalCode = (internalCode >= 0) ? internalCode : -1;
@@ -116,6 +126,7 @@ public class ErrorHeader extends Header {
         final JSONObject errorJO = new JSONObject();
         try {
             if (this.recipient != null) errorJO.put(KEY_RECIPIENT, this.recipient);
+            errorJO.put(KEY_TIMESTAMP, this.timestamp);
             errorJO.put(KEY_MESSAGE_ID, this.messageId);
             errorJO.put(KEY_ERROR_CODE, this.errorCode.intValue());
             if (this.internalCode > 0) errorJO.put(KEY_INTERNAL_CODE, this.internalCode);
@@ -209,10 +220,8 @@ public class ErrorHeader extends Header {
         }
         
         try {
-            if (errordataJO.has(KEY_RECIPIENT))
-                recipient = errordataJO.getString(KEY_RECIPIENT);
-            else
-                recipient = null;
+            recipient = (errordataJO.has(KEY_RECIPIENT)) ? errordataJO.getString(KEY_RECIPIENT) : null;
+            timestamp = (errordataJO.has(KEY_TIMESTAMP)) ? errordataJO.getLong(KEY_TIMESTAMP) : null;
             
             // If we do not recognize the error code then default to fail.
             ResponseCode code = ResponseCode.FAIL;
@@ -251,6 +260,13 @@ public class ErrorHeader extends Header {
      */
     public String getRecipient() {
         return recipient;
+    }
+    
+    /**
+     * @return the timestamp. May be null.
+     */
+    public Date getTimestamp() {
+        return (timestamp != null) ? new Date(timestamp * MILLISECONDS_PER_SECOND) : null;
     }
     
     /**
@@ -317,6 +333,8 @@ public class ErrorHeader extends Header {
         final ErrorHeader that = (ErrorHeader)obj;
         return entityAuthData.equals(that.entityAuthData) &&
             (recipient == that.recipient || (recipient != null && recipient.equals(that.recipient))) &&
+            (timestamp != null && timestamp.equals(that.timestamp) ||
+             timestamp == null && that.timestamp == null) &&
             messageId == that.messageId &&
             errorCode == that.errorCode &&
             internalCode == that.internalCode &&
@@ -331,6 +349,7 @@ public class ErrorHeader extends Header {
     public int hashCode() {
         return entityAuthData.hashCode() ^
             ((recipient != null) ? recipient.hashCode() : 0) ^
+            ((timestamp != null) ? timestamp.hashCode() : 0) ^
             Long.valueOf(messageId).hashCode() ^
             errorCode.hashCode() ^
             Integer.valueOf(internalCode).hashCode() ^
@@ -347,6 +366,8 @@ public class ErrorHeader extends Header {
     
     /** Recipient. */
     private final String recipient;
+    /** Timestamp in seconds since the epoch. */
+    private final Long timestamp;
     /** Message ID. */
     private final long messageId;
     /** Error code. */

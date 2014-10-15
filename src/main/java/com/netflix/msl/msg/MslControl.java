@@ -217,6 +217,49 @@ public class MslControl {
     }
     
     /**
+     * A clock synchronized against an external time.
+     */
+    private static class SynchronizedClock {
+        /** Milliseconds per second. */
+        private static final long MILLISECONDS_PER_SECOND = 1000;
+        
+        /**
+         * Create a new synchronized clock. The clock is not synchronized until
+         * {@link #update(MslContext, Date)} is called.
+         */
+        public SynchronizedClock() {
+            offset = 0;
+        }
+        
+        /**
+         * Update the synchronized clock based on the remote entity time.
+         * 
+         * @param ctx local entity MSL context.
+         * @param time remote entity time.
+         */
+        public void update(final MslContext ctx, final Date time) {
+            final long localSeconds = ctx.getTime() / MILLISECONDS_PER_SECOND;
+            final long remoteSeconds = time.getTime() / MILLISECONDS_PER_SECOND;
+            offset = remoteSeconds - localSeconds;
+        }
+        
+        /**
+         * Return the expected remote entity time.
+         * 
+         * @param ctx local entity MSL context.
+         * @return the expected remote entity time.
+         */
+        public Date getTime(final MslContext ctx) {
+            final long localSeconds = ctx.getTime() / MILLISECONDS_PER_SECOND;
+            final long remoteSeconds = localSeconds + offset;
+            return new Date(remoteSeconds * MILLISECONDS_PER_SECOND);
+        }
+        
+        /** Remote entity time offset from local time in seconds. */
+        private volatile long offset;
+    }
+    
+    /**
      * This class executes all tasks synchronously on the calling thread.
      */
     private static class SynchronousExecutor extends AbstractExecutorService {
@@ -1331,6 +1374,18 @@ public class MslControl {
     }
     
     /**
+     * <p>Return the current time of the remote entity (i.e. the remote peer-to-
+     * peer entity or the trusted services servers).</p>
+     * 
+     * @param ctx MSL context.
+     * @return the remote time or {@code null} if unknown.
+     */
+    private Date getRemoteTime(final MslContext ctx) {
+        final SynchronizedClock clock = remoteClocks.get(ctx);
+        return (clock != null) ? clock.getTime(ctx) : null;
+    }
+    
+    /**
      * The result of sending a message.
      */
     private static class SendResult {
@@ -1462,7 +1517,8 @@ public class MslControl {
             // Ask for key request data if we are using entity authentication
             // data or if the master token needs renewing or if the message is
             // non-replayable.
-            if (masterToken == null || masterToken.isRenewable() || msgCtx.isNonReplayable()) {
+            final Date now = getRemoteTime(ctx);
+            if (masterToken == null || masterToken.isRenewable(now) || msgCtx.isNonReplayable()) {
                 keyRequests.addAll(msgCtx.getKeyRequestData());
                 for (final KeyRequestData keyRequest : keyRequests)
                     builder.addKeyRequestData(keyRequest);
@@ -1656,6 +1712,12 @@ public class MslControl {
                 if (localIdentity.equals(sender))
                     throw new MslMessageException(MslError.UNEXPECTED_MESSAGE_SENDER, sender);
             }
+            
+            // Update the synchronized clock.
+            final Date timestamp = (responseHeader != null) ? responseHeader.getTimestamp() : errorHeader.getTimestamp();
+            remoteClocks.putIfAbsent(ctx, new SynchronizedClock());
+            final SynchronizedClock clock = remoteClocks.get(ctx);
+            clock.update(ctx, timestamp);
         } catch (final MslException e) {
             e.setEntity(masterToken);
             e.setEntity(entityAuthData);
@@ -1862,11 +1924,12 @@ public class MslControl {
         // If the message must be marked non-replayable and we do not have a
         // master token then we must mark this message as renewable to perform
         // a handshake or receive a new master token.
+        final Date startTime = getRemoteTime(ctx);
         if ((msgCtx.isEncrypted() && !builder.willEncryptPayloads()) ||
             (msgCtx.isIntegrityProtected() && !builder.willIntegrityProtectPayloads()) ||
             builder.isRenewable() ||
             (masterToken == null && msgCtx.isNonReplayable()) ||
-            (masterToken != null && masterToken.isExpired()) ||
+            (masterToken != null && masterToken.isExpired(startTime)) ||
             (userIdToken == null && userId != null && (!builder.willEncryptHeader() || !builder.willIntegrityProtectHeader())) ||
             (msgCtx.isRequestingTokens() && (masterToken == null || (userId != null && userIdToken == null))))
         {
@@ -1932,7 +1995,8 @@ public class MslControl {
                 
                 // If the new master token is still expired then try again to
                 // acquire renewal ownership.
-                if (masterToken.isExpired())
+                final Date updateTime = getRemoteTime(ctx);
+                if (masterToken.isExpired(updateTime))
                     continue;
                 
                 // If this message is already marked renewable and the received
@@ -1957,9 +2021,10 @@ public class MslControl {
         // renewed, or we do not have a user ID token but the message is
         // associated with a user, or if the user ID token should be renewed,
         // then try to mark this message as renewable.
-        if ((masterToken == null || masterToken.isRenewable()) ||
+        final Date finalTime = getRemoteTime(ctx);
+        if ((masterToken == null || masterToken.isRenewable(finalTime)) ||
             (userIdToken == null && msgCtx.getUserId() != null) ||
-            (userIdToken != null && userIdToken.isRenewable()))
+            (userIdToken != null && userIdToken.isRenewable(finalTime)))
         {
             // Try to acquire the renewal lock on this MSL context.
             final BlockingQueue<MasterToken> ctxRenewingQueue = renewingContexts.putIfAbsent(ctx, queue);
@@ -3627,4 +3692,7 @@ public class MslControl {
      * Map of in-flight master token in-flight read-write locks by MSL context.
      */
     private final ConcurrentHashMap<MasterToken,ReadWriteLock> masterTokenLocks = new ConcurrentHashMap<MasterToken,ReadWriteLock>();
+    
+    /** Map of remote entity clocks by MSL context. */
+    private final ConcurrentHashMap<MslContext,SynchronizedClock> remoteClocks = new ConcurrentHashMap<MslContext,SynchronizedClock>();
 }

@@ -109,8 +109,8 @@ public class UserIdTokenTest {
         final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
         assertTrue(userIdToken.isDecrypted());
         assertTrue(userIdToken.isVerified());
-        assertFalse(userIdToken.isRenewable());
-        assertFalse(userIdToken.isExpired());
+        assertFalse(userIdToken.isRenewable(null));
+        assertFalse(userIdToken.isExpired(null));
         assertTrue(userIdToken.isBoundTo(MASTER_TOKEN));
         assertTrue(JsonUtils.equals(ISSUER_DATA, userIdToken.getIssuerData()));
         assertEquals(USER, userIdToken.getUser());
@@ -125,8 +125,8 @@ public class UserIdTokenTest {
         final UserIdToken joUserIdToken = new UserIdToken(ctx, jo, MASTER_TOKEN);
         assertEquals(userIdToken.isDecrypted(), joUserIdToken.isDecrypted());
         assertEquals(userIdToken.isVerified(), joUserIdToken.isVerified());
-        assertEquals(userIdToken.isRenewable(), joUserIdToken.isRenewable());
-        assertEquals(userIdToken.isExpired(), joUserIdToken.isExpired());
+        assertEquals(userIdToken.isRenewable(null), joUserIdToken.isRenewable(null));
+        assertEquals(userIdToken.isExpired(null), joUserIdToken.isExpired(null));
         assertTrue(joUserIdToken.isBoundTo(MASTER_TOKEN));
         assertTrue(JsonUtils.equals(userIdToken.getIssuerData(), joUserIdToken.getIssuerData()));
         assertEquals(userIdToken.getUser(), joUserIdToken.getUser());
@@ -679,8 +679,8 @@ public class UserIdTokenTest {
         final UserIdToken joUserIdToken = new UserIdToken(ctx, jo, MASTER_TOKEN);
         assertFalse(joUserIdToken.isDecrypted());
         assertFalse(joUserIdToken.isVerified());
-        assertEquals(userIdToken.isRenewable(), joUserIdToken.isRenewable());
-        assertEquals(userIdToken.isExpired(), joUserIdToken.isExpired());
+        assertNotEquals(userIdToken.isRenewable(null), joUserIdToken.isRenewable(null));
+        assertEquals(userIdToken.isExpired(null), joUserIdToken.isExpired(null));
         assertEquals(userIdToken.isBoundTo(MASTER_TOKEN), joUserIdToken.isBoundTo(MASTER_TOKEN));
         assertEquals(null, joUserIdToken.getUser());
         assertEquals(userIdToken.getExpiration().getTime() / MILLISECONDS_PER_SECOND, joUserIdToken.getExpiration().getTime() / MILLISECONDS_PER_SECOND);
@@ -697,9 +697,20 @@ public class UserIdTokenTest {
         final Date renewalWindow = new Date();
         final Date expiration = new Date(System.currentTimeMillis() + 1000);
         final UserIdToken userIdToken = new UserIdToken(ctx, renewalWindow, expiration, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
+
+        final Date now = new Date();
+        assertTrue(userIdToken.isRenewable(null));
+        assertTrue(userIdToken.isRenewable(now));
+        assertFalse(userIdToken.isExpired(null));
+        assertFalse(userIdToken.isExpired(now));
         
-        assertTrue(userIdToken.isRenewable());
-        assertFalse(userIdToken.isExpired());
+        final Date before = new Date(renewalWindow.getTime() - 1000);
+        assertFalse(userIdToken.isRenewable(before));
+        assertFalse(userIdToken.isExpired(before));
+        
+        final Date after = new Date(expiration.getTime() + 1000);
+        assertTrue(userIdToken.isRenewable(after));
+        assertTrue(userIdToken.isExpired(after));
     }
     
     @Test
@@ -707,9 +718,20 @@ public class UserIdTokenTest {
         final Date renewalWindow = new Date(System.currentTimeMillis() - 1000);
         final Date expiration = new Date();
         final UserIdToken userIdToken = new UserIdToken(ctx, renewalWindow, expiration, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
+
+        final Date now = new Date();
+        assertTrue(userIdToken.isRenewable(null));
+        assertTrue(userIdToken.isRenewable(now));
+        assertTrue(userIdToken.isExpired(null));
+        assertTrue(userIdToken.isExpired(now));
         
-        assertTrue(userIdToken.isRenewable());
-        assertTrue(userIdToken.isExpired());
+        final Date before = new Date(renewalWindow.getTime() - 1000);
+        assertFalse(userIdToken.isRenewable(before));
+        assertFalse(userIdToken.isExpired(before));
+        
+        final Date after = new Date(expiration.getTime() + 1000);
+        assertTrue(userIdToken.isRenewable(after));
+        assertTrue(userIdToken.isExpired(after));
     }
     
     @Test
@@ -717,9 +739,20 @@ public class UserIdTokenTest {
         final Date renewalWindow = new Date(System.currentTimeMillis() + 1000);
         final Date expiration = new Date(System.currentTimeMillis() + 2000);
         final UserIdToken userIdToken = new UserIdToken(ctx, renewalWindow, expiration, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
+
+        final Date now = new Date();
+        assertFalse(userIdToken.isRenewable(null));
+        assertFalse(userIdToken.isRenewable(now));
+        assertFalse(userIdToken.isExpired(null));
+        assertFalse(userIdToken.isExpired(now));
         
-        assertFalse(userIdToken.isRenewable());
-        assertFalse(userIdToken.isExpired());
+        final Date before = new Date(renewalWindow.getTime() - 1000);
+        assertFalse(userIdToken.isRenewable(before));
+        assertFalse(userIdToken.isExpired(before));
+        
+        final Date after = new Date(expiration.getTime() + 1000);
+        assertTrue(userIdToken.isRenewable(after));
+        assertTrue(userIdToken.isExpired(after));
     }
     
     @Test

@@ -141,6 +141,54 @@ var MslControl$MslChannel;
     };
 
     /**
+     * Milliseconds per second.
+     * @const
+     * @type {number}
+     */
+    var MILLISECONDS_PER_SECOND = 1000;
+
+    /**
+     * A clock synchronized against an external time.
+     */
+    var SynchronizedClock = util.Class.create({
+        /**
+         * Create a new synchronized clock. The clock is not synchronized until
+         * {@link #update(MslContext, Date)} is called.
+         */
+        init: function init() {
+            // The properties.
+            var props = {
+                _offset: { value: 0, writable: true, enumerable: false, configurable: false },
+            };
+            Object.defineProperties(this, props);
+        },
+
+        /**
+         * Update the synchronized clock based on the remote entity time.
+         * 
+         * @param {MslContext} ctx local entity MSL context.
+         * @param {Date} time remote entity time.
+         */
+        update: function update(ctx, time) {
+            var localSeconds = ctx.getTime() / MILLISECONDS_PER_SECOND;
+            var remoteSeconds = time.getTime() / MILLISECONDS_PER_SECOND;
+            this._offset = remoteSeconds - localSeconds;
+        },
+
+        /**
+         * Return the expected remote entity time.
+         * 
+         * @param {MslContext} ctx local entity MSL context.
+         * @return {Date} the expected remote entity time.
+         */
+        getTime: function getTime(ctx) {
+            var localSeconds = ctx.getTime() / MILLISECONDS_PER_SECOND;
+            var remoteSeconds = localSeconds + offset;
+            return new Date(remoteSeconds * MILLISECONDS_PER_SECOND);
+        },
+    });
+
+    /**
      * Creates a function that when called will abort the service.
      *
      * @param {ReceiveService|RespondService|RequestService} service the
@@ -526,6 +574,11 @@ var MslControl$MslChannel;
             // The properties.
             var props = {
                 /**
+                 * Error message registry.
+                 * @type {ErrorMessageRegistry}
+                 */
+                _messageRegistry: { value: messageRegistry, writable: false, enumerable: false, configurable: false },
+                /**
                  * Filter stream factory. May be null.
                  * @type {FilterStreamFactory}
                  */
@@ -543,10 +596,10 @@ var MslControl$MslChannel;
                  */
                 _masterTokenLocks: { value: {}, writable: false, enumerable: false, configurable: false },
                 /**
-                 * Error message registry.
-                 * @type {ErrorMessageRegistry}
+                 * Map of remote entity clocks by MSL context.
+                 * @type {Array.<{ctx: MslContext, clock: SynchronizedClock}>}
                  */
-                _messageRegistry: { value: messageRegistry, writable: false, enumerable: false, configurable: false },
+                _remoteClocks: { value: [], writable: false, enumerable: false, configurable: false },
             };
             Object.defineProperties(this, props);
         },
@@ -1315,6 +1368,25 @@ var MslControl$MslChannel;
                 // No cleanup required.
             }
         },
+        
+        /**
+         * <p>Return the current time of the remote entity (i.e. the remote peer-to-
+         * peer entity or the trusted services servers).</p>
+         * 
+         * @param {MslContext} ctx MSL context.
+         * @return {Date} the remote time or {@code null} if unknown.
+         */
+        getRemoteTime: function getRemoteTime(ctx) {
+            var clock;
+            for (var i = 0; i < this._remoteClocks.length; ++i) {
+                var ctxClock = this._remoteClocks[i];
+                if (ctxClock.ctx === ctx) {
+                    clock = ctxClock.clock;
+                    break;
+                }
+            }
+            return (clock) ? clock.getTime(ctx) : null;
+        },
 
         /**
          * <p>Send a message. The message context will be used to build the message.
@@ -1460,7 +1532,8 @@ var MslControl$MslChannel;
                         // Ask for key request data if we are using entity authentication
                         // data or if the master token needs renewing or if the message is
                         // non-replayable.
-                        if (!masterToken || masterToken.isRenewable() || msgCtx.isNonReplayable()) {
+                        var now = this.getRemoteTime(ctx);
+                        if (!masterToken || masterToken.isRenewable(now) || msgCtx.isNonReplayable()) {
                             msgCtx.getKeyRequestData({
                                 result: function(requests) {
                                     InterruptibleExecutor(callback, function() {
@@ -1739,6 +1812,22 @@ var MslControl$MslChannel;
                                                         if (localIdentity == sender)
                                                             throw new MslMessageException(MslError.UNEXPECTED_MESSAGE_SENDER, sender);
                                                     }
+                                                    
+                                                    // Update the synchronized clock.
+                                                    var timestamp = (responseHeader) ? responseHeader.timestamp : errorHeader.timestamp;
+                                                    var clock;
+                                                    for (var i = 0; i < this._remoteClocks.length; ++i) {
+                                                        var ctxClock = this._remoteClocks[i];
+                                                        if (ctxClock.ctx === ctx) {
+                                                            clock = ctxClock.clock;
+                                                            break;
+                                                        }
+                                                    }
+                                                    if (!clock) {
+                                                        clock = new SynchronizedClock();
+                                                        this._remoteClocks.push({ctx: ctx, clock: clock});
+                                                    }
+                                                    clock.update(ctx, timestamp);
                                                 } catch (e) {
                                                     if (e instanceof MslException) {
                                                         e.setEntity(masterToken);
@@ -2051,11 +2140,12 @@ var MslControl$MslChannel;
                 // If the message must be marked non-replayable and we do not have a
                 // master token then we must mark this message as renewable to perform
                 // a handshake or receive a new master token.
+                var startTime = this.getRemoteTime(ctx);
                 if ((msgCtx.isEncrypted() && !builder.willEncryptPayloads()) ||
                     (msgCtx.isIntegrityProtected() && !builder.willIntegrityProtectPayloads()) ||
                     builder.isRenewable() ||
                     (!masterToken && msgCtx.isNonReplayable()) ||
-                    (masterToken && masterToken.isExpired()) ||
+                    (masterToken && masterToken.isExpired(startTime)) ||
                     (!userIdToken && userId && (!builder.willEncryptHeader() || !builder.willIntegrityProtectHeader())) ||
                     (msgCtx.isRequestingTokens() && (!masterToken || (userId && !userIdToken))))
                 {
@@ -2110,7 +2200,6 @@ var MslControl$MslChannel;
                                     return;
                                 }
                                 
-
                                 // If the new master token is not equal to the previous master
                                 // token then release the previous master token and get the
                                 // newest master token.
@@ -2186,7 +2275,8 @@ var MslControl$MslChannel;
                     
                     // If the new master token is still expired then try again to
                     // acquire renewal ownership.
-                    if (masterToken.isExpired()) {
+                    var updateTime = this.getRemoteTime(ctx);
+                    if (masterToken.isExpired(updateTime)) {
                         blockingAcquisition(masterToken, userIdToken, userId, tokenTicket);
                         return;
                     }
@@ -2224,9 +2314,10 @@ var MslControl$MslChannel;
                     // renewed, or we do not have a user ID token but the message is
                     // associated with a user, or if the user ID token should be renewed,
                     // then try to mark this message as renewable.
-                    if ((!masterToken || masterToken.isRenewable()) ||
+                    var finalTime = this.getRemoteTime(ctx);
+                    if ((!masterToken || masterToken.isRenewable(finalTime)) ||
                         (!userIdToken && msgCtx.getUserId()) ||
-                        (userIdToken && userIdToken.isRenewable()))
+                        (userIdToken && userIdToken.isRenewable(finalTime)))
                     {
                         // Try to acquire the renewal lock on this MSL context.
                         var ctxRenewingQueue = null;

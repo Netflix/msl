@@ -275,7 +275,7 @@ public class MessageInputStream extends InputStream {
                 }
                 
                 // If the master token is expired...
-                if (masterToken.isExpired()) {
+                if (masterToken.isExpired(null)) {
                     // If the message is not renewable or does not contain key
                     // request data then reject the message.
                     if (!messageHeader.isRenewable() || messageHeader.getKeyRequestData().isEmpty())

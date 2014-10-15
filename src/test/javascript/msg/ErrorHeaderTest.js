@@ -20,6 +20,9 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("ErrorHeader", function() {
+    /** Milliseconds per second. */
+    var MILLISECONDS_PER_SECOND = 1000;
+    
     /** JSON key entity authentication data. */
     var KEY_ENTITY_AUTHENTICATION_DATA = "entityauthdata";
     /** JSON key error data. */
@@ -30,6 +33,8 @@ describe("ErrorHeader", function() {
     // Message error data.
     /** JSON key recipient. */
     var KEY_RECIPIENT = "recipient";
+    /** JSON key timestamp. */
+    var KEY_TIMESTAMP = "timestamp";
     /** JSON key message ID. */
     var KEY_MESSAGE_ID = "messageid";
     /** JSON key error code. */
@@ -40,6 +45,30 @@ describe("ErrorHeader", function() {
     var KEY_ERROR_MESSAGE = "errormsg";
     /** JSON key user message. */
     var KEY_USER_MESSAGE = "usermsg";
+    
+    /**
+     * Checks if the given timestamp is close to "now".
+     * 
+     * @param {Date} timestamp the timestamp to compare.
+     * @return {boolean} true if the timestamp is about now.
+     */
+    function isAboutNow(timestamp) {
+        var now = Date.now();
+        var time = timestamp.getTime();
+        return (now - 1000 <= time && time <= now + 1000);
+    }
+
+    /**
+     * Checks if the given timestamp is close to "now".
+     * 
+     * @param {number} seconds the timestamp to compare in seconds since the epoch.
+     * @return {boolean} true if the timestamp is about now.
+     */
+    function isAboutNowSeconds(seconds) {
+        var now = Date.now();
+        var time = seconds * MILLISECONDS_PER_SECOND;
+        return (now - 1000 <= time && time <= now + 1000);
+    }
     
     /** MSL context. */
     var ctx;
@@ -90,7 +119,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
         runs(function() {
 	        expect(errorHeader.entityAuthenticationData).toEqual(ENTITY_AUTH_DATA);
 	        expect(errorHeader.errorCode).toEqual(ERROR_CODE);
@@ -99,6 +128,7 @@ describe("ErrorHeader", function() {
 	        expect(errorHeader.messageId).toEqual(MESSAGE_ID);
 	        expect(errorHeader.userMessage).toEqual(USER_MSG);
 	        expect(errorHeader.recipient).toEqual(RECIPIENT);
+	        expect(isAboutNow(errorHeader.timestamp)).toBeTruthy();
         });
     });
     
@@ -110,7 +140,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
         
         var ciphertext = undefined, plaintext = undefined, signature;
         runs(function() {
@@ -127,7 +157,7 @@ describe("ErrorHeader", function() {
 	        });
 	        signature = base64$decode(jo[KEY_SIGNATURE]);
         });
-        waitsFor(function() { return ciphertext && plaintext && signature; }, "ciphertext, plaintext, and signature not received", 100);
+        waitsFor(function() { return ciphertext && plaintext && signature; }, "ciphertext, plaintext, and signature", 100);
         
         var verified;
         runs(function() {
@@ -136,7 +166,7 @@ describe("ErrorHeader", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return verified; }, "verified not received", 100);
+        waitsFor(function() { return verified; }, "verified", 100);
         
         runs(function() {
 	        expect(verified).toBeTruthy();
@@ -148,6 +178,7 @@ describe("ErrorHeader", function() {
 	        expect(parseInt(errordata[KEY_INTERNAL_CODE])).toEqual(INTERNAL_CODE);
 	        expect(errordata[KEY_ERROR_MESSAGE]).toEqual(ERROR_MSG);
 	        expect(errordata[KEY_USER_MESSAGE]).toEqual(USER_MSG);
+            expect(isAboutNowSeconds(errordata[KEY_TIMESTAMP])).toBeTruthy();
         });
     });
     
@@ -159,7 +190,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
 
         var ciphertext = undefined, plaintext = undefined, signature;
         runs(function() {
@@ -177,7 +208,7 @@ describe("ErrorHeader", function() {
 	        });
 	        signature = base64$decode(jo[KEY_SIGNATURE]);
         });
-        waitsFor(function() { return ciphertext && plaintext && signature; }, "ciphertext, plaintext, and signature not received", 100);
+        waitsFor(function() { return ciphertext && plaintext && signature; }, "ciphertext, plaintext, and signature", 100);
 
         var verified;
         runs(function() {
@@ -186,7 +217,7 @@ describe("ErrorHeader", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return verified; }, "verified not received", 100);
+        waitsFor(function() { return verified; }, "verified", 100);
         
         runs(function() {
 	        expect(verified).toBeTruthy();
@@ -194,6 +225,7 @@ describe("ErrorHeader", function() {
 	        var errordata = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
 	
 	        expect(errordata[KEY_RECIPIENT]).toEqual(RECIPIENT);
+            expect(isAboutNowSeconds(errordata[KEY_TIMESTAMP])).toBeTruthy();
 	        expect(parseInt(errordata[KEY_MESSAGE_ID])).toEqual(MESSAGE_ID);
 	        expect(parseInt(errordata[KEY_ERROR_CODE])).toEqual(ERROR_CODE);
 	        expect(errordata[KEY_INTERNAL_CODE]).toBeUndefined();
@@ -210,7 +242,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
 
         var ciphertext = undefined, plaintext = undefined, signature;
         runs(function() {
@@ -228,7 +260,7 @@ describe("ErrorHeader", function() {
             });
             signature = base64$decode(jo[KEY_SIGNATURE]);
         });
-        waitsFor(function() { return ciphertext && plaintext && signature; }, "ciphertext, plaintext, and signature not received", 100);
+        waitsFor(function() { return ciphertext && plaintext && signature; }, "ciphertext, plaintext, and signature", 100);
 
         var verified;
         runs(function() {
@@ -237,7 +269,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return verified; }, "verified not received", 100);
+        waitsFor(function() { return verified; }, "verified", 100);
         
         runs(function() {
             expect(verified).toBeTruthy();
@@ -245,6 +277,7 @@ describe("ErrorHeader", function() {
             var errordata = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
     
             expect(errordata[KEY_RECIPIENT]).toBeUndefined();
+            expect(isAboutNowSeconds(errordata[KEY_TIMESTAMP])).toBeTruthy();
             expect(parseInt(errordata[KEY_MESSAGE_ID])).toEqual(MESSAGE_ID);
             expect(parseInt(errordata[KEY_ERROR_CODE])).toEqual(ERROR_CODE);
             expect(errordata[KEY_INTERNAL_CODE]).toEqual(INTERNAL_CODE);
@@ -261,7 +294,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
 
         var ciphertext = undefined, plaintext = undefined, signature;
         runs(function() {
@@ -279,7 +312,7 @@ describe("ErrorHeader", function() {
 	        });
 	        signature = base64$decode(jo[KEY_SIGNATURE]);
         });
-        waitsFor(function() { return ciphertext && plaintext && signature; }, "ciphertext, plaintext, and signature not received", 100);
+        waitsFor(function() { return ciphertext && plaintext && signature; }, "ciphertext, plaintext, and signature", 100);
 
         var verified;
         runs(function() {
@@ -288,7 +321,7 @@ describe("ErrorHeader", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return verified; }, "verified not received", 100);
+        waitsFor(function() { return verified; }, "verified", 100);
         
         runs(function() {
 	        expect(verified).toBeTruthy();
@@ -296,6 +329,7 @@ describe("ErrorHeader", function() {
 	        var errordata = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
 	
 	        expect(errordata[KEY_RECIPIENT]).toEqual(RECIPIENT);
+            expect(isAboutNowSeconds(errordata[KEY_TIMESTAMP])).toBeTruthy();
 	        expect(parseInt(errordata[KEY_MESSAGE_ID])).toEqual(MESSAGE_ID);
 	        expect(parseInt(errordata[KEY_ERROR_CODE])).toEqual(ERROR_CODE);
 	        expect(parseInt(errordata[KEY_INTERNAL_CODE])).toEqual(INTERNAL_CODE);
@@ -312,7 +346,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
 
         var ciphertext = undefined, plaintext = undefined, signature;
         runs(function() {
@@ -330,7 +364,7 @@ describe("ErrorHeader", function() {
             });
             signature = base64$decode(jo[KEY_SIGNATURE]);
         });
-        waitsFor(function() { return ciphertext && plaintext && signature; }, "ciphertext, plaintext, and signature not received", 100);
+        waitsFor(function() { return ciphertext && plaintext && signature; }, "ciphertext, plaintext, and signature", 100);
 
         var verified;
         runs(function() {
@@ -339,7 +373,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return verified; }, "verified not received", 100);
+        waitsFor(function() { return verified; }, "verified", 100);
         
         runs(function() {
             expect(verified).toBeTruthy();
@@ -347,6 +381,7 @@ describe("ErrorHeader", function() {
             var errordata = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
     
             expect(errordata[KEY_RECIPIENT]).toEqual(RECIPIENT);
+            expect(isAboutNowSeconds(errordata[KEY_TIMESTAMP])).toBeTruthy();
             expect(parseInt(errordata[KEY_MESSAGE_ID])).toEqual(MESSAGE_ID);
             expect(parseInt(errordata[KEY_ERROR_CODE])).toEqual(ERROR_CODE);
             expect(parseInt(errordata[KEY_INTERNAL_CODE])).toEqual(INTERNAL_CODE);
@@ -355,7 +390,7 @@ describe("ErrorHeader", function() {
         });
     });
     
-    it("parseHeader", function() {
+    it("parse header", function() {
         var errorHeader;
         runs(function() {
             ErrorHeader$create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
@@ -363,7 +398,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
         
         var header;
         runs(function() {
@@ -373,7 +408,7 @@ describe("ErrorHeader", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return header; }, "header not received", 100);
+        waitsFor(function() { return header; }, "header", 100);
         
         runs(function() {
 	        expect(header).not.toBeNull();
@@ -381,6 +416,7 @@ describe("ErrorHeader", function() {
 	        var joErrorHeader = header;
 	        
 	        expect(joErrorHeader.entityAuthenticationData).toEqual(errorHeader.entityAuthenticationData);
+	        expect(joErrorHeader.timestamp).toEqual(errorHeader.timestamp);
 	        expect(joErrorHeader.errorCode).toEqual(errorHeader.errorCode);
 	        expect(joErrorHeader.errorMessage).toEqual(errorHeader.errorMessage);
 	        expect(joErrorHeader.internalCode).toEqual(errorHeader.internalCode);
@@ -398,7 +434,7 @@ describe("ErrorHeader", function() {
                 error: function(err) { exception = err; }
             });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
         
         runs(function() {
         	var f = function() { throw exception; };
@@ -414,7 +450,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
         
         var exception;
         runs(function() {
@@ -428,7 +464,7 @@ describe("ErrorHeader", function() {
 	        	error: function(err) { exception = err; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslMessageException(MslError.MESSAGE_ENTITY_NOT_FOUND));
@@ -443,7 +479,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
 
         var exception;
         runs(function() {
@@ -456,7 +492,7 @@ describe("ErrorHeader", function() {
 	        	error: function(err) { exception = err; },
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
@@ -471,7 +507,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
 
         var exception;
         runs(function() {
@@ -485,7 +521,7 @@ describe("ErrorHeader", function() {
 	        	error: function(err) { exception = err; },
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
@@ -500,7 +536,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
 
         var exception;
         runs(function() {
@@ -513,7 +549,7 @@ describe("ErrorHeader", function() {
                 error: function(err) { exception = err; },
             });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslMessageException(MslError.HEADER_SIGNATURE_INVALID));
@@ -528,7 +564,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
 
         var exception;
         runs(function() {
@@ -541,7 +577,7 @@ describe("ErrorHeader", function() {
 	        	error: function(err) { exception = err; },
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslCryptoException(MslError.MESSAGE_VERIFICATION_FAILED));
@@ -556,7 +592,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
 
         var exception;
         runs(function() {
@@ -570,7 +606,7 @@ describe("ErrorHeader", function() {
 	        	error: function(err) { exception = err; },
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
@@ -585,7 +621,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
 
         var exception;
         runs(function() {
@@ -609,7 +645,7 @@ describe("ErrorHeader", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslCryptoException(MslError.NONE));
@@ -626,7 +662,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
     	
         var exception;
         runs(function() {
@@ -647,10 +683,115 @@ describe("ErrorHeader", function() {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslMessageException(MslError.HEADER_DATA_MISSING));
+        });
+    });
+    
+    it("missing timestamp", function() {
+        var errorHeader;
+        runs(function() {
+            ErrorHeader$create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+                result: function(hdr) { errorHeader = hdr; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+
+        var header;
+        runs(function() {
+            var errorHeaderJo = JSON.parse(JSON.stringify(errorHeader));
+            
+            // Before modifying the error data we need to decrypt it.
+            var ciphertext = base64$decode(errorHeaderJo[KEY_ERRORDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var errordata = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+                    
+                    // After modifying the error data we need to encrypt it.
+                    expect(errordata[KEY_TIMESTAMP]).not.toBeNull();
+                    delete errordata[KEY_TIMESTAMP];
+                    var modifiedPlaintext = textEncoding$getBytes(JSON.stringify(errordata), MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(modifiedPlaintext, {
+                        result: function(modifiedCiphertext) {
+                            errorHeaderJo[KEY_ERRORDATA] = base64$encode(modifiedCiphertext);
+                            
+                            // The error data must be signed otherwise the error data will not be
+                            // processed.
+                            cryptoContext.sign(modifiedCiphertext, {
+                                result: function(modifiedSignature) {
+                                    errorHeaderJo[KEY_SIGNATURE] = base64$encode(modifiedSignature);
+                                    
+                                    Header$parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function(x) { header = x; },
+                                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return header; }, "header", 100);
+    });
+    
+    it("invalid timestamp", function() {
+        var errorHeader;
+        runs(function() {
+            ErrorHeader$create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+                result: function(hdr) { errorHeader = hdr; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+
+        var exception;
+        runs(function() {
+            var errorHeaderJo = JSON.parse(JSON.stringify(errorHeader));
+    
+            // Before modifying the error data we need to decrypt it.
+            var ciphertext = base64$decode(errorHeaderJo[KEY_ERRORDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var errordata = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+                    
+                    // After modifying the error data we need to encrypt it.
+                    errordata[KEY_TIMESTAMP] = "x";
+                    var modifiedPlaintext = textEncoding$getBytes(JSON.stringify(errordata), MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(modifiedPlaintext, {
+                        result: function(modifiedCiphertext) {
+                            errorHeaderJo[KEY_ERRORDATA] = base64$encode(modifiedCiphertext);
+                            
+                            // The error data must be signed otherwise the error data will not be
+                            // processed.
+                            cryptoContext.sign(modifiedCiphertext, {
+                                result: function(modifiedSignature) {
+                                    errorHeaderJo[KEY_SIGNATURE] = base64$encode(modifiedSignature);
+                                    
+                                    Header$parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS, {
+                                        result: function() {},
+                                        error: function(err) { exception = err; },
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return exception; }, "exception", 100);
+        runs(function() {
+            var f = function() { throw exception; };
+            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
         });
     });
     
@@ -662,7 +803,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
 
         var exception;
         runs(function() {
@@ -702,7 +843,7 @@ describe("ErrorHeader", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
@@ -717,7 +858,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
 
         var exception;
         runs(function() {
@@ -756,7 +897,7 @@ describe("ErrorHeader", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
@@ -771,7 +912,7 @@ describe("ErrorHeader", function() {
         		error: function(e) { exception = e; }
         	});
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslInternalException(MslError.NONE));
@@ -786,7 +927,7 @@ describe("ErrorHeader", function() {
         		error: function(e) { exception = e; }
         	});
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslInternalException(MslError.NONE));
@@ -801,7 +942,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
 
         var exception;
         runs(function() {
@@ -840,7 +981,7 @@ describe("ErrorHeader", function() {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
         	});
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslMessageException(MslError.MESSAGE_ID_OUT_OF_RANGE));
@@ -855,7 +996,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
 
         var exception;
         runs(function() {
@@ -894,7 +1035,7 @@ describe("ErrorHeader", function() {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
         	});
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslMessageException(MslError.MESSAGE_ID_OUT_OF_RANGE));
@@ -909,7 +1050,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
 
         var exception;
         runs(function() {
@@ -949,7 +1090,7 @@ describe("ErrorHeader", function() {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
         	});
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR, messageid = MESSAGE_ID));
@@ -964,7 +1105,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
 
         var exception;
         runs(function() {
@@ -1004,7 +1145,7 @@ describe("ErrorHeader", function() {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
         	});
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR, messageid = MESSAGE_ID));
@@ -1019,7 +1160,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
         
         var joErrorHeader;
         runs(function() {
@@ -1059,7 +1200,7 @@ describe("ErrorHeader", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return joErrorHeader; }, "joErrorHeader not received", 100);
+        waitsFor(function() { return joErrorHeader; }, "joErrorHeader", 100);
         runs(function() {
 	        expect(joErrorHeader.internalCode).toEqual(-1);
         });
@@ -1073,7 +1214,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
 
         var exception;
         runs(function() {
@@ -1113,7 +1254,7 @@ describe("ErrorHeader", function() {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
         	});
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR, messageid = MESSAGE_ID));
@@ -1128,7 +1269,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
 
         var exception;
         runs(function() {
@@ -1168,7 +1309,7 @@ describe("ErrorHeader", function() {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
         	});
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslMessageException(MslError.INTERNAL_CODE_NEGATIVE, messageid = MESSAGE_ID));
@@ -1183,7 +1324,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
         
         var joErrorHeader;
         runs(function() {
@@ -1223,7 +1364,7 @@ describe("ErrorHeader", function() {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
         	});
         });
-        waitsFor(function() { return joErrorHeader; }, "joErrorHeader not received", 100);
+        waitsFor(function() { return joErrorHeader; }, "joErrorHeader", 100);
         runs(function() {
         	expect(joErrorHeader.errorMessage).toBeUndefined();
         });
@@ -1237,7 +1378,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
         
         var joErrorHeader;
         runs(function() {
@@ -1277,7 +1418,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return joErrorHeader; }, "joErrorHeader not received", 100);
+        waitsFor(function() { return joErrorHeader; }, "joErrorHeader", 100);
         runs(function() {
             expect(joErrorHeader.userMessage).toBeUndefined();
         });
@@ -1297,7 +1438,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderA && errorHeaderB; }, "error headers not received", 100);
+        waitsFor(function() { return errorHeaderA && errorHeaderB; }, "error headers", 100);
         var errorHeaderA2;
         runs(function() {
             Header$parseHeader(ctx, JSON.parse(JSON.stringify(errorHeaderA)), CRYPTO_CONTEXTS, {
@@ -1305,7 +1446,45 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2 not received", 100);
+        waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2", 100);
+
+        runs(function() {
+            expect(errorHeaderA.equals(errorHeaderA)).toBeTruthy();
+            expect(errorHeaderA.uniqueKey()).toEqual(errorHeaderA.uniqueKey());
+            
+            expect(errorHeaderA.equals(errorHeaderB)).toBeFalsy();
+            expect(errorHeaderB.equals(errorHeaderA)).toBeFalsy();
+            expect(errorHeaderB.uniqueKey()).not.toEqual(errorHeaderA.uniqueKey());
+            
+            expect(errorHeaderA.equals(errorHeaderA2)).toBeTruthy();
+            expect(errorHeaderA2.equals(errorHeaderA)).toBeTruthy();
+            expect(errorHeaderA2.uniqueKey()).toEqual(errorHeaderA.uniqueKey());
+        });
+    });
+    
+    xit("equals timestamp", function() {
+        var errorHeaderA, errorHeaderB;
+        runs(function() {
+            ErrorHeader$create(ctx, ENTITY_AUTH_DATA, recipientA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+                result: function(hdr) { errorHeaderA = hdr; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            setTimeout(MILLISECONDS_PER_SECOND, function() {
+                ErrorHeader$create(ctx, ENTITY_AUTH_DATA, recipientB, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+                    result: function(hdr) { errorHeaderB = hdr; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+        });
+        waitsFor(function() { return errorHeaderA && errorHeaderB; }, "error headers", 2000);
+        var errorHeaderA2;
+        runs(function() {
+            Header$parseHeader(ctx, JSON.parse(JSON.stringify(errorHeaderA)), CRYPTO_CONTEXTS, {
+                result: function(hdr) { errorHeaderA2 = hdr; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2", 100);
 
         runs(function() {
             expect(errorHeaderA.equals(errorHeaderA)).toBeTruthy();
@@ -1335,7 +1514,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderA && errorHeaderB; }, "error headers not received", 100);
+        waitsFor(function() { return errorHeaderA && errorHeaderB; }, "error headers", 100);
         var errorHeaderA2;
         runs(function() {
         	Header$parseHeader(ctx, JSON.parse(JSON.stringify(errorHeaderA)), CRYPTO_CONTEXTS, {
@@ -1343,7 +1522,7 @@ describe("ErrorHeader", function() {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2 not received", 100);
+        waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2", 100);
 
         runs(function() {
 	        expect(errorHeaderA.equals(errorHeaderA)).toBeTruthy();
@@ -1373,7 +1552,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderA && errorHeaderB; }, "error headers not received", 100);
+        waitsFor(function() { return errorHeaderA && errorHeaderB; }, "error headers", 100);
         var errorHeaderA2;
         runs(function() {
         	Header$parseHeader(ctx, JSON.parse(JSON.stringify(errorHeaderA)), CRYPTO_CONTEXTS, {
@@ -1381,7 +1560,7 @@ describe("ErrorHeader", function() {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2 not received", 100);
+        waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2", 100);
 
         runs(function() {
 	        expect(errorHeaderA.equals(errorHeaderA)).toBeTruthy();
@@ -1411,7 +1590,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderA && errorHeaderB; }, "error headers not received", 100);
+        waitsFor(function() { return errorHeaderA && errorHeaderB; }, "error headers", 100);
         var errorHeaderA2;
         runs(function() {
         	Header$parseHeader(ctx, JSON.parse(JSON.stringify(errorHeaderA)), CRYPTO_CONTEXTS, {
@@ -1419,7 +1598,7 @@ describe("ErrorHeader", function() {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2 not received", 100);
+        waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2", 100);
 
         runs(function() {
 	        expect(errorHeaderA.equals(errorHeaderA)).toBeTruthy();
@@ -1453,7 +1632,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderA && errorHeaderB && errorHeaderC; }, "error headers not received", 100);
+        waitsFor(function() { return errorHeaderA && errorHeaderB && errorHeaderC; }, "error headers", 100);
         var errorHeaderA2;
         runs(function() {
         	Header$parseHeader(ctx, JSON.parse(JSON.stringify(errorHeaderA)), CRYPTO_CONTEXTS, {
@@ -1461,7 +1640,7 @@ describe("ErrorHeader", function() {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2 not received", 100);
+        waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2", 100);
 
         runs(function() {
 	        expect(errorHeaderA.equals(errorHeaderA)).toBeTruthy();
@@ -1495,7 +1674,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderA && errorHeaderB && errorHeaderC; }, "error headers not received", 100);
+        waitsFor(function() { return errorHeaderA && errorHeaderB && errorHeaderC; }, "error headers", 100);
         var errorHeaderA2;
         runs(function() {
             Header$parseHeader(ctx, JSON.parse(JSON.stringify(errorHeaderA)), CRYPTO_CONTEXTS, {
@@ -1503,7 +1682,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2 not received", 100);
+        waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2", 100);
 
         runs(function() {
             expect(errorHeaderA.equals(errorHeaderA)).toBeTruthy();
@@ -1527,7 +1706,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
         runs(function() {
 	        expect(errorHeader.equals(null)).toBeFalsy();
 	        expect(errorHeader.equals(ERROR_MSG)).toBeFalsy();
