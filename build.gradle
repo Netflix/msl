@@ -1,0 +1,132 @@
+apply plugin: 'java'
+apply plugin: 'findbugs'
+apply plugin: 'war'
+
+repositories {
+    mavenCentral()
+}
+
+test {
+    includes = [ "**/*Test.class", "**/*Suite.class" ]
+    excludes = [ "**/*\$*.class" ]
+    scanForTestClasses = false
+}
+
+configurations {
+    examples.extendsFrom(compile)
+}
+
+dependencies {
+    compile fileTree(dir: "src/main/java/lib", include: "*.jar")
+    testCompile"junit:junit:latest.release"
+    testCompile fileTree(dir: "src/main/java/lib", include: "*.jar")
+    examples fileTree(dir: "src/examples/java/server/lib", include: "*.jar")
+}
+
+findbugs {
+    excludeFilter = file("findbugs-exclude.xml")
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir "src/main/java/"
+            srcDir "src/main/java/lib/JSON-java/"
+        }
+    }
+    test {
+        java {
+            srcDir "src/test/java/"
+        }
+        resources {
+            srcDir "src/test/resources/"
+        }
+    }
+    examples {
+        java {
+            srcDir "src/examples/java/"
+            compileClasspath += sourceSets.main.output
+            compileClasspath += sourceSets.test.output
+            compileClasspath += configurations.examples
+        }
+        resources {
+            srcDir "src/examples/resources/"
+        }
+    }
+}
+
+task examples(dependsOn: ":compileExamplesJava")
+
+war {
+    dependsOn ":examples"
+    baseName "msl-example-server"
+    from(sourceSets.examples.output) {
+        exclude "kancolle/**"
+        into "WEB-INF/classes"
+    }
+    webXml = file("src/examples/java/server/WebContent/WEB-INF/web.xml")
+}
+
+task javadoc(type: Javadoc, overwrite: true) {
+    options.overview = "overview.html"
+    options.links = [
+        "http://docs.oracle.com/javase/7/docs/api/",
+        "http://junit.org/javadoc/4.11/",
+        "http://www.bouncycastle.org/docs/docs1.5on/"
+    ]
+    source = sourceSets.main.allJava
+}
+
+task javadoc_public(type: Javadoc) {
+    destinationDir = file("$docsDir/javadoc-public")
+    options.overview = "overview-public.html"
+    options.links = [
+        "http://docs.oracle.com/javase/7/docs/api/",
+        "http://junit.org/javadoc/4.11/",
+        "http://www.bouncycastle.org/docs/docs1.5on/"
+    ]
+    source = sourceSets.main.allJava
+    includes = [
+        "**/EntityAuthenticationData.java",
+        "**/EntityAuthenticationFactory.java",
+        "**/EntityAuthenticationScheme.java",
+        "**/ErrorHeader.java",
+        "**/ErrorMessageRegistry.java",
+        "**/FilterStreamFactory.java",
+        "**/Header.java",
+        "**/ICryptoContext.java",
+        "**/KeyExchangeFactory.java",
+        "**/KeyExchangeScheme.java",
+        "**/KeyRequestData.java",
+        "**/KeyResponseData.java",
+        "**/MasterToken.java",
+        "**/MessageCapabilities.java",
+        "**/MessageContext.java",
+        "**/MessageDebugContext.java",
+        "**/MessageHeader.java",
+        "**/MessageInputStream.java",
+        "**/MessageServiceTokenBuilder.java",
+        "**/MslConstants.java",
+        "**/MslContext.java",
+        "**/MslControl.java",
+        "**/MslCryptoException.java",
+        "**/MslEncodingException.java",
+        "**/MslEntityAuthException.java",
+        "**/MslError.java",
+        "**/MslErrorResponseException.java",
+        "**/MslException.java",
+        "**/MslInternalException.java",
+        "**/MslKeyExchangeException.java",
+        "**/MslMasterTokenException.java",
+        "**/MslMessageException.java",
+        "**/MslStore.java",
+        "**/MslUserAuthException.java",
+        "**/MslUserIdTokenException.java",
+        "**/ServiceToken.java",
+        "**/TokenFactory.java",
+        "**/UserAuthenticationData.java",
+        "**/UserAuthenticationFactory.java",
+        "**/UserAuthenticationScheme.java",
+        "**/UserIdToken.java"
+    ]
+}
