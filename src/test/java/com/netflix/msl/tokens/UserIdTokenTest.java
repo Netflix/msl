@@ -679,8 +679,8 @@ public class UserIdTokenTest {
         final UserIdToken joUserIdToken = new UserIdToken(ctx, jo, MASTER_TOKEN);
         assertFalse(joUserIdToken.isDecrypted());
         assertFalse(joUserIdToken.isVerified());
-        assertNotEquals(userIdToken.isRenewable(null), joUserIdToken.isRenewable(null));
-        assertEquals(userIdToken.isExpired(null), joUserIdToken.isExpired(null));
+        assertTrue(joUserIdToken.isRenewable(null));
+        assertFalse(joUserIdToken.isExpired(null));
         assertEquals(userIdToken.isBoundTo(MASTER_TOKEN), joUserIdToken.isBoundTo(MASTER_TOKEN));
         assertEquals(null, joUserIdToken.getUser());
         assertEquals(userIdToken.getExpiration().getTime() / MILLISECONDS_PER_SECOND, joUserIdToken.getExpiration().getTime() / MILLISECONDS_PER_SECOND);

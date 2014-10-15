@@ -564,8 +564,8 @@ public class MasterTokenTest {
         final MasterToken joMasterToken = new MasterToken(ctx, jo);
         assertFalse(joMasterToken.isDecrypted());
         assertFalse(joMasterToken.isVerified());
-        assertNotEquals(masterToken.isRenewable(null), joMasterToken.isRenewable(null));
-        assertEquals(masterToken.isExpired(null), joMasterToken.isExpired(null));
+        assertTrue(joMasterToken.isRenewable(null));
+        assertFalse(joMasterToken.isExpired(null));
         assertFalse(joMasterToken.isNewerThan(masterToken));
         assertFalse(masterToken.isNewerThan(joMasterToken));
         assertNull(joMasterToken.getEncryptionKey());
