@@ -1815,19 +1815,21 @@ var MslControl$MslChannel;
                                                     
                                                     // Update the synchronized clock.
                                                     var timestamp = (responseHeader) ? responseHeader.timestamp : errorHeader.timestamp;
-                                                    var clock;
-                                                    for (var i = 0; i < this._remoteClocks.length; ++i) {
-                                                        var ctxClock = this._remoteClocks[i];
-                                                        if (ctxClock.ctx === ctx) {
-                                                            clock = ctxClock.clock;
-                                                            break;
+                                                    if (timestamp) {
+                                                        var clock;
+                                                        for (var i = 0; i < this._remoteClocks.length; ++i) {
+                                                            var ctxClock = this._remoteClocks[i];
+                                                            if (ctxClock.ctx === ctx) {
+                                                                clock = ctxClock.clock;
+                                                                break;
+                                                            }
                                                         }
+                                                        if (!clock) {
+                                                            clock = new SynchronizedClock();
+                                                            this._remoteClocks.push({ctx: ctx, clock: clock});
+                                                        }
+                                                        clock.update(ctx, timestamp);
                                                     }
-                                                    if (!clock) {
-                                                        clock = new SynchronizedClock();
-                                                        this._remoteClocks.push({ctx: ctx, clock: clock});
-                                                    }
-                                                    clock.update(ctx, timestamp);
                                                 } catch (e) {
                                                     if (e instanceof MslException) {
                                                         e.setEntity(masterToken);

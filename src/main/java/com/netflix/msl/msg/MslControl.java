@@ -1715,9 +1715,11 @@ public class MslControl {
             
             // Update the synchronized clock.
             final Date timestamp = (responseHeader != null) ? responseHeader.getTimestamp() : errorHeader.getTimestamp();
-            remoteClocks.putIfAbsent(ctx, new SynchronizedClock());
-            final SynchronizedClock clock = remoteClocks.get(ctx);
-            clock.update(ctx, timestamp);
+            if (timestamp != null) {
+                remoteClocks.putIfAbsent(ctx, new SynchronizedClock());
+                final SynchronizedClock clock = remoteClocks.get(ctx);
+                clock.update(ctx, timestamp);
+            }
         } catch (final MslException e) {
             e.setEntity(masterToken);
             e.setEntity(entityAuthData);
