@@ -14,13 +14,15 @@ test {
 
 configurations {
     examples.extendsFrom(compile)
+    itest.extendsFrom(compile)
 }
 
 dependencies {
     compile fileTree(dir: "src/main/java/lib", include: "*.jar")
-    testCompile"junit:junit:latest.release"
+    testCompile "junit:junit:latest.release"
     testCompile fileTree(dir: "src/main/java/lib", include: "*.jar")
     examples fileTree(dir: "src/examples/java/server/lib", include: "*.jar")
+    itest fileTree(dir: "src/int-test/java/com/netflix/msl/client/lib", include: "*.jar") + fileTree(dir: "src/int-test/java/com/netflix/msl/server/lib", include: "*.jar")
 }
 
 findbugs {
@@ -53,9 +55,29 @@ sourceSets {
             srcDir "src/examples/resources/"
         }
     }
+    itest {
+        java {
+            srcDir "src/int-test/java"
+            compileClasspath += sourceSets.main.output
+            compileClasspath += sourceSets.test.output
+            compileClasspath += configurations.itest
+        }
+        resources {
+            srcDir "src/int-test/resources"
+        }
+    }
 }
 
 task examples(dependsOn: ":compileExamplesJava")
+
+task itest(type: Test) {
+    dependsOn ":compileItestJava"
+
+    // enable TestNG support (default is JUnit)
+    useTestNG()
+
+    //TODO: Add more stuff
+}
 
 war {
     dependsOn ":examples"
@@ -65,6 +87,17 @@ war {
         into "WEB-INF/classes"
     }
     webXml = file("src/examples/java/server/WebContent/WEB-INF/web.xml")
+}
+
+task itestWar(type: War) {
+    dependsOn ":compileItestJava"
+    baseName "msl-test-server"
+    from(sourceSets.itest.output) {
+        exclude "com/netflix/msl/client/**"
+        exclude "resources/**"
+        into "WEB-INF/classes"
+    }
+    webXml = file("src/int-test/java/com/netflix/msl/server/web/WEB-INF/web.xml")
 }
 
 task javadoc(type: Javadoc, overwrite: true) {
