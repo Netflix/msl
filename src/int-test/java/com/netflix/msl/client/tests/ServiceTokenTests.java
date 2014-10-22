@@ -38,7 +38,7 @@ import static org.testng.Assert.assertEquals;
  */
 public class ServiceTokenTests extends BaseTestClass {
 
-    private static final String PATH = "/test";
+    private static final String PATH = "/msl-test-server/test";
     private static final int TIME_OUT = 60000; // 60 Seconds
 
     @BeforeClass
@@ -113,7 +113,7 @@ public class ServiceTokenTests extends BaseTestClass {
 
         final Set<ServiceToken> serviceTokens = getServiceToken(masterToken, userIdToken, ServiceTokenType.NONE, true);
 
-        MessageInputStream message = sendRecieve(out, in, masterToken, userIdToken, serviceTokens, false /*isRenewable*/, false /*addKeyRequestData*/);
+        MessageInputStream message = sendReceive(out, in, masterToken, userIdToken, serviceTokens, false /*isRenewable*/, false /*addKeyRequestData*/);
 
         thenThe(message)
                 .shouldHave().validBuffer();
@@ -135,7 +135,7 @@ public class ServiceTokenTests extends BaseTestClass {
 
         final Set<ServiceToken> serviceTokens = getServiceToken(masterToken, userIdToken, ServiceTokenType.NONE, false);
 
-        MessageInputStream message = sendRecieve(out, in, masterToken, userIdToken, serviceTokens, false /*isRenewable*/, false /*addKeyRequestData*/);
+        MessageInputStream message = sendReceive(out, in, masterToken, userIdToken, serviceTokens, false /*isRenewable*/, false /*addKeyRequestData*/);
 
         thenThe(message)
                 .shouldHave().validBuffer();
@@ -158,7 +158,7 @@ public class ServiceTokenTests extends BaseTestClass {
 
         final Set<ServiceToken> serviceTokens = getServiceToken(masterToken, userIdToken, serviceTokenType, withData);
 
-        MessageInputStream message = sendRecieve(out, in, masterToken, userIdToken, serviceTokens, false /*isRenewable*/, false /*addKeyRequestData*/);
+        MessageInputStream message = sendReceive(out, in, masterToken, userIdToken, serviceTokens, false /*isRenewable*/, false /*addKeyRequestData*/);
 
         thenThe(message)
                 .shouldHave().validBuffer();

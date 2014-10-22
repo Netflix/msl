@@ -29,7 +29,7 @@ public class UserAuthTests extends BaseTestClass {
     private static final int TIME_OUT = 60000; // 60 Seconds
     private int numThreads = 0;
     private ServerConfiguration serverConfig;
-    private static final String PATH = "/test";
+    private static final String PATH = "/msl-test-server/test";
 
     @BeforeClass
     public void setup() throws IOException, URISyntaxException {

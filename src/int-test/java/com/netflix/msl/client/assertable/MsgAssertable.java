@@ -127,10 +127,10 @@ public class MsgAssertable {
             final int bytesRead = msg.read(buffer);
             if (bytesRead == -1) break;
         } while (true);
-        if(Arrays.equals(buffer, ClientConfiguration.serverErrorBuffer)) {
+        if(Arrays.equals(buffer, ClientConfiguration.serverError.getBytes())) {
             fail("Buffer mis-match on server");
         }
-        assertEquals(this.booleanExpectation, Arrays.equals(buffer, ClientConfiguration.inputBuffer));
+        assertEquals(this.booleanExpectation, Arrays.equals(buffer, ClientConfiguration.input.getBytes()));
 
         return this;
     }

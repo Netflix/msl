@@ -1,5 +1,14 @@
 package com.netflix.msl.client.tests;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.NoSuchAlgorithmException;
+import java.util.concurrent.ExecutionException;
+
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
@@ -11,14 +20,6 @@ import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.msg.MessageInputStream;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.NoSuchAlgorithmException;
-import java.util.concurrent.ExecutionException;
 
 /**
  * User: skommidi
@@ -26,17 +27,19 @@ import java.util.concurrent.ExecutionException;
  */
 public class EntityAuthTests extends BaseTestClass {
     private int numThreads = 0;
-    private ServerConfiguration serverConfig;
+    private ServerConfiguration serverConfig = null;
     private static final int TIME_OUT = 60000; //60 seconds
-    private static final String PATH = "/test";
+    private static final String PATH = "/msl-test-server/test";
 
-    @BeforeClass
+    @BeforeMethod
     public void setup() throws IOException, URISyntaxException {
-        super.loadProperties();
-        serverConfig = new ServerConfiguration()
-                .setHost(getRemoteEntityUrl())
-                .setPath(PATH);
-        serverConfig.commitToServer();
+        if (serverConfig == null) {
+            super.loadProperties();
+            serverConfig = new ServerConfiguration()
+                    .setHost(getRemoteEntityUrl())
+                    .setPath(PATH);
+            serverConfig.commitToServer();
+        }
     }
 
     /**

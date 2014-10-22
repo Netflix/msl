@@ -1,5 +1,22 @@
 package com.netflix.msl.client.common;
 
+import java.io.FilterInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URLConnection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Properties;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+
+import org.json.JSONObject;
+
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
@@ -26,22 +43,6 @@ import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.tokens.ServiceToken;
 import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.userauth.MockEmailPasswordAuthenticationFactory;
-import org.json.JSONObject;
-
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-import java.io.File;
-import java.io.FilterInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.URLConnection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Properties;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 /**
  * User: skommidi
@@ -89,8 +90,6 @@ public class BaseTestClass {
 
     public void loadProperties() throws IOException {
         Properties prop = new Properties();
-        String path = BaseTestClass.class.getClassLoader().getResource("test.properties").getPath();
-        String classpathRoot = (new File(BaseTestClass.class.getClassLoader().getResource("test.properties").getPath())).getPath();
         prop.load(BaseTestClass.class.getClassLoader().getResourceAsStream("test.properties"));
 
         setRemoteEntityUrl(prop.getProperty("remoteEntityUrl"));
@@ -209,7 +208,7 @@ public class BaseTestClass {
         return null;
     }
 
-    public MessageInputStream sendRecieve(final OutputStream out, final DelayedInputStream in,
+    public MessageInputStream sendReceive(final OutputStream out, final DelayedInputStream in,
                                           final MasterToken masterToken, final UserIdToken userIdToken, final Set<ServiceToken> serviceTokens,
                                           final boolean isRenewable, final boolean addKeyRequestData) throws MslException, IOException {
         final MessageBuilder builder = MessageBuilder.createRequest(clientConfig.getMslContext(), masterToken, userIdToken, null);
@@ -253,7 +252,7 @@ public class BaseTestClass {
      * A delayed input stream does not open the real input stream until
      * one of its methods is called.
      */
-    protected class DelayedInputStream extends FilterInputStream {
+    protected static class DelayedInputStream extends FilterInputStream {
         /**
          * Create a new delayed input stream that will not attempt to
          * construct the input stream from the URL connection until it is

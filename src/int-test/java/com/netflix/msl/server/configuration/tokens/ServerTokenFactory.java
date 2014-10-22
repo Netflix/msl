@@ -1,5 +1,9 @@
 package com.netflix.msl.server.configuration.tokens;
 
+import java.sql.Date;
+
+import javax.crypto.SecretKey;
+
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
@@ -9,10 +13,6 @@ import com.netflix.msl.MslMasterTokenException;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.MockTokenFactory;
 import com.netflix.msl.util.MslContext;
-import org.json.JSONObject;
-
-import javax.crypto.SecretKey;
-import java.sql.Date;
 
 /**
  * User: skommidi
@@ -62,8 +62,7 @@ public class ServerTokenFactory extends MockTokenFactory {
         do {
             serialNumber = ctx.getRandom().nextLong();
         } while (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE);
-        final JSONObject issuerData = null;
-        return new MasterToken(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey);
+        return new MasterToken(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, null, identity, encryptionKey, hmacKey);
     }
 
     private final TokenFactoryType tokenFactoryType;

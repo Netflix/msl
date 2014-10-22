@@ -17,6 +17,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,6 +29,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.Future;
 
 /**
@@ -37,8 +39,8 @@ import java.util.concurrent.Future;
 public class BaseServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
-    protected static byte[] payloadBytes = "Hello".getBytes();
-    protected static byte[] errorBytes = "Error".getBytes();
+    protected static final String payload = "Hello";
+    protected static final String error = "Error";
     private static final int TIMEOUT = 25000;
     private boolean isNullCryptoContext;
     private boolean setConsoleFilterStreamFactory;
@@ -88,7 +90,7 @@ public class BaseServlet extends HttpServlet {
         /**
          * Message Context Configuration
          */
-        msgCtx = new ServerMessageContext(mslCtx, payloadBytes, isMessageEncrypted);
+        msgCtx = new ServerMessageContext(mslCtx, payload.getBytes(), isMessageEncrypted);
         msgCtx.setIntegrityProtected(isIntegrityProtected);
     }
 
@@ -105,9 +107,11 @@ public class BaseServlet extends HttpServlet {
         PrintWriter out = response.getWriter();
 
         Map<String, String[]> params = request.getParameterMap();
-        for (String key : params.keySet()) {
+        for (Entry<String,String[]> entry : params.entrySet()) {
             try {
-                setPrivateVariable(out, key, params.get(key));
+                String key = entry.getKey();
+                String[] value = entry.getValue();
+                setPrivateVariable(out, key, value);
             } catch (Exception e) {
                 e.printStackTrace();
                 out.println(e.getMessage());
@@ -144,8 +148,8 @@ public class BaseServlet extends HttpServlet {
             } while (true);
 
             //Checking the the received payload is the same as the one the client sent
-            if (!Arrays.equals(payloadBytes, buffer)) {
-                msgCtx.setBuffer(errorBytes);
+            if (!Arrays.equals(payload.getBytes(), buffer)) {
+                msgCtx.setBuffer(error.getBytes());
                 mslCtrl.respond(mslCtx, msgCtx, inStream, outStream, msgInputStream.get(), TIMEOUT);
                 throw new IllegalStateException("PayloadBytes is not as expected: " + Arrays.toString(buffer));
             }

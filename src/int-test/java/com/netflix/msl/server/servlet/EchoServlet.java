@@ -7,7 +7,6 @@ import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.server.common.BaseServlet;
 import com.netflix.msl.server.configuration.tokens.TokenFactoryType;
 
-import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -19,7 +18,6 @@ import java.security.NoSuchAlgorithmException;
  * User: skommidi
  * Date: 7/24/14
  */
-@WebServlet(urlPatterns = "/echo", loadOnStartup = 1)
 public class EchoServlet extends BaseServlet {
 
     private static final long serialVersionUID = 1L;

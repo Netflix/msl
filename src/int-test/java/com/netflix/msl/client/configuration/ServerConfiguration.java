@@ -1,35 +1,41 @@
 package com.netflix.msl.client.configuration;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import com.netflix.msl.client.configuration.tokens.TokenFactoryType;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
-import org.apache.http.HttpEntity;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.util.EntityUtils;
-
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * User: skommidi
  * Date: 7/25/14
  */
 public class ServerConfiguration {
-
-
-
-    private URIBuilder uriBuilder;
+    private static class NameValuePair {
+        public NameValuePair(String name, String value) {
+            try {
+                this.name = URLEncoder.encode(name, "UTF-8");
+                this.value = URLEncoder.encode(value, "UTF-8");
+            } catch (final UnsupportedEncodingException e) {
+                throw new RuntimeException("UTF-8 encoding not supported.", e);
+            }
+        }
+        
+        private final String name;
+        private final String value;
+    }
+    
+    private String scheme = "http";
     private String path;
     private String host;
     private int numThreads;
@@ -60,8 +66,6 @@ public class ServerConfiguration {
 
     public ServerConfiguration() {
         nvps = new ArrayList<NameValuePair>();
-        uriBuilder = new URIBuilder()
-                .setScheme("http");
     }
 
     public ServerConfiguration resetDefaultConfig() {
@@ -81,27 +85,27 @@ public class ServerConfiguration {
     }
 
     private void setNameValuePairs() {
-        nvps.add(new BasicNameValuePair(NUM_THREADS, String.valueOf(numThreads)));
-        nvps.add(new BasicNameValuePair(ENTITY_AUTH_SCHEME, String.valueOf(entityAuthScheme)));
-        nvps.add(new BasicNameValuePair(TOKEN_FACTORY_TYPE, String.valueOf(tokenFactoryType)));
-        nvps.add(new BasicNameValuePair(INITIAL_SEQUENCE_NUM, String.valueOf(initialSequenceNum)));
-        nvps.add(new BasicNameValuePair(ENCRYPTED, String.valueOf(isMessageEncrypted)));
-        nvps.add(new BasicNameValuePair(INTEGRITY_PROTECTED, String.valueOf(isIntegrityProtected)));
-        nvps.add(new BasicNameValuePair(NULL_CRYPTO_CONTEXT, String.valueOf(isNullCryptoContext)));
-        nvps.add(new BasicNameValuePair(CONSOLE_FILTER_STREAM_FACTORY, String.valueOf(setConsoleFilterStreamFactory)));
+        nvps.add(new NameValuePair(NUM_THREADS, String.valueOf(numThreads)));
+        nvps.add(new NameValuePair(ENTITY_AUTH_SCHEME, String.valueOf(entityAuthScheme)));
+        nvps.add(new NameValuePair(TOKEN_FACTORY_TYPE, String.valueOf(tokenFactoryType)));
+        nvps.add(new NameValuePair(INITIAL_SEQUENCE_NUM, String.valueOf(initialSequenceNum)));
+        nvps.add(new NameValuePair(ENCRYPTED, String.valueOf(isMessageEncrypted)));
+        nvps.add(new NameValuePair(INTEGRITY_PROTECTED, String.valueOf(isIntegrityProtected)));
+        nvps.add(new NameValuePair(NULL_CRYPTO_CONTEXT, String.valueOf(isNullCryptoContext)));
+        nvps.add(new NameValuePair(CONSOLE_FILTER_STREAM_FACTORY, String.valueOf(setConsoleFilterStreamFactory)));
         if(unSupportedEntityAuthFactories!=null) {
             for(EntityAuthenticationScheme scheme : unSupportedEntityAuthFactories) {
-                nvps.add(new BasicNameValuePair(UNSUPPORTED_ENTITY_SCHEMES, String.valueOf(scheme)));
+                nvps.add(new NameValuePair(UNSUPPORTED_ENTITY_SCHEMES, String.valueOf(scheme)));
             }
         }
         if(unSupportedUserAuthFactories!=null) {
             for(UserAuthenticationScheme scheme : unSupportedUserAuthFactories) {
-                nvps.add(new BasicNameValuePair(UNSUPPORTED_USER_SCHEMES, String.valueOf(scheme)));
+                nvps.add(new NameValuePair(UNSUPPORTED_USER_SCHEMES, String.valueOf(scheme)));
             }
         }
         if(unSupportedKeyxFactories!=null) {
             for(KeyExchangeScheme scheme : unSupportedKeyxFactories) {
-                nvps.add(new BasicNameValuePair(UNSUPPORTED_KEY_EXCHANGE_SCHEMES, String.valueOf(scheme)));
+                nvps.add(new NameValuePair(UNSUPPORTED_KEY_EXCHANGE_SCHEMES, String.valueOf(scheme)));
             }
         }
     }
@@ -120,13 +124,11 @@ public class ServerConfiguration {
 
     public ServerConfiguration setHost(String host) {
         this.host = host;
-        uriBuilder.setHost(this.host);
         return this;
     }
 
     public ServerConfiguration setPath(String path) {
         this.path = path;
-        uriBuilder.setPath(this.path);
         return this;
     }
 
@@ -153,7 +155,7 @@ public class ServerConfiguration {
         clearParameter(UNSUPPORTED_ENTITY_SCHEMES);
         if(this.unSupportedEntityAuthFactories!=null) {
             for(EntityAuthenticationScheme scheme : this.unSupportedEntityAuthFactories) {
-                nvps.add(new BasicNameValuePair(UNSUPPORTED_ENTITY_SCHEMES, String.valueOf(scheme)));
+                nvps.add(new NameValuePair(UNSUPPORTED_ENTITY_SCHEMES, String.valueOf(scheme)));
             }
         }
         return this;
@@ -164,7 +166,7 @@ public class ServerConfiguration {
         clearParameter(UNSUPPORTED_USER_SCHEMES);
         if(this.unSupportedUserAuthFactories!=null) {
             for(UserAuthenticationScheme scheme : this.unSupportedUserAuthFactories) {
-                nvps.add(new BasicNameValuePair(UNSUPPORTED_USER_SCHEMES, String.valueOf(scheme)));
+                nvps.add(new NameValuePair(UNSUPPORTED_USER_SCHEMES, String.valueOf(scheme)));
             }
         }
         return this;
@@ -175,7 +177,7 @@ public class ServerConfiguration {
         clearParameter(UNSUPPORTED_KEY_EXCHANGE_SCHEMES);
         if(this.unSupportedKeyxFactories != null) {
             for(KeyExchangeScheme scheme : this.unSupportedKeyxFactories) {
-                nvps.add(new BasicNameValuePair(UNSUPPORTED_KEY_EXCHANGE_SCHEMES, String.valueOf(scheme)));
+                nvps.add(new NameValuePair(UNSUPPORTED_KEY_EXCHANGE_SCHEMES, String.valueOf(scheme)));
             }
         }
         return this;
@@ -190,7 +192,7 @@ public class ServerConfiguration {
         if (!nvps.isEmpty()) {
             for (final Iterator<NameValuePair> it = nvps.iterator(); it.hasNext(); ) {
                 final NameValuePair nvp = it.next();
-                if (nvp.getName().equals(name)) {
+                if (nvp.name.equals(name)) {
                     it.remove();
                 }
             }
@@ -201,22 +203,21 @@ public class ServerConfiguration {
 
     public ServerConfiguration setParameter(String name, String value) {
         clearParameter(name);
-        nvps.add(new BasicNameValuePair(name, value));
+        nvps.add(new NameValuePair(name, value));
         return this;
     }
 
     public void commitToServer() throws URISyntaxException, IOException {
-        CloseableHttpClient client = HttpClients.createDefault();
-        URI uri = uriBuilder.setParameters(nvps).build();
-        HttpGet get = new HttpGet(uri);
-        CloseableHttpResponse response = client.execute(get);
-
-        try {
-            System.out.println(response.getStatusLine());
-            HttpEntity entity = response.getEntity();
-            System.out.println(EntityUtils.toString(entity));
-        } finally {
-            response.close();
-        }
+        StringBuilder urlBuilder = new StringBuilder(scheme + "://" + host + path + "?");
+        for (NameValuePair pair : nvps)
+            urlBuilder.append(pair.name + "=" + pair.value + "&");
+        URL url = new URL(urlBuilder.toString());
+        
+        HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+        conn.setRequestMethod("GET");
+        conn.setDoOutput(true);
+        conn.setDoInput(true);
+        OutputStream response = conn.getOutputStream();
+        response.close();
     }
 }

@@ -35,7 +35,7 @@ import static org.testng.Assert.assertTrue;
  */
 public class MasterTokenTests extends BaseTestClass {
 
-    private static final String PATH = "/test";
+    private static final String PATH = "/msl-test-server/test";
     private static final int TIME_OUT = 60000; // 60 Seconds
 
     @BeforeClass
@@ -95,7 +95,7 @@ public class MasterTokenTests extends BaseTestClass {
         Date expiration = new Date(System.currentTimeMillis() + 20000);
         final MasterToken masterToken = getMasterToken(renewalWindow, expiration, TIME_OUT, 0 /*sequenceNumberOffset*/);
 
-        MessageInputStream message = sendRecieve(out, in, masterToken, null, null, true /*isRenewable*/, false /*addKeyRequestData*/);
+        MessageInputStream message = sendReceive(out, in, masterToken, null, null, true /*isRenewable*/, false /*addKeyRequestData*/);
 
         thenThe(message)
                 .shouldHave().validBuffer();
@@ -111,7 +111,7 @@ public class MasterTokenTests extends BaseTestClass {
         Date expiration = new Date(System.currentTimeMillis() - 10000);
         final MasterToken masterToken = getMasterToken(renewalWindow, expiration, TIME_OUT, 0 /*sequenceNumberOffset*/);
 
-        MessageInputStream message = sendRecieve(out, in, masterToken, null, null, true /*isRenewable*/, true /*addKeyRequestData*/);
+        MessageInputStream message = sendReceive(out, in, masterToken, null, null, true /*isRenewable*/, true /*addKeyRequestData*/);
 
         thenThe(message)
                 .shouldHave().validBuffer();
@@ -127,7 +127,7 @@ public class MasterTokenTests extends BaseTestClass {
         Date expiration = new Date(System.currentTimeMillis() - 10000);
         final MasterToken masterToken = getMasterToken(renewalWindow, expiration, TIME_OUT, 0 /*sequenceNumberOffset*/);
 
-        MessageInputStream message = sendRecieve(out, in, masterToken, null, null, false /*isRenewable*/, true /*addKeyRequestData*/);
+        MessageInputStream message = sendReceive(out, in, masterToken, null, null, false /*isRenewable*/, true /*addKeyRequestData*/);
 
         thenTheErr(message)
                 .shouldBe().validateHdr()
@@ -140,7 +140,7 @@ public class MasterTokenTests extends BaseTestClass {
         Date expiration = new Date(System.currentTimeMillis() + 10000);
         final MasterToken masterToken = getMasterToken(renewalWindow, expiration, TIME_OUT, 33 /*sequenceNumberOffset*/);
 
-        MessageInputStream message = sendRecieve(out, in, masterToken, null, null, true /*isRenewable*/, true /*addKeyRequestData*/);
+        MessageInputStream message = sendReceive(out, in, masterToken, null, null, true /*isRenewable*/, true /*addKeyRequestData*/);
 
         thenTheErr(message)
                 .shouldBe().validateHdr()
@@ -153,7 +153,7 @@ public class MasterTokenTests extends BaseTestClass {
         Date expiration = new Date(System.currentTimeMillis() + 10000);
         final MasterToken masterToken = getMasterToken(renewalWindow, expiration, TIME_OUT, 0 /*sequenceNumberOffset*/);
 
-        MessageInputStream message = sendRecieve(out, in, masterToken, null, null, true /*isRenewable*/, true /*addKeyRequestData*/);
+        MessageInputStream message = sendReceive(out, in, masterToken, null, null, true /*isRenewable*/, true /*addKeyRequestData*/);
 
         thenThe(message)
                 .shouldHave().validBuffer();
@@ -169,7 +169,7 @@ public class MasterTokenTests extends BaseTestClass {
         Date expiration = new Date(System.currentTimeMillis() + 10000);
         final MasterToken masterToken = getMasterToken(renewalWindow, expiration, TIME_OUT, 0 /*sequenceNumberOffset*/);
 
-        MessageInputStream message = sendRecieve(out, in, masterToken, null, null, false /*isRenewable*/, true /*addKeyRequestData*/);
+        MessageInputStream message = sendReceive(out, in, masterToken, null, null, false /*isRenewable*/, true /*addKeyRequestData*/);
 
         thenThe(message)
                 .shouldHave().validBuffer();
@@ -188,7 +188,7 @@ public class MasterTokenTests extends BaseTestClass {
         Date expiration = new Date(System.currentTimeMillis() + 20000);   // Expiration in the past
         final MasterToken masterToken = getMasterToken(renewalWindow, expiration, TIME_OUT, 0 /*sequenceNumberOffset*/);
 
-        MessageInputStream message = sendRecieve(out, in, masterToken, null, null, true /*isRenewable*/, false /*addKeyRequestData*/);
+        MessageInputStream message = sendReceive(out, in, masterToken, null, null, true /*isRenewable*/, false /*addKeyRequestData*/);
 
         thenTheErr(message)
                 .shouldBe().validateHdr()

@@ -25,7 +25,6 @@ import com.netflix.msl.userauth.UserAuthenticationData;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
 import com.netflix.msl.util.AuthenticationUtils;
 import com.netflix.msl.util.MockAuthenticationUtils;
-import org.apache.http.client.utils.URIBuilder;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -39,14 +38,16 @@ import java.security.NoSuchAlgorithmException;
  */
 public class ClientConfiguration {
 
-    public static final byte[] inputBuffer = "Hello".getBytes();
-    public static final byte[] serverErrorBuffer = "Error".getBytes();
+    public static final String input = "Hello";
+    public static final String serverError = "Error";
 
     private MslControl mslControl;
     private ClientMslContext mslContext;
     private ClientMessageContext messageContext;
     private URL remoteEntity;
-    private URIBuilder uriBuilder = new URIBuilder();
+    private String scheme = "http";
+    private String remoteHost = "localhost";
+    private String path = "";
     private static final String USER_ID = "userid";
     private boolean isPeerToPeer = false;
     private EntityAuthenticationScheme entityAuthenticationScheme = EntityAuthenticationScheme.PSK;
@@ -129,17 +130,17 @@ public class ClientConfiguration {
     }
 
     public ClientConfiguration setScheme(String scheme) {
-        uriBuilder.setScheme(scheme);
+        this.scheme = scheme;
         return this;
     }
 
     public ClientConfiguration setHost(String remoteHost) {
-        uriBuilder.setHost(remoteHost);
+        this.remoteHost = remoteHost;
         return this;
     }
 
     public ClientConfiguration setPath(String path) {
-        uriBuilder.setPath(path);
+        this.path = path;
         return this;
     }
 
@@ -159,7 +160,7 @@ public class ClientConfiguration {
     }
 
     public void commitConfiguration() throws URISyntaxException, IOException, MslCryptoException, MslEncodingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, MslKeyExchangeException {
-        remoteEntity = uriBuilder.build().toURL();
+        remoteEntity = new URL(scheme + "://" + remoteHost + path);
 
         /** create msl context and configure */
         mslContext = new ClientMslContext(entityAuthenticationScheme, isPeerToPeer, isNullCryptoContext);
@@ -210,7 +211,7 @@ public class ClientConfiguration {
         if(this.clearKeyRequestData) {
             messageContext.clearKeyRequestData();
         }
-        messageContext.setBuffer(inputBuffer);
+        messageContext.setBuffer(input.getBytes());
         messageContext.setNonReplayable(nonReplayable);
         //Setting the maxRetryCount for msgContext
         messageContext.setMaxRetryCount(this.userAuthRetryCount);

@@ -37,7 +37,7 @@ import static org.testng.Assert.assertTrue;
  */
 public class UserIdTokenTests extends BaseTestClass {
 
-    private static final String PATH = "/test";
+    private static final String PATH = "/msl-test-server/test";
     private static final int TIME_OUT = 60000; // 60 Seconds
 
     @BeforeClass
@@ -97,7 +97,7 @@ public class UserIdTokenTests extends BaseTestClass {
         Date expiration = new Date(System.currentTimeMillis() + 20000);
         final UserIdToken userIdToken = getUserIdToken(masterToken, renewalWindow, expiration, TIME_OUT);
 
-        MessageInputStream message = sendRecieve(out, in, masterToken, userIdToken, null, true /*isRenewable*/, false /*addKeyRequestData*/);
+        MessageInputStream message = sendReceive(out, in, masterToken, userIdToken, null, true /*isRenewable*/, false /*addKeyRequestData*/);
 
         thenThe(message)
                 .shouldHave().validBuffer();
@@ -115,7 +115,7 @@ public class UserIdTokenTests extends BaseTestClass {
         Date expiration = new Date(System.currentTimeMillis() - 10000);
         final UserIdToken userIdToken = getUserIdToken(masterToken, renewalWindow, expiration, TIME_OUT);
 
-        MessageInputStream message = sendRecieve(out, in, masterToken, userIdToken, null, true /*isRenewable*/, false /*addKeyRequestData*/);
+        MessageInputStream message = sendReceive(out, in, masterToken, userIdToken, null, true /*isRenewable*/, false /*addKeyRequestData*/);
 
         thenThe(message)
                 .shouldHave().validBuffer();
@@ -133,7 +133,7 @@ public class UserIdTokenTests extends BaseTestClass {
         Date expiration = new Date(System.currentTimeMillis() - 10000);
         final UserIdToken userIdToken = getUserIdToken(masterToken, renewalWindow, expiration, TIME_OUT);
 
-        MessageInputStream message = sendRecieve(out, in, masterToken, userIdToken, null, false /*isRenewable*/, false /*addKeyRequestData*/);
+        MessageInputStream message = sendReceive(out, in, masterToken, userIdToken, null, false /*isRenewable*/, false /*addKeyRequestData*/);
 
         thenThe(message)
                 .shouldHave().validBuffer();
@@ -151,7 +151,7 @@ public class UserIdTokenTests extends BaseTestClass {
         Date expiration = new Date(System.currentTimeMillis() + 10000);
         final UserIdToken userIdToken = getUserIdToken(masterToken, renewalWindow, expiration, TIME_OUT);
 
-        MessageInputStream message = sendRecieve(out, in, masterToken, userIdToken, null, true /*isRenewable*/, false /*addKeyRequestData*/);
+        MessageInputStream message = sendReceive(out, in, masterToken, userIdToken, null, true /*isRenewable*/, false /*addKeyRequestData*/);
 
         thenThe(message)
                 .shouldHave().validBuffer();
@@ -169,7 +169,7 @@ public class UserIdTokenTests extends BaseTestClass {
         Date expiration = new Date(System.currentTimeMillis() + 10000);
         final UserIdToken userIdToken = getUserIdToken(masterToken, renewalWindow, expiration, TIME_OUT);
 
-        MessageInputStream message = sendRecieve(out, in, masterToken, userIdToken, null, false /*isRenewable*/, false /*addKeyRequestData*/);
+        MessageInputStream message = sendReceive(out, in, masterToken, userIdToken, null, false /*isRenewable*/, false /*addKeyRequestData*/);
 
         thenThe(message)
                 .shouldHave().validBuffer();

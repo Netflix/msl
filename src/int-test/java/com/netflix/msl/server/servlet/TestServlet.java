@@ -7,7 +7,6 @@ import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.server.common.BaseServlet;
 import com.netflix.msl.server.configuration.tokens.TokenFactoryType;
 
-import javax.servlet.annotation.WebServlet;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 
@@ -15,7 +14,6 @@ import java.security.NoSuchAlgorithmException;
  * User: skommidi
  * Date: 7/21/14
  */
-@WebServlet(urlPatterns = "/test", loadOnStartup = 1)
 public class TestServlet extends BaseServlet {
 
     private static final long serialVersionUID = 1L;
