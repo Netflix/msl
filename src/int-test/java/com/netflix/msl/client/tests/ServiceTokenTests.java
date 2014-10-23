@@ -14,6 +14,8 @@ import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.ServiceToken;
 import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
+import com.netflix.msl.util.MslStore;
+
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -67,7 +69,10 @@ public class ServiceTokenTests extends BaseTestClass {
     public void afterTest() throws IOException {
         if(out != null) { out.close(); out = null;}
         if(in != null) { in.close(); out = null; }
-        clientConfig.getMslContext().getMslStore().clearCryptoContexts();
+        MslStore store = clientConfig.getMslContext().getMslStore();
+        store.clearCryptoContexts();
+        store.clearServiceTokens();
+        store.clearUserIdTokens();
     }
 
     @BeforeMethod
