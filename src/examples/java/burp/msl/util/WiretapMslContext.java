@@ -1,8 +1,20 @@
 package burp.msl.util;
 
+import java.security.SecureRandom;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+
 import burp.msl.tokens.EchoingTokenFactory;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
+
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.crypto.JcaAlgorithm;
@@ -32,18 +44,6 @@ import com.netflix.msl.util.MockAuthenticationUtils;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslStore;
 import com.netflix.msl.util.NullMslStore;
-
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-import java.security.SecureRandom;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 /**
  * User: skommidi
@@ -89,11 +89,7 @@ public class WiretapMslContext implements MslContext {
      * @param entityAuthFactories entity authentication factories.
      * @param userAuthFactories user authentication factories.
      */
-    @Inject
-    public WiretapMslContext(
-            @Named("MslContextEntityAuthFactories") final Set<EntityAuthenticationFactory> entityAuthFactories,
-            @Named("MslContextUserAuthFactories") final Set<UserAuthenticationFactory> userAuthFactories)
-    {
+    public WiretapMslContext(final Set<EntityAuthenticationFactory> entityAuthFactories, final Set<UserAuthenticationFactory> userAuthFactories) {
         final SecretKey mslEncryptionKey = new SecretKeySpec(MSL_ENCRYPTION_KEY, JcaAlgorithm.AES);
         final SecretKey mslHmacKey = new SecretKeySpec(MSL_HMAC_KEY, JcaAlgorithm.HMAC_SHA256);
         final SecretKey mslWrappingKey = new SecretKeySpec(MSL_WRAPPING_KEY, JcaAlgorithm.AESKW);

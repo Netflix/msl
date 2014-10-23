@@ -6,8 +6,7 @@ import burp.msl.msg.CaptureMessageDebugContext;
 import burp.msl.msg.WiretapMessageContext;
 import burp.msl.msg.WiretapMessageInputStream;
 import burp.msl.util.WiretapMslContext;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
+
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
@@ -15,21 +14,26 @@ import com.netflix.msl.MslError;
 import com.netflix.msl.MslException;
 import com.netflix.msl.MslKeyExchangeException;
 import com.netflix.msl.crypto.ICryptoContext;
+import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.msg.ErrorHeader;
 import com.netflix.msl.msg.MessageHeader;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.UserIdToken;
+import com.netflix.msl.userauth.UserAuthenticationFactory;
 import com.netflix.msl.util.JsonUtils;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import javax.xml.bind.DatatypeConverter;
+
 import java.io.ByteArrayInputStream;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Set;
 
 /**
  * User: skommidi
@@ -67,10 +71,6 @@ public class MSLHttpListener implements IHttpListener {
     private static final String KEY_SEQUENCE_NUMBER = "sequencenumber";
     private static final String KEY_SERIAL_NUMBER = "serialnumber";
     private static final String KEY_SESSIONDATA = "sessiondata";
-    private static final String KEY_ISSUER_DATA = "issuerdata";
-    private static final String KEY_IDENTITY = "identity";
-    private static final String KEY_ENCRYPTION_KEY = "encryptionkey";
-    private static final String KEY_HMAC_KEY = "hmackey";
     private static final String KEY_MASTER_TOKEN_SERIAL_NUMBER = "mtserialnumber";
     private static final String KEY_USERDATA = "userdata";
 
@@ -82,13 +82,11 @@ public class MSLHttpListener implements IHttpListener {
         this.callbacks = callbacks;
         this.helpers = helpers;
 
-        // obtain our output and error streams
+        // obtain our output streams
         if(this.callbacks != null && this.helpers != null) {
             stdout = new PrintWriter(callbacks.getStdout(), true);
-            stderr = new PrintWriter(callbacks.getStderr(), true);
         } else {
             stdout = new PrintWriter(System.out);
-            stderr = new PrintWriter(System.err);
         }
 
         try {
@@ -99,13 +97,11 @@ public class MSLHttpListener implements IHttpListener {
     }
 
     private void initializeMsl() throws MslCryptoException {
-        final Injector injector = Guice.createInjector(new WiretapModule());
-        if(injector != null) {
-            this.ctx = injector.getInstance(WiretapMslContext.class);
-            if(this.ctx == null)
-                throw new RuntimeException("MslContext not initialized");
-        }
-
+        final WiretapModule module = new WiretapModule();
+        final Set<EntityAuthenticationFactory> entityAuthFactories = module.provideEntityAuthFactories();
+        final Set<UserAuthenticationFactory> userAuthFactories = module.provideUserAuthFactories();
+        this.ctx = new WiretapMslContext(entityAuthFactories, userAuthFactories);
+        
         // Change the entity auth data to your usecase
         ctx.setEntityAuthenticationData(EntityAuthenticationScheme.PSK);
 
@@ -202,7 +198,7 @@ public class MSLHttpListener implements IHttpListener {
 
     protected String processMslMessage(String body) throws WiretapException {
 
-        String retData = "";
+        StringBuilder retData = new StringBuilder("");
 
         WiretapMessageInputStream mis;
         try {
@@ -239,13 +235,13 @@ public class MSLHttpListener implements IHttpListener {
 
                 // Add headerdata in clear
                 errHeaderJO.put(KEY_ERRORDATA, errordataJO);
-                stdout.println(errHeaderJO); retData += errHeaderJO.toString() + "\n";
-                stdout.println(); retData += "\n";
+                stdout.println(errHeaderJO); retData.append(errHeaderJO.toString() + "\n");
+                stdout.println(); retData.append("\n");
             } catch (JSONException e) {
                 throw new WiretapException(e.getMessage(), e);
             }
 
-            return retData;
+            return retData.toString();
         } else {
             MessageHeader messageHeader = mis.getMessageHeader();
 
@@ -308,7 +304,7 @@ public class MSLHttpListener implements IHttpListener {
 
                 // Add headerdata in clear
                 msgHeaderJO.put(KEY_HEADERDATA, headerdataJO);
-                stdout.println(msgHeaderJO); retData += msgHeaderJO.toString() + "\n";
+                stdout.println(msgHeaderJO); retData.append(msgHeaderJO.toString() + "\n");
             } catch (JSONException e) {
                 throw new WiretapException(e.getMessage(), e);
             } catch (MslException e) {
@@ -325,15 +321,15 @@ public class MSLHttpListener implements IHttpListener {
 
                 JSONObject payloadJO = new JSONObject();
                 payloadJO.put(KEY_PAYLOAD, payloadTokenJO);
-                stdout.println(payloadJO); retData += payloadJO.toString() + "\n";
+                stdout.println(payloadJO); retData.append(payloadJO.toString() + "\n");
             }
-            stdout.println(); retData += "\n";
+            stdout.println(); retData.append("\n");
         } catch (Exception e) {
             throw new WiretapException(e.getMessage(), e);
         }
         stdout.flush();
 
-        return retData;
+        return retData.toString();
     }
 
     private JSONObject parseUserIdToken(UserIdToken userIdToken, MasterToken masterToken) throws JSONException, MslException {
@@ -488,7 +484,6 @@ public class MSLHttpListener implements IHttpListener {
     }
 
     private final PrintWriter stdout;
-    private final PrintWriter stderr;
     private final IBurpExtenderCallbacks callbacks;
     private final IExtensionHelpers helpers;
     private WiretapMessageContext msgCtx;
