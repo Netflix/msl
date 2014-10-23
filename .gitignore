@@ -5,3 +5,4 @@
 /.gradle
 /.settings
 /build
+/test-output
