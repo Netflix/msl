@@ -1,7 +1,6 @@
 package com.netflix.msl.client.configuration;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
@@ -215,9 +214,6 @@ public class ServerConfiguration {
         
         HttpURLConnection conn = (HttpURLConnection)url.openConnection();
         conn.setRequestMethod("GET");
-        conn.setDoOutput(true);
-        conn.setDoInput(true);
-        OutputStream response = conn.getOutputStream();
-        response.close();
+        conn.getResponseCode();
     }
 }
