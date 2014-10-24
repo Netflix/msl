@@ -1,1 +1,5 @@
 /bin
+/build
+/test-output
+/.gradle
+/.settings
