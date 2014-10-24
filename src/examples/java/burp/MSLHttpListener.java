@@ -1,3 +1,18 @@
+/**
+ * Copyright (c) 2014 Netflix, Inc.  All rights reserved.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package burp;
 
 import burp.msl.WiretapException;
@@ -29,6 +44,7 @@ import org.json.JSONObject;
 import javax.xml.bind.DatatypeConverter;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.security.InvalidAlgorithmParameterException;
@@ -209,40 +225,45 @@ public class MSLHttpListener implements IHttpListener {
         }
 
         // Check if instance of ErrorHeader
-        if(mis.getErrorHeader() != null) {
-            ErrorHeader errorHeader = mis.getErrorHeader();
-
-            // Create error headerdata JSON Object
-            JSONObject errHeaderJO = new JSONObject();
-
-            // if entity auth data is present add that to the JSON object
-            if(errorHeader.getEntityAuthenticationData() != null) {
+        final ErrorHeader errorHeader = mis.getErrorHeader();
+        try {
+            if (errorHeader != null) {
+                // Create error headerdata JSON Object
+                JSONObject errHeaderJO = new JSONObject();
+    
+                // if entity auth data is present add that to the JSON object
+                if(errorHeader.getEntityAuthenticationData() != null) {
+                    try {
+                        errHeaderJO.put(KEY_ENTITY_AUTHENTICATION_DATA, errorHeader.getEntityAuthenticationData());
+                    } catch (JSONException e) {
+                        throw new WiretapException(e.getMessage(), e);
+                    }
+                }
+    
+                final JSONObject errordataJO = new JSONObject();
                 try {
-                    errHeaderJO.put(KEY_ENTITY_AUTHENTICATION_DATA, errorHeader.getEntityAuthenticationData());
+                    errordataJO.put(KEY_RECIPIENT, errorHeader.getRecipient());
+                    errordataJO.put(KEY_MESSAGE_ID, errorHeader.getMessageId());
+                    errordataJO.put(KEY_ERROR_CODE, errorHeader.getErrorCode().intValue());
+                    errordataJO.put(KEY_INTERNAL_CODE, errorHeader.getInternalCode());
+                    errordataJO.put(KEY_ERROR_MESSAGE, errorHeader.getErrorMessage());
+                    errordataJO.put(KEY_USER_MESSAGE, errorHeader.getUserMessage());
+    
+                    // Add headerdata in clear
+                    errHeaderJO.put(KEY_ERRORDATA, errordataJO);
+                    stdout.println(errHeaderJO); retData.append(errHeaderJO.toString() + "\n");
+                    stdout.println(); retData.append("\n");
                 } catch (JSONException e) {
                     throw new WiretapException(e.getMessage(), e);
                 }
+    
+                return retData.toString();
             }
-
-            final JSONObject errordataJO = new JSONObject();
-            try {
-                errordataJO.put(KEY_RECIPIENT, errorHeader.getRecipient());
-                errordataJO.put(KEY_MESSAGE_ID, errorHeader.getMessageId());
-                errordataJO.put(KEY_ERROR_CODE, errorHeader.getErrorCode().intValue());
-                errordataJO.put(KEY_INTERNAL_CODE, errorHeader.getInternalCode());
-                errordataJO.put(KEY_ERROR_MESSAGE, errorHeader.getErrorMessage());
-                errordataJO.put(KEY_USER_MESSAGE, errorHeader.getUserMessage());
-
-                // Add headerdata in clear
-                errHeaderJO.put(KEY_ERRORDATA, errordataJO);
-                stdout.println(errHeaderJO); retData.append(errHeaderJO.toString() + "\n");
-                stdout.println(); retData.append("\n");
-            } catch (JSONException e) {
-                throw new WiretapException(e.getMessage(), e);
-            }
-
-            return retData.toString();
-        } else {
+        } finally {
+            try { mis.close(); } catch (final IOException e) {}
+        }
+        
+        try {
             MessageHeader messageHeader = mis.getMessageHeader();
 
             // Create message headerdata JSON object
@@ -310,24 +331,26 @@ public class MSLHttpListener implements IHttpListener {
             } catch (MslException e) {
                 throw new WiretapException(e.getMessage(), e);
             }
-        }
 
-        try {
-            JSONObject payloadTokenJO;
-            while((payloadTokenJO = mis.nextData()) != null) {
-                String data = new String(DatatypeConverter.parseBase64Binary(payloadTokenJO.getString(KEY_DATA)));
-                payloadTokenJO.remove(KEY_DATA);
-                payloadTokenJO.put(KEY_DATA, data);
-
-                JSONObject payloadJO = new JSONObject();
-                payloadJO.put(KEY_PAYLOAD, payloadTokenJO);
-                stdout.println(payloadJO); retData.append(payloadJO.toString() + "\n");
+            try {
+                JSONObject payloadTokenJO;
+                while((payloadTokenJO = mis.nextPayload()) != null) {
+                    String data = new String(DatatypeConverter.parseBase64Binary(payloadTokenJO.getString(KEY_DATA)));
+                    payloadTokenJO.remove(KEY_DATA);
+                    payloadTokenJO.put(KEY_DATA, data);
+    
+                    JSONObject payloadJO = new JSONObject();
+                    payloadJO.put(KEY_PAYLOAD, payloadTokenJO);
+                    stdout.println(payloadJO); retData.append(payloadJO.toString() + "\n");
+                }
+                stdout.println(); retData.append("\n");
+            } catch (Exception e) {
+                throw new WiretapException(e.getMessage(), e);
             }
-            stdout.println(); retData.append("\n");
-        } catch (Exception e) {
-            throw new WiretapException(e.getMessage(), e);
+            stdout.flush();
+        } finally {
+            try { mis.close(); } catch (final IOException e) {}
         }
-        stdout.flush();
 
         return retData.toString();
     }

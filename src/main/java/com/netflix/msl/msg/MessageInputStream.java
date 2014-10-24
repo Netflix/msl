@@ -358,6 +358,38 @@ public class MessageInputStream extends InputStream {
     }
 
     /**
+     * Retrieve the next JSON object.
+     * 
+     * @return the next JSON object or null if none remaining.
+     * @throws MslEncodingException if there is a problem parsing the JSON.
+     */
+    protected JSONObject nextJsonObject() throws MslEncodingException {
+        // Make sure this message is allowed to have payload chunks.
+        final MessageHeader messageHeader = getMessageHeader();
+        if (messageHeader == null)
+            throw new MslInternalException("Read attempted with error message.");
+        
+        // If we previously reached the end of the message, don't try to read
+        // more.
+        if (eom)
+            return null;
+        
+        // Otherwise read the next JSON object.
+        try {
+            if (!tokener.more()) {
+                eom = true;
+                return null;
+            }
+            final Object o = tokener.nextValue();
+            if (!(o instanceof JSONObject))
+                throw new MslEncodingException(MslError.MESSAGE_FORMAT_ERROR);
+            return (JSONObject)o;
+        } catch (final JSONException e) {
+            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "payloadchunk", e);
+        }
+    }
+
+    /**
      * Retrieve the next payload chunk data.
      * 
      * @return the next payload chunk data or null if none remaining.
@@ -369,7 +401,7 @@ public class MessageInputStream extends InputStream {
      *         error message.
      * @throws MslException if there is an error uncompressing the data.
      */
-    private ByteArrayInputStream nextData() throws MslCryptoException, MslEncodingException, MslMessageException, MslInternalException, MslException {
+    protected ByteArrayInputStream nextData() throws MslCryptoException, MslEncodingException, MslMessageException, MslInternalException, MslException {
         // Make sure this message is allowed to have payload chunks.
         final MessageHeader messageHeader = getMessageHeader();
         if (messageHeader == null)
@@ -379,25 +411,9 @@ public class MessageInputStream extends InputStream {
         if (payloadIterator != null && payloadIterator.hasNext())
             return payloadIterator.next();
         
-        // If we previously reached the end of the message, don't try to read
-        // more.
-        if (eom)
-            return null;
-        
         // Otherwise read the next payload.
-        final JSONObject jo;
-        try {
-            if (!tokener.more()) {
-                eom = true;
-                return null;
-            }
-            final Object o = tokener.nextValue();
-            if (!(o instanceof JSONObject))
-                throw new MslEncodingException(MslError.MESSAGE_FORMAT_ERROR);
-            jo = (JSONObject)o;
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "payloadchunk", e);
-        }
+        final JSONObject jo = nextJsonObject();
+        if (jo == null) return null;
         final PayloadChunk payload = new PayloadChunk(jo, cryptoContext);
         
         // Make sure the payload belongs to this message and is the one we are
