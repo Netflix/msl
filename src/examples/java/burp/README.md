@@ -1,27 +1,19 @@
-# Burp Extender for MSL
+# MSL Burp Extender
 
-## What is Brup Suite
+[Burp Suite](http://portswigger.net/burp/) is a platform for security testing of web applications. The MSL Burp Extender allows you to inspect MSL messages that are transmitted through a Burp proxy.
 
-Refer to http://portswigger.net/burp/
+This version has been tested with the free edition of Burp Suite v1.6.
 
-## Extender
+## Getting Started
 
-### Changes before creating extender jar
+Since every MSL configuration is different and messages are secured using authentication schemes, key exchange schemes, and crypto keys specific to a configuration, you must first configure the MSL Burp Extender to match your configuration. Generally speaking, this can be accomplished by providing the MSL Burp Extender with the same configuration (i.e. @MslContext@) as your trusted services server.
 
-* Modify WiretapMslContext.java with appropriate MSL Server keys
-    * MSL_ENCRYPTION_KEY
-    * MSL_HMAC_KEY
-    * MSL_WRAPPING_KEY
+An example configuration compatible with the integration test server is defined in [msl/util/WiretapMslContext.java](msl/util/WiretapMslContext.java).
 
-### Steps to setup extender
+Once you have the MSL Burp Extender configured properly, you can use it with Burp Suite.
 
-* Start Burp Suite, this extender was tested with free edition (burpsuite_free_v1.6.jar)
-* Create Jar out of the extender code and use it with Extender tool (http://portswigger.net/burp/extender/) in Burp Suite.
-* Setup proxy options in the Proxy -> options, these is the endpoint with which client communicates.
-    * Make sure to check "Support invisible proxying" in "Request handling" tab of the proxy setting.
-* Setup upward proxy server in the options -> connections to talk to actual MSL server.
-
-
-
-
-
+* Start Burp Suite.
+* Create a JAR from the MSL Burp Extender and install it into Burp Suite.
+* In Burp Suite the Proxy > Options will display the proxy URL the client should use.
+  * on the "Request Handling" tab enable "Support Invisible Proxying"
+* In Burp Suite set Options > Connections to the real MSL server.
