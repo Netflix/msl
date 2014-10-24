@@ -1,6 +1,9 @@
 # Message Security Layer
 
+<img src="https://github.com/Netflix/msl/raw/gh-pages/images/msl-logo.gif" alt="MSL Logo" align="left" hspace="20" vspace="0"/>
 Message Security Layer (MSL) is an extensible and flexible secure messaging protocol that can be used to transport data between two or more communicating entities. Data may also be associated with specific users, and treated as confidential or non-replayable if so desired.
+
+<br clear="all"/>
 
 ## Documentation
 
