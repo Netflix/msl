@@ -70,6 +70,14 @@ sourceSets {
 
 task examples(dependsOn: ":compileExamplesJava")
 
+task burp(type: Jar) {
+    dependsOn ":examples"
+    baseName "msl-burp-extender"
+    from(sourceSets.examples.output) {
+        include "burp/**"
+    }
+}
+
 task itest(type: Test) {
     dependsOn ":compileItestJava"
 
@@ -83,7 +91,7 @@ war {
     dependsOn ":examples"
     baseName "msl-example-server"
     from(sourceSets.examples.output) {
-        exclude "kancolle/**"
+        include "server/**"
         into "WEB-INF/classes"
     }
     webXml = file("src/examples/java/server/WebContent/WEB-INF/web.xml")
