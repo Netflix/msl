@@ -3,6 +3,8 @@
 	<classpathentry excluding="server/WebContent/" kind="src" path="src/examples/java"/>
 	<classpathentry excluding="com/netflix/msl/server/WebContent/" kind="src" path="src/int-test/java"/>
 	<classpathentry kind="src" path="src/int-test/resources"/>
+	<classpathentry excluding="burp/lib/burp-extender/|server/WebContent/" kind="src" path="src/examples/java"/>
+	<classpathentry kind="src" path="src/examples/java/burp/lib/burp-extender"/>
 	<classpathentry kind="src" path="src/examples/resources"/>
 	<classpathentry excluding="lib/JSON-java/" kind="src" path="src/main/java"/>
 	<classpathentry kind="src" path="src/main/java/lib/JSON-java"/>

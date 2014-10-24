@@ -186,7 +186,6 @@ var MessageInputStream$create;
                     _parser: { value: undefined, writable: true, enumerable: false, configurable: false },
                     _charset: { value: charset, writable: false, enumerable: false, configurable: false },
                     _remainingData: { value: '', writable: true, enumerable: false, configurable: false },
-                    _timeout: { value: timeout, writable: false, enumerable: false, configurable: false },
                     _header: { value: undefined, writable: true, enumerable: false, configurable: false },
                     _cryptoContext: { value: undefined, writable: true, enumerable: false, configurable: false },
                     _keyxCryptoContext: { value: undefined, writable: true, enumerable: false, configurable: false },
@@ -646,6 +645,73 @@ var MessageInputStream$create;
             }, self);
         },
 
+        /**
+         * Retrieve the next JSON object.
+         * 
+         * @param {number} timeout read timeout in milliseconds.
+         * @return {object} the next JSON object or null if none remaining.
+         * @throws MslEncodingException if there is a problem parsing the JSON.
+         */
+        nextJsonObject: function nextJsonObject(timeout, callback) {
+            var self = this;
+            InterruptibleExecutor(callback, function() {
+                // Make sure this message is allowed to have payload chunks.
+                var messageHeader = this.getMessageHeader();
+                if (!messageHeader)
+                    throw new MslInternalException("Read attempted with error message.");
+
+                // If we previously reached the end of the mesage don't try to
+                // read more.
+                if (this._eom)
+                    return null;
+                
+                // Otherwise read the next JSON object.
+                function nextObject(callback) {
+                    InterruptibleExecutor(callback, function() {
+                        var payloadJo;
+                        //var payloadJo = this._parser.nextValue();
+                        if (this._jsonIndex < this._json.length) {
+                            payloadJo = this._json[this._jsonIndex++];
+                            return payloadJo;
+                        } else {
+                            // in this case there's been a request for
+                            // another payload, but we don't actually have
+                            // the object parsed yet. So we need to parse
+                            // the source again
+                            inputStreamToJSON(this._source, timeout, {
+                                result: function (json) {
+                                    if (json && json.length && json.length > 0) {
+                                        json.forEach(function (elt) {
+                                            this._json.push(elt);
+                                        });
+                                        nextObject(callback);
+                                    } else {
+                                        // we've reached the end of the stream
+                                        this._eom = true;
+                                        callback.result(null);
+                                    }
+                                },
+                                timeout: callback.timeout,
+                                error: callback.error,
+                            });
+                        }
+                    }, self);
+                }
+                nextObject({
+                    result: function(payloadJo) {
+                        InterruptibleExecutor(callback, function() {
+                            if (!payloadJo)
+                                return null;
+                            if (typeof payloadJo !== 'object')
+                                throw new MslEncodingException(MslError.MESSAGE_FORMAT_ERROR);
+                            return payloadJo;
+                        }, self);
+                    },
+                    timeout: callback.timeout,
+                    error: callback.error,
+                }); 
+            }, self);
+        },
 
         /**
          * Retrieve the next payload chunk data.
@@ -680,45 +746,10 @@ var MessageInputStream$create;
                     return null;
 
                 // Otherwise read the next payload.
-                function nextPayload(callback) {
-                    InterruptibleExecutor(callback, function() {
-                        var payloadJo;
-                        //var payloadJo = this._parser.nextValue();
-                        if (this._jsonIndex < this._json.length) {
-                            payloadJo = this._json[this._jsonIndex++];
-                            return payloadJo;
-                        } else {
-
-                            // in this case there's been a request for
-                            // another payload, but we don't actually have
-                            // the object parsed yet. So we need to parse
-                            // the source again
-                            inputStreamToJSON(this._source, this._timeout, {
-                                result: function (json) {
-                                    if (json && json.length && json.length > 0) {
-                                        json.forEach(function (elt) {
-                                            this._json.push(elt);
-                                        });
-                                        nextPayload(callback);
-                                    } else {
-                                        // we've reached the end of the stream
-                                        this._eom = true;
-                                        callback.result(null);
-                                    }
-                                },
-                                timeout: callback.timeout,
-                                error: callback.error,
-                            });
-                        }
-                    }, self);
-                }
-                nextPayload({
+                this.nextJsonObject(timeout, {
                     result: function(payloadJo) {
                         InterruptibleExecutor(callback, function() {
-                            if (!payloadJo)
-                                return null;
-                            if (typeof payloadJo !== 'object')
-                                throw new MslEncodingException(MslError.MESSAGE_FORMAT_ERROR);
+                            if (!payloadJo) return null;
                             PayloadChunk$parse(payloadJo, this._cryptoContext, {
                                 result: function(payload) {
                                     InterruptibleExecutor(callback, function() {
@@ -773,8 +804,8 @@ var MessageInputStream$create;
                             });
                         }, self);
                     },
-                    timeout: function() { callback.timeout(); },
-                    error: function(e) { callback.error(e); }
+                    timeout: callback.timeout,
+                    error: callback.error,
                 });
             }, self);
         },

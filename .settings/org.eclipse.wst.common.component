@@ -6,6 +6,7 @@
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/test/java"/>
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/examples/java"/>
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/examples/resources"/>
+        <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/examples/java/burp/lib/burp-extender"/>
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/int-test/java"/>
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/int-test/resources"/>
         <property name="java-output-path" value="/msl/bin"/>
