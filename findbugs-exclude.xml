@@ -69,6 +69,12 @@
         </Or>
     </Match>
     
+    <!-- Integration server exclusions. -->
+    <Match>
+        <Class name="~.*\.BaseServlet"/>
+        <Bug pattern="MSF_MUTABLE_SERVLET_FIELD,MTIA_SUSPECT_SERVLET_INSTANCE_FIELD"/>
+    </Match>
+    
     <!-- Ignore all bugs in org.json. -->
     <Match>
         <Class name="~org\.json\..*"/>

@@ -21,7 +21,6 @@ import javax.xml.bind.DatatypeConverter;
 
 import org.json.JSONObject;
 
-import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
 import com.netflix.msl.MslError;

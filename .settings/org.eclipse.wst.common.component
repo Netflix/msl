@@ -6,7 +6,9 @@
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/test/java"/>
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/examples/java"/>
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/examples/resources"/>
-        <property name="context-root" value="msl"/>
+        <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/int-test/java"/>
+        <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/int-test/resources"/>
         <property name="java-output-path" value="/msl/bin"/>
+        <property name="context-root" value="msl-example-server"/>
     </wb-module>
 </project-modules>

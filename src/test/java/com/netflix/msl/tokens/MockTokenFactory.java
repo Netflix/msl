@@ -15,12 +15,6 @@
  */
 package com.netflix.msl.tokens;
 
-import java.sql.Date;
-
-import javax.crypto.SecretKey;
-
-import org.json.JSONObject;
-
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
@@ -28,9 +22,11 @@ import com.netflix.msl.MslError;
 import com.netflix.msl.MslException;
 import com.netflix.msl.MslMasterTokenException;
 import com.netflix.msl.MslUserIdTokenException;
-import com.netflix.msl.tokens.MasterToken;
-import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.util.MslContext;
+import org.json.JSONObject;
+
+import javax.crypto.SecretKey;
+import java.sql.Date;
 
 /**
  * Token factory for unit tests.
@@ -39,9 +35,9 @@ import com.netflix.msl.util.MslContext;
  */
 public class MockTokenFactory implements TokenFactory {
     /** Renewal window start offset in milliseconds. */
-    private static final int RENEWAL_OFFSET = 60000;
+    protected static final int RENEWAL_OFFSET = 60000;
     /** Expiration offset in milliseconds. */
-    private static final int EXPIRATION_OFFSET = 120000;
+    protected static final int EXPIRATION_OFFSET = 120000;
     /** Non-replayable ID acceptance window. */
     private static final long NON_REPLAYABLE_ID_WINDOW = 65536;
     
@@ -251,7 +247,7 @@ public class MockTokenFactory implements TokenFactory {
     }
 
     /** Newest master token sequence number. (-1 accepts all master tokens.) */
-    private long sequenceNumber = -1;
+    protected long sequenceNumber = -1;
     /** Revoked master token. (null accepts all master tokens.) */
     private MasterToken revokedMasterToken = null;
     /** Current largest non-replayable ID. */
