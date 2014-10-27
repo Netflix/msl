@@ -15,6 +15,7 @@
  */
 package com.netflix.msl.server.common;
 
+import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslKeyExchangeException;
@@ -105,7 +106,7 @@ public class BaseServlet extends HttpServlet {
         /**
          * Message Context Configuration
          */
-        msgCtx = new ServerMessageContext(mslCtx, payload.getBytes(), isMessageEncrypted);
+        msgCtx = new ServerMessageContext(mslCtx, payload.getBytes(MslConstants.DEFAULT_CHARSET), isMessageEncrypted);
         msgCtx.setIntegrityProtected(isIntegrityProtected);
     }
 
@@ -163,8 +164,8 @@ public class BaseServlet extends HttpServlet {
             } while (true);
 
             //Checking the the received payload is the same as the one the client sent
-            if (!Arrays.equals(payload.getBytes(), buffer)) {
-                msgCtx.setBuffer(error.getBytes());
+            if (!Arrays.equals(payload.getBytes(MslConstants.DEFAULT_CHARSET), buffer)) {
+                msgCtx.setBuffer(error.getBytes(MslConstants.DEFAULT_CHARSET));
                 mslCtrl.respond(mslCtx, msgCtx, inStream, outStream, msgInputStream.get(), TIMEOUT);
                 throw new IllegalStateException("PayloadBytes is not as expected: " + Arrays.toString(buffer));
             }
@@ -238,7 +239,7 @@ public class BaseServlet extends HttpServlet {
         try {
             InputStream inputStream = request.getInputStream();
             if (inputStream != null) {
-                bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+                bufferedReader = new BufferedReader(new InputStreamReader(inputStream, MslConstants.DEFAULT_CHARSET));
                 bufferedReader.mark(100000);
                 char[] charBuffer = new char[128];
                 int bytesRead = -1;

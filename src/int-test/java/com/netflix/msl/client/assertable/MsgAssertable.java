@@ -15,6 +15,7 @@
  */
 package com.netflix.msl.client.assertable;
 
+import com.netflix.msl.MslConstants;
 import com.netflix.msl.client.configuration.ClientConfiguration;
 import com.netflix.msl.msg.ErrorHeader;
 import com.netflix.msl.msg.MessageHeader;
@@ -142,10 +143,10 @@ public class MsgAssertable {
             final int bytesRead = msg.read(buffer);
             if (bytesRead == -1) break;
         } while (true);
-        if(Arrays.equals(buffer, ClientConfiguration.serverError.getBytes())) {
+        if(Arrays.equals(buffer, ClientConfiguration.serverError.getBytes(MslConstants.DEFAULT_CHARSET))) {
             fail("Buffer mis-match on server");
         }
-        assertEquals(this.booleanExpectation, Arrays.equals(buffer, ClientConfiguration.input.getBytes()));
+        assertEquals(this.booleanExpectation, Arrays.equals(buffer, ClientConfiguration.input.getBytes(MslConstants.DEFAULT_CHARSET)));
 
         return this;
     }

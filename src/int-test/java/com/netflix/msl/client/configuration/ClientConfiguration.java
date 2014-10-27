@@ -15,6 +15,7 @@
  */
 package com.netflix.msl.client.configuration;
 
+import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslKeyExchangeException;
@@ -226,7 +227,7 @@ public class ClientConfiguration {
         if(this.clearKeyRequestData) {
             messageContext.clearKeyRequestData();
         }
-        messageContext.setBuffer(input.getBytes());
+        messageContext.setBuffer(input.getBytes(MslConstants.DEFAULT_CHARSET));
         messageContext.setNonReplayable(nonReplayable);
         //Setting the maxRetryCount for msgContext
         messageContext.setMaxRetryCount(this.userAuthRetryCount);
