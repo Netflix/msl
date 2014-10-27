@@ -50,6 +50,12 @@
         <Bug pattern="MS_PKGPROTECT,MS_MUTABLE_ARRAY"/>
     </Match>
     
+    <!-- Burp exclusions. -->
+    <Match>
+        <Class name="~burp\..*"/>
+        <Bug pattern="DM_DEFAULT_ENCODING"/>
+    </Match>
+    
     <!-- KanColle example is incomplete. -->
     <Match>
         <Class name="~kancolle\..*"/>
