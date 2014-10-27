@@ -49,6 +49,7 @@ sourceSets {
         java {
             srcDir "src/examples/java/"
             compileClasspath += sourceSets.main.output
+            compileClasspath += sourceSets.test.output
             compileClasspath += configurations.examples
         }
         resources {
