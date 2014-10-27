@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="server/WebContent/" kind="src" path="src/examples/java"/>
 	<classpathentry excluding="com/netflix/msl/server/WebContent/" kind="src" path="src/int-test/java"/>
 	<classpathentry kind="src" path="src/int-test/resources"/>
 	<classpathentry excluding="burp/lib/burp-extender/|server/WebContent/" kind="src" path="src/examples/java"/>
