@@ -42,9 +42,9 @@ The JavaScript MSL code base assumes a JavaScript execution environment that sup
 - Chrome Browser 37\+  
 For earlier versions: <code>chrome://flags/#enable-experimental-web-platform-features</code>  
 On Linux libnss 3.16.2\+ must be separately installed.
-- Firefox 34\+
-- Internet Explorer 11\+  
+- Firefox 34\+  
 For earlier versions: <code>about:config dom.webcrypto.enabled</code>
+- Internet Explorer 11\+  
 - Safari 8\+
 
 Your browser may not support all Web Crypto API algorithms, key sizes, and features. If you encounter a problem with a Web Crypto operation please check the release notes for your browser version to determine if it supports what you are trying to do.
