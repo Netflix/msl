@@ -39,6 +39,7 @@ import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslInternalException;
 import com.netflix.msl.util.MslContext;
+import com.netflix.msl.util.MslUtils;
 
 /**
  * A symmetric crypto context performs AES-128 encryption/decryption, AES-128
@@ -315,7 +316,7 @@ public class SymmetricCryptoContext implements ICryptoContext {
             }
             
             // Output results.
-            if (Arrays.equals(a, AESKW_AIV) && r.length % AESKW_BLOCK_SIZE == 0)
+            if (MslUtils.safeEquals(a, AESKW_AIV) && r.length % AESKW_BLOCK_SIZE == 0)
                 return r;
             throw new MslCryptoException(MslError.UNWRAP_ERROR, "initial value " + Arrays.toString(a));
         } catch (final NoSuchPaddingException e) {

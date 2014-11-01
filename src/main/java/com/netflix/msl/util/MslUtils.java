@@ -123,21 +123,18 @@ public class MslUtils {
     
      /**
      * Safely compares two byte arrays to prevent timing attacks.
-     * https://github.com/Netflix/msl/issues/7
      * 
      * @param a first array for the comparison.
      * @param b second array for the comparison.
-     * @return the result of the comparison.
+     * @return true if the arrays are equal, false if they are not.
      */
-    public static boolean safeEquals(byte[] a, byte[] b) {
-       if (a.length != b.length) {
+    public static boolean safeEquals(final byte[] a, final byte[] b) {
+       if (a.length != b.length)
           return false;
-       }
        
        int result = 0;
-       for (int i = 0; i < a.length; i++) {
-          result |= a[i] ^ b[i]
-       }
+       for (int i = 0; i < a.length; ++i)
+          result |= a[i] ^ b[i];
        return result == 0;
     }
 }
