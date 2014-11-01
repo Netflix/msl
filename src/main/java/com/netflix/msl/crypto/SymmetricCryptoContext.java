@@ -368,7 +368,7 @@ public class SymmetricCryptoContext implements ICryptoContext {
             final Mac mac = CryptoCache.getMac(HMAC_SHA256_ALGO);
             mac.init(hmacKey);
             final byte[] hmac = mac.doFinal(data);
-            return Arrays.equals(hmac, envelope.getSignature());
+            return MslUtils.safeEquals(hmac, envelope.getSignature());
         } catch (final MslEncodingException e) {
             throw new MslCryptoException(MslError.SIGNATURE_ENVELOPE_PARSE_ERROR, e);
         } catch (final NoSuchAlgorithmException e) {

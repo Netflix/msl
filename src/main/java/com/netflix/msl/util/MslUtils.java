@@ -120,4 +120,24 @@ public class MslUtils {
             throw new MslException(MslError.UNCOMPRESSION_ERROR, "algo " + compressionAlgo.name() + " data " + dataB64, e);
         }
     }
+    
+     /**
+     * Safely compares two byte arrays to prevent timing attacks.
+     * https://github.com/Netflix/msl/issues/7
+     * 
+     * @param a first array for the comparison.
+     * @param b second array for the comparison.
+     * @return the result of the comparison.
+     */
+    public static boolean safeEquals(byte[] a, byte[] b) {
+       if (a.length != b.length) {
+          return false;
+       }
+       
+       int result = 0;
+       for (int i = 0; i < a.length; i++) {
+          result |= a[i] ^ b[i]
+       }
+       return result == 0;
+    }
 }
