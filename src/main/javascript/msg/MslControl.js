@@ -183,7 +183,7 @@ var MslControl$MslChannel;
          */
         getTime: function getTime(ctx) {
             var localSeconds = ctx.getTime() / MILLISECONDS_PER_SECOND;
-            var remoteSeconds = localSeconds + offset;
+            var remoteSeconds = localSeconds + this._offset;
             return new Date(remoteSeconds * MILLISECONDS_PER_SECOND);
         },
     });
