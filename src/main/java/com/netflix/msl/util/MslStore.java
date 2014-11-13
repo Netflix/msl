@@ -125,7 +125,9 @@ public interface MslStore {
     public void clearUserIdTokens();
     
     /**
-     * Add a set of service tokens to the store.
+     * <p>Add a set of service tokens to the store.</p>
+     * 
+     * <p>Either all or none of the provided service tokens will be added.</p>
      * 
      * @param tokens the service tokens.
      * @throws MslException if a service token is master token bound to a

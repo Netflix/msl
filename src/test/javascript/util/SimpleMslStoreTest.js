@@ -882,6 +882,33 @@ describe("SimpleMslStore", function() {
         });
     });
     
+    it("store master bound service tokens with unknown master token", function() {
+        var masterToken;
+        runs(function() {
+            MslTestUtils.getMasterToken(ctx, 1, 1, {
+                result: function(token) { masterToken = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return masterToken; }, "master token not received", 100);
+        
+        var tokens;
+        runs(function() {
+            MslTestUtils.getServiceTokens(ctx, masterToken, null, {
+                result: function(tks) { tokens = tks; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return tokens; }, "tokens not received", 100);
+        
+        runs(function() {
+            var f = function() {
+                store.addServiceTokens(tokens);
+            };
+            expect(f).toThrow(new MslException(MslError.NONE));
+        });
+    });
+    
     it("store user bound service tokens", function() {
         var masterToken;
         runs(function() {
@@ -922,6 +949,44 @@ describe("SimpleMslStore", function() {
 	        var storedTokens = store.getServiceTokens(masterToken, userIdToken);
 	        expect(storedTokens).not.toBeNull();
 	        expect(serviceTokensEqual(tokens, storedTokens)).toBeTruthy();
+        });
+    });
+    
+    it("store user bound service tokens with unknown user ID token", function() {
+        var masterToken;
+        runs(function() {
+            MslTestUtils.getMasterToken(ctx, 1, 1, {
+                result: function(token) { masterToken = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return masterToken; }, "master token not received", 100);
+        var userIdToken;
+        runs(function() {
+            MslTestUtils.getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER, {
+                result: function(token) { userIdToken = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return userIdToken; }, "user ID token not received", 100);
+        
+        var tokens;
+        runs(function() {
+            MslTestUtils.getServiceTokens(ctx, masterToken, userIdToken, {
+                result: function(tks) { tokens = tks; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return tokens; }, "tokens not received", 100);
+
+        runs(function() {
+            var cryptoContext = new NullCryptoContext();
+            store.setCryptoContext(masterToken, cryptoContext);
+            
+            var f = function() {
+                store.addServiceTokens(tokens);
+            };
+            expect(f).toThrow(new MslException(MslError.NONE));
         });
     });
     

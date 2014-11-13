@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -641,6 +642,20 @@ public class SimpleMslStoreTest {
         assertTrue(equal(tokens, storedTokens));
     }
     
+    @Test(expected = MslException.class)
+    public void missingMasterTokenAddServiceTokens() throws MslException {
+        final Set<ServiceToken> tokens;
+        try {
+            final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, 1, 1);
+            tokens = MslTestUtils.getServiceTokens(ctx, masterToken, null);
+        } catch (final MslException e) {
+            fail("Error generating service tokens: " + e.getMessage());
+            return;
+        }
+        
+        store.addServiceTokens(tokens);
+    }
+    
     @Test
     public void userBoundServiceTokens() throws MslEncodingException, MslCryptoException, MslException {
         final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, 1, 1);
@@ -659,6 +674,24 @@ public class SimpleMslStoreTest {
         final Set<ServiceToken> storedTokens = store.getServiceTokens(masterToken, userIdToken);
         assertNotNull(storedTokens);
         assertTrue(equal(tokens, storedTokens));
+    }
+    
+    @Test(expected = MslException.class)
+    public void missingUserIdTokenAddServiceTokens() throws MslException {
+        final Set<ServiceToken> tokens;
+        try {
+            final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, 1, 1);
+            final UserIdToken userIdToken = MslTestUtils.getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER);
+            final ICryptoContext cryptoContext = new NullCryptoContext();
+            tokens = MslTestUtils.getServiceTokens(ctx, masterToken, userIdToken);
+            
+            store.setCryptoContext(masterToken, cryptoContext);
+        } catch (final MslException e) {
+            fail("Error generating service tokens: " + e.getMessage());
+            return;
+        }
+
+        store.addServiceTokens(tokens);
     }
     
     @Test
