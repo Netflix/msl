@@ -88,7 +88,7 @@ var X509AuthenticationData$parse;
         equals: function equals(that) {
             if (this === that) return true;
             if (!(that instanceof X509AuthenticationData)) return false;
-            return (equals.base.call(this, this, that) && this.identity == that.identity);
+            return (equals.base.call(this, that) && this.identity == that.identity);
         },
     });
 
@@ -103,7 +103,7 @@ var X509AuthenticationData$parse;
     X509AuthenticationData$parse = function X509AuthenticationData$parse(x509AuthJO) {
         var certB64 = x509AuthJO[KEY_X509_CERT];
 
-        if (!certB64)
+        if (typeof certB64 !== 'string')
             throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "X.509 authdata" + JSON.stringify(x509AuthJO));
 
         // Convert to X.509 certificate.

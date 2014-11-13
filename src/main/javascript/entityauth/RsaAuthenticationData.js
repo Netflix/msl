@@ -83,7 +83,7 @@ var RsaAuthenticationData$parse;
         equals: function equals(that) {
             if (this === that) return true;
             if (!(that instanceof RsaAuthenticationData)) return false;
-            return (equals.base.call(this, this, that) && this.identity == that.identity && this.publicKeyId == that.publicKeyId);
+            return (equals.base.call(this, that) && this.identity == that.identity && this.publicKeyId == that.publicKeyId);
         },
     });
 
@@ -99,9 +99,7 @@ var RsaAuthenticationData$parse;
     RsaAuthenticationData$parse = function RsaAuthenticationData$parse(rsaAuthJO) {
         var identity = rsaAuthJO[KEY_IDENTITY];
         var pubkeyid = rsaAuthJO[KEY_PUBKEY_ID];
-        if (!identity || typeof identity !== 'string' ||
-            !pubkeyid || typeof pubkeyid !== 'string')
-        {
+        if (typeof identity !== 'string' || typeof pubkeyid !== 'string') {
             throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "RSA authdata" + JSON.stringify(rsaAuthJO));
         }
         return new RsaAuthenticationData(identity, pubkeyid);

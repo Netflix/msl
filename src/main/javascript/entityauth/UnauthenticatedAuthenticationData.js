@@ -74,7 +74,7 @@ var UnauthenticatedAuthenticationData$parse;
         equals: function equals(that) {
             if (this === that) return true;
             if (!(that instanceof UnauthenticatedAuthenticationData)) return false;
-            return (equals.base.call(this, this, that) && this.identity == that.identity);
+            return (equals.base.call(this, that) && this.identity == that.identity);
         },
     });
 
@@ -88,7 +88,7 @@ var UnauthenticatedAuthenticationData$parse;
      */
     UnauthenticatedAuthenticationData$parse = function UnauthenticatedAuthenticationData$parse(unauthenticatedAuthJO) {
         var identity = unauthenticatedAuthJO[KEY_IDENTITY];
-        if (!identity)
+        if (typeof identity !== 'string')
             throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "Unauthenticated authdata" + JSON.stringify(unauthenticatedAuthJO));
         return new UnauthenticatedAuthenticationData(identity);
     };

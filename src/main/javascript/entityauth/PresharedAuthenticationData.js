@@ -72,7 +72,7 @@ var PresharedAuthenticationData$parse;
         equals: function equals(that) {
             if (this === that) return true;
             if (!(that instanceof PresharedAuthenticationData)) return false;
-            return (equals.base.call(this, this, that) && this.identity == that.identity);
+            return (equals.base.call(this, that) && this.identity == that.identity);
         },
     });
 
@@ -86,7 +86,7 @@ var PresharedAuthenticationData$parse;
      */
     PresharedAuthenticationData$parse = function PresharedAuthenticationData$parse(presharedAuthJO) {
         var identity = presharedAuthJO[KEY_IDENTITY];
-        if (!identity)
+        if (typeof identity !== 'string')
             throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "psk authdata" + JSON.stringify(presharedAuthJO));
         return new PresharedAuthenticationData(identity);
     };

@@ -23,8 +23,10 @@ describe("PresharedAuthenticationFactory", function() {
     /** JSON key entity identity. */
     var KEY_IDENTITY = "identity";
 
+    /** Authentication utilities. */
+    var authutils = new MockAuthenticationUtils();
     /** Entity authentication factory. */
-    var factory = new PresharedAuthenticationFactory(MockPresharedAuthenticationFactory.PSK_ESN);
+    var factory;
     /** MSL context. */
     var ctx;
     
@@ -39,10 +41,17 @@ describe("PresharedAuthenticationFactory", function() {
             });
             waitsFor(function() { return ctx; }, "ctx", 100);
             runs(function() {
+                var store = new MockPresharedKeyStore();
+                store.addKeys(MockPresharedAuthenticationFactory.PSK_ESN, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH, MockPresharedAuthenticationFactory.KPW);
+                factory = new PresharedAuthenticationFactory(store, authutils);
                 ctx.addEntityAuthenticationFactory(factory);
                 initialized = true;
             });
         }
+    });
+    
+    afterEach(function() {
+        authutils.reset();
     });
     
     it("createData", function () {
@@ -74,11 +83,20 @@ describe("PresharedAuthenticationFactory", function() {
         expect(cryptoContext).not.toBeNull();
     });
     
-    it("incorrect ESN", function() {
+    it("unknown ESN", function() {
     	var f = function() {
-	        var data = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN + "x");
+	        var data = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN2);
 	        factory.getCryptoContext(ctx, data);
     	};
     	expect(f).toThrow(new MslEntityAuthException(MslError.ENTITY_NOT_FOUND));
+    });
+    
+    it("revoked", function() {
+        var f = function() {
+            authutils.revokeEntity(MockPresharedAuthenticationFactory.PSK_ESN);
+            var data = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN);
+            factory.getCryptoContext(ctx, data);
+        };
+        expect(f).toThrow(new MslEntityAuthException(MslError.ENTITY_REVOKED));
     });
 });

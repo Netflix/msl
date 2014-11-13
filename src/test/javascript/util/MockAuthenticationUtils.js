@@ -28,7 +28,7 @@ var MockAuthenticationUtils = AuthenticationUtils.extend({
          * Revoked entity identities.
          * @type {Array.<string>}
          */
-        var revokedEntityIdentities = {};
+        var revokedEntityIdentities = [];
         /**
          * Revoked entity authentication schemes.
          * @type {Object.<string,Array.<EntityAuthenticationScheme>>}
@@ -65,7 +65,7 @@ var MockAuthenticationUtils = AuthenticationUtils.extend({
      * Reset the entity revocation state.
      */
     reset: function reset() {
-        this._revokedEntityIdentities = {};
+        this._revokedEntityIdentities = [];
         this._revokedEntityAuthSchemes = {};
         this._revokedUserAuthSchemes = {};
         this._revokedEntityUserAuthSchemes = {};
