@@ -57,6 +57,8 @@ var EntityAuthenticationScheme$getScheme;
     ({
         /** Pre-shared keys. */
         PSK : new EntityAuthenticationScheme("PSK", true, true),
+        /** Pre-shared keys with entity profiles. */
+        PSK_PROFILE : new EntityAuthenticationScheme("PSK_PROFILE", true, true),
         /** X.509 public/private key pair. */
         X509 : new EntityAuthenticationScheme("X509", false, true),
         /** RSA public/private key pair. */
