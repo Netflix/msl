@@ -48,6 +48,13 @@ var PresharedProfileAuthenticationData$parse;
      * @type {string}
      */
     var KEY_PROFILE = "profile";
+    
+    /**
+     * Identity concatenation character.
+     * @const
+     * @type {string}
+     */
+    var CONCAT_CHAR = "-";
 
     PresharedProfileAuthenticationData = EntityAuthenticationData.extend({
         /**
@@ -68,9 +75,15 @@ var PresharedProfileAuthenticationData$parse;
             Object.defineProperties(this, props);
         },
     
-        /** @inheritDoc */
+        /**
+         * <p>Returns the entity identity. This is equal to the preshared keys
+         * identity and profile strings joined with a hyphen, e.g.
+         * {@code pskid-profile}.</p>
+         * 
+         * @return {string} the entity identity.
+         */
         getIdentity: function getIdentity() {
-            return this.presharedKeysId + ":" + this.profile;
+            return this.presharedKeysId + CONCAT_CHAR + this.profile;
         },
     
         /** @inheritDoc */

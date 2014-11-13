@@ -50,6 +50,9 @@ public class PresharedProfileAuthenticationDataTest {
     /** JSON key entity profile. */
     private static final String KEY_PROFILE = "profile";
     
+    /** Identity concatenation character. */
+    private static final String CONCAT_CHAR = "-";
+    
     @Rule
     public ExpectedMslException thrown = ExpectedMslException.none();
     
@@ -66,7 +69,7 @@ public class PresharedProfileAuthenticationDataTest {
     @Test
     public void ctors() throws MslEncodingException, JSONException {
         final PresharedProfileAuthenticationData data = new PresharedProfileAuthenticationData(MockPresharedProfileAuthenticationFactory.PSK_ESN, MockPresharedProfileAuthenticationFactory.PROFILE);
-        assertEquals(MockPresharedProfileAuthenticationFactory.PSK_ESN + ":" + MockPresharedProfileAuthenticationFactory.PROFILE, data.getIdentity());
+        assertEquals(MockPresharedProfileAuthenticationFactory.PSK_ESN + CONCAT_CHAR + MockPresharedProfileAuthenticationFactory.PROFILE, data.getIdentity());
         assertEquals(MockPresharedProfileAuthenticationFactory.PSK_ESN, data.getPresharedKeysId());
         assertEquals(MockPresharedProfileAuthenticationFactory.PROFILE, data.getProfile());
         assertEquals(EntityAuthenticationScheme.PSK_PROFILE, data.getScheme());

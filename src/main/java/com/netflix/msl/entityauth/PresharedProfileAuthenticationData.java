@@ -42,6 +42,9 @@ public class PresharedProfileAuthenticationData extends EntityAuthenticationData
     private static final String KEY_PSKID = "pskid";
     /** JSON key entity profile. */
     private static final String KEY_PROFILE = "profile";
+    
+    /** Identity concatenation character. */
+    private static final String CONCAT_CHAR = "-";
 
     /**
      * Construct a new preshared keys authentication data instance from the
@@ -76,14 +79,14 @@ public class PresharedProfileAuthenticationData extends EntityAuthenticationData
 
     /**
      * <p>Returns the entity identity. This is equal to the preshared keys
-     * identity and profile strings joined with a colon, e.g.
-     * {@code pskid:profile}.</p>
+     * identity and profile strings joined with a hyphen, e.g.
+     * {@code pskid-profile}.</p>
      * 
      * @return the entity identity.
      */
     @Override
     public String getIdentity() {
-        return pskid + ":" + profile;
+        return pskid + CONCAT_CHAR + profile;
     }
     
     /**

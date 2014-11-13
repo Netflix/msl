@@ -28,6 +28,9 @@ describe("PresharedProfileAuthenticationData", function() {
     var KEY_PSKID = "pskid";
     /** JSON key entity profile. */
     var KEY_PROFILE = "profile";
+    
+    /** Identity concatenation character. */
+    var CONCAT_CHAR = "-";
 
     /** MSL context. */
     var ctx;
@@ -45,7 +48,7 @@ describe("PresharedProfileAuthenticationData", function() {
 
     it("ctors", function() {
         var data = new PresharedProfileAuthenticationData(MockPresharedProfileAuthenticationFactory.PSK_ESN, MockPresharedProfileAuthenticationFactory.PROFILE);
-        expect(data.getIdentity()).toEqual(MockPresharedProfileAuthenticationFactory.PSK_ESN + ":" + MockPresharedProfileAuthenticationFactory.PROFILE);
+        expect(data.getIdentity()).toEqual(MockPresharedProfileAuthenticationFactory.PSK_ESN + CONCAT_CHAR + MockPresharedProfileAuthenticationFactory.PROFILE);
         expect(data.presharedKeysId).toEqual(MockPresharedProfileAuthenticationFactory.PSK_ESN);
         expect(data.profile).toEqual(MockPresharedProfileAuthenticationFactory.PROFILE);
         expect(data.scheme).toEqual(EntityAuthenticationScheme.PSK_PROFILE);
