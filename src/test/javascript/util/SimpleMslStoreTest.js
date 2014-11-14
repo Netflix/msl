@@ -906,6 +906,10 @@ describe("SimpleMslStore", function() {
                 store.addServiceTokens(tokens);
             };
             expect(f).toThrow(new MslException(MslError.NONE));
+
+            var emptyTokens = store.getServiceTokens(masterToken, null);
+            expect(emptyTokens).not.toBeNull();
+            expect(emptyTokens.length).toEqual(0);
         });
     });
     
@@ -987,6 +991,10 @@ describe("SimpleMslStore", function() {
                 store.addServiceTokens(tokens);
             };
             expect(f).toThrow(new MslException(MslError.NONE));
+
+            var emptyTokens = store.getServiceTokens(masterToken, null);
+            expect(emptyTokens).not.toBeNull();
+            expect(emptyTokens.length).toEqual(0);
         });
     });
     

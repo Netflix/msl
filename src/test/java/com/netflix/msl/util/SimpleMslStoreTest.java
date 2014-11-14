@@ -642,18 +642,22 @@ public class SimpleMslStoreTest {
         assertTrue(equal(tokens, storedTokens));
     }
     
-    @Test(expected = MslException.class)
+    @Test
     public void missingMasterTokenAddServiceTokens() throws MslException {
-        final Set<ServiceToken> tokens;
+        final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, 1, 1);
+        final Set<ServiceToken> tokens = MslTestUtils.getServiceTokens(ctx, masterToken, null);
+
+        MslException exception = null;
         try {
-            final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, 1, 1);
-            tokens = MslTestUtils.getServiceTokens(ctx, masterToken, null);
+            store.addServiceTokens(tokens);
         } catch (final MslException e) {
-            fail("Error generating service tokens: " + e.getMessage());
-            return;
+            exception = e;
         }
-        
-        store.addServiceTokens(tokens);
+        assertNotNull(exception);
+
+        final Set<ServiceToken> emptyTokens = store.getServiceTokens(masterToken, null);
+        assertNotNull(emptyTokens);
+        assertEquals(0, emptyTokens.size());
     }
     
     @Test
@@ -676,22 +680,26 @@ public class SimpleMslStoreTest {
         assertTrue(equal(tokens, storedTokens));
     }
     
-    @Test(expected = MslException.class)
+    @Test
     public void missingUserIdTokenAddServiceTokens() throws MslException {
-        final Set<ServiceToken> tokens;
-        try {
-            final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, 1, 1);
-            final UserIdToken userIdToken = MslTestUtils.getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER);
-            final ICryptoContext cryptoContext = new NullCryptoContext();
-            tokens = MslTestUtils.getServiceTokens(ctx, masterToken, userIdToken);
-            
-            store.setCryptoContext(masterToken, cryptoContext);
-        } catch (final MslException e) {
-            fail("Error generating service tokens: " + e.getMessage());
-            return;
-        }
+        final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, 1, 1);
+        final UserIdToken userIdToken = MslTestUtils.getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER);
+        final ICryptoContext cryptoContext = new NullCryptoContext();
+        final Set<ServiceToken> tokens = MslTestUtils.getServiceTokens(ctx, masterToken, userIdToken);
 
-        store.addServiceTokens(tokens);
+        store.setCryptoContext(masterToken, cryptoContext);
+
+        MslException exception = null;
+        try {
+            store.addServiceTokens(tokens);
+        } catch (final MslException e) {
+            exception = e;
+        }
+        assertNotNull(exception);
+
+        final Set<ServiceToken> emptyTokens = store.getServiceTokens(masterToken, null);
+        assertNotNull(emptyTokens);
+        assertEquals(0, emptyTokens.size());
     }
     
     @Test
