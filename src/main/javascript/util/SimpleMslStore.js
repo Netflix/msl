@@ -256,14 +256,9 @@ var SimpleMslStore;
 
         /** @inheritDoc */
         addServiceTokens: function addServiceTokens(tokens) {
+            // Verify we recognize the bound service tokens.
             tokens.forEach(function(token) {
-                // Unbound?
-                if (token.isUnbound()) {
-                    this.unboundServiceTokens[token.uniqueKey()] = token;
-                    return;
-                }
-
-                // Verify we recognize the bound service tokens.
+                // Verify master token bound.
                 if (token.isMasterTokenBound()) {
                     var foundMasterToken = false;
                     for (var key in this.masterTokens) {
@@ -276,6 +271,8 @@ var SimpleMslStore;
                     if (!foundMasterToken)
                         throw new MslException(MslError.SERVICETOKEN_MASTERTOKEN_NOT_FOUND, "st mtserialnumber " + token.mtSerialNumber);
                 }
+                
+                // Verify user token bound.
                 if (token.isUserIdTokenBound()) {
                     var foundUserIdToken = false;
                     for (var userId in this.userIdTokens) {
@@ -287,6 +284,15 @@ var SimpleMslStore;
                     }
                     if (!foundUserIdToken)
                         throw new MslException(MslError.SERVICETOKEN_USERIDTOKEN_NOT_FOUND, "st uitserialnumber " + token.uitSerialNumber);
+                }
+            }, this);
+            
+            // Add service tokens.
+            tokens.forEach(function(token) {
+                // Unbound?
+                if (token.isUnbound()) {
+                    this.unboundServiceTokens[token.uniqueKey()] = token;
+                    return;
                 }
 
                 // Master token bound?

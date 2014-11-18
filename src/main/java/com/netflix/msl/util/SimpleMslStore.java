@@ -227,14 +227,9 @@ public class SimpleMslStore implements MslStore {
      */
     @Override
     public synchronized void addServiceTokens(final Set<ServiceToken> tokens) throws MslException {
+        // Verify we recognize the bound service tokens.
         for (final ServiceToken token : tokens) {
-            // Unbound?
-            if (token.isUnbound()) {
-                unboundServiceTokens.add(token);
-                continue;
-            }
-            
-            // Verify we recognize the bound service tokens.
+            // Verify master token bound.
             if (token.isMasterTokenBound()) {
                 boolean foundMasterToken = false;
                 for (final MasterToken masterToken : cryptoContexts.keySet()) {
@@ -246,6 +241,8 @@ public class SimpleMslStore implements MslStore {
                 if (!foundMasterToken)
                     throw new MslException(MslError.SERVICETOKEN_MASTERTOKEN_NOT_FOUND, "st mtserialnumber " + token.getMasterTokenSerialNumber());
             }
+            
+            // Verify user token bound.
             if (token.isUserIdTokenBound()) {
                 boolean foundUserIdToken = false;
                 for (final UserIdToken userIdToken : userIdTokens.values()) {
@@ -256,6 +253,15 @@ public class SimpleMslStore implements MslStore {
                 }
                 if (!foundUserIdToken)
                     throw new MslException(MslError.SERVICETOKEN_USERIDTOKEN_NOT_FOUND, "st uitserialnumber " + token.getUserIdTokenSerialNumber());
+            }
+        }
+        
+        // Add service tokens.
+        for (final ServiceToken token : tokens) {
+            // Unbound?
+            if (token.isUnbound()) {
+                unboundServiceTokens.add(token);
+                continue;
             }
             
             // Master token bound?

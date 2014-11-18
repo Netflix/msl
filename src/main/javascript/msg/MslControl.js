@@ -832,8 +832,8 @@ var MslControl$MslChannel;
          * @param {?MasterToken} masterToken master for the service tokens.
          * @param {?UserIdToken} userIdToken user ID token for the service tokens.
          * @param {Array.<ServiceToken>} serviceTokens the service tokens to update.
-         * @throws MslException if a token cannot be removed because of a master
-         *         token or user ID token mismatch.
+         * @throws MslException if a token cannot be removed or added/replaced
+         *         because of a master token or user ID token mismatch.
          */
         storeServiceTokens: function storeServiceTokens(ctx, masterToken, userIdToken, serviceTokens) {
             // Remove deleted service tokens from the store. Update stored

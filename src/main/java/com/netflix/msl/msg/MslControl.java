@@ -961,8 +961,8 @@ public class MslControl {
      * @param masterToken master for the service tokens.
      * @param userIdToken user ID token for the service tokens.
      * @param serviceTokens the service tokens to update.
-     * @throws MslException if a token cannot be removed because of a master
-     *         token or user ID token mismatch.
+     * @throws MslException if a token cannot be removed or added/replaced
+     *         because of a master token or user ID token mismatch.
      */
     private static void storeServiceTokens(final MslContext ctx, final MasterToken masterToken, final UserIdToken userIdToken, final Set<ServiceToken> serviceTokens) throws MslException {
         // Remove deleted service tokens from the store. Update stored

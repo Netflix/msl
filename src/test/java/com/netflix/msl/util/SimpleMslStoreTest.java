@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -642,6 +643,24 @@ public class SimpleMslStoreTest {
     }
     
     @Test
+    public void missingMasterTokenAddServiceTokens() throws MslException {
+        final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, 1, 1);
+        final Set<ServiceToken> tokens = MslTestUtils.getServiceTokens(ctx, masterToken, null);
+
+        MslException exception = null;
+        try {
+            store.addServiceTokens(tokens);
+        } catch (final MslException e) {
+            exception = e;
+        }
+        assertNotNull(exception);
+
+        final Set<ServiceToken> emptyTokens = store.getServiceTokens(masterToken, null);
+        assertNotNull(emptyTokens);
+        assertEquals(0, emptyTokens.size());
+    }
+    
+    @Test
     public void userBoundServiceTokens() throws MslEncodingException, MslCryptoException, MslException {
         final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, 1, 1);
         final UserIdToken userIdToken = MslTestUtils.getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER);
@@ -659,6 +678,28 @@ public class SimpleMslStoreTest {
         final Set<ServiceToken> storedTokens = store.getServiceTokens(masterToken, userIdToken);
         assertNotNull(storedTokens);
         assertTrue(equal(tokens, storedTokens));
+    }
+    
+    @Test
+    public void missingUserIdTokenAddServiceTokens() throws MslException {
+        final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, 1, 1);
+        final UserIdToken userIdToken = MslTestUtils.getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER);
+        final ICryptoContext cryptoContext = new NullCryptoContext();
+        final Set<ServiceToken> tokens = MslTestUtils.getServiceTokens(ctx, masterToken, userIdToken);
+
+        store.setCryptoContext(masterToken, cryptoContext);
+
+        MslException exception = null;
+        try {
+            store.addServiceTokens(tokens);
+        } catch (final MslException e) {
+            exception = e;
+        }
+        assertNotNull(exception);
+
+        final Set<ServiceToken> emptyTokens = store.getServiceTokens(masterToken, null);
+        assertNotNull(emptyTokens);
+        assertEquals(0, emptyTokens.size());
     }
     
     @Test
