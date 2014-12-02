@@ -462,7 +462,7 @@ var MasterToken$parse;
          * @see #equals(that)
          */
         uniqueKey: function uniqueKey() {
-            return this.serialNumber + ':' + this.sequenceNumber + this.expiration.getTime();
+            return this.serialNumber + ':' + this.sequenceNumber + ':' + this.expiration.getTime();
         },
     });
 
