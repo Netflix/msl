@@ -55,6 +55,7 @@ public class LZWInputStream extends InputStream {
     @Override
     protected void finalize() throws Throwable {
         close();
+        super.finalize();
     }
     
     /* (non-Javadoc)

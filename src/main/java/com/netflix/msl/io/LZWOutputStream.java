@@ -132,6 +132,7 @@ public class LZWOutputStream extends OutputStream {
     @Override
     protected void finalize() throws Throwable {
         close();
+        super.finalize();
     }
 
     /* (non-Javadoc)
