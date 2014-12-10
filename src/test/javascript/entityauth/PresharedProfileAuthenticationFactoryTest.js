@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,13 @@
  */
 
 /**
- * Pre-shared keys entity authentication factory unit tests.
+ * Pre-shared keys profile entity authentication factory unit tests.
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-describe("PresharedAuthenticationFactory", function() {
-    /** JSON key entity identity. */
-    var KEY_IDENTITY = "identity";
+describe("PresharedProfileAuthenticationFactory", function() {
+    /** JSON key entity preshared keys identity. */
+    var KEY_PSKID = "pskid";
 
     /** Authentication utilities. */
     var authutils = new MockAuthenticationUtils();
@@ -42,8 +42,8 @@ describe("PresharedAuthenticationFactory", function() {
             waitsFor(function() { return ctx; }, "ctx", 100);
             runs(function() {
                 var store = new MockPresharedKeyStore();
-                store.addKeys(MockPresharedAuthenticationFactory.PSK_ESN, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH, MockPresharedAuthenticationFactory.KPW);
-                factory = new PresharedAuthenticationFactory(store, authutils);
+                store.addKeys(MockPresharedProfileAuthenticationFactory.PSK_ESN, MockPresharedProfileAuthenticationFactory.KPE, MockPresharedProfileAuthenticationFactory.KPH, MockPresharedProfileAuthenticationFactory.KPW);
+                factory = new PresharedProfileAuthenticationFactory(store, authutils);
                 ctx.addEntityAuthenticationFactory(factory);
                 initialized = true;
             });
@@ -55,12 +55,12 @@ describe("PresharedAuthenticationFactory", function() {
     });
     
     it("createData", function () {
-        var data = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN);
+        var data = new PresharedProfileAuthenticationData(MockPresharedProfileAuthenticationFactory.PSK_ESN, MockPresharedProfileAuthenticationFactory.PROFILE);
         var entityAuthJO = data.getAuthData();
         
         var authdata = factory.createData(ctx, entityAuthJO);
         expect(authdata).not.toBeNull();
-        expect(authdata instanceof PresharedAuthenticationData).toBeTruthy();
+        expect(authdata instanceof PresharedProfileAuthenticationData).toBeTruthy();
         
         var dataJo = JSON.parse(JSON.stringify(data));
         var authdataJo = JSON.parse(JSON.stringify(authdata));
@@ -68,33 +68,33 @@ describe("PresharedAuthenticationFactory", function() {
     });
     
     it("encode exception", function() {
-    	var f = function() {
-	        var data = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN);
-	        var entityAuthJO = data.getAuthData();
-	        delete entityAuthJO[KEY_IDENTITY];
-	        factory.createData(ctx, entityAuthJO);
-    	};
-    	expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+        var f = function() {
+            var data = new PresharedProfileAuthenticationData(MockPresharedProfileAuthenticationFactory.PSK_ESN, MockPresharedProfileAuthenticationFactory.PROFILE);
+            var entityAuthJO = data.getAuthData();
+            delete entityAuthJO[KEY_PSKID];
+            factory.createData(ctx, entityAuthJO);
+        };
+        expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
     });
     
     it("crypto context", function() {
-        var data = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN);
+        var data = new PresharedProfileAuthenticationData(MockPresharedProfileAuthenticationFactory.PSK_ESN, MockPresharedProfileAuthenticationFactory.PROFILE);
         var cryptoContext = factory.getCryptoContext(ctx, data);
         expect(cryptoContext).not.toBeNull();
     });
     
     it("unknown ESN", function() {
-    	var f = function() {
-	        var data = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN2);
-	        factory.getCryptoContext(ctx, data);
-    	};
-    	expect(f).toThrow(new MslEntityAuthException(MslError.ENTITY_NOT_FOUND));
+        var f = function() {
+            var data = new PresharedProfileAuthenticationData(MockPresharedProfileAuthenticationFactory.PSK_ESN2, MockPresharedProfileAuthenticationFactory.PROFILE);
+            factory.getCryptoContext(ctx, data);
+        };
+        expect(f).toThrow(new MslEntityAuthException(MslError.ENTITY_NOT_FOUND));
     });
     
     it("revoked", function() {
         var f = function() {
-            authutils.revokeEntity(MockPresharedAuthenticationFactory.PSK_ESN);
-            var data = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN);
+            authutils.revokeEntity(MockPresharedProfileAuthenticationFactory.PSK_ESN);
+            var data = new PresharedProfileAuthenticationData(MockPresharedProfileAuthenticationFactory.PSK_ESN, MockPresharedProfileAuthenticationFactory.PROFILE);
             factory.getCryptoContext(ctx, data);
         };
         expect(f).toThrow(new MslEntityAuthException(MslError.ENTITY_REVOKED));

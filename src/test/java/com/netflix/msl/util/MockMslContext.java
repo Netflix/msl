@@ -41,9 +41,11 @@ import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.entityauth.MockPresharedAuthenticationFactory;
+import com.netflix.msl.entityauth.MockPresharedProfileAuthenticationFactory;
 import com.netflix.msl.entityauth.MockRsaAuthenticationFactory;
 import com.netflix.msl.entityauth.MockX509AuthenticationFactory;
 import com.netflix.msl.entityauth.PresharedAuthenticationData;
+import com.netflix.msl.entityauth.PresharedProfileAuthenticationData;
 import com.netflix.msl.entityauth.RsaAuthenticationData;
 import com.netflix.msl.entityauth.UnauthenticatedAuthenticationData;
 import com.netflix.msl.entityauth.UnauthenticatedAuthenticationFactory;
@@ -133,6 +135,8 @@ public class MockMslContext implements MslContext {
 
         if (EntityAuthenticationScheme.PSK.equals(scheme))
             entityAuthData = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN);
+        else if (EntityAuthenticationScheme.PSK_PROFILE.equals(scheme))
+            entityAuthData = new PresharedProfileAuthenticationData(MockPresharedProfileAuthenticationFactory.PSK_ESN, MockPresharedProfileAuthenticationFactory.PROFILE);
         else if (EntityAuthenticationScheme.X509.equals(scheme))
             entityAuthData = new X509AuthenticationData(MockX509AuthenticationFactory.X509_CERT);
         else if (EntityAuthenticationScheme.RSA.equals(scheme))
@@ -161,6 +165,7 @@ public class MockMslContext implements MslContext {
         
         entityAuthFactories = new HashMap<EntityAuthenticationScheme,EntityAuthenticationFactory>();
         entityAuthFactories.put(EntityAuthenticationScheme.PSK, new MockPresharedAuthenticationFactory());
+        entityAuthFactories.put(EntityAuthenticationScheme.PSK_PROFILE, new MockPresharedProfileAuthenticationFactory());
         entityAuthFactories.put(EntityAuthenticationScheme.RSA, new MockRsaAuthenticationFactory());
         entityAuthFactories.put(EntityAuthenticationScheme.NONE, new UnauthenticatedAuthenticationFactory(authutils));
         entityAuthFactories.put(EntityAuthenticationScheme.X509, new MockX509AuthenticationFactory());

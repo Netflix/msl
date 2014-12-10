@@ -56,14 +56,23 @@ var MockMslContext$create;
 		            result: function(factory) {
 		                AsyncExecutor(callback, function() {
 		                    entityAuthFactories[EntityAuthenticationScheme.PSK.name] = factory;
-		                    rsaAuthFactory(entityAuthFactories);
+		                    pskProfileAuthFactory(entityAuthFactories);
 		                }, self);
 		            },
-		            error: function(e) {
-		                callback.error(e);
-		            }
+		            error: callback.error,
 		        });
 		    });
+		    function pskProfileAuthFactory(entityAuthFactories) {
+		        MockPresharedProfileAuthenticationFactory$create({
+                    result: function(factory) {
+                        AsyncExecutor(callback, function() {
+                            entityAuthFactories[EntityAuthenticationScheme.PSK_PROFILE.name] = factory;
+                            rsaAuthFactory(entityAuthFactories);
+                        }, self);
+                    },
+                    error: callback.error,
+                });
+		    }
 		    function rsaAuthFactory(entityAuthFactories) {
 		        MockRsaAuthenticationFactory$create(null, {
 		            result: function(factory) {
@@ -72,9 +81,7 @@ var MockMslContext$create;
 		                    syncEntityAuthFactories(entityAuthFactories);
 		                }, self);
 		            },
-		            error: function(e) {
-		                callback.error(e);
-		            }
+		            error: callback.error,
 		        });
 		    }
 		    function syncEntityAuthFactories(entityAuthFactories) {
@@ -118,6 +125,8 @@ var MockMslContext$create;
 		            var entityAuthData;
 		            if (EntityAuthenticationScheme.PSK == scheme) {
 		                entityAuthData = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN);
+		            } else if (EntityAuthenticationScheme.PSK_PROFILE == scheme) {
+		                entityAuthData = new PresharedProfileAuthenticationData(MockPresharedProfileAuthenticationFactory.PSK_ESN, MockPresharedProfileAuthenticationFactory.PROFILE);
 		            } else if (EntityAuthenticationScheme.X509 == scheme) {
 		                entityAuthData = new X509AuthenticationData(MockX509AuthenticationFactory.X509_CERT);
 		            } else if (EntityAuthenticationScheme.RSA == scheme) {
