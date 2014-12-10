@@ -138,7 +138,10 @@ public class ErrorHeader extends Header {
 
         try {
             // Create the crypto context.
-            final EntityAuthenticationFactory factory = ctx.getEntityAuthenticationFactory(entityAuthData.getScheme());
+            final EntityAuthenticationScheme scheme = entityAuthData.getScheme();
+            final EntityAuthenticationFactory factory = ctx.getEntityAuthenticationFactory(scheme);
+            if (factory == null)
+                throw new MslEntityAuthException(MslError.ENTITYAUTH_FACTORY_NOT_FOUND, scheme.name());
             final ICryptoContext cryptoContext = factory.getCryptoContext(ctx, entityAuthData);
         
             // Encrypt and sign the error data.
