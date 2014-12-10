@@ -2209,7 +2209,7 @@ var MslControl$MslChannel;
                                 // We cannot simply use the new master token directly since we
                                 // have not acquired its master token lock.
                                 var previousMasterToken = masterToken;
-                                if (!masterToken.equals(newMasterToken)) {
+                                if (!masterToken || !masterToken.equals(newMasterToken)) {
                                     this.releaseMasterToken(tokenTicket);
                                     this.getNewestMasterToken(service, ctx, timeout, {
                                         result: function(tokenTicket) {

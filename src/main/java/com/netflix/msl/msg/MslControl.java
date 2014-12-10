@@ -1966,7 +1966,7 @@ public class MslControl {
                 // We cannot simply use the new master token directly since we
                 // have not acquired its master token lock.
                 final MasterToken previousMasterToken = masterToken;
-                if (!masterToken.equals(newMasterToken)) {
+                if (masterToken == null || !masterToken.equals(newMasterToken)) {
                     releaseMasterToken(masterToken);
                     masterToken = getNewestMasterToken(ctx);
                     
