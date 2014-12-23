@@ -638,7 +638,6 @@ public class JsonWebEncryptionCryptoContextSuite {
         @Test
         public void badCek() throws MslCryptoException {
             thrown.expect(MslCryptoException.class);
-            thrown.expectMslError(MslError.INVALID_SYMMETRIC_KEY);
 
             final byte[] wrapped = cryptoContext.wrap(data);
             final byte[] ecek = new byte[137];
@@ -968,7 +967,6 @@ public class JsonWebEncryptionCryptoContextSuite {
         @Test
         public void badCek() throws MslCryptoException, JSONException {
             thrown.expect(MslCryptoException.class);
-            thrown.expectMslError(MslError.INVALID_SYMMETRIC_KEY);
 
             final byte[] wrapped = cryptoContext.wrap(data);
             final byte[] ecek = new byte[137];
