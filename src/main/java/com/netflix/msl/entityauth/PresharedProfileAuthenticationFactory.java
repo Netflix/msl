@@ -40,7 +40,7 @@ public class PresharedProfileAuthenticationFactory extends EntityAuthenticationF
      * @param authutils authentication utilities.
      */
     public PresharedProfileAuthenticationFactory(final PresharedKeyStore store, final AuthenticationUtils authutils) {
-        super(EntityAuthenticationScheme.PSK);
+        super(EntityAuthenticationScheme.PSK_PROFILE);
         this.store = store;
         this.authutils = authutils;
     }
