@@ -58,7 +58,6 @@ var SimpleRequest$Type;
     };
     
     SimpleRequest = util.Class.create({
-        
         /**
          * <p>Create a simple request.</p>
          * 
@@ -68,7 +67,7 @@ var SimpleRequest$Type;
             // Set properties.
             var props = {
                 type: { value: type, writable: false, enumerable: true, configurable: false },
-            }
+            };
             Object.defineProperties(this, props);
         },
     
