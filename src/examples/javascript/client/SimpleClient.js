@@ -62,13 +62,14 @@ var SimpleClient$create;
         /**
          * <p>Create a new client.</p>
          *
+         * @param {string} identity the client entity identity.
          * @param {?FilterStreamFactory} factory the filter stream factory to
          *        attach to the MSL control.
-         * @param {result: function(SimpleClient), error: function(Error)}
+         * @param {result: function(SimpleClient), error: function(msgOrError)}
          *        callback the callback that will receive the created client or
          *        any thrown exceptions.
          */
-        init: function init(factory, callback) {
+        init: function init(identity, factory, callback) {
             var self = this;
             
             // Import the server RSA public key.
@@ -87,7 +88,7 @@ var SimpleClient$create;
 	                                rsaStore.addPublicKey(SimpleConstants.SERVER_ID, publicKey);
 	
 	                                // Set up the MSL context.
-	                                var ctx = new SimpleMslContext(SimpleConstants.CLIENT_ID, rsaStore, keyxMgr, errorCallback);
+	                                var ctx = new SimpleMslContext(identity, rsaStore, keyxMgr, callback.error);
 	
 	                                // Create the MSL control.
 	                                var ctrl = new MslControl();
@@ -96,7 +97,9 @@ var SimpleClient$create;
 	                                // Set properties.
 	                                var props = {
 	                                    _keyxMgr: { value: keyxMgr, writable: false, enumerable: false, configurable: false },
-	                                    _ctx: { value: ctx, writable: false, enumerable: false, configurable: false },
+	                                    _rsaStore: { value: rsaStore, writable: false, enumerable: false, configurable: false },
+	                                    _identity: { value: identity, writable: true, enumerable: false, configurable: false },
+	                                    _ctx: { value: ctx, writable: true, enumerable: false, configurable: false },
 	                                    _ctrl: { value: ctrl, writable: false, enumerable: false, configurable: false },
 	                                    _cancelFunc: { value: null, writable: true, enumerable: false, configurable: false },
 	                                };
@@ -112,6 +115,43 @@ var SimpleClient$create;
                 },
                 error: callback.error,
             });
+        },
+        
+        /**
+         * <p>Add an RSA public key to the RSA key store.</p>
+         * 
+         * @param {string} identity the remote entity's identity (i.e. RSA key
+         *        pair identity).
+         * @param {PublicKey} key the RSA public key.
+         */
+        addRsaPublicKey: function addRsaPublicKey(identity, key) {
+            this._rsaStore.addPublicKey(identity, key);
+        },
+        
+        /**
+         * <p>Reset all state data.</p>
+         */
+        reset: function reset() {
+            var store = this._ctx.getMslStore();
+            store.clearCryptoContexts();
+            store.clearUserIdTokens();
+            store.clearServiceTokens();
+        },
+        
+        /**
+         * <p>Set the entity identity. If the identity has not changed then
+         * this method does nothing. If the identity has changed then all data
+         * is reset and the new entity identity will be used.</p>
+         * 
+         * @param {string} identity the new entity identity.
+         * @param {function(msgOrError)}
+         *        callback the callback that will any thrown exceptions.
+         */
+        setIdentity: function setIdentity(identity, callback) {
+            if (this._identity != identity) {
+                this._identity = identity;
+                this._ctx = new SimpleMslContext(identity, this._rsaStore, this._keyxMgr, callback);
+            }
         },
 
         /**
@@ -145,7 +185,7 @@ var SimpleClient$create;
          *        not associated with a user.
          * @param {?string} password user password or {@code null} if already
          *        logged in or unknown.
-         * @param {SimpleRequest} request the request to send.
+         * @param {SimpleRequest|AdvancedRequest} request the request to send.
          * @param {?MessageDebugContext} dbgCtx message debug context. May be
          *        {@code null}.
          * @param {result: function(MslChannel), error: function(Error)}
@@ -167,7 +207,14 @@ var SimpleClient$create;
                     else
                         callback.error(msgOrError);
                 };
-                var msgCtx = new SimpleRequestMessageContext(username, userAuthData, request, this._keyxMgr, dbgCtx, errorCallback);
+                
+                // Simple or advanced request?
+                var msgCtx;
+                if (request instanceof SimpleRequest) {
+                    msgCtx = new SimpleRequestMessageContext(username, userAuthData, request, this._keyxMgr, dbgCtx, errorCallback);
+                } else {
+                    msgCtx = new AdvancedRequestMessageContext(username, userAuthData, request, this._keyxMgr, dbgCtx, errorCallback);
+                }
                 
                 // Create the URL instance.
                 var xhr = new Xhr(endpoint);
@@ -204,13 +251,14 @@ var SimpleClient$create;
     /**
      * <p>Create a new client.</p>
      *
+     * @param {string} identity the client entity identity.
      * @param {?FilterStreamFactory} factory the filter stream factory to
      *        attach to the MSL control.
-     * @param {result: function(SimpleClient), error: function(Error)}
+     * @param {result: function(SimpleClient), error: function(msgOrError)}
      *        callback the callback that will receive the created client or
      *        any thrown exceptions.
      */
-    SimpleClient$create = function SimpleClient$create(factory, callback) {
-        new SimpleClient(factory, callback);
+    SimpleClient$create = function SimpleClient$create(identity, factory, callback) {
+        new SimpleClient(identity, factory, callback);
     };
 })();

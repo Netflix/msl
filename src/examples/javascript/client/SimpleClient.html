@@ -124,6 +124,8 @@
 <!-- Client Code -->
 <script type="text/javascript" src="SimpleConstants.js"></script>
 <script type="text/javascript" src="keyx/SimpleKeyxManager.js"></script>
+<script type="text/javascript" src="msg/AdvancedRequest.js"></script>
+<script type="text/javascript" src="msg/AdvancedRequestMessageContext.js"></script>
 <script type="text/javascript" src="msg/SimpleRequest.js"></script>
 <script type="text/javascript" src="msg/SimpleEchoRequest.js"></script>
 <script type="text/javascript" src="msg/SimpleLogRequest.js"></script>
@@ -139,6 +141,14 @@
 
 <!-- Page Script -->
 <script type="text/javascript">
+function getQueryParam(key, defaultValue) {
+    var queryString = window.location.search;
+    var regex = new RegExp(key + '=([^&?]*)');
+    var matches = queryString.match(regex);
+    if (matches) return matches[1];
+    return defaultValue;
+}
+
 function errorCallback(msgOrError) {
     var error = document.getElementById('error');
     var errortext = document.getElementById('errortext');
@@ -173,14 +183,57 @@ function onload() {
     dbgCtx = new SimpleMessageDebugContext(sentText, receivedText);
     
     // Create client.
+    var identityField = document.getElementById('identity');
+    var identity = identityField.value;
     var factory = new SimpleFilterStreamFactory(sentText, receivedText);
-	SimpleClient$create(factory, {
+	SimpleClient$create(identity, factory, {
 	    result: function(c) {
 	        client = c;
 	        ready();
 	    },
 	    error: errorCallback,
 	});
+}
+
+function displayRsaKeyForm() {
+    var keyform = document.getElementById('rsa-key-form');
+    keyform.style.visibility = 'visible';
+}
+
+function addRsaKey() {
+    var keyform = document.getElementById('rsa-key-form');
+    
+    // Grab key identity and data.
+    var identity = document.getElementById('rsa-key-id').value;
+    var keyB64 = document.getElementById('rsa-pubkey').value;
+    
+    // Remove whitespace from the key data.
+    keyB64 = keyB64.replace(/\s+/g, '');
+    
+    // Import the public key.
+    PublicKey$import(keyB64, WebCryptoAlgorithm.RSASSA_SHA256, WebCryptoUsage.VERIFY, {
+        result: function (pubkey) {
+            client.addRsaPublicKey(identity, pubkey);
+            keyform.style.visibility = 'hidden';
+        },
+        error: function(msgOrErr) {
+            errorCallback(msgOrErr);
+            keyform.style.visibility = 'hidden';
+        }
+    });
+}
+
+function resetState() {
+    client.reset();
+    checkUsername();
+    clearSentReceived();
+}
+
+function setIdentity() {
+    var identityField = document.getElementById('identity');
+    var identity = identityField.value;
+    client.setIdentity(identity, errorCallback);
+    checkUsername();
 }
 
 function checkUsername() {
@@ -275,6 +328,16 @@ function sendRequest() {
             break;
         case 'quit':
             request = new SimpleQuitRequest();
+            break;
+        case 'advanced':
+            var recipient = document.getElementById('recipient').value;
+            if (!recipient || recipient.trim() == '') recipient = null;
+            var isEncrypted = document.getElementById('encrypted').checked;
+            var isIntegrityProtected = document.getElementById('integrity-protected').checked;
+            var isNonReplayable = document.getElementById('non-replayable').checked;
+            var isRequestingTokens = document.getElementById('requesting-tokens').checked;
+            var data = textEncoding$getBytes(document.getElementById('data').value);
+            request = new AdvancedRequest(recipient, isEncrypted, isIntegrityProtected, isNonReplayable, isRequestingTokens, data);
             break;
         default:
             errorCallback("Request type [" + type + "] is not recognized.");
@@ -377,6 +440,18 @@ div#errortext {
     margin-bottom: 0.25em;
 }
 
+table#rsa-key-form {
+    width: 800px;
+    border: 4px solid grey;
+    border-spacing: 4px;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+    background-color: lightblue;
+}
+
 table.container {
     width: 800px;
     border: 4px solid grey;
@@ -415,9 +490,19 @@ ul.tabs li.selected {
 }
 
 div.request {
-    height: 7em;
+    height: 15.5em;
     padding: 0.5em;
     border: 1px solid black;
+}
+
+input#import-rsa {
+    position: absolute;
+    top: 1em;
+    left: 660px;
+}
+
+input#reset {
+    float: right;
 }
 
 input#clear {
@@ -436,15 +521,34 @@ input#clear {
 
 <form onsubmit="return false;">
 
+<input id="import-rsa" type="button" value="Import RSA Public Key" onclick="displayRsaKeyForm()"/>
+<table id="rsa-key-form" style="position: absolute; visibility: hidden">
+    <tr>
+        <td><b>RSA Key Pair ID:</b></td>
+        <td><input id="rsa-key-id" type="text" size="20"></td>
+    </tr>
+    <tr>
+        <td><b>RSA Public Key (Base64):</b></td>
+        <td><textarea id="rsa-pubkey" cols="82" rows="10"></textarea></td>
+    </tr>
+    <tr>
+        <td colspan="2"><input type="button" value="Import Key" onclick="addRsaKey();"/></td>
+    </tr>
+</table>
+
 <table class="container">
-    <tr><td colspan="3" class="title"><b>Application Request</b></td></tr>
+    <tr><td colspan="3" class="title">
+        <b>Application Request</b>
+        <input id="reset" type="button" value="Reset State" onclick="resetState();"/>
+    </td></tr>
     <tr>
         <td colspan="2">
         <p>Enter a username and password to send a message as a specific user. Leave the username
         blank to send a message without associating it with a user.</p>
         <p>The password is optional if you have already sent a message authenticated as that user.
         In that case, the password field will be disabled. You may discard a user's authentication
-        credentials and "logout" by clicking on the "Logout" button.</p></td>
+        credentials and "logout" by clicking on the "Logout" button.</p>
+        </td>
         <td rowspan="3">
             <table border="1" cellpadding="4" style="margin-left: 40px; margin-right: 40px">
                 <caption>User Accounts</caption>
@@ -471,6 +575,7 @@ input#clear {
             <li id="profile" class="tab" onclick="javascript:setRequestType('profile')">Get Profile</li>
             <li id="query" class="tab" onclick="javascript:setRequestType('query')">Lookup Word</li>
             <li id="quit" class="tab" onclick="javascript:setRequestType('quit')">Terminate Server</li>
+            <li id="advanced" class="tab" onclick="javascript:setRequestType('advanced')">Advanced</li>
         </ul>
         <div class="request">
             <table>
@@ -509,6 +614,38 @@ input#clear {
 			    <tr class="field quit" style="position: absolute; visibility: hidden">
 			        <td colspan="2">Only the administrator is authorized to terminate the server.</td>
 			    </tr>
+			    <tr class="field advanced" style="position: absolute; visibility: hidden">
+			        <td>
+			        <table>
+			            <tr>
+					        <td><b>Entity Identity:</b></td>
+					        <td>
+					            <script type="text/javascript">
+					                var entityIdentity = getQueryParam('identity', SimpleConstants.CLIENT_ID);
+					                document.write("<input id='identity' type='text' size='40' value='" + entityIdentity + "' onchange='javascript:setIdentity()'/>");
+					            </script>
+					        </td>
+					    </tr>
+					    <tr>
+					        <td><b>Recipient:</b></td>
+					        <td><input id="recipient" type="text" size="20"/> (leave blank for no explicit recipient)</td>
+					    </tr>
+                        <tr>
+                            <td><b>Settings:</b></td>
+                            <td>
+                                <label><input id="encrypted" type="checkbox" value="true"/>Encryption</label><br/>
+                                <label><input id="integrity-protected" type="checkbox" value="true"/>Integrity Protection</label><br/>
+                                <label><input id="non-replayable" type="checkbox" value="true"/>Non-Replayable</label><br/>
+                                <label><input id="requesting-tokens" type="checkbox" value="true"/>Requesting Tokens</label><br/>
+                            </td>
+                        </tr>
+					    <tr>
+					        <td><b>Application Data:</b></td>
+					        <td><textarea id="data" cols="80" rows="8"></textarea></td>
+					    </tr>
+					</table>
+				    </td>
+			    </tr>
 		    </table>
         </div>
     </td></tr>
@@ -516,7 +653,9 @@ input#clear {
         <td><input type="button" id="perform" value="Send Request To:" onclick="sendRequest();" disabled="disabled"/></td>
         <td>
         <script type="text/javascript">
-            document.write('<input type="text" id="url" size="40" value="http://localhost:' + SimpleConstants.SERVER_PORT + '/msl-example-server/"/>');
+            var exampleUrl = 'http://localhost:' + SimpleConstants.SERVER_PORT + '/msl-example-server/';
+            var targetUrl = getQueryParam('url', exampleUrl);
+            document.write('<input type="text" id="url" size="40" value="' + targetUrl + '"/>');
         </script>
         </td>
         <td>Change this to point to your example Java server, if the default value is incorrect.</td>
