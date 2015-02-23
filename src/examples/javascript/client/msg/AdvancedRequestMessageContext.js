@@ -60,7 +60,7 @@ var AdvancedRequestMessageContext;
         
         /** @inheritDoc */
         getRecipient: function() {
-            return SimpleConstants.SERVER_ID;
+            return this._request.recipient;
         },
     
         /** @inheritDoc */
