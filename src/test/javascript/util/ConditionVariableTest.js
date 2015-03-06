@@ -220,7 +220,7 @@ describe("ConditionVariable", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return timedout; }, "timedout", 100);
+        waitsFor(function() { return timedout; }, "timedout", 200);
     });
     
     it("stress", function() {
