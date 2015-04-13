@@ -1,3 +1,7 @@
+plugins {
+    id 'nebula.netflixoss' version '2.2.9'
+}
+
 apply plugin: 'java'
 apply plugin: 'findbugs'
 apply plugin: 'war'
@@ -19,8 +23,7 @@ configurations {
 
 dependencies {
     compile fileTree(dir: "src/main/java/lib", include: "*.jar")
-    testCompile "junit:junit:latest.release"
-    testCompile fileTree(dir: "src/main/java/lib", include: "*.jar")
+    testCompile "junit:junit:4.11"
     examples fileTree(dir: "src/examples/java/server/lib", include: "*.jar")
     itest "org.testng:testng:latest.release"
     itest fileTree(dir: "src/int-test/java/com/netflix/msl/server/lib", include: "*.jar")
@@ -35,14 +38,6 @@ sourceSets {
         java {
             srcDir "src/main/java/"
             srcDir "src/main/java/lib/JSON-java/"
-        }
-    }
-    test {
-        java {
-            srcDir "src/test/java/"
-        }
-        resources {
-            srcDir "src/test/resources/"
         }
     }
     examples {
