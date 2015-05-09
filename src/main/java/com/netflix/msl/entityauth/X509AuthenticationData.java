@@ -16,10 +16,13 @@
 package com.netflix.msl.entityauth;
 
 import java.io.ByteArrayInputStream;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.Collection;
+import java.util.Collections;
 
 import javax.xml.bind.DatatypeConverter;
 
@@ -42,7 +45,7 @@ import com.netflix.msl.MslInternalException;
  * <p>
  * {@code {
  *   "#mandatory" : [ "x509certificate" ],
- *   "x509certificate" : "base64"
+ *   "x509certificate" : "base64 DER-encoded certificate"
  * }} where:
  * <ul>
  * <li>{@code x509certificate} is Base64-encoded X.509 certificate</li>
@@ -53,6 +56,7 @@ import com.netflix.msl.MslInternalException;
 public class X509AuthenticationData extends EntityAuthenticationData {
     /** JSON key entity X.509 certificate. */
     private static final String KEY_X509_CERT = "x509certificate";
+    private static final String KEY_X509_CHAIN = "x509chain";  // FIXME: remove
     
     /**
      * Construct a new X.509 asymmetric keys authentication data instance from
@@ -64,7 +68,7 @@ public class X509AuthenticationData extends EntityAuthenticationData {
      */
     public X509AuthenticationData(final X509Certificate x509cert) throws MslCryptoException {
         super(EntityAuthenticationScheme.X509);
-        this.x509cert = x509cert;
+        this.certs = Collections.singleton(x509cert);
         this.identity = x509cert.getSubjectX500Principal().getName();
     }
     
@@ -77,13 +81,26 @@ public class X509AuthenticationData extends EntityAuthenticationData {
      *         parsed.
      * @throws MslEncodingException if the X.509 certificate cannot be found.
      */
+    @SuppressWarnings("unchecked")  // FIXME: remove
     X509AuthenticationData(final JSONObject x509AuthJO) throws MslCryptoException, MslEncodingException {
         super(EntityAuthenticationScheme.X509);
-        
         // Extract X.509 certificate representation.
-        final String x509;
+        String inString;
+        byte[] inBytes;
         try {
-            x509 = x509AuthJO.getString(KEY_X509_CERT);
+        	if (x509AuthJO.has(KEY_X509_CERT)) {
+        		inString = x509AuthJO.getString(KEY_X509_CERT);
+                try {
+                    inBytes = DatatypeConverter.parseBase64Binary(inString);
+                } catch (final IllegalArgumentException e) {
+                    throw new MslCryptoException(MslError.X509CERT_INVALID, inString, e);
+                }
+        	} else if (x509AuthJO.has(KEY_X509_CHAIN)) {
+        		// FIXME TODO
+        		throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "X.509 authdata " + x509AuthJO.toString(), null);
+        	} else {
+        		throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "X.509 authdata " + x509AuthJO.toString(), null);
+        	}
         } catch (final JSONException e) {
             throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "X.509 authdata " + x509AuthJO.toString(), e);
         }
@@ -97,18 +114,15 @@ public class X509AuthenticationData extends EntityAuthenticationData {
         }
         
         // Create X.509 cert.
-        final byte[] x509bytes;
         try {
-            x509bytes = DatatypeConverter.parseBase64Binary(x509);
-        } catch (final IllegalArgumentException e) {
-            throw new MslCryptoException(MslError.X509CERT_INVALID, x509, e);
-        }
-        try {
-            final ByteArrayInputStream bais = new ByteArrayInputStream(x509bytes);
-            x509cert = (X509Certificate)factory.generateCertificate(bais);
-            identity = x509cert.getSubjectX500Principal().getName();
+            final ByteArrayInputStream bais = new ByteArrayInputStream(inBytes);
+            certs = (Collection<X509Certificate>)factory.generateCertificates(bais);
+            if (certs.isEmpty()) {
+            	throw new MslCryptoException(MslError.X509CERT_PARSE_ERROR, inString, null);
+            }
+            identity = getX509Cert().getSubjectX500Principal().getName();
         } catch (final CertificateException e) {
-            throw new MslCryptoException(MslError.X509CERT_PARSE_ERROR, x509, e);
+            throw new MslCryptoException(MslError.X509CERT_PARSE_ERROR, inString, e);
         }
     }
     
@@ -116,7 +130,7 @@ public class X509AuthenticationData extends EntityAuthenticationData {
      * @return the X.509 certificate.
      */
     public X509Certificate getX509Cert() {
-        return x509cert;
+    	return certs.iterator().next();
     }
 
     /* (non-Javadoc)
@@ -134,7 +148,7 @@ public class X509AuthenticationData extends EntityAuthenticationData {
     public JSONObject getAuthData() throws MslEncodingException {
         final JSONObject jsonObj = new JSONObject();
         try {
-            jsonObj.put(KEY_X509_CERT, DatatypeConverter.printBase64Binary(x509cert.getEncoded()));
+            jsonObj.put(KEY_X509_CERT, DatatypeConverter.printBase64Binary(getX509Cert().getEncoded()));
         } catch (final JSONException e) {
             throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, "X.509 authdata", e);
         } catch (final CertificateEncodingException e) {
@@ -163,7 +177,7 @@ public class X509AuthenticationData extends EntityAuthenticationData {
     }
 
     /** Entity X.509 certificate. */
-    private final X509Certificate x509cert;
+    private final Collection<X509Certificate> certs;
     /** Entity identity. */
     private final String identity;
 }
