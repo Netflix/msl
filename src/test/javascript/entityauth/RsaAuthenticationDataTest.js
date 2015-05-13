@@ -65,7 +65,7 @@ describe("RsaAuthenticationData", function() {
         expect(joJsonString).toEqual(jsonString);
     });
     
-    it("jsonString", function() {
+    it("json is correct", function() {
         var data = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
         var jo = JSON.parse(JSON.stringify(data));
         expect(jo[KEY_SCHEME]).toEqual(EntityAuthenticationScheme.RSA.name);
@@ -94,7 +94,7 @@ describe("RsaAuthenticationData", function() {
         expect(joJsonString).toEqual(jsonString);
     });
     
-    it("missingIdentity", function() {
+    it("missing identity", function() {
         var f = function() {
 	        var data = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
 	        var authdata = data.getAuthData();
@@ -105,7 +105,7 @@ describe("RsaAuthenticationData", function() {
         expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
     });
 
-    it("missingPubkeyId", function() {
+    it("missing pubkey id", function() {
         var f = function() {
 	        var data = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
 	        var authdata = data.getAuthData();
@@ -116,7 +116,7 @@ describe("RsaAuthenticationData", function() {
         expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
     });
     
-    it("equalsIdentity", function() {
+    it("equals identity", function() {
         var identityA = MockRsaAuthenticationFactory.RSA_ESN + "A";
         var identityB = MockRsaAuthenticationFactory.RSA_ESN + "B";
         var dataA = new RsaAuthenticationData(identityA, MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
@@ -132,7 +132,7 @@ describe("RsaAuthenticationData", function() {
         expect(dataA2.equals(dataA)).toBeTruthy();
     });
     
-    it("equalsPubKeyId", function() {
+    it("equals pubkeyid", function() {
         var pubkeyidA = MockRsaAuthenticationFactory.RSA_PUBKEY_ID + "A";
         var pubkeyidB = MockRsaAuthenticationFactory.RSA_PUBKEY_ID + "B";
         var dataA = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, pubkeyidA);
@@ -148,7 +148,7 @@ describe("RsaAuthenticationData", function() {
         expect(dataA2.equals(dataA)).toBeTruthy();
     });
     
-    it("equalsObject", function() {
+    it("equals object", function() {
         var data = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
         expect(data.equals(null)).toBeFalsy();
         expect(data.equals(KEY_IDENTITY)).toBeFalsy();
