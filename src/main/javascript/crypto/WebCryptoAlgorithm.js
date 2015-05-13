@@ -40,5 +40,6 @@ var WebCryptoAlgorithm = {
     /** deriveKey */
     AUTHENTICATED_DH: { 'name' : 'NFLX-DH' },
     /** digest */
+    SHA_256: { 'name': 'SHA-256' },
     SHA_384: { 'name': 'SHA-384' },
 };
