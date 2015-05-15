@@ -29,6 +29,7 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import javax.security.auth.x500.X500Principal;
 
 import javax.xml.bind.DatatypeConverter;
 
@@ -187,6 +188,27 @@ public class X509AuthenticationDataTest {
         assertFalse(data.equals(KEY_X509_CERT));
         assertTrue(data.hashCode() != KEY_X509_CERT.hashCode());
     }
+    
+	@Test
+    public void chain() throws IOException, JSONException, MslEntityAuthException, MslEncodingException, MslCryptoException {
+    	final X509AuthenticationData data = new X509AuthenticationData(MockX509AuthenticationFactory.X509_CHAIN_JO);
+    	assertEquals(4, data.getSize());
+//		for (X509Certificate cert : data.getX509Certs()) {
+//			System.out.println("=====================================");
+//			System.out.println(cert.getSubjectX500Principal().toString());
+//			System.out.println(cert.getIssuerX500Principal().toString());
+//			if (isSelfSigned(cert)) {
+//				System.out.println("*** SELF-SIGNED ***");
+//			}
+//			System.out.println(cert.toString());
+//		}
+    }
+	
+//    private static boolean isSelfSigned(final X509Certificate cert) {
+//        final X500Principal subject = cert.getSubjectX500Principal();
+//        final X500Principal issuer = cert.getIssuerX500Principal();
+//        return subject.equals(issuer);
+//    }
     
     /** MSL context. */
     private static MslContext ctx;
