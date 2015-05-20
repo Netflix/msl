@@ -24,10 +24,14 @@ var MslConstants$MAX_LONG_VALUE;
 var MslConstants$MAX_MESSAGES;
 var MslConstants$CompressionAlgorithm;
 var MslConstants$CompressionAlgorithm$getPreferredAlgorithm;
+var MslConstants$EncryptionAlgo;
+var MslConstants$EncryptionAlgo$fromString;
+var MslConstants$EncryptionAlgo$toWebCryptoAlgorithm
 var MslConstants$CipherSpec;
 var MslConstants$CipherSpec$fromString;
 var MslConstants$SignatureAlgo;
 var MslConstants$SignatureAlgo$fromString;
+var MslConstants$SignatureAlgo$toWebCryptoAlgorithm
 var MslConstants$ResponseCode;
 
 (function() {
@@ -84,6 +88,42 @@ var MslConstants$ResponseCode;
         return null;
     };
     
+    /** Encryption algorithms. */
+    var EncryptionAlgo = MslConstants$EncryptionAlgo = {
+        /** AES */
+        AES : "AES",
+    };
+    Object.freeze(MslConstants$EncryptionAlgo);
+    
+    /**
+     * @param {WebCryptoAlgorithm|string} value the Web Crypto algorithm or
+     *        string value of the encryption algorithm.
+     * @return {?MslConstants$EncryptionAlgo} the associated encryption
+     *         algorithm or undefined if there is none.
+     */
+    MslConstants$EncryptionAlgo$fromString = function MslConstants$EncryptionAlgo$fromString(value) {
+        // Web Crypto does not define key types independent of cipher
+        // specifications, so unfortunately the AES-CBC cipher spcification
+        // maps onto the AES key type.
+        if (WebCryptoAlgorithm.AES_CBC['name'] == value['name'])
+            return EncryptionAlgo.AES;
+        return EncryptionAlgo[value];
+    };
+    
+    /**
+     * @param {EncryptionAlgo} the encryption algorithm.
+     * @return {?WebCryptoAlgorithm} the Web Crypto algorithm associated with
+     *         the encryption algorithm or undefined if there is none.
+     */
+    MslConstants$EncryptionAlgo$toWebCryptoAlgorithm = function MslConstants$EncryptionAlgo$toWebCryptoAlgorithm(value) {
+        // Web Crypto does not define key types independent of cipher
+        // specifications, so unfortunately the AES key type maps onto the
+        // AES-CBC cipher specification.
+        if (EncryptionAlgo.AES == value)
+            return WebCryptoAlgorithm.AES_CBC;
+        return undefined;
+    };
+    
     /** Cipher specifications. */
     var CipherSpec = MslConstants$CipherSpec = {
         /** AES/CBC/PKCS5Padding */
@@ -114,16 +154,51 @@ var MslConstants$ResponseCode;
         HmacSHA256 : "HmacSHA256",
         /** SHA256withRSA */
         SHA256withRSA : "SHA256withRSA",
+        /** AESCmac */
+        AESCmac : "AESCmac",
     };
     Object.freeze(MslConstants$SignatureAlgo);
     
     /**
-     * @param {string} value the string value of the signature algorithm.
-     * @return {?MslConstants$SignatureAlgo} the signature algorithm associated
-     *         with the string value or undefined if there is none.
+     * @param {WebCryptoAlgorithm|string} value the Web Crypto algorithm or
+     *        string value of the signature algorithm.
+     * @return {?MslConstants$SignatureAlgo} the associated signature algorithm
+     *         or undefined if there is none.
      */
     MslConstants$SignatureAlgo$fromString = function MslConstants$SignatureAlgo$fromString(value) {
+        // FIXME
+        // This is an ugly approach to mapping Web Crypto algorithms onto
+        // signature algorithms. We should probably use some sort of subset-
+        // JSON object function to compare.
+        if (WebCryptoAlgorithm.HMAC_SHA256['name'] == value['name'] &&
+            value['hash'] && WebCryptoAlgorithm.HMAC_SHA256['hash']['name'] == value['hash']['name'])
+        {
+            return SignatureAlgo.HmacSHA256;
+        }
+        if (WebCryptoAlgorithm.RSASSA_SHA256['name'] == value['name'] &&
+            value['hash'] && WebCryptoAlgorithm.RSASSA_SHA256['hash']['name'] == value['hash']['name'])
+        {
+            return SignatureAlgo.SHA256withRSA;
+        }
+        if (WebCryptoAlgorithm.AES_CMAC['name'] == value['name']) {
+            return SignatureAlgo.AESCmac;
+        }   
         return SignatureAlgo[value];
+    };
+    
+    /**
+     * @param {SignatureAlgo} the signature algorithm.
+     * @return {?WebCryptoAlgorithm} the Web Crypto algorithm associated with
+     *         the signature algorithm or undefined if there is none.
+     */
+    MslConstants$SignatureAlgo$toWebCryptoAlgorithm = function MslConstants$SignatureAlgo$toWebCryptoAlgorithm(value) {
+        if (SignatureAlgo.HmacSHA256 == value)
+            return WebCryptoAlgorithm.HMAC_SHA256;
+        if (SignatureAlgo.SHA256withRSA == value)
+            return WebCryptoAlgorithm.SHA256withRSA;
+        if (SignatureAlgo.AESCmac == value)
+            return WebCryptoAlgorithm.AES_CMAC;
+        return undefined;
     };
     
     /**

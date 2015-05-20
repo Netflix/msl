@@ -37,7 +37,7 @@ public class SessionCryptoContext extends SymmetricCryptoContext {
      * @throws MslMasterTokenException if the master token is not trusted.
      */
     public SessionCryptoContext(final MslContext ctx, final MasterToken masterToken) throws MslMasterTokenException {
-        this(ctx, masterToken, masterToken.getIdentity(), masterToken.getEncryptionKey(), masterToken.getHmacKey());
+        this(ctx, masterToken, masterToken.getIdentity(), masterToken.getEncryptionKey(), masterToken.getSignatureKey());
         if (!masterToken.isDecrypted())
             throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, masterToken);
     }

@@ -71,6 +71,7 @@ public class MslSignatureEnvelope {
          * <tr><th>Algorithm</th><th>Description</th>
          * <tr><td>HmacSHA256</td><td>HMAC w/SHA-256</td></tr>
          * <tr><td>SHA256withRSA</td><td>RSA signature w/SHA-256</td></tr>
+         * <tr><td>AESCmac</td><td>AES CMAC</td></tr>
          * </table></p>
          */
         V2;

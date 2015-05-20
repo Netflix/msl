@@ -123,7 +123,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
                     result: function(x) { PSK_ENCRYPTION_JWK = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                var pskHmacKey = PSK_MASTER_TOKEN.hmacKey;
+                var pskHmacKey = PSK_MASTER_Token.signatureKey;
                 WRAP_CRYPTO_CONTEXT.wrap(pskHmacKey, {
                     result: function(x) { PSK_HMAC_JWK = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -773,7 +773,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             // operation as the wrapped key is not exportable.
             var refCryptoContext, wrapCryptoContext, refCiphertext, wrapCiphertext, refHmac, wrapHmac;
             runs(function() {
-                refCryptoContext = new SymmetricCryptoContext(pskCtx, KEY_ID, masterToken.encryptionKey, masterToken.hmacKey, null);
+                refCryptoContext = new SymmetricCryptoContext(pskCtx, KEY_ID, masterToken.encryptionKey, masterToken.signatureKey, null);
                 wrapCryptoContext = new SymmetricCryptoContext(pskCtx, KEY_ID, encryptionKey, hmacKey, null);
                 refCryptoContext.encrypt(data, {
                     result: function(x) { refCiphertext = x; },
@@ -874,7 +874,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             // operation as the wrapped key is not exportable.
             var refCryptoContext, wrapCryptoContext, refCiphertext, wrapCiphertext, refHmac, wrapHmac;
             runs(function() {
-                refCryptoContext = new SymmetricCryptoContext(pskCtx, KEY_ID, masterToken.encryptionKey, masterToken.hmacKey, null);
+                refCryptoContext = new SymmetricCryptoContext(pskCtx, KEY_ID, masterToken.encryptionKey, masterToken.signatureKey, null);
                 wrapCryptoContext = new SymmetricCryptoContext(pskCtx, KEY_ID, encryptionKey, hmacKey, null);
                 refCryptoContext.encrypt(data, {
                     result: function(x) { refCiphertext = x; },
@@ -992,7 +992,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             // operation as the wrapped key is not exportable.
             var refCryptoContext, wrapCryptoContext, refCiphertext, wrapCiphertext, refHmac, wrapHmac;
             runs(function() {
-                refCryptoContext = new SymmetricCryptoContext(pskCtx, KEY_ID, masterToken.encryptionKey, masterToken.hmacKey, null);
+                refCryptoContext = new SymmetricCryptoContext(pskCtx, KEY_ID, masterToken.encryptionKey, masterToken.signatureKey, null);
                 wrapCryptoContext = new SymmetricCryptoContext(pskCtx, KEY_ID, encryptionKey, hmacKey, null);
                 refCryptoContext.encrypt(data, {
                     result: function(x) { refCiphertext = x; },
@@ -1095,7 +1095,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             // operation as the wrapped key is not exportable.
             var refCryptoContext, wrapCryptoContext, refCiphertext, wrapCiphertext, refHmac, wrapHmac;
             runs(function() {
-                refCryptoContext = new SymmetricCryptoContext(pskCtx, KEY_ID, masterToken.encryptionKey, masterToken.hmacKey, null);
+                refCryptoContext = new SymmetricCryptoContext(pskCtx, KEY_ID, masterToken.encryptionKey, masterToken.signatureKey, null);
                 wrapCryptoContext = new SymmetricCryptoContext(pskCtx, KEY_ID, encryptionKey, hmacKey, null);
                 refCryptoContext.encrypt(data, {
                     result: function(x) { refCiphertext = x; },

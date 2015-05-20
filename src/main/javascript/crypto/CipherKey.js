@@ -69,6 +69,7 @@ var CipherKey$import;
 
                     // The properties.
                     var props = {
+                        algorithm: { value: rawKey.algorithm, writable: false, configurable: false },
                         rawKey: { value: rawKey, writable: false, configurable: false },
                         keyData: { value: keyData, writable: false, configurable: false },
                         keyDataB64: { value: keyDataB64, writable: false, configurable: false }

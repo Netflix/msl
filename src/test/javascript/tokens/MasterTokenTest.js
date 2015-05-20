@@ -47,8 +47,14 @@ describe("MasterToken", function() {
     var KEY_IDENTITY = "identity";
     /** JSON key symmetric encryption key. */
     var KEY_ENCRYPTION_KEY = "encryptionkey";
+    /** JSON key encryption algorithm. */
+    var KEY_ENCRYPTION_ALGORITHM = "encryptionalgorithm";
     /** JSON key symmetric HMAC key. */
     var KEY_HMAC_KEY = "hmackey";
+    /** JSON key signature key. */
+    var KEY_SIGNATURE_KEY = "signaturekey";
+    /** JSON key signature algorithm. */
+    var KEY_SIGNATURE_ALGORITHM = "signaturealgorithm";
     
     var RENEWAL_WINDOW = new Date(Date.now() + 120000);
     var EXPIRATION = new Date(Date.now() + 180000);
@@ -56,7 +62,7 @@ describe("MasterToken", function() {
     var SERIAL_NUMBER = 42;
     var IDENTITY = MockPresharedAuthenticationFactory.PSK_ESN;
     var ENCRYPTION_KEY;
-    var HMAC_KEY;
+    var SIGNATURE_KEY;
     
     var ISSUER_DATA = { "issuerid": 17 };
     
@@ -76,9 +82,9 @@ describe("MasterToken", function() {
             runs(function() {
                 // These keys won't exist until after the factory is instantiated.
                 ENCRYPTION_KEY = MockPresharedAuthenticationFactory.KPE;
-                HMAC_KEY = MockPresharedAuthenticationFactory.KPH;
+                SIGNATURE_KEY = MockPresharedAuthenticationFactory.KPH;
             });
-            waitsFor(function() { return ENCRYPTION_KEY && HMAC_KEY; }, "keys", 500);
+            waitsFor(function() { return ENCRYPTION_KEY && SIGNATURE_KEY; }, "keys", 500);
             runs(function() { initialized = true; });
         }
     });
@@ -98,7 +104,7 @@ describe("MasterToken", function() {
     it("ctors", function() {
         var masterToken;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -114,7 +120,7 @@ describe("MasterToken", function() {
 	        expect(masterToken.isNewerThan(masterToken)).toBeFalsy();
 	        expect(masterToken.encryptionKey.toByteArray()).toEqual(ENCRYPTION_KEY.toByteArray());
 	        expect(masterToken.expiration.getTime() / MILLISECONDS_PER_SECOND).toEqual(Math.floor(EXPIRATION.getTime() / MILLISECONDS_PER_SECOND));
-	        expect(masterToken.hmacKey.toByteArray()).toEqual(HMAC_KEY.toByteArray());
+	        expect(masterToken.signatureKey.toByteArray()).toEqual(SIGNATURE_KEY.toByteArray());
 	        expect(masterToken.identity).toEqual(IDENTITY);
 	        expect(masterToken.issuerData).toEqual(ISSUER_DATA);
 	        expect(masterToken.renewalWindow.getTime() / MILLISECONDS_PER_SECOND).toEqual(Math.floor(RENEWAL_WINDOW.getTime() / MILLISECONDS_PER_SECOND));
@@ -142,7 +148,7 @@ describe("MasterToken", function() {
 	        expect(masterToken.isNewerThan(joMasterToken)).toBeFalsy();
 	        expect(joMasterToken.encryptionKey.toByteArray()).toEqual(masterToken.encryptionKey.toByteArray());
 	        expect(joMasterToken.expiration.getTime() / MILLISECONDS_PER_SECOND).toEqual(masterToken.expiration.getTime() / MILLISECONDS_PER_SECOND);
-	        expect(joMasterToken.hmacKey.toByteArray()).toEqual(masterToken.hmacKey.toByteArray());
+	        expect(joMasterToken.signatureKey.toByteArray()).toEqual(masterToken.signatureKey.toByteArray());
 	        expect(joMasterToken.identity).toEqual(masterToken.identity);
 	        expect(joMasterToken.issuerData).toEqual(masterToken.issuerData);
 	        expect(joMasterToken.renewalWindow.getTime() / MILLISECONDS_PER_SECOND).toEqual(masterToken.renewalWindow.getTime() / MILLISECONDS_PER_SECOND);
@@ -158,7 +164,7 @@ describe("MasterToken", function() {
     	var exception;
     	runs(function() {
 	        var sequenceNumber = -1;
-	        MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, sequenceNumber, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+	        MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, sequenceNumber, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
 	        	result: function() {},
 	        	error: function(err) { exception = err; },
 	        });
@@ -174,7 +180,7 @@ describe("MasterToken", function() {
     	var exception;
     	runs(function() {
 	        var sequenceNumber = MslConstants$MAX_LONG_VALUE + 2;
-	        MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, sequenceNumber, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+	        MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, sequenceNumber, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
 	            result: function() {},
 	            error: function(err) { exception = err; },
 	        });
@@ -190,7 +196,7 @@ describe("MasterToken", function() {
     	var exception;
     	runs(function() {
 	        var serialNumber = -1;
-	        MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, serialNumber, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+	        MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, serialNumber, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
 	            result: function() {},
 	            error: function(err) { exception = err; },
 	        });
@@ -206,7 +212,7 @@ describe("MasterToken", function() {
     	var exception;
     	runs(function() {
     		var serialNumber = MslConstants$MAX_LONG_VALUE + 2;
-	        MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, serialNumber, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+	        MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, serialNumber, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
 	            result: function() {},
 	            error: function(err) { exception = err; },
 	        });
@@ -224,7 +230,7 @@ describe("MasterToken", function() {
 	        var expiration = new Date(Date.now() - 1000);
 	        var renewalWindow = new Date();
 	        expect(expiration.getTime()).toBeLessThan(renewalWindow.getTime());
-	        MasterToken$create(ctx, renewalWindow, expiration, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+	        MasterToken$create(ctx, renewalWindow, expiration, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
 	            result: function() {},
 	            error: function(err) { exception = err; },
 	        });
@@ -239,7 +245,7 @@ describe("MasterToken", function() {
     it("inconsistent expiration JSON", function() {
     	var masterToken;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -273,7 +279,7 @@ describe("MasterToken", function() {
     it("null issuer data", function() {
         var masterToken;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, null, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, null, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -302,7 +308,7 @@ describe("MasterToken", function() {
     it("missing tokendata", function() {
     	var masterToken;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -332,7 +338,7 @@ describe("MasterToken", function() {
     it("invalid tokendata", function() {
     	var masterToken;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -363,7 +369,7 @@ describe("MasterToken", function() {
     it("missing signature", function() {
     	var masterToken;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -393,7 +399,7 @@ describe("MasterToken", function() {
     it("missing renewal window", function() {
     	var masterToken;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -426,7 +432,7 @@ describe("MasterToken", function() {
     it("invalid renewal window", function() {
     	var masterToken;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -458,7 +464,7 @@ describe("MasterToken", function() {
     it("missing expiration", function() {
     	var masterToken;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -491,7 +497,7 @@ describe("MasterToken", function() {
     it("invalid expiration", function() {
     	var masterToken;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -523,7 +529,7 @@ describe("MasterToken", function() {
     it("missing sequence number", function() {
     	var masterToken;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -556,7 +562,7 @@ describe("MasterToken", function() {
     it("invalid sequence number", function() {
     	var masterToken;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -588,7 +594,7 @@ describe("MasterToken", function() {
     it("negative sequence number", function() {
     	var masterToken;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -620,7 +626,7 @@ describe("MasterToken", function() {
     it("too large sequence number", function() {
     	var masterToken;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -652,7 +658,7 @@ describe("MasterToken", function() {
     it("missing serial number", function() {
     	var masterToken;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -686,7 +692,7 @@ describe("MasterToken", function() {
     it("invalid serial number", function() {
     	var masterToken;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -718,7 +724,7 @@ describe("MasterToken", function() {
     it("negative serial number", function() {
     	var masterToken;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -750,7 +756,7 @@ describe("MasterToken", function() {
     it("too large serial number", function() {
     	var masterToken;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -782,7 +788,7 @@ describe("MasterToken", function() {
     it("missing session data", function() {
     	var masterToken;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -815,7 +821,7 @@ describe("MasterToken", function() {
     it("invalid session data", function() {
     	var masterToken;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -856,7 +862,7 @@ describe("MasterToken", function() {
     it("empty session data", function() {
     	var masterToken;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -898,7 +904,7 @@ describe("MasterToken", function() {
     it("corrupt session data", function() {
     	var masterToken;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -942,7 +948,7 @@ describe("MasterToken", function() {
     it("not verified", function() {
         var masterToken;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -975,7 +981,7 @@ describe("MasterToken", function() {
 	        expect(masterToken.isNewerThan(joMasterToken)).toBeFalsy();
 	        expect(joMasterToken.encryptionKey).toBeNull();
 	        expect(joMasterToken.expiration.getTime() / MILLISECONDS_PER_SECOND).toEqual(masterToken.expiration.getTime() / MILLISECONDS_PER_SECOND);
-	        expect(joMasterToken.hmacKey).toBeNull();
+	        expect(joMasterToken.signatureKey).toBeNull();
 	        expect(joMasterToken.identity).toBeNull();
 	        expect(joMasterToken.issuerData).toBeNull();
 	        expect(joMasterToken.renewalWindow.getTime() / MILLISECONDS_PER_SECOND).toEqual(masterToken.renewalWindow.getTime() / MILLISECONDS_PER_SECOND);
@@ -990,7 +996,7 @@ describe("MasterToken", function() {
     it("invalid issuer data", function() {
     	var masterToken;
     	runs(function() {
-    		MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+    		MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
     			result: function(token) { masterToken = token; },
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     		});
@@ -1052,7 +1058,7 @@ describe("MasterToken", function() {
     it("missing identity", function() {
     	var masterToken;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1115,7 +1121,7 @@ describe("MasterToken", function() {
     it("missing encryption key", function() {
     	var masterToken;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1178,7 +1184,7 @@ describe("MasterToken", function() {
     it("invalid encryption key", function() {
     	var masterToken;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1237,10 +1243,396 @@ describe("MasterToken", function() {
     	});
     });
     
+    it("missing encryption algorithm", function() {
+        var masterToken;
+        runs(function() {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
+                result: function(token) { masterToken = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        
+        var joMasterToken;
+        runs(function() {
+            var jsonString = JSON.stringify(masterToken);
+            var jo = JSON.parse(jsonString);
+            
+            var cryptoContext = ctx.getMslCryptoContext();
+            
+            // Before modifying the session data we need to decrypt it.
+            var tokendata = base64$decode(jo[KEY_TOKENDATA]);
+            var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
+            var ciphertext = base64$decode(tokendataJo[KEY_SESSIONDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var sessiondataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+                    
+                    // After modifying the session data we need to encrypt it.
+                    expect(sessiondataJo[KEY_ENCRYPTION_ALGORITHM]).not.toBeNull();
+                    delete sessiondataJo[KEY_ENCRYPTION_ALGORITHM];
+                    var json = JSON.stringify(sessiondataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(sessiondata) {
+                            tokendataJo[KEY_SESSIONDATA] = base64$encode(sessiondata);
+                            
+                            // The tokendata must be signed otherwise the session data will not be
+                            // processed.
+                            var modifiedTokendata = textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET);
+                            cryptoContext.sign(modifiedTokendata, {
+                                result: function(signature) {
+                                    jo[KEY_TOKENDATA] = base64$encode(modifiedTokendata);
+                                    jo[KEY_SIGNATURE] = base64$encode(signature);
+                                    
+                                    MasterToken$parse(ctx, jo, {
+                                        result: function(x) { joMasterToken = x; },
+                                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                                    }); 
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return joMasterToken; }, "joMasterToken not received", 500);
+        
+        runs(function() {
+            // Confirm default algorithm.
+            var joEncryptionKey = joMasterToken.encryptionKey;
+            expect(WebCryptoAlgorithm.AES_CBC['name']).toEqual(joEncryptionKey.algorithm['name']);
+        });
+    });
+    
+    it("invalid encryption algorithm", function() {
+        var masterToken;
+        runs(function() {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
+                result: function(token) { masterToken = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        
+        var exception;
+        runs(function() {
+            var jsonString = JSON.stringify(masterToken);
+            var jo = JSON.parse(jsonString);
+            
+            var cryptoContext = ctx.getMslCryptoContext();
+            
+            // Before modifying the session data we need to decrypt it.
+            var tokendata = base64$decode(jo[KEY_TOKENDATA]);
+            var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
+            var ciphertext = base64$decode(tokendataJo[KEY_SESSIONDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var sessiondataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+                    
+                    // After modifying the session data we need to encrypt it.
+                    sessiondataJo[KEY_ENCRYPTION_ALGORITHM] = "x";
+                    var json = JSON.stringify(sessiondataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(sessiondata) {
+                            tokendataJo[KEY_SESSIONDATA] = base64$encode(sessiondata);
+                            
+                            // The tokendata must be signed otherwise the session data will not be
+                            // processed.
+                            var modifiedTokendata = textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET);
+                            cryptoContext.sign(modifiedTokendata, {
+                                result: function(signature) {
+                                    jo[KEY_TOKENDATA] = base64$encode(modifiedTokendata);
+                                    jo[KEY_SIGNATURE] = base64$encode(signature);
+                                    
+                                    MasterToken$parse(ctx, jo, {
+                                        result: function() {},
+                                        error: function(e) { exception = e; }
+                                    }); 
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 500);
+        runs(function() {
+            var f = function() { throw exception; };
+            expect(f).toThrow(new MslCryptoException(MslError.UNIDENTIFIED_ALGORITHM));
+        });
+    });
+    
     it("missing HMAC key", function() {
+        var masterToken;
+        runs(function() {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
+                result: function(token) { masterToken = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        
+        var joMasterToken;
+        runs(function() {
+            var jsonString = JSON.stringify(masterToken);
+            var jo = JSON.parse(jsonString);
+            
+            var cryptoContext = ctx.getMslCryptoContext();
+            
+            // Before modifying the session data we need to decrypt it.
+            var tokendata = base64$decode(jo[KEY_TOKENDATA]);
+            var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
+            var ciphertext = base64$decode(tokendataJo[KEY_SESSIONDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var sessiondataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+                    
+                    // After modifying the session data we need to encrypt it.
+                    expect(sessiondataJo[KEY_HMAC_KEY]).not.toBeNull();
+                    delete sessiondataJo[KEY_HMAC_KEY];
+                    var json = JSON.stringify(sessiondataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(sessiondata) {
+                            tokendataJo[KEY_SESSIONDATA] = base64$encode(sessiondata);
+                            
+                            // The tokendata must be signed otherwise the session data will not be
+                            // processed.
+                            var modifiedTokendata = textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET);
+                            cryptoContext.sign(modifiedTokendata, {
+                                result: function(signature) {
+                                    jo[KEY_TOKENDATA] = base64$encode(modifiedTokendata);
+                                    jo[KEY_SIGNATURE] = base64$encode(signature);
+                                    
+                                    MasterToken$parse(ctx, jo, {
+                                        result: function(x) { joMasterToken = x; },
+                                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                                    }); 
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return joMasterToken; }, "joMasterToken not received", 500);
+        
+        runs(function() {
+            // Confirm signature key.
+            var joSignatureKey = joMasterToken.signatureKey;
+            expect(joSignatureKey.toByteArray()).toEqual(masterToken.signatureKey.toByteArray());
+        });
+    });
+    
+    it("missing signature key", function() {
+        var masterToken;
+        runs(function() {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
+                result: function(token) { masterToken = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        
+        var joMasterToken;
+        runs(function() {
+            var jsonString = JSON.stringify(masterToken);
+            var jo = JSON.parse(jsonString);
+            
+            var cryptoContext = ctx.getMslCryptoContext();
+            
+            // Before modifying the session data we need to decrypt it.
+            var tokendata = base64$decode(jo[KEY_TOKENDATA]);
+            var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
+            var ciphertext = base64$decode(tokendataJo[KEY_SESSIONDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var sessiondataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+                    
+                    // After modifying the session data we need to encrypt it.
+                    expect(sessiondataJo[KEY_SIGNATURE_KEY]).not.toBeNull();
+                    delete sessiondataJo[KEY_SIGNATURE_KEY];
+                    var json = JSON.stringify(sessiondataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(sessiondata) {
+                            tokendataJo[KEY_SESSIONDATA] = base64$encode(sessiondata);
+                            
+                            // The tokendata must be signed otherwise the session data will not be
+                            // processed.
+                            var modifiedTokendata = textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET);
+                            cryptoContext.sign(modifiedTokendata, {
+                                result: function(signature) {
+                                    jo[KEY_TOKENDATA] = base64$encode(modifiedTokendata);
+                                    jo[KEY_SIGNATURE] = base64$encode(signature);
+                                    
+                                    MasterToken$parse(ctx, jo, {
+                                        result: function(x) { joMasterToken = x; },
+                                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                                    }); 
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return joMasterToken; }, "joMasterToken not received", 500);
+        
+        runs(function() {
+            // Confirm signature key.
+            var joSignatureKey = joMasterToken.signatureKey;
+            expect(joSignatureKey.toByteArray()).toEqual(masterToken.signatureKey.toByteArray());
+        });
+    });
+    
+    it("missing signature algorithm", function() {
+        var masterToken;
+        runs(function() {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
+                result: function(token) { masterToken = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        
+        var joMasterToken;
+        runs(function() {
+            var jsonString = JSON.stringify(masterToken);
+            var jo = JSON.parse(jsonString);
+            
+            var cryptoContext = ctx.getMslCryptoContext();
+            
+            // Before modifying the session data we need to decrypt it.
+            var tokendata = base64$decode(jo[KEY_TOKENDATA]);
+            var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
+            var ciphertext = base64$decode(tokendataJo[KEY_SESSIONDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var sessiondataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+                    
+                    // After modifying the session data we need to encrypt it.
+                    expect(sessiondataJo[KEY_SIGNATURE_ALGORITHM]).not.toBeNull();
+                    delete sessiondataJo[KEY_SIGNATURE_ALGORITHM];
+                    var json = JSON.stringify(sessiondataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(sessiondata) {
+                            tokendataJo[KEY_SESSIONDATA] = base64$encode(sessiondata);
+                            
+                            // The tokendata must be signed otherwise the session data will not be
+                            // processed.
+                            var modifiedTokendata = textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET);
+                            cryptoContext.sign(modifiedTokendata, {
+                                result: function(signature) {
+                                    jo[KEY_TOKENDATA] = base64$encode(modifiedTokendata);
+                                    jo[KEY_SIGNATURE] = base64$encode(signature);
+                                    
+                                    MasterToken$parse(ctx, jo, {
+                                        result: function(x) { joMasterToken = x; },
+                                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                                    }); 
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return joMasterToken; }, "joMasterToken not received", 500);
+        
+        runs(function() {
+            // Confirm default algorithm.
+            var joSignatureKey = joMasterToken.signatureKey;
+            expect(WebCryptoAlgorithm.HMAC_SHA256['name']).toEqual(joSignatureKey.algorithm['name']);
+            expect(joSignatureKey.algorithm['hash']).toBeTruthy();
+            expect(WebCryptoAlgorithm.HMAC_SHA256['hash']['name']).toEqual(joSignatureKey.algorithm['hash']['name']);
+        });
+    });
+    
+    it("invalid signature algorithm", function() {
+        var masterToken;
+        runs(function() {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
+                result: function(token) { masterToken = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        
+        var exception;
+        runs(function() {
+            var jsonString = JSON.stringify(masterToken);
+            var jo = JSON.parse(jsonString);
+            
+            var cryptoContext = ctx.getMslCryptoContext();
+            
+            // Before modifying the session data we need to decrypt it.
+            var tokendata = base64$decode(jo[KEY_TOKENDATA]);
+            var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
+            var ciphertext = base64$decode(tokendataJo[KEY_SESSIONDATA]);
+            cryptoContext.decrypt(ciphertext, {
+                result: function(plaintext) {
+                    var sessiondataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+                    
+                    // After modifying the session data we need to encrypt it.
+                    sessiondataJo[KEY_SIGNATURE_ALGORITHM] = "x";
+                    var json = JSON.stringify(sessiondataJo);
+                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    cryptoContext.encrypt(plaintext, {
+                        result: function(sessiondata) {
+                            tokendataJo[KEY_SESSIONDATA] = base64$encode(sessiondata);
+                            
+                            // The tokendata must be signed otherwise the session data will not be
+                            // processed.
+                            var modifiedTokendata = textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET);
+                            cryptoContext.sign(modifiedTokendata, {
+                                result: function(signature) {
+                                    jo[KEY_TOKENDATA] = base64$encode(modifiedTokendata);
+                                    jo[KEY_SIGNATURE] = base64$encode(signature);
+                                    
+                                    MasterToken$parse(ctx, jo, {
+                                        result: function() {},
+                                        error: function(e) { exception = e; }
+                                    }); 
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 500);
+        runs(function() {
+            var f = function() { throw exception; };
+            expect(f).toThrow(new MslCryptoException(MslError.UNIDENTIFIED_ALGORITHM));
+        });
+    });
+    
+    it("missing HMAC and signature key", function() {
     	var masterToken;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1263,8 +1655,10 @@ describe("MasterToken", function() {
 	        		var sessiondataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
 	    	        
 	    	        // After modifying the session data we need to encrypt it.
-	    	        expect(sessiondataJo[KEY_HMAC_KEY]).not.toBeNull();
-	    	        delete sessiondataJo[KEY_HMAC_KEY];
+                    expect(sessiondataJo[KEY_HMAC_KEY]).not.toBeNull();
+                    delete sessiondataJo[KEY_HMAC_KEY];
+	    	        expect(sessiondataJo[KEY_SIGNATURE_KEY]).not.toBeNull();
+	    	        delete sessiondataJo[KEY_SIGNATURE_KEY];
 	    	        var json = JSON.stringify(sessiondataJo);
 	    	        var plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
 	    	        cryptoContext.encrypt(plaintext, {
@@ -1300,10 +1694,10 @@ describe("MasterToken", function() {
     	});
     });
     
-    it("invalid HMAC key", function() {
+    it("invalid HMAC and signature key", function() {
     	var masterToken;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1326,7 +1720,8 @@ describe("MasterToken", function() {
 	        		var sessiondataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
 	    	        
 	    	        // After modifying the session data we need to encrypt it.
-	    	        sessiondataJo[KEY_HMAC_KEY] = "";
+                    sessiondataJo[KEY_HMAC_KEY] = "";
+	    	        sessiondataJo[KEY_SIGNATURE_KEY] = "";
 	    	        var json = JSON.stringify(sessiondataJo);
 	    	        plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
 	    	        cryptoContext.encrypt(plaintext, {
@@ -1367,7 +1762,7 @@ describe("MasterToken", function() {
         var expiration = new Date(Date.now() + 10000);
         var masterToken;
         runs(function() {
-            MasterToken$create(ctx, renewalWindow, expiration, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, renewalWindow, expiration, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1395,7 +1790,7 @@ describe("MasterToken", function() {
         var expiration = new Date();
         var masterToken;
         runs(function() {
-            MasterToken$create(ctx, renewalWindow, expiration, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, renewalWindow, expiration, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1423,7 +1818,7 @@ describe("MasterToken", function() {
         var expiration = new Date(Date.now() + 2000);
         var masterToken;
         runs(function() {
-            MasterToken$create(ctx, renewalWindow, expiration, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, renewalWindow, expiration, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1451,11 +1846,11 @@ describe("MasterToken", function() {
         var sequenceNumberB = 2;
         var masterTokenA = undefined, masterTokenB;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, sequenceNumberA, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, sequenceNumberA, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterTokenA = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, sequenceNumberB, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, sequenceNumberB, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterTokenB = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1483,23 +1878,23 @@ describe("MasterToken", function() {
         	var minus1MasterToken = undefined, plus1MasterToken;
         	var plus127MasterToken = undefined, plus128MasterToken;
         	runs(function() {
-        		MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, zero, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+        		MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, zero, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
         			result: function(x) { masterToken = x; },
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
-        		MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, minus1, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+        		MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, minus1, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
         			result: function(x) { minus1MasterToken = x; },
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
-        		MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, plus1, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+        		MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, plus1, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
         			result: function(x) { plus1MasterToken = x; },
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
-        		MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, plus127, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+        		MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, plus127, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
         			result: function(x) { plus127MasterToken = x; },
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
-        		MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, plus128, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+        		MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, plus128, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
         			result: function(x) { plus128MasterToken = x; },
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
@@ -1524,11 +1919,11 @@ describe("MasterToken", function() {
     	var expirationB = new Date(EXPIRATION.getTime() + 10000);
         var masterTokenA = undefined, masterTokenB;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, expirationA, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, expirationA, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterTokenA = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            MasterToken$create(ctx, RENEWAL_WINDOW, expirationB, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, expirationB, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterTokenB = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1548,11 +1943,11 @@ describe("MasterToken", function() {
         var sequenceNumberB = 2;
         var masterTokenA = undefined, masterTokenB;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, sequenceNumberA, serialNumberA, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, sequenceNumberA, serialNumberA, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterTokenA = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, sequenceNumberB, serialNumberB, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, sequenceNumberB, serialNumberB, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterTokenB = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1602,11 +1997,11 @@ describe("MasterToken", function() {
         var serialNumberB = 2;
         var masterTokenA = undefined, masterTokenB;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, serialNumberA, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, serialNumberA, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterTokenA = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, serialNumberB, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, serialNumberB, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterTokenB = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1639,11 +2034,11 @@ describe("MasterToken", function() {
         var sequenceNumberB = 2;
         var masterTokenA = undefined, masterTokenB;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, sequenceNumberA, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, sequenceNumberA, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterTokenA = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, sequenceNumberB, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, sequenceNumberB, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterTokenB = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1676,11 +2071,11 @@ describe("MasterToken", function() {
         var expirationB = new Date(EXPIRATION.getTime() + 10000);
         var masterTokenA = undefined, masterTokenB;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, expirationA, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, expirationA, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterTokenA = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            MasterToken$create(ctx, RENEWAL_WINDOW, expirationB, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, expirationB, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterTokenB = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1711,7 +2106,7 @@ describe("MasterToken", function() {
     it("equals object", function() {
         var masterToken;
         runs(function() {
-            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY, {
+            MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });

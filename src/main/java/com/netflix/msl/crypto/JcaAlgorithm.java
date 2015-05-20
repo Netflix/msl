@@ -27,4 +27,6 @@ public class JcaAlgorithm {
     public static final String HMAC_SHA256 = "HmacSHA256";
     /** AES key wrap. */
     public static final String AESKW = "AES";
+    /** CMAC. */
+    public static final String AES_CMAC = "AESCmac";
 }

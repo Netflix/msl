@@ -16,7 +16,7 @@
 
 /**
  * A symmetric crypto context performs AES-128 encryption/decryption, AES-128
- * key wrap/unwrap, and HMAC-SHA256 sign/verify.
+ * key wrap/unwrap, and HMAC-SHA256 or AES-CMAC sign/verify.
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
@@ -25,26 +25,28 @@ var SymmetricCryptoContext;
 (function() {
     SymmetricCryptoContext = ICryptoContext.extend({
         /**
-         * Create a new symmetric crypto context using the provided keys.
-         *
-         * If there is no encryption key, encryption and decryption is unsupported.
-         *
-         * If there is no HMAC key, signing and verification is unsupported.
-         *
-         * If there is no wrap key, wrap and unwrap is unsupported.
+         * <p>Create a new symmetric crypto context using the provided keys.</p>
+         * 
+         * <p>If there is no encryption key, encryption and decryption is
+         * unsupported.</p>
+         * 
+         * <p>If there is no signature key, signing and verification is
+         * unsupported.</p>
+         * 
+         * <p>If there is no wrapping key, wrap and unwrap is unsupported.</p>
          *
          * @param {MslContext} ctx MSL context.
          * @param {string} id the key set identity.
          * @param {CipherKey} encryptionKey the key used for encryption/decryption.
-         * @param {CipherKey} hmacKey the key used for HMAC compuation.
+         * @param {CipherKey} signatureKey the key used for HMAC or CMAC computation.
          * @param {CipherKey} wrapKey the key used for wrap/unwrap.
          * @throws MslCryptoException if the encryption key length is unsupported.
          */
-        init: function init(ctx, id, encryptionKey, hmacKey, wrapKey) {
+        init: function init(ctx, id, encryptionKey, signatureKey, wrapKey) {
             init.base.call(this);
 
             encryptionKey = encryptionKey && encryptionKey.rawKey;
-            hmacKey = hmacKey && hmacKey.rawKey;
+            signatureKey = signatureKey && signatureKey.rawKey;
             wrapKey = wrapKey && wrapKey.rawKey;
 
             // The properties.
@@ -52,7 +54,7 @@ var SymmetricCryptoContext;
                 ctx: { value: ctx, writable: false, enumerable: false, configurable: false },
                 id: { value: id, writable: false, enumerable: false, configurable: false },
                 encryptionKey: { value: encryptionKey, writable: false, enumerable: false, configurable: false },
-                hmacKey: { value: hmacKey, writable: false, enumerable: false, configurable: false },
+                signatureKey: { value: signatureKey, writable: false, enumerable: false, configurable: false },
                 wrapKey: { value: wrapKey, writable: false, enumerable: false, configurable: false }
             };
             Object.defineProperties(this, props);
@@ -208,8 +210,8 @@ var SymmetricCryptoContext;
         sign: function sign(data, callback) {
             var self = this;
             AsyncExecutor(callback, function() {
-                if (!this.hmacKey)
-                    throw new MslCryptoException(MslError.SIGN_NOT_SUPPORTED, "no HMAC key.");
+                if (!this.signatureKey)
+                    throw new MslCryptoException(MslError.SIGN_NOT_SUPPORTED, "no signature key.");
                 
                 // Compute the hash.
                 var oncomplete = function(hash) {
@@ -226,7 +228,7 @@ var SymmetricCryptoContext;
                 var onerror = function() {
                     callback.error(new MslCryptoException(MslError.HMAC_ERROR));
                 };
-                mslCrypto['sign'](WebCryptoAlgorithm.HMAC_SHA256, this.hmacKey, data)
+                mslCrypto['sign'](this.signatureKey.algorithm, this.signatureKey, data)
                     .then(oncomplete, onerror);
             }, this);
         },
@@ -235,8 +237,8 @@ var SymmetricCryptoContext;
         verify: function verify(data, signature, callback) {
             var self = this;
             AsyncExecutor(callback, function() {
-                if (!this.hmacKey)
-                    throw new MslCryptoException(MslError.VERIFY_NOT_SUPPORTED, "no HMAC key.");
+                if (!this.signatureKey)
+                    throw new MslCryptoException(MslError.VERIFY_NOT_SUPPORTED, "no signature key.");
 
                 // Reconstitute the signature envelope.
                 MslSignatureEnvelope$parse(signature, MslSignatureEnvelope$Version.V1, {
@@ -247,7 +249,7 @@ var SymmetricCryptoContext;
                             var onerror = function(e) {
                                 callback.error(new MslCryptoException(MslError.HMAC_ERROR));
                             };
-                            mslCrypto['verify'](WebCryptoAlgorithm.HMAC_SHA256, this.hmacKey, envelope.signature, data)
+                            mslCrypto['verify'](this.signatureKey.algorithm, this.signatureKey, envelope.signature, data)
                                 .then(oncomplete, onerror);
                         }, self);
                     },

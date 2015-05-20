@@ -26,11 +26,13 @@ import org.json.JSONObject;
 import org.json.JSONString;
 
 import com.netflix.msl.MslConstants;
+import com.netflix.msl.MslConstants.EncryptionAlgo;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslException;
 import com.netflix.msl.MslInternalException;
+import com.netflix.msl.MslConstants.SignatureAlgo;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.crypto.JcaAlgorithm;
 import com.netflix.msl.util.MslContext;
@@ -102,18 +104,25 @@ import com.netflix.msl.util.MslContext;
  * <p>The decrypted session data is represented as
  * {@code
  * sessiondata = {
- *   "#mandatory" : [ "identity", "encryptionkey", "hmackey" ],
+ *   "#mandatory" : [ "identity", "encryptionkey" ],
+ *   "#conditions" : [ "hmackey" or "signaturekey" ],
  *   "issuerdata" : object,
  *   "identity" : "string",
  *   "encryptionkey" : "base64",
- *   "hmackey" : "base64"
+ *   "encryptionkeyalgorithm" : "string",
+ *   "hmackey" : "base64",
+ *   "signaturekey" : "base64",
+ *   "signaturekeyalgorithm" : "string",
  * }}
  * where:
  * <ul>
  * <li>{@code issuerdata} is the master token issuer data</li>
  * <li>{@code identity} is the identifier of the remote entity</li>
- * <li>{@code encryptionkey} is the Base64-encoded AES-128 encryption session key</li>
- * <li>{@code hmackey} is the Base64-encoded SHA-256 HMAC session key</li>
+ * <li>{@code encryptionkey} is the Base64-encoded encryption session key</li>
+ * <li>{@code encryptionkeyalgorithm} is the JCA encryption algorithm name (default: AES/CBC/PKCS5Padding)</li>
+ * <li>{@code hmackey} is the Base64-encoded HMAC session key</li>
+ * <li>{@code signaturekey} is the Base64-encoded signature session key</li>
+ * <li>{@code signaturekeyalgorithm} is the JCA signature algorithm name (default: HmacSHA256)</li> 
  * </ul></p>
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
@@ -146,12 +155,18 @@ public class MasterToken implements JSONString {
     private static final String KEY_IDENTITY = "identity";
     /** JSON key symmetric encryption key. */
     private static final String KEY_ENCRYPTION_KEY = "encryptionkey";
+    /** JSON key encryption algorithm. */
+    private static final String KEY_ENCRYPTION_ALGORITHM = "encryptionalgorithm";
     /** JSON key symmetric HMAC key. */
     private static final String KEY_HMAC_KEY = "hmackey";
+    /** JSON key signature key. */
+    private static final String KEY_SIGNATURE_KEY = "signaturekey";
+    /** JSON key signature algorithm. */
+    private static final String KEY_SIGNATURE_ALGORITHM = "signaturealgorithm";
         
     /**
      * Create a new master token with the specified expiration, identity,
-     * serial number, and encryption and HMAC keys.
+     * serial number, and encryption and signature keys.
      * 
      * @param ctx MSL context.
      * @param renewalWindow the renewal window.
@@ -161,13 +176,13 @@ public class MasterToken implements JSONString {
      * @param issuerData the issuer data. May be null.
      * @param identity the singular identity this master token represents.
      * @param encryptionKey the session encryption key.
-     * @param hmacKey the session HMAC key.
+     * @param signatureKey the session signature key.
      * @throws MslEncodingException if there is an error encoding the JSON
      *         data.
      * @throws MslCryptoException if there is an error encrypting or signing
-     *         the token data.
+     *         the token data or the crypto algorithms are not recognized.
      */
-    public MasterToken(final MslContext ctx, final Date renewalWindow, final Date expiration, final long sequenceNumber, final long serialNumber, final JSONObject issuerData, final String identity, final SecretKey encryptionKey, final SecretKey hmacKey) throws MslEncodingException, MslCryptoException {
+    public MasterToken(final MslContext ctx, final Date renewalWindow, final Date expiration, final long sequenceNumber, final long serialNumber, final JSONObject issuerData, final String identity, final SecretKey encryptionKey, final SecretKey signatureKey) throws MslEncodingException, MslCryptoException {
         // The expiration must appear after the renewal window.
         if (expiration.before(renewalWindow))
             throw new MslInternalException("Cannot construct a master token that expires before its renewal window opens.");
@@ -185,17 +200,29 @@ public class MasterToken implements JSONString {
         this.issuerData = issuerData;
         this.identity = identity;
         this.encryptionKey = encryptionKey;
-        this.hmacKey = hmacKey;
+        this.signatureKey = signatureKey;
         
         // Construct the session data.
         final JSONObject sessionData = new JSONObject();
         try {
+            // Encode session keys and algorithm names.
+            final String encryptionKeyB64 = DatatypeConverter.printBase64Binary(this.encryptionKey.getEncoded());
+            final EncryptionAlgo encryptionAlgo = EncryptionAlgo.fromString(this.encryptionKey.getAlgorithm());
+            final String signatureKeyB64 = DatatypeConverter.printBase64Binary(this.signatureKey.getEncoded());
+            final SignatureAlgo signatureAlgo = SignatureAlgo.fromString(this.signatureKey.getAlgorithm());
+            
+            // Create session data.
             if (this.issuerData != null)
                 sessionData.put(KEY_ISSUER_DATA, this.issuerData);
             sessionData.put(KEY_IDENTITY, this.identity);
-            sessionData.put(KEY_ENCRYPTION_KEY, DatatypeConverter.printBase64Binary(this.encryptionKey.getEncoded()));
-            sessionData.put(KEY_HMAC_KEY, DatatypeConverter.printBase64Binary(this.hmacKey.getEncoded()));
+            sessionData.put(KEY_ENCRYPTION_KEY, encryptionKeyB64);
+            sessionData.put(KEY_ENCRYPTION_ALGORITHM, encryptionAlgo);
+            sessionData.put(KEY_HMAC_KEY, signatureKeyB64);
+            sessionData.put(KEY_SIGNATURE_KEY, signatureKeyB64);
+            sessionData.put(KEY_SIGNATURE_ALGORITHM, signatureAlgo);
             this.sessiondata = sessionData.toString().getBytes(MslConstants.DEFAULT_CHARSET);
+        } catch (final IllegalArgumentException e) {
+            throw new MslCryptoException(MslError.UNIDENTIFIED_ALGORITHM, "encryption algorithm: " + this.encryptionKey.getAlgorithm() + "; signature algorithm: " + this.signatureKey.getAlgorithm(), e);
         } catch (final JSONException e) {
             throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, "sessiondata", e);
         }
@@ -292,22 +319,35 @@ public class MasterToken implements JSONString {
         if (sessiondata != null) {
             // Parse JSON.
             final String sessionDataJson = new String(sessiondata, MslConstants.DEFAULT_CHARSET);
-            final String encryptionB64, hmacB64;
+            final String encryptionB64, signatureB64;
+            final String encryptionAlgo, signatureAlgo;
             try {
                 final JSONObject sessionDataJO = new JSONObject(sessionDataJson);
                 issuerData = (sessionDataJO.has(KEY_ISSUER_DATA)) ? sessionDataJO.getJSONObject(KEY_ISSUER_DATA) : null;
                 identity = sessionDataJO.getString(KEY_IDENTITY);
-                // TODO: optionally include the algorithm names in the master token.
                 encryptionB64 = sessionDataJO.getString(KEY_ENCRYPTION_KEY);
-                hmacB64 = sessionDataJO.getString(KEY_HMAC_KEY);
+                encryptionAlgo = sessionDataJO.optString(KEY_ENCRYPTION_ALGORITHM, JcaAlgorithm.AES);
+                signatureB64 = (sessionDataJO.has(KEY_SIGNATURE_KEY))
+                    ? sessionDataJO.getString(KEY_SIGNATURE_KEY)
+                    : sessionDataJO.getString(KEY_HMAC_KEY);
+                signatureAlgo = sessionDataJO.optString(KEY_SIGNATURE_ALGORITHM, JcaAlgorithm.HMAC_SHA256);
             } catch (final JSONException e) {
                 throw new MslEncodingException(MslError.MASTERTOKEN_SESSIONDATA_PARSE_ERROR, "sessiondata " + sessionDataJson, e);
             }
             
+            // Decode algorithm names.
+            final String jcaEncryptionAlgo, jcaSignatureAlgo;
+            try {
+                jcaEncryptionAlgo = EncryptionAlgo.fromString(encryptionAlgo).toString();
+                jcaSignatureAlgo = SignatureAlgo.fromString(signatureAlgo).toString();
+            } catch (final IllegalArgumentException e) {
+                throw new MslCryptoException(MslError.UNIDENTIFIED_ALGORITHM, "encryption algorithm: " + encryptionAlgo + "; signature algorithm" + signatureAlgo, e);
+            }
+            
             // Reconstruct keys.
             try {
-                encryptionKey = new SecretKeySpec(DatatypeConverter.parseBase64Binary(encryptionB64), JcaAlgorithm.AES);
-                hmacKey = new SecretKeySpec(DatatypeConverter.parseBase64Binary(hmacB64), JcaAlgorithm.HMAC_SHA256);
+                encryptionKey = new SecretKeySpec(DatatypeConverter.parseBase64Binary(encryptionB64), jcaEncryptionAlgo);
+                signatureKey = new SecretKeySpec(DatatypeConverter.parseBase64Binary(signatureB64), jcaSignatureAlgo);
             } catch (final IllegalArgumentException e) {
                 throw new MslCryptoException(MslError.MASTERTOKEN_KEY_CREATION_ERROR, e);
             }
@@ -315,7 +355,7 @@ public class MasterToken implements JSONString {
             issuerData = null;
             identity = null;
             encryptionKey = null;
-            hmacKey = null;
+            signatureKey = null;
         }
     }
     
@@ -464,19 +504,19 @@ public class MasterToken implements JSONString {
     }
     
     /**
-     * @return the symmetric encryption key or null if unknown (session data
-     *         could not be decrypted).
+     * @return the encryption key or null if unknown (session data could not be
+     *         decrypted).
      */
     public SecretKey getEncryptionKey() {
         return encryptionKey;
     }
 
     /**
-     * @return the symmetric HMAC key or null if unknown (session data could
-     *         not be decrypted).
+     * @return the signature key or null if unknown (session data could not be
+     *         decrypted).
      */
-    public SecretKey getHmacKey() {
-        return hmacKey;
+    public SecretKey getSignatureKey() {
+        return signatureKey;
     }
     
     /** MSL context. */
@@ -504,8 +544,8 @@ public class MasterToken implements JSONString {
     private final String identity;
     /** Encryption key. */
     private final SecretKey encryptionKey;
-    /** HMAC key. */
-    private final SecretKey hmacKey;
+    /** Signature (HMAC) key. */
+    private final SecretKey signatureKey;
     
     /** Token is verified. */
     private final boolean verified;
@@ -538,7 +578,10 @@ public class MasterToken implements JSONString {
                     sessiondataJO.put(KEY_ISSUER_DATA, issuerData);
                 sessiondataJO.put(KEY_IDENTITY, identity);
                 sessiondataJO.put(KEY_ENCRYPTION_KEY, encryptionKey);
-                sessiondataJO.put(KEY_HMAC_KEY, hmacKey);
+                sessiondataJO.put(KEY_ENCRYPTION_ALGORITHM, encryptionKey.getAlgorithm());
+                sessiondataJO.put(KEY_HMAC_KEY, signatureKey);
+                sessiondataJO.put(KEY_SIGNATURE_KEY, signatureKey);
+                sessiondataJO.put(KEY_SIGNATURE_ALGORITHM, signatureKey.getAlgorithm());
             } else {
                 sessiondataJO = null;
             }

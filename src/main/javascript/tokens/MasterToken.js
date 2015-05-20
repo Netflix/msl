@@ -81,18 +81,25 @@
  * <p>The decrypted session data is represented as
  * {@code
  * sessiondata = {
- *   "#mandatory" : [ "identity", "encryptionkey", "hmackey" ],
+ *   "#mandatory" : [ "identity", "encryptionkey"],
+ *   "#conditions" : [ "hmackey" or "signaturekey" ],
  *   "issuerdata" : object,
  *   "identity" : "string",
  *   "encryptionkey" : "base64",
- *   "hmackey" : "base64"
+ *   "encryptionkeyalgorithm" : "string",
+ *   "hmackey" : "base64",
+ *   "signaturekey" : "base64",
+ *   "signaturekeyalgorithm" : "string",
  * }}
  * where:
  * <ul>
  * <li>{@code issuerdata} is the master token issuer data</li>
  * <li>{@code identity} is the identifier of the remote entity</li>
- * <li>{@code encryptionkey} is the Base64-encoded AES-128 encryption session key</li>
- * <li>{@code hmackey} is the Base64-encoded SHA-256 HMAC session key</li>
+ * <li>{@code encryptionkey} is the Base64-encoded encryption session key</li>
+ * <li>{@code encryptionkeyalgorithm} is the JCA encryption algorithm name (default: AES/CBC/PKCS5Padding)</li>
+ * <li>{@code hmackey} is the Base64-encoded HMAC session key</li>
+ * <li>{@code signaturekey} is the Base64-encoded signature session key</li>
+ * <li>{@code signaturekeyalgorithm} is the JCA signature algorithm name (default: HmacSHA256)</li> 
  * </ul></p>
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
@@ -174,11 +181,29 @@ var MasterToken$parse;
      */
     var KEY_ENCRYPTION_KEY = "encryptionkey";
     /**
+     * JSON key encryption algorithm.
+     * @const
+     * @type {string}
+     */
+    var KEY_ENCRYPTION_ALGORITHM = "encryptionalgorithm";
+    /**
      * JSON key symmetric HMAC key.
      * @const
      * @type {string}
      */
     var KEY_HMAC_KEY = "hmackey";
+    /**
+     * JSON key signature key.
+     * @const
+     * @type {string}
+     */
+    var KEY_SIGNATURE_KEY = "signaturekey";
+    /**
+     * JSON key signature algorithm.
+     * @const
+     * @type {string}
+     */
+    var KEY_SIGNATURE_ALGORITHM = "signaturealgorithm";
 
     /**
      * Create a new session and token data container object.
@@ -199,7 +224,7 @@ var MasterToken$parse;
     MasterToken = util.Class.create({
         /**
          * Create a new master token with the specified expiration, identity,
-         * serial number, and encryption and HMAC keys.
+         * serial number, and encryption and signature keys.
          *
          * @param {MslContext} ctx MSL context.
          * @param {Date} renewalWindow the renewal window.
@@ -209,7 +234,7 @@ var MasterToken$parse;
          * @param {Object} issuerData the issuer data. May be null.
          * @param {string} identity the singular identity this master token represents.
          * @param {CipherKey} encryptionKey the session encryption key.
-         * @param {CipherKey} hmacKey the session HMAC key.
+         * @param {CipherKey} signatureKey the session signature key.
          * @param {?CreationData} creationData optional creation data.
          * @param {{result: function(MasterToken), error: function(Error)}}
          *        callback the callback functions that will receive the master token
@@ -220,7 +245,7 @@ var MasterToken$parse;
          *         the token data.
          * @constructor
          */
-        init: function init(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey, creationData, callback) {
+        init: function init(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, signatureKey, creationData, callback) {
             var self = this;
             AsyncExecutor(callback, function() {
                 // The expiration must appear after the renewal window.
@@ -239,12 +264,25 @@ var MasterToken$parse;
                 // Construct the session data.
                 var sessiondata;
                 if (!creationData) {
+                    // Encode session keys and algorithm names.
+                    var encryptionKeyB64 = base64$encode(encryptionKey.toByteArray());
+                    var encryptionAlgo = MslConstants$EncryptionAlgo$fromString(encryptionKey.algorithm);
+                    var signatureKeyB64 = base64$encode(signatureKey.toByteArray());
+                    var signatureAlgo = MslConstants$SignatureAlgo$fromString(signatureKey.algorithm);
+                    if (!encryptionAlgo || !signatureAlgo) {
+                        throw new MslCryptoException(MslError.UNIDENTIFIED_ALGORITHM, "encryption algorithm: " + encryptionKey.algorithm + "; signature algorithm: " + signatureKey.algorithm);
+                    }
+
+                    // Create session data.
                     var sessionDataJO = {};
                     if (issuerData)
                         sessionDataJO[KEY_ISSUER_DATA] = issuerData;
                     sessionDataJO[KEY_IDENTITY] = identity;
-                    sessionDataJO[KEY_ENCRYPTION_KEY] = base64$encode(encryptionKey.toByteArray());
-                    sessionDataJO[KEY_HMAC_KEY] = base64$encode(hmacKey.toByteArray());
+                    sessionDataJO[KEY_ENCRYPTION_KEY] = encryptionKeyB64;
+                    sessionDataJO[KEY_ENCRYPTION_ALGORITHM] = encryptionAlgo;
+                    sessionDataJO[KEY_HMAC_KEY] = signatureKeyB64;
+                    sessionDataJO[KEY_SIGNATURE_KEY] = signatureKeyB64;
+                    sessionDataJO[KEY_SIGNATURE_ALGORITHM] = signatureAlgo;
                     sessiondata = textEncoding$getBytes(JSON.stringify(sessionDataJO), MslConstants$DEFAULT_CHARSET);
                 } else {
                     sessiondata = creationData.sessiondata;
@@ -282,7 +320,7 @@ var MasterToken$parse;
                                                 issuerData: { value: issuerData, writable: false, configurable: false },
                                                 identity: { value: identity, writable: false, configurable: false },
                                                 encryptionKey: { value: encryptionKey, writable: false, configurable: false },
-                                                hmacKey: { value: hmacKey, writable: false, configurable: false },
+                                                signatureKey: { value: signatureKey, writable: false, configurable: false },
                                                 sessiondata: { value: sessiondata, writable: false, enumerable: false, configurable: false },
                                                 verified: { value: verified, writable: false, enumerable: false, configurable: false },
                                                 tokendata: { value: tokendata, writable: false, enumerable: false, configurable: false },
@@ -313,7 +351,7 @@ var MasterToken$parse;
                         issuerData: { value: issuerData, writable: false, configurable: false },
                         identity: { value: identity, writable: false, configurable: false },
                         encryptionKey: { value: encryptionKey, writable: false, configurable: false },
-                        hmacKey: { value: hmacKey, writable: false, configurable: false },
+                        signatureKey: { value: signatureKey, writable: false, configurable: false },
                         sessiondata: { value: sessiondata, writable: false, enumerable: false, configurable: false },
                         verified: { value: verified, writable: false, enumerable: false, configurable: false },
                         tokendata: { value: tokendata, writable: false, enumerable: false, configurable: false },
@@ -468,7 +506,7 @@ var MasterToken$parse;
 
     /**
      * Create a new master token with the specified expiration, identity,
-     * serial number, and encryption and HMAC keys.
+     * serial number, and encryption and signature keys.
      *
      * @param {MslContext} ctx MSL context.
      * @param {Date} renewalWindow the renewal window.
@@ -478,7 +516,7 @@ var MasterToken$parse;
      * @param {Object} issuerData the issuer data. May be null.
      * @param {string} identity the singular identity this master token represents.
      * @param {CipherKey} encryptionKey the session encryption key.
-     * @param {CipherKey} hmacKey the session HMAC key.
+     * @param {CipherKey} signatureKey the session signature key.
      * @param {CreationData} creationData optional creation data.
      * @param {{result: function(MasterToken), error: function(Error)}}
      *        callback the callback functions that will receive the master token
@@ -488,8 +526,8 @@ var MasterToken$parse;
      * @throws MslCryptoException if there is an error encrypting or signing
      *         the token data.
      */
-    MasterToken$create = function MasterToken$create(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey, callback) {
-        new MasterToken(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey, null, callback);
+    MasterToken$create = function MasterToken$create(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, signatureKey, callback) {
+        new MasterToken(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, signatureKey, null, callback);
     };
 
     /**
@@ -585,14 +623,18 @@ var MasterToken$parse;
                             cryptoContext.decrypt(ciphertext, {
                                 result: function(sessiondata) {
                                     AsyncExecutor(callback, function() {
-                                        var issuerData, identity, encryptionKeyB64, hmacKeyB64;
+                                        var issuerData, identity, encryptionKeyB64, signatureKeyB64, encryptionAlgo, signatureAlgo;
                                         var sessionDataJson = textEncoding$getString(sessiondata, MslConstants$DEFAULT_CHARSET);
                                         try {
                                             var sessionDataJO = JSON.parse(sessionDataJson);
                                             issuerData = sessionDataJO[KEY_ISSUER_DATA];
                                             identity = sessionDataJO[KEY_IDENTITY];
                                             encryptionKeyB64 = sessionDataJO[KEY_ENCRYPTION_KEY];
-                                            hmacKeyB64 = sessionDataJO[KEY_HMAC_KEY];
+                                            encryptionAlgo = sessionDataJO[KEY_ENCRYPTION_ALGORITHM];
+                                            signatureKeyB64 = sessionDataJO[KEY_SIGNATURE_KEY];
+                                            if (typeof signatureKeyB64 !== 'string')
+                                                signatureKeyB64 = sessionDataJO[KEY_HMAC_KEY];
+                                            signatureAlgo = sessionDataJO[KEY_SIGNATURE_ALGORITHM];
                                         } catch (e) {
                                             if (e instanceof SyntaxError)
                                                 throw new MslEncodingException(MslError.MASTERTOKEN_SESSIONDATA_PARSE_ERROR, "sessiondata " + sessionDataJson, e);
@@ -603,20 +645,35 @@ var MasterToken$parse;
                                         if (issuerData && typeof issuerData !== 'object' ||
                                             !identity ||
                                             typeof encryptionKeyB64 !== 'string' ||
-                                            typeof hmacKeyB64 !== 'string')
+                                            encryptionAlgo && typeof encryptionAlgo !== 'string' ||
+                                            typeof signatureKeyB64 !== 'string' ||
+                                            signatureAlgo && typeof signatureAlgo !== 'string')
                                         {
                                             throw new MslEncodingException(MslError.MASTERTOKEN_SESSIONDATA_PARSE_ERROR, "sessiondata " + sessionDataJson);
                                         }
+                                        
+                                        // Apply default algorithms.
+                                        if (!encryptionAlgo)
+                                            encryptionAlgo = MslConstants$EncryptionAlgo.AES;
+                                        if (!signatureAlgo)
+                                            signatureAlgo = MslConstants$SignatureAlgo.HmacSHA256;
+                                        
+                                        // Decode algorithm names.
+                                        var wcEncryptionAlgo = MslConstants$EncryptionAlgo$toWebCryptoAlgorithm(encryptionAlgo);
+                                        var wcSignatureAlgo = MslConstants$SignatureAlgo$toWebCryptoAlgorithm(signatureAlgo);
+                                        if (!wcEncryptionAlgo || !wcSignatureAlgo) {
+                                            throw new MslCryptoException(MslError.UNIDENTIFIED_ALGORITHM, "encryption algorithm: " + encryptionAlgo + "; signature algorithm: " + signatureAlgo);
+                                        }
 
                                         // Reconstruct cipher keys.
-                                        CipherKey$import(encryptionKeyB64, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+                                        CipherKey$import(encryptionKeyB64, wcEncryptionAlgo, WebCryptoUsage.ENCRYPT_DECRYPT, {
                                             result: function(encryptionKey) {
-                                                CipherKey$import(hmacKeyB64, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
-                                                    result: function(hmacKey) {
+                                                CipherKey$import(signatureKeyB64, wcSignatureAlgo, WebCryptoUsage.SIGN_VERIFY, {
+                                                    result: function(signatureKey) {
                                                         AsyncExecutor(callback, function() {
                                                             // Return the new master token.
                                                             var creationData = new CreationData(sessiondata, tokendata, signature, verified);
-                                                            new MasterToken(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey, creationData, callback);
+                                                            new MasterToken(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, signatureKey, creationData, callback);
                                                         });
                                                     },
                                                     error: function(e) {
@@ -637,11 +694,11 @@ var MasterToken$parse;
                             var issuerData = null;
                             var identity = null;
                             var encryptionKey = null;
-                            var hmacKey = null;
+                            var signatureKey = null;
 
                             // Return the new master token.
                             var creationData = new CreationData(sessiondata, tokendata, signature, verified);
-                            new MasterToken(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey, creationData, callback);
+                            new MasterToken(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, signatureKey, creationData, callback);
                         }
                     });
                 },

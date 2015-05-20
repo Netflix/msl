@@ -147,7 +147,7 @@ public class AsymmetricWrappedExchangeSuite {
             ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
             MASTER_TOKEN = MslTestUtils.getMasterToken(ctx, 1, 1);
             ENCRYPTION_KEY = MASTER_TOKEN.getEncryptionKey().getEncoded();
-            HMAC_KEY = MASTER_TOKEN.getHmacKey().getEncoded();
+            HMAC_KEY = MASTER_TOKEN.getSignatureKey().getEncoded();
         }
     }
     
