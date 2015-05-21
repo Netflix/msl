@@ -30,6 +30,11 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 
+import org.bouncycastle.crypto.BlockCipher;
+import org.bouncycastle.crypto.CipherParameters;
+import org.bouncycastle.crypto.engines.AESEngine;
+import org.bouncycastle.crypto.macs.CMac;
+import org.bouncycastle.crypto.params.KeyParameter;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -43,7 +48,7 @@ import com.netflix.msl.util.MslUtils;
 
 /**
  * A symmetric crypto context performs AES-128 encryption/decryption, AES-128
- * key wrap/unwrap, and HMAC-SHA256 sign/verify.
+ * key wrap/unwrap, and HMAC-SHA256 or AES-CMAC sign/verify.
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
@@ -117,28 +122,32 @@ public class SymmetricCryptoContext implements ICryptoContext {
      * <p>If there is no encryption key, encryption and decryption is
      * unsupported.</p>
      * 
-     * <p>If there is no HMAC key, signing and verification is unsupported.</p>
+     * <p>If there is no signature key, signing and verification is
+     * unsupported.</p>
      * 
      * <p>If there is no wrapping key, wrap and unwrap is unsupported.</p>
      * 
      * @param ctx MSL context.
      * @param id the key set identity.
      * @param encryptionKey the key used for encryption/decryption.
-     * @param hmacKey the key used for HMAC compuation.
-     * @param wrappingKey the key used for wrap/unwrap.
-     */
-    public SymmetricCryptoContext(final MslContext ctx, final String id, final SecretKey encryptionKey, final SecretKey hmacKey, final SecretKey wrappingKey) {
+     * @param signatureKey the key used for HMAC or CMAC computation.
+     * @param wrappingKey the key used for wrap/unwrap.     */
+    public SymmetricCryptoContext(final MslContext ctx, final String id, final SecretKey encryptionKey, final SecretKey signatureKey, final SecretKey wrappingKey) {
         if (encryptionKey != null && !encryptionKey.getAlgorithm().equals(JcaAlgorithm.AES))
             throw new IllegalArgumentException("Encryption key must be an " + JcaAlgorithm.AES + " key.");
-        if (hmacKey != null && !hmacKey.getAlgorithm().equals(JcaAlgorithm.HMAC_SHA256))
-            throw new IllegalArgumentException("Encryption key must be an " + JcaAlgorithm.HMAC_SHA256 + " key.");
+        if (signatureKey != null &&
+            !signatureKey.getAlgorithm().equals(JcaAlgorithm.HMAC_SHA256) &&
+            !signatureKey.getAlgorithm().equals(JcaAlgorithm.AES_CMAC))
+        {
+            throw new IllegalArgumentException("Encryption key must be an " + JcaAlgorithm.HMAC_SHA256 + " or " + JcaAlgorithm.AES_CMAC + " key.");
+        }
         if (wrappingKey != null && !wrappingKey.getAlgorithm().equals(JcaAlgorithm.AESKW))
             throw new IllegalArgumentException("Encryption key must be an " + JcaAlgorithm.AESKW + " key.");
         
         this.ctx = ctx;
         this.id = id;
         this.encryptionKey = encryptionKey;
-        this.hmacKey = hmacKey;
+        this.signatureKey = signatureKey;
         this.wrappingKey = wrappingKey;
     }
     
@@ -337,16 +346,29 @@ public class SymmetricCryptoContext implements ICryptoContext {
      */
     @Override
     public byte[] sign(final byte[] data) throws MslCryptoException {
-        if (hmacKey == null)
-            throw new MslCryptoException(MslError.SIGN_NOT_SUPPORTED, "no HMAC key.");
+        if (signatureKey == null)
+            throw new MslCryptoException(MslError.SIGN_NOT_SUPPORTED, "No signature key.");
         try {
-            // Compute the hash.
-            final Mac mac = CryptoCache.getMac(HMAC_SHA256_ALGO);
-            mac.init(hmacKey);
-            final byte[] hash = mac.doFinal(data);
+            // Compute the xMac.
+            final byte[] xmac;
+            if (signatureKey.getAlgorithm().equals(JcaAlgorithm.HMAC_SHA256)) {
+                final Mac mac = CryptoCache.getMac(HMAC_SHA256_ALGO);
+                mac.init(signatureKey);
+                xmac = mac.doFinal(data);
+            } else if (signatureKey.getAlgorithm().equals(JcaAlgorithm.AES_CMAC)) {
+                final CipherParameters params = new KeyParameter(signatureKey.getEncoded());
+                final BlockCipher aes = new AESEngine();
+                final CMac mac = new CMac(aes);
+                mac.init(params);
+                mac.update(data, 0, data.length);
+                xmac = new byte[mac.getMacSize()];
+                mac.doFinal(xmac, 0);
+            } else {
+                throw new MslCryptoException(MslError.SIGN_NOT_SUPPORTED, "Unsupported algorithm.");
+            }
             
             // Return the signature envelope byte representation.
-            return new MslSignatureEnvelope(hash).getBytes();
+            return new MslSignatureEnvelope(xmac).getBytes();
         } catch (final NoSuchAlgorithmException e) {
             throw new MslInternalException("Invalid MAC algorithm specified.", e);
         } catch (final InvalidKeyException e) {
@@ -359,17 +381,32 @@ public class SymmetricCryptoContext implements ICryptoContext {
      */
     @Override
     public boolean verify(final byte[] data, final byte[] signature) throws MslCryptoException {
-        if (hmacKey == null)
-            throw new MslCryptoException(MslError.VERIFY_NOT_SUPPORTED, "no HMAC key.");
+        if (signatureKey == null)
+            throw new MslCryptoException(MslError.VERIFY_NOT_SUPPORTED, "No signature key.");
         try {
             // Reconstitute the signature envelope.
             final MslSignatureEnvelope envelope = MslSignatureEnvelope.parse(signature);
             
-            // Verify the hash.
-            final Mac mac = CryptoCache.getMac(HMAC_SHA256_ALGO);
-            mac.init(hmacKey);
-            final byte[] hmac = mac.doFinal(data);
-            return MslUtils.safeEquals(hmac, envelope.getSignature());
+            // Compute the xMac.
+            final byte[] xmac;
+            if (signatureKey.getAlgorithm().equals(JcaAlgorithm.HMAC_SHA256)) {
+                final Mac mac = CryptoCache.getMac(HMAC_SHA256_ALGO);
+                mac.init(signatureKey);
+                xmac = mac.doFinal(data);
+            } else if (signatureKey.getAlgorithm().equals(JcaAlgorithm.AES_CMAC)) {
+                final CipherParameters params = new KeyParameter(signatureKey.getEncoded());
+                final BlockCipher aes = new AESEngine();
+                final CMac mac = new CMac(aes);
+                mac.init(params);
+                mac.update(data, 0, data.length);
+                xmac = new byte[mac.getMacSize()];
+                mac.doFinal(xmac, 0);
+            } else {
+                throw new MslCryptoException(MslError.VERIFY_NOT_SUPPORTED, "Unsupported algorithm.");
+            }
+
+            // Compare the computed hash to the provided signature.
+            return MslUtils.safeEquals(xmac, envelope.getSignature());
         } catch (final MslEncodingException e) {
             throw new MslCryptoException(MslError.SIGNATURE_ENVELOPE_PARSE_ERROR, e);
         } catch (final NoSuchAlgorithmException e) {
@@ -385,8 +422,8 @@ public class SymmetricCryptoContext implements ICryptoContext {
     private final String id;
     /** Encryption/decryption key. */
     private final SecretKey encryptionKey;
-    /** HMAC key. */
-    private final SecretKey hmacKey;
+    /** Signature key. */
+    private final SecretKey signatureKey;
     /** Wrapping key. */
     private final SecretKey wrappingKey;
 }

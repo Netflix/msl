@@ -150,7 +150,7 @@ public class JsonWebEncryptionLadderExchangeSuite {
             final SecretKey pskEncryptionKey = PSK_MASTER_TOKEN.getEncryptionKey();
             final JsonWebKey pskEncryptionJwk = new JsonWebKey(Usage.enc, Algorithm.A128CBC, false, null, pskEncryptionKey);
             PSK_ENCRYPTION_JWK = WRAP_CRYPTO_CONTEXT.wrap(pskEncryptionJwk.toJSONString().getBytes(UTF_8));
-            final SecretKey pskHmacKey = PSK_MASTER_TOKEN.getHmacKey();
+            final SecretKey pskHmacKey = PSK_MASTER_TOKEN.getSignatureKey();
             final JsonWebKey pskHmacJwk = new JsonWebKey(Usage.sig, Algorithm.HS256, false, null, pskHmacKey);
             PSK_HMAC_JWK = WRAP_CRYPTO_CONTEXT.wrap(pskHmacJwk.toJSONString().getBytes(UTF_8));
         }
@@ -699,7 +699,7 @@ public class JsonWebEncryptionLadderExchangeSuite {
             final SecretKey encryptionKey = extractJwkSecretKey(wrapCryptoContext, respdata.getEncryptionKey());
             assertArrayEquals(masterToken.getEncryptionKey().getEncoded(), encryptionKey.getEncoded());
             final SecretKey hmacKey = extractJwkSecretKey(wrapCryptoContext, respdata.getHmacKey());
-            assertArrayEquals(masterToken.getHmacKey().getEncoded(), hmacKey.getEncoded());
+            assertArrayEquals(masterToken.getSignatureKey().getEncoded(), hmacKey.getEncoded());
         }
         
         @Test
@@ -727,7 +727,7 @@ public class JsonWebEncryptionLadderExchangeSuite {
             final SecretKey encryptionKey = extractJwkSecretKey(wrapCryptoContext, respdata.getEncryptionKey());
             assertArrayEquals(masterToken.getEncryptionKey().getEncoded(), encryptionKey.getEncoded());
             final SecretKey hmacKey = extractJwkSecretKey(wrapCryptoContext, respdata.getHmacKey());
-            assertArrayEquals(masterToken.getHmacKey().getEncoded(), hmacKey.getEncoded());
+            assertArrayEquals(masterToken.getSignatureKey().getEncoded(), hmacKey.getEncoded());
         }
         
         @Test(expected = MslInternalException.class)
@@ -763,7 +763,7 @@ public class JsonWebEncryptionLadderExchangeSuite {
             final SecretKey encryptionKey = extractJwkSecretKey(wrapCryptoContext, respdata.getEncryptionKey());
             assertArrayEquals(masterToken.getEncryptionKey().getEncoded(), encryptionKey.getEncoded());
             final SecretKey hmacKey = extractJwkSecretKey(wrapCryptoContext, respdata.getHmacKey());
-            assertArrayEquals(masterToken.getHmacKey().getEncoded(), hmacKey.getEncoded());
+            assertArrayEquals(masterToken.getSignatureKey().getEncoded(), hmacKey.getEncoded());
         }
         
         @Test
@@ -793,7 +793,7 @@ public class JsonWebEncryptionLadderExchangeSuite {
             final SecretKey encryptionKey = extractJwkSecretKey(wrapCryptoContext, respdata.getEncryptionKey());
             assertArrayEquals(masterToken.getEncryptionKey().getEncoded(), encryptionKey.getEncoded());
             final SecretKey hmacKey = extractJwkSecretKey(wrapCryptoContext, respdata.getHmacKey());
-            assertArrayEquals(masterToken.getHmacKey().getEncoded(), hmacKey.getEncoded());
+            assertArrayEquals(masterToken.getSignatureKey().getEncoded(), hmacKey.getEncoded());
         }
         
         @Test(expected = MslInternalException.class)

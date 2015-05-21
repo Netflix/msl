@@ -22,7 +22,6 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -110,7 +109,7 @@ public class SimpleMslStoreTest {
         final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, 1, 1);
         assertNull(store.getCryptoContext(masterToken));
         
-        final ICryptoContext cc1 = new SymmetricCryptoContext(ctx, KEYSET_ID, masterToken.getEncryptionKey(), masterToken.getHmacKey(), null);
+        final ICryptoContext cc1 = new SymmetricCryptoContext(ctx, KEYSET_ID, masterToken.getEncryptionKey(), masterToken.getSignatureKey(), null);
         store.setCryptoContext(masterToken, cc1);
         final ICryptoContext cc2 = store.getCryptoContext(masterToken);
         assertNotNull(cc2);
@@ -121,7 +120,7 @@ public class SimpleMslStoreTest {
     @Test
     public void replaceCryptoContext() throws MslEncodingException, MslCryptoException {
         final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, 1, 1);
-        final ICryptoContext cc1 = new SymmetricCryptoContext(ctx, KEYSET_ID, masterToken.getEncryptionKey(), masterToken.getHmacKey(), null);
+        final ICryptoContext cc1 = new SymmetricCryptoContext(ctx, KEYSET_ID, masterToken.getEncryptionKey(), masterToken.getSignatureKey(), null);
         final ICryptoContext cc2 = new NullCryptoContext();
         
         store.setCryptoContext(masterToken, cc1);
@@ -150,7 +149,7 @@ public class SimpleMslStoreTest {
     @Test
     public void clearCryptoContext() throws MslEncodingException, MslCryptoException {
         final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, 1, 1);
-        final ICryptoContext cc1 = new SymmetricCryptoContext(ctx, KEYSET_ID, masterToken.getEncryptionKey(), masterToken.getHmacKey(), null);
+        final ICryptoContext cc1 = new SymmetricCryptoContext(ctx, KEYSET_ID, masterToken.getEncryptionKey(), masterToken.getSignatureKey(), null);
         store.setCryptoContext(masterToken, cc1);
         store.clearCryptoContexts();
         assertNull(store.getCryptoContext(masterToken));

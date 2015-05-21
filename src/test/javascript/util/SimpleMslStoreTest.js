@@ -117,7 +117,7 @@ describe("SimpleMslStore", function() {
         runs(function() {
             expect(store.getCryptoContext(masterToken)).toBeUndefined();
 
-	        var cc1 = new SymmetricCryptoContext(ctx, KEYSET_ID, masterToken.encryptionKey, masterToken.hmacKey, null);
+	        var cc1 = new SymmetricCryptoContext(ctx, KEYSET_ID, masterToken.encryptionKey, masterToken.signatureKey, null);
 	        store.setCryptoContext(masterToken, cc1);
 	        var cc2 = store.getCryptoContext(masterToken);
 	        expect(cc2).not.toBeNull();
@@ -137,7 +137,7 @@ describe("SimpleMslStore", function() {
         waitsFor(function() { return masterToken; }, "master token not received", 100);
         
         runs(function() {
-	        var cc1 = new SymmetricCryptoContext(ctx, KEYSET_ID, masterToken.encryptionKey, masterToken.hmacKey, null);
+	        var cc1 = new SymmetricCryptoContext(ctx, KEYSET_ID, masterToken.encryptionKey, masterToken.signatureKey, null);
 	        var cc2 = new NullCryptoContext();
 	        
 	        store.setCryptoContext(masterToken, cc1);
@@ -184,7 +184,7 @@ describe("SimpleMslStore", function() {
         waitsFor(function() { return masterToken; }, "master token not received", 100);
         
         runs(function() {
-	        var cc1 = new SymmetricCryptoContext(ctx, KEYSET_ID, masterToken.encryptionKey, masterToken.hmacKey, null);
+	        var cc1 = new SymmetricCryptoContext(ctx, KEYSET_ID, masterToken.encryptionKey, masterToken.signatureKey, null);
 	        store.setCryptoContext(masterToken, cc1);
 	        store.clearCryptoContexts();
 	        expect(store.getCryptoContext(masterToken)).toBeUndefined();

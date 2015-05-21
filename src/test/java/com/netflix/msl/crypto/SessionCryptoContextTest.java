@@ -73,15 +73,15 @@ public class SessionCryptoContextTest {
         final Date expiration = new Date(System.currentTimeMillis() + 2000);
         final String identity = MockPresharedAuthenticationFactory.PSK_ESN;
         final SecretKey encryptionKey = MockPresharedAuthenticationFactory.KPE;
-        final SecretKey hmacKey = MockPresharedAuthenticationFactory.KPH;
-        final MasterToken masterToken = new MasterToken(ctx, renewalWindow, expiration, 1L, 1L, null, identity, encryptionKey, hmacKey);
+        final SecretKey signatureKey = MockPresharedAuthenticationFactory.KPH;
+        final MasterToken masterToken = new MasterToken(ctx, renewalWindow, expiration, 1L, 1L, null, identity, encryptionKey, signatureKey);
         return masterToken;
     }
     
     /**
      * @param ctx MSL context.
      * @param encryptionKey master token encryption key.
-     * @param hmacKey master token HMAC key.
+     * @param signatureKey master token signature key.
      * @return a new master token.
      * @throws MslEncodingException if there is an error encoding the JSON
      *         data.
@@ -90,11 +90,11 @@ public class SessionCryptoContextTest {
      * @throws MslException if the master token is constructed incorrectly.
      * @throws JSONException if there is an error editing the JSON data.
      */
-    private static MasterToken getUntrustedMasterToken(final MslContext ctx, final SecretKey encryptionKey, final SecretKey hmacKey) throws MslEncodingException, MslCryptoException, JSONException, MslException {
+    private static MasterToken getUntrustedMasterToken(final MslContext ctx, final SecretKey encryptionKey, final SecretKey signatureKey) throws MslEncodingException, MslCryptoException, JSONException, MslException {
         final Date renewalWindow = new Date(System.currentTimeMillis() + 1000);
         final Date expiration = new Date(System.currentTimeMillis() + 2000);
         final String identity = MockPresharedAuthenticationFactory.PSK_ESN;
-        final MasterToken masterToken = new MasterToken(ctx, renewalWindow, expiration, 1L, 1L, null, identity, encryptionKey, hmacKey);
+        final MasterToken masterToken = new MasterToken(ctx, renewalWindow, expiration, 1L, 1L, null, identity, encryptionKey, signatureKey);
         final String json = masterToken.toJSONString();
         final JSONObject jo = new JSONObject(json);
         final byte[] signature = DatatypeConverter.parseBase64Binary(jo.getString("signature"));
@@ -124,8 +124,8 @@ public class SessionCryptoContextTest {
         thrown.expectMslError(MslError.MASTERTOKEN_UNTRUSTED);
 
         final SecretKey encryptionKey = MockPresharedAuthenticationFactory.KPE;
-        final SecretKey hmacKey = MockPresharedAuthenticationFactory.KPH;
-        final MasterToken masterToken = getUntrustedMasterToken(ctx, encryptionKey, hmacKey);
+        final SecretKey signatureKey = MockPresharedAuthenticationFactory.KPH;
+        final MasterToken masterToken = getUntrustedMasterToken(ctx, encryptionKey, signatureKey);
         new SessionCryptoContext(ctx, masterToken);
     }
 
@@ -162,9 +162,9 @@ public class SessionCryptoContextTest {
     public void encryptDecryptKeys() throws JSONException, MslException {
         final String identity = MockPresharedAuthenticationFactory.PSK_ESN;
         final SecretKey encryptionKey = MockPresharedAuthenticationFactory.KPE;
-        final SecretKey hmacKey = MockPresharedAuthenticationFactory.KPH;
-        final MasterToken masterToken = getUntrustedMasterToken(ctx, encryptionKey, hmacKey);
-        final SessionCryptoContext cryptoContext = new SessionCryptoContext(ctx, masterToken, identity, encryptionKey, hmacKey);
+        final SecretKey signatureKey = MockPresharedAuthenticationFactory.KPH;
+        final MasterToken masterToken = getUntrustedMasterToken(ctx, encryptionKey, signatureKey);
+        final SessionCryptoContext cryptoContext = new SessionCryptoContext(ctx, masterToken, identity, encryptionKey, signatureKey);
         
         final byte[] messageA = new byte[32];
         random.nextBytes(messageA);
@@ -274,15 +274,15 @@ public class SessionCryptoContextTest {
 
         final String identity = MockPresharedAuthenticationFactory.PSK_ESN;
         final SecretKey encryptionKey = MockPresharedAuthenticationFactory.KPE;
-        final SecretKey hmacKey = MockPresharedAuthenticationFactory.KPH;
+        final SecretKey signatureKey = MockPresharedAuthenticationFactory.KPH;
         final MasterToken masterToken;
         try {
-            masterToken = getUntrustedMasterToken(ctx, encryptionKey, hmacKey);
+            masterToken = getUntrustedMasterToken(ctx, encryptionKey, signatureKey);
         } catch (final MslCryptoException e) {
             fail(e.getMessage());
             return;
         }
-        final SessionCryptoContext cryptoContext = new SessionCryptoContext(ctx, masterToken, identity, null, hmacKey);
+        final SessionCryptoContext cryptoContext = new SessionCryptoContext(ctx, masterToken, identity, null, signatureKey);
         
         final byte[] messageA = new byte[32];
         random.nextBytes(messageA);
@@ -291,11 +291,11 @@ public class SessionCryptoContextTest {
     }
     
     @Test
-    public void encryptDecryptNullHmac() throws JSONException, MslException {
+    public void encryptDecryptNullSignature() throws JSONException, MslException {
         final String identity = MockPresharedAuthenticationFactory.PSK_ESN;
         final SecretKey encryptionKey = MockPresharedAuthenticationFactory.KPE;
-        final SecretKey hmacKey = MockPresharedAuthenticationFactory.KPH;
-        final MasterToken masterToken = getUntrustedMasterToken(ctx, encryptionKey, hmacKey);
+        final SecretKey signatureKey = MockPresharedAuthenticationFactory.KPH;
+        final MasterToken masterToken = getUntrustedMasterToken(ctx, encryptionKey, signatureKey);
         final SessionCryptoContext cryptoContext = new SessionCryptoContext(ctx, masterToken, identity, encryptionKey, null);
         
         final byte[] messageA = new byte[32];
@@ -329,10 +329,10 @@ public class SessionCryptoContextTest {
 
         final String identity = MockPresharedAuthenticationFactory.PSK_ESN;
         final SecretKey encryptionKey = MockPresharedAuthenticationFactory.KPE;
-        final SecretKey hmacKey = MockPresharedAuthenticationFactory.KPH;
+        final SecretKey signatureKey = MockPresharedAuthenticationFactory.KPH;
         final MasterToken masterToken;
         try {
-            masterToken = getUntrustedMasterToken(ctx, encryptionKey, hmacKey);
+            masterToken = getUntrustedMasterToken(ctx, encryptionKey, signatureKey);
         } catch (final MslCryptoException e) {
             fail(e.getMessage());
             return;
@@ -342,8 +342,8 @@ public class SessionCryptoContextTest {
         // identity provided against the internals of the master token. So this
         // test makes use of two session crypto contexts with different
         // identities.
-        final SessionCryptoContext cryptoContextA = new SessionCryptoContext(ctx, masterToken, identity + "A", encryptionKey, hmacKey);
-        final SessionCryptoContext cryptoContextB = new SessionCryptoContext(ctx, masterToken, identity + "B", encryptionKey, hmacKey);
+        final SessionCryptoContext cryptoContextA = new SessionCryptoContext(ctx, masterToken, identity + "A", encryptionKey, signatureKey);
+        final SessionCryptoContext cryptoContextB = new SessionCryptoContext(ctx, masterToken, identity + "B", encryptionKey, signatureKey);
         
         final byte[] message = new byte[32];
         random.nextBytes(message);
@@ -366,20 +366,20 @@ public class SessionCryptoContextTest {
 
         final String identity = MockPresharedAuthenticationFactory.PSK_ESN;
         final SecretKey encryptionKeyA = MockPresharedAuthenticationFactory.KPE;
-        final SecretKey hmacKeyA = MockPresharedAuthenticationFactory.KPH;
+        final SecretKey signatureKeyA = MockPresharedAuthenticationFactory.KPH;
         final SecretKey encryptionKeyB = MockPresharedAuthenticationFactory.KPE2;
-        final SecretKey hmacKeyB = MockPresharedAuthenticationFactory.KPH2;
+        final SecretKey signatureKeyB = MockPresharedAuthenticationFactory.KPH2;
         final MasterToken masterTokenA, masterTokenB;
         try {
-            masterTokenA = getUntrustedMasterToken(ctx, encryptionKeyA, hmacKeyA);
-            masterTokenB = getUntrustedMasterToken(ctx, encryptionKeyB, hmacKeyB);
+            masterTokenA = getUntrustedMasterToken(ctx, encryptionKeyA, signatureKeyA);
+            masterTokenB = getUntrustedMasterToken(ctx, encryptionKeyB, signatureKeyB);
         } catch (final MslCryptoException e) {
             fail(e.getMessage());
             return;
         }
         
-        final SessionCryptoContext cryptoContextA = new SessionCryptoContext(ctx, masterTokenA, identity, encryptionKeyA, hmacKeyA);
-        final SessionCryptoContext cryptoContextB = new SessionCryptoContext(ctx, masterTokenB, identity, encryptionKeyB, hmacKeyB);
+        final SessionCryptoContext cryptoContextA = new SessionCryptoContext(ctx, masterTokenA, identity, encryptionKeyA, signatureKeyA);
+        final SessionCryptoContext cryptoContextB = new SessionCryptoContext(ctx, masterTokenB, identity, encryptionKeyB, signatureKeyB);
 
         final byte[] message = new byte[32];
         random.nextBytes(message);
@@ -425,20 +425,20 @@ public class SessionCryptoContextTest {
     public void signVerifyContextMismatch() throws JSONException, MslException {
         final String identity = MockPresharedAuthenticationFactory.PSK_ESN;
         final SecretKey encryptionKeyA = MockPresharedAuthenticationFactory.KPE;
-        final SecretKey hmacKeyA = MockPresharedAuthenticationFactory.KPH;
+        final SecretKey signatureKeyA = MockPresharedAuthenticationFactory.KPH;
         final SecretKey encryptionKeyB = MockPresharedAuthenticationFactory.KPE2;
-        final SecretKey hmacKeyB = MockPresharedAuthenticationFactory.KPH2;
+        final SecretKey signatureKeyB = MockPresharedAuthenticationFactory.KPH2;
         final MasterToken masterTokenA, masterTokenB;
         try {
-            masterTokenA = getUntrustedMasterToken(ctx, encryptionKeyA, hmacKeyA);
-            masterTokenB = getUntrustedMasterToken(ctx, encryptionKeyB, hmacKeyB);
+            masterTokenA = getUntrustedMasterToken(ctx, encryptionKeyA, signatureKeyA);
+            masterTokenB = getUntrustedMasterToken(ctx, encryptionKeyB, signatureKeyB);
         } catch (final MslCryptoException e) {
             fail(e.getMessage());
             return;
         }
         
-        final SessionCryptoContext cryptoContextA = new SessionCryptoContext(ctx, masterTokenA, identity, encryptionKeyA, hmacKeyA);
-        final SessionCryptoContext cryptoContextB = new SessionCryptoContext(ctx, masterTokenB, identity, encryptionKeyB, hmacKeyB);
+        final SessionCryptoContext cryptoContextA = new SessionCryptoContext(ctx, masterTokenA, identity, encryptionKeyA, signatureKeyA);
+        final SessionCryptoContext cryptoContextB = new SessionCryptoContext(ctx, masterTokenB, identity, encryptionKeyB, signatureKeyB);
 
         final byte[] message = new byte[32];
         random.nextBytes(message);
@@ -450,9 +450,9 @@ public class SessionCryptoContextTest {
     public void signVerifyKeys() throws JSONException, MslException {
         final String identity = MockPresharedAuthenticationFactory.PSK_ESN;
         final SecretKey encryptionKey = MockPresharedAuthenticationFactory.KPE;
-        final SecretKey hmacKey = MockPresharedAuthenticationFactory.KPH;
-        final MasterToken masterToken = getUntrustedMasterToken(ctx, encryptionKey, hmacKey);
-        final SessionCryptoContext cryptoContext = new SessionCryptoContext(ctx, masterToken, identity, encryptionKey, hmacKey);
+        final SecretKey signatureKey = MockPresharedAuthenticationFactory.KPH;
+        final MasterToken masterToken = getUntrustedMasterToken(ctx, encryptionKey, signatureKey);
+        final SessionCryptoContext cryptoContext = new SessionCryptoContext(ctx, masterToken, identity, encryptionKey, signatureKey);
         
         final byte[] messageA = new byte[32];
         random.nextBytes(messageA);
@@ -479,9 +479,9 @@ public class SessionCryptoContextTest {
     public void signVerifyNullEncryption() throws JSONException, MslException {
         final String identity = MockPresharedAuthenticationFactory.PSK_ESN;
         final SecretKey encryptionKey = MockPresharedAuthenticationFactory.KPE;
-        final SecretKey hmacKey = MockPresharedAuthenticationFactory.KPH;
-        final MasterToken masterToken = getUntrustedMasterToken(ctx, encryptionKey, hmacKey);
-        final SessionCryptoContext cryptoContext = new SessionCryptoContext(ctx, masterToken, identity, null, hmacKey);
+        final SecretKey signatureKey = MockPresharedAuthenticationFactory.KPH;
+        final MasterToken masterToken = getUntrustedMasterToken(ctx, encryptionKey, signatureKey);
+        final SessionCryptoContext cryptoContext = new SessionCryptoContext(ctx, masterToken, identity, null, signatureKey);
         
         final byte[] messageA = new byte[32];
         random.nextBytes(messageA);
@@ -505,16 +505,16 @@ public class SessionCryptoContextTest {
     }
     
     @Test
-    public void verifyNullHmac() throws JSONException, MslException {
+    public void verifyNullSignature() throws JSONException, MslException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.SIGN_NOT_SUPPORTED);
 
         final String identity = MockPresharedAuthenticationFactory.PSK_ESN;
         final SecretKey encryptionKey = MockPresharedAuthenticationFactory.KPE;
-        final SecretKey hmacKey = MockPresharedAuthenticationFactory.KPH;
+        final SecretKey signatureKey = MockPresharedAuthenticationFactory.KPH;
         final MasterToken masterToken;
         try {
-            masterToken = getUntrustedMasterToken(ctx, encryptionKey, hmacKey);
+            masterToken = getUntrustedMasterToken(ctx, encryptionKey, signatureKey);
         } catch (final MslCryptoException e) {
             fail(e.getMessage());
             return;

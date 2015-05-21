@@ -131,7 +131,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
     				result: function(masterToken) {
     					MASTER_TOKEN = masterToken;
     					ENCRYPTION_KEY = MASTER_TOKEN.encryptionKey.toByteArray();
-    					HMAC_KEY = MASTER_TOKEN.hmacKey.toByteArray();
+    					HMAC_KEY = MASTER_TOKEN.signatureKey.toByteArray();
     				},
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});

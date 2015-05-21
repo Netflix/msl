@@ -26,6 +26,7 @@ import static org.junit.Assert.fail;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 import javax.crypto.SecretKey;
@@ -37,6 +38,9 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
@@ -55,11 +59,15 @@ import com.netflix.msl.util.MslContext;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+@RunWith(Parameterized.class)
 public class SymmetricCryptoContextTest {
     /** Key set ID. */
     private static final String KEYSET_ID = "keysetid";
     /** JSON key ciphertext. */
-    private final static String KEY_CIPHERTEXT = "ciphertext";
+    private static final String KEY_CIPHERTEXT = "ciphertext";
+    
+    /** AES-128 CMAC key length in bytes. */
+    private static final int AES_CMAC_KEY_LENGTH = 16;
     
     /** RFC 3394 encryption key. */
     private final byte[] RFC_KEY = {
@@ -78,20 +86,41 @@ public class SymmetricCryptoContextTest {
     @Rule
     public ExpectedMslException thrown = ExpectedMslException.none();
     
-    /** Crypto context. */
-    private static ICryptoContext cryptoContext;
-    
     @BeforeClass
     public static void setup() throws MslEncodingException, MslCryptoException {
         random = new Random();
         ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
-        cryptoContext = new SymmetricCryptoContext(ctx, KEYSET_ID, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH, MockPresharedAuthenticationFactory.KPW);
     }
     
     @AfterClass
     public static void teardown() {
         ctx = null;
         random = null;
+    }
+    
+    @Parameters
+    public static List<Object[]> data() {
+        final byte[] aesKey = new byte[AES_CMAC_KEY_LENGTH];
+        new Random().nextBytes(aesKey);
+        final SecretKey aesCmacKey = new SecretKeySpec(aesKey, JcaAlgorithm.AES_CMAC);
+        return Arrays.asList(new Object[][] {
+            { MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH, MockPresharedAuthenticationFactory.KPW },
+            { MockPresharedAuthenticationFactory.KPE, aesCmacKey, MockPresharedAuthenticationFactory.KPW },
+        });
+    }
+    
+    /** Crypto context. */
+    private ICryptoContext cryptoContext;
+    
+    /**
+     * Create a new symmetric crypto context test instance.
+     * 
+     * @param encryptionKey encryption key.
+     * @param signatureKey signature key.
+     * @param wrappingKey wrpaping key.
+     */
+    public SymmetricCryptoContextTest(final SecretKey encryptionKey, final SecretKey signatureKey, final SecretKey wrappingKey) {
+        this.cryptoContext = new SymmetricCryptoContext(ctx, KEYSET_ID, encryptionKey, signatureKey, wrappingKey);
     }
     
     @Test

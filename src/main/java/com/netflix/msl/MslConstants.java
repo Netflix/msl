@@ -67,6 +67,35 @@ public abstract class MslConstants {
         }
     }
     
+    /** Encryption algorithms. */
+    public static enum EncryptionAlgo {
+        /** AES */
+        AES,
+        ;
+        
+        /**
+         * @param value the string value of the encryption algorithm.
+         * @return the encryption algorithm associated with the string value.
+         * @throws IllegalArgumentException if the value is unknown.
+         */
+        public static EncryptionAlgo fromString(final String value) {
+            return EncryptionAlgo.valueOf(EncryptionAlgo.class, value);
+        }
+        
+        /**
+         * Returns the string value of this encryption algorithm. This will be
+         * equal to the Java standard algorithm name and is suitable for use
+         * with the JCE interfaces.
+         * 
+         * @return the Java standard algorithm name for this encryption
+         *         algorithm.
+         */
+        @Override
+        public String toString() {
+            return name();
+        }
+    }
+    
     /** Cipher specifications. */
     public static enum CipherSpec {
         /** AES/CBC/PKCS5Padding */
@@ -122,6 +151,8 @@ public abstract class MslConstants {
         HmacSHA256,
         /** SHA256withRSA */
         SHA256withRSA,
+        /** AESCmac. */
+        AESCmac,
         ;
         
         /**

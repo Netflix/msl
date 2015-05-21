@@ -33,17 +33,17 @@ var SessionCryptoContext = SymmetricCryptoContext.extend({
      *        the identity, encryption key, and HMAC key are provided.
      * @param {string=} identity entity identity.
      * @param {CipherKey=} encryptionKey encryption key.
-     * @param {CipherKey=} hmacKey HMAC key.
+     * @param {CipherKey=} signatureKey signature key.
      * @throws MslMasterTokenException if the master token is not trusted.
      * @throws MslCryptoException if the encryption key length is unsupported.
      */
-    init: function init(ctx, masterToken, identity, encryptionKey, hmacKey) {
-        if (identity || encryptionKey || hmacKey) {
-            init.base.call(this, ctx, identity + '_' + masterToken.sequenceNumber, encryptionKey, hmacKey, null);
+    init: function init(ctx, masterToken, identity, encryptionKey, signatureKey) {
+        if (identity || encryptionKey || signatureKey) {
+            init.base.call(this, ctx, identity + '_' + masterToken.sequenceNumber, encryptionKey, signatureKey, null);
         } else {
             if (!masterToken.isDecrypted())
                 throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, masterToken);
-            init.base.call(this, ctx, masterToken.identity + '_' + masterToken.sequenceNumber, masterToken.encryptionKey, masterToken.hmacKey, null);
+            init.base.call(this, ctx, masterToken.identity + '_' + masterToken.sequenceNumber, masterToken.encryptionKey, masterToken.signatureKey, null);
         }
     },
 });

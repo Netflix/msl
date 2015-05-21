@@ -38,14 +38,14 @@ describe("SessionCryptoContext", function() {
 		var expiration = new Date(Date.now() + 2000);
         var identity = MockPresharedAuthenticationFactory.PSK_ESN;
         var encryptionKey = MockPresharedAuthenticationFactory.KPE;
-        var hmacKey = MockPresharedAuthenticationFactory.KPH;
-        MasterToken$create(ctx, renewalWindow, expiration, 1, 1, null, identity, encryptionKey, hmacKey, callback);
+        var signatureKey = MockPresharedAuthenticationFactory.KPH;
+        MasterToken$create(ctx, renewalWindow, expiration, 1, 1, null, identity, encryptionKey, signatureKey, callback);
     }
     
     /**
      * @param {MslContext} ctx MSL context.
      * @param {CipherKey} encryptionKey master token encryption key.
-     * @param {CipherKey} hmacKey master token HMAC key.
+     * @param {CipherKey} signatureKey master token signature key.
 	 * @param {result: function(MasterToken), error: function(Error)}
 	 *        callback the callback functions that will receive the envelope
 	 *        or any thrown exceptions.
@@ -56,12 +56,12 @@ describe("SessionCryptoContext", function() {
      * @throws MslException if the master token is constructed incorrectly.
      * @throws JSONException if there is an error editing the JSON data.
      */
-    function getUntrustedMasterToken(ctx, encryptionKey, hmacKey, callback) {
+    function getUntrustedMasterToken(ctx, encryptionKey, signatureKey, callback) {
 		var renewalWindow = new Date(Date.now() + 1000);
 		var expiration = new Date(Date.now() + 2000);
         var identity = MockPresharedAuthenticationFactory.PSK_ESN;
         
-        MasterToken$create(ctx, renewalWindow, expiration, 1, 1, null, identity, encryptionKey, hmacKey, {
+        MasterToken$create(ctx, renewalWindow, expiration, 1, 1, null, identity, encryptionKey, signatureKey, {
         	result: function(masterToken) {
         		var json = JSON.stringify(masterToken);
                 var jo = JSON.parse(json);
@@ -92,11 +92,11 @@ describe("SessionCryptoContext", function() {
 
     it("untrusted", function() {
     	var encryptionKey = MockPresharedAuthenticationFactory.KPE;
-    	var hmacKey = MockPresharedAuthenticationFactory.KPH;
+    	var signatureKey = MockPresharedAuthenticationFactory.KPH;
     	
     	var masterToken;
     	runs(function() {
-    		getUntrustedMasterToken(ctx, encryptionKey, hmacKey, {
+    		getUntrustedMasterToken(ctx, encryptionKey, signatureKey, {
     			result: function(mt) { masterToken = mt; },
     			error: function(err) { console.log(err); throw err; }
     		});
@@ -170,12 +170,12 @@ describe("SessionCryptoContext", function() {
     it("encrypt/decrypt w/keys", function() {
         var identity = MockPresharedAuthenticationFactory.PSK_ESN;
         var encryptionKey = MockPresharedAuthenticationFactory.KPE;
-        var hmacKey = MockPresharedAuthenticationFactory.KPH;
+        var signatureKey = MockPresharedAuthenticationFactory.KPH;
     	var cryptoContext;
     	runs(function() {
-    		getUntrustedMasterToken(ctx, encryptionKey, hmacKey, {
+    		getUntrustedMasterToken(ctx, encryptionKey, signatureKey, {
     			result: function(masterToken) {
-    				cryptoContext = new SessionCryptoContext(ctx, masterToken, identity, encryptionKey, hmacKey);
+    				cryptoContext = new SessionCryptoContext(ctx, masterToken, identity, encryptionKey, signatureKey);
     			},
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
@@ -432,12 +432,12 @@ describe("SessionCryptoContext", function() {
     it("encrypt/decrypt with null encryption key", function() {
         var identity = MockPresharedAuthenticationFactory.PSK_ESN;
         var encryptionKey = MockPresharedAuthenticationFactory.KPE;
-        var hmacKey = MockPresharedAuthenticationFactory.KPH;
+        var signatureKey = MockPresharedAuthenticationFactory.KPH;
     	var cryptoContext;
     	runs(function() {
-    		getUntrustedMasterToken(ctx, encryptionKey, hmacKey, {
+    		getUntrustedMasterToken(ctx, encryptionKey, signatureKey, {
     			result: function(masterToken) {
-    				cryptoContext = new SessionCryptoContext(ctx, masterToken, identity, null, hmacKey);
+    				cryptoContext = new SessionCryptoContext(ctx, masterToken, identity, null, signatureKey);
     			},
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
@@ -461,13 +461,13 @@ describe("SessionCryptoContext", function() {
     	});
     });
     
-    it("encrypt/decrypt with null HMAC key", function() {
+    it("encrypt/decrypt with null signature key", function() {
         var identity = MockPresharedAuthenticationFactory.PSK_ESN;
         var encryptionKey = MockPresharedAuthenticationFactory.KPE;
-        var hmacKey = MockPresharedAuthenticationFactory.KPH;
+        var signatureKey = MockPresharedAuthenticationFactory.KPH;
     	var cryptoContext;
     	runs(function() {
-    		getUntrustedMasterToken(ctx, encryptionKey, hmacKey, {
+    		getUntrustedMasterToken(ctx, encryptionKey, signatureKey, {
     			result: function(masterToken) {
     				cryptoContext = new SessionCryptoContext(ctx, masterToken, identity, encryptionKey, null);
     			},
@@ -525,17 +525,17 @@ describe("SessionCryptoContext", function() {
     it("encrypt/decrypt with mismatched key ID", function() {
         var identity = MockPresharedAuthenticationFactory.PSK_ESN;
         var encryptionKey = MockPresharedAuthenticationFactory.KPE;
-        var hmacKey = MockPresharedAuthenticationFactory.KPH;
+        var signatureKey = MockPresharedAuthenticationFactory.KPH;
     	var cryptoContextA = undefined, cryptoContextB;
     	runs(function() {
-    		getUntrustedMasterToken(ctx, encryptionKey, hmacKey, {
+    		getUntrustedMasterToken(ctx, encryptionKey, signatureKey, {
     			result: function(masterToken) {
     				// With untrusted master tokens, there is no way of verifying the
     		    	// identity provided against the internals of the master token. So this
     		    	// test makes use of two session crypto contexts with different
     		    	// identities.
-    		    	cryptoContextA = new SessionCryptoContext(ctx, masterToken, identity + "A", encryptionKey, hmacKey);
-    		    	cryptoContextB = new SessionCryptoContext(ctx, masterToken, identity + "B", encryptionKey, hmacKey);
+    		    	cryptoContextA = new SessionCryptoContext(ctx, masterToken, identity + "A", encryptionKey, signatureKey);
+    		    	cryptoContextB = new SessionCryptoContext(ctx, masterToken, identity + "B", encryptionKey, signatureKey);
     			},
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
@@ -572,15 +572,15 @@ describe("SessionCryptoContext", function() {
 	it("encrypt/decrypt with mismatched keys", function() {
     	var identity = MockPresharedAuthenticationFactory.PSK_ESN;
     	var encryptionKeyA = MockPresharedAuthenticationFactory.KPE;
-    	var hmacKeyA = MockPresharedAuthenticationFactory.KPH;
+    	var signatureKeyA = MockPresharedAuthenticationFactory.KPH;
     	var encryptionKeyB = MockPresharedAuthenticationFactory.KPE2;
-    	var hmacKeyB = MockPresharedAuthenticationFactory.KPH2;
+    	var signatureKeyB = MockPresharedAuthenticationFactory.KPH2;
     	
     	var cryptoContextA;
     	runs(function() {
-    		getUntrustedMasterToken(ctx, encryptionKeyA, hmacKeyA, {
+    		getUntrustedMasterToken(ctx, encryptionKeyA, signatureKeyA, {
     			result: function(masterTokenA) {
-    				cryptoContextA = new SessionCryptoContext(ctx, masterTokenA, identity, encryptionKeyA, hmacKeyA);
+    				cryptoContextA = new SessionCryptoContext(ctx, masterTokenA, identity, encryptionKeyA, signatureKeyA);
     			},
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
@@ -589,9 +589,9 @@ describe("SessionCryptoContext", function() {
     	
     	var cryptoContextB;
     	runs(function() {
-    		getUntrustedMasterToken(ctx, encryptionKeyB, hmacKeyB, {
+    		getUntrustedMasterToken(ctx, encryptionKeyB, signatureKeyB, {
     			result: function(masterTokenB) {
-    				cryptoContextB = new SessionCryptoContext(ctx, masterTokenB, identity, encryptionKeyB, hmacKeyB);
+    				cryptoContextB = new SessionCryptoContext(ctx, masterTokenB, identity, encryptionKeyB, signatureKeyB);
     			},
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
@@ -687,15 +687,15 @@ describe("SessionCryptoContext", function() {
     it("sign/verify with mismatched contexts", function() {
     	var identity = MockPresharedAuthenticationFactory.PSK_ESN;
         var encryptionKeyA = MockPresharedAuthenticationFactory.KPE;
-        var hmacKeyA = MockPresharedAuthenticationFactory.KPH;
+        var signatureKeyA = MockPresharedAuthenticationFactory.KPH;
         var encryptionKeyB = MockPresharedAuthenticationFactory.KPE2;
-        var hmacKeyB = MockPresharedAuthenticationFactory.KPH2;
+        var signatureKeyB = MockPresharedAuthenticationFactory.KPH2;
 
     	var cryptoContextA;
     	runs(function() {
-    		getUntrustedMasterToken(ctx, encryptionKeyA, hmacKeyA, {
+    		getUntrustedMasterToken(ctx, encryptionKeyA, signatureKeyA, {
     			result: function(masterTokenA) {
-    				cryptoContextA = new SessionCryptoContext(ctx, masterTokenA, identity, encryptionKeyA, hmacKeyA);
+    				cryptoContextA = new SessionCryptoContext(ctx, masterTokenA, identity, encryptionKeyA, signatureKeyA);
     			},
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
@@ -704,9 +704,9 @@ describe("SessionCryptoContext", function() {
     	
     	var cryptoContextB;
     	runs(function() {
-    		getUntrustedMasterToken(ctx, encryptionKeyB, hmacKeyB, {
+    		getUntrustedMasterToken(ctx, encryptionKeyB, signatureKeyB, {
     			result: function(masterTokenB) {
-    				cryptoContextB = new SessionCryptoContext(ctx, masterTokenB, identity, encryptionKeyB, hmacKeyB);
+    				cryptoContextB = new SessionCryptoContext(ctx, masterTokenB, identity, encryptionKeyB, signatureKeyB);
     			},
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
@@ -741,12 +741,12 @@ describe("SessionCryptoContext", function() {
     it("sign/verify with crypto context from keys", function() {
         var identity = MockPresharedAuthenticationFactory.PSK_ESN;
         var encryptionKey = MockPresharedAuthenticationFactory.KPE;
-        var hmacKey = MockPresharedAuthenticationFactory.KPH;
+        var signatureKey = MockPresharedAuthenticationFactory.KPH;
     	var cryptoContext;
     	runs(function() {
-    		getUntrustedMasterToken(ctx, encryptionKey, hmacKey, {
+    		getUntrustedMasterToken(ctx, encryptionKey, signatureKey, {
     			result: function(masterToken) {
-    				cryptoContext = new SessionCryptoContext(ctx, masterToken, identity, encryptionKey, hmacKey);
+    				cryptoContext = new SessionCryptoContext(ctx, masterToken, identity, encryptionKey, signatureKey);
     			},
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
@@ -805,12 +805,12 @@ describe("SessionCryptoContext", function() {
     it("sign/verify with null encryption key", function() {
         var identity = MockPresharedAuthenticationFactory.PSK_ESN;
         var encryptionKey = MockPresharedAuthenticationFactory.KPE;
-        var hmacKey = MockPresharedAuthenticationFactory.KPH;
+        var signatureKey = MockPresharedAuthenticationFactory.KPH;
     	var cryptoContext;
     	runs(function() {
-    		getUntrustedMasterToken(ctx, encryptionKey, hmacKey, {
+    		getUntrustedMasterToken(ctx, encryptionKey, signatureKey, {
     			result: function(masterToken) {
-    				cryptoContext = new SessionCryptoContext(ctx, masterToken, identity, null, hmacKey);
+    				cryptoContext = new SessionCryptoContext(ctx, masterToken, identity, null, signatureKey);
     			},
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
@@ -866,13 +866,13 @@ describe("SessionCryptoContext", function() {
         });
     });
     
-    it("sign/verify with null HMAC key", function() {
+    it("sign/verify with null signature key", function() {
     	var identity = MockPresharedAuthenticationFactory.PSK_ESN;
     	var encryptionKey = MockPresharedAuthenticationFactory.KPE;
-    	var hmacKey = MockPresharedAuthenticationFactory.KPH;
+    	var signatureKey = MockPresharedAuthenticationFactory.KPH;
     	var cryptoContext;
     	runs(function() {
-    		getUntrustedMasterToken(ctx, encryptionKey, hmacKey, {
+    		getUntrustedMasterToken(ctx, encryptionKey, signatureKey, {
     			result: function(masterToken) {
     				cryptoContext = new SessionCryptoContext(ctx, masterToken, identity, encryptionKey, null);
     			},
