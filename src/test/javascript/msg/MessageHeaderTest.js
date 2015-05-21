@@ -22,7 +22,9 @@
 describe("MessageHeader", function() {
     /** Milliseconds per second. */
     var MILLISECONDS_PER_SECOND = 1000;
-    
+
+    /** JSON key version. */
+    var KEY_VERSION = "version";
 	/** JSON key entity authentication data. */
 	var KEY_ENTITY_AUTHENTICATION_DATA = "entityauthdata";
 	/** JSON key master token. */
@@ -367,6 +369,7 @@ describe("MessageHeader", function() {
 		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
 
 		runs(function() {
+		    expect(messageHeader.version).toEqual(MslConstants$VERSION);
 			expect(messageHeader.isEncrypting()).toBeTruthy();
 			expect(messageHeader.nonReplayableId).toEqual(NON_REPLAYABLE_ID);
 			expect(messageHeader.isRenewable()).toEqual(RENEWABLE);
@@ -423,6 +426,7 @@ describe("MessageHeader", function() {
         waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
 
         runs(function() {
+            expect(messageHeader.version).toEqual(MslConstants$VERSION);
             expect(messageHeader.isEncrypting()).toBeTruthy();
             expect(messageHeader.nonReplayableId).toBeNull();
             expect(messageHeader.isRenewable()).toEqual(RENEWABLE);
@@ -490,6 +494,7 @@ describe("MessageHeader", function() {
             var jsonString = JSON.stringify(messageHeader);
             expect(jsonString).not.toBeNull();
             var jo = JSON.parse(jsonString);
+            expect(jo[KEY_VERSION]).toEqual(MslConstants$VERSION);
             var entityAuthDataJo = jo[KEY_ENTITY_AUTHENTICATION_DATA];
             expect(entityAuthDataJo).toEqual(JSON.parse(JSON.stringify(ENTITY_AUTH_DATA)));
             expect(jo[KEY_MASTER_TOKEN]).toBeFalsy();
@@ -575,6 +580,7 @@ describe("MessageHeader", function() {
             var jsonString = JSON.stringify(messageHeader);
             expect(jsonString).not.toBeNull();
             var jo = JSON.parse(jsonString);
+            expect(jo[KEY_VERSION]).toEqual(MslConstants$VERSION);
             var entityAuthDataJo = jo[KEY_ENTITY_AUTHENTICATION_DATA];
             expect(entityAuthDataJo).toEqual(JSON.parse(JSON.stringify(ENTITY_AUTH_DATA)));
             expect(jo[KEY_MASTER_TOKEN]).toBeFalsy();
@@ -649,6 +655,7 @@ describe("MessageHeader", function() {
 		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
 
         runs(function() {
+            expect(messageHeader.version).toEqual(MslConstants$VERSION);
             expect(messageHeader.isEncrypting()).toBeTruthy();
             expect(messageHeader.nonReplayableId).toEqual(NON_REPLAYABLE_ID);
             expect(messageHeader.isRenewable()).toEqual(RENEWABLE);
@@ -707,6 +714,7 @@ describe("MessageHeader", function() {
         waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
 
         runs(function() {
+            expect(messageHeader.version).toEqual(MslConstants$VERSION);
             expect(messageHeader.isEncrypting()).toBeTruthy();
             expect(messageHeader.nonReplayableId).toBeFalsy();
             expect(messageHeader.isRenewable()).toEqual(RENEWABLE);
@@ -776,6 +784,7 @@ describe("MessageHeader", function() {
             var jsonString = JSON.stringify(messageHeader);
             expect(jsonString).not.toBeNull();
             var jo = JSON.parse(jsonString);
+            expect(jo[KEY_VERSION]).toEqual(MslConstants$VERSION);
             var entityAuthDataJo = jo[KEY_ENTITY_AUTHENTICATION_DATA];
             expect(entityAuthDataJo).toEqual(JSON.parse(JSON.stringify(PEER_ENTITY_AUTH_DATA)));
             expect(jo[KEY_MASTER_TOKEN]).toBeFalsy();
@@ -863,6 +872,7 @@ describe("MessageHeader", function() {
             var jsonString = JSON.stringify(messageHeader);
             expect(jsonString).not.toBeNull();
             var jo = JSON.parse(jsonString);
+            expect(jo[KEY_VERSION]).toEqual(MslConstants$VERSION);
             var entityAuthDataJo = jo[KEY_ENTITY_AUTHENTICATION_DATA];
             expect(entityAuthDataJo).toEqual(JSON.parse(JSON.stringify(PEER_ENTITY_AUTH_DATA)));
             expect(jo[KEY_MASTER_TOKEN]).toBeFalsy();
@@ -935,6 +945,7 @@ describe("MessageHeader", function() {
 		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
 
         runs(function() {
+            expect(messageHeader.version).toEqual(MslConstants$VERSION);
             expect(messageHeader.isEncrypting()).toBeTruthy();
             expect(messageHeader.nonReplayableId).toEqual(NON_REPLAYABLE_ID);
             expect(messageHeader.isRenewable()).toEqual(RENEWABLE);
@@ -995,6 +1006,7 @@ describe("MessageHeader", function() {
             var jsonString = JSON.stringify(messageHeader);
             expect(jsonString).not.toBeNull();
             var jo = JSON.parse(jsonString);
+            expect(jo[KEY_VERSION]).toEqual(MslConstants$VERSION);
             expect(jo[KEY_ENTITY_AUTHENTICATION_DATA]).toBeFalsy();
             var masterToken = jo[KEY_MASTER_TOKEN];
             expect(masterToken).toEqual(JSON.parse(JSON.stringify(MASTER_TOKEN)));
@@ -1071,6 +1083,7 @@ describe("MessageHeader", function() {
 		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
 
         runs(function() {
+            expect(messageHeader.version).toEqual(MslConstants$VERSION);
             expect(messageHeader.isEncrypting()).toBeTruthy();
             expect(messageHeader.nonReplayableId).toEqual(NON_REPLAYABLE_ID);
             expect(messageHeader.isRenewable()).toEqual(RENEWABLE);
@@ -1135,6 +1148,7 @@ describe("MessageHeader", function() {
             var jsonString = JSON.stringify(messageHeader);
             expect(jsonString).not.toBeNull();
             var jo = JSON.parse(jsonString);
+            expect(jo[KEY_VERSION]).toEqual(MslConstants$VERSION);
             expect(jo[KEY_ENTITY_AUTHENTICATION_DATA]).toBeFalsy();
             var masterToken = jo[KEY_MASTER_TOKEN];
             expect(masterToken).toEqual(JSON.parse(JSON.stringify(MASTER_TOKEN)));
@@ -1205,6 +1219,7 @@ describe("MessageHeader", function() {
 		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
 
         runs(function() {
+            expect(messageHeader.version).toEqual(MslConstants$VERSION);
             expect(messageHeader.isEncrypting()).toBeTruthy();
             expect(messageHeader.nonReplayableId).toEqual(NON_REPLAYABLE_ID);
             expect(messageHeader.isRenewable()).toEqual(RENEWABLE);
@@ -1260,6 +1275,7 @@ describe("MessageHeader", function() {
 		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
 
         runs(function() {
+            expect(messageHeader.version).toEqual(MslConstants$VERSION);
             expect(messageHeader.isEncrypting()).toBeTruthy();
             expect(messageHeader.nonReplayableId).toEqual(NON_REPLAYABLE_ID);
             expect(messageHeader.isRenewable()).toEqual(RENEWABLE);
@@ -1311,6 +1327,7 @@ describe("MessageHeader", function() {
 		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
 
         runs(function() {
+            expect(messageHeader.version).toEqual(MslConstants$VERSION);
             expect(messageHeader.isEncrypting()).toBeTruthy();
             expect(messageHeader.nonReplayableId).toEqual(NON_REPLAYABLE_ID);
             expect(messageHeader.isRenewable()).toEqual(RENEWABLE);
@@ -1366,6 +1383,7 @@ describe("MessageHeader", function() {
 		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
 
         runs(function() {
+            expect(messageHeader.version).toEqual(MslConstants$VERSION);
             expect(messageHeader.isEncrypting()).toBeTruthy();
             expect(messageHeader.nonReplayableId).toEqual(NON_REPLAYABLE_ID);
             expect(messageHeader.isRenewable()).toEqual(RENEWABLE);
@@ -1990,6 +2008,7 @@ describe("MessageHeader", function() {
 		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
 
         runs(function() {
+            expect(messageHeader.version).toEqual(MslConstants$VERSION);
             expect(messageHeader.nonReplayableId).toEqual(NON_REPLAYABLE_ID);
             expect(messageHeader.isRenewable()).toEqual(RENEWABLE);
 			expect(messageHeader.isHandshake()).toEqual(HANDSHAKE);
@@ -2054,6 +2073,7 @@ describe("MessageHeader", function() {
             expect(header instanceof MessageHeader).toBeTruthy();
             var joMessageHeader = header;
     
+            expect(joMessageHeader.version).toEqual(messageHeader.version);
             expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
             expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
             expect(messageHeader.cryptoContext).not.toBeNull();
@@ -2121,6 +2141,7 @@ describe("MessageHeader", function() {
             expect(header instanceof MessageHeader).toBeTruthy();
             var joMessageHeader = header;
     
+            expect(joMessageHeader.version).toEqual(messageHeader.version);
             expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
             expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
             expect(messageHeader.cryptoContext).not.toBeNull();
@@ -2187,6 +2208,7 @@ describe("MessageHeader", function() {
             expect(header instanceof MessageHeader).toBeTruthy();
             var joMessageHeader = header;
     
+            expect(joMessageHeader.version).toEqual(messageHeader.version);
             expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
             expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
             expect(messageHeader.cryptoContext).not.toBeNull();
@@ -2251,6 +2273,7 @@ describe("MessageHeader", function() {
             expect(header instanceof MessageHeader).toBeTruthy();
             var joMessageHeader = header;
     
+            expect(joMessageHeader.version).toEqual(messageHeader.version);
             expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
             expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
             expect(messageHeader.cryptoContext).not.toBeNull();
@@ -2317,6 +2340,7 @@ describe("MessageHeader", function() {
             expect(header instanceof MessageHeader).toBeTruthy();
             var joMessageHeader = header;
     
+            expect(joMessageHeader.version).toEqual(messageHeader.version);
             expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
             expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
             expect(messageHeader.cryptoContext).not.toBeNull();
@@ -2381,6 +2405,7 @@ describe("MessageHeader", function() {
             expect(header instanceof MessageHeader).toBeTruthy();
             var joMessageHeader = header;
     
+            expect(joMessageHeader.version).toEqual(messageHeader.version);
             expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
             expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
             expect(messageHeader.cryptoContext).not.toBeNull();
@@ -2404,6 +2429,94 @@ describe("MessageHeader", function() {
             expect(joMessageHeader.userAuthenticationData).toEqual(messageHeader.userAuthenticationData);
             expect(joMessageHeader.userIdToken).toEqual(messageHeader.userIdToken);
             expect(joMessageHeader.user).not.toBeNull();
+        });
+	});
+	
+	it("parseHeader with missing version", function() {
+	    var builder;
+        runs(function() {
+            HeaderDataBuilder$create(p2pCtx, null, null, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+        var messageHeader;
+        runs(function() {
+            builder.set(KEY_RECIPIENT, null);
+            builder.set(KEY_CAPABILITIES, null);
+            builder.set(KEY_KEY_REQUEST_DATA, null);
+            builder.set(KEY_KEY_RESPONSE_DATA, null);
+            builder.set(KEY_USER_AUTHENTICATION_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+            MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+                result: function(token) { messageHeader = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+
+        var header;
+        runs(function() {
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            expect(messageHeaderJo[KEY_VERSION]).not.toBeNull();
+            delete messageHeaderJo[KEY_VERSION];
+            Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                result: function(hdr) { header = hdr; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return header; }, "header not received", 100);
+        runs(function() {
+            expect(header).not.toBeNull();
+            expect(header instanceof MessageHeader).toBeTruthy();
+            var joMessageHeader = header;
+            
+            expect(joMessageHeader.version).toBeNull();
+        });
+	});
+	
+	it("parseHeader with invalid version", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(p2pCtx, null, null, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", 100);
+        
+        var messageHeader;
+        runs(function() {
+            builder.set(KEY_RECIPIENT, null);
+            builder.set(KEY_CAPABILITIES, null);
+            builder.set(KEY_KEY_REQUEST_DATA, null);
+            builder.set(KEY_KEY_RESPONSE_DATA, null);
+            builder.set(KEY_USER_AUTHENTICATION_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+            MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+                result: function(token) { messageHeader = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+        
+        var exception;
+        runs(function() {
+            var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
+            messageHeaderJo[KEY_VERSION] = true;
+            Header$parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
+                result: function() {},
+                error: function(err) { exception = err; }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception not received", 100);
+        runs(function() {
+            var f = function() { throw exception; };
+            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
         });
 	});
 
@@ -2656,6 +2769,7 @@ describe("MessageHeader", function() {
             expect(header instanceof MessageHeader).toBeTruthy();
             var joMessageHeader = header;
     
+            expect(joMessageHeader.version).toEqual(messageHeader.version);
             expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
             expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
             expect(messageHeader.cryptoContext).not.toBeNull();
@@ -3061,6 +3175,7 @@ describe("MessageHeader", function() {
             expect(header instanceof MessageHeader).toBeTruthy();
             var joMessageHeader = header;
     
+            expect(joMessageHeader.version).toEqual(messageHeader.version);
             expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
             expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
             expect(messageHeader.cryptoContext).not.toBeNull();
@@ -3163,6 +3278,7 @@ describe("MessageHeader", function() {
             expect(header instanceof MessageHeader).toBeTruthy();
             var joMessageHeader = header;
     
+            expect(joMessageHeader.version).toEqual(messageHeader.version);
             expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
             expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
             expect(messageHeader.cryptoContext).not.toBeNull();
@@ -3229,6 +3345,7 @@ describe("MessageHeader", function() {
             expect(header instanceof MessageHeader).toBeTruthy();
             var joMessageHeader = header;
     
+            expect(joMessageHeader.version).toEqual(messageHeader.version);
             expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
             expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
             expect(messageHeader.cryptoContext).not.toBeNull();
@@ -3326,6 +3443,7 @@ describe("MessageHeader", function() {
             expect(header instanceof MessageHeader).toBeTruthy();
             var joMessageHeader = header;
     
+            expect(joMessageHeader.version).toEqual(messageHeader.version);
             expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
             expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
             expect(messageHeader.cryptoContext).not.toBeNull();

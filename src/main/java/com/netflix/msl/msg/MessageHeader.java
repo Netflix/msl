@@ -265,6 +265,8 @@ public class MessageHeader extends Header {
      *         token is provided.
      */
     public MessageHeader(final MslContext ctx, final EntityAuthenticationData entityAuthData, final MasterToken masterToken, final HeaderData headerData, final HeaderPeerData peerData) throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException {
+        this.version = MslConstants.VERSION;
+        
         this.entityAuthData = (masterToken == null) ? entityAuthData : null;
         this.masterToken = masterToken;
         this.nonReplayableId = headerData.nonReplayableId;
@@ -445,6 +447,7 @@ public class MessageHeader extends Header {
      * will be used.</p>
      * 
      * @param ctx MSL context.
+     * @param version message protocol version. May be null.
      * @param headerdata header data JSON representation.
      * @param entityAuthData the entity authentication data. May be null if a
      *        master token is provided.
@@ -470,8 +473,9 @@ public class MessageHeader extends Header {
      *         missing or invalid, or the message ID is negative.
      * @throws MslException if a token is improperly bound to another token.
      */
-    protected MessageHeader(final MslContext ctx, final String headerdata, final EntityAuthenticationData entityAuthData, final MasterToken masterToken, final byte[] signature, final Map<String,ICryptoContext> cryptoContexts) throws MslEncodingException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslMasterTokenException, MslMessageException, MslEntityAuthException, MslException {
+    protected MessageHeader(final MslContext ctx, final String version, final String headerdata, final EntityAuthenticationData entityAuthData, final MasterToken masterToken, final byte[] signature, final Map<String,ICryptoContext> cryptoContexts) throws MslEncodingException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslMasterTokenException, MslMessageException, MslEntityAuthException, MslException {
         try {
+            this.version = version;
             this.entityAuthData = (masterToken == null) ? entityAuthData : null;
             this.masterToken = masterToken;
             this.signature = signature;
@@ -726,6 +730,13 @@ public class MessageHeader extends Header {
             throw e;
         }
     }
+    
+    /**
+     * @return the message protocol version or {@code null} if none specified.
+     */
+    public String getVersion() {
+        return version;
+    }
 
     /**
      * <p>Returns true if the header data has been decrypted and parsed. If
@@ -952,6 +963,8 @@ public class MessageHeader extends Header {
     public String toJSONString() {
         try {
             final JSONObject jsonObj = new JSONObject();
+            if (version != null)
+                jsonObj.put(KEY_VERSION, version);
             if (masterToken != null)
                 jsonObj.put(KEY_MASTER_TOKEN, masterToken);
             else
@@ -1027,6 +1040,9 @@ public class MessageHeader extends Header {
             ((peerUserIdToken != null) ? peerUserIdToken.hashCode() : 0) ^
             peerServiceTokens.hashCode();
     }
+    
+    /** Protocol version. */
+    private final String version;
 
     /** Entity authentication data. */
     private final EntityAuthenticationData entityAuthData;

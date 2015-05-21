@@ -19,6 +19,7 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+var MslConstants$VERSION;
 var MslConstants$DEFAULT_CHARSET;
 var MslConstants$MAX_LONG_VALUE;
 var MslConstants$MAX_MESSAGES;
@@ -32,6 +33,9 @@ var MslConstants$ResponseCode;
 
 (function() {
     "use strict";
+    
+    /** Protocol version string. */
+    MslConstants$VERSION = "1.0";
     
     /** RFC-4327 defines UTF-8 as the default encoding. */
     MslConstants$DEFAULT_CHARSET = "utf-8";

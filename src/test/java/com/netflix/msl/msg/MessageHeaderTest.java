@@ -96,6 +96,8 @@ public class MessageHeaderTest {
     /** Milliseconds per second. */
     private static final long MILLISECONDS_PER_SECOND = 1000;
     
+    /** JSON key version. */
+    private static final String KEY_VERSION = "version";
     /** JSON key entity authentication data. */
     private static final String KEY_ENTITY_AUTHENTICATION_DATA = "entityauthdata";
     /** JSON key master token. */
@@ -351,6 +353,7 @@ public class MessageHeaderTest {
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
         
+        assertEquals(MslConstants.VERSION, messageHeader.getVersion());
         assertTrue(messageHeader.isEncrypting());
         assertEquals(NON_REPLAYABLE_ID, messageHeader.getNonReplayableId());
         assertEquals(RENEWABLE, messageHeader.isRenewable());
@@ -389,6 +392,7 @@ public class MessageHeaderTest {
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
         
+        assertEquals(MslConstants.VERSION, messageHeader.getVersion());
         assertTrue(messageHeader.isEncrypting());
         assertNull(messageHeader.getNonReplayableId());
         assertEquals(RENEWABLE, messageHeader.isRenewable());
@@ -433,6 +437,7 @@ public class MessageHeaderTest {
         final ICryptoContext cryptoContext = factory.getCryptoContext(trustedNetCtx, entityAuthData);
         
         final JSONObject jo = new JSONObject(jsonString);
+        assertEquals(MslConstants.VERSION, jo.getString(KEY_VERSION));
         final JSONObject entityAuthDataJo = jo.getJSONObject(KEY_ENTITY_AUTHENTICATION_DATA);
         assertTrue(JsonUtils.equals(new JSONObject(entityAuthData.toJSONString()), entityAuthDataJo));
         assertFalse(jo.has(KEY_MASTER_TOKEN));
@@ -481,6 +486,7 @@ public class MessageHeaderTest {
         final ICryptoContext cryptoContext = factory.getCryptoContext(trustedNetCtx, entityAuthData);
         
         final JSONObject jo = new JSONObject(jsonString);
+        assertEquals(MslConstants.VERSION, jo.getString(KEY_VERSION));
         final JSONObject entityAuthDataJo = jo.getJSONObject(KEY_ENTITY_AUTHENTICATION_DATA);
         assertTrue(JsonUtils.equals(new JSONObject(entityAuthData.toJSONString()), entityAuthDataJo));
         assertFalse(jo.has(KEY_MASTER_TOKEN));
@@ -522,6 +528,7 @@ public class MessageHeaderTest {
         final EntityAuthenticationData entityAuthData = p2pCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, entityAuthData, null, headerData, peerData);
         
+        assertEquals(MslConstants.VERSION, messageHeader.getVersion());
         assertTrue(messageHeader.isEncrypting());
         assertEquals(NON_REPLAYABLE_ID, messageHeader.getNonReplayableId());
         assertEquals(RENEWABLE, messageHeader.isRenewable());
@@ -561,6 +568,7 @@ public class MessageHeaderTest {
         final EntityAuthenticationData entityAuthData = p2pCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, entityAuthData, null, headerData, peerData);
         
+        assertEquals(MslConstants.VERSION, messageHeader.getVersion());
         assertTrue(messageHeader.isEncrypting());
         assertNull(messageHeader.getNonReplayableId());
         assertEquals(RENEWABLE, messageHeader.isRenewable());
@@ -606,6 +614,7 @@ public class MessageHeaderTest {
         final ICryptoContext cryptoContext = factory.getCryptoContext(p2pCtx, entityAuthData);
         
         final JSONObject jo = new JSONObject(jsonString);
+        assertEquals(MslConstants.VERSION, jo.getString(KEY_VERSION));
         final JSONObject entityAuthDataJo = jo.getJSONObject(KEY_ENTITY_AUTHENTICATION_DATA);
         assertTrue(JsonUtils.equals(new JSONObject(entityAuthData.toJSONString()), entityAuthDataJo));
         assertFalse(jo.has(KEY_MASTER_TOKEN));
@@ -655,6 +664,7 @@ public class MessageHeaderTest {
         final ICryptoContext cryptoContext = factory.getCryptoContext(p2pCtx, entityAuthData);
         
         final JSONObject jo = new JSONObject(jsonString);
+        assertEquals(MslConstants.VERSION, jo.getString(KEY_VERSION));
         final JSONObject entityAuthDataJo = jo.getJSONObject(KEY_ENTITY_AUTHENTICATION_DATA);
         assertTrue(JsonUtils.equals(new JSONObject(entityAuthData.toJSONString()), entityAuthDataJo));
         assertFalse(jo.has(KEY_MASTER_TOKEN));
@@ -695,6 +705,7 @@ public class MessageHeaderTest {
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, MASTER_TOKEN, headerData, peerData);
         
+        assertEquals(MslConstants.VERSION, messageHeader.getVersion());
         assertTrue(messageHeader.isEncrypting());
         assertEquals(NON_REPLAYABLE_ID, messageHeader.getNonReplayableId());
         assertEquals(RENEWABLE, messageHeader.isRenewable());
@@ -737,6 +748,7 @@ public class MessageHeaderTest {
         final ICryptoContext cryptoContext = new SessionCryptoContext(trustedNetCtx, MASTER_TOKEN);
         
         final JSONObject jo = new JSONObject(jsonString);
+        assertEquals(MslConstants.VERSION, jo.getString(KEY_VERSION));
         assertFalse(jo.has(KEY_ENTITY_AUTHENTICATION_DATA));
         final JSONObject masterToken = jo.getJSONObject(KEY_MASTER_TOKEN);
         assertTrue(JsonUtils.equals(new JSONObject(MASTER_TOKEN.toJSONString()), masterToken));
@@ -781,6 +793,7 @@ public class MessageHeaderTest {
         final EntityAuthenticationData entityAuthData = p2pCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, entityAuthData, MASTER_TOKEN, headerData, peerData);
         
+        assertEquals(MslConstants.VERSION, messageHeader.getVersion());
         assertTrue(messageHeader.isEncrypting());
         assertEquals(NON_REPLAYABLE_ID, messageHeader.getNonReplayableId());
         assertEquals(RENEWABLE, messageHeader.isRenewable());
@@ -827,6 +840,7 @@ public class MessageHeaderTest {
         final ICryptoContext cryptoContext = new SessionCryptoContext(trustedNetCtx, MASTER_TOKEN);
         
         final JSONObject jo = new JSONObject(jsonString);
+        assertEquals(MslConstants.VERSION, jo.getString(KEY_VERSION));
         assertFalse(jo.has(KEY_ENTITY_AUTHENTICATION_DATA));
         final JSONObject masterToken = jo.getJSONObject(KEY_MASTER_TOKEN);
         assertTrue(JsonUtils.equals(new JSONObject(MASTER_TOKEN.toJSONString()), masterToken));
@@ -868,6 +882,7 @@ public class MessageHeaderTest {
         final EntityAuthenticationData entityAuthData = p2pCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, entityAuthData, null, headerData, peerData);
         
+        assertEquals(MslConstants.VERSION, messageHeader.getVersion());
         assertTrue(messageHeader.isEncrypting());
         assertEquals(NON_REPLAYABLE_ID, messageHeader.getNonReplayableId());
         assertEquals(RENEWABLE, messageHeader.isRenewable());
@@ -908,6 +923,7 @@ public class MessageHeaderTest {
         final EntityAuthenticationData entityAuthData = p2pCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, entityAuthData, null, headerData, peerData);
 
+        assertEquals(MslConstants.VERSION, messageHeader.getVersion());
         assertTrue(messageHeader.isEncrypting());
         assertEquals(NON_REPLAYABLE_ID, messageHeader.getNonReplayableId());
         assertEquals(RENEWABLE, messageHeader.isRenewable());
@@ -943,6 +959,7 @@ public class MessageHeaderTest {
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerData);
         
+        assertEquals(MslConstants.VERSION, messageHeader.getVersion());
         assertTrue(messageHeader.isEncrypting());
         assertEquals(NON_REPLAYABLE_ID, messageHeader.getNonReplayableId());
         assertEquals(RENEWABLE, messageHeader.isRenewable());
@@ -982,6 +999,7 @@ public class MessageHeaderTest {
         final HeaderPeerData peerData = new HeaderPeerData(null, null, peerServiceTokens);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerData);
 
+        assertEquals(MslConstants.VERSION, messageHeader.getVersion());
         assertTrue(messageHeader.isEncrypting());
         assertEquals(NON_REPLAYABLE_ID, messageHeader.getNonReplayableId());
         assertEquals(RENEWABLE, messageHeader.isRenewable());
@@ -1224,6 +1242,7 @@ public class MessageHeaderTest {
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, masterToken, headerData, peerData);
         
+        assertEquals(MslConstants.VERSION, messageHeader.getVersion());
         assertEquals(NON_REPLAYABLE_ID, messageHeader.getNonReplayableId());
         assertEquals(RENEWABLE, messageHeader.isRenewable());
         assertEquals(HANDSHAKE, messageHeader.isHandshake());
@@ -1262,6 +1281,7 @@ public class MessageHeaderTest {
         assertTrue(header instanceof MessageHeader);
         final MessageHeader joMessageHeader = (MessageHeader)header;
         
+        assertEquals(messageHeader.getVersion(), joMessageHeader.getVersion());
         assertEquals(messageHeader.getNonReplayableId(), joMessageHeader.getNonReplayableId());
         assertEquals(messageHeader.isRenewable(), joMessageHeader.isRenewable());
         assertNotNull(messageHeader.getCryptoContext());
@@ -1303,6 +1323,7 @@ public class MessageHeaderTest {
         assertTrue(header instanceof MessageHeader);
         final MessageHeader joMessageHeader = (MessageHeader)header;
         
+        assertEquals(messageHeader.getVersion(), joMessageHeader.getVersion());
         assertEquals(messageHeader.getNonReplayableId(), joMessageHeader.getNonReplayableId());
         assertEquals(messageHeader.isRenewable(), joMessageHeader.isRenewable());
         assertNotNull(messageHeader.getCryptoContext());
@@ -1343,6 +1364,7 @@ public class MessageHeaderTest {
         assertTrue(header instanceof MessageHeader);
         final MessageHeader joMessageHeader = (MessageHeader)header;
         
+        assertEquals(messageHeader.getVersion(), joMessageHeader.getVersion());
         assertEquals(messageHeader.getNonReplayableId(), joMessageHeader.getNonReplayableId());
         assertEquals(messageHeader.isRenewable(), joMessageHeader.isRenewable());
         assertNotNull(messageHeader.getCryptoContext());
@@ -1381,6 +1403,7 @@ public class MessageHeaderTest {
         assertTrue(header instanceof MessageHeader);
         final MessageHeader joMessageHeader = (MessageHeader)header;
         
+        assertEquals(messageHeader.getVersion(), joMessageHeader.getVersion());
         assertEquals(messageHeader.getNonReplayableId(), joMessageHeader.getNonReplayableId());
         assertEquals(messageHeader.isRenewable(), joMessageHeader.isRenewable());
         assertNotNull(messageHeader.getCryptoContext());
@@ -1421,6 +1444,7 @@ public class MessageHeaderTest {
         assertTrue(header instanceof MessageHeader);
         final MessageHeader joMessageHeader = (MessageHeader)header;
         
+        assertEquals(messageHeader.getVersion(), joMessageHeader.getVersion());
         assertEquals(messageHeader.getNonReplayableId(), joMessageHeader.getNonReplayableId());
         assertEquals(messageHeader.isRenewable(), joMessageHeader.isRenewable());
         assertNotNull(messageHeader.getCryptoContext());
@@ -1459,6 +1483,7 @@ public class MessageHeaderTest {
         assertTrue(header instanceof MessageHeader);
         final MessageHeader joMessageHeader = (MessageHeader)header;
         
+        assertEquals(messageHeader.getVersion(), joMessageHeader.getVersion());
         assertEquals(messageHeader.getNonReplayableId(), joMessageHeader.getNonReplayableId());
         assertEquals(messageHeader.isRenewable(), joMessageHeader.isRenewable());
         assertNotNull(messageHeader.getCryptoContext());
@@ -1482,6 +1507,50 @@ public class MessageHeaderTest {
         assertEquals(messageHeader.getUserAuthenticationData(), joMessageHeader.getUserAuthenticationData());
         assertEquals(messageHeader.getUserIdToken(), joMessageHeader.getUserIdToken());
         assertNotNull(joMessageHeader.getUser());
+    }
+    
+    @Test
+    public void missingVersionParseHeader() throws MslEncodingException, MslCryptoException, MslException {
+        final HeaderDataBuilder builder = new HeaderDataBuilder(p2pCtx, null, null, false);
+        builder.set(KEY_RECIPIENT, null);
+        builder.set(KEY_CAPABILITIES, null);
+        builder.set(KEY_KEY_REQUEST_DATA, null);
+        builder.set(KEY_KEY_RESPONSE_DATA, null);
+        builder.set(KEY_USER_AUTHENTICATION_DATA, null);
+        final HeaderData headerData = builder.build();
+        final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
+        final EntityAuthenticationData entityAuthData = p2pCtx.getEntityAuthenticationData(null);
+        final MessageHeader messageHeader = new MessageHeader(p2pCtx, entityAuthData, null, headerData, peerData);
+        
+        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        messageHeaderJo.remove(KEY_VERSION);
+        final Header header = Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        assertNotNull(header);
+        assertTrue(header instanceof MessageHeader);
+        final MessageHeader joMessageHeader = (MessageHeader)header;
+        
+        assertNull(joMessageHeader.getVersion());
+    }
+    
+    @Test
+    public void invalidVersionParseHeader() throws MslEncodingException, MslCryptoException, MslException {
+        thrown.expect(MslEncodingException.class);
+        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        
+        final HeaderDataBuilder builder = new HeaderDataBuilder(p2pCtx, null, null, false);
+        builder.set(KEY_RECIPIENT, null);
+        builder.set(KEY_CAPABILITIES, null);
+        builder.set(KEY_KEY_REQUEST_DATA, null);
+        builder.set(KEY_KEY_RESPONSE_DATA, null);
+        builder.set(KEY_USER_AUTHENTICATION_DATA, null);
+        final HeaderData headerData = builder.build();
+        final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
+        final EntityAuthenticationData entityAuthData = p2pCtx.getEntityAuthenticationData(null);
+        final MessageHeader messageHeader = new MessageHeader(p2pCtx, entityAuthData, null, headerData, peerData);
+        
+        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        messageHeaderJo.put(KEY_VERSION, true);
+        Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
     }
     
     @Test
@@ -1583,6 +1652,7 @@ public class MessageHeaderTest {
         assertTrue(header instanceof MessageHeader);
         final MessageHeader joMessageHeader = (MessageHeader)header;
         
+        assertEquals(messageHeader.getVersion(), joMessageHeader.getVersion());
         assertEquals(messageHeader.getNonReplayableId(), joMessageHeader.getNonReplayableId());
         assertEquals(messageHeader.isRenewable(), joMessageHeader.isRenewable());
         assertNotNull(messageHeader.getCryptoContext());
@@ -1787,6 +1857,7 @@ public class MessageHeaderTest {
         assertTrue(header instanceof MessageHeader);
         final MessageHeader joMessageHeader = (MessageHeader)header;
         
+        assertEquals(messageHeader.getVersion(), joMessageHeader.getVersion());
         assertEquals(messageHeader.getNonReplayableId(), joMessageHeader.getNonReplayableId());
         assertEquals(messageHeader.isRenewable(), joMessageHeader.isRenewable());
         assertNotNull(messageHeader.getCryptoContext());
@@ -1849,6 +1920,7 @@ public class MessageHeaderTest {
         assertTrue(header instanceof MessageHeader);
         final MessageHeader joMessageHeader = (MessageHeader)header;
         
+        assertEquals(messageHeader.getVersion(), joMessageHeader.getVersion());
         assertEquals(messageHeader.getNonReplayableId(), joMessageHeader.getNonReplayableId());
         assertEquals(messageHeader.isRenewable(), joMessageHeader.isRenewable());
         assertNotNull(messageHeader.getCryptoContext());
@@ -1891,6 +1963,7 @@ public class MessageHeaderTest {
         assertTrue(header instanceof MessageHeader);
         final MessageHeader joMessageHeader = (MessageHeader)header;
         
+        assertEquals(messageHeader.getVersion(), joMessageHeader.getVersion());
         assertEquals(messageHeader.getNonReplayableId(), joMessageHeader.getNonReplayableId());
         assertEquals(messageHeader.isRenewable(), joMessageHeader.isRenewable());
         assertNotNull(messageHeader.getCryptoContext());
@@ -1950,6 +2023,7 @@ public class MessageHeaderTest {
         assertTrue(header instanceof MessageHeader);
         final MessageHeader joMessageHeader = (MessageHeader)header;
         
+        assertEquals(messageHeader.getVersion(), joMessageHeader.getVersion());
         assertEquals(messageHeader.getNonReplayableId(), joMessageHeader.getNonReplayableId());
         assertEquals(messageHeader.isRenewable(), joMessageHeader.isRenewable());
         assertNotNull(messageHeader.getCryptoContext());

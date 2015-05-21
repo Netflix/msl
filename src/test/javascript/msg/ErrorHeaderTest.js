@@ -22,7 +22,9 @@
 describe("ErrorHeader", function() {
     /** Milliseconds per second. */
     var MILLISECONDS_PER_SECOND = 1000;
-    
+
+    /** JSON key version. */
+    var KEY_VERSION = "version";
     /** JSON key entity authentication data. */
     var KEY_ENTITY_AUTHENTICATION_DATA = "entityauthdata";
     /** JSON key error data. */
@@ -121,6 +123,7 @@ describe("ErrorHeader", function() {
         });
         waitsFor(function() { return errorHeader; }, "errorHeader", 100);
         runs(function() {
+            expect(errorHeader.version).toEqual(MslConstants$VERSION);
 	        expect(errorHeader.entityAuthenticationData).toEqual(ENTITY_AUTH_DATA);
 	        expect(errorHeader.errorCode).toEqual(ERROR_CODE);
 	        expect(errorHeader.errorMessage).toEqual(ERROR_MSG);
@@ -148,6 +151,7 @@ describe("ErrorHeader", function() {
 	        expect(jsonString).not.toBeNull();
 	        
 	        var jo = JSON.parse(jsonString);
+	        expect(jo[KEY_VERSION]).toEqual(MslConstants$VERSION);
 	        var entityAuthDataJo = jo[KEY_ENTITY_AUTHENTICATION_DATA];
 	        expect(entityAuthDataJo).toEqual(JSON.parse(JSON.stringify(ENTITY_AUTH_DATA)));
 	        ciphertext = base64$decode(jo[KEY_ERRORDATA]);
@@ -199,6 +203,7 @@ describe("ErrorHeader", function() {
 	        expect(jsonString).not.toBeNull();
 	        
 	        var jo = JSON.parse(jsonString);
+	        expect(jo[KEY_VERSION]).toEqual(MslConstants$VERSION);
 	        var entityAuthDataJo = jo[KEY_ENTITY_AUTHENTICATION_DATA];
 	        expect(entityAuthDataJo).toEqual(JSON.parse(JSON.stringify(ENTITY_AUTH_DATA)));
 	        ciphertext = base64$decode(jo[KEY_ERRORDATA]);
@@ -251,6 +256,7 @@ describe("ErrorHeader", function() {
             expect(jsonString).not.toBeNull();
             
             var jo = JSON.parse(jsonString);
+            expect(jo[KEY_VERSION]).toEqual(MslConstants$VERSION);
             var entityAuthDataJo = jo[KEY_ENTITY_AUTHENTICATION_DATA];
             expect(entityAuthDataJo).toEqual(JSON.parse(JSON.stringify(ENTITY_AUTH_DATA)));
             ciphertext = base64$decode(jo[KEY_ERRORDATA]);
@@ -303,6 +309,7 @@ describe("ErrorHeader", function() {
 	        expect(jsonString).not.toBeNull();
 	        
 	        var jo = JSON.parse(jsonString);
+	        expect(jo[KEY_VERSION]).toEqual(MslConstants$VERSION);
 	        var entityAuthDataJo = jo[KEY_ENTITY_AUTHENTICATION_DATA];
 	        expect(entityAuthDataJo).toEqual(JSON.parse(JSON.stringify(ENTITY_AUTH_DATA)));
 	        ciphertext = base64$decode(jo[KEY_ERRORDATA]);
@@ -355,6 +362,7 @@ describe("ErrorHeader", function() {
             expect(jsonString).not.toBeNull();
             
             var jo = JSON.parse(jsonString);
+            expect(jo[KEY_VERSION]).toEqual(MslConstants$VERSION);
             var entityAuthDataJo = jo[KEY_ENTITY_AUTHENTICATION_DATA];
             expect(entityAuthDataJo).toEqual(JSON.parse(JSON.stringify(ENTITY_AUTH_DATA)));
             ciphertext = base64$decode(jo[KEY_ERRORDATA]);
@@ -415,6 +423,7 @@ describe("ErrorHeader", function() {
 	        expect(header instanceof ErrorHeader).toBeTruthy();
 	        var joErrorHeader = header;
 	        
+	        expect(joErrorHeader.version).toEqual(errorHeader.version);
 	        expect(joErrorHeader.entityAuthenticationData).toEqual(errorHeader.entityAuthenticationData);
 	        expect(joErrorHeader.timestamp).toEqual(errorHeader.timestamp);
 	        expect(joErrorHeader.errorCode).toEqual(errorHeader.errorCode);
@@ -423,6 +432,66 @@ describe("ErrorHeader", function() {
 	        expect(joErrorHeader.messageId).toEqual(errorHeader.messageId);
 	        expect(joErrorHeader.recipient).toEqual(errorHeader.recipient);
 	        expect(joErrorHeader.userMessage).toEqual(errorHeader.userMessage);
+        });
+    });
+    
+    it("parseHeader with missing version", function() {
+        var errorHeader;
+        runs(function() {
+            ErrorHeader$create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+                result: function(hdr) { errorHeader = hdr; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        
+        var header;
+        runs(function() {
+            var errorHeaderJo = JSON.parse(JSON.stringify(errorHeader));
+            
+            expect(errorHeaderJo[KEY_VERSION]).not.toBeNull();
+            delete errorHeaderJo[KEY_VERSION];
+            
+            Header$parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS, {
+                result: function(hdr) { header = hdr; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return header; }, "header", 100);
+        runs(function() {
+            expect(header).not.toBeNull();
+            expect(header instanceof ErrorHeader).toBeTruthy();
+            var joErrorHeader = header;
+            
+            expect(joErrorHeader.version).toBeNull();
+        });
+    });
+    
+    it("parseHeader with invalid version", function() {
+        var errorHeader;
+        runs(function() {
+            ErrorHeader$create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+                result: function(hdr) { errorHeader = hdr; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        
+        var exception;
+        runs(function() {
+            var errorHeaderJo = JSON.parse(JSON.stringify(errorHeader));
+            
+            errorHeaderJo[KEY_VERSION] = true;
+            
+            Header$parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS, {
+                result: function() {},
+                error: function(err) { exception = err; }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception", 100);
+        runs(function() {
+            var f = function() { throw exception; };
+            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
         });
     });
 

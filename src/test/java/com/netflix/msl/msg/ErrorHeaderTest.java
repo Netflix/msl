@@ -64,7 +64,9 @@ import com.netflix.msl.util.MslContext;
 public class ErrorHeaderTest {
     /** Milliseconds per second. */
     private static final long MILLISECONDS_PER_SECOND = 1000;
-    
+
+    /** JSON key version. */
+    private static final String KEY_VERSION = "version";
     /** JSON key entity authentication data. */
     private static final String KEY_ENTITY_AUTHENTICATION_DATA = "entityauthdata";
     /** JSON key error data. */
@@ -148,6 +150,7 @@ public class ErrorHeaderTest {
     @Test
     public void ctors() throws MslEncodingException, MslEntityAuthException, MslMessageException, MslCryptoException {
         final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        assertEquals(MslConstants.VERSION, errorHeader.getVersion());
         assertEquals(ENTITY_AUTH_DATA, errorHeader.getEntityAuthenticationData());
         assertEquals(ERROR_CODE, errorHeader.getErrorCode());
         assertEquals(ERROR_MSG, errorHeader.getErrorMessage());
@@ -165,6 +168,7 @@ public class ErrorHeaderTest {
         assertNotNull(jsonString);
         
         final JSONObject jo = new JSONObject(jsonString);
+        assertEquals(MslConstants.VERSION, jo.getString(KEY_VERSION));
         final JSONObject entityAuthDataJo = jo.getJSONObject(KEY_ENTITY_AUTHENTICATION_DATA);
         assertTrue(JsonUtils.equals(new JSONObject(ENTITY_AUTH_DATA.toJSONString()), entityAuthDataJo));
         final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_ERRORDATA));
@@ -190,6 +194,7 @@ public class ErrorHeaderTest {
         assertNotNull(jsonString);
         
         final JSONObject jo = new JSONObject(jsonString);
+        assertEquals(MslConstants.VERSION, jo.getString(KEY_VERSION));
         final JSONObject entityAuthDataJo = jo.getJSONObject(KEY_ENTITY_AUTHENTICATION_DATA);
         assertTrue(JsonUtils.equals(new JSONObject(ENTITY_AUTH_DATA.toJSONString()), entityAuthDataJo));
         final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_ERRORDATA));
@@ -215,6 +220,7 @@ public class ErrorHeaderTest {
         assertNotNull(jsonString);
         
         final JSONObject jo = new JSONObject(jsonString);
+        assertEquals(MslConstants.VERSION, jo.getString(KEY_VERSION));
         final JSONObject entityAuthDataJo = jo.getJSONObject(KEY_ENTITY_AUTHENTICATION_DATA);
         assertTrue(JsonUtils.equals(new JSONObject(ENTITY_AUTH_DATA.toJSONString()), entityAuthDataJo));
         final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_ERRORDATA));
@@ -240,6 +246,7 @@ public class ErrorHeaderTest {
         assertNotNull(jsonString);
         
         final JSONObject jo = new JSONObject(jsonString);
+        assertEquals(MslConstants.VERSION, jo.getString(KEY_VERSION));
         final JSONObject entityAuthDataJo = jo.getJSONObject(KEY_ENTITY_AUTHENTICATION_DATA);
         assertTrue(JsonUtils.equals(new JSONObject(ENTITY_AUTH_DATA.toJSONString()), entityAuthDataJo));
         final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_ERRORDATA));
@@ -265,6 +272,7 @@ public class ErrorHeaderTest {
         assertNotNull(jsonString);
         
         final JSONObject jo = new JSONObject(jsonString);
+        assertEquals(MslConstants.VERSION, jo.getString(KEY_VERSION));
         final JSONObject entityAuthDataJo = jo.getJSONObject(KEY_ENTITY_AUTHENTICATION_DATA);
         assertTrue(JsonUtils.equals(new JSONObject(ENTITY_AUTH_DATA.toJSONString()), entityAuthDataJo));
         final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_ERRORDATA));
@@ -291,6 +299,7 @@ public class ErrorHeaderTest {
         assertTrue(header instanceof ErrorHeader);
         final ErrorHeader joErrorHeader = (ErrorHeader)header;
         
+        assertEquals(errorHeader.getVersion(), joErrorHeader.getVersion());
         assertEquals(errorHeader.getEntityAuthenticationData(), joErrorHeader.getEntityAuthenticationData());
         assertEquals(errorHeader.getTimestamp(), joErrorHeader.getTimestamp());
         assertEquals(errorHeader.getErrorCode(), joErrorHeader.getErrorCode());
@@ -299,6 +308,34 @@ public class ErrorHeaderTest {
         assertEquals(errorHeader.getMessageId(), joErrorHeader.getMessageId());
         assertEquals(errorHeader.getRecipient(), joErrorHeader.getRecipient());
         assertEquals(errorHeader.getUserMessage(), joErrorHeader.getUserMessage());
+    }
+    
+    @Test
+    public void missingVersionParseHeader() throws MslKeyExchangeException, MslUserAuthException, MslException {
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final JSONObject errorHeaderJo = new JSONObject(errorHeader.toJSONString());
+        
+        assertNotNull(errorHeaderJo.remove(KEY_VERSION));
+        
+        final Header header = Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
+        assertNotNull(header);
+        assertTrue(header instanceof ErrorHeader);
+        final ErrorHeader joErrorHeader = (ErrorHeader)header;
+        
+        assertNull(joErrorHeader.getVersion());
+    }
+    
+    @Test
+    public void invalidVersionParseHeader() throws MslKeyExchangeException, MslUserAuthException, MslException {
+        thrown.expect(MslEncodingException.class);
+        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final JSONObject errorHeaderJo = new JSONObject(errorHeader.toJSONString());
+        
+        errorHeaderJo.put(KEY_VERSION, true);
+        
+        Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
     }
     
     @Test

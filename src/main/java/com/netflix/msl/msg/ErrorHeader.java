@@ -105,6 +105,8 @@ public class ErrorHeader extends Header {
      *         provided.
      */
     public ErrorHeader(final MslContext ctx, final EntityAuthenticationData entityAuthData, final String recipient, final long messageId, final ResponseCode errorCode, final int internalCode, final String errorMsg, final String userMsg) throws MslEncodingException, MslCryptoException, MslEntityAuthException, MslMessageException {
+        this.version = MslConstants.VERSION;
+        
         this.entityAuthData = entityAuthData;
         this.recipient = recipient;
         this.timestamp = ctx.getTime() / MILLISECONDS_PER_SECOND;
@@ -166,6 +168,7 @@ public class ErrorHeader extends Header {
      * for the entity authentication scheme.</p>
      * 
      * @param ctx MSL context.
+     * @param version message protocol version. May be null.
      * @param errordata error data JSON representation.
      * @param entityAuthData the entity authentication data.
      * @param signature the header signature.
@@ -178,9 +181,10 @@ public class ErrorHeader extends Header {
      *         (null), the error data is missing or invalid, the message ID is
      *         negative, or the internal code is negative.
      */
-    protected ErrorHeader(final MslContext ctx, final String errordata, final EntityAuthenticationData entityAuthData, final byte[] signature) throws MslEncodingException, MslCryptoException, MslEntityAuthException, MslMessageException {
+    protected ErrorHeader(final MslContext ctx, final String version, final String errordata, final EntityAuthenticationData entityAuthData, final byte[] signature) throws MslEncodingException, MslCryptoException, MslEntityAuthException, MslMessageException {
         final byte[] plaintext;
         try {
+            this.version = version;
             this.entityAuthData = entityAuthData;
             this.signature = signature;
             if (entityAuthData == null)
@@ -247,6 +251,13 @@ public class ErrorHeader extends Header {
         } catch (final JSONException e) {
             throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "errordata " + errordataJO.toString(), e).setEntity(entityAuthData).setMessageId(messageId);
         }
+    }
+    
+    /**
+     * @return the message protocol version or {@code null} if none specified.
+     */
+    public String getVersion() {
+        return version;
     }
     
     /**
@@ -317,6 +328,8 @@ public class ErrorHeader extends Header {
     public String toJSONString() {
         try {
             final JSONObject jsonObj = new JSONObject();
+            if (version != null)
+                jsonObj.put(KEY_VERSION, version);
             jsonObj.put(KEY_ENTITY_AUTHENTICATION_DATA, entityAuthData);
             jsonObj.put(KEY_ERRORDATA, DatatypeConverter.printBase64Binary(errordata));
             jsonObj.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
@@ -359,6 +372,9 @@ public class ErrorHeader extends Header {
             ((errorMsg != null) ? errorMsg.hashCode() : 0) ^
             ((userMsg != null) ? userMsg.hashCode() : 0);
     }
+    
+    /** Protocol version. */
+    private final String version;
 
     /** Entity authentication data. */
     private final EntityAuthenticationData entityAuthData;

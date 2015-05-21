@@ -264,6 +264,7 @@ var MessageHeader$HeaderPeerData;
     /**
      * Create a new token data container object.
      *
+     * @param {?string} version protocol version.
      * @param {MslUser} user MSL user.
      * @param {string} sender message sender.
      * @param {number} timestampSeconds message timestamp in seconds since the epoch.
@@ -275,7 +276,8 @@ var MessageHeader$HeaderPeerData;
      * @param {number} legacy non-replayable boolean.
      * @constructor
      */
-    function CreationData(user, sender, timestampSeconds, messageCryptoContext, headerdata, plaintext, signature, verified, nonReplayable) {
+    function CreationData(version, user, sender, timestampSeconds, messageCryptoContext, headerdata, plaintext, signature, verified, nonReplayable) {
+        this.version = version;
         this.user = user;
         this.sender = sender;
         this.timestampSeconds = timestampSeconds;
@@ -291,6 +293,7 @@ var MessageHeader$HeaderPeerData;
      * Return a properties configuration for the provided property values.
      *
      * @param {MslContext} ctx
+     * @param {string} version
      * @param {ICryptoContext} messageCryptoContext
      * @param {MslUser} user
      * @param {EntityAuthenticationData} entityAuthData
@@ -317,7 +320,7 @@ var MessageHeader$HeaderPeerData;
      * @param {boolean} verified
      * @return {object} the properties configuration.
      */
-    function buildProperties(ctx, messageCryptoContext, user,
+    function buildProperties(ctx, version, messageCryptoContext, user,
             entityAuthData, masterToken, sender, recipient, timestampSeconds, messageId,
             keyRequestData, keyResponseData,
             userAuthData, userIdToken, serviceTokens,
@@ -327,6 +330,8 @@ var MessageHeader$HeaderPeerData;
     {
         // The properties.
         return {
+            /** Protocol version. */
+            version: { value: version, writable: false, configurable: false },
             /**
              * Returns the crypto context that was used to process the header data.
              * This crypto context should also be used to process the payload data if
@@ -568,6 +573,9 @@ var MessageHeader$HeaderPeerData;
 
                     // Create the header data.
                     if (!creationData) {
+                        // Set the version.
+                        var version = MslConstants$VERSION;
+                        
                         // Grab the user.
                         var user = (userIdToken) ? userIdToken.user : null;
                         
@@ -617,7 +625,7 @@ var MessageHeader$HeaderPeerData;
                                     messageCryptoContext.sign(headerdata, {
                                         result: function(signature) {
                                             AsyncExecutor(callback, function() {
-                                                var props = buildProperties(ctx, messageCryptoContext, user, entityAuthData,
+                                                var props = buildProperties(ctx, version, messageCryptoContext, user, entityAuthData,
                                                     masterToken, sender, recipient, timestampSeconds, messageId,
                                                     keyRequestData, keyResponseData,
                                                     userAuthData, userIdToken, serviceTokens,
@@ -657,6 +665,7 @@ var MessageHeader$HeaderPeerData;
                             }
                         });
                     } else {
+                        var version = creationData.version;
                         var user = creationData.user;
                         var timestampSeconds = creationData.timestampSeconds;
                         var messageCryptoContext = creationData.messageCryptoContext;
@@ -666,7 +675,7 @@ var MessageHeader$HeaderPeerData;
                         var verified = creationData.verified;
                         nonReplayable = creationData.nonReplayable;
 
-                        var props = buildProperties(ctx, messageCryptoContext, user, entityAuthData,
+                        var props = buildProperties(ctx, version, messageCryptoContext, user, entityAuthData,
                             masterToken, sender, recipient, timestampSeconds, messageId,
                             keyRequestData, keyResponseData,
                             userAuthData, userIdToken, serviceTokens,
@@ -738,6 +747,8 @@ var MessageHeader$HeaderPeerData;
         /** @inheritDoc */
         toJSON: function toJSON() {
             var jsonObj = {};
+            if (this.version)
+                jsonObj[Header$KEY_VERSION] = this.version;
             if (this.masterToken)
                 jsonObj[Header$KEY_MASTER_TOKEN] = this.masterToken;
             else
@@ -1045,6 +1056,7 @@ var MessageHeader$HeaderPeerData;
      * will be used.</p>
      *
      * @param {MslContext} ctx MSL context.
+     * @param {string} version message protocol version. May be null.
      * @param {string} headerdata header data JSON representation.
      * @param {EntityAuthenticationData} entityAuthData the entity authentication data. May be null if a
      *        master token is provided.
@@ -1073,7 +1085,7 @@ var MessageHeader$HeaderPeerData;
      *         missing or the message ID is negative.
      * @throws MslException if a token is improperly bound to another token.
      */
-    MessageHeader$parse = function MessageHeader$parse(ctx, headerdata, entityAuthData, masterToken, signature, cryptoContexts, callback) {
+    MessageHeader$parse = function MessageHeader$parse(ctx, version, headerdata, entityAuthData, masterToken, signature, cryptoContexts, callback) {
         AsyncExecutor(callback, function() {
             entityAuthData = (!masterToken) ? entityAuthData : null;
             if (!entityAuthData && !masterToken)
@@ -1130,7 +1142,7 @@ var MessageHeader$HeaderPeerData;
                 if (!plaintext) {
                     var headerData = new HeaderData(null, 1, null, false, false, null, [], null, null, null, []);
                     var headerPeerData = new HeaderPeerData(null, null, []);
-                    var creationData = new CreationData(null, null, null, messageCryptoContext, headerdata, plaintext, signature, verified, false);
+                    var creationData = new CreationData(version, null, null, null, messageCryptoContext, headerdata, plaintext, signature, verified, false);
                     new MessageHeader(ctx, entityAuthData, masterToken, headerData, headerPeerData, creationData, callback);
                     return;
                 }
@@ -1159,10 +1171,10 @@ var MessageHeader$HeaderPeerData;
                 var sender = (masterToken) ? headerdataJO[KEY_SENDER] : null;
                 if (masterToken && (!sender || typeof sender !== 'string'))
                     throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson).setEntity(masterToken).setEntity(entityAuthData).setMessageId(messageId);
-                var recipient = (headerdataJO[KEY_RECIPIENT] !== 'undefined') ? headerdataJO[KEY_RECIPIENT] : null;
+                var recipient = (typeof headerdataJO[KEY_RECIPIENT] !== 'undefined') ? headerdataJO[KEY_RECIPIENT] : null;
                 if (recipient && typeof recipient !== 'string')
                     throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson).setEntity(masterToken).setEntity(entityAuthData).setMessageId(messageId);
-                var timestampSeconds = (headerdataJO[KEY_TIMESTAMP] !== 'undefined') ? headerdataJO[KEY_TIMESTAMP] : null;
+                var timestampSeconds = (typeof headerdataJO[KEY_TIMESTAMP] !== 'undefined') ? headerdataJO[KEY_TIMESTAMP] : null;
                 if (timestampSeconds && typeof timestampSeconds !== 'number')
                     throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson).setEntity(masterToken).setEntity(entityAuthData).setMessageId(messageId);
                 
@@ -1274,7 +1286,7 @@ var MessageHeader$HeaderPeerData;
                                                                                             keyRequestData, keyResponseData, userAuthData, userIdToken,
                                                                                             serviceTokens);
                                                                                     var headerPeerData = new HeaderPeerData(peerMasterToken, peerUserIdToken, peerServiceTokens);
-                                                                                    var creationData = new CreationData(user, sender, timestampSeconds, messageCryptoContext, headerdata, plaintext, signature, verified, nonReplayable);
+                                                                                    var creationData = new CreationData(version, user, sender, timestampSeconds, messageCryptoContext, headerdata, plaintext, signature, verified, nonReplayable);
                                                                                     new MessageHeader(ctx, entityAuthData, masterToken, headerData, headerPeerData, creationData, callback);
                                                                                 });
                                                                             },

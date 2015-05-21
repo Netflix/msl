@@ -24,6 +24,9 @@ import java.util.Set;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public abstract class MslConstants {
+    /** Protocol version string. */
+    public static final String VERSION = "1.0";
+    
     /** RFC-4627 defines UTF-8 as the default encoding. */
     public static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
     

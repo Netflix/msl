@@ -96,12 +96,14 @@ var ErrorHeader$parse;
     /**
      * Create a new error data container object.
      *
+     * @param {?string} version protocol version.
      * @param {Uint8Array} errordata raw error data.
      * @param {Uint8Array} signature raw signature.
      * @param {number} timestampSeconds creation timestamp in seconds since the epoch.
      * @constructor
      */
-    function CreationData(errordata, signature, timestampSeconds) {
+    function CreationData(version, errordata, signature, timestampSeconds) {
+        this.version = version;
         this.errordata = errordata;
         this.signature = signature;
         this.timestampSeconds = timestampSeconds;
@@ -151,6 +153,7 @@ var ErrorHeader$parse;
 
                 // Construct the error data.
                 if (!creationData) {
+                    var version = MslConstants$VERSION;
                     var timestampSeconds = ctx.getTime() / MILLISECONDS_PER_SECOND;
                     
                     // Construct the JSON.
@@ -186,6 +189,7 @@ var ErrorHeader$parse;
                                         AsyncExecutor(callback, function() {
                                             // The properties.
                                             var props = {
+                                                version: { value: version, writable: false, configurable: false },
                                                 entityAuthenticationData: { value: entityAuthData, writable: false, configurable: false },
                                                 recipient: { value: recipient, writable: false, configurable: false },
                                                 timestampSeconds: { value: timestampSeconds, writable: false, enumerable: false, configurable: false },
@@ -224,12 +228,14 @@ var ErrorHeader$parse;
                         }
                     });
                 } else {
+                    var version = creationData.version;
                     var timestampSeconds = creationData.timestampSeconds;
                     var errordata = creationData.errordata;
                     var signature = creationData.signature;
 
                     // The properties.
                     var props = {
+                        version: { value: version, writable: false, configurable: false },
                         entityAuthenticationData: { value: entityAuthData, writable: false, configurable: false },
                         recipient: { value: recipient, writable: false, configurable: false },
                         timestampSeconds: { value: timestampSeconds, writable: false, enumerable: false, configurable: false },
@@ -257,6 +263,8 @@ var ErrorHeader$parse;
         /** @inheritDoc */
         toJSON: function toJSON() {
             var jsonObj = {};
+            if (this.version)
+                jsonObj[Header$KEY_VERSION] = this.version;
             jsonObj[Header$KEY_ENTITY_AUTHENTICATION_DATA] = this.entityAuthenticationData;
             jsonObj[Header$KEY_ERRORDATA] = base64$encode(this.errordata);
             jsonObj[Header$KEY_SIGNATURE] = base64$encode(this.signature);
@@ -299,6 +307,7 @@ var ErrorHeader$parse;
      * for the entity authentication scheme.
      *
      * @param {MslContext} ctx MSL context.
+     * @param {string} version message protocol version. May be null.
      * @param {string} errordata error data JSON representation.
      * @param {EntityAuthenticationData} entityAuthData the entity authentication data.
      * @param {Uint8Array} signature the header signature.
@@ -314,7 +323,7 @@ var ErrorHeader$parse;
      *         (null) or the error data is missing or the message ID is
      *         negative or the internal code is negative.
      */
-    ErrorHeader$parse = function ErrorHeader$parse(ctx, errordata, entityAuthData, signature, callback) {
+    ErrorHeader$parse = function ErrorHeader$parse(ctx, version, errordata, entityAuthData, signature, callback) {
         AsyncExecutor(callback, function() {
             if (!entityAuthData)
                 throw new MslMessageException(MslError.MESSAGE_ENTITY_NOT_FOUND);
@@ -404,7 +413,7 @@ var ErrorHeader$parse;
                                     }
 
                                     // Return the error header.
-                                    var creationData = new CreationData(errordata, signature, timestampSeconds);
+                                    var creationData = new CreationData(version, errordata, signature, timestampSeconds);
                                     new ErrorHeader(ctx, entityAuthData, recipient, messageId, errorCode, internalCode, errorMsg, userMsg, creationData, callback);
                                 });
                             },

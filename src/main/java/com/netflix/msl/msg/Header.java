@@ -46,12 +46,14 @@ import com.netflix.msl.util.MslContext;
  * header = {
  *   "#mandatory" : [ "headerdata", "signature" ],
  *   "#conditions" : [ "entityauthdata xor mastertoken" ],
+ *   "version" : "string",
  *   "entityauthdata" : entityauthdata,
  *   "mastertoken" : mastertoken,
  *   "headerdata" : "base64",
  *   "signature" : "base64"
  * }} where:
  * <ul>
+ * <li>{@code version} is the protocol version</li>
  * <li>{@code entityauthdata} is the entity authentication data (mutually exclusive with mastertoken)</li>
  * <li>{@code mastertoken} is the master token (mutually exclusive with entityauthdata)</li>
  * <li>{@code headerdata} is the Base64-encoded encrypted header data (headerdata)</li>
@@ -62,11 +64,13 @@ import com.netflix.msl.util.MslContext;
  * {@code
  * errorheader = {
  *   "#mandatory" : [ "entityauthdata", "errordata", "signature" ],
+ *   "version" : "string",
  *   "entityauthdata" : entityauthdata,
  *   "errordata" : "base64",
  *   "signature" : "base64"
  * }} where:
  * <ul>
+ * <li>{@code version} is the protocol version</li>
  * <li>{@code entityauthdata} is the entity authentication data</li>
  * <li>{@code errordata} is the Base64-encoded encrypted error data (errordata)</li>
  * <li>{@code signature} is the Base64-encoded verification data of the error data</li>
@@ -75,6 +79,8 @@ import com.netflix.msl.util.MslContext;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public abstract class Header implements JSONString {
+    /** JSON key protocol version. */
+    protected static final String KEY_VERSION = "version";
     /** JSON key entity authentication data. */
     protected static final String KEY_ENTITY_AUTHENTICATION_DATA = "entityauthdata";
     /** JSON key master token. */
@@ -124,11 +130,15 @@ public abstract class Header implements JSONString {
      */
     public static Header parseHeader(final MslContext ctx, final JSONObject headerJO, final Map<String,ICryptoContext> cryptoContexts) throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslMessageException, MslException {
         // Pull authentication data.
+        final String version;
         final EntityAuthenticationData entityAuthData;
         final MasterToken masterToken;
         final byte[] signature;
         try {
             // Pull message data.
+            version = (headerJO.has(KEY_VERSION))
+                ? headerJO.getString(KEY_VERSION)
+                : null;
             entityAuthData = (headerJO.has(KEY_ENTITY_AUTHENTICATION_DATA))
                 ? EntityAuthenticationData.create(ctx, headerJO.getJSONObject(KEY_ENTITY_AUTHENTICATION_DATA))
                 : null;
@@ -150,7 +160,7 @@ public abstract class Header implements JSONString {
             // Process message headers.
             if (headerJO.has(KEY_HEADERDATA)) {
                 final String headerdata = headerJO.getString(KEY_HEADERDATA);
-                final MessageHeader messageHeader = new MessageHeader(ctx, headerdata, entityAuthData, masterToken, signature, cryptoContexts);
+                final MessageHeader messageHeader = new MessageHeader(ctx, version, headerdata, entityAuthData, masterToken, signature, cryptoContexts);
                 
                 // Make sure the header was verified and decrypted.
                 //
@@ -170,7 +180,7 @@ public abstract class Header implements JSONString {
             // Process error headers.
             else if (headerJO.has(KEY_ERRORDATA)) {
                 final String errordata = headerJO.getString(KEY_ERRORDATA);
-                return new ErrorHeader(ctx, errordata, entityAuthData, signature);
+                return new ErrorHeader(ctx, version, errordata, entityAuthData, signature);
             }
         } catch (final JSONException e) {
             throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "header/errormsg " + headerJO.toString(), e);
