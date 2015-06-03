@@ -1,13 +1,13 @@
 # Message Security Layer
 
 <img src="https://github.com/Netflix/msl/raw/gh-pages/images/msl-logo.gif" alt="MSL Logo" align="left" hspace="20" vspace="0"/>
-Message Security Layer (MSL) is an extensible and flexible secure messaging protocol that can be used to transport data between two or more communicating entities. Data may also be associated with specific users, and treated as confidential or non-replayable if so desired.
+Message Security Layer (MSL) is an extensible and flexible secure messaging framework that can be used to transport data between two or more communicating entities. Data may also be associated with specific users, and treated as confidential or non-replayable if so desired.
 
 <br clear="all"/>
 
 ## Documentation
 
-The [MSL Protocol](https://github.com/Netflix/msl/wiki/) provides a complete description of the protocol and implementation requirements. The [Configuration Guide](https://github.com/Netflix/msl/wiki/Configuration-Guide) presents some common client and server MSL configurations. The protocol and configuration guide were reviewed by an external security firm. No issues were identified.
+The [MSL Framework](https://github.com/Netflix/msl/wiki/) provides a complete description of the framework and its implementation requirements. The [Configuration Guide](https://github.com/Netflix/msl/wiki/Configuration-Guide) presents some common client and server MSL configurations. The framework documentation and configuration guide were reviewed by an external security firm. No issues were identified.
 
 The set of public interfaces and classes an application must implement and use is documented in the [Public Javadoc](http://netflix.github.com/msl/javadoc-public/). Documentation on all of the code, including internal classes and private methods, can be found in the full [Javadoc](http://netflix.github.com/msl/javadoc/).
 
@@ -23,7 +23,7 @@ All third-party libraries are subject to their respective license agreements.
 
 ## Getting Started
 
-To build an application that uses MSL for communication, you must read through and understand the [MSL Protocol](https://github.com/Netflix/msl/wiki/). This is necessary because unlike other security protocols and libraries, you must make choices about how to secure your communication and authenticate your entities and users. The [Configuration Guide](https://github.com/Netflix/msl/wiki/Configuration-Guide) can help you make those decisions.
+To build an application that uses MSL for communication, you must read through and understand the [MSL Framework](https://github.com/Netflix/msl/wiki/). This is necessary because unlike other security protocols and libraries, you must make choices about how to secure your communication and authenticate your entities and users. The [Configuration Guide](https://github.com/Netflix/msl/wiki/Configuration-Guide) can help you make those decisions.
 
 The application interface to the MSL stack is <code>MslControl</code>. The application configuration for a single MSL network is an instance of <code>MslContext</code>. Your application may participate in multiple MSL networks and therefore have multiple instances of <code>MslContext</code> but only one <code>MslControl</code> should be used. Message-specific configuration, such as the user or security properties of that message, are specified in individual instances of <code>MessageContext</code>.
 
