@@ -251,6 +251,7 @@ public class MslError {
     public static final MslError KEYX_INVALID_ENCRYPTION_KEY = new MslError(7019, ResponseCode.FAIL, "Key exchange encryption key is invalid.");
     public static final MslError KEYX_INVALID_HMAC_KEY = new MslError(7020, ResponseCode.FAIL, "Key exchange HMAC key is invalid.");
     public static final MslError KEYX_INVALID_WRAPDATA = new MslError(7021, ResponseCode.FAIL, "Key exchange wrap data is invalid.");
+    public static final MslError UNSUPPORTED_KEYX_SCHEME = new MslError(7022, ResponseCode.FAIL, "Unsupported key exchange scheme.");
 
     // 9 Internal Errors
     public static final MslError INTERNAL_EXCEPTION = new MslError(9000, ResponseCode.TRANSIENT_FAILURE, "Internal exception.");

@@ -278,6 +278,7 @@ util.Class.mixin(MslError,
     KEYX_INVALID_ENCRYPTION_KEY : new MslError(7019, MslConstants$ResponseCode.FAIL, "Key exchange encryption key is invalid."),
     KEYX_INVALID_HMAC_KEY : new MslError(7020, MslConstants$ResponseCode.FAIL, "Key exchange HMAC key is invalid."),
     KEYX_INVALID_WRAPDATA : new MslError(7021, MslConstants$ResponseCode.FAIL, "Key exchange wrap data is invalid."),
+    UNSUPPORTED_KEYX_SCHEME : new MslError(7022, MslConstants$ResponseCode.FAIL, "Unsupported key exchange scheme."),
 
     // 9 Internal Errors
     INTERNAL_EXCEPTION : new MslError(9000, MslConstants$ResponseCode.TRANSIENT_FAILURE, "Internal exception."),
