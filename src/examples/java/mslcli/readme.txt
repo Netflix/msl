@@ -10,3 +10,18 @@ payloads and implementing data abstraction layer for
 marshalling/unmarshalling payload was not viewed as essential
 goal, because it does not help in understanding of MSL core,
 and MSL messages can carry arbitrary data.
+
+To run MSL CLI:
+% cd mslcli
+% ./build.sh
+
+Open two terminals. From one, type
+% ./start_client.sh
+
+From another
+% ./start_server.sh
+
+The client will enter the infinite prompt loop, asking for text message to be sent to the server.
+The response will be printed to stdout, and it's supposed to be the same.
+
+Both client and server must be terminated by Ctrl-C.
