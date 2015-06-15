@@ -21,7 +21,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
-import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
@@ -57,9 +56,9 @@ public final class SharedUtil {
 
     // initialize pre-shared key store
     public static PresharedKeyStore getPresharedKeyStore() {
-        final SecretKey encryptionKey = new SecretKeySpec(ENCR_PSK, JcaAlgorithm.AES);
-        final SecretKey hmacKey       = new SecretKeySpec(HMAC_PSK, JcaAlgorithm.HMAC_SHA256);
-        final SecretKey wrapKey       = new SecretKeySpec(WRAP_PSK, JcaAlgorithm.AESKW);
+        final SecretKey encryptionKey = new SecretKeySpec(hexStringToByteArray(CLIENT_ENCR_PSK_HEX), JcaAlgorithm.AES);
+        final SecretKey hmacKey       = new SecretKeySpec(hexStringToByteArray(CLIENT_HMAC_PSK_HEX), JcaAlgorithm.HMAC_SHA256);
+        final SecretKey wrapKey       = new SecretKeySpec(hexStringToByteArray(CLIENT_WRAP_PSK_HEX), JcaAlgorithm.AESKW);
         final KeySet keySet = new KeySet(encryptionKey, hmacKey, wrapKey);
         final Map<String,KeySet> keySets = new HashMap<String,KeySet>();
         keySets.put(CLIENT_ID, keySet);
@@ -118,11 +117,11 @@ public final class SharedUtil {
         try {
             final KeyFactory rsaKeyFactory = KeyFactory.getInstance("RSA");
 
-            final byte[] privKeyEncoded = DatatypeConverter.parseBase64Binary(RSA_PRIVKEY_B64);
+            final byte[] privKeyEncoded = DatatypeConverter.parseBase64Binary(SERVER_RSA_PRIVKEY_B64);
             final PKCS8EncodedKeySpec privKeySpec = new PKCS8EncodedKeySpec(privKeyEncoded);
             final PrivateKey privKey = rsaKeyFactory.generatePrivate(privKeySpec);
 
-            final byte[] pubKeyEncoded = DatatypeConverter.parseBase64Binary(RSA_PUBKEY_B64);
+            final byte[] pubKeyEncoded = DatatypeConverter.parseBase64Binary(SERVER_RSA_PUBKEY_B64);
             final X509EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(pubKeyEncoded);
             final PublicKey pubKey = rsaKeyFactory.generatePublic(pubKeySpec);
 

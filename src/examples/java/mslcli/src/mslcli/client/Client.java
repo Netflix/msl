@@ -20,7 +20,6 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import java.io.IOException;
 import java.net.URL;
-import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.util.HashSet;
 import java.util.Set;

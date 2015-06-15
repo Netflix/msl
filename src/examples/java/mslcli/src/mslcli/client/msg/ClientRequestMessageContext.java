@@ -31,8 +31,6 @@ import com.netflix.msl.userauth.UserAuthenticationData;
 import com.netflix.msl.util.MslContext;
 
 import java.io.IOException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;

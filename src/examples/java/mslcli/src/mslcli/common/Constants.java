@@ -16,8 +16,6 @@
 
 package mslcli.common;
 
-import mslcli.common.util.SharedUtil;
-
 public final class Constants {
 
     /** Client entity ID */
@@ -33,13 +31,13 @@ public final class Constants {
     public static final String CLIENT_USER_PASSWORD = "simpleMslClientUserPassword";
 
     /** client's pre-shared encryption key */
-    public static final byte[] ENCR_PSK = SharedUtil.hexStringToByteArray("DBD68AC676BFBA6641CA6A4C771053AC");
+    public static final String CLIENT_ENCR_PSK_HEX = "DBD68AC676BFBA6641CA6A4C771053AC";
 
     /** client's pre-shared HMAC key */
-    public static final byte[] HMAC_PSK = SharedUtil.hexStringToByteArray("93EDD1DDB772CFCE217931265DBDB39C2BCDEEAE1BA45D7972A1BA354E9A38C9");
+    public static final String CLIENT_HMAC_PSK_HEX = "93EDD1DDB772CFCE217931265DBDB39C2BCDEEAE1BA45D7972A1BA354E9A38C9";
 
     /** client's pre-shared key wrapping key */
-    public static final byte[] WRAP_PSK = SharedUtil.hexStringToByteArray("8A27C28E6DE751E69F4E963E5E3569FA");
+    public static final String CLIENT_WRAP_PSK_HEX = "8A27C28E6DE751E69F4E963E5E3569FA";
 
     /** Default server port. */
     public static final int DEFAULT_PORT = 8080;
@@ -54,7 +52,7 @@ public final class Constants {
     public static final String SERVER_RSA_KEY_ID = "SimpleMslServerRsaKeyId";
 
     /** Server 2048-bit RSA public key. */
-    public static final String RSA_PUBKEY_B64 = 
+    public static final String SERVER_RSA_PUBKEY_B64 = 
         "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4feorj/FWQi8AhbvjK3G" +
         "L31ct6N+Ad/3FwqNsa4vAsfPmilLRx0DWhkxRycetmQEAa+1THyNCzobIduQE3UY" +
         "8NtdOiy1S3BtHDoiSNEITFPAs0l2OAZ2ZUv0KIr9sLWAznlXMclLOBXtLOQMCs2e" +
@@ -62,8 +60,9 @@ public final class Constants {
         "4tuu0ENsO/ebgMx2ltZ4b9dkzA65DM6XxEC60jK1AW+/wvFb4+iPQqrA7mdiZWsp" +
         "zqMRTaAUDHKJo2LFBc6N0/wuTsXczHx6TYz5b2hrI6N+O7EEuxirAaU+xU7XEqv2" +
         "dQIDAQAB";
+
     /** Server 2048-bit RSA private key. */
-    public static final String RSA_PRIVKEY_B64 =
+    public static final String SERVER_RSA_PRIVKEY_B64 =
         "MIIEowIBAAKCAQEA4feorj/FWQi8AhbvjK3GL31ct6N+Ad/3FwqNsa4vAsfPmilL" +
         "Rx0DWhkxRycetmQEAa+1THyNCzobIduQE3UY8NtdOiy1S3BtHDoiSNEITFPAs0l2" +
         "OAZ2ZUv0KIr9sLWAznlXMclLOBXtLOQMCs2eEy4MO1m9uLywwc2SuAfoZe+wjEIa" +

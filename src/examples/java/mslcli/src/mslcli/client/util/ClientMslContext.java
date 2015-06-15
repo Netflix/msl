@@ -18,24 +18,18 @@ package mslcli.client.util;
 
 import java.security.SecureRandom;
 import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-
 import com.netflix.msl.MslConstants.CompressionAlgorithm;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.crypto.ClientMslCryptoContext;
 import com.netflix.msl.crypto.ICryptoContext;
-import com.netflix.msl.crypto.SymmetricCryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
@@ -44,7 +38,6 @@ import com.netflix.msl.entityauth.PresharedAuthenticationFactory;
 import com.netflix.msl.entityauth.PresharedKeyStore;
 import com.netflix.msl.entityauth.RsaAuthenticationFactory;
 import com.netflix.msl.entityauth.RsaStore;
-import com.netflix.msl.entityauth.UnauthenticatedAuthenticationFactory;
 import com.netflix.msl.keyx.AsymmetricWrappedExchange;
 import com.netflix.msl.keyx.SymmetricWrappedExchange;
 import com.netflix.msl.keyx.KeyExchangeFactory;
@@ -59,7 +52,6 @@ import com.netflix.msl.userauth.UserAuthenticationScheme;
 import com.netflix.msl.util.AuthenticationUtils;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslStore;
-import com.netflix.msl.util.SimpleMslStore;
 
 import mslcli.common.util.SharedUtil;
 
@@ -113,9 +105,10 @@ public final class ClientMslContext implements MslContext {
         this.userAuthFactory = new EmailPasswordAuthenticationFactory(emailPasswordStore, authutils);
         
         // Key exchange factories.
-        this.keyxFactories = new TreeSet<KeyExchangeFactory>(SharedUtil.getKeyExchangeFactoryComparator());
-        this.keyxFactories.add(new AsymmetricWrappedExchange(authutils));
-        this.keyxFactories.add(new SymmetricWrappedExchange(authutils));
+        final TreeSet<KeyExchangeFactory> keyxTmpFactories = new TreeSet<KeyExchangeFactory>(SharedUtil.getKeyExchangeFactoryComparator());
+        keyxTmpFactories.add(new AsymmetricWrappedExchange(authutils));
+        keyxTmpFactories.add(new SymmetricWrappedExchange(authutils));
+        this.keyxFactories = Collections.unmodifiableSortedSet(keyxTmpFactories);
 
         // key token factory
         this.tokenFactory = new ClientTokenFactory();
