@@ -61,6 +61,8 @@ import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslStore;
 import com.netflix.msl.util.SimpleMslStore;
 
+import mslcli.common.util.SharedUtil;
+
 /**
  * <p>The sample client MSL context for clients talking to trusted network servers.</p>
  * 
@@ -68,36 +70,6 @@ import com.netflix.msl.util.SimpleMslStore;
  */
 
 public final class ClientMslContext implements MslContext {
-    /**
-     * Key exchange factory comparator.
-     */
-    private static class KeyExchangeFactoryComparator implements Comparator<KeyExchangeFactory> {
-        /** Scheme priorities. Lower values are higher priority. */
-        private final Map<KeyExchangeScheme,Integer> schemePriorities = new HashMap<KeyExchangeScheme,Integer>();
-
-        /**
-         * Create a new key exchange factory comparator.
-         */
-        public KeyExchangeFactoryComparator() {
-            schemePriorities.put(KeyExchangeScheme.JWK_LADDER, 0);
-            schemePriorities.put(KeyExchangeScheme.JWE_LADDER, 1);
-            schemePriorities.put(KeyExchangeScheme.DIFFIE_HELLMAN, 2);
-            schemePriorities.put(KeyExchangeScheme.SYMMETRIC_WRAPPED, 3);
-            schemePriorities.put(KeyExchangeScheme.ASYMMETRIC_WRAPPED, 4);
-        }
-
-        /* (non-Javadoc)
-         * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
-         */
-        @Override
-        public int compare(KeyExchangeFactory a, KeyExchangeFactory b) {
-            final KeyExchangeScheme schemeA = a.getScheme();
-            final KeyExchangeScheme schemeB = b.getScheme();
-            final Integer priorityA = schemePriorities.get(schemeA);
-            final Integer priorityB = schemePriorities.get(schemeB);
-            return priorityA.compareTo(priorityB);
-        }
-    }
     
     /**
      * <p>Create a new MSL context.</p>
@@ -107,10 +79,10 @@ public final class ClientMslContext implements MslContext {
      * @param emailPasswords user email/password store.
      */
     public ClientMslContext(final String clientId,
-                                  final PresharedKeyStore presharedKeyStore,
-                                  final RsaStore rsaStore,
-                                  final EmailPasswordStore emailPasswordStore,
-                                  final MslStore mslStore)
+                            final PresharedKeyStore presharedKeyStore,
+                            final RsaStore rsaStore,
+                            final EmailPasswordStore emailPasswordStore,
+                            final MslStore mslStore)
     {
         // Message capabilities.
         final Set<CompressionAlgorithm> compressionAlgos =
@@ -136,15 +108,17 @@ public final class ClientMslContext implements MslContext {
         this.entityAuthFactories = new HashSet<EntityAuthenticationFactory>();
         this.entityAuthFactories.add(new PresharedAuthenticationFactory(presharedKeyStore, authutils));
         this.entityAuthFactories.add(new RsaAuthenticationFactory(rsaStore, authutils));
-        this.entityAuthFactories.add(new UnauthenticatedAuthenticationFactory(authutils));
         
         // User authentication factories.
         this.userAuthFactory = new EmailPasswordAuthenticationFactory(emailPasswordStore, authutils);
         
         // Key exchange factories.
-        this.keyxFactories = new TreeSet<KeyExchangeFactory>(new KeyExchangeFactoryComparator());
+        this.keyxFactories = new TreeSet<KeyExchangeFactory>(SharedUtil.getKeyExchangeFactoryComparator());
         this.keyxFactories.add(new AsymmetricWrappedExchange(authutils));
         this.keyxFactories.add(new SymmetricWrappedExchange(authutils));
+
+        // key token factory
+        this.tokenFactory = new ClientTokenFactory();
 
         // MSL store
         this.mslStore = mslStore;
@@ -261,7 +235,7 @@ public final class ClientMslContext implements MslContext {
     private final ICryptoContext mslCryptoContext;
     private final Set<EntityAuthenticationFactory> entityAuthFactories;
     private final UserAuthenticationFactory userAuthFactory;
-    private final TokenFactory tokenFactory = new ClientTokenFactory();
+    private final TokenFactory tokenFactory;
     private final SortedSet<KeyExchangeFactory> keyxFactories;
     private final MslStore mslStore;
 }

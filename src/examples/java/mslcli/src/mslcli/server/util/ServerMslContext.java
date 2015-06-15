@@ -18,6 +18,7 @@ package mslcli.server.util;
 
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -82,37 +83,6 @@ public class ServerMslContext implements MslContext {
     private static final byte[] MSL_WRAPPING_KEY = SharedUtil.hexStringToByteArray("0x83b69a1580d323a20xe79dd9b22626b3f6");
 
     /**
-     * Key exchange factory comparator.
-     */
-    private static class KeyExchangeFactoryComparator implements Comparator<KeyExchangeFactory> {
-        /** Scheme priorities. Lower values are higher priority. */
-        private final Map<KeyExchangeScheme,Integer> schemePriorities = new HashMap<KeyExchangeScheme,Integer>();
-
-        /**
-         * Create a new key exchange factory comparator.
-         */
-        public KeyExchangeFactoryComparator() {
-            schemePriorities.put(KeyExchangeScheme.JWK_LADDER, 0);
-            schemePriorities.put(KeyExchangeScheme.JWE_LADDER, 1);
-            schemePriorities.put(KeyExchangeScheme.DIFFIE_HELLMAN, 2);
-            schemePriorities.put(KeyExchangeScheme.SYMMETRIC_WRAPPED, 3);
-            schemePriorities.put(KeyExchangeScheme.ASYMMETRIC_WRAPPED, 4);
-        }
-
-        /* (non-Javadoc)
-         * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
-         */
-        @Override
-        public int compare(KeyExchangeFactory a, KeyExchangeFactory b) {
-            final KeyExchangeScheme schemeA = a.getScheme();
-            final KeyExchangeScheme schemeB = b.getScheme();
-            final Integer priorityA = schemePriorities.get(schemeA);
-            final Integer priorityB = schemePriorities.get(schemeB);
-            return priorityA.compareTo(priorityB);
-        }
-    }
-    
-    /**
      * <p>Create a new simple MSL context.</p>
      * 
      * @param serverId local server entity identity.
@@ -142,16 +112,18 @@ public class ServerMslContext implements MslContext {
         // Entity authentication factories.
         this.entityAuthFactories = new HashSet<EntityAuthenticationFactory>();
         this.entityAuthFactories.add(new PresharedAuthenticationFactory(presharedKeyStore, authutils));
-        this.entityAuthFactories.add(new UnauthenticatedAuthenticationFactory(authutils));
         this.entityAuthFactories.add(new RsaAuthenticationFactory(rsaStore, authutils));
         
         // User authentication factories.
         this.userAuthFactory = new EmailPasswordAuthenticationFactory(emailPasswordStore, authutils);
         
         // Key exchange factories.
-        this.keyxFactories = new TreeSet<KeyExchangeFactory>(new KeyExchangeFactoryComparator());
-        //this.keyxFactories.add(new AsymmetricWrappedExchange(authutils));
-        this.keyxFactories.add(new SymmetricWrappedExchange(authutils));
+        final TreeSet<KeyExchangeFactory> keyxTmpFactories = new TreeSet<KeyExchangeFactory>(SharedUtil.getKeyExchangeFactoryComparator());
+        keyxTmpFactories.add(new SymmetricWrappedExchange(authutils));
+        this.keyxFactories = Collections.unmodifiableSortedSet(keyxTmpFactories);
+
+        // key token factory
+        this.tokenFactory = new ServerTokenFactory();
 
         this.mslStore = mslStore;
     }
@@ -267,7 +239,7 @@ public class ServerMslContext implements MslContext {
     private final ICryptoContext mslCryptoContext;
     private final Set<EntityAuthenticationFactory> entityAuthFactories;
     private final UserAuthenticationFactory userAuthFactory;
-    private final TokenFactory tokenFactory = new ServerTokenFactory();
+    private final TokenFactory tokenFactory;
     private final SortedSet<KeyExchangeFactory> keyxFactories;
     private final MslStore mslStore;
 }

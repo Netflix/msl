@@ -29,6 +29,7 @@ import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import javax.crypto.SecretKey;
@@ -39,6 +40,8 @@ import com.netflix.msl.crypto.JcaAlgorithm;
 import com.netflix.msl.entityauth.PresharedKeyStore;
 import com.netflix.msl.entityauth.PresharedKeyStore.KeySet;
 import com.netflix.msl.entityauth.RsaStore;
+import com.netflix.msl.keyx.KeyExchangeFactory;
+import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.userauth.EmailPasswordStore;
 import com.netflix.msl.util.MslStore;
 import com.netflix.msl.util.SimpleMslStore;
@@ -130,5 +133,42 @@ public final class SharedUtil {
             throw new RuntimeException("Invalid RSA private key.", e);
         }
         return rsaStore;
+    }
+
+    /**
+     * Key exchange factory comparator.
+     */
+    private static class KeyExchangeFactoryComparator implements Comparator<KeyExchangeFactory> {
+        /** Scheme priorities. Lower values are higher priority. */
+        private final Map<KeyExchangeScheme,Integer> schemePriorities = new HashMap<KeyExchangeScheme,Integer>();
+
+        /**
+         * Create a new key exchange factory comparator.
+         */
+        public KeyExchangeFactoryComparator() {
+            schemePriorities.put(KeyExchangeScheme.JWK_LADDER, 0);
+            schemePriorities.put(KeyExchangeScheme.JWE_LADDER, 1);
+            schemePriorities.put(KeyExchangeScheme.DIFFIE_HELLMAN, 2);
+            schemePriorities.put(KeyExchangeScheme.SYMMETRIC_WRAPPED, 3);
+            schemePriorities.put(KeyExchangeScheme.ASYMMETRIC_WRAPPED, 4);
+        }
+
+        /* (non-Javadoc)
+         * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
+         */
+        @Override
+        public int compare(KeyExchangeFactory a, KeyExchangeFactory b) {
+            final KeyExchangeScheme schemeA = a.getScheme();
+            final KeyExchangeScheme schemeB = b.getScheme();
+            final Integer priorityA = schemePriorities.get(schemeA);
+            final Integer priorityB = schemePriorities.get(schemeB);
+            return priorityA.compareTo(priorityB);
+        }
+    }
+
+    private static final KeyExchangeFactoryComparator keyxFactoryComparator = new KeyExchangeFactoryComparator();
+
+    public static KeyExchangeFactoryComparator getKeyExchangeFactoryComparator() {
+        return keyxFactoryComparator;
     }
 }
