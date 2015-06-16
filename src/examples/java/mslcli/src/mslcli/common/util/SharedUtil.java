@@ -32,10 +32,13 @@ import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import javax.crypto.SecretKey;
 import javax.crypto.interfaces.DHPrivateKey;
 import javax.crypto.interfaces.DHPublicKey;
@@ -254,5 +257,21 @@ public final class SharedUtil {
             throw new MslInternalException("Diffie-Hellman algorithm parameters rejected by Diffie-Hellman key agreement.", e);
         }
         return new DiffieHellmanPair(pubKey, privKey);
+    }
+
+    public static SortedSet<KeyExchangeFactory> getKeyExchangeFactorySet(KeyExchangeFactory... factories) {
+        final TreeSet<KeyExchangeFactory> keyxFactoriesSet = new TreeSet<KeyExchangeFactory>(getKeyExchangeFactoryComparator());
+        keyxFactoriesSet.addAll(Arrays.asList(factories));
+        return  Collections.unmodifiableSortedSet(keyxFactoriesSet);
+    }
+
+    public static KeyPair generateAsymmetricWrapepdExchangeKeyPair() throws MslException {
+        try {
+            final KeyPairGenerator generator = CryptoCache.getKeyPairGenerator("RSA");
+            generator.initialize(1024);
+            return generator.generateKeyPair();
+        } catch (final NoSuchAlgorithmException e) {
+            throw new MslInternalException("RSA algorithm not found.", e);
+        }
     }
 }

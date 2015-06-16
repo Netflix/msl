@@ -18,13 +18,11 @@ package mslcli.client.util;
 
 import java.security.SecureRandom;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.TreeSet;
 
 import com.netflix.msl.MslConstants.CompressionAlgorithm;
 import com.netflix.msl.MslCryptoException;
@@ -106,11 +104,11 @@ public final class ClientMslContext implements MslContext {
         this.userAuthFactory = new EmailPasswordAuthenticationFactory(emailPasswordStore, authutils);
         
         // Key exchange factories.
-        final TreeSet<KeyExchangeFactory> keyxTmpFactories = new TreeSet<KeyExchangeFactory>(SharedUtil.getKeyExchangeFactoryComparator());
-//        keyxTmpFactories.add(new AsymmetricWrappedExchange(authutils));
-        keyxTmpFactories.add(new SymmetricWrappedExchange(authutils));
-        keyxTmpFactories.add(new DiffieHellmanExchange(SharedUtil.getDiffieHellmanParameters(), authutils));
-        this.keyxFactories = Collections.unmodifiableSortedSet(keyxTmpFactories);
+        this.keyxFactories = SharedUtil.getKeyExchangeFactorySet(
+            new AsymmetricWrappedExchange(authutils),
+            new SymmetricWrappedExchange(authutils),
+            new DiffieHellmanExchange(SharedUtil.getDiffieHellmanParameters(), authutils)
+        );
 
         // key token factory
         this.tokenFactory = new ClientTokenFactory();

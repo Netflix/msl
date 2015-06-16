@@ -18,13 +18,11 @@ package mslcli.server.util;
 
 import java.security.SecureRandom;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.TreeSet;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -41,6 +39,7 @@ import com.netflix.msl.entityauth.PresharedKeyStore;
 import com.netflix.msl.entityauth.RsaAuthenticationData;
 import com.netflix.msl.entityauth.RsaAuthenticationFactory;
 import com.netflix.msl.entityauth.RsaStore;
+import com.netflix.msl.keyx.AsymmetricWrappedExchange;
 import com.netflix.msl.keyx.DiffieHellmanExchange;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeScheme;
@@ -68,13 +67,13 @@ import mslcli.server.util.ServerAuthenticationUtils;
 
 public class ServerMslContext implements MslContext {
     /** MSL encryption key. */
-    private static final byte[] MSL_ENCRYPTION_KEY = SharedUtil.hexStringToByteArray("1d58f3b8f747d16ab1093c4ca624eacf");
+    private static final byte[] MSL_ENCRYPTION_KEY = SharedUtil.hexStringToByteArray(MSL_ENCRYPTION_KEY_HEX);
 
     /** MSL HMAC key. */
-    private static final byte[] MSL_HMAC_KEY = SharedUtil.hexStringToByteArray("d7aebfd5879bb0e0ad016a4cf3cb3982f5ba260da520245bb42275bd7947370c");
+    private static final byte[] MSL_HMAC_KEY       = SharedUtil.hexStringToByteArray(MSL_HMAC_KEY_HEX);
 
     /** MSL wrapping key. */
-    private static final byte[] MSL_WRAPPING_KEY = SharedUtil.hexStringToByteArray("0x83b69a1580d323a20xe79dd9b22626b3f6");
+    private static final byte[] MSL_WRAPPING_KEY   = SharedUtil.hexStringToByteArray(MSL_WRAPPING_KEY_HEX);
 
     /**
      * <p>Create a new simple MSL context.</p>
@@ -91,8 +90,8 @@ public class ServerMslContext implements MslContext {
         
         // MSL crypto context.
         final SecretKey encryptionKey = new SecretKeySpec(MSL_ENCRYPTION_KEY, "AES");
-        final SecretKey hmacKey = new SecretKeySpec(MSL_HMAC_KEY, "HmacSHA256");
-        final SecretKey wrappingKey = new SecretKeySpec(MSL_WRAPPING_KEY, "AES");
+        final SecretKey hmacKey       = new SecretKeySpec(MSL_HMAC_KEY      , "HmacSHA256");
+        final SecretKey wrappingKey   = new SecretKeySpec(MSL_WRAPPING_KEY  , "AES");
         this.mslCryptoContext = new SymmetricCryptoContext(this, serverId, encryptionKey, hmacKey, wrappingKey);
         
         // Create authentication utils.
@@ -112,10 +111,11 @@ public class ServerMslContext implements MslContext {
         this.userAuthFactory = new EmailPasswordAuthenticationFactory(emailPasswordStore, authutils);
         
         // Key exchange factories.
-        final TreeSet<KeyExchangeFactory> keyxTmpFactories = new TreeSet<KeyExchangeFactory>(SharedUtil.getKeyExchangeFactoryComparator());
-        keyxTmpFactories.add(new SymmetricWrappedExchange(authutils));
-        keyxTmpFactories.add(new DiffieHellmanExchange(SharedUtil.getDiffieHellmanParameters(), authutils));
-        this.keyxFactories = Collections.unmodifiableSortedSet(keyxTmpFactories);
+        this.keyxFactories = SharedUtil.getKeyExchangeFactorySet(
+            new AsymmetricWrappedExchange(authutils),
+            new SymmetricWrappedExchange(authutils),
+            new DiffieHellmanExchange(SharedUtil.getDiffieHellmanParameters(), authutils)
+        );
 
         // key token factory
         this.tokenFactory = new ServerTokenFactory();

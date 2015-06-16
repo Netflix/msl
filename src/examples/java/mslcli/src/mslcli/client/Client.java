@@ -21,6 +21,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URL;
+import java.security.KeyPair;
 import java.security.Security;
 import java.util.Arrays;
 import java.util.Collections;
@@ -33,8 +34,9 @@ import javax.crypto.interfaces.DHPrivateKey;
 import com.netflix.msl.MslException;
 import com.netflix.msl.entityauth.PresharedKeyStore;
 import com.netflix.msl.entityauth.RsaStore;
-import com.netflix.msl.keyx.KeyRequestData;
+import com.netflix.msl.keyx.AsymmetricWrappedExchange;
 import com.netflix.msl.keyx.DiffieHellmanExchange;
+import com.netflix.msl.keyx.KeyRequestData;
 import com.netflix.msl.keyx.SymmetricWrappedExchange;
 import com.netflix.msl.msg.ConsoleFilterStreamFactory;
 import com.netflix.msl.msg.MessageContext;
@@ -59,9 +61,20 @@ public final class Client {
         Security.addProvider(new BouncyCastleProvider());
     }
 
-    private static final String KX_DH = "dh";
-    private static final String KX_SWE = "swe";
-    private static final Set<String> supportedKxTypes = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(KX_DH, KX_SWE)));
+    private static final String KX_DH  = "dh" ; // Diffie-Hellman      Key Exchange
+    private static final String KX_SWE = "swe"; // Symmetric  Wrapped  Key Exchange
+    private static final String KX_AWE = "awe"; // Asymmetric Wrapped  Key Exchange
+
+    private static final Set<String> supportedKxTypes = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(KX_DH, KX_SWE, KX_AWE)));
+
+    // Asymmetric Wrapped Key Exchange Mechanisms
+    private static final Set<String> supportedAsymmetricWrappedExchangeMechanisms = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
+                                                                            AsymmetricWrappedExchange.RequestData.Mechanism.JWE_RSA.toString(),
+                                                                            AsymmetricWrappedExchange.RequestData.Mechanism.JWEJS_RSA.toString(),
+                                                                            AsymmetricWrappedExchange.RequestData.Mechanism.JWK_RSA.toString(),
+                                                                            AsymmetricWrappedExchange.RequestData.Mechanism.JWK_RSAES.toString())));
+                                                                           
+
     private static final String QUIT = "q";
 
     public static void main(String[] args) throws Exception {
@@ -142,7 +155,7 @@ public final class Client {
         return SharedUtil.readIntoArray(ch.input);
     }
 
-    private void setKeyRequestData(final String kxType) throws MslException {
+    private void setKeyRequestData(final String kxType) throws MslException, IOException {
         mslStore.clearCryptoContexts();
         keyRequestDataSet.clear();
         if (KX_DH.equals(kxType)) {
@@ -150,6 +163,15 @@ public final class Client {
             keyRequestDataSet.add(new DiffieHellmanExchange.RequestData(DEFAULT_DH_PARAMS_ID, dhPair.getPublic().getY(), dhPair.getPrivate()));
         } else if (KX_SWE.equals(kxType)) {
             keyRequestDataSet.add(new SymmetricWrappedExchange.RequestData(SymmetricWrappedExchange.KeyId.PSK));
+        } else if (KX_AWE.equals(kxType)) {
+            String mechanism;
+            do {
+                mechanism = SharedUtil.readInput(String.format("Mechanism%s", supportedAsymmetricWrappedExchangeMechanisms.toString()));
+            } while (!supportedAsymmetricWrappedExchangeMechanisms.contains(mechanism));
+            final AsymmetricWrappedExchange.RequestData.Mechanism m = Enum.valueOf(AsymmetricWrappedExchange.RequestData.Mechanism.class, mechanism);
+            final KeyPair keyPair = SharedUtil.generateAsymmetricWrapepdExchangeKeyPair();
+            keyRequestDataSet.add(new AsymmetricWrappedExchange.RequestData(DEFAULT_AWE_KEY_PAIR_ID, m, keyPair.getPublic(), keyPair.getPrivate()));
+            
         } else {
             throw new IllegalArgumentException("Unsupported Key Exchange Type " + kxType);
         }

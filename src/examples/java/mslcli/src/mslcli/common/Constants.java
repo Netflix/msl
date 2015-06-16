@@ -39,6 +39,9 @@ public final class Constants {
     /** client's pre-shared key wrapping key */
     public static final String CLIENT_WRAP_PSK_HEX = "8A27C28E6DE751E69F4E963E5E3569FA";
 
+    /** default asymmetrik key wrap exchange key pair id */
+    public static final String DEFAULT_AWE_KEY_PAIR_ID = "default_awe_key_id";
+
     /** Default server port. */
     public static final int DEFAULT_PORT = 8080;
 
@@ -91,4 +94,13 @@ public final class Constants {
 
     /** Default DH parameters ID. */
     public static final String DEFAULT_DH_PARAMS_ID = "default1";
+
+    // MSL Encryption Key
+    public static final String MSL_ENCRYPTION_KEY_HEX = "1d58f3b8f747d16ab1093c4ca624eacf";
+
+    // MSL HMAC Key
+    public static final String MSL_HMAC_KEY_HEX       = "d7aebfd5879bb0e0ad016a4cf3cb3982f5ba260da520245bb42275bd7947370c";
+
+    // MSL Key Wrapping Key
+    public static final String MSL_WRAPPING_KEY_HEX   = "83b69a1580d323a2e79dd9b22626b3f6";
 }
