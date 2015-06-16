@@ -169,7 +169,7 @@ public final class Client {
                 mechanism = SharedUtil.readInput(String.format("Mechanism%s", supportedAsymmetricWrappedExchangeMechanisms.toString()));
             } while (!supportedAsymmetricWrappedExchangeMechanisms.contains(mechanism));
             final AsymmetricWrappedExchange.RequestData.Mechanism m = Enum.valueOf(AsymmetricWrappedExchange.RequestData.Mechanism.class, mechanism);
-            final KeyPair keyPair = SharedUtil.generateAsymmetricWrapepdExchangeKeyPair();
+            final KeyPair keyPair = SharedUtil.generateAsymmetricWrappedExchangeKeyPair();
             keyRequestDataSet.add(new AsymmetricWrappedExchange.RequestData(DEFAULT_AWE_KEY_PAIR_ID, m, keyPair.getPublic(), keyPair.getPrivate()));
             
         } else {

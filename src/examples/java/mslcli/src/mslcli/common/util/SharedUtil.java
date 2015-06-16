@@ -265,7 +265,7 @@ public final class SharedUtil {
         return  Collections.unmodifiableSortedSet(keyxFactoriesSet);
     }
 
-    public static KeyPair generateAsymmetricWrapepdExchangeKeyPair() throws MslException {
+    public static KeyPair generateAsymmetricWrappedExchangeKeyPair() throws MslException {
         try {
             final KeyPairGenerator generator = CryptoCache.getKeyPairGenerator("RSA");
             generator.initialize(1024);
