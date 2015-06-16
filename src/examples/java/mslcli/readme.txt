@@ -1,17 +1,13 @@
-Initial implementation of MSL Command Line Interface.
+MSL Command Line Interface.
 
 This implementation is very basic by intent.
-Comments / suggestions are welcome to decide in which
-direction this project needs to go and which additional
-features will be most beneficial.
+MSL server is a simple ECHO server accepting arbitrary inputs.
+Passing JSON-formatted payloads and implementing data abstraction
+layer for payload marshalling/unmarshalling was not viewed as an
+essential goal, because it does not help in understanding of MSL
+core; MSL messages in general can carry arbitrary payload data.
 
-MSL server is a simple ECHO server. Passing JSON-formatted
-payloads and implementing data abstraction layer for
-marshalling/unmarshalling payload was not viewed as essential
-goal, because it does not help in understanding of MSL core,
-and MSL messages can carry arbitrary data.
-
-To run MSL CLI:
+To build MSL CLI:
 % cd mslcli
 % ./build.sh
 
@@ -21,11 +17,15 @@ Open two terminals. From one, type
 From another
 % ./start_server.sh
 
-The client will enter the infinite prompt loop, asking for text message to be sent to the server.
-The response will be printed to stdout, and it's supposed to be the same.
+The client program will enter the outer prompt loop, asking for key exchange type.
+Entering "q" in the outer loop exits the client.
 
-Both client and server must be terminated by Ctrl-C.
+Once key exchange type is selected, the client enters the inner prompt loop, asking for text message to send.
+Entering "q" in the inner loop goes back into the outer loop, to choose another key exchange configuration.
 
-Note: mslcli.cli package contains the code that is not being used so far and can be ignored.
-It is meant to be used for command-line options parsing, for a future support of flexible
-client/server configurations.
+The response will be printed to stdout, and it's supposed to be the same as the request.
+
+The server is terminated by pressing Ctrl-C.
+
+Comments / suggestions are welcome to decide in which direction this project needs
+to go and what additional features would be the most beneficial.
