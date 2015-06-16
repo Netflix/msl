@@ -41,9 +41,12 @@ import com.netflix.msl.entityauth.RsaAuthenticationFactory;
 import com.netflix.msl.entityauth.RsaStore;
 import com.netflix.msl.keyx.AsymmetricWrappedExchange;
 import com.netflix.msl.keyx.DiffieHellmanExchange;
+import com.netflix.msl.keyx.JsonWebEncryptionLadderExchange;
+import com.netflix.msl.keyx.JsonWebKeyLadderExchange;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.keyx.SymmetricWrappedExchange;
+import com.netflix.msl.keyx.WrapCryptoContextRepository;
 import com.netflix.msl.msg.MessageCapabilities;
 import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.userauth.EmailPasswordAuthenticationFactory;
@@ -93,6 +96,9 @@ public class ServerMslContext implements MslContext {
         final SecretKey hmacKey       = new SecretKeySpec(MSL_HMAC_KEY      , "HmacSHA256");
         final SecretKey wrappingKey   = new SecretKeySpec(MSL_WRAPPING_KEY  , "AES");
         this.mslCryptoContext = new SymmetricCryptoContext(this, serverId, encryptionKey, hmacKey, wrappingKey);
+
+        // WrapCryptoContextRepository
+        final WrapCryptoContextRepository wrapCryptoContextRepository = null;
         
         // Create authentication utils.
         final AuthenticationUtils authutils = new ServerAuthenticationUtils(serverId);
@@ -114,7 +120,9 @@ public class ServerMslContext implements MslContext {
         this.keyxFactories = SharedUtil.getKeyExchangeFactorySet(
             new AsymmetricWrappedExchange(authutils),
             new SymmetricWrappedExchange(authutils),
-            new DiffieHellmanExchange(SharedUtil.getDiffieHellmanParameters(), authutils)
+            new DiffieHellmanExchange(SharedUtil.getDiffieHellmanParameters(), authutils),
+            new JsonWebEncryptionLadderExchange(wrapCryptoContextRepository, authutils),
+            new JsonWebKeyLadderExchange(wrapCryptoContextRepository, authutils)
         );
 
         // key token factory

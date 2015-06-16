@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
@@ -49,6 +50,7 @@ import javax.xml.bind.DatatypeConverter;
 import com.netflix.msl.MslException;
 import com.netflix.msl.MslInternalException;
 import com.netflix.msl.crypto.CryptoCache;
+import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.crypto.JcaAlgorithm;
 import com.netflix.msl.entityauth.PresharedKeyStore;
 import com.netflix.msl.entityauth.PresharedKeyStore.KeySet;
@@ -56,6 +58,7 @@ import com.netflix.msl.entityauth.RsaStore;
 import com.netflix.msl.keyx.DiffieHellmanParameters;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeScheme;
+import com.netflix.msl.keyx.WrapCryptoContextRepository;
 import com.netflix.msl.userauth.EmailPasswordStore;
 import com.netflix.msl.util.MslStore;
 import com.netflix.msl.util.SimpleMslStore;
@@ -267,11 +270,35 @@ public final class SharedUtil {
 
     public static KeyPair generateAsymmetricWrappedExchangeKeyPair() throws MslException {
         try {
+            System.out.println("Generating RSA Key Pair - please, wait ...");
             final KeyPairGenerator generator = CryptoCache.getKeyPairGenerator("RSA");
-            generator.initialize(1024);
+            generator.initialize(4096);
             return generator.generateKeyPair();
         } catch (final NoSuchAlgorithmException e) {
             throw new MslInternalException("RSA algorithm not found.", e);
         }
+    }
+
+    private static final class SimpleWrapCryptoContextRepository implements WrapCryptoContextRepository {
+        private final Map<ByteBuffer,ICryptoContext> repository = new HashMap<ByteBuffer,ICryptoContext>();
+
+        @Override
+        public void addCryptoContext(final byte[] wrapdata, final ICryptoContext cryptoContext) {
+            repository.put(ByteBuffer.wrap(wrapdata), cryptoContext);
+        }
+
+        @Override
+        public ICryptoContext getCryptoContext(final byte[] wrapdata) {
+            return repository.get(ByteBuffer.wrap(wrapdata));
+        }
+
+        @Override
+        public void removeCryptoContext(final byte[] wrapdata) {
+            repository.remove(ByteBuffer.wrap(wrapdata));
+        }
+    }
+
+    public static WrapCryptoContextRepository getWrapCryptoContextRepository() {
+        return new SimpleWrapCryptoContextRepository();
     }
 }

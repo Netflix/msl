@@ -36,6 +36,8 @@ import com.netflix.msl.entityauth.PresharedKeyStore;
 import com.netflix.msl.entityauth.RsaStore;
 import com.netflix.msl.keyx.AsymmetricWrappedExchange;
 import com.netflix.msl.keyx.DiffieHellmanExchange;
+import com.netflix.msl.keyx.JsonWebEncryptionLadderExchange;
+import com.netflix.msl.keyx.JsonWebKeyLadderExchange;
 import com.netflix.msl.keyx.KeyRequestData;
 import com.netflix.msl.keyx.SymmetricWrappedExchange;
 import com.netflix.msl.msg.ConsoleFilterStreamFactory;
@@ -61,11 +63,14 @@ public final class Client {
         Security.addProvider(new BouncyCastleProvider());
     }
 
-    private static final String KX_DH  = "dh" ; // Diffie-Hellman      Key Exchange
-    private static final String KX_SWE = "swe"; // Symmetric  Wrapped  Key Exchange
-    private static final String KX_AWE = "awe"; // Asymmetric Wrapped  Key Exchange
+    private static final String KX_DH   = "dh" ; // Diffie-Hellman             Key Exchange
+    private static final String KX_SWE  = "sw" ; // Symmetric  Wrapped         Key Exchange
+    private static final String KX_AWE  = "aw" ; // Asymmetric Wrapped         Key Exchange
+    private static final String KX_JWEL = "jwe"; // JSON Web Encryption Ladder Key Exchange
+    private static final String KX_JWKL = "jwk"; // JSON Web Key        Ladder Key Exchange
 
-    private static final Set<String> supportedKxTypes = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(KX_DH, KX_SWE, KX_AWE)));
+    private static final Set<String> supportedKxTypes = Collections.unmodifiableSet(
+        new HashSet<String>(Arrays.asList(KX_DH, KX_SWE, KX_AWE, KX_JWEL, KX_JWKL)));
 
     // Asymmetric Wrapped Key Exchange Mechanisms
     private static final Set<String> supportedAsymmetricWrappedExchangeMechanisms = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
@@ -86,7 +91,7 @@ public final class Client {
         final Client client = new Client();
 
         String kxType;
-        while (!QUIT.equalsIgnoreCase(kxType = SharedUtil.readInput(String.format("KeyExchange%s", supportedKxTypes.toString())))) {
+        while (!QUIT.equalsIgnoreCase(kxType = SharedUtil.readInput(String.format("KeyExchange(\"%s\" to exit) %s", QUIT, supportedKxTypes.toString())))) {
             if (supportedKxTypes.contains(kxType)) {
                 client.setKeyRequestData(kxType);
             } else {
@@ -94,7 +99,7 @@ public final class Client {
             }
                 
             String msg;
-            while (!QUIT.equalsIgnoreCase(msg = SharedUtil.readInput("Message"))) {
+            while (!QUIT.equalsIgnoreCase(msg = SharedUtil.readInput(String.format("Message(\"%s\" to switch key exchange)", QUIT)))) {
                 final byte[] response = client.sendRequest(msg.getBytes(), remoteUrl);
                 System.out.println("\nResponse: " + new String(response));
             }
@@ -156,6 +161,7 @@ public final class Client {
     }
 
     private void setKeyRequestData(final String kxType) throws MslException, IOException {
+        System.out.println("resetting MSL store ...");
         mslStore.clearCryptoContexts();
         keyRequestDataSet.clear();
         if (KX_DH.equals(kxType)) {
@@ -172,6 +178,14 @@ public final class Client {
             final KeyPair keyPair = SharedUtil.generateAsymmetricWrappedExchangeKeyPair();
             keyRequestDataSet.add(new AsymmetricWrappedExchange.RequestData(DEFAULT_AWE_KEY_PAIR_ID, m, keyPair.getPublic(), keyPair.getPrivate()));
             
+        } else if (KX_JWEL.equals(kxType)) {
+            final JsonWebEncryptionLadderExchange.Mechanism m = JsonWebEncryptionLadderExchange.Mechanism.PSK;
+            final byte[] wrapdata = null;
+            keyRequestDataSet.add(new JsonWebEncryptionLadderExchange.RequestData(m, wrapdata));
+        } else if (KX_JWKL.equals(kxType)) {
+            final JsonWebKeyLadderExchange.Mechanism m = JsonWebKeyLadderExchange.Mechanism.PSK;
+            final byte[] wrapdata = null;
+            keyRequestDataSet.add(new JsonWebKeyLadderExchange.RequestData(m, wrapdata));
         } else {
             throw new IllegalArgumentException("Unsupported Key Exchange Type " + kxType);
         }

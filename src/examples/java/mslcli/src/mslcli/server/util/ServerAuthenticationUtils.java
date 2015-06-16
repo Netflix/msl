@@ -70,6 +70,8 @@ public class ServerAuthenticationUtils implements AuthenticationUtils {
         Collections.addAll(this.allowedClientKeyExchangeSchemes         , KeyExchangeScheme.ASYMMETRIC_WRAPPED
                                                                         , KeyExchangeScheme.SYMMETRIC_WRAPPED
                                                                         , KeyExchangeScheme.DIFFIE_HELLMAN
+                                                                        , KeyExchangeScheme.JWE_LADDER
+                                                                        , KeyExchangeScheme.JWK_LADDER
                           );
     }
     
