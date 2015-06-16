@@ -19,16 +19,22 @@ package mslcli.client;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.URL;
 import java.security.Security;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import javax.crypto.interfaces.DHPrivateKey;
 
+import com.netflix.msl.MslException;
 import com.netflix.msl.entityauth.PresharedKeyStore;
 import com.netflix.msl.entityauth.RsaStore;
 import com.netflix.msl.keyx.KeyRequestData;
+import com.netflix.msl.keyx.DiffieHellmanExchange;
 import com.netflix.msl.keyx.SymmetricWrappedExchange;
 import com.netflix.msl.msg.ConsoleFilterStreamFactory;
 import com.netflix.msl.msg.MessageContext;
@@ -53,18 +59,32 @@ public final class Client {
         Security.addProvider(new BouncyCastleProvider());
     }
 
+    private static final String KX_DH = "dh";
+    private static final String KX_SWE = "swe";
+    private static final Set<String> supportedKxTypes = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(KX_DH, KX_SWE)));
+    private static final String QUIT = "q";
+
     public static void main(String[] args) throws Exception {
         if (args.length < 1) {
             System.err.println("Specify remote URL");
             System.exit(1);
         }
         final URL remoteUrl = new URL(args[0]);
-
         final Client client = new Client();
-        String msg;
-        while (!"quit".equalsIgnoreCase(msg = SharedUtil.readInput())) {
-            final byte[] response = client.sendRequest(msg.getBytes(), remoteUrl);
-            System.out.println("\nResponse: " + new String(response));
+
+        String kxType;
+        while (!QUIT.equalsIgnoreCase(kxType = SharedUtil.readInput(String.format("KeyExchange%s", supportedKxTypes.toString())))) {
+            if (supportedKxTypes.contains(kxType)) {
+                client.setKeyRequestData(kxType);
+            } else {
+                continue;
+            }
+                
+            String msg;
+            while (!QUIT.equalsIgnoreCase(msg = SharedUtil.readInput("Message"))) {
+                final byte[] response = client.sendRequest(msg.getBytes(), remoteUrl);
+                System.out.println("\nResponse: " + new String(response));
+            }
         }
     }
 
@@ -75,9 +95,8 @@ public final class Client {
         this.mslCtrl = new MslControl(0);
         this.mslCtrl.setFilterFactory(new ConsoleFilterStreamFactory());
 
-        /* Initialize MSL store.
-         */
-        final MslStore mslStore = SharedUtil.getClientMslStore();
+        // Initialize MSL store.
+        this.mslStore = SharedUtil.getClientMslStore();
 
         // Create the pre-shared key store.
         final PresharedKeyStore presharedKeyStore = SharedUtil.getPresharedKeyStore();
@@ -93,14 +112,15 @@ public final class Client {
 
         // Initialize UserAuthenticationData
         this.userAuthData = new EmailPasswordAuthenticationData(CLIENT_USER_EMAIL, CLIENT_USER_PASSWORD);
+
+        // initialize key request data
+        this.keyRequestDataSet = new HashSet<KeyRequestData>();
     }
 
-    public byte[] sendRequest(byte[] request, URL remoteUrl) throws ExecutionException, IOException, InterruptedException {
+    public byte[] sendRequest(byte[] request, URL remoteUrl) throws ExecutionException, IOException, InterruptedException, MslException {
         final boolean isEncrypted = true;
         final boolean isIntegrityProtected = true;
         final boolean isNonReplayable = false;
-        final Set<KeyRequestData> keyRequestDataSet = new HashSet<KeyRequestData>();
-        keyRequestDataSet.add(new SymmetricWrappedExchange.RequestData(SymmetricWrappedExchange.KeyId.PSK));
 
         final MessageContext msgCtx = new ClientRequestMessageContext(
             mslCtx,
@@ -122,10 +142,27 @@ public final class Client {
         return SharedUtil.readIntoArray(ch.input);
     }
 
+    private void setKeyRequestData(final String kxType) throws MslException {
+        mslStore.clearCryptoContexts();
+        keyRequestDataSet.clear();
+        if (KX_DH.equals(kxType)) {
+            SharedUtil.DiffieHellmanPair dhPair = SharedUtil.generateDiffieHellmanKeys(DEFAULT_DH_PARAMS_ID);
+            keyRequestDataSet.add(new DiffieHellmanExchange.RequestData(DEFAULT_DH_PARAMS_ID, dhPair.getPublic().getY(), dhPair.getPrivate()));
+        } else if (KX_SWE.equals(kxType)) {
+            keyRequestDataSet.add(new SymmetricWrappedExchange.RequestData(SymmetricWrappedExchange.KeyId.PSK));
+        } else {
+            throw new IllegalArgumentException("Unsupported Key Exchange Type " + kxType);
+        }
+    }
+
     /** MSL context */
     private final MslContext mslCtx;
     /** MSL control */
     private final MslControl mslCtrl;
     /** User Authentication Data */
     private final UserAuthenticationData userAuthData;
+    /** key request data set chosen by MslControl in the order of preference */
+    private final Set<KeyRequestData> keyRequestDataSet;
+    /** MSL store storing master tokens with associated crypto context, user id tokens, and service tokens */
+    private final MslStore mslStore;
 }

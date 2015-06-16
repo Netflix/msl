@@ -63,8 +63,13 @@ public class ClientAuthenticationUtils implements AuthenticationUtils {
         Collections.addAll(this.allowedClientUserAuthenticationSchemes  , UserAuthenticationScheme.EMAIL_PASSWORD);
         // allowedServerUserAuthenticationSchemes remains empty
 
-        Collections.addAll(this.allowedServerKeyExchangeSchemes         , KeyExchangeScheme.ASYMMETRIC_WRAPPED, KeyExchangeScheme.SYMMETRIC_WRAPPED);
-        Collections.addAll(this.allowedClientKeyExchangeSchemes         , KeyExchangeScheme.ASYMMETRIC_WRAPPED, KeyExchangeScheme.SYMMETRIC_WRAPPED);
+        Collections.addAll(this.allowedServerKeyExchangeSchemes         , KeyExchangeScheme.ASYMMETRIC_WRAPPED
+                                                                        , KeyExchangeScheme.SYMMETRIC_WRAPPED
+                          );
+        Collections.addAll(this.allowedClientKeyExchangeSchemes         , KeyExchangeScheme.ASYMMETRIC_WRAPPED
+                                                                        , KeyExchangeScheme.SYMMETRIC_WRAPPED
+                                                                        , KeyExchangeScheme.DIFFIE_HELLMAN
+                          );
     }
     
     /* (non-Javadoc)

@@ -88,4 +88,7 @@ public final class Constants {
         "9MMseQKBgBVp+6dU2Rdf1jzwzDH3IRDIVgWeqLlQucbVr/Fipjooioq6nxH2oHUB" +
         "2Qmq7FjYLKfKdaIRRoJhgeUhjVOVdjyIKVhLlBYpztr48jrMD5e4ykvKdAV2tlNv" +
         "B/b+6sSJkqh7Qm6CMO29m+dE2PJBZCzviTkBMOzyme71phGsh//C";
+
+    /** Default DH parameters ID. */
+    public static final String DEFAULT_DH_PARAMS_ID = "default1";
 }

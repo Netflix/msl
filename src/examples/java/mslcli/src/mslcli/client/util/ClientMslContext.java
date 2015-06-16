@@ -39,9 +39,10 @@ import com.netflix.msl.entityauth.PresharedKeyStore;
 import com.netflix.msl.entityauth.RsaAuthenticationFactory;
 import com.netflix.msl.entityauth.RsaStore;
 import com.netflix.msl.keyx.AsymmetricWrappedExchange;
-import com.netflix.msl.keyx.SymmetricWrappedExchange;
+import com.netflix.msl.keyx.DiffieHellmanExchange;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeScheme;
+import com.netflix.msl.keyx.SymmetricWrappedExchange;
 import com.netflix.msl.msg.MessageCapabilities;
 import com.netflix.msl.tokens.ClientTokenFactory;
 import com.netflix.msl.tokens.TokenFactory;
@@ -106,8 +107,9 @@ public final class ClientMslContext implements MslContext {
         
         // Key exchange factories.
         final TreeSet<KeyExchangeFactory> keyxTmpFactories = new TreeSet<KeyExchangeFactory>(SharedUtil.getKeyExchangeFactoryComparator());
-        keyxTmpFactories.add(new AsymmetricWrappedExchange(authutils));
+//        keyxTmpFactories.add(new AsymmetricWrappedExchange(authutils));
         keyxTmpFactories.add(new SymmetricWrappedExchange(authutils));
+        keyxTmpFactories.add(new DiffieHellmanExchange(SharedUtil.getDiffieHellmanParameters(), authutils));
         this.keyxFactories = Collections.unmodifiableSortedSet(keyxTmpFactories);
 
         // key token factory

@@ -21,24 +21,36 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
+import java.math.BigInteger;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyFactory;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import javax.crypto.SecretKey;
+import javax.crypto.interfaces.DHPrivateKey;
+import javax.crypto.interfaces.DHPublicKey;
+import javax.crypto.spec.DHParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
 
+import com.netflix.msl.MslException;
+import com.netflix.msl.MslInternalException;
+import com.netflix.msl.crypto.CryptoCache;
 import com.netflix.msl.crypto.JcaAlgorithm;
 import com.netflix.msl.entityauth.PresharedKeyStore;
 import com.netflix.msl.entityauth.PresharedKeyStore.KeySet;
 import com.netflix.msl.entityauth.RsaStore;
+import com.netflix.msl.keyx.DiffieHellmanParameters;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.userauth.EmailPasswordStore;
@@ -98,9 +110,9 @@ public final class SharedUtil {
         return data;
     }
 
-    public static String readInput() throws IOException {
+    public static String readInput(final String prompt) throws IOException {
         final BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        System.out.print("Message> ");
+        System.out.print(prompt.trim() + "> ");
         return br.readLine();
     }
 
@@ -169,5 +181,78 @@ public final class SharedUtil {
 
     public static KeyExchangeFactoryComparator getKeyExchangeFactoryComparator() {
         return keyxFactoryComparator;
+    }
+
+    private static class SharedDiffieHellmanParameters implements DiffieHellmanParameters {
+        /** Default parameters. */
+        private static BigInteger p =
+            new BigInteger("C2048E076B268761DB1427BA3AD98473D32B0ABDEE98C0827923426F294EDA3392BF0032A1D8092055B58BAA07586A7D3E271C39A8C891F5CEEA4DEBDFA6B023", 16);
+        private static BigInteger g = new BigInteger("02", 16);
+
+        private SharedDiffieHellmanParameters() {
+            final DHParameterSpec paramSpec = new DHParameterSpec(p, g);
+            params.put(DEFAULT_DH_PARAMS_ID, paramSpec);
+        }
+
+        /* (non-Javadoc)
+         * @see com.netflix.msl.keyx.DiffieHellmanParameters#getParameterSpecs()
+         */
+        @Override
+        public Map<String,DHParameterSpec> getParameterSpecs() {
+            return Collections.unmodifiableMap(params);
+        }
+
+        /* (non-Javadoc)
+         * @see com.netflix.msl.keyx.DiffieHellmanParameters#getParameterSpec(java.lang.String)
+         */
+        @Override
+        public DHParameterSpec getParameterSpec(final String id) {
+            return params.get(id);
+        }
+
+        /** Diffie-Hellman parameters Map. */
+        private final Map<String,DHParameterSpec> params = new HashMap<String,DHParameterSpec>();
+    }
+
+    private static final DiffieHellmanParameters sharedDiffieHellmanParameters = new SharedDiffieHellmanParameters();
+
+    public static DiffieHellmanParameters getDiffieHellmanParameters() {
+        return sharedDiffieHellmanParameters;
+    }
+
+    public static final class DiffieHellmanPair {
+        private DiffieHellmanPair(DHPublicKey pub, DHPrivateKey priv) {
+            this.pub  = pub;
+            this.priv = priv;
+        }
+
+        public DHPublicKey getPublic() {
+            return pub;
+        }
+
+        public DHPrivateKey getPrivate() {
+            return priv;
+        }
+
+        private final DHPublicKey pub;
+        private final DHPrivateKey priv;
+    }
+
+    public static DiffieHellmanPair generateDiffieHellmanKeys(final String paramId) throws MslException {
+        final DHParameterSpec paramSpec = getDiffieHellmanParameters().getParameterSpec(paramId);
+        final DHPublicKey pubKey;
+        final DHPrivateKey privKey;
+        try {
+            final KeyPairGenerator generator = CryptoCache.getKeyPairGenerator("DH");
+            generator.initialize(paramSpec);
+            final KeyPair keyPair = generator.generateKeyPair();
+            pubKey = (DHPublicKey)keyPair.getPublic();
+            privKey = (DHPrivateKey)keyPair.getPrivate();
+        } catch (final NoSuchAlgorithmException e) {
+            throw new MslInternalException("DiffieHellman algorithm not found.", e);
+        } catch (final InvalidAlgorithmParameterException e) {
+            throw new MslInternalException("Diffie-Hellman algorithm parameters rejected by Diffie-Hellman key agreement.", e);
+        }
+        return new DiffieHellmanPair(pubKey, privKey);
     }
 }
