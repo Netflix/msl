@@ -41,6 +41,7 @@ import com.netflix.msl.keyx.JsonWebKeyLadderExchange;
 import com.netflix.msl.keyx.KeyRequestData;
 import com.netflix.msl.keyx.SymmetricWrappedExchange;
 import com.netflix.msl.msg.ConsoleFilterStreamFactory;
+import com.netflix.msl.msg.ErrorHeader;
 import com.netflix.msl.msg.MessageContext;
 import com.netflix.msl.msg.MslControl;
 import com.netflix.msl.msg.MslControl.MslChannel;
@@ -157,7 +158,13 @@ public final class Client {
         if (ch == null)
             return null;
 
-        return SharedUtil.readIntoArray(ch.input);
+        final ErrorHeader errHeader = ch.input.getErrorHeader();
+        if (errHeader == null) {
+            return SharedUtil.readIntoArray(ch.input);
+        } else {
+            System.err.println("ERROR: " + errHeader.toJSONString());
+            return null;
+        }
     }
 
     private void setKeyRequestData(final String kxType) throws MslException, IOException {
@@ -175,8 +182,10 @@ public final class Client {
                 mechanism = SharedUtil.readInput(String.format("Mechanism%s", supportedAsymmetricWrappedExchangeMechanisms.toString()));
             } while (!supportedAsymmetricWrappedExchangeMechanisms.contains(mechanism));
             final AsymmetricWrappedExchange.RequestData.Mechanism m = Enum.valueOf(AsymmetricWrappedExchange.RequestData.Mechanism.class, mechanism);
-            final KeyPair keyPair = SharedUtil.generateAsymmetricWrappedExchangeKeyPair();
-            keyRequestDataSet.add(new AsymmetricWrappedExchange.RequestData(DEFAULT_AWE_KEY_PAIR_ID, m, keyPair.getPublic(), keyPair.getPrivate()));
+            if (aweKeyPair == null) {
+               aweKeyPair = SharedUtil.generateAsymmetricWrappedExchangeKeyPair();
+            }
+            keyRequestDataSet.add(new AsymmetricWrappedExchange.RequestData(DEFAULT_AWE_KEY_PAIR_ID, m, aweKeyPair.getPublic(), aweKeyPair.getPrivate()));
             
         } else if (KX_JWEL.equals(kxType)) {
             final JsonWebEncryptionLadderExchange.Mechanism m = JsonWebEncryptionLadderExchange.Mechanism.PSK;
@@ -201,4 +210,6 @@ public final class Client {
     private final Set<KeyRequestData> keyRequestDataSet;
     /** MSL store storing master tokens with associated crypto context, user id tokens, and service tokens */
     private final MslStore mslStore;
+    /** Cached RSA Key Pair for asymmetric key wrap key exchange to avoid expensive key pair generation. */
+    private KeyPair aweKeyPair = null;
 }
