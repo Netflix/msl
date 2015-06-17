@@ -102,7 +102,9 @@ public final class Client {
             String msg;
             while (!QUIT.equalsIgnoreCase(msg = SharedUtil.readInput(String.format("Message(\"%s\" to switch key exchange)", QUIT)))) {
                 final byte[] response = client.sendRequest(msg.getBytes(), remoteUrl);
-                System.out.println("\nResponse: " + new String(response));
+                if (response != null) {
+                    System.out.println("\nResponse: " + new String(response));
+                }
             }
         }
     }
@@ -162,7 +164,11 @@ public final class Client {
         if (errHeader == null) {
             return SharedUtil.readIntoArray(ch.input);
         } else {
-            System.err.println("ERROR: " + errHeader.toJSONString());
+            if (errHeader.getErrorMessage() != null) {
+                System.err.println(String.format("ERROR: error_code %d, error_msg \"%s\"", errHeader.getErrorCode().intValue(), errHeader.getErrorMessage()));
+            } else {
+                System.err.println(String.format("ERROR: %s" + errHeader.toJSONString()));
+            }
             return null;
         }
     }

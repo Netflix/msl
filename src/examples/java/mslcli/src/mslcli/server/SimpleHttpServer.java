@@ -25,6 +25,9 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
+import com.netflix.msl.MslError;
+import com.netflix.msl.MslException;
+
 import mslcli.common.util.SharedUtil;
 
 public class SimpleHttpServer {
@@ -46,30 +49,34 @@ public class SimpleHttpServer {
         public void handle(HttpExchange t) throws IOException {
             System.out.println("Processing request");
 
+            final ByteArrayOutputStream out = new ByteArrayOutputStream();
             try {
                 // Allow requests from anywhere.
                 t.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
-
-                final ByteArrayOutputStream out = new ByteArrayOutputStream();
                 mslServer.processRequest(t.getRequestBody(), out);
-
-                final byte[] response = out.toByteArray();
-
-                t.sendResponseHeaders(200, response.length);
-                OutputStream os = t.getResponseBody();
-                os.write(response);
-                os.close();
             } catch (IOException e) {
-               System.err.println("\nIO-ERROR: " + e);
-               System.err.println("ROOT CAUSE:");
-               SharedUtil.getCause(e).printStackTrace(System.err);
-               throw e;
+                final Throwable thr = SharedUtil.getCause(e);
+                if (thr instanceof MslException) {
+                    final MslError mErr = ((MslException)thr).getError();
+                    System.out.println(String.format("MSL ERROR: error_code %d, error_msg %s", mErr.getResponseCode().intValue(), mErr.getMessage()));
+                } else {
+                    System.err.println("\nIO-ERROR: " + e);
+                    System.err.println("ROOT CAUSE:");
+                    thr.printStackTrace(System.err);
+                }
             } catch (RuntimeException e) {
-               System.err.println("\nRT-ERROR: " + e);
-               System.err.println("ROOT CAUSE:");
-               SharedUtil.getCause(e).printStackTrace(System.err);
-               throw e;
+                System.err.println("\nRT-ERROR: " + e);
+                System.err.println("ROOT CAUSE:");
+                SharedUtil.getCause(e).printStackTrace(System.err);
+            } finally {
+                final byte[] response = out.toByteArray();
+                t.sendResponseHeaders(200, response.length);
+                final OutputStream os = t.getResponseBody();
+                os.write(response);
+                os.flush();
+                os.close();
             }
+
             System.out.println("\nSUCCESS!!!\n");
         }
 
