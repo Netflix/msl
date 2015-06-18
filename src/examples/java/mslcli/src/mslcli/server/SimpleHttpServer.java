@@ -58,7 +58,7 @@ public class SimpleHttpServer {
                 final Throwable thr = SharedUtil.getCause(e);
                 if (thr instanceof MslException) {
                     final MslError mErr = ((MslException)thr).getError();
-                    System.out.println(String.format("MSL ERROR: error_code %d, error_msg %s", mErr.getResponseCode().intValue(), mErr.getMessage()));
+                    System.out.println(String.format("\nMSL ERROR: error_code %d, error_msg %s", mErr.getResponseCode().intValue(), mErr.getMessage()));
                 } else {
                     System.err.println("\nIO-ERROR: " + e);
                     System.err.println("ROOT CAUSE:");
