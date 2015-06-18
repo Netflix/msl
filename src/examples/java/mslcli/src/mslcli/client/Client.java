@@ -45,6 +45,7 @@ import com.netflix.msl.msg.ErrorHeader;
 import com.netflix.msl.msg.MessageContext;
 import com.netflix.msl.msg.MslControl;
 import com.netflix.msl.msg.MslControl.MslChannel;
+import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.userauth.EmailPasswordAuthenticationData;
 import com.netflix.msl.userauth.EmailPasswordStore;
 import com.netflix.msl.userauth.UserAuthenticationData;
@@ -64,6 +65,14 @@ public final class Client {
         Security.addProvider(new BouncyCastleProvider());
     }
 
+    // commands
+    private static final String CMD_MSG = "send"; // send message
+    private static final String CMD_CFG = "cfg" ; // configure
+    private static final String CMD_KX  = "kx"  ; // set key exchange
+    private static final Set<String> supportedCommands = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
+                                                                                     CMD_MSG, CMD_CFG, CMD_KX)));
+
+    // key exchanges
     private static final String KX_DH   = "dh" ; // Diffie-Hellman             Key Exchange
     private static final String KX_SWE  = "sw" ; // Symmetric  Wrapped         Key Exchange
     private static final String KX_AWE  = "aw" ; // Asymmetric Wrapped         Key Exchange
@@ -81,6 +90,8 @@ public final class Client {
                                                                             AsymmetricWrappedExchange.RequestData.Mechanism.JWK_RSAES.toString())));
                                                                            
 
+    private static final String YES  = "y";
+    private static final String NO   = "n";
     private static final String QUIT = "q";
 
     public static void main(String[] args) throws Exception {
@@ -91,22 +102,66 @@ public final class Client {
         final URL remoteUrl = new URL(args[0]);
         final Client client = new Client();
 
+        // first, set key exchange type
+        if (!setKeyExchange(client)) return;
+
+        String cmd;
+        while (!QUIT.equalsIgnoreCase(cmd = SharedUtil.readInput(String.format("Command(\"%s\" to exit) %s", QUIT, supportedCommands.toString())))) {
+            if (CMD_KX.equalsIgnoreCase(cmd)) {
+                if (setKeyExchange(client)) continue;
+            } else if (CMD_CFG.equalsIgnoreCase(cmd)) {
+                if (setConfig(client)) continue;
+            } else if (CMD_MSG.equalsIgnoreCase(cmd)) {
+                if (sendMessages(client, remoteUrl)) continue;
+            }
+        }
+    }
+
+    private static boolean setKeyExchange(final Client client) throws IOException, MslException {
         String kxType;
         while (!QUIT.equalsIgnoreCase(kxType = SharedUtil.readInput(String.format("KeyExchange(\"%s\" to exit) %s", QUIT, supportedKxTypes.toString())))) {
             if (supportedKxTypes.contains(kxType)) {
                 client.setKeyRequestData(kxType);
+                return true;
             } else {
                 continue;
             }
-                
-            String msg;
-            while (!QUIT.equalsIgnoreCase(msg = SharedUtil.readInput(String.format("Message(\"%s\" to switch key exchange)", QUIT)))) {
-                final byte[] response = client.sendRequest(msg.getBytes(), remoteUrl);
-                if (response != null) {
-                    System.out.println("\nResponse: " + new String(response));
-                }
+        }
+        return false;
+    }
+
+    private static boolean setConfig(final Client client) throws IOException {
+        client.setEncryption         (readBoolean("Encrypted"          , client.isEncrypted()         ));
+        client.setIntegrityProtection(readBoolean("Integrity Protected", client.isIntegrityProtected()));
+        client.setNonReplay          (readBoolean("Non-Replayable"     , client.isNonReplayable()     ));
+        System.out.println(String.format("Encryption: %b, Integrity: %b, Non-Replayable: %b",
+            client.isEncrypted(), client.isIntegrityProtected(), client.isNonReplayable()));
+        return true;
+    }
+
+    private static boolean readBoolean(final String name, final boolean def) throws IOException {
+        String value;
+        do {
+            value = SharedUtil.readInput(String.format("%s[%s]", name, def? "y" : "n"));
+            if (value.trim().isEmpty()) {
+                return def;
+            } else if (YES.equalsIgnoreCase(value)) {
+                return true;
+            } else if (NO.equalsIgnoreCase(value)) {
+                return false;
+            } 
+        } while (true);
+    }
+
+    private static boolean sendMessages(final Client client, final URL remoteUrl) throws ExecutionException, InterruptedException, IOException, MslException {
+        String msg;
+        while (!QUIT.equalsIgnoreCase(msg = SharedUtil.readInput(String.format("Message(\"%s\" back to config)", QUIT)))) {
+            final byte[] response = client.sendRequest(msg.getBytes(), remoteUrl);
+            if (response != null) {
+                System.out.println("\nResponse: " + new String(response));
             }
         }
+        return true;
     }
 
     public Client() {
@@ -139,15 +194,12 @@ public final class Client {
     }
 
     public byte[] sendRequest(byte[] request, URL remoteUrl) throws ExecutionException, IOException, InterruptedException, MslException {
-        final boolean isEncrypted = true;
-        final boolean isIntegrityProtected = true;
-        final boolean isNonReplayable = false;
 
         final MessageContext msgCtx = new ClientRequestMessageContext(
             mslCtx,
-            isEncrypted,
-            isIntegrityProtected,
-            isNonReplayable,
+            isEncrypted(),
+            isIntegrityProtected(),
+            isNonReplayable(),
             CLIENT_USER_ID,
             userAuthData,
             keyRequestDataSet,
@@ -162,6 +214,15 @@ public final class Client {
 
         final ErrorHeader errHeader = ch.input.getErrorHeader();
         if (errHeader == null) {
+            MasterToken mt = mslStore.getMasterToken();
+            if (mt != latestMasterToken) {
+                if (mt != null) {
+                    System.out.println(String.format("\n\nINFO: New Master Token: serial_num %d, seq_num %d\n", mt.getSerialNumber(), mt.getSequenceNumber()));
+                    latestMasterToken = mt;
+                } else {
+                    System.out.println("\n\nINFO: Master Tokens Purged from MSL Store\n");
+                }
+            }
             return SharedUtil.readIntoArray(ch.input);
         } else {
             if (errHeader.getErrorMessage() != null) {
@@ -206,6 +267,30 @@ public final class Client {
         }
     }
 
+    public boolean isEncrypted() {
+        return isEncrypted;
+    }
+
+    public boolean isIntegrityProtected() {
+        return isIntegrityProtected;
+    }
+
+    public boolean isNonReplayable() {
+        return isNonReplayable;
+    }
+
+    public void setEncryption(boolean value) {
+        isEncrypted = value;
+    }
+
+    public void setIntegrityProtection(boolean value) {
+        isIntegrityProtected = value;
+    }
+
+    public void setNonReplay(boolean value) {
+        isNonReplayable = value;
+    }
+
     /** MSL context */
     private final MslContext mslCtx;
     /** MSL control */
@@ -218,4 +303,12 @@ public final class Client {
     private final MslStore mslStore;
     /** Cached RSA Key Pair for asymmetric key wrap key exchange to avoid expensive key pair generation. */
     private KeyPair aweKeyPair = null;
+    /** configurable encryption option */
+    private boolean isEncrypted = true;
+    /** configurable integrity protection option */
+    private boolean isIntegrityProtected = true;
+    /** configurable non-replayability option */
+    private boolean isNonReplayable = false;
+    /** keep track of the latest master token in MSL store */
+    private MasterToken latestMasterToken = null;
 }
