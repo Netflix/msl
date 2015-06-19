@@ -19,6 +19,7 @@ package mslcli.client;
 import java.io.IOException;
 import java.net.URL;
 import java.security.KeyPair;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -114,7 +115,11 @@ public final class Client {
             MasterToken mt = mslStore.getMasterToken();
             if (mt != latestMasterToken) {
                 if (mt != null) {
-                    System.out.println(String.format("\n\nINFO: New Master Token: serial_num %d, seq_num %d\n", mt.getSerialNumber(), mt.getSequenceNumber()));
+                    final long t_now = System.currentTimeMillis();
+                    final long t_rnw = (mt.getRenewalWindow().getTime() - t_now)/1000L;
+                    final long t_exp = (mt.getExpiration().getTime() - t_now)/1000L;
+                    System.out.println(String.format("\n\nINFO: New Master Token: serial_num %d, seq_num %d, renewable in %d sec, expired in %d sec\n",
+                        mt.getSerialNumber(), mt.getSequenceNumber(), t_rnw, t_exp));
                     latestMasterToken = mt;
                 } else {
                     System.out.println("\n\nINFO: Master Tokens Purged from MSL Store\n");

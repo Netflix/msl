@@ -109,7 +109,7 @@ public final class ClientApp {
      */
     private static void setKeyExchange(final Client client) throws IOException, MslException {
         String kxType;
-        while (!QUIT.equalsIgnoreCase(kxType = SharedUtil.readInput(String.format("KeyExchange(\"%s\" to exit) %s", QUIT, supportedKxTypes.toString())))) {
+        while (!QUIT.equalsIgnoreCase(kxType = SharedUtil.readInput(String.format("KeyExchange(\"%s\" to skip) %s", QUIT, supportedKxTypes.toString())))) {
             if (supportedKxTypes.contains(kxType)) {
                 String mechanism = null;
                 if (KX_AWE.equals(kxType)) {
@@ -143,7 +143,7 @@ public final class ClientApp {
     {
         System.out.println(cfg.toString());
         String msg;
-        while (!QUIT.equalsIgnoreCase(msg = SharedUtil.readInput(String.format("Message(\"%s\" back to config)", QUIT)))) {
+        while (!QUIT.equalsIgnoreCase(msg = SharedUtil.readInput(String.format("Message(\"%s\" to finish)", QUIT)))) {
             final byte[] response = client.sendRequest(msg.getBytes(), cfg, remoteUrl);
             if (response != null) {
                 System.out.println("\nResponse: " + new String(response));
