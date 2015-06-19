@@ -22,7 +22,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
@@ -65,6 +64,7 @@ import com.netflix.msl.util.SimpleMslStore;
 
 import mslcli.common.entityauth.SimplePresharedKeyStore;
 import mslcli.common.entityauth.SimpleRsaStore;
+import mslcli.common.keyx.SimpleWrapCryptoContextRepository;
 import mslcli.common.userauth.SimpleEmailPasswordStore;
 
 import static mslcli.common.Constants.*;
@@ -72,8 +72,10 @@ import static mslcli.common.Constants.*;
 public final class SharedUtil {
     private SharedUtil() {}
 
-    // initialize pre-shared key store
-    public static PresharedKeyStore getPresharedKeyStore() {
+    /**
+     * Initialize client pre-shared key store
+     */
+    public static PresharedKeyStore getClientPresharedKeyStore() {
         final SecretKey encryptionKey = new SecretKeySpec(hexStringToByteArray(CLIENT_ENCR_PSK_HEX), JcaAlgorithm.AES);
         final SecretKey hmacKey       = new SecretKeySpec(hexStringToByteArray(CLIENT_HMAC_PSK_HEX), JcaAlgorithm.HMAC_SHA256);
         final SecretKey wrapKey       = new SecretKeySpec(hexStringToByteArray(CLIENT_WRAP_PSK_HEX), JcaAlgorithm.AESKW);
@@ -83,55 +85,65 @@ public final class SharedUtil {
         return new SimplePresharedKeyStore(keySets);
     }
 
-    public static EmailPasswordStore getEmailPasswordStore() {
+    /**
+     * Initialize server pre-shared key store
+     * Real-life implementation is likely to support multiple clients
+     */
+    public static PresharedKeyStore getServerPresharedKeyStore() {
+        return getClientPresharedKeyStore();
+    }
+
+    /**
+     * Initialize client {email,password} store
+     */
+    public static EmailPasswordStore getClientEmailPasswordStore() {
         final Map<String,String> emailPasswords = new HashMap<String,String>();
         emailPasswords.put(CLIENT_USER_EMAIL, CLIENT_USER_PASSWORD);
         return new SimpleEmailPasswordStore(emailPasswords);
     }
 
+    /**
+     * Initialize server {email,password} store
+     * Real-life implementation is likely to support multiple clients
+     */
+    public static EmailPasswordStore getServerEmailPasswordStore() {
+        return getClientEmailPasswordStore();
+    }
+
+    /**
+     * Initialize client MSL store
+     */
     public static MslStore getClientMslStore() {
         return new SimpleMslStore();
     }
 
+    /**
+     * Initialize server MSL store
+     */
     public static MslStore getServerMslStore() {
         return new SimpleMslStore();
     }
 
-    public static byte[] readIntoArray(final InputStream in) throws IOException {
-        final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        int b;
-        while ((b = in.read()) != -1) {
-            out.write(b);
-        }
-        return out.toByteArray();
+    /**
+     * Initialize client RSA key store
+     * Real-life implementation may support multiple servers
+     * Client only posesses server public key
+     */
+    public static RsaStore getClientRsaStore() {
+        final KeyPair kp = getServerRsaKeyPair();
+        return new SimpleRsaStore(SERVER_RSA_KEY_ID, kp.getPublic(), null);
     }
 
-    public static byte[] hexStringToByteArray(final String s) {
-        int len = s.length();
-        byte[] data = new byte[len / 2];
-        for (int i = 0; i < len; i += 2) {
-            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
-                                 + Character.digit(s.charAt(i+1), 16));
-        }
-        return data;
+    /**
+     * Initialize server RSA key store
+     * Real-life implementation may support multiple servers
+     */
+    public static RsaStore getServerRsaStore() {
+        final KeyPair kp = getServerRsaKeyPair();
+        return new SimpleRsaStore(SERVER_RSA_KEY_ID, kp.getPublic(), kp.getPrivate());
     }
 
-    public static String readInput(final String prompt) throws IOException {
-        final BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        System.out.print(prompt.trim() + "> ");
-        return br.readLine();
-    }
-
-    public static Throwable getCause(Throwable t) {
-        while (t.getCause() != null) {
-            t = t.getCause();
-        }
-        return t;
-    }
-
-    public static RsaStore getRsaStore() {
-        // Create the RSA key store.
-        final RsaStore rsaStore;
+    private static KeyPair getServerRsaKeyPair() {
         try {
             final KeyFactory rsaKeyFactory = KeyFactory.getInstance("RSA");
 
@@ -143,17 +155,17 @@ public final class SharedUtil {
             final X509EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(pubKeyEncoded);
             final PublicKey pubKey = rsaKeyFactory.generatePublic(pubKeySpec);
 
-            rsaStore = new SimpleRsaStore(SERVER_RSA_KEY_ID, pubKey, privKey);
+            return new KeyPair(pubKey, privKey);
+
         } catch (final NoSuchAlgorithmException e) {
             throw new RuntimeException("RSA algorithm not found.", e);
         } catch (final InvalidKeySpecException e) {
             throw new RuntimeException("Invalid RSA private key.", e);
         }
-        return rsaStore;
     }
 
     /**
-     * Key exchange factory comparator.
+     * Key exchange factory comparator. The purpose is to list key exchange schemes in order of preference.
      */
     private static class KeyExchangeFactoryComparator implements Comparator<KeyExchangeFactory> {
         /** Scheme priorities. Lower values are higher priority. */
@@ -185,17 +197,22 @@ public final class SharedUtil {
 
     private static final KeyExchangeFactoryComparator keyxFactoryComparator = new KeyExchangeFactoryComparator();
 
-    public static KeyExchangeFactoryComparator getKeyExchangeFactoryComparator() {
-        return keyxFactoryComparator;
+    /**
+     * Convenience method creating SortedSet of multiple key exchange factories,
+     * sorted in order of preference of their use.
+     */
+    public static SortedSet<KeyExchangeFactory> getKeyExchangeFactorySet(KeyExchangeFactory... factories) {
+        final TreeSet<KeyExchangeFactory> keyxFactoriesSet = new TreeSet<KeyExchangeFactory>(keyxFactoryComparator);
+        keyxFactoriesSet.addAll(Arrays.asList(factories));
+        return  Collections.unmodifiableSortedSet(keyxFactoriesSet);
     }
 
-    private static class SharedDiffieHellmanParameters implements DiffieHellmanParameters {
+    private static final class SimpleDiffieHellmanParameters implements DiffieHellmanParameters {
         /** Default parameters. */
-        private static BigInteger p =
-            new BigInteger("C2048E076B268761DB1427BA3AD98473D32B0ABDEE98C0827923426F294EDA3392BF0032A1D8092055B58BAA07586A7D3E271C39A8C891F5CEEA4DEBDFA6B023", 16);
-        private static BigInteger g = new BigInteger("02", 16);
+        private static final BigInteger p = new BigInteger(DEFAULT_DH_PARAM_P_HEX, 16);
+        private static final BigInteger g = new BigInteger(DEFAULT_DH_PARAM_G_HEX, 16);
 
-        private SharedDiffieHellmanParameters() {
+        private SimpleDiffieHellmanParameters() {
             final DHParameterSpec paramSpec = new DHParameterSpec(p, g);
             params.put(DEFAULT_DH_PARAMS_ID, paramSpec);
         }
@@ -220,54 +237,32 @@ public final class SharedUtil {
         private final Map<String,DHParameterSpec> params = new HashMap<String,DHParameterSpec>();
     }
 
-    private static final DiffieHellmanParameters sharedDiffieHellmanParameters = new SharedDiffieHellmanParameters();
+    private static final DiffieHellmanParameters simpleDiffieHellmanParameters = new SimpleDiffieHellmanParameters();
 
-    public static DiffieHellmanParameters getDiffieHellmanParameters() {
-        return sharedDiffieHellmanParameters;
+    public static final DiffieHellmanParameters getDiffieHellmanParameters() {
+        return simpleDiffieHellmanParameters;
     }
 
-    public static final class DiffieHellmanPair {
-        private DiffieHellmanPair(DHPublicKey pub, DHPrivateKey priv) {
-            this.pub  = pub;
-            this.priv = priv;
-        }
-
-        public DHPublicKey getPublic() {
-            return pub;
-        }
-
-        public DHPrivateKey getPrivate() {
-            return priv;
-        }
-
-        private final DHPublicKey pub;
-        private final DHPrivateKey priv;
-    }
-
-    public static DiffieHellmanPair generateDiffieHellmanKeys(final String paramId) throws MslException {
+    /**
+     * Generate Diffie-Hellman key pair for key exchange, with parameters corresponding
+     * to specified parameters ID
+     */
+    public static KeyPair generateDiffieHellmanKeys(final String paramId) throws MslException {
         final DHParameterSpec paramSpec = getDiffieHellmanParameters().getParameterSpec(paramId);
-        final DHPublicKey pubKey;
-        final DHPrivateKey privKey;
         try {
             final KeyPairGenerator generator = CryptoCache.getKeyPairGenerator("DH");
             generator.initialize(paramSpec);
-            final KeyPair keyPair = generator.generateKeyPair();
-            pubKey = (DHPublicKey)keyPair.getPublic();
-            privKey = (DHPrivateKey)keyPair.getPrivate();
+            return generator.generateKeyPair();
         } catch (final NoSuchAlgorithmException e) {
             throw new MslInternalException("DiffieHellman algorithm not found.", e);
         } catch (final InvalidAlgorithmParameterException e) {
             throw new MslInternalException("Diffie-Hellman algorithm parameters rejected by Diffie-Hellman key agreement.", e);
         }
-        return new DiffieHellmanPair(pubKey, privKey);
     }
 
-    public static SortedSet<KeyExchangeFactory> getKeyExchangeFactorySet(KeyExchangeFactory... factories) {
-        final TreeSet<KeyExchangeFactory> keyxFactoriesSet = new TreeSet<KeyExchangeFactory>(getKeyExchangeFactoryComparator());
-        keyxFactoriesSet.addAll(Arrays.asList(factories));
-        return  Collections.unmodifiableSortedSet(keyxFactoriesSet);
-    }
-
+    /**
+     * Generate RSA key pair used for wrapped kkey exchange
+     */
     public static KeyPair generateAsymmetricWrappedExchangeKeyPair() throws MslException {
         try {
             System.out.println("Generating RSA Key Pair - please, wait ...");
@@ -279,26 +274,72 @@ public final class SharedUtil {
         }
     }
 
-    private static final class SimpleWrapCryptoContextRepository implements WrapCryptoContextRepository {
-        private final Map<ByteBuffer,ICryptoContext> repository = new HashMap<ByteBuffer,ICryptoContext>();
-
-        @Override
-        public void addCryptoContext(final byte[] wrapdata, final ICryptoContext cryptoContext) {
-            repository.put(ByteBuffer.wrap(wrapdata), cryptoContext);
-        }
-
-        @Override
-        public ICryptoContext getCryptoContext(final byte[] wrapdata) {
-            return repository.get(ByteBuffer.wrap(wrapdata));
-        }
-
-        @Override
-        public void removeCryptoContext(final byte[] wrapdata) {
-            repository.remove(ByteBuffer.wrap(wrapdata));
-        }
-    }
-
+    /**
+     * Simple implementation of WrappedCryptoContextRepository interface
+     */
     public static WrapCryptoContextRepository getWrapCryptoContextRepository() {
         return new SimpleWrapCryptoContextRepository();
+    }
+
+    /**
+     * IO Helper: read input stream into byte array
+     */
+    public static byte[] readIntoArray(final InputStream in) throws IOException {
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        int b;
+        while ((b = in.read()) != -1) {
+            out.write(b);
+        }
+        return out.toByteArray();
+    }
+
+    /**
+     * IO Helper: read single line from STDIN
+     */
+    public static String readInput(final String prompt) throws IOException {
+        final BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        System.out.print(prompt.trim() + "> ");
+        return br.readLine();
+    }
+
+    /**
+     * IO Helper: read boolean value from STDIN.
+     * Repeat prompt till one of the valid values is entered. 
+     */
+    public static boolean readBoolean(final String name, final boolean def, final String yesStr, final String noStr) throws IOException {
+        String value;
+        do {
+            value = readInput(String.format("%s[%s]", name, def? "y" : "n"));
+            if (value.trim().isEmpty()) {
+                return def;
+            } else if (yesStr.equalsIgnoreCase(value)) {
+                return true;
+            } else if (noStr.equalsIgnoreCase(value)) {
+                return false;
+            }
+        } while (true);
+    }
+
+    /**
+     * Helper: convert hex string into byte array
+     */
+    public static byte[] hexStringToByteArray(final String s) {
+        int len = s.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(s.charAt(i  ), 16) << 4)
+                                 + Character.digit(s.charAt(i+1), 16)     );
+        }
+        return data;
+    }
+
+    /**
+     * Helper: get innermost cause exception
+     */
+    public static Throwable getRootCause(Throwable t) {
+        while (t.getCause() != null) {
+            t = t.getCause();
+        }
+        return t;
     }
 }

@@ -55,7 +55,7 @@ public class SimpleHttpServer {
                 t.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
                 mslServer.processRequest(t.getRequestBody(), out);
             } catch (IOException e) {
-                final Throwable thr = SharedUtil.getCause(e);
+                final Throwable thr = SharedUtil.getRootCause(e);
                 if (thr instanceof MslException) {
                     final MslError mErr = ((MslException)thr).getError();
                     System.out.println(String.format("\nMSL ERROR: error_code %d, error_msg %s", mErr.getResponseCode().intValue(), mErr.getMessage()));
@@ -67,7 +67,7 @@ public class SimpleHttpServer {
             } catch (RuntimeException e) {
                 System.err.println("\nRT-ERROR: " + e);
                 System.err.println("ROOT CAUSE:");
-                SharedUtil.getCause(e).printStackTrace(System.err);
+                SharedUtil.getRootCause(e).printStackTrace(System.err);
             } finally {
                 final byte[] response = out.toByteArray();
                 t.sendResponseHeaders(200, response.length);

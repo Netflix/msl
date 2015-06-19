@@ -16,20 +16,15 @@
 
 package mslcli.client;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-
 import java.io.IOException;
-import java.math.BigInteger;
 import java.net.URL;
 import java.security.KeyPair;
-import java.security.Security;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import javax.crypto.interfaces.DHPrivateKey;
+import javax.crypto.interfaces.DHPublicKey;
 
 import com.netflix.msl.MslException;
 import com.netflix.msl.entityauth.PresharedKeyStore;
@@ -55,116 +50,17 @@ import com.netflix.msl.util.MslStore;
 import mslcli.client.msg.ClientRequestMessageContext;
 import mslcli.client.util.ClientMslContext;
 
+import mslcli.common.msg.MessageConfig;
 import mslcli.common.util.SharedUtil;
 
 import static mslcli.common.Constants.*;
 
 public final class Client {
-    // Add BouncyCastle provider.
-    static {
-        Security.addProvider(new BouncyCastleProvider());
-    }
-
-    // commands
-    private static final String CMD_MSG = "send"; // send message
-    private static final String CMD_CFG = "cfg" ; // configure
-    private static final String CMD_KX  = "kx"  ; // set key exchange
-    private static final Set<String> supportedCommands = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
-                                                                                     CMD_MSG, CMD_CFG, CMD_KX)));
-
-    // key exchanges
-    private static final String KX_DH   = "dh" ; // Diffie-Hellman             Key Exchange
-    private static final String KX_SWE  = "sw" ; // Symmetric  Wrapped         Key Exchange
-    private static final String KX_AWE  = "aw" ; // Asymmetric Wrapped         Key Exchange
-    private static final String KX_JWEL = "jwe"; // JSON Web Encryption Ladder Key Exchange
-    private static final String KX_JWKL = "jwk"; // JSON Web Key        Ladder Key Exchange
-
-    private static final Set<String> supportedKxTypes = Collections.unmodifiableSet(
-        new HashSet<String>(Arrays.asList(KX_DH, KX_SWE, KX_AWE, KX_JWEL, KX_JWKL)));
-
-    // Asymmetric Wrapped Key Exchange Mechanisms
-    private static final Set<String> supportedAsymmetricWrappedExchangeMechanisms = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
-                                                                            AsymmetricWrappedExchange.RequestData.Mechanism.JWE_RSA.toString(),
-                                                                            AsymmetricWrappedExchange.RequestData.Mechanism.JWEJS_RSA.toString(),
-                                                                            AsymmetricWrappedExchange.RequestData.Mechanism.JWK_RSA.toString(),
-                                                                            AsymmetricWrappedExchange.RequestData.Mechanism.JWK_RSAES.toString())));
-                                                                           
-
-    private static final String YES  = "y";
-    private static final String NO   = "n";
-    private static final String QUIT = "q";
-
-    public static void main(String[] args) throws Exception {
-        if (args.length < 1) {
-            System.err.println("Specify remote URL");
-            System.exit(1);
+    public Client(final String clientId) {
+        if (clientId == null || clientId.trim().isEmpty()) {
+            throw new IllegalArgumentException("Undefined CLient Id");
         }
-        final URL remoteUrl = new URL(args[0]);
-        final Client client = new Client();
 
-        // first, set key exchange type
-        if (!setKeyExchange(client)) return;
-
-        String cmd;
-        while (!QUIT.equalsIgnoreCase(cmd = SharedUtil.readInput(String.format("Command(\"%s\" to exit) %s", QUIT, supportedCommands.toString())))) {
-            if (CMD_KX.equalsIgnoreCase(cmd)) {
-                if (setKeyExchange(client)) continue;
-            } else if (CMD_CFG.equalsIgnoreCase(cmd)) {
-                if (setConfig(client)) continue;
-            } else if (CMD_MSG.equalsIgnoreCase(cmd)) {
-                if (sendMessages(client, remoteUrl)) continue;
-            }
-        }
-    }
-
-    private static boolean setKeyExchange(final Client client) throws IOException, MslException {
-        String kxType;
-        while (!QUIT.equalsIgnoreCase(kxType = SharedUtil.readInput(String.format("KeyExchange(\"%s\" to exit) %s", QUIT, supportedKxTypes.toString())))) {
-            if (supportedKxTypes.contains(kxType)) {
-                client.setKeyRequestData(kxType);
-                return true;
-            } else {
-                continue;
-            }
-        }
-        return false;
-    }
-
-    private static boolean setConfig(final Client client) throws IOException {
-        client.setEncryption         (readBoolean("Encrypted"          , client.isEncrypted()         ));
-        client.setIntegrityProtection(readBoolean("Integrity Protected", client.isIntegrityProtected()));
-        client.setNonReplay          (readBoolean("Non-Replayable"     , client.isNonReplayable()     ));
-        System.out.println(String.format("Encryption: %b, Integrity: %b, Non-Replayable: %b",
-            client.isEncrypted(), client.isIntegrityProtected(), client.isNonReplayable()));
-        return true;
-    }
-
-    private static boolean readBoolean(final String name, final boolean def) throws IOException {
-        String value;
-        do {
-            value = SharedUtil.readInput(String.format("%s[%s]", name, def? "y" : "n"));
-            if (value.trim().isEmpty()) {
-                return def;
-            } else if (YES.equalsIgnoreCase(value)) {
-                return true;
-            } else if (NO.equalsIgnoreCase(value)) {
-                return false;
-            } 
-        } while (true);
-    }
-
-    private static boolean sendMessages(final Client client, final URL remoteUrl) throws ExecutionException, InterruptedException, IOException, MslException {
-        String msg;
-        while (!QUIT.equalsIgnoreCase(msg = SharedUtil.readInput(String.format("Message(\"%s\" back to config)", QUIT)))) {
-            final byte[] response = client.sendRequest(msg.getBytes(), remoteUrl);
-            if (response != null) {
-                System.out.println("\nResponse: " + new String(response));
-            }
-        }
-        return true;
-    }
-
-    public Client() {
         // Create the MSL control.
         //
         // Since this is an example process all requests on the calling thread.
@@ -175,16 +71,16 @@ public final class Client {
         this.mslStore = SharedUtil.getClientMslStore();
 
         // Create the pre-shared key store.
-        final PresharedKeyStore presharedKeyStore = SharedUtil.getPresharedKeyStore();
+        final PresharedKeyStore presharedKeyStore = SharedUtil.getClientPresharedKeyStore();
 
         // Create the RSA key store
-        final RsaStore rsaStore = SharedUtil.getRsaStore();
+        final RsaStore rsaStore = SharedUtil.getClientRsaStore();
 
         // Create the email/password store.
-        final EmailPasswordStore emailPasswordStore = SharedUtil.getEmailPasswordStore();
+        final EmailPasswordStore emailPasswordStore = SharedUtil.getClientEmailPasswordStore();
 
         // Set up the MSL context
-        this.mslCtx = new ClientMslContext(CLIENT_ID, presharedKeyStore, rsaStore, emailPasswordStore, mslStore);
+        this.mslCtx = new ClientMslContext(clientId, presharedKeyStore, rsaStore, emailPasswordStore, mslStore);
 
         // Initialize UserAuthenticationData
         this.userAuthData = new EmailPasswordAuthenticationData(CLIENT_USER_EMAIL, CLIENT_USER_PASSWORD);
@@ -193,13 +89,15 @@ public final class Client {
         this.keyRequestDataSet = new HashSet<KeyRequestData>();
     }
 
-    public byte[] sendRequest(byte[] request, URL remoteUrl) throws ExecutionException, IOException, InterruptedException, MslException {
+    public byte[] sendRequest(final byte[] request, final MessageConfig cfg, final URL remoteUrl)
+        throws ExecutionException, IOException, InterruptedException, MslException
+    {
 
         final MessageContext msgCtx = new ClientRequestMessageContext(
             mslCtx,
-            isEncrypted(),
-            isIntegrityProtected(),
-            isNonReplayable(),
+            cfg.isEncrypted,
+            cfg.isIntegrityProtected,
+            cfg.isNonReplayable,
             CLIENT_USER_ID,
             userAuthData,
             keyRequestDataSet,
@@ -234,26 +132,24 @@ public final class Client {
         }
     }
 
-    private void setKeyRequestData(final String kxType) throws MslException, IOException {
+    public void setKeyRequestData(final String kxType, final String mechanism) throws MslException, IOException {
         System.out.println("resetting MSL store ...");
         mslStore.clearCryptoContexts();
         keyRequestDataSet.clear();
         if (KX_DH.equals(kxType)) {
-            SharedUtil.DiffieHellmanPair dhPair = SharedUtil.generateDiffieHellmanKeys(DEFAULT_DH_PARAMS_ID);
-            keyRequestDataSet.add(new DiffieHellmanExchange.RequestData(DEFAULT_DH_PARAMS_ID, dhPair.getPublic().getY(), dhPair.getPrivate()));
+            final KeyPair dhKeyPair = SharedUtil.generateDiffieHellmanKeys(DEFAULT_DH_PARAMS_ID);
+            keyRequestDataSet.add(new DiffieHellmanExchange.RequestData(DEFAULT_DH_PARAMS_ID, ((DHPublicKey)dhKeyPair.getPublic()).getY(), (DHPrivateKey)dhKeyPair.getPrivate()));
         } else if (KX_SWE.equals(kxType)) {
             keyRequestDataSet.add(new SymmetricWrappedExchange.RequestData(SymmetricWrappedExchange.KeyId.PSK));
         } else if (KX_AWE.equals(kxType)) {
-            String mechanism;
-            do {
-                mechanism = SharedUtil.readInput(String.format("Mechanism%s", supportedAsymmetricWrappedExchangeMechanisms.toString()));
-            } while (!supportedAsymmetricWrappedExchangeMechanisms.contains(mechanism));
+            if (mechanism == null) {
+                throw new IllegalArgumentException("Missing Key Wrapping Mechanism for Asymmetric Wrapped Key Exchange");
+            }
             final AsymmetricWrappedExchange.RequestData.Mechanism m = Enum.valueOf(AsymmetricWrappedExchange.RequestData.Mechanism.class, mechanism);
             if (aweKeyPair == null) {
                aweKeyPair = SharedUtil.generateAsymmetricWrappedExchangeKeyPair();
             }
             keyRequestDataSet.add(new AsymmetricWrappedExchange.RequestData(DEFAULT_AWE_KEY_PAIR_ID, m, aweKeyPair.getPublic(), aweKeyPair.getPrivate()));
-            
         } else if (KX_JWEL.equals(kxType)) {
             final JsonWebEncryptionLadderExchange.Mechanism m = JsonWebEncryptionLadderExchange.Mechanism.PSK;
             final byte[] wrapdata = null;
@@ -267,48 +163,28 @@ public final class Client {
         }
     }
 
-    public boolean isEncrypted() {
-        return isEncrypted;
-    }
-
-    public boolean isIntegrityProtected() {
-        return isIntegrityProtected;
-    }
-
-    public boolean isNonReplayable() {
-        return isNonReplayable;
-    }
-
-    public void setEncryption(boolean value) {
-        isEncrypted = value;
-    }
-
-    public void setIntegrityProtection(boolean value) {
-        isIntegrityProtected = value;
-    }
-
-    public void setNonReplay(boolean value) {
-        isNonReplayable = value;
-    }
-
     /** MSL context */
     private final MslContext mslCtx;
+
     /** MSL control */
     private final MslControl mslCtrl;
+
     /** User Authentication Data */
     private final UserAuthenticationData userAuthData;
+
     /** key request data set chosen by MslControl in the order of preference */
     private final Set<KeyRequestData> keyRequestDataSet;
+
     /** MSL store storing master tokens with associated crypto context, user id tokens, and service tokens */
     private final MslStore mslStore;
-    /** Cached RSA Key Pair for asymmetric key wrap key exchange to avoid expensive key pair generation. */
+
+    /** Cached RSA Key Pair for asymmetric key wrap key exchange to avoid expensive key pair generation.
+     * This is an optimization specific to this application, to avoid annoying delays in generating
+     * 4096-bit RSA key pairs. Real-life implementations should not re-use key wrapping keys
+     * too many times.
+     */
     private KeyPair aweKeyPair = null;
-    /** configurable encryption option */
-    private boolean isEncrypted = true;
-    /** configurable integrity protection option */
-    private boolean isIntegrityProtected = true;
-    /** configurable non-replayability option */
-    private boolean isNonReplayable = false;
+
     /** keep track of the latest master token in MSL store */
     private MasterToken latestMasterToken = null;
 }

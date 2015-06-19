@@ -68,9 +68,11 @@ public final class ClientMslContext implements MslContext {
     /**
      * <p>Create a new MSL context.</p>
      * 
-     * @param clientId local server entity identity.
-     * @param presharedKeyStore local server entity preshared key store.
+     * @param clientId local client entity identity.
+     * @param presharedKeyStore local client entity preshared key store.
+     * @param rsaStore local client entity RSA key store.
      * @param emailPasswords user email/password store.
+     * @param mslStore local client entity MSL store
      */
     public ClientMslContext(final String clientId,
                             final PresharedKeyStore presharedKeyStore,
@@ -109,7 +111,7 @@ public final class ClientMslContext implements MslContext {
         // User authentication factories.
         this.userAuthFactory = new EmailPasswordAuthenticationFactory(emailPasswordStore, authutils);
         
-        // Key exchange factories.
+        // Key exchange factories. Real-life clients are likely to support subset of key exchange types.
         this.keyxFactories = SharedUtil.getKeyExchangeFactorySet(
             new AsymmetricWrappedExchange(authutils),
             new SymmetricWrappedExchange(authutils),

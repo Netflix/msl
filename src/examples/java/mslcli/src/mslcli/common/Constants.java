@@ -95,6 +95,11 @@ public final class Constants {
     /** Default DH parameters ID. */
     public static final String DEFAULT_DH_PARAMS_ID = "default1";
 
+    /** Default DH Parameters */
+    public static final String DEFAULT_DH_PARAM_P_HEX =
+        "C2048E076B268761DB1427BA3AD98473D32B0ABDEE98C0827923426F294EDA3392BF0032A1D8092055B58BAA07586A7D3E271C39A8C891F5CEEA4DEBDFA6B023";
+    public static final String DEFAULT_DH_PARAM_G_HEX = "02";
+
     // MSL Encryption Key
     public static final String MSL_ENCRYPTION_KEY_HEX = "1d58f3b8f747d16ab1093c4ca624eacf";
 
@@ -103,4 +108,11 @@ public final class Constants {
 
     // MSL Key Wrapping Key
     public static final String MSL_WRAPPING_KEY_HEX   = "83b69a1580d323a2e79dd9b22626b3f6";
+
+    // key exchanges
+    public static final String KX_DH   = "dh" ; // Diffie-Hellman             Key Exchange
+    public static final String KX_SWE  = "sw" ; // Symmetric  Wrapped         Key Exchange
+    public static final String KX_AWE  = "aw" ; // Asymmetric Wrapped         Key Exchange
+    public static final String KX_JWEL = "jwe"; // JSON Web Encryption Ladder Key Exchange
+    public static final String KX_JWKL = "jwk"; // JSON Web Key        Ladder Key Exchange
 }

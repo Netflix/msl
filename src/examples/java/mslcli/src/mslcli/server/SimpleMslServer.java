@@ -100,13 +100,13 @@ public class SimpleMslServer {
         final MslStore mslStore = SharedUtil.getServerMslStore();
 
         // Create the pre-shared key store.
-        final PresharedKeyStore presharedKeyStore = SharedUtil.getPresharedKeyStore();
+        final PresharedKeyStore presharedKeyStore = SharedUtil.getServerPresharedKeyStore();
 
         // Create the RSA key store.
-        final RsaStore rsaStore = SharedUtil.getRsaStore();
+        final RsaStore rsaStore = SharedUtil.getServerRsaStore();
 
        // Create the email/password store.
-        final EmailPasswordStore emailPasswordStore = SharedUtil.getEmailPasswordStore();
+        final EmailPasswordStore emailPasswordStore = SharedUtil.getServerEmailPasswordStore();
         
         // Set up the MSL context.
         this.mslCtx = new ServerMslContext(SERVER_ID, presharedKeyStore, rsaStore, emailPasswordStore, mslStore);
