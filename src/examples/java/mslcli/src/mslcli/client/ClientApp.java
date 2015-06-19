@@ -29,6 +29,8 @@ import java.util.concurrent.ExecutionException;
 
 import com.netflix.msl.MslException;
 import com.netflix.msl.keyx.AsymmetricWrappedExchange;
+import com.netflix.msl.msg.ConsoleFilterStreamFactory;
+import com.netflix.msl.msg.MslControl;
 
 import mslcli.common.msg.MessageConfig;
 import mslcli.common.util.SharedUtil;
@@ -67,8 +69,18 @@ public final class ClientApp {
             System.err.println("Specify remote URL");
             System.exit(1);
         }
+
+        /* An application should only use one instance of MslControl for all MSL communication.
+         * This class is thread-safe.
+         * Passing 0 parameter leads to MslControl executing on the caller's thread.
+         */
+        final MslControl mslCtrl = new MslControl(0);
+        if (args.length > 1) {
+            mslCtrl.setFilterFactory(new ConsoleFilterStreamFactory());
+        }
+
         final URL remoteUrl = new URL(args[0]);
-        final Client client = new Client(CLIENT_ID);
+        final Client client = new Client(CLIENT_ID, mslCtrl);
         final MessageConfig cfg = new MessageConfig();
         cfg.isEncrypted = true;
         cfg.isIntegrityProtected = true;

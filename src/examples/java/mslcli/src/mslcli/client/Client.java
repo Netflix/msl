@@ -35,7 +35,6 @@ import com.netflix.msl.keyx.JsonWebEncryptionLadderExchange;
 import com.netflix.msl.keyx.JsonWebKeyLadderExchange;
 import com.netflix.msl.keyx.KeyRequestData;
 import com.netflix.msl.keyx.SymmetricWrappedExchange;
-import com.netflix.msl.msg.ConsoleFilterStreamFactory;
 import com.netflix.msl.msg.ErrorHeader;
 import com.netflix.msl.msg.MessageContext;
 import com.netflix.msl.msg.MslControl;
@@ -56,16 +55,16 @@ import mslcli.common.util.SharedUtil;
 import static mslcli.common.Constants.*;
 
 public final class Client {
-    public Client(final String clientId) {
+    public Client(final String clientId, final MslControl mslCtrl) {
         if (clientId == null || clientId.trim().isEmpty()) {
-            throw new IllegalArgumentException("Undefined CLient Id");
+            throw new IllegalArgumentException("Undefined Client Id");
+        }
+        if (mslCtrl == null) {
+            throw new IllegalArgumentException("Undefined MSL COntrol");
         }
 
-        // Create the MSL control.
-        //
-        // Since this is an example process all requests on the calling thread.
-        this.mslCtrl = new MslControl(0);
-        this.mslCtrl.setFilterFactory(new ConsoleFilterStreamFactory());
+        // Set the MSL control.
+        this.mslCtrl = mslCtrl;
 
         // Initialize MSL store.
         this.mslStore = SharedUtil.getClientMslStore();
