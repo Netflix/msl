@@ -16,6 +16,12 @@
 
 package mslcli.common;
 
+/**
+ * Misc. constants.
+ *
+ * @author Vadim Spector <vspector@netflix.com>
+ */
+
 public final class Constants {
 
     /** Client entity ID */

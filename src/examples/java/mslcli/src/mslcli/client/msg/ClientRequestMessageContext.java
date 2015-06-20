@@ -36,6 +36,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * Client Request message context
+ *
  * @author Vadim Spector <vspector@netflix.com>
  */
 
@@ -53,27 +55,15 @@ public class ClientRequestMessageContext implements MessageContext {
     /**
      * <p>Create a new request context.
      * <p/>
-     * The message will be encrypted and non-replayable.
      *
-     *
-     *
-     * @param ctx    MSL context.
-     * @param userId user ID.
-     * @param scheme user authentication scheme.
-     * @param isMessageEncrypted
-     * @param isIntegrityProtected
-     * @throws java.security.NoSuchAlgorithmException
-     *                         if a key generation algorithm is not
-     *                         found.
-     * @throws java.security.InvalidAlgorithmParameterException
-     *                         if key generation parameters
-     *                         are invalid.
-     * @throws com.netflix.msl.MslCryptoException
-     *                         if the service token crypto context keys are
-     *                         the wrong length.
-     * @throws com.netflix.msl.MslKeyExchangeException
-     *                         if there is an error accessing Diffie-
-     *                         Hellman parameters.
+     * @param mslCtx MSL context.
+     * @param isEncrypted true if message is to be encrypted, false otherwise
+     * @param isIntegrityProtected true if message is to be integrity protected, false otherwise
+     * @param isNonReplayable true if message is to be marked as non-replayable, false otherwise
+     * @param userId user ID
+     * @param userAuthData user authentication data
+     * @param keyRequestDataSet set of key exchange requests
+     * @param payload message payload
      */
     public ClientRequestMessageContext(final MslContext               mslCtx,
                                        final boolean                  isEncrypted,

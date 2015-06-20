@@ -69,6 +69,12 @@ import mslcli.common.userauth.SimpleEmailPasswordStore;
 
 import static mslcli.common.Constants.*;
 
+/**
+ * Collection of utilities
+ *
+ * @author Vadim Spector <vspector@netflix.com>
+ */
+
 public final class SharedUtil {
     private SharedUtil() {}
 

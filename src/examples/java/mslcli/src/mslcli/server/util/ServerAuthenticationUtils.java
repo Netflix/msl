@@ -27,10 +27,10 @@ import com.netflix.msl.userauth.UserAuthenticationScheme;
 import com.netflix.msl.util.AuthenticationUtils;
 
 /**
- * <p>Restrict client authentication to unauthenticated.
- *    Restrict server entity authentication to pre-shared keys.
- *    Restrict user authentication to email-password.
- *    Restrict key exchange to asymmetric wrapped key exchange.
+ * <p>Restrict client authentication to pre-shared keys
+ *    Restrict server entity authentication to RSA keys.
+ *    Restrict client user authentication to email-password.
+ *    Restrict client key exchange to asymmetric wrapped, symmetric wrapped, DH, JWE Ladder, and JWK Ladder.
  * </p>
  * 
  * @author Vadim Spector <vspector@netflix.com>
@@ -50,28 +50,30 @@ public class ServerAuthenticationUtils implements AuthenticationUtils {
     private final Set<KeyExchangeScheme>          allowedClientKeyExchangeSchemes          = new HashSet<KeyExchangeScheme>();
 
     /**
-     * <p>Create a new authentication utils instance for the specified server
-     * identity.</p>
+     * <p>Create a new authentication utils instance for the specified server identity.
+     * </p>
      * 
      * @param serverId local server entity identity.
      */
     public ServerAuthenticationUtils(final String serverId) {
         this.serverId = serverId;
 
-        Collections.addAll(this.allowedServerEntityAuthenticationSchemes, EntityAuthenticationScheme.RSA);
+        // set allowed entity authentication schemes
         Collections.addAll(this.allowedClientEntityAuthenticationSchemes, EntityAuthenticationScheme.PSK);
+        Collections.addAll(this.allowedServerEntityAuthenticationSchemes, EntityAuthenticationScheme.RSA);
 
+        // set allowed user authentication schemes
         Collections.addAll(this.allowedClientUserAuthenticationSchemes  , UserAuthenticationScheme.EMAIL_PASSWORD);
         // allowedServerUserAuthenticationSchemes remains empty
 
-        // allowedServerKeyExchangeSchemes remains empty
-
+        // set allowed key exchange schemes
         Collections.addAll(this.allowedClientKeyExchangeSchemes , KeyExchangeScheme.ASYMMETRIC_WRAPPED
                                                                 , KeyExchangeScheme.SYMMETRIC_WRAPPED
                                                                 , KeyExchangeScheme.DIFFIE_HELLMAN
                                                                 , KeyExchangeScheme.JWE_LADDER
                                                                 , KeyExchangeScheme.JWK_LADDER
                           );
+        // allowedServerKeyExchangeSchemes remains empty
     }
     
     /* (non-Javadoc)

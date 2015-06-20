@@ -30,6 +30,12 @@ import com.netflix.msl.MslException;
 
 import mslcli.common.util.SharedUtil;
 
+/**
+ * Simple HTTP Server using com.sun.net.httpserver.* classes built into Oracle's JVM
+ *
+ * @author Vadim Spector <vspector@netflix.com>
+ */
+
 public class SimpleHttpServer {
 
     public static void main(String[] args) throws Exception {

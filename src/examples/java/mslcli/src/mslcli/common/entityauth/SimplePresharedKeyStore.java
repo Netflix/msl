@@ -27,6 +27,7 @@ import com.netflix.msl.entityauth.PresharedKeyStore.KeySet;
  * 
  * @author Vadim Spector <vspector@netflix.com>
  */
+
 public class SimplePresharedKeyStore implements PresharedKeyStore {
     /**
      * <p>Create a new preshared store that will return the provided preshared

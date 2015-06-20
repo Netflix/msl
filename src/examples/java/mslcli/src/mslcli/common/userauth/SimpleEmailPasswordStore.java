@@ -25,7 +25,7 @@ import com.netflix.msl.userauth.EmailPasswordStore;
 import mslcli.common.tokens.SimpleUser;
 
 /**
- * <p>Example user email/password store.</p>
+ * <p>Memory-backed user email/password store.</p>
  * 
  * @author Vadim Spector <vspector@netflix.com>
  */

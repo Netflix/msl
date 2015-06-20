@@ -24,6 +24,12 @@ import com.netflix.msl.crypto.ICryptoContext;
 
 import com.netflix.msl.keyx.WrapCryptoContextRepository;
 
+/**
+ * Memory-backed Wrap Crypto Context Repository
+ *
+ * @author Vadim Spector <vspector@netflix.com>
+ */
+
 public final class SimpleWrapCryptoContextRepository implements WrapCryptoContextRepository {
     private final Map<ByteBuffer,ICryptoContext> repository = new HashMap<ByteBuffer,ICryptoContext>();
 

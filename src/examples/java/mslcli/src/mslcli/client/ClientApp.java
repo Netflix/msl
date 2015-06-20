@@ -37,6 +37,12 @@ import mslcli.common.util.SharedUtil;
 
 import static mslcli.common.Constants.*;
 
+/**
+ * MSL client launcher program. Allows to configure message security policies and key exchange mechanism.
+ *
+ * @author Vadim Spector <vspector@netflix.com>
+ */
+
 public final class ClientApp {
     // Add BouncyCastle provider.
     static {

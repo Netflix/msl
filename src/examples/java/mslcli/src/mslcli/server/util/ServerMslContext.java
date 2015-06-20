@@ -79,11 +79,13 @@ public class ServerMslContext implements MslContext {
     private static final byte[] MSL_WRAPPING_KEY   = SharedUtil.hexStringToByteArray(MSL_WRAPPING_KEY_HEX);
 
     /**
-     * <p>Create a new simple MSL context.</p>
+     * <p>Create a new server MSL context.</p>
      * 
      * @param serverId local server entity identity.
      * @param presharedKeyStore local server entity preshared key store.
+     * @param rsaStore local server entity RSA key store.
      * @param emailPasswords user email/password store.
+     * @param mslStore MSL store.
      */
     public ServerMslContext(final String serverId, final PresharedKeyStore presharedKeyStore, final RsaStore rsaStore, final EmailPasswordStore emailPasswordStore, final MslStore mslStore) {
         // Message capabilities.

@@ -28,9 +28,11 @@ import com.netflix.msl.util.AuthenticationUtils;
 
 /**
  * <p>
+ *    Client-side authentication utilities.
+ *    Restrict server entity authentication to RSA keys.
  *    Restrict client entity authentication to pre-shared keys.
  *    Restrict user authentication to email-password.
- *    Restrict key exchange to asymmetric wrapped key exchange.
+ *    Restrict client entity key exchange to asymmetric wrapped, symmetric wrapped, DH, JWE Ladder, and JWK Ladder.
  * </p>
  * 
  * @author Vadim Spector <vspector@netflix.com>
@@ -57,20 +59,22 @@ public class ClientAuthenticationUtils implements AuthenticationUtils {
     public ClientAuthenticationUtils(final String clientId) {
         this.clientId = clientId;
 
-        Collections.addAll(this.allowedServerEntityAuthenticationSchemes, EntityAuthenticationScheme.RSA);
+        // set allowed entity authentication schemes
         Collections.addAll(this.allowedClientEntityAuthenticationSchemes, EntityAuthenticationScheme.PSK);
+        Collections.addAll(this.allowedServerEntityAuthenticationSchemes, EntityAuthenticationScheme.RSA);
 
+        // set allowed user authentication schemes
         Collections.addAll(this.allowedClientUserAuthenticationSchemes  , UserAuthenticationScheme.EMAIL_PASSWORD);
         // allowedServerUserAuthenticationSchemes remains empty
 
-        // allowedServerKeyExchangeSchemes remains empty
-
-        Collections.addAll(this.allowedClientKeyExchangeSchemes         , KeyExchangeScheme.ASYMMETRIC_WRAPPED
-                                                                        , KeyExchangeScheme.SYMMETRIC_WRAPPED
-                                                                        , KeyExchangeScheme.DIFFIE_HELLMAN
-                                                                        , KeyExchangeScheme.JWE_LADDER
-                                                                        , KeyExchangeScheme.JWK_LADDER
+        // set allowed key exchange schemes
+        Collections.addAll(this.allowedClientKeyExchangeSchemes, KeyExchangeScheme.ASYMMETRIC_WRAPPED
+                                                               , KeyExchangeScheme.SYMMETRIC_WRAPPED
+                                                               , KeyExchangeScheme.DIFFIE_HELLMAN
+                                                               , KeyExchangeScheme.JWE_LADDER
+                                                               , KeyExchangeScheme.JWK_LADDER
                           );
+        // allowedServerKeyExchangeSchemes remains empty
     }
     
     /* (non-Javadoc)
@@ -101,16 +105,16 @@ public class ClientAuthenticationUtils implements AuthenticationUtils {
     @Override
     public boolean isSchemePermitted(final String identity, final UserAuthenticationScheme scheme) {
        if (clientId.equals(identity)) {
-            return allowedServerUserAuthenticationSchemes.contains(scheme);
-       } else {
             return allowedClientUserAuthenticationSchemes.contains(scheme);
+       } else {
+            return allowedServerUserAuthenticationSchemes.contains(scheme);
        }
     }
     
     /* (non-Javadoc)
      * @see com.netflix.msl.util.AuthenticationUtils#isSchemePermitted(java.lang.String, com.netflix.msl.tokens.MslUser, com.netflix.msl.userauth.UserAuthenticationScheme)
      *
-     * In this specific implementation, iallowed user authentication schemes depend on entity identity, not a specific user of that entity,
+     * In this specific implementation, allowed user authentication schemes depend on entity identity, not a specific user of that entity,
      * so the implementation is the same as in the method above.
      */
     @Override

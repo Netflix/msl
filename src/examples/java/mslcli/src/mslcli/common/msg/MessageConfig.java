@@ -16,6 +16,12 @@
 
 package mslcli.common.msg;
 
+/**
+ * MSL message security configuration data object
+ *
+ * @author Vadim Spector <vspector@netflix.com>
+ */
+
 public final class MessageConfig {
     public boolean isEncrypted;
     public boolean isIntegrityProtected;

@@ -39,7 +39,7 @@ import com.netflix.msl.util.MslContext;
 import mslcli.common.tokens.SimpleUser;
 
 /**
- * <p>A memory-backed token factory.</p>
+ * <p>A server-side memory-backed token factory.</p>
  * 
  * @author Vadim Spector <vspector@netflix.com>
  */

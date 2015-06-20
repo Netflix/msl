@@ -55,7 +55,20 @@ import mslcli.common.util.SharedUtil;
 
 import static mslcli.common.Constants.*;
 
+/**
+ * MSL Client class.
+ *
+ * @author Vadim Spector <vspector@netflix.com>
+ */
+
 public final class Client {
+
+    /**
+     * Constructor.
+     *
+     * @param clientId - client entity identity
+     * @param mslCtrl - MSL controller implementing MSL protocol stack
+     */
     public Client(final String clientId, final MslControl mslCtrl) {
         if (clientId == null || clientId.trim().isEmpty()) {
             throw new IllegalArgumentException("Undefined Client Id");
@@ -89,6 +102,12 @@ public final class Client {
         this.keyRequestDataSet = new HashSet<KeyRequestData>();
     }
 
+    /**
+     * Send single request.
+     * @param request message payload to send
+     * @param cfg message security policies
+     * @param remoteUrl target URL for sending message
+     */
     public byte[] sendRequest(final byte[] request, final MessageConfig cfg, final URL remoteUrl)
         throws ExecutionException, IOException, InterruptedException, MslException
     {
@@ -136,6 +155,9 @@ public final class Client {
         }
     }
 
+    /**
+     * Set key request data for specific key request and (if applicable) mechanism.
+     */
     public void setKeyRequestData(final String kxType, final String mechanism) throws MslException, IOException {
         System.out.println("resetting MSL store ...");
         mslStore.clearCryptoContexts();

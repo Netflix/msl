@@ -26,8 +26,6 @@ import javax.servlet.http.HttpServletResponse;
  *    An example Java MSL servlet that listens for requests from the example MSL client.
  * </p> 
  * 
- * <p>This class is thread-safe.</p>
- * 
  * @author Vadim Spector <vspector@netflix.com>
  */
 
