@@ -21,9 +21,11 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import java.io.IOException;
 import java.net.URL;
 import java.security.Security;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
@@ -50,11 +52,13 @@ public final class ClientApp {
     }
 
     // commands
-    private static final String CMD_MSG = "msg"; // send message
-    private static final String CMD_CFG = "cfg" ; // configure message properties
-    private static final String CMD_KX  = "kx"  ; // select key exchange
-    private static final Set<String> supportedCommands =
-        Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(CMD_MSG, CMD_CFG, CMD_KX)));
+    private static final String CMD_MSG  = "msg"; // send message
+    private static final String CMD_CFG  = "cfg" ; // configure message properties
+    private static final String CMD_KX   = "kx"  ; // select key exchange
+    private static final String CMD_HELP = "help"; // help
+
+    private static final List<String> supportedCommands =
+        Collections.unmodifiableList(new ArrayList<String>(Arrays.asList(CMD_MSG, CMD_CFG, CMD_KX, CMD_HELP)));
 
     // Key Exchange strings are defined in Constants.java
     private static final Set<String> supportedKxTypes = Collections.unmodifiableSet(
@@ -66,9 +70,13 @@ public final class ClientApp {
                                                                             AsymmetricWrappedExchange.RequestData.Mechanism.JWEJS_RSA.toString(),
                                                                             AsymmetricWrappedExchange.RequestData.Mechanism.JWK_RSA.toString(),
                                                                             AsymmetricWrappedExchange.RequestData.Mechanism.JWK_RSAES.toString())));
-    private static final String YES  = "y";
-    private static final String NO   = "n";
-    private static final String QUIT = "q";
+    private static final String MSG_ENCRYPTION = "Encrypted";
+    private static final String MSG_INTEGRITY  = "Integrity Protected";
+    private static final String MSG_NONREPLAY  = "Non-Replayable";
+
+    private static final String YES   = "y";
+    private static final String NO    = "n";
+    private static final String QUIT  = "q";
 
     public static void main(String[] args) throws Exception {
         if (args.length < 1) {
@@ -92,9 +100,6 @@ public final class ClientApp {
         cfg.isIntegrityProtected = true;
         cfg.isNonReplayable = false;
 
-        // first, set key exchange type
-        setKeyExchange(client);
-
         String cmd;
         while (!QUIT.equalsIgnoreCase(cmd = SharedUtil.readInput(String.format("Command(\"%s\" to exit) %s", QUIT, supportedCommands.toString())))) {
             if (CMD_KX.equalsIgnoreCase(cmd)) {
@@ -103,8 +108,34 @@ public final class ClientApp {
                 setConfig(cfg);
             } else if (CMD_MSG.equalsIgnoreCase(cmd)) {
                 sendMessages(client, cfg, remoteUrl);
+            } else if (CMD_HELP.equalsIgnoreCase(cmd)) {
+                System.out.println(help());
             }
         }
+    }
+
+    private static String help() {
+        final String pad = "    ";
+        final StringBuilder sb = new StringBuilder(); 
+            sb.append("commands:\n")
+              .append(CMD_KX).append(" - select Key Exchange Type\n")
+              .append(pad).append(KX_DH).append(" - Diffie-Hellman\n")
+              .append(pad).append(KX_SWE).append(" - Symmetric Wrapped Key Exchange\n")
+              .append(pad).append(KX_AWE).append(" - Awymmetric Wrapped Key Exchange\n")
+              .append(pad).append(pad).append("Mechanisms:\n")
+              .append(pad).append(pad).append(AsymmetricWrappedExchange.RequestData.Mechanism.JWE_RSA).append(" - RSA-OAEP JSON Web Encryption JSON Serialization\n")
+              .append(pad).append(pad).append(AsymmetricWrappedExchange.RequestData.Mechanism.JWEJS_RSA).append(" - RSA-OAEP JSON Web Encryption Compact Serialization\n")
+              .append(pad).append(pad).append(AsymmetricWrappedExchange.RequestData.Mechanism.JWK_RSA).append(" - RSA-OAEP JSON Web Key\n")
+              .append(pad).append(pad).append(AsymmetricWrappedExchange.RequestData.Mechanism.JWK_RSAES).append("- RSA PKCS#1 JSPN Web Key\n")
+              .append(pad).append(KX_JWEL).append(" - JSON Web Encryption Ladder Key Exchange\n")
+              .append(pad).append(KX_JWKL).append(" - JSON Web Key Ladder Key Exchange\n")
+              .append(CMD_CFG).append(" - set message security properties:\n")
+              .append(pad).append(MSG_ENCRYPTION).append(" - Encryption ON/OFF\n")
+              .append(pad).append(MSG_INTEGRITY).append(" - Integrity Protection ON/OFF\n")
+              .append(pad).append(MSG_NONREPLAY).append(" - Non-Replay ON/OFF\n")
+              .append(CMD_MSG).append(" - send multiple text messages using the selected key exchange mechanism and message security properties\n")
+              .append(pad).append("enter \"q\" to go back to the command menu\n");
+        return sb.toString();
     }
 
     /*
@@ -135,9 +166,9 @@ public final class ClientApp {
      * This is why MessageConfig instance is passed in every Client.sendrequest() call.
      */
     private static void setConfig(final MessageConfig cfg) throws IOException {
-        cfg.isEncrypted          = SharedUtil.readBoolean("Encrypted"          , cfg.isEncrypted         , YES, NO);
-        cfg.isIntegrityProtected = SharedUtil.readBoolean("Integrity Protected", cfg.isIntegrityProtected, YES, NO);
-        cfg.isNonReplayable      = SharedUtil.readBoolean("Non-Replayable"     , cfg.isNonReplayable     , YES, NO);
+        cfg.isEncrypted          = SharedUtil.readBoolean(MSG_ENCRYPTION, cfg.isEncrypted         , YES, NO);
+        cfg.isIntegrityProtected = SharedUtil.readBoolean(MSG_INTEGRITY , cfg.isIntegrityProtected, YES, NO);
+        cfg.isNonReplayable      = SharedUtil.readBoolean(MSG_NONREPLAY , cfg.isNonReplayable     , YES, NO);
         System.out.println(cfg.toString());
     }
 

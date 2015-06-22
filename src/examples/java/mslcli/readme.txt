@@ -17,13 +17,10 @@ Open two terminals. From one, type
 From another
 % ./start_server.sh
 
-The client program will enter the outer prompt loop, asking for key exchange type.
-Entering "q" in the outer loop exits the client.
+The client program will first present the command selection. Entering "help" prints help information
+explaining each command and command options.
 
-Once key exchange type is selected, the client enters the inner prompt loop, asking for text message to send.
-Entering "q" in the inner loop goes back into the outer loop, to choose another key exchange configuration.
-
-The response will be printed to stdout, and it's supposed to be the same as the request.
+Message responses will be printed to stdout, and it's supposed to be the same as the request.
 
 The server is terminated by pressing Ctrl-C.
 
