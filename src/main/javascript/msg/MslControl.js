@@ -3566,7 +3566,7 @@ var MslControl$MslChannel;
                                             var mslError, userMessage, toThrow;
                                             if (e instanceof MslException) {
                                                 mslError = e.error;
-                                                var caps = messageHeader.messageCapabilities;
+                                                var caps = requestHeader.messageCapabilities;
                                                 var languages = (caps) ? caps.languages : null;
                                                 userMessage = this._ctrl.messageRegistry.getUserMessage(mslError, languages);
                                                 toThrow = e;
@@ -3763,11 +3763,11 @@ var MslControl$MslChannel;
             InterruptibleExecutor(callback, function() {
                 // Identify the correct MSL error.
                 var err;
-                if (this._appError == ENTITY_REJECTED) {
+                if (this._appError == MslControl$ApplicationError.ENTITY_REJECTED) {
                     err = (this._request.masterToken)
                         ? MslError.MASTERTOKEN_REJECTED_BY_APP
                         : MslError.ENTITY_REJECTED_BY_APP;
-                } else if (this._appError == USER_REJECTED) {
+                } else if (this._appError == MslControl$ApplicationError.USER_REJECTED) {
                     err = (this._request.userIdToken)
                         ? MslError.USERIDTOKEN_REJECTED_BY_APP
                         : MslError.USER_REJECTED_BY_APP;
@@ -4266,7 +4266,7 @@ var MslControl$MslChannel;
                                                 else {
                                                     // Close the request and response. The response will be
                                                     // discarded and we will be issuing a new request.
-                                                    closeRequestAndResponse(result, function() {
+                                                    closeRequestAndResponse(result, function(success) {
                                                         InterruptibleExecutor(callback, function() {
                                                             // If cancelled return null.
                                                             if (!success) {
