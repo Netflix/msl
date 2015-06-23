@@ -31,7 +31,7 @@ import com.netflix.msl.util.AuthenticationUtils;
  *    Client-side authentication utilities.
  *    Restrict server entity authentication to RSA keys.
  *    Restrict client entity authentication to pre-shared keys.
- *    Restrict user authentication to email-password.
+ *    Restrict client user authentication to email-password.
  *    Restrict client entity key exchange to asymmetric wrapped, symmetric wrapped, DH, JWE Ladder, and JWK Ladder.
  * </p>
  * 

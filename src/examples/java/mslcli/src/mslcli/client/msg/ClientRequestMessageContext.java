@@ -15,6 +15,11 @@
  */
 package mslcli.client.msg;
 
+import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslException;
@@ -28,12 +33,8 @@ import com.netflix.msl.msg.MessageOutputStream;
 import com.netflix.msl.msg.MessageServiceTokenBuilder;
 import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.userauth.UserAuthenticationData;
-import com.netflix.msl.util.MslContext;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import mslcli.common.userauth.UserAuthenticationDataHandle;
 
 /**
  * Client Request message context
@@ -42,11 +43,10 @@ import java.util.Set;
  */
 
 public class ClientRequestMessageContext implements MessageContext {
-    private final MslContext                 mslCtx;
     private final boolean                    isEncrypted;
     private final boolean                    isIntegrityProtected;
     private final boolean                    isNonReplayable;
-    private final UserAuthenticationData     userAuthData;
+    private final UserAuthenticationDataHandle userAuthenticationDataHandle;
     private final String                     userId; 
     private final Set<KeyRequestData>        keyRequestDataSet; 
     private final byte[]                     payload;
@@ -56,31 +56,28 @@ public class ClientRequestMessageContext implements MessageContext {
      * <p>Create a new request context.
      * <p/>
      *
-     * @param mslCtx MSL context.
      * @param isEncrypted true if message is to be encrypted, false otherwise
      * @param isIntegrityProtected true if message is to be integrity protected, false otherwise
      * @param isNonReplayable true if message is to be marked as non-replayable, false otherwise
      * @param userId user ID
-     * @param userAuthData user authentication data
+     * @param userAuthDataHandle user authentication data getter
      * @param keyRequestDataSet set of key exchange requests
      * @param payload message payload
      */
-    public ClientRequestMessageContext(final MslContext               mslCtx,
-                                       final boolean                  isEncrypted,
+    public ClientRequestMessageContext(final boolean                  isEncrypted,
                                        final boolean                  isIntegrityProtected,
                                        final boolean                  isNonReplayable,
                                        final String                   userId,
-                                       final UserAuthenticationData   userAuthData,
+                                       final UserAuthenticationDataHandle userAuthenticationDataHandle,
                                        final Set<KeyRequestData>      keyRequestDataSet,
                                        final byte[]                   payload
                                       )
     {
-        this.mslCtx               = mslCtx;
         this.isEncrypted          = isEncrypted;
         this.isIntegrityProtected = isIntegrityProtected;
         this.isNonReplayable      = isNonReplayable;
         this.userId               = userId;
-        this.userAuthData         = userAuthData;
+        this.userAuthenticationDataHandle = userAuthenticationDataHandle;
         this.keyRequestDataSet    = Collections.unmodifiableSet(keyRequestDataSet);
         this.payload              = payload;
         this.cryptoContexts       = Collections.<String,ICryptoContext>emptyMap();
@@ -128,7 +125,7 @@ public class ClientRequestMessageContext implements MessageContext {
     @Override
     public UserAuthenticationData getUserAuthData(final ReauthCode reauthCode, final boolean renewable, final boolean required) {
         if ((reauthCode == null) && required) {
-            return userAuthData;
+            return userAuthenticationDataHandle.getUserAuthenticationData();
         } else {
             return null;
         }

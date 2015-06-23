@@ -41,9 +41,7 @@ import com.netflix.msl.msg.MessageContext;
 import com.netflix.msl.msg.MslControl;
 import com.netflix.msl.msg.MslControl.MslChannel;
 import com.netflix.msl.tokens.MasterToken;
-import com.netflix.msl.userauth.EmailPasswordAuthenticationData;
 import com.netflix.msl.userauth.EmailPasswordStore;
-import com.netflix.msl.userauth.UserAuthenticationData;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslStore;
 
@@ -51,6 +49,7 @@ import mslcli.client.msg.ClientRequestMessageContext;
 import mslcli.client.util.ClientMslContext;
 
 import mslcli.common.msg.MessageConfig;
+import mslcli.common.userauth.UserAuthenticationDataHandle;
 import mslcli.common.util.SharedUtil;
 
 import static mslcli.common.Constants.*;
@@ -64,24 +63,47 @@ import static mslcli.common.Constants.*;
 public final class Client {
 
     /**
-     * Constructor.
-     *
+     * Data object encapsulating response from the server
+     */
+    public static final class Response {
+        private Response(final byte[] payload, final ErrorHeader errHeader) {
+            this.payload = payload;
+            this.errHeader = errHeader;
+        }
+        public byte[] getPayload() {
+            return payload;
+        }
+        public ErrorHeader getErrorHeader() {
+            return errHeader;
+        }
+        private final byte[] payload;
+        private final ErrorHeader errHeader;
+    }
+        
+    /**
      * @param clientId - client entity identity
      * @param mslCtrl - MSL controller implementing MSL protocol stack
+     * @param mslStore - MSL Store
      */
-    public Client(final String clientId, final MslControl mslCtrl) {
+    public Client(final String clientId, final MslControl mslCtrl, final MslStore mslStore) {
         if (clientId == null || clientId.trim().isEmpty()) {
             throw new IllegalArgumentException("Undefined Client Id");
         }
         if (mslCtrl == null) {
-            throw new IllegalArgumentException("Undefined MSL COntrol");
+            throw new IllegalArgumentException("NULL MSL Control");
         }
+        if (mslStore == null) {
+            throw new IllegalArgumentException("NULL MSL Store");
+        }
+
+        // Set client ID
+        this.clientId = clientId;
 
         // Set the MSL control.
         this.mslCtrl = mslCtrl;
 
         // Initialize MSL store.
-        this.mslStore = SharedUtil.getClientMslStore();
+        this.mslStore = mslStore;
 
         // Create the pre-shared key store.
         final PresharedKeyStore presharedKeyStore = SharedUtil.getClientPresharedKeyStore();
@@ -95,9 +117,6 @@ public final class Client {
         // Set up the MSL context
         this.mslCtx = new ClientMslContext(clientId, presharedKeyStore, rsaStore, emailPasswordStore, mslStore);
 
-        // Initialize UserAuthenticationData
-        this.userAuthData = new EmailPasswordAuthenticationData(CLIENT_USER_EMAIL, CLIENT_USER_PASSWORD);
-
         // initialize key request data
         this.keyRequestDataSet = new HashSet<KeyRequestData>();
     }
@@ -108,17 +127,19 @@ public final class Client {
      * @param cfg message security policies
      * @param remoteUrl target URL for sending message
      */
-    public byte[] sendRequest(final byte[] request, final MessageConfig cfg, final URL remoteUrl)
+    public Response sendRequest(final byte[] request, final MessageConfig cfg, final URL remoteUrl)
         throws ExecutionException, IOException, InterruptedException, MslException
     {
+        if (userAuthenticationDataHandle == null) {
+            throw new IllegalStateException("Uninitialized UserAuthentication Data Handle");
+        }
 
         final MessageContext msgCtx = new ClientRequestMessageContext(
-            mslCtx,
             cfg.isEncrypted,
             cfg.isIntegrityProtected,
             cfg.isNonReplayable,
-            CLIENT_USER_ID,
-            userAuthData,
+            cfg.userId,
+            userAuthenticationDataHandle,
             keyRequestDataSet,
             request
             );
@@ -131,27 +152,9 @@ public final class Client {
 
         final ErrorHeader errHeader = ch.input.getErrorHeader();
         if (errHeader == null) {
-            MasterToken mt = mslStore.getMasterToken();
-            if (mt != latestMasterToken) {
-                if (mt != null) {
-                    final long t_now = System.currentTimeMillis();
-                    final long t_rnw = (mt.getRenewalWindow().getTime() - t_now)/1000L;
-                    final long t_exp = (mt.getExpiration().getTime() - t_now)/1000L;
-                    System.out.println(String.format("\n\nINFO: New Master Token: serial_num %d, seq_num %d, renewable in %d sec, expired in %d sec\n",
-                        mt.getSerialNumber(), mt.getSequenceNumber(), t_rnw, t_exp));
-                    latestMasterToken = mt;
-                } else {
-                    System.out.println("\n\nINFO: Master Tokens Purged from MSL Store\n");
-                }
-            }
-            return SharedUtil.readIntoArray(ch.input);
+            return new Response(SharedUtil.readIntoArray(ch.input), null);
         } else {
-            if (errHeader.getErrorMessage() != null) {
-                System.err.println(String.format("ERROR: error_code %d, error_msg \"%s\"", errHeader.getErrorCode().intValue(), errHeader.getErrorMessage()));
-            } else {
-                System.err.println(String.format("ERROR: %s" + errHeader.toJSONString()));
-            }
-            return null;
+            return new Response(null, errHeader);
         }
     }
 
@@ -159,8 +162,6 @@ public final class Client {
      * Set key request data for specific key request and (if applicable) mechanism.
      */
     public void setKeyRequestData(final String kxType, final String mechanism) throws MslException, IOException {
-        System.out.println("resetting MSL store ...");
-        mslStore.clearCryptoContexts();
         keyRequestDataSet.clear();
         if (KX_DH.equals(kxType)) {
             final KeyPair dhKeyPair = SharedUtil.generateDiffieHellmanKeys(DEFAULT_DH_PARAMS_ID);
@@ -189,6 +190,20 @@ public final class Client {
         }
     }
 
+    /**
+     * Set user authentication data handle
+     */
+    public void setUserAuthenticationDataHandle(final UserAuthenticationDataHandle userAuthenticationDataHandle) {
+        this.userAuthenticationDataHandle = userAuthenticationDataHandle;
+    }
+
+    public MslStore getMslStore() {
+        return mslStore;
+    }
+
+    /** Client Entity ID */
+    private final String clientId;
+
     /** MSL context */
     private final MslContext mslCtx;
 
@@ -196,7 +211,7 @@ public final class Client {
     private final MslControl mslCtrl;
 
     /** User Authentication Data */
-    private final UserAuthenticationData userAuthData;
+    private UserAuthenticationDataHandle userAuthenticationDataHandle;
 
     /** key request data set chosen by MslControl in the order of preference */
     private final Set<KeyRequestData> keyRequestDataSet;
@@ -210,7 +225,4 @@ public final class Client {
      * too many times.
      */
     private KeyPair aweKeyPair = null;
-
-    /** keep track of the latest master token in MSL store */
-    private MasterToken latestMasterToken = null;
 }

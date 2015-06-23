@@ -30,11 +30,18 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import com.netflix.msl.MslException;
+import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.keyx.AsymmetricWrappedExchange;
 import com.netflix.msl.msg.ConsoleFilterStreamFactory;
 import com.netflix.msl.msg.MslControl;
+import com.netflix.msl.tokens.MasterToken;
+import com.netflix.msl.userauth.EmailPasswordAuthenticationData;
+import com.netflix.msl.userauth.UserAuthenticationData;
+import com.netflix.msl.util.MslStore;
 
 import mslcli.common.msg.MessageConfig;
+import mslcli.common.userauth.UserAuthenticationDataHandle;
+import mslcli.common.util.MslStoreWrapper;
 import mslcli.common.util.SharedUtil;
 
 import static mslcli.common.Constants.*;
@@ -83,23 +90,44 @@ public final class ClientApp {
             System.err.println("Specify remote URL");
             System.exit(1);
         }
+        new ClientApp(args).startClientApp();
+    }
+
+    private final MslControl mslCtrl;
+    private final MslStore mslStore;
+    private URL remoteUrl;
+    private Client client;
+    private MessageConfig cfg;
+
+    private ClientApp(String[] args) throws Exception {
 
         /* An application should only use one instance of MslControl for all MSL communication.
          * This class is thread-safe.
          * Passing 0 parameter leads to MslControl executing on the caller's thread.
          */
-        final MslControl mslCtrl = new MslControl(0);
+        mslCtrl = new MslControl(0);
+
+        // initialize MSL Store - use wrapper to intercept selected MSL Store calls
+        mslStore = new AppMslStoreWrapper(SharedUtil.getClientMslStore());
+
+        // set server URL
+        remoteUrl = new URL(args[0]);
+
+        /* second command-line argument with any value turns on diagnostic messages in MslControl
+         */
         if (args.length > 1) {
             mslCtrl.setFilterFactory(new ConsoleFilterStreamFactory());
         }
+    }
 
-        final URL remoteUrl = new URL(args[0]);
-        final Client client = new Client(CLIENT_ID, mslCtrl);
-        final MessageConfig cfg = new MessageConfig();
+    private void startClientApp() throws Exception {
+        cfg = new MessageConfig();
+        cfg.userId = CLIENT_USER_ID;
         cfg.isEncrypted = true;
         cfg.isIntegrityProtected = true;
         cfg.isNonReplayable = false;
-
+        client = new Client(CLIENT_ID, mslCtrl, mslStore);
+        client.setUserAuthenticationDataHandle(new AppUserAuthenticationDataHandle());
         String cmd;
         while (!QUIT.equalsIgnoreCase(cmd = SharedUtil.readInput(String.format("Command(\"%s\" to exit) %s", QUIT, supportedCommands.toString())))) {
             if (CMD_KX.equalsIgnoreCase(cmd)) {
@@ -111,6 +139,59 @@ public final class ClientApp {
             } else if (CMD_HELP.equalsIgnoreCase(cmd)) {
                 System.out.println(help());
             }
+        }
+    }
+
+    private static final String getMasterTokenInfo(final MasterToken masterToken) {
+        if (masterToken == null) {
+            return null;
+        }
+        final long t_now = System.currentTimeMillis();
+        final long t_rnw = (masterToken.getRenewalWindow().getTime() - t_now)/1000L;
+        final long t_exp = (masterToken.getExpiration().getTime() - t_now)/1000L;
+        return String.format("Master Token serial_num %d, seq_num %d, renewable in %d sec, expired in %d sec\n",
+            masterToken.getSerialNumber(), masterToken.getSequenceNumber(), t_rnw, t_exp);
+    }
+
+    /*
+     * This class facilitates on-demand fetching of user authentication data
+     */
+    private final class AppUserAuthenticationDataHandle implements UserAuthenticationDataHandle {
+        @Override
+        public UserAuthenticationData getUserAuthenticationData() {
+            System.out.println("User Authentication Data requested");
+            return new EmailPasswordAuthenticationData(CLIENT_USER_EMAIL, CLIENT_USER_PASSWORD);
+        }
+    }
+
+    /*
+     * This is a listener to all MslStore calls. It can override only the methods in ClientStoreInterceptor the app cares about.
+     */
+    private final class AppMslStoreWrapper extends MslStoreWrapper {
+        private AppMslStoreWrapper(final MslStore mslStore) {
+            super(mslStore);
+        }
+        @Override
+        public void setCryptoContext(final MasterToken masterToken, final ICryptoContext cryptoContext) {
+            if (masterToken == null) {
+                System.out.println("\nMslStore: setting crypto context with NULL MasterToken???");
+            } else {
+                System.out.println(String.format("\nMslStore: %s %s\n",
+                    (cryptoContext != null)? "adding" : "removing", getMasterTokenInfo(masterToken)));
+            }
+            super.setCryptoContext(masterToken, cryptoContext);
+        }
+
+        @Override
+        public void removeCryptoContext(final MasterToken masterToken) {
+            System.out.println("\nMslStore: Removing Crypto Context for " + getMasterTokenInfo(masterToken));
+            super.removeCryptoContext(masterToken);
+        }
+
+        @Override
+        public void clearCryptoContexts() {
+            System.out.println("\nMslStore: Clear Crypto Contexts");
+            super.clearCryptoContexts();
         }
     }
 
@@ -181,9 +262,18 @@ public final class ClientApp {
         System.out.println(cfg.toString());
         String msg;
         while (!QUIT.equalsIgnoreCase(msg = SharedUtil.readInput(String.format("Message(\"%s\" to finish)", QUIT)))) {
-            final byte[] response = client.sendRequest(msg.getBytes(), cfg, remoteUrl);
-            if (response != null) {
-                System.out.println("\nResponse: " + new String(response));
+            final Client.Response response = client.sendRequest(msg.getBytes(), cfg, remoteUrl);
+            if (response.getPayload() != null) {
+                System.out.println("Response: " + new String(response.getPayload()));
+            } else if (response.getErrorHeader() != null) {
+                if (response.getErrorHeader().getErrorMessage() != null) {
+                    System.err.println(String.format("ERROR: error_code %d, error_msg \"%s\"", response.getErrorHeader().getErrorCode().intValue(),
+                                                                                               response.getErrorHeader().getErrorMessage()));
+                } else {
+                    System.err.println(String.format("ERROR: %s" + response.getErrorHeader().toJSONString()));
+                }
+            } else {
+                System.out.println("Internal ERROR: invalid response returned");
             }
         }
     }
