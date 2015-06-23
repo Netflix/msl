@@ -74,34 +74,42 @@ public class MslStoreWrapper implements MslStore {
         mslStore.clearCryptoContexts();
     }
     
+    @Override
     public void addUserIdToken(final String userId, final UserIdToken userIdToken) throws MslException {
         mslStore.addUserIdToken(userId, userIdToken);
     }
     
+    @Override
     public UserIdToken getUserIdToken(final String userId) {
         return mslStore.getUserIdToken(userId);
     }
     
+    @Override
     public void removeUserIdToken(final UserIdToken userIdToken) {
         mslStore.removeUserIdToken(userIdToken);
     }
     
+    @Override
     public void clearUserIdTokens() {
         mslStore.clearUserIdTokens();
     }
     
+    @Override
     public void addServiceTokens(final Set<ServiceToken> tokens) throws MslException {
         mslStore.addServiceTokens(tokens);
     }
 
+    @Override
     public Set<ServiceToken> getServiceTokens(final MasterToken masterToken, final UserIdToken userIdToken) throws MslException {
         return mslStore.getServiceTokens(masterToken, userIdToken);
     }
 
+    @Override
     public void removeServiceTokens(final String name, final MasterToken masterToken, final UserIdToken userIdToken) throws MslException {
         mslStore.removeServiceTokens(name, masterToken, userIdToken);
     }
 
+    @Override
     public void clearServiceTokens() {
         mslStore.clearServiceTokens();
     }

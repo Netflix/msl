@@ -131,7 +131,7 @@ public final class Client {
         throws ExecutionException, IOException, InterruptedException, MslException
     {
         if (userAuthenticationDataHandle == null) {
-            throw new IllegalStateException("Uninitialized UserAuthentication Data Handle");
+            throw new IllegalStateException("Uninitialized UserAuthenticationDataHandle");
         }
 
         final MessageContext msgCtx = new ClientRequestMessageContext(
@@ -162,6 +162,9 @@ public final class Client {
      * Set key request data for specific key request and (if applicable) mechanism.
      */
     public void setKeyRequestData(final String kxType, final String mechanism) throws MslException, IOException {
+        if (kxType == null) {
+            throw new IllegalArgumentException("NULL Key Exchange Type");
+        }
         keyRequestDataSet.clear();
         if (KX_DH.equals(kxType)) {
             final KeyPair dhKeyPair = SharedUtil.generateDiffieHellmanKeys(DEFAULT_DH_PARAMS_ID);
@@ -194,6 +197,9 @@ public final class Client {
      * Set user authentication data handle
      */
     public void setUserAuthenticationDataHandle(final UserAuthenticationDataHandle userAuthenticationDataHandle) {
+        if (userAuthenticationDataHandle == null) {
+            throw new IllegalArgumentException("NULL UserAuthenticationDataHandle");
+        }
         this.userAuthenticationDataHandle = userAuthenticationDataHandle;
     }
 
