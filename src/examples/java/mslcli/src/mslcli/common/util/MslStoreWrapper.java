@@ -32,9 +32,12 @@ import com.netflix.msl.util.MslStore;
  */
 
 public class MslStoreWrapper implements MslStore {
-    private final MslStore mslStore;
+    private MslStore mslStore;
 
-    public MslStoreWrapper(final MslStore mslStore)  {
+    /**
+     * package-private so only AppContext can call it
+     */
+    void setMslStore(final MslStore mslStore) {
         if (mslStore == null) {
             throw new IllegalArgumentException("NULL MSL Store");
         }

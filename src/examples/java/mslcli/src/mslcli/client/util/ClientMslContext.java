@@ -68,15 +68,11 @@ public final class ClientMslContext implements MslContext {
     /**
      * <p>Create a new MSL context.</p>
      * 
+     * @param appCtx application context
      * @param clientId local client entity identity.
-     * @param presharedKeyStore local client entity preshared key store.
-     * @param rsaStore local client entity RSA key store.
-     * @param emailPasswords user email/password store.
-     * @param mslStore local client entity MSL store
      */
     public ClientMslContext(final AppContext appCtx,
-                            final String clientId,
-                            final MslStore mslStore)
+                            final String clientId)
     {
         if (appCtx == null) {
             throw new IllegalArgumentException("NULL AppContext");
@@ -85,12 +81,17 @@ public final class ClientMslContext implements MslContext {
             throw new IllegalArgumentException("NULL client ID");
         }
 
-        final PresharedKeyStore presharedKeyStore = appCtx.getClientPresharedKeyStore();
+        // MSL store
+        this.mslStore = appCtx.getMslStore();
 
-        final RsaStore rsaStore = appCtx.getClientRsaStore();
+        // Create the preshared keys store.
+        final PresharedKeyStore presharedKeyStore = appCtx.getPresharedKeyStore();
+
+        // Create the RSA store.
+        final RsaStore rsaStore = appCtx.getRsaStore();
 
         // Create the email/password store.
-        final EmailPasswordStore emailPasswordStore = appCtx.getClientEmailPasswordStore();
+        final EmailPasswordStore emailPasswordStore = appCtx.getEmailPasswordStore();
 
         // Message capabilities.
         final Set<CompressionAlgorithm> compressionAlgos =
@@ -134,9 +135,6 @@ public final class ClientMslContext implements MslContext {
 
         // key token factory
         this.tokenFactory = new ClientTokenFactory();
-
-        // MSL store
-        this.mslStore = mslStore;
     }
 
     /* (non-Javadoc)

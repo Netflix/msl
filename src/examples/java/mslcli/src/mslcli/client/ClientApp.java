@@ -37,7 +37,6 @@ import com.netflix.msl.msg.MslControl;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.userauth.EmailPasswordAuthenticationData;
 import com.netflix.msl.userauth.UserAuthenticationData;
-import com.netflix.msl.util.MslStore;
 
 import mslcli.common.msg.MessageConfig;
 import mslcli.common.userauth.UserAuthenticationDataHandle;
@@ -96,7 +95,6 @@ public final class ClientApp {
     }
 
     private final AppContext appCtx;
-    private final MslStore mslStore;
     private URL remoteUrl;
     private Client client;
     private MessageConfig cfg;
@@ -120,7 +118,7 @@ public final class ClientApp {
         }
 
         // initialize MSL Store - use wrapper to intercept selected MSL Store calls
-        mslStore = new AppMslStoreWrapper(appCtx.getClientMslStore());
+        appCtx.setMslStoreWrapper(new AppMslStoreWrapper());
     }
 
     private void startClientApp() throws Exception {
@@ -129,7 +127,7 @@ public final class ClientApp {
         cfg.isEncrypted = true;
         cfg.isIntegrityProtected = true;
         cfg.isNonReplayable = false;
-        client = new Client(appCtx, CLIENT_ID, mslStore);
+        client = new Client(appCtx, CLIENT_ID);
         client.setUserAuthenticationDataHandle(new AppUserAuthenticationDataHandle());
         String cmd;
         while (!QUIT.equalsIgnoreCase(cmd = SharedUtil.readInput(String.format("Command(\"%s\" to exit) %s", QUIT, supportedCommands.toString())))) {
@@ -171,9 +169,6 @@ public final class ClientApp {
      * This is a listener to all MslStore calls. It can override only the methods in ClientStoreInterceptor the app cares about.
      */
     private final class AppMslStoreWrapper extends MslStoreWrapper {
-        private AppMslStoreWrapper(final MslStore mslStore) {
-            super(mslStore);
-        }
         @Override
         public void setCryptoContext(final MasterToken masterToken, final ICryptoContext cryptoContext) {
             if (masterToken == null) {

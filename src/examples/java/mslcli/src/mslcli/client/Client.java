@@ -82,31 +82,28 @@ public final class Client {
     }
         
     /**
-     * @param clientId - client entity identity
-     * @param mslStore - MSL Store
+     * @param appCtx application context
+     * @param clientId client entity identity
      */
-    public Client(final AppContext appCtx, final String clientId, final MslStore mslStore) {
+    public Client(final AppContext appCtx, final String clientId) {
         if (appCtx == null) {
             throw new IllegalArgumentException("NULL app context");
         }
         if (clientId == null || clientId.trim().isEmpty()) {
             throw new IllegalArgumentException("Undefined Client Id");
         }
-        if (mslStore == null) {
-            throw new IllegalArgumentException("NULL MSL Store");
-        }
+
+        // Initialize app context.
+        this.appCtx = appCtx;
 
         // Set client ID
         this.clientId = clientId;
 
         // Initialize MSL store.
-        this.mslStore = mslStore;
-
-        // Initialize app context.
-        this.appCtx = appCtx;
+        this.mslStore = appCtx.getMslStore();
 
         // Set up the MSL context
-        this.mslCtx = new ClientMslContext(appCtx, clientId, mslStore);
+        this.mslCtx = new ClientMslContext(appCtx, clientId);
 
         // Set up the MSL Control
         this.mslCtrl = appCtx.getMslControl();

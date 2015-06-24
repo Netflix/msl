@@ -15,10 +15,12 @@
  */
 package mslcli.common.entityauth;
 
+import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import com.netflix.msl.entityauth.RsaStore;
@@ -26,48 +28,40 @@ import com.netflix.msl.entityauth.RsaStore;
 /**
  * <p>An example RSA key store.</p>
  * 
- * @author Wesley Miaw <wmiaw@netflix.com>
+ * @author Vadim Spector <wmiaw@netflix.com>
  */
 public class SimpleRsaStore implements RsaStore {
     /**
      * <p>Create a new RSA store that will return the provided public and/or
-     * private keys for the specified server entity identity. A public key must
-     * be provided to authenticate remote entities. A private key must be
-     * provided to authenticate local entities.</p>
+     * private keys for the specified server RSA key pair ID.
+     *
+     * Multiple server instances may be configured to use the same RSA key pair id.
+     *
+     * A public key must be provided to authenticate remote entities. A private key
+     * must be provided to authenticate local entities.</p>
      * 
-     * @param serverId server entity identity.
-     * @param publicKey server RSA public key. May be null.
-     * @param privateKey server RSA private key. May be null.
+     * @param keys RSA key pairs keyed by server entity id
      */
-    public SimpleRsaStore(final String serverId, final PublicKey publicKey, final PrivateKey privateKey) {
-        this.serverId = serverId;
-        this.publicKey = publicKey;
-        this.privateKey = privateKey;
+    public SimpleRsaStore(final Map<String,KeyPair> keys) {
+        this.keys = keys;
     }
     
     @Override
     public Set<String> getIdentities() {
-        return new HashSet<String>(Arrays.asList(serverId));
+        return keys.keySet();
     }
 
     @Override
     public PublicKey getPublicKey(final String identity) {
-        if (serverId.equals(identity))
-            return publicKey;
-        return null;
+        final KeyPair pair = keys.get(identity);
+        return (pair != null) ? pair.getPublic() : null;
     }
 
     @Override
     public PrivateKey getPrivateKey(final String identity) {
-        if (serverId.equals(identity))
-            return privateKey;
-        return null;
+        final KeyPair pair = keys.get(identity);
+        return (pair != null) ? pair.getPrivate() : null;
     }
-    
-    /** Server entity identity. */
-    private final String serverId;
-    /** Server RSA public key. */
-    private final PublicKey publicKey;
-    /** Server RSA private key. */
-    private final PrivateKey privateKey;
-};
+
+    private final Map<String,KeyPair> keys;
+}

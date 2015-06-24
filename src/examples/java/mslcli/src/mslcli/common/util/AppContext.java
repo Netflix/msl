@@ -95,14 +95,25 @@ public final class AppContext {
 
     private final MslProperties prop;
     private final MslControl mslControl;
+    private final MslStore mslStore;
+    private final PresharedKeyStore presharedKeyStore;
+    private final EmailPasswordStore emailPasswordStore;
+    private final RsaStore rsaStore;
+    private final WrapCryptoContextRepository wrapCryptoContextRepository;
+    private transient MslStoreWrapper mslStoreWrapper;
 
     private AppContext(final MslProperties p) {
         if (p == null) {
             throw new IllegalArgumentException("NULL MslProperties");
         }
         this.prop = p;
-        this.mslControl = new MslControl(prop.getNumMslControlThreads(0));
-        this.simpleDiffieHellmanParameters = new SimpleDiffieHellmanParameters(this.prop);
+        this.mslControl = new MslControl(p.getNumMslControlThreads());
+        this.mslStore = new SimpleMslStore(); // TBD - add persistency
+        this.simpleDiffieHellmanParameters = new SimpleDiffieHellmanParameters(p);
+        this.presharedKeyStore = initPresharedKeyStore(p);
+        this.emailPasswordStore = initEmailPasswordStore(p);
+        this.rsaStore = initRsaStore(p);
+        this.wrapCryptoContextRepository = new SimpleWrapCryptoContextRepository();
     }
 
     /* An application should only use one instance of MslControl for all MSL communication.
@@ -114,89 +125,89 @@ public final class AppContext {
     }
 
     /**
-     * Initialize client pre-shared key store
+     * Initialize pre-shared key store
      */
-    public PresharedKeyStore getClientPresharedKeyStore() {
-        final SecretKey encryptionKey = new SecretKeySpec(SharedUtil.hexStringToByteArray(CLIENT_ENCR_PSK_HEX), JcaAlgorithm.AES);
-        final SecretKey hmacKey       = new SecretKeySpec(SharedUtil.hexStringToByteArray(CLIENT_HMAC_PSK_HEX), JcaAlgorithm.HMAC_SHA256);
-        final SecretKey wrapKey       = new SecretKeySpec(SharedUtil.hexStringToByteArray(CLIENT_WRAP_PSK_HEX), JcaAlgorithm.AESKW);
-        final KeySet keySet = new KeySet(encryptionKey, hmacKey, wrapKey);
+    public PresharedKeyStore getPresharedKeyStore() {
+        return presharedKeyStore;
+    }
+
+    private static PresharedKeyStore initPresharedKeyStore(final MslProperties p) {
         final Map<String,KeySet> keySets = new HashMap<String,KeySet>();
-        keySets.put(CLIENT_ID, keySet);
+
+        for (Map.Entry<String,MslProperties.PresharedKeyTriple> entry : p.getPresharedKeyStore().entrySet()) {
+            keySets.put(entry.getKey(), new KeySet(
+                new SecretKeySpec(SharedUtil.hexStringToByteArray(entry.getValue().encKeyHex ), JcaAlgorithm.AES),
+                new SecretKeySpec(SharedUtil.hexStringToByteArray(entry.getValue().hmacKeyHex), JcaAlgorithm.HMAC_SHA256),
+                new SecretKeySpec(SharedUtil.hexStringToByteArray(entry.getValue().wrapKeyHex), JcaAlgorithm.AESKW)
+            ));
+        }
         return new SimplePresharedKeyStore(keySets);
     }
 
     /**
-     * Initialize server pre-shared key store
-     * Real-life implementation is likely to support multiple clients
+     * Initialize {email,password} store
      */
-    public PresharedKeyStore getServerPresharedKeyStore() {
-        return getClientPresharedKeyStore();
+    public EmailPasswordStore getEmailPasswordStore() {
+        return emailPasswordStore;
     }
 
-    /**
-     * Initialize client {email,password} store
-     */
-    public EmailPasswordStore getClientEmailPasswordStore() {
+    private static EmailPasswordStore initEmailPasswordStore(final MslProperties p) {
         final Map<String,String> emailPasswords = new HashMap<String,String>();
         emailPasswords.put(CLIENT_USER_EMAIL, CLIENT_USER_PASSWORD);
         return new SimpleEmailPasswordStore(emailPasswords);
     }
 
     /**
-     * Initialize server {email,password} store
-     * Real-life implementation is likely to support multiple clients
-     */
-    public EmailPasswordStore getServerEmailPasswordStore() {
-        return getClientEmailPasswordStore();
-    }
-
-    /**
      * Initialize client MSL store
      */
-    public MslStore getClientMslStore() {
-        return new SimpleMslStore();
+    public MslStore getMslStore() {
+        return (mslStoreWrapper != null) ? mslStoreWrapper : mslStore;
+    }
+
+    public void setMslStoreWrapper(final MslStoreWrapper mslStoreWrapper) {
+        this.mslStoreWrapper = mslStoreWrapper;
+        if (mslStoreWrapper != null) {
+            mslStoreWrapper.setMslStore(mslStore);
+        }
     }
 
     /**
-     * Initialize server MSL store
-     */
-    public MslStore getServerMslStore() {
-        return new SimpleMslStore();
-    }
-
-    /**
-     * Initialize client RSA key store
+     * Initialize RSA key store
      * Real-life implementation may support multiple servers
      * Client only posesses server public key
      */
-    public RsaStore getClientRsaStore() {
-        final KeyPair kp = getServerRsaKeyPair();
-        return new SimpleRsaStore(SERVER_RSA_KEY_ID, kp.getPublic(), null);
+    public RsaStore getRsaStore() {
+        return rsaStore;
     }
 
-    /**
-     * Initialize server RSA key store
-     * Real-life implementation may support multiple servers
-     */
-    public RsaStore getServerRsaStore() {
-        final KeyPair kp = getServerRsaKeyPair();
-        return new SimpleRsaStore(SERVER_RSA_KEY_ID, kp.getPublic(), kp.getPrivate());
-    }
-
-    private KeyPair getServerRsaKeyPair() {
+    private static RsaStore initRsaStore(final MslProperties p) {
         try {
             final KeyFactory rsaKeyFactory = KeyFactory.getInstance("RSA");
+            final Map<String,MslProperties.RsaStoreKeyPair> rsaKeyPairsB64 = p.getRsaKeyStore();
+            final Map<String,KeyPair> rsaKeyPairs = new HashMap<String,KeyPair>();
 
-            final byte[] privKeyEncoded = DatatypeConverter.parseBase64Binary(SERVER_RSA_PRIVKEY_B64);
-            final PKCS8EncodedKeySpec privKeySpec = new PKCS8EncodedKeySpec(privKeyEncoded);
-            final PrivateKey privKey = rsaKeyFactory.generatePrivate(privKeySpec);
+            for (Map.Entry<String,MslProperties.RsaStoreKeyPair> entry : rsaKeyPairsB64.entrySet()) {
+                final PrivateKey privKey;
+                if (entry.getValue().privB64 != null) {
+                    final byte[] privKeyEncoded = DatatypeConverter.parseBase64Binary(entry.getValue().privB64);
+                    final PKCS8EncodedKeySpec privKeySpec = new PKCS8EncodedKeySpec(privKeyEncoded);
+                    privKey = rsaKeyFactory.generatePrivate(privKeySpec);
+                } else {
+                    privKey = null;
+                }
 
-            final byte[] pubKeyEncoded = DatatypeConverter.parseBase64Binary(SERVER_RSA_PUBKEY_B64);
-            final X509EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(pubKeyEncoded);
-            final PublicKey pubKey = rsaKeyFactory.generatePublic(pubKeySpec);
+                final PublicKey pubKey;
+                if (entry.getValue().pubB64 != null) {
+                    final byte[] pubKeyEncoded = DatatypeConverter.parseBase64Binary(entry.getValue().pubB64);
+                    final X509EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(pubKeyEncoded);
+                    pubKey = rsaKeyFactory.generatePublic(pubKeySpec);
+                } else {
+                    pubKey = null;
+                }
 
-            return new KeyPair(pubKey, privKey);
+                rsaKeyPairs.put(entry.getKey(), new KeyPair(pubKey, privKey));
+            }
+            return new SimpleRsaStore(rsaKeyPairs);
 
         } catch (final NoSuchAlgorithmException e) {
             throw new RuntimeException("RSA algorithm not found.", e);
@@ -347,6 +358,6 @@ public final class AppContext {
      * Simple implementation of WrappedCryptoContextRepository interface
      */
     public WrapCryptoContextRepository getWrapCryptoContextRepository() {
-        return new SimpleWrapCryptoContextRepository();
+        return wrapCryptoContextRepository;
     }
 }

@@ -82,11 +82,8 @@ public class ServerMslContext implements MslContext {
     /**
      * <p>Create a new server MSL context.</p>
      * 
+     * @param appCtx application context
      * @param serverId local server entity identity.
-     * @param presharedKeyStore local server entity preshared key store.
-     * @param rsaStore local server entity RSA key store.
-     * @param emailPasswords user email/password store.
-     * @param mslStore MSL store.
      */
     public ServerMslContext(final AppContext appCtx, final String serverId) {
         if (appCtx == null) {
@@ -100,16 +97,16 @@ public class ServerMslContext implements MslContext {
 
         /* Initialize MSL store.
          */
-        this.mslStore = appCtx.getServerMslStore();
+        this.mslStore = appCtx.getMslStore();
 
         // Create the pre-shared key store.
-        final PresharedKeyStore presharedKeyStore = appCtx.getServerPresharedKeyStore();
+        final PresharedKeyStore presharedKeyStore = appCtx.getPresharedKeyStore();
 
         // Create the RSA key store.
-        final RsaStore rsaStore = appCtx.getServerRsaStore();
+        final RsaStore rsaStore = appCtx.getRsaStore();
 
         // Create the email/password store.
-        final EmailPasswordStore emailPasswordStore = appCtx.getServerEmailPasswordStore();
+        final EmailPasswordStore emailPasswordStore = appCtx.getEmailPasswordStore();
 
         // Message capabilities.
         final Set<CompressionAlgorithm> compressionAlgos = new HashSet<CompressionAlgorithm>(Arrays.asList(CompressionAlgorithm.GZIP, CompressionAlgorithm.LZW));
