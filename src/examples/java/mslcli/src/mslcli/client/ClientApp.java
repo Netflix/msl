@@ -41,7 +41,9 @@ import com.netflix.msl.util.MslStore;
 
 import mslcli.common.msg.MessageConfig;
 import mslcli.common.userauth.UserAuthenticationDataHandle;
+import mslcli.common.util.MslProperties;
 import mslcli.common.util.MslStoreWrapper;
+import mslcli.common.util.AppContext;
 import mslcli.common.util.SharedUtil;
 
 import static mslcli.common.Constants.*;
@@ -93,7 +95,7 @@ public final class ClientApp {
         new ClientApp(args).startClientApp();
     }
 
-    private final MslControl mslCtrl;
+    private final AppContext appCtx;
     private final MslStore mslStore;
     private URL remoteUrl;
     private Client client;
@@ -101,23 +103,24 @@ public final class ClientApp {
 
     private ClientApp(String[] args) throws Exception {
 
-        /* An application should only use one instance of MslControl for all MSL communication.
-         * This class is thread-safe.
-         * Passing 0 parameter leads to MslControl executing on the caller's thread.
-         */
-        mslCtrl = new MslControl(0);
-
-        // initialize MSL Store - use wrapper to intercept selected MSL Store calls
-        mslStore = new AppMslStoreWrapper(SharedUtil.getClientMslStore());
+        if (args.length < 2) {
+            System.out.println("Parameters: server_url config_file [verbose]");
+            System.exit(1);
+        }
 
         // set server URL
         remoteUrl = new URL(args[0]);
 
+        this.appCtx = AppContext.getInstance(MslProperties.getInstance(args[1]));
+
         /* second command-line argument with any value turns on diagnostic messages in MslControl
          */
-        if (args.length > 1) {
-            mslCtrl.setFilterFactory(new ConsoleFilterStreamFactory());
+        if (args.length > 2) {
+            appCtx.getMslControl().setFilterFactory(new ConsoleFilterStreamFactory());
         }
+
+        // initialize MSL Store - use wrapper to intercept selected MSL Store calls
+        mslStore = new AppMslStoreWrapper(appCtx.getClientMslStore());
     }
 
     private void startClientApp() throws Exception {
@@ -126,7 +129,7 @@ public final class ClientApp {
         cfg.isEncrypted = true;
         cfg.isIntegrityProtected = true;
         cfg.isNonReplayable = false;
-        client = new Client(CLIENT_ID, mslCtrl, mslStore);
+        client = new Client(appCtx, CLIENT_ID, mslStore);
         client.setUserAuthenticationDataHandle(new AppUserAuthenticationDataHandle());
         String cmd;
         while (!QUIT.equalsIgnoreCase(cmd = SharedUtil.readInput(String.format("Command(\"%s\" to exit) %s", QUIT, supportedCommands.toString())))) {

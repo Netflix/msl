@@ -49,6 +49,8 @@ import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslStore;
 
 import static mslcli.common.Constants.*;
+import mslcli.common.util.MslProperties;
+import mslcli.common.util.AppContext;
 import mslcli.common.util.SharedUtil;
 import mslcli.server.msg.ServerReceiveMessageContext;
 import mslcli.server.msg.ServerRespondMessageContext;
@@ -87,30 +89,19 @@ public class SimpleMslServer {
      * <p>Create a new server instance and initialize its static, immutable state.
      * </p>
      */
-    public SimpleMslServer() {
+    public SimpleMslServer(final MslProperties prop) {
+        if (prop == null) {
+            throw new IllegalArgumentException("NULL MslProperties");
+        }
+
+        this.appCtx = AppContext.getInstance(prop);
+
         // Create the MSL control.
-        //
-        // Since this is an example process all requests on the calling thread.
-        this.mslCtrl = new MslControl(0);
+        this.mslCtrl = appCtx.getMslControl();
         mslCtrl.setFilterFactory(new ConsoleFilterStreamFactory());
 
-        /* Initialize memory-backed MSL store.
-         * This class is implemented in MSL core
-         */
-        final MslStore mslStore = SharedUtil.getServerMslStore();
+        this.mslCtx = new ServerMslContext(appCtx, SERVER_ID);
 
-        // Create the pre-shared key store.
-        final PresharedKeyStore presharedKeyStore = SharedUtil.getServerPresharedKeyStore();
-
-        // Create the RSA key store.
-        final RsaStore rsaStore = SharedUtil.getServerRsaStore();
-
-       // Create the email/password store.
-        final EmailPasswordStore emailPasswordStore = SharedUtil.getServerEmailPasswordStore();
-        
-        // Set up the MSL context.
-        this.mslCtx = new ServerMslContext(SERVER_ID, presharedKeyStore, rsaStore, emailPasswordStore, mslStore);
-        
         // Use one crypto context for all service tokens.
         final SecretKey encryptionKey = new SecretKeySpec(ST_ENCRYPTION_KEY, JcaAlgorithm.AES);
         final SecretKey hmacKey = new SecretKeySpec(ST_HMAC_KEY, JcaAlgorithm.HMAC_SHA256);
@@ -169,6 +160,9 @@ public class SimpleMslServer {
         }
     }
     
+    /** MSL context. */
+    private final AppContext appCtx;
+
     /** MSL context. */
     private final MslContext mslCtx;
 

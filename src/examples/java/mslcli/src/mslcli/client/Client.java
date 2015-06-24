@@ -50,6 +50,7 @@ import mslcli.client.util.ClientMslContext;
 
 import mslcli.common.msg.MessageConfig;
 import mslcli.common.userauth.UserAuthenticationDataHandle;
+import mslcli.common.util.AppContext;
 import mslcli.common.util.SharedUtil;
 
 import static mslcli.common.Constants.*;
@@ -82,15 +83,14 @@ public final class Client {
         
     /**
      * @param clientId - client entity identity
-     * @param mslCtrl - MSL controller implementing MSL protocol stack
      * @param mslStore - MSL Store
      */
-    public Client(final String clientId, final MslControl mslCtrl, final MslStore mslStore) {
+    public Client(final AppContext appCtx, final String clientId, final MslStore mslStore) {
+        if (appCtx == null) {
+            throw new IllegalArgumentException("NULL app context");
+        }
         if (clientId == null || clientId.trim().isEmpty()) {
             throw new IllegalArgumentException("Undefined Client Id");
-        }
-        if (mslCtrl == null) {
-            throw new IllegalArgumentException("NULL MSL Control");
         }
         if (mslStore == null) {
             throw new IllegalArgumentException("NULL MSL Store");
@@ -99,23 +99,17 @@ public final class Client {
         // Set client ID
         this.clientId = clientId;
 
-        // Set the MSL control.
-        this.mslCtrl = mslCtrl;
-
         // Initialize MSL store.
         this.mslStore = mslStore;
 
-        // Create the pre-shared key store.
-        final PresharedKeyStore presharedKeyStore = SharedUtil.getClientPresharedKeyStore();
-
-        // Create the RSA key store
-        final RsaStore rsaStore = SharedUtil.getClientRsaStore();
-
-        // Create the email/password store.
-        final EmailPasswordStore emailPasswordStore = SharedUtil.getClientEmailPasswordStore();
+        // Initialize app context.
+        this.appCtx = appCtx;
 
         // Set up the MSL context
-        this.mslCtx = new ClientMslContext(clientId, presharedKeyStore, rsaStore, emailPasswordStore, mslStore);
+        this.mslCtx = new ClientMslContext(appCtx, clientId, mslStore);
+
+        // Set up the MSL Control
+        this.mslCtrl = appCtx.getMslControl();
 
         // initialize key request data
         this.keyRequestDataSet = new HashSet<KeyRequestData>();
@@ -167,8 +161,9 @@ public final class Client {
         }
         keyRequestDataSet.clear();
         if (KX_DH.equals(kxType)) {
-            final KeyPair dhKeyPair = SharedUtil.generateDiffieHellmanKeys(DEFAULT_DH_PARAMS_ID);
-            keyRequestDataSet.add(new DiffieHellmanExchange.RequestData(DEFAULT_DH_PARAMS_ID, ((DHPublicKey)dhKeyPair.getPublic()).getY(), (DHPrivateKey)dhKeyPair.getPrivate()));
+            final String diffieHellmanParametersId = appCtx.getDiffieHellmanParametersId(clientId);
+            final KeyPair dhKeyPair = appCtx.generateDiffieHellmanKeys(diffieHellmanParametersId);
+            keyRequestDataSet.add(new DiffieHellmanExchange.RequestData(diffieHellmanParametersId, ((DHPublicKey)dhKeyPair.getPublic()).getY(), (DHPrivateKey)dhKeyPair.getPrivate()));
         } else if (KX_SWE.equals(kxType)) {
             keyRequestDataSet.add(new SymmetricWrappedExchange.RequestData(SymmetricWrappedExchange.KeyId.PSK));
         } else if (KX_AWE.equals(kxType)) {
@@ -177,7 +172,7 @@ public final class Client {
             }
             final AsymmetricWrappedExchange.RequestData.Mechanism m = Enum.valueOf(AsymmetricWrappedExchange.RequestData.Mechanism.class, mechanism);
             if (aweKeyPair == null) {
-               aweKeyPair = SharedUtil.generateAsymmetricWrappedExchangeKeyPair();
+               aweKeyPair = appCtx.generateAsymmetricWrappedExchangeKeyPair();
             }
             keyRequestDataSet.add(new AsymmetricWrappedExchange.RequestData(DEFAULT_AWE_KEY_PAIR_ID, m, aweKeyPair.getPublic(), aweKeyPair.getPrivate()));
         } else if (KX_JWEL.equals(kxType)) {
@@ -206,6 +201,9 @@ public final class Client {
     public MslStore getMslStore() {
         return mslStore;
     }
+
+    /** App context */
+    private final AppContext appCtx;
 
     /** Client Entity ID */
     private final String clientId;

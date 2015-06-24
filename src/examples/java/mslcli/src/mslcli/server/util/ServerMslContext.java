@@ -58,6 +58,7 @@ import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslStore;
 
 import static mslcli.common.Constants.*;
+import mslcli.common.util.AppContext;
 import mslcli.common.util.SharedUtil;
 import mslcli.server.tokens.ServerTokenFactory;
 import mslcli.server.util.ServerAuthenticationUtils;
@@ -87,7 +88,29 @@ public class ServerMslContext implements MslContext {
      * @param emailPasswords user email/password store.
      * @param mslStore MSL store.
      */
-    public ServerMslContext(final String serverId, final PresharedKeyStore presharedKeyStore, final RsaStore rsaStore, final EmailPasswordStore emailPasswordStore, final MslStore mslStore) {
+    public ServerMslContext(final AppContext appCtx, final String serverId) {
+        if (appCtx == null) {
+            throw new IllegalArgumentException("NULL app context");
+        }
+        if (serverId == null) {
+            throw new IllegalArgumentException("NULL server ID");
+        }
+
+        this.appCtx = appCtx;
+
+        /* Initialize MSL store.
+         */
+        this.mslStore = appCtx.getServerMslStore();
+
+        // Create the pre-shared key store.
+        final PresharedKeyStore presharedKeyStore = appCtx.getServerPresharedKeyStore();
+
+        // Create the RSA key store.
+        final RsaStore rsaStore = appCtx.getServerRsaStore();
+
+        // Create the email/password store.
+        final EmailPasswordStore emailPasswordStore = appCtx.getServerEmailPasswordStore();
+
         // Message capabilities.
         final Set<CompressionAlgorithm> compressionAlgos = new HashSet<CompressionAlgorithm>(Arrays.asList(CompressionAlgorithm.GZIP, CompressionAlgorithm.LZW));
         final List<String> languages = Arrays.asList("en-US");
@@ -103,7 +126,7 @@ public class ServerMslContext implements MslContext {
         final WrapCryptoContextRepository wrapCryptoContextRepository = null;
         
         // Create authentication utils.
-        final AuthenticationUtils authutils = new ServerAuthenticationUtils(serverId);
+        final AuthenticationUtils authutils = new ServerAuthenticationUtils(appCtx, serverId);
         
         // Entity authentication.
         //
@@ -119,18 +142,16 @@ public class ServerMslContext implements MslContext {
         this.userAuthFactory = new EmailPasswordAuthenticationFactory(emailPasswordStore, authutils);
         
         // Key exchange factories.
-        this.keyxFactories = SharedUtil.getKeyExchangeFactorySet(
+        this.keyxFactories = appCtx.getKeyExchangeFactorySet(
             new AsymmetricWrappedExchange(authutils),
             new SymmetricWrappedExchange(authutils),
-            new DiffieHellmanExchange(SharedUtil.getDiffieHellmanParameters(), authutils),
+            new DiffieHellmanExchange(appCtx.getDiffieHellmanParameters(), authutils),
             new JsonWebEncryptionLadderExchange(wrapCryptoContextRepository, authutils),
             new JsonWebKeyLadderExchange(wrapCryptoContextRepository, authutils)
         );
 
         // key token factory
         this.tokenFactory = new ServerTokenFactory();
-
-        this.mslStore = mslStore;
     }
 
     /* (non-Javadoc)
@@ -239,6 +260,7 @@ public class ServerMslContext implements MslContext {
         return mslStore;
     }
 
+    private final AppContext appCtx;
     private final MessageCapabilities messageCaps;
     private final EntityAuthenticationData entityAuthData;
     private final ICryptoContext mslCryptoContext;

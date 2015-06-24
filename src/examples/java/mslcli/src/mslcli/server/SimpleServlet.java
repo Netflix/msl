@@ -21,6 +21,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import mslcli.common.util.MslProperties;
+
 /**
  * <p>
  *    An example Java MSL servlet that listens for requests from the example MSL client.
@@ -31,12 +33,14 @@ import javax.servlet.http.HttpServletResponse;
 
 public class SimpleServlet extends HttpServlet {
     private static final long serialVersionUID = -4593207843035538485L;
+    private static final String configFile = "mslcli.cfg"; // TBD - make configurable from servlet properties
     
     /**
      * <p>Create a new servlet instance and initialize the simple MSL server.</p>
      */
-    public SimpleServlet() {
-        this.mslServer = new SimpleMslServer();
+    public SimpleServlet() throws Exception {
+        final MslProperties prop = MslProperties.getInstance(configFile);
+        this.mslServer = new SimpleMslServer(prop);
     }
     
     /* (non-Javadoc)

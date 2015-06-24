@@ -55,7 +55,7 @@ import com.netflix.msl.util.AuthenticationUtils;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslStore;
 
-import mslcli.common.util.SharedUtil;
+import mslcli.common.util.AppContext;
 
 /**
  * <p>The sample client MSL context for clients talking to trusted network servers.</p>
@@ -74,12 +74,24 @@ public final class ClientMslContext implements MslContext {
      * @param emailPasswords user email/password store.
      * @param mslStore local client entity MSL store
      */
-    public ClientMslContext(final String clientId,
-                            final PresharedKeyStore presharedKeyStore,
-                            final RsaStore rsaStore,
-                            final EmailPasswordStore emailPasswordStore,
+    public ClientMslContext(final AppContext appCtx,
+                            final String clientId,
                             final MslStore mslStore)
     {
+        if (appCtx == null) {
+            throw new IllegalArgumentException("NULL AppContext");
+        }
+        if (clientId == null) {
+            throw new IllegalArgumentException("NULL client ID");
+        }
+
+        final PresharedKeyStore presharedKeyStore = appCtx.getClientPresharedKeyStore();
+
+        final RsaStore rsaStore = appCtx.getClientRsaStore();
+
+        // Create the email/password store.
+        final EmailPasswordStore emailPasswordStore = appCtx.getClientEmailPasswordStore();
+
         // Message capabilities.
         final Set<CompressionAlgorithm> compressionAlgos =
             new HashSet<CompressionAlgorithm>(Arrays.asList(CompressionAlgorithm.GZIP, CompressionAlgorithm.LZW));
@@ -93,10 +105,10 @@ public final class ClientMslContext implements MslContext {
         this.mslCryptoContext = new ClientMslCryptoContext();
 
         // WrapCryptoContextRepository
-        final WrapCryptoContextRepository wrapCryptoContextRepository = SharedUtil.getWrapCryptoContextRepository();
+        final WrapCryptoContextRepository wrapCryptoContextRepository = appCtx.getWrapCryptoContextRepository();
         
         // Create authentication utils.
-        final AuthenticationUtils authutils = new ClientAuthenticationUtils(clientId);
+        final AuthenticationUtils authutils = new ClientAuthenticationUtils(clientId, appCtx);
         
         // Entity authentication.
         //
@@ -112,10 +124,10 @@ public final class ClientMslContext implements MslContext {
         this.userAuthFactory = new EmailPasswordAuthenticationFactory(emailPasswordStore, authutils);
         
         // Key exchange factories. Real-life clients are likely to support subset of key exchange types.
-        this.keyxFactories = SharedUtil.getKeyExchangeFactorySet(
+        this.keyxFactories = appCtx.getKeyExchangeFactorySet(
             new AsymmetricWrappedExchange(authutils),
             new SymmetricWrappedExchange(authutils),
-            new DiffieHellmanExchange(SharedUtil.getDiffieHellmanParameters(), authutils),
+            new DiffieHellmanExchange(appCtx.getDiffieHellmanParameters(), authutils),
             new JsonWebEncryptionLadderExchange(wrapCryptoContextRepository, authutils),
             new JsonWebKeyLadderExchange(wrapCryptoContextRepository, authutils)
         );

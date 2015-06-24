@@ -26,6 +26,8 @@ import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
 import com.netflix.msl.util.AuthenticationUtils;
 
+import mslcli.common.util.AppContext;
+
 /**
  * <p>Restrict client authentication to pre-shared keys
  *    Restrict server entity authentication to RSA keys.
@@ -55,7 +57,7 @@ public class ServerAuthenticationUtils implements AuthenticationUtils {
      * 
      * @param serverId local server entity identity.
      */
-    public ServerAuthenticationUtils(final String serverId) {
+    public ServerAuthenticationUtils(final AppContext appCtx, final String serverId) {
         this.serverId = serverId;
 
         // set allowed entity authentication schemes
@@ -67,12 +69,7 @@ public class ServerAuthenticationUtils implements AuthenticationUtils {
         // allowedServerUserAuthenticationSchemes remains empty
 
         // set allowed key exchange schemes
-        Collections.addAll(this.allowedClientKeyExchangeSchemes , KeyExchangeScheme.ASYMMETRIC_WRAPPED
-                                                                , KeyExchangeScheme.SYMMETRIC_WRAPPED
-                                                                , KeyExchangeScheme.DIFFIE_HELLMAN
-                                                                , KeyExchangeScheme.JWE_LADDER
-                                                                , KeyExchangeScheme.JWK_LADDER
-                          );
+        this.allowedClientKeyExchangeSchemes.addAll(appCtx.getAllowedKeyExchangeSchemes(serverId));
         // allowedServerKeyExchangeSchemes remains empty
     }
     

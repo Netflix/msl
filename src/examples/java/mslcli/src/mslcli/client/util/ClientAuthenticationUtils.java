@@ -26,6 +26,8 @@ import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
 import com.netflix.msl.util.AuthenticationUtils;
 
+import mslcli.common.util.AppContext;
+
 /**
  * <p>
  *    Client-side authentication utilities.
@@ -56,8 +58,9 @@ public class ClientAuthenticationUtils implements AuthenticationUtils {
      * 
      * @param clientId local client entity identity.
      */
-    public ClientAuthenticationUtils(final String clientId) {
+    public ClientAuthenticationUtils(final String clientId, final AppContext appCtx) {
         this.clientId = clientId;
+        this.appCtx = appCtx;
 
         // set allowed entity authentication schemes
         Collections.addAll(this.allowedClientEntityAuthenticationSchemes, EntityAuthenticationScheme.PSK);
@@ -68,12 +71,7 @@ public class ClientAuthenticationUtils implements AuthenticationUtils {
         // allowedServerUserAuthenticationSchemes remains empty
 
         // set allowed key exchange schemes
-        Collections.addAll(this.allowedClientKeyExchangeSchemes, KeyExchangeScheme.ASYMMETRIC_WRAPPED
-                                                               , KeyExchangeScheme.SYMMETRIC_WRAPPED
-                                                               , KeyExchangeScheme.DIFFIE_HELLMAN
-                                                               , KeyExchangeScheme.JWE_LADDER
-                                                               , KeyExchangeScheme.JWK_LADDER
-                          );
+        this.allowedClientKeyExchangeSchemes.addAll(appCtx.getAllowedKeyExchangeSchemes(clientId));
         // allowedServerKeyExchangeSchemes remains empty
     }
     
@@ -136,4 +134,7 @@ public class ClientAuthenticationUtils implements AuthenticationUtils {
     
     /** Local client entity identity. */
     private final String clientId;
+
+    /** Local client entity identity. */
+    private final AppContext appCtx;
 }
