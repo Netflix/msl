@@ -70,8 +70,6 @@ import mslcli.common.entityauth.SimpleRsaStore;
 import mslcli.common.keyx.SimpleWrapCryptoContextRepository;
 import mslcli.common.userauth.SimpleEmailPasswordStore;
 
-import static mslcli.common.Constants.*;
-
 /**
  * Collection of app configuration-specific functions
  *
@@ -100,6 +98,7 @@ public final class AppContext {
     private final EmailPasswordStore emailPasswordStore;
     private final RsaStore rsaStore;
     private final WrapCryptoContextRepository wrapCryptoContextRepository;
+    private final DiffieHellmanParameters diffieHellmanParameters;
     private transient MslStoreWrapper mslStoreWrapper;
 
     private AppContext(final MslProperties p) {
@@ -109,7 +108,7 @@ public final class AppContext {
         this.prop = p;
         this.mslControl = new MslControl(p.getNumMslControlThreads());
         this.mslStore = new SimpleMslStore(); // TBD - add persistency
-        this.simpleDiffieHellmanParameters = new SimpleDiffieHellmanParameters(p);
+        this.diffieHellmanParameters = new SimpleDiffieHellmanParameters(p);
         this.presharedKeyStore = initPresharedKeyStore(p);
         this.emailPasswordStore = initEmailPasswordStore(p);
         this.rsaStore = initRsaStore(p);
@@ -152,9 +151,7 @@ public final class AppContext {
     }
 
     private static EmailPasswordStore initEmailPasswordStore(final MslProperties p) {
-        final Map<String,String> emailPasswords = new HashMap<String,String>();
-        emailPasswords.put(CLIENT_USER_EMAIL, CLIENT_USER_PASSWORD);
-        return new SimpleEmailPasswordStore(emailPasswords);
+        return new SimpleEmailPasswordStore(p.getEmailPasswordStore());
     }
 
     /**
@@ -263,12 +260,11 @@ public final class AppContext {
         /** Default parameters. */
 
         private SimpleDiffieHellmanParameters(final MslProperties prop) {
-            final Set<String> paramIds = prop.getDiffieHellmanParametersIds();
-            for (String paramId : paramIds) {
-                BigInteger p = new BigInteger(prop.getDiffieHellmanParameterP(paramId), 16);
-                BigInteger g = new BigInteger(prop.getDiffieHellmanParameterG(paramId), 16);
-                DHParameterSpec paramSpec = new DHParameterSpec(p, g);
-                params.put(paramId, paramSpec);
+            for (Map.Entry<String,MslProperties.DHPair> entry : prop.getDHParameterStore().entrySet()) {
+                params.put(entry.getKey(), new DHParameterSpec(
+                    new BigInteger(entry.getValue().pHex, 16),
+                    new BigInteger(entry.getValue().gHex, 16)
+                ));
             }
         }
 
@@ -292,10 +288,8 @@ public final class AppContext {
         private final Map<String,DHParameterSpec> params = new HashMap<String,DHParameterSpec>();
     }
 
-    private final DiffieHellmanParameters simpleDiffieHellmanParameters;
-
     public final DiffieHellmanParameters getDiffieHellmanParameters() {
-        return simpleDiffieHellmanParameters;
+        return diffieHellmanParameters;
     }
 
     /**
@@ -305,7 +299,7 @@ public final class AppContext {
      * $param entityId entity identity string
      */
     public String getDiffieHellmanParametersId(String entityId) {
-        return prop.getDiffieHellmanParametersId(entityId);
+        return prop.getEntityDiffieHellmanParametersId(entityId);
     }
 
     /**

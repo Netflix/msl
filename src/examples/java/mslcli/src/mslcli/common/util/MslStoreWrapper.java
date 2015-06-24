@@ -42,7 +42,7 @@ public class MslStoreWrapper implements MslStore {
             throw new IllegalArgumentException("NULL MSL Store");
         }
         if (mslStore instanceof MslStoreWrapper) {
-            throw new IllegalArgumentException("MSL Store is MslStoreAdapter instance");
+            throw new IllegalArgumentException("MSL Store is MslStoreWrapper instance");
         }
         this.mslStore = mslStore;
     }

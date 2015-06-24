@@ -28,7 +28,7 @@ import com.netflix.msl.entityauth.RsaStore;
 /**
  * <p>An example RSA key store.</p>
  * 
- * @author Vadim Spector <wmiaw@netflix.com>
+ * @author Vadim Spector <vspector@netflix.com>
  */
 public class SimpleRsaStore implements RsaStore {
     /**

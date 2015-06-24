@@ -36,19 +36,29 @@ public final class MslProperties {
 
     private static final String MSL_CTRL_NUM_THR  = "mslctrl.nthr";
     private static final String ENTITY_KX_SCHEMES = "entity.kx.schemes.";
-    private static final String DH_PARAMS_ID      = "entity.kx.dh.";
-    private static final String DH_PARAMS_IDS     = "kx.dh.ids";
-    private static final String DH_PARAMS_P       = "kx.dh.p.";
-    private static final String DH_PARAMS_G       = "kx.dh.g.";
+
     private static final String RSA_NUM           = "store.rsa.num"; 
     private static final String RSA_KEY_ID        = "store.rsa.keyid."; 
     private static final String RSA_PUB           = "store.rsa.pub."; 
     private static final String RSA_PRIV          = "store.rsa.priv."; 
+
     private static final String PSK_NUM           = "entity.psk.num";
     private static final String PSK_ENTITY_ID     = "entity.psk.id.";
     private static final String PSK_ENC           = "entity.psk.enc.";
     private static final String PSK_HMAC          = "entity.psk.hmac.";
     private static final String PSK_WRAP          = "entity.psk.wrap.";
+
+    private static final String ENTITY_DH_ID      = "entity.dh.id.";
+
+    private static final String DH_NUM            = "kx.dh.num";
+    private static final String DH_ID             = "kx.dh.id.";
+    private static final String DH_P              = "kx.dh.p.";
+    private static final String DH_G              = "kx.dh.g.";
+
+    private static final String USER_EMAIL_NUM    = "user.email-pwd.num";
+    private static final String USER_EMAIL        = "user.email.";
+    private static final String USER_PWD          = "user.password.";
+
     private static final String ANY               = "*"; 
     private static final String SPACE_REGEX       = "\\s";
 
@@ -60,6 +70,15 @@ public final class MslProperties {
         private RsaStoreKeyPair(final String pubB64, final String privB64) {
             this.pubB64 = pubB64;
             this.privB64 = privB64;
+        }
+    }
+
+    public static final class DHPair {
+        public final String pHex;
+        public final String gHex; 
+        private DHPair(final String pHex, final String gHex) {
+            this.pHex = pHex;
+            this.gHex = gHex;
         }
     }
 
@@ -85,11 +104,14 @@ public final class MslProperties {
         final Properties p = new Properties();
         p.setProperty(MSL_CTRL_NUM_THR, "0");
         p.setProperty(ENTITY_KX_SCHEMES + ANY, "JWK_LADDER JWE_LADDER DIFFIE_HELLMAN SYMMETRIC_WRAPPED ASYMMETRIC_WRAPPED");
-        p.setProperty(DH_PARAMS_IDS, DEFAULT_DH_PARAMS_ID);
-        p.setProperty(DH_PARAMS_ID + CLIENT_ID, DEFAULT_DH_PARAMS_ID);
-        p.setProperty(DH_PARAMS_ID + SERVER_ID, DEFAULT_DH_PARAMS_ID);
-        p.setProperty(DH_PARAMS_P + DEFAULT_DH_PARAMS_ID, DEFAULT_DH_PARAM_P_HEX);
-        p.setProperty(DH_PARAMS_G + DEFAULT_DH_PARAMS_ID, DEFAULT_DH_PARAM_G_HEX);
+
+        p.setProperty(DH_NUM, "1");
+        p.setProperty(DH_ID + 0, DEFAULT_DH_PARAMS_ID);
+        p.setProperty(DH_P  + 0, DEFAULT_DH_PARAM_P_HEX);
+        p.setProperty(DH_G  + 0, DEFAULT_DH_PARAM_G_HEX);
+
+        p.setProperty(ENTITY_DH_ID + CLIENT_ID, DEFAULT_DH_PARAMS_ID);
+        p.setProperty(ENTITY_DH_ID + SERVER_ID, DEFAULT_DH_PARAMS_ID);
 
         p.setProperty(RSA_NUM, "1");
         p.setProperty(RSA_KEY_ID + 0, SERVER_RSA_KEY_ID);
@@ -101,6 +123,10 @@ public final class MslProperties {
         p.setProperty(PSK_ENC       + 0, CLIENT_ENCR_PSK_HEX);
         p.setProperty(PSK_HMAC      + 0, CLIENT_HMAC_PSK_HEX);
         p.setProperty(PSK_WRAP      + 0, CLIENT_WRAP_PSK_HEX);
+
+        p.setProperty(USER_EMAIL_NUM, "1");
+        p.setProperty(USER_EMAIL + 0, CLIENT_USER_EMAIL);
+        p.setProperty(USER_PWD   + 0, CLIENT_USER_PASSWORD);
 
         return new MslProperties(p);
     }
@@ -136,47 +162,24 @@ public final class MslProperties {
         return getCountProperty(MSL_CTRL_NUM_THR);
     }
 
-    /**
-     * return DH paremeters ID for a given entity
-     */
-    public String getDiffieHellmanParametersId(final String entityId) {
-        String id = p.getProperty(DH_PARAMS_ID + entityId);
-        if (id == null) {
-            id = p.getProperty(DH_PARAMS_ID + ANY);
+    public Map<String,DHPair> getDHParameterStore() {
+        final int num = getCountProperty(DH_NUM);
+        final Map<String,DHPair> dhParams = new HashMap<String,DHPair>(num);
+        for (int i = 0; i < num; i++) {
+            dhParams.put(getRequiredProperty(DH_ID + i), new DHPair(
+                         getRequiredProperty(DH_P  + i),
+                         getRequiredProperty(DH_G  + i)));
         }
-        if (id == null) {
-            throw new IllegalArgumentException(String.format("Missing Properties %s(%s|%s)", DH_PARAMS_ID, entityId, ANY));
-        }
-        return id;
+        return dhParams;
     }
 
-    /**
-     * return the names of all supported DH parameter IDs
-     */
-    public Set<String> getDiffieHellmanParametersIds() {
-        final String id = getRequiredProperty(DH_PARAMS_IDS);
-        final Set<String> ids = new HashSet<String>();
-        ids.addAll(Arrays.asList(id.split(SPACE_REGEX)));
-        return Collections.unmodifiableSet(ids);
-    }
-
-    /**
-     * return DH parameter P for a given parameters ID
-     */ 
-    public String getDiffieHellmanParameterP(final String paramId) {
-        return getRequiredProperty(DH_PARAMS_P + paramId);
-    }
-
-    /**
-     * return DH parameter G for a given parameters ID
-     */ 
-    public String getDiffieHellmanParameterG(final String paramId) {
-        return getRequiredProperty(DH_PARAMS_G + paramId);
+    public String getEntityDiffieHellmanParametersId(final String entityId) {
+        return getRequiredProperty(ENTITY_DH_ID + entityId);
     }
 
     public Map<String,RsaStoreKeyPair> getRsaKeyStore() {
         final int numRSA = getCountProperty(RSA_NUM);
-        final Map<String,RsaStoreKeyPair> keys = new HashMap<String,RsaStoreKeyPair>();
+        final Map<String,RsaStoreKeyPair> keys = new HashMap<String,RsaStoreKeyPair>(numRSA);
         for (int i = 0; i < numRSA; i++) {
             keys.put(getRequiredProperty(RSA_KEY_ID + i), new RsaStoreKeyPair(
                      getRequiredProperty(RSA_PUB    + i),
@@ -185,9 +188,18 @@ public final class MslProperties {
         return keys;
     }
 
+    public Map<String,String> getEmailPasswordStore() {
+        final int num = getCountProperty(USER_EMAIL_NUM);
+        final Map<String,String> emailPwd = new HashMap<String,String>(num);
+        for (int i = 0; i < num; i++) {
+            emailPwd.put(getRequiredProperty(USER_EMAIL + i), getRequiredProperty(USER_PWD + i));
+        }
+        return emailPwd;
+    }
+
     public Map<String,PresharedKeyTriple> getPresharedKeyStore() {
         final int numPSK = getCountProperty(PSK_NUM);
-        final Map<String,PresharedKeyTriple> keys = new HashMap<String,PresharedKeyTriple>();
+        final Map<String,PresharedKeyTriple> keys = new HashMap<String,PresharedKeyTriple>(numPSK);
         for (int i = 0; i < numPSK; i++) {
             keys.put(getRequiredProperty(PSK_ENTITY_ID + i), new PresharedKeyTriple(
                 getRequiredProperty(PSK_ENC  + i),
