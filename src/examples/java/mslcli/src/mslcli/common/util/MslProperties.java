@@ -93,7 +93,7 @@ public final class MslProperties {
     /**
      * return DH paremeters ID for a given entity
      */
-    public String getDiffieHellmanParameterId(final String entityId) {
+    public String getDiffieHellmanParametersId(final String entityId) {
         String id = p.getProperty(DH_PARAMS_ID + entityId);
         if (id == null) {
             id = p.getProperty(DH_PARAMS_ID + ANY);

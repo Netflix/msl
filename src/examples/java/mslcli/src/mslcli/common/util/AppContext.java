@@ -294,7 +294,7 @@ public final class AppContext {
      * $param entityId entity identity string
      */
     public String getDiffieHellmanParametersId(String entityId) {
-        return DEFAULT_DH_PARAMS_ID;
+        return prop.getDiffieHellmanParametersId(entityId);
     }
 
     /**
