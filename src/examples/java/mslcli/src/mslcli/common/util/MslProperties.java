@@ -32,7 +32,12 @@ import static mslcli.common.Constants.*;
 
 public final class MslProperties {
 
-    private static final String ENTITY_KX_SCHEMES = "entity.kx.schemes";
+    private static final String ENTITY_KX_SCHEMES = "entity.kx.schemes.";
+    private static final String DH_PARAMS_ID      = "entity.kx.dh.";
+    private static final String DH_PARAMS_IDS     = "kx.dh.ids";
+    private static final String DH_PARAMS_P       = "kx.dh.p.";
+    private static final String DH_PARAMS_G       = "kx.dh.g.";
+    private static final String ANY               = "*"; 
 
     private final Properties p;
 
@@ -45,7 +50,12 @@ public final class MslProperties {
      */
     public static MslProperties getInstance(final String configFile) throws Exception {
         final Properties p = new Properties();
-        p.setProperty(ENTITY_KX_SCHEMES + ".*", "JWK_LADDER JWE_LADDER DIFFIE_HELLMAN SYMMETRIC_WRAPPED ASYMMETRIC_WRAPPED");
+        p.setProperty(ENTITY_KX_SCHEMES + ANY, "JWK_LADDER JWE_LADDER DIFFIE_HELLMAN SYMMETRIC_WRAPPED ASYMMETRIC_WRAPPED");
+        p.setProperty(DH_PARAMS_IDS, DEFAULT_DH_PARAMS_ID);
+        p.setProperty(DH_PARAMS_ID + CLIENT_ID, DEFAULT_DH_PARAMS_ID);
+        p.setProperty(DH_PARAMS_ID + SERVER_ID, DEFAULT_DH_PARAMS_ID);
+        p.setProperty(DH_PARAMS_P + DEFAULT_DH_PARAMS_ID, DEFAULT_DH_PARAM_P_HEX);
+        p.setProperty(DH_PARAMS_G + DEFAULT_DH_PARAMS_ID, DEFAULT_DH_PARAM_G_HEX);
         return new MslProperties(p);
     }
 
@@ -62,9 +72,9 @@ public final class MslProperties {
      */
     public Set<String> getSupportedKeyExchangeSchemes(final String entityId) {
         String kxProp;
-        kxProp = p.getProperty(ENTITY_KX_SCHEMES + "." + entityId);
+        kxProp = p.getProperty(ENTITY_KX_SCHEMES + entityId);
         if (kxProp == null) {
-            kxProp = p.getProperty(ENTITY_KX_SCHEMES + ".*");
+            kxProp = p.getProperty(ENTITY_KX_SCHEMES + ANY);
             if (kxProp == null) return Collections.emptySet();
         }
         final Set<String> kx = new HashSet<String>();
@@ -78,5 +88,54 @@ public final class MslProperties {
 
     public int getNumMslControlThreads(final int defValue) {
         return defValue;
+    }
+
+    /**
+     * return DH paremeters ID for a given entity
+     */
+    public String getDiffieHellmanParameterId(final String entityId) {
+        String id = p.getProperty(DH_PARAMS_ID + entityId);
+        if (id == null) {
+            id = p.getProperty(DH_PARAMS_ID + ANY);
+        }
+        if (id == null) {
+            throw new IllegalArgumentException(String.format("Missing Property %s%s", DH_PARAMS_ID, entityId));
+        }
+        return id;
+    }
+
+    /**
+     * return the names of all supported DH parameter IDs
+     */
+    public Set<String> getDiffieHellmanParametersIds() {
+        final String id = p.getProperty(DH_PARAMS_IDS);
+        if (id == null) {
+            throw new IllegalArgumentException("Missing Property " + DH_PARAMS_IDS);
+        }
+        final Set<String> ids = new HashSet<String>();
+        ids.addAll(Arrays.asList(id.split("\\W+"))); // split by non-word characters, i.e. not [a-zA-Z_0-9]
+        return Collections.unmodifiableSet(ids);
+    }
+
+    /**
+     * return DH parameter P for a given parameters ID
+     */ 
+    public String getDiffieHellmanParameterP(final String paramId) {
+        final String param_p = p.getProperty(DH_PARAMS_P + paramId);
+        if (param_p == null) {
+            throw new IllegalArgumentException(String.format("Missing Property %s%s", DH_PARAMS_P, paramId));
+        }
+        return param_p;
+    }
+
+    /**
+     * return DH parameter G for a given parameters ID
+     */ 
+    public String getDiffieHellmanParameterG(final String paramId) {
+        final String param_g = p.getProperty(DH_PARAMS_G + paramId);
+        if (param_g == null) {
+            throw new IllegalArgumentException(String.format("Missing Property %s%s", DH_PARAMS_G, paramId));
+        }
+        return param_g;
     }
 }

@@ -102,6 +102,7 @@ public final class AppContext {
         }
         this.prop = p;
         this.mslControl = new MslControl(prop.getNumMslControlThreads(0));
+        this.simpleDiffieHellmanParameters = new SimpleDiffieHellmanParameters(this.prop);
     }
 
     /* An application should only use one instance of MslControl for all MSL communication.
@@ -247,14 +248,17 @@ public final class AppContext {
         return  Collections.unmodifiableSortedSet(keyxFactoriesSet);
     }
 
-    private final class SimpleDiffieHellmanParameters implements DiffieHellmanParameters {
+    private static final class SimpleDiffieHellmanParameters implements DiffieHellmanParameters {
         /** Default parameters. */
-        private final BigInteger p = new BigInteger(DEFAULT_DH_PARAM_P_HEX, 16);
-        private final BigInteger g = new BigInteger(DEFAULT_DH_PARAM_G_HEX, 16);
 
-        private SimpleDiffieHellmanParameters() {
-            final DHParameterSpec paramSpec = new DHParameterSpec(p, g);
-            params.put(DEFAULT_DH_PARAMS_ID, paramSpec);
+        private SimpleDiffieHellmanParameters(final MslProperties prop) {
+            final Set<String> paramIds = prop.getDiffieHellmanParametersIds();
+            for (String paramId : paramIds) {
+                BigInteger p = new BigInteger(prop.getDiffieHellmanParameterP(paramId), 16);
+                BigInteger g = new BigInteger(prop.getDiffieHellmanParameterG(paramId), 16);
+                DHParameterSpec paramSpec = new DHParameterSpec(p, g);
+                params.put(paramId, paramSpec);
+            }
         }
 
         /* (non-Javadoc)
@@ -277,7 +281,7 @@ public final class AppContext {
         private final Map<String,DHParameterSpec> params = new HashMap<String,DHParameterSpec>();
     }
 
-    private final DiffieHellmanParameters simpleDiffieHellmanParameters = new SimpleDiffieHellmanParameters();
+    private final DiffieHellmanParameters simpleDiffieHellmanParameters;
 
     public final DiffieHellmanParameters getDiffieHellmanParameters() {
         return simpleDiffieHellmanParameters;
