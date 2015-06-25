@@ -67,7 +67,7 @@ import mslcli.server.util.ServerMslContext;
 
 public class SimpleMslServer {
     private static final long serialVersionUID = -4593207843035538485L;
-    
+
     /** Line separator. */
     private static final String NEWLINE = System.lineSeparator();
     
@@ -98,9 +98,11 @@ public class SimpleMslServer {
 
         // Create the MSL control.
         this.mslCtrl = appCtx.getMslControl();
-        mslCtrl.setFilterFactory(new ConsoleFilterStreamFactory());
+        if (prop.isDebugOn()) {
+            mslCtrl.setFilterFactory(new ConsoleFilterStreamFactory());
+        }
 
-        this.mslCtx = new ServerMslContext(appCtx, SERVER_ID);
+        this.mslCtx = new ServerMslContext(appCtx, prop.getServerId());
 
         // Use one crypto context for all service tokens.
         final SecretKey encryptionKey = new SecretKeySpec(ST_ENCRYPTION_KEY, JcaAlgorithm.AES);

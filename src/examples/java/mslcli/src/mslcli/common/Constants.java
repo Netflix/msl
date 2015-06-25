@@ -24,20 +24,11 @@ package mslcli.common;
 
 public final class Constants {
 
-    /** Client entity ID */
-    public static final String CLIENT_ID            = "simpleMslClient";
-
-    /** Client user ID */
-    public static final String CLIENT_USER_ID       = "simpleMslClientUserId";
-
     /** Client user email */
     public static final String CLIENT_USER_EMAIL    = "simpleMslClientUser@foo.com";
 
     /** Client user password */
     public static final String CLIENT_USER_PASSWORD = "simpleMslClientUserPassword";
-
-    /** Server entity ID. */
-    public static final String SERVER_ID = "simpleMslServer";
 
     /** MSL control timeout in milliseconds. */
     public static final int TIMEOUT_MS = 120 * 1000;

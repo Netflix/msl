@@ -199,6 +199,7 @@ public class ServerTokenFactory implements TokenFactory {
      */
     @Override
     public UserIdToken createUserIdToken(final MslContext ctx, final MslUser user, final MasterToken masterToken) throws MslEncodingException, MslCryptoException {
+        System.out.println("Creating UserIdToken for user " + user.getEncoded());
         final JSONObject issuerData = null;
         final Date renewalWindow = new Date(ctx.getTime() + RENEWAL_OFFSET);
         final Date expiration = new Date(ctx.getTime() + EXPIRATION_OFFSET);
@@ -222,6 +223,7 @@ public class ServerTokenFactory implements TokenFactory {
         final Date expiration = new Date(ctx.getTime() + EXPIRATION_OFFSET);
         final long serialNumber = userIdToken.getSerialNumber();
         final MslUser user = userIdToken.getUser();
+        System.out.println("Renewing UserIdToken for user " + ((user != null) ? user.getEncoded() : null));
         return new UserIdToken(ctx, renewalWindow, expiration, masterToken, serialNumber, issuerData, user);
     }
 

@@ -71,6 +71,11 @@ public final class MslProperties {
     private static final String ANY               = "*"; 
     private static final String SPACE_REGEX       = "\\s";
 
+    private static final String CLIENT_ID         = "msl.client.id";
+    private static final String SERVER_ID         = "msl.server.id";
+
+    private static final String DEBUG_FLAG        = "debug";
+
     private final Properties p;
 
     public static final class RsaStoreKeyPair {
@@ -268,6 +273,28 @@ public final class MslProperties {
      */
     public int getServerPort() {
         return getCountProperty(MSL_SERVER_PORT);
+    }
+
+    /**
+     * @return "this" client id
+     */
+    public String getClientId() {
+        return getRequiredProperty(CLIENT_ID);
+    }
+
+    /**
+     * @return "this" server id
+     */
+    public String getServerId() {
+        return getRequiredProperty(SERVER_ID);
+    }
+
+    /**
+     * @return debug flag
+     */
+    public boolean isDebugOn() {
+        final String s = p.getProperty(DEBUG_FLAG);
+        return Boolean.parseBoolean(s);
     }
 
     private int getCountProperty(final String name) {

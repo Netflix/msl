@@ -35,6 +35,8 @@ import com.netflix.msl.keyx.AsymmetricWrappedExchange;
 import com.netflix.msl.msg.ConsoleFilterStreamFactory;
 import com.netflix.msl.msg.MslControl;
 import com.netflix.msl.tokens.MasterToken;
+import com.netflix.msl.tokens.ServiceToken;
+import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.userauth.EmailPasswordAuthenticationData;
 import com.netflix.msl.userauth.UserAuthenticationData;
 
@@ -96,6 +98,7 @@ public final class ClientApp {
 
     private final AppContext appCtx;
     private final URL remoteUrl;
+    private final MslProperties prop;
     private Client client;
     private MessageConfig cfg;
 
@@ -109,11 +112,12 @@ public final class ClientApp {
         // set server URL
         remoteUrl = new URL(args[0]);
 
-        this.appCtx = AppContext.getInstance(MslProperties.getInstance(args[1]));
+        this.prop = MslProperties.getInstance(args[1]);
+        this.appCtx = AppContext.getInstance(prop);
 
         /* second command-line argument with any value turns on diagnostic messages in MslControl
          */
-        if (args.length > 2) {
+        if (prop.isDebugOn()) {
             appCtx.getMslControl().setFilterFactory(new ConsoleFilterStreamFactory());
         }
 
@@ -123,11 +127,12 @@ public final class ClientApp {
 
     private void startClientApp() throws Exception {
         cfg = new MessageConfig();
-        cfg.userId = CLIENT_USER_ID;
+        //cfg.userId = CLIENT_USER_ID;
+        cfg.userId = CLIENT_USER_EMAIL;
         cfg.isEncrypted = true;
         cfg.isIntegrityProtected = true;
         cfg.isNonReplayable = false;
-        client = new Client(appCtx, CLIENT_ID);
+        client = new Client(appCtx, prop.getClientId());
         client.setUserAuthenticationDataHandle(new AppUserAuthenticationDataHandle());
         String cmd;
         while (!QUIT.equalsIgnoreCase(cmd = SharedUtil.readInput(String.format("Command(\"%s\" to exit) %s", QUIT, supportedCommands.toString())))) {
@@ -150,8 +155,23 @@ public final class ClientApp {
         final long t_now = System.currentTimeMillis();
         final long t_rnw = (masterToken.getRenewalWindow().getTime() - t_now)/1000L;
         final long t_exp = (masterToken.getExpiration().getTime() - t_now)/1000L;
-        return String.format("Master Token serial_num %d, seq_num %d, renewable in %d sec, expired in %d sec\n",
+        return String.format("MasterToken{ser_num %d, seq_num %d, renewable in %d sec, expires in %d sec}",
             masterToken.getSerialNumber(), masterToken.getSequenceNumber(), t_rnw, t_exp);
+    }
+
+    private static final String getUserIdTokenInfo(final UserIdToken userIdToken) {
+        if (userIdToken == null) {
+            return null;
+        }
+        final long t_now = System.currentTimeMillis();
+        final long t_rnw = (userIdToken.getRenewalWindow().getTime() - t_now)/1000L;
+        final long t_exp = (userIdToken.getExpiration().getTime() - t_now)/1000L;
+        return String.format("UserIdToken{user %s, ser_num %d, mt_ser_num: %d, renewable in %d sec, expires in %d sec}",
+            (userIdToken.getUser() != null) ? userIdToken.getUser().getEncoded() : null,
+            userIdToken.getSerialNumber(),
+            userIdToken.getMasterTokenSerialNumber(),
+            t_rnw,
+            t_exp);
     }
 
     /*
@@ -160,7 +180,7 @@ public final class ClientApp {
     private final class AppUserAuthenticationDataHandle implements UserAuthenticationDataHandle {
         @Override
         public UserAuthenticationData getUserAuthenticationData() {
-            System.out.println("User Authentication Data requested");
+            System.out.println("UserAuthentication Data requested");
             return new EmailPasswordAuthenticationData(CLIENT_USER_EMAIL, CLIENT_USER_PASSWORD);
         }
     }
@@ -175,7 +195,7 @@ public final class ClientApp {
                 System.out.println("\nMslStore: setting crypto context with NULL MasterToken???");
             } else {
                 System.out.println(String.format("\nMslStore: %s %s\n",
-                    (cryptoContext != null)? "adding" : "removing", getMasterTokenInfo(masterToken)));
+                    (cryptoContext != null)? "Adding" : "Removing", getMasterTokenInfo(masterToken)));
             }
             super.setCryptoContext(masterToken, cryptoContext);
         }
@@ -190,6 +210,26 @@ public final class ClientApp {
         public void clearCryptoContexts() {
             System.out.println("\nMslStore: Clear Crypto Contexts");
             super.clearCryptoContexts();
+        }
+
+        @Override
+        public void addUserIdToken(final String userId, final UserIdToken userIdToken) throws MslException {
+            System.out.println(String.format("\nMslStore: Adding %s for userId %s", getUserIdTokenInfo(userIdToken), userId));
+            super.addUserIdToken(userId, userIdToken);
+        }
+
+        @Override
+        public void removeUserIdToken(final UserIdToken userIdToken) {
+            System.out.println("\nMslStore: Removing " + getUserIdTokenInfo(userIdToken));
+            super.removeUserIdToken(userIdToken);
+        }
+
+        @Override
+        public void addServiceTokens(final Set<ServiceToken> tokens) throws MslException {
+            if (tokens != null && !tokens.isEmpty()) {
+                System.out.println("\nMslStore: Adding Service Tokens");
+            }
+            super.addServiceTokens(tokens);
         }
     }
 
