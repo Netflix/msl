@@ -24,9 +24,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.SortedSet;
 
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-
 import com.netflix.msl.MslConstants.CompressionAlgorithm;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.crypto.ICryptoContext;
@@ -70,15 +67,6 @@ import mslcli.server.util.ServerAuthenticationUtils;
  */
 
 public class ServerMslContext implements MslContext {
-    /** MSL encryption key. */
-    private static final byte[] MSL_ENCRYPTION_KEY = SharedUtil.hexStringToByteArray(MSL_ENCRYPTION_KEY_HEX);
-
-    /** MSL HMAC key. */
-    private static final byte[] MSL_HMAC_KEY       = SharedUtil.hexStringToByteArray(MSL_HMAC_KEY_HEX);
-
-    /** MSL wrapping key. */
-    private static final byte[] MSL_WRAPPING_KEY   = SharedUtil.hexStringToByteArray(MSL_WRAPPING_KEY_HEX);
-
     /**
      * <p>Create a new server MSL context.</p>
      * 
@@ -114,10 +102,7 @@ public class ServerMslContext implements MslContext {
         this.messageCaps = new MessageCapabilities(compressionAlgos, languages);
         
         // MSL crypto context.
-        final SecretKey encryptionKey = new SecretKeySpec(MSL_ENCRYPTION_KEY, "AES");
-        final SecretKey hmacKey       = new SecretKeySpec(MSL_HMAC_KEY      , "HmacSHA256");
-        final SecretKey wrappingKey   = new SecretKeySpec(MSL_WRAPPING_KEY  , "AES");
-        this.mslCryptoContext = new SymmetricCryptoContext(this, serverId, encryptionKey, hmacKey, wrappingKey);
+        this.mslCryptoContext = new SymmetricCryptoContext(this, serverId, appCtx.getMslEncKey(), appCtx.getMslHmacKey(), appCtx.getMslWrapKey());
 
         // WrapCryptoContextRepository
         final WrapCryptoContextRepository wrapCryptoContextRepository = null;
@@ -128,7 +113,7 @@ public class ServerMslContext implements MslContext {
         // Entity authentication.
         //
         // Use the local entity identity for the preshared keys database ID.
-        this.entityAuthData = new RsaAuthenticationData(serverId, SERVER_RSA_KEY_ID);
+        this.entityAuthData = new RsaAuthenticationData(serverId, appCtx.getRsaKeyId(serverId));
         
         // Entity authentication factories.
         this.entityAuthFactories = new HashSet<EntityAuthenticationFactory>();

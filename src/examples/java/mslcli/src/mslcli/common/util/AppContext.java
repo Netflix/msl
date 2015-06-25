@@ -133,7 +133,7 @@ public final class AppContext {
     private static PresharedKeyStore initPresharedKeyStore(final MslProperties p) {
         final Map<String,KeySet> keySets = new HashMap<String,KeySet>();
 
-        for (Map.Entry<String,MslProperties.PresharedKeyTriple> entry : p.getPresharedKeyStore().entrySet()) {
+        for (Map.Entry<String,MslProperties.KeyTriple> entry : p.getPresharedKeyStore().entrySet()) {
             keySets.put(entry.getKey(), new KeySet(
                 new SecretKeySpec(SharedUtil.hexStringToByteArray(entry.getValue().encKeyHex ), JcaAlgorithm.AES),
                 new SecretKeySpec(SharedUtil.hexStringToByteArray(entry.getValue().hmacKeyHex), JcaAlgorithm.HMAC_SHA256),
@@ -346,6 +346,34 @@ public final class AppContext {
             schemes.add(kxs);
         }
         return Collections.unmodifiableSet(schemes);
+    }
+
+    /**
+     * get RSA key pair ID for a given entity
+     */
+    public String getRsaKeyId(final String entityId) {
+        return prop.getRsaKeyId(entityId);
+    }
+
+    /*
+     * get MSL encryption key
+     */
+    public SecretKey getMslEncKey() {
+        return new SecretKeySpec(SharedUtil.hexStringToByteArray(prop.getMslEncKey()), "AES");
+    }
+
+    /*
+     * get MSL HMAC key
+     */
+    public SecretKey getMslHmacKey() {
+        return new SecretKeySpec(SharedUtil.hexStringToByteArray(prop.getMslHmacKey()), "HmacSHA256");
+    }
+
+    /*
+     * get MSL WRAP key
+     */
+    public SecretKey getMslWrapKey() {
+        return new SecretKeySpec(SharedUtil.hexStringToByteArray(prop.getMslWrapKey()), "AES");
     }
 
     /**

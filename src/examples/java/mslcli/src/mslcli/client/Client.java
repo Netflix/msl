@@ -63,6 +63,9 @@ import static mslcli.common.Constants.*;
 
 public final class Client {
 
+    /** default asymmetrik key wrap exchange key pair id - the value should not matter */
+    private static final String DEFAULT_AWE_KEY_PAIR_ID = "default_awe_key_id";
+
     /**
      * Data object encapsulating response from the server
      */

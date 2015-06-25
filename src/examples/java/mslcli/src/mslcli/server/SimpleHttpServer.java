@@ -46,7 +46,7 @@ public class SimpleHttpServer {
         }
         final MslProperties prop = MslProperties.getInstance(args[0]);
         final SimpleMslServer mslServer = new SimpleMslServer(prop);
-        final HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
+        final HttpServer server = HttpServer.create(new InetSocketAddress(prop.getServerPort()), 0);
         server.createContext("/msl", new MyHandler(mslServer));
         server.setExecutor(null); // creates a default executor
         server.start();

@@ -16,6 +16,7 @@
 
 package mslcli.common.util;
 
+import java.io.FileReader;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,6 +43,8 @@ public final class MslProperties {
     private static final String RSA_PUB           = "store.rsa.pub."; 
     private static final String RSA_PRIV          = "store.rsa.priv."; 
 
+    private static final String ENTITY_RSA_KEY_ID = "entity.rsa.keyid."; 
+
     private static final String PSK_NUM           = "entity.psk.num";
     private static final String PSK_ENTITY_ID     = "entity.psk.id.";
     private static final String PSK_ENC           = "entity.psk.enc.";
@@ -55,9 +58,15 @@ public final class MslProperties {
     private static final String DH_P              = "kx.dh.p.";
     private static final String DH_G              = "kx.dh.g.";
 
-    private static final String USER_EMAIL_NUM    = "user.email-pwd.num";
+    private static final String USER_EMAIL_NUM    = "user.emailpwd.num";
     private static final String USER_EMAIL        = "user.email.";
-    private static final String USER_PWD          = "user.password.";
+    private static final String USER_PWD          = "user.pwd.";
+
+    private static final String MSL_KEY_ENC       = "msl.key.enc";
+    private static final String MSL_KEY_HMAC      = "msl.key.hmac";
+    private static final String MSL_KEY_WRAP      = "msl.key.wrap";
+
+    private static final String MSL_SERVER_PORT   = "msl.server.port";
 
     private static final String ANY               = "*"; 
     private static final String SPACE_REGEX       = "\\s";
@@ -82,11 +91,11 @@ public final class MslProperties {
         }
     }
 
-    public static final class PresharedKeyTriple {
+    public static final class KeyTriple {
         public final String encKeyHex;
         public final String hmacKeyHex;
         public final String wrapKeyHex;
-        private PresharedKeyTriple(final String encKeyHex, final String hmacKeyHex, final String wrapKeyHex) {
+        private KeyTriple(final String encKeyHex, final String hmacKeyHex, final String wrapKeyHex) {
             this.encKeyHex = encKeyHex;
             this.hmacKeyHex = hmacKeyHex;
             this.wrapKeyHex = wrapKeyHex;
@@ -102,32 +111,7 @@ public final class MslProperties {
      */
     public static MslProperties getInstance(final String configFile) throws Exception {
         final Properties p = new Properties();
-        p.setProperty(MSL_CTRL_NUM_THR, "0");
-        p.setProperty(ENTITY_KX_SCHEMES + ANY, "JWK_LADDER JWE_LADDER DIFFIE_HELLMAN SYMMETRIC_WRAPPED ASYMMETRIC_WRAPPED");
-
-        p.setProperty(DH_NUM, "1");
-        p.setProperty(DH_ID + 0, DEFAULT_DH_PARAMS_ID);
-        p.setProperty(DH_P  + 0, DEFAULT_DH_PARAM_P_HEX);
-        p.setProperty(DH_G  + 0, DEFAULT_DH_PARAM_G_HEX);
-
-        p.setProperty(ENTITY_DH_ID + CLIENT_ID, DEFAULT_DH_PARAMS_ID);
-        p.setProperty(ENTITY_DH_ID + SERVER_ID, DEFAULT_DH_PARAMS_ID);
-
-        p.setProperty(RSA_NUM, "1");
-        p.setProperty(RSA_KEY_ID + 0, SERVER_RSA_KEY_ID);
-        p.setProperty(RSA_PUB    + 0, SERVER_RSA_PUBKEY_B64);
-        p.setProperty(RSA_PRIV   + 0, SERVER_RSA_PRIVKEY_B64);
-
-        p.setProperty(PSK_NUM, "1");
-        p.setProperty(PSK_ENTITY_ID + 0, CLIENT_ID);
-        p.setProperty(PSK_ENC       + 0, CLIENT_ENCR_PSK_HEX);
-        p.setProperty(PSK_HMAC      + 0, CLIENT_HMAC_PSK_HEX);
-        p.setProperty(PSK_WRAP      + 0, CLIENT_WRAP_PSK_HEX);
-
-        p.setProperty(USER_EMAIL_NUM, "1");
-        p.setProperty(USER_EMAIL + 0, CLIENT_USER_EMAIL);
-        p.setProperty(USER_PWD   + 0, CLIENT_USER_PASSWORD);
-
+        p.load(new FileReader(configFile));
         return new MslProperties(p);
     }
 
@@ -146,8 +130,11 @@ public final class MslProperties {
         String kxProp;
         kxProp = p.getProperty(ENTITY_KX_SCHEMES + entityId);
         if (kxProp == null) {
+            System.out.println(String.format("Missing Property %s%s", ENTITY_KX_SCHEMES, entityId));
             kxProp = p.getProperty(ENTITY_KX_SCHEMES + ANY);
-            if (kxProp == null) return Collections.emptySet();
+            if (kxProp == null) {
+                throw new IllegalArgumentException(String.format("Missing Property %s(%s|%s)", ENTITY_KX_SCHEMES, entityId, ANY));
+            }
         }
         final Set<String> kx = new HashSet<String>();
         kx.addAll(Arrays.asList(kxProp.split(SPACE_REGEX)));
@@ -177,6 +164,19 @@ public final class MslProperties {
         return getRequiredProperty(ENTITY_DH_ID + entityId);
     }
 
+    public Map<String,KeyTriple> getPresharedKeyStore() {
+        final int numPSK = getCountProperty(PSK_NUM);
+        final Map<String,KeyTriple> keys = new HashMap<String,KeyTriple>(numPSK);
+        for (int i = 0; i < numPSK; i++) {
+            keys.put(getRequiredProperty(PSK_ENTITY_ID + i), new KeyTriple(
+                getRequiredProperty(PSK_ENC  + i),
+                getRequiredProperty(PSK_HMAC + i),
+                getRequiredProperty(PSK_WRAP + i)
+            ));
+        }
+        return keys;
+    }
+
     public Map<String,RsaStoreKeyPair> getRsaKeyStore() {
         final int numRSA = getCountProperty(RSA_NUM);
         final Map<String,RsaStoreKeyPair> keys = new HashMap<String,RsaStoreKeyPair>(numRSA);
@@ -197,17 +197,33 @@ public final class MslProperties {
         return emailPwd;
     }
 
-    public Map<String,PresharedKeyTriple> getPresharedKeyStore() {
-        final int numPSK = getCountProperty(PSK_NUM);
-        final Map<String,PresharedKeyTriple> keys = new HashMap<String,PresharedKeyTriple>(numPSK);
-        for (int i = 0; i < numPSK; i++) {
-            keys.put(getRequiredProperty(PSK_ENTITY_ID + i), new PresharedKeyTriple(
-                getRequiredProperty(PSK_ENC  + i),
-                getRequiredProperty(PSK_HMAC + i),
-                getRequiredProperty(PSK_WRAP + i)
-            ));
+    public String getMslEncKey() {
+        return getRequiredProperty(MSL_KEY_ENC);
+    }
+
+    public String getMslHmacKey() {
+        return getRequiredProperty(MSL_KEY_HMAC);
+    }
+
+    public String getMslWrapKey() {
+        return getRequiredProperty(MSL_KEY_WRAP);
+    }
+
+    public String getRsaKeyId(final String entityId) {
+        String s = p.getProperty(ENTITY_RSA_KEY_ID + entityId);
+        if (s == null) {
+            System.out.println(String.format("Missing Property %s%s", ENTITY_RSA_KEY_ID, entityId));
+            s = p.getProperty(ENTITY_RSA_KEY_ID + ANY);
         }
-        return keys;
+        if (s == null) {
+            System.out.println(String.format("Missing Property %s%s", ENTITY_RSA_KEY_ID, ANY));
+            throw new IllegalArgumentException(String.format("Missing Property %s(%s|%s)", ENTITY_RSA_KEY_ID, entityId, ANY));
+        }
+        return s;
+    }
+
+    public int getServerPort() {
+        return getCountProperty(MSL_SERVER_PORT);
     }
 
     private int getCountProperty(final String name) {
@@ -222,7 +238,7 @@ public final class MslProperties {
     private String getRequiredProperty(final String name) {
         final String s = p.getProperty(name);
         if (s == null) {
-            throw new IllegalArgumentException("Missing Property " + PSK_NUM);
+            throw new IllegalArgumentException("Missing Property " + name);
         }
         return s;
     }
