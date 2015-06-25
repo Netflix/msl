@@ -86,7 +86,7 @@ public class SimpleMslServer {
     }
     
     /**
-     * <p>Create a new server instance and initialize its static, immutable state.
+     * <p>Create a new server instance and initialize its state.
      * </p>
      */
     public SimpleMslServer(final MslProperties prop) {
@@ -109,6 +109,9 @@ public class SimpleMslServer {
         cryptoContexts.put("", stCryptoContext);
     }
     
+    /**
+     * process incoming request
+     */
     public void processRequest(final InputStream in, final OutputStream out) throws IOException {
         //  Set up the receive MSL message context.
         final MessageContext rcvMsgCtx = new ServerReceiveMessageContext(cryptoContexts);
@@ -160,7 +163,7 @@ public class SimpleMslServer {
         }
     }
     
-    /** MSL context. */
+    /** application context. */
     private final AppContext appCtx;
 
     /** MSL context. */

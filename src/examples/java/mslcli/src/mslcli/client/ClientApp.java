@@ -95,7 +95,7 @@ public final class ClientApp {
     }
 
     private final AppContext appCtx;
-    private URL remoteUrl;
+    private final URL remoteUrl;
     private Client client;
     private MessageConfig cfg;
 

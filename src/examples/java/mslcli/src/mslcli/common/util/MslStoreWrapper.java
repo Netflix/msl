@@ -37,7 +37,7 @@ public class MslStoreWrapper implements MslStore {
     /**
      * package-private so only AppContext can call it
      */
-    void setMslStore(final MslStore mslStore) {
+    final void setMslStore(final MslStore mslStore) {
         if (mslStore == null) {
             throw new IllegalArgumentException("NULL MSL Store");
         }

@@ -82,6 +82,9 @@ public final class MslProperties {
         }
     }
 
+    /**
+     * data object class to carry Diffie-Hellman algorithm P and G parameters, HEX-encoded
+     */
     public static final class DHPair {
         public final String pHex;
         public final String gHex; 
@@ -91,6 +94,9 @@ public final class MslProperties {
         }
     }
 
+    /**
+     * data object class to carry encryption, hmac, and wrapping keys, HEX-encoded
+     */
     public static final class KeyTriple {
         public final String encKeyHex;
         public final String hmacKeyHex;
@@ -104,9 +110,6 @@ public final class MslProperties {
 
     /**
      * Load properties from config file
-     * TBD
-     * Currently using hard-coded values
-     *
      * @param configFile configuration file path
      */
     public static MslProperties getInstance(final String configFile) throws Exception {
@@ -124,7 +127,8 @@ public final class MslProperties {
     }
 
     /**
-     * get the list of supported key exchange schemes for a give entity
+     * @param entityId entity identity
+     * @return supported key exchange scheme names
      */
     public Set<String> getSupportedKeyExchangeSchemes(final String entityId) {
         String kxProp;
@@ -141,14 +145,25 @@ public final class MslProperties {
         return Collections.unmodifiableSet(kx);
     }
 
+    /**
+     * @param entityId entity identity
+     * @param userId user identity
+     * @return supported key exchange scheme names
+     */
     public Set<String> getSupportedKeyExchangeSchemes(final String entityId, final String userId) {
         return getSupportedKeyExchangeSchemes(entityId);
     }
 
+    /**
+     * @return number of threads configured for MslControl
+     */
     public int getNumMslControlThreads() {
         return getCountProperty(MSL_CTRL_NUM_THR);
     }
 
+    /**
+     * @return Diffie-Hellman {P,G) parameters keyed by parameter IDs
+     */
     public Map<String,DHPair> getDHParameterStore() {
         final int num = getCountProperty(DH_NUM);
         final Map<String,DHPair> dhParams = new HashMap<String,DHPair>(num);
@@ -160,10 +175,17 @@ public final class MslProperties {
         return dhParams;
     }
 
+    /**
+     * @param entityId entity identity
+     * @return Diffie-Hellman parameters ID to be used by given entity
+     */
     public String getEntityDiffieHellmanParametersId(final String entityId) {
         return getRequiredProperty(ENTITY_DH_ID + entityId);
     }
 
+    /**
+     * @return { encryption, hmac, wrapping} key tuples keyed by entity identity
+     */
     public Map<String,KeyTriple> getPresharedKeyStore() {
         final int numPSK = getCountProperty(PSK_NUM);
         final Map<String,KeyTriple> keys = new HashMap<String,KeyTriple>(numPSK);
@@ -177,6 +199,42 @@ public final class MslProperties {
         return keys;
     }
 
+    /**
+     * @return { email,password } map 
+     */
+    public Map<String,String> getEmailPasswordStore() {
+        final int num = getCountProperty(USER_EMAIL_NUM);
+        final Map<String,String> emailPwd = new HashMap<String,String>(num);
+        for (int i = 0; i < num; i++) {
+            emailPwd.put(getRequiredProperty(USER_EMAIL + i), getRequiredProperty(USER_PWD + i));
+        }
+        return emailPwd;
+    }
+
+    /**
+     * @return MSL encryption key, HEX-encoded
+     */
+    public String getMslEncKey() {
+        return getRequiredProperty(MSL_KEY_ENC);
+    }
+
+    /**
+     * @return MSL HMAC key, HEX-encoded
+     */
+    public String getMslHmacKey() {
+        return getRequiredProperty(MSL_KEY_HMAC);
+    }
+
+    /**
+     * @return MSL wrapping key, HEX-encoded
+     */
+    public String getMslWrapKey() {
+        return getRequiredProperty(MSL_KEY_WRAP);
+    }
+
+    /**
+     * @return { public, private } RSA key tuples keyed by RSA key ID
+     */
     public Map<String,RsaStoreKeyPair> getRsaKeyStore() {
         final int numRSA = getCountProperty(RSA_NUM);
         final Map<String,RsaStoreKeyPair> keys = new HashMap<String,RsaStoreKeyPair>(numRSA);
@@ -188,27 +246,10 @@ public final class MslProperties {
         return keys;
     }
 
-    public Map<String,String> getEmailPasswordStore() {
-        final int num = getCountProperty(USER_EMAIL_NUM);
-        final Map<String,String> emailPwd = new HashMap<String,String>(num);
-        for (int i = 0; i < num; i++) {
-            emailPwd.put(getRequiredProperty(USER_EMAIL + i), getRequiredProperty(USER_PWD + i));
-        }
-        return emailPwd;
-    }
-
-    public String getMslEncKey() {
-        return getRequiredProperty(MSL_KEY_ENC);
-    }
-
-    public String getMslHmacKey() {
-        return getRequiredProperty(MSL_KEY_HMAC);
-    }
-
-    public String getMslWrapKey() {
-        return getRequiredProperty(MSL_KEY_WRAP);
-    }
-
+    /**
+     * @param entityId entity identity, owner of RSA key pair used for RSA entity authentication
+     * @return RSA key pair ID to be used for specified entity
+     */
     public String getRsaKeyId(final String entityId) {
         String s = p.getProperty(ENTITY_RSA_KEY_ID + entityId);
         if (s == null) {
@@ -222,6 +263,9 @@ public final class MslProperties {
         return s;
     }
 
+    /**
+     * @return IP port to be used by the MSL server for listenning to incoming MSL messages
+     */
     public int getServerPort() {
         return getCountProperty(MSL_SERVER_PORT);
     }

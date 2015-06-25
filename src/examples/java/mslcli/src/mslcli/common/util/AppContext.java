@@ -83,14 +83,6 @@ public final class AppContext {
      */
     private static AppContext _instance;
 
-    public static synchronized AppContext getInstance(final MslProperties p) {
-        if (_instance == null) {
-            return (_instance = new AppContext(p));
-        } else {
-            throw new IllegalStateException("Illegal Attempt to Re-Initialize AppContext");
-        }
-    }
-
     private final MslProperties prop;
     private final MslControl mslControl;
     private final MslStore mslStore;
@@ -99,7 +91,21 @@ public final class AppContext {
     private final RsaStore rsaStore;
     private final WrapCryptoContextRepository wrapCryptoContextRepository;
     private final DiffieHellmanParameters diffieHellmanParameters;
+    private final KeyExchangeFactoryComparator keyxFactoryComparator;
     private transient MslStoreWrapper mslStoreWrapper;
+
+
+    /**
+     * @param p properties loaded from some configuration source
+     * @return singleton instance of AppContext
+     */
+    public static synchronized AppContext getInstance(final MslProperties p) {
+        if (_instance == null) {
+            return (_instance = new AppContext(p));
+        } else {
+            throw new IllegalStateException("Illegal Attempt to Re-Initialize AppContext");
+        }
+    }
 
     private AppContext(final MslProperties p) {
         if (p == null) {
@@ -113,18 +119,18 @@ public final class AppContext {
         this.emailPasswordStore = initEmailPasswordStore(p);
         this.rsaStore = initRsaStore(p);
         this.wrapCryptoContextRepository = new SimpleWrapCryptoContextRepository();
+        this.keyxFactoryComparator = new KeyExchangeFactoryComparator();
     }
 
-    /* An application should only use one instance of MslControl for all MSL communication.
-     * This class is thread-safe.
-     * Passing 0 parameter leads to MslControl executing on the caller's thread.
+    /**
+     * An application should only use one instance of MslControl for all MSL communication.
      */
     public synchronized MslControl getMslControl() {
         return mslControl;
     }
 
     /**
-     * Initialize pre-shared key store
+     * @return preshared key store
      */
     public PresharedKeyStore getPresharedKeyStore() {
         return presharedKeyStore;
@@ -144,7 +150,7 @@ public final class AppContext {
     }
 
     /**
-     * Initialize {email,password} store
+     * @return {email,password} store
      */
     public EmailPasswordStore getEmailPasswordStore() {
         return emailPasswordStore;
@@ -155,12 +161,15 @@ public final class AppContext {
     }
 
     /**
-     * Initialize client MSL store
+     * @return MSL store
      */
     public MslStore getMslStore() {
         return (mslStoreWrapper != null) ? mslStoreWrapper : mslStore;
     }
 
+    /**
+     * @param mslStoreWrapper MSL store wrapper instance which extends MslStoreWrapper class and can be implemented by the app to intercept and modify MslStore calls
+     */
     public void setMslStoreWrapper(final MslStoreWrapper mslStoreWrapper) {
         this.mslStoreWrapper = mslStoreWrapper;
         if (mslStoreWrapper != null) {
@@ -169,14 +178,15 @@ public final class AppContext {
     }
 
     /**
-     * Initialize RSA key store
-     * Real-life implementation may support multiple servers
-     * Client only posesses server public key
+     * @return RSA key store
      */
     public RsaStore getRsaStore() {
         return rsaStore;
     }
 
+    /* client would normally have only the server public key to authenticate server responses.
+     * server would normally have both public and private keys
+     */
     private static RsaStore initRsaStore(final MslProperties p) {
         try {
             final KeyFactory rsaKeyFactory = KeyFactory.getInstance("RSA");
@@ -244,8 +254,6 @@ public final class AppContext {
         }
     }
 
-    private final KeyExchangeFactoryComparator keyxFactoryComparator = new KeyExchangeFactoryComparator();
-
     /**
      * Convenience method creating SortedSet of multiple key exchange factories,
      * sorted in order of preference of their use.
@@ -256,6 +264,10 @@ public final class AppContext {
         return  Collections.unmodifiableSortedSet(keyxFactoriesSet);
     }
 
+    /*
+     * Class encapsulating Diffie-Hellman parameters Map keyed by parameters ID.
+     * Parameters are loaded from the configuration.
+     */
     private static final class SimpleDiffieHellmanParameters implements DiffieHellmanParameters {
         /** Default parameters. */
 
@@ -288,15 +300,16 @@ public final class AppContext {
         private final Map<String,DHParameterSpec> params = new HashMap<String,DHParameterSpec>();
     }
 
+    /**
+     * @return mapping from Diffie-Hellman parameters ID to Diffie-Hellman parameters
+     */
     public final DiffieHellmanParameters getDiffieHellmanParameters() {
         return diffieHellmanParameters;
     }
 
     /**
-     * To support per-entityId Difie-Hellman parameters configurations
-     * TBD - make it configurable
-     *
-     * $param entityId entity identity string
+     * @param entityId entity identity string
+     * @return Diffie-Hellman parameters ID to be used by the given entity for key exchange
      */
     public String getDiffieHellmanParametersId(String entityId) {
         return prop.getEntityDiffieHellmanParametersId(entityId);
@@ -305,6 +318,8 @@ public final class AppContext {
     /**
      * Generate Diffie-Hellman key pair for key exchange, with parameters corresponding
      * to specified parameters ID
+     * @param paramId Diffie-Hellman parameters ID
+     * @return Diffie-Hellman key pair generated using parameters corresponding to the provided ID
      */
     public KeyPair generateDiffieHellmanKeys(final String paramId) throws MslException {
         final DHParameterSpec paramSpec = getDiffieHellmanParameters().getParameterSpec(paramId);
@@ -320,7 +335,8 @@ public final class AppContext {
     }
 
     /**
-     * Generate RSA key pair used for wrapped kkey exchange
+     * Generate RSA key pair used for wrapped key exchange
+     * @return RSA key pair
      */
     public KeyPair generateAsymmetricWrappedExchangeKeyPair() throws MslException {
         try {
@@ -335,6 +351,7 @@ public final class AppContext {
 
     /**
      * @param entityId entity identity
+     * @return key exchange schemes allowed for a given entity
      */
     public Set<KeyExchangeScheme> getAllowedKeyExchangeSchemes(final String entityId) {
         final Set<KeyExchangeScheme> schemes = new HashSet<KeyExchangeScheme>();
@@ -349,35 +366,36 @@ public final class AppContext {
     }
 
     /**
-     * get RSA key pair ID for a given entity
+     * @param entityId entity identity
+     * @return RSA key pair ID to be used for a given entity for RSA entity authentication
      */
     public String getRsaKeyId(final String entityId) {
         return prop.getRsaKeyId(entityId);
     }
 
-    /*
-     * get MSL encryption key
+    /**
+     * @return MSL encryption key
      */
     public SecretKey getMslEncKey() {
         return new SecretKeySpec(SharedUtil.hexStringToByteArray(prop.getMslEncKey()), "AES");
     }
 
-    /*
-     * get MSL HMAC key
+    /**
+     * @return MSL HMAC key
      */
     public SecretKey getMslHmacKey() {
         return new SecretKeySpec(SharedUtil.hexStringToByteArray(prop.getMslHmacKey()), "HmacSHA256");
     }
 
-    /*
-     * get MSL WRAP key
+    /**
+     * @return MSL wrapping key
      */
     public SecretKey getMslWrapKey() {
         return new SecretKeySpec(SharedUtil.hexStringToByteArray(prop.getMslWrapKey()), "AES");
     }
 
     /**
-     * Simple implementation of WrappedCryptoContextRepository interface
+     * @return repository for storing mapping between wrapped key and crypto context
      */
     public WrapCryptoContextRepository getWrapCryptoContextRepository() {
         return wrapCryptoContextRepository;

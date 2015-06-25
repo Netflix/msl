@@ -76,7 +76,7 @@ public class ServerAuthenticationUtils implements AuthenticationUtils {
     /* (non-Javadoc)
      * @see com.netflix.msl.util.AuthenticationUtils#isEntityRevoked(java.lang.String)
      *
-     * Should query entity status in real life ...
+     * May query entity revocation status in real life ...
      */
     @Override
     public boolean isEntityRevoked(final String identity) {
