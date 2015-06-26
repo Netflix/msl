@@ -47,14 +47,15 @@ public final class MslProperties {
    /*
     * ENTITY-SPECIFIC CONFIGURATION PROPERTY NAMES
     */
-    private static final String ENTITY_KX_SCHEMES = "entity.kx.schemes.";
-    private static final String ENTITY_RSA_KEY_ID = "entity.rsa.keyid."; 
-    private static final String ENTITY_PSK_NUM    = "entity.psk.num";
-    private static final String ENTITY_PSK_ID     = "entity.psk.id.";
-    private static final String ENTITY_PSK_ENC    = "entity.psk.enc.";
-    private static final String ENTITY_PSK_HMAC   = "entity.psk.hmac.";
-    private static final String ENTITY_PSK_WRAP   = "entity.psk.wrap.";
-    private static final String ENTITY_DH_ID      = "entity.dh.id.";
+    private static final String ENTITY_KX_SCHEMES    = "entity.kx.schemes.";
+    private static final String ENTITY_RSA_KEY_ID    = "entity.rsa.keyid."; 
+    private static final String ENTITY_PSK_NUM       = "entity.psk.num";
+    private static final String ENTITY_PSK_ID        = "entity.psk.id.";
+    private static final String ENTITY_PSK_ENC       = "entity.psk.enc.";
+    private static final String ENTITY_PSK_HMAC      = "entity.psk.hmac.";
+    private static final String ENTITY_PSK_WRAP      = "entity.psk.wrap.";
+    private static final String ENTITY_DH_ID         = "entity.dh.id.";
+    private static final String ENTITY_STOKEN_KEY_ID = "entity.stoken.keyid.";
 
    /*
     * USER-SPECIFIC CONFIGURATION PROPERTY NAMES
@@ -81,6 +82,9 @@ public final class MslProperties {
     private static final String MSL_KEY_HMAC      = "msl.key.hmac";
     private static final String MSL_KEY_WRAP      = "msl.key.wrap";
 
+    private static final String MSL_STOKEN_KEY_ENC  = "msl.stoken.keys.enc.";
+    private static final String MSL_STOKEN_KEY_HMAC = "msl.stoken.keys.hmac.";
+
     // local definitions
     private static final String ANY               = "*"; 
     private static final String SPACE_REGEX       = "\\s";
@@ -88,8 +92,8 @@ public final class MslProperties {
     private final Properties p;
 
     /**
-     * Load properties from config file
-     * @param configFile configuration file path
+     * @param properties provided in app-specific way
+     * @return singleton instance of MslProperties
      */
     public static MslProperties getInstance(final Properties p) throws Exception {
         if (p == null) {
@@ -108,7 +112,7 @@ public final class MslProperties {
 
     /**
      * @param entityId entity identity
-     * @return supported key exchange scheme names
+     * @return names of key exchange schemes supported by given entity
      */
     public Set<String> getSupportedKeyExchangeSchemes(final String entityId) {
         String kxProp;
@@ -128,7 +132,7 @@ public final class MslProperties {
     /**
      * @param entityId entity identity
      * @param userId user identity
-     * @return supported key exchange scheme names
+     * @return names of key exchange scheme supported by given entity
      */
     public Set<String> getSupportedKeyExchangeSchemes(final String entityId, final String userId) {
         return getSupportedKeyExchangeSchemes(entityId);
@@ -136,14 +140,14 @@ public final class MslProperties {
 
     /**
      * @param entityId entity identity
-     * @return Diffie-Hellman parameters ID to be used by given entity
+     * @return ID of Diffie-Hellman parameters to be used by given entity
      */
     public String getEntityDiffieHellmanParametersId(final String entityId) {
         return getRequiredProperty(ENTITY_DH_ID + entityId);
     }
 
     /**
-     * @return { encryption, hmac, wrapping} key tuples keyed by entity identity
+     * @return mappings between entity identity and { encryption, hmac, wrapping} hex-encoded pre-shared keys triplet
      */
     public Map<String,Triplet<String,String,String>> getPresharedKeyStore() {
         final int numPSK = getCountProperty(ENTITY_PSK_NUM);
@@ -159,8 +163,16 @@ public final class MslProperties {
     }
 
     /**
+     * @param entity identity
+     * @return ID of the { encryption, hmac } key set to be used by this entity for issuing service tokens
+     */
+    public String getServiceTokenKeySetId(final String entityId) {
+        return getRequiredProperty(ENTITY_STOKEN_KEY_ID + entityId);
+    }
+
+    /**
      * @param entityId entity identity, owner of RSA key pair used for RSA entity authentication
-     * @return RSA key pair ID to be used for specified entity
+     * @return ID of the RSA key pair to be used for specified entity's authentication
      */
     public String getRsaKeyId(final String entityId) {
         String s = p.getProperty(ENTITY_RSA_KEY_ID + entityId);
@@ -180,6 +192,7 @@ public final class MslProperties {
      ****************************/
 
     /**
+     * @param userId user id, corresponding to local user account of some kind. Has no meaning outside local context.
      * @return ( email,password ) tuple for a given user ID
      */
     public Pair<String,String> getEmailPassword(final String userId) {
@@ -197,7 +210,7 @@ public final class MslProperties {
     }
 
     /**
-     * @return { email,password } for a given user ID
+     * @return mappings between user email and user password
      */
     public Map<String,String> getEmailPasswordStore() {
         final int num = getCountProperty(USER_EP_NUM);
@@ -213,7 +226,7 @@ public final class MslProperties {
      *********************************/
 
     /**
-     * Get MSL encryption, HMAC, and wrapping keys
+     * @return MSL {encryption, HMAC, and wrapping} keys triplet.
      */
     public Triplet<String,String,String> getMslKeys() {
         return new Triplet<String,String,String>(
@@ -224,7 +237,7 @@ public final class MslProperties {
     }
 
     /**
-     * @return { public, private } RSA key tuples keyed by RSA key ID
+     * @return mappings between RSA key pair ID and { public, private } RSA key pair tuples
      */
     public Map<String,Pair<String,String>> getRsaKeyStore() {
         final int numRSA = getCountProperty(MSL_RSA_NUM);
@@ -238,7 +251,7 @@ public final class MslProperties {
     }
 
     /**
-     * @return Diffie-Hellman {P,G) parameters keyed by parameter IDs
+     * @return mappings between Diffie-Hellman parameters ID and actual Diffie-Hellman {P,G) parameters
      */
     public Map<String,Pair<String,String>> getDHParameterStore() {
         final int num = getCountProperty(MSL_DH_NUM);
@@ -251,12 +264,20 @@ public final class MslProperties {
         return dhParams;
     }
 
+    /**
+     * @param ID of the { encryption, hmac } key pair used for service token issuing
+     * @return { encryption, hmac } key pair
+     */
+    public Pair<String,String> getServiceTokenKeys(final String keyId) {
+        return new Pair<String,String>(getRequiredProperty(MSL_STOKEN_KEY_ENC + keyId), getRequiredProperty(MSL_STOKEN_KEY_HMAC + keyId));
+    }
+
     /* ************************
      * APPLICATION PROPERTIES *
      **************************/
 
     /**
-     * @return number of threads configured for MslControl
+     * @return number of threads configured for "this" MslControl
      */
     public int getNumMslControlThreads() {
         return getCountProperty(APP_CTRL_NUM_THR);
@@ -284,7 +305,7 @@ public final class MslProperties {
     }
 
     /**
-     * @return debug flag
+     * @return debug flag for "this" app
      */
     public boolean isDebugOn() {
         final String s = p.getProperty(APP_DEBUG_FLAG);
@@ -295,6 +316,7 @@ public final class MslProperties {
      * Helper classes *
      ******************/
 
+    // return mandatory non-negative integer property
     private int getCountProperty(final String name) {
         final String s = getRequiredProperty(name);
         final int num = Integer.parseInt(s);
@@ -304,6 +326,7 @@ public final class MslProperties {
         return num;
     }
 
+    // return mandatory property
     private String getRequiredProperty(final String name) {
         final String s = p.getProperty(name);
         if (s == null) {

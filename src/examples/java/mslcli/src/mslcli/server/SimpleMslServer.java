@@ -26,14 +26,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.crypto.ICryptoContext;
-import com.netflix.msl.crypto.JcaAlgorithm;
 import com.netflix.msl.crypto.SymmetricCryptoContext;
 import com.netflix.msl.entityauth.PresharedKeyStore;
 import com.netflix.msl.entityauth.RsaStore;
@@ -49,6 +47,7 @@ import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslStore;
 
 import static mslcli.common.Constants.*;
+import mslcli.common.Pair;
 import mslcli.common.util.MslProperties;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.SharedUtil;
@@ -68,18 +67,6 @@ import mslcli.server.util.ServerMslContext;
 public class SimpleMslServer {
     private static final long serialVersionUID = -4593207843035538485L;
 
-    /** Line separator. */
-    private static final String NEWLINE = System.lineSeparator();
-    
-    /** Service token key set ID. */
-    private static final String ST_KEYSET_ID = "serviceTokenKeySetId";
-
-    /** Service token encryption key. */
-    private static final byte[] ST_ENCRYPTION_KEY = SharedUtil.hexStringToByteArray("000102030405060708090A0B0C0D0E0F");
-
-    /** Service token HMAC key. */
-    private static final byte[] ST_HMAC_KEY = SharedUtil.hexStringToByteArray("000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F");
-    
     // Add BouncyCastle provider.
     static {
         Security.addProvider(new BouncyCastleProvider());
@@ -105,9 +92,9 @@ public class SimpleMslServer {
         this.mslCtx = new ServerMslContext(appCtx, prop.getServerId());
 
         // Use one crypto context for all service tokens.
-        final SecretKey encryptionKey = new SecretKeySpec(ST_ENCRYPTION_KEY, JcaAlgorithm.AES);
-        final SecretKey hmacKey = new SecretKeySpec(ST_HMAC_KEY, JcaAlgorithm.HMAC_SHA256);
-        final ICryptoContext stCryptoContext = new SymmetricCryptoContext(this.mslCtx, ST_KEYSET_ID, encryptionKey, hmacKey, null);
+        final String stKeySetId = prop.getServiceTokenKeySetId(prop.getServerId());
+        final Pair<SecretKey,SecretKey> keys = appCtx.getServiceTokenKeys(stKeySetId);
+        final ICryptoContext stCryptoContext = new SymmetricCryptoContext(this.mslCtx, stKeySetId, keys.x, keys.y, null);
         cryptoContexts.put("", stCryptoContext);
     }
     

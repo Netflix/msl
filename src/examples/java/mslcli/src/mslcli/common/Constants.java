@@ -26,7 +26,7 @@ public final class Constants {
     /** MSL control timeout in milliseconds. */
     public static final int TIMEOUT_MS = 120 * 1000;
 
-   // key exchanges
+   // key exchange type names used as command / user entry options
     public static final String KX_DH   = "dh" ; // Diffie-Hellman             Key Exchange
     public static final String KX_SWE  = "sw" ; // Symmetric  Wrapped         Key Exchange
     public static final String KX_AWE  = "aw" ; // Asymmetric Wrapped         Key Exchange

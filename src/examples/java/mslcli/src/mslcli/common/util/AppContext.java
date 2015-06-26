@@ -143,7 +143,7 @@ public final class AppContext {
 
         for (Map.Entry<String,Triplet<String,String,String>> entry : p.getPresharedKeyStore().entrySet()) {
             keySets.put(entry.getKey(), new KeySet(
-                new SecretKeySpec(SharedUtil.hexStringToByteArray(entry.getValue().x ), JcaAlgorithm.AES),
+                new SecretKeySpec(SharedUtil.hexStringToByteArray(entry.getValue().x), JcaAlgorithm.AES),
                 new SecretKeySpec(SharedUtil.hexStringToByteArray(entry.getValue().y), JcaAlgorithm.HMAC_SHA256),
                 new SecretKeySpec(SharedUtil.hexStringToByteArray(entry.getValue().z), JcaAlgorithm.AESKW)
             ));
@@ -381,9 +381,20 @@ public final class AppContext {
     public Triplet<SecretKey,SecretKey,SecretKey> getMslKeys() {
         final Triplet<String,String,String> mslKeys = prop.getMslKeys();
         return new Triplet<SecretKey,SecretKey,SecretKey>(
-            new SecretKeySpec(SharedUtil.hexStringToByteArray(mslKeys.x), "AES"),
-            new SecretKeySpec(SharedUtil.hexStringToByteArray(mslKeys.y), "HmacSHA256"),
-            new SecretKeySpec(SharedUtil.hexStringToByteArray(mslKeys.z), "AES")
+            new SecretKeySpec(SharedUtil.hexStringToByteArray(mslKeys.x), JcaAlgorithm.AES),
+            new SecretKeySpec(SharedUtil.hexStringToByteArray(mslKeys.y), JcaAlgorithm.HMAC_SHA256),
+            new SecretKeySpec(SharedUtil.hexStringToByteArray(mslKeys.z), JcaAlgorithm.AESKW)
+            );
+    }
+
+    /**
+     * @return service token encryption and HMAC keys for a given key set ID
+     */
+    public Pair<SecretKey,SecretKey> getServiceTokenKeys(final String keySetId) {
+        final Pair<String,String> keys = prop.getServiceTokenKeys(keySetId);
+        return new Pair<SecretKey,SecretKey>(
+            new SecretKeySpec(SharedUtil.hexStringToByteArray(keys.x), JcaAlgorithm.AES),
+            new SecretKeySpec(SharedUtil.hexStringToByteArray(keys.y), JcaAlgorithm.HMAC_SHA256)
             );
     }
 
