@@ -53,6 +53,7 @@ import com.netflix.msl.MslInternalException;
 import com.netflix.msl.crypto.CryptoCache;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.crypto.JcaAlgorithm;
+import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.entityauth.PresharedKeyStore;
 import com.netflix.msl.entityauth.PresharedKeyStore.KeySet;
 import com.netflix.msl.entityauth.RsaStore;
@@ -62,6 +63,7 @@ import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.keyx.WrapCryptoContextRepository;
 import com.netflix.msl.msg.MslControl;
 import com.netflix.msl.userauth.EmailPasswordStore;
+import com.netflix.msl.userauth.UserAuthenticationScheme;
 import com.netflix.msl.util.MslStore;
 import com.netflix.msl.util.SimpleMslStore;
 
@@ -122,6 +124,13 @@ public final class AppContext {
         this.rsaStore = initRsaStore(p);
         this.wrapCryptoContextRepository = new SimpleWrapCryptoContextRepository();
         this.keyxFactoryComparator = new KeyExchangeFactoryComparator();
+    }
+
+    /**
+     * @return MslProperties
+     */
+    public MslProperties getProperties() {
+        return prop;
     }
 
     /**
@@ -353,6 +362,38 @@ public final class AppContext {
 
     /**
      * @param entityId entity identity
+     * @return entity authentication schemes allowed for a given entity
+     */
+    public Set<EntityAuthenticationScheme> getAllowedEntityAuthenticationSchemes(final String entityId) {
+        final Set<EntityAuthenticationScheme> schemes = new HashSet<EntityAuthenticationScheme>();
+        for (String scheme : prop.getSupportedEntityAuthenticationSchemes(entityId)) {
+            final EntityAuthenticationScheme eas = EntityAuthenticationScheme.getScheme(scheme);
+            if (eas == null) {
+                throw new IllegalArgumentException(String.format("Unknown Entity Authentication Scheme for Entity %s: %s", entityId, scheme));
+            }
+            schemes.add(eas);
+        }
+        return Collections.unmodifiableSet(schemes);
+    }
+
+    /**
+     * @param entityId entity identity
+     * @return entity authentication schemes allowed for a given entity
+     */
+    public Set<UserAuthenticationScheme> getAllowedUserAuthenticationSchemes(final String entityId) {
+        final Set<UserAuthenticationScheme> schemes = new HashSet<UserAuthenticationScheme>();
+        for (String scheme : prop.getSupportedUserAuthenticationSchemes(entityId)) {
+            final UserAuthenticationScheme uas = UserAuthenticationScheme.getScheme(scheme);
+            if (uas == null) {
+                throw new IllegalArgumentException(String.format("Unknown User Authentication Scheme for Entity %s: %s", entityId, scheme));
+            }
+            schemes.add(uas);
+        }
+        return Collections.unmodifiableSet(schemes);
+    }
+
+    /**
+     * @param entityId entity identity
      * @return key exchange schemes allowed for a given entity
      */
     public Set<KeyExchangeScheme> getAllowedKeyExchangeSchemes(final String entityId) {
@@ -403,5 +444,21 @@ public final class AppContext {
      */
     public WrapCryptoContextRepository getWrapCryptoContextRepository() {
         return wrapCryptoContextRepository;
+    }
+
+    /**
+     * info logging
+     * @param message info message
+     */
+    public void info(final String msg) {
+        System.err.println("INFO: " + msg);
+    }
+
+    /**
+     * warning logging
+     * @param message warning message
+     */
+    public void warning(final String msg) {
+        System.err.println("WARNING: " + msg);
     }
 }

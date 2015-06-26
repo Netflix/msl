@@ -136,7 +136,7 @@ public class ServerMslContext implements MslContext {
         );
 
         // key token factory
-        this.tokenFactory = new ServerTokenFactory();
+        this.tokenFactory = new ServerTokenFactory(appCtx);
     }
 
     /* (non-Javadoc)

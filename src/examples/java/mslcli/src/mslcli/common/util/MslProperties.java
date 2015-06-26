@@ -47,6 +47,8 @@ public final class MslProperties {
    /*
     * ENTITY-SPECIFIC CONFIGURATION PROPERTY NAMES
     */
+    private static final String ENTITY_AUTH_SCHEMES  = "entity.auth.schemes.";
+    private static final String ENTITY_UAUTH_SCHEMES = "entity.userauth.schemes.";
     private static final String ENTITY_KX_SCHEMES    = "entity.kx.schemes.";
     private static final String ENTITY_RSA_KEY_ID    = "entity.rsa.keyid."; 
     private static final String ENTITY_PSK_NUM       = "entity.psk.num";
@@ -82,6 +84,10 @@ public final class MslProperties {
     private static final String MSL_KEY_HMAC      = "msl.key.hmac";
     private static final String MSL_KEY_WRAP      = "msl.key.wrap";
 
+    private static final String MSL_MTOKEN_RENEWAL_OFFSET       = "msl.mtoken.renewal";
+    private static final String MSL_MTOKEN_EXPIRATION_OFFSET    = "msl.mtoken.expiration";
+    private static final String MSL_MTOKEN_NON_REPLAY_ID_WINDOW = "msl.mtoken.non_replay_id_window";
+
     private static final String MSL_STOKEN_KEY_ENC  = "msl.stoken.keys.enc.";
     private static final String MSL_STOKEN_KEY_HMAC = "msl.stoken.keys.hmac.";
 
@@ -112,23 +118,29 @@ public final class MslProperties {
 
     /**
      * @param entityId entity identity
+     * @return names of entity authentication schemes supported by given entity
+     */
+    public Set<String> getSupportedEntityAuthenticationSchemes(final String entityId) {
+        return split(getWildcharProperty(ENTITY_AUTH_SCHEMES, entityId));
+    }
+
+    /**
+     * @param entityId entity identity
+     * @return names of entity authentication schemes supported by given entity
+     */
+    public Set<String> getSupportedUserAuthenticationSchemes(final String entityId) {
+        return split(getWildcharProperty(ENTITY_UAUTH_SCHEMES, entityId));
+    }
+
+    /**
+     * @param entityId entity identity
      * @return names of key exchange schemes supported by given entity
      */
     public Set<String> getSupportedKeyExchangeSchemes(final String entityId) {
-        String kxProp;
-        kxProp = p.getProperty(ENTITY_KX_SCHEMES + entityId);
-        if (kxProp == null) {
-            System.out.println(String.format("Missing Property %s%s", ENTITY_KX_SCHEMES, entityId));
-            kxProp = p.getProperty(ENTITY_KX_SCHEMES + ANY);
-            if (kxProp == null) {
-                throw new IllegalArgumentException(String.format("Missing Property %s(%s|%s)", ENTITY_KX_SCHEMES, entityId, ANY));
-            }
-        }
-        final Set<String> kx = new HashSet<String>();
-        kx.addAll(Arrays.asList(kxProp.split(SPACE_REGEX)));
-        return Collections.unmodifiableSet(kx);
+        return split(getWildcharProperty(ENTITY_KX_SCHEMES, entityId));
     }
 
+    /**
     /**
      * @param entityId entity identity
      * @param userId user identity
@@ -175,16 +187,7 @@ public final class MslProperties {
      * @return ID of the RSA key pair to be used for specified entity's authentication
      */
     public String getRsaKeyId(final String entityId) {
-        String s = p.getProperty(ENTITY_RSA_KEY_ID + entityId);
-        if (s == null) {
-            System.out.println(String.format("Missing Property %s%s", ENTITY_RSA_KEY_ID, entityId));
-            s = p.getProperty(ENTITY_RSA_KEY_ID + ANY);
-        }
-        if (s == null) {
-            System.out.println(String.format("Missing Property %s%s", ENTITY_RSA_KEY_ID, ANY));
-            throw new IllegalArgumentException(String.format("Missing Property %s(%s|%s)", ENTITY_RSA_KEY_ID, entityId, ANY));
-        }
-        return s;
+        return getWildcharProperty(ENTITY_RSA_KEY_ID, entityId);
     }
 
     /* **************************
@@ -272,6 +275,27 @@ public final class MslProperties {
         return new Pair<String,String>(getRequiredProperty(MSL_STOKEN_KEY_ENC + keyId), getRequiredProperty(MSL_STOKEN_KEY_HMAC + keyId));
     }
 
+    /**
+     * @return Master Token renewal offset in milliseconds
+     */
+    public int getMasterTokenRenewalOffset() {
+        return getCountProperty(MSL_MTOKEN_RENEWAL_OFFSET);
+    }
+
+    /**
+     * @return Master Token expiration offset in milliseconds
+     */
+    public int getMasterTokenExpirationOffset() {
+        return getCountProperty(MSL_MTOKEN_RENEWAL_OFFSET);
+    }
+
+    /**
+     * @return Master Token non-replay ID window
+     */
+    public int getMasterTokenNonReplayIdWindow() {
+        return getCountProperty(MSL_MTOKEN_NON_REPLAY_ID_WINDOW);
+    }
+
     /* ************************
      * APPLICATION PROPERTIES *
      **************************/
@@ -333,5 +357,24 @@ public final class MslProperties {
             throw new IllegalArgumentException("Missing Property " + name);
         }
         return s;
+    }
+
+    // get property with the name that can have ".*" at the end to indicate "any" id
+    private String getWildcharProperty(final String prefix, String id) {
+        String s = p.getProperty(prefix + id);
+        if (s == null) {
+            s = p.getProperty(prefix + ANY);
+        }
+        if (s == null) {
+            throw new IllegalArgumentException(String.format("Missing Property %s(%s|%s)", prefix, id, ANY));
+        }
+        return s;
+    }
+
+    // parse multi-value property into a Set of unique values
+    private Set<String> split(final String value) {
+        final Set<String> set = new HashSet<String>();
+        set.addAll(Arrays.asList(value.split(SPACE_REGEX)));
+        return Collections.unmodifiableSet(set);
     }
 }

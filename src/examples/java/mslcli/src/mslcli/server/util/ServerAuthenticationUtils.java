@@ -29,10 +29,9 @@ import com.netflix.msl.util.AuthenticationUtils;
 import mslcli.common.util.AppContext;
 
 /**
- * <p>Restrict client authentication to pre-shared keys
- *    Restrict server entity authentication to RSA keys.
- *    Restrict client user authentication to email-password.
- *    Restrict client key exchange to asymmetric wrapped, symmetric wrapped, DH, JWE Ladder, and JWK Ladder.
+ * <p>
+ *    Authentication utility telling which entity authentication, user authentication,
+ *    and key exchange schemes are permitted/supported for a given entity.
  * </p>
  * 
  * @author Vadim Spector <vspector@netflix.com>
@@ -42,14 +41,7 @@ public class ServerAuthenticationUtils implements AuthenticationUtils {
 
     // should be configurable
 
-    private final Set<EntityAuthenticationScheme> allowedServerEntityAuthenticationSchemes = new HashSet<EntityAuthenticationScheme>();
-    private final Set<EntityAuthenticationScheme> allowedClientEntityAuthenticationSchemes = new HashSet<EntityAuthenticationScheme>();
-
-    private final Set<UserAuthenticationScheme>   allowedServerUserAuthenticationSchemes   = new HashSet<UserAuthenticationScheme>();
-    private final Set<UserAuthenticationScheme>   allowedClientUserAuthenticationSchemes   = new HashSet<UserAuthenticationScheme>();
-
-    private final Set<KeyExchangeScheme>          allowedServerKeyExchangeSchemes          = new HashSet<KeyExchangeScheme>();
-    private final Set<KeyExchangeScheme>          allowedClientKeyExchangeSchemes          = new HashSet<KeyExchangeScheme>();
+    private final Set<EntityAuthenticationScheme> allowedServerEntityAuthenticationSchemes;
 
     /**
      * <p>Create a new authentication utils instance for the specified server identity.
@@ -58,19 +50,10 @@ public class ServerAuthenticationUtils implements AuthenticationUtils {
      * @param serverId local server entity identity.
      */
     public ServerAuthenticationUtils(final AppContext appCtx, final String serverId) {
+        this.appCtx = appCtx;
         this.serverId = serverId;
-
-        // set allowed entity authentication schemes
-        Collections.addAll(this.allowedClientEntityAuthenticationSchemes, EntityAuthenticationScheme.PSK);
-        Collections.addAll(this.allowedServerEntityAuthenticationSchemes, EntityAuthenticationScheme.RSA);
-
-        // set allowed user authentication schemes
-        Collections.addAll(this.allowedClientUserAuthenticationSchemes  , UserAuthenticationScheme.EMAIL_PASSWORD);
-        // allowedServerUserAuthenticationSchemes remains empty
-
-        // set allowed key exchange schemes
-        this.allowedClientKeyExchangeSchemes.addAll(appCtx.getAllowedKeyExchangeSchemes(serverId));
-        // allowedServerKeyExchangeSchemes remains empty
+        // set allowed server entity authentication schemes
+        this.allowedServerEntityAuthenticationSchemes = appCtx.getAllowedEntityAuthenticationSchemes(serverId);
     }
     
     /* (non-Javadoc)
@@ -91,7 +74,7 @@ public class ServerAuthenticationUtils implements AuthenticationUtils {
         if (serverId.equals(identity)) {
             return allowedServerEntityAuthenticationSchemes.contains(scheme);
         } else {
-            return allowedClientEntityAuthenticationSchemes.contains(scheme);
+            return appCtx.getAllowedEntityAuthenticationSchemes(identity).contains(scheme);
         }
     }
 
@@ -101,9 +84,10 @@ public class ServerAuthenticationUtils implements AuthenticationUtils {
     @Override
     public boolean isSchemePermitted(final String identity, final UserAuthenticationScheme scheme) {
         if (serverId.equals(identity)) {
-            return allowedServerUserAuthenticationSchemes.contains(scheme);
+            appCtx.warning(String.format("server %s: supported user authentication scheme inquiry for itself", serverId));
+            return false; // server has no local users to authenticate
        } else {
-            return allowedClientUserAuthenticationSchemes.contains(scheme);
+            return appCtx.getAllowedUserAuthenticationSchemes(identity).contains(scheme);
        }
     }
     
@@ -124,12 +108,16 @@ public class ServerAuthenticationUtils implements AuthenticationUtils {
     @Override
     public boolean isSchemePermitted(final String identity, final KeyExchangeScheme scheme) {
         if (serverId.equals(identity)) {
-            return allowedServerKeyExchangeSchemes.contains(scheme);
+            appCtx.warning(String.format("server %s: supported key exchange scheme inquiry for itself", serverId));
+            return false; // server never initiates key exchange
         } else {
-            return allowedClientKeyExchangeSchemes.contains(scheme);
+            return appCtx.getAllowedKeyExchangeSchemes(identity).contains(scheme);
         }
     }
     
+    /** app context */
+    private final AppContext appCtx;
+
     /** Local server entity identity. */
     private final String serverId;
 }

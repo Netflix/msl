@@ -24,6 +24,9 @@ import java.io.InputStreamReader;
 import java.io.IOException;
 import java.util.Properties;
 
+import com.netflix.msl.tokens.MasterToken;
+import com.netflix.msl.tokens.UserIdToken;
+
 /**
  * Collection of utilities
  *
@@ -33,6 +36,38 @@ import java.util.Properties;
 public final class SharedUtil {
 
     private SharedUtil() {}
+
+    /**
+     * extract useful info from MasterToken
+     */
+    public static final String getMasterTokenInfo(final MasterToken masterToken) {
+        if (masterToken == null) {
+            return null;
+        }
+        final long t_now = System.currentTimeMillis();
+        final long t_rnw = (masterToken.getRenewalWindow().getTime() - t_now)/1000L;
+        final long t_exp = (masterToken.getExpiration().getTime() - t_now)/1000L;
+        return String.format("MasterToken{ser_num %d, seq_num %d, renewable in %d sec, expires in %d sec}",
+            masterToken.getSerialNumber(), masterToken.getSequenceNumber(), t_rnw, t_exp);
+    }
+
+    /**
+     * extract useful info from MasterToken
+     */
+    public static final String getUserIdTokenInfo(final UserIdToken userIdToken) {
+        if (userIdToken == null) {
+            return null;
+        }
+        final long t_now = System.currentTimeMillis();
+        final long t_rnw = (userIdToken.getRenewalWindow().getTime() - t_now)/1000L;
+        final long t_exp = (userIdToken.getExpiration().getTime() - t_now)/1000L;
+        return String.format("UserIdToken{user %s, ser_num %d, mt_ser_num: %d, renewable in %d sec, expires in %d sec}",
+            (userIdToken.getUser() != null) ? userIdToken.getUser().getEncoded() : null,
+            userIdToken.getSerialNumber(),
+            userIdToken.getMasterTokenSerialNumber(),
+            t_rnw,
+            t_exp);
+    }
 
     /**
      * IO Helper: read input stream into byte array

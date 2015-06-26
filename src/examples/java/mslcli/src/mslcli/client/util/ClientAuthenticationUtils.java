@@ -30,11 +30,8 @@ import mslcli.common.util.AppContext;
 
 /**
  * <p>
- *    Client-side authentication utilities.
- *    Restrict server entity authentication to RSA keys.
- *    Restrict client entity authentication to pre-shared keys.
- *    Restrict client user authentication to email-password.
- *    Restrict client entity key exchange to asymmetric wrapped, symmetric wrapped, DH, JWE Ladder, and JWK Ladder.
+ *    Utility telling which entity authentication, user authentication, and key exchange
+ *    mechanisms are allowed/supported for a given entity
  * </p>
  * 
  * @author Vadim Spector <vspector@netflix.com>
@@ -44,14 +41,9 @@ public class ClientAuthenticationUtils implements AuthenticationUtils {
 
    // should be configurable
 
-    private final Set<EntityAuthenticationScheme> allowedServerEntityAuthenticationSchemes = new HashSet<EntityAuthenticationScheme>();
-    private final Set<EntityAuthenticationScheme> allowedClientEntityAuthenticationSchemes = new HashSet<EntityAuthenticationScheme>();
-
-    private final Set<UserAuthenticationScheme>   allowedServerUserAuthenticationSchemes   = new HashSet<UserAuthenticationScheme>();
-    private final Set<UserAuthenticationScheme>   allowedClientUserAuthenticationSchemes   = new HashSet<UserAuthenticationScheme>();
-
-    private final Set<KeyExchangeScheme>          allowedServerKeyExchangeSchemes          = new HashSet<KeyExchangeScheme>();
-    private final Set<KeyExchangeScheme>          allowedClientKeyExchangeSchemes          = new HashSet<KeyExchangeScheme>();
+    private final Set<EntityAuthenticationScheme> allowedClientEntityAuthenticationSchemes;
+    private final Set<UserAuthenticationScheme>   allowedClientUserAuthenticationSchemes;
+    private final Set<KeyExchangeScheme>          allowedClientKeyExchangeSchemes;
 
     /**
      * <p>Create a new authentication utils instance for the specified client identity.</p>
@@ -63,16 +55,13 @@ public class ClientAuthenticationUtils implements AuthenticationUtils {
         this.appCtx = appCtx;
 
         // set allowed entity authentication schemes
-        Collections.addAll(this.allowedClientEntityAuthenticationSchemes, EntityAuthenticationScheme.PSK);
-        Collections.addAll(this.allowedServerEntityAuthenticationSchemes, EntityAuthenticationScheme.RSA);
+        this.allowedClientEntityAuthenticationSchemes = appCtx.getAllowedEntityAuthenticationSchemes(clientId);;
 
         // set allowed user authentication schemes
-        Collections.addAll(this.allowedClientUserAuthenticationSchemes  , UserAuthenticationScheme.EMAIL_PASSWORD);
-        // allowedServerUserAuthenticationSchemes remains empty
+        this.allowedClientUserAuthenticationSchemes = appCtx.getAllowedUserAuthenticationSchemes(clientId);
 
         // set allowed key exchange schemes
-        this.allowedClientKeyExchangeSchemes.addAll(appCtx.getAllowedKeyExchangeSchemes(clientId));
-        // allowedServerKeyExchangeSchemes remains empty
+        this.allowedClientKeyExchangeSchemes = appCtx.getAllowedKeyExchangeSchemes(clientId);
     }
     
     /* (non-Javadoc)
@@ -93,7 +82,7 @@ public class ClientAuthenticationUtils implements AuthenticationUtils {
         if (clientId.equals(identity)) {
             return allowedClientEntityAuthenticationSchemes.contains(scheme);
         } else {
-            return allowedServerEntityAuthenticationSchemes.contains(scheme);
+            return appCtx.getAllowedEntityAuthenticationSchemes(identity).contains(scheme);
         }
     }
 
@@ -105,7 +94,8 @@ public class ClientAuthenticationUtils implements AuthenticationUtils {
        if (clientId.equals(identity)) {
             return allowedClientUserAuthenticationSchemes.contains(scheme);
        } else {
-            return allowedServerUserAuthenticationSchemes.contains(scheme);
+            appCtx.warning(String.format("client %s: user authentication schema support inquiry for entity %s", clientId, identity));
+            return false;
        }
     }
     
@@ -128,7 +118,8 @@ public class ClientAuthenticationUtils implements AuthenticationUtils {
         if (clientId.equals(identity)) {
             return allowedClientKeyExchangeSchemes.contains(scheme);
         } else {
-            return allowedServerKeyExchangeSchemes.contains(scheme);
+            appCtx.warning(String.format("client %s: key exchange schema support inquiry for entity %s", clientId, identity));
+            return false;
         }
     }
     

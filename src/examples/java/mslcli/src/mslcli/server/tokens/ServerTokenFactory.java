@@ -37,6 +37,8 @@ import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.util.MslContext;
 
 import mslcli.common.tokens.SimpleUser;
+import mslcli.common.util.AppContext;
+import mslcli.common.util.SharedUtil;
 
 /**
  * <p>A server-side memory-backed token factory.</p>
@@ -45,12 +47,24 @@ import mslcli.common.tokens.SimpleUser;
  */
 public class ServerTokenFactory implements TokenFactory {
     /** Renewal window start offset in milliseconds. */
-    private static final int RENEWAL_OFFSET = 60000;
+    private final int renewalOffset;
     /** Expiration offset in milliseconds. */
-    private static final int EXPIRATION_OFFSET = 120000;
+    private final int expirationOffset;
     /** Non-replayable ID acceptance window. */
-    private static final long NON_REPLAYABLE_ID_WINDOW = 65536;
-    
+    private final long nonReplayIdWindow;
+    /** app context */
+    private final AppContext appCtx;
+
+    /*
+     * @param appCtx application context
+     */
+    public ServerTokenFactory(final AppContext appCtx) {
+        this.appCtx = appCtx;
+        this.renewalOffset = appCtx.getProperties().getMasterTokenRenewalOffset();
+        this.expirationOffset = appCtx.getProperties().getMasterTokenExpirationOffset();
+        this.nonReplayIdWindow = appCtx.getProperties().getMasterTokenNonReplayIdWindow();
+    }
+
     /* (non-Javadoc)
      * @see com.netflix.msl.tokens.TokenFactory#isNewestMasterToken(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken)
      */
@@ -103,13 +117,13 @@ public class ServerTokenFactory implements TokenFactory {
 
         // Reject if the non-replayable ID is larger by more than the
         // acceptance window. The sender cannot recover quickly.
-        if (nonReplayableId - NON_REPLAYABLE_ID_WINDOW > largestNonReplayableId)
+        if (nonReplayableId - nonReplayIdWindow > largestNonReplayableId)
             return MslError.MESSAGE_REPLAYED_UNRECOVERABLE;
         
         // If the non-replayable ID is smaller reject it if it is outside the
         // wrap-around window. The sender cannot recover quickly.
         if (nonReplayableId < largestNonReplayableId) {
-            final long cutoff = largestNonReplayableId - MslConstants.MAX_LONG_VALUE + NON_REPLAYABLE_ID_WINDOW;
+            final long cutoff = largestNonReplayableId - MslConstants.MAX_LONG_VALUE + nonReplayIdWindow;
             if (nonReplayableId >= cutoff)
                 return MslError.MESSAGE_REPLAYED_UNRECOVERABLE;
         }
@@ -127,8 +141,9 @@ public class ServerTokenFactory implements TokenFactory {
      */
     @Override
     public MasterToken createMasterToken(final MslContext ctx, final String identity, final SecretKey encryptionKey, final SecretKey hmacKey) throws MslEncodingException, MslCryptoException {
-        final Date renewalWindow = new Date(ctx.getTime() + RENEWAL_OFFSET);
-        final Date expiration = new Date(ctx.getTime() + EXPIRATION_OFFSET);
+        appCtx.info("Creating MasterToken for " + identity);
+        final Date renewalWindow = new Date(ctx.getTime() + renewalOffset);
+        final Date expiration = new Date(ctx.getTime() + expirationOffset);
         final long sequenceNumber = 0;
         long serialNumber = -1;
         do {
@@ -162,13 +177,14 @@ public class ServerTokenFactory implements TokenFactory {
      */
     @Override
     public MasterToken renewMasterToken(final MslContext ctx, final MasterToken masterToken, final SecretKey encryptionKey, final SecretKey hmacKey) throws MslEncodingException, MslCryptoException, MslMasterTokenException {
+        appCtx.info("Renewing " + SharedUtil.getMasterTokenInfo(masterToken));
         if (!isNewestMasterToken(ctx, masterToken))
             throw new MslMasterTokenException(MslError.MASTERTOKEN_SEQUENCE_NUMBER_OUT_OF_SYNC, masterToken);
         
         // Renew master token.
         final JSONObject issuerData = null;
-        final Date renewalWindow = new Date(ctx.getTime() + RENEWAL_OFFSET);
-        final Date expiration = new Date(ctx.getTime() + EXPIRATION_OFFSET);
+        final Date renewalWindow = new Date(ctx.getTime() + renewalOffset);
+        final Date expiration = new Date(ctx.getTime() + expirationOffset);
         final long oldSequenceNumber = masterToken.getSequenceNumber();
         final long sequenceNumber = (oldSequenceNumber == MslConstants.MAX_LONG_VALUE) ? 0 : oldSequenceNumber + 1;
         final long serialNumber = masterToken.getSerialNumber();
@@ -199,10 +215,10 @@ public class ServerTokenFactory implements TokenFactory {
      */
     @Override
     public UserIdToken createUserIdToken(final MslContext ctx, final MslUser user, final MasterToken masterToken) throws MslEncodingException, MslCryptoException {
-        System.out.println("Creating UserIdToken for user " + user.getEncoded());
+        appCtx.info("Creating UserIdToken for user " + ((user != null) ? user.getEncoded() : null));
         final JSONObject issuerData = null;
-        final Date renewalWindow = new Date(ctx.getTime() + RENEWAL_OFFSET);
-        final Date expiration = new Date(ctx.getTime() + EXPIRATION_OFFSET);
+        final Date renewalWindow = new Date(ctx.getTime() + renewalOffset);
+        final Date expiration = new Date(ctx.getTime() + expirationOffset);
         long serialNumber = -1;
         do {
             serialNumber = ctx.getRandom().nextLong();
@@ -215,15 +231,15 @@ public class ServerTokenFactory implements TokenFactory {
      */
     @Override
     public UserIdToken renewUserIdToken(final MslContext ctx, final UserIdToken userIdToken, final MasterToken masterToken) throws MslEncodingException, MslCryptoException, MslUserIdTokenException {
+        appCtx.info("Renewing " + SharedUtil.getUserIdTokenInfo(userIdToken));
         if (!userIdToken.isDecrypted())
             throw new MslUserIdTokenException(MslError.USERIDTOKEN_NOT_DECRYPTED, userIdToken).setEntity(masterToken);
 
         final JSONObject issuerData = null;
-        final Date renewalWindow = new Date(ctx.getTime() + RENEWAL_OFFSET);
-        final Date expiration = new Date(ctx.getTime() + EXPIRATION_OFFSET);
+        final Date renewalWindow = new Date(ctx.getTime() + renewalOffset);
+        final Date expiration = new Date(ctx.getTime() + expirationOffset);
         final long serialNumber = userIdToken.getSerialNumber();
         final MslUser user = userIdToken.getUser();
-        System.out.println("Renewing UserIdToken for user " + ((user != null) ? user.getEncoded() : null));
         return new UserIdToken(ctx, renewalWindow, expiration, masterToken, serialNumber, issuerData, user);
     }
 

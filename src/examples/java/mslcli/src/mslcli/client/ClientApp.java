@@ -152,32 +152,6 @@ public final class ClientApp {
         }
     }
 
-    private static final String getMasterTokenInfo(final MasterToken masterToken) {
-        if (masterToken == null) {
-            return null;
-        }
-        final long t_now = System.currentTimeMillis();
-        final long t_rnw = (masterToken.getRenewalWindow().getTime() - t_now)/1000L;
-        final long t_exp = (masterToken.getExpiration().getTime() - t_now)/1000L;
-        return String.format("MasterToken{ser_num %d, seq_num %d, renewable in %d sec, expires in %d sec}",
-            masterToken.getSerialNumber(), masterToken.getSequenceNumber(), t_rnw, t_exp);
-    }
-
-    private static final String getUserIdTokenInfo(final UserIdToken userIdToken) {
-        if (userIdToken == null) {
-            return null;
-        }
-        final long t_now = System.currentTimeMillis();
-        final long t_rnw = (userIdToken.getRenewalWindow().getTime() - t_now)/1000L;
-        final long t_exp = (userIdToken.getExpiration().getTime() - t_now)/1000L;
-        return String.format("UserIdToken{user %s, ser_num %d, mt_ser_num: %d, renewable in %d sec, expires in %d sec}",
-            (userIdToken.getUser() != null) ? userIdToken.getUser().getEncoded() : null,
-            userIdToken.getSerialNumber(),
-            userIdToken.getMasterTokenSerialNumber(),
-            t_rnw,
-            t_exp);
-    }
-
     /*
      * This class facilitates on-demand fetching of user authentication data
      */
@@ -204,14 +178,14 @@ public final class ClientApp {
                 System.out.println("\nMslStore: setting crypto context with NULL MasterToken???");
             } else {
                 System.out.println(String.format("\nMslStore: %s %s\n",
-                    (cryptoContext != null)? "Adding" : "Removing", getMasterTokenInfo(masterToken)));
+                    (cryptoContext != null)? "Adding" : "Removing", SharedUtil.getMasterTokenInfo(masterToken)));
             }
             super.setCryptoContext(masterToken, cryptoContext);
         }
 
         @Override
         public void removeCryptoContext(final MasterToken masterToken) {
-            System.out.println("\nMslStore: Removing Crypto Context for " + getMasterTokenInfo(masterToken));
+            System.out.println("\nMslStore: Removing Crypto Context for " + SharedUtil.getMasterTokenInfo(masterToken));
             super.removeCryptoContext(masterToken);
         }
 
@@ -223,13 +197,13 @@ public final class ClientApp {
 
         @Override
         public void addUserIdToken(final String userId, final UserIdToken userIdToken) throws MslException {
-            System.out.println(String.format("\nMslStore: Adding %s for userId %s", getUserIdTokenInfo(userIdToken), userId));
+            System.out.println(String.format("\nMslStore: Adding %s for userId %s", SharedUtil.getUserIdTokenInfo(userIdToken), userId));
             super.addUserIdToken(userId, userIdToken);
         }
 
         @Override
         public void removeUserIdToken(final UserIdToken userIdToken) {
-            System.out.println("\nMslStore: Removing " + getUserIdTokenInfo(userIdToken));
+            System.out.println("\nMslStore: Removing " + SharedUtil.getUserIdTokenInfo(userIdToken));
             super.removeUserIdToken(userIdToken);
         }
 
