@@ -16,7 +16,6 @@
 
 package mslcli.common.util;
 
-import java.io.FileReader;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -25,7 +24,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import static mslcli.common.Constants.*;
+import mslcli.common.Pair;
+import mslcli.common.Triplet;
 
 /**
  * Msl Properties
@@ -35,101 +35,76 @@ import static mslcli.common.Constants.*;
 
 public final class MslProperties {
 
-    private static final String MSL_CTRL_NUM_THR  = "mslctrl.nthr";
+  /*
+   * APPLICATION-SPECIFIC CONFIGURATION PROPERTIY NAMES
+   */
+    private static final String APP_CTRL_NUM_THR      = "app.mslctrl.nthr";
+    private static final String APP_SERVER_PORT       = "app.server.port";
+    private static final String APP_CLIENT_ID         = "app.client.id";
+    private static final String APP_SERVER_ID         = "app.server.id";
+    private static final String APP_DEBUG_FLAG        = "app.debug";
+
+   /*
+    * ENTITY-SPECIFIC CONFIGURATION PROPERTY NAMES
+    */
     private static final String ENTITY_KX_SCHEMES = "entity.kx.schemes.";
-
-    private static final String RSA_NUM           = "store.rsa.num"; 
-    private static final String RSA_KEY_ID        = "store.rsa.keyid."; 
-    private static final String RSA_PUB           = "store.rsa.pub."; 
-    private static final String RSA_PRIV          = "store.rsa.priv."; 
-
     private static final String ENTITY_RSA_KEY_ID = "entity.rsa.keyid."; 
-
-    private static final String PSK_NUM           = "entity.psk.num";
-    private static final String PSK_ENTITY_ID     = "entity.psk.id.";
-    private static final String PSK_ENC           = "entity.psk.enc.";
-    private static final String PSK_HMAC          = "entity.psk.hmac.";
-    private static final String PSK_WRAP          = "entity.psk.wrap.";
-
+    private static final String ENTITY_PSK_NUM    = "entity.psk.num";
+    private static final String ENTITY_PSK_ID     = "entity.psk.id.";
+    private static final String ENTITY_PSK_ENC    = "entity.psk.enc.";
+    private static final String ENTITY_PSK_HMAC   = "entity.psk.hmac.";
+    private static final String ENTITY_PSK_WRAP   = "entity.psk.wrap.";
     private static final String ENTITY_DH_ID      = "entity.dh.id.";
 
-    private static final String DH_NUM            = "kx.dh.num";
-    private static final String DH_ID             = "kx.dh.id.";
-    private static final String DH_P              = "kx.dh.p.";
-    private static final String DH_G              = "kx.dh.g.";
+   /*
+    * USER-SPECIFIC CONFIGURATION PROPERTY NAMES
+    */
+    private static final String USER_EP_NUM       = "user.ep.num";
+    private static final String USER_EP_EMAIL     = "user.ep.email.";
+    private static final String USER_EP_PWD       = "user.ep.pwd.";
+    private static final String USER_EP_ID        = "user.ep.id.";
 
-    private static final String USER_EMAIL_NUM    = "user.emailpwd.num";
-    private static final String USER_EMAIL        = "user.email.";
-    private static final String USER_PWD          = "user.pwd.";
+   /*
+    * MSL ECOSYSTEM-WIDE CONFIGURATION PROPERTY NAMES
+    */
+    private static final String MSL_RSA_NUM       = "msl.rsa.num"; 
+    private static final String MSL_RSA_KEY_ID    = "msl.rsa.keyid."; 
+    private static final String MSL_RSA_PUB       = "msl.rsa.pub."; 
+    private static final String MSL_RSA_PRIV      = "msl.rsa.priv."; 
+
+    private static final String MSL_DH_NUM        = "msl.dh.num";
+    private static final String MSL_DH_ID         = "msl.dh.id.";
+    private static final String MSL_DH_P          = "msl.dh.p.";
+    private static final String MSL_DH_G          = "msl.dh.g.";
 
     private static final String MSL_KEY_ENC       = "msl.key.enc";
     private static final String MSL_KEY_HMAC      = "msl.key.hmac";
     private static final String MSL_KEY_WRAP      = "msl.key.wrap";
 
-    private static final String MSL_SERVER_PORT   = "msl.server.port";
-
+    // local definitions
     private static final String ANY               = "*"; 
     private static final String SPACE_REGEX       = "\\s";
 
-    private static final String CLIENT_ID         = "msl.client.id";
-    private static final String SERVER_ID         = "msl.server.id";
-
-    private static final String DEBUG_FLAG        = "debug";
-
     private final Properties p;
-
-    public static final class RsaStoreKeyPair {
-        public final String pubB64;
-        public final String privB64; 
-        private RsaStoreKeyPair(final String pubB64, final String privB64) {
-            this.pubB64 = pubB64;
-            this.privB64 = privB64;
-        }
-    }
-
-    /**
-     * data object class to carry Diffie-Hellman algorithm P and G parameters, HEX-encoded
-     */
-    public static final class DHPair {
-        public final String pHex;
-        public final String gHex; 
-        private DHPair(final String pHex, final String gHex) {
-            this.pHex = pHex;
-            this.gHex = gHex;
-        }
-    }
-
-    /**
-     * data object class to carry encryption, hmac, and wrapping keys, HEX-encoded
-     */
-    public static final class KeyTriple {
-        public final String encKeyHex;
-        public final String hmacKeyHex;
-        public final String wrapKeyHex;
-        private KeyTriple(final String encKeyHex, final String hmacKeyHex, final String wrapKeyHex) {
-            this.encKeyHex = encKeyHex;
-            this.hmacKeyHex = hmacKeyHex;
-            this.wrapKeyHex = wrapKeyHex;
-        }
-    }
 
     /**
      * Load properties from config file
      * @param configFile configuration file path
      */
-    public static MslProperties getInstance(final String configFile) throws Exception {
-        final Properties p = new Properties();
-        p.load(new FileReader(configFile));
+    public static MslProperties getInstance(final Properties p) throws Exception {
+        if (p == null) {
+            throw new IllegalArgumentException("NULL Properties");
+        }
         return new MslProperties(p);
     }
 
     private MslProperties(final Properties p) {
-        if (p != null) {
-            this.p = p;
-        } else {
-            throw new IllegalArgumentException("NULL Properties");
-        }
+        this.p = p;
     }
+
+    /* ****************************
+     * ENTITY-SPECIFIC PROPERTIES *
+     ******************************/
 
     /**
      * @param entityId entity identity
@@ -160,27 +135,6 @@ public final class MslProperties {
     }
 
     /**
-     * @return number of threads configured for MslControl
-     */
-    public int getNumMslControlThreads() {
-        return getCountProperty(MSL_CTRL_NUM_THR);
-    }
-
-    /**
-     * @return Diffie-Hellman {P,G) parameters keyed by parameter IDs
-     */
-    public Map<String,DHPair> getDHParameterStore() {
-        final int num = getCountProperty(DH_NUM);
-        final Map<String,DHPair> dhParams = new HashMap<String,DHPair>(num);
-        for (int i = 0; i < num; i++) {
-            dhParams.put(getRequiredProperty(DH_ID + i), new DHPair(
-                         getRequiredProperty(DH_P  + i),
-                         getRequiredProperty(DH_G  + i)));
-        }
-        return dhParams;
-    }
-
-    /**
      * @param entityId entity identity
      * @return Diffie-Hellman parameters ID to be used by given entity
      */
@@ -191,62 +145,15 @@ public final class MslProperties {
     /**
      * @return { encryption, hmac, wrapping} key tuples keyed by entity identity
      */
-    public Map<String,KeyTriple> getPresharedKeyStore() {
-        final int numPSK = getCountProperty(PSK_NUM);
-        final Map<String,KeyTriple> keys = new HashMap<String,KeyTriple>(numPSK);
+    public Map<String,Triplet<String,String,String>> getPresharedKeyStore() {
+        final int numPSK = getCountProperty(ENTITY_PSK_NUM);
+        final Map<String,Triplet<String,String,String>> keys = new HashMap<String,Triplet<String,String,String>>(numPSK);
         for (int i = 0; i < numPSK; i++) {
-            keys.put(getRequiredProperty(PSK_ENTITY_ID + i), new KeyTriple(
-                getRequiredProperty(PSK_ENC  + i),
-                getRequiredProperty(PSK_HMAC + i),
-                getRequiredProperty(PSK_WRAP + i)
+            keys.put(getRequiredProperty(ENTITY_PSK_ID + i), new Triplet<String,String,String>(
+                getRequiredProperty(ENTITY_PSK_ENC  + i),
+                getRequiredProperty(ENTITY_PSK_HMAC + i),
+                getRequiredProperty(ENTITY_PSK_WRAP + i)
             ));
-        }
-        return keys;
-    }
-
-    /**
-     * @return { email,password } map 
-     */
-    public Map<String,String> getEmailPasswordStore() {
-        final int num = getCountProperty(USER_EMAIL_NUM);
-        final Map<String,String> emailPwd = new HashMap<String,String>(num);
-        for (int i = 0; i < num; i++) {
-            emailPwd.put(getRequiredProperty(USER_EMAIL + i), getRequiredProperty(USER_PWD + i));
-        }
-        return emailPwd;
-    }
-
-    /**
-     * @return MSL encryption key, HEX-encoded
-     */
-    public String getMslEncKey() {
-        return getRequiredProperty(MSL_KEY_ENC);
-    }
-
-    /**
-     * @return MSL HMAC key, HEX-encoded
-     */
-    public String getMslHmacKey() {
-        return getRequiredProperty(MSL_KEY_HMAC);
-    }
-
-    /**
-     * @return MSL wrapping key, HEX-encoded
-     */
-    public String getMslWrapKey() {
-        return getRequiredProperty(MSL_KEY_WRAP);
-    }
-
-    /**
-     * @return { public, private } RSA key tuples keyed by RSA key ID
-     */
-    public Map<String,RsaStoreKeyPair> getRsaKeyStore() {
-        final int numRSA = getCountProperty(RSA_NUM);
-        final Map<String,RsaStoreKeyPair> keys = new HashMap<String,RsaStoreKeyPair>(numRSA);
-        for (int i = 0; i < numRSA; i++) {
-            keys.put(getRequiredProperty(RSA_KEY_ID + i), new RsaStoreKeyPair(
-                     getRequiredProperty(RSA_PUB    + i),
-                     getRequiredProperty(RSA_PRIV   + i)));
         }
         return keys;
     }
@@ -268,34 +175,125 @@ public final class MslProperties {
         return s;
     }
 
+    /* **************************
+     * USER-SPECIFIC PROPERTIES *
+     ****************************/
+
     /**
-     * @return IP port to be used by the MSL server for listenning to incoming MSL messages
+     * @return ( email,password ) tuple for a given user ID
+     */
+    public Pair<String,String> getEmailPassword(final String userId) {
+        if (userId == null || userId.trim().isEmpty()) {
+            throw new IllegalArgumentException("Undefined userId");
+        }
+        final int num = getCountProperty(USER_EP_NUM);
+        for (int i = 0; i < num; i++) {
+            final String uid = p.getProperty(USER_EP_ID + i);
+            if (userId.equals(uid)) {
+                return new Pair<String,String>(getRequiredProperty(USER_EP_EMAIL + i), getRequiredProperty(USER_EP_PWD + i));
+            }
+        }
+        throw new IllegalArgumentException("Missing Email-Password Entry for User Id " + userId);
+    }
+
+    /**
+     * @return { email,password } for a given user ID
+     */
+    public Map<String,String> getEmailPasswordStore() {
+        final int num = getCountProperty(USER_EP_NUM);
+        final Map<String,String> emailPwd = new HashMap<String,String>(num);
+        for (int i = 0; i < num; i++) {
+            emailPwd.put(getRequiredProperty(USER_EP_EMAIL + i), getRequiredProperty(USER_EP_PWD + i));
+        }
+        return emailPwd;
+    }
+
+    /* *******************************
+     * MSL ECOSYSTEM-WIDE PROPERTIES *
+     *********************************/
+
+    /**
+     * Get MSL encryption, HMAC, and wrapping keys
+     */
+    public Triplet<String,String,String> getMslKeys() {
+        return new Triplet<String,String,String>(
+            getRequiredProperty(MSL_KEY_ENC),
+            getRequiredProperty(MSL_KEY_HMAC),
+            getRequiredProperty(MSL_KEY_WRAP)
+            );
+    }
+
+    /**
+     * @return { public, private } RSA key tuples keyed by RSA key ID
+     */
+    public Map<String,Pair<String,String>> getRsaKeyStore() {
+        final int numRSA = getCountProperty(MSL_RSA_NUM);
+        final Map<String,Pair<String,String>> keys = new HashMap<String,Pair<String,String>>(numRSA);
+        for (int i = 0; i < numRSA; i++) {
+            keys.put(getRequiredProperty(MSL_RSA_KEY_ID + i), new Pair<String,String>(
+                     getRequiredProperty(MSL_RSA_PUB    + i),
+                     getRequiredProperty(MSL_RSA_PRIV   + i)));
+        }
+        return keys;
+    }
+
+    /**
+     * @return Diffie-Hellman {P,G) parameters keyed by parameter IDs
+     */
+    public Map<String,Pair<String,String>> getDHParameterStore() {
+        final int num = getCountProperty(MSL_DH_NUM);
+        final Map<String,Pair<String,String>> dhParams = new HashMap<String,Pair<String,String>>(num);
+        for (int i = 0; i < num; i++) {
+            dhParams.put(getRequiredProperty(MSL_DH_ID + i), new Pair<String,String>(
+                         getRequiredProperty(MSL_DH_P  + i),
+                         getRequiredProperty(MSL_DH_G  + i)));
+        }
+        return dhParams;
+    }
+
+    /* ************************
+     * APPLICATION PROPERTIES *
+     **************************/
+
+    /**
+     * @return number of threads configured for MslControl
+     */
+    public int getNumMslControlThreads() {
+        return getCountProperty(APP_CTRL_NUM_THR);
+    }
+
+    /**
+     * @return IP port to be used by "this" MSL server for listenning to incoming MSL messages
      */
     public int getServerPort() {
-        return getCountProperty(MSL_SERVER_PORT);
+        return getCountProperty(APP_SERVER_PORT);
     }
 
     /**
      * @return "this" client id
      */
     public String getClientId() {
-        return getRequiredProperty(CLIENT_ID);
+        return getRequiredProperty(APP_CLIENT_ID);
     }
 
     /**
      * @return "this" server id
      */
     public String getServerId() {
-        return getRequiredProperty(SERVER_ID);
+        return getRequiredProperty(APP_SERVER_ID);
     }
 
     /**
      * @return debug flag
      */
     public boolean isDebugOn() {
-        final String s = p.getProperty(DEBUG_FLAG);
+        final String s = p.getProperty(APP_DEBUG_FLAG);
         return Boolean.parseBoolean(s);
     }
+
+    /* ****************
+     * Helper classes *
+     ******************/
 
     private int getCountProperty(final String name) {
         final String s = getRequiredProperty(name);

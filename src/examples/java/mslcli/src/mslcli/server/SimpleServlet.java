@@ -22,6 +22,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import mslcli.common.util.MslProperties;
+import mslcli.common.util.SharedUtil;
 
 /**
  * <p>
@@ -39,7 +40,7 @@ public class SimpleServlet extends HttpServlet {
      * <p>Create a new servlet instance and initialize the simple MSL server.</p>
      */
     public SimpleServlet() throws Exception {
-        final MslProperties prop = MslProperties.getInstance(configFile);
+        final MslProperties prop = MslProperties.getInstance(SharedUtil.loadPropertiesFromFile(configFile));
         this.mslServer = new SimpleMslServer(prop);
     }
     

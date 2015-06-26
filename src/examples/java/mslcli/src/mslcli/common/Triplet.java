@@ -22,14 +22,13 @@ package mslcli.common;
  * @author Vadim Spector <vspector@netflix.com>
  */
 
-public final class Constants {
-    /** MSL control timeout in milliseconds. */
-    public static final int TIMEOUT_MS = 120 * 1000;
-
-   // key exchanges
-    public static final String KX_DH   = "dh" ; // Diffie-Hellman             Key Exchange
-    public static final String KX_SWE  = "sw" ; // Symmetric  Wrapped         Key Exchange
-    public static final String KX_AWE  = "aw" ; // Asymmetric Wrapped         Key Exchange
-    public static final String KX_JWEL = "jwe"; // JSON Web Encryption Ladder Key Exchange
-    public static final String KX_JWKL = "jwk"; // JSON Web Key        Ladder Key Exchange
+public final class Triplet<X,Y,Z> {
+    public final X x;
+    public final Y y;
+    public final Z z;
+    public Triplet(X x, Y y, Z z) {
+      this.x = x;
+      this.y = y;
+      this.z = z;
+    }
 }

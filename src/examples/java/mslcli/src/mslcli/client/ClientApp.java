@@ -40,6 +40,7 @@ import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.userauth.EmailPasswordAuthenticationData;
 import com.netflix.msl.userauth.UserAuthenticationData;
 
+import mslcli.common.Pair;
 import mslcli.common.msg.MessageConfig;
 import mslcli.common.userauth.UserAuthenticationDataHandle;
 import mslcli.common.util.MslProperties;
@@ -80,13 +81,16 @@ public final class ClientApp {
                                                                             AsymmetricWrappedExchange.RequestData.Mechanism.JWEJS_RSA.toString(),
                                                                             AsymmetricWrappedExchange.RequestData.Mechanism.JWK_RSA.toString(),
                                                                             AsymmetricWrappedExchange.RequestData.Mechanism.JWK_RSAES.toString())));
-    private static final String MSG_ENCRYPTION = "Encrypted";
-    private static final String MSG_INTEGRITY  = "Integrity Protected";
-    private static final String MSG_NONREPLAY  = "Non-Replayable";
+    private static final String MSG_ENCRYPTION_PROMPT = "Encrypted";
+    private static final String MSG_INTEGRITY_PROMPT  = "Integrity Protected";
+    private static final String MSG_NONREPLAY_PROMPT  = "Non-Replayable";
+    private static final String USER_ID_PROMPT        = "User ID";
 
-    private static final String YES   = "y";
-    private static final String NO    = "n";
-    private static final String QUIT  = "q";
+    private static final String YES  = "y";
+    private static final String NO   = "n";
+    private static final String QUIT = "q";
+
+    private static final String DEFAULT_USER_ID = "simpleMslClientUserId";
 
     public static void main(String[] args) throws Exception {
         if (args.length < 1) {
@@ -101,6 +105,7 @@ public final class ClientApp {
     private final MslProperties prop;
     private Client client;
     private MessageConfig cfg;
+    private String currentUserId = DEFAULT_USER_ID;
 
     private ClientApp(String[] args) throws Exception {
 
@@ -112,7 +117,7 @@ public final class ClientApp {
         // set server URL
         remoteUrl = new URL(args[0]);
 
-        this.prop = MslProperties.getInstance(args[1]);
+        this.prop = MslProperties.getInstance(SharedUtil.loadPropertiesFromFile(args[1]));
         this.appCtx = AppContext.getInstance(prop);
 
         /* second command-line argument with any value turns on diagnostic messages in MslControl
@@ -127,8 +132,7 @@ public final class ClientApp {
 
     private void startClientApp() throws Exception {
         cfg = new MessageConfig();
-        //cfg.userId = CLIENT_USER_ID;
-        cfg.userId = CLIENT_USER_EMAIL;
+        cfg.userId = currentUserId;
         cfg.isEncrypted = true;
         cfg.isIntegrityProtected = true;
         cfg.isNonReplayable = false;
@@ -181,7 +185,12 @@ public final class ClientApp {
         @Override
         public UserAuthenticationData getUserAuthenticationData() {
             System.out.println("UserAuthentication Data requested");
-            return new EmailPasswordAuthenticationData(CLIENT_USER_EMAIL, CLIENT_USER_PASSWORD);
+            if (cfg.userId != null) {
+                final Pair<String,String> ep = prop.getEmailPassword(cfg.userId);
+                return new EmailPasswordAuthenticationData(ep.x, ep.y);
+            } else {
+                return null;
+            }
         }
     }
 
@@ -225,11 +234,9 @@ public final class ClientApp {
         }
 
         @Override
-        public void addServiceTokens(final Set<ServiceToken> tokens) throws MslException {
-            if (tokens != null && !tokens.isEmpty()) {
-                System.out.println("\nMslStore: Adding Service Tokens");
-            }
-            super.addServiceTokens(tokens);
+        public UserIdToken getUserIdToken(final String userId) {
+            System.out.println("\nMslStore: Getting UserIdToken for user ID " + userId);
+            return super.getUserIdToken(userId);
         }
     }
 
@@ -248,10 +255,11 @@ public final class ClientApp {
               .append(pad).append(pad).append(AsymmetricWrappedExchange.RequestData.Mechanism.JWK_RSAES).append("- RSA PKCS#1 JSON Web Key\n")
               .append(pad).append(KX_JWEL).append(" - JSON Web Encryption Ladder Key Exchange\n")
               .append(pad).append(KX_JWKL).append(" - JSON Web Key Ladder Key Exchange\n")
-              .append(CMD_CFG).append(" - set message security properties:\n")
-              .append(pad).append(MSG_ENCRYPTION).append(" - Encryption ON/OFF\n")
-              .append(pad).append(MSG_INTEGRITY).append(" - Integrity Protection ON/OFF\n")
-              .append(pad).append(MSG_NONREPLAY).append(" - Non-Replay ON/OFF\n")
+              .append(CMD_CFG).append(" - set message properties:\n")
+              .append(pad).append(USER_ID_PROMPT).append(" - User Id\n")
+              .append(pad).append(MSG_ENCRYPTION_PROMPT).append(" - Encryption ON/OFF\n")
+              .append(pad).append(MSG_INTEGRITY_PROMPT).append(" - Integrity Protection ON/OFF\n")
+              .append(pad).append(MSG_NONREPLAY_PROMPT).append(" - Non-Replay ON/OFF\n")
               .append(CMD_MSG).append(" - send multiple text messages using the selected key exchange mechanism and message security properties\n")
               .append(pad).append("enter \"q\" to go back to the command menu\n");
         return sb.toString();
@@ -285,9 +293,10 @@ public final class ClientApp {
      * This is why MessageConfig instance is passed in every Client.sendrequest() call.
      */
     private static void setConfig(final MessageConfig cfg) throws IOException {
-        cfg.isEncrypted          = SharedUtil.readBoolean(MSG_ENCRYPTION, cfg.isEncrypted         , YES, NO);
-        cfg.isIntegrityProtected = SharedUtil.readBoolean(MSG_INTEGRITY , cfg.isIntegrityProtected, YES, NO);
-        cfg.isNonReplayable      = SharedUtil.readBoolean(MSG_NONREPLAY , cfg.isNonReplayable     , YES, NO);
+        cfg.userId               = SharedUtil.readParameter(USER_ID_PROMPT, cfg.userId);
+        cfg.isEncrypted          = SharedUtil.readBoolean(MSG_ENCRYPTION_PROMPT, cfg.isEncrypted         , YES, NO);
+        cfg.isIntegrityProtected = SharedUtil.readBoolean(MSG_INTEGRITY_PROMPT , cfg.isIntegrityProtected, YES, NO);
+        cfg.isNonReplayable      = SharedUtil.readBoolean(MSG_NONREPLAY_PROMPT , cfg.isNonReplayable     , YES, NO);
         System.out.println(cfg.toString());
     }
 

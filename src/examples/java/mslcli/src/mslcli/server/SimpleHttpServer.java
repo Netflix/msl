@@ -44,7 +44,7 @@ public class SimpleHttpServer {
             System.out.println("Parameters: config_file");
             System.exit(1);
         }
-        final MslProperties prop = MslProperties.getInstance(args[0]);
+        final MslProperties prop = MslProperties.getInstance(SharedUtil.loadPropertiesFromFile(args[0]));
         final SimpleMslServer mslServer = new SimpleMslServer(prop);
         final HttpServer server = HttpServer.create(new InetSocketAddress(prop.getServerPort()), 0);
         server.createContext("/msl", new MyHandler(mslServer));

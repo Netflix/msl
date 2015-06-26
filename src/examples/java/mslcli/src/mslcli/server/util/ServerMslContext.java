@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.SortedSet;
+import javax.crypto.SecretKey;
 
 import com.netflix.msl.MslConstants.CompressionAlgorithm;
 import com.netflix.msl.MslCryptoException;
@@ -55,6 +56,7 @@ import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslStore;
 
 import static mslcli.common.Constants.*;
+import mslcli.common.Triplet;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.SharedUtil;
 import mslcli.server.tokens.ServerTokenFactory;
@@ -102,7 +104,8 @@ public class ServerMslContext implements MslContext {
         this.messageCaps = new MessageCapabilities(compressionAlgos, languages);
         
         // MSL crypto context.
-        this.mslCryptoContext = new SymmetricCryptoContext(this, serverId, appCtx.getMslEncKey(), appCtx.getMslHmacKey(), appCtx.getMslWrapKey());
+        final Triplet<SecretKey,SecretKey,SecretKey> mslKeys = appCtx.getMslKeys();
+        this.mslCryptoContext = new SymmetricCryptoContext(this, serverId, mslKeys.x, mslKeys.y, mslKeys.z);
 
         // WrapCryptoContextRepository
         final WrapCryptoContextRepository wrapCryptoContextRepository = null;

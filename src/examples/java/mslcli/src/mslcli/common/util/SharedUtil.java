@@ -18,9 +18,11 @@ package mslcli.common.util;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.FileReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
+import java.util.Properties;
 
 /**
  * Collection of utilities
@@ -51,6 +53,20 @@ public final class SharedUtil {
         final BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         System.out.print(prompt.trim() + "> ");
         return br.readLine();
+    }
+
+    /**
+     * IO Helper: read parameter from STDIN
+     */
+    public static String readParameter(final String prompt, final String def) throws IOException {
+        final String value = readInput(String.format("%s[%s]", prompt, def));
+        if (value == null || value.isEmpty()) {
+            return def;
+        } else if (value.trim().isEmpty()) {
+            return null;
+        } else {
+            return value.trim();
+        }
     }
 
     /**
@@ -92,5 +108,20 @@ public final class SharedUtil {
             t = t.getCause();
         }
         return t;
+    }
+
+    /**
+     * load properties from file
+     */
+    public static Properties loadPropertiesFromFile(final String file) throws IOException {
+        final Properties p = new Properties();
+        FileReader fr = null;
+        try {
+            fr = new FileReader(file);
+            p.load(fr);
+        } finally {
+            if (fr != null) try { fr.close(); } catch (IOException ignore) {}
+        }
+        return p;
     }
 }

@@ -65,6 +65,8 @@ import com.netflix.msl.userauth.EmailPasswordStore;
 import com.netflix.msl.util.MslStore;
 import com.netflix.msl.util.SimpleMslStore;
 
+import mslcli.common.Pair;
+import mslcli.common.Triplet;
 import mslcli.common.entityauth.SimplePresharedKeyStore;
 import mslcli.common.entityauth.SimpleRsaStore;
 import mslcli.common.keyx.SimpleWrapCryptoContextRepository;
@@ -139,11 +141,11 @@ public final class AppContext {
     private static PresharedKeyStore initPresharedKeyStore(final MslProperties p) {
         final Map<String,KeySet> keySets = new HashMap<String,KeySet>();
 
-        for (Map.Entry<String,MslProperties.KeyTriple> entry : p.getPresharedKeyStore().entrySet()) {
+        for (Map.Entry<String,Triplet<String,String,String>> entry : p.getPresharedKeyStore().entrySet()) {
             keySets.put(entry.getKey(), new KeySet(
-                new SecretKeySpec(SharedUtil.hexStringToByteArray(entry.getValue().encKeyHex ), JcaAlgorithm.AES),
-                new SecretKeySpec(SharedUtil.hexStringToByteArray(entry.getValue().hmacKeyHex), JcaAlgorithm.HMAC_SHA256),
-                new SecretKeySpec(SharedUtil.hexStringToByteArray(entry.getValue().wrapKeyHex), JcaAlgorithm.AESKW)
+                new SecretKeySpec(SharedUtil.hexStringToByteArray(entry.getValue().x ), JcaAlgorithm.AES),
+                new SecretKeySpec(SharedUtil.hexStringToByteArray(entry.getValue().y), JcaAlgorithm.HMAC_SHA256),
+                new SecretKeySpec(SharedUtil.hexStringToByteArray(entry.getValue().z), JcaAlgorithm.AESKW)
             ));
         }
         return new SimplePresharedKeyStore(keySets);
@@ -190,26 +192,26 @@ public final class AppContext {
     private static RsaStore initRsaStore(final MslProperties p) {
         try {
             final KeyFactory rsaKeyFactory = KeyFactory.getInstance("RSA");
-            final Map<String,MslProperties.RsaStoreKeyPair> rsaKeyPairsB64 = p.getRsaKeyStore();
+            final Map<String,Pair<String,String>> rsaKeyPairsB64 = p.getRsaKeyStore();
             final Map<String,KeyPair> rsaKeyPairs = new HashMap<String,KeyPair>();
 
-            for (Map.Entry<String,MslProperties.RsaStoreKeyPair> entry : rsaKeyPairsB64.entrySet()) {
-                final PrivateKey privKey;
-                if (entry.getValue().privB64 != null) {
-                    final byte[] privKeyEncoded = DatatypeConverter.parseBase64Binary(entry.getValue().privB64);
-                    final PKCS8EncodedKeySpec privKeySpec = new PKCS8EncodedKeySpec(privKeyEncoded);
-                    privKey = rsaKeyFactory.generatePrivate(privKeySpec);
-                } else {
-                    privKey = null;
-                }
-
+            for (Map.Entry<String,Pair<String,String>> entry : rsaKeyPairsB64.entrySet()) {
                 final PublicKey pubKey;
-                if (entry.getValue().pubB64 != null) {
-                    final byte[] pubKeyEncoded = DatatypeConverter.parseBase64Binary(entry.getValue().pubB64);
+                if (entry.getValue().x != null) {
+                    final byte[] pubKeyEncoded = DatatypeConverter.parseBase64Binary(entry.getValue().x);
                     final X509EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(pubKeyEncoded);
                     pubKey = rsaKeyFactory.generatePublic(pubKeySpec);
                 } else {
                     pubKey = null;
+                }
+
+                final PrivateKey privKey;
+                if (entry.getValue().y != null) {
+                    final byte[] privKeyEncoded = DatatypeConverter.parseBase64Binary(entry.getValue().y);
+                    final PKCS8EncodedKeySpec privKeySpec = new PKCS8EncodedKeySpec(privKeyEncoded);
+                    privKey = rsaKeyFactory.generatePrivate(privKeySpec);
+                } else {
+                    privKey = null;
                 }
 
                 rsaKeyPairs.put(entry.getKey(), new KeyPair(pubKey, privKey));
@@ -272,10 +274,10 @@ public final class AppContext {
         /** Default parameters. */
 
         private SimpleDiffieHellmanParameters(final MslProperties prop) {
-            for (Map.Entry<String,MslProperties.DHPair> entry : prop.getDHParameterStore().entrySet()) {
+            for (Map.Entry<String,Pair<String,String>> entry : prop.getDHParameterStore().entrySet()) {
                 params.put(entry.getKey(), new DHParameterSpec(
-                    new BigInteger(entry.getValue().pHex, 16),
-                    new BigInteger(entry.getValue().gHex, 16)
+                    new BigInteger(entry.getValue().x, 16),
+                    new BigInteger(entry.getValue().y, 16)
                 ));
             }
         }
@@ -374,24 +376,15 @@ public final class AppContext {
     }
 
     /**
-     * @return MSL encryption key
+     * @return MSL encryption, HMAC, and wrapping keys
      */
-    public SecretKey getMslEncKey() {
-        return new SecretKeySpec(SharedUtil.hexStringToByteArray(prop.getMslEncKey()), "AES");
-    }
-
-    /**
-     * @return MSL HMAC key
-     */
-    public SecretKey getMslHmacKey() {
-        return new SecretKeySpec(SharedUtil.hexStringToByteArray(prop.getMslHmacKey()), "HmacSHA256");
-    }
-
-    /**
-     * @return MSL wrapping key
-     */
-    public SecretKey getMslWrapKey() {
-        return new SecretKeySpec(SharedUtil.hexStringToByteArray(prop.getMslWrapKey()), "AES");
+    public Triplet<SecretKey,SecretKey,SecretKey> getMslKeys() {
+        final Triplet<String,String,String> mslKeys = prop.getMslKeys();
+        return new Triplet<SecretKey,SecretKey,SecretKey>(
+            new SecretKeySpec(SharedUtil.hexStringToByteArray(mslKeys.x), "AES"),
+            new SecretKeySpec(SharedUtil.hexStringToByteArray(mslKeys.y), "HmacSHA256"),
+            new SecretKeySpec(SharedUtil.hexStringToByteArray(mslKeys.z), "AES")
+            );
     }
 
     /**
