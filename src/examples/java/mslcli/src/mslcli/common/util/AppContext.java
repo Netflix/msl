@@ -125,9 +125,9 @@ public final class AppContext {
     }
 
     /**
-     * An application should only use one instance of MslControl for all MSL communication.
+     * @return MSL control
      */
-    public synchronized MslControl getMslControl() {
+    public MslControl getMslControl() {
         return mslControl;
     }
 
