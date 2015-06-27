@@ -36,11 +36,17 @@ public class SimplePresharedKeyStore implements PresharedKeyStore {
      * @param presharedKeys {identity, preshared_keys} map
      */
     public SimplePresharedKeyStore(final Map<String,KeySet> presharedKeys) {
+        if (presharedKeys == null) {
+            throw new IllegalArgumentException("NULL preshared key map");
+        }
         this.presharedKeys.putAll(presharedKeys);
     }
     
     @Override
     public KeySet getKeys(final String identity) {
+        if (identity == null) {
+            throw new IllegalArgumentException("NULL identity");
+        }
         return presharedKeys.get(identity);
     }
 

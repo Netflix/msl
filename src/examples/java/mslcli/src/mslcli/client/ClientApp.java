@@ -110,7 +110,7 @@ public final class ClientApp {
     private ClientApp(String[] args) throws Exception {
 
         if (args.length < 2) {
-            System.out.println("Parameters: server_url config_file [verbose]");
+            System.out.println("Parameters: server_url config_file");
             System.exit(1);
         }
 

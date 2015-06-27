@@ -50,6 +50,12 @@ public class ServerAuthenticationUtils implements AuthenticationUtils {
      * @param serverId local server entity identity.
      */
     public ServerAuthenticationUtils(final AppContext appCtx, final String serverId) {
+        if (appCtx == null) {
+            throw new IllegalArgumentException("NULL app context");
+        }
+        if (serverId == null) {
+            throw new IllegalArgumentException("NULL server ID");
+        }
         this.appCtx = appCtx;
         this.serverId = serverId;
         // set allowed server entity authentication schemes

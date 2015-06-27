@@ -96,7 +96,7 @@ public final class AppContext {
     private final WrapCryptoContextRepository wrapCryptoContextRepository;
     private final DiffieHellmanParameters diffieHellmanParameters;
     private final KeyExchangeFactoryComparator keyxFactoryComparator;
-    private transient MslStoreWrapper mslStoreWrapper;
+    private MslStoreWrapper mslStoreWrapper;
 
 
     /**
@@ -105,6 +105,9 @@ public final class AppContext {
      */
     public static synchronized AppContext getInstance(final MslProperties p) {
         if (_instance == null) {
+            if (p == null) {
+                throw new IllegalArgumentException("NULL properties");
+            }
             return (_instance = new AppContext(p));
         } else {
             throw new IllegalStateException("Illegal Attempt to Re-Initialize AppContext");
@@ -175,16 +178,20 @@ public final class AppContext {
      * @return MSL store
      */
     public MslStore getMslStore() {
-        return (mslStoreWrapper != null) ? mslStoreWrapper : mslStore;
+        synchronized (mslStore) {
+            return (mslStoreWrapper != null) ? mslStoreWrapper : mslStore;
+        }
     }
 
     /**
      * @param mslStoreWrapper MSL store wrapper instance which extends MslStoreWrapper class and can be implemented by the app to intercept and modify MslStore calls
      */
     public void setMslStoreWrapper(final MslStoreWrapper mslStoreWrapper) {
-        this.mslStoreWrapper = mslStoreWrapper;
-        if (mslStoreWrapper != null) {
-            mslStoreWrapper.setMslStore(mslStore);
+        synchronized (mslStore) {
+            this.mslStoreWrapper = mslStoreWrapper;
+            if (mslStoreWrapper != null) {
+                mslStoreWrapper.setMslStore(mslStore);
+            }
         }
     }
 

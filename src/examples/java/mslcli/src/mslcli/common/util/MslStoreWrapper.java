@@ -32,7 +32,7 @@ import com.netflix.msl.util.MslStore;
  */
 
 public class MslStoreWrapper implements MslStore {
-    private MslStore mslStore;
+    private volatile MslStore mslStore;
 
     /**
      * package-private so only AppContext can call it

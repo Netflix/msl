@@ -59,7 +59,7 @@ public class ClientRequestMessageContext implements MessageContext {
      * @param isEncrypted true if message is to be encrypted, false otherwise
      * @param isIntegrityProtected true if message is to be integrity protected, false otherwise
      * @param isNonReplayable true if message is to be marked as non-replayable, false otherwise
-     * @param userId user ID
+     * @param userId user ID, should be null if a message is not user-bound
      * @param userAuthDataHandle user authentication data getter
      * @param keyRequestDataSet set of key exchange requests
      * @param payload message payload
@@ -73,55 +73,78 @@ public class ClientRequestMessageContext implements MessageContext {
                                        final byte[]                   payload
                                       )
     {
+        if (userAuthenticationDataHandle == null) {
+            throw new IllegalArgumentException("NULL user authentication data handle");
+        }
         this.isEncrypted          = isEncrypted;
         this.isIntegrityProtected = isIntegrityProtected;
         this.isNonReplayable      = isNonReplayable;
         this.userId               = userId;
         this.userAuthenticationDataHandle = userAuthenticationDataHandle;
-        this.keyRequestDataSet    = Collections.unmodifiableSet(keyRequestDataSet);
+        this.keyRequestDataSet    = (keyRequestDataSet != null) ? Collections.unmodifiableSet(keyRequestDataSet) : Collections.emptySet();
         this.payload              = payload;
         this.cryptoContexts       = Collections.<String,ICryptoContext>emptyMap();
     }
 
+    /* (non-Javadoc)
+     * @see com.netflix.msl.msg.MessageContext#getCryptoContext()
+     */
     @Override 
     public Map<String,ICryptoContext> getCryptoContexts() {
         return cryptoContexts;
     }
 
+    /* (non-Javadoc)
+     * @see com.netflix.msl.msg.MessageContext#getRecipient()
+     */
     @Override
     public String getRecipient() {
         return null;
     }
 
+    /* (non-Javadoc)
+     * @see com.netflix.msl.msg.MessageContext#isEncrypted()
+     */
     @Override
     public boolean isEncrypted() {
         return isEncrypted;
     }
 
+    /* (non-Javadoc)
+     * @see com.netflix.msl.msg.MessageContext#isIntegrityProtected()
+     */
     @Override
     public boolean isIntegrityProtected() {
         return isIntegrityProtected;
     }
 
+    /* (non-Javadoc)
+     * @see com.netflix.msl.msg.MessageContext#isNonReplayable()
+     */
     @Override
     public boolean isNonReplayable() {
         return isNonReplayable;
     }
 
-    /* Per Wes, even if returning false, MSL stack will still acquire
-     * master and user tokens if they are not available, or use them
-     * if they are available.
+    /* (non-Javadoc)
+     * @see com.netflix.msl.msg.MessageContext#isRequestingTokens()
      */
     @Override
     public boolean isRequestingTokens() {
         return false;
     }
 
+    /* (non-Javadoc)
+     * @see com.netflix.msl.msg.MessageContext#getUserId()
+     */
     @Override
     public String getUserId() {
         return userId;
     }
 
+    /* (non-Javadoc)
+     * @see com.netflix.msl.msg.MessageContext#getUserAuthData()
+     */
     @Override
     public UserAuthenticationData getUserAuthData(final ReauthCode reauthCode, final boolean renewable, final boolean required) {
         if ((reauthCode == null) && required) {
@@ -131,16 +154,25 @@ public class ClientRequestMessageContext implements MessageContext {
         }
     }
 
+    /* (non-Javadoc)
+     * @see com.netflix.msl.msg.MessageContext#getUser()
+     */
     @Override
     public MslUser getUser() {
         return null;
     }
 
+    /* (non-Javadoc)
+     * @see com.netflix.msl.msg.MessageContext#getKeyRequestData()
+     */
     @Override
     public Set<KeyRequestData> getKeyRequestData() throws MslKeyExchangeException {
         return keyRequestDataSet;
     }
 
+    /* (non-Javadoc)
+     * @see com.netflix.msl.msg.MessageContext#updateServiceTokens()
+     */
     @Override
     public void updateServiceTokens(final MessageServiceTokenBuilder builder, final boolean handshake)
         throws MslMessageException, MslCryptoException, MslEncodingException, MslException {
@@ -148,15 +180,20 @@ public class ClientRequestMessageContext implements MessageContext {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.msg.MockMessageContext#write(com.netflix.msl.msg.MessageOutputStream)
+     * @see com.netflix.msl.msg.MessageContext#write(com.netflix.msl.msg.MessageOutputStream)
      */
     @Override
     public void write(final MessageOutputStream output) throws IOException {
-        output.write(payload);
-        output.flush();
-        output.close();
+        if (payload != null) {
+            output.write(payload);
+            output.flush();
+            output.close();
+        }
     }
 
+    /* (non-Javadoc)
+     * @see com.netflix.msl.msg.MessageContext#getDebugContext()
+     */
     @Override
     public MessageDebugContext getDebugContext() {
         return null;

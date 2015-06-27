@@ -17,7 +17,7 @@
 package mslcli.common;
 
 /**
- * Misc. constants.
+ * Generic triplet class. Values can be null.
  *
  * @author Vadim Spector <vspector@netflix.com>
  */

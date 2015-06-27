@@ -18,6 +18,7 @@ package mslcli.common.util;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -39,6 +40,9 @@ public final class SharedUtil {
 
     /**
      * extract useful info from MasterToken
+     *
+     * @param masterToken master token, can be null
+     * @return partial master token info as a string, or null if masterToken is null
      */
     public static final String getMasterTokenInfo(final MasterToken masterToken) {
         if (masterToken == null) {
@@ -52,7 +56,10 @@ public final class SharedUtil {
     }
 
     /**
-     * extract useful info from MasterToken
+     * extract useful info from UserIdToken
+     *
+     * @param userIdToken user ID token, can be null
+     * @return partial user ID token info as a string, or null if userIdToken is null
      */
     public static final String getUserIdTokenInfo(final UserIdToken userIdToken) {
         if (userIdToken == null) {
@@ -71,8 +78,14 @@ public final class SharedUtil {
 
     /**
      * IO Helper: read input stream into byte array
+     *
+     * @param in input stream
+     * @return byte array read from the input stream
      */
     public static byte[] readIntoArray(final InputStream in) throws IOException {
+        if (in == null) {
+            throw new IllegalArgumentException("NULL input Stream");
+        }
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         int b;
         while ((b = in.read()) != -1) {
@@ -83,8 +96,14 @@ public final class SharedUtil {
 
     /**
      * IO Helper: read single line from STDIN
+     *
+     * @param prompt  reading prompt
+     * @return user input converted to a string
      */
     public static String readInput(final String prompt) throws IOException {
+        if (prompt == null) {
+            throw new IllegalArgumentException("NULL prompt");
+        }
         final BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         System.out.print(prompt.trim() + "> ");
         return br.readLine();
@@ -92,8 +111,18 @@ public final class SharedUtil {
 
     /**
      * IO Helper: read parameter from STDIN
+     *
+     * @param prompt  reading prompt
+     * @param def  default value accepted if no input is supplied
+     * @return user input converted to a string
      */
     public static String readParameter(final String prompt, final String def) throws IOException {
+        if (prompt == null) {
+            throw new IllegalArgumentException("NULL prompt");
+        }
+        if (def == null) {
+            throw new IllegalArgumentException("NULL default value");
+        }
         final String value = readInput(String.format("%s[%s]", prompt, def));
         if (value == null || value.isEmpty()) {
             return def;
@@ -107,11 +136,26 @@ public final class SharedUtil {
     /**
      * IO Helper: read boolean value from STDIN.
      * Repeat prompt till one of the valid values is entered. 
+     *
+     * @param prompt  reading prompt
+     * @param def  default value accepted if no input is supplied
+     * @param yesStr input accepted as true
+     * @param noStr input accepted as false
+     * @return user input converted to a string
      */
     public static boolean readBoolean(final String name, final boolean def, final String yesStr, final String noStr) throws IOException {
+        if (name == null) {
+            throw new IllegalArgumentException("NULL name");
+        }
+        if (yesStr == null) {
+            throw new IllegalArgumentException("NULL yesStr");
+        }
+        if (noStr == null) {
+            throw new IllegalArgumentException("NULL noStr");
+        }
         String value;
         do {
-            value = readInput(String.format("%s[%s]", name, def? "y" : "n"));
+            value = readInput(String.format("%s[%s]", name, def ? "y" : "n"));
             if (value.trim().isEmpty()) {
                 return def;
             } else if (yesStr.equalsIgnoreCase(value)) {
@@ -124,21 +168,36 @@ public final class SharedUtil {
 
     /**
      * Helper: convert hex string into byte array
+     *
+     * @param hex byte array hex-encoded as a string
+     * @return byte array
      */
-    public static byte[] hexStringToByteArray(final String s) {
-        int len = s.length();
-        byte[] data = new byte[len / 2];
+    public static byte[] hexStringToByteArray(final String hex) {
+        if (hex == null) {
+            throw new IllegalArgumentException("NULL hex string");
+        }
+        final int len = hex.length();
+        if (len % 2 != 0) {
+            throw new IllegalArgumentException("hex-encoded string size " + len + " - must be even");
+        }
+        final byte[] data = new byte[len / 2];
         for (int i = 0; i < len; i += 2) {
-            data[i / 2] = (byte) ((Character.digit(s.charAt(i  ), 16) << 4)
-                                 + Character.digit(s.charAt(i+1), 16)     );
+            data[i / 2] = (byte) ((Character.digit(hex.charAt(i  ), 16) << 4)
+                                 + Character.digit(hex.charAt(i+1), 16)     );
         }
         return data;
     }
 
     /**
      * Helper: get innermost cause exception
+     *
+     * @param t Throwable
+     * @return innermost cause Throwable
      */
     public static Throwable getRootCause(Throwable t) {
+        if (t == null) {
+            throw new IllegalArgumentException("NULL throwable");
+        }
         while (t.getCause() != null) {
             t = t.getCause();
         }
@@ -147,12 +206,22 @@ public final class SharedUtil {
 
     /**
      * load properties from file
+     *
+     * @param file file name
+     * @return properties loaded from this file
      */
     public static Properties loadPropertiesFromFile(final String file) throws IOException {
+        if (file == null) {
+            throw new IllegalArgumentException("NULL file");
+        }
+        final File f = new File(file);
+        if (!f.isFile()) {
+            throw new IllegalArgumentException(file + " not a file");
+        }
         final Properties p = new Properties();
         FileReader fr = null;
         try {
-            fr = new FileReader(file);
+            fr = new FileReader(f);
             p.load(fr);
         } finally {
             if (fr != null) try { fr.close(); } catch (IOException ignore) {}

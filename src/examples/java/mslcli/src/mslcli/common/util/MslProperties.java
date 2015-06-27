@@ -268,7 +268,7 @@ public final class MslProperties {
     }
 
     /**
-     * @param ID of the { encryption, hmac } key pair used for service token issuing
+     * @param keyId ID of the { encryption, hmac } key pair used for service token issuing
      * @return { encryption, hmac } key pair
      */
     public Pair<String,String> getServiceTokenKeys(final String keyId) {

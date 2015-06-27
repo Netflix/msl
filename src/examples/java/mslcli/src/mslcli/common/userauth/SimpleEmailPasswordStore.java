@@ -38,6 +38,9 @@ public class SimpleEmailPasswordStore implements EmailPasswordStore {
      * @param emailPasswords map of email addresses onto passwords.
      */
     public SimpleEmailPasswordStore(final Map<String,String> emailPasswords) {
+        if (emailPasswords == null) {
+            throw new IllegalArgumentException("NULL emal-password map");
+        }
         this.emailPasswords.putAll(emailPasswords);
     }
     

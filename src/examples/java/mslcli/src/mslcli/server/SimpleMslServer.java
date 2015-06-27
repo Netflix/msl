@@ -102,6 +102,12 @@ public class SimpleMslServer {
      * process incoming request
      */
     public void processRequest(final InputStream in, final OutputStream out) throws IOException {
+        if (in == null) {
+            throw new IllegalArgumentException("NULL Input Stream");
+        }
+        if (out == null) {
+            throw new IllegalArgumentException("NULL Output Stream");
+        }
         //  Set up the receive MSL message context.
         final MessageContext rcvMsgCtx = new ServerReceiveMessageContext(cryptoContexts);
 

@@ -19,7 +19,8 @@ package mslcli.common.userauth;
 import com.netflix.msl.userauth.UserAuthenticationData;
 
 /**
- * User Authorization Data Handle interface  
+ * User Authorization Data Handle interface. Called on client-side when MslControl
+ * requests user authentication data from MessageContext.
  *
  * @author Vadim Spector <vspector@netflix.com>
  */

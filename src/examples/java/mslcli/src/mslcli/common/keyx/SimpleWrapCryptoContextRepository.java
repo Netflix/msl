@@ -33,16 +33,25 @@ import com.netflix.msl.keyx.WrapCryptoContextRepository;
 public final class SimpleWrapCryptoContextRepository implements WrapCryptoContextRepository {
     private final Map<ByteBuffer,ICryptoContext> repository = new HashMap<ByteBuffer,ICryptoContext>();
 
+    /**
+     * @see com.netflix.msl.keyx.WrapCryptoContextRepository.addCryptoContext()
+     */
     @Override
     public void addCryptoContext(final byte[] wrapdata, final ICryptoContext cryptoContext) {
         repository.put(ByteBuffer.wrap(wrapdata), cryptoContext);
     }
 
+    /**
+     * @see com.netflix.msl.keyx.WrapCryptoContextRepository.getCryptoContext()
+     */
     @Override
     public ICryptoContext getCryptoContext(final byte[] wrapdata) {
         return repository.get(ByteBuffer.wrap(wrapdata));
     }
 
+    /**
+     *@see com.netflix.msl.keyx.WrapCryptoContextRepository.removeCryptoContext()
+     */
     @Override
     public void removeCryptoContext(final byte[] wrapdata) {
         repository.remove(ByteBuffer.wrap(wrapdata));

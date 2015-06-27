@@ -17,7 +17,7 @@
 package mslcli.common;
 
 /**
- * Misc. constants.
+ * generic Pair class. Some or all values can be null.
  *
  * @author Vadim Spector <vspector@netflix.com>
  */

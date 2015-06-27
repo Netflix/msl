@@ -67,7 +67,7 @@ public final class Client {
     private static final String DEFAULT_AWE_KEY_PAIR_ID = "default_awe_key_id";
 
     /**
-     * Data object encapsulating response from the server
+     * Data object encapsulating payload and/or error header from the server
      */
     public static final class Response {
         private Response(final byte[] payload, final ErrorHeader errHeader) {
@@ -120,6 +120,7 @@ public final class Client {
      * @param request message payload to send
      * @param cfg message security policies
      * @param remoteUrl target URL for sending message
+     * @return response encapsulating payload and/or error header
      */
     public Response sendRequest(final byte[] request, final MessageConfig cfg, final URL remoteUrl)
         throws ExecutionException, IOException, InterruptedException, MslException
@@ -154,6 +155,8 @@ public final class Client {
 
     /**
      * Set key request data for specific key request and (if applicable) mechanism.
+     * @param kxType key exchange type
+     * @param mechanism key exchange mechanism (optional) required for some key exchange types
      */
     public void setKeyRequestData(final String kxType, final String mechanism) throws MslException, IOException {
         if (kxType == null) {
@@ -190,6 +193,7 @@ public final class Client {
 
     /**
      * Set user authentication data handle
+     * @param userAuthenticationDataHandle user authentication data handle callback
      */
     public void setUserAuthenticationDataHandle(final UserAuthenticationDataHandle userAuthenticationDataHandle) {
         if (userAuthenticationDataHandle == null) {
@@ -198,6 +202,9 @@ public final class Client {
         this.userAuthenticationDataHandle = userAuthenticationDataHandle;
     }
 
+    /**
+     * @return MSL Store
+     */
     public MslStore getMslStore() {
         return mslStore;
     }

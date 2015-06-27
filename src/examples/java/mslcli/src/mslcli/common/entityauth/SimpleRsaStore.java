@@ -43,6 +43,9 @@ public class SimpleRsaStore implements RsaStore {
      * @param keys RSA key pairs keyed by server entity id
      */
     public SimpleRsaStore(final Map<String,KeyPair> keys) {
+        if (keys == null) {
+            throw new IllegalArgumentException("NULL RSA key map");
+        }
         this.keys = keys;
     }
     

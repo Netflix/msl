@@ -17,7 +17,8 @@
 package mslcli.common.msg;
 
 /**
- * MSL message security configuration data object
+ * MSL message security configuration data object.
+ * The userId value should be null for requests that are not user-bound.
  *
  * @author Vadim Spector <vspector@netflix.com>
  */

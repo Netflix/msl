@@ -51,6 +51,12 @@ public class ClientAuthenticationUtils implements AuthenticationUtils {
      * @param clientId local client entity identity.
      */
     public ClientAuthenticationUtils(final String clientId, final AppContext appCtx) {
+        if (clientId == null || clientId.isEmpty()) {
+            throw new IllegalArgumentException("NULL clientId");
+        }
+        if (appCtx == null) {
+            throw new IllegalArgumentException("NULL app context");
+        }
         this.clientId = clientId;
         this.appCtx = appCtx;
 

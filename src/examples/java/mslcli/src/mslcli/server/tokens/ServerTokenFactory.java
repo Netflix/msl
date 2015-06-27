@@ -59,6 +59,9 @@ public class ServerTokenFactory implements TokenFactory {
      * @param appCtx application context
      */
     public ServerTokenFactory(final AppContext appCtx) {
+        if (appCtx == null) {
+            throw new IllegalArgumentException("NULL app context");
+        }
         this.appCtx = appCtx;
         this.renewalOffset = appCtx.getProperties().getMasterTokenRenewalOffset();
         this.expirationOffset = appCtx.getProperties().getMasterTokenExpirationOffset();
