@@ -2151,13 +2151,13 @@ var MslControl$MslChannel;
                     (!userIdToken && userId && (!builder.willEncryptHeader() || !builder.willIntegrityProtectHeader())) ||
                     (msgCtx.isRequestingTokens() && (!masterToken || (userId && !userIdToken))))
                 {
-                    blockingAcquisition(masterToken, userIdToken, userId, tokenTicket);
+                    blockingAcquisition(masterToken, userIdToken, userId, builder, tokenTicket);
                 } else {
                     tryAcquisition(masterToken, userIdToken);
                 }
             }, self);
 
-            function blockingAcquisition(masterToken, userIdToken, userId, tokenTicket) {
+            function blockingAcquisition(masterToken, userIdToken, userId, builder, tokenTicket) {
                 InterruptibleExecutor(callback, function() {
                     // Stop and throw an exception if aborted.
                     if (service.isAborted())
@@ -2198,7 +2198,7 @@ var MslControl$MslChannel;
                                 // If the renewing request did not acquire a master token then
                                 // try again to acquire renewal ownership.
                                 if (newMasterToken === NULL_MASTER_TOKEN) {
-                                    blockingAcquisition(masterToken, userIdToken, userId, tokenTicket);
+                                    blockingAcquisition(masterToken, userIdToken, userId, builder, tokenTicket);
                                     return;
                                 }
                                 
@@ -2224,12 +2224,12 @@ var MslControl$MslChannel;
                                                 // again to acquire renewal ownership.
                                                 masterToken = (tokenTicket && tokenTicket.masterToken);
                                                 if (!masterToken) {
-                                                    blockingAcquisition(masterToken, userIdToken, userId, tokenTicket);
+                                                    blockingAcquisition(masterToken, userIdToken, userId, builder, tokenTicket);
                                                     return;
                                                 }
                                                 
                                                 // Otherwise continue with renewal lock acquisition.
-                                                continueAcquisition(previousMasterToken, masterToken, userIdToken, userId, tokenTicket);
+                                                continueAcquisition(previousMasterToken, masterToken, userIdToken, userId, builder, tokenTicket);
                                             }, self);
                                         },
                                         timeout: callback.timeout,
@@ -2239,7 +2239,7 @@ var MslControl$MslChannel;
                                 } else {
                                     // The master token has not changed. Continue with renewal lock
                                     // acquisition.
-                                    continueAcquisition(previousMasterToken, masterToken, userIdToken, userId, tokenTicket);
+                                    continueAcquisition(previousMasterToken, masterToken, userIdToken, userId, builder, tokenTicket);
                                 }
                             }, self);
                         },
@@ -2255,7 +2255,7 @@ var MslControl$MslChannel;
                 }, self);
             }
                         
-            function continueAcquisition(previousMasterToken, masterToken, userIdToken, userId, tokenTicket) {
+            function continueAcquisition(previousMasterToken, masterToken, userIdToken, userId, builder, tokenTicket) {
                 InterruptibleExecutor(callback, function() {
                     // The renewing request may have acquired a new user ID token.
                     // Attach it to this message if the message is associated with
@@ -2279,7 +2279,7 @@ var MslControl$MslChannel;
                     // acquire renewal ownership.
                     var updateTime = this.getRemoteTime(ctx);
                     if (masterToken.isExpired(updateTime)) {
-                        blockingAcquisition(masterToken, userIdToken, userId, tokenTicket);
+                        blockingAcquisition(masterToken, userIdToken, userId, builder, tokenTicket);
                         return;
                     }
 
@@ -2287,7 +2287,7 @@ var MslControl$MslChannel;
                     // master token is the same as the previous master token then
                     // we must still attempt to acquire the renewal lock.
                     if (builder.isRenewable() && masterToken.equals(previousMasterToken)) {
-                        blockingAcquisition(masterToken, userIdToken, userId, tokenTicket);
+                        blockingAcquisition(masterToken, userIdToken, userId, builder, tokenTicket);
                         return;
                     }
 
@@ -2295,7 +2295,7 @@ var MslControl$MslChannel;
                     // a user but there is no user ID token then we must still
                     // attempt to acquire the renewal lock.
                     if (msgCtx.isRequestingTokens() && !userIdToken) {
-                        blockingAcquisition(masterToken, userIdToken, userId, tokenTicket);
+                        blockingAcquisition(masterToken, userIdToken, userId, builder, tokenTicket);
                         return;
                     }
 
@@ -3021,7 +3021,7 @@ var MslControl$MslChannel;
                                     userMessage = this._ctrl.messageRegistry.getUserMessage(mslError, languages);
                                     toThrow = e;
                                 } else {
-                                    requestMessageId = requestHeader.messageId;
+                                    requestMessageId = request.messageHeader.messageId;
                                     mslError = MslError.INTERNAL_EXCEPTION;
                                     userMessage = null;
                                     toThrow = new MslInternalException("Error creating an automatic handshake response.", e);
@@ -3360,7 +3360,7 @@ var MslControl$MslChannel;
                                 // If we were cancelled then return null.
                                 if (cancelled(e)) return null;
 
-                                throw new MslErrorResponseException("Response wishes to attach a user ID token but there is no master token.", re, null);
+                                throw new MslErrorResponseException("Response wishes to attach a user ID token but there is no master token.", e, null);
                             }, self);
                         }
                     });
@@ -3484,7 +3484,7 @@ var MslControl$MslChannel;
                 InterruptibleExecutor(callback, function() {
                     // Cleanup and build the error response. This will acquire the
                     // master token lock.
-                    var errorHeader = response.getErrorHeader();
+                    var errorHeader = result.response.getErrorHeader();
                     this._ctrl.cleanupContext(this._ctx, result.request.getMessageHeader(), errorHeader);
                     this._ctrl.buildErrorResponse(this, this._ctx, msgCtx, result, errorHeader, {
                         result: function(errTokenTicket) {
@@ -3715,7 +3715,7 @@ var MslControl$MslChannel;
                 _ctx: { value: ctx, writable: false, enumerable: false, configurable: false },
                 _msgCtx: { value: msgCtx, writable: false, enumerable: false, configurable: false },
                 _appError: { value: err, writable: false, enumerable: false, configurable: false },
-                _output: { value: output, writable: false, enumerable: false, configurable: false },
+                _output: { value: out, writable: false, enumerable: false, configurable: false },
                 _request: { value: request, writable: false, enumerable: false, configurable: false },
                 _timeout: { value: timeout, writable: false, enumerable: false, configurable: false },
                 _aborted: { value: false, writable: true, enumerable: false, configurable: false },
