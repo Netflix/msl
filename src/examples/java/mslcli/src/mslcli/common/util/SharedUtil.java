@@ -19,6 +19,7 @@ package mslcli.common.util;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -27,6 +28,7 @@ import java.util.Properties;
 
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.UserIdToken;
+import com.netflix.msl.util.MslStore;
 
 /**
  * Collection of utilities
@@ -227,5 +229,49 @@ public final class SharedUtil {
             if (fr != null) try { fr.close(); } catch (IOException ignore) {}
         }
         return p;
+    }
+
+    /**
+     * load file content into a byte array
+     *
+     * @param filePath file path
+     * @return file content as byte array
+     */
+    public static byte[] loadBytesFromFile(final String file) throws IOException {
+        if (file == null) {
+            throw new IllegalArgumentException("NULL file");
+        }
+        final File f = new File(file);
+        if (!f.isFile()) {
+            throw new IllegalArgumentException(file + " not a file");
+        }
+        final Properties p = new Properties();
+        FileInputStream fis = null;
+        try {
+            fis = new FileInputStream(f);
+            return readIntoArray(fis);
+        } finally {
+            if (fis != null) try { fis.close(); } catch (IOException ignore) {}
+        }
+    }
+ 
+    /**
+     * Serialize MslStore
+     *
+     * @param mslStore MslStore instance
+     * @return serialized MslStore
+     */
+    public static byte[] marshalMslStore(final MslStore mslStore) throws IOException {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Serialize MslStore
+     *
+     * @param mslStore MslStore instance
+     * @return serialized MslStore
+     */
+    public static MslStore unmarshalMslStore(final byte[] mslStoreData) throws IOException {
+        throw new UnsupportedOperationException();
     }
 }

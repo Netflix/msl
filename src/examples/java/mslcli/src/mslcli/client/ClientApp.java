@@ -118,7 +118,7 @@ public final class ClientApp {
         remoteUrl = new URL(args[0]);
 
         this.prop = MslProperties.getInstance(SharedUtil.loadPropertiesFromFile(args[1]));
-        this.appCtx = AppContext.getInstance(prop);
+        this.appCtx = AppContext.getInstance(prop, prop.getClientId());
 
         /* second command-line argument with any value turns on diagnostic messages in MslControl
          */

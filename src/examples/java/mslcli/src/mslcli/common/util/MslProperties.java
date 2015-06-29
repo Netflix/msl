@@ -43,6 +43,10 @@ public final class MslProperties {
     private static final String APP_CLIENT_ID         = "app.client.id";
     private static final String APP_SERVER_ID         = "app.server.id";
     private static final String APP_DEBUG_FLAG        = "app.debug";
+    private static final String APP_MSL_STORE_PATH    = "app.msl.store";
+
+    // not a property name, but if part of property value, to be replaced with the client's entity_id
+    private static final String APP_ID_TOKEN = "{app_id}";
 
    /*
     * ENTITY-SPECIFIC CONFIGURATION PROPERTY NAMES
@@ -334,6 +338,16 @@ public final class MslProperties {
     public boolean isDebugOn() {
         final String s = p.getProperty(APP_DEBUG_FLAG);
         return Boolean.parseBoolean(s);
+    }
+
+    /**
+     * @return MSL Store file path
+     */
+    public String getMslStorePath(final String appId) {
+        if (appId == null || appId.isEmpty()) {
+            throw new IllegalArgumentException("Missing app ID");
+        }
+        return getRequiredProperty(APP_MSL_STORE_PATH).replace(APP_ID_TOKEN, appId);
     }
 
     /* ****************

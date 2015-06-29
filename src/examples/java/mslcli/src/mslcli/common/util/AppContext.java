@@ -18,6 +18,7 @@ package mslcli.common.util;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
@@ -90,6 +91,7 @@ public final class AppContext {
     private final MslProperties prop;
     private final MslControl mslControl;
     private final MslStore mslStore;
+    private final String mslStorePath;
     private final PresharedKeyStore presharedKeyStore;
     private final EmailPasswordStore emailPasswordStore;
     private final RsaStore rsaStore;
@@ -103,24 +105,28 @@ public final class AppContext {
      * @param p properties loaded from some configuration source
      * @return singleton instance of AppContext
      */
-    public static synchronized AppContext getInstance(final MslProperties p) {
+    public static synchronized AppContext getInstance(final MslProperties p, final String appId) {
         if (_instance == null) {
             if (p == null) {
                 throw new IllegalArgumentException("NULL properties");
             }
-            return (_instance = new AppContext(p));
+            return (_instance = new AppContext(p, appId));
         } else {
             throw new IllegalStateException("Illegal Attempt to Re-Initialize AppContext");
         }
     }
 
-    private AppContext(final MslProperties p) {
+    private AppContext(final MslProperties p, final String appId) {
         if (p == null) {
             throw new IllegalArgumentException("NULL MslProperties");
         }
+        if (appId == null) {
+            throw new IllegalArgumentException("NULL appId");
+        }
         this.prop = p;
         this.mslControl = new MslControl(p.getNumMslControlThreads());
-        this.mslStore = new SimpleMslStore(); // TBD - add persistency
+        this.mslStorePath = prop.getMslStorePath(appId);
+        this.mslStore = initMslStore(mslStorePath);
         this.diffieHellmanParameters = new SimpleDiffieHellmanParameters(p);
         this.presharedKeyStore = initPresharedKeyStore(p);
         this.emailPasswordStore = initEmailPasswordStore(p);
@@ -134,6 +140,23 @@ public final class AppContext {
      */
     public MslProperties getProperties() {
         return prop;
+    }
+
+    private static MslStore initMslStore(final String mslStorePath) {
+        try {
+            final File f = new File(mslStorePath);
+            if (f.isFile()) {
+                info("Loading MSL Store from " + mslStorePath);
+                return SharedUtil.unmarshalMslStore(SharedUtil.loadBytesFromFile(mslStorePath));
+            } else if (f.exists()){
+                throw new IllegalArgumentException("MSL Store Path Exists but not a File: " + mslStorePath);
+            } else {
+                info("Creating Empty MSL Store " + mslStorePath);
+                return new SimpleMslStore();
+            }
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Error reading MSL Store File " + mslStorePath, e);
+        }
     }
 
     /**
@@ -457,7 +480,7 @@ public final class AppContext {
      * info logging
      * @param message info message
      */
-    public void info(final String msg) {
+    public static void info(final String msg) {
         System.err.println("INFO: " + msg);
     }
 
@@ -465,7 +488,7 @@ public final class AppContext {
      * warning logging
      * @param message warning message
      */
-    public void warning(final String msg) {
+    public static void warning(final String msg) {
         System.err.println("WARNING: " + msg);
     }
 }
