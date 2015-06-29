@@ -41,11 +41,11 @@ import com.netflix.msl.userauth.EmailPasswordAuthenticationData;
 import com.netflix.msl.userauth.UserAuthenticationData;
 
 import mslcli.common.Pair;
-import mslcli.common.msg.MessageConfig;
-import mslcli.common.userauth.UserAuthenticationDataHandle;
+import mslcli.client.msg.MessageConfig;
+import mslcli.client.util.UserAuthenticationDataHandle;
+import mslcli.common.util.AppContext;
 import mslcli.common.util.MslProperties;
 import mslcli.common.util.MslStoreWrapper;
-import mslcli.common.util.AppContext;
 import mslcli.common.util.SharedUtil;
 
 import static mslcli.common.Constants.*;

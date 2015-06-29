@@ -14,23 +14,17 @@
  * limitations under the License.
  */
 
-package mslcli.common.msg;
+package mslcli.client.util;
+
+import com.netflix.msl.userauth.UserAuthenticationData;
 
 /**
- * MSL message security configuration data object.
- * The userId value should be null for requests that are not user-bound.
+ * User Authorization Data Handle interface. Called on client-side when MslControl
+ * requests user authentication data from MessageContext.
  *
  * @author Vadim Spector <vspector@netflix.com>
  */
 
-public final class MessageConfig {
-    public String userId;
-    public boolean isEncrypted;
-    public boolean isIntegrityProtected;
-    public boolean isNonReplayable;
-
-    @Override
-    public String toString() {
-        return String.format("userid: %s, encrypted: %b, integrity protected: %b, non-replayable: %b", userId, isEncrypted, isIntegrityProtected, isNonReplayable);
-    }
+public interface UserAuthenticationDataHandle {
+    UserAuthenticationData getUserAuthenticationData();
 }

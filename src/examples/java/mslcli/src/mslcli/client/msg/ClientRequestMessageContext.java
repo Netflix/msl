@@ -34,7 +34,7 @@ import com.netflix.msl.msg.MessageServiceTokenBuilder;
 import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.userauth.UserAuthenticationData;
 
-import mslcli.common.userauth.UserAuthenticationDataHandle;
+import mslcli.client.util.UserAuthenticationDataHandle;
 
 /**
  * Client Request message context

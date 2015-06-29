@@ -46,10 +46,11 @@ import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslStore;
 
 import mslcli.client.msg.ClientRequestMessageContext;
+import mslcli.client.msg.MessageConfig;
+import mslcli.client.util.UserAuthenticationDataHandle;
+
 import mslcli.client.util.ClientMslContext;
 
-import mslcli.common.msg.MessageConfig;
-import mslcli.common.userauth.UserAuthenticationDataHandle;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.SharedUtil;
 
