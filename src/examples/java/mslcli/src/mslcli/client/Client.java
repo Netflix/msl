@@ -54,7 +54,7 @@ import mslcli.client.util.ClientMslContext;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.SharedUtil;
 
-import static mslcli.common.Constants.*;
+import static mslcli.client.CliCmdParameters.*;
 
 /**
  * MSL Client class.
@@ -63,6 +63,8 @@ import static mslcli.common.Constants.*;
  */
 
 public final class Client {
+
+    private static final int TIMEOUT_MS = 120 * 1000;
 
     /** default asymmetrik key wrap exchange key pair id - the value should not matter */
     private static final String DEFAULT_AWE_KEY_PAIR_ID = "default_awe_key_id";

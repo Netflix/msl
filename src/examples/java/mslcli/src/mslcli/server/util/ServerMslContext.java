@@ -55,7 +55,6 @@ import com.netflix.msl.util.AuthenticationUtils;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslStore;
 
-import static mslcli.common.Constants.*;
 import mslcli.common.Triplet;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.SharedUtil;

@@ -20,6 +20,7 @@ import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -121,9 +122,6 @@ public final class SharedUtil {
     public static String readParameter(final String prompt, final String def) throws IOException {
         if (prompt == null) {
             throw new IllegalArgumentException("NULL prompt");
-        }
-        if (def == null) {
-            throw new IllegalArgumentException("NULL default value");
         }
         final String value = readInput(String.format("%s[%s]", prompt, def));
         if (value == null || value.isEmpty()) {
@@ -237,7 +235,7 @@ public final class SharedUtil {
      * @param filePath file path
      * @return file content as byte array
      */
-    public static byte[] loadBytesFromFile(final String file) throws IOException {
+    public static byte[] readFromFile(final String file) throws IOException {
         if (file == null) {
             throw new IllegalArgumentException("NULL file");
         }
@@ -245,13 +243,38 @@ public final class SharedUtil {
         if (!f.isFile()) {
             throw new IllegalArgumentException(file + " not a file");
         }
-        final Properties p = new Properties();
         FileInputStream fis = null;
         try {
             fis = new FileInputStream(f);
             return readIntoArray(fis);
         } finally {
             if (fis != null) try { fis.close(); } catch (IOException ignore) {}
+        }
+    }
+ 
+    /**
+     * save byte array into a file
+     *
+     * @param filePath file path
+     * @return file content as byte array
+     */
+    public static void saveToFile(final String file, final byte[] data) throws IOException {
+        if (file == null) {
+            throw new IllegalArgumentException("NULL file");
+        }
+        if (data == null) {
+            throw new IllegalArgumentException("NULL data");
+        }
+        final File f = new File(file);
+        if (f.exists()) {
+            throw new IllegalArgumentException("cannot overwrite file " + file);
+        }
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(f);
+            fos.write(data);
+        } finally {
+            if (fos != null) try { fos.close(); } catch (IOException ignore) {}
         }
     }
  

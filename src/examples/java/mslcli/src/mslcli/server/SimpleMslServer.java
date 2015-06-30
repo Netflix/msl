@@ -46,7 +46,6 @@ import com.netflix.msl.userauth.EmailPasswordStore;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslStore;
 
-import static mslcli.common.Constants.*;
 import mslcli.common.Pair;
 import mslcli.common.util.MslProperties;
 import mslcli.common.util.AppContext;
@@ -66,6 +65,8 @@ import mslcli.server.util.ServerMslContext;
 
 public class SimpleMslServer {
     private static final long serialVersionUID = -4593207843035538485L;
+
+    private static final int TIMEOUT_MS = 120 * 1000;
 
     // Add BouncyCastle provider.
     static {

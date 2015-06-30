@@ -48,7 +48,7 @@ import mslcli.common.util.MslProperties;
 import mslcli.common.util.MslStoreWrapper;
 import mslcli.common.util.SharedUtil;
 
-import static mslcli.common.Constants.*;
+import static mslcli.client.CliCmdParameters.*;
 
 /**
  * MSL client launcher program. Allows to configure message security policies and key exchange mechanism.
@@ -71,16 +71,6 @@ public final class ClientApp {
     private static final List<String> supportedCommands =
         Collections.unmodifiableList(new ArrayList<String>(Arrays.asList(CMD_MSG, CMD_CFG, CMD_KX, CMD_HELP)));
 
-    // Key Exchange strings are defined in Constants.java
-    private static final Set<String> supportedKxTypes = Collections.unmodifiableSet(
-        new HashSet<String>(Arrays.asList(KX_DH, KX_SWE, KX_AWE, KX_JWEL, KX_JWKL)));
-
-    // Asymmetric Wrapped Key Exchange Mechanisms
-    private static final Set<String> supportedAsymmetricWrappedExchangeMechanisms = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
-                                                                            AsymmetricWrappedExchange.RequestData.Mechanism.JWE_RSA.toString(),
-                                                                            AsymmetricWrappedExchange.RequestData.Mechanism.JWEJS_RSA.toString(),
-                                                                            AsymmetricWrappedExchange.RequestData.Mechanism.JWK_RSA.toString(),
-                                                                            AsymmetricWrappedExchange.RequestData.Mechanism.JWK_RSAES.toString())));
     private static final String MSG_ENCRYPTION_PROMPT = "Encrypted";
     private static final String MSG_INTEGRITY_PROMPT  = "Integrity Protected";
     private static final String MSG_NONREPLAY_PROMPT  = "Non-Replayable";
@@ -90,53 +80,78 @@ public final class ClientApp {
     private static final String NO   = "n";
     private static final String QUIT = "q";
 
-    private static final String DEFAULT_USER_ID = "simpleMslClientUserId";
-
     public static void main(String[] args) throws Exception {
-        if (args.length < 1) {
-            System.err.println("Specify remote URL");
-            System.exit(1);
+        final CliCmdParameters cmdParam = new CliCmdParameters(args);
+        System.out.println("Parameters: " + cmdParam.getParameters());
+        final ClientApp clientApp = new ClientApp(cmdParam);
+        if (cmdParam.isInteractive()) {
+            clientApp.startClientApp();
+        } else {
+            clientApp.sendSingleRequest();
         }
-        new ClientApp(args).startClientApp();
     }
 
+    private final CliCmdParameters cmdParam;
     private final AppContext appCtx;
     private final URL remoteUrl;
     private final MslProperties prop;
+    private final String entityId;
     private Client client;
     private MessageConfig cfg;
-    private String currentUserId = DEFAULT_USER_ID;
+    private String currentUserId;
 
-    private ClientApp(String[] args) throws Exception {
+    private ClientApp(final CliCmdParameters cmdParam) throws Exception {
 
-        if (args.length < 2) {
-            System.out.println("Parameters: server_url config_file");
-            System.exit(1);
-        }
+        this.cmdParam = cmdParam;
 
         // set server URL
-        remoteUrl = new URL(args[0]);
+        this.remoteUrl = cmdParam.getUrl();
 
-        this.prop = MslProperties.getInstance(SharedUtil.loadPropertiesFromFile(args[1]));
-        this.appCtx = AppContext.getInstance(prop, prop.getClientId());
+        this.prop = MslProperties.getInstance(SharedUtil.loadPropertiesFromFile(cmdParam.getConfigFilePath()));
+        this.appCtx = AppContext.getInstance(prop, cmdParam.getEntityId());
 
         /* second command-line argument with any value turns on diagnostic messages in MslControl
          */
-        if (prop.isDebugOn()) {
+        if (cmdParam.isVerbose()) {
             appCtx.getMslControl().setFilterFactory(new ConsoleFilterStreamFactory());
         }
 
         // initialize MSL Store - use wrapper to intercept selected MSL Store calls
-        appCtx.setMslStoreWrapper(new AppMslStoreWrapper());
+        this.appCtx.setMslStoreWrapper(new AppMslStoreWrapper());
+
+        this.entityId = cmdParam.getEntityId();
+
+        this.currentUserId = cmdParam.getUserId();
+
+        cfg = new MessageConfig();
+        cfg.userId = currentUserId;
+        cfg.isEncrypted = cmdParam.isEncrypted();
+        cfg.isIntegrityProtected = cmdParam.isIntegrityProtected();
+        cfg.isNonReplayable = cmdParam.isNonReplayable();
+    }
+
+    private void sendSingleRequest() throws Exception {
+        client = new Client(appCtx, entityId);
+        client.setUserAuthenticationDataHandle(new AppUserAuthenticationDataHandle());
+        final String kx = cmdParam.getKeyExchangeScheme();
+        if (kx != null) {
+            String kxm = null;
+            if (KX_AWE.equals(kx)) {
+                cmdParam.getKeyExchangeMechanism();
+            }
+            client.setKeyRequestData(kx, kxm);
+        }
+        final String inputFile = cmdParam.getPayloadInputFile();
+        final byte[] requestPayload = SharedUtil.readFromFile(inputFile);
+        final String outputFile = cmdParam.getPayloadOutputFile();
+        final Client.Response response = sendMessage(client, cfg, remoteUrl, requestPayload);
+        if (response.getPayload() != null) {
+             SharedUtil.saveToFile(outputFile, response.getPayload());
+        }
     }
 
     private void startClientApp() throws Exception {
-        cfg = new MessageConfig();
-        cfg.userId = currentUserId;
-        cfg.isEncrypted = true;
-        cfg.isIntegrityProtected = true;
-        cfg.isNonReplayable = false;
-        client = new Client(appCtx, prop.getClientId());
+        client = new Client(appCtx, entityId);
         client.setUserAuthenticationDataHandle(new AppUserAuthenticationDataHandle());
         String cmd;
         while (!QUIT.equalsIgnoreCase(cmd = SharedUtil.readInput(String.format("Command(\"%s\" to exit) %s", QUIT, supportedCommands.toString())))) {
@@ -283,7 +298,18 @@ public final class ClientApp {
         System.out.println(cfg.toString());
         String msg;
         while (!QUIT.equalsIgnoreCase(msg = SharedUtil.readInput(String.format("Message(\"%s\" to finish)", QUIT)))) {
-            final Client.Response response = client.sendRequest(msg.getBytes(), cfg, remoteUrl);
+            Client.Response response = sendMessage(client, cfg, remoteUrl, msg.getBytes());
+        }
+    }
+
+    /*
+     * Send single message
+     */
+    private static Client.Response sendMessage(final Client client, final MessageConfig cfg, final URL remoteUrl, final byte[] payload)
+        throws ExecutionException, InterruptedException, IOException, MslException
+    {
+        try {
+            final Client.Response response = client.sendRequest(payload, cfg, remoteUrl);
             if (response.getPayload() != null) {
                 System.out.println("Response: " + new String(response.getPayload()));
             } else if (response.getErrorHeader() != null) {
@@ -296,6 +322,11 @@ public final class ClientApp {
             } else {
                 System.out.println("Internal ERROR: invalid response returned");
             }
+            return response;
+        } catch (Exception e) {
+            System.err.println("Sending Error:");
+            e.printStackTrace(System.err);
+            throw e;
         }
     }
 }

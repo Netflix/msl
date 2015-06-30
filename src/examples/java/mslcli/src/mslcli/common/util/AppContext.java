@@ -147,7 +147,7 @@ public final class AppContext {
             final File f = new File(mslStorePath);
             if (f.isFile()) {
                 info("Loading MSL Store from " + mslStorePath);
-                return SharedUtil.unmarshalMslStore(SharedUtil.loadBytesFromFile(mslStorePath));
+                return SharedUtil.unmarshalMslStore(SharedUtil.readFromFile(mslStorePath));
             } else if (f.exists()){
                 throw new IllegalArgumentException("MSL Store Path Exists but not a File: " + mslStorePath);
             } else {
