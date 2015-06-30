@@ -2390,7 +2390,7 @@ var MslControl$MslChannel;
 
             // If we received an error message then deliver a null master token,
             // release the lock, and return immediately.
-            var messageHeader = message.messageHeader;
+            var messageHeader = message.getMessageHeader();
             if (!messageHeader) {
                 queue.add(NULL_MASTER_TOKEN);
                 this._renewingContexts.splice(index, 1);
@@ -2898,7 +2898,7 @@ var MslControl$MslChannel;
             function deliverMessage(request) {
                 InterruptibleExecutor(callback, function() {
                     // Return error headers to the caller.
-                    var requestHeader = request.messageHeader;
+                    var requestHeader = request.getMessageHeader();
                     if (!requestHeader)
                         return request;
 
@@ -2959,7 +2959,7 @@ var MslControl$MslChannel;
                     //
                     // In peer-to-peer mode this will acquire the local entity's
                     // master token read lock.
-                    this._ctrl.buildResponse(this, this._ctx, this._msgCtx, request.messageHeader, this._timeout, {
+                    this._ctrl.buildResponse(this, this._ctx, this._msgCtx, request.getMessageHeader(), this._timeout, {
                         result: function(builderTokenTicket) {
                             InterruptibleExecutor(callback, function() {
                                 var responseBuilder = builderTokenTicket.builder;
@@ -2969,10 +2969,9 @@ var MslControl$MslChannel;
                                 // expected. Send the handshake response and return null. The next
                                 // message from the remote entity can be retrieved by another call
                                 // to receive.
-                                var requestHeader = request.messageHeader;
                                 var keyxMsgCtx = new KeyxResponseMessageContext(this._msgCtx);
                                 if (!this._ctx.isPeerToPeer()) {
-                                    sendHandshake(requestHeader, responseBuilder, keyxMsgCtx, tokenTicket);
+                                    sendHandshake(request, responseBuilder, keyxMsgCtx, tokenTicket);
                                     return;
                                 }
 
@@ -3016,7 +3015,7 @@ var MslControl$MslChannel;
                                 if (e instanceof MslException) {
                                     requestMessageId = e.messageId;
                                     mslError = e.error;
-                                    var caps = request.messageHeader.messageCapabilities;
+                                    var caps = request.getMessageHeader().messageCapabilities;
                                     var languages = (caps) ? caps.languages : null;
                                     userMessage = this._ctrl.messageRegistry.getUserMessage(mslError, languages);
                                     toThrow = e;
@@ -3044,7 +3043,7 @@ var MslControl$MslChannel;
                 }, self);
             }
 
-            function sendHandshake(requestHeader, responseBuilder, keyxMsgCtx, tokenTicket) {
+            function sendHandshake(request, responseBuilder, keyxMsgCtx, tokenTicket) {
                 InterruptibleExecutor(callback, function() {
                     responseBuilder.setRenewable(false);
                     this._ctrl.send(this._ctx, keyxMsgCtx, this._output, responseBuilder, false, this._timeout, {
@@ -3079,17 +3078,17 @@ var MslControl$MslChannel;
                                 if (e instanceof MslException) {
                                     requestMessageId = e.messageId;
                                     mslError = e.error;
-                                    var caps = requestHeader.messageCapabilities;
+                                    var caps = request.getMessageHeader().messageCapabilities;
                                     var languages = (caps) ? caps.languages : null;
                                     userMessage = this._ctrl.messageRegistry.getUserMessage(mslError, languages);
                                     toThrow = e;
                                 } else if (e instanceof MslIoException) {
-                                    requestMessageId = requestHeader.messageId;
+                                    requestMessageId = request.getMessageHeader().messageId;
                                     mslError = MslError.MSL_COMMS_FAILURE;
                                     userMessage = null;
                                     toThrow = e;
                                 } else {
-                                    requestMessageId = requestHeader.messageId;
+                                    requestMessageId = request.getMessageHeader().messageId;
                                     mslError = MslError.INTERNAL_EXCEPTION;
                                     userMessage = null;
                                     toThrow = new MslInternalException("Error sending an automatic handshake response.", e);
