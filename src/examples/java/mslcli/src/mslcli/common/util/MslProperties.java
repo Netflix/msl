@@ -107,7 +107,7 @@ public final class MslProperties {
      */
     public static MslProperties getInstance(final Properties p) throws Exception {
         if (p == null) {
-            throw new IllegalArgumentException("NULL Properties");
+            throw new ConfigurationException("NULL Properties");
         }
         return new MslProperties(p);
     }
@@ -204,7 +204,7 @@ public final class MslProperties {
      */
     public Pair<String,String> getEmailPassword(final String userId) {
         if (userId == null || userId.trim().isEmpty()) {
-            throw new IllegalArgumentException("Undefined userId");
+            throw new ConfigurationException("Undefined userId");
         }
         final int num = getCountProperty(USER_EP_NUM);
         for (int i = 0; i < num; i++) {
@@ -213,7 +213,7 @@ public final class MslProperties {
                 return new Pair<String,String>(getRequiredProperty(USER_EP_EMAIL + i), getRequiredProperty(USER_EP_PWD + i));
             }
         }
-        throw new IllegalArgumentException("Missing Email-Password Entry for User Id " + userId);
+        throw new ConfigurationException("Missing Email-Password Entry for User Id " + userId);
     }
 
     /**
@@ -345,7 +345,7 @@ public final class MslProperties {
      */
     public String getMslStorePath(final String appId) {
         if (appId == null || appId.isEmpty()) {
-            throw new IllegalArgumentException("Missing app ID");
+            throw new ConfigurationException("Missing app ID");
         }
         return getRequiredProperty(APP_MSL_STORE_PATH).replace(APP_ID_TOKEN, appId);
     }
@@ -359,7 +359,7 @@ public final class MslProperties {
         final String s = getRequiredProperty(name);
         final int num = Integer.parseInt(s);
         if (num < 0) {
-            throw new IllegalArgumentException(String.format("Invalid Property %s : %s --> %d", name, s, num));
+            throw new ConfigurationException(String.format("Invalid Property %s : %s --> %d", name, s, num));
         }
         return num;
     }
@@ -368,7 +368,7 @@ public final class MslProperties {
     private String getRequiredProperty(final String name) {
         final String s = p.getProperty(name);
         if (s == null) {
-            throw new IllegalArgumentException("Missing Property " + name);
+            throw new ConfigurationException("Missing Property " + name);
         }
         return s;
     }
@@ -380,7 +380,7 @@ public final class MslProperties {
             s = p.getProperty(prefix + ANY);
         }
         if (s == null) {
-            throw new IllegalArgumentException(String.format("Missing Property %s(%s|%s)", prefix, id, ANY));
+            throw new ConfigurationException(String.format("Missing Property %s(%s|%s)", prefix, id, ANY));
         }
         return s;
     }

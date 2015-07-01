@@ -203,7 +203,7 @@ public final class SharedUtil {
         final List<String> list = new ArrayList<String>();
         final Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(str);
         while (m.find()) {
-            list.add(m.group(1)); // Add .replace("\"", "") to remove surrounding quotes.
+            list.add(m.group(1).replace("\"", ""));
         }
         return list.toArray(new String[list.size()]);
     }

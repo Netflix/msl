@@ -44,6 +44,7 @@ import mslcli.common.Pair;
 import mslcli.client.msg.MessageConfig;
 import mslcli.client.util.UserAuthenticationDataHandle;
 import mslcli.common.util.AppContext;
+import mslcli.common.util.ConfigurationException;
 import mslcli.common.util.MslProperties;
 import mslcli.common.util.MslStoreWrapper;
 import mslcli.common.util.SharedUtil;
@@ -97,6 +98,8 @@ public final class ClientApp {
     private final CmdArguments cmdParam;
     private final MslProperties mslProp;
     private final AppContext appCtx;
+    private Client client;
+    private String clientId = null;
 
     public static void main(String[] args) {
         if (Arrays.asList(args).contains(CMD_HELP)) {
@@ -145,6 +148,9 @@ public final class ClientApp {
             } catch (IllegalCmdArgumentException e) {
                 System.err.println(e.getMessage());
                 exit(Status.ARG_ERROR);
+            } catch (ConfigurationException e) {
+                System.err.println(e.getMessage());
+                exit(Status.CFG_ERROR);
             } catch (Exception e) {
                 System.err.println(e.getMessage());
                 exit(Status.CLIENT_EXE_ERROR);
@@ -218,8 +224,14 @@ public final class ClientApp {
             appCtx.getMslControl().setFilterFactory(new ConsoleFilterStreamFactory());
         }
         System.out.println("Options: " + cmdParam.getParameters());
-        // initialize Client
-        final Client client = new Client(appCtx, cmdParam.getEntityId());
+
+        // initialize Client for the first time or whenever its identity changes
+        if (!cmdParam.getEntityId().equals(clientId) || (client == null)) {
+            clientId = cmdParam.getEntityId();
+            client = null;
+            client = new Client(appCtx, clientId);
+        }
+
         client.setUserAuthenticationDataHandle(new AppUserAuthenticationDataHandle(cmdParam.getUserId(), mslProp));
 
         // set message mslProperties
@@ -244,13 +256,16 @@ public final class ClientApp {
         }
 
         // set request payload
-        byte[] requestPayload;
+        byte[] requestPayload = null;
         {
             final String inputFile = cmdParam.getPayloadInputFile();
+            requestPayload = cmdParam.getPayloadMessage();
+            if (inputFile != null && requestPayload != null) {
+                throw new IllegalCmdArgumentException("Input File and Input Message cannot be both specified");
+            }
             if (inputFile != null) {
                 requestPayload = SharedUtil.readFromFile(inputFile);
             } else {
-                requestPayload = cmdParam.getPayloadMessage();
                 if (requestPayload == null) {
                     requestPayload = new byte[0];
                 }
@@ -280,7 +295,8 @@ public final class ClientApp {
                 }
                 status = Status.SERVER_APP_ERROR;
             } else {
-                System.out.println("Response: " + new String(response.getPayload()));
+                System.out.println("Response with no payload or error header ???");
+                status = Status.SERVER_APP_ERROR;
             }
         } catch (Exception e) {
             System.err.println("Error: " + e.getMessage());

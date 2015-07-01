@@ -130,6 +130,9 @@ public final class CmdArguments {
         if (other == null) {
             throw new IllegalCmdArgumentException("NULL CmdArguments argument");
         }
+        if (other.argMap.containsKey(P_CFG)) {
+            throw new IllegalCmdArgumentException("Cannot reset Configuration File");
+        }
         for (Map.Entry<String,String> entry : other.argMap.entrySet()) {
             if (entry.getValue() != null) {
                 argMap.put(entry.getKey(), entry.getValue());
