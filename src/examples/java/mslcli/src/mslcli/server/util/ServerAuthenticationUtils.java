@@ -28,6 +28,12 @@ import com.netflix.msl.util.AuthenticationUtils;
 
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
+import mslcli.common.util.ConfigurationRuntimeException;
+
+/**
+ * <p>
+ *    Authentication utility telling which entity authentication, user authentication,
+ *    and key exchange schemes are permitted/supported for a given entity.
 
 /**
  * <p>
@@ -84,7 +90,7 @@ public class ServerAuthenticationUtils implements AuthenticationUtils {
             try{
                 return appCtx.getAllowedEntityAuthenticationSchemes(identity).contains(scheme);
             } catch (ConfigurationException e) {
-                throw new IllegalArgumentException("Invalid Entity Authentication Configuration for Entity " + identity, e);
+                throw new ConfigurationRuntimeException(e);
             }
         }
     }
@@ -101,7 +107,7 @@ public class ServerAuthenticationUtils implements AuthenticationUtils {
             try{
                 return appCtx.getAllowedUserAuthenticationSchemes(identity).contains(scheme);
             } catch (ConfigurationException e) {
-                throw new IllegalArgumentException("Invalid User Authentication Configuration for User " + identity, e);
+                throw new ConfigurationRuntimeException(e);
             }
        }
     }
@@ -129,7 +135,7 @@ public class ServerAuthenticationUtils implements AuthenticationUtils {
             try{
                 return appCtx.getAllowedKeyExchangeSchemes(identity).contains(scheme);
             } catch (ConfigurationException e) {
-                throw new IllegalArgumentException("Server Configuration Error", e);
+                throw new ConfigurationRuntimeException(e);
             }
         }
     }

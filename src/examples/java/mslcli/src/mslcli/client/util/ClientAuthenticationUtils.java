@@ -28,6 +28,7 @@ import com.netflix.msl.util.AuthenticationUtils;
 
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
+import mslcli.common.util.ConfigurationRuntimeException;
 
 /**
  * <p>
@@ -92,7 +93,7 @@ public class ClientAuthenticationUtils implements AuthenticationUtils {
             try {
                 return appCtx.getAllowedEntityAuthenticationSchemes(identity).contains(scheme);
             } catch (ConfigurationException e) {
-                throw new IllegalArgumentException("Invalid Entity Authentication Configuration For Entity " + identity, e);
+                throw new ConfigurationRuntimeException(e);
             }
         }
     }

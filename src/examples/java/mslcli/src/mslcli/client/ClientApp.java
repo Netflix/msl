@@ -49,6 +49,7 @@ import mslcli.client.msg.MessageConfig;
 import mslcli.client.util.UserAuthenticationDataHandle;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
+import mslcli.common.util.ConfigurationRuntimeException;
 import mslcli.common.util.MslProperties;
 import mslcli.common.util.MslStoreWrapper;
 import mslcli.common.util.SharedUtil;
@@ -290,6 +291,9 @@ public final class ClientApp {
         } catch (ConfigurationException e) {
             System.err.println("Error: " + e.getMessage());
             return Status.CFG_ERROR;
+        } catch (ConfigurationRuntimeException e) {
+            System.err.println("Error: " + e.getCause().getMessage());
+            return Status.CFG_ERROR;
         } catch (IllegalCmdArgumentException e) {
             System.err.println("Error: " + e.getMessage());
             return Status.ARG_ERROR;
@@ -297,9 +301,18 @@ public final class ClientApp {
             System.err.println("Error: " + e.getMessage());
             return Status.COMM_ERROR;
         } catch (ExecutionException e) {
-            System.err.println("Error: " + e.getMessage());
-            SharedUtil.getRootCause(e).printStackTrace(System.err);
-            return Status.EXE_ERROR;
+            final Throwable thr = SharedUtil.getRootCause(e);
+            if (thr instanceof ConfigurationException) {
+                System.err.println("Error: " + thr.getMessage());
+                return Status.CFG_ERROR;
+            } else if (thr instanceof MslException) {
+                System.err.println(getMslExceptionInfo((MslException)thr));
+                return Status.MSL_EXC_ERROR;
+            } else {
+                System.err.println("Error: " + thr.getMessage());
+                thr.printStackTrace(System.err);
+                return Status.EXE_ERROR;
+            }
         } catch (IOException e) {
             System.err.println("Error: " + e.getMessage());
             SharedUtil.getRootCause(e).printStackTrace(System.err);
