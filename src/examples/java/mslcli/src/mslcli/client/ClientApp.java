@@ -63,7 +63,7 @@ public final class ClientApp {
         Security.addProvider(new BouncyCastleProvider());
     }
 
-    private static final String CMD_PROMPT = "cmd"; // command prompt
+    private static final String CMD_PROMPT = "args"; // command prompt
     private static final String APP_ID = "client_app"; // client app id
 
     private static final String HELP_FILE = "mslclient_manual.txt";

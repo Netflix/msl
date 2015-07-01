@@ -49,6 +49,7 @@ public class SimpleHttpServer {
         final HttpServer server = HttpServer.create(new InetSocketAddress(prop.getServerPort()), 0);
         server.createContext("/msl", new MyHandler(mslServer));
         server.setExecutor(null); // creates a default executor
+        System.out.println(String.format("waiting for requests on http://localhost:%d/msl ...", prop.getServerPort()));
         server.start();
     }
 

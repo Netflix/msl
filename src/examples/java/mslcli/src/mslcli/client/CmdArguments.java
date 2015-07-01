@@ -108,7 +108,7 @@ public final class CmdArguments {
                 param = s;
             // looks like partameter, but not one of the supported ones - error
             } else if (s.startsWith("-") && (s.length() > 1)) {
-                throw new IllegalCmdArgumentException("Illegal Argument " + s);
+                throw new IllegalCmdArgumentException("Illegal Option " + s);
             // if not a parameter, then must be a value
             } else if (param != null) {
                 value = s.equals("-") ? null : s; // special case "-" for deleting the value
@@ -117,8 +117,11 @@ public final class CmdArguments {
                 value = null;
             // looks like parameter value, but next parameter is expected
             } else {
-                throw new IllegalCmdArgumentException("Command Line Arguments Parser: Unexpected Value \"" + s + "\"");
+                throw new IllegalCmdArgumentException("Unexpected Value \"" + s + "\"");
             }
+        }
+        if (param != null) {
+            throw new IllegalCmdArgumentException("Missing Value for Option \"" + param + "\"");
         }
     }
 
@@ -132,6 +135,9 @@ public final class CmdArguments {
         }
         if (other.argMap.containsKey(P_CFG)) {
             throw new IllegalCmdArgumentException("Cannot reset Configuration File");
+        }
+        if (other.argMap.containsKey(P_INT)) {
+            throw new IllegalCmdArgumentException("Cannot reset Interactive Mode");
         }
         for (Map.Entry<String,String> entry : other.argMap.entrySet()) {
             if (entry.getValue() != null) {
