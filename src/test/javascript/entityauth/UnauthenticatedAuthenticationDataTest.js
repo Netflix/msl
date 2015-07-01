@@ -45,7 +45,7 @@ describe("UnauthenticatedAuthenticationData", function() {
 
     it("ctors", function() {
         var data = new UnauthenticatedAuthenticationData(IDENTITY);
-        expect(data.identity).toEqual(IDENTITY);
+        expect(data.getIdentity()).toEqual(IDENTITY);
         expect(data.scheme).toEqual(EntityAuthenticationScheme.NONE);
         var authdata = data.getAuthData();
         expect(authdata).not.toBeNull();
@@ -53,7 +53,7 @@ describe("UnauthenticatedAuthenticationData", function() {
         expect(jsonString).not.toBeNull();
         
         var joData = UnauthenticatedAuthenticationData$parse(authdata);
-        expect(joData.identity).toEqual(data.identity);
+        expect(joData.getIdentity()).toEqual(data.getIdentity());
         expect(joData.scheme).toEqual(data.scheme);
         var joAuthdata = joData.getAuthData();
         expect(joAuthdata).not.toBeNull();
@@ -80,7 +80,7 @@ describe("UnauthenticatedAuthenticationData", function() {
         expect(entitydata instanceof UnauthenticatedAuthenticationData).toBeTruthy();
         
         var joData = entitydata;
-        expect(joData.identity).toEqual(data.identity);
+        expect(joData.getIdentity()).toEqual(data.getIdentity());
         expect(joData.scheme).toEqual(data.scheme);
         var joAuthdata = joData.getAuthData();
         expect(joAuthdata).not.toBeNull();
