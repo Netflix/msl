@@ -28,6 +28,8 @@ import com.sun.net.httpserver.HttpServer;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslException;
 
+import mslcli.common.util.ConfigurationException;
+import mslcli.common.util.ConfigurationRuntimeException;
 import mslcli.common.util.MslProperties;
 import mslcli.common.util.SharedUtil;
 
@@ -39,18 +41,30 @@ import mslcli.common.util.SharedUtil;
 
 public class SimpleHttpServer {
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         if (args.length < 1) {
             System.out.println("Parameters: config_file");
             System.exit(1);
         }
-        final MslProperties prop = MslProperties.getInstance(SharedUtil.loadPropertiesFromFile(args[0]));
-        final SimpleMslServer mslServer = new SimpleMslServer(prop);
-        final HttpServer server = HttpServer.create(new InetSocketAddress(prop.getServerPort()), 0);
-        server.createContext("/msl", new MyHandler(mslServer));
-        server.setExecutor(null); // creates a default executor
-        System.out.println(String.format("waiting for requests on http://localhost:%d/msl ...", prop.getServerPort()));
-        server.start();
+        try {
+            final MslProperties prop = MslProperties.getInstance(SharedUtil.loadPropertiesFromFile(args[0]));
+            final SimpleMslServer mslServer = new SimpleMslServer(prop);
+            final HttpServer server = HttpServer.create(new InetSocketAddress(prop.getServerPort()), 0);
+            server.createContext("/msl", new MyHandler(mslServer));
+            server.setExecutor(null); // creates a default executor
+            System.out.println(String.format("waiting for requests on http://localhost:%d/msl ...", prop.getServerPort()));
+            server.start();
+        } catch (ConfigurationException e) {
+            System.err.println("Server Configuration Error: " + e.getMessage());
+            System.exit(1);
+        } catch (IOException e) {
+            System.err.println("Server Initialization Error: " + e.getMessage());
+            System.exit(1);
+        } catch (RuntimeException e) {
+            System.err.println("Server Internal Error: " + e.getMessage());
+            SharedUtil.getRootCause(e).printStackTrace(System.err);
+            System.exit(1);
+        }
     }
 
     static class MyHandler implements HttpHandler {
@@ -67,16 +81,17 @@ public class SimpleHttpServer {
                 // Allow requests from anywhere.
                 t.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
                 mslServer.processRequest(t.getRequestBody(), out);
+            } catch (ConfigurationException e) {
+                System.err.println("Server Configuration Error: " + e.getMessage());
+            } catch (ConfigurationRuntimeException e) {
+                System.err.println("Server Configuration Error: " + e.getCause().getMessage());
+            } catch (MslException e) {
+                System.err.println(SharedUtil.getMslExceptionInfo(e));
             } catch (IOException e) {
                 final Throwable thr = SharedUtil.getRootCause(e);
-                if (thr instanceof MslException) {
-                    final MslError mErr = ((MslException)thr).getError();
-                    System.out.println(String.format("\nMSL ERROR: error_code %d, error_msg %s", mErr.getResponseCode().intValue(), mErr.getMessage()));
-                } else {
-                    System.err.println("\nIO-ERROR: " + e);
-                    System.err.println("ROOT CAUSE:");
-                    thr.printStackTrace(System.err);
-                }
+                System.err.println("\nIO-ERROR: " + e);
+                System.err.println("ROOT CAUSE:");
+                thr.printStackTrace(System.err);
             } catch (RuntimeException e) {
                 System.err.println("\nRT-ERROR: " + e);
                 System.err.println("ROOT CAUSE:");

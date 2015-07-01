@@ -31,6 +31,9 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.netflix.msl.MslConstants.ResponseCode;
+import com.netflix.msl.MslError;
+import com.netflix.msl.MslException;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.util.MslStore;
@@ -316,5 +319,20 @@ public final class SharedUtil {
      */
     public static MslStore unmarshalMslStore(final byte[] mslStoreData) throws IOException {
         throw new UnsupportedOperationException();
+    }
+
+    public static String getMslExceptionInfo(final MslException e) {
+        if (e == null) return null;
+        final MslError mErr = e.getError();
+        if (mErr != null) {
+            final ResponseCode respCode = mErr.getResponseCode();
+            if (respCode != null) {
+                return String.format("MslException: error_code %d, error_msg %s", respCode.intValue(), mErr.getMessage());
+            } else {
+                return String.format("MslException: error_msg %s", mErr.getMessage());
+            }
+        } else {
+            return String.format("MslException: %s", e.getMessage());
+        }
     }
 }

@@ -31,6 +31,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
+import com.netflix.msl.MslException;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.crypto.SymmetricCryptoContext;
 import com.netflix.msl.entityauth.PresharedKeyStore;
@@ -49,6 +50,7 @@ import com.netflix.msl.util.MslStore;
 import mslcli.common.Pair;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
+import mslcli.common.util.ConfigurationRuntimeException;
 import mslcli.common.util.MslProperties;
 import mslcli.common.util.SharedUtil;
 import mslcli.server.msg.ServerReceiveMessageContext;
@@ -103,7 +105,7 @@ public class SimpleMslServer {
     /**
      * process incoming request
      */
-    public void processRequest(final InputStream in, final OutputStream out) throws IOException {
+    public void processRequest(final InputStream in, final OutputStream out) throws ConfigurationException, IOException, MslException {
         if (in == null) {
             throw new IllegalArgumentException("NULL Input Stream");
         }
@@ -118,14 +120,24 @@ public class SimpleMslServer {
         final Future<MessageInputStream> requestFuture = mslCtrl.receive(mslCtx, rcvMsgCtx, in, out, TIMEOUT_MS);
         try {
             requestInputStream = requestFuture.get();
-            if (requestInputStream == null) {
-                System.err.println("NULL Input Stream ?");
-                return;
+        } catch (ExecutionException e) {
+            final Throwable thr = SharedUtil.getRootCause(e);
+            if (thr instanceof MslException) {
+                throw (MslException)thr;
+            } else if (thr instanceof ConfigurationException) {
+                throw (ConfigurationException)thr;
+            } else if (thr instanceof ConfigurationRuntimeException) {
+                throw (ConfigurationException)thr.getCause();
+            } else {
+                throw new IOException("ExecutionException", e);
             }
-        } catch (final ExecutionException e) {
+        } catch (InterruptedException e) {
             throw new IOException("ExecutionException", e);
-        } catch (final InterruptedException e) {
-            throw new IOException("InterruptedException", e);
+        }
+
+        if (requestInputStream == null) {
+            System.err.println("NULL Input Stream ?");
+            return;
         }
 
         // We should not receive error headers but check just in case.
@@ -135,12 +147,7 @@ public class SimpleMslServer {
         }
 
         // Process request.
-        final String clientId;
-        try {
-            clientId = requestInputStream.getIdentity();
-        } catch (MslCryptoException e) {
-            throw new IOException("Error Extracting Identity from Request", e);
-        }
+        final String clientId = requestInputStream.getIdentity();
         final MslUser user = requestInputStream.getUser();
         final byte[] request = SharedUtil.readIntoArray(requestInputStream);
 
@@ -152,11 +159,19 @@ public class SimpleMslServer {
         final Future<MslChannel> channelFuture = mslCtrl.respond(mslCtx, responseMsgCtx, in, out, requestInputStream, TIMEOUT_MS);
         try {
             channelFuture.get();
-        } catch (final ExecutionException e) {
+        } catch (ExecutionException e) {
+            final Throwable thr = SharedUtil.getRootCause(e);
+            if (thr instanceof MslException) {
+                throw (MslException)thr;
+            } else if (thr instanceof ConfigurationException) {
+                throw (ConfigurationException)thr;
+            } else if (thr instanceof ConfigurationRuntimeException) {
+                throw (ConfigurationException)thr.getCause();
+            } else {
+                throw new IOException("ExecutionException", e);
+            }
+        } catch (InterruptedException e) {
             throw new IOException("ExecutionException", e);
-        } catch (final InterruptedException e) {
-            System.err.println("MslControl.receive() interrupted.");
-            return;
         }
     }
     

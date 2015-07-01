@@ -17,10 +17,16 @@
 package mslcli.server;
 
 import java.io.IOException;
+import java.util.Properties;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.netflix.msl.MslException;
+
+import mslcli.common.util.ConfigurationException;
 import mslcli.common.util.MslProperties;
 import mslcli.common.util.SharedUtil;
 
@@ -34,14 +40,35 @@ import mslcli.common.util.SharedUtil;
 
 public class SimpleServlet extends HttpServlet {
     private static final long serialVersionUID = -4593207843035538485L;
-    private static final String configFile = "mslcli.cfg"; // TBD - make configurable from servlet properties
+
+    private static final String CONFIG_FILE_PATH = "mslcli.cfg.file";
     
     /**
-     * <p>Create a new servlet instance and initialize the simple MSL server.</p>
+     * <p>Initialize servlet instance and MSL server.</p>
      */
-    public SimpleServlet() throws Exception {
-        final MslProperties prop = MslProperties.getInstance(SharedUtil.loadPropertiesFromFile(configFile));
-        this.mslServer = new SimpleMslServer(prop);
+    @Override
+    public void init(ServletConfig cfg) throws ServletException {
+        super.init(cfg);
+
+        final String configFile = cfg.getInitParameter(CONFIG_FILE_PATH);
+        if (configFile == null) {
+            throw new ServletException("Missing Servlet Configuration Parameter " + CONFIG_FILE_PATH);
+        }
+
+        final Properties prop;
+        try {
+            prop = SharedUtil.loadPropertiesFromFile(configFile);
+        } catch (IOException e) {
+            throw new ServletException("Error Loading Configuration File " + CONFIG_FILE_PATH, e);
+        }
+
+        final MslProperties mslProp = MslProperties.getInstance(prop);
+
+        try {
+            this.mslServer = new SimpleMslServer(mslProp);
+        } catch (ConfigurationException e) {
+            throw new ServletException(String.format("Server Configuration %s Validation Error", CONFIG_FILE_PATH), e);
+        }
     }
     
     /* (non-Javadoc)
@@ -52,9 +79,17 @@ public class SimpleServlet extends HttpServlet {
         // Allow requests from anywhere.
         resp.setHeader("Access-Control-Allow-Origin", "*");
         
-        mslServer.processRequest(req.getInputStream(), resp.getOutputStream());
+        try {
+            mslServer.processRequest(req.getInputStream(), resp.getOutputStream());
+        } catch (ConfigurationException e) {
+            log("Server Configuration Error: " + e.getMessage());
+            throw new IOException("MslException", e);
+        } catch (MslException e) {
+            log(SharedUtil.getMslExceptionInfo(e));
+            throw new IOException("MslException", e);
+        }
     }
     
     /** MSL server. */
-    private final SimpleMslServer mslServer;
+    private SimpleMslServer mslServer;
 }

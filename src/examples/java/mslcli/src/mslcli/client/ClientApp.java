@@ -106,55 +106,54 @@ public final class ClientApp {
     private Client client;
     private String clientId = null;
 
+    /*
+     * Launcher of MSL CLI client. See user manual in HELP_FILE.
+     */
     public static void main(String[] args) {
+        Status status = Status.OK;
         try {
             if (Arrays.asList(args).contains(CMD_HELP)) {
                 help();
-                exit(Status.OK);
-            }
-            if (args.length == 0) {
+                status = Status.OK;
+            } else if (args.length == 0) {
                 System.err.println("Use " + CMD_HELP + " for help");
-                exit(Status.ARG_ERROR);
-            }
-
-            final CmdArguments cmdParam = new CmdArguments(args);
-        
-            final ClientApp clientApp = new ClientApp(cmdParam);
-
-            if (cmdParam.isInteractive()) {
-                clientApp.sendMultipleRequests();
-                exit(Status.OK);
+                status = Status.ARG_ERROR;
             } else {
-                Status status = clientApp.sendSingleRequest();
-                exit(status);
+                final CmdArguments cmdParam = new CmdArguments(args);
+                final ClientApp clientApp = new ClientApp(cmdParam);
+                if (cmdParam.isInteractive()) {
+                    clientApp.sendMultipleRequests();
+                    status = Status.OK;
+                } else {
+                    status = clientApp.sendSingleRequest();
+                }
             }
         } catch (ConfigurationException e) {
             System.err.println(e.getMessage());
-            exit(Status.ARG_ERROR);
+            status = Status.CFG_ERROR;
         } catch (IllegalCmdArgumentException e) {
             System.err.println(e.getMessage());
-            exit(Status.ARG_ERROR);
+            status = Status.ARG_ERROR;
         } catch (IOException e) {
             System.err.println(e.getMessage());
-            exit(Status.EXE_ERROR);
+            status = Status.EXE_ERROR;
         } catch (RuntimeException e) {
             System.err.println(e.getMessage());
-            exit(Status.EXE_ERROR);
+            status = Status.EXE_ERROR;
         }
-    }
-
-    private static String getMslExceptionInfo(final MslException e) {
-        final MslError mslError = e.getError();
-        final ResponseCode respCode = mslError.getResponseCode();
-        return String.format("MslException: responseCode %d, Message %s", respCode, e.getMessage());
-    }
-
-    private static void exit(final Status status) {
         System.out.println("Exit Status " + status);
         System.exit(status.code);
     }
 
-    private ClientApp(final CmdArguments cmdParam) throws ConfigurationException, IllegalCmdArgumentException, IOException {
+    /*
+     * ClientApp holds the instance of one Client and some other objects which are global for the application.
+     * Instance of Client is supposed to be re-instantiated only when its entity identity changes,
+     * which is only applicable in the interactive mode. Changing entity identity within a given Client
+     * instance would be too convoluted; it makes sense to permanently bind Client with its entity ID.
+     *
+     * @param encapsulation of command-line arguments
+     */
+    public ClientApp(final CmdArguments cmdParam) throws ConfigurationException, IllegalCmdArgumentException, IOException {
 
         // save command-line arguments
         this.cmdParam = cmdParam;
@@ -177,7 +176,7 @@ public final class ClientApp {
      * @throws IOException in case of user input reading error
      */
 
-    private void sendMultipleRequests() throws IllegalCmdArgumentException, IOException {
+    public void sendMultipleRequests() throws IllegalCmdArgumentException, IOException {
         while (true) {
             final String options = SharedUtil.readInput(CMD_PROMPT);
             if (CMD_QUIT.equalsIgnoreCase(options)) {
@@ -212,10 +211,10 @@ public final class ClientApp {
     /*
      * send single request
      */
-    private Status sendSingleRequest() {
+    public Status sendSingleRequest() {
         Status status = Status.OK;
 
-        try {
+        try_label: try {
             // set verbose mode
             if (cmdParam.isVerbose()) {
                 appCtx.getMslControl().setFilterFactory(new ConsoleFilterStreamFactory());
@@ -251,7 +250,8 @@ public final class ClientApp {
             requestPayload = cmdParam.getPayloadMessage();
             if (inputFile != null && requestPayload != null) {
                 appCtx.error("Input File and Input Message cannot be both specified");
-                return Status.ARG_ERROR;
+                status = Status.ARG_ERROR;
+                break try_label;
             }
             if (inputFile != null) {
                 requestPayload = SharedUtil.readFromFile(inputFile);
@@ -272,9 +272,10 @@ public final class ClientApp {
                 } else {
                     System.out.println("Response: " + new String(response.getPayload()));
                 }
+                status = Status.OK;
             } else if (response.getErrorHeader() != null) {
                 if (response.getErrorHeader().getErrorMessage() != null) {
-                    System.err.println(String.format("ERROR: error_code %d, error_msg \"%s\"",
+                    System.err.println(String.format("MSL RESPONSE ERROR: error_code %d, error_msg \"%s\"",
                         response.getErrorHeader().getErrorCode().intValue(),
                         response.getErrorHeader().getErrorMessage()));
                 } else {
@@ -286,59 +287,51 @@ public final class ClientApp {
                 status = Status.MSL_ERROR;
             }
         } catch (MslException e) {
-            System.err.println(getMslExceptionInfo(e));
-            return Status.MSL_EXC_ERROR;
+            System.err.println(SharedUtil.getMslExceptionInfo(e));
+            status = Status.MSL_EXC_ERROR;
         } catch (ConfigurationException e) {
             System.err.println("Error: " + e.getMessage());
-            return Status.CFG_ERROR;
+            status = Status.CFG_ERROR;
         } catch (ConfigurationRuntimeException e) {
             System.err.println("Error: " + e.getCause().getMessage());
-            return Status.CFG_ERROR;
+            status = Status.CFG_ERROR;
         } catch (IllegalCmdArgumentException e) {
             System.err.println("Error: " + e.getMessage());
-            return Status.ARG_ERROR;
+            status = Status.ARG_ERROR;
         } catch (ConnectException e) {
             System.err.println("Error: " + e.getMessage());
-            return Status.COMM_ERROR;
+            status = Status.COMM_ERROR;
         } catch (ExecutionException e) {
             final Throwable thr = SharedUtil.getRootCause(e);
             if (thr instanceof ConfigurationException) {
                 System.err.println("Error: " + thr.getMessage());
-                return Status.CFG_ERROR;
+                status = Status.CFG_ERROR;
             } else if (thr instanceof MslException) {
-                System.err.println(getMslExceptionInfo((MslException)thr));
-                return Status.MSL_EXC_ERROR;
+                System.err.println(SharedUtil.getMslExceptionInfo((MslException)thr));
+                status = Status.MSL_EXC_ERROR;
+            } else if (thr instanceof ConnectException) {
+                System.err.println("Error: " + thr.getMessage());
+                status = Status.COMM_ERROR;
             } else {
                 System.err.println("Error: " + thr.getMessage());
                 thr.printStackTrace(System.err);
-                return Status.EXE_ERROR;
+                status = Status.EXE_ERROR;
             }
         } catch (IOException e) {
             System.err.println("Error: " + e.getMessage());
             SharedUtil.getRootCause(e).printStackTrace(System.err);
-            return Status.EXE_ERROR;
+            status = Status.EXE_ERROR;
         } catch (InterruptedException e) {
             System.err.println("Error: " + e.getMessage());
             SharedUtil.getRootCause(e).printStackTrace(System.err);
-            return Status.EXE_ERROR;
+            status = Status.EXE_ERROR;
         } catch (RuntimeException e) {
             System.err.println("Error: " + e.getMessage());
             SharedUtil.getRootCause(e).printStackTrace(System.err);
-            return Status.EXE_ERROR;
+            status = Status.EXE_ERROR;
         }
 
         return status;
-    }
-
-    /*
-     * helper
-     */
-    private static void help() {
-        try {
-            System.out.println(new String(SharedUtil.readFromFile(HELP_FILE)));
-        } catch (IOException e) {
-            System.err.println(String.format("Cannot read help file %s: %s", HELP_FILE, e.getMessage()));
-        }
     }
 
     /*
@@ -426,5 +419,16 @@ public final class ClientApp {
         }
 
         private final AppContext appCtx;
+    }
+
+    /*
+     * helper - print help file
+     */
+    private static void help() {
+        try {
+            System.out.println(new String(SharedUtil.readFromFile(HELP_FILE)));
+        } catch (IOException e) {
+            System.err.println(String.format("Cannot read help file %s: %s", HELP_FILE, e.getMessage()));
+        }
     }
 }
