@@ -123,7 +123,7 @@ public class UnauthenticatedAuthenticationDataTest {
 
         final UnauthenticatedAuthenticationData data = new UnauthenticatedAuthenticationData(IDENTITY);
         final JSONObject authdata = data.getAuthData();
-        authdata.remove("identity");
+        authdata.remove(KEY_IDENTITY);
         new UnauthenticatedAuthenticationData(authdata);
     }
     
