@@ -81,7 +81,7 @@ public final class ClientApp {
         ARG_ERROR    (1, "Invalid Arguments"),
         CFG_ERROR    (2, "Configuration File Error"),
         MSL_EXC_ERROR(3, "MSL Exception"),
-        MSL_ERROR    (4, "Server App Error Reply"),
+        MSL_ERROR    (4, "Server MSL Error Reply"),
         COMM_ERROR   (5, "Server Communication Error"),
         EXE_ERROR    (6, "Internal Execution Error");
 

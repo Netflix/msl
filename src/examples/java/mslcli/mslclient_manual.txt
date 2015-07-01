@@ -117,11 +117,11 @@ EXIT CODES
 
 	2 - configuration file reading and/or validation error.
 
-	3 - invalid client configuration error
+	3 - exception from MSL core protocol stack.
 
-	4 - client execution error
+	4 - MSL protocol error: Error header in MSL response
 
-	5 - MSL server communication error
+	5 - server communication error
 
-	6 - MSL server application error: MSL Error Header in MSL response.
+	6 - internal execution error
 
