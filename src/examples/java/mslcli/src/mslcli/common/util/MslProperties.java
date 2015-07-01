@@ -250,8 +250,9 @@ public final class MslProperties {
         final Map<String,Pair<String,String>> keys = new HashMap<String,Pair<String,String>>(numRSA);
         for (int i = 0; i < numRSA; i++) {
             keys.put(getRequiredProperty(MSL_RSA_KEY_ID + i), new Pair<String,String>(
-                     getRequiredProperty(MSL_RSA_PUB    + i),
-                     getRequiredProperty(MSL_RSA_PRIV   + i)));
+                     getRequiredProperty(MSL_RSA_PUB + i),
+                     p.getProperty(MSL_RSA_PRIV + i) // private key is optional
+                 ));
         }
         return keys;
     }
