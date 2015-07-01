@@ -28,26 +28,41 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public final class CliCmdParameters {
+public final class CmdArguments {
 
     // parameters
     public static final String P_INT  = "-int" ; // interactive mode
+    public static final String P_CFG  = "-cfg" ; // configuration file
+    public static final String P_URL  = "-url" ; // remote url
     public static final String P_EID  = "-eid" ; // entity id
     public static final String P_UID  = "-uid" ; // user id
     public static final String P_KX   = "-kx"  ; // key exchange type
     public static final String P_KXM  = "-kxm" ; // key exchange mechanism
-    public static final String P_URL  = "-url" ; // remote url
-    public static final String P_IF   = "-if"  ; // input message file
-    public static final String P_OF   = "-of"  ; // output message file
     public static final String P_ENC  = "-enc" ; // message encrypted
     public static final String P_SIG  = "-sig" ; // message integrity protected
     public static final String P_NREP = "-nrep"; // message non-replayable
-    public static final String P_CFG  = "-cfg" ; // configuration file
-    public static final String P_DBG  = "-v"   ; // verbose
-    public static final String P_HELP = "-help"; // help
+    public static final String P_IF   = "-if"  ; // input message payload file
+    public static final String P_OF   = "-of"  ; // output message payload file
+    public static final String P_MSG  = "-msg" ; // input message payload text
+    public static final String P_V    = "-v"   ; // verbose
 
-    public static final List<String> supportedParameters =
-        Collections.unmodifiableList(new ArrayList<String>(Arrays.asList(P_INT, P_EID, P_UID, P_KX, P_KXM, P_URL, P_IF, P_OF, P_ENC, P_SIG, P_NREP, P_CFG, P_DBG, P_HELP)));
+    private static final List<String> supportedArguments =
+        Collections.unmodifiableList(new ArrayList<String>(Arrays.asList(
+            P_INT,
+            P_CFG,
+            P_URL,
+            P_EID,
+            P_UID,
+            P_KX,
+            P_KXM,
+            P_ENC,
+            P_SIG,
+            P_NREP,
+            P_IF,
+            P_OF,
+            P_MSG,
+            P_V
+        )));
 
     // supported key exchanges
     public static final String KX_DH   = "dh" ; // Diffie-Hellman             Key Exchange
@@ -68,9 +83,11 @@ public final class CliCmdParameters {
     public static final Set<String> supportedAsymmetricWrappedExchangeMechanisms = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
         KXM_JWE_RSA, KXM_JWEJS_RSA, KXM_JWK_RSA, KXM_JWK_RSAES)));
 
-    public CliCmdParameters(final String[] args) {
+    private final Map<String,String> argMap;
+
+    public CmdArguments(final String[] args) {
         if (args == null) {
-            throw new IllegalArgumentException("NULL args");
+            throw new IllegalCmdArgumentException("NULL args");
         }
         this.argMap = new HashMap<String,String>();
 
@@ -78,35 +95,48 @@ public final class CliCmdParameters {
         String value = null;
         for (String s : args) {
             // one of the supported parameters
-            if (supportedParameters.contains(s)) {
+            if (supportedArguments.contains(s)) {
                 // already occured - error
                 if (argMap.containsKey(s)) {
-                    throw new IllegalArgumentException("Multiple Occurences of " + s);
+                    throw new IllegalCmdArgumentException("Multiple Occurences of " + s);
                 }
                 // expected value, not parameter
                 if (param != null) {
-                    throw new IllegalArgumentException("Missing Value for " + param);
+                    throw new IllegalCmdArgumentException("Missing Value for " + param);
                 }
                 // ok, new parameter; previous ones were successfully parsed
                 param = s;
             // looks like partameter, but not one of the supported ones - error
-            } else if (s.startsWith("-")) {
-                throw new IllegalArgumentException("Illegal Parameter " + s);
-            // looks like parameter value, and is expected
+            } else if (s.startsWith("-") && (s.length() > 1)) {
+                throw new IllegalCmdArgumentException("Illegal Argument " + s);
+            // if not a parameter, then must be a value
             } else if (param != null) {
-                value = s;
+                value = s.equals("-") ? null : s; // special case "-" for deleting the value
                 argMap.put(param, value);
                 param = null;
                 value = null;
             // looks like parameter value, but next parameter is expected
             } else {
-                throw new IllegalArgumentException("Unexpected Value " + s);
+                throw new IllegalCmdArgumentException("Command Line Arguments Parser: Unexpected Value \"" + s + "\"");
             }
         }
     }
 
     public Map<String,String> getParameters() {
         return Collections.unmodifiableMap(argMap);
+    }
+
+    public void merge(CmdArguments other) {
+        if (other == null) {
+            throw new IllegalCmdArgumentException("NULL CmdArguments argument");
+        }
+        for (Map.Entry<String,String> entry : other.argMap.entrySet()) {
+            if (entry.getValue() != null) {
+                argMap.put(entry.getKey(), entry.getValue());
+            } else {
+                argMap.remove(entry.getKey());
+            }
+        }
     }
 
     /**
@@ -124,7 +154,7 @@ public final class CliCmdParameters {
         try {
             return new URL(url);
         } catch (MalformedURLException e) {
-            throw new IllegalArgumentException("Invalid URL " + url, e);
+            throw new IllegalCmdArgumentException("Invalid URL " + url, e);
         }
     }
 
@@ -137,7 +167,7 @@ public final class CliCmdParameters {
         if (f.isFile()) {
             return file;
         } else {
-            throw new IllegalArgumentException("Not a File: " + file);
+            throw new IllegalCmdArgumentException("Not a File: " + file);
         }
     }
 
@@ -145,12 +175,15 @@ public final class CliCmdParameters {
      * @return file path to read request payload from. Must exist and be a regular file.
      */
     public String getPayloadInputFile() {
-        final String file = getValue(P_IF);
+        final String file = argMap.get(P_IF);
+        if (file == null) {
+            return null;
+        }
         final File f = new File(file);
         if (f.isFile()) {
             return file;
         } else {
-            throw new IllegalArgumentException("Not a File: " + file);
+            throw new IllegalCmdArgumentException("Not a File: " + file);
         }
     }
 
@@ -158,13 +191,24 @@ public final class CliCmdParameters {
      * @return file path to write response payload to
      */
     public String getPayloadOutputFile() {
-        final String file = getValue(P_OF);
+        final String file = argMap.get(P_OF);
+        if (file == null) {
+            return null;
+        }
         final File f = new File(file);
         if (!f.exists()) {
             return file;
         } else {
-            throw new IllegalArgumentException("Cannot Overwrite Existing File: " + file);
+            throw new IllegalCmdArgumentException("Cannot Overwrite Existing File: " + file);
         }
+    }
+
+    /**
+     * @return payload text message
+     */
+    public byte[] getPayloadMessage() {
+        final String s = argMap.get(P_MSG);
+        return (s != null) ? s.getBytes() : null;
     }
 
     /**
@@ -203,14 +247,14 @@ public final class CliCmdParameters {
     }
 
     /**
-     * @return key exchange scheme - can be uninitialized
+     * @return key exchange scheme
      */
     public String getKeyExchangeScheme() {
         return argMap.get(P_KX);
     }
 
     /**
-     * @return key exchange mechanism - can be uninitialized
+     * @return key exchange mechanism
      */
     public String getKeyExchangeMechanism() {
         return argMap.get(P_KXM);
@@ -220,7 +264,7 @@ public final class CliCmdParameters {
      * @return verbose mode y/n
      */
     public boolean isVerbose() {
-        return getBoolean(P_DBG, false);
+        return getBoolean(P_V, false);
     }
 
     private boolean getBoolean(final String name, final boolean def) {
@@ -233,9 +277,7 @@ public final class CliCmdParameters {
         if (s != null) {
             return s;
         } else {
-            throw new IllegalArgumentException("Missing Required Parameter " + name);
+            throw new IllegalCmdArgumentException("Missing Required Argument " + name);
         }
     }
-
-    private final Map<String,String> argMap;
 }

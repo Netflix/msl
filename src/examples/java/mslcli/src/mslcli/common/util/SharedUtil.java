@@ -25,7 +25,11 @@ import java.io.FileReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.UserIdToken;
@@ -186,6 +190,22 @@ public final class SharedUtil {
                                  + Character.digit(hex.charAt(i+1), 16)     );
         }
         return data;
+    }
+
+    /**
+     * split string of space-separated tokens into a List of tokens, treating quoted group of tokens as a single token
+     *
+     * @param str input string
+     * @return array of tokens
+     */
+
+    public static String[] split(final String str) {
+        final List<String> list = new ArrayList<String>();
+        final Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(str);
+        while (m.find()) {
+            list.add(m.group(1)); // Add .replace("\"", "") to remove surrounding quotes.
+        }
+        return list.toArray(new String[list.size()]);
     }
 
     /**

@@ -12,15 +12,12 @@ To build MSL CLI:
 % ./build.sh
 
 Open two terminals. From one, type
-% ./start_client.sh
+% ./mslclient.sh [options]
 
 From another
-% ./start_server.sh
+% ./mslserver.sh
 
-The client program will first present the command selection. Entering "help" prints help information
-explaining each command and command options.
-
-Message responses will be printed to stdout, and it's supposed to be the same as the request.
+Please, read mslclient_manual.txt for the detailed information on how to run mslclient.sh.
 
 The server is terminated by pressing Ctrl-C.
 
