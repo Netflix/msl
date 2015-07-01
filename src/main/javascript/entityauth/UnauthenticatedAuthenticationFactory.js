@@ -22,8 +22,6 @@
 var UnauthenticatedAuthenticationFactory = EntityAuthenticationFactory.extend({
     /**
      * Construct a new unauthenticated authentication factory instance.
-     *
-     * @param {string} identity my local identity.
      */
     init: function init() {
         init.base.call(this, EntityAuthenticationScheme.NONE);
