@@ -87,6 +87,7 @@ var MockMslContext$create;
 		    function syncEntityAuthFactories(entityAuthFactories) {
 		        entityAuthFactories[EntityAuthenticationScheme.X509.name] = new MockX509AuthenticationFactory();
 		        entityAuthFactories[EntityAuthenticationScheme.NONE.name] = new UnauthenticatedAuthenticationFactory();
+		        entityAuthFactories[EntityAuthenticationScheme.NONE_SUFFIXED.name] = new UnauthenticatedSuffixedAuthenticationFactory();
                 syncUserAuthFactories(entityAuthFactories);
 		    }
 		    function syncUserAuthFactories(entityAuthFactories, userAuthFactories) {
@@ -133,6 +134,8 @@ var MockMslContext$create;
 		                entityAuthData = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
 		            } else if (EntityAuthenticationScheme.NONE == scheme) {
 		                entityAuthData = new UnauthenticatedAuthenticationData("MOCKUNAUTH-ESN");
+		            } else if (EntityAuthenticationScheme.NONE_SUFFIXED == scheme) {
+		                entityAuthData = new UnauthenticatedSuffixedAuthenticationData("MOCKUNAUTH-ROOT", "MOCKUNAUTH-SUFFIX");
 		            } else {
 		                throw new MslInternalException("Unsupported authentication type: " + scheme);
 		            };
