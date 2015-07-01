@@ -57,6 +57,7 @@ import com.netflix.msl.util.MslStore;
 
 import mslcli.common.Triplet;
 import mslcli.common.util.AppContext;
+import mslcli.common.util.ConfigurationException;
 import mslcli.common.util.SharedUtil;
 import mslcli.server.tokens.ServerTokenFactory;
 import mslcli.server.util.ServerAuthenticationUtils;
@@ -74,7 +75,7 @@ public class ServerMslContext implements MslContext {
      * @param appCtx application context
      * @param serverId local server entity identity.
      */
-    public ServerMslContext(final AppContext appCtx, final String serverId) {
+    public ServerMslContext(final AppContext appCtx, final String serverId) throws ConfigurationException {
         if (appCtx == null) {
             throw new IllegalArgumentException("NULL app context");
         }

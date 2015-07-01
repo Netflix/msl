@@ -16,7 +16,7 @@
 
 package mslcli.client;
 
-public class IllegalCmdArgumentException extends IllegalArgumentException {
+public class IllegalCmdArgumentException extends Exception {
     public IllegalCmdArgumentException() {
         super();
     }

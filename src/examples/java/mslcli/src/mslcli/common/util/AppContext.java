@@ -51,6 +51,7 @@ import javax.xml.bind.DatatypeConverter;
 
 import com.netflix.msl.MslException;
 import com.netflix.msl.MslInternalException;
+import com.netflix.msl.MslKeyExchangeException;
 import com.netflix.msl.crypto.CryptoCache;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.crypto.JcaAlgorithm;
@@ -105,7 +106,7 @@ public final class AppContext {
      * @param p properties loaded from some configuration source
      * @return singleton instance of AppContext
      */
-    public static synchronized AppContext getInstance(final MslProperties p, final String appId) {
+    public static synchronized AppContext getInstance(final MslProperties p, final String appId) throws ConfigurationException {
         if (_instance == null) {
             if (p == null) {
                 throw new IllegalArgumentException("NULL properties");
@@ -116,7 +117,7 @@ public final class AppContext {
         }
     }
 
-    private AppContext(final MslProperties p, final String appId) {
+    private AppContext(final MslProperties p, final String appId) throws ConfigurationException {
         if (p == null) {
             throw new IllegalArgumentException("NULL MslProperties");
         }
@@ -173,7 +174,7 @@ public final class AppContext {
         return presharedKeyStore;
     }
 
-    private static PresharedKeyStore initPresharedKeyStore(final MslProperties p) {
+    private static PresharedKeyStore initPresharedKeyStore(final MslProperties p) throws ConfigurationException {
         final Map<String,KeySet> keySets = new HashMap<String,KeySet>();
 
         for (Map.Entry<String,Triplet<String,String,String>> entry : p.getPresharedKeyStore().entrySet()) {
@@ -193,7 +194,7 @@ public final class AppContext {
         return emailPasswordStore;
     }
 
-    private static EmailPasswordStore initEmailPasswordStore(final MslProperties p) {
+    private static EmailPasswordStore initEmailPasswordStore(final MslProperties p) throws ConfigurationException {
         return new SimpleEmailPasswordStore(p.getEmailPasswordStore());
     }
 
@@ -228,7 +229,7 @@ public final class AppContext {
     /* client would normally have only the server public key to authenticate server responses.
      * server would normally have both public and private keys
      */
-    private static RsaStore initRsaStore(final MslProperties p) {
+    private static RsaStore initRsaStore(final MslProperties p) throws ConfigurationException {
         try {
             final KeyFactory rsaKeyFactory = KeyFactory.getInstance("RSA");
             final Map<String,Pair<String,String>> rsaKeyPairsB64 = p.getRsaKeyStore();
@@ -312,7 +313,7 @@ public final class AppContext {
     private static final class SimpleDiffieHellmanParameters implements DiffieHellmanParameters {
         /** Default parameters. */
 
-        private SimpleDiffieHellmanParameters(final MslProperties prop) {
+        private SimpleDiffieHellmanParameters(final MslProperties prop) throws ConfigurationException {
             for (Map.Entry<String,Pair<String,String>> entry : prop.getDHParameterStore().entrySet()) {
                 params.put(entry.getKey(), new DHParameterSpec(
                     new BigInteger(entry.getValue().x, 16),
@@ -352,7 +353,7 @@ public final class AppContext {
      * @param entityId entity identity string
      * @return Diffie-Hellman parameters ID to be used by the given entity for key exchange
      */
-    public String getDiffieHellmanParametersId(String entityId) {
+    public String getDiffieHellmanParametersId(String entityId) throws ConfigurationException {
         return prop.getEntityDiffieHellmanParametersId(entityId);
     }
 
@@ -362,7 +363,7 @@ public final class AppContext {
      * @param paramId Diffie-Hellman parameters ID
      * @return Diffie-Hellman key pair generated using parameters corresponding to the provided ID
      */
-    public KeyPair generateDiffieHellmanKeys(final String paramId) throws MslException {
+    public KeyPair generateDiffieHellmanKeys(final String paramId) throws MslKeyExchangeException {
         final DHParameterSpec paramSpec = getDiffieHellmanParameters().getParameterSpec(paramId);
         try {
             final KeyPairGenerator generator = CryptoCache.getKeyPairGenerator("DH");
@@ -379,7 +380,7 @@ public final class AppContext {
      * Generate RSA key pair used for wrapped key exchange
      * @return RSA key pair
      */
-    public KeyPair generateAsymmetricWrappedExchangeKeyPair() throws MslException {
+    public KeyPair generateAsymmetricWrappedExchangeKeyPair() throws MslInternalException {
         try {
             System.out.println("Generating RSA Key Pair - please, wait ...");
             final KeyPairGenerator generator = CryptoCache.getKeyPairGenerator("RSA");
@@ -394,7 +395,7 @@ public final class AppContext {
      * @param entityId entity identity
      * @return entity authentication schemes allowed for a given entity
      */
-    public Set<EntityAuthenticationScheme> getAllowedEntityAuthenticationSchemes(final String entityId) {
+    public Set<EntityAuthenticationScheme> getAllowedEntityAuthenticationSchemes(final String entityId) throws ConfigurationException {
         final Set<EntityAuthenticationScheme> schemes = new HashSet<EntityAuthenticationScheme>();
         for (String scheme : prop.getSupportedEntityAuthenticationSchemes(entityId)) {
             final EntityAuthenticationScheme eas = EntityAuthenticationScheme.getScheme(scheme);
@@ -410,7 +411,7 @@ public final class AppContext {
      * @param entityId entity identity
      * @return entity authentication schemes allowed for a given entity
      */
-    public Set<UserAuthenticationScheme> getAllowedUserAuthenticationSchemes(final String entityId) {
+    public Set<UserAuthenticationScheme> getAllowedUserAuthenticationSchemes(final String entityId) throws ConfigurationException {
         final Set<UserAuthenticationScheme> schemes = new HashSet<UserAuthenticationScheme>();
         for (String scheme : prop.getSupportedUserAuthenticationSchemes(entityId)) {
             final UserAuthenticationScheme uas = UserAuthenticationScheme.getScheme(scheme);
@@ -426,7 +427,7 @@ public final class AppContext {
      * @param entityId entity identity
      * @return key exchange schemes allowed for a given entity
      */
-    public Set<KeyExchangeScheme> getAllowedKeyExchangeSchemes(final String entityId) {
+    public Set<KeyExchangeScheme> getAllowedKeyExchangeSchemes(final String entityId) throws ConfigurationException {
         final Set<KeyExchangeScheme> schemes = new HashSet<KeyExchangeScheme>();
         for (String scheme : prop.getSupportedKeyExchangeSchemes(entityId)) {
             final KeyExchangeScheme kxs = KeyExchangeScheme.getScheme(scheme);
@@ -442,14 +443,14 @@ public final class AppContext {
      * @param entityId entity identity
      * @return RSA key pair ID to be used for a given entity for RSA entity authentication
      */
-    public String getRsaKeyId(final String entityId) {
+    public String getRsaKeyId(final String entityId) throws ConfigurationException {
         return prop.getRsaKeyId(entityId);
     }
 
     /**
      * @return MSL encryption, HMAC, and wrapping keys
      */
-    public Triplet<SecretKey,SecretKey,SecretKey> getMslKeys() {
+    public Triplet<SecretKey,SecretKey,SecretKey> getMslKeys() throws ConfigurationException {
         final Triplet<String,String,String> mslKeys = prop.getMslKeys();
         return new Triplet<SecretKey,SecretKey,SecretKey>(
             new SecretKeySpec(SharedUtil.hexStringToByteArray(mslKeys.x), JcaAlgorithm.AES),
@@ -461,7 +462,7 @@ public final class AppContext {
     /**
      * @return service token encryption and HMAC keys for a given key set ID
      */
-    public Pair<SecretKey,SecretKey> getServiceTokenKeys(final String keySetId) {
+    public Pair<SecretKey,SecretKey> getServiceTokenKeys(final String keySetId) throws ConfigurationException {
         final Pair<String,String> keys = prop.getServiceTokenKeys(keySetId);
         return new Pair<SecretKey,SecretKey>(
             new SecretKeySpec(SharedUtil.hexStringToByteArray(keys.x), JcaAlgorithm.AES),
@@ -490,5 +491,13 @@ public final class AppContext {
      */
     public static void warning(final String msg) {
         System.err.println("WARNING: " + msg);
+    }
+
+    /**
+     * info logging
+     * @param message error message
+     */
+    public static void error(final String msg) {
+        System.err.println("ERROR: " + msg);
     }
 }

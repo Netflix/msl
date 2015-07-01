@@ -27,6 +27,7 @@ import com.netflix.msl.userauth.UserAuthenticationScheme;
 import com.netflix.msl.util.AuthenticationUtils;
 
 import mslcli.common.util.AppContext;
+import mslcli.common.util.ConfigurationException;
 
 /**
  * <p>
@@ -49,7 +50,7 @@ public class ServerAuthenticationUtils implements AuthenticationUtils {
      * 
      * @param serverId local server entity identity.
      */
-    public ServerAuthenticationUtils(final AppContext appCtx, final String serverId) {
+    public ServerAuthenticationUtils(final AppContext appCtx, final String serverId) throws ConfigurationException {
         if (appCtx == null) {
             throw new IllegalArgumentException("NULL app context");
         }
@@ -80,7 +81,11 @@ public class ServerAuthenticationUtils implements AuthenticationUtils {
         if (serverId.equals(identity)) {
             return allowedServerEntityAuthenticationSchemes.contains(scheme);
         } else {
-            return appCtx.getAllowedEntityAuthenticationSchemes(identity).contains(scheme);
+            try{
+                return appCtx.getAllowedEntityAuthenticationSchemes(identity).contains(scheme);
+            } catch (ConfigurationException e) {
+                throw new IllegalArgumentException("Invalid Entity Authentication Configuration for Entity " + identity, e);
+            }
         }
     }
 
@@ -93,7 +98,11 @@ public class ServerAuthenticationUtils implements AuthenticationUtils {
             appCtx.warning(String.format("server %s: supported user authentication scheme inquiry for itself", serverId));
             return false; // server has no local users to authenticate
        } else {
-            return appCtx.getAllowedUserAuthenticationSchemes(identity).contains(scheme);
+            try{
+                return appCtx.getAllowedUserAuthenticationSchemes(identity).contains(scheme);
+            } catch (ConfigurationException e) {
+                throw new IllegalArgumentException("Invalid User Authentication Configuration for User " + identity, e);
+            }
        }
     }
     
@@ -117,7 +126,11 @@ public class ServerAuthenticationUtils implements AuthenticationUtils {
             appCtx.warning(String.format("server %s: supported key exchange scheme inquiry for itself", serverId));
             return false; // server never initiates key exchange
         } else {
-            return appCtx.getAllowedKeyExchangeSchemes(identity).contains(scheme);
+            try{
+                return appCtx.getAllowedKeyExchangeSchemes(identity).contains(scheme);
+            } catch (ConfigurationException e) {
+                throw new IllegalArgumentException("Server Configuration Error", e);
+            }
         }
     }
     

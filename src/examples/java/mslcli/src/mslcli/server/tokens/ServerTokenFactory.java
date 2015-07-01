@@ -38,6 +38,7 @@ import com.netflix.msl.util.MslContext;
 
 import mslcli.common.tokens.SimpleUser;
 import mslcli.common.util.AppContext;
+import mslcli.common.util.ConfigurationException;
 import mslcli.common.util.SharedUtil;
 
 /**
@@ -58,7 +59,7 @@ public class ServerTokenFactory implements TokenFactory {
     /*
      * @param appCtx application context
      */
-    public ServerTokenFactory(final AppContext appCtx) {
+    public ServerTokenFactory(final AppContext appCtx) throws ConfigurationException {
         if (appCtx == null) {
             throw new IllegalArgumentException("NULL app context");
         }

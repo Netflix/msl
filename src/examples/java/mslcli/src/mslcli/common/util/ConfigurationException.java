@@ -16,7 +16,7 @@
 
 package mslcli.common.util;
 
-public class ConfigurationException extends IllegalArgumentException {
+public class ConfigurationException extends Exception {
     public ConfigurationException() {
         super();
     }

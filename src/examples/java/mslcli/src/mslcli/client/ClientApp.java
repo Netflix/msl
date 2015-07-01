@@ -19,6 +19,7 @@ package mslcli.client;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.URL;
 import java.security.Security;
 import java.util.ArrayList;
@@ -29,7 +30,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
+import com.netflix.msl.MslConstants.ResponseCode;
+import com.netflix.msl.MslError;
 import com.netflix.msl.MslException;
+import com.netflix.msl.MslKeyExchangeException;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.keyx.AsymmetricWrappedExchange;
 import com.netflix.msl.msg.ConsoleFilterStreamFactory;
@@ -74,12 +78,12 @@ public final class ClientApp {
 
     public enum Status {
         OK(0, "Success"),
-        ARG_ERROR(1, "Invalid Arguments"),
-        CFG_ERROR(2, "Configuration File Error"),
-        CLIENT_CFG_ERROR(3, "Client Configuration Error"),
-        CLIENT_EXE_ERROR(4, "Internal Execution Error"),
-        SERVER_COMM_ERROR(5, "Server Communication Error"),
-        SERVER_APP_ERROR(6, "Server MSL Error Reply");
+        ARG_ERROR    (1, "Invalid Arguments"),
+        CFG_ERROR    (2, "Configuration File Error"),
+        MSL_EXC_ERROR(3, "MSL Exception"),
+        MSL_ERROR    (4, "Server App Error Reply"),
+        COMM_ERROR   (5, "Server Communication Error"),
+        EXE_ERROR    (6, "Internal Execution Error");
 
         private final int code;
         private final String info;
@@ -102,60 +106,46 @@ public final class ClientApp {
     private String clientId = null;
 
     public static void main(String[] args) {
-        if (Arrays.asList(args).contains(CMD_HELP)) {
-            help();
-            exit(Status.OK);
-        }
-        if (args.length == 0) {
-            System.err.println("Use " + CMD_HELP + " for help");
-            exit(Status.ARG_ERROR);
-        }
-
-        CmdArguments cmdParam = null;
         try {
-            cmdParam = new CmdArguments(args);
-        } catch (IllegalCmdArgumentException e) {
-            System.err.println(e.getMessage());
-            exit(Status.ARG_ERROR);
-        } catch (Exception e) {
-            System.err.println(e.getMessage());
-            exit(Status.CLIENT_EXE_ERROR);
-        }
+            if (Arrays.asList(args).contains(CMD_HELP)) {
+                help();
+                exit(Status.OK);
+            }
+            if (args.length == 0) {
+                System.err.println("Use " + CMD_HELP + " for help");
+                exit(Status.ARG_ERROR);
+            }
+
+            final CmdArguments cmdParam = new CmdArguments(args);
         
-        ClientApp clientApp = null;
-        try {
-            clientApp = new ClientApp(cmdParam);
-        } catch (IllegalCmdArgumentException e) {
-            System.err.println(e.getMessage());
-            exit(Status.ARG_ERROR);
-        } catch (Exception e) {
-            System.err.println(e.getMessage());
-            exit(Status.CLIENT_EXE_ERROR);
-        }
+            final ClientApp clientApp = new ClientApp(cmdParam);
 
-        if (cmdParam.isInteractive()) {
-            try {
+            if (cmdParam.isInteractive()) {
                 clientApp.sendMultipleRequests();
                 exit(Status.OK);
-            } catch (Exception e) {
-                System.err.println(e.getMessage());
-                exit(Status.CLIENT_EXE_ERROR);
-            }
-        } else {
-            try {
+            } else {
                 Status status = clientApp.sendSingleRequest();
                 exit(status);
-            } catch (IllegalCmdArgumentException e) {
-                System.err.println(e.getMessage());
-                exit(Status.ARG_ERROR);
-            } catch (ConfigurationException e) {
-                System.err.println(e.getMessage());
-                exit(Status.CFG_ERROR);
-            } catch (Exception e) {
-                System.err.println(e.getMessage());
-                exit(Status.CLIENT_EXE_ERROR);
             }
+        } catch (ConfigurationException e) {
+            System.err.println(e.getMessage());
+            exit(Status.ARG_ERROR);
+        } catch (IllegalCmdArgumentException e) {
+            System.err.println(e.getMessage());
+            exit(Status.ARG_ERROR);
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+            exit(Status.EXE_ERROR);
+        } catch (RuntimeException e) {
+            System.err.println(e.getMessage());
+            exit(Status.EXE_ERROR);
         }
+    }
+
+    private static String getMslExceptionInfo(final MslException e) {
+        final MslError mslError = e.getError();
+        final ResponseCode respCode = mslError.getResponseCode();
+        return String.format("MslException: responseCode %d, Message %s", respCode, e.getMessage());
     }
 
     private static void exit(final Status status) {
@@ -163,7 +153,7 @@ public final class ClientApp {
         System.exit(status.code);
     }
 
-    private ClientApp(final CmdArguments cmdParam) throws Exception {
+    private ClientApp(final CmdArguments cmdParam) throws ConfigurationException, IllegalCmdArgumentException, IOException {
 
         // save command-line arguments
         this.cmdParam = cmdParam;
@@ -186,7 +176,7 @@ public final class ClientApp {
      * @throws IOException in case of user input reading error
      */
 
-    private void sendMultipleRequests() throws IOException {
+    private void sendMultipleRequests() throws IllegalCmdArgumentException, IOException {
         while (true) {
             final String options = SharedUtil.readInput(CMD_PROMPT);
             if (CMD_QUIT.equalsIgnoreCase(options)) {
@@ -206,8 +196,13 @@ public final class ClientApp {
                     final CmdArguments p = new CmdArguments(SharedUtil.split(options));
                     cmdParam.merge(p);
                 }
-                sendSingleRequest();
-            } catch (Exception e) {
+                final Status status = sendSingleRequest();
+                if (status != Status.OK) {
+                    System.out.println("Status: " + status.toString());
+                }
+            } catch (IllegalCmdArgumentException e) {
+                System.err.println(e.getMessage());
+            } catch (RuntimeException e) {
                 System.err.println(e.getMessage());
             }
         }
@@ -216,52 +211,46 @@ public final class ClientApp {
     /*
      * send single request
      */
-    private Status sendSingleRequest() throws Exception {
+    private Status sendSingleRequest() {
         Status status = Status.OK;
 
-        // set verbose mode
-        if (cmdParam.isVerbose()) {
-            appCtx.getMslControl().setFilterFactory(new ConsoleFilterStreamFactory());
-        }
-        System.out.println("Options: " + cmdParam.getParameters());
+        try {
+            // set verbose mode
+            if (cmdParam.isVerbose()) {
+                appCtx.getMslControl().setFilterFactory(new ConsoleFilterStreamFactory());
+            }
+            System.out.println("Options: " + cmdParam.getParameters());
 
-        // initialize Client for the first time or whenever its identity changes
-        if (!cmdParam.getEntityId().equals(clientId) || (client == null)) {
-            clientId = cmdParam.getEntityId();
-            client = null;
-            client = new Client(appCtx, clientId);
-        }
+            // initialize Client for the first time or whenever its identity changes
+            if (!cmdParam.getEntityId().equals(clientId) || (client == null)) {
+                clientId = cmdParam.getEntityId();
+                client = null; // required for keeping the state, in case the next line throws exception
+                client = new Client(appCtx, clientId);
+            }
 
-        client.setUserAuthenticationDataHandle(new AppUserAuthenticationDataHandle(cmdParam.getUserId(), mslProp));
+            client.setUserAuthenticationDataHandle(new AppUserAuthenticationDataHandle(cmdParam.getUserId(), mslProp));
 
-        // set message mslProperties
-        final MessageConfig mcfg = new MessageConfig();
-        mcfg.userId = cmdParam.getUserId();
-        mcfg.isEncrypted = cmdParam.isEncrypted();
-        mcfg.isIntegrityProtected = cmdParam.isIntegrityProtected();
-        mcfg.isNonReplayable = cmdParam.isNonReplayable();
+            // set message mslProperties
+            final MessageConfig mcfg = new MessageConfig();
+            mcfg.userId = cmdParam.getUserId();
+            mcfg.isEncrypted = cmdParam.isEncrypted();
+            mcfg.isIntegrityProtected = cmdParam.isIntegrityProtected();
+            mcfg.isNonReplayable = cmdParam.isNonReplayable();
 
-        // set key exchange scheme / mechanism
-        {
+            // set key exchange scheme / mechanism
             final String kx = cmdParam.getKeyExchangeScheme();
             if (kx != null) {
                 final String kxm = cmdParam.getKeyExchangeMechanism();
-                if (KX_AWE.equals(kx)) {
-                    if (kxm == null) {
-                        throw new IllegalCmdArgumentException("Missing Key Exchange Mechanism");
-                    }
-                }
                 client.setKeyRequestData(kx, kxm);
             }
-        }
 
-        // set request payload
-        byte[] requestPayload = null;
-        {
+            // set request payload
+            byte[] requestPayload = null;
             final String inputFile = cmdParam.getPayloadInputFile();
             requestPayload = cmdParam.getPayloadMessage();
             if (inputFile != null && requestPayload != null) {
-                throw new IllegalCmdArgumentException("Input File and Input Message cannot be both specified");
+                appCtx.error("Input File and Input Message cannot be both specified");
+                return Status.ARG_ERROR;
             }
             if (inputFile != null) {
                 requestPayload = SharedUtil.readFromFile(inputFile);
@@ -270,13 +259,10 @@ public final class ClientApp {
                     requestPayload = new byte[0];
                 }
             }
-        }
 
-        final String outputFile = cmdParam.getPayloadOutputFile();
-
-        // send request and process response
-        final URL url = cmdParam.getUrl();
-        try {
+            // send request and process response
+            final String outputFile = cmdParam.getPayloadOutputFile();
+            final URL url = cmdParam.getUrl();
             final Client.Response response = client.sendRequest(requestPayload, mcfg, url);
             // Non-NULL response payload - good
             if (response.getPayload() != null) {
@@ -293,15 +279,39 @@ public final class ClientApp {
                 } else {
                     System.err.println(String.format("ERROR: %s" + response.getErrorHeader().toJSONString()));
                 }
-                status = Status.SERVER_APP_ERROR;
+                status = Status.MSL_ERROR;
             } else {
                 System.out.println("Response with no payload or error header ???");
-                status = Status.SERVER_APP_ERROR;
+                status = Status.MSL_ERROR;
             }
-        } catch (Exception e) {
+        } catch (MslException e) {
+            System.err.println(getMslExceptionInfo(e));
+            return Status.MSL_EXC_ERROR;
+        } catch (ConfigurationException e) {
+            System.err.println("Error: " + e.getMessage());
+            return Status.CFG_ERROR;
+        } catch (IllegalCmdArgumentException e) {
+            System.err.println("Error: " + e.getMessage());
+            return Status.ARG_ERROR;
+        } catch (ConnectException e) {
+            System.err.println("Error: " + e.getMessage());
+            return Status.COMM_ERROR;
+        } catch (ExecutionException e) {
             System.err.println("Error: " + e.getMessage());
             SharedUtil.getRootCause(e).printStackTrace(System.err);
-            throw e;
+            return Status.EXE_ERROR;
+        } catch (IOException e) {
+            System.err.println("Error: " + e.getMessage());
+            SharedUtil.getRootCause(e).printStackTrace(System.err);
+            return Status.EXE_ERROR;
+        } catch (InterruptedException e) {
+            System.err.println("Error: " + e.getMessage());
+            SharedUtil.getRootCause(e).printStackTrace(System.err);
+            return Status.EXE_ERROR;
+        } catch (RuntimeException e) {
+            System.err.println("Error: " + e.getMessage());
+            SharedUtil.getRootCause(e).printStackTrace(System.err);
+            return Status.EXE_ERROR;
         }
 
         return status;
@@ -332,8 +342,12 @@ public final class ClientApp {
         public UserAuthenticationData getUserAuthenticationData() {
             System.out.println("UserAuthentication Data requested");
             if (userId != null) {
-                final Pair<String,String> ep = mslProp.getEmailPassword(userId);
-                return new EmailPasswordAuthenticationData(ep.x, ep.y);
+                try {
+                    final Pair<String,String> ep = mslProp.getEmailPassword(userId);
+                    return new EmailPasswordAuthenticationData(ep.x, ep.y);
+                } catch (ConfigurationException e) {
+                    throw new IllegalArgumentException("Invalid Email-Password Configuration for User " + userId);
+                }
             } else {
                 return null;
             }

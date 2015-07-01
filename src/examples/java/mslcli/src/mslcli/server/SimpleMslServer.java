@@ -47,8 +47,9 @@ import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslStore;
 
 import mslcli.common.Pair;
-import mslcli.common.util.MslProperties;
 import mslcli.common.util.AppContext;
+import mslcli.common.util.ConfigurationException;
+import mslcli.common.util.MslProperties;
 import mslcli.common.util.SharedUtil;
 import mslcli.server.msg.ServerReceiveMessageContext;
 import mslcli.server.msg.ServerRespondMessageContext;
@@ -77,7 +78,7 @@ public class SimpleMslServer {
      * <p>Create a new server instance and initialize its state.
      * </p>
      */
-    public SimpleMslServer(final MslProperties prop) {
+    public SimpleMslServer(final MslProperties prop) throws ConfigurationException {
         if (prop == null) {
             throw new IllegalArgumentException("NULL MslProperties");
         }

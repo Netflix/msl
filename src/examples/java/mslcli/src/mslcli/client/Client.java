@@ -28,6 +28,7 @@ import javax.crypto.interfaces.DHPrivateKey;
 import javax.crypto.interfaces.DHPublicKey;
 
 import com.netflix.msl.MslException;
+import com.netflix.msl.MslKeyExchangeException;
 import com.netflix.msl.entityauth.PresharedKeyStore;
 import com.netflix.msl.entityauth.RsaStore;
 import com.netflix.msl.keyx.AsymmetricWrappedExchange;
@@ -52,6 +53,7 @@ import mslcli.client.util.UserAuthenticationDataHandle;
 import mslcli.client.util.ClientMslContext;
 
 import mslcli.common.util.AppContext;
+import mslcli.common.util.ConfigurationException;
 import mslcli.common.util.SharedUtil;
 
 import static mslcli.client.CmdArguments.*;
@@ -91,7 +93,7 @@ public final class Client {
      * @param appCtx application context
      * @param clientId client entity identity
      */
-    public Client(final AppContext appCtx, final String clientId) {
+    public Client(final AppContext appCtx, final String clientId) throws ConfigurationException {
         if (appCtx == null) {
             throw new IllegalArgumentException("NULL app context");
         }
@@ -161,7 +163,7 @@ public final class Client {
      * @param kxType key exchange type
      * @param mechanism key exchange mechanism (optional) required for some key exchange types
      */
-    public void setKeyRequestData(final String kxType, final String mechanism) throws MslException, IOException {
+    public void setKeyRequestData(final String kxType, final String mechanism) throws ConfigurationException, IllegalCmdArgumentException, MslKeyExchangeException {
         if (kxType == null) {
             throw new IllegalArgumentException("NULL Key Exchange Type");
         }

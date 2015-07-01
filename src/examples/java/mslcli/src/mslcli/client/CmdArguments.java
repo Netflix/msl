@@ -85,7 +85,7 @@ public final class CmdArguments {
 
     private final Map<String,String> argMap;
 
-    public CmdArguments(final String[] args) {
+    public CmdArguments(final String[] args) throws IllegalCmdArgumentException {
         if (args == null) {
             throw new IllegalCmdArgumentException("NULL args");
         }
@@ -129,9 +129,9 @@ public final class CmdArguments {
         return Collections.unmodifiableMap(argMap);
     }
 
-    public void merge(CmdArguments other) {
+    public void merge(CmdArguments other) throws IllegalCmdArgumentException {
         if (other == null) {
-            throw new IllegalCmdArgumentException("NULL CmdArguments argument");
+            throw new IllegalArgumentException("NULL CmdArguments argument");
         }
         if (other.argMap.containsKey(P_CFG)) {
             throw new IllegalCmdArgumentException("Cannot reset Configuration File");
@@ -158,8 +158,8 @@ public final class CmdArguments {
     /**
      * @return remote URL - must exist
      */
-    public URL getUrl() {
-        final String url = getValue(P_URL);
+    public URL getUrl() throws IllegalCmdArgumentException {
+        final String url = getRequiredValue(P_URL);
         try {
             return new URL(url);
         } catch (MalformedURLException e) {
@@ -170,8 +170,8 @@ public final class CmdArguments {
     /**
      * @return configuration file path - must exist and be a regular file
      */
-    public String getConfigFilePath() {
-        final String file = getValue(P_CFG);
+    public String getConfigFilePath() throws IllegalCmdArgumentException {
+        final String file = getRequiredValue(P_CFG);
         final File f = new File(file);
         if (f.isFile()) {
             return file;
@@ -183,7 +183,7 @@ public final class CmdArguments {
     /**
      * @return file path to read request payload from. Must exist and be a regular file.
      */
-    public String getPayloadInputFile() {
+    public String getPayloadInputFile() throws IllegalCmdArgumentException {
         final String file = argMap.get(P_IF);
         if (file == null) {
             return null;
@@ -199,7 +199,7 @@ public final class CmdArguments {
     /**
      * @return file path to write response payload to
      */
-    public String getPayloadOutputFile() {
+    public String getPayloadOutputFile() throws IllegalCmdArgumentException {
         final String file = argMap.get(P_OF);
         if (file == null) {
             return null;
@@ -223,8 +223,8 @@ public final class CmdArguments {
     /**
      * @return entityId - must be initialized
      */
-    public String getEntityId() {
-        return getValue(P_EID);
+    public String getEntityId() throws IllegalCmdArgumentException {
+        return getRequiredValue(P_EID);
     }
 
     /**
@@ -281,7 +281,7 @@ public final class CmdArguments {
         return (s != null) ? Boolean.parseBoolean(s) : def;
     }
 
-    private String getValue(final String name) {
+    private String getRequiredValue(final String name) throws IllegalCmdArgumentException {
         final String s = argMap.get(name);
         if (s != null) {
             return s;

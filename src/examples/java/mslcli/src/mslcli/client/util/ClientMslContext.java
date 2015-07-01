@@ -56,6 +56,7 @@ import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslStore;
 
 import mslcli.common.util.AppContext;
+import mslcli.common.util.ConfigurationException;
 
 /**
  * <p>The sample client MSL context for clients talking to trusted network servers.</p>
@@ -71,8 +72,8 @@ public final class ClientMslContext implements MslContext {
      * @param appCtx application context
      * @param clientId local client entity identity.
      */
-    public ClientMslContext(final AppContext appCtx,
-                            final String clientId)
+    public ClientMslContext(final AppContext appCtx, final String clientId)
+        throws ConfigurationException
     {
         if (appCtx == null) {
             throw new IllegalArgumentException("NULL AppContext");

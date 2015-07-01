@@ -27,6 +27,7 @@ import com.netflix.msl.userauth.UserAuthenticationScheme;
 import com.netflix.msl.util.AuthenticationUtils;
 
 import mslcli.common.util.AppContext;
+import mslcli.common.util.ConfigurationException;
 
 /**
  * <p>
@@ -50,7 +51,7 @@ public class ClientAuthenticationUtils implements AuthenticationUtils {
      * 
      * @param clientId local client entity identity.
      */
-    public ClientAuthenticationUtils(final String clientId, final AppContext appCtx) {
+    public ClientAuthenticationUtils(final String clientId, final AppContext appCtx) throws ConfigurationException {
         if (clientId == null || clientId.isEmpty()) {
             throw new IllegalArgumentException("NULL clientId");
         }
@@ -88,7 +89,11 @@ public class ClientAuthenticationUtils implements AuthenticationUtils {
         if (clientId.equals(identity)) {
             return allowedClientEntityAuthenticationSchemes.contains(scheme);
         } else {
-            return appCtx.getAllowedEntityAuthenticationSchemes(identity).contains(scheme);
+            try {
+                return appCtx.getAllowedEntityAuthenticationSchemes(identity).contains(scheme);
+            } catch (ConfigurationException e) {
+                throw new IllegalArgumentException("Invalid Entity Authentication Configuration For Entity " + identity, e);
+            }
         }
     }
 

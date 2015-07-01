@@ -40,7 +40,6 @@ public final class MslProperties {
    */
     private static final String APP_CTRL_NUM_THR      = "app.mslctrl.nthr";
     private static final String APP_SERVER_PORT       = "app.server.port";
-    private static final String APP_CLIENT_ID         = "app.client.id";
     private static final String APP_SERVER_ID         = "app.server.id";
     private static final String APP_DEBUG_FLAG        = "app.debug";
     private static final String APP_MSL_STORE_PATH    = "app.msl.store";
@@ -105,9 +104,9 @@ public final class MslProperties {
      * @param properties provided in app-specific way
      * @return singleton instance of MslProperties
      */
-    public static MslProperties getInstance(final Properties p) throws Exception {
+    public static MslProperties getInstance(final Properties p) {
         if (p == null) {
-            throw new ConfigurationException("NULL Properties");
+            throw new IllegalArgumentException("NULL Properties");
         }
         return new MslProperties(p);
     }
@@ -124,7 +123,7 @@ public final class MslProperties {
      * @param entityId entity identity
      * @return names of entity authentication schemes supported by given entity
      */
-    public Set<String> getSupportedEntityAuthenticationSchemes(final String entityId) {
+    public Set<String> getSupportedEntityAuthenticationSchemes(final String entityId) throws ConfigurationException {
         return split(getWildcharProperty(ENTITY_AUTH_SCHEMES, entityId));
     }
 
@@ -132,7 +131,7 @@ public final class MslProperties {
      * @param entityId entity identity
      * @return names of entity authentication schemes supported by given entity
      */
-    public Set<String> getSupportedUserAuthenticationSchemes(final String entityId) {
+    public Set<String> getSupportedUserAuthenticationSchemes(final String entityId) throws ConfigurationException {
         return split(getWildcharProperty(ENTITY_UAUTH_SCHEMES, entityId));
     }
 
@@ -140,7 +139,7 @@ public final class MslProperties {
      * @param entityId entity identity
      * @return names of key exchange schemes supported by given entity
      */
-    public Set<String> getSupportedKeyExchangeSchemes(final String entityId) {
+    public Set<String> getSupportedKeyExchangeSchemes(final String entityId) throws ConfigurationException {
         return split(getWildcharProperty(ENTITY_KX_SCHEMES, entityId));
     }
 
@@ -150,7 +149,7 @@ public final class MslProperties {
      * @param userId user identity
      * @return names of key exchange scheme supported by given entity
      */
-    public Set<String> getSupportedKeyExchangeSchemes(final String entityId, final String userId) {
+    public Set<String> getSupportedKeyExchangeSchemes(final String entityId, final String userId) throws ConfigurationException {
         return getSupportedKeyExchangeSchemes(entityId);
     }
 
@@ -158,14 +157,14 @@ public final class MslProperties {
      * @param entityId entity identity
      * @return ID of Diffie-Hellman parameters to be used by given entity
      */
-    public String getEntityDiffieHellmanParametersId(final String entityId) {
+    public String getEntityDiffieHellmanParametersId(final String entityId) throws ConfigurationException {
         return getRequiredProperty(ENTITY_DH_ID + entityId);
     }
 
     /**
      * @return mappings between entity identity and { encryption, hmac, wrapping} hex-encoded pre-shared keys triplet
      */
-    public Map<String,Triplet<String,String,String>> getPresharedKeyStore() {
+    public Map<String,Triplet<String,String,String>> getPresharedKeyStore() throws ConfigurationException {
         final int numPSK = getCountProperty(ENTITY_PSK_NUM);
         final Map<String,Triplet<String,String,String>> keys = new HashMap<String,Triplet<String,String,String>>(numPSK);
         for (int i = 0; i < numPSK; i++) {
@@ -182,7 +181,7 @@ public final class MslProperties {
      * @param entity identity
      * @return ID of the { encryption, hmac } key set to be used by this entity for issuing service tokens
      */
-    public String getServiceTokenKeySetId(final String entityId) {
+    public String getServiceTokenKeySetId(final String entityId) throws ConfigurationException {
         return getRequiredProperty(ENTITY_STOKEN_KEY_ID + entityId);
     }
 
@@ -190,7 +189,7 @@ public final class MslProperties {
      * @param entityId entity identity, owner of RSA key pair used for RSA entity authentication
      * @return ID of the RSA key pair to be used for specified entity's authentication
      */
-    public String getRsaKeyId(final String entityId) {
+    public String getRsaKeyId(final String entityId) throws ConfigurationException {
         return getWildcharProperty(ENTITY_RSA_KEY_ID, entityId);
     }
 
@@ -202,9 +201,9 @@ public final class MslProperties {
      * @param userId user id, corresponding to local user account of some kind. Has no meaning outside local context.
      * @return ( email,password ) tuple for a given user ID
      */
-    public Pair<String,String> getEmailPassword(final String userId) {
+    public Pair<String,String> getEmailPassword(final String userId) throws ConfigurationException {
         if (userId == null || userId.trim().isEmpty()) {
-            throw new ConfigurationException("Undefined userId");
+            throw new IllegalArgumentException("Undefined userId");
         }
         final int num = getCountProperty(USER_EP_NUM);
         for (int i = 0; i < num; i++) {
@@ -219,7 +218,7 @@ public final class MslProperties {
     /**
      * @return mappings between user email and user password
      */
-    public Map<String,String> getEmailPasswordStore() {
+    public Map<String,String> getEmailPasswordStore() throws ConfigurationException {
         final int num = getCountProperty(USER_EP_NUM);
         final Map<String,String> emailPwd = new HashMap<String,String>(num);
         for (int i = 0; i < num; i++) {
@@ -235,7 +234,7 @@ public final class MslProperties {
     /**
      * @return MSL {encryption, HMAC, and wrapping} keys triplet.
      */
-    public Triplet<String,String,String> getMslKeys() {
+    public Triplet<String,String,String> getMslKeys() throws ConfigurationException {
         return new Triplet<String,String,String>(
             getRequiredProperty(MSL_KEY_ENC),
             getRequiredProperty(MSL_KEY_HMAC),
@@ -246,7 +245,7 @@ public final class MslProperties {
     /**
      * @return mappings between RSA key pair ID and { public, private } RSA key pair tuples
      */
-    public Map<String,Pair<String,String>> getRsaKeyStore() {
+    public Map<String,Pair<String,String>> getRsaKeyStore() throws ConfigurationException {
         final int numRSA = getCountProperty(MSL_RSA_NUM);
         final Map<String,Pair<String,String>> keys = new HashMap<String,Pair<String,String>>(numRSA);
         for (int i = 0; i < numRSA; i++) {
@@ -260,7 +259,7 @@ public final class MslProperties {
     /**
      * @return mappings between Diffie-Hellman parameters ID and actual Diffie-Hellman {P,G) parameters
      */
-    public Map<String,Pair<String,String>> getDHParameterStore() {
+    public Map<String,Pair<String,String>> getDHParameterStore() throws ConfigurationException {
         final int num = getCountProperty(MSL_DH_NUM);
         final Map<String,Pair<String,String>> dhParams = new HashMap<String,Pair<String,String>>(num);
         for (int i = 0; i < num; i++) {
@@ -275,28 +274,28 @@ public final class MslProperties {
      * @param keyId ID of the { encryption, hmac } key pair used for service token issuing
      * @return { encryption, hmac } key pair
      */
-    public Pair<String,String> getServiceTokenKeys(final String keyId) {
+    public Pair<String,String> getServiceTokenKeys(final String keyId) throws ConfigurationException {
         return new Pair<String,String>(getRequiredProperty(MSL_STOKEN_KEY_ENC + keyId), getRequiredProperty(MSL_STOKEN_KEY_HMAC + keyId));
     }
 
     /**
      * @return Master Token renewal offset in milliseconds
      */
-    public int getMasterTokenRenewalOffset() {
+    public int getMasterTokenRenewalOffset() throws ConfigurationException {
         return getCountProperty(MSL_MTOKEN_RENEWAL_OFFSET);
     }
 
     /**
      * @return Master Token expiration offset in milliseconds
      */
-    public int getMasterTokenExpirationOffset() {
+    public int getMasterTokenExpirationOffset() throws ConfigurationException {
         return getCountProperty(MSL_MTOKEN_RENEWAL_OFFSET);
     }
 
     /**
      * @return Master Token non-replay ID window
      */
-    public int getMasterTokenNonReplayIdWindow() {
+    public int getMasterTokenNonReplayIdWindow() throws ConfigurationException {
         return getCountProperty(MSL_MTOKEN_NON_REPLAY_ID_WINDOW);
     }
 
@@ -307,28 +306,21 @@ public final class MslProperties {
     /**
      * @return number of threads configured for "this" MslControl
      */
-    public int getNumMslControlThreads() {
+    public int getNumMslControlThreads() throws ConfigurationException {
         return getCountProperty(APP_CTRL_NUM_THR);
     }
 
     /**
      * @return IP port to be used by "this" MSL server for listenning to incoming MSL messages
      */
-    public int getServerPort() {
+    public int getServerPort() throws ConfigurationException {
         return getCountProperty(APP_SERVER_PORT);
-    }
-
-    /**
-     * @return "this" client id
-     */
-    public String getClientId() {
-        return getRequiredProperty(APP_CLIENT_ID);
     }
 
     /**
      * @return "this" server id
      */
-    public String getServerId() {
+    public String getServerId() throws ConfigurationException {
         return getRequiredProperty(APP_SERVER_ID);
     }
 
@@ -343,9 +335,9 @@ public final class MslProperties {
     /**
      * @return MSL Store file path
      */
-    public String getMslStorePath(final String appId) {
+    public String getMslStorePath(final String appId) throws ConfigurationException {
         if (appId == null || appId.isEmpty()) {
-            throw new ConfigurationException("Missing app ID");
+            throw new IllegalArgumentException("Missing app ID");
         }
         return getRequiredProperty(APP_MSL_STORE_PATH).replace(APP_ID_TOKEN, appId);
     }
@@ -355,7 +347,7 @@ public final class MslProperties {
      ******************/
 
     // return mandatory non-negative integer property
-    private int getCountProperty(final String name) {
+    private int getCountProperty(final String name) throws ConfigurationException {
         final String s = getRequiredProperty(name);
         final int num = Integer.parseInt(s);
         if (num < 0) {
@@ -365,7 +357,7 @@ public final class MslProperties {
     }
 
     // return mandatory property
-    private String getRequiredProperty(final String name) {
+    private String getRequiredProperty(final String name) throws ConfigurationException {
         final String s = p.getProperty(name);
         if (s == null) {
             throw new ConfigurationException("Missing Property " + name);
@@ -374,7 +366,7 @@ public final class MslProperties {
     }
 
     // get property with the name that can have ".*" at the end to indicate "any" id
-    private String getWildcharProperty(final String prefix, String id) {
+    private String getWildcharProperty(final String prefix, String id) throws ConfigurationException {
         String s = p.getProperty(prefix + id);
         if (s == null) {
             s = p.getProperty(prefix + ANY);
