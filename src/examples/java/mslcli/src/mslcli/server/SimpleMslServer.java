@@ -132,7 +132,7 @@ public class SimpleMslServer {
                 throw new IOException("ExecutionException", e);
             }
         } catch (InterruptedException e) {
-            throw new IOException("ExecutionException", e);
+            throw new IOException("InterruptedException", e);
         }
 
         if (requestInputStream == null) {

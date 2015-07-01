@@ -28,7 +28,6 @@ import com.netflix.msl.util.AuthenticationUtils;
 
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
-import mslcli.common.util.ConfigurationRuntimeException;
 
 /**
  * <p>
@@ -90,7 +89,8 @@ public class ServerAuthenticationUtils implements AuthenticationUtils {
             try{
                 return appCtx.getAllowedEntityAuthenticationSchemes(identity).contains(scheme);
             } catch (ConfigurationException e) {
-                throw new ConfigurationRuntimeException(e);
+                appCtx.warning(String.format("Entity %s: no entity authentication schemes configured", identity));
+                return false;
             }
         }
     }
@@ -107,7 +107,8 @@ public class ServerAuthenticationUtils implements AuthenticationUtils {
             try{
                 return appCtx.getAllowedUserAuthenticationSchemes(identity).contains(scheme);
             } catch (ConfigurationException e) {
-                throw new ConfigurationRuntimeException(e);
+                appCtx.warning(String.format("Entity %s: no user authentication schemes configured", identity));
+                return false;
             }
        }
     }
@@ -135,7 +136,8 @@ public class ServerAuthenticationUtils implements AuthenticationUtils {
             try{
                 return appCtx.getAllowedKeyExchangeSchemes(identity).contains(scheme);
             } catch (ConfigurationException e) {
-                throw new ConfigurationRuntimeException(e);
+                appCtx.warning(String.format("Entity %s: no key exchange schemes configured", identity));
+                return false;
             }
         }
     }
