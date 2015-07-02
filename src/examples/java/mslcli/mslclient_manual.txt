@@ -27,7 +27,7 @@ OPTIONS
 		must be set from the command line.
 
 		In interactive mode the configuration is first populated from the command-line arguments.
-		Then a user is repetitively presented with the "cmd>" prompt, from which parameters can
+		Then a user is repetitively presented with the "args>" prompt, from which parameters can
 		be entered to alter the existing configuration, by deleting, adding, or changing, the
 		existing options, following the exact same syntax as in the command-line arguments.
 		Pressing ENTER upon completion of parameters entry results in sending a message to the
@@ -57,7 +57,7 @@ OPTIONS
 		sw - for Symmetric Wrapped key exchange
 		aw - for Asymmetric Wrapped key exchange
 		jwe - for JSON Web Encryption Ladder Key Exchange
-		jwl - for JSON Web Key Ladder Key Exchange
+		jwk - for JSON Web Key Ladder Key Exchange
 
 	-kxm <supported-key-exchange-mechanism>
 		Only applicable if Asymmetric Wrapped Key Exchange scheme is specified with -kx option.
@@ -94,16 +94,16 @@ OPTIONS
 
 	-help
 		Printing help to stdout. Must be specified as a stand-alone command-line option or at
-		the "cmd>" prompt in interactive mode. Any other options will be ignored and no message
+		the "args>" prompt in interactive mode. Any other options will be ignored and no message
 	 	will be sent.
 
 	-list
 		Interactive mode only. List currently selected options. Must be specified as a
-		stand-alone option at the "cmd>" prompt. Any other options will be ignored and no
+		stand-alone option at the "args>" prompt. Any other options will be ignored and no
 		message will be sent.
 
-	-q
-		Interactive mode only. Entered from the "cmd>" prompt to quit mslclient program.
+	-quit
+		Interactive mode only. Entered from the "args>" prompt to quit mslclient program.
 
 ENVIRONMENT
 	No environment variables are required.
