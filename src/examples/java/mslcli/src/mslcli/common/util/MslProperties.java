@@ -290,7 +290,7 @@ public final class MslProperties {
      * @return Master Token expiration offset in milliseconds
      */
     public int getMasterTokenExpirationOffset() throws ConfigurationException {
-        return getCountProperty(MSL_MTOKEN_RENEWAL_OFFSET);
+        return getCountProperty(MSL_MTOKEN_EXPIRATION_OFFSET);
     }
 
     /**
