@@ -432,6 +432,25 @@ public final class ClientApp {
             return super.getUserIdToken(userId);
         }
 
+        @Override
+        public void addServiceTokens(final Set<ServiceToken> tokens) throws MslException {
+            if (tokens != null && !tokens.isEmpty()) {
+                final StringBuilder sb = new StringBuilder();
+                for (ServiceToken st : tokens) {
+                    sb.append(SharedUtil.getServiceTokenInfo(st)).append("\n");
+                }
+                appCtx.info("MslStore: Adding Service Tokens\n" + sb.toString());
+            }
+            super.addServiceTokens(tokens);
+        }
+
+        @Override
+        public void removeServiceTokens(final String name, final MasterToken masterToken, final UserIdToken userIdToken) throws MslException {
+            appCtx.info(String.format("MslStore: Removing Service Tokens %s for %s %s", name,
+                SharedUtil.getMasterTokenInfo(masterToken), SharedUtil.getUserIdTokenInfo(userIdToken)));
+            super.removeServiceTokens(name, masterToken, userIdToken);
+        }
+
         private final AppContext appCtx;
     }
 

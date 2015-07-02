@@ -20,8 +20,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.Security;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -42,7 +46,10 @@ import com.netflix.msl.msg.MessageContext;
 import com.netflix.msl.msg.MessageInputStream;
 import com.netflix.msl.msg.MslControl;
 import com.netflix.msl.msg.MslControl.MslChannel;
+import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.MslUser;
+import com.netflix.msl.tokens.ServiceToken;
+import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.userauth.EmailPasswordStore;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslStore;
@@ -52,9 +59,11 @@ import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
 import mslcli.common.util.ConfigurationRuntimeException;
 import mslcli.common.util.MslProperties;
+import mslcli.common.util.MslStoreWrapper;
 import mslcli.common.util.SharedUtil;
 import mslcli.server.msg.ServerReceiveMessageContext;
 import mslcli.server.msg.ServerRespondMessageContext;
+import mslcli.server.msg.ServerRespondMessageContext.Token;
 import mslcli.server.util.ServerMslContext;
 
 /**
@@ -86,6 +95,7 @@ public class SimpleMslServer {
         }
 
         this.appCtx = AppContext.getInstance(prop, prop.getServerId());
+        this.appCtx.setMslStoreWrapper(new AppMslStoreWrapper(appCtx));
 
         // Create the MSL control.
         this.mslCtrl = appCtx.getMslControl();
@@ -152,7 +162,12 @@ public class SimpleMslServer {
         final byte[] request = SharedUtil.readIntoArray(requestInputStream);
 
         //  Set up the respond MSL message context. Echo back the initial request.
-        final MessageContext responseMsgCtx = new ServerRespondMessageContext(clientId, true, new String(request, MslConstants.DEFAULT_CHARSET));
+        Set<Token> tokens = new HashSet<Token>();
+        tokens.addAll(Arrays.asList(
+            new Token("st_name1", "st_data1", true, true),
+            new Token("st_name2", "st_data2", true, true)
+        ));
+        final MessageContext responseMsgCtx = new ServerRespondMessageContext(clientId, true, new String(request, MslConstants.DEFAULT_CHARSET), tokens, cryptoContexts);
 
         // Send response. We don't need the MslChannel because we are not
         // opening a persistent channel.
@@ -173,6 +188,82 @@ public class SimpleMslServer {
         } catch (InterruptedException e) {
             throw new IOException("ExecutionException", e);
         }
+    }
+
+    /*
+     * This is a class to serve as an interceptor to all MslStore calls.
+     * It can override only the methods in MslStore the app cares about.
+     * This sample implementation just prints out the information about
+     * calling some selected MslStore methods.
+     */
+    private static final class AppMslStoreWrapper extends MslStoreWrapper {
+        private AppMslStoreWrapper(final AppContext appCtx) {
+            if (appCtx == null) {
+                throw new IllegalArgumentException("NULL app context");
+            }
+            this.appCtx = appCtx;
+        }
+
+        @Override
+        public void setCryptoContext(final MasterToken masterToken, final ICryptoContext cryptoContext) {
+            if (masterToken == null) {
+                appCtx.info("MslStore: setting crypto context with NULL MasterToken???");
+            } else {
+                appCtx.info(String.format("MslStore: %s %s\n",
+                    (cryptoContext != null)? "Adding" : "Removing", SharedUtil.getMasterTokenInfo(masterToken)));
+            }
+            super.setCryptoContext(masterToken, cryptoContext);
+        }
+
+        @Override
+        public void removeCryptoContext(final MasterToken masterToken) {
+            appCtx.info("MslStore: Removing Crypto Context for " + SharedUtil.getMasterTokenInfo(masterToken));
+            super.removeCryptoContext(masterToken);
+        }
+
+        @Override
+        public void clearCryptoContexts() {
+            appCtx.info("MslStore: Clear Crypto Contexts");
+            super.clearCryptoContexts();
+        }
+
+        @Override
+        public void addUserIdToken(final String userId, final UserIdToken userIdToken) throws MslException {
+            appCtx.info(String.format("MslStore: Adding %s for userId %s", SharedUtil.getUserIdTokenInfo(userIdToken), userId));
+            super.addUserIdToken(userId, userIdToken);
+        }
+        @Override
+        public void removeUserIdToken(final UserIdToken userIdToken) {
+            appCtx.info("MslStore: Removing " + SharedUtil.getUserIdTokenInfo(userIdToken));
+            super.removeUserIdToken(userIdToken);
+        }
+
+        @Override
+        public UserIdToken getUserIdToken(final String userId) {
+            appCtx.info("MslStore: Getting UserIdToken for user ID " + userId);
+            return super.getUserIdToken(userId);
+        }
+
+        @Override
+        public void addServiceTokens(final Set<ServiceToken> tokens) throws MslException {
+            if (tokens != null && !tokens.isEmpty()) {
+                final StringBuilder sb = new StringBuilder();
+                for (ServiceToken st : tokens) {
+                    sb.append(SharedUtil.getServiceTokenInfo(st)).append("\n");
+                }
+                appCtx.info("MslStore: Adding Service Tokens " + sb.toString());
+            }
+            super.addServiceTokens(tokens);
+        }
+
+        @Override
+        public void removeServiceTokens(final String name, final MasterToken masterToken, final UserIdToken userIdToken) throws MslException {
+            appCtx.info(String.format("MslStore: Removing Service Tokens %s for %s %s", name,
+                SharedUtil.getMasterTokenInfo(masterToken), SharedUtil.getUserIdTokenInfo(userIdToken)));
+            super.removeServiceTokens(name, masterToken, userIdToken);
+        }
+
+        private final AppContext appCtx;
     }
     
     /** application context. */

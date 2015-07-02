@@ -35,6 +35,7 @@ import com.netflix.msl.MslConstants.ResponseCode;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslException;
 import com.netflix.msl.tokens.MasterToken;
+import com.netflix.msl.tokens.ServiceToken;
 import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.util.MslStore;
 
@@ -84,6 +85,20 @@ public final class SharedUtil {
             userIdToken.getMasterTokenSerialNumber(),
             t_rnw,
             t_exp);
+    }
+
+    /**
+     * extract useful info from ServiceToken
+     *
+     * @param serviceToken service token, can be null
+     * @return partial service token info as a string, or null if serviceToken is null
+     */
+    public static final String getServiceTokenInfo(final ServiceToken serviceToken) {
+        if (serviceToken == null) {
+            return null;
+        }
+        return String.format("ServiceToken{name %s, mt_ser_num %d, ut_ser_num %d, enc %b}",
+            serviceToken.getName(), serviceToken.getMasterTokenSerialNumber(), serviceToken.getUserIdTokenSerialNumber(), serviceToken.isEncrypted());
     }
 
     /**
