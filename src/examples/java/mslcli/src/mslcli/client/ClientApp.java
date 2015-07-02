@@ -18,6 +18,7 @@ package mslcli.client;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
+import java.io.Console;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.URL;
@@ -228,7 +229,7 @@ public final class ClientApp {
                 client = new Client(appCtx, clientId);
             }
 
-            client.setUserAuthenticationDataHandle(new AppUserAuthenticationDataHandle(cmdParam.getUserId(), mslProp));
+            client.setUserAuthenticationDataHandle(new AppUserAuthenticationDataHandle(cmdParam.getUserId(), mslProp, cmdParam.isInteractive()));
 
             // set message mslProperties
             final MessageConfig mcfg = new MessageConfig();
@@ -339,9 +340,10 @@ public final class ClientApp {
      * Other implementations may prompt users to enter their credentials from the console.
      */
     private static final class AppUserAuthenticationDataHandle implements UserAuthenticationDataHandle {
-        AppUserAuthenticationDataHandle(final String userId, final MslProperties mslProp) {
+        AppUserAuthenticationDataHandle(final String userId, final MslProperties mslProp, final boolean interactive) {
             this.userId = userId;
             this.mslProp = mslProp;
+            this.interactive = interactive;
         }
 
         @Override
@@ -352,7 +354,18 @@ public final class ClientApp {
                     final Pair<String,String> ep = mslProp.getEmailPassword(userId);
                     return new EmailPasswordAuthenticationData(ep.x, ep.y);
                 } catch (ConfigurationException e) {
-                    throw new IllegalArgumentException("Invalid Email-Password Configuration for User " + userId);
+                    if (interactive) {
+                        final Console cons = System.console();
+                        if (cons != null) {
+                            final String email = cons.readLine("Email> ");
+                            final char[] pwd = cons.readPassword("Password> ");
+                            return new EmailPasswordAuthenticationData(email, new String(pwd));
+                        } else {
+                            throw new IllegalArgumentException("Invalid Email-Password Configuration for User " + userId);
+                        }
+                    } else {
+                        throw new IllegalArgumentException("Invalid Email-Password Configuration for User " + userId);
+                    }
                 }
             } else {
                 return null;
@@ -361,6 +374,7 @@ public final class ClientApp {
 
         private final String userId;
         private final MslProperties mslProp;
+        private final boolean interactive;
     }
 
     /*
