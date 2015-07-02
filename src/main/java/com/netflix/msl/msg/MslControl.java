@@ -1542,8 +1542,9 @@ public class MslControl {
         updateCryptoContexts(ctx, requestHeader, keyExchangeData);
         
         // Update the stored service tokens.
+        final MasterToken tokenVerificationMasterToken = (keyExchangeData != null) ? keyExchangeData.keyResponseData.getMasterToken() : masterToken;
         final Set<ServiceToken> serviceTokens = requestHeader.getServiceTokens();
-        storeServiceTokens(ctx, masterToken, userIdToken, serviceTokens);
+        storeServiceTokens(ctx, tokenVerificationMasterToken, userIdToken, serviceTokens);
         
         // We will either use the header crypto context or the key exchange
         // data crypto context in trusted network mode to process the message
