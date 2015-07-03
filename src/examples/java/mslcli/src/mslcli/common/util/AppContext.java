@@ -24,6 +24,7 @@ import java.io.InputStreamReader;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -189,10 +190,24 @@ public final class AppContext {
         final Map<String,KeySet> keySets = new HashMap<String,KeySet>();
 
         for (Map.Entry<String,Triplet<String,String,String>> entry : p.getPresharedKeyStore().entrySet()) {
+            final byte[] encKey = parseKey(entry.getValue().x);
+            final byte[] hmacKey = parseKey(entry.getValue().y);
+            final byte[] wrapKey;
+            if (entry.getValue().z != null) {
+                wrapKey = parseKey(entry.getValue().z);
+            } else {
+                try {
+                    wrapKey = SharedUtil.deriveWrappingKey(encKey, hmacKey);
+                } catch (InvalidKeyException e) {
+                    throw new ConfigurationException("Failed to initialize preshared keys", e);
+                } catch (NoSuchAlgorithmException e) {
+                    throw new ConfigurationException("Failed to initialize preshared keys", e);
+                }
+            }
             keySets.put(entry.getKey(), new KeySet(
-                new SecretKeySpec(parseKey(entry.getValue().x), JcaAlgorithm.AES),
-                new SecretKeySpec(parseKey(entry.getValue().y), JcaAlgorithm.HMAC_SHA256),
-                new SecretKeySpec(parseKey(entry.getValue().z), JcaAlgorithm.AESKW)
+                new SecretKeySpec(encKey, JcaAlgorithm.AES),
+                new SecretKeySpec(hmacKey, JcaAlgorithm.HMAC_SHA256),
+                new SecretKeySpec(wrapKey, JcaAlgorithm.AESKW)
             ));
         }
         return new SimplePresharedKeyStore(keySets);

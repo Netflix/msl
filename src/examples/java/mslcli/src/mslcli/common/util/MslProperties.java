@@ -174,7 +174,7 @@ public final class MslProperties {
             keys.put(getRequiredProperty(ENTITY_PSK_ID + i), new Triplet<String,String,String>(
                 getRequiredProperty(ENTITY_PSK_ENC  + i),
                 getRequiredProperty(ENTITY_PSK_HMAC + i),
-                getRequiredProperty(ENTITY_PSK_WRAP + i)
+                p.getProperty(ENTITY_PSK_WRAP + i)
             ));
         }
         return keys;

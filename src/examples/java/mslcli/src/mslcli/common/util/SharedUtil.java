@@ -24,16 +24,24 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.crypto.Mac;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslConstants.ResponseCode;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslException;
+import com.netflix.msl.crypto.JcaAlgorithm;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.ServiceToken;
 import com.netflix.msl.tokens.UserIdToken;
@@ -355,5 +363,54 @@ public final class SharedUtil {
         } else {
             return String.format("MslException: %s", e.getMessage());
         }
+    }
+
+    /** Wrapping key derivation algorithm salt. */
+    private static final byte[] SALT = {
+        (byte)0x02, (byte)0x76, (byte)0x17, (byte)0x98, (byte)0x4f, (byte)0x62, (byte)0x27, (byte)0x53,
+        (byte)0x9a, (byte)0x63, (byte)0x0b, (byte)0x89, (byte)0x7c, (byte)0x01, (byte)0x7d, (byte)0x69 };
+
+    /** Wrapping key derivation algorithm info. */
+    private static final byte[] INFO = {
+        (byte)0x80, (byte)0x9f, (byte)0x82, (byte)0xa7, (byte)0xad, (byte)0xdf, (byte)0x54, (byte)0x8d,
+        (byte)0x3e, (byte)0xa9, (byte)0xdd, (byte)0x06, (byte)0x7f, (byte)0xf9, (byte)0xbb, (byte)0x91, };
+
+    /** Wrapping key length in bytes. */
+    private static final int WRAPPING_KEY_LENGTH = 128 / Byte.SIZE;
+
+
+    /**
+     * Derives the pre-shared or model group keys AES-128 Key Wrap key from the
+     * provided AES-128 encryption key and HMAC-SHA256 key.
+     *
+     * @param encryptionKey the encryption key.
+     * @param hmacKey the HMAC key.
+     * @return the wrapping key.
+     * @throws CryptoException if there is an error generating the wrapping
+     *         key.
+     */
+
+    public static byte[] deriveWrappingKey(final byte[] encryptionKey, final byte[] hmacKey) throws InvalidKeyException, NoSuchAlgorithmException {
+
+        // Concatenate the keys.
+        final byte[] bits = Arrays.copyOf(encryptionKey, encryptionKey.length + hmacKey.length);
+
+        System.arraycopy(hmacKey, 0, bits, encryptionKey.length, hmacKey.length);
+
+        final Mac mac = Mac.getInstance("HmacSHA256");
+
+        // HMAC-SHA256 the keys with the salt as the HMAC key.
+        final SecretKey saltKey = new SecretKeySpec(SALT, JcaAlgorithm.AESKW);
+        mac.init(saltKey);
+        final byte[] intermediateBits = mac.doFinal(bits);
+
+        // HMAC-SHA256 the info with the intermediate key as the HMAC key.
+        final SecretKey intermediateKey = new SecretKeySpec(intermediateBits, JcaAlgorithm.AESKW);
+        mac.init(intermediateKey);
+
+        final byte[] finalBits = mac.doFinal(INFO);
+
+        // Grab the first 128 bits.
+        return Arrays.copyOf(finalBits, WRAPPING_KEY_LENGTH);
     }
 }
