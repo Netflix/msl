@@ -91,6 +91,9 @@ public final class MslProperties {
     private static final String MSL_MTOKEN_EXPIRATION_OFFSET    = "msl.mtoken.expiration";
     private static final String MSL_MTOKEN_NON_REPLAY_ID_WINDOW = "msl.mtoken.non_replay_id_window";
 
+    private static final String MSL_UITOKEN_RENEWAL_OFFSET      = "msl.uitoken.renewal";
+    private static final String MSL_UITOKEN_EXPIRATION_OFFSET   = "msl.uitoken.expiration";
+
     private static final String MSL_STOKEN_KEY_ENC  = "msl.stoken.keys.enc.";
     private static final String MSL_STOKEN_KEY_HMAC = "msl.stoken.keys.hmac.";
 
@@ -298,6 +301,20 @@ public final class MslProperties {
      */
     public int getMasterTokenNonReplayIdWindow() throws ConfigurationException {
         return getCountProperty(MSL_MTOKEN_NON_REPLAY_ID_WINDOW);
+    }
+
+    /**
+     * @return User ID Token renewal offset in milliseconds
+     */
+    public int getUserIdTokenRenewalOffset() throws ConfigurationException {
+        return getCountProperty(MSL_UITOKEN_RENEWAL_OFFSET);
+    }
+
+    /**
+     * @return User ID Token expiration offset in milliseconds
+     */
+    public int getUserIdTokenExpirationOffset() throws ConfigurationException {
+        return getCountProperty(MSL_UITOKEN_EXPIRATION_OFFSET);
     }
 
     /* ************************

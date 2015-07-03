@@ -47,12 +47,18 @@ import mslcli.common.util.SharedUtil;
  * @author Vadim Spector <vspector@netflix.com>
  */
 public class ServerTokenFactory implements TokenFactory {
-    /** Renewal window start offset in milliseconds. */
+    /** Master Token Renewal window start offset in milliseconds. */
     private final int renewalOffset;
-    /** Expiration offset in milliseconds. */
+    /** Master Token Expiration offset in milliseconds. */
     private final int expirationOffset;
-    /** Non-replayable ID acceptance window. */
+    /** Master Token Non-replayable ID acceptance window. */
     private final long nonReplayIdWindow;
+
+    /** User ID Token Renewal window start offset in milliseconds. */
+    private final int uitRenewalOffset;
+    /** User ID Expiration offset in milliseconds. */
+    private final int uitExpirationOffset;
+
     /** app context */
     private final AppContext appCtx;
 
@@ -67,6 +73,8 @@ public class ServerTokenFactory implements TokenFactory {
         this.renewalOffset = appCtx.getProperties().getMasterTokenRenewalOffset();
         this.expirationOffset = appCtx.getProperties().getMasterTokenExpirationOffset();
         this.nonReplayIdWindow = appCtx.getProperties().getMasterTokenNonReplayIdWindow();
+        this.uitRenewalOffset = appCtx.getProperties().getUserIdTokenRenewalOffset();
+        this.uitExpirationOffset = appCtx.getProperties().getUserIdTokenExpirationOffset();
     }
 
     /* (non-Javadoc)
@@ -224,8 +232,8 @@ public class ServerTokenFactory implements TokenFactory {
     public UserIdToken createUserIdToken(final MslContext ctx, final MslUser user, final MasterToken masterToken) throws MslEncodingException, MslCryptoException {
         appCtx.info("Creating UserIdToken for user " + ((user != null) ? user.getEncoded() : null));
         final JSONObject issuerData = null;
-        final Date renewalWindow = new Date(ctx.getTime() + renewalOffset);
-        final Date expiration = new Date(ctx.getTime() + expirationOffset);
+        final Date renewalWindow = new Date(ctx.getTime() + uitRenewalOffset);
+        final Date expiration = new Date(ctx.getTime() + uitExpirationOffset);
         long serialNumber = -1;
         do {
             serialNumber = ctx.getRandom().nextLong();
@@ -243,8 +251,8 @@ public class ServerTokenFactory implements TokenFactory {
             throw new MslUserIdTokenException(MslError.USERIDTOKEN_NOT_DECRYPTED, userIdToken).setEntity(masterToken);
 
         final JSONObject issuerData = null;
-        final Date renewalWindow = new Date(ctx.getTime() + renewalOffset);
-        final Date expiration = new Date(ctx.getTime() + expirationOffset);
+        final Date renewalWindow = new Date(ctx.getTime() + uitRenewalOffset);
+        final Date expiration = new Date(ctx.getTime() + uitExpirationOffset);
         final long serialNumber = userIdToken.getSerialNumber();
         final MslUser user = userIdToken.getUser();
         return new UserIdToken(ctx, renewalWindow, expiration, masterToken, serialNumber, issuerData, user);
