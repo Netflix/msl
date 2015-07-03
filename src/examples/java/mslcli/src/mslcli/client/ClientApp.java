@@ -139,9 +139,11 @@ public final class ClientApp {
         } catch (IOException e) {
             System.err.println(e.getMessage());
             status = Status.EXE_ERROR;
+            SharedUtil.getRootCause(e).printStackTrace(System.err);
         } catch (RuntimeException e) {
             System.err.println(e.getMessage());
             status = Status.EXE_ERROR;
+            SharedUtil.getRootCause(e).printStackTrace(System.err);
         }
         System.out.println("Exit Status " + status);
         System.exit(status.code);
