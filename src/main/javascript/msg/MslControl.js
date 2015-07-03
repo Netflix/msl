@@ -1575,8 +1575,9 @@ var MslControl$MslChannel;
                                         this.updateOutgoingCryptoContexts(ctx, requestHeader, keyExchangeData);
 
                                         // Update the stored service tokens.
+                                        var tokenVerificationMasterToken = (keyExchangeData) ? keyExchangeData.keyResponseData.masterToken : masterToken;
                                         var serviceTokens = requestHeader.serviceTokens;
-                                        this.storeServiceTokens(ctx, masterToken, userIdToken, serviceTokens);
+                                        this.storeServiceTokens(ctx, tokenVerificationMasterToken, userIdToken, serviceTokens);
 
                                         // We will either use the header crypto context or the key exchange
                                         // data crypto context in trusted network mode to process the message
