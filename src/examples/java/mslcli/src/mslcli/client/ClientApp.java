@@ -75,9 +75,10 @@ public final class ClientApp {
 
     private static final String HELP_FILE = "mslclient_manual.txt";
 
-    private static final String CMD_HELP = "-help";
-    private static final String CMD_LIST = "-list";
-    private static final String CMD_QUIT = "-quit";
+    private static final String CMD_HELP = "help";
+    private static final String CMD_LIST = "list";
+    private static final String CMD_QUIT = "quit";
+    private static final String CMD_HINT = "?";
 
     public enum Status {
         OK(0, "Success"),
@@ -192,6 +193,10 @@ public final class ClientApp {
             }
             if (CMD_LIST.equalsIgnoreCase(options)) {
                 System.out.println(cmdParam.getParameters());
+                continue;
+            }
+            if (CMD_HINT.equalsIgnoreCase(options)) {
+                hint();
                 continue;
             }
             try {
@@ -466,5 +471,17 @@ public final class ClientApp {
         } catch (IOException e) {
             System.err.println(String.format("Cannot read help file %s: %s", HELP_FILE, e.getMessage()));
         }
+    }
+
+    /*
+     * helper - interactive mode hint
+     */
+    private static void hint() {
+        System.out.println("Choices:");
+        System.out.println("a) Modify Command-line arguments, if any need to be modified, and press Enter to send a message.");
+        System.out.println("   Use exactly the same syntax as from the command line.");
+        System.out.println("b) Type \"list\" for listing currently selected command-line arguments.");
+        System.out.println("c) Type \"help\" for the detailed instructions on using this tool.");
+        System.out.println("d) Type \"quit\" to quit this tool.");
     }
 }
