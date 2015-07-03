@@ -395,7 +395,7 @@ var DiffieHellmanExchange$ResponseData$parse;
 
                 // Generate public/private key pair.
                 var oncomplete = function(keyPair) {
-                    constructKeys(params, requestPublicKey, keyPair.publicKey, keyPair.privateKey);
+                    constructKeys(parametersId, params, requestPublicKey, keyPair.publicKey, keyPair.privateKey);
                 };
                 var onerror = function(e) {
                     callback.error(new MslCryptoException(MslError.GENERATEKEY_ERROR, "Error generating Diffie-Hellman key pair.", e));
@@ -408,7 +408,7 @@ var DiffieHellmanExchange$ResponseData$parse;
             }, self);
 
             // Construct encryption and HMAC keys.
-            function constructKeys(params, requestPublicKey, responsePublicKey, responsePrivateKey) {
+            function constructKeys(parametersId, params, requestPublicKey, responsePublicKey, responsePrivateKey) {
                 this.deriveSessionKeys(requestPublicKey, responsePrivateKey, params, {
                     result: function(sessionKeys) {
                         AsyncExecutor(callback, function() {
@@ -453,7 +453,7 @@ var DiffieHellmanExchange$ResponseData$parse;
                     },
                     error: function(e) {
                         AsyncExecutor(callback, function() {
-                            throw new MslCryptoException(MslError.SESSION_KEY_CREATION_FAILURE, e).setEntity(masterToken);
+                            throw new MslCryptoException(MslError.SESSION_KEY_CREATION_FAILURE, e).setEntity(entityToken);
                         }, self);
                     }
                 });
