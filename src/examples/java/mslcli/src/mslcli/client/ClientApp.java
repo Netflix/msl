@@ -115,12 +115,12 @@ public final class ClientApp {
     public static void main(String[] args) {
         Status status = Status.OK;
         try {
-            if (Arrays.asList(args).contains(CMD_HELP)) {
-                help();
-                status = Status.OK;
-            } else if (args.length == 0) {
+            if (args.length == 0) {
                 System.err.println("Use " + CMD_HELP + " for help");
                 status = Status.ARG_ERROR;
+            } else if (CMD_HELP.equalsIgnoreCase(args[0])) {
+                help();
+                status = Status.OK;
             } else {
                 final CmdArguments cmdParam = new CmdArguments(args);
                 final ClientApp clientApp = new ClientApp(cmdParam);
