@@ -174,14 +174,25 @@ public final class AppContext {
         return presharedKeyStore;
     }
 
+    private static byte[] parseKey(final String s) throws ConfigurationException {
+        if (s == null || s.trim().isEmpty()) {
+            throw new ConfigurationException("Empty Key Value");
+        }
+        if (s.startsWith("b64:")) {
+            return DatatypeConverter.parseBase64Binary(s.substring(4));
+        } else {
+            return SharedUtil.hexStringToByteArray(s);
+        }
+    }
+
     private static PresharedKeyStore initPresharedKeyStore(final MslProperties p) throws ConfigurationException {
         final Map<String,KeySet> keySets = new HashMap<String,KeySet>();
 
         for (Map.Entry<String,Triplet<String,String,String>> entry : p.getPresharedKeyStore().entrySet()) {
             keySets.put(entry.getKey(), new KeySet(
-                new SecretKeySpec(SharedUtil.hexStringToByteArray(entry.getValue().x), JcaAlgorithm.AES),
-                new SecretKeySpec(SharedUtil.hexStringToByteArray(entry.getValue().y), JcaAlgorithm.HMAC_SHA256),
-                new SecretKeySpec(SharedUtil.hexStringToByteArray(entry.getValue().z), JcaAlgorithm.AESKW)
+                new SecretKeySpec(parseKey(entry.getValue().x), JcaAlgorithm.AES),
+                new SecretKeySpec(parseKey(entry.getValue().y), JcaAlgorithm.HMAC_SHA256),
+                new SecretKeySpec(parseKey(entry.getValue().z), JcaAlgorithm.AESKW)
             ));
         }
         return new SimplePresharedKeyStore(keySets);
