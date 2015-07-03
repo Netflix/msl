@@ -81,7 +81,7 @@ public class ClientRequestMessageContext implements MessageContext {
         this.isNonReplayable      = isNonReplayable;
         this.userId               = userId;
         this.userAuthenticationDataHandle = userAuthenticationDataHandle;
-        this.keyRequestDataSet    = (keyRequestDataSet != null) ? Collections.unmodifiableSet(keyRequestDataSet) : Collections.emptySet();
+        this.keyRequestDataSet    = (keyRequestDataSet != null) ? Collections.<KeyRequestData>unmodifiableSet(keyRequestDataSet) : Collections.<KeyRequestData>emptySet();
         this.payload              = payload;
         this.cryptoContexts       = Collections.<String,ICryptoContext>emptyMap();
     }

@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.netflix.msl.MslConstants;
+
 public final class CmdArguments {
 
     // parameters
@@ -217,7 +219,7 @@ public final class CmdArguments {
      */
     public byte[] getPayloadMessage() {
         final String s = argMap.get(P_MSG);
-        return (s != null) ? s.getBytes() : null;
+        return (s != null) ? s.getBytes(MslConstants.DEFAULT_CHARSET) : null;
     }
 
     /**

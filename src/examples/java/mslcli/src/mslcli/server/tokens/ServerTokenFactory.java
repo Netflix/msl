@@ -97,6 +97,7 @@ public class ServerTokenFactory implements TokenFactory {
      */
     @Override
     public MslError acceptNonReplayableId(final MslContext ctx, final MasterToken masterToken, final long nonReplayableId) throws MslException {
+        synchronized (nonReplayableIdsLock) {
         if (!masterToken.isDecrypted())
             throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, masterToken);
         if (nonReplayableId < 0 || nonReplayableId > MslConstants.MAX_LONG_VALUE)
@@ -104,9 +105,9 @@ public class ServerTokenFactory implements TokenFactory {
         
         // Accept if there is no non-replayable ID.
         final String key = masterToken.getIdentity() + ":" + masterToken.getSerialNumber();
-        final Long largestNonReplayableId = nonReplayableIds.get(key);
+        final Long largestNonReplayableId = nonReplayableIds.putIfAbsent(key, nonReplayableId);
         if (largestNonReplayableId == null) {
-            nonReplayableIds.put(key, nonReplayableId);
+            appCtx.info(String.format("%s: First Non-Replayable ID %d", key, nonReplayableId));
             return null;
         }
         
@@ -137,7 +138,9 @@ public class ServerTokenFactory implements TokenFactory {
         // This is not perfect, since it's possible a smaller value will
         // overwrite a larger value, but it's good enough for the example.
         nonReplayableIds.put(key, nonReplayableId);
+        appCtx.info(String.format("%s: Update Non-Replayable ID %d", key, nonReplayableId));
         return null;
+        } // synchronized (nonReplayableIdsLock)
     }
 
     /* (non-Javadoc)
@@ -259,4 +262,5 @@ public class ServerTokenFactory implements TokenFactory {
     private final ConcurrentHashMap<String,Long> mtSequenceNumbers = new ConcurrentHashMap<String,Long>();
     /** Map of entity identities and serial numbers onto non-replayable IDs. */
     private final ConcurrentHashMap<String,Long> nonReplayableIds = new ConcurrentHashMap<String,Long>();
+    private final Object nonReplayableIdsLock = new Object();
 }

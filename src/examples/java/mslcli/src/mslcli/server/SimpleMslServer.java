@@ -209,7 +209,7 @@ public class SimpleMslServer {
             if (masterToken == null) {
                 appCtx.info("MslStore: setting crypto context with NULL MasterToken???");
             } else {
-                appCtx.info(String.format("MslStore: %s %s\n",
+                appCtx.info(String.format("MslStore: %s %s",
                     (cryptoContext != null)? "Adding" : "Removing", SharedUtil.getMasterTokenInfo(masterToken)));
             }
             super.setCryptoContext(masterToken, cryptoContext);

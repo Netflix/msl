@@ -21,7 +21,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
@@ -31,6 +30,7 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslConstants.ResponseCode;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslException;
@@ -129,7 +129,7 @@ public final class SharedUtil {
         if (prompt == null) {
             throw new IllegalArgumentException("NULL prompt");
         }
-        final BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        final BufferedReader br = new BufferedReader(new InputStreamReader(System.in, MslConstants.DEFAULT_CHARSET));
         System.out.print(prompt.trim() + "> ");
         return br.readLine();
     }
@@ -257,12 +257,18 @@ public final class SharedUtil {
             throw new IllegalArgumentException(file + " not a file");
         }
         final Properties p = new Properties();
-        FileReader fr = null;
+        FileInputStream fis = null;
+        InputStreamReader isr = null;
+        BufferedReader br = null;
         try {
-            fr = new FileReader(f);
-            p.load(fr);
+            fis = new FileInputStream(f);
+            isr = new InputStreamReader(fis, MslConstants.DEFAULT_CHARSET);
+            br  = new BufferedReader(isr);
+            p.load(br);
         } finally {
-            if (fr != null) try { fr.close(); } catch (IOException ignore) {}
+            if (fis != null) try { fis.close(); } catch (IOException ignore) {}
+            if (isr != null) try { isr.close(); } catch (IOException ignore) {}
+            if (br != null) try { br.close(); } catch (IOException ignore) {}
         }
         return p;
     }

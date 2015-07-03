@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
+import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslConstants.ResponseCode;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslException;
@@ -271,7 +272,7 @@ public final class ClientApp {
                 if (outputFile != null) {
                     SharedUtil.saveToFile(outputFile, response.getPayload());
                 } else {
-                    System.out.println("Response: " + new String(response.getPayload()));
+                    System.out.println("Response: " + new String(response.getPayload(), MslConstants.DEFAULT_CHARSET));
                 }
                 status = Status.OK;
             } else if (response.getErrorHeader() != null) {
@@ -396,7 +397,7 @@ public final class ClientApp {
             if (masterToken == null) {
                 appCtx.info("MslStore: setting crypto context with NULL MasterToken???");
             } else {
-                appCtx.info(String.format("MslStore: %s %s\n",
+                appCtx.info(String.format("MslStore: %s %s",
                     (cryptoContext != null)? "Adding" : "Removing", SharedUtil.getMasterTokenInfo(masterToken)));
             }
             super.setCryptoContext(masterToken, cryptoContext);
@@ -459,7 +460,7 @@ public final class ClientApp {
      */
     private static void help() {
         try {
-            System.out.println(new String(SharedUtil.readFromFile(HELP_FILE)));
+            System.out.println(new String(SharedUtil.readFromFile(HELP_FILE), MslConstants.DEFAULT_CHARSET));
         } catch (IOException e) {
             System.err.println(String.format("Cannot read help file %s: %s", HELP_FILE, e.getMessage()));
         }

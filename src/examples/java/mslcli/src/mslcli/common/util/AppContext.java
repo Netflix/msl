@@ -268,7 +268,7 @@ public final class AppContext {
     /**
      * Key exchange factory comparator. The purpose is to list key exchange schemes in order of preference.
      */
-    private class KeyExchangeFactoryComparator implements Comparator<KeyExchangeFactory> {
+    private static class KeyExchangeFactoryComparator implements Comparator<KeyExchangeFactory> {
         /** Scheme priorities. Lower values are higher priority. */
         private final Map<KeyExchangeScheme,Integer> schemePriorities = new HashMap<KeyExchangeScheme,Integer>();
 
