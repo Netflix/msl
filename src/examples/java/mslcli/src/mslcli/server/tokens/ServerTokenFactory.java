@@ -16,7 +16,9 @@
 
 package mslcli.server.tokens;
 
+import java.math.BigInteger;
 import java.sql.Date;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.crypto.SecretKey;
@@ -61,6 +63,8 @@ public class ServerTokenFactory implements TokenFactory {
 
     /** app context */
     private final AppContext appCtx;
+
+    private static final int MAX_LONG_VALUE_BITS = BigInteger.valueOf(MslConstants.MAX_LONG_VALUE).bitLength();
 
     /*
      * @param appCtx application context
@@ -160,10 +164,7 @@ public class ServerTokenFactory implements TokenFactory {
         final Date renewalWindow = new Date(ctx.getTime() + renewalOffset);
         final Date expiration = new Date(ctx.getTime() + expirationOffset);
         final long sequenceNumber = 0;
-        long serialNumber = -1;
-        do {
-            serialNumber = ctx.getRandom().nextLong();
-        } while (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE);
+        final long serialNumber = generateSerialNumber(ctx.getRandom());
         final JSONObject issuerData = null;
         final MasterToken masterToken = new MasterToken(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey);
         
@@ -234,10 +235,7 @@ public class ServerTokenFactory implements TokenFactory {
         final JSONObject issuerData = null;
         final Date renewalWindow = new Date(ctx.getTime() + uitRenewalOffset);
         final Date expiration = new Date(ctx.getTime() + uitExpirationOffset);
-        long serialNumber = -1;
-        do {
-            serialNumber = ctx.getRandom().nextLong();
-        } while (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE);
+        final long serialNumber = generateSerialNumber(ctx.getRandom());
         return new UserIdToken(ctx, renewalWindow, expiration, masterToken, serialNumber, issuerData, user);
     }
 
@@ -266,6 +264,18 @@ public class ServerTokenFactory implements TokenFactory {
         return new SimpleUser(userdata);
     }
     
+    /*
+     * helper - generate random serial number in [0 ... MslConstants.MAX_LONG_VALUE] range
+     */
+    private long generateSerialNumber(final Random r) {
+        long serialNumber = -1L;
+        do {
+            serialNumber = new BigInteger(MAX_LONG_VALUE_BITS, r).longValue();
+            appCtx.info(String.format("Serial Number %x, Max %x", serialNumber, MslConstants.MAX_LONG_VALUE));
+        } while (serialNumber > MslConstants.MAX_LONG_VALUE);
+        return serialNumber;
+    }
+
     /** Map of entity identities onto sequence numbers. */
     private final ConcurrentHashMap<String,Long> mtSequenceNumbers = new ConcurrentHashMap<String,Long>();
     /** Map of entity identities and serial numbers onto non-replayable IDs. */
