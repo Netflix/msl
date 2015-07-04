@@ -161,7 +161,7 @@ public final class MslProperties {
      * @return ID of Diffie-Hellman parameters to be used by given entity
      */
     public String getEntityDiffieHellmanParametersId(final String entityId) throws ConfigurationException {
-        return getRequiredProperty(ENTITY_DH_ID + entityId);
+        return getWildcharProperty(ENTITY_DH_ID, entityId);
     }
 
     /**
