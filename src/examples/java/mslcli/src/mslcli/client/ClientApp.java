@@ -179,6 +179,7 @@ public final class ClientApp {
             } catch (IOException e) {
                 throw new ConfigurationException(e.getMessage());
             }
+            cmdParam.merge(new CmdArguments(new String[] { CmdArguments.P_EID, pskEntry.x }));
             mslProp.addPresharedKeys(pskEntry);
         }
 
