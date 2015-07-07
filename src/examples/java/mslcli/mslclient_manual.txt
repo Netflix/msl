@@ -65,6 +65,15 @@ OPTIONS
 		It is typically used for forming user authentication data in
 		a MSL request, in order to acquire UserIdToken.
 
+	-psk <file-path>
+		OPTIONAL. Pre-shared key file which should have exactly 3
+		lines, in this order:
+		* entityId string
+		* encryption key, Base64-encoded
+		* HMAC key, Base64-encoded
+		Using this option may be more convenient than changing a
+		configuration file.
+
 	-kx <supported-key-exchange-scheme>
 		The following are the allowed values:
 		DIFFIE_HELLMAN - for Diffie-Hellman key exchange

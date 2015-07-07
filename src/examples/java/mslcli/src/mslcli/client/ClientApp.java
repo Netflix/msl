@@ -49,6 +49,7 @@ import com.netflix.msl.userauth.UserAuthenticationData;
 import mslcli.common.Pair;
 import mslcli.client.msg.MessageConfig;
 import mslcli.client.util.UserAuthenticationDataHandle;
+import mslcli.common.Triplet;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
 import mslcli.common.util.ConfigurationRuntimeException;
@@ -160,12 +161,26 @@ public final class ClientApp {
      * @param encapsulation of command-line arguments
      */
     public ClientApp(final CmdArguments cmdParam) throws ConfigurationException, IllegalCmdArgumentException, IOException {
+        if (cmdParam == null) {
+            throw new IllegalArgumentException("NULL Arguments");
+        }
 
         // save command-line arguments
         this.cmdParam = cmdParam;
 
         // load configuration from the configuration file
         this.mslProp = MslProperties.getInstance(SharedUtil.loadPropertiesFromFile(cmdParam.getConfigFilePath()));
+
+        final String pskFile = cmdParam.getPskFile();
+        if (pskFile != null) {
+            final Triplet<String,String,String> pskEntry;
+            try {
+                pskEntry = SharedUtil.readPskFile(pskFile);
+            } catch (IOException e) {
+                throw new ConfigurationException(e.getMessage());
+            }
+            mslProp.addPresharedKeys(pskEntry);
+        }
 
         // initialize application context
         this.appCtx = AppContext.getInstance(mslProp, APP_ID);

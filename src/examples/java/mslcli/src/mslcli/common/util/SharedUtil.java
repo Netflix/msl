@@ -47,6 +47,8 @@ import com.netflix.msl.tokens.ServiceToken;
 import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.util.MslStore;
 
+import mslcli.common.Triplet;
+
 /**
  * Collection of utilities
  *
@@ -302,6 +304,38 @@ public final class SharedUtil {
         } finally {
             if (fis != null) try { fis.close(); } catch (IOException ignore) {}
         }
+    }
+
+    /**
+     * read special pre-shared key file that contains exactly 3 lines:
+     * entityId
+     * encryption key, base64-encoded
+     * hmac key, base64-encoded
+     */
+    public static Triplet<String,String,String> readPskFile(final String file) throws IOException {
+        FileInputStream fis = null;
+        InputStreamReader isr = null;
+        BufferedReader br = null;
+        try {
+            fis = new FileInputStream(file);
+            isr = new InputStreamReader(fis, MslConstants.DEFAULT_CHARSET);
+            br  = new BufferedReader(isr);
+            final String entityId = br.readLine();
+            final String encKey = br.readLine();
+            final String hmacKey = br.readLine();
+            if (entityId == null || entityId.trim().length() == 0 ||
+                encKey   == null || encKey.trim().length()   == 0 ||
+                hmacKey  == null || hmacKey.trim().length()  == 0)
+            {
+                throw new IOException("Invalid PSK File " + file);
+            }
+            return new Triplet<String,String,String>(entityId.trim(), "b64:" + encKey.trim(), "b64:" + hmacKey.trim());
+        } finally {
+            if (fis != null) try { fis.close(); } catch (IOException ignore) {}
+            if (isr != null) try { isr.close(); } catch (IOException ignore) {}
+            if (br != null) try { br.close(); } catch (IOException ignore) {}
+        }
+
     }
  
     /**

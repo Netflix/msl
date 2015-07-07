@@ -43,6 +43,7 @@ public final class MslProperties {
     private static final String APP_SERVER_ID         = "app.server.id";
     private static final String APP_DEBUG_FLAG        = "app.debug";
     private static final String APP_MSL_STORE_PATH    = "app.msl.store";
+    private static final String APP_PSK_FILE_PATH     = "app.msl.keyfile";
 
     // not a property name, but if part of property value, to be replaced with the client's entity_id
     private static final String APP_ID_TOKEN = "{app_id}";
@@ -100,6 +101,8 @@ public final class MslProperties {
     // local definitions
     private static final String ANY               = "*"; 
     private static final String SPACE_REGEX       = "\\s";
+
+    private final Object pskStoreLock = new String("PSK-STORE-LOCK");
 
     private final Properties p;
 
@@ -168,16 +171,18 @@ public final class MslProperties {
      * @return mappings between entity identity and { encryption, hmac, wrapping} hex-encoded pre-shared keys triplet
      */
     public Map<String,Triplet<String,String,String>> getPresharedKeyStore() throws ConfigurationException {
-        final int numPSK = getCountProperty(ENTITY_PSK_NUM);
-        final Map<String,Triplet<String,String,String>> keys = new HashMap<String,Triplet<String,String,String>>(numPSK);
-        for (int i = 0; i < numPSK; i++) {
-            keys.put(getRequiredProperty(ENTITY_PSK_ID + i), new Triplet<String,String,String>(
-                getRequiredProperty(ENTITY_PSK_ENC  + i),
-                getRequiredProperty(ENTITY_PSK_HMAC + i),
-                getProperty(ENTITY_PSK_WRAP + i)
-            ));
+        synchronized (pskStoreLock) {
+            final int numPSK = getCountProperty(ENTITY_PSK_NUM);
+            final Map<String,Triplet<String,String,String>> keys = new HashMap<String,Triplet<String,String,String>>(numPSK);
+            for (int i = 0; i < numPSK; i++) {
+                keys.put(getRequiredProperty(ENTITY_PSK_ID + i), new Triplet<String,String,String>(
+                    getRequiredProperty(ENTITY_PSK_ENC  + i),
+                    getRequiredProperty(ENTITY_PSK_HMAC + i),
+                    getProperty(ENTITY_PSK_WRAP + i)
+                ));
+            }
+            return keys;
         }
-        return keys;
     }
 
     /**
@@ -194,6 +199,23 @@ public final class MslProperties {
      */
     public String getRsaKeyId(final String entityId) throws ConfigurationException {
         return getWildcharProperty(ENTITY_RSA_KEY_ID, entityId);
+    }
+
+    /**
+     * add pre-shared key entry; it can be called by the client app
+     * @param pskEntry { entityId, encryptionKey, hmacKey}. Wrapping key is assumed to be derived.
+     */
+    public void addPresharedKeys(final Triplet<String,String,String> pskEntry) throws ConfigurationException {
+        if (pskEntry == null) {
+            throw new IllegalArgumentException("NULL keys");
+        }
+        synchronized (pskStoreLock) {
+            final int numPSK = getCountProperty(ENTITY_PSK_NUM);
+            p.setProperty(ENTITY_PSK_NUM, String.valueOf(numPSK + 1));
+            p.setProperty(ENTITY_PSK_ID   + numPSK, pskEntry.x);
+            p.setProperty(ENTITY_PSK_ENC  + numPSK, pskEntry.y);
+            p.setProperty(ENTITY_PSK_HMAC + numPSK, pskEntry.z);
+        }
     }
 
     /* **************************

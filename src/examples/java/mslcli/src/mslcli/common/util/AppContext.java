@@ -181,9 +181,13 @@ public final class AppContext {
             throw new ConfigurationException("Empty Key Value");
         }
         if (s.startsWith("b64:")) {
-            return DatatypeConverter.parseBase64Binary(s.substring(4));
+            try {
+                return DatatypeConverter.parseBase64Binary(s.trim().substring(4));
+            } catch (IllegalArgumentException e) {
+                throw new ConfigurationException("Invalid Base64 Value " + s);
+            }
         } else {
-            return SharedUtil.hexStringToByteArray(s);
+            return SharedUtil.hexStringToByteArray(s.trim());
         }
     }
 

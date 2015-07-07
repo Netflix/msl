@@ -46,6 +46,7 @@ public final class CmdArguments {
     public static final String P_IF   = "-if"  ; // input message payload file
     public static final String P_OF   = "-of"  ; // output message payload file
     public static final String P_MSG  = "-msg" ; // input message payload text
+    public static final String P_PSK  = "-psk" ; // pre-shared key file path
     public static final String P_V    = "-v"   ; // verbose
 
     private static final List<String> supportedArguments =
@@ -63,27 +64,9 @@ public final class CmdArguments {
             P_IF,
             P_OF,
             P_MSG,
+            P_PSK,
             P_V
         )));
-
-    // supported key exchanges
-    public static final String KX_DH   = "dh" ; // Diffie-Hellman             Key Exchange
-    public static final String KX_SWE  = "sw" ; // Symmetric  Wrapped         Key Exchange
-    public static final String KX_AWE  = "aw" ; // Asymmetric Wrapped         Key Exchange
-    public static final String KX_JWEL = "jwe"; // JSON Web Encryption Ladder Key Exchange
-    public static final String KX_JWKL = "jwk"; // JSON Web Key        Ladder Key Exchange
-
-    public static final Set<String> supportedKxTypes =
-        Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(KX_DH, KX_SWE, KX_AWE, KX_JWEL, KX_JWKL)));
-
-   // Asymmetric Wrapped Key Exchange Mechanisms
-    public static final String KXM_JWE_RSA   = "JWE_RSA";
-    public static final String KXM_JWEJS_RSA = "JWEJS_RSA";
-    public static final String KXM_JWK_RSA   = "JWK_RSA";
-    public static final String KXM_JWK_RSAES = "JWK_RSAES";
-
-    public static final Set<String> supportedAsymmetricWrappedExchangeMechanisms = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
-        KXM_JWE_RSA, KXM_JWEJS_RSA, KXM_JWK_RSA, KXM_JWK_RSAES)));
 
     private final Map<String,String> argMap;
 
@@ -140,6 +123,9 @@ public final class CmdArguments {
         }
         if (other.argMap.containsKey(P_INT)) {
             throw new IllegalCmdArgumentException("Cannot reset Interactive Mode");
+        }
+        if (other.argMap.containsKey(P_PSK)) {
+            throw new IllegalCmdArgumentException("Cannot add PSK file interactively");
         }
         for (Map.Entry<String,String> entry : other.argMap.entrySet()) {
             if (entry.getValue() != null) {
@@ -211,6 +197,22 @@ public final class CmdArguments {
             return file;
         } else {
             throw new IllegalCmdArgumentException("Cannot Overwrite Existing File: " + file);
+        }
+    }
+
+    /**
+     * @return file path to PSK file. If defined, must be a file.
+     */
+    public String getPskFile() throws IllegalCmdArgumentException {
+        final String file = argMap.get(P_PSK);
+        if (file == null) {
+            return null;
+        }
+        final File f = new File(file);
+        if (f.isFile()) {
+            return file;
+        } else {
+            throw new IllegalCmdArgumentException("Not a File: " + file);
         }
     }
 
