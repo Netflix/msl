@@ -200,14 +200,28 @@ public final class Client {
         } else if (kxScheme == KeyExchangeScheme.JWE_LADDER) {
             final JsonWebEncryptionLadderExchange.Mechanism m = getKeyExchangeMechanism(
                 JsonWebEncryptionLadderExchange.Mechanism.class, kxScheme, kxmName);
-            final byte[] wrapdata = (m == JsonWebEncryptionLadderExchange.Mechanism.WRAP) ?
-                appCtx.getWrapCryptoContextRepository().getLastWrapdata() : null;
+            final byte[] wrapdata;
+            if (m == JsonWebEncryptionLadderExchange.Mechanism.WRAP) {
+                wrapdata = appCtx.getWrapCryptoContextRepository().getLastWrapdata();
+                if (wrapdata == null) {
+                    throw new IllegalCmdArgumentException(String.format("No Key Wrapping Data Found for {%s %s}", kxScheme.name(), m));
+                }
+            } else {
+                wrapdata = null;
+            }
             keyRequestDataSet.add(new JsonWebEncryptionLadderExchange.RequestData(m, wrapdata));
         } else if (kxScheme == KeyExchangeScheme.JWK_LADDER) {
             final JsonWebKeyLadderExchange.Mechanism m = getKeyExchangeMechanism(
                 JsonWebKeyLadderExchange.Mechanism.class, kxScheme, kxmName);
-            final byte[] wrapdata = (m == JsonWebKeyLadderExchange.Mechanism.WRAP) ?
-                appCtx.getWrapCryptoContextRepository().getLastWrapdata() : null;
+            final byte[] wrapdata;
+            if (m == JsonWebKeyLadderExchange.Mechanism.WRAP) {
+                wrapdata = appCtx.getWrapCryptoContextRepository().getLastWrapdata();
+                if (wrapdata == null) {
+                    throw new IllegalCmdArgumentException(String.format("No Key Wrapping Data Found for {%s %s}", kxScheme.name(), m));
+                }
+            } else {
+                wrapdata = null;
+            }
             keyRequestDataSet.add(new JsonWebKeyLadderExchange.RequestData(m, wrapdata));
         } else {
             throw new IllegalCmdArgumentException("Unsupported Key Exchange Scheme " + kxScheme);

@@ -174,7 +174,7 @@ public final class MslProperties {
             keys.put(getRequiredProperty(ENTITY_PSK_ID + i), new Triplet<String,String,String>(
                 getRequiredProperty(ENTITY_PSK_ENC  + i),
                 getRequiredProperty(ENTITY_PSK_HMAC + i),
-                p.getProperty(ENTITY_PSK_WRAP + i)
+                getProperty(ENTITY_PSK_WRAP + i)
             ));
         }
         return keys;
@@ -210,7 +210,7 @@ public final class MslProperties {
         }
         final int num = getCountProperty(USER_EP_NUM);
         for (int i = 0; i < num; i++) {
-            final String uid = p.getProperty(USER_EP_ID + i);
+            final String uid = getProperty(USER_EP_ID + i);
             if (userId.equals(uid)) {
                 return new Pair<String,String>(getRequiredProperty(USER_EP_EMAIL + i), getRequiredProperty(USER_EP_PWD + i));
             }
@@ -254,7 +254,7 @@ public final class MslProperties {
         for (int i = 0; i < numRSA; i++) {
             keys.put(getRequiredProperty(MSL_RSA_KEY_ID + i), new Pair<String,String>(
                      getRequiredProperty(MSL_RSA_PUB + i),
-                     p.getProperty(MSL_RSA_PRIV + i) // private key is optional
+                     getProperty(MSL_RSA_PRIV + i) // private key is optional
                  ));
         }
         return keys;
@@ -345,8 +345,8 @@ public final class MslProperties {
     /**
      * @return debug flag for "this" app
      */
-    public boolean isDebugOn() {
-        final String s = p.getProperty(APP_DEBUG_FLAG);
+    public boolean isDebugOn() throws ConfigurationException {
+        final String s = getProperty(APP_DEBUG_FLAG);
         return Boolean.parseBoolean(s);
     }
 
@@ -364,6 +364,23 @@ public final class MslProperties {
      * Helper classes *
      ******************/
 
+    // return non-mandatory property.
+    // throw exception if property exists but the value is not set or is blank
+    private String getProperty(final String name) throws ConfigurationException {
+        final String value = p.getProperty(name);
+        if (value != null) {
+            if (value.trim().length() != 0) {
+                return value.trim();
+            } else {
+                throw new ConfigurationException(String.format("Property %s with blank value", name));
+            }
+        } else if (p.containsKey(name)) {
+            throw new ConfigurationException(String.format("Property %s with no value", name));
+        } else {
+            return null;
+        }
+    }
+
     // return mandatory non-negative integer property
     private int getCountProperty(final String name) throws ConfigurationException {
         final String s = getRequiredProperty(name);
@@ -376,7 +393,7 @@ public final class MslProperties {
 
     // return mandatory property
     private String getRequiredProperty(final String name) throws ConfigurationException {
-        final String s = p.getProperty(name);
+        final String s = getProperty(name);
         if (s == null) {
             throw new ConfigurationException("Missing Property " + name);
         }
@@ -385,9 +402,9 @@ public final class MslProperties {
 
     // get property with the name that can have ".*" at the end to indicate "any" id
     private String getWildcharProperty(final String prefix, String id) throws ConfigurationException {
-        String s = p.getProperty(prefix + id);
+        String s = getProperty(prefix + id);
         if (s == null) {
-            s = p.getProperty(prefix + ANY);
+            s = getProperty(prefix + ANY);
         }
         if (s == null) {
             throw new ConfigurationException(String.format("Missing Property %s(%s|%s)", prefix, id, ANY));
