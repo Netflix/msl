@@ -81,6 +81,8 @@ public class ServerTokenFactory implements TokenFactory {
         this.uitExpirationOffset = appCtx.getProperties().getUserIdTokenExpirationOffset();
     }
 
+    private static final int MAX_LOST_MTOKENS = 5;
+
     /* (non-Javadoc)
      * @see com.netflix.msl.tokens.TokenFactory#isNewestMasterToken(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken)
      */
@@ -89,10 +91,22 @@ public class ServerTokenFactory implements TokenFactory {
         if (!masterToken.isDecrypted())
             throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, masterToken);
         
-        // Return true if we have no sequence number records or if the master
-        // token sequence number is the most recently issued one.
-        final Long newestSeqNo = mtSequenceNumbers.get(masterToken.getIdentity());
-        return (newestSeqNo == null || newestSeqNo.longValue() == masterToken.getSequenceNumber());
+        // Return false if we have no sequence number records
+        final SeqNumPair seqNumPair = mtSequenceNumbers.get(masterToken.getIdentity());
+        if (seqNumPair == null)
+            return false;
+
+        // if it's the first MasterToken issued, its serial number must be the one we recorded
+        if (seqNumPair.oldSeqNum == null) {
+             return seqNumPair.newSeqNum.longValue() == masterToken.getSequenceNumber();
+        // if it's not the first master token, it must be either the last issued
+        // ... or the last used for issuing the last issued, in case all subsequent issued ones were lost on its way to the client
+        // ... as long as not too many were lost
+        } else {
+             return ((seqNumPair.oldSeqNum.longValue() == masterToken.getSequenceNumber()) ||
+                    (seqNumPair.newSeqNum.longValue() == masterToken.getSequenceNumber())) &&
+                    ((seqNumPair.newSeqNum.longValue() - seqNumPair.oldSeqNum.longValue()) < MAX_LOST_MTOKENS);
+        }
     }
 
     /* (non-Javadoc)
@@ -172,7 +186,7 @@ public class ServerTokenFactory implements TokenFactory {
         //
         // This is not perfect, since it's possible a smaller value will
         // overwrite a larger value, but it's good enough for the example.
-        mtSequenceNumbers.put(identity, sequenceNumber);
+        mtSequenceNumbers.put(identity, new SeqNumPair(null, sequenceNumber));
         
         // Return the new master token.
         return masterToken;
@@ -201,17 +215,18 @@ public class ServerTokenFactory implements TokenFactory {
         final JSONObject issuerData = null;
         final Date renewalWindow = new Date(ctx.getTime() + renewalOffset);
         final Date expiration = new Date(ctx.getTime() + expirationOffset);
-        final long oldSequenceNumber = masterToken.getSequenceNumber();
-        final long sequenceNumber = (oldSequenceNumber == MslConstants.MAX_LONG_VALUE) ? 0 : oldSequenceNumber + 1;
-        final long serialNumber = masterToken.getSerialNumber();
         final String identity = masterToken.getIdentity();
-        final MasterToken newMasterToken = new MasterToken(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey);
+        final SeqNumPair seqNumPair = mtSequenceNumbers.get(identity);
+        final long lastSequenceNumber = seqNumPair.newSeqNum;
+        final long nextSequenceNumber = (lastSequenceNumber == MslConstants.MAX_LONG_VALUE) ? 0 : lastSequenceNumber + 1;
+        final long serialNumber = masterToken.getSerialNumber();
+        final MasterToken newMasterToken = new MasterToken(ctx, renewalWindow, expiration, nextSequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey);
         
         // Remember the sequence number.
         //
         // This is not perfect, since it's possible a smaller value will
         // overwrite a larger value, but it's good enough for the example.
-        mtSequenceNumbers.put(identity, sequenceNumber);
+        mtSequenceNumbers.put(identity, new SeqNumPair(masterToken.getSequenceNumber(), nextSequenceNumber));
         
         // Return the new master token.
         return newMasterToken;
@@ -277,8 +292,17 @@ public class ServerTokenFactory implements TokenFactory {
     }
 
     /** Map of entity identities onto sequence numbers. */
-    private final ConcurrentHashMap<String,Long> mtSequenceNumbers = new ConcurrentHashMap<String,Long>();
+    private final ConcurrentHashMap<String,SeqNumPair> mtSequenceNumbers = new ConcurrentHashMap<String,SeqNumPair>();
     /** Map of entity identities and serial numbers onto non-replayable IDs. */
     private final ConcurrentHashMap<String,Long> nonReplayableIds = new ConcurrentHashMap<String,Long>();
     private final Object nonReplayableIdsLock = new Object();
+
+    private static final class SeqNumPair {
+        private Long oldSeqNum;
+        private Long newSeqNum;
+        SeqNumPair(final Long oldSeqNum, final Long newSeqNum) {
+            this.oldSeqNum = oldSeqNum;
+            this.newSeqNum = newSeqNum;
+        }
+    }
 }

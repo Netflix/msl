@@ -302,6 +302,7 @@ public final class ClientApp {
         } catch (MslException e) {
             System.err.println(SharedUtil.getMslExceptionInfo(e));
             status = Status.MSL_EXC_ERROR;
+            SharedUtil.getRootCause(e).printStackTrace(System.err);
         } catch (ConfigurationException e) {
             System.err.println("Error: " + e.getMessage());
             status = Status.CFG_ERROR;
@@ -322,6 +323,7 @@ public final class ClientApp {
             } else if (thr instanceof MslException) {
                 System.err.println(SharedUtil.getMslExceptionInfo((MslException)thr));
                 status = Status.MSL_EXC_ERROR;
+                SharedUtil.getRootCause(e).printStackTrace(System.err);
             } else if (thr instanceof ConnectException) {
                 System.err.println("Error: " + thr.getMessage());
                 status = Status.COMM_ERROR;
