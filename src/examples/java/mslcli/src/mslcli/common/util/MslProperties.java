@@ -102,7 +102,7 @@ public final class MslProperties {
     private static final String ANY               = "*"; 
     private static final String SPACE_REGEX       = "\\s";
 
-    private final Object pskStoreLock = new String("PSK-STORE-LOCK");
+    private final Object pskStoreLock = new Object();
 
     private final Properties p;
 
