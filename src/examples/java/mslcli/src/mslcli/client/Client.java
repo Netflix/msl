@@ -19,8 +19,10 @@ package mslcli.client;
 import java.io.IOException;
 import java.net.URL;
 import java.security.KeyPair;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -35,6 +37,7 @@ import com.netflix.msl.keyx.AsymmetricWrappedExchange;
 import com.netflix.msl.keyx.DiffieHellmanExchange;
 import com.netflix.msl.keyx.JsonWebEncryptionLadderExchange;
 import com.netflix.msl.keyx.JsonWebKeyLadderExchange;
+import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.keyx.KeyRequestData;
 import com.netflix.msl.keyx.SymmetricWrappedExchange;
 import com.netflix.msl.msg.ErrorHeader;
@@ -159,57 +162,71 @@ public final class Client {
     }
 
     /**
-     * Set key request data for specific key request and (if applicable) mechanism.
-     * @param kxType key exchange type
-     * @param mechanism key exchange mechanism (optional) required for some key exchange types
+     * Set key request data for specific key request scheme and (if applicable) mechanism.
+     * @param kxsName key exchange scheme name
+     * @param kxmName key exchange mechanism name
      */
-    public void setKeyRequestData(final String kxType, final String mechanism) throws ConfigurationException, IllegalCmdArgumentException, MslKeyExchangeException {
-        if (kxType == null) {
+    public void setKeyRequestData(final String kxsName, final String kxmName)
+        throws ConfigurationException, IllegalCmdArgumentException, MslKeyExchangeException
+    {
+        if (kxsName == null || kxsName.trim().isEmpty()) {
             throw new IllegalArgumentException("NULL Key Exchange Type");
         }
+        final KeyExchangeScheme kxScheme = KeyExchangeScheme.getScheme(kxsName.trim());
+        if (kxScheme == null) {
+            throw new IllegalCmdArgumentException(String.format("Invalid Key Exchange Type %s: valid %s", kxsName.trim(), KeyExchangeScheme.values()));
+        }
         keyRequestDataSet.clear();
-        if (KX_DH.equals(kxType)) {
-            if (mechanism != null) {
-                throw new IllegalCmdArgumentException("No Key Wrapping Mechanism Needed for Key Exchange " + kxType);
+
+        if (kxScheme == KeyExchangeScheme.DIFFIE_HELLMAN) {
+            if (kxmName != null) {
+                throw new IllegalCmdArgumentException("No Key Wrapping Mechanism Needed for Key Exchange " + kxScheme.name());
             }
             final String diffieHellmanParametersId = appCtx.getDiffieHellmanParametersId(clientId);
             final KeyPair dhKeyPair = appCtx.generateDiffieHellmanKeys(diffieHellmanParametersId);
-            keyRequestDataSet.add(new DiffieHellmanExchange.RequestData(diffieHellmanParametersId, ((DHPublicKey)dhKeyPair.getPublic()).getY(), (DHPrivateKey)dhKeyPair.getPrivate()));
-        } else if (KX_SWE.equals(kxType)) {
-            if (mechanism != null) {
-                throw new IllegalCmdArgumentException("No Key Wrapping Mechanism Needed for Key Exchange " + kxType);
-            }
-            keyRequestDataSet.add(new SymmetricWrappedExchange.RequestData(SymmetricWrappedExchange.KeyId.PSK));
-        } else if (KX_AWE.equals(kxType)) {
-            if (mechanism == null) {
-                throw new IllegalCmdArgumentException("Missing Key Wrapping Mechanism for Asymmetric Wrapped Key Exchange");
-            }
-            final AsymmetricWrappedExchange.RequestData.Mechanism m;
-            try {
-                m = Enum.valueOf(AsymmetricWrappedExchange.RequestData.Mechanism.class, mechanism);
-            } catch (Exception e) {
-               throw new IllegalCmdArgumentException(String.format("Illegal Key Exchange Mechanism %s for Key Exchange Scheme %s", mechanism, kxType), e);
-            }
+            keyRequestDataSet.add(new DiffieHellmanExchange.RequestData(diffieHellmanParametersId,
+                ((DHPublicKey)dhKeyPair.getPublic()).getY(), (DHPrivateKey)dhKeyPair.getPrivate()));
+        } else if (kxScheme == KeyExchangeScheme.SYMMETRIC_WRAPPED) {
+            final SymmetricWrappedExchange.KeyId keyId = getKeyExchangeMechanism(
+                SymmetricWrappedExchange.KeyId.class, kxScheme, kxmName);
+            keyRequestDataSet.add(new SymmetricWrappedExchange.RequestData(keyId));
+        } else if (kxScheme == KeyExchangeScheme.ASYMMETRIC_WRAPPED) {
+            final AsymmetricWrappedExchange.RequestData.Mechanism m = getKeyExchangeMechanism(
+                AsymmetricWrappedExchange.RequestData.Mechanism.class, kxScheme, kxmName);
             if (aweKeyPair == null) {
                aweKeyPair = appCtx.generateAsymmetricWrappedExchangeKeyPair();
             }
             keyRequestDataSet.add(new AsymmetricWrappedExchange.RequestData(DEFAULT_AWE_KEY_PAIR_ID, m, aweKeyPair.getPublic(), aweKeyPair.getPrivate()));
-        } else if (KX_JWEL.equals(kxType)) {
-            if (mechanism != null) {
-                throw new IllegalCmdArgumentException("No Key Wrapping Mechanism Needed for Key Exchange " + kxType);
-            }
-            final JsonWebEncryptionLadderExchange.Mechanism m = JsonWebEncryptionLadderExchange.Mechanism.PSK;
-            final byte[] wrapdata = null;
+        } else if (kxScheme == KeyExchangeScheme.JWE_LADDER) {
+            final JsonWebEncryptionLadderExchange.Mechanism m = getKeyExchangeMechanism(
+                JsonWebEncryptionLadderExchange.Mechanism.class, kxScheme, kxmName);
+            final byte[] wrapdata = (m == JsonWebEncryptionLadderExchange.Mechanism.WRAP) ?
+                appCtx.getWrapCryptoContextRepository().getLastWrapdata() : null;
             keyRequestDataSet.add(new JsonWebEncryptionLadderExchange.RequestData(m, wrapdata));
-        } else if (KX_JWKL.equals(kxType)) {
-            if (mechanism != null) {
-                throw new IllegalCmdArgumentException("No Key Wrapping Mechanism Needed for Key Exchange " + kxType);
-            }
-            final JsonWebKeyLadderExchange.Mechanism m = JsonWebKeyLadderExchange.Mechanism.PSK;
-            final byte[] wrapdata = null;
+        } else if (kxScheme == KeyExchangeScheme.JWK_LADDER) {
+            final JsonWebKeyLadderExchange.Mechanism m = getKeyExchangeMechanism(
+                JsonWebKeyLadderExchange.Mechanism.class, kxScheme, kxmName);
+            final byte[] wrapdata = (m == JsonWebKeyLadderExchange.Mechanism.WRAP) ?
+                appCtx.getWrapCryptoContextRepository().getLastWrapdata() : null;
             keyRequestDataSet.add(new JsonWebKeyLadderExchange.RequestData(m, wrapdata));
         } else {
-            throw new IllegalCmdArgumentException("Unsupported Key Exchange Type " + kxType);
+            throw new IllegalCmdArgumentException("Unsupported Key Exchange Scheme " + kxScheme);
+        }
+    }
+
+    private static <T extends Enum<T>> T getKeyExchangeMechanism(final Class<T> clazz, final KeyExchangeScheme keyExchangeScheme, final String kxmName)
+         throws IllegalCmdArgumentException
+    {
+        final List<T> values = Arrays.asList(clazz.getEnumConstants());
+        if (kxmName == null || kxmName.trim().isEmpty()) {
+            throw new IllegalCmdArgumentException(String.format("Missing Key Exchange Mechanism for %s: Valid %s",
+                keyExchangeScheme.name(), values));
+        }
+        try {
+            return Enum.valueOf(clazz, kxmName.trim());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalCmdArgumentException(String.format("Illegal Key Exchange %s for %s, Valid %s",
+                keyExchangeScheme.name(), kxmName.trim(), values));
         }
     }
 

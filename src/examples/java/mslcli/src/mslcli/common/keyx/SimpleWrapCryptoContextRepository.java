@@ -17,12 +17,14 @@
 package mslcli.common.keyx;
 
 import java.nio.ByteBuffer;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.netflix.msl.crypto.ICryptoContext;
 
 import com.netflix.msl.keyx.WrapCryptoContextRepository;
+
+import mslcli.common.util.WrapCryptoContextRepositoryHandle;
 
 /**
  * Memory-backed Wrap Crypto Context Repository
@@ -30,14 +32,14 @@ import com.netflix.msl.keyx.WrapCryptoContextRepository;
  * @author Vadim Spector <vspector@netflix.com>
  */
 
-public final class SimpleWrapCryptoContextRepository implements WrapCryptoContextRepository {
-    private final Map<ByteBuffer,ICryptoContext> repository = new HashMap<ByteBuffer,ICryptoContext>();
+public final class SimpleWrapCryptoContextRepository implements WrapCryptoContextRepositoryHandle {
+    private final Map<ByteBuffer,ICryptoContext> repository = new LinkedHashMap<ByteBuffer,ICryptoContext>();
 
     /**
      * @see com.netflix.msl.keyx.WrapCryptoContextRepository.addCryptoContext()
      */
     @Override
-    public void addCryptoContext(final byte[] wrapdata, final ICryptoContext cryptoContext) {
+    public synchronized void addCryptoContext(final byte[] wrapdata, final ICryptoContext cryptoContext) {
         repository.put(ByteBuffer.wrap(wrapdata), cryptoContext);
     }
 
@@ -45,7 +47,7 @@ public final class SimpleWrapCryptoContextRepository implements WrapCryptoContex
      * @see com.netflix.msl.keyx.WrapCryptoContextRepository.getCryptoContext()
      */
     @Override
-    public ICryptoContext getCryptoContext(final byte[] wrapdata) {
+    public synchronized ICryptoContext getCryptoContext(final byte[] wrapdata) {
         return repository.get(ByteBuffer.wrap(wrapdata));
     }
 
@@ -53,7 +55,16 @@ public final class SimpleWrapCryptoContextRepository implements WrapCryptoContex
      *@see com.netflix.msl.keyx.WrapCryptoContextRepository.removeCryptoContext()
      */
     @Override
-    public void removeCryptoContext(final byte[] wrapdata) {
+    public synchronized void removeCryptoContext(final byte[] wrapdata) {
         repository.remove(ByteBuffer.wrap(wrapdata));
+    }
+
+    @Override
+    public synchronized byte[] getLastWrapdata() {
+        ByteBuffer bb1 = null;
+        for (ByteBuffer bb : repository.keySet()) {
+            bb1 = bb;
+        }
+        return (bb1 != null) ? bb1.array() : null;
     }
 }

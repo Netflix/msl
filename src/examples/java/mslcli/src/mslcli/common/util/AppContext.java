@@ -97,10 +97,11 @@ public final class AppContext {
     private final PresharedKeyStore presharedKeyStore;
     private final EmailPasswordStore emailPasswordStore;
     private final RsaStore rsaStore;
-    private final WrapCryptoContextRepository wrapCryptoContextRepository;
+    private final WrapCryptoContextRepositoryHandle wrapCryptoContextRepository;
     private final DiffieHellmanParameters diffieHellmanParameters;
     private final KeyExchangeFactoryComparator keyxFactoryComparator;
     private MslStoreWrapper mslStoreWrapper;
+    private WrapCryptoContextRepositoryWrapper wrapCryptoContextRepositoryWrapper;
 
 
     /**
@@ -499,8 +500,22 @@ public final class AppContext {
     /**
      * @return repository for storing mapping between wrapped key and crypto context
      */
-    public WrapCryptoContextRepository getWrapCryptoContextRepository() {
-        return wrapCryptoContextRepository;
+    public WrapCryptoContextRepositoryHandle getWrapCryptoContextRepository() {
+        synchronized (wrapCryptoContextRepository) {
+            return (wrapCryptoContextRepositoryWrapper != null) ? wrapCryptoContextRepositoryWrapper : wrapCryptoContextRepository;
+        }
+    }
+
+    /**
+     * @param wrapCryptoContexRepositorytWrapper MSL store wrapper instance which extends MslStoreWrapper class and can be implemented by the app to intercept and modify MslStore calls
+     */
+    public void setWrapCryptoContextRepositoryWrapper(final WrapCryptoContextRepositoryWrapper wrapCryptoContextRepositoryWrapper) {
+        synchronized (wrapCryptoContextRepository) {
+            this.wrapCryptoContextRepositoryWrapper = wrapCryptoContextRepositoryWrapper;
+            if (wrapCryptoContextRepositoryWrapper != null) {
+                wrapCryptoContextRepositoryWrapper.setWrapCryptoContextRepository(wrapCryptoContextRepository);
+            }
+        }
     }
 
     /**

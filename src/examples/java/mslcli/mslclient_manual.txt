@@ -67,20 +67,30 @@ OPTIONS
 
 	-kx <supported-key-exchange-scheme>
 		The following are the allowed values:
-		dh - for Diffie-Hellman key exchange
-		sw - for Symmetric Wrapped key exchange
-		aw - for Asymmetric Wrapped key exchange
-		jwe - for JSON Web Encryption Ladder Key Exchange
-		jwk - for JSON Web Key Ladder Key Exchange
+		DIFFIE_HELLMAN - for Diffie-Hellman key exchange
+		SYMMETRIC_WRAPPED - for Symmetric Wrapped key exchange
+		ASYMMETRIC_WRAPPED - for Asymmetric Wrapped key exchange
+		JWE_LADDER - for JSON Web Encryption Ladder Key Exchange
+		JWK_LADDER - for JSON Web Key Ladder Key Exchange
 
 	-kxm <supported-key-exchange-mechanism>
-		Only applicable if Asymmetric Wrapped Key Exchange scheme is
-		specified with -kx option.
-		The following are the legal values:
-		JWE_RSA   - RSA-OAEP JSON Web ENcryption Compact Serialization
-		JWEJS_RSA - RSA-OAEP JSON Web Encryption JSON Serialization
-		JWK_RSA   - RSA-OAEP Json Web Key 
-		JWK_RSAES - RSA PKCS#1 JSON Web Key
+		The following are the legal values per key exchange scheme:
+		-kx DIFFIE_HELLMAN:
+			should not be specified
+		-kx SYMMETRIC_WRAPPED:
+			PSK - using pre-shared keys
+			SESSION - using session keys
+		-kx ASYMMETRIC_WRAPPED:
+			JWE_RSA   - RSA-OAEP JSON Web ENcryption Compact Serialization
+			JWEJS_RSA - RSA-OAEP JSON Web Encryption JSON Serialization
+			JWK_RSA   - RSA-OAEP Json Web Key 
+			JWK_RSAES - RSA PKCS#1 JSON Web Key
+		-kx JWE_LADDER:
+			PSK - using pre-shared keys
+			WRAP - using session wrap keys
+		-kx JWK_LADDER:
+			PSK - using pre-shared keys
+			WRAP - using session wrap keys
 
 	-enc (true|false), default true
 		OPTIONAL. Whether the request must be encrypted or not.

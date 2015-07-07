@@ -55,6 +55,7 @@ import mslcli.common.util.ConfigurationRuntimeException;
 import mslcli.common.util.MslProperties;
 import mslcli.common.util.MslStoreWrapper;
 import mslcli.common.util.SharedUtil;
+import mslcli.common.util.WrapCryptoContextRepositoryWrapper;
 
 import static mslcli.client.CmdArguments.*;
 
@@ -171,6 +172,9 @@ public final class ClientApp {
 
         // initialize MSL Store - use wrapper to intercept selected MSL Store calls
         this.appCtx.setMslStoreWrapper(new AppMslStoreWrapper(appCtx));
+
+        // initialize WrapCryptoContextRepositoryWrapper to intercept WrapCryptoContextRepository calls
+        this.appCtx.setWrapCryptoContextRepositoryWrapper(new AppWrapCryptoContextRepositoryWrapper(appCtx));
     }
 
     /*
@@ -459,6 +463,34 @@ public final class ClientApp {
             super.removeServiceTokens(name, masterToken, userIdToken);
         }
 
+        private final AppContext appCtx;
+    }
+
+    private static final class AppWrapCryptoContextRepositoryWrapper extends WrapCryptoContextRepositoryWrapper {
+        private AppWrapCryptoContextRepositoryWrapper(final AppContext appCtx) {
+            if (appCtx == null) {
+                throw new IllegalArgumentException("NULL app context");
+            }
+            this.appCtx = appCtx;
+        }
+
+        @Override
+        public void addCryptoContext(final byte[] wrapdata, final ICryptoContext cryptoContext) {
+            appCtx.info("WrapCryptoContextRepositoryWrapper: addCryptoContext");
+            super.addCryptoContext(wrapdata, cryptoContext);
+        }
+
+        @Override
+        public ICryptoContext getCryptoContext(final byte[] wrapdata) {
+            appCtx.info("WrapCryptoContextRepositoryWrapper: getCryptoContext");
+            return super.getCryptoContext(wrapdata);
+        }
+
+        @Override
+        public void removeCryptoContext(final byte[] wrapdata) {
+            appCtx.info("WrapCryptoContextRepositoryWrapper: removeCryptoContext");
+            super.removeCryptoContext(wrapdata);
+        }
         private final AppContext appCtx;
     }
 
