@@ -42,7 +42,7 @@ var MslUtils$uncompress;
         case CompressionAlgorithm.LZW:
             return lzw$compress(data);
         case CompressionAlgorithm.GZIP:
-            if (gzip$compress)
+            if (typeof gzip$compress === "function")
                 return gzip$compress(data);
         default:
             throw new MslException(MslError.UNSUPPORTED_COMPRESSION, compressionAlgo);
@@ -62,7 +62,7 @@ var MslUtils$uncompress;
         case CompressionAlgorithm.LZW:
             return lzw$uncompress(data);
         case CompressionAlgorithm.GZIP:
-            if (gzip$uncompress)
+            if (typeof gzip$uncompress === "function")
                 return gzip$uncompress(data);
         default:
             throw new MslException(MslError.UNSUPPORTED_COMPRESSION, compressionAlgo.name());
