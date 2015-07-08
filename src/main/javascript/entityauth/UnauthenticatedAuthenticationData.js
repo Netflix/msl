@@ -35,6 +35,8 @@ var UnauthenticatedAuthenticationData;
 var UnauthenticatedAuthenticationData$parse;
 
 (function() {
+    "use strict";
+    
     /**
      * JSON key entity identity.
      * @const
@@ -53,7 +55,7 @@ var UnauthenticatedAuthenticationData$parse;
             init.base.call(this, EntityAuthenticationScheme.NONE);
             // The properties.
             var props = {
-                identity: { value: identity, writable: false }
+                identity: { value: identity, writable: false, configurable: false }
             };
             Object.defineProperties(this, props);
         },
@@ -82,7 +84,7 @@ var UnauthenticatedAuthenticationData$parse;
      * Construct a new Unauthenticated asymmetric keys authentication data instance from the
      * provided JSON object.
      *
-     * @param unauthenticatedAuthJO the authentication data JSON object.
+     * @param {object} unauthenticatedAuthJO the authentication data JSON object.
      * @throws MslEncodingException if there is an error parsing the entity
      *         authentication data.
      */

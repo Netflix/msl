@@ -49,6 +49,8 @@ import com.netflix.msl.entityauth.PresharedProfileAuthenticationData;
 import com.netflix.msl.entityauth.RsaAuthenticationData;
 import com.netflix.msl.entityauth.UnauthenticatedAuthenticationData;
 import com.netflix.msl.entityauth.UnauthenticatedAuthenticationFactory;
+import com.netflix.msl.entityauth.UnauthenticatedSuffixedAuthenticationData;
+import com.netflix.msl.entityauth.UnauthenticatedSuffixedAuthenticationFactory;
 import com.netflix.msl.entityauth.X509AuthenticationData;
 import com.netflix.msl.keyx.AsymmetricWrappedExchange;
 import com.netflix.msl.keyx.DiffieHellmanExchange;
@@ -143,6 +145,8 @@ public class MockMslContext implements MslContext {
             entityAuthData = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
         else if (EntityAuthenticationScheme.NONE.equals(scheme))
             entityAuthData = new UnauthenticatedAuthenticationData("MOCKUNAUTH-ESN");
+        else if (EntityAuthenticationScheme.NONE_SUFFIXED.equals(scheme))
+            entityAuthData = new UnauthenticatedSuffixedAuthenticationData("MOCKUNAUTH-ROOT", "MOCKUNAUTH-SUFFIX");
         else      
             throw new IllegalArgumentException("Unsupported authentication type: " + scheme.name());
 
@@ -169,6 +173,7 @@ public class MockMslContext implements MslContext {
         entityAuthFactories.put(EntityAuthenticationScheme.RSA, new MockRsaAuthenticationFactory());
         entityAuthFactories.put(EntityAuthenticationScheme.NONE, new UnauthenticatedAuthenticationFactory(authutils));
         entityAuthFactories.put(EntityAuthenticationScheme.X509, new MockX509AuthenticationFactory());
+        entityAuthFactories.put(EntityAuthenticationScheme.NONE_SUFFIXED, new UnauthenticatedSuffixedAuthenticationFactory(authutils));
 
         userAuthFactories = new HashMap<UserAuthenticationScheme,UserAuthenticationFactory>();
         userAuthFactories.put(UserAuthenticationScheme.EMAIL_PASSWORD, new MockEmailPasswordAuthenticationFactory());

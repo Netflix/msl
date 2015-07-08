@@ -65,6 +65,8 @@ var EntityAuthenticationScheme$getScheme;
         RSA : new EntityAuthenticationScheme("RSA", false, true),
         /** Unauthenticated. */
         NONE : new EntityAuthenticationScheme("NONE", false, false),
+        /** Unauthenticated suffixed. */
+        NONE_SUFFIXED : new EntityAuthenticationScheme("NONE_SUFFIXED", false, false),
     }));
     Object.freeze(EntityAuthenticationScheme);
 

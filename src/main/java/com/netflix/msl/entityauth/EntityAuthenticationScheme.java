@@ -41,6 +41,8 @@ public class EntityAuthenticationScheme {
     public static final EntityAuthenticationScheme RSA = new EntityAuthenticationScheme("RSA", false, true);
     /** Unauthenticated. */
     public static final EntityAuthenticationScheme NONE = new EntityAuthenticationScheme("NONE", false, false);
+    /** Unauthenticated suffixed. */
+    public static final EntityAuthenticationScheme NONE_SUFFIXED = new EntityAuthenticationScheme("NONE_SUFFIXED", false, false);
     
     /**
      * Define an entity authentication scheme with the specified name and
