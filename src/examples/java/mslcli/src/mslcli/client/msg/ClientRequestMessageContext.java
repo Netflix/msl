@@ -34,6 +34,7 @@ import com.netflix.msl.msg.MessageServiceTokenBuilder;
 import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.userauth.UserAuthenticationData;
 
+import mslcli.client.util.KeyRequestDataHandle;
 import mslcli.client.util.UserAuthenticationDataHandle;
 
 /**
@@ -48,7 +49,7 @@ public class ClientRequestMessageContext implements MessageContext {
     private final boolean                    isNonReplayable;
     private final UserAuthenticationDataHandle userAuthenticationDataHandle;
     private final String                     userId; 
-    private final Set<KeyRequestData>        keyRequestDataSet; 
+    private final KeyRequestDataHandle       keyRequestDataHandle; 
     private final byte[]                     payload;
     private final Map<String,ICryptoContext> cryptoContexts;
 
@@ -61,27 +62,30 @@ public class ClientRequestMessageContext implements MessageContext {
      * @param isNonReplayable true if message is to be marked as non-replayable, false otherwise
      * @param userId user ID, should be null if a message is not user-bound
      * @param userAuthDataHandle user authentication data getter
-     * @param keyRequestDataSet set of key exchange requests
+     * @param keyRequestDataHandle key request data getter
      * @param payload message payload
      */
-    public ClientRequestMessageContext(final boolean                  isEncrypted,
-                                       final boolean                  isIntegrityProtected,
-                                       final boolean                  isNonReplayable,
-                                       final String                   userId,
+    public ClientRequestMessageContext(final MessageConfig                msgCfg,
                                        final UserAuthenticationDataHandle userAuthenticationDataHandle,
-                                       final Set<KeyRequestData>      keyRequestDataSet,
-                                       final byte[]                   payload
+                                       final KeyRequestDataHandle         keyRequestDataHandle,
+                                       final byte[]                       payload
                                       )
     {
+        if (msgCfg == null) {
+            throw new IllegalArgumentException("NULL message config data");
+        }
         if (userAuthenticationDataHandle == null) {
             throw new IllegalArgumentException("NULL user authentication data handle");
         }
-        this.isEncrypted          = isEncrypted;
-        this.isIntegrityProtected = isIntegrityProtected;
-        this.isNonReplayable      = isNonReplayable;
-        this.userId               = userId;
+        if (keyRequestDataHandle == null) {
+            throw new IllegalArgumentException("NULL key request data handle");
+        }
+        this.isEncrypted          = msgCfg.isEncrypted;
+        this.isIntegrityProtected = msgCfg.isIntegrityProtected;
+        this.isNonReplayable      = msgCfg.isNonReplayable;
+        this.userId               = msgCfg.userId;
         this.userAuthenticationDataHandle = userAuthenticationDataHandle;
-        this.keyRequestDataSet    = (keyRequestDataSet != null) ? Collections.<KeyRequestData>unmodifiableSet(keyRequestDataSet) : Collections.<KeyRequestData>emptySet();
+        this.keyRequestDataHandle = keyRequestDataHandle;
         this.payload              = payload;
         this.cryptoContexts       = Collections.<String,ICryptoContext>emptyMap();
     }
@@ -167,7 +171,7 @@ public class ClientRequestMessageContext implements MessageContext {
      */
     @Override
     public Set<KeyRequestData> getKeyRequestData() throws MslKeyExchangeException {
-        return keyRequestDataSet;
+        return keyRequestDataHandle.getKeyRequestData();
     }
 
     /* (non-Javadoc)

@@ -63,7 +63,7 @@ public class ClientAuthenticationUtils implements AuthenticationUtils {
         this.appCtx = appCtx;
 
         // set allowed entity authentication schemes
-        this.allowedClientEntityAuthenticationSchemes = appCtx.getAllowedEntityAuthenticationSchemes(clientId);;
+        this.allowedClientEntityAuthenticationSchemes = appCtx.getAllowedEntityAuthenticationSchemes(clientId);
 
         // set allowed user authentication schemes
         this.allowedClientUserAuthenticationSchemes = appCtx.getAllowedUserAuthenticationSchemes(clientId);

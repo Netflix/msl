@@ -19,9 +19,11 @@ package mslcli.client;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import java.io.Console;
+import java.io.InputStream;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.URL;
+import java.security.KeyPair;
 import java.security.Security;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,6 +32,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import javax.crypto.interfaces.DHPrivateKey;
+import javax.crypto.interfaces.DHPublicKey;
 
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslConstants.ResponseCode;
@@ -38,6 +42,12 @@ import com.netflix.msl.MslException;
 import com.netflix.msl.MslKeyExchangeException;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.keyx.AsymmetricWrappedExchange;
+import com.netflix.msl.keyx.DiffieHellmanExchange;
+import com.netflix.msl.keyx.JsonWebEncryptionLadderExchange;
+import com.netflix.msl.keyx.JsonWebKeyLadderExchange;
+import com.netflix.msl.keyx.KeyExchangeScheme;
+import com.netflix.msl.keyx.KeyRequestData;
+import com.netflix.msl.keyx.SymmetricWrappedExchange;
 import com.netflix.msl.msg.ConsoleFilterStreamFactory;
 import com.netflix.msl.msg.MslControl;
 import com.netflix.msl.tokens.MasterToken;
@@ -48,6 +58,7 @@ import com.netflix.msl.userauth.UserAuthenticationData;
 
 import mslcli.common.Pair;
 import mslcli.client.msg.MessageConfig;
+import mslcli.client.util.KeyRequestDataHandle;
 import mslcli.client.util.UserAuthenticationDataHandle;
 import mslcli.common.Triplet;
 import mslcli.common.util.AppContext;
@@ -110,6 +121,7 @@ public final class ClientApp {
     private final AppContext appCtx;
     private Client client;
     private String clientId = null;
+    private AppKeyRequestDataHandle keyRequestDataHandle = null;
 
     /*
      * Launcher of MSL CLI client. See user manual in HELP_FILE.
@@ -247,6 +259,8 @@ public final class ClientApp {
             // set verbose mode
             if (cmdParam.isVerbose()) {
                 appCtx.getMslControl().setFilterFactory(new ConsoleFilterStreamFactory());
+            } else {
+                appCtx.getMslControl().setFilterFactory(null);
             }
             System.out.println("Options: " + cmdParam.getParameters());
 
@@ -254,10 +268,10 @@ public final class ClientApp {
             if (!cmdParam.getEntityId().equals(clientId) || (client == null)) {
                 clientId = cmdParam.getEntityId();
                 client = null; // required for keeping the state, in case the next line throws exception
-                client = new Client(appCtx, clientId);
+                keyRequestDataHandle = new AppKeyRequestDataHandle(appCtx, clientId);
+                client = new Client(appCtx, clientId, new AppUserAuthenticationDataHandle(cmdParam.getUserId(), mslProp, cmdParam.isInteractive()),
+                                                      keyRequestDataHandle);
             }
-
-            client.setUserAuthenticationDataHandle(new AppUserAuthenticationDataHandle(cmdParam.getUserId(), mslProp, cmdParam.isInteractive()));
 
             // set message mslProperties
             final MessageConfig mcfg = new MessageConfig();
@@ -270,7 +284,7 @@ public final class ClientApp {
             final String kx = cmdParam.getKeyExchangeScheme();
             if (kx != null) {
                 final String kxm = cmdParam.getKeyExchangeMechanism();
-                client.setKeyRequestData(kx, kxm);
+                keyRequestDataHandle.setKeyExchange(kx, kxm);
             }
 
             // set request payload
@@ -408,6 +422,117 @@ public final class ClientApp {
     }
 
     /*
+     * This class facilitates on-demand fetching of key request data and configuring this data on the fly.
+     */
+    private static final class AppKeyRequestDataHandle implements KeyRequestDataHandle {
+        AppKeyRequestDataHandle(final AppContext appCtx, final String clientId) {
+            this.appCtx = appCtx;
+            this.clientId = clientId;
+            this.keyRequestDataSet = new HashSet<KeyRequestData>();
+        }
+
+        @Override
+        public synchronized Set<KeyRequestData> getKeyRequestData() {
+            appCtx.info("Requesting Key Request Data");
+            return Collections.<KeyRequestData>unmodifiableSet(keyRequestDataSet);
+        }
+
+        /*
+         * Set key request data for specific key request scheme and (if applicable) mechanism.
+         * @param kxsName key exchange scheme name
+         * @param kxmName key exchange mechanism name
+         */
+        private synchronized void setKeyExchange(final String kxsName, final String kxmName)
+            throws ConfigurationException, IllegalCmdArgumentException, ConfigurationException, MslKeyExchangeException {
+            if (kxsName == null || kxsName.trim().isEmpty()) {
+                throw new IllegalArgumentException("NULL Key Exchange Type");
+            }
+            final KeyExchangeScheme kxScheme = KeyExchangeScheme.getScheme(kxsName.trim());
+            if (kxScheme == null) {
+                throw new IllegalCmdArgumentException(String.format("Invalid Key Exchange Type %s: valid %s", kxsName.trim(), KeyExchangeScheme.values()));
+            }
+                    keyRequestDataSet.clear();
+
+            if (kxScheme == KeyExchangeScheme.DIFFIE_HELLMAN) {
+                if (kxmName != null) {
+                    throw new IllegalCmdArgumentException("No Key Wrapping Mechanism Needed for Key Exchange " + kxScheme.name());
+                }
+                final String diffieHellmanParametersId = appCtx.getDiffieHellmanParametersId(clientId);
+                final KeyPair dhKeyPair = appCtx.generateDiffieHellmanKeys(diffieHellmanParametersId);
+                keyRequestDataSet.add(new DiffieHellmanExchange.RequestData(diffieHellmanParametersId,
+                    ((DHPublicKey)dhKeyPair.getPublic()).getY(), (DHPrivateKey)dhKeyPair.getPrivate()));
+            } else if (kxScheme == KeyExchangeScheme.SYMMETRIC_WRAPPED) {
+                final SymmetricWrappedExchange.KeyId keyId = getKeyExchangeMechanism(
+                    SymmetricWrappedExchange.KeyId.class, kxScheme, kxmName);
+                keyRequestDataSet.add(new SymmetricWrappedExchange.RequestData(keyId));
+            } else if (kxScheme == KeyExchangeScheme.ASYMMETRIC_WRAPPED) {
+                final AsymmetricWrappedExchange.RequestData.Mechanism m = getKeyExchangeMechanism(
+                    AsymmetricWrappedExchange.RequestData.Mechanism.class, kxScheme, kxmName);
+                if (aweKeyPair == null) {
+                    aweKeyPair = appCtx.generateAsymmetricWrappedExchangeKeyPair();
+                }
+                keyRequestDataSet.add(new AsymmetricWrappedExchange.RequestData(DEFAULT_AWE_KEY_PAIR_ID, m, aweKeyPair.getPublic(), aweKeyPair.getPrivate()));
+            } else if (kxScheme == KeyExchangeScheme.JWE_LADDER) {
+                final JsonWebEncryptionLadderExchange.Mechanism m = getKeyExchangeMechanism(
+                    JsonWebEncryptionLadderExchange.Mechanism.class, kxScheme, kxmName);
+                final byte[] wrapdata;
+                if (m == JsonWebEncryptionLadderExchange.Mechanism.WRAP) {
+                    wrapdata = appCtx.getWrapCryptoContextRepository().getLastWrapdata();
+                    if (wrapdata == null) {
+                        throw new IllegalCmdArgumentException(String.format("No Key Wrapping Data Found for {%s %s}", kxScheme.name(), m));
+                    }
+                } else {
+                    wrapdata = null;
+                }
+                keyRequestDataSet.add(new JsonWebEncryptionLadderExchange.RequestData(m, wrapdata));
+            } else if (kxScheme == KeyExchangeScheme.JWK_LADDER) {
+                final JsonWebKeyLadderExchange.Mechanism m = getKeyExchangeMechanism(
+                    JsonWebKeyLadderExchange.Mechanism.class, kxScheme, kxmName);
+                final byte[] wrapdata;
+                if (m == JsonWebKeyLadderExchange.Mechanism.WRAP) {
+                    wrapdata = appCtx.getWrapCryptoContextRepository().getLastWrapdata();
+                    if (wrapdata == null) {
+                        throw new IllegalCmdArgumentException(String.format("No Key Wrapping Data Found for {%s %s}", kxScheme.name(), m));
+                    }
+                } else {
+                    wrapdata = null;
+                }
+                keyRequestDataSet.add(new JsonWebKeyLadderExchange.RequestData(m, wrapdata));
+            } else {
+                throw new IllegalCmdArgumentException("Unsupported Key Exchange Scheme " + kxScheme);
+            }
+        }
+
+        private static <T extends Enum<T>> T getKeyExchangeMechanism(final Class<T> clazz, final KeyExchangeScheme keyExchangeScheme, final String kxmName)
+            throws IllegalCmdArgumentException
+        {
+            final List<T> values = Arrays.asList(clazz.getEnumConstants());
+            if (kxmName == null || kxmName.trim().isEmpty()) {
+                throw new IllegalCmdArgumentException(String.format("Missing Key Exchange Mechanism for %s: Valid %s",
+                    keyExchangeScheme.name(), values));
+            }
+            try {
+                return Enum.valueOf(clazz, kxmName.trim());
+            } catch (IllegalArgumentException e) {
+                throw new IllegalCmdArgumentException(String.format("Illegal Key Exchange %s for %s, Valid %s",
+                    keyExchangeScheme.name(), kxmName.trim(), values));
+            }
+        }
+
+        private final AppContext appCtx;
+        private final String clientId;
+        private final Set<KeyRequestData> keyRequestDataSet; 
+        /* Cached RSA Key Pair for asymmetric key wrap key exchange to avoid expensive key pair generation.
+         * This is an optimization specific to this application, to avoid annoying delays in generating
+         * 4096-bit RSA key pairs. Real-life implementations should not re-use key wrapping keys
+         * too many times.
+         */
+        private KeyPair aweKeyPair = null;
+        /* default asymmetrik key wrap exchange key pair id - the value should not matter */
+        private static final String DEFAULT_AWE_KEY_PAIR_ID = "default_awe_key_id";
+    }
+
+    /*
      * This is a class to serve as an interceptor to all MslStore calls.
      * It can override only the methods in MslStore the app cares about.
      * This sample implementation just prints out the information about
@@ -484,6 +609,9 @@ public final class ClientApp {
         private final AppContext appCtx;
     }
 
+    /*
+     * convenience WrapCryptoContextRepository wrapper class to trace all calls
+     */
     private static final class AppWrapCryptoContextRepositoryWrapper extends WrapCryptoContextRepositoryWrapper {
         private AppWrapCryptoContextRepositoryWrapper(final AppContext appCtx) {
             if (appCtx == null) {
@@ -494,7 +622,7 @@ public final class ClientApp {
 
         @Override
         public void addCryptoContext(final byte[] wrapdata, final ICryptoContext cryptoContext) {
-            appCtx.info("WrapCryptoContextRepositoryWrapper: addCryptoContext");
+            appCtx.info("WrapCryptoContextRepositoryWrapper: addCryptoContext " + ((cryptoContext != null) ? cryptoContext.getClass().getName() : "null"));
             super.addCryptoContext(wrapdata, cryptoContext);
         }
 
@@ -516,10 +644,15 @@ public final class ClientApp {
      * helper - print help file
      */
     private static void help() {
+        InputStream input = null;
         try {
-            System.out.println(new String(SharedUtil.readFromFile(HELP_FILE), MslConstants.DEFAULT_CHARSET));
-        } catch (IOException e) {
+            input = ClientApp.class.getResourceAsStream(HELP_FILE);
+            final String helpInfo = new String(SharedUtil.readIntoArray(input), MslConstants.DEFAULT_CHARSET);
+            System.out.println(helpInfo);
+        } catch (Exception e) {
             System.err.println(String.format("Cannot read help file %s: %s", HELP_FILE, e.getMessage()));
+        } finally {
+            if (input != null) try { input.close(); } catch (Exception ignore) {}
         }
     }
 
