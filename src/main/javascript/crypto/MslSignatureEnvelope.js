@@ -216,7 +216,7 @@ var MslSignatureEnvelope$Version;
                             // Grab signature.
                             var signature = base64$decode(signatureB64);
                             if (!signature)
-                                throw new MslCryptoException(MslError.INVALID_SIGNATURE, "signature envelope " + Base64Util.encode(envelope));
+                                throw new MslCryptoException(MslError.INVALID_SIGNATURE, "signature envelope " + base64$encode(envelope));
 
                             // Return the envelope.
                             return new MslSignatureEnvelope(Version.V2, algorithm, signature);

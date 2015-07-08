@@ -161,7 +161,7 @@ var MslCrypto$setCryptoSubtle;
                 	var op = nfCryptoSubtle.encrypt(algorithm, key, buffer);
                     return promisedOperation(op);
                 default:
-                    throw new Error("Unsupported Web Crypto version " + WEB_CRYPTO_VERSION + ".");
+                    throw new Error("Unsupported Web Crypto version " + mslCrypto$version + ".");
             }
         },
 
@@ -174,7 +174,7 @@ var MslCrypto$setCryptoSubtle;
                     var op = nfCryptoSubtle.decrypt(algorithm, key, buffer);
                     return promisedOperation(op);
                default:
-                    throw new Error("Unsupported Web Crypto version " + WEB_CRYPTO_VERSION + ".");
+                    throw new Error("Unsupported Web Crypto version " + mslCrypto$version + ".");
             }
         },
 
@@ -187,7 +187,7 @@ var MslCrypto$setCryptoSubtle;
                     var op = nfCryptoSubtle.sign(algorithm, key, buffer);
                     return promisedOperation(op);
                 default:
-                    throw new Error("Unsupported Web Crypto version " + WEB_CRYPTO_VERSION + ".");
+                    throw new Error("Unsupported Web Crypto version " + mslCrypto$version + ".");
             }
         },
 
@@ -200,7 +200,7 @@ var MslCrypto$setCryptoSubtle;
                     var op = nfCryptoSubtle.verify(algorithm, key, signature, buffer);
                     return promisedOperation(op);
                 default:
-                    throw new Error("Unsupported Web Crypto version " + WEB_CRYPTO_VERSION + ".");
+                    throw new Error("Unsupported Web Crypto version " + mslCrypto$version + ".");
             }
         },
 
@@ -213,7 +213,7 @@ var MslCrypto$setCryptoSubtle;
                     var op = nfCryptoSubtle.digest(algorithm, buffer);
                     return promisedOperation(op);
                 default:
-                    throw new Error("Unsupported Web Crypto version " + WEB_CRYPTO_VERSION + ".");
+                    throw new Error("Unsupported Web Crypto version " + mslCrypto$version + ".");
             }
         },
 
@@ -228,7 +228,7 @@ var MslCrypto$setCryptoSubtle;
                     var op = nfCryptoSubtle.generateKey(algorithm, ext, ku);
                     return promisedOperation(op);
                 default:
-                    throw new Error("Unsupported Web Crypto version " + WEB_CRYPTO_VERSION + ".");
+                    throw new Error("Unsupported Web Crypto version " + mslCrypto$version + ".");
             }
         },
 
@@ -243,7 +243,7 @@ var MslCrypto$setCryptoSubtle;
                     var op = nfCryptoSubtle.deriveKey(algorithm, baseKey, derivedKeyAlgorithm, ext, ku);
                     return promisedOperation(op);
                 default:
-                    throw new Error("Unsupported Web Crypto version " + WEB_CRYPTO_VERSION + ".");
+                    throw new Error("Unsupported Web Crypto version " + mslCrypto$version + ".");
             }
         },
 
@@ -273,7 +273,7 @@ var MslCrypto$setCryptoSubtle;
 						return promisedOperation(op);
                     }
                 default:
-                    throw new Error("Unsupported Web Crypto version " + WEB_CRYPTO_VERSION + ".");
+                    throw new Error("Unsupported Web Crypto version " + mslCrypto$version + ".");
             }
         },
 
@@ -300,7 +300,7 @@ var MslCrypto$setCryptoSubtle;
 						return promisedOperation(op);
                     }
                 default:
-                    throw new Error("Unsupported Web Crypto version " + WEB_CRYPTO_VERSION + ".");
+                    throw new Error("Unsupported Web Crypto version " + mslCrypto$version + ".");
             }
         },
 
@@ -316,7 +316,7 @@ var MslCrypto$setCryptoSubtle;
                     op = nfCryptoSubtle.wrapKey(format, keyToWrap, wrappingKey, wrappingAlgorithm);
                     break;
                 default:
-                    throw new Error("Unsupported Web Crypto version " + WEB_CRYPTO_VERSION + ".");
+                    throw new Error("Unsupported Web Crypto version " + mslCrypto$version + ".");
             }
             return promisedOperation(op);
         },
@@ -335,7 +335,7 @@ var MslCrypto$setCryptoSubtle;
                     op = nfCryptoSubtle.unwrapKey(format, wrappedKey, unwrappingKey, unwrapAlgorithm, unwrappedKeyAlgorithm, ext, ku);
                     break;
                 default:
-                    throw new Error("Unsupported Web Crypto version " + WEB_CRYPTO_VERSION + ".");
+                    throw new Error("Unsupported Web Crypto version " + mslCrypto$version + ".");
             }
             return promisedOperation(op);
         },
