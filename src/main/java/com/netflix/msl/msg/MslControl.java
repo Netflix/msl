@@ -1841,6 +1841,11 @@ public class MslControl {
             {
                 response = receive(ctx, msgCtx, in, requestHeader);
                 response.closeSource(closeStreams);
+                
+                // If we received an error response then cleanup.
+                final ErrorHeader errorHeader = response.getErrorHeader();
+                if (errorHeader != null)
+                    cleanupContext(ctx, requestHeader, errorHeader);
             }
         } finally {
             // Release the renewal lock.
@@ -2604,10 +2609,9 @@ public class MslControl {
                     // Otherwise we don't care about an exception on close.
                 }
                 
-                // Cleanup and build the error response. This will acquire the
-                // master token lock.
+                // Build the error response. This will acquire the master token
+                // lock.
                 final ErrorHeader errorHeader = response.getErrorHeader();
-                cleanupContext(ctx, result.request.getMessageHeader(), errorHeader);
                 final ErrorResult errMsg = buildErrorResponse(ctx, msgCtx, result, errorHeader);
 
                 // If there is no error response then return the error.
@@ -3149,10 +3153,9 @@ public class MslControl {
                     // Otherwise we don't care about an I/O exception on close.
                 }
                 
-                // Cleanup and build the error response. This will acquire the
-                // master token lock.
+                // Build the error response. This will acquire the master token
+                // lock.
                 final ErrorHeader errorHeader = response.getErrorHeader();
-                cleanupContext(ctx, request.getMessageHeader(), errorHeader);
                 final ErrorResult errMsg = buildErrorResponse(ctx, msgCtx, result, errorHeader);
 
                 // If there is no error response then return the error.

@@ -1976,6 +1976,11 @@ var MslControl$MslChannel;
                                     this.receive(service, ctx, msgCtx, input, requestHeader, timeout, {
                                         result: function(response) {
                                             InterruptibleExecutor(callback, function() {
+                                                // If we received an error response then cleanup.
+                                                var errorHeader = response.getErrorHeader();
+                                                if (errorHeader)
+                                                    this.cleanupContext(ctx, requestHeader, errorHeader);
+                                                
                                                 // Release the renewal lock.
                                                 if (renewing)
                                                     this.releaseRenewalLock(ctx, renewalQueue, response);
@@ -3482,10 +3487,9 @@ var MslControl$MslChannel;
 
             function handleError(result) {
                 InterruptibleExecutor(callback, function() {
-                    // Cleanup and build the error response. This will acquire the
-                    // master token lock.
+                    // Build the error response. This will acquire the master token
+                    // lock.
                     var errorHeader = result.response.getErrorHeader();
-                    this._ctrl.cleanupContext(this._ctx, result.request.getMessageHeader(), errorHeader);
                     this._ctrl.buildErrorResponse(this, this._ctx, msgCtx, result, errorHeader, {
                         result: function(errTokenTicket) {
                             InterruptibleExecutor(callback, function() {
@@ -4036,12 +4040,10 @@ var MslControl$MslChannel;
 
             function handleError(result) {
                 InterruptibleExecutor(callback, function() {
-                    // Cleanup and build the error response. This will acquire the
-                    // master token lock.
-                    var request = result.request;
+                    // Build the error response. This will acquire the master token
+                    // lock.
                     var response = result.response;
                     var errorHeader = response.getErrorHeader();
-                    this._ctrl.cleanupContext(this._ctx, request.getMessageHeader(), errorHeader);
                     this._ctrl.buildErrorResponse(this, this._ctx, msgCtx, result, errorHeader, timeout, {
                         result: function(errTokenTicket) {
                             InterruptibleExecutor(callback, function() {
