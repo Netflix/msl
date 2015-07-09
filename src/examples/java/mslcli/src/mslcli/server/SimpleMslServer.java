@@ -103,7 +103,7 @@ public class SimpleMslServer {
             mslCtrl.setFilterFactory(new ConsoleFilterStreamFactory());
         }
 
-        this.mslCtx = new ServerMslContext(appCtx, prop.getServerId());
+        this.mslCtx = new ServerMslContext(appCtx, prop.getServerId(), new ServerMslConfig(appCtx, prop.getServerId()));
 
         // Use one crypto context for all service tokens.
         final String stKeySetId = prop.getServiceTokenKeySetId(prop.getServerId());

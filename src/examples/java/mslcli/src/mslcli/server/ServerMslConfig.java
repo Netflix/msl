@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-package mslcli.client;
+package mslcli.server;
 
-import com.netflix.msl.entityauth.PresharedAuthenticationData;
+import com.netflix.msl.entityauth.RsaAuthenticationData;
 
 import mslcli.common.MslConfig;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
-import mslcli.client.util.ClientAuthenticationUtils;
+import mslcli.server.util.ServerAuthenticationUtils;
 
 /**
- * <p>The configuration class for MSl client</p>
+ * <p>The configuration class for MSl server</p>
  * 
  * @author Vadim Spector <vspector@netflix.com>
  */
 
-public final class ClientMslConfig extends MslConfig {
-    public ClientMslConfig(final AppContext appCtx, final String clientId) throws ConfigurationException {
-        super(appCtx, clientId, new PresharedAuthenticationData(clientId), new ClientAuthenticationUtils(clientId, appCtx));
+public final class ServerMslConfig extends MslConfig {
+    public ServerMslConfig(final AppContext appCtx, final String serverId) throws ConfigurationException {
+        super(appCtx, serverId, new RsaAuthenticationData(serverId, appCtx.getRsaKeyId(serverId)), new ServerAuthenticationUtils(appCtx, serverId));
     }
 }

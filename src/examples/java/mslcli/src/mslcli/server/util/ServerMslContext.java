@@ -59,6 +59,7 @@ import mslcli.common.Triplet;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
 import mslcli.common.util.SharedUtil;
+import mslcli.server.ServerMslConfig;
 import mslcli.server.tokens.ServerTokenFactory;
 import mslcli.server.util.ServerAuthenticationUtils;
 
@@ -75,28 +76,20 @@ public class ServerMslContext implements MslContext {
      * @param appCtx application context
      * @param serverId local server entity identity.
      */
-    public ServerMslContext(final AppContext appCtx, final String serverId) throws ConfigurationException {
+    public ServerMslContext(final AppContext appCtx, final String serverId, final ServerMslConfig mslCfg) throws ConfigurationException {
         if (appCtx == null) {
             throw new IllegalArgumentException("NULL app context");
         }
         if (serverId == null) {
             throw new IllegalArgumentException("NULL server ID");
         }
-
-        this.appCtx = appCtx;
+        if (mslCfg == null) {
+            throw new IllegalArgumentException("NULL server MSL config");
+        }
 
         /* Initialize MSL store.
          */
         this.mslStore = appCtx.getMslStore();
-
-        // Create the pre-shared key store.
-        final PresharedKeyStore presharedKeyStore = appCtx.getPresharedKeyStore();
-
-        // Create the RSA key store.
-        final RsaStore rsaStore = appCtx.getRsaStore();
-
-        // Create the email/password store.
-        final EmailPasswordStore emailPasswordStore = appCtx.getEmailPasswordStore();
 
         // Message capabilities.
         final Set<CompressionAlgorithm> compressionAlgos = new HashSet<CompressionAlgorithm>(Arrays.asList(CompressionAlgorithm.GZIP, CompressionAlgorithm.LZW));
@@ -107,33 +100,17 @@ public class ServerMslContext implements MslContext {
         final Triplet<SecretKey,SecretKey,SecretKey> mslKeys = appCtx.getMslKeys();
         this.mslCryptoContext = new SymmetricCryptoContext(this, serverId, mslKeys.x, mslKeys.y, mslKeys.z);
 
-        // WrapCryptoContextRepository
-        final WrapCryptoContextRepository wrapCryptoContextRepository = null;
-        
-        // Create authentication utils.
-        final AuthenticationUtils authutils = new ServerAuthenticationUtils(appCtx, serverId);
-        
         // Entity authentication.
-        //
-        // Use the local entity identity for the preshared keys database ID.
-        this.entityAuthData = new RsaAuthenticationData(serverId, appCtx.getRsaKeyId(serverId));
+        this.entityAuthData = mslCfg.getEntityAuthenticationData();
         
         // Entity authentication factories.
-        this.entityAuthFactories = new HashSet<EntityAuthenticationFactory>();
-        this.entityAuthFactories.add(new PresharedAuthenticationFactory(presharedKeyStore, authutils));
-        this.entityAuthFactories.add(new RsaAuthenticationFactory(rsaStore, authutils));
+        this.entityAuthFactories = mslCfg.getEntityAuthenticationFactories();
         
         // User authentication factories.
-        this.userAuthFactory = new EmailPasswordAuthenticationFactory(emailPasswordStore, authutils);
+        this.userAuthFactories = mslCfg.getUserAuthenticationFactories();
         
         // Key exchange factories.
-        this.keyxFactories = appCtx.getKeyExchangeFactorySet(
-            new AsymmetricWrappedExchange(authutils),
-            new SymmetricWrappedExchange(authutils),
-            new DiffieHellmanExchange(appCtx.getDiffieHellmanParameters(), authutils),
-            new JsonWebEncryptionLadderExchange(wrapCryptoContextRepository, authutils),
-            new JsonWebKeyLadderExchange(wrapCryptoContextRepository, authutils)
-        );
+        this.keyxFactories = mslCfg.getKeyExchangeFactories();
 
         // key token factory
         this.tokenFactory = new ServerTokenFactory(appCtx);
@@ -204,8 +181,10 @@ public class ServerMslContext implements MslContext {
      */
     @Override
     public UserAuthenticationFactory getUserAuthenticationFactory(final UserAuthenticationScheme scheme) {
-        if (userAuthFactory.getScheme().equals(scheme))
-            return userAuthFactory;
+       for (final UserAuthenticationFactory factory : userAuthFactories) {
+            if (factory.getScheme().equals(scheme))
+                return factory;
+        }
         return null;
     }
 
@@ -245,13 +224,12 @@ public class ServerMslContext implements MslContext {
         return mslStore;
     }
 
-    private final AppContext appCtx;
     private final MessageCapabilities messageCaps;
-    private final EntityAuthenticationData entityAuthData;
     private final ICryptoContext mslCryptoContext;
-    private final Set<EntityAuthenticationFactory> entityAuthFactories;
-    private final UserAuthenticationFactory userAuthFactory;
     private final TokenFactory tokenFactory;
-    private final SortedSet<KeyExchangeFactory> keyxFactories;
     private final MslStore mslStore;
+    private final EntityAuthenticationData entityAuthData;
+    private final Set<EntityAuthenticationFactory> entityAuthFactories;
+    private final Set<UserAuthenticationFactory> userAuthFactories;
+    private final SortedSet<KeyExchangeFactory> keyxFactories;
 }
