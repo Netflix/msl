@@ -31,30 +31,17 @@ import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
-import com.netflix.msl.entityauth.PresharedAuthenticationData;
-import com.netflix.msl.entityauth.PresharedAuthenticationFactory;
-import com.netflix.msl.entityauth.PresharedKeyStore;
-import com.netflix.msl.entityauth.RsaAuthenticationFactory;
-import com.netflix.msl.entityauth.RsaStore;
-import com.netflix.msl.keyx.AsymmetricWrappedExchange;
-import com.netflix.msl.keyx.DiffieHellmanExchange;
-import com.netflix.msl.keyx.JsonWebEncryptionLadderExchange;
-import com.netflix.msl.keyx.JsonWebKeyLadderExchange;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeScheme;
-import com.netflix.msl.keyx.SymmetricWrappedExchange;
-import com.netflix.msl.keyx.WrapCryptoContextRepository;
 import com.netflix.msl.msg.MessageCapabilities;
 import com.netflix.msl.tokens.ClientTokenFactory;
 import com.netflix.msl.tokens.TokenFactory;
-import com.netflix.msl.userauth.EmailPasswordAuthenticationFactory;
-import com.netflix.msl.userauth.EmailPasswordStore;
 import com.netflix.msl.userauth.UserAuthenticationFactory;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
-import com.netflix.msl.util.AuthenticationUtils;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslStore;
 
+import mslcli.client.ClientMslConfig;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
 
@@ -72,7 +59,7 @@ public final class ClientMslContext implements MslContext {
      * @param appCtx application context
      * @param clientId local client entity identity.
      */
-    public ClientMslContext(final AppContext appCtx, final String clientId)
+    public ClientMslContext(final AppContext appCtx, final String clientId, final ClientMslConfig mslCfg)
         throws ConfigurationException
     {
         if (appCtx == null) {
@@ -84,15 +71,6 @@ public final class ClientMslContext implements MslContext {
 
         // MSL store
         this.mslStore = appCtx.getMslStore();
-
-        // Create the preshared keys store.
-        final PresharedKeyStore presharedKeyStore = appCtx.getPresharedKeyStore();
-
-        // Create the RSA store.
-        final RsaStore rsaStore = appCtx.getRsaStore();
-
-        // Create the email/password store.
-        final EmailPasswordStore emailPasswordStore = appCtx.getEmailPasswordStore();
 
         // Message capabilities.
         final Set<CompressionAlgorithm> compressionAlgos =
@@ -106,33 +84,19 @@ public final class ClientMslContext implements MslContext {
          */
         this.mslCryptoContext = new ClientMslCryptoContext();
 
-        // WrapCryptoContextRepository
-        final WrapCryptoContextRepository wrapCryptoContextRepository = appCtx.getWrapCryptoContextRepository();
-        
-        // Create authentication utils.
-        final AuthenticationUtils authutils = new ClientAuthenticationUtils(clientId, appCtx);
-        
         // Entity authentication.
         //
         // Use the local entity identity for the preshared keys database ID.
-        this.entityAuthData = new PresharedAuthenticationData(clientId);
+        this.entityAuthData = mslCfg.getEntityAuthenticationData();
         
         // Entity authentication factories.
-        this.entityAuthFactories = new HashSet<EntityAuthenticationFactory>();
-        this.entityAuthFactories.add(new PresharedAuthenticationFactory(presharedKeyStore, authutils));
-        this.entityAuthFactories.add(new RsaAuthenticationFactory(rsaStore, authutils));
+        this.entityAuthFactories = mslCfg.getEntityAuthenticationFactories();
         
         // User authentication factories.
-        this.userAuthFactory = new EmailPasswordAuthenticationFactory(emailPasswordStore, authutils);
+        this.userAuthFactories = mslCfg.getUserAuthenticationFactories();
         
         // Key exchange factories. Real-life clients are likely to support subset of key exchange types.
-        this.keyxFactories = appCtx.getKeyExchangeFactorySet(
-            new AsymmetricWrappedExchange(authutils),
-            new SymmetricWrappedExchange(authutils),
-            new DiffieHellmanExchange(appCtx.getDiffieHellmanParameters(), authutils),
-            new JsonWebEncryptionLadderExchange(wrapCryptoContextRepository, authutils),
-            new JsonWebKeyLadderExchange(wrapCryptoContextRepository, authutils)
-        );
+        this.keyxFactories = mslCfg.getKeyExchangeFactories();
 
         // key token factory
         this.tokenFactory = new ClientTokenFactory();
@@ -203,8 +167,10 @@ public final class ClientMslContext implements MslContext {
      */
     @Override
     public UserAuthenticationFactory getUserAuthenticationFactory(final UserAuthenticationScheme scheme) {
-        if (userAuthFactory.getScheme().equals(scheme))
-            return userAuthFactory;
+        for (final UserAuthenticationFactory factory : userAuthFactories) {
+            if (factory.getScheme().equals(scheme))
+                return factory;
+        }
         return null;
     }
 
@@ -245,11 +211,11 @@ public final class ClientMslContext implements MslContext {
     }
 
     private final MessageCapabilities messageCaps;
-    private final EntityAuthenticationData entityAuthData;
     private final ICryptoContext mslCryptoContext;
-    private final Set<EntityAuthenticationFactory> entityAuthFactories;
-    private final UserAuthenticationFactory userAuthFactory;
     private final TokenFactory tokenFactory;
-    private final SortedSet<KeyExchangeFactory> keyxFactories;
     private final MslStore mslStore;
+    private final EntityAuthenticationData entityAuthData;
+    private final Set<EntityAuthenticationFactory> entityAuthFactories;
+    private final Set<UserAuthenticationFactory> userAuthFactories;
+    private final SortedSet<KeyExchangeFactory> keyxFactories;
 }

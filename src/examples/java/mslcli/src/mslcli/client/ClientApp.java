@@ -270,7 +270,7 @@ public final class ClientApp {
                 client = null; // required for keeping the state, in case the next line throws exception
                 keyRequestDataHandle = new AppKeyRequestDataHandle(appCtx, clientId);
                 client = new Client(appCtx, clientId, new AppUserAuthenticationDataHandle(cmdParam.getUserId(), mslProp, cmdParam.isInteractive()),
-                                                      keyRequestDataHandle);
+                                                      keyRequestDataHandle, new ClientMslConfig(appCtx, clientId));
             }
 
             // set message mslProperties
@@ -590,11 +590,9 @@ public final class ClientApp {
         @Override
         public void addServiceTokens(final Set<ServiceToken> tokens) throws MslException {
             if (tokens != null && !tokens.isEmpty()) {
-                final StringBuilder sb = new StringBuilder();
                 for (ServiceToken st : tokens) {
-                    sb.append(SharedUtil.getServiceTokenInfo(st)).append("\n");
+                    appCtx.info("MslStore: Adding " + SharedUtil.getServiceTokenInfo(st));
                 }
-                appCtx.info("MslStore: Adding Service Tokens\n" + sb.toString());
             }
             super.addServiceTokens(tokens);
         }

@@ -74,7 +74,13 @@ public final class Client {
      * @param appCtx application context
      * @param clientId client entity identity
      */
-    public Client(final AppContext appCtx, final String clientId, final UserAuthenticationDataHandle userAuthenticationDataHandle, final KeyRequestDataHandle keyRequestDataHandle) throws ConfigurationException {
+    public Client(final AppContext appCtx,
+                  final String clientId,
+                  final UserAuthenticationDataHandle userAuthenticationDataHandle,
+                  final KeyRequestDataHandle keyRequestDataHandle,
+                  final ClientMslConfig mslCfg
+                 ) throws ConfigurationException
+    {
         if (appCtx == null) {
             throw new IllegalArgumentException("NULL app context");
         }
@@ -104,7 +110,7 @@ public final class Client {
         this.mslStore = appCtx.getMslStore();
 
         // Set up the MSL context
-        this.mslCtx = new ClientMslContext(appCtx, clientId);
+        this.mslCtx = new ClientMslContext(appCtx, clientId, mslCfg);
 
         // Set up the MSL Control
         this.mslCtrl = appCtx.getMslControl();
