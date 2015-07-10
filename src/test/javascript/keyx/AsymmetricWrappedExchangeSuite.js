@@ -421,7 +421,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
         	var rsaPublicKey;
         	runs(function() {
         	    // FIXME: Read from RSA_KEYPAIR_B.
-        	    MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSA_OAEP, WebCryptoUsage.WRAP_UNWRAP, 512, {
+        	    MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSA_OAEP, WebCryptoUsage.WRAP_UNWRAP, 1024, {
         	        result: function(publicKey, privateKey) { rsaPublicKey = publicKey; },
         	        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	    });
@@ -457,7 +457,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             var rsaPrivateKey;
             runs(function() {
                 // FIXME: Read from RSA_KEYPAIR_B.
-                MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSA_OAEP, WebCryptoUsage.WRAP_UNWRAP, 512, {
+                MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSA_OAEP, WebCryptoUsage.WRAP_UNWRAP, 1024, {
                     result: function(publicKey, privateKey) { rsaPrivateKey = privateKey; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });

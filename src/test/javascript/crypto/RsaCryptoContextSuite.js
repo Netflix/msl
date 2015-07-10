@@ -146,7 +146,7 @@ describe("RsaCryptoContext", function() {
             runs(function () {
                 // TODO: read from RSA_KEYPAIR_A.publicKey
                 // TODO: read from RSA_KEYPAIR_A.privateKey
-                MslTestUtils.generateRsaKeys(algorithm, WebCryptoUsage.ENCRYPT_DECRYPT, 512, {
+                MslTestUtils.generateRsaKeys(algorithm, WebCryptoUsage.ENCRYPT_DECRYPT, 1024, {
                     result: function(publicKey, privateKey) {
                         publicKeyA = publicKey;
                         privateKeyA = privateKey;
@@ -159,7 +159,7 @@ describe("RsaCryptoContext", function() {
             runs(function() {
                 // TODO: read from RSA_KEYPAIR_B.publicKey
                 // TODO: read from RSA_KEYPAIR_B.privateKey
-                MslTestUtils.generateRsaKeys(algorithm, WebCryptoUsage.ENCRYPT_DECRYPT, 512, {
+                MslTestUtils.generateRsaKeys(algorithm, WebCryptoUsage.ENCRYPT_DECRYPT, 1024, {
                     result: function(publicKey, privateKey) {
                         publicKeyB = publicKey;
                         privateKeyB = privateKey;
@@ -897,7 +897,7 @@ describe("RsaCryptoContext", function() {
             runs(function () {
                 // TODO: read from RSA_KEYPAIR_A.publicKey
                 // TODO: read from RSA_KEYPAIR_A.privateKey
-                MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSASSA, WebCryptoUsage.SIGN_VERIFY, 512, {
+                MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSASSA, WebCryptoUsage.SIGN_VERIFY, 1024, {
                     result: function(publicKey, privateKey) {
                         publicKeyA = publicKey;
                         privateKeyA = privateKey;
@@ -910,7 +910,7 @@ describe("RsaCryptoContext", function() {
             runs(function() {
                 // TODO: read from RSA_KEYPAIR_B.publicKey
                 // TODO: read from RSA_KEYPAIR_B.privateKey
-                MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSASSA, WebCryptoUsage.SIGN_VERIFY, 512, {
+                MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSASSA, WebCryptoUsage.SIGN_VERIFY, 1024, {
                     result: function(publicKey, privateKey) {
                         publicKeyB = publicKey;
                         privateKeyB = privateKey;

@@ -204,7 +204,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
                 
-                MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSA_OAEP, WebCryptoUsage.WRAP_UNWRAP, 512, {
+                MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSA_OAEP, WebCryptoUsage.WRAP_UNWRAP, 1024, {
                     result: function(publicKey, privateKey) {
                         RSA_PUBLIC_KEY = publicKey;
                         RSA_PRIVATE_KEY = privateKey;
