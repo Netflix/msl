@@ -32,23 +32,10 @@ import com.netflix.msl.crypto.SymmetricCryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
-import com.netflix.msl.entityauth.PresharedAuthenticationFactory;
-import com.netflix.msl.entityauth.PresharedKeyStore;
-import com.netflix.msl.entityauth.RsaAuthenticationData;
-import com.netflix.msl.entityauth.RsaAuthenticationFactory;
-import com.netflix.msl.entityauth.RsaStore;
-import com.netflix.msl.keyx.AsymmetricWrappedExchange;
-import com.netflix.msl.keyx.DiffieHellmanExchange;
-import com.netflix.msl.keyx.JsonWebEncryptionLadderExchange;
-import com.netflix.msl.keyx.JsonWebKeyLadderExchange;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeScheme;
-import com.netflix.msl.keyx.SymmetricWrappedExchange;
-import com.netflix.msl.keyx.WrapCryptoContextRepository;
 import com.netflix.msl.msg.MessageCapabilities;
 import com.netflix.msl.tokens.TokenFactory;
-import com.netflix.msl.userauth.EmailPasswordAuthenticationFactory;
-import com.netflix.msl.userauth.EmailPasswordStore;
 import com.netflix.msl.userauth.UserAuthenticationFactory;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
 import com.netflix.msl.util.AuthenticationUtils;
@@ -58,10 +45,8 @@ import com.netflix.msl.util.MslStore;
 import mslcli.common.Triplet;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
-import mslcli.common.util.SharedUtil;
 import mslcli.server.ServerMslConfig;
 import mslcli.server.tokens.ServerTokenFactory;
-import mslcli.server.util.ServerAuthenticationUtils;
 
 /**
  * <p>The sample server MSL context.</p>
