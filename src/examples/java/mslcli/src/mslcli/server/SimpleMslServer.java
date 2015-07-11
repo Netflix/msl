@@ -94,7 +94,7 @@ public class SimpleMslServer {
             throw new IllegalArgumentException("NULL MslProperties");
         }
 
-        this.appCtx = AppContext.getInstance(prop, prop.getServerId());
+        this.appCtx = AppContext.getInstance(prop);
         this.appCtx.setMslStoreWrapper(new AppMslStoreWrapper(appCtx));
 
         // Create the MSL control.

@@ -375,11 +375,21 @@ public final class MslProperties {
     /**
      * @return MSL Store file path
      */
-    public String getMslStorePath(final String appId) throws ConfigurationException {
-        if (appId == null || appId.isEmpty()) {
-            throw new IllegalArgumentException("Missing app ID");
+    public String getMslStorePath() throws ConfigurationException {
+        return getProperty(APP_MSL_STORE_PATH);
+    }
+
+    /**
+     * set MSL Store file
+     */
+    public void setMslStorePath(final String mslStorePath) throws ConfigurationException {
+        if (mslStorePath == null) {
+            throw new IllegalArgumentException("NULL MSL Store Path");
         }
-        return getRequiredProperty(APP_MSL_STORE_PATH).replace(APP_ID_TOKEN, appId);
+        final String oldPath = getProperty(APP_MSL_STORE_PATH);
+        if (oldPath != null)
+            throw new ConfigurationException("Cannot Reset MSL Store Path " + oldPath);
+        p.setProperty(APP_MSL_STORE_PATH, mslStorePath);
     }
 
     /* ****************

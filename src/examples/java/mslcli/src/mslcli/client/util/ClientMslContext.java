@@ -57,16 +57,13 @@ public final class ClientMslContext implements MslContext {
      * <p>Create a new MSL context.</p>
      * 
      * @param appCtx application context
-     * @param clientId local client entity identity.
+     * @param mslCfg encapsulation of MSL configuration parameters
      */
-    public ClientMslContext(final AppContext appCtx, final String clientId, final ClientMslConfig mslCfg)
+    public ClientMslContext(final AppContext appCtx, final ClientMslConfig mslCfg)
         throws ConfigurationException
     {
         if (appCtx == null) {
             throw new IllegalArgumentException("NULL AppContext");
-        }
-        if (clientId == null) {
-            throw new IllegalArgumentException("NULL client ID");
         }
 
         // MSL store

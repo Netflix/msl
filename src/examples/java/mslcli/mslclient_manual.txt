@@ -74,6 +74,16 @@ OPTIONS
 		Using this option may be more convenient than changing a
 		configuration file.
 
+	-mst <file-path>
+		OPTIONAL. MSL store file path. MSL store contains
+		master, user id, and service tokens acquired by the client.
+		If the file exists, MSL store will be populated from it.
+		If the file does not exist, the app will start with empty
+		MSL store. At the exit, the app will update this file
+		with the new content. If this option is not defined,
+		the app will start withthe empty MSL store and all
+		changes to it will be lost at the exit of the app.
+
 	-kx <supported-key-exchange-scheme>
 		The following are the allowed values:
 		DIFFIE_HELLMAN - for Diffie-Hellman key exchange

@@ -84,7 +84,6 @@ public final class ClientApp {
     }
 
     private static final String CMD_PROMPT = "args"; // command prompt
-    private static final String APP_ID = "client_app"; // client app id
 
     private static final String HELP_FILE = "mslclient_manual.txt";
 
@@ -144,6 +143,7 @@ public final class ClientApp {
                 } else {
                     status = clientApp.sendSingleRequest();
                 }
+                clientApp.saveMslStore();
             }
         } catch (ConfigurationException e) {
             System.err.println(e.getMessage());
@@ -195,8 +195,13 @@ public final class ClientApp {
             mslProp.addPresharedKeys(pskEntry);
         }
 
+        final String mslStorePath = cmdParam.getMslStorePath();
+        if (mslStorePath != null) {
+            mslProp.setMslStorePath(mslStorePath);
+        }
+
         // initialize application context
-        this.appCtx = AppContext.getInstance(mslProp, APP_ID);
+        this.appCtx = AppContext.getInstance(mslProp);
 
         // initialize MSL Store - use wrapper to intercept selected MSL Store calls
         this.appCtx.setMslStoreWrapper(new AppMslStoreWrapper(appCtx));
@@ -269,8 +274,8 @@ public final class ClientApp {
                 clientId = cmdParam.getEntityId();
                 client = null; // required for keeping the state, in case the next line throws exception
                 keyRequestDataHandle = new AppKeyRequestDataHandle(appCtx, clientId);
-                client = new Client(appCtx, clientId, new AppUserAuthenticationDataHandle(cmdParam.getUserId(), mslProp, cmdParam.isInteractive()),
-                                                      keyRequestDataHandle, new ClientMslConfig(appCtx, clientId));
+                client = new Client(appCtx, new AppUserAuthenticationDataHandle(cmdParam.getUserId(), mslProp, cmdParam.isInteractive()),
+                                    keyRequestDataHandle, new ClientMslConfig(appCtx, clientId));
             }
 
             // set message mslProperties
@@ -311,7 +316,7 @@ public final class ClientApp {
             // Non-NULL response payload - good
             if (response.getPayload() != null) {
                 if (outputFile != null) {
-                    SharedUtil.saveToFile(outputFile, response.getPayload());
+                    SharedUtil.saveToFile(outputFile, response.getPayload(), false /*overwrite*/);
                 } else {
                     System.out.println("Response: " + new String(response.getPayload(), MslConstants.DEFAULT_CHARSET));
                 }
@@ -377,6 +382,10 @@ public final class ClientApp {
         }
 
         return status;
+    }
+
+    public void saveMslStore() throws IOException {
+        appCtx.saveMslStore();
     }
 
     /*

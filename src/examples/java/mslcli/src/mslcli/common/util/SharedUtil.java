@@ -26,10 +26,13 @@ import java.io.InputStreamReader;
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import java.util.Random;
+import java.util.SortedSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,13 +42,28 @@ import javax.crypto.spec.SecretKeySpec;
 
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslConstants.ResponseCode;
+import com.netflix.msl.MslCryptoException;
+import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslException;
+import com.netflix.msl.crypto.ClientMslCryptoContext;
+import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.crypto.JcaAlgorithm;
+import com.netflix.msl.entityauth.EntityAuthenticationData;
+import com.netflix.msl.entityauth.EntityAuthenticationFactory;
+import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.keyx.KeyExchangeFactory;
+import com.netflix.msl.keyx.KeyExchangeScheme;
+import com.netflix.msl.msg.MessageCapabilities;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.ServiceToken;
+import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.tokens.UserIdToken;
+import com.netflix.msl.userauth.UserAuthenticationFactory;
+import com.netflix.msl.userauth.UserAuthenticationScheme;
+import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslStore;
+import com.netflix.msl.util.SimpleMslStore;
 
 import mslcli.common.Triplet;
 
@@ -344,7 +362,7 @@ public final class SharedUtil {
      * @param filePath file path
      * @return file content as byte array
      */
-    public static void saveToFile(final String file, final byte[] data) throws IOException {
+    public static void saveToFile(final String file, final byte[] data, final boolean overwrite) throws IOException {
         if (file == null) {
             throw new IllegalArgumentException("NULL file");
         }
@@ -352,7 +370,7 @@ public final class SharedUtil {
             throw new IllegalArgumentException("NULL data");
         }
         final File f = new File(file);
-        if (f.exists()) {
+        if (f.exists() && !overwrite) {
             throw new IllegalArgumentException("cannot overwrite file " + file);
         }
         FileOutputStream fos = null;
@@ -367,11 +385,11 @@ public final class SharedUtil {
     /**
      * Serialize MslStore
      *
-     * @param mslStore MslStore instance
+     * @param mslStore SimpleMslStore instance
      * @return serialized MslStore
      */
-    public static byte[] marshalMslStore(final MslStore mslStore) throws IOException {
-        throw new UnsupportedOperationException();
+    public static byte[] marshalMslStore(final SimpleMslStore mslStore) throws IOException, MslEncodingException {
+        return MslStoreData.serialize(mslStore);
     }
 
     /**
@@ -380,8 +398,63 @@ public final class SharedUtil {
      * @param mslStore MslStore instance
      * @return serialized MslStore
      */
-    public static MslStore unmarshalMslStore(final byte[] mslStoreData) throws IOException {
-        throw new UnsupportedOperationException();
+    public static MslStore unmarshalMslStore(final byte[] mslStoreData) throws IOException, MslEncodingException, MslException {
+        return MslStoreData.deserialize(mslStoreData, new DummyMslContext());
+    }
+
+    /*
+     * this class is needed exclusively for deserialization of SimpleMslStore on the client side
+     */
+    private static final class DummyMslContext implements MslContext {
+        @Override
+        public long getTime() {
+            return System.currentTimeMillis();
+        }
+        @Override
+        public Random getRandom() {
+            return new SecureRandom();
+        }
+        @Override
+        public boolean isPeerToPeer() {
+            throw new UnsupportedOperationException();
+        }
+        @Override
+        public MessageCapabilities getMessageCapabilities() {
+            throw new UnsupportedOperationException();
+        }
+        @Override
+        public EntityAuthenticationData getEntityAuthenticationData(final ReauthCode reauthCode) {
+            throw new UnsupportedOperationException();
+        }
+        @Override
+        public ICryptoContext getMslCryptoContext() throws MslCryptoException {
+            return mslCryptoContext;
+        }
+        @Override
+        public EntityAuthenticationFactory getEntityAuthenticationFactory(final EntityAuthenticationScheme scheme) {
+            throw new UnsupportedOperationException();
+        }
+        @Override
+        public UserAuthenticationFactory getUserAuthenticationFactory(final UserAuthenticationScheme scheme) {
+            throw new UnsupportedOperationException();
+        }
+        @Override
+        public TokenFactory getTokenFactory() {
+            throw new UnsupportedOperationException();
+        }
+        @Override
+        public KeyExchangeFactory getKeyExchangeFactory(final KeyExchangeScheme scheme) {
+            throw new UnsupportedOperationException();
+        }
+        @Override
+        public SortedSet<KeyExchangeFactory> getKeyExchangeFactories() {
+            throw new UnsupportedOperationException();
+        }
+        @Override
+        public MslStore getMslStore() {
+            throw new UnsupportedOperationException();
+        }
+        private final ICryptoContext mslCryptoContext = new ClientMslCryptoContext();
     }
 
     public static String getMslExceptionInfo(final MslException e) {

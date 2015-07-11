@@ -47,6 +47,7 @@ public final class CmdArguments {
     public static final String P_OF   = "-of"  ; // output message payload file
     public static final String P_MSG  = "-msg" ; // input message payload text
     public static final String P_PSK  = "-psk" ; // pre-shared key file path
+    public static final String P_MST  = "-mst" ; // MSL store file path
     public static final String P_V    = "-v"   ; // verbose
 
     private static final List<String> supportedArguments =
@@ -65,6 +66,7 @@ public final class CmdArguments {
             P_OF,
             P_MSG,
             P_PSK,
+            P_MST,
             P_V
         )));
 
@@ -126,6 +128,9 @@ public final class CmdArguments {
         }
         if (other.argMap.containsKey(P_PSK)) {
             throw new IllegalCmdArgumentException("Cannot add PSK file interactively");
+        }
+        if (other.argMap.containsKey(P_MST) && argMap.containsKey(P_MST)) {
+            throw new IllegalCmdArgumentException("Cannot reset MSL Store File");
         }
         for (Map.Entry<String,String> entry : other.argMap.entrySet()) {
             if (entry.getValue() != null) {
@@ -213,6 +218,24 @@ public final class CmdArguments {
             return file;
         } else {
             throw new IllegalCmdArgumentException("Not a File: " + file);
+        }
+    }
+
+    /**
+     * @return file path to PSK file. If defined, must be a file.
+     */
+    public String getMslStorePath() throws IllegalCmdArgumentException {
+        final String file = argMap.get(P_MST);
+        if (file == null) {
+            return null;
+        }
+        final File f = new File(file);
+        if (f.isFile()) {
+            return file;
+        } else if (!f.exists() && (f.getParentFile() == null || f.getParentFile().isDirectory())) {
+            return file;
+        } else {
+            throw new IllegalCmdArgumentException("Invalid File Path: " + file);
         }
     }
 

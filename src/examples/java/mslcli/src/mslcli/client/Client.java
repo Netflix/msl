@@ -72,10 +72,11 @@ public final class Client {
         
     /**
      * @param appCtx application context
-     * @param clientId client entity identity
+     * @param userAuthenticationDataHandle callback for obtaining user authentication data
+     * @param keyRequestDataHandle callback for obtaining key request data
+     * @param mslCfg encapsulation of MSL configuration parameters
      */
     public Client(final AppContext appCtx,
-                  final String clientId,
                   final UserAuthenticationDataHandle userAuthenticationDataHandle,
                   final KeyRequestDataHandle keyRequestDataHandle,
                   final ClientMslConfig mslCfg
@@ -83,9 +84,6 @@ public final class Client {
     {
         if (appCtx == null) {
             throw new IllegalArgumentException("NULL app context");
-        }
-        if (clientId == null || clientId.trim().isEmpty()) {
-            throw new IllegalArgumentException("Undefined Client Id");
         }
         if (userAuthenticationDataHandle == null) {
             throw new IllegalArgumentException("NULL user authentication data handle");
@@ -97,9 +95,6 @@ public final class Client {
         // Initialize app context.
         this.appCtx = appCtx;
 
-        // Set client ID
-        this.clientId = clientId;
-
         // Set user authentication data handle
         this.userAuthenticationDataHandle = userAuthenticationDataHandle;
 
@@ -110,7 +105,7 @@ public final class Client {
         this.mslStore = appCtx.getMslStore();
 
         // Set up the MSL context
-        this.mslCtx = new ClientMslContext(appCtx, clientId, mslCfg);
+        this.mslCtx = new ClientMslContext(appCtx, mslCfg);
 
         // Set up the MSL Control
         this.mslCtrl = appCtx.getMslControl();
@@ -160,9 +155,6 @@ public final class Client {
 
     /** App context */
     private final AppContext appCtx;
-
-    /** Client Entity ID */
-    private final String clientId;
 
     /** MSL context */
     private final MslContext mslCtx;

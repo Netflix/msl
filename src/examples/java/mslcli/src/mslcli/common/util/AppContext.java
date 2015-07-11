@@ -47,6 +47,7 @@ import javax.crypto.spec.DHParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
 
+import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslException;
 import com.netflix.msl.MslInternalException;
 import com.netflix.msl.MslKeyExchangeException;
@@ -104,27 +105,24 @@ public final class AppContext {
      * @param p properties loaded from some configuration source
      * @return singleton instance of AppContext
      */
-    public static synchronized AppContext getInstance(final MslProperties p, final String appId) throws ConfigurationException {
+    public static synchronized AppContext getInstance(final MslProperties p) throws ConfigurationException {
         if (_instance == null) {
             if (p == null) {
                 throw new IllegalArgumentException("NULL properties");
             }
-            return (_instance = new AppContext(p, appId));
+            return (_instance = new AppContext(p));
         } else {
             throw new IllegalStateException("Illegal Attempt to Re-Initialize AppContext");
         }
     }
 
-    private AppContext(final MslProperties p, final String appId) throws ConfigurationException {
+    private AppContext(final MslProperties p) throws ConfigurationException {
         if (p == null) {
             throw new IllegalArgumentException("NULL MslProperties");
         }
-        if (appId == null) {
-            throw new IllegalArgumentException("NULL appId");
-        }
         this.prop = p;
         this.mslControl = new MslControl(p.getNumMslControlThreads());
-        this.mslStorePath = prop.getMslStorePath(appId);
+        this.mslStorePath = prop.getMslStorePath();
         this.mslStore = initMslStore(mslStorePath);
         this.diffieHellmanParameters = new SimpleDiffieHellmanParameters(p);
         this.presharedKeyStore = initPresharedKeyStore(p);
@@ -140,7 +138,12 @@ public final class AppContext {
         return prop;
     }
 
-    private static MslStore initMslStore(final String mslStorePath) {
+    private static MslStore initMslStore(final String mslStorePath) throws ConfigurationException {
+        if (mslStorePath == null) {
+            info("Creating Non-Persistent MSL Store");
+            return new SimpleMslStore();
+        }
+
         try {
             final File f = new File(mslStorePath);
             if (f.isFile()) {
@@ -152,8 +155,8 @@ public final class AppContext {
                 info("Creating Empty MSL Store " + mslStorePath);
                 return new SimpleMslStore();
             }
-        } catch (IOException e) {
-            throw new IllegalArgumentException("Error reading MSL Store File " + mslStorePath, e);
+        } catch (Exception e) {
+            throw new ConfigurationException("Error reading MSL Store File " + mslStorePath, e);
         }
     }
 
@@ -230,6 +233,24 @@ public final class AppContext {
     public MslStore getMslStore() {
         synchronized (mslStore) {
             return (mslStoreWrapper != null) ? mslStoreWrapper : mslStore;
+        }
+    }
+
+    /**
+     * persist MSL store
+     */
+    public void saveMslStore() throws IOException {
+        if (mslStorePath == null) {
+            info("Not Persisting In-Memory MSL Store");
+            return;
+        }
+        synchronized (mslStore) {
+            try {
+                SharedUtil.saveToFile(mslStorePath, SharedUtil.marshalMslStore((SimpleMslStore)mslStore), true /*overwrite*/);
+            } catch (MslEncodingException e) {
+                throw new IOException("Error Saving MslStore file " + mslStorePath, e);
+            }
+            info(String.format("MSL Store %s Updated", mslStorePath));
         }
     }
 
