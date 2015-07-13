@@ -49,7 +49,7 @@ import mslcli.server.ServerMslConfig;
 import mslcli.server.tokens.ServerTokenFactory;
 
 /**
- * <p>The sample server MSL context.</p>
+ * <p>Server MSL context. It represents configurations specific to a given service entity ID.</p>
  * 
  * @author Vadim Spector <vspector@netflix.com>
  */

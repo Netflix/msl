@@ -18,15 +18,13 @@ package mslcli.common.entityauth;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import com.netflix.msl.entityauth.RsaStore;
 
 /**
- * <p>An example RSA key store.</p>
+ * <p>Memory-backed RSA key store.</p>
  * 
  * @author Vadim Spector <vspector@netflix.com>
  */

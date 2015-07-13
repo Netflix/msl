@@ -17,7 +17,7 @@
 package mslcli.common;
 
 /**
- * Generic triplet class. Values can be null.
+ * Generic data object class for storing triplet values. Values can be null.
  *
  * @author Vadim Spector <vspector@netflix.com>
  */

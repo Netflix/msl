@@ -56,7 +56,15 @@ import mslcli.client.util.ClientAuthenticationUtils;
  */
 
 public abstract class MslConfig {
-    protected MslConfig(final AppContext appCtx, final String entityId, final EntityAuthenticationData entityAuthData, final AuthenticationUtils authutils) throws ConfigurationException {
+    protected MslConfig(final AppContext appCtx, final String entityId, final EntityAuthenticationData entityAuthData, final AuthenticationUtils authutils)
+        throws ConfigurationException
+    {
+        // set application context
+        this.appCtx = appCtx;
+
+        // set entity ID
+        this.entityId = entityId;
+
         // Entity authentication.
         this.entityAuthData = entityAuthData;
 
@@ -79,19 +87,19 @@ public abstract class MslConfig {
         );
     }
 
-    public EntityAuthenticationData getEntityAuthenticationData() {
+    public final EntityAuthenticationData getEntityAuthenticationData() {
         return entityAuthData;
     }
 
-    public Set<EntityAuthenticationFactory> getEntityAuthenticationFactories() {
+    public final Set<EntityAuthenticationFactory> getEntityAuthenticationFactories() {
         return Collections.<EntityAuthenticationFactory>unmodifiableSet(entityAuthFactories);
     }
  
-    public Set<UserAuthenticationFactory> getUserAuthenticationFactories() {
+    public final Set<UserAuthenticationFactory> getUserAuthenticationFactories() {
         return Collections.<UserAuthenticationFactory>unmodifiableSet(userAuthFactories);
     }
  
-    public SortedSet<KeyExchangeFactory> getKeyExchangeFactories() {
+    public final SortedSet<KeyExchangeFactory> getKeyExchangeFactories() {
         return keyxFactories;
     }
 
@@ -136,6 +144,8 @@ public abstract class MslConfig {
         return  Collections.unmodifiableSortedSet(keyxFactoriesSet);
     }
  
+    protected final AppContext appCtx;
+    protected final String entityId;
     private final EntityAuthenticationData entityAuthData;
     private final Set<EntityAuthenticationFactory> entityAuthFactories;
     private final Set<UserAuthenticationFactory> userAuthFactories;

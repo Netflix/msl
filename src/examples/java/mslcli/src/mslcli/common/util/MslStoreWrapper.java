@@ -26,7 +26,9 @@ import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.util.MslStore;
 
 /**
- * Wrapper class for MslStore to enable selective call interception by deriving from this class
+ * Wrapper class for MslStore to enable selective call interception by deriving from this class.
+ * Extending this class allows overwriting selected method in order to change their behavior,
+ * for reporting, testing, etc.
  *
  * @author Vadim Spector <vspector@netflix.com>
  */

@@ -21,7 +21,9 @@ import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.keyx.WrapCryptoContextRepository;
 
 /**
- * Wrap Crypto Context Repository Wrapper to intercept calls to WrapCryptoContextRepository
+ * WrapCryptoContextRepositoryWrapper class makes pass-through calls to WrapCryptoContextRepositoryHandle.
+ * Extending this class allows intercepting selected methods in order to customize their behavior,
+ * including reporting, testing, etc.
  *
  * @author Vadim Spector <vspector@netflix.com>
  */

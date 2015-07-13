@@ -46,7 +46,9 @@ import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
 
 /**
- * <p>The sample client MSL context for clients talking to trusted network servers.</p>
+ * <p>The sample client MSL context for clients talking to trusted network servers.
+ *    It represents configurations specific to a given client entity ID.
+ * </p>
  * 
  * @author Vadim Spector <vspector@netflix.com>
  */

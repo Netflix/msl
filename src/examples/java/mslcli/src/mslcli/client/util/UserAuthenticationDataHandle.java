@@ -26,5 +26,5 @@ import com.netflix.msl.userauth.UserAuthenticationData;
  */
 
 public interface UserAuthenticationDataHandle {
-    UserAuthenticationData getUserAuthenticationData();
+    UserAuthenticationData getUserAuthenticationData(final String userId);
 }

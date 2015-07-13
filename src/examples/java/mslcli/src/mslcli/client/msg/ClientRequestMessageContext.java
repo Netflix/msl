@@ -152,7 +152,7 @@ public class ClientRequestMessageContext implements MessageContext {
     @Override
     public UserAuthenticationData getUserAuthData(final ReauthCode reauthCode, final boolean renewable, final boolean required) {
         if ((reauthCode == null) && required) {
-            return userAuthenticationDataHandle.getUserAuthenticationData();
+            return userAuthenticationDataHandle.getUserAuthenticationData(userId);
         } else {
             return null;
         }
