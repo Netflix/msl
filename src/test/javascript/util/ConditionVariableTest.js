@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 describe("ConditionVariable", function() {
-    var TIMEOUT = 50;
+    var TIMEOUT = 150;
     var DELAY = 1;
     var NAME = "name";
     
