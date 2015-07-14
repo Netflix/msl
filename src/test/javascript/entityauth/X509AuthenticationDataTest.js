@@ -75,8 +75,7 @@ describe("X509AuthenticationData", function() {
 	it("json is correct", function() {
 		var data = new X509AuthenticationData(MockX509AuthenticationFactory.X509_CERT);
 		var json = JSON.stringify(data);
-		var certWords = CryptoJS.enc.Hex.parse(MockX509AuthenticationFactory.X509_CERT.hex);
-		var certB64 = CryptoJS.enc.Base64.stringify(certWords); 
+		var certB64 = hex2b64(MockX509AuthenticationFactory.X509_CERT.hex);
 		expect(json).toEqual('{"scheme":"' + EntityAuthenticationScheme.X509.name + '","authdata":{"x509certificate":"' + certB64 + '"}}');
 	});
 	
