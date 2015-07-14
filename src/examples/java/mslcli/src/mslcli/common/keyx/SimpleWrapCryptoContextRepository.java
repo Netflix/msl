@@ -22,18 +22,32 @@ import java.util.Map;
 
 import com.netflix.msl.crypto.ICryptoContext;
 
+import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.keyx.WrapCryptoContextRepository;
 
 import mslcli.common.util.WrapCryptoContextRepositoryHandle;
 
 /**
- * Memory-backed Wrap Crypto Context Repository
+ * Memory-backed Wrap Crypto Context Repository.
+ * Instance is specific to entity ID and key exchange scheme.
  *
  * @author Vadim Spector <vspector@netflix.com>
  */
 
-public final class SimpleWrapCryptoContextRepository implements WrapCryptoContextRepositoryHandle {
+public class SimpleWrapCryptoContextRepository implements WrapCryptoContextRepositoryHandle {
     private final Map<ByteBuffer,ICryptoContext> repository = new LinkedHashMap<ByteBuffer,ICryptoContext>();
+    protected final String entityId;
+    protected final KeyExchangeScheme scheme;
+
+    /**
+     * Ctor
+     * @param entityId entity ID
+     * @param scheme key exchange scheme
+     */
+    public SimpleWrapCryptoContextRepository(final String entityId, final KeyExchangeScheme scheme) {
+        this.entityId = entityId;
+        this.scheme = scheme;
+    }
 
     /**
      * @see com.netflix.msl.keyx.WrapCryptoContextRepository.addCryptoContext()

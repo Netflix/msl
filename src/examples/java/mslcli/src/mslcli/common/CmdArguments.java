@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package mslcli.client;
+package mslcli.common;
 
 import java.io.File;
 import java.net.MalformedURLException;

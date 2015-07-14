@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package mslcli.client;
+package mslcli.common;
 
 public class IllegalCmdArgumentException extends Exception {
     public IllegalCmdArgumentException() {

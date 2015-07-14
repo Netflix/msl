@@ -61,18 +61,14 @@ import com.netflix.msl.entityauth.RsaStore;
 import com.netflix.msl.keyx.DiffieHellmanParameters;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeScheme;
-import com.netflix.msl.keyx.WrapCryptoContextRepository;
 import com.netflix.msl.msg.MslControl;
 import com.netflix.msl.userauth.EmailPasswordStore;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
-import com.netflix.msl.util.MslStore;
-import com.netflix.msl.util.SimpleMslStore;
 
 import mslcli.common.Pair;
 import mslcli.common.Triplet;
 import mslcli.common.entityauth.SimplePresharedKeyStore;
 import mslcli.common.entityauth.SimpleRsaStore;
-import mslcli.common.keyx.SimpleWrapCryptoContextRepository;
 import mslcli.common.userauth.SimpleEmailPasswordStore;
 
 /**
@@ -90,16 +86,10 @@ public final class AppContext {
 
     private final MslProperties prop;
     private final MslControl mslControl;
-    private final MslStore mslStore;
-    private final String mslStorePath;
     private final PresharedKeyStore presharedKeyStore;
     private final EmailPasswordStore emailPasswordStore;
     private final RsaStore rsaStore;
-    private final WrapCryptoContextRepositoryHandle wrapCryptoContextRepository;
     private final DiffieHellmanParameters diffieHellmanParameters;
-    private MslStoreWrapper mslStoreWrapper;
-    private WrapCryptoContextRepositoryWrapper wrapCryptoContextRepositoryWrapper;
-
 
     /**
      * @param p properties loaded from some configuration source
@@ -122,13 +112,10 @@ public final class AppContext {
         }
         this.prop = p;
         this.mslControl = new MslControl(p.getNumMslControlThreads());
-        this.mslStorePath = prop.getMslStorePath();
-        this.mslStore = initMslStore(mslStorePath);
         this.diffieHellmanParameters = new SimpleDiffieHellmanParameters(p);
         this.presharedKeyStore = initPresharedKeyStore(p);
         this.emailPasswordStore = initEmailPasswordStore(p);
         this.rsaStore = initRsaStore(p);
-        this.wrapCryptoContextRepository = new SimpleWrapCryptoContextRepository();
     }
 
     /**
@@ -136,28 +123,6 @@ public final class AppContext {
      */
     public MslProperties getProperties() {
         return prop;
-    }
-
-    private static MslStore initMslStore(final String mslStorePath) throws ConfigurationException {
-        if (mslStorePath == null) {
-            info("Creating Non-Persistent MSL Store");
-            return new SimpleMslStore();
-        }
-
-        try {
-            final File f = new File(mslStorePath);
-            if (f.isFile()) {
-                info("Loading MSL Store from " + mslStorePath);
-                return SharedUtil.unmarshalMslStore(SharedUtil.readFromFile(mslStorePath));
-            } else if (f.exists()){
-                throw new IllegalArgumentException("MSL Store Path Exists but not a File: " + mslStorePath);
-            } else {
-                info("Creating Empty MSL Store " + mslStorePath);
-                return new SimpleMslStore();
-            }
-        } catch (Exception e) {
-            throw new ConfigurationException("Error reading MSL Store File " + mslStorePath, e);
-        }
     }
 
     /**
@@ -225,45 +190,6 @@ public final class AppContext {
 
     private static EmailPasswordStore initEmailPasswordStore(final MslProperties p) throws ConfigurationException {
         return new SimpleEmailPasswordStore(p.getEmailPasswordStore());
-    }
-
-    /**
-     * @return MSL store
-     */
-    public MslStore getMslStore() {
-        synchronized (mslStore) {
-            return (mslStoreWrapper != null) ? mslStoreWrapper : mslStore;
-        }
-    }
-
-    /**
-     * persist MSL store
-     */
-    public void saveMslStore() throws IOException {
-        if (mslStorePath == null) {
-            info("Not Persisting In-Memory MSL Store");
-            return;
-        }
-        synchronized (mslStore) {
-            try {
-                SharedUtil.saveToFile(mslStorePath, SharedUtil.marshalMslStore((SimpleMslStore)mslStore), true /*overwrite*/);
-            } catch (MslEncodingException e) {
-                throw new IOException("Error Saving MslStore file " + mslStorePath, e);
-            }
-            info(String.format("MSL Store %s Updated", mslStorePath));
-        }
-    }
-
-    /**
-     * @param mslStoreWrapper MSL store wrapper instance which extends MslStoreWrapper class and can be implemented by the app to intercept and modify MslStore calls
-     */
-    public void setMslStoreWrapper(final MslStoreWrapper mslStoreWrapper) {
-        synchronized (mslStore) {
-            this.mslStoreWrapper = mslStoreWrapper;
-            if (mslStoreWrapper != null) {
-                mslStoreWrapper.setMslStore(mslStore);
-            }
-        }
     }
 
     /**
@@ -474,27 +400,6 @@ public final class AppContext {
             new SecretKeySpec(SharedUtil.hexStringToByteArray(keys.x), JcaAlgorithm.AES),
             new SecretKeySpec(SharedUtil.hexStringToByteArray(keys.y), JcaAlgorithm.HMAC_SHA256)
             );
-    }
-
-    /**
-     * @return repository for storing mapping between wrapped key and crypto context
-     */
-    public WrapCryptoContextRepositoryHandle getWrapCryptoContextRepository() {
-        synchronized (wrapCryptoContextRepository) {
-            return (wrapCryptoContextRepositoryWrapper != null) ? wrapCryptoContextRepositoryWrapper : wrapCryptoContextRepository;
-        }
-    }
-
-    /**
-     * @param wrapCryptoContexRepositorytWrapper MSL store wrapper instance which extends MslStoreWrapper class and can be implemented by the app to intercept and modify MslStore calls
-     */
-    public void setWrapCryptoContextRepositoryWrapper(final WrapCryptoContextRepositoryWrapper wrapCryptoContextRepositoryWrapper) {
-        synchronized (wrapCryptoContextRepository) {
-            this.wrapCryptoContextRepositoryWrapper = wrapCryptoContextRepositoryWrapper;
-            if (wrapCryptoContextRepositoryWrapper != null) {
-                wrapCryptoContextRepositoryWrapper.setWrapCryptoContextRepository(wrapCryptoContextRepository);
-            }
-        }
     }
 
     /**

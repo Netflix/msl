@@ -36,11 +36,13 @@ import com.netflix.msl.keyx.SymmetricWrappedExchange;
 import com.netflix.msl.userauth.EmailPasswordAuthenticationData;
 import com.netflix.msl.userauth.UserAuthenticationData;
 
+import mslcli.client.util.ClientAuthenticationUtils;
+import mslcli.common.CmdArguments;
+import mslcli.common.IllegalCmdArgumentException;
 import mslcli.common.MslConfig;
 import mslcli.common.Pair;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
-import mslcli.client.util.ClientAuthenticationUtils;
 
 /**
  * <p>The configuration class for specific MSl client entity ID.
@@ -51,8 +53,15 @@ import mslcli.client.util.ClientAuthenticationUtils;
  */
 
 public final class ClientMslConfig extends MslConfig {
-    public ClientMslConfig(final AppContext appCtx, final String clientId) throws ConfigurationException {
-        super(appCtx, clientId, new PresharedAuthenticationData(clientId), new ClientAuthenticationUtils(clientId, appCtx));
+    public ClientMslConfig(final AppContext appCtx, final String clientId, final CmdArguments args)
+        throws ConfigurationException, IllegalCmdArgumentException
+    {
+        super(appCtx,
+              args,
+              clientId,
+              new PresharedAuthenticationData(clientId),
+              new ClientAuthenticationUtils(clientId, appCtx)
+             );
     }
 
     /* Cached RSA Key Pair for asymmetric key wrap key exchange to avoid expensive key pair generation.
@@ -100,7 +109,7 @@ public final class ClientMslConfig extends MslConfig {
                 JsonWebEncryptionLadderExchange.Mechanism.class, kxScheme, kxmName);
             final byte[] wrapdata;
             if (m == JsonWebEncryptionLadderExchange.Mechanism.WRAP) {
-                wrapdata = appCtx.getWrapCryptoContextRepository().getLastWrapdata();
+                wrapdata = super.getWrapCryptoContextRepository(kxScheme).getLastWrapdata();
                 if (wrapdata == null) {
                     throw new IllegalCmdArgumentException(String.format("No Key Wrapping Data Found for {%s %s}", kxScheme.name(), m));
                 }
@@ -114,7 +123,7 @@ public final class ClientMslConfig extends MslConfig {
                 JsonWebKeyLadderExchange.Mechanism.class, kxScheme, kxmName);
             final byte[] wrapdata;
             if (m == JsonWebKeyLadderExchange.Mechanism.WRAP) {
-                wrapdata = appCtx.getWrapCryptoContextRepository().getLastWrapdata();
+                wrapdata = super.getWrapCryptoContextRepository(kxScheme).getLastWrapdata();
                 if (wrapdata == null) {
                     throw new IllegalCmdArgumentException(String.format("No Key Wrapping Data Found for {%s %s}", kxScheme.name(), m));
                 }
@@ -175,5 +184,4 @@ public final class ClientMslConfig extends MslConfig {
                 keyExchangeScheme.name(), kxmName.trim(), values));
         }
     }
-
 }

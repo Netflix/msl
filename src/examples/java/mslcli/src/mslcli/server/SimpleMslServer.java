@@ -46,20 +46,16 @@ import com.netflix.msl.msg.MessageContext;
 import com.netflix.msl.msg.MessageInputStream;
 import com.netflix.msl.msg.MslControl;
 import com.netflix.msl.msg.MslControl.MslChannel;
-import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.MslUser;
-import com.netflix.msl.tokens.ServiceToken;
-import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.userauth.EmailPasswordStore;
 import com.netflix.msl.util.MslContext;
-import com.netflix.msl.util.MslStore;
 
+import mslcli.common.IllegalCmdArgumentException;
 import mslcli.common.Pair;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
 import mslcli.common.util.ConfigurationRuntimeException;
 import mslcli.common.util.MslProperties;
-import mslcli.common.util.MslStoreWrapper;
 import mslcli.common.util.SharedUtil;
 import mslcli.server.msg.ServerReceiveMessageContext;
 import mslcli.server.msg.ServerRespondMessageContext;
@@ -89,13 +85,12 @@ public class SimpleMslServer {
      * <p>Create a new server instance and initialize its state.
      * </p>
      */
-    public SimpleMslServer(final MslProperties prop) throws ConfigurationException {
+    public SimpleMslServer(final MslProperties prop) throws ConfigurationException, IllegalCmdArgumentException {
         if (prop == null) {
             throw new IllegalArgumentException("NULL MslProperties");
         }
 
         this.appCtx = AppContext.getInstance(prop);
-        this.appCtx.setMslStoreWrapper(new AppMslStoreWrapper(appCtx));
 
         // Create the MSL control.
         this.mslCtrl = appCtx.getMslControl();
@@ -190,82 +185,6 @@ public class SimpleMslServer {
         }
     }
 
-    /*
-     * This is a class to serve as an interceptor to all MslStore calls.
-     * It can override only the methods in MslStore the app cares about.
-     * This sample implementation just prints out the information about
-     * calling some selected MslStore methods.
-     */
-    private static final class AppMslStoreWrapper extends MslStoreWrapper {
-        private AppMslStoreWrapper(final AppContext appCtx) {
-            if (appCtx == null) {
-                throw new IllegalArgumentException("NULL app context");
-            }
-            this.appCtx = appCtx;
-        }
-
-        @Override
-        public void setCryptoContext(final MasterToken masterToken, final ICryptoContext cryptoContext) {
-            if (masterToken == null) {
-                appCtx.info("MslStore: setting crypto context with NULL MasterToken???");
-            } else {
-                appCtx.info(String.format("MslStore: %s %s",
-                    (cryptoContext != null)? "Adding" : "Removing", SharedUtil.getMasterTokenInfo(masterToken)));
-            }
-            super.setCryptoContext(masterToken, cryptoContext);
-        }
-
-        @Override
-        public void removeCryptoContext(final MasterToken masterToken) {
-            appCtx.info("MslStore: Removing Crypto Context for " + SharedUtil.getMasterTokenInfo(masterToken));
-            super.removeCryptoContext(masterToken);
-        }
-
-        @Override
-        public void clearCryptoContexts() {
-            appCtx.info("MslStore: Clear Crypto Contexts");
-            super.clearCryptoContexts();
-        }
-
-        @Override
-        public void addUserIdToken(final String userId, final UserIdToken userIdToken) throws MslException {
-            appCtx.info(String.format("MslStore: Adding %s for userId %s", SharedUtil.getUserIdTokenInfo(userIdToken), userId));
-            super.addUserIdToken(userId, userIdToken);
-        }
-        @Override
-        public void removeUserIdToken(final UserIdToken userIdToken) {
-            appCtx.info("MslStore: Removing " + SharedUtil.getUserIdTokenInfo(userIdToken));
-            super.removeUserIdToken(userIdToken);
-        }
-
-        @Override
-        public UserIdToken getUserIdToken(final String userId) {
-            appCtx.info("MslStore: Getting UserIdToken for user ID " + userId);
-            return super.getUserIdToken(userId);
-        }
-
-        @Override
-        public void addServiceTokens(final Set<ServiceToken> tokens) throws MslException {
-            if (tokens != null && !tokens.isEmpty()) {
-                final StringBuilder sb = new StringBuilder();
-                for (ServiceToken st : tokens) {
-                    sb.append(SharedUtil.getServiceTokenInfo(st)).append("\n");
-                }
-                appCtx.info("MslStore: Adding Service Tokens " + sb.toString());
-            }
-            super.addServiceTokens(tokens);
-        }
-
-        @Override
-        public void removeServiceTokens(final String name, final MasterToken masterToken, final UserIdToken userIdToken) throws MslException {
-            appCtx.info(String.format("MslStore: Removing Service Tokens %s for %s %s", name,
-                SharedUtil.getMasterTokenInfo(masterToken), SharedUtil.getUserIdTokenInfo(userIdToken)));
-            super.removeServiceTokens(name, masterToken, userIdToken);
-        }
-
-        private final AppContext appCtx;
-    }
-    
     /** application context. */
     private final AppContext appCtx;
 

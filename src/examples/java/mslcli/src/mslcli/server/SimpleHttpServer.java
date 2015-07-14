@@ -60,7 +60,7 @@ public class SimpleHttpServer {
         } catch (IOException e) {
             System.err.println("Server Initialization Error: " + e.getMessage());
             System.exit(1);
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             System.err.println("Server Internal Error: " + e.getMessage());
             SharedUtil.getRootCause(e).printStackTrace(System.err);
             System.exit(1);

@@ -69,7 +69,7 @@ public final class ClientMslContext implements MslContext {
         }
 
         // MSL store
-        this.mslStore = appCtx.getMslStore();
+        this.mslStore = mslCfg.getMslStore();
 
         // Message capabilities.
         final Set<CompressionAlgorithm> compressionAlgos =

@@ -26,6 +26,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.netflix.msl.MslException;
 
+import mslcli.common.IllegalCmdArgumentException;
 import mslcli.common.util.ConfigurationException;
 import mslcli.common.util.MslProperties;
 import mslcli.common.util.SharedUtil;
@@ -68,6 +69,8 @@ public class SimpleServlet extends HttpServlet {
             this.mslServer = new SimpleMslServer(mslProp);
         } catch (ConfigurationException e) {
             throw new ServletException(String.format("Server Configuration %s Validation Error", CONFIG_FILE_PATH), e);
+        } catch (IllegalCmdArgumentException e) {
+            throw new ServletException("Server Internal Initialization Error", e);
         }
     }
     

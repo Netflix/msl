@@ -18,6 +18,8 @@ package mslcli.server;
 
 import com.netflix.msl.entityauth.RsaAuthenticationData;
 
+import mslcli.common.CmdArguments;
+import mslcli.common.IllegalCmdArgumentException;
 import mslcli.common.MslConfig;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
@@ -30,7 +32,14 @@ import mslcli.server.util.ServerAuthenticationUtils;
  */
 
 public final class ServerMslConfig extends MslConfig {
-    public ServerMslConfig(final AppContext appCtx, final String serverId) throws ConfigurationException {
-        super(appCtx, serverId, new RsaAuthenticationData(serverId, appCtx.getRsaKeyId(serverId)), new ServerAuthenticationUtils(appCtx, serverId));
+    public ServerMslConfig(final AppContext appCtx, final String serverId)
+        throws ConfigurationException, IllegalCmdArgumentException
+    {
+        super(appCtx,
+              new CmdArguments(new String[0]),
+              serverId,
+              new RsaAuthenticationData(serverId, appCtx.getRsaKeyId(serverId)),
+              new ServerAuthenticationUtils(appCtx, serverId)
+             );
     }
 }

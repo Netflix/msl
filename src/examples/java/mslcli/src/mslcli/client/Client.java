@@ -40,7 +40,7 @@ import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
 import mslcli.common.util.SharedUtil;
 
-import static mslcli.client.CmdArguments.*;
+import static mslcli.common.CmdArguments.*;
 
 /**
  * MSL Client class.
@@ -101,8 +101,8 @@ public final class Client {
         // Set key request data handle
         this.keyRequestDataHandle = keyRequestDataHandle;
 
-        // Initialize MSL store.
-        this.mslStore = appCtx.getMslStore();
+        // set MSL configuration
+        this.mslCfg = mslCfg;
 
         // Set up the MSL context
         this.mslCtx = new ClientMslContext(appCtx, mslCfg);
@@ -150,7 +150,14 @@ public final class Client {
      * @return MSL Store
      */
     public MslStore getMslStore() {
-        return mslStore;
+        return mslCfg.getMslStore();
+    }
+
+    /**
+     * save MSL Store
+     */
+    public void saveMslStore() throws IOException {
+        mslCfg.saveMslStore();
     }
 
     /** App context */
@@ -158,6 +165,9 @@ public final class Client {
 
     /** MSL context */
     private final MslContext mslCtx;
+
+    /** MSL config */
+    private final ClientMslConfig mslCfg;
 
     /** MSL control */
     private final MslControl mslCtrl;
@@ -167,7 +177,4 @@ public final class Client {
 
     /** Key Request Data Supplier */
     private final KeyRequestDataHandle keyRequestDataHandle;
-
-    /** MSL store storing master tokens with associated crypto context, user id tokens, and service tokens */
-    private final MslStore mslStore;
 }

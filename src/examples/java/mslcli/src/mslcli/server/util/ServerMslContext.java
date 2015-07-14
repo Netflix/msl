@@ -74,7 +74,7 @@ public class ServerMslContext implements MslContext {
 
         /* Initialize MSL store.
          */
-        this.mslStore = appCtx.getMslStore();
+        this.mslStore = mslCfg.getMslStore();
 
         // Message capabilities.
         final Set<CompressionAlgorithm> compressionAlgos = new HashSet<CompressionAlgorithm>(Arrays.asList(CompressionAlgorithm.GZIP, CompressionAlgorithm.LZW));

@@ -42,8 +42,6 @@ public final class MslProperties {
     private static final String APP_SERVER_PORT       = "app.server.port";
     private static final String APP_SERVER_ID         = "app.server.id";
     private static final String APP_DEBUG_FLAG        = "app.debug";
-    private static final String APP_MSL_STORE_PATH    = "app.msl.store";
-    private static final String APP_PSK_FILE_PATH     = "app.msl.keyfile";
 
     // not a property name, but if part of property value, to be replaced with the client's entity_id
     private static final String APP_ID_TOKEN = "{app_id}";
@@ -370,26 +368,6 @@ public final class MslProperties {
     public boolean isDebugOn() throws ConfigurationException {
         final String s = getProperty(APP_DEBUG_FLAG);
         return Boolean.parseBoolean(s);
-    }
-
-    /**
-     * @return MSL Store file path
-     */
-    public String getMslStorePath() throws ConfigurationException {
-        return getProperty(APP_MSL_STORE_PATH);
-    }
-
-    /**
-     * set MSL Store file
-     */
-    public void setMslStorePath(final String mslStorePath) throws ConfigurationException {
-        if (mslStorePath == null) {
-            throw new IllegalArgumentException("NULL MSL Store Path");
-        }
-        final String oldPath = getProperty(APP_MSL_STORE_PATH);
-        if (oldPath != null)
-            throw new ConfigurationException("Cannot Reset MSL Store Path " + oldPath);
-        p.setProperty(APP_MSL_STORE_PATH, mslStorePath);
     }
 
     /* ****************

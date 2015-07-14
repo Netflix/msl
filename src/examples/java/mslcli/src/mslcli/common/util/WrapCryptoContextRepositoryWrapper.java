@@ -29,12 +29,12 @@ import com.netflix.msl.keyx.WrapCryptoContextRepository;
  */
 
 public class WrapCryptoContextRepositoryWrapper implements WrapCryptoContextRepositoryHandle {
-    private volatile WrapCryptoContextRepositoryHandle rep;
+    private final WrapCryptoContextRepositoryHandle rep;
 
     /**
      * package-private so only AppContext can call it
      */
-    final void setWrapCryptoContextRepository(final WrapCryptoContextRepositoryHandle rep) {
+    public WrapCryptoContextRepositoryWrapper(final WrapCryptoContextRepositoryHandle rep) {
         if (rep == null) {
             throw new IllegalArgumentException("NULL WrapCryptoContextRepository");
         }

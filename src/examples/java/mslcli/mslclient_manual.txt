@@ -81,8 +81,14 @@ OPTIONS
 		If the file does not exist, the app will start with empty
 		MSL store. At the exit, the app will update this file
 		with the new content. If this option is not defined,
-		the app will start withthe empty MSL store and all
+		the app will start with the empty MSL store and all
 		changes to it will be lost at the exit of the app.
+
+		Note: String "{eid}" within the file path will be
+		replaced by th entity id string value specified with
+		"-eid" option. It is handy to manage MSL store
+		file names space, especially when switching between
+		different entities in interactive mode.
 
 	-kx <supported-key-exchange-scheme>
 		The following are the allowed values:

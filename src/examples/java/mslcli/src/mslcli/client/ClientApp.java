@@ -33,29 +33,23 @@ import com.netflix.msl.MslConstants.ResponseCode;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslException;
 import com.netflix.msl.MslKeyExchangeException;
-import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.keyx.KeyRequestData;
 import com.netflix.msl.msg.ConsoleFilterStreamFactory;
-import com.netflix.msl.msg.MslControl;
-import com.netflix.msl.tokens.MasterToken;
-import com.netflix.msl.tokens.ServiceToken;
-import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.userauth.UserAuthenticationData;
 
 import mslcli.common.MslConfig;
 import mslcli.client.msg.MessageConfig;
 import mslcli.client.util.KeyRequestDataHandle;
 import mslcli.client.util.UserAuthenticationDataHandle;
+import mslcli.common.CmdArguments;
+import mslcli.common.IllegalCmdArgumentException;
 import mslcli.common.Triplet;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
 import mslcli.common.util.ConfigurationRuntimeException;
 import mslcli.common.util.MslProperties;
-import mslcli.common.util.MslStoreWrapper;
 import mslcli.common.util.SharedUtil;
 import mslcli.common.util.WrapCryptoContextRepositoryWrapper;
-
-import static mslcli.client.CmdArguments.*;
 
 /**
  * MSL client launcher program. Allows to configure message security policies and key exchange mechanism.
@@ -129,7 +123,7 @@ public final class ClientApp {
                 } else {
                     status = clientApp.sendSingleRequest();
                 }
-                clientApp.saveMslStore();
+                clientApp.shutdown();
             }
         } catch (ConfigurationException e) {
             System.err.println(e.getMessage());
@@ -181,19 +175,8 @@ public final class ClientApp {
             mslProp.addPresharedKeys(pskEntry);
         }
 
-        final String mslStorePath = cmdParam.getMslStorePath();
-        if (mslStorePath != null) {
-            mslProp.setMslStorePath(mslStorePath);
-        }
-
         // initialize application context
         this.appCtx = AppContext.getInstance(mslProp);
-
-        // initialize MSL Store - use wrapper to intercept selected MSL Store calls
-        this.appCtx.setMslStoreWrapper(new AppMslStoreWrapper(appCtx));
-
-        // initialize WrapCryptoContextRepositoryWrapper to intercept WrapCryptoContextRepository calls
-        this.appCtx.setWrapCryptoContextRepositoryWrapper(new AppWrapCryptoContextRepositoryWrapper(appCtx));
     }
 
     /*
@@ -258,8 +241,10 @@ public final class ClientApp {
             // initialize Client for the first time or whenever its identity changes
             if (!cmdParam.getEntityId().equals(clientId) || (client == null)) {
                 clientId = cmdParam.getEntityId();
+                if (client != null)
+                    client.saveMslStore();
                 client = null; // required for keeping the state, in case the next line throws exception
-                final ClientMslConfig mslCfg = new ClientMslConfig(appCtx, clientId);
+                final ClientMslConfig mslCfg = new ClientMslConfig(appCtx, clientId, cmdParam);
                 keyRequestDataHandle = new AppKeyRequestDataHandle(appCtx, mslCfg);
                 client = new Client(appCtx, new AppUserAuthenticationDataHandle(mslCfg, cmdParam.isInteractive()),
                                     keyRequestDataHandle, mslCfg);
@@ -371,8 +356,12 @@ public final class ClientApp {
         return status;
     }
 
-    public void saveMslStore() throws IOException {
-        appCtx.saveMslStore();
+    /**
+     * shutdown activities
+     */
+    public void shutdown() throws IOException {
+        if (client != null)
+            client.saveMslStore();
     }
 
     /*
@@ -425,112 +414,6 @@ public final class ClientApp {
         private final AppContext appCtx;
         private final ClientMslConfig mslConfig;
         private final Set<KeyRequestData> keyRequestDataSet;
-    }
-
-    /*
-     * This is a class to serve as an interceptor to all MslStore calls.
-     * It can override only the methods in MslStore the app cares about.
-     * This sample implementation just prints out the information about
-     * calling some selected MslStore methods.
-     */
-    private static final class AppMslStoreWrapper extends MslStoreWrapper {
-        private AppMslStoreWrapper(final AppContext appCtx) {
-            if (appCtx == null) {
-                throw new IllegalArgumentException("NULL app context");
-            }
-            this.appCtx = appCtx;
-        }
-
-        @Override
-        public void setCryptoContext(final MasterToken masterToken, final ICryptoContext cryptoContext) {
-            if (masterToken == null) {
-                appCtx.info("MslStore: setting crypto context with NULL MasterToken???");
-            } else {
-                appCtx.info(String.format("MslStore: %s %s",
-                    (cryptoContext != null)? "Adding" : "Removing", SharedUtil.getMasterTokenInfo(masterToken)));
-            }
-            super.setCryptoContext(masterToken, cryptoContext);
-        }
-
-        @Override
-        public void removeCryptoContext(final MasterToken masterToken) {
-            appCtx.info("MslStore: Removing Crypto Context for " + SharedUtil.getMasterTokenInfo(masterToken));
-            super.removeCryptoContext(masterToken);
-        }
-
-        @Override
-        public void clearCryptoContexts() {
-            appCtx.info("MslStore: Clear Crypto Contexts");
-            super.clearCryptoContexts();
-        }
-
-        @Override
-        public void addUserIdToken(final String userId, final UserIdToken userIdToken) throws MslException {
-            appCtx.info(String.format("MslStore: Adding %s for userId %s", SharedUtil.getUserIdTokenInfo(userIdToken), userId));
-            super.addUserIdToken(userId, userIdToken);
-        }
-
-        @Override
-        public void removeUserIdToken(final UserIdToken userIdToken) {
-            appCtx.info("MslStore: Removing " + SharedUtil.getUserIdTokenInfo(userIdToken));
-            super.removeUserIdToken(userIdToken);
-        }
-
-        @Override
-        public UserIdToken getUserIdToken(final String userId) {
-            appCtx.info("MslStore: Getting UserIdToken for user ID " + userId);
-            return super.getUserIdToken(userId);
-        }
-
-        @Override
-        public void addServiceTokens(final Set<ServiceToken> tokens) throws MslException {
-            if (tokens != null && !tokens.isEmpty()) {
-                for (ServiceToken st : tokens) {
-                    appCtx.info("MslStore: Adding " + SharedUtil.getServiceTokenInfo(st));
-                }
-            }
-            super.addServiceTokens(tokens);
-        }
-
-        @Override
-        public void removeServiceTokens(final String name, final MasterToken masterToken, final UserIdToken userIdToken) throws MslException {
-            appCtx.info(String.format("MslStore: Removing Service Tokens %s for %s %s", name,
-                SharedUtil.getMasterTokenInfo(masterToken), SharedUtil.getUserIdTokenInfo(userIdToken)));
-            super.removeServiceTokens(name, masterToken, userIdToken);
-        }
-
-        private final AppContext appCtx;
-    }
-
-    /*
-     * convenience WrapCryptoContextRepository wrapper class to trace all calls
-     */
-    private static final class AppWrapCryptoContextRepositoryWrapper extends WrapCryptoContextRepositoryWrapper {
-        private AppWrapCryptoContextRepositoryWrapper(final AppContext appCtx) {
-            if (appCtx == null) {
-                throw new IllegalArgumentException("NULL app context");
-            }
-            this.appCtx = appCtx;
-        }
-
-        @Override
-        public void addCryptoContext(final byte[] wrapdata, final ICryptoContext cryptoContext) {
-            appCtx.info("WrapCryptoContextRepositoryWrapper: addCryptoContext " + ((cryptoContext != null) ? cryptoContext.getClass().getName() : "null"));
-            super.addCryptoContext(wrapdata, cryptoContext);
-        }
-
-        @Override
-        public ICryptoContext getCryptoContext(final byte[] wrapdata) {
-            appCtx.info("WrapCryptoContextRepositoryWrapper: getCryptoContext");
-            return super.getCryptoContext(wrapdata);
-        }
-
-        @Override
-        public void removeCryptoContext(final byte[] wrapdata) {
-            appCtx.info("WrapCryptoContextRepositoryWrapper: removeCryptoContext");
-            super.removeCryptoContext(wrapdata);
-        }
-        private final AppContext appCtx;
     }
 
     /*
