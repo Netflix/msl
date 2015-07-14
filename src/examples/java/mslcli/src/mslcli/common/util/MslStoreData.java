@@ -16,12 +16,20 @@
 
 package mslcli.common.util;
 
-import org.json.*;
+import org.json.JSONObject;
 
-import java.io.*;
-import java.lang.reflect.*;
-import java.util.*;
-
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import javax.crypto.SecretKey;
 
 import com.netflix.msl.MslCryptoException;
@@ -44,8 +52,19 @@ import com.netflix.msl.util.SimpleMslStore;
 
 public class MslStoreData implements Serializable {
 
+    /*
+     * SimpleMslStore fields that need to be accessed for serialization.
+     * To be kept in-sync with SimpleMslStore code
+     */
+    private static final String MS_CRYPTO_CONTEXT_FIELD = "cryptoContexts";
+    private static final String MS_UID_TOKENS_FIELD     = "userIdTokens";
+    private static final String MS_UNB_SVC_TOKENS_FIELD = "unboundServiceTokens";
+    private static final String MS_MT_SVC_TOKENS_FIELD  = "mtServiceTokens";
+    private static final String MS_UIT_SVC_TOKENS_FIELD = "uitServiceTokens";
+    private static final String MS_NON_REPLAY_IDS_FIELD = "nonReplayableIds";
+
     /**
-     * Create serializable MslStoreData from non-serializable MslStore, assuming it's SimpleMslStore
+     * Create serializable MslStoreData from non-serializable SimpleMslStore
      * @param MslStore  SimpleMslStore instance
      */
     @SuppressWarnings("unchecked")
@@ -54,13 +73,13 @@ public class MslStoreData implements Serializable {
             throw new IllegalArgumentException("NULL MslStore");
 
         // extract all master tokens with crypto contexts
-        final Map<MasterToken,ICryptoContext> cryptoContexts = (Map<MasterToken,ICryptoContext>)getFieldValue(mslStore, "cryptoContexts");
+        final Map<MasterToken,ICryptoContext> cryptoContexts = (Map<MasterToken,ICryptoContext>)getFieldValue(mslStore, MS_CRYPTO_CONTEXT_FIELD);
         for (Map.Entry<MasterToken,ICryptoContext> e : cryptoContexts.entrySet()) {
             this.cryptoContextData.put(new MasterTokenData(e.getKey()), new CryptoContextData(e.getValue()));
         }
 
         // extract all user id tokens
-        final Map<String,UserIdToken> userIdTokens = new HashMap<String,UserIdToken>((Map<String,UserIdToken>)getFieldValue(mslStore, "userIdTokens"));
+        final Map<String,UserIdToken> userIdTokens = new HashMap<String,UserIdToken>((Map<String,UserIdToken>)getFieldValue(mslStore, MS_UID_TOKENS_FIELD));
         for (Map.Entry<String,UserIdToken> e : userIdTokens.entrySet()) {
             this.userIdTokenData.put(e.getKey(), new UserIdTokenData(e.getValue()));
         }
@@ -68,15 +87,15 @@ public class MslStoreData implements Serializable {
         // extract all service tokens
         final Set<ServiceToken> serviceTokens = new HashSet<ServiceToken>();
         {
-            final Set<ServiceToken> unboundServiceTokens = (Set<ServiceToken>)getFieldValue(mslStore, "unboundServiceTokens");
+            final Set<ServiceToken> unboundServiceTokens = (Set<ServiceToken>)getFieldValue(mslStore, MS_UNB_SVC_TOKENS_FIELD);
             serviceTokens.addAll(unboundServiceTokens);
 
-            final Map<Long,Set<ServiceToken>> mtServiceTokens = (Map<Long,Set<ServiceToken>>)getFieldValue(mslStore, "mtServiceTokens");
+            final Map<Long,Set<ServiceToken>> mtServiceTokens = (Map<Long,Set<ServiceToken>>)getFieldValue(mslStore, MS_MT_SVC_TOKENS_FIELD);
             for (Set<ServiceToken> sts : mtServiceTokens.values()) {
                 serviceTokens.addAll(sts);
             }
 
-            final Map<Long,Set<ServiceToken>> uitServiceTokens = (Map<Long,Set<ServiceToken>>)getFieldValue(mslStore, "uitServiceTokens");
+            final Map<Long,Set<ServiceToken>> uitServiceTokens = (Map<Long,Set<ServiceToken>>)getFieldValue(mslStore, MS_UIT_SVC_TOKENS_FIELD);
             for (Set<ServiceToken> sts : uitServiceTokens.values()) {
                 serviceTokens.addAll(sts);
             }
@@ -84,8 +103,16 @@ public class MslStoreData implements Serializable {
         for (ServiceToken st : serviceTokens) {
             this.serviceTokenData.add(new ServiceTokenData(st));
         }
+
+        // extract non-replayable id's
+        this.nonReplayableIds = (Map<Long,Long>)getFieldValue(mslStore, MS_NON_REPLAY_IDS_FIELD);
     }
 
+    /**
+     * SimpleMslStore serializer
+     * @param ms SimpleMslStore instance
+     * @return blob serialized SimpleMslStore instance
+     */
     public static byte[] serialize(final SimpleMslStore ms) throws IOException {
         final MslStoreData msd = new MslStoreData(ms);
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -99,7 +126,15 @@ public class MslStoreData implements Serializable {
         }
     }
 
-    public static SimpleMslStore deserialize(final byte[] blob, final MslContext mslCtx) throws IOException, MslEncodingException, MslException {
+    /**
+     * SimpleMslStore deserializer
+     * @param blob serialized SimpleMslStore
+     * @param mslContext MslContext instance
+     * @return deserialized SimpleMslStore instance
+     */
+    public static SimpleMslStore deserialize(final byte[] blob, final MslContext mslCtx)
+        throws IOException, MslEncodingException, MslException
+    {
         final MslStoreData msd;
         final ByteArrayInputStream in = new ByteArrayInputStream(blob);
         ObjectInputStream ois = null;
@@ -135,28 +170,23 @@ public class MslStoreData implements Serializable {
         }
         mslStore.addServiceTokens(stokens);
 
+        setFieldValue(mslStore, MS_NON_REPLAY_IDS_FIELD, msd.nonReplayableIds);
+
         return mslStore;
     }
 
-    private static Object getFieldValue(final Object o, final String name) {
-        final Field f;
-        try {
-            f = o.getClass().getDeclaredField(name);
-        } catch (Exception e) {
-            throw new IllegalArgumentException(String.format("Class %s has no field %s", o.getClass().getName(), name), e);
-        }
-        f.setAccessible(true);
-        try {
-            return f.get(o);
-        } catch (Exception e) {
-            throw new IllegalArgumentException(String.format("Class %s field %s - cannot access value", o.getClass().getName(), name), e);
-        }
-    }
-
+    /** Map of serializable master tokens onto serializable crypto contexts */
     private final Map<MasterTokenData,CryptoContextData> cryptoContextData = new HashMap<MasterTokenData,CryptoContextData>();
+    /** Map of user IDs onto serializable user id tokens */
     private final Map<String,UserIdTokenData> userIdTokenData = new HashMap<String,UserIdTokenData>();
+    /** Set of serializable service tokens */
     private final Set<ServiceTokenData> serviceTokenData = new HashSet<ServiceTokenData>();
+    /** Map of master token serial numbers onto non-replayable IDs. */
+    private final Map<Long,Long> nonReplayableIds;
 
+    /*
+     * serializable wrapper class for MasterToken
+     */
     private static final class MasterTokenData implements Serializable {
         MasterTokenData(final MasterToken mt) {
             this.s = mt.toJSONString();
@@ -167,6 +197,9 @@ public class MslStoreData implements Serializable {
         private final String s;
     }
 
+    /*
+     * serializable wrapper class for UserIdToken
+     */
     private static final class UserIdTokenData implements Serializable {
         UserIdTokenData(final UserIdToken uit) {
             this.s = uit.toJSONString();
@@ -179,13 +212,18 @@ public class MslStoreData implements Serializable {
         private final long mtSerialNumber;
     }
 
+    /*
+     * serializable wrapper class for ServiceToken
+     */
     private static final class ServiceTokenData implements Serializable {
         ServiceTokenData(final ServiceToken st) {
             this.s = st.toJSONString();
             this.mtSerialNumber = st.getMasterTokenSerialNumber();
             this.uitSerialNumber = st.getUserIdTokenSerialNumber();
         }
-        ServiceToken get(final MslContext ctx, final MasterToken mt, final UserIdToken uit) throws MslEncodingException, MslException, MslCryptoException {
+        ServiceToken get(final MslContext ctx, final MasterToken mt, final UserIdToken uit)
+            throws MslEncodingException, MslException, MslCryptoException
+        {
             return new ServiceToken(ctx, new JSONObject(s), mt, uit, (ICryptoContext)null);
         }
         private final String s;
@@ -193,6 +231,9 @@ public class MslStoreData implements Serializable {
         private final long uitSerialNumber;
     }
 
+    /*
+     * serializable wrapper class for SessionCryptoContext
+     */
     private static final class CryptoContextData implements Serializable {
         private static final String ID_FIELD = "id";
         private static final String ENC_FIELD = "encryptionKey";
@@ -201,31 +242,12 @@ public class MslStoreData implements Serializable {
 
         CryptoContextData(final ICryptoContext ctx) {
             if (!(ctx instanceof SessionCryptoContext))
-                throw new IllegalArgumentException(String.format("CryptoContext[%s] - required %s", ctx.getClass().getName(), SessionCryptoContext.class.getName()));
-            try {
-                final Map<String,Field> fields = getAllInstanceFields(ctx.getClass());
-                Field f = fields.get(ID_FIELD);
-                if (f == null)
-                    throw new RuntimeException(String.format("%s: field \"%s\" missing", ctx.getClass().getName(), ID_FIELD));
-                id = (String)f.get(ctx);
-
-                f = fields.get(ENC_FIELD);
-                if (f == null)
-                    throw new RuntimeException(String.format("%s: field \"%s\" missing", ctx.getClass().getName(), ENC_FIELD));
-                this.encKey = (SecretKey)f.get(ctx);
-
-                f = fields.get(SIG_FIELD);
-                if (f == null)
-                    throw new RuntimeException(String.format("%s: field \"%s\" missing", ctx.getClass().getName(), SIG_FIELD));
-                this.hmacKey = (SecretKey)f.get(ctx);
-
-                f = fields.get(WRAP_FIELD);
-                if (f == null)
-                    throw new RuntimeException(String.format("%s: field \"%s\" missing", ctx.getClass().getName(), WRAP_FIELD));
-                this.wrapKey = (SecretKey)f.get(ctx);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(String.format("CryptoContext[%s]: Cannot Access Some Fields", ctx.getClass().getName()));
-            }
+                throw new IllegalArgumentException(String.format("CryptoContext[%s] - required %s",
+                    ctx.getClass().getName(), SessionCryptoContext.class.getName()));
+            this.id      = (String)   getFieldValue(ctx, ID_FIELD  );
+            this.encKey  = (SecretKey)getFieldValue(ctx, ENC_FIELD );
+            this.hmacKey = (SecretKey)getFieldValue(ctx, SIG_FIELD );
+            this.wrapKey = (SecretKey)getFieldValue(ctx, WRAP_FIELD);
         }
 
         ICryptoContext get(final MslContext mctx, final MasterToken mt) {
@@ -244,20 +266,66 @@ public class MslStoreData implements Serializable {
         private final SecretKey wrapKey;
     }
 
+   /* ********************************
+    * Java reflection helper methods *
+    **********************************/
+
     /*
-     * return all non-static non-transient fields of a given class and make them accessible
+     * get the value of the field with the given name for a given object
      */
-    private static Map<String,Field> getAllInstanceFields(Class cls) {
-        final Map<String,Field> fields = new HashMap<String,Field>();
+    private static Object getFieldValue(final Object o, final String name) {
+        if (o == null)
+            throw new IllegalArgumentException("NULL object");
+        if (name == null)
+            throw new IllegalArgumentException("NULL field name");
+
+        final Field f = getField(o, name);
+        try {
+            return f.get(o);
+        } catch (IllegalAccessException e) {
+            throw new IllegalArgumentException(String.format("Class %s field %s - cannot get value", o.getClass().getName(), name), e);
+        }
+    }
+
+    /*
+     * set the value of the field with the given name for a given object
+     */
+    private static void setFieldValue(final Object o, final String name, final Object value) {
+        if (o == null)
+            throw new IllegalArgumentException("NULL object");
+        if (name == null)
+            throw new IllegalArgumentException("NULL field name");
+        if (value == null)
+            throw new IllegalArgumentException("NULL field value");
+        final Field f = getField(o, name);
+        try {
+            f.set(o, value);
+        } catch (IllegalAccessException e) {
+            throw new IllegalArgumentException(String.format("Class %s field %s - cannot set value", o.getClass().getName(), name), e);
+        }
+    }
+
+    /*
+     * return the field with the given name of a given class (search superclasses as well)
+     * and make it accessible for get and set
+     */
+    private static Field getField(final Object o, final String name) {
+        if (o == null)
+            throw new IllegalArgumentException("NULL object");
+        if (name == null)
+            throw new IllegalArgumentException("NULL field name");
+        Class cls = o.getClass();
         for ( ; cls.getSuperclass() != null; cls = cls.getSuperclass()) {
             for (final Field f : cls.getDeclaredFields()) {
                 if (Modifier.isStatic(f.getModifiers()) || Modifier.isTransient(f.getModifiers())) {
                     continue;
                 }
-                f.setAccessible(true);
-                fields.put(f.getName(),f);
+                if (name.equals(f.getName())) {
+                    f.setAccessible(true);
+                    return f;
+                }
             }
         }
-        return fields;
+        throw new IllegalArgumentException(String.format("Class %s: no field %s found", o.getClass().getName(), name));
     }
 }
