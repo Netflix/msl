@@ -75,8 +75,7 @@ var X509AuthenticationData$parse;
         getAuthData: function getAuthData() {
             // Base64 encode the X.509 certificate.
             var certHex = this.x509cert.hex;
-            var certWords = CryptoJS.enc.Hex.parse(certHex);
-            var certB64 = CryptoJS.enc.Base64.stringify(certWords);
+            var certB64 = hex2b64(certHex);
 
             // Return the authentication data.
             var result = {};

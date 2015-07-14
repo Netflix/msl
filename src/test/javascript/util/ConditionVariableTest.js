@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 describe("ConditionVariable", function() {
-    var TIMEOUT = 50;
+    var TIMEOUT = 150;
     var DELAY = 1;
     var NAME = "name";
     
@@ -220,7 +220,7 @@ describe("ConditionVariable", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return timedout; }, "timedout", 100);
+        waitsFor(function() { return timedout; }, "timedout", 200);
     });
     
     it("stress", function() {
