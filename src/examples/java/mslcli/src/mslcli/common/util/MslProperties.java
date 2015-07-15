@@ -40,11 +40,6 @@ public final class MslProperties {
    */
     private static final String APP_CTRL_NUM_THR      = "app.mslctrl.nthr";
     private static final String APP_SERVER_PORT       = "app.server.port";
-    private static final String APP_SERVER_ID         = "app.server.id";
-    private static final String APP_DEBUG_FLAG        = "app.debug";
-
-    // not a property name, but if part of property value, to be replaced with the client's entity_id
-    private static final String APP_ID_TOKEN = "{app_id}";
 
    /*
     * ENTITY-SPECIFIC CONFIGURATION PROPERTY NAMES
@@ -353,21 +348,6 @@ public final class MslProperties {
      */
     public int getServerPort() throws ConfigurationException {
         return getCountProperty(APP_SERVER_PORT);
-    }
-
-    /**
-     * @return "this" server id
-     */
-    public String getServerId() throws ConfigurationException {
-        return getRequiredProperty(APP_SERVER_ID);
-    }
-
-    /**
-     * @return debug flag for "this" app
-     */
-    public boolean isDebugOn() throws ConfigurationException {
-        final String s = getProperty(APP_DEBUG_FLAG);
-        return Boolean.parseBoolean(s);
     }
 
     /* ****************

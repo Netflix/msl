@@ -59,14 +59,11 @@ public class ServerMslContext implements MslContext {
      * <p>Create a new server MSL context.</p>
      * 
      * @param appCtx application context
-     * @param serverId local server entity identity.
+     * @param mslCfg server MSL configuration.
      */
-    public ServerMslContext(final AppContext appCtx, final String serverId, final ServerMslConfig mslCfg) throws ConfigurationException {
+    public ServerMslContext(final AppContext appCtx, final ServerMslConfig mslCfg) throws ConfigurationException {
         if (appCtx == null) {
             throw new IllegalArgumentException("NULL app context");
-        }
-        if (serverId == null) {
-            throw new IllegalArgumentException("NULL server ID");
         }
         if (mslCfg == null) {
             throw new IllegalArgumentException("NULL server MSL config");
@@ -83,7 +80,7 @@ public class ServerMslContext implements MslContext {
         
         // MSL crypto context.
         final Triplet<SecretKey,SecretKey,SecretKey> mslKeys = appCtx.getMslKeys();
-        this.mslCryptoContext = new SymmetricCryptoContext(this, serverId, mslKeys.x, mslKeys.y, mslKeys.z);
+        this.mslCryptoContext = new SymmetricCryptoContext(this, mslCfg.getEntityId(), mslKeys.x, mslKeys.y, mslKeys.z);
 
         // Entity authentication.
         this.entityAuthData = mslCfg.getEntityAuthenticationData();

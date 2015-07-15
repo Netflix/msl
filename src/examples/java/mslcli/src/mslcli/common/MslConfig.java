@@ -77,7 +77,6 @@ import mslcli.common.util.WrapCryptoContextRepositoryWrapper;
 public abstract class MslConfig {
     protected MslConfig(final AppContext appCtx,
                         final CmdArguments args,
-                        final String entityId,
                         final EntityAuthenticationData entityAuthData,
                         final AuthenticationUtils authutils)
         throws ConfigurationException, IllegalCmdArgumentException
@@ -89,7 +88,7 @@ public abstract class MslConfig {
         this.args = args;
 
         // set entity ID
-        this.entityId = entityId;
+        this.entityId = args.getEntityId();
 
         // set MslStore
         if (args.getMslStorePath() != null) {
@@ -176,6 +175,10 @@ public abstract class MslConfig {
     }
 
 
+    public final String getEntityId() {
+        return entityId;
+    }
+
     public final EntityAuthenticationData getEntityAuthenticationData() {
         return entityAuthData;
     }
@@ -254,7 +257,7 @@ public abstract class MslConfig {
 
         @Override
         public void addCryptoContext(final byte[] wrapdata, final ICryptoContext cryptoContext) {
-            appCtx.info(String.format("%s: addCryptoContext", id));
+            appCtx.info(String.format("%s: addCryptoContext %s", id, cryptoContext.getClass().getName()));
             super.addCryptoContext(wrapdata, cryptoContext);
         }
 

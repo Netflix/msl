@@ -26,10 +26,12 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.netflix.msl.MslException;
 
+import mslcli.common.CmdArguments;
 import mslcli.common.IllegalCmdArgumentException;
 import mslcli.common.util.ConfigurationException;
 import mslcli.common.util.MslProperties;
 import mslcli.common.util.SharedUtil;
+
 
 /**
  * <p>
@@ -43,6 +45,7 @@ public class SimpleServlet extends HttpServlet {
     private static final long serialVersionUID = -4593207843035538485L;
 
     private static final String CONFIG_FILE_PATH = "mslcli.cfg.file";
+    private static final String SERVER_ID = "mslcli.cfg.server.id";
     
     /**
      * <p>Initialize servlet instance and MSL server.</p>
@@ -52,9 +55,12 @@ public class SimpleServlet extends HttpServlet {
         super.init(cfg);
 
         final String configFile = cfg.getInitParameter(CONFIG_FILE_PATH);
-        if (configFile == null) {
+        if (configFile == null)
             throw new ServletException("Missing Servlet Configuration Parameter " + CONFIG_FILE_PATH);
-        }
+
+        final String serverId = cfg.getInitParameter(SERVER_ID);
+        if (serverId == null)
+            throw new ServletException("Missing Servlet Configuration Parameter " + SERVER_ID);
 
         final Properties prop;
         try {
@@ -66,7 +72,7 @@ public class SimpleServlet extends HttpServlet {
         final MslProperties mslProp = MslProperties.getInstance(prop);
 
         try {
-            this.mslServer = new SimpleMslServer(mslProp);
+            this.mslServer = new SimpleMslServer(mslProp, new CmdArguments(new String[] { CmdArguments.P_CFG, configFile, CmdArguments.P_EID, serverId } ));
         } catch (ConfigurationException e) {
             throw new ServletException(String.format("Server Configuration %s Validation Error", CONFIG_FILE_PATH), e);
         } catch (IllegalCmdArgumentException e) {

@@ -28,6 +28,7 @@ import com.sun.net.httpserver.HttpServer;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslException;
 
+import mslcli.common.CmdArguments;
 import mslcli.common.util.ConfigurationException;
 import mslcli.common.util.ConfigurationRuntimeException;
 import mslcli.common.util.MslProperties;
@@ -47,8 +48,9 @@ public class SimpleHttpServer {
             System.exit(1);
         }
         try {
-            final MslProperties prop = MslProperties.getInstance(SharedUtil.loadPropertiesFromFile(args[0]));
-            final SimpleMslServer mslServer = new SimpleMslServer(prop);
+            final CmdArguments cmdArgs = new CmdArguments(args);
+            final MslProperties prop = MslProperties.getInstance(SharedUtil.loadPropertiesFromFile(cmdArgs.getConfigFilePath()));
+            final SimpleMslServer mslServer = new SimpleMslServer(prop, cmdArgs);
             final HttpServer server = HttpServer.create(new InetSocketAddress(prop.getServerPort()), 0);
             server.createContext("/msl", new MyHandler(mslServer));
             server.setExecutor(null); // creates a default executor

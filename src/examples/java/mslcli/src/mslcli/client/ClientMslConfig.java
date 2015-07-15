@@ -58,9 +58,8 @@ public final class ClientMslConfig extends MslConfig {
     {
         super(appCtx,
               args,
-              clientId,
-              new PresharedAuthenticationData(clientId),
-              new ClientAuthenticationUtils(clientId, appCtx)
+              new PresharedAuthenticationData(args.getEntityId()),
+              new ClientAuthenticationUtils(args.getEntityId(), appCtx)
              );
     }
 

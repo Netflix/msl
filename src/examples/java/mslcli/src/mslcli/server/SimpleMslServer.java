@@ -50,6 +50,7 @@ import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.userauth.EmailPasswordStore;
 import com.netflix.msl.util.MslContext;
 
+import mslcli.common.CmdArguments;
 import mslcli.common.IllegalCmdArgumentException;
 import mslcli.common.Pair;
 import mslcli.common.util.AppContext;
@@ -85,7 +86,7 @@ public class SimpleMslServer {
      * <p>Create a new server instance and initialize its state.
      * </p>
      */
-    public SimpleMslServer(final MslProperties prop) throws ConfigurationException, IllegalCmdArgumentException {
+    public SimpleMslServer(final MslProperties prop, final CmdArguments args) throws ConfigurationException, IllegalCmdArgumentException {
         if (prop == null) {
             throw new IllegalArgumentException("NULL MslProperties");
         }
@@ -94,14 +95,14 @@ public class SimpleMslServer {
 
         // Create the MSL control.
         this.mslCtrl = appCtx.getMslControl();
-        if (prop.isDebugOn()) {
+        if (args.isVerbose()) {
             mslCtrl.setFilterFactory(new ConsoleFilterStreamFactory());
         }
 
-        this.mslCtx = new ServerMslContext(appCtx, prop.getServerId(), new ServerMslConfig(appCtx, prop.getServerId()));
+        this.mslCtx = new ServerMslContext(appCtx, new ServerMslConfig(appCtx, args));
 
         // Use one crypto context for all service tokens.
-        final String stKeySetId = prop.getServiceTokenKeySetId(prop.getServerId());
+        final String stKeySetId = prop.getServiceTokenKeySetId(args.getEntityId());
         final Pair<SecretKey,SecretKey> keys = appCtx.getServiceTokenKeys(stKeySetId);
         final ICryptoContext stCryptoContext = new SymmetricCryptoContext(this.mslCtx, stKeySetId, keys.x, keys.y, null);
         cryptoContexts.put("", stCryptoContext);

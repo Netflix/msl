@@ -32,14 +32,13 @@ import mslcli.server.util.ServerAuthenticationUtils;
  */
 
 public final class ServerMslConfig extends MslConfig {
-    public ServerMslConfig(final AppContext appCtx, final String serverId)
+    public ServerMslConfig(final AppContext appCtx, final CmdArguments args)
         throws ConfigurationException, IllegalCmdArgumentException
     {
         super(appCtx,
-              new CmdArguments(new String[0]),
-              serverId,
-              new RsaAuthenticationData(serverId, appCtx.getRsaKeyId(serverId)),
-              new ServerAuthenticationUtils(appCtx, serverId)
+              args,
+              new RsaAuthenticationData(args.getEntityId(), appCtx.getRsaKeyId(args.getEntityId())),
+              new ServerAuthenticationUtils(appCtx, args.getEntityId())
              );
     }
 }
