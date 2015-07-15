@@ -294,6 +294,13 @@ public abstract class MslConfig {
         }
 
         @Override
+        public long getNonReplayableId(final MasterToken masterToken) {
+            final long nextId = super.getNonReplayableId(masterToken);
+            appCtx.info(String.format("%s: %s - next non-replayable id %d", id, SharedUtil.getMasterTokenInfo(masterToken), nextId));
+            return nextId;
+        }
+
+        @Override
         public void setCryptoContext(final MasterToken masterToken, final ICryptoContext cryptoContext) {
             if (masterToken == null) {
                 appCtx.info(String.format("%s: setting crypto context with NULL MasterToken???", id));
