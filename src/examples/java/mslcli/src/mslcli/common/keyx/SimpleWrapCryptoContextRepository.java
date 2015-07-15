@@ -28,8 +28,10 @@ import com.netflix.msl.keyx.WrapCryptoContextRepository;
 import mslcli.common.util.WrapCryptoContextRepositoryHandle;
 
 /**
+ * <p>
  * Memory-backed Wrap Crypto Context Repository.
  * Instance is specific to entity ID and key exchange scheme.
+ * </p>
  *
  * @author Vadim Spector <vspector@netflix.com>
  */
@@ -66,13 +68,16 @@ public class SimpleWrapCryptoContextRepository implements WrapCryptoContextRepos
     }
 
     /**
-     *@see com.netflix.msl.keyx.WrapCryptoContextRepository.removeCryptoContext()
+     * @see com.netflix.msl.keyx.WrapCryptoContextRepository.removeCryptoContext()
      */
     @Override
     public synchronized void removeCryptoContext(final byte[] wrapdata) {
         repository.remove(ByteBuffer.wrap(wrapdata));
     }
 
+    /**
+     * @see mslcli.common.util.WrapCryptoContextRepositoryHandle.getLastWrapData()
+     */
     @Override
     public synchronized byte[] getLastWrapdata() {
         ByteBuffer bb1 = null;

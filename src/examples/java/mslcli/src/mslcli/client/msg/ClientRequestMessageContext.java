@@ -38,7 +38,7 @@ import mslcli.client.util.KeyRequestDataHandle;
 import mslcli.client.util.UserAuthenticationDataHandle;
 
 /**
- * Client Request message context
+ * <p>Client Request message context.</p>
  *
  * @author Vadim Spector <vspector@netflix.com>
  */
@@ -54,13 +54,9 @@ public class ClientRequestMessageContext implements MessageContext {
     private final Map<String,ICryptoContext> cryptoContexts;
 
     /**
-     * <p>Create a new request context.
-     * <p/>
+     * Constructor
      *
-     * @param isEncrypted true if message is to be encrypted, false otherwise
-     * @param isIntegrityProtected true if message is to be integrity protected, false otherwise
-     * @param isNonReplayable true if message is to be marked as non-replayable, false otherwise
-     * @param userId user ID, should be null if a message is not user-bound
+     * @param msgCfg message configuration
      * @param userAuthDataHandle user authentication data getter
      * @param keyRequestDataHandle key request data getter
      * @param payload message payload

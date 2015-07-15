@@ -17,7 +17,7 @@
 package mslcli.common;
 
 /**
- * generic Pair class. Some or all values can be null.
+ * <p>Generic Pair class. Some or all values can be null.</p>
  *
  * @author Vadim Spector <vspector@netflix.com>
  */
@@ -25,6 +25,12 @@ package mslcli.common;
 public final class Pair<X,Y> {
     public final X x;
     public final Y y;
+    /**
+     * Constructor.
+     *
+     * @param x first parameter of type X
+     * @param y second parameter of type Y
+     */
     public Pair(X x, Y y) {
       this.x = x;
       this.y = y;

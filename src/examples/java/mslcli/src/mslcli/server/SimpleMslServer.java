@@ -64,10 +64,10 @@ import mslcli.server.msg.ServerRespondMessageContext.Token;
 import mslcli.server.util.ServerMslContext;
 
 /**
- * <p>An example Java MSL server that listens for requests from the example MSL client.
+ * <p>
+ * An example Java MSL server that listens for requests from the example MSL client.
+ * This class is thread-safe.
  * </p> 
- * 
- * <p>This class is thread-safe.</p>
  * 
  * @author Vadim Spector <vspector@netflix.com>
  */
@@ -109,7 +109,9 @@ public class SimpleMslServer {
     }
     
     /**
-     * process incoming request
+     * Process incoming MSL request and produce MSL response.
+     *
+     * 
      */
     public void processRequest(final InputStream in, final OutputStream out) throws ConfigurationException, IOException, MslException {
         if (in == null) {
@@ -163,7 +165,7 @@ public class SimpleMslServer {
             new Token("st_name1", "st_data1", true, true),
             new Token("st_name2", "st_data2", true, true)
         ));
-        final MessageContext responseMsgCtx = new ServerRespondMessageContext(clientId, true, new String(request, MslConstants.DEFAULT_CHARSET), tokens, cryptoContexts);
+        final MessageContext responseMsgCtx = new ServerRespondMessageContext(clientId, true, request /*echo request*/, tokens, cryptoContexts);
 
         // Send response. We don't need the MslChannel because we are not
         // opening a persistent channel.

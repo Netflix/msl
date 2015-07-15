@@ -16,6 +16,11 @@
 
 package mslcli.common;
 
+/**
+ * <p>Exception for invalid MSL CLI command line arguments.</p>
+ *
+ * @author Vadim Spector <vspector@netflix.com>
+ */
 public class IllegalCmdArgumentException extends Exception {
     public IllegalCmdArgumentException() {
         super();

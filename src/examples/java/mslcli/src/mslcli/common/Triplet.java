@@ -17,7 +17,7 @@
 package mslcli.common;
 
 /**
- * Generic data object class for storing triplet values. Values can be null.
+ * <p>Generic data object class for storing triplet values. Values can be null.</p>
  *
  * @author Vadim Spector <vspector@netflix.com>
  */
@@ -26,6 +26,13 @@ public final class Triplet<X,Y,Z> {
     public final X x;
     public final Y y;
     public final Z z;
+    /**
+     * Constructor.
+     *
+     * @param x first value of type X
+     * @param y second value of type Y
+     * @param z second value of type Z
+     */
     public Triplet(X x, Y y, Z z) {
       this.x = x;
       this.y = y;

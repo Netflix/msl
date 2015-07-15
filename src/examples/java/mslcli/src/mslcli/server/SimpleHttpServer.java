@@ -35,7 +35,7 @@ import mslcli.common.util.MslProperties;
 import mslcli.common.util.SharedUtil;
 
 /**
- * Simple HTTP Server using com.sun.net.httpserver.* classes built into Oracle's JVM
+ * <p>Simple HTTP Server using com.sun.net.httpserver.* classes built into Oracle's JVM</p>
  *
  * @author Vadim Spector <vspector@netflix.com>
  */

@@ -52,7 +52,10 @@ import mslcli.common.util.SharedUtil;
 import mslcli.common.util.WrapCryptoContextRepositoryWrapper;
 
 /**
- * MSL client launcher program. Allows to configure message security policies and key exchange mechanism.
+ * <p>
+ * MSL client launcher program. Allows sending a single or multiple MSL messages to one or more MLS
+ * servers, using different message MSL security configuration options.
+ * </p>
  *
  * @author Vadim Spector <vspector@netflix.com>
  */
@@ -244,7 +247,7 @@ public final class ClientApp {
                 if (client != null)
                     client.saveMslStore();
                 client = null; // required for keeping the state, in case the next line throws exception
-                final ClientMslConfig mslCfg = new ClientMslConfig(appCtx, clientId, cmdParam);
+                final ClientMslConfig mslCfg = new ClientMslConfig(appCtx, cmdParam);
                 keyRequestDataHandle = new AppKeyRequestDataHandle(appCtx, mslCfg);
                 client = new Client(appCtx, new AppUserAuthenticationDataHandle(mslCfg, cmdParam.isInteractive()),
                                     keyRequestDataHandle, mslCfg);

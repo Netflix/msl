@@ -45,7 +45,10 @@ import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.SimpleMslStore;
 
 /**
- * <p>The class for serializing SImpleMslStore. Because of using reflection, this code must keep in-sync with SimpleMslStore changes</p>
+ * <p>
+ * The class for serializing SimpleMslStore. Because of using reflection, this code is pretty brittle and
+ * must keep in-sync with SimpleMslStore changes.
+ * </p>
  * 
  * @author Vadim Spector <vspector@netflix.com>
  */
@@ -110,6 +113,7 @@ public class MslStoreData implements Serializable {
 
     /**
      * SimpleMslStore serializer
+     *
      * @param ms SimpleMslStore instance
      * @return blob serialized SimpleMslStore instance
      */
@@ -128,6 +132,7 @@ public class MslStoreData implements Serializable {
 
     /**
      * SimpleMslStore deserializer
+     *
      * @param blob serialized SimpleMslStore
      * @param mslContext MslContext instance
      * @return deserialized SimpleMslStore instance

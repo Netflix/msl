@@ -131,30 +131,30 @@ public class ServerTokenFactory implements TokenFactory {
         
         // Accept if there is no non-replayable ID.
         final String key = masterToken.getIdentity() + ":" + masterToken.getSerialNumber();
-        final Long largestNonReplayableId = nonReplayableIds.putIfAbsent(key, nonReplayableId);
-        if (largestNonReplayableId == null) {
+        final Long storedNonReplayableId = nonReplayableIds.putIfAbsent(key, nonReplayableId);
+        if (storedNonReplayableId == null) {
             appCtx.info(String.format("%s: First Non-Replayable ID %d", key, nonReplayableId));
             return null;
         }
-        
+
         // Reject if the non-replayable ID is equal or just a few messages
         // behind. The sender can recover by incrementing.
         final long catchupWindow = MslConstants.MAX_MESSAGES / 2;
-        if (nonReplayableId <= largestNonReplayableId &&
-            nonReplayableId > largestNonReplayableId - catchupWindow)
+        if (nonReplayableId <= storedNonReplayableId &&
+            nonReplayableId > storedNonReplayableId - catchupWindow)
         {
             return MslError.MESSAGE_REPLAYED;
         }
 
         // Reject if the non-replayable ID is larger by more than the
         // acceptance window. The sender cannot recover quickly.
-        if (nonReplayableId - nonReplayIdWindow > largestNonReplayableId)
+        if (nonReplayableId - nonReplayIdWindow > storedNonReplayableId)
             return MslError.MESSAGE_REPLAYED_UNRECOVERABLE;
         
         // If the non-replayable ID is smaller reject it if it is outside the
         // wrap-around window. The sender cannot recover quickly.
-        if (nonReplayableId < largestNonReplayableId) {
-            final long cutoff = largestNonReplayableId - MslConstants.MAX_LONG_VALUE + nonReplayIdWindow;
+        if (nonReplayableId < storedNonReplayableId) {
+            final long cutoff = storedNonReplayableId - MslConstants.MAX_LONG_VALUE + nonReplayIdWindow;
             if (nonReplayableId >= cutoff)
                 return MslError.MESSAGE_REPLAYED_UNRECOVERABLE;
         }

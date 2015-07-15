@@ -66,9 +66,10 @@ import mslcli.common.util.WrapCryptoContextRepositoryHandle;
 import mslcli.common.util.WrapCryptoContextRepositoryWrapper;
 
 /**
- * <p>The common configuration class for MSl client and server.
- *    Instance of this class is specific to a given entity ID.
- *    If entity ID changes, new instance of MslConfig must be used.
+ * <p>
+ * The common configuration class for MSl client and server.
+ * Instance of this class is specific to a given entity ID.
+ * If entity ID changes, new instance of MslConfig must be used.
  * </p>
  * 
  * @author Vadim Spector <vspector@netflix.com>
@@ -150,7 +151,7 @@ public abstract class MslConfig {
     }
 
     /**
-     * get entity-specific instance of MslStore
+     * @return entity-specific instance of MslStore
      */
     public final MslStore getMslStore() {
         return mslStoreWrapper;
@@ -175,26 +176,45 @@ public abstract class MslConfig {
     }
 
 
+    /**
+     * @return entity identity
+     */
     public final String getEntityId() {
         return entityId;
     }
 
+    /**
+     * @return entity authentication data
+     */
     public final EntityAuthenticationData getEntityAuthenticationData() {
         return entityAuthData;
     }
 
+    /**
+     * @return entity authentication factories
+     */
     public final Set<EntityAuthenticationFactory> getEntityAuthenticationFactories() {
         return Collections.<EntityAuthenticationFactory>unmodifiableSet(entityAuthFactories);
     }
  
+    /**
+     * @return user authentication factories
+     */
     public final Set<UserAuthenticationFactory> getUserAuthenticationFactories() {
         return Collections.<UserAuthenticationFactory>unmodifiableSet(userAuthFactories);
     }
  
+    /**
+     * @return key exchange factories
+     */
     public final SortedSet<KeyExchangeFactory> getKeyExchangeFactories() {
         return keyxFactories;
     }
 
+    /**
+     * @param scheme key exchange scheme
+     * @return wrap crypto context repository for a given key exchange scheme
+     */
     public final WrapCryptoContextRepositoryHandle getWrapCryptoContextRepository(final KeyExchangeScheme scheme) {
         if (scheme == null)
             throw new IllegalArgumentException("NULL KeyExchangeScheme");

@@ -33,11 +33,6 @@ import mslcli.common.util.ConfigurationException;
  * <p>
  *    Authentication utility telling which entity authentication, user authentication,
  *    and key exchange schemes are permitted/supported for a given entity.
-
-/**
- * <p>
- *    Authentication utility telling which entity authentication, user authentication,
- *    and key exchange schemes are permitted/supported for a given entity.
  * </p>
  * 
  * @author Vadim Spector <vspector@netflix.com>
@@ -53,6 +48,7 @@ public class ServerAuthenticationUtils implements AuthenticationUtils {
      * <p>Create a new authentication utils instance for the specified server identity.
      * </p>
      * 
+     * @param appCtx application context
      * @param serverId local server entity identity.
      */
     public ServerAuthenticationUtils(final AppContext appCtx, final String serverId) throws ConfigurationException {
@@ -116,7 +112,7 @@ public class ServerAuthenticationUtils implements AuthenticationUtils {
     /* (non-Javadoc)
      * @see com.netflix.msl.util.AuthenticationUtils#isSchemePermitted(java.lang.String, com.netflix.msl.tokens.MslUser, com.netflix.msl.userauth.UserAuthenticationScheme)
      *
-     * In this specific implementation, iallowed user authentication schemes depend on entity identity, not a specific user of that entity,
+     * In this specific implementation, allowed user authentication schemes depend on entity identity, not a specific user of that entity,
      * so the implementation is the same as in the method above.
      */
     @Override

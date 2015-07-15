@@ -16,6 +16,11 @@
 
 package mslcli.common.util;
 
+/**
+ * <p>ConfigurationException class for MSL CLI configuration file errors.</p>
+ *
+ * @author Vadim Spector <vspector@netflix.com>
+ */
 public class ConfigurationException extends Exception {
     public ConfigurationException() {
         super();

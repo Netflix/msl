@@ -68,7 +68,7 @@ import com.netflix.msl.util.SimpleMslStore;
 import mslcli.common.Triplet;
 
 /**
- * Collection of utilities
+ * <p>Collection of utilities.</p>
  *
  * @author Vadim Spector <vspector@netflix.com>
  */
@@ -78,7 +78,7 @@ public final class SharedUtil {
     private SharedUtil() {}
 
     /**
-     * extract useful info from MasterToken
+     * extract useful info from MasterToken for display
      *
      * @param masterToken master token, can be null
      * @return partial master token info as a string, or null if masterToken is null
@@ -95,7 +95,7 @@ public final class SharedUtil {
     }
 
     /**
-     * extract useful info from UserIdToken
+     * extract useful info from UserIdToken for display
      *
      * @param userIdToken user ID token, can be null
      * @return partial user ID token info as a string, or null if userIdToken is null
@@ -116,7 +116,7 @@ public final class SharedUtil {
     }
 
     /**
-     * extract useful info from ServiceToken
+     * extract useful info from ServiceToken for display
      *
      * @param serviceToken service token, can be null
      * @return partial service token info as a string, or null if serviceToken is null
@@ -457,6 +457,11 @@ public final class SharedUtil {
         private final ICryptoContext mslCryptoContext = new ClientMslCryptoContext();
     }
 
+    /**
+     * extract useful info from MslException for display
+     *
+     * @return useful info from MslException for display
+     */
     public static String getMslExceptionInfo(final MslException e) {
         if (e == null) return null;
         final MslError mErr = e.getError();

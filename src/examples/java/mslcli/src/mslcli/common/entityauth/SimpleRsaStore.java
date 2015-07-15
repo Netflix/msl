@@ -24,8 +24,13 @@ import java.util.Set;
 import com.netflix.msl.entityauth.RsaStore;
 
 /**
- * <p>Memory-backed RSA key store.</p>
- * 
+ * <p>
+ * Memory-backed RSA key store, mapping IDs to RSA key pairs.
+ * Note, that ID is the identity of RSA key pair, not of the
+ * entity using it. Each entity needs to know the ID of the RSA
+ * key pair it should use.
+ * </p>
+ *
  * @author Vadim Spector <vspector@netflix.com>
  */
 public class SimpleRsaStore implements RsaStore {
@@ -46,18 +51,27 @@ public class SimpleRsaStore implements RsaStore {
         }
         this.keys = keys;
     }
-    
+
+    /**
+     * @see com.netflix.msl.entityauth.RsaStore.getIdentities()
+     */
     @Override
     public Set<String> getIdentities() {
         return keys.keySet();
     }
 
+    /**
+     * @see com.netflix.msl.entityauth.RsaStore.getPublicKey()
+     */
     @Override
     public PublicKey getPublicKey(final String identity) {
         final KeyPair pair = keys.get(identity);
         return (pair != null) ? pair.getPublic() : null;
     }
 
+    /**
+     * @see com.netflix.msl.entityauth.RsaStore.getPrivateKey()
+     */
     @Override
     public PrivateKey getPrivateKey(final String identity) {
         final KeyPair pair = keys.get(identity);

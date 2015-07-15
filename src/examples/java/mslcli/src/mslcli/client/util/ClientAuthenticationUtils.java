@@ -51,6 +51,7 @@ public class ClientAuthenticationUtils implements AuthenticationUtils {
      * <p>Create a new authentication utils instance for the specified client identity.</p>
      * 
      * @param clientId local client entity identity.
+     * @param appCtx application context
      */
     public ClientAuthenticationUtils(final String clientId, final AppContext appCtx) throws ConfigurationException {
         if (clientId == null || clientId.isEmpty()) {

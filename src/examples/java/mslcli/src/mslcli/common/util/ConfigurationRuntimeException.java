@@ -17,9 +17,13 @@
 package mslcli.common.util;
 
 /**
- * This exception is a wrapper for ConfigurationException.
+ * <p>
+ * Wrapper class for ConfigurationException.
  * It is used to be thrown from the existing MSL core methods
  * which cannot be modified to throw ConfigurationException.
+ * </p>
+ *
+ * @author Vadim Spector <vspector@netflix.com>
  */
 public class ConfigurationRuntimeException extends RuntimeException {
     public ConfigurationRuntimeException(ConfigurationException cause) {

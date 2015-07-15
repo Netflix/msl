@@ -30,6 +30,15 @@ import java.util.Set;
 
 import com.netflix.msl.MslConstants;
 
+/**
+ * <p>
+ * This class parses MSL CLI command-line arguments, validates them,
+ * and provides access methods.
+ * </p>
+ *
+ * @author Vadim Spector <vspector@netflix.com>
+ */
+
 public final class CmdArguments {
 
     // parameters
@@ -112,10 +121,17 @@ public final class CmdArguments {
         }
     }
 
+    /**
+     * @return all parameters as unmodifiable Map
+     */
     public Map<String,String> getParameters() {
         return Collections.unmodifiableMap(argMap);
     }
 
+    /**
+     * merge parameters from another CmdArguments instance
+     * @param other another CmdArguments instance to merge parameters from
+     */
     public void merge(CmdArguments other) throws IllegalCmdArgumentException {
         if (other == null) {
             throw new IllegalArgumentException("NULL CmdArguments argument");

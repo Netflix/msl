@@ -28,7 +28,9 @@ import mslcli.common.Pair;
 import mslcli.common.Triplet;
 
 /**
- * Msl Properties
+ * <p>
+ * Msl Properties extracted from MSL CLI configuration file.
+ * </p>
  *
  * @author Vadim Spector <vspector@netflix.com>
  */

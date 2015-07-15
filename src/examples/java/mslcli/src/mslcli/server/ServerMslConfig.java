@@ -26,12 +26,20 @@ import mslcli.common.util.ConfigurationException;
 import mslcli.server.util.ServerAuthenticationUtils;
 
 /**
- * <p>The configuration class for MSl server</p>
+ * <p>
+ * The configuration class for MSl server, created per given server entity identity.
+ * </p>
  * 
  * @author Vadim Spector <vspector@netflix.com>
  */
 
 public final class ServerMslConfig extends MslConfig {
+    /**
+     * Constructor.
+     *
+     * @param appCtx application context.
+     * @param args command line arguments
+     */
     public ServerMslConfig(final AppContext appCtx, final CmdArguments args)
         throws ConfigurationException, IllegalCmdArgumentException
     {

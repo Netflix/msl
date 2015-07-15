@@ -16,12 +16,12 @@
 
 package mslcli.common.util;
 
-import com.netflix.msl.crypto.ICryptoContext;
-
 import com.netflix.msl.keyx.WrapCryptoContextRepository;
 
 /**
- * Wrap Crypto Context Repository Handle adding method to access the most recently added wrapdata
+ * <p>
+ * Wrap Crypto Context Repository Handle adding method to access the most recently added wrapdata.
+ * </p>
  *
  * @author Vadim Spector <vspector@netflix.com>
  */

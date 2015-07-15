@@ -81,7 +81,7 @@ public class ServerRespondMessageContext implements MessageContext {
      * @param encrypted true if the response data must be encrypted.
      * @param data application response data.
      */
-    public ServerRespondMessageContext(final String recipient, final boolean encrypted, final String data) {
+    public ServerRespondMessageContext(final String recipient, final boolean encrypted, final byte[] data) {
         this.recipient = recipient;
         this.encrypted = encrypted;
         this.data = data;
@@ -99,7 +99,7 @@ public class ServerRespondMessageContext implements MessageContext {
      * @param tokens application service tokens.
      * @param cryptoContexts application service token crypto contexts.
      */
-    public ServerRespondMessageContext(final String recipient, final boolean encrypted, final String data, final Set<Token> tokens, final Map<String,ICryptoContext> cryptoContexts) {
+    public ServerRespondMessageContext(final String recipient, final boolean encrypted, final byte[] data, final Set<Token> tokens, final Map<String,ICryptoContext> cryptoContexts) {
         this.recipient = recipient;
         this.encrypted = encrypted;
         this.data = data;
@@ -212,7 +212,7 @@ public class ServerRespondMessageContext implements MessageContext {
      */
     @Override
     public void write(final MessageOutputStream output) throws IOException {
-        output.write(data.getBytes(MslConstants.DEFAULT_CHARSET));
+        output.write(data);
         output.close();
     }
 
@@ -231,7 +231,7 @@ public class ServerRespondMessageContext implements MessageContext {
     /** True if the response data must be encrypted. */
     private final boolean encrypted;
     /** Response data. */
-    private final String data;
+    private final byte[] data;
     /** Service tokens. */
     private final Set<Token> tokens;
 }

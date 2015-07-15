@@ -40,10 +40,12 @@ import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
 import mslcli.common.util.SharedUtil;
 
-import static mslcli.common.CmdArguments.*;
-
 /**
- * MSL Client class.
+ * <p>
+ * MSL client. Hides some complexities of MSL core APIs and send/receive error handling.
+ * Instance of thsi class is bound to a given client entity identity via an instance of
+ * ClientMslConfig, which, in turn, is bound to a given client entity identity.
+ * </p>
  *
  * @author Vadim Spector <vspector@netflix.com>
  */

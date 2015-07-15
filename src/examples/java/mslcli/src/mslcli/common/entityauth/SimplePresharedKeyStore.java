@@ -23,7 +23,9 @@ import com.netflix.msl.entityauth.PresharedKeyStore;
 import com.netflix.msl.entityauth.PresharedKeyStore.KeySet;
 
 /**
- * <p>An example preshared key store backed by memory.</p>
+ * <p>
+ * Sample preshared key store backed by memory.
+ * </p>
  * 
  * @author Vadim Spector <vspector@netflix.com>
  */
@@ -41,7 +43,10 @@ public class SimplePresharedKeyStore implements PresharedKeyStore {
         }
         this.presharedKeys.putAll(presharedKeys);
     }
-    
+
+    /**
+     * @see com.netflix.msl.entityauth.PresharedKeyStore.getKeys()
+     */
     @Override
     public KeySet getKeys(final String identity) {
         if (identity == null) {

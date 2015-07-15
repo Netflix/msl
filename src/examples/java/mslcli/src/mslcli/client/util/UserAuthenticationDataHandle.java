@@ -19,8 +19,10 @@ package mslcli.client.util;
 import com.netflix.msl.userauth.UserAuthenticationData;
 
 /**
- * User Authorization Data Handle interface. Called on client-side when MslControl
- * requests user authentication data from MessageContext.
+ * <p>
+ * Callback interface for fetching UserAuthenticationData. Called on client side
+ * when MslControl requests user authentication data from MessageContext.
+ * </p>
  *
  * @author Vadim Spector <vspector@netflix.com>
  */

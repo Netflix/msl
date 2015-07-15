@@ -72,7 +72,10 @@ import mslcli.common.entityauth.SimpleRsaStore;
 import mslcli.common.userauth.SimpleEmailPasswordStore;
 
 /**
- * Collection of app configuration-specific functions
+ * <p>
+ * Collection of MSL configuration-specific functions, based
+ * on the data extracted from MSL CLI configuration file.
+ * </p>
  *
  * @author Vadim Spector <vspector@netflix.com>
  */

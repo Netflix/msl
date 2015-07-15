@@ -21,8 +21,10 @@ import java.util.Set;
 import com.netflix.msl.keyx.KeyRequestData;
 
 /**
- * Called on client-side when MslControl
- * calls MessageContext.getKeyRequestData()
+ * <p>
+ * Callback interface for fetching KeyRequestData. Called on client-side
+ * when MslControl calls MessageContext.getKeyRequestData()
+ * </p>
  *
  * @author Vadim Spector <vspector@netflix.com>
  */

@@ -45,15 +45,23 @@ import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
 
 /**
- * <p>The configuration class for specific MSl client entity ID.
- *    Each time the app changes client entity ID, new instance
- *    needs to be created.</p>
+ * <p>
+ * The configuration class for specific MSl client entity ID.
+ * Each time the app changes client entity ID, new instance
+ * needs to be created.
+ * </p>
  * 
  * @author Vadim Spector <vspector@netflix.com>
  */
 
 public final class ClientMslConfig extends MslConfig {
-    public ClientMslConfig(final AppContext appCtx, final String clientId, final CmdArguments args)
+    /**
+     * Constructor.
+     *
+     * @param appCtx application context
+     * @param args command line arguments
+     */
+    public ClientMslConfig(final AppContext appCtx, final CmdArguments args)
         throws ConfigurationException, IllegalCmdArgumentException
     {
         super(appCtx,
