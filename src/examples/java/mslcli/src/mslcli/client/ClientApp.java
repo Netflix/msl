@@ -72,6 +72,7 @@ public final class ClientApp {
 
     private static final String CMD_HELP = "help";
     private static final String CMD_LIST = "list";
+    private static final String CMD_SAVE = "save";
     private static final String CMD_QUIT = "quit";
     private static final String CMD_HINT = "?";
 
@@ -202,6 +203,11 @@ public final class ClientApp {
             }
             if (CMD_LIST.equalsIgnoreCase(options)) {
                 System.out.println(cmdParam.getParameters());
+                continue;
+            }
+            if (CMD_SAVE.equalsIgnoreCase(options)) {
+                if (client != null)
+                    client.saveMslStore();
                 continue;
             }
             if (CMD_HINT.equalsIgnoreCase(options)) {
@@ -379,7 +385,6 @@ public final class ClientApp {
 
         @Override
         public UserAuthenticationData getUserAuthenticationData(final String userId) {
-            System.out.println("UserAuthentication Data requested");
             return mslCfg.getUserAuthenticationData(userId, interactive);
         }
         private final ClientMslConfig mslCfg;
@@ -394,11 +399,15 @@ public final class ClientApp {
             this.appCtx = appCtx;
             this.mslConfig = mslConfig;
             this.keyRequestDataSet = new HashSet<KeyRequestData>();
+            this.lastKxsName = null;
+            this.lastKxmName = null;
+            this.lastRequested = false;
         }
 
         @Override
         public synchronized Set<KeyRequestData> getKeyRequestData() {
-            appCtx.info("Requesting Key Request Data");
+            appCtx.info(String.format("%s: Requesting Key Request Data", this));
+            lastRequested = true;
             return Collections.<KeyRequestData>unmodifiableSet(keyRequestDataSet);
         }
 
@@ -409,14 +418,27 @@ public final class ClientApp {
          */
         private synchronized void setKeyExchange(final String kxsName, final String kxmName)
             throws ConfigurationException, IllegalCmdArgumentException, MslKeyExchangeException {
+            if (SharedUtil.safeEqual(kxsName, lastKxsName) && SharedUtil.safeEqual(kxmName, lastKxmName) && !lastRequested)
+                return;
             final KeyRequestData keyRequestData = mslConfig.getKeyRequestData(kxsName, kxmName);
             keyRequestDataSet.clear();
             keyRequestDataSet.add(keyRequestData);
+            lastKxsName = kxsName;
+            lastKxmName = kxmName;
+            lastRequested = false;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("KeyRequestDataHandle[%s]", mslConfig.getEntityId());
         }
 
         private final AppContext appCtx;
         private final ClientMslConfig mslConfig;
         private final Set<KeyRequestData> keyRequestDataSet;
+        private String lastKxsName;
+        private String lastKxmName;
+        private boolean lastRequested;
     }
 
     /*
@@ -442,8 +464,9 @@ public final class ClientApp {
         System.out.println("Choices:");
         System.out.println("a) Modify Command-line arguments, if any need to be modified, and press Enter to send a message.");
         System.out.println("   Use exactly the same syntax as from the command line.");
-        System.out.println("b) Type \"list\" for listing currently selected command-line arguments.");
-        System.out.println("c) Type \"help\" for the detailed instructions on using this tool.");
-        System.out.println("d) Type \"quit\" to quit this tool.");
+        System.out.println(String.format("b) Type \"%s\" for listing currently selected command-line arguments.", CMD_LIST));
+        System.out.println(String.format("c) Type \"%s\" for the detailed instructions on using this tool.", CMD_HELP));
+        System.out.println(String.format("d) Type \"%s\" to save MSL store to the disk. MSL store is saved automatically on exit.", CMD_SAVE));
+        System.out.println(String.format("e) Type \"%s\" to quit this tool.", CMD_QUIT));
     }
 }

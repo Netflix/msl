@@ -86,6 +86,7 @@ public final class ClientMslConfig extends MslConfig {
         if (kxsName == null || kxsName.trim().isEmpty()) {
             throw new IllegalArgumentException("NULL Key Exchange Type");
         }
+        appCtx.info(String.format("%s: Generating KeyRequestData{%s %s}", this, kxsName, kxmName));
         final KeyExchangeScheme kxScheme = KeyExchangeScheme.getScheme(kxsName.trim());
         if (kxScheme == null) {
             throw new IllegalCmdArgumentException(String.format("Invalid Key Exchange Type %s: valid %s", kxsName.trim(), KeyExchangeScheme.values()));
@@ -146,6 +147,7 @@ public final class ClientMslConfig extends MslConfig {
     }
 
     public UserAuthenticationData getUserAuthenticationData(final String userId, boolean interactive) {
+        appCtx.info(String.format("%s: Requesting UserAuthenticationData, UserId %s, Interactive %b", this, userId, interactive));
         if (userId != null) {
             try {
                 final Pair<String,String> ep = appCtx.getProperties().getEmailPassword(userId);
@@ -190,5 +192,10 @@ public final class ClientMslConfig extends MslConfig {
             throw new IllegalCmdArgumentException(String.format("Illegal Key Exchange %s for %s, Valid %s",
                 keyExchangeScheme.name(), kxmName.trim(), values));
         }
+    }
+
+    @Override
+    public String toString() {
+        return String.format("ClientMslConfig[%s]", entityId);
     }
 }

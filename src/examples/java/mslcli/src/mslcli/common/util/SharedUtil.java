@@ -525,4 +525,16 @@ public final class SharedUtil {
         // Grab the first 128 bits.
         return Arrays.copyOf(finalBits, WRAPPING_KEY_LENGTH);
     }
+
+    /**
+     * Compare two objects, one or both of which can be null. Null objects are considered equal.
+     *
+     * @param x first object
+     * @param y second object
+     * @return true if both objects are null or equal to each other per Object.equals() method
+     */
+
+    public static boolean safeEqual(final Object x, final Object y) {
+        return (x == null) ? (y == null) : x.equals(y); 
+    }
 }
