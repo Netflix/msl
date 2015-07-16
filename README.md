@@ -42,6 +42,7 @@ The JavaScript MSL code base assumes a JavaScript execution environment that sup
 - Chrome Browser 37\+  
 For earlier versions: <code>chrome://flags/#enable-experimental-web-platform-features</code>  
 On Linux libnss 3.16.2\+ must be separately installed.
+- Edge
 - Firefox 34\+  
 For earlier versions: <code>about:config dom.webcrypto.enabled</code>
 - Internet Explorer 11\+  
