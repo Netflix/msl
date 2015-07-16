@@ -4987,7 +4987,7 @@ describe("MessageHeader", function() {
             });
         });
         //waitsFor(function() { return exception; }, "exception not received", 300);
-        waitsFor(function() { return header; }, "header not received", 100);
+        waitsFor(function() { return header; }, "header not received", 300);
         
         runs(function() {
             //var f = function() { throw exception; };

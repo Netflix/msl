@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 describe("BlockingQueue", function() {
-    var TIMEOUT = 75;
+    var TIMEOUT = 150;
     var DELAY = 1;
     var NAME = "name";
     
@@ -120,7 +120,7 @@ describe("BlockingQueue", function() {
             expect(t).toBeDefined();
             deliver(queue, items);
         });
-        waitsFor(function() { return Arrays$equal(consumer.items, items); }, "items", 100);
+        waitsFor(function() { return Arrays$equal(consumer.items, items); }, "items", 200);
     });
     
     it("add and poll", function() {
@@ -130,7 +130,7 @@ describe("BlockingQueue", function() {
             var t = queue.poll(TIMEOUT, consumer.getCallback(NAME));
             expect(t).toBeDefined();
         });
-        waitsFor(function() { return Arrays$equal(consumer.items, items); }, "items", 100);
+        waitsFor(function() { return Arrays$equal(consumer.items, items); }, "items", 200);
     });
     
     it("multiple poll and add", function() {
@@ -145,7 +145,7 @@ describe("BlockingQueue", function() {
             }
             expect(consumer.items.length).toEqual(0);
         });
-        waitsFor(function() { return names.length == 3; }, "names", 100);
+        waitsFor(function() { return names.length == 3; }, "names", 200);
         
         runs(function() {
             setTimeout(function() { queue.add(items[0]); }, DELAY);
@@ -185,19 +185,19 @@ describe("BlockingQueue", function() {
         runs(function() {
             setTimeout(function() { queue.poll(TIMEOUT, consumer.getCallback(NAME)); }, DELAY);
         });
-        waitsFor(function() { return consumer.items.length == 1; }, "first", 100);
+        waitsFor(function() { return consumer.items.length == 1; }, "first", 200);
         
         runs(function() {
             expect(consumer.items[0]).toEqual(items[0]);
             setTimeout(function() { queue.poll(TIMEOUT, consumer.getCallback(NAME)); }, DELAY);
         });
-        waitsFor(function() { return consumer.items.length == 2; }, "second", 100);
+        waitsFor(function() { return consumer.items.length == 2; }, "second", 200);
         
         runs(function() {
             expect(consumer.items[1]).toEqual(items[1]);
             setTimeout(function() { queue.poll(TIMEOUT, consumer.getCallback(NAME)); }, DELAY);
         });
-        waitsFor(function() { return consumer.items.length == 3; }, "third", 100);
+        waitsFor(function() { return consumer.items.length == 3; }, "third", 200);
         
         runs(function() {
             expect(consumer.items).toEqual(items);
@@ -221,7 +221,7 @@ describe("BlockingQueue", function() {
             var ticket = queue.poll(TIMEOUT, consumer.getCallback(NAME));
             setTimeout(function() { queue.cancel(ticket); }, DELAY);
         });
-        waitsFor(function() { return consumer.cancelled == 1; }, "cancelled", 100);
+        waitsFor(function() { return consumer.cancelled == 1; }, "cancelled", 200);
     });
     
     it("cancel multiple", function() {
@@ -237,26 +237,26 @@ describe("BlockingQueue", function() {
             }
             expect(consumer.items.length).toEqual(0);
         });
-        waitsFor(function() { return names.length == 3 && tickets.length == 3; }, "names & tickets", 100);
+        waitsFor(function() { return names.length == 3 && tickets.length == 3; }, "names & tickets", 200);
         
         runs(function() {
             setTimeout(function() { queue.cancel(tickets.shift()); }, DELAY);
         });
-        waitsFor(function() { return consumer.cancelled == 1; }, "first", 100);
-        
-        runs(function() {
-            var expectedName = names.shift();
-            expect(consumer.lastName).toEqual(expectedName);
-            setTimeout(function() { queue.cancel(tickets.shift()); }, DELAY);
-        });
-        waitsFor(function() { return consumer.cancelled == 2; }, "second", 100);
+        waitsFor(function() { return consumer.cancelled == 1; }, "first", 200);
         
         runs(function() {
             var expectedName = names.shift();
             expect(consumer.lastName).toEqual(expectedName);
             setTimeout(function() { queue.cancel(tickets.shift()); }, DELAY);
         });
-        waitsFor(function() { return consumer.cancelled == 3; }, "third", 100);
+        waitsFor(function() { return consumer.cancelled == 2; }, "second", 200);
+        
+        runs(function() {
+            var expectedName = names.shift();
+            expect(consumer.lastName).toEqual(expectedName);
+            setTimeout(function() { queue.cancel(tickets.shift()); }, DELAY);
+        });
+        waitsFor(function() { return consumer.cancelled == 3; }, "third", 200);
         
         runs(function() {
             var expectedName = names.shift();
@@ -273,7 +273,7 @@ describe("BlockingQueue", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return timedout; }, "timedout", 100);
+        waitsFor(function() { return timedout; }, "timedout", 200);
     });
     
     it("stress", function() {
