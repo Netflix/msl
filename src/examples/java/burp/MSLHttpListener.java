@@ -299,7 +299,6 @@ public class MSLHttpListener implements IHttpListener {
                 headerdataJO.put(KEY_RECIPIENT, messageHeader.getRecipient());
                 headerdataJO.put(KEY_MESSAGE_ID, messageHeader.getMessageId());
                 headerdataJO.put(KEY_NON_REPLAYABLE_ID, messageHeader.getNonReplayableId());
-                headerdataJO.put(KEY_NON_REPLAYABLE, messageHeader.isNonReplayable());
                 headerdataJO.put(KEY_RENEWABLE, messageHeader.isRenewable());
                 headerdataJO.put(KEY_HANDSHAKE, messageHeader.isHandshake());
                 headerdataJO.put(KEY_CAPABILITIES, messageHeader.getMessageCapabilities());

@@ -292,29 +292,6 @@ public class MessageInputStream extends InputStream {
                 }
             }
             
-            // TODO: This is the old non-replayable logic for backwards
-            // compatibility. It should be removed once all MSL stacks have
-            // migrated to the newer non-replayable ID logic.
-            //
-            // If the message is non-replayable (it is not from a trusted
-            // network server).
-            if (messageHeader.isNonReplayable()) {
-                // ...and not also renewable with key request data and a
-                // master token then reject the message.
-                if (!messageHeader.isRenewable() ||
-                    messageHeader.getKeyRequestData().isEmpty() ||
-                    masterToken == null)
-                {
-                    throw new MslMessageException(MslError.INCOMPLETE_NONREPLAYABLE_MESSAGE, messageHeader.toJSONString());
-                }
-
-                // If the message does not have the newest master token
-                // then notify the sender.
-                final TokenFactory factory = ctx.getTokenFactory();
-                if (!factory.isNewestMasterToken(ctx, masterToken))
-                    throw new MslMessageException(MslError.MESSAGE_REPLAYED, messageHeader.toJSONString());
-            }
-            
             // If the message is non-replayable (it is not from a trusted
             // network server).
             final Long nonReplayableId = messageHeader.getNonReplayableId();
