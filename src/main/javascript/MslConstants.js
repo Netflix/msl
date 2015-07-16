@@ -102,10 +102,17 @@ var MslConstants$ResponseCode;
      *         algorithm or undefined if there is none.
      */
     MslConstants$EncryptionAlgo$fromString = function MslConstants$EncryptionAlgo$fromString(value) {
+        // IE 11 uses lowercase algorithm names, contrary to spec.
+        var algoName = value;
+        if (typeof value === 'string')
+            algoName = value.toLowerCase();
+        if (typeof value === 'object' && typeof value['name'] === 'string')
+            algoName = value['name'].toLowerCase();
+        
         // Web Crypto does not define key types independent of cipher
         // specifications, so unfortunately the AES-CBC cipher spcification
         // maps onto the AES key type.
-        if (WebCryptoAlgorithm.AES_CBC['name'] == value['name'])
+        if (WebCryptoAlgorithm.AES_CBC['name'].toLowerCase() == algoName)
             return EncryptionAlgo.AES;
         return EncryptionAlgo[value];
     };
@@ -166,21 +173,31 @@ var MslConstants$ResponseCode;
      *         or undefined if there is none.
      */
     MslConstants$SignatureAlgo$fromString = function MslConstants$SignatureAlgo$fromString(value) {
+        // IE 11 uses lowercase algorithm names, contrary to spec.
+        var algoName = value;
+        if (typeof value === 'string')
+            algoName = value.toLowerCase();
+        if (typeof value === 'object' && typeof value['name'] === 'string')
+            algoName = value['name'].toLowerCase();
+        var hashName = undefined;
+        if (typeof value['hash'] === 'object')
+            hashName = value['hash']['name'].toLowerCase();
+        
         // FIXME
         // This is an ugly approach to mapping Web Crypto algorithms onto
         // signature algorithms. We should probably use some sort of subset-
         // JSON object function to compare.
-        if (WebCryptoAlgorithm.HMAC_SHA256['name'] == value['name'] &&
-            value['hash'] && WebCryptoAlgorithm.HMAC_SHA256['hash']['name'] == value['hash']['name'])
+        if (WebCryptoAlgorithm.HMAC_SHA256['name'].toLowerCase() == algoName &&
+            WebCryptoAlgorithm.HMAC_SHA256['hash']['name'].toLowerCase() == hashName)
         {
             return SignatureAlgo.HmacSHA256;
         }
-        if (WebCryptoAlgorithm.RSASSA_SHA256['name'] == value['name'] &&
-            value['hash'] && WebCryptoAlgorithm.RSASSA_SHA256['hash']['name'] == value['hash']['name'])
+        if (WebCryptoAlgorithm.RSASSA_SHA256['name'].toLowerCase() == algoName &&
+            WebCryptoAlgorithm.RSASSA_SHA256['hash']['name'].toLowerCase() == hashName)
         {
             return SignatureAlgo.SHA256withRSA;
         }
-        if (WebCryptoAlgorithm.AES_CMAC['name'] == value['name']) {
+        if (WebCryptoAlgorithm.AES_CMAC['name'].toLowerCase() == algoName) {
             return SignatureAlgo.AESCmac;
         }   
         return SignatureAlgo[value];
