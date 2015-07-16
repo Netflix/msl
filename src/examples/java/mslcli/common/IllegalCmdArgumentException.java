@@ -22,6 +22,7 @@ package mslcli.common;
  * @author Vadim Spector <vspector@netflix.com>
  */
 public class IllegalCmdArgumentException extends Exception {
+    private static final long serialVersionUID = -6754762182112853406L;
     public IllegalCmdArgumentException() {
         super();
     }

@@ -54,6 +54,7 @@ import com.netflix.msl.util.SimpleMslStore;
  */
 
 public class MslStoreData implements Serializable {
+    private static final long serialVersionUID = 5207304253726353139L;
 
     /*
      * SimpleMslStore fields that need to be accessed for serialization.
@@ -193,6 +194,7 @@ public class MslStoreData implements Serializable {
      * serializable wrapper class for MasterToken
      */
     private static final class MasterTokenData implements Serializable {
+        private static final long serialVersionUID = -4900828984126453948L;
         MasterTokenData(final MasterToken mt) {
             this.s = mt.toJSONString();
         }
@@ -206,6 +208,7 @@ public class MslStoreData implements Serializable {
      * serializable wrapper class for UserIdToken
      */
     private static final class UserIdTokenData implements Serializable {
+        private static final long serialVersionUID = -5191856143592904675L;
         UserIdTokenData(final UserIdToken uit) {
             this.s = uit.toJSONString();
             this.mtSerialNumber = uit.getMasterTokenSerialNumber();
@@ -221,6 +224,7 @@ public class MslStoreData implements Serializable {
      * serializable wrapper class for ServiceToken
      */
     private static final class ServiceTokenData implements Serializable {
+        private static final long serialVersionUID = -2854005430616613106L;
         ServiceTokenData(final ServiceToken st) {
             this.s = st.toJSONString();
             this.mtSerialNumber = st.getMasterTokenSerialNumber();
@@ -240,6 +244,7 @@ public class MslStoreData implements Serializable {
      * serializable wrapper class for SessionCryptoContext
      */
     private static final class CryptoContextData implements Serializable {
+        private static final long serialVersionUID = -4094166271048593127L;
         private static final String ID_FIELD = "id";
         private static final String ENC_FIELD = "encryptionKey";
         private static final String SIG_FIELD = "signatureKey";
@@ -319,7 +324,7 @@ public class MslStoreData implements Serializable {
             throw new IllegalArgumentException("NULL object");
         if (name == null)
             throw new IllegalArgumentException("NULL field name");
-        Class cls = o.getClass();
+        Class<? extends Object> cls = o.getClass();
         for ( ; cls.getSuperclass() != null; cls = cls.getSuperclass()) {
             for (final Field f : cls.getDeclaredFields()) {
                 if (Modifier.isStatic(f.getModifiers()) || Modifier.isTransient(f.getModifiers())) {

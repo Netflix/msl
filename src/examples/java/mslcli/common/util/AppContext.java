@@ -409,7 +409,7 @@ public final class AppContext {
      * info logging
      * @param message info message
      */
-    public static void info(final String msg) {
+    public void info(final String msg) {
         System.err.println("INFO: " + msg);
     }
 
@@ -417,7 +417,7 @@ public final class AppContext {
      * warning logging
      * @param message warning message
      */
-    public static void warning(final String msg) {
+    public void warning(final String msg) {
         System.err.println("WARNING: " + msg);
     }
 
@@ -425,7 +425,7 @@ public final class AppContext {
      * info logging
      * @param message error message
      */
-    public static void error(final String msg) {
+    public void error(final String msg) {
         System.err.println("ERROR: " + msg);
     }
 }

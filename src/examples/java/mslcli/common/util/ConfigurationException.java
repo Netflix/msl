@@ -22,6 +22,7 @@ package mslcli.common.util;
  * @author Vadim Spector <vspector@netflix.com>
  */
 public class ConfigurationException extends Exception {
+    private static final long serialVersionUID = 8802095343158937216L;
     public ConfigurationException() {
         super();
     }
