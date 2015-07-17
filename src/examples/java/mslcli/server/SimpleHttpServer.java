@@ -42,6 +42,10 @@ import mslcli.common.util.SharedUtil;
 
 public class SimpleHttpServer {
 
+    /**
+     * HTTP server launcher
+     * @param args command line arguments
+     */
     public static void main(String[] args) {
         if (args.length < 1) {
             System.out.println("Parameters: config_file");
@@ -69,7 +73,13 @@ public class SimpleHttpServer {
         }
     }
 
+    /**
+     * callback class for handling to HTTP requests
+     */
     static class MyHandler implements HttpHandler {
+        /**
+         * @param mslServer MSL server to delegate requests to
+         */
         MyHandler(final SimpleMslServer mslServer) {
             this.mslServer = mslServer;
         }
@@ -110,6 +120,7 @@ public class SimpleHttpServer {
             System.out.println("\nSUCCESS!!!\n");
         }
 
+        /** MSL server to delegate requests to */
         private final SimpleMslServer mslServer;
     }
 }

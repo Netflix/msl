@@ -23,13 +23,15 @@ package mslcli.common;
  */
 
 public final class Pair<X,Y> {
+    /** first value of type X */
     public final X x;
+    /** second value of type Y */
     public final Y y;
     /**
      * Constructor.
      *
-     * @param x first parameter of type X
-     * @param y second parameter of type Y
+     * @param x first value of type X
+     * @param y second value of type Y
      */
     public Pair(X x, Y y) {
       this.x = x;

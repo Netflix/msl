@@ -30,5 +30,8 @@ import com.netflix.msl.keyx.KeyRequestData;
  */
 
 public interface KeyRequestDataHandle {
+    /**
+     * @return key request data to be included into the outgoing request
+     */
     Set<KeyRequestData> getKeyRequestData();
 }

@@ -73,8 +73,9 @@ import mslcli.server.util.ServerMslContext;
  */
 
 public class SimpleMslServer {
+    /** for proper serialization */
     private static final long serialVersionUID = -4593207843035538485L;
-
+    /** timeout for reading request and producing response */
     private static final int TIMEOUT_MS = 120 * 1000;
 
     // Add BouncyCastle provider.
@@ -83,8 +84,12 @@ public class SimpleMslServer {
     }
     
     /**
-     * <p>Create a new server instance and initialize its state.
-     * </p>
+     * Create a new server instance and initialize its state.
+     *
+     * @param prop MslProperties from the configuration file
+     * @param args command line arguments
+     * @throws ConfigurationException
+     * @throws IllegalCmdArgumentException
      */
     public SimpleMslServer(final MslProperties prop, final CmdArguments args) throws ConfigurationException, IllegalCmdArgumentException {
         if (prop == null) {
@@ -111,7 +116,11 @@ public class SimpleMslServer {
     /**
      * Process incoming MSL request and produce MSL response.
      *
-     * 
+     * @param in input stream for reading request
+     * @param out output stream for writing response
+     * @throws ConfigurationException
+     * @throws IOException
+     * @throws MslException
      */
     public void processRequest(final InputStream in, final OutputStream out) throws ConfigurationException, IOException, MslException {
         if (in == null) {

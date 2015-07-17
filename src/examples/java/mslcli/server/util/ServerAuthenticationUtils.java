@@ -40,8 +40,7 @@ import mslcli.common.util.ConfigurationException;
 
 public class ServerAuthenticationUtils implements AuthenticationUtils {
 
-    // should be configurable
-
+    /** entity authentication schemes that this server entity is allowed to use to authenticate itself */
     private final Set<EntityAuthenticationScheme> allowedServerEntityAuthenticationSchemes;
 
     /**
@@ -50,6 +49,7 @@ public class ServerAuthenticationUtils implements AuthenticationUtils {
      * 
      * @param appCtx application context
      * @param serverId local server entity identity.
+     * @throws ConfigurationException if some configuration parameters required for initialization are missing, invalid, or inconsistent
      */
     public ServerAuthenticationUtils(final AppContext appCtx, final String serverId) throws ConfigurationException {
         if (appCtx == null) {

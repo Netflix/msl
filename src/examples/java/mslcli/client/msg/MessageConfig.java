@@ -26,9 +26,13 @@ package mslcli.client.msg;
  */
 
 public final class MessageConfig {
+    /** current user id */
     public String userId;
+    /** whether message should be encrypted */
     public boolean isEncrypted;
+    /** whether message should be integrity protected */
     public boolean isIntegrityProtected;
+    /** whether message should be non-replayable */
     public boolean isNonReplayable;
 
     @Override

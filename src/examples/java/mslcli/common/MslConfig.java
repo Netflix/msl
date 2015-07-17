@@ -76,6 +76,15 @@ import mslcli.common.util.WrapCryptoContextRepositoryWrapper;
  */
 
 public abstract class MslConfig {
+    /**
+     * Ctor
+     * @param appCtx application context
+     * @param args command line arguments
+     * @param entityAuthData entity authentication data
+     * @param authutils authentication utils
+     * @throws ConfigurationException
+     * @throws IllegalCmdArgumentException
+     */
     protected MslConfig(final AppContext appCtx,
                         final CmdArguments args,
                         final EntityAuthenticationData entityAuthData,
@@ -128,6 +137,14 @@ public abstract class MslConfig {
         );
     }
 
+    /**
+     * Initialize MslStore
+     *
+     * @param appCtx application context
+     * @param mslStorePath MSL store path
+     * @return MSL store
+     * @throws ConfigurationException
+     */
     private static SimpleMslStore initMslStore(final AppContext appCtx, final String mslStorePath) throws ConfigurationException {
         if (mslStorePath == null) {
             appCtx.info("Creating Non-Persistent MSL Store");
@@ -159,6 +176,8 @@ public abstract class MslConfig {
 
    /**
     * persist MSL store
+    *
+    * @throws IOException
     */
     public void saveMslStore() throws IOException {
         if (mslStorePath == null) {
@@ -258,6 +277,8 @@ public abstract class MslConfig {
     /**
      * Convenience method creating SortedSet of multiple key exchange factories,
      * sorted in order of preference of their use.
+     * @param factories array of key exchange factories
+     * @return Set of factories sorted from most to least preferable
      */
     protected static SortedSet<KeyExchangeFactory> getKeyExchangeFactorySet(KeyExchangeFactory... factories) {
         final TreeSet<KeyExchangeFactory> keyxFactoriesSet = new TreeSet<KeyExchangeFactory>(keyxFactoryComparator);
@@ -265,10 +286,15 @@ public abstract class MslConfig {
         return  Collections.unmodifiableSortedSet(keyxFactoriesSet);
     }
 
-    /*
+    /**
      * extension of WrapCryptoContextRepositoryWrapper class to intercept and report calls
      */
     private static final class AppWrapCryptoContextRepository extends WrapCryptoContextRepositoryWrapper {
+        /**
+         * @param appCtx application context
+         * @param entityId entity identity
+         * @param scheme key exchange scheme
+         */
         private AppWrapCryptoContextRepository(final AppContext appCtx, final String entityId, final KeyExchangeScheme scheme) {
             super(new SimpleWrapCryptoContextRepository(entityId, scheme));
             this.appCtx = appCtx;
@@ -292,17 +318,24 @@ public abstract class MslConfig {
             appCtx.info(String.format("%s: removeCryptoContext", id));
             super.removeCryptoContext(wrapdata);
         }
+        /** application context */
         private final AppContext appCtx;
+        /** id for this instance */
         private final String id;
     }
 
-   /*
+    /**
      * This is a class to serve as an interceptor to all MslStore calls.
      * It can override only the methods in MslStore the app cares about.
      * This sample implementation just prints out the information about
      * calling some selected MslStore methods.
      */
     private static final class AppMslStoreWrapper extends MslStoreWrapper {
+        /**
+         * @param appCtx application context
+         * @param entityId entity identity
+         * @param mslStore MSL store
+         */
         private AppMslStoreWrapper(final AppContext appCtx, final String entityId, final MslStore mslStore) {
             super(mslStore);
             if (appCtx == null) {
@@ -310,22 +343,21 @@ public abstract class MslConfig {
             }
             this.appCtx = appCtx;
             this.entityId = entityId;
-            this.id = String.format("MslStore[%s]", entityId);
         }
 
         @Override
         public long getNonReplayableId(final MasterToken masterToken) {
             final long nextId = super.getNonReplayableId(masterToken);
-            appCtx.info(String.format("%s: %s - next non-replayable id %d", id, SharedUtil.getMasterTokenInfo(masterToken), nextId));
+            appCtx.info(String.format("%s: %s - next non-replayable id %d", this, SharedUtil.getMasterTokenInfo(masterToken), nextId));
             return nextId;
         }
 
         @Override
         public void setCryptoContext(final MasterToken masterToken, final ICryptoContext cryptoContext) {
             if (masterToken == null) {
-                appCtx.info(String.format("%s: setting crypto context with NULL MasterToken???", id));
+                appCtx.info(String.format("%s: setting crypto context with NULL MasterToken???", this));
             } else {
-                appCtx.info(String.format("%s: %s %s", id,
+                appCtx.info(String.format("%s: %s %s", this,
                     (cryptoContext != null)? "Adding" : "Removing", SharedUtil.getMasterTokenInfo(masterToken)));
             }
             super.setCryptoContext(masterToken, cryptoContext);
@@ -333,43 +365,59 @@ public abstract class MslConfig {
 
         @Override
         public void removeCryptoContext(final MasterToken masterToken) {
-            appCtx.info(String.format("%s: Removing Crypto Context for %s", id, SharedUtil.getMasterTokenInfo(masterToken)));
+            appCtx.info(String.format("%s: Removing Crypto Context for %s", this, SharedUtil.getMasterTokenInfo(masterToken)));
             super.removeCryptoContext(masterToken);
         }
 
         @Override
         public void clearCryptoContexts() {
-            appCtx.info(String.format("%s: Clear Crypto Contexts", id));
+            appCtx.info(String.format("%s: Clear Crypto Contexts", this));
             super.clearCryptoContexts();
         }
 
         @Override
         public void addUserIdToken(final String userId, final UserIdToken userIdToken) throws MslException {
-            appCtx.info(String.format("%s: Adding %s for userId %s", id, SharedUtil.getUserIdTokenInfo(userIdToken), userId));
+            appCtx.info(String.format("%s: Adding %s for userId %s", this, SharedUtil.getUserIdTokenInfo(userIdToken), userId));
             super.addUserIdToken(userId, userIdToken);
         }
 
         @Override
         public void removeUserIdToken(final UserIdToken userIdToken) {
-            appCtx.info(String.format("%s: Removing %s", id, SharedUtil.getUserIdTokenInfo(userIdToken)));
+            appCtx.info(String.format("%s: Removing %s", this, SharedUtil.getUserIdTokenInfo(userIdToken)));
             super.removeUserIdToken(userIdToken);
         }
 
+        @Override
+        public String toString() {
+            return String.format("MslStore[%s]", entityId);
+        }
+
+        /** application context */
         private final AppContext appCtx;
+        /** entity identity */
         private final String entityId;
-        private final String id;
     }
  
+    /** application context */
     protected final AppContext appCtx;
+    /** entity identity */
     protected final String entityId;
+    /** command arguments */
     protected final CmdArguments args;
+    /** MSL store */
     private final MslStoreWrapper mslStoreWrapper;
+    /** MSL store file path */
     private final String mslStorePath;
+    /** entity authentication data */
     private final EntityAuthenticationData entityAuthData;
+    /** entity authentication factories */
     private final Set<EntityAuthenticationFactory> entityAuthFactories;
+    /** user authentication factories */
     private final Set<UserAuthenticationFactory> userAuthFactories;
+    /** key exchange factories */
     private final SortedSet<KeyExchangeFactory> keyxFactories;
+    /** wrap data repositories per key exchange */
     private final Map<KeyExchangeScheme,WrapCryptoContextRepositoryHandle> wrapCryptoContextRepositories;
-
+    /** key exchange factory comparator for sorting key exchange factories by priority */
     private static final KeyExchangeFactoryComparator keyxFactoryComparator = new KeyExchangeFactoryComparator();
 }

@@ -42,9 +42,11 @@ import mslcli.common.util.SharedUtil;
  */
 
 public class SimpleServlet extends HttpServlet {
+    /** for proper serialization */
     private static final long serialVersionUID = -4593207843035538485L;
-
+    /** name of the servlet property for the configuration file path */
     private static final String CONFIG_FILE_PATH = "mslcli.cfg.file";
+    /** name of the servlet property for the server entity identity */
     private static final String SERVER_ID = "mslcli.cfg.server.id";
     
     /**

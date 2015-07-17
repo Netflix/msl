@@ -52,23 +52,36 @@ import mslcli.common.util.SharedUtil;
 
 public final class Client {
 
+    /** timeout in milliseconds for processing request and composing response */
     private static final int TIMEOUT_MS = 120 * 1000;
 
     /**
      * Data object encapsulating payload and/or error header from the server
      */
     public static final class Response {
+        /**
+         * @param payload message application payload of the response, if any
+         * @param errHeader MSL error header in the response, if any
+         */
         private Response(final byte[] payload, final ErrorHeader errHeader) {
             this.payload = payload;
             this.errHeader = errHeader;
         }
+        /**
+         * @return application payload in the response, if any
+         */
         public byte[] getPayload() {
             return payload;
         }
+        /**
+         * @return MSL error header in the response, if any
+         */
         public ErrorHeader getErrorHeader() {
             return errHeader;
         }
+        /** application payload */
         private final byte[] payload;
+        /** MSL error header */
         private final ErrorHeader errHeader;
     }
         
@@ -77,6 +90,7 @@ public final class Client {
      * @param userAuthenticationDataHandle callback for obtaining user authentication data
      * @param keyRequestDataHandle callback for obtaining key request data
      * @param mslCfg encapsulation of MSL configuration parameters
+     * @throws ConfigurationException
      */
     public Client(final AppContext appCtx,
                   final UserAuthenticationDataHandle userAuthenticationDataHandle,
@@ -119,6 +133,10 @@ public final class Client {
      * @param cfg message security policies
      * @param remoteUrl target URL for sending message
      * @return response encapsulating payload and/or error header
+     * @throws ExecutionException
+     * @throws IOException
+     * @throws InterruptedException
+     * @throws MslException
      */
     public Response sendRequest(final byte[] request, final MessageConfig cfg, final URL remoteUrl)
         throws ExecutionException, IOException, InterruptedException, MslException
@@ -157,6 +175,7 @@ public final class Client {
 
     /**
      * save MSL Store
+     * @throws IOException if cannot save MSL store
      */
     public void saveMslStore() throws IOException {
         mslCfg.saveMslStore();

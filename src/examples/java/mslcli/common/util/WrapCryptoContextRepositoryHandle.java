@@ -27,5 +27,8 @@ import com.netflix.msl.keyx.WrapCryptoContextRepository;
  */
 
 public interface WrapCryptoContextRepositoryHandle extends WrapCryptoContextRepository {
+    /**
+     * @return the latest wrap data added to the store
+     */
     byte[] getLastWrapdata();
 }

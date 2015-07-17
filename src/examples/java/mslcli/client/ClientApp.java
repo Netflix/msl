@@ -66,28 +66,50 @@ public final class ClientApp {
         Security.addProvider(new BouncyCastleProvider());
     }
 
-    private static final String CMD_PROMPT = "args"; // command prompt
-
+    /** interactive prompt for setting/changing runtime arguments */
+    private static final String CMD_PROMPT = "args";
+    /** MSL CLI client manual file name */
     private static final String HELP_FILE = "mslclient_manual.txt";
 
+    /** interactive command to print help */
     private static final String CMD_HELP = "help";
+    /** interactive command to list current runtime arguments */
     private static final String CMD_LIST = "list";
+    /** interactive command to save MSL store */
     private static final String CMD_SAVE = "save";
+    /** interactive command to exit MSL CLI client program */
     private static final String CMD_QUIT = "quit";
+    /** interactive command to print the list of interactive commands */
     private static final String CMD_HINT = "?";
 
+    /**
+     * enumeration of status codes returned by MSL CLI program
+     */
     public enum Status {
+        /** success status */
         OK(0, "Success"),
+        /** invalid command line arguments */
         ARG_ERROR    (1, "Invalid Arguments"),
+        /** invalid configuration file */
         CFG_ERROR    (2, "Configuration File Error"),
+        /** exception from the MSL stack */
         MSL_EXC_ERROR(3, "MSL Exception"),
+        /** MSL protocol error from the server */
         MSL_ERROR    (4, "Server MSL Error Reply"),
+        /** problem connecting/talking to the server */
         COMM_ERROR   (5, "Server Communication Error"),
+        /** internal exception */
         EXE_ERROR    (6, "Internal Execution Error");
 
+        /** exit status code */
         private final int code;
+        /** exit status code explanation */
         private final String info;
 
+        /**
+         * @param code status code
+         * @param info status code explanation
+         */
         Status(final int code, final String info) {
             this.code = code;
             this.info = info;
@@ -99,15 +121,22 @@ public final class ClientApp {
         }
     }
 
+    /** runtime arguments */
     private final CmdArguments cmdParam;
+    /** configuration properties */
     private final MslProperties mslProp;
+    /** application context */
     private final AppContext appCtx;
+    /** client handle */
     private Client client;
+    /** current client entity id */
     private String clientId = null;
+    /** key request data handle callback */
     private AppKeyRequestDataHandle keyRequestDataHandle = null;
 
-    /*
+    /**
      * Launcher of MSL CLI client. See user manual in HELP_FILE.
+     * @param args command line arguments
      */
     public static void main(String[] args) {
         Status status = Status.OK;
@@ -148,13 +177,16 @@ public final class ClientApp {
         System.exit(status.code);
     }
 
-    /*
+    /**
      * ClientApp holds the instance of one Client and some other objects which are global for the application.
      * Instance of Client is supposed to be re-instantiated only when its entity identity changes,
      * which is only applicable in the interactive mode. Changing entity identity within a given Client
      * instance would be too convoluted; it makes sense to permanently bind Client with its entity ID.
      *
-     * @param encapsulation of command-line arguments
+     * @param cmdParam encapsulation of command-line arguments
+     * @throws ConfigurationException if some configuration parameters required for initialization are missing, invalid, or mutually inconsistent
+     * @throws IllegalCmdArgumentException if some command line arguments required for initialization are missing, invalid, or mutually inconsistent
+     * @throws IOException if configuration file reading failed
      */
     public ClientApp(final CmdArguments cmdParam) throws ConfigurationException, IllegalCmdArgumentException, IOException {
         if (cmdParam == null) {
@@ -183,11 +215,11 @@ public final class ClientApp {
         this.appCtx = AppContext.getInstance(mslProp);
     }
 
-    /*
+    /**
      * In a loop as a user to modify command-line arguments and then send a single request,
-     * until a user enters "-quit" command.
+     * until a user enters "quit" command.
      *
-     * @return true if configuration was succesfully modified or left unchanged; false if QUIT option was entered
+     * @throws IllegalCmdArgumentException invalid / inconsistent command line arguments
      * @throws IOException in case of user input reading error
      */
 
@@ -232,8 +264,10 @@ public final class ClientApp {
         }
     }
 
-    /*
+    /**
      * send single request
+     *
+     * @return Status containing either reply payload or MSL error
      */
     public Status sendSingleRequest() {
         Status status = Status.OK;
@@ -367,17 +401,22 @@ public final class ClientApp {
 
     /**
      * shutdown activities
+     * @throws IOException if cannot save MSL store
      */
     public void shutdown() throws IOException {
         if (client != null)
             client.saveMslStore();
     }
 
-    /*
+    /**
      * This class facilitates on-demand fetching of user authentication data.
      * Other implementations may prompt users to enter their credentials from the console.
      */
     private static final class AppUserAuthenticationDataHandle implements UserAuthenticationDataHandle {
+        /**
+         * @param mslCfg MSL configuration
+         * @param interactive true for interactive mode
+         */
         AppUserAuthenticationDataHandle(final ClientMslConfig mslCfg, final boolean interactive) {
             this.mslCfg = mslCfg;
             this.interactive = interactive;
@@ -387,14 +426,21 @@ public final class ClientApp {
         public UserAuthenticationData getUserAuthenticationData(final String userId) {
             return mslCfg.getUserAuthenticationData(userId, interactive);
         }
+        /** MSL configuration */
         private final ClientMslConfig mslCfg;
+        /** true if in interactive mode */
         private final boolean interactive;
     }
 
-    /*
+    /**
      * This class facilitates on-demand fetching of key request data and configuring this data on the fly.
      */
     private static final class AppKeyRequestDataHandle implements KeyRequestDataHandle {
+        
+        /**
+         * @param appCtx application context
+         * @param mslConfig MSL configuration
+         */
         AppKeyRequestDataHandle(final AppContext appCtx, final ClientMslConfig mslConfig) {
             this.appCtx = appCtx;
             this.mslConfig = mslConfig;
@@ -411,10 +457,13 @@ public final class ClientApp {
             return Collections.<KeyRequestData>unmodifiableSet(keyRequestDataSet);
         }
 
-        /*
+        /**
          * Set key request data for specific key request scheme and (if applicable) mechanism.
          * @param kxsName key exchange scheme name
          * @param kxmName key exchange mechanism name
+         * @throws ConfigurationException
+         * @throws IllegalCmdArgumentException
+         * @throws MslKeyExchangeException
          */
         private synchronized void setKeyExchange(final String kxsName, final String kxmName)
             throws ConfigurationException, IllegalCmdArgumentException, MslKeyExchangeException {
@@ -433,15 +482,21 @@ public final class ClientApp {
             return String.format("KeyRequestDataHandle[%s]", mslConfig.getEntityId());
         }
 
+        /** application context */
         private final AppContext appCtx;
+        /** MSL configuration */
         private final ClientMslConfig mslConfig;
+        /** set of key request data objects, sorted in order of their preference */
         private final Set<KeyRequestData> keyRequestDataSet;
+        /** last key exchange scheme name */
         private String lastKxsName;
+        /** last key exchange mechanism name */
         private String lastKxmName;
+        /** true if getKeyRequestData() was called exactly once after the last call to setKeyExchange() */
         private boolean lastRequested;
     }
 
-    /*
+    /**
      * helper - print help file
      */
     private static void help() {
@@ -457,7 +512,7 @@ public final class ClientApp {
         }
     }
 
-    /*
+    /**
      * helper - interactive mode hint
      */
     private static void hint() {

@@ -42,23 +42,40 @@ import com.netflix.msl.MslConstants;
 public final class CmdArguments {
 
     // parameters
-    public static final String P_INT  = "-int" ; // interactive mode
-    public static final String P_CFG  = "-cfg" ; // configuration file
-    public static final String P_URL  = "-url" ; // remote url
-    public static final String P_EID  = "-eid" ; // entity id
-    public static final String P_UID  = "-uid" ; // user id
-    public static final String P_KX   = "-kx"  ; // key exchange type
-    public static final String P_KXM  = "-kxm" ; // key exchange mechanism
-    public static final String P_ENC  = "-enc" ; // message encrypted
-    public static final String P_SIG  = "-sig" ; // message integrity protected
-    public static final String P_NREP = "-nrep"; // message non-replayable
-    public static final String P_IF   = "-if"  ; // input message payload file
-    public static final String P_OF   = "-of"  ; // output message payload file
-    public static final String P_MSG  = "-msg" ; // input message payload text
-    public static final String P_PSK  = "-psk" ; // pre-shared key file path
-    public static final String P_MST  = "-mst" ; // MSL store file path
-    public static final String P_V    = "-v"   ; // verbose
+    /** interactive mode */
+    public static final String P_INT  = "-int" ;
+    /** configuration file */
+    public static final String P_CFG  = "-cfg" ;
+    /** remote url */
+    public static final String P_URL  = "-url" ;
+    /** entity id */
+    public static final String P_EID  = "-eid" ;
+    /** user id */
+    public static final String P_UID  = "-uid" ;
+    /** key exchange type */
+    public static final String P_KX   = "-kx"  ;
+    /** key exchange mechanism */
+    public static final String P_KXM  = "-kxm" ;
+    /** message encrypted */
+    public static final String P_ENC  = "-enc" ;
+    /** message integrity protected */
+    public static final String P_SIG  = "-sig" ;
+    /** message non-replayable */
+    public static final String P_NREP = "-nrep";
+    /** input message payload file */
+    public static final String P_IF   = "-if"  ;
+    /** output message payload file */
+    public static final String P_OF   = "-of"  ;
+    /** input message payload text */
+    public static final String P_MSG  = "-msg" ;
+    /** pre-shared key file path */
+    public static final String P_PSK  = "-psk" ;
+    /** MSL store file path */
+    public static final String P_MST  = "-mst" ;
+    /** verbose */
+    public static final String P_V    = "-v"   ;
 
+    /** list of supported arguments */
     private static final List<String> supportedArguments =
         Collections.unmodifiableList(new ArrayList<String>(Arrays.asList(
             P_INT,
@@ -79,8 +96,15 @@ public final class CmdArguments {
             P_V
         )));
 
+    /** underlying representation of arguments */
     private final Map<String,String> argMap;
 
+    /**
+     * Ctor.
+     *
+     * @param args array of arguments
+     * @throws IllegalCmdArgumentException
+     */
     public CmdArguments(final String[] args) throws IllegalCmdArgumentException {
         if (args == null) {
             throw new IllegalCmdArgumentException("NULL args");
@@ -131,6 +155,7 @@ public final class CmdArguments {
     /**
      * merge parameters from another CmdArguments instance
      * @param other another CmdArguments instance to merge parameters from
+     * @throws IllegalCmdArgumentException
      */
     public void merge(CmdArguments other) throws IllegalCmdArgumentException {
         if (other == null) {
@@ -166,6 +191,7 @@ public final class CmdArguments {
 
     /**
      * @return remote URL - must exist
+     * @throws IllegalCmdArgumentException
      */
     public URL getUrl() throws IllegalCmdArgumentException {
         final String url = getRequiredValue(P_URL);
@@ -178,6 +204,7 @@ public final class CmdArguments {
 
     /**
      * @return configuration file path - must exist and be a regular file
+     * @throws IllegalCmdArgumentException
      */
     public String getConfigFilePath() throws IllegalCmdArgumentException {
         final String file = getRequiredValue(P_CFG);
@@ -191,6 +218,7 @@ public final class CmdArguments {
 
     /**
      * @return file path to read request payload from. Must exist and be a regular file.
+     * @throws IllegalCmdArgumentException
      */
     public String getPayloadInputFile() throws IllegalCmdArgumentException {
         final String file = argMap.get(P_IF);
@@ -207,6 +235,7 @@ public final class CmdArguments {
 
     /**
      * @return file path to write response payload to
+     * @throws IllegalCmdArgumentException
      */
     public String getPayloadOutputFile() throws IllegalCmdArgumentException {
         final String file = argMap.get(P_OF);
@@ -223,6 +252,7 @@ public final class CmdArguments {
 
     /**
      * @return file path to PSK file. If defined, must be a file.
+     * @throws IllegalCmdArgumentException
      */
     public String getPskFile() throws IllegalCmdArgumentException {
         final String file = argMap.get(P_PSK);
@@ -239,6 +269,7 @@ public final class CmdArguments {
 
     /**
      * @return file path to PSK file. If defined, must be a file.
+     * @throws IllegalCmdArgumentException
      */
     public String getMslStorePath() throws IllegalCmdArgumentException {
         final String file = argMap.get(P_MST);
@@ -265,6 +296,7 @@ public final class CmdArguments {
 
     /**
      * @return entityId - must be initialized
+     * @throws IllegalCmdArgumentException
      */
     public String getEntityId() throws IllegalCmdArgumentException {
         return getRequiredValue(P_EID);
@@ -319,11 +351,21 @@ public final class CmdArguments {
         return getBoolean(P_V, false);
     }
 
+    /**
+     * @param name name of the boolean property
+     * @param def default value of the boolean property
+     * @return property parsed as boolean or default value if it does not exist
+     */
     private boolean getBoolean(final String name, final boolean def) {
         final String s = argMap.get(name);
         return (s != null) ? Boolean.parseBoolean(s) : def;
     }
 
+    /**
+     * @param name name of the mandatory property
+     * @return property value
+     * @throws IllegalCmdArgumentException if property is not defined
+     */
     private String getRequiredValue(final String name) throws IllegalCmdArgumentException {
         final String s = argMap.get(name);
         if (s != null) {

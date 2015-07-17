@@ -60,6 +60,7 @@ public class ServerMslContext implements MslContext {
      * 
      * @param appCtx application context
      * @param mslCfg server MSL configuration.
+     * @throws ConfigurationException
      */
     public ServerMslContext(final AppContext appCtx, final ServerMslConfig mslCfg) throws ConfigurationException {
         if (appCtx == null) {
@@ -206,12 +207,20 @@ public class ServerMslContext implements MslContext {
         return mslStore;
     }
 
+    /** message capabilities */
     private final MessageCapabilities messageCaps;
+    /** MSL crypto context */
     private final ICryptoContext mslCryptoContext;
+    /** MSL token factory */
     private final TokenFactory tokenFactory;
+    /** MSL store */
     private final MslStore mslStore;
+    /** entity authentication data */
     private final EntityAuthenticationData entityAuthData;
+    /** entity authentication factories */
     private final Set<EntityAuthenticationFactory> entityAuthFactories;
+    /** user authentication factories */
     private final Set<UserAuthenticationFactory> userAuthFactories;
+    /** key exchange factories */
     private final SortedSet<KeyExchangeFactory> keyxFactories;
 }

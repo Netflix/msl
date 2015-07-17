@@ -22,16 +22,28 @@ package mslcli.common.util;
  * @author Vadim Spector <vspector@netflix.com>
  */
 public class ConfigurationException extends Exception {
+    /** serial version for serialization */
     private static final long serialVersionUID = 8802095343158937216L;
+    /** Default Ctor */
     public ConfigurationException() {
         super();
     }
+    /**
+     * @param message exception message
+     */
     public ConfigurationException(String message) {
         super(message);
     }
+    /**
+     * @param message exception message
+     * @param cause exception cause
+     */
     public ConfigurationException(String message, Throwable cause) {
         super(message, cause);
     }
+    /**
+     * @param cause exception cause
+     */
     public ConfigurationException(Throwable cause) {
         super(cause);
     }

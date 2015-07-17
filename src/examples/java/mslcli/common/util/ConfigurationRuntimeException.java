@@ -26,7 +26,11 @@ package mslcli.common.util;
  * @author Vadim Spector <vspector@netflix.com>
  */
 public class ConfigurationRuntimeException extends RuntimeException {
+    /** for proper serialization */
     private static final long serialVersionUID = 2452369560136305840L;
+    /**
+     * @param cause exception cause
+     */
     public ConfigurationRuntimeException(ConfigurationException cause) {
         super(cause);
     }

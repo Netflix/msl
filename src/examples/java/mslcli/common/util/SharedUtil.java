@@ -75,13 +75,14 @@ import mslcli.common.Triplet;
 
 public final class SharedUtil {
 
+    /** to disable instantiation */
     private SharedUtil() {}
 
     /**
      * extract useful info from MasterToken for display
      *
      * @param masterToken master token, can be null
-     * @return partial master token info as a string, or null if masterToken is null
+     * @return master token info as a string, or null if masterToken is null
      */
     public static final String getMasterTokenInfo(final MasterToken masterToken) {
         if (masterToken == null) {
@@ -98,7 +99,7 @@ public final class SharedUtil {
      * extract useful info from UserIdToken for display
      *
      * @param userIdToken user ID token, can be null
-     * @return partial user ID token info as a string, or null if userIdToken is null
+     * @return user ID token info as a string, or null if userIdToken is null
      */
     public static final String getUserIdTokenInfo(final UserIdToken userIdToken) {
         if (userIdToken == null) {
@@ -119,7 +120,7 @@ public final class SharedUtil {
      * extract useful info from ServiceToken for display
      *
      * @param serviceToken service token, can be null
-     * @return partial service token info as a string, or null if serviceToken is null
+     * @return service token info as a string, or null if serviceToken is null
      */
     public static final String getServiceTokenInfo(final ServiceToken serviceToken) {
         if (serviceToken == null) {
@@ -134,6 +135,7 @@ public final class SharedUtil {
      *
      * @param in input stream
      * @return byte array read from the input stream
+     * @throws IOException
      */
     public static byte[] readIntoArray(final InputStream in) throws IOException {
         if (in == null) {
@@ -152,6 +154,7 @@ public final class SharedUtil {
      *
      * @param prompt  reading prompt
      * @return user input converted to a string
+     * @throws IOException
      */
     public static String readInput(final String prompt) throws IOException {
         if (prompt == null) {
@@ -168,6 +171,7 @@ public final class SharedUtil {
      * @param prompt  reading prompt
      * @param def  default value accepted if no input is supplied
      * @return user input converted to a string
+     * @throws IOException
      */
     public static String readParameter(final String prompt, final String def) throws IOException {
         if (prompt == null) {
@@ -187,11 +191,12 @@ public final class SharedUtil {
      * IO Helper: read boolean value from STDIN.
      * Repeat prompt till one of the valid values is entered. 
      *
-     * @param prompt  reading prompt
-     * @param def  default value accepted if no input is supplied
+     * @param name reading prompt
+     * @param def default value accepted if no input is supplied
      * @param yesStr input accepted as true
      * @param noStr input accepted as false
      * @return user input converted to a string
+     * @throws IOException
      */
     public static boolean readBoolean(final String name, final boolean def, final String yesStr, final String noStr) throws IOException {
         if (name == null) {
@@ -275,6 +280,7 @@ public final class SharedUtil {
      *
      * @param file file name
      * @return properties loaded from this file
+     * @throws IOException
      */
     public static Properties loadPropertiesFromFile(final String file) throws IOException {
         if (file == null) {
@@ -304,8 +310,9 @@ public final class SharedUtil {
     /**
      * load file content into a byte array
      *
-     * @param filePath file path
+     * @param file file path
      * @return file content as byte array
+     * @throws IOException
      */
     public static byte[] readFromFile(final String file) throws IOException {
         if (file == null) {
@@ -329,6 +336,10 @@ public final class SharedUtil {
      * entityId
      * encryption key, base64-encoded
      * hmac key, base64-encoded
+     *
+     * @param file PSK file path
+     * @return { entityId, encryption_key, hmac_key } triplet
+     * @throws IOException
      */
     public static Triplet<String,String,String> readPskFile(final String file) throws IOException {
         FileInputStream fis = null;
@@ -359,8 +370,10 @@ public final class SharedUtil {
     /**
      * save byte array into a file
      *
-     * @param filePath file path
-     * @return file content as byte array
+     * @param file file path
+     * @param data data to save into a file
+     * @param overwrite true if the existing file can be overwritten
+     * @throws IOException
      */
     public static void saveToFile(final String file, final byte[] data, final boolean overwrite) throws IOException {
         if (file == null) {
@@ -387,6 +400,8 @@ public final class SharedUtil {
      *
      * @param mslStore SimpleMslStore instance
      * @return serialized MslStore
+     * @throws IOException
+     * @throws MslEncodingException
      */
     public static byte[] marshalMslStore(final SimpleMslStore mslStore) throws IOException, MslEncodingException {
         return MslStoreData.serialize(mslStore);
@@ -395,14 +410,17 @@ public final class SharedUtil {
     /**
      * Serialize MslStore
      *
-     * @param mslStore MslStore instance
+     * @param mslStoreData MslStore blob
      * @return serialized MslStore
+     * @throws IOException
+     * @throws MslEncodingException
+     * @throws MslException
      */
     public static MslStore unmarshalMslStore(final byte[] mslStoreData) throws IOException, MslEncodingException, MslException {
         return MslStoreData.deserialize(mslStoreData, new DummyMslContext());
     }
 
-    /*
+    /**
      * this class is needed exclusively for deserialization of SimpleMslStore on the client side
      */
     private static final class DummyMslContext implements MslContext {
@@ -454,12 +472,14 @@ public final class SharedUtil {
         public MslStore getMslStore() {
             throw new UnsupportedOperationException();
         }
+        /** MSL crypto context */
         private final ICryptoContext mslCryptoContext = new ClientMslCryptoContext();
     }
 
     /**
      * extract useful info from MslException for display
      *
+     * @param e MslException object
      * @return useful info from MslException for display
      */
     public static String getMslExceptionInfo(final MslException e) {
@@ -498,8 +518,8 @@ public final class SharedUtil {
      * @param encryptionKey the encryption key.
      * @param hmacKey the HMAC key.
      * @return the wrapping key.
-     * @throws CryptoException if there is an error generating the wrapping
-     *         key.
+     * @throws InvalidKeyException
+     * @throws NoSuchAlgorithmException
      */
 
     public static byte[] deriveWrappingKey(final byte[] encryptionKey, final byte[] hmacKey) throws InvalidKeyException, NoSuchAlgorithmException {

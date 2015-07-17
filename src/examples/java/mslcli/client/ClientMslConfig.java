@@ -60,6 +60,8 @@ public final class ClientMslConfig extends MslConfig {
      *
      * @param appCtx application context
      * @param args command line arguments
+     * @throws ConfigurationException
+     * @throws IllegalCmdArgumentException
      */
     public ClientMslConfig(final AppContext appCtx, final CmdArguments args)
         throws ConfigurationException, IllegalCmdArgumentException
@@ -71,15 +73,24 @@ public final class ClientMslConfig extends MslConfig {
              );
     }
 
-    /* Cached RSA Key Pair for asymmetric key wrap key exchange to avoid expensive key pair generation.
+    /**
+     * Cached RSA Key Pair for asymmetric key wrap key exchange to avoid expensive key pair generation.
      * This is an optimization specific to this application, to avoid annoying delays in generating
      * 4096-bit RSA key pairs. Real-life implementations should not re-use key wrapping keys
      * too many times.
      */
     private KeyPair aweKeyPair = null;
-    /* default asymmetric key wrap exchange key pair id - the value should not matter */
+    /** default asymmetric key wrap exchange key pair id - the value should not matter */
     private static final String DEFAULT_AWE_KEY_PAIR_ID = "default_awe_key_id";
 
+    /**
+     * @param kxsName the name of key exchange scheme
+     * @param kxmName the name of key exchange scheme mechanism
+     * @return key request data
+     * @throws ConfigurationException
+     * @throws IllegalCmdArgumentException
+     * @throws MslKeyExchangeException
+     */
     public KeyRequestData getKeyRequestData(final String kxsName, final String kxmName)
         throws ConfigurationException, IllegalCmdArgumentException, MslKeyExchangeException
     {
@@ -146,6 +157,11 @@ public final class ClientMslConfig extends MslConfig {
         return keyRequestData;
     }
 
+    /**
+     * @param userId user identity
+     * @param interactive true in the interactive mode
+     * @return  user authentication data
+     */
     public UserAuthenticationData getUserAuthenticationData(final String userId, boolean interactive) {
         appCtx.info(String.format("%s: Requesting UserAuthenticationData, UserId %s, Interactive %b", this, userId, interactive));
         if (userId != null) {
@@ -176,7 +192,9 @@ public final class ClientMslConfig extends MslConfig {
      * @param clazz class defining Enum values for key exchange mechanisms for a given key exchange scheme
      * @param keyExchangeScheme key exchange scheme
      * @param kxmName key exchange mechanism name
+     * @param <T> enumerated type
      * @return key eachange mechanism Enum value
+     * @throws IllegalCmdArgumentException
      */
     protected static <T extends Enum<T>> T getKeyExchangeMechanism(final Class<T> clazz, final KeyExchangeScheme keyExchangeScheme, final String kxmName)
         throws IllegalCmdArgumentException

@@ -87,16 +87,23 @@ public final class AppContext {
      */
     private static AppContext _instance;
 
+    /** properties from the config file */
     private final MslProperties prop;
+    /** MslControl implementing MSL protocol stack */
     private final MslControl mslControl;
+    /** entity preshared keys database */
     private final PresharedKeyStore presharedKeyStore;
+    /** user email / password database */
     private final EmailPasswordStore emailPasswordStore;
+    /** named RSA key pairs database */
     private final RsaStore rsaStore;
+    /** named Diffie-Hellman algorithm parameters database */
     private final DiffieHellmanParameters diffieHellmanParameters;
 
     /**
      * @param p properties loaded from some configuration source
      * @return singleton instance of AppContext
+     * @throws ConfigurationException
      */
     public static synchronized AppContext getInstance(final MslProperties p) throws ConfigurationException {
         if (_instance == null) {
@@ -109,6 +116,12 @@ public final class AppContext {
         }
     }
 
+    /**
+     * Ctor
+     *
+     * @param p MslProperties based on the configuration properties file
+     * @throws ConfigurationException
+     */
     private AppContext(final MslProperties p) throws ConfigurationException {
         if (p == null) {
             throw new IllegalArgumentException("NULL MslProperties");
@@ -142,6 +155,11 @@ public final class AppContext {
         return presharedKeyStore;
     }
 
+    /**
+     * @param s key encoded as HEX or BASE64 string
+     * @return key decoded into a byte array
+     * @throws ConfigurationException
+     */
     private static byte[] parseKey(final String s) throws ConfigurationException {
         if (s == null || s.trim().isEmpty()) {
             throw new ConfigurationException("Empty Key Value");
@@ -157,6 +175,11 @@ public final class AppContext {
         }
     }
 
+    /**
+     * @param p MslProperties
+     * @return preshared key store database
+     * @throws ConfigurationException
+     */
     private static PresharedKeyStore initPresharedKeyStore(final MslProperties p) throws ConfigurationException {
         final Map<String,KeySet> keySets = new HashMap<String,KeySet>();
 
@@ -191,6 +214,11 @@ public final class AppContext {
         return emailPasswordStore;
     }
 
+    /**
+     * @param p MslProperties
+     * @return user email / password database
+     * @throws ConfigurationException
+     */
     private static EmailPasswordStore initEmailPasswordStore(final MslProperties p) throws ConfigurationException {
         return new SimpleEmailPasswordStore(p.getEmailPasswordStore());
     }
@@ -202,8 +230,13 @@ public final class AppContext {
         return rsaStore;
     }
 
-    /* client would normally have only the server public key to authenticate server responses.
-     * server would normally have both public and private keys
+    /**
+     * Client would normally have only the server public key to authenticate server responses.
+     * Server would normally have both public and private keys
+     *
+     * @param p MslProperties
+     * @return RSA key store
+     * @throws ConfigurationException
      */
     private static RsaStore initRsaStore(final MslProperties p) throws ConfigurationException {
         try {
@@ -241,13 +274,18 @@ public final class AppContext {
         }
     }
 
-    /*
+    /**
      * Class encapsulating Diffie-Hellman parameters Map keyed by parameters ID.
      * Parameters are loaded from the configuration.
      */
     private static final class SimpleDiffieHellmanParameters implements DiffieHellmanParameters {
         /** Default parameters. */
 
+        /**
+         * Ctor
+         * @param prop MslProperties
+         * @throws ConfigurationException
+         */
         private SimpleDiffieHellmanParameters(final MslProperties prop) throws ConfigurationException {
             for (Map.Entry<String,Pair<String,String>> entry : prop.getDHParameterStore().entrySet()) {
                 params.put(entry.getKey(), new DHParameterSpec(
@@ -287,6 +325,7 @@ public final class AppContext {
     /**
      * @param entityId entity identity string
      * @return Diffie-Hellman parameters ID to be used by the given entity for key exchange
+     * @throws ConfigurationException
      */
     public String getDiffieHellmanParametersId(String entityId) throws ConfigurationException {
         return prop.getEntityDiffieHellmanParametersId(entityId);
@@ -297,6 +336,7 @@ public final class AppContext {
      * to specified parameters ID
      * @param paramId Diffie-Hellman parameters ID
      * @return Diffie-Hellman key pair generated using parameters corresponding to the provided ID
+     * @throws MslKeyExchangeException
      */
     public KeyPair generateDiffieHellmanKeys(final String paramId) throws MslKeyExchangeException {
         final DHParameterSpec paramSpec = getDiffieHellmanParameters().getParameterSpec(paramId);
@@ -314,6 +354,7 @@ public final class AppContext {
     /**
      * Generate RSA key pair used for wrapped key exchange
      * @return RSA key pair
+     * @throws MslInternalException
      */
     public KeyPair generateAsymmetricWrappedExchangeKeyPair() throws MslInternalException {
         try {
@@ -329,6 +370,7 @@ public final class AppContext {
     /**
      * @param entityId entity identity
      * @return entity authentication schemes allowed for a given entity
+     * @throws ConfigurationException
      */
     public Set<EntityAuthenticationScheme> getAllowedEntityAuthenticationSchemes(final String entityId) throws ConfigurationException {
         final Set<EntityAuthenticationScheme> schemes = new HashSet<EntityAuthenticationScheme>();
@@ -345,6 +387,7 @@ public final class AppContext {
     /**
      * @param entityId entity identity
      * @return entity authentication schemes allowed for a given entity
+     * @throws ConfigurationException
      */
     public Set<UserAuthenticationScheme> getAllowedUserAuthenticationSchemes(final String entityId) throws ConfigurationException {
         final Set<UserAuthenticationScheme> schemes = new HashSet<UserAuthenticationScheme>();
@@ -361,6 +404,7 @@ public final class AppContext {
     /**
      * @param entityId entity identity
      * @return key exchange schemes allowed for a given entity
+     * @throws ConfigurationException
      */
     public Set<KeyExchangeScheme> getAllowedKeyExchangeSchemes(final String entityId) throws ConfigurationException {
         final Set<KeyExchangeScheme> schemes = new HashSet<KeyExchangeScheme>();
@@ -377,6 +421,7 @@ public final class AppContext {
     /**
      * @param entityId entity identity
      * @return RSA key pair ID to be used for a given entity for RSA entity authentication
+     * @throws ConfigurationException
      */
     public String getRsaKeyId(final String entityId) throws ConfigurationException {
         return prop.getRsaKeyId(entityId);
@@ -384,6 +429,7 @@ public final class AppContext {
 
     /**
      * @return MSL encryption, HMAC, and wrapping keys
+     * @throws ConfigurationException
      */
     public Triplet<SecretKey,SecretKey,SecretKey> getMslKeys() throws ConfigurationException {
         final Triplet<String,String,String> mslKeys = prop.getMslKeys();
@@ -395,7 +441,9 @@ public final class AppContext {
     }
 
     /**
+     * @param keySetId for a given RSA key pair
      * @return service token encryption and HMAC keys for a given key set ID
+     * @throws ConfigurationException
      */
     public Pair<SecretKey,SecretKey> getServiceTokenKeys(final String keySetId) throws ConfigurationException {
         final Pair<String,String> keys = prop.getServiceTokenKeys(keySetId);
@@ -407,7 +455,8 @@ public final class AppContext {
 
     /**
      * info logging
-     * @param message info message
+     *
+     * @param msg info message
      */
     public void info(final String msg) {
         System.err.println("INFO: " + msg);
@@ -415,15 +464,17 @@ public final class AppContext {
 
     /**
      * warning logging
-     * @param message warning message
+     *
+     * @param msg warning message
      */
     public void warning(final String msg) {
         System.err.println("WARNING: " + msg);
     }
 
     /**
-     * info logging
-     * @param message error message
+     * error logging
+     *
+     * @param msg error message
      */
     public void error(final String msg) {
         System.err.println("ERROR: " + msg);

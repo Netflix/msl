@@ -39,6 +39,8 @@ public final class ServerMslConfig extends MslConfig {
      *
      * @param appCtx application context.
      * @param args command line arguments
+     * @throws ConfigurationException if some configuration parameters required for initialization are missing, invalid, or mutually inconsistent
+     * @throws IllegalCmdArgumentException if some command line parameters required for initialization are missing, invalid, or mutually inconsistent
      */
     public ServerMslConfig(final AppContext appCtx, final CmdArguments args)
         throws ConfigurationException, IllegalCmdArgumentException

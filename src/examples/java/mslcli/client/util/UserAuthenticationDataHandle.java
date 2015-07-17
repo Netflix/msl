@@ -28,5 +28,9 @@ import com.netflix.msl.userauth.UserAuthenticationData;
  */
 
 public interface UserAuthenticationDataHandle {
+    /**
+     * @param userId user Id that only has meaning for the client side
+     * @return user authentication data to be included into the outgoing request
+     */
     UserAuthenticationData getUserAuthenticationData(final String userId);
 }

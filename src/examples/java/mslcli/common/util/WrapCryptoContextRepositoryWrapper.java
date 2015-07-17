@@ -31,6 +31,7 @@ import com.netflix.msl.keyx.WrapCryptoContextRepository;
  */
 
 public class WrapCryptoContextRepositoryWrapper implements WrapCryptoContextRepositoryHandle {
+    /** target WrapCryptoContextRepositoryHandle implementation to which all calls are delegated */
     private final WrapCryptoContextRepositoryHandle rep;
 
     /**

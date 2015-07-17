@@ -64,10 +64,12 @@ public class ServerTokenFactory implements TokenFactory {
     /** app context */
     private final AppContext appCtx;
 
+    /** number of bits in MslConstants.MAX_LONG_VALUE, used for more efficient serial number generation algorithm */
     private static final int MAX_LONG_VALUE_BITS = BigInteger.valueOf(MslConstants.MAX_LONG_VALUE).bitLength();
 
-    /*
+    /**
      * @param appCtx application context
+     * @throws ConfigurationException if some required configuration properties are missing or invalid
      */
     public ServerTokenFactory(final AppContext appCtx) throws ConfigurationException {
         if (appCtx == null) {
@@ -81,6 +83,7 @@ public class ServerTokenFactory implements TokenFactory {
         this.uitExpirationOffset = appCtx.getProperties().getUserIdTokenExpirationOffset();
     }
 
+    /** maximum number of lost master tokens on the client side before master token renewal is rejected */
     private static final int MAX_LOST_MTOKENS = 5;
 
     /* (non-Javadoc)
@@ -279,8 +282,10 @@ public class ServerTokenFactory implements TokenFactory {
         return new SimpleUser(userdata);
     }
     
-    /*
+    /**
      * helper - generate random serial number in [0 ... MslConstants.MAX_LONG_VALUE] range
+     * @param r random numbers generator
+     * @return random serial number in the [0 MslConstants.MAX_LONG_VALUE] range
      */
     private long generateSerialNumber(final Random r) {
         long serialNumber = -1L;
@@ -295,11 +300,22 @@ public class ServerTokenFactory implements TokenFactory {
     private final ConcurrentHashMap<String,SeqNumPair> mtSequenceNumbers = new ConcurrentHashMap<String,SeqNumPair>();
     /** Map of entity identities and serial numbers onto non-replayable IDs. */
     private final ConcurrentHashMap<String,Long> nonReplayableIds = new ConcurrentHashMap<String,Long>();
+    /** lock object to sync access to nonReplayableIds */
     private final Object nonReplayableIdsLock = new Object();
 
+    /**
+     * the class to store the latest master token sequence number and the sequence number
+     * of the master token that was used for renewal.
+     */
     private static final class SeqNumPair {
+        /** old sequence number */
         private Long oldSeqNum;
+        /** new sequence number */
         private Long newSeqNum;
+        /**
+         * @param oldSeqNum old sequence number
+         * @param newSeqNum cwnewold sequence number
+         */
         SeqNumPair(final Long oldSeqNum, final Long newSeqNum) {
             this.oldSeqNum = oldSeqNum;
             this.newSeqNum = newSeqNum;

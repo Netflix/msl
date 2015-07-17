@@ -37,8 +37,11 @@ import mslcli.common.util.WrapCryptoContextRepositoryHandle;
  */
 
 public class SimpleWrapCryptoContextRepository implements WrapCryptoContextRepositoryHandle {
+    /** mappings between wrapping key blob and crypto context */
     private final Map<ByteBuffer,ICryptoContext> repository = new LinkedHashMap<ByteBuffer,ICryptoContext>();
+    /** entity identity of this repository */
     protected final String entityId;
+    /** key exchange scheme of this repository */
     protected final KeyExchangeScheme scheme;
 
     /**

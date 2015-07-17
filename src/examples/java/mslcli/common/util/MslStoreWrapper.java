@@ -36,10 +36,13 @@ import com.netflix.msl.util.MslStore;
  */
 
 public class MslStoreWrapper implements MslStore {
+    /** target MslStore instance to which all calls are delegated */
     private final MslStore mslStore;
 
     /**
-     * package-private so only AppContext can call it
+     * Ctor.
+     *
+     * @param mslStore target MslStore instance to which all calls are delegated
      */
     public MslStoreWrapper(final MslStore mslStore) {
         if (mslStore == null) {

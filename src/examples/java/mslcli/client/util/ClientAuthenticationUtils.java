@@ -43,8 +43,11 @@ public class ClientAuthenticationUtils implements AuthenticationUtils {
 
    // should be configurable
 
+    /** set of entity authentication schemes allowed for this client */
     private final Set<EntityAuthenticationScheme> allowedClientEntityAuthenticationSchemes;
+    /** set of user authentication schemes allowed for this client */
     private final Set<UserAuthenticationScheme>   allowedClientUserAuthenticationSchemes;
+    /** set of key exchange schemes allowed for this client */
     private final Set<KeyExchangeScheme>          allowedClientKeyExchangeSchemes;
 
     /**
@@ -52,6 +55,7 @@ public class ClientAuthenticationUtils implements AuthenticationUtils {
      * 
      * @param clientId local client entity identity.
      * @param appCtx application context
+     * @throws ConfigurationException
      */
     public ClientAuthenticationUtils(final String clientId, final AppContext appCtx) throws ConfigurationException {
         if (clientId == null || clientId.isEmpty()) {

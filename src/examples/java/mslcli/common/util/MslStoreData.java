@@ -54,22 +54,29 @@ import com.netflix.msl.util.SimpleMslStore;
  */
 
 public class MslStoreData implements Serializable {
+        /** for proper serialization */
     private static final long serialVersionUID = 5207304253726353139L;
 
     /*
      * SimpleMslStore fields that need to be accessed for serialization.
      * To be kept in-sync with SimpleMslStore code
      */
+    /** SimpleMslStore field */
     private static final String MS_CRYPTO_CONTEXT_FIELD = "cryptoContexts";
+    /** SimpleMslStore field */
     private static final String MS_UID_TOKENS_FIELD     = "userIdTokens";
+    /** SimpleMslStore field */
     private static final String MS_UNB_SVC_TOKENS_FIELD = "unboundServiceTokens";
+    /** SimpleMslStore field */
     private static final String MS_MT_SVC_TOKENS_FIELD  = "mtServiceTokens";
+    /** SimpleMslStore field */
     private static final String MS_UIT_SVC_TOKENS_FIELD = "uitServiceTokens";
+    /** SimpleMslStore field */
     private static final String MS_NON_REPLAY_IDS_FIELD = "nonReplayableIds";
 
     /**
      * Create serializable MslStoreData from non-serializable SimpleMslStore
-     * @param MslStore  SimpleMslStore instance
+     * @param mslStore  SimpleMslStore instance
      */
     @SuppressWarnings("unchecked")
     private MslStoreData(final SimpleMslStore mslStore) {
@@ -117,6 +124,7 @@ public class MslStoreData implements Serializable {
      *
      * @param ms SimpleMslStore instance
      * @return blob serialized SimpleMslStore instance
+     * @throws IOException
      */
     public static byte[] serialize(final SimpleMslStore ms) throws IOException {
         final MslStoreData msd = new MslStoreData(ms);
@@ -135,8 +143,11 @@ public class MslStoreData implements Serializable {
      * SimpleMslStore deserializer
      *
      * @param blob serialized SimpleMslStore
-     * @param mslContext MslContext instance
+     * @param mslCtx MslContext instance
      * @return deserialized SimpleMslStore instance
+     * @throws IOException
+     * @throws MslEncodingException
+     * @throws MslException
      */
     public static SimpleMslStore deserialize(final byte[] blob, final MslContext mslCtx)
         throws IOException, MslEncodingException, MslException
@@ -190,66 +201,116 @@ public class MslStoreData implements Serializable {
     /** Map of master token serial numbers onto non-replayable IDs. */
     private final Map<Long,Long> nonReplayableIds;
 
-    /*
+    /**
      * serializable wrapper class for MasterToken
      */
     private static final class MasterTokenData implements Serializable {
+        /** for proper serialization */
         private static final long serialVersionUID = -4900828984126453948L;
+        /**
+         * @param mt master token
+         */
         MasterTokenData(final MasterToken mt) {
             this.s = mt.toJSONString();
         }
+        /**
+         * @param ctx MslContext
+         * @return re-created master token
+         * @throws MslEncodingException
+         * @throws MslException
+         * @throws MslCryptoException
+         */
         MasterToken get(final MslContext ctx) throws MslEncodingException, MslException, MslCryptoException {
             return new MasterToken(ctx, new JSONObject(s));
         }
+        /** JSON-serialized master token */
         private final String s;
     }
 
-    /*
+    /**
      * serializable wrapper class for UserIdToken
      */
     private static final class UserIdTokenData implements Serializable {
+        /** for proper serialization */
         private static final long serialVersionUID = -5191856143592904675L;
+        /**
+         * @param uit user id token
+         */
         UserIdTokenData(final UserIdToken uit) {
             this.s = uit.toJSONString();
             this.mtSerialNumber = uit.getMasterTokenSerialNumber();
         }
+        /**
+         * @param ctx MslContext
+         * @param mt master token
+         * @return re-created user id token
+         * @throws MslEncodingException
+         * @throws MslException
+         * @throws MslCryptoException
+         */
         UserIdToken get(final MslContext ctx, final MasterToken mt) throws MslEncodingException, MslException, MslCryptoException {
             return new UserIdToken(ctx, new JSONObject(s), mt);
         }
+        /** JSON-serialized user id token */
         private final String s;
+        /** master token serial number */
         private final long mtSerialNumber;
     }
 
-    /*
+    /**
      * serializable wrapper class for ServiceToken
      */
     private static final class ServiceTokenData implements Serializable {
+        /** for proper serialization */
         private static final long serialVersionUID = -2854005430616613106L;
+        /**
+         * @param st service token
+         */
         ServiceTokenData(final ServiceToken st) {
             this.s = st.toJSONString();
             this.mtSerialNumber = st.getMasterTokenSerialNumber();
             this.uitSerialNumber = st.getUserIdTokenSerialNumber();
         }
+        /**
+         * @param ctx MslContext
+         * @param mt master token
+         * @param uit user id token
+         * @return re-created service token
+         * @throws MslEncodingException
+         * @throws MslException
+         * @throws MslCryptoException
+         */
         ServiceToken get(final MslContext ctx, final MasterToken mt, final UserIdToken uit)
             throws MslEncodingException, MslException, MslCryptoException
         {
             return new ServiceToken(ctx, new JSONObject(s), mt, uit, (ICryptoContext)null);
         }
+        /** JSON-serialized service token */
         private final String s;
+        /** master token serial number */
         private final long mtSerialNumber;
+        /** user id token serial number */
         private final long uitSerialNumber;
     }
 
-    /*
+    /**
      * serializable wrapper class for SessionCryptoContext
      */
     private static final class CryptoContextData implements Serializable {
+        /** for proper serialization */
         private static final long serialVersionUID = -4094166271048593127L;
+        /** SessionEncryptionContext field name */
         private static final String ID_FIELD = "id";
+        /** SessionEncryptionContext field name */
         private static final String ENC_FIELD = "encryptionKey";
+        /** SessionEncryptionContext field name */
         private static final String SIG_FIELD = "signatureKey";
+        /** SessionEncryptionContext field name */
         private static final String WRAP_FIELD = "wrappingKey";
 
+        /**
+         * @param ctx crypto context that must be of SessionCryptoContext type
+         */
         CryptoContextData(final ICryptoContext ctx) {
             if (!(ctx instanceof SessionCryptoContext))
                 throw new IllegalArgumentException(String.format("CryptoContext[%s] - required %s",
@@ -260,6 +321,11 @@ public class MslStoreData implements Serializable {
             this.wrapKey = (SecretKey)getFieldValue(ctx, WRAP_FIELD);
         }
 
+        /**
+         * @param mctx MslContext
+         * @param mt master token
+         * @return recreated crypto context
+         */
         ICryptoContext get(final MslContext mctx, final MasterToken mt) {
             final String suffix = "_" + mt.getSequenceNumber();
             if (!id.endsWith(suffix)) {
@@ -270,9 +336,13 @@ public class MslStoreData implements Serializable {
             return new SessionCryptoContext(mctx, mt, id_without_suffix, encKey, hmacKey);
         }
 
+        /** crypto context id */
         private final String id;
+        /** crypto context encryption key */
         private final SecretKey encKey;
+        /** crypto context hmac key */
         private final SecretKey hmacKey;
+        /** crypto context wrapping key */
         private final SecretKey wrapKey;
     }
 
@@ -280,8 +350,12 @@ public class MslStoreData implements Serializable {
     * Java reflection helper methods *
     **********************************/
 
-    /*
+    /**
      * get the value of the field with the given name for a given object
+     *
+     * @param o object
+     * @param name name of the field of this object
+     * @return value of the field with the given name of this object
      */
     private static Object getFieldValue(final Object o, final String name) {
         if (o == null)
@@ -297,8 +371,12 @@ public class MslStoreData implements Serializable {
         }
     }
 
-    /*
+    /**
      * set the value of the field with the given name for a given object
+     *
+     * @param o object
+     * @param name name of the field of this object
+     * @param value value to assign to the given field of the given object
      */
     private static void setFieldValue(final Object o, final String name, final Object value) {
         if (o == null)
@@ -315,9 +393,13 @@ public class MslStoreData implements Serializable {
         }
     }
 
-    /*
-     * return the field with the given name of a given class (search superclasses as well)
+    /**
+     * Return the field with the given name of a given class (search superclasses as well)
      * and make it accessible for get and set
+     *
+     * @param o object
+     * @param name name of the field of this object
+     * @return field with the given name, made accessible for get/set operations
      */
     private static Field getField(final Object o, final String name) {
         if (o == null)

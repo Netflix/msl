@@ -44,20 +44,28 @@ import mslcli.client.util.UserAuthenticationDataHandle;
  */
 
 public class ClientRequestMessageContext implements MessageContext {
+    /** whether message should be encrypted */
     private final boolean                    isEncrypted;
+    /** whether message should be integrity protected */
     private final boolean                    isIntegrityProtected;
+    /** whether message should be non-replayable */
     private final boolean                    isNonReplayable;
+    /** callback for asking user authentication data */
     private final UserAuthenticationDataHandle userAuthenticationDataHandle;
+    /** user id */
     private final String                     userId; 
+    /** callback for asking key request data */
     private final KeyRequestDataHandle       keyRequestDataHandle; 
+    /** message payload */
     private final byte[]                     payload;
+    /** map of crypto contexts */
     private final Map<String,ICryptoContext> cryptoContexts;
 
     /**
      * Constructor
      *
      * @param msgCfg message configuration
-     * @param userAuthDataHandle user authentication data getter
+     * @param userAuthenticationDataHandle user authentication data getter
      * @param keyRequestDataHandle key request data getter
      * @param payload message payload
      */

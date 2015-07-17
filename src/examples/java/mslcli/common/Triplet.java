@@ -23,8 +23,11 @@ package mslcli.common;
  */
 
 public final class Triplet<X,Y,Z> {
+    /** first value of type X */
     public final X x;
+    /** second value of type Y */
     public final Y y;
+    /** third value of type Z */
     public final Z z;
     /**
      * Constructor.

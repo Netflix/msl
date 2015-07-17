@@ -61,6 +61,7 @@ public final class ClientMslContext implements MslContext {
      * 
      * @param appCtx application context
      * @param mslCfg encapsulation of MSL configuration parameters
+     * @throws ConfigurationException if some configuration parameters required for initialization are missing, invalid, or mutually inconsistent
      */
     public ClientMslContext(final AppContext appCtx, final ClientMslConfig mslCfg)
         throws ConfigurationException
@@ -210,12 +211,20 @@ public final class ClientMslContext implements MslContext {
         return mslStore;
     }
 
+    /** message capabilities */
     private final MessageCapabilities messageCaps;
+    /** MSL crypt context */
     private final ICryptoContext mslCryptoContext;
+    /** client token factory */
     private final TokenFactory tokenFactory;
+    /** MSL store */
     private final MslStore mslStore;
+    /** entity authentication data */
     private final EntityAuthenticationData entityAuthData;
+    /** set of entity authentication factories */
     private final Set<EntityAuthenticationFactory> entityAuthFactories;
+    /** set of user authentication factories */
     private final Set<UserAuthenticationFactory> userAuthFactories;
+    /** set of key factories sorted in order of preference */
     private final SortedSet<KeyExchangeFactory> keyxFactories;
 }

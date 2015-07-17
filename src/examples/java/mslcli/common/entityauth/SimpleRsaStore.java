@@ -78,5 +78,6 @@ public class SimpleRsaStore implements RsaStore {
         return (pair != null) ? pair.getPrivate() : null;
     }
 
+    /** map of RSA key pair IDs into key pairs */
     private final Map<String,KeyPair> keys;
 }

@@ -22,16 +22,28 @@ package mslcli.common;
  * @author Vadim Spector <vspector@netflix.com>
  */
 public class IllegalCmdArgumentException extends Exception {
+    /** for proper serialization */
     private static final long serialVersionUID = -6754762182112853406L;
+    /** default ctor */
     public IllegalCmdArgumentException() {
         super();
     }
+    /**
+     * @param message exception message
+     */
     public IllegalCmdArgumentException(String message) {
         super(message);
     }
+    /**
+     * @param message exception message
+     * @param cause exception cause
+     */
     public IllegalCmdArgumentException(String message, Throwable cause) {
         super(message, cause);
     }
+    /**
+     * @param cause exception cause
+     */
     public IllegalCmdArgumentException(Throwable cause) {
         super(cause);
     }
