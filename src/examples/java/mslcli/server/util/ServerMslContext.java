@@ -42,6 +42,7 @@ import com.netflix.msl.util.AuthenticationUtils;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslStore;
 
+import mslcli.common.IllegalCmdArgumentException;
 import mslcli.common.Triplet;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
@@ -61,8 +62,9 @@ public class ServerMslContext implements MslContext {
      * @param appCtx application context
      * @param mslCfg server MSL configuration.
      * @throws ConfigurationException
+     * @throws IllegalCmdArgumentException
      */
-    public ServerMslContext(final AppContext appCtx, final ServerMslConfig mslCfg) throws ConfigurationException {
+    public ServerMslContext(final AppContext appCtx, final ServerMslConfig mslCfg) throws ConfigurationException, IllegalCmdArgumentException {
         if (appCtx == null) {
             throw new IllegalArgumentException("NULL app context");
         }

@@ -25,7 +25,6 @@ import javax.crypto.interfaces.DHPrivateKey;
 import javax.crypto.interfaces.DHPublicKey;
 
 import com.netflix.msl.MslKeyExchangeException;
-import com.netflix.msl.entityauth.PresharedAuthenticationData;
 import com.netflix.msl.keyx.AsymmetricWrappedExchange;
 import com.netflix.msl.keyx.DiffieHellmanExchange;
 import com.netflix.msl.keyx.JsonWebEncryptionLadderExchange;
@@ -66,11 +65,7 @@ public final class ClientMslConfig extends MslConfig {
     public ClientMslConfig(final AppContext appCtx, final CmdArguments args)
         throws ConfigurationException, IllegalCmdArgumentException
     {
-        super(appCtx,
-              args,
-              new PresharedAuthenticationData(args.getEntityId()),
-              new ClientAuthenticationUtils(args.getEntityId(), appCtx)
-             );
+        super(appCtx, args, new ClientAuthenticationUtils(args.getEntityId(), appCtx));
     }
 
     /**

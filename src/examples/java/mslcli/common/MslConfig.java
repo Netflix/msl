@@ -33,7 +33,6 @@ import com.netflix.msl.MslException;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
-import com.netflix.msl.entityauth.PresharedAuthenticationData;
 import com.netflix.msl.entityauth.PresharedAuthenticationFactory;
 import com.netflix.msl.entityauth.PresharedKeyStore;
 import com.netflix.msl.entityauth.RsaAuthenticationFactory;
@@ -57,6 +56,7 @@ import com.netflix.msl.util.SimpleMslStore;
 
 import mslcli.common.CmdArguments;
 import mslcli.common.IllegalCmdArgumentException;
+import mslcli.common.entityauth.AuthenticationDataHandle;
 import mslcli.common.keyx.SimpleWrapCryptoContextRepository;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
@@ -87,7 +87,6 @@ public abstract class MslConfig {
      */
     protected MslConfig(final AppContext appCtx,
                         final CmdArguments args,
-                        final EntityAuthenticationData entityAuthData,
                         final AuthenticationUtils authutils)
         throws ConfigurationException, IllegalCmdArgumentException
     {
@@ -109,7 +108,9 @@ public abstract class MslConfig {
         this.mslStoreWrapper = new AppMslStoreWrapper(appCtx, entityId, initMslStore(appCtx, mslStorePath));
 
         // Entity authentication.
-        this.entityAuthData = entityAuthData;
+        this.entityAuthDataHandle = appCtx.getAuthenticationDataHandle(args.getEntityAuthenticationScheme());
+        if (this.entityAuthDataHandle == null)
+            throw new IllegalCmdArgumentException(String.format("Entity %s: no support for entity auth scheme %s", entityId, args.getEntityAuthenticationScheme()));
 
         // Entity authentication factories.
         this.entityAuthFactories = new HashSet<EntityAuthenticationFactory>();
@@ -204,9 +205,11 @@ public abstract class MslConfig {
 
     /**
      * @return entity authentication data
+     * @throws ConfigurationException
+     * @throws IllegalCmdArgumentException
      */
-    public final EntityAuthenticationData getEntityAuthenticationData() {
-        return entityAuthData;
+    public final EntityAuthenticationData getEntityAuthenticationData() throws ConfigurationException, IllegalCmdArgumentException {
+        return entityAuthDataHandle.getEntityAuthenticationData(appCtx, args);
     }
 
     /**
@@ -408,8 +411,8 @@ public abstract class MslConfig {
     private final MslStoreWrapper mslStoreWrapper;
     /** MSL store file path */
     private final String mslStorePath;
-    /** entity authentication data */
-    private final EntityAuthenticationData entityAuthData;
+    /** entity authentication data handle */
+    private final AuthenticationDataHandle entityAuthDataHandle;
     /** entity authentication factories */
     private final Set<EntityAuthenticationFactory> entityAuthFactories;
     /** user authentication factories */

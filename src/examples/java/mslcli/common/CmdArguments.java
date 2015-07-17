@@ -72,6 +72,8 @@ public final class CmdArguments {
     public static final String P_PSK  = "-psk" ;
     /** MSL store file path */
     public static final String P_MST  = "-mst" ;
+    /** entity authentication scheme */
+    public static final String P_EAS  = "-eas" ;
     /** verbose */
     public static final String P_V    = "-v"   ;
 
@@ -93,6 +95,7 @@ public final class CmdArguments {
             P_MSG,
             P_PSK,
             P_MST,
+            P_EAS,
             P_V
         )));
 
@@ -328,6 +331,14 @@ public final class CmdArguments {
      */
     public boolean isNonReplayable() {
         return getBoolean(P_NREP, false);
+    }
+
+    /**
+     * @return get entity authentication scheme
+     * @throws IllegalCmdArgumentException if property is not defined
+     */
+    public String getEntityAuthenticationScheme() throws IllegalCmdArgumentException {
+        return getRequiredValue(P_EAS);
     }
 
     /**

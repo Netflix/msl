@@ -14,37 +14,35 @@
  * limitations under the License.
  */
 
-package mslcli.server;
+package mslcli.common.entityauth;
 
-import com.netflix.msl.entityauth.RsaAuthenticationData;
+import com.netflix.msl.entityauth.EntityAuthenticationData;
+import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 
 import mslcli.common.CmdArguments;
 import mslcli.common.IllegalCmdArgumentException;
-import mslcli.common.MslConfig;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
-import mslcli.server.util.ServerAuthenticationUtils;
 
 /**
  * <p>
- * The configuration class for MSl server, created per given server entity identity.
+ * Interface facilitating plugin implementation for generating entity authentication data
  * </p>
  * 
  * @author Vadim Spector <vspector@netflix.com>
  */
 
-public final class ServerMslConfig extends MslConfig {
+public interface AuthenticationDataHandle {
     /**
-     * Constructor.
-     *
-     * @param appCtx application context.
-     * @param args command line arguments
-     * @throws ConfigurationException if some configuration parameters required for initialization are missing, invalid, or mutually inconsistent
-     * @throws IllegalCmdArgumentException if some command line parameters required for initialization are missing, invalid, or mutually inconsistent
+     * @return entity authentication scheme
      */
-    public ServerMslConfig(final AppContext appCtx, final CmdArguments args)
-        throws ConfigurationException, IllegalCmdArgumentException
-    {
-        super(appCtx, args, new ServerAuthenticationUtils(appCtx, args.getEntityId()));
-    }
-}
+    EntityAuthenticationScheme getScheme();
+    /**
+     * @param appCtx application context
+     * @param args command line arguments
+     * @return entity authentication data to be included into a message
+     * @throws ConfigurationException
+     * @throws IllegalCmdArgumentException
+     */
+    EntityAuthenticationData getEntityAuthenticationData(final AppContext appCtx, final CmdArguments args) throws ConfigurationException, IllegalCmdArgumentException;
+};

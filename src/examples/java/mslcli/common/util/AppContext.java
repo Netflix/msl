@@ -67,6 +67,7 @@ import com.netflix.msl.userauth.UserAuthenticationScheme;
 
 import mslcli.common.Pair;
 import mslcli.common.Triplet;
+import mslcli.common.entityauth.AuthenticationDataHandle;
 import mslcli.common.entityauth.SimplePresharedKeyStore;
 import mslcli.common.entityauth.SimpleRsaStore;
 import mslcli.common.userauth.SimpleEmailPasswordStore;
@@ -99,6 +100,8 @@ public final class AppContext {
     private final RsaStore rsaStore;
     /** named Diffie-Hellman algorithm parameters database */
     private final DiffieHellmanParameters diffieHellmanParameters;
+    /** entity authentication data handles configured for this app */
+    private final Set<AuthenticationDataHandle> authenticationDataHandles;
 
     /**
      * @param p properties loaded from some configuration source
@@ -132,6 +135,28 @@ public final class AppContext {
         this.presharedKeyStore = initPresharedKeyStore(p);
         this.emailPasswordStore = initEmailPasswordStore(p);
         this.rsaStore = initRsaStore(p);
+        this.authenticationDataHandles = new HashSet<AuthenticationDataHandle>();
+        for (String s : p.getEntityAuthenticationDataHandles()) {
+            final Class<? extends Object> cls;
+            try {
+                cls = Class.forName(s);
+            } catch (ClassNotFoundException e) {
+                throw new ConfigurationException("Authentication Data Handle class not found: " + s);
+            }
+            final Object h;
+            try {
+                h = cls.newInstance();
+            } catch (InstantiationException e) {
+                throw new ConfigurationException(String.format("Authentication Data Handle class %s: object cannot be instantiated", s), e);
+            } catch (IllegalAccessException e) {
+                throw new ConfigurationException(String.format("Authentication Data Handle class %s: object cannot be instantiated", s), e);
+            }
+            if (h instanceof AuthenticationDataHandle) {
+                authenticationDataHandles.add((AuthenticationDataHandle)h);
+            } else {
+                throw new ConfigurationException(String.format("Authentication Data Handle class %s: wrong type %s", s, h.getClass().getName()));
+            }
+        }
     }
 
     /**
@@ -153,6 +178,18 @@ public final class AppContext {
      */
     public PresharedKeyStore getPresharedKeyStore() {
         return presharedKeyStore;
+    }
+
+    /**
+     * @param scheme authentication scheme name
+     * @return entity authentication data handle for a given scheme
+     */
+    public AuthenticationDataHandle getAuthenticationDataHandle(final String scheme) {
+        for (final AuthenticationDataHandle h : authenticationDataHandles) {
+            if (h.getScheme().toString().equals(scheme))
+                return h;
+        }
+        return null;
     }
 
     /**

@@ -44,6 +44,10 @@ public final class MslProperties {
     private static final String APP_CTRL_NUM_THR      = "app.mslctrl.nthr";
     /** server port */
     private static final String APP_SERVER_PORT       = "app.server.port";
+    /** entity authentication data handles number */
+    private static final String APP_ENTITY_AUTH_HANDLE_NUM = "app.entityauth.handle.num";
+    /** entity authentication data handle prefix */
+    private static final String APP_ENTITY_AUTH_HANDLE = "app.entityauth.handle.";
 
    /*
     * ENTITY-SPECIFIC CONFIGURATION PROPERTY NAMES
@@ -413,6 +417,19 @@ public final class MslProperties {
      */
     public int getServerPort() throws ConfigurationException {
         return getCountProperty(APP_SERVER_PORT);
+    }
+
+    /**
+     * @return list of entity authentication handle class names
+     * @throws ConfigurationException if the value is not defined or is not valid
+     */
+    public Set<String> getEntityAuthenticationDataHandles() throws ConfigurationException {
+        final int num = getCountProperty(APP_ENTITY_AUTH_HANDLE_NUM);
+        final Set<String> handles = new HashSet<String>(num);
+        for (int i = 0; i < num; i++) {
+            handles.add(getRequiredProperty(APP_ENTITY_AUTH_HANDLE + i));
+        }
+        return handles;
     }
 
     /* ****************

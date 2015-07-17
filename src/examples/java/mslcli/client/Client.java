@@ -36,6 +36,7 @@ import mslcli.client.util.UserAuthenticationDataHandle;
 
 import mslcli.client.util.ClientMslContext;
 
+import mslcli.common.IllegalCmdArgumentException;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
 import mslcli.common.util.SharedUtil;
@@ -91,12 +92,13 @@ public final class Client {
      * @param keyRequestDataHandle callback for obtaining key request data
      * @param mslCfg encapsulation of MSL configuration parameters
      * @throws ConfigurationException
+     * @throws IllegalCmdArgumentException
      */
     public Client(final AppContext appCtx,
                   final UserAuthenticationDataHandle userAuthenticationDataHandle,
                   final KeyRequestDataHandle keyRequestDataHandle,
                   final ClientMslConfig mslCfg
-                 ) throws ConfigurationException
+                 ) throws ConfigurationException, IllegalCmdArgumentException
     {
         if (appCtx == null) {
             throw new IllegalArgumentException("NULL app context");

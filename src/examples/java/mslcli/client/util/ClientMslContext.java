@@ -42,6 +42,7 @@ import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslStore;
 
 import mslcli.client.ClientMslConfig;
+import mslcli.common.IllegalCmdArgumentException;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
 
@@ -62,9 +63,10 @@ public final class ClientMslContext implements MslContext {
      * @param appCtx application context
      * @param mslCfg encapsulation of MSL configuration parameters
      * @throws ConfigurationException if some configuration parameters required for initialization are missing, invalid, or mutually inconsistent
+     * @throws IllegalCmdArgumentException if some command line arguments required for initialization are missing, invalid, or mutually inconsistent
      */
     public ClientMslContext(final AppContext appCtx, final ClientMslConfig mslCfg)
-        throws ConfigurationException
+        throws ConfigurationException, IllegalCmdArgumentException
     {
         if (appCtx == null) {
             throw new IllegalArgumentException("NULL AppContext");
