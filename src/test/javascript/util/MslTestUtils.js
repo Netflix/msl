@@ -455,4 +455,24 @@ var MslTestUtils$Algorithm;
 	        }
 	    },
     };
+
+    MslTestUtils$Algorithm = {
+    	/**
+    	 * Returns true if two algorithms are equal.
+    	 *
+    	 * @param {WebCryptoAlgorithm} a the first algorithm.
+    	 * @param {WebCryptoAlgorithm} b the second algorithm.
+    	 * @return true if the algorithms are equal.
+    	 */
+    	equals: function equals(a, b) {
+    		// IE 11 uses lowercase algorithm names, contrary to spec.
+    		if (a['name'].toLowerCase() != b['name'].toLowerCase())
+    			return false;
+    		if ((a['hash'] && !b['hash']) || (!a['hash'] && b['hash']))
+    			return false;
+    		if (a['hash'] && a['hash']['name'].toLowerCase() != b['hash']['name'].toLowerCase())
+    			return false;
+    		return true;
+    	},
+    };
 })();

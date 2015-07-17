@@ -1304,7 +1304,7 @@ describe("MasterToken", function() {
         runs(function() {
             // Confirm default algorithm.
             var joEncryptionKey = joMasterToken.encryptionKey;
-            expect(WebCryptoAlgorithm.AES_CBC['name']).toEqual(joEncryptionKey.algorithm['name']);
+            expect(MslTestUtils$Algorithm.equals(WebCryptoAlgorithm.AES_CBC, joEncryptionKey.algorithm)).toBeTruthy();
         });
     });
     
@@ -1561,9 +1561,7 @@ describe("MasterToken", function() {
         runs(function() {
             // Confirm default algorithm.
             var joSignatureKey = joMasterToken.signatureKey;
-            expect(WebCryptoAlgorithm.HMAC_SHA256['name']).toEqual(joSignatureKey.algorithm['name']);
-            expect(joSignatureKey.algorithm['hash']).toBeTruthy();
-            expect(WebCryptoAlgorithm.HMAC_SHA256['hash']['name']).toEqual(joSignatureKey.algorithm['hash']['name']);
+            expect(MslTestUtils$Algorithm.equals(WebCryptoAlgorithm.HMAC_SHA256, joSignatureKey.algorithm)).toBeTruthy();
         });
     });
     
