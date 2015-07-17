@@ -3175,7 +3175,7 @@ describe("MessageInputStream", function() {
                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
            });
        });
-       waitsFor(function() { return closed; }, "closed", 100);
+       waitsFor(function() { return closed; }, "closed", 300);
     });
 
     it("mark/reset with read all", function() {
