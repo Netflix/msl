@@ -20,6 +20,7 @@ import java.io.Console;
 import java.security.KeyPair;
 import java.security.Security;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.netflix.msl.MslKeyExchangeException;
@@ -84,7 +85,10 @@ public final class ClientMslConfig extends MslConfig {
             if (kxh.getScheme().name().equals(kxsName))
                 return kxh.getKeyRequestData(appCtx, args);
         }
-        throw new IllegalCmdArgumentException("Unsupported Key Exchange Scheme " + kxsName);
+        final List<String> schemes = new ArrayList<String>();
+        for (final KeyExchangeHandle kxh : appCtx.getKeyExchangeHandles())
+            schemes.add(kxh.getScheme().name());
+        throw new IllegalCmdArgumentException(String.format("Unsupported Key Exchange Scheme %s, Supported: %s", kxsName, schemes));
     }
 
     /**
