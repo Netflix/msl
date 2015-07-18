@@ -19,10 +19,12 @@ package mslcli.common;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
@@ -33,17 +35,8 @@ import com.netflix.msl.MslException;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
-import com.netflix.msl.entityauth.PresharedAuthenticationFactory;
-import com.netflix.msl.entityauth.PresharedKeyStore;
-import com.netflix.msl.entityauth.RsaAuthenticationFactory;
-import com.netflix.msl.entityauth.RsaStore;
-import com.netflix.msl.keyx.AsymmetricWrappedExchange;
-import com.netflix.msl.keyx.DiffieHellmanExchange;
-import com.netflix.msl.keyx.JsonWebEncryptionLadderExchange;
-import com.netflix.msl.keyx.JsonWebKeyLadderExchange;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeScheme;
-import com.netflix.msl.keyx.SymmetricWrappedExchange;
 import com.netflix.msl.keyx.WrapCryptoContextRepository;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.UserIdToken;
@@ -57,13 +50,12 @@ import com.netflix.msl.util.SimpleMslStore;
 import mslcli.common.CmdArguments;
 import mslcli.common.IllegalCmdArgumentException;
 import mslcli.common.entityauth.AuthenticationDataHandle;
-import mslcli.common.keyx.SimpleWrapCryptoContextRepository;
+import mslcli.common.keyx.KeyExchangeHandle;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
 import mslcli.common.util.MslStoreWrapper;
 import mslcli.common.util.SharedUtil;
 import mslcli.common.util.WrapCryptoContextRepositoryHandle;
-import mslcli.common.util.WrapCryptoContextRepositoryWrapper;
 
 /**
  * <p>
@@ -99,6 +91,9 @@ public abstract class MslConfig {
         // set entity ID
         this.entityId = args.getEntityId();
 
+        // set authutils
+        this.authutils = authutils;
+
         // set MslStore
         if (args.getMslStorePath() != null) {
             this.mslStorePath = args.getMslStorePath().replace("{eid}", entityId);
@@ -107,35 +102,9 @@ public abstract class MslConfig {
         }
         this.mslStoreWrapper = new AppMslStoreWrapper(appCtx, entityId, initMslStore(appCtx, mslStorePath));
 
-        // Entity authentication.
-        this.entityAuthDataHandle = appCtx.getAuthenticationDataHandle(args.getEntityAuthenticationScheme());
-        if (this.entityAuthDataHandle == null)
-            throw new IllegalCmdArgumentException(String.format("Entity %s: no support for entity auth scheme %s", entityId, args.getEntityAuthenticationScheme()));
-
-        // Entity authentication factories.
-        this.entityAuthFactories = new HashSet<EntityAuthenticationFactory>();
-        this.entityAuthFactories.add(new PresharedAuthenticationFactory(appCtx.getPresharedKeyStore(), authutils));
-        this.entityAuthFactories.add(new RsaAuthenticationFactory(appCtx.getRsaStore(), authutils));
-
         // User authentication factories.
         this.userAuthFactories = new HashSet<UserAuthenticationFactory>();
         this.userAuthFactories.add(new EmailPasswordAuthenticationFactory(appCtx.getEmailPasswordStore(), authutils));
-
-        // wrapping key repositories per keyexchange scheme
-        this.wrapCryptoContextRepositories = new HashMap<KeyExchangeScheme,WrapCryptoContextRepositoryHandle>();
-        final WrapCryptoContextRepositoryHandle jwe_h = new AppWrapCryptoContextRepository(appCtx, entityId, KeyExchangeScheme.JWE_LADDER);
-        final WrapCryptoContextRepositoryHandle jwk_h = new AppWrapCryptoContextRepository(appCtx, entityId, KeyExchangeScheme.JWK_LADDER);
-        this.wrapCryptoContextRepositories.put(KeyExchangeScheme.JWE_LADDER, jwe_h);
-        this.wrapCryptoContextRepositories.put(KeyExchangeScheme.JWK_LADDER, jwk_h);
-
-        // Key exchange factories.
-        this.keyxFactories = getKeyExchangeFactorySet(
-            new AsymmetricWrappedExchange(authutils),
-            new SymmetricWrappedExchange(authutils),
-            new DiffieHellmanExchange(appCtx.getDiffieHellmanParameters(), authutils),
-            new JsonWebEncryptionLadderExchange(jwe_h, authutils),
-            new JsonWebKeyLadderExchange(jwk_h, authutils)
-        );
     }
 
     /**
@@ -209,14 +178,31 @@ public abstract class MslConfig {
      * @throws IllegalCmdArgumentException
      */
     public final EntityAuthenticationData getEntityAuthenticationData() throws ConfigurationException, IllegalCmdArgumentException {
-        return entityAuthDataHandle.getEntityAuthenticationData(appCtx, args);
+        String scheme = args.getEntityAuthenticationScheme();
+        if (scheme == null || scheme.trim().length() == 0)
+            throw new IllegalCmdArgumentException("Entity Authentication Scheme is not set");
+        scheme = scheme.trim();
+        for(final AuthenticationDataHandle adh : appCtx.getAuthenticationDataHandles()) {
+            if (scheme.equals(adh.getScheme().name())) {
+                return adh.getEntityAuthenticationData(appCtx, args);
+            }
+        }
+        throw new IllegalCmdArgumentException("Unsupported Entity Authentication Scheme " + scheme);
     }
 
     /**
      * @return entity authentication factories
+     * @throws ConfigurationException
+     * @throws IllegalCmdArgumentException
      */
-    public final Set<EntityAuthenticationFactory> getEntityAuthenticationFactories() {
-        return Collections.<EntityAuthenticationFactory>unmodifiableSet(entityAuthFactories);
+    public final Set<EntityAuthenticationFactory> getEntityAuthenticationFactories()
+        throws ConfigurationException, IllegalCmdArgumentException
+    {
+        final Set<EntityAuthenticationFactory> entityAuthFactories = new HashSet<EntityAuthenticationFactory>();
+        for (final AuthenticationDataHandle adh : appCtx.getAuthenticationDataHandles()) {
+            entityAuthFactories.add(adh.getEntityAuthenticationFactory(appCtx, args, authutils));
+        }
+        return Collections.unmodifiableSet(entityAuthFactories);
     }
  
     /**
@@ -228,9 +214,19 @@ public abstract class MslConfig {
  
     /**
      * @return key exchange factories
+     * @throws ConfigurationException
+     * @throws IllegalCmdArgumentException
      */
-    public final SortedSet<KeyExchangeFactory> getKeyExchangeFactories() {
-        return keyxFactories;
+    public final SortedSet<KeyExchangeFactory> getKeyExchangeFactories()
+        throws ConfigurationException, IllegalCmdArgumentException
+    {
+        // key exchange handles
+        List<KeyExchangeFactory> keyxFactoriesList = new ArrayList<KeyExchangeFactory>();
+        final List<KeyExchangeHandle> keyxHandles = appCtx.getKeyExchangeHandles();
+        for (final KeyExchangeHandle kxh : keyxHandles) {
+            keyxFactoriesList.add(kxh.getKeyExchangeFactory(appCtx, args, authutils));
+        }
+        return getKeyExchangeFactorySet(keyxFactoriesList);
     }
 
     /**
@@ -240,10 +236,12 @@ public abstract class MslConfig {
     public final WrapCryptoContextRepositoryHandle getWrapCryptoContextRepository(final KeyExchangeScheme scheme) {
         if (scheme == null)
             throw new IllegalArgumentException("NULL KeyExchangeScheme");
-        WrapCryptoContextRepositoryHandle rep = wrapCryptoContextRepositories.get(scheme);
-        if (rep == null)
-             throw new IllegalArgumentException(String.format("Wrapping Key Repository nto configured for Key Exchange %s", scheme));
-        return rep;
+        final List<KeyExchangeHandle> keyxHandles = appCtx.getKeyExchangeHandles();
+        for (final KeyExchangeHandle kxh : keyxHandles) {
+            if (kxh.getScheme().equals(scheme))
+                return kxh.getWrapCryptoContextRepository();
+        }
+        return null;
     }
 
     /**
@@ -255,13 +253,13 @@ public abstract class MslConfig {
 
         /**
          * Create a new key exchange factory comparator.
+         * @param factories factories in order of their preference
          */
-        public KeyExchangeFactoryComparator() {
-            schemePriorities.put(KeyExchangeScheme.JWK_LADDER, 0);
-            schemePriorities.put(KeyExchangeScheme.JWE_LADDER, 1);
-            schemePriorities.put(KeyExchangeScheme.DIFFIE_HELLMAN, 2);
-            schemePriorities.put(KeyExchangeScheme.SYMMETRIC_WRAPPED, 3);
-            schemePriorities.put(KeyExchangeScheme.ASYMMETRIC_WRAPPED, 4);
+        public KeyExchangeFactoryComparator(List<KeyExchangeFactory> factories) {
+            int priority = 0;
+            for (KeyExchangeFactory f : factories) {
+                schemePriorities.put(f.getScheme(), priority++);
+            }
         }
 
         /* (non-Javadoc)
@@ -283,48 +281,11 @@ public abstract class MslConfig {
      * @param factories array of key exchange factories
      * @return Set of factories sorted from most to least preferable
      */
-    protected static SortedSet<KeyExchangeFactory> getKeyExchangeFactorySet(KeyExchangeFactory... factories) {
+    protected static SortedSet<KeyExchangeFactory> getKeyExchangeFactorySet(List<KeyExchangeFactory> factories) {
+        final KeyExchangeFactoryComparator keyxFactoryComparator = new KeyExchangeFactoryComparator(factories);
         final TreeSet<KeyExchangeFactory> keyxFactoriesSet = new TreeSet<KeyExchangeFactory>(keyxFactoryComparator);
-        keyxFactoriesSet.addAll(Arrays.asList(factories));
+        keyxFactoriesSet.addAll(factories);
         return  Collections.unmodifiableSortedSet(keyxFactoriesSet);
-    }
-
-    /**
-     * extension of WrapCryptoContextRepositoryWrapper class to intercept and report calls
-     */
-    private static final class AppWrapCryptoContextRepository extends WrapCryptoContextRepositoryWrapper {
-        /**
-         * @param appCtx application context
-         * @param entityId entity identity
-         * @param scheme key exchange scheme
-         */
-        private AppWrapCryptoContextRepository(final AppContext appCtx, final String entityId, final KeyExchangeScheme scheme) {
-            super(new SimpleWrapCryptoContextRepository(entityId, scheme));
-            this.appCtx = appCtx;
-            this.id = String.format("WrapCryptoContextRepo[%s %s]", entityId, scheme.toString());
-        }
-
-        @Override
-        public void addCryptoContext(final byte[] wrapdata, final ICryptoContext cryptoContext) {
-            appCtx.info(String.format("%s: addCryptoContext %s", id, cryptoContext.getClass().getName()));
-            super.addCryptoContext(wrapdata, cryptoContext);
-        }
-
-        @Override
-        public ICryptoContext getCryptoContext(final byte[] wrapdata) {
-            appCtx.info(String.format("%s: getCryptoContext", id));
-            return super.getCryptoContext(wrapdata);
-        }
-
-        @Override
-        public void removeCryptoContext(final byte[] wrapdata) {
-            appCtx.info(String.format("%s: removeCryptoContext", id));
-            super.removeCryptoContext(wrapdata);
-        }
-        /** application context */
-        private final AppContext appCtx;
-        /** id for this instance */
-        private final String id;
     }
 
     /**
@@ -407,20 +368,12 @@ public abstract class MslConfig {
     protected final String entityId;
     /** command arguments */
     protected final CmdArguments args;
+    /** authentication utilities */
+    protected final AuthenticationUtils authutils;
     /** MSL store */
     private final MslStoreWrapper mslStoreWrapper;
     /** MSL store file path */
     private final String mslStorePath;
-    /** entity authentication data handle */
-    private final AuthenticationDataHandle entityAuthDataHandle;
-    /** entity authentication factories */
-    private final Set<EntityAuthenticationFactory> entityAuthFactories;
     /** user authentication factories */
     private final Set<UserAuthenticationFactory> userAuthFactories;
-    /** key exchange factories */
-    private final SortedSet<KeyExchangeFactory> keyxFactories;
-    /** wrap data repositories per key exchange */
-    private final Map<KeyExchangeScheme,WrapCryptoContextRepositoryHandle> wrapCryptoContextRepositories;
-    /** key exchange factory comparator for sorting key exchange factories by priority */
-    private static final KeyExchangeFactoryComparator keyxFactoryComparator = new KeyExchangeFactoryComparator();
 }

@@ -17,8 +17,11 @@
 package mslcli.common.entityauth;
 
 import com.netflix.msl.entityauth.EntityAuthenticationData;
+import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.entityauth.RsaAuthenticationData;
+import com.netflix.msl.entityauth.RsaAuthenticationFactory;
+import com.netflix.msl.util.AuthenticationUtils;
 
 import mslcli.common.CmdArguments;
 import mslcli.common.IllegalCmdArgumentException;
@@ -45,4 +48,11 @@ public class RsaAuthenticationDataHandle implements AuthenticationDataHandle {
     {
         return new RsaAuthenticationData(args.getEntityId(), appCtx.getRsaKeyId(args.getEntityId()));
     }
-};
+
+    @Override
+    public EntityAuthenticationFactory getEntityAuthenticationFactory(final AppContext appCtx, final CmdArguments args, final AuthenticationUtils authutils)
+        throws ConfigurationException, IllegalCmdArgumentException
+    {
+        return new RsaAuthenticationFactory(appCtx.getRsaStore(), authutils);
+    }
+}

@@ -469,7 +469,7 @@ public final class ClientApp {
             throws ConfigurationException, IllegalCmdArgumentException, MslKeyExchangeException {
             if (SharedUtil.safeEqual(kxsName, lastKxsName) && SharedUtil.safeEqual(kxmName, lastKxmName) && !lastRequested)
                 return;
-            final KeyRequestData keyRequestData = mslConfig.getKeyRequestData(kxsName, kxmName);
+            final KeyRequestData keyRequestData = mslConfig.getKeyRequestData();
             keyRequestDataSet.clear();
             keyRequestDataSet.add(keyRequestData);
             lastKxsName = kxsName;

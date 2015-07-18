@@ -17,9 +17,11 @@
 package mslcli.common.util;
 
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -48,6 +50,10 @@ public final class MslProperties {
     private static final String APP_ENTITY_AUTH_HANDLE_NUM = "app.entityauth.handle.num";
     /** entity authentication data handle prefix */
     private static final String APP_ENTITY_AUTH_HANDLE = "app.entityauth.handle.";
+    /** key exchange handles number */
+    private static final String APP_KEYX_HANDLE_NUM = "app.keyx.handle.num";
+    /** key exchange handle prefix */
+    private static final String APP_KEYX_HANDLE = "app.keyx.handle.";
 
    /*
     * ENTITY-SPECIFIC CONFIGURATION PROPERTY NAMES
@@ -428,6 +434,19 @@ public final class MslProperties {
         final Set<String> handles = new HashSet<String>(num);
         for (int i = 0; i < num; i++) {
             handles.add(getRequiredProperty(APP_ENTITY_AUTH_HANDLE + i));
+        }
+        return handles;
+    }
+
+    /**
+     * @return list of key exchange handle class names
+     * @throws ConfigurationException if the value is not defined or is not valid
+     */
+    public List<String> getKeyExchangeHandles() throws ConfigurationException {
+        final int num = getCountProperty(APP_KEYX_HANDLE_NUM);
+        final ArrayList<String> handles = new ArrayList<String>(num);
+        for (int i = 0; i < num; i++) {
+            handles.add(getRequiredProperty(APP_KEYX_HANDLE + i));
         }
         return handles;
     }

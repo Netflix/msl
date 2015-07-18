@@ -35,9 +35,11 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.crypto.SecretKey;
@@ -70,6 +72,7 @@ import mslcli.common.Triplet;
 import mslcli.common.entityauth.AuthenticationDataHandle;
 import mslcli.common.entityauth.SimplePresharedKeyStore;
 import mslcli.common.entityauth.SimpleRsaStore;
+import mslcli.common.keyx.KeyExchangeHandle;
 import mslcli.common.userauth.SimpleEmailPasswordStore;
 
 /**
@@ -102,6 +105,8 @@ public final class AppContext {
     private final DiffieHellmanParameters diffieHellmanParameters;
     /** entity authentication data handles configured for this app */
     private final Set<AuthenticationDataHandle> authenticationDataHandles;
+    /** ordered list of key exchange handles configured for this app in the order of their preference */
+    private final List<KeyExchangeHandle> keyExchangeHandles;
 
     /**
      * @param p properties loaded from some configuration source
@@ -157,6 +162,28 @@ public final class AppContext {
                 throw new ConfigurationException(String.format("Authentication Data Handle class %s: wrong type %s", s, h.getClass().getName()));
             }
         }
+        this.keyExchangeHandles = new ArrayList<KeyExchangeHandle>();
+        for (String s : p.getKeyExchangeHandles()) {
+            final Class<? extends Object> cls;
+            try {
+                cls = Class.forName(s);
+            } catch (ClassNotFoundException e) {
+                throw new ConfigurationException("Key Exchange Handle class not found: " + s);
+            }
+            final Object h;
+            try {
+                h = cls.newInstance();
+            } catch (InstantiationException e) {
+                throw new ConfigurationException(String.format("Key Exchange Handle class %s: object cannot be instantiated", s), e);
+            } catch (IllegalAccessException e) {
+                throw new ConfigurationException(String.format("Key Exchange Handle class %s: object cannot be instantiated", s), e);
+            }
+            if (h instanceof KeyExchangeHandle) {
+                keyExchangeHandles.add((KeyExchangeHandle)h);
+            } else {
+                throw new ConfigurationException(String.format("key Exchange Handle class %s: wrong type %s", s, h.getClass().getName()));
+            }
+        }
     }
 
     /**
@@ -184,12 +211,15 @@ public final class AppContext {
      * @param scheme authentication scheme name
      * @return entity authentication data handle for a given scheme
      */
-    public AuthenticationDataHandle getAuthenticationDataHandle(final String scheme) {
-        for (final AuthenticationDataHandle h : authenticationDataHandles) {
-            if (h.getScheme().toString().equals(scheme))
-                return h;
-        }
-        return null;
+    public Set<AuthenticationDataHandle> getAuthenticationDataHandles() {
+        return Collections.unmodifiableSet(authenticationDataHandles);
+    }
+
+    /**
+     * @return key exchange handles
+     */
+    public List<KeyExchangeHandle> getKeyExchangeHandles() {
+        return Collections.unmodifiableList(keyExchangeHandles);
     }
 
     /**

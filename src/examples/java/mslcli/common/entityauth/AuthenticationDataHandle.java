@@ -17,7 +17,9 @@
 package mslcli.common.entityauth;
 
 import com.netflix.msl.entityauth.EntityAuthenticationData;
+import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.util.AuthenticationUtils;
 
 import mslcli.common.CmdArguments;
 import mslcli.common.IllegalCmdArgumentException;
@@ -37,6 +39,7 @@ public interface AuthenticationDataHandle {
      * @return entity authentication scheme
      */
     EntityAuthenticationScheme getScheme();
+
     /**
      * @param appCtx application context
      * @param args command line arguments
@@ -44,5 +47,17 @@ public interface AuthenticationDataHandle {
      * @throws ConfigurationException
      * @throws IllegalCmdArgumentException
      */
-    EntityAuthenticationData getEntityAuthenticationData(final AppContext appCtx, final CmdArguments args) throws ConfigurationException, IllegalCmdArgumentException;
-};
+    EntityAuthenticationData getEntityAuthenticationData(final AppContext appCtx, final CmdArguments args)
+        throws ConfigurationException, IllegalCmdArgumentException;
+
+    /**
+     * @param appCtx application context
+     * @param args command line arguments
+     * @param authutils authentication utilities
+     * @return entity authentication factory
+     * @throws ConfigurationException
+     * @throws IllegalCmdArgumentException
+     */
+    EntityAuthenticationFactory getEntityAuthenticationFactory(final AppContext appCtx, final CmdArguments args, final AuthenticationUtils authutils)
+        throws ConfigurationException, IllegalCmdArgumentException;
+}
