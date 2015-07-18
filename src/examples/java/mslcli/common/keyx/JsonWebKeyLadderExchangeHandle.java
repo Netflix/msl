@@ -72,7 +72,7 @@ public class JsonWebKeyLadderExchangeHandle extends KeyExchangeHandle {
     public KeyExchangeFactory getKeyExchangeFactory(final AppContext appCtx, final CmdArguments args, final AuthenticationUtils authutils)
         throws ConfigurationException, IllegalCmdArgumentException
     {
-       rep = new AppWrapCryptoContextRepository(appCtx, args.getEntityId(), KeyExchangeScheme.JWE_LADDER);
+       rep = new AppWrapCryptoContextRepository(appCtx, args.getEntityId(), KeyExchangeScheme.JWK_LADDER);
        return new JsonWebKeyLadderExchange(rep, authutils);
     }
 
