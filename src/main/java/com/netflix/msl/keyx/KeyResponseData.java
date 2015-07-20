@@ -92,7 +92,7 @@ public abstract class KeyResponseData implements JSONString {
             // Pull the key data.
             final MasterToken masterToken = new MasterToken(ctx, keyResponseDataJO.getJSONObject(KEY_MASTER_TOKEN));
             final String schemeName = keyResponseDataJO.getString(KEY_SCHEME);
-            final KeyExchangeScheme scheme = KeyExchangeScheme.getScheme(schemeName);
+            final KeyExchangeScheme scheme = ctx.getKeyExchangeScheme(schemeName);
             if (scheme == null)
                 throw new MslKeyExchangeException(MslError.UNIDENTIFIED_KEYX_SCHEME, schemeName);
             final JSONObject keyData = keyResponseDataJO.getJSONObject(KEY_KEYDATA);

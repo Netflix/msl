@@ -131,7 +131,7 @@ var UserAuthenticationData$parse;
             }
 
             // Verify user authentication scheme.
-            var scheme = UserAuthenticationScheme$getScheme(schemeName);
+            var scheme = ctx.getUserAuthenticationScheme(schemeName);
             if (!scheme)
                 throw new MslUserAuthException(MslError.UNIDENTIFIED_USERAUTH_SCHEME, schemeName);
 

@@ -166,6 +166,16 @@ public interface MslContext {
      *         context.
      */
     public ICryptoContext getMslCryptoContext() throws MslCryptoException;
+    
+    /**
+     * <p>Returns the entity authentication scheme identified by the specified
+     * name or {@code null} if there is none.</p>
+     * 
+     * @param name the entity authentication scheme name.
+     * @return the scheme identified by the specified name or {@code null} if
+     *         there is none.
+     */
+    public EntityAuthenticationScheme getEntityAuthenticationScheme(final String name);
 
     /**
      * Returns the entity authentication factory for the specified scheme.
@@ -175,6 +185,16 @@ public interface MslContext {
      *         available.
      */
     public EntityAuthenticationFactory getEntityAuthenticationFactory(final EntityAuthenticationScheme scheme);
+
+    /**
+     * <p>Returns the user authentication scheme identified by the specified
+     * name or {@code null} if there is none.</p>
+     * 
+     * @param name the user authentication scheme name.
+     * @return the scheme identified by the specified name or {@code null} if
+     *         there is none.
+     */
+    public UserAuthenticationScheme getUserAuthenticationScheme(final String name);
 
     /**
      * Returns the user authentication factory for the specified scheme.
@@ -195,6 +215,16 @@ public interface MslContext {
      * @return the token factory.
      */
     public TokenFactory getTokenFactory();
+
+    /**
+     * <p>Returns the key exchange scheme identified by the specified name or
+     * {@code null} if there is none.</p>
+     * 
+     * @param name the key exchange scheme name.
+     * @return the scheme identified by the specified name or {@code null} if
+     *         there is none.
+     */
+    public KeyExchangeScheme getKeyExchangeScheme(final String name);
 
     /**
      * Returns the key exchange factory for the specified scheme.

@@ -70,7 +70,7 @@ public abstract class UserAuthenticationData implements JSONString {
         try {
             // Pull the scheme.
             final String schemeName = userAuthJO.getString(KEY_SCHEME);
-            final UserAuthenticationScheme scheme = UserAuthenticationScheme.getScheme(schemeName);
+            final UserAuthenticationScheme scheme = ctx.getUserAuthenticationScheme(schemeName);
             if (scheme == null)
                 throw new MslUserAuthException(MslError.UNIDENTIFIED_USERAUTH_SCHEME, schemeName);
             

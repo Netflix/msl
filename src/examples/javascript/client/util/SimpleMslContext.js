@@ -97,12 +97,22 @@ var SimpleMslContext;
         getMslCryptoContext: function getMslCryptoContext() {
             return this._mslCryptoContext;
         },
+        
+        /** @inheritDoc */
+        getEntityAuthenticationScheme: function getEntityAuthenticationScheme(name) {
+            return EntityAuthenticationScheme$getScheme(name);
+        },
     
         /** @inheritDoc */
         getEntityAuthenticationFactory: function getEntityAuthenticationFactory(scheme) {
             if (this._entityAuthFactories[scheme])
                 return this._entityAuthFactories[scheme];
             return null;
+        },
+        
+        /** @inheritDoc */
+        getUserAuthenticationScheme: function getUserAuthenticationScheme(name) {
+            return UserAuthenticationScheme$getScheme(name);
         },
     
         /** @inheritDoc */
@@ -113,6 +123,11 @@ var SimpleMslContext;
         /** @inheritDoc */
         getTokenFactory: function getTokenFactory() {
             return _tokenFactory;
+        },
+        
+        /** @inheritDoc */
+        getKeyExchangeScheme: function getKeyExchangeScheme(name) {
+            return KeyExchangeScheme$getScheme(name);
         },
     
         /** @inheritDoc */
