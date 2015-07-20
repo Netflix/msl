@@ -70,6 +70,8 @@ public final class CmdArguments {
     public static final String P_MSG  = "-msg" ;
     /** pre-shared key file path */
     public static final String P_PSK  = "-psk" ;
+    /** MGK key file path */
+    public static final String P_MGK  = "-mgk" ;
     /** MSL store file path */
     public static final String P_MST  = "-mst" ;
     /** entity authentication scheme */
@@ -94,6 +96,7 @@ public final class CmdArguments {
             P_OF,
             P_MSG,
             P_PSK,
+            P_MGK,
             P_MST,
             P_EAS,
             P_V
@@ -259,6 +262,23 @@ public final class CmdArguments {
      */
     public String getPskFile() throws IllegalCmdArgumentException {
         final String file = argMap.get(P_PSK);
+        if (file == null) {
+            return null;
+        }
+        final File f = new File(file);
+        if (f.isFile()) {
+            return file;
+        } else {
+            throw new IllegalCmdArgumentException("Not a File: " + file);
+        }
+    }
+
+    /**
+     * @return file path to MGK file. If defined, must be a file.
+     * @throws IllegalCmdArgumentException
+     */
+    public String getMgkFile() throws IllegalCmdArgumentException {
+        final String file = argMap.get(P_MGK);
         if (file == null) {
             return null;
         }

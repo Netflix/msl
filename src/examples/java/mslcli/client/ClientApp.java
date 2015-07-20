@@ -199,6 +199,7 @@ public final class ClientApp {
         // load configuration from the configuration file
         this.mslProp = MslProperties.getInstance(SharedUtil.loadPropertiesFromFile(cmdParam.getConfigFilePath()));
 
+        // load PSK if specified
         final String pskFile = cmdParam.getPskFile();
         if (pskFile != null) {
             final Triplet<String,String,String> pskEntry;
@@ -209,6 +210,19 @@ public final class ClientApp {
             }
             cmdParam.merge(new CmdArguments(new String[] { CmdArguments.P_EID, pskEntry.x }));
             mslProp.addPresharedKeys(pskEntry);
+        }
+
+        // load MGK if specified
+        final String mgkFile = cmdParam.getMgkFile();
+        if (mgkFile != null) {
+            final Triplet<String,String,String> mgkEntry;
+            try {
+                mgkEntry = SharedUtil.readPskFile(mgkFile);
+            } catch (IOException e) {
+                throw new ConfigurationException(e.getMessage());
+            }
+            cmdParam.merge(new CmdArguments(new String[] { CmdArguments.P_EID, mgkEntry.x }));
+            mslProp.addMgkKeys(mgkEntry);
         }
 
         // initialize application context
