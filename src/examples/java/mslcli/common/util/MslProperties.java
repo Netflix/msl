@@ -43,17 +43,13 @@ public final class MslProperties {
     * APPLICATION-SPECIFIC CONFIGURATION PROPERTIY NAMES
     */
     /** number of thread for MslControl to run on */
-    private static final String APP_CTRL_NUM_THR      = "app.mslctrl.nthr";
+    private static final String APP_CTRL_NUM_THR       = "app.mslctrl.nthr";
     /** server port */
-    private static final String APP_SERVER_PORT       = "app.server.port";
-    /** entity authentication data handles number */
-    private static final String APP_ENTITY_AUTH_HANDLE_NUM = "app.entityauth.handle.num";
+    private static final String APP_SERVER_PORT        = "app.server.port";
     /** entity authentication data handle prefix */
     private static final String APP_ENTITY_AUTH_HANDLE = "app.entityauth.handle.";
-    /** key exchange handles number */
-    private static final String APP_KEYX_HANDLE_NUM = "app.keyx.handle.num";
     /** key exchange handle prefix */
-    private static final String APP_KEYX_HANDLE = "app.keyx.handle.";
+    private static final String APP_KEYX_HANDLE        = "app.keyx.handle.";
 
    /*
     * ENTITY-SPECIFIC CONFIGURATION PROPERTY NAMES
@@ -66,16 +62,12 @@ public final class MslProperties {
     private static final String ENTITY_KX_SCHEMES    = "entity.kx.schemes.";
     /** prefix for RSA key ID used by a given entity */
     private static final String ENTITY_RSA_KEY_ID    = "entity.rsa.keyid."; 
-    /** number of entities with defined PSK key sets */
-    private static final String ENTITY_PSK_NUM       = "entity.psk.num";
-    /** prefix for the entity ID in PSK database */
-    private static final String ENTITY_PSK_ID        = "entity.psk.id.";
-    /** prefix for the entity encryption key in PSK database */
-    private static final String ENTITY_PSK_ENC       = "entity.psk.enc.";
-    /** prefix for the entity HMAC key in PSK database */
-    private static final String ENTITY_PSK_HMAC      = "entity.psk.hmac.";
-    /** prefix for the entity wrap key in PSK database */
-    private static final String ENTITY_PSK_WRAP      = "entity.psk.wrap.";
+
+    /** prefix for PSK key sets */
+    private static final String ENTITY_PSK           = "entity.psk.";
+    /** prefix for MGK key sets */
+    private static final String ENTITY_MGK           = "entity.mgk.";
+
     /** prefix for the entity Diffie-Hellman key pair ID */
     private static final String ENTITY_DH_ID         = "entity.dh.id.";
     /** prefix for the entity key set ID used for securing service tokens */
@@ -84,35 +76,20 @@ public final class MslProperties {
    /*
     * USER-SPECIFIC CONFIGURATION PROPERTY NAMES
     */
-    /** the number of users configured for email/password authentication */
-    private static final String USER_EP_NUM       = "user.ep.num";
-    /** prefix for user email */
-    private static final String USER_EP_EMAIL     = "user.ep.email.";
-    /** prefix for user password */
-    private static final String USER_EP_PWD       = "user.ep.pwd.";
-    /** prefix for user id */
-    private static final String USER_EP_ID        = "user.ep.id.";
+    /** suffix for email/password entries */
+    private static final String USER_EP = "user.ep.";
+    /** email */
+    private static final String EMAIL   = "email";
+    /** password */
+    private static final String PWD     = "pwd";
 
    /*
     * MSL ECOSYSTEM-WIDE CONFIGURATION PROPERTY NAMES
     */
-    /** the number of RSA key pair sets */
-    private static final String MSL_RSA_NUM       = "msl.rsa.num"; 
-    /** prefix for RSA key set id */
-    private static final String MSL_RSA_KEY_ID    = "msl.rsa.keyid."; 
-    /** prefix for RSA key set public key */
-    private static final String MSL_RSA_PUB       = "msl.rsa.pub."; 
-    /** prefix for RSA key set private key */
-    private static final String MSL_RSA_PRIV      = "msl.rsa.priv."; 
-
-    /** number of Diffie-Hellman algorithm parameters sets */
-    private static final String MSL_DH_NUM        = "msl.dh.num";
-    /** prefix for Diffie-Hellman algorithm ID */
-    private static final String MSL_DH_ID         = "msl.dh.id.";
-    /** prefix for Diffie-Hellman algorithm P parameter */
-    private static final String MSL_DH_P          = "msl.dh.p.";
-    /** prefix for Diffie-Hellman algorithm G parameter */
-    private static final String MSL_DH_G          = "msl.dh.g.";
+    /** RSA key pair sets */
+    private static final String MSL_RSA = "msl.rsa."; 
+    /** Diffie-Hellman algorithm parameters sets */
+    private static final String MSL_DH  = "msl.dh.";
 
     /** MSL encryption key */
     private static final String MSL_KEY_ENC       = "msl.key.enc";
@@ -138,10 +115,31 @@ public final class MslProperties {
     /** prefix for service token HMAC key */
     private static final String MSL_STOKEN_KEY_HMAC = "msl.stoken.keys.hmac.";
 
+    /** Common property name suffix for defining the number of properties of a given kind */
+    private static final String NUM = "num";
+    /** Common property name suffix for entry ID */
+    private static final String ID = "id";
+    /** Common property name suffix for encryption key */
+    private static final String ENC_KEY = "enc";
+    /** Common property name suffix for hmac key */
+    private static final String HMAC_KEY = "hmac";
+    /** Common property name suffix for hmac key */
+    private static final String WRAP_KEY = "wrap";
+    /** public key */
+    private static final String PUB_KEY = "pub"; 
+    /** private key */
+    private static final String PRIV_KEY = "priv"; 
+    /** Diffie-Hellman algorithm P parameter */
+    private static final String DH_P = "p";
+    /** Diffie-Hellman algorithm G parameter */
+    private static final String DH_G = "g";
+
     /** Wildchar for "any" value in property name */
     private static final String ANY               = "*"; 
     /** Regex for space */
     private static final String SPACE_REGEX       = "\\s";
+    /** Common separator between propert name elements */
+    private static final String SEP = ".";
 
     /** lock object for synchronizing access to PSK store */
     private final Object pskStoreLock = new Object();
@@ -224,16 +222,7 @@ public final class MslProperties {
      */
     public Map<String,Triplet<String,String,String>> getPresharedKeyStore() throws ConfigurationException {
         synchronized (pskStoreLock) {
-            final int numPSK = getCountProperty(ENTITY_PSK_NUM);
-            final Map<String,Triplet<String,String,String>> keys = new HashMap<String,Triplet<String,String,String>>(numPSK);
-            for (int i = 0; i < numPSK; i++) {
-                keys.put(getRequiredProperty(ENTITY_PSK_ID + i), new Triplet<String,String,String>(
-                    getRequiredProperty(ENTITY_PSK_ENC  + i),
-                    getRequiredProperty(ENTITY_PSK_HMAC + i),
-                    getProperty(ENTITY_PSK_WRAP + i)
-                ));
-            }
-            return keys;
+            return getTripletMap(ENTITY_PSK, ID, ENC_KEY, HMAC_KEY, WRAP_KEY, true, true, false);
         }
     }
 
@@ -265,11 +254,12 @@ public final class MslProperties {
             throw new IllegalArgumentException("NULL keys");
         }
         synchronized (pskStoreLock) {
-            final int numPSK = getCountProperty(ENTITY_PSK_NUM);
-            p.setProperty(ENTITY_PSK_NUM, String.valueOf(numPSK + 1));
-            p.setProperty(ENTITY_PSK_ID   + numPSK, pskEntry.x);
-            p.setProperty(ENTITY_PSK_ENC  + numPSK, pskEntry.y);
-            p.setProperty(ENTITY_PSK_HMAC + numPSK, pskEntry.z);
+            final int numPSK = getCountProperty(ENTITY_PSK + NUM);
+            p.setProperty(ENTITY_PSK + NUM, String.valueOf(numPSK + 1));
+            p.setProperty(ENTITY_PSK + ID       + SEP + numPSK, pskEntry.x);
+            p.setProperty(ENTITY_PSK + ENC_KEY  + SEP + numPSK, pskEntry.y);
+            if (pskEntry.z != null)
+            p.setProperty(ENTITY_PSK + HMAC_KEY + SEP + numPSK, pskEntry.z);
         }
     }
 
@@ -286,14 +276,12 @@ public final class MslProperties {
         if (userId == null || userId.trim().isEmpty()) {
             throw new IllegalArgumentException("Undefined userId");
         }
-        final int num = getCountProperty(USER_EP_NUM);
-        for (int i = 0; i < num; i++) {
-            final String uid = getProperty(USER_EP_ID + i);
-            if (userId.trim().equals(uid)) {
-                return new Pair<String,String>(getRequiredProperty(USER_EP_EMAIL + i), getRequiredProperty(USER_EP_PWD + i));
-            }
-        }
-        throw new ConfigurationException("Missing Email-Password Entry for User Id " + userId);
+        final Map<String,Pair<String,String>> map = getPairMap(USER_EP, ID, EMAIL, PWD, true, true);
+        final Pair<String,String> emailPwd = map.get(userId.trim());
+        if (emailPwd != null)
+            return emailPwd;
+        else
+            throw new ConfigurationException("Missing Email-Password Entry for User Id " + userId);
     }
 
     /**
@@ -301,12 +289,7 @@ public final class MslProperties {
      * @throws ConfigurationException if the value is not defined or is not valid
      */
     public Map<String,String> getEmailPasswordStore() throws ConfigurationException {
-        final int num = getCountProperty(USER_EP_NUM);
-        final Map<String,String> emailPwd = new HashMap<String,String>(num);
-        for (int i = 0; i < num; i++) {
-            emailPwd.put(getRequiredProperty(USER_EP_EMAIL + i), getRequiredProperty(USER_EP_PWD + i));
-        }
-        return emailPwd;
+        return getMap(USER_EP, EMAIL, PWD);
     }
 
     /* *******************************
@@ -330,15 +313,7 @@ public final class MslProperties {
      * @throws ConfigurationException if the value is not defined or is not valid
      */
     public Map<String,Pair<String,String>> getRsaKeyStore() throws ConfigurationException {
-        final int numRSA = getCountProperty(MSL_RSA_NUM);
-        final Map<String,Pair<String,String>> keys = new HashMap<String,Pair<String,String>>(numRSA);
-        for (int i = 0; i < numRSA; i++) {
-            keys.put(getRequiredProperty(MSL_RSA_KEY_ID + i), new Pair<String,String>(
-                     getRequiredProperty(MSL_RSA_PUB + i),
-                     getProperty(MSL_RSA_PRIV + i) // private key is optional
-                 ));
-        }
-        return keys;
+        return getPairMap(MSL_RSA, ID, PUB_KEY, PRIV_KEY, true, false);
     }
 
     /**
@@ -346,14 +321,7 @@ public final class MslProperties {
      * @throws ConfigurationException if the value is not defined or is not valid
      */
     public Map<String,Pair<String,String>> getDHParameterStore() throws ConfigurationException {
-        final int num = getCountProperty(MSL_DH_NUM);
-        final Map<String,Pair<String,String>> dhParams = new HashMap<String,Pair<String,String>>(num);
-        for (int i = 0; i < num; i++) {
-            dhParams.put(getRequiredProperty(MSL_DH_ID + i), new Pair<String,String>(
-                         getRequiredProperty(MSL_DH_P  + i),
-                         getRequiredProperty(MSL_DH_G  + i)));
-        }
-        return dhParams;
+        return getPairMap(MSL_DH, ID, DH_P, DH_G, true, true);
     }
 
     /**
@@ -429,13 +397,8 @@ public final class MslProperties {
      * @return list of entity authentication handle class names
      * @throws ConfigurationException if the value is not defined or is not valid
      */
-    public Set<String> getEntityAuthenticationDataHandles() throws ConfigurationException {
-        final int num = getCountProperty(APP_ENTITY_AUTH_HANDLE_NUM);
-        final Set<String> handles = new HashSet<String>(num);
-        for (int i = 0; i < num; i++) {
-            handles.add(getRequiredProperty(APP_ENTITY_AUTH_HANDLE + i));
-        }
-        return handles;
+    public List<String> getEntityAuthenticationDataHandles() throws ConfigurationException {
+        return getValueList(APP_ENTITY_AUTH_HANDLE);
     }
 
     /**
@@ -443,17 +406,103 @@ public final class MslProperties {
      * @throws ConfigurationException if the value is not defined or is not valid
      */
     public List<String> getKeyExchangeHandles() throws ConfigurationException {
-        final int num = getCountProperty(APP_KEYX_HANDLE_NUM);
-        final ArrayList<String> handles = new ArrayList<String>(num);
-        for (int i = 0; i < num; i++) {
-            handles.add(getRequiredProperty(APP_KEYX_HANDLE + i));
-        }
-        return handles;
+        return getValueList(APP_KEYX_HANDLE);
     }
 
     /* ****************
      * Helper classes *
      ******************/
+
+    /**
+     * @param name prefix for all property names in the property triplets
+     * @return list of property values
+     * @throws ConfigurationException if the value is not defined or is not valid
+     */
+    private List<String> getValueList(final String name) throws ConfigurationException {
+        final int num = getCountProperty(name + NUM);
+        final ArrayList<String> values = new ArrayList<String>(num);
+        for (int i = 0; i < num; i++) {
+            values.add(getRequiredProperty(name + i));
+        }
+        return values;
+    }
+
+    /**
+     * @param prefix prefix for all property names
+     * @param key suffix for property key names
+     * @param value suffix for property value names
+     * @return (key,value) map
+     * @throws ConfigurationException if the value is not defined or is not valid
+     */
+    private Map<String,String> getMap(final String prefix, final String key, final String value) throws ConfigurationException {
+        final int num = getCountProperty(prefix + NUM);
+        final Map<String,String> map = new HashMap<String,String>(num);
+        for (int i = 0; i < num; i++) {
+            map.put(getRequiredProperty(prefix + key + SEP + i), getRequiredProperty(prefix + value + SEP + i));
+        }
+        return map;
+    }
+
+    /**
+     * @param prefix prefix for all property names in the property pairs
+     * @param key name of the property reprsenting the key
+     * @param name1 name of the property reprsenting the first value
+     * @param name2 name of the property reprsenting the second value
+     * @param required1 whether the property with name1 is required to be defined
+     * @param required2 whether the property with name2 is required to be defined
+     * @return Map of property pair values
+     * @throws ConfigurationException if the value is not defined or is not valid
+     */
+    private Map<String,Pair<String,String>> getPairMap(
+        final String prefix, final String key,
+        final String name1, final String name2,
+        final boolean required1, final boolean required2)
+        throws ConfigurationException
+    {
+        final int num = getCountProperty(prefix + NUM);
+        final Map<String,Pair<String,String>> map = new HashMap<String,Pair<String,String>>(num);
+        for (int i = 0; i < num; i++) {
+            map.put(getRequiredProperty(prefix + key + SEP + i),
+                new Pair<String,String>(
+                    required1 ? getRequiredProperty(prefix + name1 + SEP + i) : getProperty(prefix + name1 + SEP + i),
+                    required2 ? getRequiredProperty(prefix + name2 + SEP + i) : getProperty(prefix + name2 + SEP + i)
+                )
+            );
+        }
+        return map;
+    }
+
+    /**
+     * @param prefix prefix for all property names in the property triplets
+     * @param key name of the property reprsenting the key
+     * @param name1 name of the property reprsenting the first value
+     * @param name2 name of the property reprsenting the second value
+     * @param name3 name of the property reprsenting the second value
+     * @param required1 whether the property with name1 is required to be defined
+     * @param required2 whether the property with name2 is required to be defined
+     * @param required3 whether the property with name3 is required to be defined
+     * @return Map of property pair values
+     * @throws ConfigurationException if the value is not defined or is not valid
+     */
+    private Map<String,Triplet<String,String,String>> getTripletMap(
+        final String prefix, final String key,
+        final String name1, final String name2, final String name3,
+        final boolean required1, final boolean required2, final boolean required3)
+        throws ConfigurationException
+    {
+        final int num = getCountProperty(prefix + NUM);
+        final Map<String,Triplet<String,String,String>> map = new HashMap<String,Triplet<String,String,String>>(num);
+        for (int i = 0; i < num; i++) {
+            map.put(getRequiredProperty(prefix + key + SEP + i),
+                new Triplet<String,String,String>(
+                    required1 ? getRequiredProperty(prefix + name1 + SEP + i) : getProperty(prefix + name1 + SEP + i),
+                    required2 ? getRequiredProperty(prefix + name2 + SEP + i) : getProperty(prefix + name2 + SEP + i),
+                    required3 ? getRequiredProperty(prefix + name3 + SEP + i) : getProperty(prefix + name3 + SEP + i)
+                )
+            );
+        }
+        return map;
+    }
 
     /**
      * return non-mandatory property.
