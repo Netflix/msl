@@ -93,13 +93,13 @@ public abstract class KeyExchangeHandle {
     {
         final List<T> values = Arrays.asList(clazz.getEnumConstants());
         if (kxmName == null || kxmName.trim().isEmpty()) {
-            throw new IllegalCmdArgumentException(String.format("Missing Key Exchange Mechanism for %s: Valid %s",
+            throw new IllegalCmdArgumentException(String.format("KeyExchange[%s]: Unspecified Mechanism, Valid %s",
                 scheme.name(), values));
         }
         try {
             return Enum.valueOf(clazz, kxmName.trim());
         } catch (IllegalArgumentException e) {
-            throw new IllegalCmdArgumentException(String.format("Illegal Key Exchange %s for %s, Valid %s",
+            throw new IllegalCmdArgumentException(String.format("KeyExchange[%s]: Illegal Mechanism %s, Valid %s",
                 scheme.name(), kxmName.trim(), values));
         }
     }
@@ -120,7 +120,7 @@ public abstract class KeyExchangeHandle {
          * @param entityId entity identity
          * @param scheme key exchange scheme
          */
-        protected AppWrapCryptoContextRepository(final AppContext appCtx, final String entityId, final KeyExchangeScheme scheme) {
+        public AppWrapCryptoContextRepository(final AppContext appCtx, final String entityId, final KeyExchangeScheme scheme) {
             super(new SimpleWrapCryptoContextRepository(entityId, scheme));
             this.appCtx = appCtx;
             this.id = String.format("WrapCryptoContextRepo[%s %s]", entityId, scheme.toString());

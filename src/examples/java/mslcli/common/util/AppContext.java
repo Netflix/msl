@@ -47,7 +47,6 @@ import javax.crypto.interfaces.DHPrivateKey;
 import javax.crypto.interfaces.DHPublicKey;
 import javax.crypto.spec.DHParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import javax.xml.bind.DatatypeConverter;
 
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslException;
@@ -74,6 +73,7 @@ import mslcli.common.entityauth.SimplePresharedKeyStore;
 import mslcli.common.entityauth.SimpleRsaStore;
 import mslcli.common.keyx.KeyExchangeHandle;
 import mslcli.common.userauth.SimpleEmailPasswordStore;
+import mslcli.common.util.SharedUtil.Base64Util;
 
 /**
  * <p>
@@ -97,6 +97,8 @@ public final class AppContext {
     private final MslControl mslControl;
     /** entity preshared keys database */
     private final PresharedKeyStore presharedKeyStore;
+    /** entity MGK keys database */
+    private final PresharedKeyStore mgkKeyStore;
     /** user email / password database */
     private final EmailPasswordStore emailPasswordStore;
     /** named RSA key pairs database */
@@ -138,6 +140,7 @@ public final class AppContext {
         this.mslControl = new MslControl(p.getNumMslControlThreads());
         this.diffieHellmanParameters = new SimpleDiffieHellmanParameters(p);
         this.presharedKeyStore = initPresharedKeyStore(p);
+        this.mgkKeyStore = initMgkKeyStore(p);
         this.emailPasswordStore = initEmailPasswordStore(p);
         this.rsaStore = initRsaStore(p);
         this.authenticationDataHandles = new HashSet<AuthenticationDataHandle>();
@@ -208,6 +211,13 @@ public final class AppContext {
     }
 
     /**
+     * @return MGK key store
+     */
+    public PresharedKeyStore getMgkKeyStore() {
+        return mgkKeyStore;
+    }
+
+    /**
      * @param scheme authentication scheme name
      * @return entity authentication data handle for a given scheme
      */
@@ -233,7 +243,7 @@ public final class AppContext {
         }
         if (s.startsWith("b64:")) {
             try {
-                return DatatypeConverter.parseBase64Binary(s.trim().substring(4));
+                return Base64Util.decodeToByteArray(s.trim().substring(4));
             } catch (IllegalArgumentException e) {
                 throw new ConfigurationException("Invalid Base64 Value " + s);
             }
@@ -248,9 +258,27 @@ public final class AppContext {
      * @throws ConfigurationException
      */
     private static PresharedKeyStore initPresharedKeyStore(final MslProperties p) throws ConfigurationException {
+        return _initKeyStore(p.getPresharedKeyStore());
+    }
+
+    /**
+     * @param p MslProperties
+     * @return MGK key store database
+     * @throws ConfigurationException
+     */
+    private static PresharedKeyStore initMgkKeyStore(final MslProperties p) throws ConfigurationException {
+        return _initKeyStore(p.getMgkKeyStore());
+    }
+
+    /**
+     * @param keys map of entity ID to key triplet
+     * @return key store database
+     * @throws ConfigurationException
+     */
+    private static PresharedKeyStore _initKeyStore(final Map<String,Triplet<String,String,String>> keys) throws ConfigurationException {
         final Map<String,KeySet> keySets = new HashMap<String,KeySet>();
 
-        for (Map.Entry<String,Triplet<String,String,String>> entry : p.getPresharedKeyStore().entrySet()) {
+        for (Map.Entry<String,Triplet<String,String,String>> entry : keys.entrySet()) {
             final byte[] encKey = parseKey(entry.getValue().x);
             final byte[] hmacKey = parseKey(entry.getValue().y);
             final byte[] wrapKey;
@@ -314,7 +342,7 @@ public final class AppContext {
             for (Map.Entry<String,Pair<String,String>> entry : rsaKeyPairsB64.entrySet()) {
                 final PublicKey pubKey;
                 if (entry.getValue().x != null) {
-                    final byte[] pubKeyEncoded = DatatypeConverter.parseBase64Binary(entry.getValue().x);
+                    final byte[] pubKeyEncoded = Base64Util.decodeToByteArray(entry.getValue().x);
                     final X509EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(pubKeyEncoded);
                     pubKey = rsaKeyFactory.generatePublic(pubKeySpec);
                 } else {
@@ -323,7 +351,7 @@ public final class AppContext {
 
                 final PrivateKey privKey;
                 if (entry.getValue().y != null) {
-                    final byte[] privKeyEncoded = DatatypeConverter.parseBase64Binary(entry.getValue().y);
+                    final byte[] privKeyEncoded = Base64Util.decodeToByteArray(entry.getValue().y);
                     final PKCS8EncodedKeySpec privKeySpec = new PKCS8EncodedKeySpec(privKeyEncoded);
                     privKey = rsaKeyFactory.generatePrivate(privKeySpec);
                 } else {

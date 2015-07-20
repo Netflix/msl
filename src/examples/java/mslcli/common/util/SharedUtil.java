@@ -39,6 +39,7 @@ import java.util.regex.Pattern;
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import javax.xml.bind.DatatypeConverter;
 
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslConstants.ResponseCode;
@@ -474,6 +475,38 @@ public final class SharedUtil {
         }
         /** MSL crypto context */
         private final ICryptoContext mslCryptoContext = new ClientMslCryptoContext();
+    }
+
+    /** Base64 utilities */
+    public static final class Base64Util {
+        /**
+         * @param encoded base64-encoded string
+         * @return decoded array
+         */
+        public static byte[] decodeToByteArray(final String encoded) {
+            return DatatypeConverter.parseBase64Binary(encoded);
+        }
+        /**
+         * @param encoded base64-encoded string
+         * @return decoded String
+         */
+        public static String decode(final String encoded) {
+            return new String(DatatypeConverter.parseBase64Binary(encoded), MslConstants.DEFAULT_CHARSET);
+        }
+        /**
+         * @param data byte array to be encoded
+         * @return base64 encoding of the input byte array
+         */
+        public static String encode(final byte[] data) {
+            return DatatypeConverter.printBase64Binary(data);
+        }
+        /**
+         * @param data byte array to be encoded
+         * @return base64 encoding of the input byte array
+         */
+        public static String encode(final String data) {
+            return DatatypeConverter.printBase64Binary(data.getBytes(MslConstants.DEFAULT_CHARSET));
+        }
     }
 
     /**

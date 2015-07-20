@@ -143,6 +143,8 @@ public final class MslProperties {
 
     /** lock object for synchronizing access to PSK store */
     private final Object pskStoreLock = new Object();
+    /** lock object for synchronizing access to MGK store */
+    private final Object mgkStoreLock = new Object();
 
     /** underlying representation of configuration properties */
     private final Properties p;
@@ -227,6 +229,16 @@ public final class MslProperties {
     }
 
     /**
+     * @return mappings between entity identity and { encryption, hmac, wrapping} hex-encoded mgk keys triplet
+     * @throws ConfigurationException if the value is not defined or is not valid
+     */
+    public Map<String,Triplet<String,String,String>> getMgkKeyStore() throws ConfigurationException {
+        synchronized (mgkStoreLock) {
+            return getTripletMap(ENTITY_MGK, ID, ENC_KEY, HMAC_KEY, WRAP_KEY, true, true, false);
+        }
+    }
+
+    /**
      * @param entityId identity identity
      * @return ID of the { encryption, hmac } key set to be used by this entity for issuing service tokens
      * @throws ConfigurationException if the value is not defined or is not valid
@@ -250,16 +262,35 @@ public final class MslProperties {
      * @throws ConfigurationException if the value is not defined or is not valid
      */
     public void addPresharedKeys(final Triplet<String,String,String> pskEntry) throws ConfigurationException {
-        if (pskEntry == null) {
+        addKeyTriplet(pskEntry, ENTITY_PSK, pskStoreLock);
+    }
+
+    /**
+     * add MGK key entry; it can be called by the client app
+     * @param mgkEntry { entityId, encryptionKey, hmacKey}. Wrapping key is assumed to be derived.
+     * @throws ConfigurationException if the value is not defined or is not valid
+     */
+    public void addMgkKeys(final Triplet<String,String,String> mgkEntry) throws ConfigurationException {
+        addKeyTriplet(mgkEntry, ENTITY_MGK, mgkStoreLock);
+    }
+
+    /**
+     * @param entry {enc,hmac,wrap} key triplet to be added to the configuration
+     * @param prefix name of the key family
+     * @param lock suncronization object for this key family
+     * @throws ConfigurationException if the value is not defined or is not valid
+     */
+    private void addKeyTriplet(final Triplet<String,String,String> entry, final String prefix, final Object lock) throws ConfigurationException {
+        if (entry == null) {
             throw new IllegalArgumentException("NULL keys");
         }
-        synchronized (pskStoreLock) {
-            final int numPSK = getCountProperty(ENTITY_PSK + NUM);
-            p.setProperty(ENTITY_PSK + NUM, String.valueOf(numPSK + 1));
-            p.setProperty(ENTITY_PSK + ID       + SEP + numPSK, pskEntry.x);
-            p.setProperty(ENTITY_PSK + ENC_KEY  + SEP + numPSK, pskEntry.y);
-            if (pskEntry.z != null)
-            p.setProperty(ENTITY_PSK + HMAC_KEY + SEP + numPSK, pskEntry.z);
+        synchronized (lock) {
+            final int num = getCountProperty(prefix + NUM);
+            p.setProperty(prefix + NUM, String.valueOf(num + 1));
+            p.setProperty(prefix + ID       + SEP + num, entry.x);
+            p.setProperty(prefix + ENC_KEY  + SEP + num, entry.y);
+            if (entry.z != null)
+            p.setProperty(prefix + HMAC_KEY + SEP + num, entry.z);
         }
     }
 
