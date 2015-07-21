@@ -20,6 +20,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.util.Date;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -117,7 +118,7 @@ public class SimpleHttpServer {
                 os.close();
             }
 
-            System.out.println("\nSUCCESS!!!\n");
+            System.out.println(String.format("SUCCESS: %1$te/%1$tm/%1$tY %1$tH:%1$tM:%1$tS.%1$tL\n", new Date()));
         }
 
         /** MSL server to delegate requests to */

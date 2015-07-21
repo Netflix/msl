@@ -105,13 +105,6 @@ public abstract class KeyExchangeHandle {
     }
 
     /**
-     * @return wrapping key repository, for applicable key exchanges
-     */
-    public WrapCryptoContextRepositoryHandle getWrapCryptoContextRepository() {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
      * extension of WrapCryptoContextRepositoryWrapper class to intercept and report calls
      */
     protected static final class AppWrapCryptoContextRepository extends WrapCryptoContextRepositoryWrapper {

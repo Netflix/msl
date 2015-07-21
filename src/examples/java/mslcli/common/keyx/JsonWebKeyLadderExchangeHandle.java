@@ -17,6 +17,8 @@
 package mslcli.common.keyx;
 
 import java.security.KeyPair;
+import java.util.HashMap;
+import java.util.Map;
 import javax.crypto.interfaces.DHPrivateKey;
 import javax.crypto.interfaces.DHPublicKey;
 
@@ -58,9 +60,13 @@ public class JsonWebKeyLadderExchangeHandle extends KeyExchangeHandle {
             JsonWebKeyLadderExchange.Mechanism.class, args.getKeyExchangeMechanism());
         final byte[] wrapdata;
         if (m == JsonWebKeyLadderExchange.Mechanism.WRAP) {
-            wrapdata = rep.getLastWrapdata();
-            if (wrapdata == null) {
-                throw new IllegalCmdArgumentException(String.format("No Key Wrapping Data Found for {%s %s}", getScheme().name(), m));
+            synchronized (rep) {
+                final WrapCryptoContextRepositoryHandle h = rep.get(args.getEntityId());
+                if (h == null)
+                    throw new IllegalCmdArgumentException(String.format("No Key Wrapping Repository Found for {%s %s}", getScheme().name(), m));
+                wrapdata = h.getLastWrapdata();
+                if (wrapdata == null)
+                    throw new IllegalCmdArgumentException(String.format("No Key Wrapping Data Found for {%s %s}", getScheme().name(), m));
             }
         } else {
             wrapdata = null;
@@ -72,15 +78,14 @@ public class JsonWebKeyLadderExchangeHandle extends KeyExchangeHandle {
     public KeyExchangeFactory getKeyExchangeFactory(final AppContext appCtx, final CmdArguments args, final AuthenticationUtils authutils)
         throws ConfigurationException, IllegalCmdArgumentException
     {
-       rep = new AppWrapCryptoContextRepository(appCtx, args.getEntityId(), KeyExchangeScheme.JWK_LADDER);
-       return new JsonWebKeyLadderExchange(rep, authutils);
-    }
-
-    @Override
-    public WrapCryptoContextRepositoryHandle getWrapCryptoContextRepository() {
-        return rep;
+        synchronized (rep) {
+            WrapCryptoContextRepositoryHandle r = rep.get(args.getEntityId());
+            if (r == null)
+                rep.put(args.getEntityId(), new AppWrapCryptoContextRepository(appCtx, args.getEntityId(), KeyExchangeScheme.JWK_LADDER));
+            return new JsonWebKeyLadderExchange(r, authutils);
+        }
     }
 
     /** mapping of key wrapping data to crypto context */
-    private transient WrapCryptoContextRepositoryHandle rep;
+    private final Map<String,WrapCryptoContextRepositoryHandle> rep = new HashMap<String,WrapCryptoContextRepositoryHandle>();
 }

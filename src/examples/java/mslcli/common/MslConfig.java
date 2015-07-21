@@ -230,21 +230,6 @@ public abstract class MslConfig {
     }
 
     /**
-     * @param scheme key exchange scheme
-     * @return wrap crypto context repository for a given key exchange scheme
-     */
-    public final WrapCryptoContextRepositoryHandle getWrapCryptoContextRepository(final KeyExchangeScheme scheme) {
-        if (scheme == null)
-            throw new IllegalArgumentException("NULL KeyExchangeScheme");
-        final List<KeyExchangeHandle> keyxHandles = appCtx.getKeyExchangeHandles();
-        for (final KeyExchangeHandle kxh : keyxHandles) {
-            if (kxh.getScheme().equals(scheme))
-                return kxh.getWrapCryptoContextRepository();
-        }
-        return null;
-    }
-
-    /**
      * Key exchange factory comparator. The purpose is to list key exchange schemes in order of preference.
      */
     private static class KeyExchangeFactoryComparator implements Comparator<KeyExchangeFactory> {
