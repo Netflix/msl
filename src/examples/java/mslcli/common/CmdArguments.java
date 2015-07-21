@@ -22,11 +22,13 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import com.netflix.msl.MslConstants;
 
@@ -87,6 +89,7 @@ public final class CmdArguments {
             P_URL,
             P_EID,
             P_UID,
+            P_EAS,
             P_KX,
             P_KXM,
             P_ENC,
@@ -98,9 +101,29 @@ public final class CmdArguments {
             P_PSK,
             P_MGK,
             P_MST,
-            P_EAS,
             P_V
         )));
+
+    /**
+     * comparator class for listing arguments in preferable order
+     */
+    private static final class ArgComparator implements Comparator<String> {
+        @Override
+        public int compare(String x, String y) {
+            return supportedArguments.indexOf(x) - supportedArguments.indexOf(y);
+        }
+        @Override
+        public boolean equals(Object o) {
+            throw new UnsupportedOperationException();
+        }
+        @Override
+        public int hashCode() {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    /** arg comparator */
+    private static final Comparator<String> argComparator = new ArgComparator();
 
     /** underlying representation of arguments */
     private final Map<String,String> argMap;
@@ -154,8 +177,14 @@ public final class CmdArguments {
     /**
      * @return all parameters as unmodifiable Map
      */
-    public Map<String,String> getParameters() {
-        return Collections.unmodifiableMap(argMap);
+    public String getParameters() {
+        final Map<String,String> m = new TreeMap<String,String>(argComparator);
+        m.putAll(argMap);
+        final StringBuilder sb = new StringBuilder();
+        for (final Map.Entry<String,String> entry : m.entrySet()) {
+            sb.append(entry.getKey()).append(' ').append(entry.getValue()).append(' ');
+        }
+        return sb.toString();
     }
 
     /**

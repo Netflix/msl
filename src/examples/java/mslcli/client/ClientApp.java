@@ -240,23 +240,23 @@ public final class ClientApp {
     public void sendMultipleRequests() throws IllegalCmdArgumentException, IOException {
         while (true) {
             final String options = SharedUtil.readInput(CMD_PROMPT);
-            if (CMD_QUIT.equalsIgnoreCase(options)) {
+            if (optMatch(CMD_QUIT, options)) {
                 return;
             }
-            if (CMD_HELP.equalsIgnoreCase(options)) {
+            if (optMatch(CMD_HELP, options)) {
                 help();
                 continue;
             }
-            if (CMD_LIST.equalsIgnoreCase(options)) {
+            if (optMatch(CMD_LIST, options)) {
                 System.out.println(cmdParam.getParameters());
                 continue;
             }
-            if (CMD_SAVE.equalsIgnoreCase(options)) {
+            if (optMatch(CMD_SAVE, options)) {
                 if (client != null)
                     client.saveMslStore();
                 continue;
             }
-            if (CMD_HINT.equalsIgnoreCase(options)) {
+            if (optMatch(CMD_HINT, options)) {
                 hint();
                 continue;
             }
@@ -276,6 +276,15 @@ public final class ClientApp {
                 System.err.println(e.getMessage());
             }
         }
+    }
+
+    /**
+     * @param option option to be selected
+     * @param val user entry
+     * @return true if user entry is the beginning of the option string
+     */
+    private static boolean optMatch(final String option, final String val) {
+        return (option != null) && (val != null) && (val.trim().length() != 0) && option.startsWith(val.trim());
     }
 
     /**
