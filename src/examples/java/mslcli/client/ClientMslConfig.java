@@ -79,11 +79,14 @@ public final class ClientMslConfig extends MslConfig {
             throw new IllegalArgumentException("NULL Key Exchange Type");
         }
         final String kxmName = args.getKeyExchangeMechanism();
-        appCtx.info(String.format("%s: Generating KeyRequestData{%s %s}", this, kxsName.trim(), (kxmName != null) ? kxmName.trim() : null));
 
         for (final KeyExchangeHandle kxh : appCtx.getKeyExchangeHandles()) {
-            if (kxh.getScheme().name().equals(kxsName))
-                return kxh.getKeyRequestData(appCtx, args);
+            if (kxh.getScheme().name().equals(kxsName)) {
+                final KeyRequestData krd =  kxh.getKeyRequestData(appCtx, args);
+                appCtx.info(String.format("%s: Generated KeyRequestData{%s %s}, %s",
+                    this, kxsName.trim(), (kxmName != null) ? kxmName.trim() : null, krd.getClass().getName()));
+                return krd;
+            }
         }
         final List<String> schemes = new ArrayList<String>();
         for (final KeyExchangeHandle kxh : appCtx.getKeyExchangeHandles())
