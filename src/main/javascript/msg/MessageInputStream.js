@@ -341,7 +341,7 @@ var MessageInputStream$create;
                         if (masterToken && (ctx.isPeerToPeer() || masterToken.isVerified())) {
                             checkMasterTokenRevoked(ctx, messageHeader);
                         } else {
-                            checkNonReplayable(ctx, messageHeader);
+                            checkNonReplayableId(ctx, messageHeader);
                         }
                     } catch (e) {
                         if (e instanceof MslException) {
@@ -476,7 +476,7 @@ var MessageInputStream$create;
                                         .setMessageId(messageHeader.messageId);;
                                         ready();
                                     } else {
-                                        checkNonReplayable(ctx, messageHeader);
+                                        checkNonReplayableId(ctx, messageHeader);
                                     }
                                 },
                                 error: function(e) {
@@ -491,80 +491,11 @@ var MessageInputStream$create;
                                 },
                             });
                         } else {
-                            checkNonReplayable(ctx, messageHeader);
-                        }
-                    } catch (e) {
-                        if (e instanceof MslException) {
-                            e.setEntity(messageHeader.masterToken);
-                            e.setUser(messageHeader.userIdToken);
-                            e.setUser(messageHeader.userAuthenticationData);
-                            e.setMessageId(messageHeader.messageId);
-                        }
-                        self._errored = e;
-                        ready();
-                    }
-                }
-
-                function checkNonReplayable(ctx, messageHeader) {
-                    try {
-                        // TODO: This is the old non-replayable logic for backwards
-                        // compatibility. It should be removed once all MSL stacks have
-                        // migrated to the newer non-replayable ID logic.
-                        //
-                        // If the message is non-replayable (it is not from a trusted
-                        // network server).
-                        var masterToken = messageHeader.masterToken;
-                        if (messageHeader.isNonReplayable()) {
-                            // ...and not also renewable with key request data and a
-                            // master token then reject the message.
-                            if (!messageHeader.isRenewable() ||
-                                messageHeader.keyRequestData.length == 0 ||
-                                !masterToken)
-                            {
-                                self._errored = new MslMessageException(MslError.INCOMPLETE_NONREPLAYABLE_MESSAGE, JSON.stringify(messageHeader))
-                                .setEntity(masterToken)
-                                .setEntity(messageHeader.entityAuthenticationData)
-                                .setUser(messageHeader.userIdToken)
-                                .setUser(messageHeader.userAuthenticationData)
-                                .setMessageId(messageHeader.messageId);
-                                ready();
-                                return;
-                            }
-
-                            // If the message does not have the newest master token
-                            // then notify the sender.
-                            var factory = ctx.getTokenFactory();
-                            factory.isNewestMasterToken(ctx, masterToken, {
-                                result: function(newest) {
-                                    if (!newest) {
-                                        self._errored = new MslMessageException(MslError.MESSAGE_REPLAYED, JSON.stringify(messageHeader))
-                                        .setEntity(masterToken)
-                                        .setUser(messageHeader.userIdToken)
-                                        .setUser(messageHeader.userAuthenticationData)
-                                        .setMessageId(messageHeader.messageId);
-                                        ready();
-                                    } else {
-                                        checkNonReplayableId(ctx, messageHeader);
-                                    }
-                                },
-                                error: function(e) {
-                                    if (e instanceof MslException) {
-                                        e.setEntity(masterToken);
-                                        e.setUser(messageHeader.userIdToken);
-                                        e.setUser(messageHeader.userAuthenticationData);
-                                        e.setMessageId(messageHeader.messageId);
-                                    }
-                                    self._errored = e;
-                                    ready();
-                                }
-                            });
-                        } else {
                             checkNonReplayableId(ctx, messageHeader);
                         }
                     } catch (e) {
                         if (e instanceof MslException) {
                             e.setEntity(messageHeader.masterToken);
-                            e.setEntity(messageHeader.entityAuthenticationData);
                             e.setUser(messageHeader.userIdToken);
                             e.setUser(messageHeader.userAuthenticationData);
                             e.setMessageId(messageHeader.messageId);
