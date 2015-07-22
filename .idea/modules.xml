@@ -2,8 +2,13 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/message-service-layer/message-service-layer.iml" filepath="$PROJECT_DIR$/message-service-layer/message-service-layer.iml" />
+      <module fileurl="file://$PROJECT_DIR$/example-burp/message-service-layer-burp.iml" filepath="$PROJECT_DIR$/example-burp/message-service-layer-burp.iml" />
+      <module fileurl="file://$PROJECT_DIR$/example-server/message-service-layer-example-server.iml" filepath="$PROJECT_DIR$/example-server/message-service-layer-example-server.iml" />
+      <module fileurl="file://$PROJECT_DIR$/integ-tests/message-service-layer-integ-tests.iml" filepath="$PROJECT_DIR$/integ-tests/message-service-layer-integ-tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/mocks/message-service-layer-mocks.iml" filepath="$PROJECT_DIR$/mocks/message-service-layer-mocks.iml" />
       <module fileurl="file://$PROJECT_DIR$/msl.iml" filepath="$PROJECT_DIR$/msl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/msl-root.iml" filepath="$PROJECT_DIR$/msl-root.iml" />
     </modules>
   </component>
 </project>
-

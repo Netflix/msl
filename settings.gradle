@@ -1,1 +1,8 @@
-rootProject.name = 'msl'
+rootProject.name = 'msl-root'
+
+include 'message-service-layer', 'example-server', 'example-burp', 'mocks', 'integ-tests'
+
+project(':example-server').name = 'message-service-layer-example-server'
+project(':example-burp').name = 'message-service-layer-burp'
+project(':mocks').name = 'message-service-layer-mocks'
+project(':integ-tests').name = 'message-service-layer-integ-tests'

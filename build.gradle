@@ -1,168 +1,24 @@
 plugins {
-    id 'nebula.netflixoss' version '2.2.9'
+    id 'nebula.netflixoss' version '2.2.10'
 }
 
-apply plugin: 'java'
-apply plugin: 'findbugs'
-apply plugin: 'war'
+subprojects {
+    repositories {
+        jcenter()
+    }
 
-repositories {
-    mavenCentral()
-}
+    apply plugin: 'nebula-javadoc-jar'
+    apply plugin: 'nebula-source-jar'
+    apply plugin: 'findbugs'
+    findbugs {
+        excludeFilter = rootProject.file("findbugs-exclude.xml")
+        ignoreFailures = true
+    }
 
-test {
-    includes = [ "**/*Test.class", "**/*Suite.class" ]
-    excludes = [ "**/*\$*.class" ]
-    scanForTestClasses = false
-}
-
-configurations {
-    examples.extendsFrom(compile)
-    itest.extendsFrom(compile)
-}
-
-dependencies {
-    compile fileTree(dir: "src/main/java/lib", include: "*.jar")
-    testCompile "junit:junit:4.11"
-    examples fileTree(dir: "src/examples/java/server/lib", include: "*.jar")
-    itest "org.testng:testng:latest.release"
-    itest fileTree(dir: "src/int-test/java/com/netflix/msl/server/lib", include: "*.jar")
-}
-
-findbugs {
-    excludeFilter = file("findbugs-exclude.xml")
-}
-
-sourceSets {
-    main {
-        java {
-            srcDir "src/main/java/"
-            srcDir "src/main/java/lib/JSON-java/"
+    if (JavaVersion.current().isJava8Compatible()) {
+        tasks.withType(Javadoc) {
+            options.addStringOption('Xdoclint:none', '-quiet')
         }
     }
-    examples {
-        java {
-            srcDir "src/examples/java/"
-            compileClasspath += sourceSets.main.output
-            compileClasspath += sourceSets.test.output
-            compileClasspath += configurations.examples
-        }
-        resources {
-            srcDir "src/examples/resources/"
-        }
-    }
-    itest {
-        java {
-            srcDir "src/int-test/java"
-            compileClasspath += sourceSets.main.output
-            compileClasspath += sourceSets.test.output
-            compileClasspath += configurations.itest
-        }
-        resources {
-            srcDir "src/int-test/resources"
-        }
-    }
-}
 
-task examples(dependsOn: ":compileExamplesJava")
-
-task burp(type: Jar) {
-    dependsOn ":examples"
-    baseName "msl-burp-extender"
-    from(sourceSets.examples.output) {
-        include "burp/**"
-    }
-}
-
-task itest(type: Test) {
-    dependsOn ":compileItestJava"
-    useTestNG()
-}
-
-war {
-    dependsOn ":examples"
-    baseName "msl-example-server"
-    from(sourceSets.examples.output) {
-        include "server/**"
-        into "WEB-INF/classes"
-    }
-    webXml = file("src/examples/java/server/WebContent/WEB-INF/web.xml")
-}
-
-task itest_war(type: War) {
-    dependsOn ":compileItestJava"
-    baseName "msl-test-server"
-    from(sourceSets.test.output) {
-        into "WEB-INF/classes"
-    }
-    from(sourceSets.itest.output) {
-        exclude "com/netflix/msl/client/**"
-        exclude "resources/**"
-        into "WEB-INF/classes"
-    }
-    webXml = file("src/int-test/java/com/netflix/msl/server/WebContent/WEB-INF/web.xml")
-}
-
-task javadoc(type: Javadoc, overwrite: true) {
-    options.overview = "overview.html"
-    options.links = [
-        "http://docs.oracle.com/javase/7/docs/api/",
-        "http://junit.org/javadoc/4.11/",
-        "http://www.bouncycastle.org/docs/docs1.5on/"
-    ]
-    source = sourceSets.main.allJava
-}
-
-task javadoc_public(type: Javadoc) {
-    destinationDir = file("$docsDir/javadoc-public")
-    options.overview = "overview-public.html"
-    options.links = [
-        "http://docs.oracle.com/javase/7/docs/api/",
-        "http://junit.org/javadoc/4.11/",
-        "http://www.bouncycastle.org/docs/docs1.5on/"
-    ]
-    source = sourceSets.main.allJava
-    includes = [
-        "**/EntityAuthenticationData.java",
-        "**/EntityAuthenticationFactory.java",
-        "**/EntityAuthenticationScheme.java",
-        "**/ErrorHeader.java",
-        "**/ErrorMessageRegistry.java",
-        "**/FilterStreamFactory.java",
-        "**/Header.java",
-        "**/ICryptoContext.java",
-        "**/KeyExchangeFactory.java",
-        "**/KeyExchangeScheme.java",
-        "**/KeyRequestData.java",
-        "**/KeyResponseData.java",
-        "**/MasterToken.java",
-        "**/MessageCapabilities.java",
-        "**/MessageContext.java",
-        "**/MessageDebugContext.java",
-        "**/MessageHeader.java",
-        "**/MessageInputStream.java",
-        "**/MessageServiceTokenBuilder.java",
-        "**/MslConstants.java",
-        "**/MslContext.java",
-        "**/MslControl.java",
-        "**/MslCryptoException.java",
-        "**/MslEncodingException.java",
-        "**/MslEntityAuthException.java",
-        "**/MslError.java",
-        "**/MslErrorResponseException.java",
-        "**/MslException.java",
-        "**/MslInternalException.java",
-        "**/MslKeyExchangeException.java",
-        "**/MslMasterTokenException.java",
-        "**/MslMessageException.java",
-        "**/MslStore.java",
-        "**/MslUserAuthException.java",
-        "**/MslUserIdTokenException.java",
-        "**/ServiceToken.java",
-        "**/TokenFactory.java",
-        "**/UserAuthenticationData.java",
-        "**/UserAuthenticationFactory.java",
-        "**/UserAuthenticationScheme.java",
-        "**/UserIdToken.java"
-    ]
 }
