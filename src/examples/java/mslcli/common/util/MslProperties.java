@@ -104,6 +104,8 @@ public final class MslProperties {
     private static final String MSL_MTOKEN_EXPIRATION_OFFSET    = "msl.mtoken.expiration";
     /** Master Token non-replay ID window */
     private static final String MSL_MTOKEN_NON_REPLAY_ID_WINDOW = "msl.mtoken.non_replay_id_window";
+    /** Master Token max number of skipped sequence numbers still allowed for renewal  */
+    private static final String MSL_MTOKEN_MAX_SKIPPED = "msl.mtoken.max_skipped";
 
     /** User Id Token renewal offset in milliseconds */
     private static final String MSL_UITOKEN_RENEWAL_OFFSET      = "msl.uitoken.renewal";
@@ -386,6 +388,14 @@ public final class MslProperties {
      */
     public int getMasterTokenNonReplayIdWindow() throws ConfigurationException {
         return getCountProperty(MSL_MTOKEN_NON_REPLAY_ID_WINDOW);
+    }
+
+    /**
+     * @return Master Token's max allowed skipped sequence numbers still allowed for renewal
+     * @throws ConfigurationException if the value is not defined or is not valid
+     */
+    public int getMasterTokenMaxSkipped() throws ConfigurationException {
+        return getCountProperty(MSL_MTOKEN_MAX_SKIPPED);
     }
 
     /**

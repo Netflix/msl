@@ -55,6 +55,8 @@ public class ServerTokenFactory implements TokenFactory {
     private final int expirationOffset;
     /** Master Token Non-replayable ID acceptance window. */
     private final long nonReplayIdWindow;
+    /** Master Token max number of lost tokens still allowed for renewal */
+    private final long maxSkipped;
 
     /** User ID Token Renewal window start offset in milliseconds. */
     private final int uitRenewalOffset;
@@ -79,12 +81,10 @@ public class ServerTokenFactory implements TokenFactory {
         this.renewalOffset = appCtx.getProperties().getMasterTokenRenewalOffset();
         this.expirationOffset = appCtx.getProperties().getMasterTokenExpirationOffset();
         this.nonReplayIdWindow = appCtx.getProperties().getMasterTokenNonReplayIdWindow();
+        this.maxSkipped = appCtx.getProperties().getMasterTokenMaxSkipped();
         this.uitRenewalOffset = appCtx.getProperties().getUserIdTokenRenewalOffset();
         this.uitExpirationOffset = appCtx.getProperties().getUserIdTokenExpirationOffset();
     }
-
-    /** maximum number of lost master tokens on the client side before master token renewal is rejected */
-    private static final int MAX_LOST_MTOKENS = 5;
 
     /* (non-Javadoc)
      * @see com.netflix.msl.tokens.TokenFactory#isNewestMasterToken(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken)
@@ -108,7 +108,7 @@ public class ServerTokenFactory implements TokenFactory {
         } else {
              return ((seqNumPair.oldSeqNum.longValue() == masterToken.getSequenceNumber()) ||
                     (seqNumPair.newSeqNum.longValue() == masterToken.getSequenceNumber())) &&
-                    ((seqNumPair.newSeqNum.longValue() - seqNumPair.oldSeqNum.longValue()) < MAX_LOST_MTOKENS);
+                    ((seqNumPair.newSeqNum.longValue() - seqNumPair.oldSeqNum.longValue()) < maxSkipped);
         }
     }
 
