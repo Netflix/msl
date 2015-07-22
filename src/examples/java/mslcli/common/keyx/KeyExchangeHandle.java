@@ -17,7 +17,9 @@
 package mslcli.common.keyx;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.netflix.msl.MslKeyExchangeException;
 import com.netflix.msl.crypto.ICryptoContext;
@@ -142,6 +144,28 @@ public abstract class KeyExchangeHandle {
         private final String id;
     }
 
+    /**
+     * Lazy initialization of WrapCryptoContextRepositoryHandle for a given entity identity
+     *
+     * @param appCtx application context
+     * @param args command line arguments
+     * @return WrapCryptoContextRepositoryHandle instance
+     * @throws IllegalCmdArgumentException
+     */
+
+    protected WrapCryptoContextRepositoryHandle getRepo(final AppContext appCtx, final CmdArguments args)
+        throws IllegalCmdArgumentException
+    {
+        synchronized (rep) {
+            WrapCryptoContextRepositoryHandle r = rep.get(args.getEntityId());
+            if (r == null)
+                rep.put(args.getEntityId(), r = new AppWrapCryptoContextRepository(appCtx, args.getEntityId(), getScheme()));
+            return r;
+        }
+    }
+
     /** key exchange scheme */
     protected final KeyExchangeScheme scheme;
+    /** mapping of key wrapping data to crypto context */
+    private final Map<String,WrapCryptoContextRepositoryHandle> rep = new HashMap<String,WrapCryptoContextRepositoryHandle>();
 }

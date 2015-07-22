@@ -60,14 +60,9 @@ public class JsonWebKeyLadderExchangeHandle extends KeyExchangeHandle {
             JsonWebKeyLadderExchange.Mechanism.class, args.getKeyExchangeMechanism());
         final byte[] wrapdata;
         if (m == JsonWebKeyLadderExchange.Mechanism.WRAP) {
-            synchronized (rep) {
-                final WrapCryptoContextRepositoryHandle h = rep.get(args.getEntityId());
-                if (h == null)
-                    throw new IllegalCmdArgumentException(String.format("No Key Wrapping Repository Found for {%s %s}", getScheme().name(), m));
-                wrapdata = h.getLastWrapdata();
-                if (wrapdata == null)
-                    throw new IllegalCmdArgumentException(String.format("No Key Wrapping Data Found for {%s %s}", getScheme().name(), m));
-            }
+            wrapdata = getRepo(appCtx, args).getLastWrapdata();
+            if (wrapdata == null)
+                throw new IllegalCmdArgumentException(String.format("No Key Wrapping Data Found for {%s %s}", getScheme().name(), m));
         } else {
             wrapdata = null;
         }
@@ -78,14 +73,6 @@ public class JsonWebKeyLadderExchangeHandle extends KeyExchangeHandle {
     public KeyExchangeFactory getKeyExchangeFactory(final AppContext appCtx, final CmdArguments args, final AuthenticationUtils authutils)
         throws ConfigurationException, IllegalCmdArgumentException
     {
-        synchronized (rep) {
-            WrapCryptoContextRepositoryHandle r = rep.get(args.getEntityId());
-            if (r == null)
-                rep.put(args.getEntityId(), new AppWrapCryptoContextRepository(appCtx, args.getEntityId(), KeyExchangeScheme.JWK_LADDER));
-            return new JsonWebKeyLadderExchange(r, authutils);
-        }
+        return new JsonWebKeyLadderExchange(getRepo(appCtx, args), authutils);
     }
-
-    /** mapping of key wrapping data to crypto context */
-    private final Map<String,WrapCryptoContextRepositoryHandle> rep = new HashMap<String,WrapCryptoContextRepositoryHandle>();
 }
