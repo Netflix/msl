@@ -3,6 +3,7 @@ dependencies {
     compile 'javax.servlet:servlet-api:2.5'
     compile project(':message-service-layer')
     compile project(':message-service-layer-example-server')
+    compile project(':message-service-layer-mocks')
     testCompile 'org.testng:testng:latest.release'
 }
 
