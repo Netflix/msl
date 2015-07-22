@@ -129,6 +129,16 @@ var MslContext = util.Class.create({
     getMslCryptoContext: function() {},
 
     /**
+     * <p>Returns the entity authentication scheme identified by the specified
+     * name or {@code null} if there is none.</p>
+     * 
+     * @param {string} name the entity authentication scheme name.
+     * @return {EntityAuthenticationScheme} the scheme identified by the specified name or {@code null} if
+     *         there is none.
+     */
+    getEntityAuthenticationScheme: function(name) {},
+    
+    /**
      * Returns the entity authentication factory for the specified scheme.
      *
      * @param {EntityAuthenticationScheme} scheme the entity authentication scheme.
@@ -136,6 +146,16 @@ var MslContext = util.Class.create({
      *         available.
      */
     getEntityAuthenticationFactory: function(scheme) {},
+
+    /**
+     * <p>Returns the user authentication scheme identified by the specified
+     * name or {@code null} if there is none.</p>
+     * 
+     * @param {string} name the user authentication scheme name.
+     * @return {UserAuthenticationScheme} the scheme identified by the specified name or {@code null} if
+     *         there is none.
+     */
+    getUserAuthenticationScheme: function getUserAuthenticationScheme(name) {},
 
     /**
      * Returns the user authentication factory for the specified scheme.
@@ -156,6 +176,16 @@ var MslContext = util.Class.create({
      * @return {TokenFactory} the token factory.
      */
     getTokenFactory: function() {},
+
+    /**
+     * <p>Returns the key exchange scheme identified by the specified name or
+     * {@code null} if there is none.</p>
+     * 
+     * @param {string} name the key exchange scheme name.
+     * @return {KeyExchangeScheme} the scheme identified by the specified name or {@code null} if
+     *         there is none.
+     */
+    getKeyExchangeScheme: function getKeyExchangeScheme(name) {},
 
     /**
      * Returns the key exchange factory for the specified scheme.

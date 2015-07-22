@@ -84,7 +84,7 @@ public abstract class KeyRequestData implements JSONString {
         try {
             // Pull the key data.
             final String schemeName = keyRequestDataJO.getString(KEY_SCHEME);
-            final KeyExchangeScheme scheme = KeyExchangeScheme.getScheme(schemeName);
+            final KeyExchangeScheme scheme = ctx.getKeyExchangeScheme(schemeName);
             if (scheme == null)
                 throw new MslKeyExchangeException(MslError.UNIDENTIFIED_KEYX_SCHEME, schemeName);
             final JSONObject keyData = keyRequestDataJO.getJSONObject(KEY_KEYDATA);

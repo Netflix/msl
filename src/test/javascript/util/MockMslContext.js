@@ -233,6 +233,11 @@ var MockMslContext$create;
 		getMslCryptoContext: function getMslCryptoContext() {
 			return this._mslCryptoContext;
 		},
+        
+        /** @inheritDoc */
+		getEntityAuthenticationScheme: function getEntityAuthenticationScheme(name) {
+		    return EntityAuthenticationScheme$getScheme(name);
+		},
 
 		/**
 		 * Adds or replaces the entity authentication factory associated with the
@@ -257,6 +262,11 @@ var MockMslContext$create;
 		/** @inheritDoc */
 		getEntityAuthenticationFactory: function getEntityAuthenticationFactory(scheme) {
 			return this._entityAuthFactories[scheme.name];
+		},
+		
+		/** @inheritDoc */
+		getUserAuthenticationScheme: function getUserAuthenticationScheme(name) {
+		    return UserAuthenticationScheme$getScheme(name);
 		},
 
 		/**
@@ -306,6 +316,36 @@ var MockMslContext$create;
 		getDhParameterSpecs: function getDhParameterSpecs() {
 			return this._paramSpecs;
 		},
+		
+		/** @inheritDoc */
+		getKeyExchangeScheme: function getKeyExchangeScheme(name) {
+		    return KeyExchangeScheme$getScheme(name);
+		},
+
+        /**
+         * Adds a key exchange factory to the end of the preferred set.
+         * 
+         * @param {KeyExchangeFactory} factory key exchange factory.
+         */
+        addKeyExchangeFactory: function addKeyExchangeFactory(factory) {
+            this._keyxFactories.push(factory);
+        },
+
+        /**
+         * Removes all key exchange factories associated with the specified key
+         * exchange scheme.
+         * 
+         * @param {KeyExchangeScheme} scheme key exchange scheme.
+         */
+        removeKeyExchangeFactories: function removeKeyExchangeFactories(scheme) {
+            for (var i = 0; i < this._keyxFactories.length; ++i) {
+                var factory = this._keyxFactories[i];
+                if (factory.scheme == scheme) {
+                    this._keyxFactories.splice(i, 1);
+                    --i;
+                }
+            }
+        },
 
 		/** @inheritDoc */
 		getKeyExchangeFactory: function getKeyExchangeFactory(scheme) {
@@ -320,31 +360,6 @@ var MockMslContext$create;
 		/** @inheritDoc */
 		getKeyExchangeFactories: function getKeyExchangeFactories(scheme) {
 			return this._keyxFactories;
-		},
-
-		/**
-		 * Adds a key exchange factory to the end of the preferred set.
-		 * 
-		 * @param {KeyExchangeFactory} factory key exchange factory.
-		 */
-		addKeyExchangeFactory: function addKeyExchangeFactory(factory) {
-			this._keyxFactories.push(factory);
-		},
-
-		/**
-		 * Removes all key exchange factories associated with the specified key
-		 * exchange scheme.
-		 * 
-		 * @param {KeyExchangeScheme} scheme key exchange scheme.
-		 */
-		removeKeyExchangeFactories: function removeKeyExchangeFactories(scheme) {
-			for (var i = 0; i < this._keyxFactories.length; ++i) {
-				var factory = this._keyxFactories[i];
-				if (factory.scheme == scheme) {
-					this._keyxFactories.splice(i, 1);
-					--i;
-				}
-			}
 		},
 
 		/** @inheritDoc */

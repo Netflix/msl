@@ -128,11 +128,27 @@ public abstract class KanColleMslContext implements MslContext {
     }
 
     /* (non-Javadoc)
+     * @see com.netflix.msl.util.MslContext#getEntityAuthenticationScheme(java.lang.String)
+     */
+    @Override
+    public EntityAuthenticationScheme getEntityAuthenticationScheme(final String name) {
+        return EntityAuthenticationScheme.getScheme(name);
+    }
+
+    /* (non-Javadoc)
      * @see com.netflix.msl.util.MslContext#getEntityAuthenticationFactory(com.netflix.msl.entityauth.EntityAuthenticationScheme)
      */
     @Override
     public EntityAuthenticationFactory getEntityAuthenticationFactory(final EntityAuthenticationScheme scheme) {
         return entityAuthFactories.get(scheme);
+    }
+
+    /* (non-Javadoc)
+     * @see com.netflix.msl.util.MslContext#getUserAuthenticationScheme(java.lang.String)
+     */
+    @Override
+    public UserAuthenticationScheme getUserAuthenticationScheme(final String name) {
+        return UserAuthenticationScheme.getScheme(name);
     }
 
     /* (non-Javadoc)
@@ -149,6 +165,14 @@ public abstract class KanColleMslContext implements MslContext {
     @Override
     public TokenFactory getTokenFactory() {
         return tokenFactory;
+    }
+    
+    /* (non-Javadoc)
+     * @see com.netflix.msl.util.MslContext#getKeyExchangeScheme(java.lang.String)
+     */
+    @Override
+    public KeyExchangeScheme getKeyExchangeScheme(final String name) {
+        return KeyExchangeScheme.getScheme(name);
     }
 
     /* (non-Javadoc)

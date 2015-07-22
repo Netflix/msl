@@ -373,6 +373,14 @@ public class MslControl {
         public ICryptoContext getMslCryptoContext() throws MslCryptoException {
             return new NullCryptoContext();
         }
+        
+        /* (non-Javadoc)
+         * @see com.netflix.msl.util.MslContext#getEntityAuthenticationScheme(java.lang.String)
+         */
+        @Override
+        public EntityAuthenticationScheme getEntityAuthenticationScheme(final String name) {
+            return EntityAuthenticationScheme.getScheme(name);
+        }
 
         /* (non-Javadoc)
          * @see com.netflix.msl.util.MslContext#getEntityAuthenticationFactory(com.netflix.msl.entityauth.EntityAuthenticationScheme)
@@ -380,6 +388,14 @@ public class MslControl {
         @Override
         public EntityAuthenticationFactory getEntityAuthenticationFactory(final EntityAuthenticationScheme scheme) {
             return null;
+        }
+        
+        /* (non-Javadoc)
+         * @see com.netflix.msl.util.MslContext#getUserAuthenticationScheme(java.lang.String)
+         */
+        @Override
+        public UserAuthenticationScheme getUserAuthenticationScheme(final String name) {
+            return UserAuthenticationScheme.getScheme(name);
         }
 
         /* (non-Javadoc)
@@ -396,6 +412,14 @@ public class MslControl {
         @Override
         public TokenFactory getTokenFactory() {
             throw new MslInternalException("Dummy token factory should never actually get used.");
+        }
+        
+        /* (non-Javadoc)
+         * @see com.netflix.msl.util.MslContext#getKeyExchangeScheme(java.lang.String)
+         */
+        @Override
+        public KeyExchangeScheme getKeyExchangeScheme(final String name) {
+            return KeyExchangeScheme.getScheme(name);
         }
 
         /* (non-Javadoc)
@@ -2812,7 +2836,7 @@ public class MslControl {
         /** Request message input stream. */
         private final MessageInputStream request;
         /** Remote entity output stream. */
-        private OutputStream out;
+        private final OutputStream out;
         
         /**
          * Create a new error service.
@@ -2931,7 +2955,7 @@ public class MslControl {
             }
 
             @Override
-            public synchronized void mark(int readlimit) {
+            public synchronized void mark(final int readlimit) {
             }
 
             @Override
@@ -2947,14 +2971,14 @@ public class MslControl {
             }
 
             @Override
-            public int read(byte[] b, int off, int len) throws IOException {
+            public int read(final byte[] b, final int off, final int len) throws IOException {
                 if (in == null)
                     in = conn.getInputStream();
                 return super.read(b, off, len);
             }
 
             @Override
-            public int read(byte[] b) throws IOException {
+            public int read(final byte[] b) throws IOException {
                 if (in == null)
                     in = conn.getInputStream();
                 return super.read(b);
@@ -2968,7 +2992,7 @@ public class MslControl {
             }
 
             @Override
-            public long skip(long n) throws IOException {
+            public long skip(final long n) throws IOException {
                 if (in == null)
                     in = conn.getInputStream();
                 return super.skip(n);
