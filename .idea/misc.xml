@@ -68,7 +68,4 @@
   <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" default="true" assert-keyword="true" jdk-15="true" project-jdk-name="1.8" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/classes" />
   </component>
-  <component name="SvnConfiguration">
-    <configuration>$USER_HOME$/.subversion</configuration>
-  </component>
 </project>

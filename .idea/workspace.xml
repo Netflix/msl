@@ -2,620 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="f2e4eafe-7a5c-40ee-881f-9de4b6e9d013" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/example-burp/build.gradle" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/example-server/build.gradle" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integ-tests/build.gradle" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/mocks/build.gradle" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/.idea/encodings.xml" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/.idea/libraries/org_hamcrest_hamcrest_library_1_3.xml" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/.idea/scopes/scope_settings.xml" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/.project" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/entityauth/MockPresharedAuthenticationFactory.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/entityauth/MockPresharedKeyStore.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/entityauth/MockPresharedProfileAuthenticationFactory.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/entityauth/MockRsaAuthenticationFactory.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/entityauth/MockRsaStore.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/entityauth/MockX509AuthenticationFactory.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/keyx/MockCryptoContextRepository.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/keyx/MockDiffieHellmanParameters.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/msg/MockMessageContext.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/tokens/MockMslUser.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/tokens/MockTokenFactory.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/userauth/MockEmailPasswordAuthenticationFactory.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/userauth/MockEmailPasswordStore.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/userauth/MockUserIdTokenAuthenticationFactory.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/util/MockAuthenticationUtils.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/util/MockMslContext.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/javascript/entityauth/MockPresharedAuthenticationFactory.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/javascript/entityauth/MockPresharedKeyStore.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/javascript/entityauth/MockPresharedProfileAuthenticationFactory.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/javascript/entityauth/MockRsaAuthenticationFactory.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/javascript/entityauth/MockUnauthenticatedAuthenticationFactory.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/javascript/entityauth/MockX509AuthenticationFactory.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/javascript/keyx/MockCryptoContextRepository.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/javascript/keyx/MockDiffieHellmanParameters.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/javascript/msg/MockMessageContext.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/javascript/tokens/MockMslUser.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/javascript/tokens/MockTokenFactory.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/javascript/userauth/MockEmailPasswordAuthenticationFactory.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/javascript/userauth/MockEmailPasswordStore.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/javascript/userauth/MockUserIdTokenAuthenticationFactory.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/javascript/util/MockAuthenticationUtils.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/message-service-layer/src/test/javascript/util/MockMslContext.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/BurpExtender.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/MSLHttpListener.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/MSLTab.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/MSLTabFactory.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/README.md" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IBurpExtender.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IBurpExtenderCallbacks.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IContextMenuFactory.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IContextMenuInvocation.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/ICookie.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IExtensionHelpers.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IExtensionStateListener.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IHttpListener.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IHttpRequestResponse.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IHttpRequestResponsePersisted.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IHttpRequestResponseWithMarkers.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IHttpService.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IInterceptedProxyMessage.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IIntruderAttack.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IIntruderPayloadGenerator.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IIntruderPayloadGeneratorFactory.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IIntruderPayloadProcessor.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IMenuItemHandler.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IMessageEditor.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IMessageEditorController.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IMessageEditorTab.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IMessageEditorTabFactory.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IParameter.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IProxyListener.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IRequestInfo.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IResponseInfo.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IScanIssue.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IScanQueueItem.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IScannerCheck.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IScannerInsertionPoint.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IScannerInsertionPointProvider.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IScannerListener.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/IScopeChangeListener.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/ISessionHandlingAction.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/ITab.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/ITempFile.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/lib/burp-extender/burp/ITextEditor.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/msl/WiretapException.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/msl/WiretapModule.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/msl/msg/CaptureMessageDebugContext.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/msl/msg/WiretapMessageContext.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/msl/msg/WiretapMessageInputStream.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/msl/tokens/EchoingTokenFactory.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/burp/msl/util/WiretapMslContext.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/KanColleConstants.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/KanColleFactory.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/KanColleMslError.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/Kanmusu.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/NavalPort.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/app/KanColle.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/crypto/KanColleCryptoContext.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/entityauth/CodeBook.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/entityauth/FivePageCodeBook.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/entityauth/KanColleEntityAuthenticationScheme.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/entityauth/KanmusuAuthenticationData.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/entityauth/KanmusuAuthenticationFactory.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/entityauth/KanmusuDatabase.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/entityauth/NavalPortAuthenticationData.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/entityauth/NavalPortAuthenticationFactory.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/entityauth/NavalPortDatabase.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/entityauth/SimpleKanmusuDatabase.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/entityauth/SimpleNavalPortDatabase.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/kc/Handler.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/kc/KanColleServer.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/kc/KcConnection.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/kc/KcStreamHandlerFactory.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/keyx/DiffieHellmanManager.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/keyx/KanColleDiffieHellmanParameters.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/keyx/KanColleKeyxComparator.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/msg/AckMessageContext.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/msg/CriticalMessageContext.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/msg/ErrorMessageContext.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/msg/KanColleMessageContext.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/msg/Message.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/msg/MessageProcessor.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/msg/OrderRequestMessageContext.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/msg/OrderResponseMessageContext.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/msg/PingMessageContext.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/msg/ReceiveMessageContext.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/msg/ReportMessageContext.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/tokens/KanColleTokenFactory.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/userauth/KanColleUserAuthenticationScheme.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/userauth/Officer.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/userauth/OfficerAuthenticationData.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/userauth/OfficerAuthenticationFactory.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/userauth/OfficerDatabase.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/userauth/SimpleOfficerDatabase.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/util/ConsoleManager.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/util/KanColleAuthenticationUtils.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/util/KanColleMslContext.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/util/KanmusuMslContext.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/kancolle/util/NavalPortMslContext.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/server/SimpleConstants.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/server/SimpleServlet.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/server/WebContent/META-INF/MANIFEST.MF" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/server/WebContent/WEB-INF/lib/bcprov-jdk15on-150.jar" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/server/WebContent/WEB-INF/web.xml" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/server/entityauth/SimpleRsaStore.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/server/lib/servlet-api-2.5.jar" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/server/msg/SimpleEchoRequest.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/server/msg/SimpleLogRequest.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/server/msg/SimpleProfileRequest.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/server/msg/SimpleQueryRequest.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/server/msg/SimpleQuitRequest.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/server/msg/SimpleReceiveMessageContext.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/server/msg/SimpleRequest.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/server/msg/SimpleRequestExecutionException.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/server/msg/SimpleRequestParseException.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/server/msg/SimpleRequestUnknownException.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/server/msg/SimpleRequestUserException.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/server/msg/SimpleRespondMessageContext.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/server/userauth/SimpleEmailPasswordStore.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/server/userauth/SimpleTokenFactory.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/server/userauth/SimpleUser.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/server/util/SimpleAuthenticationUtils.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/java/server/util/SimpleMslContext.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/javascript/client/SimpleClient.html" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/javascript/client/SimpleClient.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/javascript/client/SimpleConstants.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/javascript/client/keyx/SimpleKeyxManager.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/javascript/client/msg/AdvancedRequest.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/javascript/client/msg/AdvancedRequestMessageContext.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/javascript/client/msg/SimpleEchoRequest.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/javascript/client/msg/SimpleFilterStreamFactory.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/javascript/client/msg/SimpleLogRequest.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/javascript/client/msg/SimpleMessageDebugContext.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/javascript/client/msg/SimpleProfileRequest.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/javascript/client/msg/SimpleQueryRequest.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/javascript/client/msg/SimpleQuitRequest.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/javascript/client/msg/SimpleRequest.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/javascript/client/msg/SimpleRequestMessageContext.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/javascript/client/util/SimpleKeyxMslStore.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/javascript/client/util/SimpleMslContext.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/resources/kancolle/codebooks/cockcannotfly.txt" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/resources/kancolle/codebooks/dogscannotspeak.txt" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/resources/kancolle/codebooks/ratandowl.txt" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/resources/kancolle/codebooks/thundergods.txt" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/resources/kancolle/db/kanmusu.properties" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/resources/kancolle/db/officers.properties" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/examples/resources/kancolle/db/ports.properties" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/int-test/java/com/netflix/msl/server/WebContent/WEB-INF/lib/bcprov-jdk15on-150.jar" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/int-test/java/com/netflix/msl/server/lib/servlet-api-2.5.jar" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/README.md" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/java/com/netflix/msl/client/assertable/ErrorHdrAssertable.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/java/com/netflix/msl/client/assertable/MsgAssertable.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/java/com/netflix/msl/client/common/BaseTestClass.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/java/com/netflix/msl/client/configuration/ClientConfiguration.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/java/com/netflix/msl/client/configuration/ServerConfiguration.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/java/com/netflix/msl/client/configuration/entityauth/ExtendedEntityAuthenticationScheme.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/java/com/netflix/msl/client/configuration/entityauth/TestPresharedAuthenticationFactory.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/java/com/netflix/msl/client/configuration/entityauth/TestRsaAuthenticationFactory.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/java/com/netflix/msl/client/configuration/entityauth/TestX509AuthenticationFactory.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/java/com/netflix/msl/client/configuration/keyx/TestKeyExchangeScheme.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/java/com/netflix/msl/client/configuration/msg/ClientMessageContext.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/java/com/netflix/msl/client/configuration/msg/InvalidUserAuthScheme.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/java/com/netflix/msl/client/configuration/msg/TestConsoleFilterStreamFactory.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/java/com/netflix/msl/client/configuration/tokens/TokenFactoryType.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/java/com/netflix/msl/client/configuration/util/ClientMslContext.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/java/com/netflix/msl/client/tests/EntityAuthTests.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/java/com/netflix/msl/client/tests/MasterTokenTests.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/java/com/netflix/msl/client/tests/ServiceTokenTests.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/java/com/netflix/msl/client/tests/UserAuthTests.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/java/com/netflix/msl/client/tests/UserIdTokenTests.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/java/com/netflix/msl/server/WebContent/META-INF/MANIFEST.MF" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/java/com/netflix/msl/server/WebContent/WEB-INF/lib/bcprov-jdk15on-150.jar" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/java/com/netflix/msl/server/WebContent/WEB-INF/web.xml" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/java/com/netflix/msl/server/common/BaseServlet.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/java/com/netflix/msl/server/configuration/msg/ServerMessageContext.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/java/com/netflix/msl/server/configuration/tokens/ServerTokenFactory.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/java/com/netflix/msl/server/configuration/tokens/TokenFactoryType.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/java/com/netflix/msl/server/configuration/util/ServerMslContext.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/java/com/netflix/msl/server/servlet/EchoServlet.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/java/com/netflix/msl/server/servlet/NullServlet.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/java/com/netflix/msl/server/servlet/TestServlet.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/integTest/resources/test.properties" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/java/lib/JSON-java/README" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/java/lib/JSON-java/org/json/CDL.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/java/lib/JSON-java/org/json/Cookie.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/java/lib/JSON-java/org/json/CookieList.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/java/lib/JSON-java/org/json/HTTP.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/java/lib/JSON-java/org/json/HTTPTokener.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/java/lib/JSON-java/org/json/JSONArray.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/java/lib/JSON-java/org/json/JSONException.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/java/lib/JSON-java/org/json/JSONML.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/java/lib/JSON-java/org/json/JSONObject.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/java/lib/JSON-java/org/json/JSONString.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/java/lib/JSON-java/org/json/JSONStringer.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/java/lib/JSON-java/org/json/JSONTokener.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/java/lib/JSON-java/org/json/JSONWriter.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/java/lib/JSON-java/org/json/Kim.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/java/lib/JSON-java/org/json/Property.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/java/lib/JSON-java/org/json/XML.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/java/lib/JSON-java/org/json/XMLTokener.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/java/lib/JSON-java/org/json/zip/BitInputStream.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/java/lib/JSON-java/org/json/zip/BitOutputStream.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/java/lib/JSON-java/org/json/zip/BitReader.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/java/lib/JSON-java/org/json/zip/BitWriter.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/java/lib/JSON-java/org/json/zip/Huff.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/java/lib/JSON-java/org/json/zip/JSONzip.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/java/lib/JSON-java/org/json/zip/Keep.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/java/lib/JSON-java/org/json/zip/None.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/java/lib/JSON-java/org/json/zip/PostMortem.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/java/lib/JSON-java/org/json/zip/README" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/java/lib/JSON-java/org/json/zip/Unzipper.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/java/lib/JSON-java/org/json/zip/Zipper.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/test/java/lib/hamcrest-core-1.3.jar" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/test/java/lib/hamcrest-library-1.3.jar" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/test/java/lib/junit-4.11.jar" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/test/resources/entityauth/msl.key" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/test/resources/entityauth/msl.pem" afterPath="" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/MslConstants.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/MslConstants.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/MslCryptoException.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/MslCryptoException.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/MslEncodingException.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/MslEncodingException.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/MslEntityAuthException.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/MslEntityAuthException.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/MslError.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/MslError.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/MslErrorResponseException.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/MslErrorResponseException.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/MslException.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/MslException.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/MslInternalException.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/MslInternalException.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/MslKeyExchangeException.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/MslKeyExchangeException.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/MslMasterTokenException.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/MslMasterTokenException.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/MslMessageException.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/MslMessageException.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/MslUserAuthException.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/MslUserAuthException.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/MslUserIdTokenException.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/MslUserIdTokenException.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/crypto/AsymmetricCryptoContext.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/crypto/AsymmetricCryptoContext.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/crypto/ClientMslCryptoContext.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/crypto/ClientMslCryptoContext.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/crypto/CryptoCache.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/crypto/CryptoCache.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/crypto/ICryptoContext.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/crypto/ICryptoContext.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/crypto/JcaAlgorithm.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/crypto/JcaAlgorithm.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/crypto/JsonWebEncryptionCryptoContext.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/crypto/JsonWebEncryptionCryptoContext.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/crypto/JsonWebKey.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/crypto/JsonWebKey.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/crypto/MslCiphertextEnvelope.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/crypto/MslCiphertextEnvelope.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/crypto/MslSignatureEnvelope.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/crypto/MslSignatureEnvelope.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/crypto/NullCryptoContext.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/crypto/NullCryptoContext.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/crypto/RsaCryptoContext.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/crypto/RsaCryptoContext.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/crypto/SessionCryptoContext.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/crypto/SessionCryptoContext.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/crypto/SymmetricCryptoContext.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/crypto/SymmetricCryptoContext.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/crypto/package.html" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/crypto/package.html" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/entityauth/EntityAuthenticationData.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/entityauth/EntityAuthenticationData.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/entityauth/EntityAuthenticationFactory.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/entityauth/EntityAuthenticationFactory.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/entityauth/EntityAuthenticationScheme.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/entityauth/EntityAuthenticationScheme.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/entityauth/PresharedAuthenticationData.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/entityauth/PresharedAuthenticationData.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/entityauth/PresharedAuthenticationFactory.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/entityauth/PresharedAuthenticationFactory.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/entityauth/PresharedKeyStore.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/entityauth/PresharedKeyStore.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/entityauth/PresharedProfileAuthenticationData.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/entityauth/PresharedProfileAuthenticationData.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/entityauth/PresharedProfileAuthenticationFactory.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/entityauth/PresharedProfileAuthenticationFactory.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/entityauth/RsaAuthenticationData.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/entityauth/RsaAuthenticationData.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/entityauth/RsaAuthenticationFactory.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/entityauth/RsaAuthenticationFactory.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/entityauth/RsaStore.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/entityauth/RsaStore.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/entityauth/UnauthenticatedAuthenticationData.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/entityauth/UnauthenticatedAuthenticationData.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/entityauth/UnauthenticatedAuthenticationFactory.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/entityauth/UnauthenticatedAuthenticationFactory.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/entityauth/UnauthenticatedSuffixedAuthenticationData.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/entityauth/UnauthenticatedSuffixedAuthenticationData.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/entityauth/UnauthenticatedSuffixedAuthenticationFactory.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/entityauth/UnauthenticatedSuffixedAuthenticationFactory.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/entityauth/X509AuthenticationData.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/entityauth/X509AuthenticationData.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/entityauth/X509AuthenticationFactory.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/entityauth/X509AuthenticationFactory.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/entityauth/X509Store.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/entityauth/X509Store.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/entityauth/package.html" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/entityauth/package.html" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/io/LZWInputStream.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/io/LZWInputStream.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/io/LZWOutputStream.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/io/LZWOutputStream.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/io/package.html" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/io/package.html" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/keyx/AsymmetricWrappedExchange.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/keyx/AsymmetricWrappedExchange.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/keyx/DiffieHellmanExchange.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/keyx/DiffieHellmanExchange.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/keyx/DiffieHellmanParameters.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/keyx/DiffieHellmanParameters.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/keyx/JsonWebEncryptionLadderExchange.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/keyx/JsonWebEncryptionLadderExchange.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/keyx/JsonWebKeyLadderExchange.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/keyx/JsonWebKeyLadderExchange.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/keyx/KeyExchangeFactory.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/keyx/KeyExchangeFactory.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/keyx/KeyExchangeScheme.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/keyx/KeyExchangeScheme.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/keyx/KeyRequestData.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/keyx/KeyRequestData.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/keyx/KeyResponseData.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/keyx/KeyResponseData.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/keyx/SymmetricWrappedExchange.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/keyx/SymmetricWrappedExchange.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/keyx/WrapCryptoContextRepository.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/keyx/WrapCryptoContextRepository.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/keyx/package.html" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/keyx/package.html" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/msg/ConsoleFilterStreamFactory.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/msg/ConsoleFilterStreamFactory.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/msg/ErrorHeader.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/msg/ErrorHeader.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/msg/ErrorMessageRegistry.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/msg/ErrorMessageRegistry.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/msg/FilterStreamFactory.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/msg/FilterStreamFactory.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/msg/Header.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/msg/Header.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/msg/MessageBuilder.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/msg/MessageBuilder.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/msg/MessageCapabilities.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/msg/MessageCapabilities.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/msg/MessageContext.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/msg/MessageContext.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/msg/MessageDebugContext.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/msg/MessageDebugContext.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/msg/MessageHeader.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/msg/MessageHeader.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/msg/MessageInputStream.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/msg/MessageInputStream.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/msg/MessageOutputStream.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/msg/MessageOutputStream.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/msg/MessageServiceTokenBuilder.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/msg/MessageServiceTokenBuilder.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/msg/MslControl.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/msg/MslControl.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/msg/NonReplayableMessageContext.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/msg/NonReplayableMessageContext.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/msg/PayloadChunk.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/msg/PayloadChunk.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/msg/PublicMessageContext.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/msg/PublicMessageContext.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/msg/SecretMessageContext.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/msg/SecretMessageContext.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/msg/package.html" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/msg/package.html" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/package.html" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/package.html" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/tokens/ClientTokenFactory.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/tokens/ClientTokenFactory.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/tokens/MasterToken.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/tokens/MasterToken.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/tokens/MslUser.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/tokens/MslUser.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/tokens/ServiceToken.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/tokens/ServiceToken.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/tokens/TokenFactory.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/tokens/TokenFactory.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/tokens/UserIdToken.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/tokens/UserIdToken.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/tokens/package.html" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/tokens/package.html" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/userauth/EmailPasswordAuthenticationData.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/userauth/EmailPasswordAuthenticationData.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/userauth/EmailPasswordAuthenticationFactory.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/userauth/EmailPasswordAuthenticationFactory.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/userauth/EmailPasswordStore.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/userauth/EmailPasswordStore.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/userauth/UserAuthenticationData.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/userauth/UserAuthenticationData.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/userauth/UserAuthenticationFactory.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/userauth/UserAuthenticationFactory.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/userauth/UserAuthenticationScheme.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/userauth/UserAuthenticationScheme.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/userauth/UserIdTokenAuthenticationData.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/userauth/UserIdTokenAuthenticationData.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/userauth/UserIdTokenAuthenticationFactory.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/userauth/UserIdTokenAuthenticationFactory.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/userauth/package.html" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/userauth/package.html" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/util/AuthenticationUtils.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/util/AuthenticationUtils.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/util/JsonUtils.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/util/JsonUtils.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/util/MslContext.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/util/MslContext.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/util/MslStore.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/util/MslStore.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/util/MslUtils.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/util/MslUtils.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/util/NullMslStore.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/util/NullMslStore.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/util/SimpleMslStore.java" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/util/SimpleMslStore.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/java/com/netflix/msl/util/package.html" afterPath="$PROJECT_DIR$/message-service-layer/src/main/java/com/netflix/msl/util/package.html" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/MslConstants.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/MslConstants.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/MslCryptoException.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/MslCryptoException.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/MslEncodingException.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/MslEncodingException.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/MslEntityAuthException.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/MslEntityAuthException.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/MslError.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/MslError.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/MslErrorResponseException.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/MslErrorResponseException.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/MslException.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/MslException.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/MslInternalException.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/MslInternalException.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/MslInterruptedException.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/MslInterruptedException.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/MslIoException.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/MslIoException.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/MslKeyExchangeException.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/MslKeyExchangeException.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/MslMasterTokenException.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/MslMasterTokenException.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/MslMessageException.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/MslMessageException.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/MslUserAuthException.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/MslUserAuthException.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/MslUserIdTokenException.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/MslUserIdTokenException.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/crypto/CipherKey.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/crypto/CipherKey.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/crypto/ClientMslCryptoContext.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/crypto/ClientMslCryptoContext.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/crypto/ICryptoContext.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/crypto/ICryptoContext.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/crypto/JsonWebEncryptionCryptoContext.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/crypto/JsonWebEncryptionCryptoContext.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/crypto/MslCiphertextEnvelope.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/crypto/MslCiphertextEnvelope.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/crypto/MslSignatureEnvelope.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/crypto/MslSignatureEnvelope.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/crypto/NullCryptoContext.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/crypto/NullCryptoContext.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/crypto/PrivateKey.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/crypto/PrivateKey.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/crypto/PublicKey.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/crypto/PublicKey.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/crypto/RsaCryptoContext.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/crypto/RsaCryptoContext.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/crypto/SessionCryptoContext.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/crypto/SessionCryptoContext.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/crypto/SymmetricCryptoContext.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/crypto/SymmetricCryptoContext.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/crypto/WebCryptoAdapter.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/crypto/WebCryptoAdapter.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/crypto/WebCryptoAlgorithm.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/crypto/WebCryptoAlgorithm.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/crypto/WebCryptoUsage.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/crypto/WebCryptoUsage.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/entityauth/EntityAuthenticationData.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/entityauth/EntityAuthenticationData.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/entityauth/EntityAuthenticationFactory.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/entityauth/EntityAuthenticationFactory.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/entityauth/EntityAuthenticationScheme.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/entityauth/EntityAuthenticationScheme.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/entityauth/PresharedAuthenticationData.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/entityauth/PresharedAuthenticationData.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/entityauth/PresharedAuthenticationFactory.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/entityauth/PresharedAuthenticationFactory.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/entityauth/PresharedKeyStore.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/entityauth/PresharedKeyStore.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/entityauth/PresharedProfileAuthenticationData.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/entityauth/PresharedProfileAuthenticationData.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/entityauth/PresharedProfileAuthenticationFactory.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/entityauth/PresharedProfileAuthenticationFactory.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/entityauth/RsaAuthenticationData.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/entityauth/RsaAuthenticationData.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/entityauth/RsaAuthenticationFactory.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/entityauth/RsaAuthenticationFactory.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/entityauth/RsaStore.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/entityauth/RsaStore.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/entityauth/UnauthenticatedAuthenticationData.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/entityauth/UnauthenticatedAuthenticationData.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/entityauth/UnauthenticatedAuthenticationFactory.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/entityauth/UnauthenticatedAuthenticationFactory.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/entityauth/UnauthenticatedSuffixedAuthenticationData.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/entityauth/UnauthenticatedSuffixedAuthenticationData.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/entityauth/UnauthenticatedSuffixedAuthenticationFactory.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/entityauth/UnauthenticatedSuffixedAuthenticationFactory.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/entityauth/X509AuthenticationData.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/entityauth/X509AuthenticationData.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/entityauth/X509AuthenticationFactory.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/entityauth/X509AuthenticationFactory.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/entityauth/X509Store.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/entityauth/X509Store.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/io/ByteArrayInputStream.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/io/ByteArrayInputStream.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/io/ByteArrayOutputStream.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/io/ByteArrayOutputStream.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/io/InputStream.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/io/InputStream.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/io/OutputStream.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/io/OutputStream.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/io/Url.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/io/Url.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/io/inputStreamToJSON.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/io/inputStreamToJSON.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/keyx/AsymmetricWrappedExchange.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/keyx/AsymmetricWrappedExchange.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/keyx/DiffieHellmanExchange.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/keyx/DiffieHellmanExchange.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/keyx/DiffieHellmanParameters.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/keyx/DiffieHellmanParameters.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/keyx/JsonWebEncryptionLadderExchange.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/keyx/JsonWebEncryptionLadderExchange.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/keyx/JsonWebKeyLadderExchange.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/keyx/JsonWebKeyLadderExchange.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/keyx/KeyExchangeFactory.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/keyx/KeyExchangeFactory.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/keyx/KeyExchangeScheme.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/keyx/KeyExchangeScheme.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/keyx/KeyRequestData.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/keyx/KeyRequestData.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/keyx/KeyResponseData.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/keyx/KeyResponseData.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/keyx/SymmetricWrappedExchange.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/keyx/SymmetricWrappedExchange.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/keyx/WrapCryptoContextRepository.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/keyx/WrapCryptoContextRepository.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/lib/asnjwk.concat.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/lib/asnjwk.concat.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/lib/base64.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/lib/base64.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/lib/clarinet.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/lib/clarinet.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/lib/jsrsasign/LICENSE.txt" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/lib/jsrsasign/LICENSE.txt" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/lib/jsrsasign/jsrsasign-4.8.3-all-min.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/lib/jsrsasign/jsrsasign-4.8.3-all-min.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/lib/lzw.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/lib/lzw.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/lib/promise.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/lib/promise.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/lib/textEncoding.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/lib/textEncoding.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/msg/ClarinetParser.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/msg/ClarinetParser.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/msg/ErrorHeader.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/msg/ErrorHeader.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/msg/ErrorMessageRegistry.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/msg/ErrorMessageRegistry.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/msg/FilterStreamFactory.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/msg/FilterStreamFactory.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/msg/Header.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/msg/Header.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/msg/MessageBuilder.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/msg/MessageBuilder.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/msg/MessageCapabilities.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/msg/MessageCapabilities.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/msg/MessageContext.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/msg/MessageContext.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/msg/MessageDebugContext.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/msg/MessageDebugContext.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/msg/MessageHeader.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/msg/MessageHeader.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/msg/MessageInputStream.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/msg/MessageInputStream.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/msg/MessageOutputStream.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/msg/MessageOutputStream.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/msg/MessageServiceTokenBuilder.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/msg/MessageServiceTokenBuilder.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/msg/MslControl.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/msg/MslControl.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/msg/NonReplayableMessageContext.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/msg/NonReplayableMessageContext.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/msg/PayloadChunk.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/msg/PayloadChunk.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/msg/PublicMessageContext.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/msg/PublicMessageContext.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/msg/SecretMessageContext.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/msg/SecretMessageContext.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/tokens/ClientTokenFactory.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/tokens/ClientTokenFactory.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/tokens/MasterToken.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/tokens/MasterToken.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/tokens/MslUser.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/tokens/MslUser.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/tokens/ServiceToken.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/tokens/ServiceToken.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/tokens/TokenFactory.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/tokens/TokenFactory.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/tokens/UserIdToken.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/tokens/UserIdToken.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/userauth/EmailPasswordAuthenticationData.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/userauth/EmailPasswordAuthenticationData.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/userauth/EmailPasswordAuthenticationFactory.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/userauth/EmailPasswordAuthenticationFactory.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/userauth/EmailPasswordStore.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/userauth/EmailPasswordStore.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/userauth/UserAuthenticationData.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/userauth/UserAuthenticationData.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/userauth/UserAuthenticationFactory.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/userauth/UserAuthenticationFactory.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/userauth/UserAuthenticationScheme.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/userauth/UserAuthenticationScheme.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/userauth/UserIdTokenAuthenticationData.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/userauth/UserIdTokenAuthenticationData.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/userauth/UserIdTokenAuthenticationFactory.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/userauth/UserIdTokenAuthenticationFactory.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/util/Arrays.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/util/Arrays.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/util/AsyncExecutor.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/util/AsyncExecutor.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/util/AuthenticationUtils.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/util/AuthenticationUtils.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/util/BlockingQueue.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/util/BlockingQueue.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/util/Class.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/util/Class.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/util/ConditionVariable.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/util/ConditionVariable.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/util/MslContext.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/util/MslContext.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/util/MslStore.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/util/MslStore.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/util/MslUtils.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/util/MslUtils.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/util/NullMslStore.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/util/NullMslStore.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/util/Random.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/util/Random.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/util/ReadWriteLock.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/util/ReadWriteLock.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/main/javascript/util/SimpleMslStore.js" afterPath="$PROJECT_DIR$/message-service-layer/src/main/javascript/util/SimpleMslStore.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/MslExceptionTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/MslExceptionTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/crypto/JsonWebEncryptionCryptoContextSuite.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/crypto/JsonWebEncryptionCryptoContextSuite.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/crypto/JsonWebKeyTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/crypto/JsonWebKeyTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/crypto/MslCiphertextEnvelopeTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/crypto/MslCiphertextEnvelopeTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/crypto/MslSignatureEnvelopeTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/crypto/MslSignatureEnvelopeTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/crypto/NullCryptoContextTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/crypto/NullCryptoContextTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/crypto/RsaCryptoContextSuite.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/crypto/RsaCryptoContextSuite.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/crypto/SessionCryptoContextTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/crypto/SessionCryptoContextTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/crypto/SymmetricCryptoContextTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/crypto/SymmetricCryptoContextTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/entityauth/EntityAuthenticationDataTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/entityauth/EntityAuthenticationDataTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/entityauth/PresharedAuthenticationDataTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/entityauth/PresharedAuthenticationDataTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/entityauth/PresharedAuthenticationFactoryTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/entityauth/PresharedAuthenticationFactoryTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/entityauth/PresharedProfileAuthenticationDataTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/entityauth/PresharedProfileAuthenticationDataTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/entityauth/PresharedProfileAuthenticationFactoryTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/entityauth/PresharedProfileAuthenticationFactoryTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/entityauth/RsaAuthenticationDataTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/entityauth/RsaAuthenticationDataTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/entityauth/RsaAuthenticationFactoryTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/entityauth/RsaAuthenticationFactoryTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/entityauth/UnauthenticatedAuthenticationDataTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/entityauth/UnauthenticatedAuthenticationDataTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/entityauth/UnauthenticatedAuthenticationFactoryTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/entityauth/UnauthenticatedAuthenticationFactoryTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/entityauth/UnauthenticatedSuffixedAuthenticationDataTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/entityauth/UnauthenticatedSuffixedAuthenticationDataTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/entityauth/UnauthenticatedSuffixedAuthenticationFactoryTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/entityauth/UnauthenticatedSuffixedAuthenticationFactoryTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/entityauth/X509AuthenticationDataTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/entityauth/X509AuthenticationDataTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/entityauth/X509AuthenticationFactoryTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/entityauth/X509AuthenticationFactoryTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/io/LZWInputStreamTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/io/LZWInputStreamTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/io/LZWOutputStreamTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/io/LZWOutputStreamTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/keyx/AsymmetricWrappedExchangeSuite.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/keyx/AsymmetricWrappedExchangeSuite.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/keyx/DiffieHellmanExchangeSuite.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/keyx/DiffieHellmanExchangeSuite.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/keyx/JsonWebEncryptionLadderExchangeSuite.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/keyx/JsonWebEncryptionLadderExchangeSuite.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/keyx/JsonWebKeyLadderExchangeSuite.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/keyx/JsonWebKeyLadderExchangeSuite.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/keyx/KeyRequestDataTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/keyx/KeyRequestDataTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/keyx/KeyResponseDataTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/keyx/KeyResponseDataTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/keyx/SymmetricWrappedExchangeSuite.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/keyx/SymmetricWrappedExchangeSuite.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/msg/ErrorHeaderTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/msg/ErrorHeaderTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/msg/JSONTokenerTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/msg/JSONTokenerTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/msg/MessageBuilderSuite.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/msg/MessageBuilderSuite.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/msg/MessageCapabilitiesTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/msg/MessageCapabilitiesTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/msg/MessageHeaderTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/msg/MessageHeaderTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/msg/MessageInputStreamTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/msg/MessageInputStreamTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/msg/MessageOutputStreamTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/msg/MessageOutputStreamTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/msg/MessageServiceTokenBuilderTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/msg/MessageServiceTokenBuilderTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/msg/PayloadChunkTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/msg/PayloadChunkTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/test/ExpectedMslException.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/test/ExpectedMslException.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/tokens/MasterTokenTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/tokens/MasterTokenTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/tokens/ServiceTokenTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/tokens/ServiceTokenTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/tokens/UserIdTokenTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/tokens/UserIdTokenTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/userauth/EmailPasswordAuthenticationDataTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/userauth/EmailPasswordAuthenticationDataTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/userauth/EmailPasswordAuthenticationFactoryTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/userauth/EmailPasswordAuthenticationFactoryTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/userauth/UserAuthenticationDataTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/userauth/UserAuthenticationDataTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/userauth/UserIdTokenAuthenticationDataTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/userauth/UserIdTokenAuthenticationDataTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/userauth/UserIdTokenAuthenticationFactoryTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/userauth/UserIdTokenAuthenticationFactoryTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/util/JsonUtilsTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/util/JsonUtilsTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/util/MslTestUtils.java" afterPath="$PROJECT_DIR$/mocks/src/main/java/msl/util/MslTestUtils.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/util/NullMslStoreTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/util/NullMslStoreTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/java/com/netflix/msl/util/SimpleMslStoreTest.java" afterPath="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/util/SimpleMslStoreTest.java" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/MslConstantsTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/MslConstantsTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/MslCryptoExceptionTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/MslCryptoExceptionTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/MslErrorTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/MslErrorTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/MslExceptionTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/MslExceptionTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/crypto/CipherKeyTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/crypto/CipherKeyTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/crypto/JsonWebEncryptionCryptoContextSuite.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/crypto/JsonWebEncryptionCryptoContextSuite.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/crypto/MslCiphertextEnvelopeTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/crypto/MslCiphertextEnvelopeTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/crypto/MslSignatureEnvelopeTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/crypto/MslSignatureEnvelopeTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/crypto/NullCryptoContextTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/crypto/NullCryptoContextTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/crypto/RsaCryptoContextSuite.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/crypto/RsaCryptoContextSuite.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/crypto/SessionCryptoContextTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/crypto/SessionCryptoContextTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/crypto/SymmetricCryptoContextTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/crypto/SymmetricCryptoContextTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/entityauth/EntityAuthenticationDataTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/entityauth/EntityAuthenticationDataTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/entityauth/EntityAuthenticationSchemeTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/entityauth/EntityAuthenticationSchemeTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/entityauth/PresharedAuthenticationDataTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/entityauth/PresharedAuthenticationDataTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/entityauth/PresharedAuthenticationFactoryTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/entityauth/PresharedAuthenticationFactoryTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/entityauth/PresharedProfileAuthenticationDataTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/entityauth/PresharedProfileAuthenticationDataTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/entityauth/PresharedProfileAuthenticationFactoryTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/entityauth/PresharedProfileAuthenticationFactoryTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/entityauth/RsaAuthenticationDataTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/entityauth/RsaAuthenticationDataTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/entityauth/RsaAuthenticationFactoryTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/entityauth/RsaAuthenticationFactoryTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/entityauth/UnauthenticatedAuthenticationDataTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/entityauth/UnauthenticatedAuthenticationDataTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/entityauth/UnauthenticatedAuthenticationFactoryTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/entityauth/UnauthenticatedAuthenticationFactoryTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/entityauth/UnauthenticatedSuffixedAuthenticationDataTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/entityauth/UnauthenticatedSuffixedAuthenticationDataTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/entityauth/UnauthenticatedSuffixedAuthenticationFactoryTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/entityauth/UnauthenticatedSuffixedAuthenticationFactoryTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/entityauth/X509AuthenticationDataTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/entityauth/X509AuthenticationDataTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/entityauth/X509AuthenticationFactoryTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/entityauth/X509AuthenticationFactoryTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/keyx/AsymmetricWrappedExchangeSuite.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/keyx/AsymmetricWrappedExchangeSuite.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/keyx/DiffieHellmanExchangeSuite.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/keyx/DiffieHellmanExchangeSuite.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/keyx/JsonWebEncryptionLadderExchangeSuite.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/keyx/JsonWebEncryptionLadderExchangeSuite.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/keyx/JsonWebKeyLadderExchangeSuite.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/keyx/JsonWebKeyLadderExchangeSuite.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/keyx/SymmetricWrappedExchangeSuite.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/keyx/SymmetricWrappedExchangeSuite.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/lib/base64test.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/lib/base64test.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/lib/jasmine/MIT.LICENSE" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/lib/jasmine/MIT.LICENSE" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/lib/jasmine/jasmine-html.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/lib/jasmine/jasmine-html.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/lib/jasmine/jasmine.css" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/lib/jasmine/jasmine.css" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/lib/jasmine/jasmine.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/lib/jasmine/jasmine.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/lib/lzwtest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/lib/lzwtest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/lib/textEncodingtest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/lib/textEncodingtest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/msg/ConsoleFilterStreamFactory.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/msg/ConsoleFilterStreamFactory.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/msg/ErrorHeaderTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/msg/ErrorHeaderTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/msg/MessageBuilderSuite.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/msg/MessageBuilderSuite.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/msg/MessageCapabilitiesTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/msg/MessageCapabilitiesTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/msg/MessageHeaderTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/msg/MessageHeaderTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/msg/MessageInputStreamTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/msg/MessageInputStreamTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/msg/MessageOutputStreamTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/msg/MessageOutputStreamTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/msg/MessageServiceTokenBuilderTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/msg/MessageServiceTokenBuilderTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/msg/PayloadChunkTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/msg/PayloadChunkTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/msltests.html" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/msltests.html" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/tokens/MasterTokenTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/tokens/MasterTokenTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/tokens/ServiceTokenTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/tokens/ServiceTokenTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/tokens/UserIdTokenTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/tokens/UserIdTokenTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/userauth/EmailPasswordAuthenticationDataTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/userauth/EmailPasswordAuthenticationDataTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/userauth/EmailPasswordAuthenticationFactoryTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/userauth/EmailPasswordAuthenticationFactoryTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/userauth/UserAuthenticationDataTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/userauth/UserAuthenticationDataTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/userauth/UserIdTokenAuthenticationDataTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/userauth/UserIdTokenAuthenticationDataTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/userauth/UserIdTokenAuthenticationFactoryTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/userauth/UserIdTokenAuthenticationFactoryTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/util/ArraysTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/util/ArraysTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/util/BlockingQueueTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/util/BlockingQueueTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/util/ClassTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/util/ClassTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/util/ConditionVariableTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/util/ConditionVariableTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/util/MslTestUtils.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/util/MslTestUtils.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/util/NullMslStoreTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/util/NullMslStoreTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/util/RandomTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/util/RandomTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/util/ReadWriteLockTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/util/ReadWriteLockTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/javascript/util/SimpleMslStoreTest.js" afterPath="$PROJECT_DIR$/message-service-layer/src/test/javascript/util/SimpleMslStoreTest.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/resources/entityauth/expired.key" afterPath="$PROJECT_DIR$/message-service-layer/src/test/resources/entityauth/expired.key" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/resources/entityauth/expired.pem" afterPath="$PROJECT_DIR$/message-service-layer/src/test/resources/entityauth/expired.pem" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/resources/entityauth/untrusted.key" afterPath="$PROJECT_DIR$/message-service-layer/src/test/resources/entityauth/untrusted.key" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/resources/entityauth/untrusted.pem" afterPath="$PROJECT_DIR$/message-service-layer/src/test/resources/entityauth/untrusted.pem" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/resources/pg1112.lzw" afterPath="$PROJECT_DIR$/message-service-layer/src/test/resources/pg1112.lzw" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/resources/pg1112.txt" afterPath="$PROJECT_DIR$/message-service-layer/src/test/resources/pg1112.txt" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/resources/rsa_private.pem" afterPath="$PROJECT_DIR$/message-service-layer/src/test/resources/rsa_private.pem" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/resources/rsa_private2.pem" afterPath="$PROJECT_DIR$/message-service-layer/src/test/resources/rsa_private2.pem" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/resources/rsa_public.pem" afterPath="$PROJECT_DIR$/message-service-layer/src/test/resources/rsa_public.pem" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/resources/rsa_public2.der" afterPath="$PROJECT_DIR$/message-service-layer/src/test/resources/rsa_public2.der" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/test/resources/rsa_public2.pem" afterPath="$PROJECT_DIR$/message-service-layer/src/test/resources/rsa_public2.pem" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/build.gradle" afterPath="$PROJECT_DIR$/build.gradle" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/compiler.xml" afterPath="$PROJECT_DIR$/.idea/compiler.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/findbugs-exclude.xml" afterPath="$PROJECT_DIR$/findbugs-exclude.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/modules.xml" afterPath="$PROJECT_DIR$/.idea/modules.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/msl.iml" afterPath="$PROJECT_DIR$/msl.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/settings.gradle" afterPath="$PROJECT_DIR$/settings.gradle" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/vcs.xml" afterPath="$PROJECT_DIR$/.idea/vcs.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="msl.iws" />
@@ -648,6 +36,9 @@
   <component name="ExternalProjectsManager">
     <system id="GRADLE">
       <state>
+        <task path="$PROJECT_DIR$">
+          <activation />
+        </task>
         <projects_view>
           <tree_state>
             <PATH>
@@ -691,8 +82,18 @@
                 <option name="myItemId" value="msl-root" />
                 <option name="myItemType" value="com.intellij.openapi.externalSystem.view.ProjectNode" />
               </PATH_ELEMENT>
+            </PATH>
+            <PATH>
               <PATH_ELEMENT>
-                <option name="myItemId" value=":message-service-layer-integ-tests" />
+                <option name="myItemId" value="" />
+                <option name="myItemType" value="com.intellij.openapi.externalSystem.view.ExternalProjectsStructure$RootNode" />
+              </PATH_ELEMENT>
+              <PATH_ELEMENT>
+                <option name="myItemId" value="msl-root" />
+                <option name="myItemType" value="com.intellij.openapi.externalSystem.view.ProjectNode" />
+              </PATH_ELEMENT>
+              <PATH_ELEMENT>
+                <option name="myItemId" value=":message-service-layer-example-server" />
                 <option name="myItemType" value="com.intellij.openapi.externalSystem.view.ModuleNode" />
               </PATH_ELEMENT>
               <PATH_ELEMENT>
@@ -710,18 +111,8 @@
                 <option name="myItemType" value="com.intellij.openapi.externalSystem.view.ProjectNode" />
               </PATH_ELEMENT>
               <PATH_ELEMENT>
-                <option name="myItemId" value=":message-service-layer-integ-tests" />
+                <option name="myItemId" value=":message-service-layer-example-server" />
                 <option name="myItemType" value="com.intellij.openapi.externalSystem.view.ModuleNode" />
-              </PATH_ELEMENT>
-            </PATH>
-            <PATH>
-              <PATH_ELEMENT>
-                <option name="myItemId" value="" />
-                <option name="myItemType" value="com.intellij.openapi.externalSystem.view.ExternalProjectsStructure$RootNode" />
-              </PATH_ELEMENT>
-              <PATH_ELEMENT>
-                <option name="myItemId" value="msl-root" />
-                <option name="myItemType" value="com.intellij.openapi.externalSystem.view.ProjectNode" />
               </PATH_ELEMENT>
             </PATH>
             <PATH>
@@ -787,7 +178,7 @@
         </entry>
       </file>
       <file leaf-file-name="MslTestUtils.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/mocks/src/main/java/msl/util/MslTestUtils.java">
+        <entry file="file://$PROJECT_DIR$/mocks/src/main/java/com/netflix/msl/util/MslTestUtils.java">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
               <caret line="32" column="0" selection-start-line="32" selection-start-column="0" selection-end-line="32" selection-end-column="0" />
@@ -802,7 +193,7 @@
         </entry>
       </file>
       <file leaf-file-name="MockX509AuthenticationFactory.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/mocks/src/main/java/msl/entityauth/MockX509AuthenticationFactory.java">
+        <entry file="file://$PROJECT_DIR$/mocks/src/main/java/com/netflix/msl/entityauth/MockX509AuthenticationFactory.java">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
               <caret line="72" column="70" selection-start-line="72" selection-start-column="70" selection-end-line="72" selection-end-column="70" />
@@ -872,11 +263,31 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="build.gradle" pinned="false" current-in-tab="true">
+      <file leaf-file-name="build.gradle" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/message-service-layer/build.gradle">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.31982943">
-              <caret line="10" column="26" selection-start-line="10" selection-start-column="26" selection-end-line="10" selection-end-column="26" />
+            <state vertical-scroll-proportion="-8.888889">
+              <caret line="16" column="23" selection-start-line="16" selection-start-column="23" selection-end-line="16" selection-end-column="23" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="EmailPasswordAuthenticationFactoryTest.java" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/userauth/EmailPasswordAuthenticationFactoryTest.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.3326613">
+              <caret line="40" column="27" selection-start-line="40" selection-start-column="27" selection-end-line="40" selection-end-column="27" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="MessageBuilderSuite.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/msg/MessageBuilderSuite.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="75" column="33" selection-start-line="75" selection-start-column="33" selection-end-line="75" selection-end-column="33" />
               <folding />
             </state>
           </provider>
@@ -918,8 +329,8 @@
       <file leaf-file-name="build.gradle" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/example-server/build.gradle">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-2.7777777">
-              <caret line="5" column="1" selection-start-line="5" selection-start-column="1" selection-end-line="5" selection-end-column="1" />
+            <state vertical-scroll-proportion="-1.6666666">
+              <caret line="3" column="45" selection-start-line="3" selection-start-column="45" selection-end-line="3" selection-end-column="45" />
               <folding />
             </state>
           </provider>
@@ -1044,8 +455,18 @@
       <file leaf-file-name="build.gradle" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/integ-tests/build.gradle">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-2.2222223">
-              <caret line="4" column="58" selection-start-line="4" selection-start-column="58" selection-end-line="4" selection-end-column="58" />
+            <state vertical-scroll-proportion="-2.7777777">
+              <caret line="5" column="5" selection-start-line="5" selection-start-column="5" selection-end-line="5" selection-end-column="5" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="ServerTokenFactory.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/integ-tests/src/main/java/com/netflix/msl/server/configuration/tokens/ServerTokenFactory.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="28" column="47" selection-start-line="28" selection-start-column="47" selection-end-line="28" selection-end-column="47" />
               <folding />
             </state>
           </provider>
@@ -1935,6 +1356,7 @@
     <option name="modificationStamps">
       <map>
         <entry key="$PROJECT_DIR$/../../JKSCHNEIDER/model-class-benchmark" value="1431547094000" />
+        <entry key="$PROJECT_DIR$" value="10062900650000" />
         <entry key="$PROJECT_DIR$/../../../stash/AC/anycast-license-core" value="2863456352000" />
         <entry key="$PROJECT_DIR$/../../../stash/AC/anycast-server" value="4299690698000" />
         <entry key="$PROJECT_DIR$/../../../stash/APT/primetime-license-core" value="2866259394000" />
@@ -3125,7 +2547,6 @@
         <option value="$PROJECT_DIR$/src/test/java/com/netflix/msl/entityauth/UnauthenticatedSuffixedAuthenticationDataTest.java" />
         <option value="$PROJECT_DIR$/examples/build.gradle" />
         <option value="$PROJECT_DIR$/example-server/build.gradle" />
-        <option value="$PROJECT_DIR$/integ-tests/build.gradle" />
         <option value="$PROJECT_DIR$/mocks/build.gradle" />
         <option value="$PROJECT_DIR$/settings.gradle" />
         <option value="$PROJECT_DIR$/example-burp/build.gradle" />
@@ -3134,6 +2555,8 @@
         <option value="$PROJECT_DIR$/mocks/src/main/java/msl/entityauth/MockX509AuthenticationFactory.java" />
         <option value="$PROJECT_DIR$/mocks/src/main/java/msl/util/MslTestUtils.java" />
         <option value="$PROJECT_DIR$/message-service-layer/build.gradle" />
+        <option value="$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/userauth/EmailPasswordAuthenticationFactoryTest.java" />
+        <option value="$PROJECT_DIR$/integ-tests/build.gradle" />
       </list>
     </option>
   </component>
@@ -3358,7 +2781,7 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="example-server" />
+              <option name="myItemId" value="integ-tests" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -3372,7 +2795,7 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="example-burp" />
+              <option name="myItemId" value="example-server" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -3387,7 +2810,7 @@
     <property name="last_opened_file_path" value="$PROJECT_DIR$/build.gradle" />
     <property name="recentsLimit" value="5" />
     <property name="project.structure.last.edited" value="Modules" />
-    <property name="project.structure.proportion" value="0.0" />
+    <property name="project.structure.proportion" value="0.15" />
     <property name="project.structure.side.proportion" value="0.34514287" />
   </component>
   <component name="RecentsManager">
@@ -3554,6 +2977,12 @@
       <method />
     </configuration>
     <configuration default="true" type="js.build_tools.gulp" factoryName="Gulp.js">
+      <node-options />
+      <gulpfile />
+      <tasks />
+      <arguments />
+      <pass-parent-envs>true</pass-parent-envs>
+      <envs />
       <method />
     </configuration>
     <list size="1">
@@ -3566,21 +2995,24 @@
     </recent_temporary>
   </component>
   <component name="ShelveChangesManager" show_recycled="false" />
+  <component name="SvnConfiguration">
+    <configuration>$USER_HOME$/.subversion</configuration>
+  </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
       <changelist id="f2e4eafe-7a5c-40ee-881f-9de4b6e9d013" name="Default" comment="" />
       <created>1437507903706</created>
       <option name="number" value="Default" />
       <updated>1437507903706</updated>
-      <workItem from="1437507905235" duration="7696000" />
+      <workItem from="1437507905235" duration="11083000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="7696000" />
+    <option name="totallyTimeSpent" value="11083000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="23" width="1440" height="873" extended-state="0" />
+    <frame x="0" y="23" width="1440" height="873" extended-state="1" />
     <editor active="true" />
     <layout>
       <window_info id="Palette&#9;" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
@@ -3589,7 +3021,7 @@
       <window_info id="Atlassian " active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.3290653" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3290653" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Java Enterprise" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
@@ -3598,9 +3030,9 @@
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="true" content_ui="tabs" />
       <window_info id="FindBugs-IDEA" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3290653" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.3290653" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Web" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="true" content_ui="tabs" />
-      <window_info id="Gradle" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.3297568" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
+      <window_info id="Gradle" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3297568" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
@@ -3613,6 +3045,14 @@
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
     </layout>
+  </component>
+  <component name="Vcs.Log.UiProperties">
+    <option name="RECENTLY_FILTERED_USER_GROUPS">
+      <collection />
+    </option>
+    <option name="RECENTLY_FILTERED_BRANCH_GROUPS">
+      <collection />
+    </option>
   </component>
   <component name="VcsContentAnnotationSettings">
     <option name="myLimit" value="2678400000" />
@@ -3760,14 +3200,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/integ-tests/build.gradle">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-2.2222223">
-          <caret line="4" column="58" selection-start-line="4" selection-start-column="58" selection-end-line="4" selection-end-column="58" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/example-burp/src/main/java/burp/lib/burp-extender/burp/IBurpExtenderCallbacks.java">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
@@ -3808,14 +3240,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/example-server/build.gradle">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-2.7777777">
-          <caret line="5" column="1" selection-start-line="5" selection-start-column="1" selection-end-line="5" selection-end-column="1" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/mocks/build.gradle">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="-2.2222223">
@@ -3848,7 +3272,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/mocks/src/main/java/msl/entityauth/MockX509AuthenticationFactory.java">
+    <entry file="file://$PROJECT_DIR$/mocks/src/main/java/com/netflix/msl/entityauth/MockX509AuthenticationFactory.java">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="72" column="70" selection-start-line="72" selection-start-column="70" selection-end-line="72" selection-end-column="70" />
@@ -3867,7 +3291,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/mocks/src/main/java/msl/util/MslTestUtils.java">
+    <entry file="file://$PROJECT_DIR$/mocks/src/main/java/com/netflix/msl/util/MslTestUtils.java">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="32" column="0" selection-start-line="32" selection-start-column="0" selection-end-line="32" selection-end-column="0" />
@@ -3882,8 +3306,48 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/message-service-layer/build.gradle">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.31982943">
-          <caret line="10" column="26" selection-start-line="10" selection-start-column="26" selection-end-line="10" selection-end-column="26" />
+        <state vertical-scroll-proportion="-8.888889">
+          <caret line="16" column="23" selection-start-line="16" selection-start-column="23" selection-end-line="16" selection-end-column="23" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/example-server/build.gradle">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-1.6666666">
+          <caret line="3" column="45" selection-start-line="3" selection-start-column="45" selection-end-line="3" selection-end-column="45" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/msg/MessageBuilderSuite.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="75" column="33" selection-start-line="75" selection-start-column="33" selection-end-line="75" selection-end-column="33" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/integ-tests/build.gradle">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-2.7777777">
+          <caret line="5" column="5" selection-start-line="5" selection-start-column="5" selection-end-line="5" selection-end-column="5" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/integ-tests/src/main/java/com/netflix/msl/server/configuration/tokens/ServerTokenFactory.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="28" column="47" selection-start-line="28" selection-start-column="47" selection-end-line="28" selection-end-column="47" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/message-service-layer/src/test/java/com/netflix/msl/userauth/EmailPasswordAuthenticationFactoryTest.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.3326613">
+          <caret line="40" column="27" selection-start-line="40" selection-start-column="27" selection-end-line="40" selection-end-column="27" />
           <folding />
         </state>
       </provider>
@@ -3894,7 +3358,7 @@
       <state key="ArtifactsStructureConfigurable.UI">
         <settings>
           <artifact-editor />
-          <last-edited>Gradle : com.netflix:msl : msl-example-server-0.1.0-SNAPSHOT.war</last-edited>
+          <last-edited>Gradle : msl-root:message-service-layer : message-service-layer-0.1.0-SNAPSHOT.war</last-edited>
           <splitter-proportions>
             <option name="proportions">
               <list>
@@ -3942,12 +3406,11 @@
       </state>
       <state key="ModuleStructureConfigurable.UI">
         <settings>
-          <last-edited>msl</last-edited>
+          <last-edited>message-service-layer-mocks</last-edited>
           <splitter-proportions>
             <option name="proportions">
               <list>
                 <option value="0.34514287" />
-                <option value="0.6" />
               </list>
             </option>
           </splitter-proportions>

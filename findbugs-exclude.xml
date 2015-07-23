@@ -67,7 +67,7 @@
             <Class name="~.*Mock.*"/>
             <Class name="~.*(Test|Suite)"/>
             <Class name="~.*(Test|Suite)\$.*"/>
-            <Class name="com.netflix.msl.util.MslTestUtils"/>
+            <Class name="MslTestUtils"/>
         </Or>
         <Or>
             <Not><Bug code="IJU"/></Not>
