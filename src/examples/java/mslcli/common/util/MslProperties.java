@@ -46,10 +46,12 @@ public final class MslProperties {
     private static final String APP_CTRL_NUM_THR       = "app.mslctrl.nthr";
     /** server port */
     private static final String APP_SERVER_PORT        = "app.server.port";
-    /** entity authentication data handle prefix */
+    /** entity authentication handle prefix */
     private static final String APP_ENTITY_AUTH_HANDLE = "app.entityauth.handle.";
     /** key exchange handle prefix */
     private static final String APP_KEYX_HANDLE        = "app.keyx.handle.";
+    /** user authentication handle prefix */
+    private static final String APP_USER_AUTH_HANDLE   = "app.userauth.handle.";
 
    /*
     * ENTITY-SPECIFIC CONFIGURATION PROPERTY NAMES
@@ -438,7 +440,7 @@ public final class MslProperties {
      * @return list of entity authentication handle class names
      * @throws ConfigurationException if the value is not defined or is not valid
      */
-    public List<String> getEntityAuthenticationDataHandles() throws ConfigurationException {
+    public List<String> getEntityAuthenticationHandles() throws ConfigurationException {
         return getValueList(APP_ENTITY_AUTH_HANDLE);
     }
 
@@ -450,6 +452,13 @@ public final class MslProperties {
         return getValueList(APP_KEYX_HANDLE);
     }
 
+    /**
+     * @return list of user authentication handle class names
+     * @throws ConfigurationException if the value is not defined or is not valid
+     */
+    public List<String> getUserAuthenticationHandles() throws ConfigurationException {
+        return getValueList(APP_USER_AUTH_HANDLE);
+    }
     /* ****************
      * Helper classes *
      ******************/

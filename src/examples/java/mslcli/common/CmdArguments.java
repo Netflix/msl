@@ -54,6 +54,8 @@ public final class CmdArguments {
     public static final String P_EID  = "-eid" ;
     /** user id */
     public static final String P_UID  = "-uid" ;
+    /** user authentication scheme */
+    public static final String P_UAS  = "-uas" ;
     /** key exchange type */
     public static final String P_KX   = "-kx"  ;
     /** key exchange mechanism */
@@ -89,6 +91,7 @@ public final class CmdArguments {
             P_URL,
             P_EID,
             P_UID,
+            P_UAS,
             P_EAS,
             P_KX,
             P_KXM,
@@ -359,6 +362,13 @@ public final class CmdArguments {
      */
     public String getUserId() {
         return argMap.get(P_UID);
+    }
+
+    /**
+     * @return user authentication scheme - can be uninitialized
+     */
+    public String getUserAuthenticationScheme() {
+        return argMap.get(P_UAS);
     }
 
     /**

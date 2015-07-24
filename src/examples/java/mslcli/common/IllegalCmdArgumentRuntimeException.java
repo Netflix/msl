@@ -14,25 +14,20 @@
  * limitations under the License.
  */
 
-package mslcli.client.util;
-
-import com.netflix.msl.userauth.UserAuthenticationData;
-
-import mslcli.common.IllegalCmdArgumentException;
-import mslcli.common.util.ConfigurationException;
+package mslcli.common;
 
 /**
- * <p>
- * Callback interface for fetching UserAuthenticationData. Called on client side
- * when MslControl requests user authentication data from MessageContext.
- * </p>
+ * <p>Exception for invalid MSL CLI command line arguments.</p>
  *
  * @author Vadim Spector <vspector@netflix.com>
  */
-
-public interface UserAuthenticationDataHandle {
+public class IllegalCmdArgumentRuntimeException extends RuntimeException {
+    /** for proper serialization */
+    private static final long serialVersionUID = -6754762182112853406L;
     /**
-     * @return user authentication data to be included into the outgoing request
+     * @param cause exception cause
      */
-    UserAuthenticationData getUserAuthenticationData();
+    public IllegalCmdArgumentRuntimeException(Throwable cause) {
+        super(cause);
+    }
 }

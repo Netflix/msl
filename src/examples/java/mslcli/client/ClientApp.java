@@ -43,6 +43,7 @@ import mslcli.client.util.KeyRequestDataHandle;
 import mslcli.client.util.UserAuthenticationDataHandle;
 import mslcli.common.CmdArguments;
 import mslcli.common.IllegalCmdArgumentException;
+import mslcli.common.IllegalCmdArgumentRuntimeException;
 import mslcli.common.Triplet;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
@@ -312,7 +313,7 @@ public final class ClientApp {
                 client = null; // required for keeping the state, in case the next line throws exception
                 final ClientMslConfig mslCfg = new ClientMslConfig(appCtx, cmdParam);
                 keyRequestDataHandle = new AppKeyRequestDataHandle(appCtx, mslCfg);
-                client = new Client(appCtx, new AppUserAuthenticationDataHandle(mslCfg, cmdParam.isInteractive()),
+                client = new Client(appCtx, new AppUserAuthenticationDataHandle(mslCfg),
                                     keyRequestDataHandle, mslCfg);
             }
 
@@ -385,6 +386,9 @@ public final class ClientApp {
         } catch (IllegalCmdArgumentException e) {
             System.err.println("Error: " + e.getMessage());
             status = Status.ARG_ERROR;
+        } catch (IllegalCmdArgumentRuntimeException e) {
+            System.err.println("Error: " + e.getCause().getMessage());
+            status = Status.ARG_ERROR;
         } catch (ConnectException e) {
             System.err.println("Error: " + e.getMessage());
             status = Status.COMM_ERROR;
@@ -440,19 +444,23 @@ public final class ClientApp {
          * @param mslCfg MSL configuration
          * @param interactive true for interactive mode
          */
-        AppUserAuthenticationDataHandle(final ClientMslConfig mslCfg, final boolean interactive) {
+        AppUserAuthenticationDataHandle(final ClientMslConfig mslCfg) {
             this.mslCfg = mslCfg;
-            this.interactive = interactive;
         }
 
         @Override
-        public UserAuthenticationData getUserAuthenticationData(final String userId) {
-            return mslCfg.getUserAuthenticationData(userId, interactive);
+        public UserAuthenticationData getUserAuthenticationData()
+        {
+            try {
+                return mslCfg.getUserAuthenticationData();
+            } catch (IllegalCmdArgumentException e) {
+                throw new IllegalCmdArgumentRuntimeException(e);
+            } catch (ConfigurationException e) {
+                throw new ConfigurationRuntimeException(e);
+            }
         }
         /** MSL configuration */
         private final ClientMslConfig mslCfg;
-        /** true if in interactive mode */
-        private final boolean interactive;
     }
 
     /**

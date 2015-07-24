@@ -16,25 +16,10 @@
 
 package mslcli.client;
 
-import java.io.Console;
-import java.security.KeyPair;
-import java.security.Security;
-import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.List;
-
-import com.netflix.msl.MslKeyExchangeException;
-import com.netflix.msl.keyx.KeyExchangeScheme;
-import com.netflix.msl.keyx.KeyRequestData;
-import com.netflix.msl.userauth.EmailPasswordAuthenticationData;
-import com.netflix.msl.userauth.UserAuthenticationData;
-
 import mslcli.client.util.ClientAuthenticationUtils;
 import mslcli.common.CmdArguments;
 import mslcli.common.IllegalCmdArgumentException;
 import mslcli.common.MslConfig;
-import mslcli.common.Pair;
-import mslcli.common.keyx.KeyExchangeHandle;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
 
@@ -63,68 +48,6 @@ public final class ClientMslConfig extends MslConfig {
         super(appCtx, args, new ClientAuthenticationUtils(args.getEntityId(), appCtx));
     }
 
-    /**
-     * @param kxsName the name of key exchange scheme
-     * @param kxmName the name of key exchange scheme mechanism
-     * @return key request data
-     * @throws ConfigurationException
-     * @throws IllegalCmdArgumentException
-     * @throws MslKeyExchangeException
-     */
-    public KeyRequestData getKeyRequestData()
-        throws ConfigurationException, IllegalCmdArgumentException, MslKeyExchangeException
-    {
-        final String kxsName = args.getKeyExchangeScheme();
-        if (kxsName == null || kxsName.trim().isEmpty()) {
-            throw new IllegalArgumentException("NULL Key Exchange Type");
-        }
-        final String kxmName = args.getKeyExchangeMechanism();
-
-        for (final KeyExchangeHandle kxh : appCtx.getKeyExchangeHandles()) {
-            if (kxh.getScheme().name().equals(kxsName)) {
-                final KeyRequestData krd =  kxh.getKeyRequestData(appCtx, args);
-                appCtx.info(String.format("%s: Generated KeyRequestData{%s %s}, %s",
-                    this, kxsName.trim(), (kxmName != null) ? kxmName.trim() : null, krd.getClass().getName()));
-                return krd;
-            }
-        }
-        final List<String> schemes = new ArrayList<String>();
-        for (final KeyExchangeHandle kxh : appCtx.getKeyExchangeHandles())
-            schemes.add(kxh.getScheme().name());
-        throw new IllegalCmdArgumentException(String.format("Unsupported Key Exchange Scheme %s, Supported: %s", kxsName, schemes));
-    }
-
-    /**
-     * @param userId user identity
-     * @param interactive true in the interactive mode
-     * @return  user authentication data
-     */
-    public UserAuthenticationData getUserAuthenticationData(final String userId, boolean interactive) {
-        appCtx.info(String.format("%s: Requesting UserAuthenticationData, UserId %s, Interactive %b", this, userId, interactive));
-        if (userId != null) {
-            try {
-                final Pair<String,String> ep = appCtx.getProperties().getEmailPassword(userId);
-                return new EmailPasswordAuthenticationData(ep.x, ep.y);
-            } catch (ConfigurationException e) {
-                if (interactive) {
-                    final Console cons = System.console();
-                    if (cons != null) {
-                        final String email = cons.readLine("Email> ");
-                        final char[] pwd = cons.readPassword("Password> ");
-                        return new EmailPasswordAuthenticationData(email, new String(pwd));
-                    } else {
-                        throw new IllegalArgumentException("Invalid Email-Password Configuration for User " + userId);
-                    }
-                } else {
-                    throw new IllegalArgumentException("Invalid Email-Password Configuration for User " + userId);
-                }
-            }
-        } else {
-            return null;
-        }
-    }
-
-    @Override
     public String toString() {
         return String.format("ClientMslConfig[%s]", entityId);
     }

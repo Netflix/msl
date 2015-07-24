@@ -16,6 +16,7 @@
 
 package mslcli.common;
 
+import java.io.Console;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -32,16 +33,19 @@ import java.util.TreeSet;
 
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslException;
+import com.netflix.msl.MslKeyExchangeException;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeScheme;
+import com.netflix.msl.keyx.KeyRequestData;
 import com.netflix.msl.keyx.WrapCryptoContextRepository;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.tokens.ServiceToken;
 import com.netflix.msl.userauth.EmailPasswordAuthenticationFactory;
+import com.netflix.msl.userauth.UserAuthenticationData;
 import com.netflix.msl.userauth.UserAuthenticationFactory;
 import com.netflix.msl.util.AuthenticationUtils;
 import com.netflix.msl.util.MslStore;
@@ -51,6 +55,7 @@ import mslcli.common.CmdArguments;
 import mslcli.common.IllegalCmdArgumentException;
 import mslcli.common.entityauth.AuthenticationDataHandle;
 import mslcli.common.keyx.KeyExchangeHandle;
+import mslcli.common.userauth.UserAuthenticationHandle;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
 import mslcli.common.util.MslStoreWrapper;
@@ -101,69 +106,7 @@ public abstract class MslConfig {
             this.mslStorePath = null;
         }
         this.mslStoreWrapper = new AppMslStoreWrapper(appCtx, entityId, initMslStore(appCtx, mslStorePath));
-
-        // User authentication factories.
-        this.userAuthFactories = new HashSet<UserAuthenticationFactory>();
-        this.userAuthFactories.add(new EmailPasswordAuthenticationFactory(appCtx.getEmailPasswordStore(), authutils));
     }
-
-    /**
-     * Initialize MslStore
-     *
-     * @param appCtx application context
-     * @param mslStorePath MSL store path
-     * @return MSL store
-     * @throws ConfigurationException
-     */
-    private static SimpleMslStore initMslStore(final AppContext appCtx, final String mslStorePath) throws ConfigurationException {
-        if (mslStorePath == null) {
-            appCtx.info("Creating Non-Persistent MSL Store");
-            return new SimpleMslStore();
-        }
-
-        try {
-            final File f = new File(mslStorePath);
-            if (f.isFile()) {
-                appCtx.info("Loading MSL Store from " + mslStorePath);
-                return (SimpleMslStore)SharedUtil.unmarshalMslStore(SharedUtil.readFromFile(mslStorePath));
-            } else if (f.exists()){
-                throw new IllegalArgumentException("MSL Store Path Exists but not a File: " + mslStorePath);
-            } else {
-                appCtx.info("Creating Empty MSL Store " + mslStorePath);
-                return new SimpleMslStore();
-            }
-        } catch (Exception e) {
-            throw new ConfigurationException("Error reading MSL Store File " + mslStorePath, e);
-        }
-    }
-
-    /**
-     * @return entity-specific instance of MslStore
-     */
-    public final MslStore getMslStore() {
-        return mslStoreWrapper;
-    }
-
-   /**
-    * persist MSL store
-    *
-    * @throws IOException
-    */
-    public void saveMslStore() throws IOException {
-        if (mslStorePath == null) {
-            appCtx.info("Not Persisting In-Memory MSL Store");
-            return;
-        }
-        synchronized (mslStoreWrapper) {
-            try {
-                SharedUtil.saveToFile(mslStorePath, SharedUtil.marshalMslStore((SimpleMslStore)mslStoreWrapper.getMslStore()), true /*overwrite*/);
-            } catch (MslEncodingException e) {
-                throw new IOException("Error Saving MslStore file " + mslStorePath, e);
-            }
-            appCtx.info(String.format("MSL Store %s Updated", mslStorePath));
-        }
-    }
-
 
     /**
      * @return entity identity
@@ -171,6 +114,8 @@ public abstract class MslConfig {
     public final String getEntityId() {
         return entityId;
     }
+
+    /* ================================== ENTITY AUTHENTICATION APIs ================================================ */
 
     /**
      * @return entity authentication data
@@ -202,16 +147,84 @@ public abstract class MslConfig {
         for (final AuthenticationDataHandle adh : appCtx.getAuthenticationDataHandles()) {
             entityAuthFactories.add(adh.getEntityAuthenticationFactory(appCtx, args, authutils));
         }
-        return Collections.unmodifiableSet(entityAuthFactories);
+        return Collections.<EntityAuthenticationFactory>unmodifiableSet(entityAuthFactories);
     }
  
+    /* ================================== USER AUTHENTICATION APIs ================================================ */
+
+    /**
+     * @return  user authentication data
+     * @throws ConfigurationException
+     * @throws IllegalCmdArgumentException
+     */
+    public UserAuthenticationData getUserAuthenticationData()
+        throws ConfigurationException, IllegalCmdArgumentException
+    {
+        appCtx.info(String.format("%s: Requesting UserAuthenticationData, UserId %s, Interactive %b, scheme %s",
+            this, args.getUserId(), args.isInteractive(), args.getUserAuthenticationScheme()));
+        final String uasName = args.getUserAuthenticationScheme();
+        for (final UserAuthenticationHandle uah : appCtx.getUserAuthenticationHandles()) {
+            if (uah.getScheme().name().equals(uasName)) {
+                final UserAuthenticationData uad = uah.getUserAuthenticationData(appCtx, args);
+                appCtx.info(String.format("%s: Generated UserAuthenticationData{%s}, %s",
+                    this, (uasName != null) ? uasName.trim() : null, uad.getClass().getName()));
+                return uad;
+            }
+        }
+        final List<String> schemes = new ArrayList<String>();
+        for (final UserAuthenticationHandle uah : appCtx.getUserAuthenticationHandles())
+            schemes.add(uah.getScheme().name());
+        throw new IllegalCmdArgumentException(String.format("Unsupported User Authentication Scheme %s, Supported: %s", uasName, schemes));
+    }
+
     /**
      * @return user authentication factories
+     * @throws ConfigurationException
+     * @throws IllegalCmdArgumentException
      */
-    public final Set<UserAuthenticationFactory> getUserAuthenticationFactories() {
+    public final Set<UserAuthenticationFactory> getUserAuthenticationFactories()
+        throws ConfigurationException, IllegalCmdArgumentException
+    {
+        final Set<UserAuthenticationFactory> userAuthFactories = new HashSet<UserAuthenticationFactory>();
+        for (final UserAuthenticationHandle uah : appCtx.getUserAuthenticationHandles()) {
+            userAuthFactories.add(uah.getUserAuthenticationFactory(appCtx, args, authutils));
+        }
         return Collections.<UserAuthenticationFactory>unmodifiableSet(userAuthFactories);
     }
  
+    /* ================================== KEY EXCHANGE APIs ================================================ */
+
+    /**
+     * @param kxsName the name of key exchange scheme
+     * @param kxmName the name of key exchange scheme mechanism
+     * @return key request data
+     * @throws ConfigurationException
+     * @throws IllegalCmdArgumentException
+     * @throws MslKeyExchangeException
+     */
+    public KeyRequestData getKeyRequestData()
+        throws ConfigurationException, IllegalCmdArgumentException, MslKeyExchangeException
+    {
+        final String kxsName = args.getKeyExchangeScheme();
+        if (kxsName == null || kxsName.trim().isEmpty()) {
+            throw new IllegalArgumentException("NULL Key Exchange Type");
+        }
+        final String kxmName = args.getKeyExchangeMechanism();
+
+        for (final KeyExchangeHandle kxh : appCtx.getKeyExchangeHandles()) {
+            if (kxh.getScheme().name().equals(kxsName)) {
+                final KeyRequestData krd =  kxh.getKeyRequestData(appCtx, args);
+                appCtx.info(String.format("%s: Generated KeyRequestData{%s %s}, %s",
+                    this, kxsName.trim(), (kxmName != null) ? kxmName.trim() : null, krd.getClass().getName()));
+                return krd;
+            }
+        }
+        final List<String> schemes = new ArrayList<String>();
+        for (final KeyExchangeHandle kxh : appCtx.getKeyExchangeHandles())
+            schemes.add(kxh.getScheme().name());
+        throw new IllegalCmdArgumentException(String.format("Unsupported Key Exchange Scheme %s, Supported: %s", kxsName, schemes));
+    }
+
     /**
      * @return key exchange factories
      * @throws ConfigurationException
@@ -226,7 +239,10 @@ public abstract class MslConfig {
         for (final KeyExchangeHandle kxh : keyxHandles) {
             keyxFactoriesList.add(kxh.getKeyExchangeFactory(appCtx, args, authutils));
         }
-        return getKeyExchangeFactorySet(keyxFactoriesList);
+        final KeyExchangeFactoryComparator keyxFactoryComparator = new KeyExchangeFactoryComparator(keyxFactoriesList);
+        final TreeSet<KeyExchangeFactory> keyxFactoriesSet = new TreeSet<KeyExchangeFactory>(keyxFactoryComparator);
+        keyxFactoriesSet.addAll(keyxFactoriesList);
+        return  Collections.unmodifiableSortedSet(keyxFactoriesSet);
     }
 
     /**
@@ -260,17 +276,65 @@ public abstract class MslConfig {
         }
     }
 
+   /* ================================== MSL STORE APIs ================================================ */
+
     /**
-     * Convenience method creating SortedSet of multiple key exchange factories,
-     * sorted in order of preference of their use.
-     * @param factories array of key exchange factories
-     * @return Set of factories sorted from most to least preferable
+     * @return entity-specific instance of MslStore
      */
-    protected static SortedSet<KeyExchangeFactory> getKeyExchangeFactorySet(List<KeyExchangeFactory> factories) {
-        final KeyExchangeFactoryComparator keyxFactoryComparator = new KeyExchangeFactoryComparator(factories);
-        final TreeSet<KeyExchangeFactory> keyxFactoriesSet = new TreeSet<KeyExchangeFactory>(keyxFactoryComparator);
-        keyxFactoriesSet.addAll(factories);
-        return  Collections.unmodifiableSortedSet(keyxFactoriesSet);
+    public final MslStore getMslStore() {
+        return mslStoreWrapper;
+    }
+
+   /**
+    * persist MSL store
+    *
+    * @throws IOException
+    */
+    public void saveMslStore() throws IOException {
+        if (mslStorePath == null) {
+            appCtx.info("Not Persisting In-Memory MSL Store");
+            return;
+        }
+        synchronized (mslStoreWrapper) {
+            try {
+                SharedUtil.saveToFile(mslStorePath, SharedUtil.marshalMslStore((SimpleMslStore)mslStoreWrapper.getMslStore()), true /*overwrite*/);
+            } catch (MslEncodingException e) {
+                throw new IOException("Error Saving MslStore file " + mslStorePath, e);
+            }
+            appCtx.info(String.format("MSL Store %s Updated", mslStorePath));
+        }
+    }
+
+    /**
+     * Initialize MslStore
+     *
+     * @param appCtx application context
+     * @param mslStorePath MSL store path
+     * @return MSL store
+     * @throws ConfigurationException
+     */
+    private static SimpleMslStore initMslStore(final AppContext appCtx, final String mslStorePath)
+        throws ConfigurationException
+    {
+        if (mslStorePath == null) {
+            appCtx.info("Creating Non-Persistent MSL Store");
+            return new SimpleMslStore();
+        }
+
+        try {
+            final File f = new File(mslStorePath);
+            if (f.isFile()) {
+                appCtx.info("Loading MSL Store from " + mslStorePath);
+                return (SimpleMslStore)SharedUtil.unmarshalMslStore(SharedUtil.readFromFile(mslStorePath));
+            } else if (f.exists()){
+                throw new IllegalArgumentException("MSL Store Path Exists but not a File: " + mslStorePath);
+            } else {
+                appCtx.info("Creating Empty MSL Store " + mslStorePath);
+                return new SimpleMslStore();
+            }
+        } catch (Exception e) {
+            throw new ConfigurationException("Error reading MSL Store File " + mslStorePath, e);
+        }
     }
 
     /**
@@ -347,6 +411,8 @@ public abstract class MslConfig {
         private final String entityId;
     }
  
+   /* ================================== INSTANCE VARIABLES ================================================ */
+
     /** application context */
     protected final AppContext appCtx;
     /** entity identity */
@@ -359,6 +425,4 @@ public abstract class MslConfig {
     private final MslStoreWrapper mslStoreWrapper;
     /** MSL store file path */
     private final String mslStorePath;
-    /** user authentication factories */
-    private final Set<UserAuthenticationFactory> userAuthFactories;
 }

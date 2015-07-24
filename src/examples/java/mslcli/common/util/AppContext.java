@@ -73,6 +73,7 @@ import mslcli.common.entityauth.SimplePresharedKeyStore;
 import mslcli.common.entityauth.SimpleRsaStore;
 import mslcli.common.keyx.KeyExchangeHandle;
 import mslcli.common.userauth.SimpleEmailPasswordStore;
+import mslcli.common.userauth.UserAuthenticationHandle;
 import mslcli.common.util.SharedUtil.Base64Util;
 
 /**
@@ -105,10 +106,12 @@ public final class AppContext {
     private final RsaStore rsaStore;
     /** named Diffie-Hellman algorithm parameters database */
     private final DiffieHellmanParameters diffieHellmanParameters;
-    /** entity authentication data handles configured for this app */
-    private final Set<AuthenticationDataHandle> authenticationDataHandles;
+    /** entity authentication handles configured for this app */
+    private final Set<AuthenticationDataHandle> entityAuthenticationHandles;
     /** ordered list of key exchange handles configured for this app in the order of their preference */
     private final List<KeyExchangeHandle> keyExchangeHandles;
+    /** user authentication handles configured for this app */
+    private final Set<UserAuthenticationHandle> userAuthenticationHandles;
 
     /**
      * @param p properties loaded from some configuration source
@@ -143,8 +146,8 @@ public final class AppContext {
         this.mgkKeyStore = initMgkKeyStore(p);
         this.emailPasswordStore = initEmailPasswordStore(p);
         this.rsaStore = initRsaStore(p);
-        this.authenticationDataHandles = new HashSet<AuthenticationDataHandle>();
-        for (String s : p.getEntityAuthenticationDataHandles()) {
+        this.entityAuthenticationHandles = new HashSet<AuthenticationDataHandle>();
+        for (String s : p.getEntityAuthenticationHandles()) {
             final Class<? extends Object> cls;
             try {
                 cls = Class.forName(s);
@@ -160,7 +163,7 @@ public final class AppContext {
                 throw new ConfigurationException(String.format("Authentication Data Handle class %s: object cannot be instantiated", s), e);
             }
             if (h instanceof AuthenticationDataHandle) {
-                authenticationDataHandles.add((AuthenticationDataHandle)h);
+                entityAuthenticationHandles.add((AuthenticationDataHandle)h);
             } else {
                 throw new ConfigurationException(String.format("Authentication Data Handle class %s: wrong type %s", s, h.getClass().getName()));
             }
@@ -185,6 +188,28 @@ public final class AppContext {
                 keyExchangeHandles.add((KeyExchangeHandle)h);
             } else {
                 throw new ConfigurationException(String.format("key Exchange Handle class %s: wrong type %s", s, h.getClass().getName()));
+            }
+        }
+        this.userAuthenticationHandles = new HashSet<UserAuthenticationHandle>();
+        for (String s : p.getUserAuthenticationHandles()) {
+            final Class<? extends Object> cls;
+            try {
+                cls = Class.forName(s);
+            } catch (ClassNotFoundException e) {
+                throw new ConfigurationException("User Authentication Handle class not found: " + s);
+            }
+            final Object h;
+            try {
+                h = cls.newInstance();
+            } catch (InstantiationException e) {
+                throw new ConfigurationException(String.format("User Authentication Handle class %s: object cannot be instantiated", s), e);
+            } catch (IllegalAccessException e) {
+                throw new ConfigurationException(String.format("User Authentication Handle class %s: object cannot be instantiated", s), e);
+            }
+            if (h instanceof UserAuthenticationHandle) {
+                userAuthenticationHandles.add((UserAuthenticationHandle)h);
+            } else {
+                throw new ConfigurationException(String.format("User Authentication Handle class %s: wrong type %s", s, h.getClass().getName()));
             }
         }
     }
@@ -222,7 +247,7 @@ public final class AppContext {
      * @return entity authentication data handle for a given scheme
      */
     public Set<AuthenticationDataHandle> getAuthenticationDataHandles() {
-        return Collections.unmodifiableSet(authenticationDataHandles);
+        return Collections.unmodifiableSet(entityAuthenticationHandles);
     }
 
     /**
@@ -230,6 +255,13 @@ public final class AppContext {
      */
     public List<KeyExchangeHandle> getKeyExchangeHandles() {
         return Collections.unmodifiableList(keyExchangeHandles);
+    }
+
+    /**
+     * @return user authentication handles
+     */
+    public Set<UserAuthenticationHandle> getUserAuthenticationHandles() {
+        return Collections.unmodifiableSet(userAuthenticationHandles);
     }
 
     /**

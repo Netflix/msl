@@ -47,7 +47,6 @@ import com.netflix.msl.msg.MessageInputStream;
 import com.netflix.msl.msg.MslControl;
 import com.netflix.msl.msg.MslControl.MslChannel;
 import com.netflix.msl.tokens.MslUser;
-import com.netflix.msl.userauth.EmailPasswordStore;
 import com.netflix.msl.util.MslContext;
 
 import mslcli.common.CmdArguments;
