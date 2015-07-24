@@ -16,13 +16,24 @@ DESCRIPTION
 	Interactive mode allows sending multiple messages and interactive
 	change of configuration before sending each message.
 
-OPTIONS
+GENERAL OPTIONS
 	All options start with "-". No option value can start with "-"
 	unless "-" is an entire value. Specifying "-" value in non-
 	interactive mode is illegal. Specifying "-" value in interactiv
 	mode results in deleting the corresponding option from the current
 	options list. All values are mandatory unless explicitly marked
 	as OPTIONAL or having the default value.
+
+	-cfg <configuration-file-path>
+		REQUIRED. Path to the existing configuration file. Read the
+		comments in the supplied mslcli.cfg configuration file to
+		understand what each parameter means and how this file can
+		be changed to support your specific needs.
+		Notice: configuration file can only be set once and only
+		from the command-line.
+
+	-url <server-url>
+		REQUIRED. The URL of the server to send messages to.
 
 	-int (true|false), default false
 		OPTIONAL. Make mslclient run in interactive (true) or non-
@@ -43,37 +54,6 @@ OPTIONS
 		entering any parameters results in sending the same payload
 		under the same configuration.
 
-	-cfg <configuration-file-path>
-		Path to the existing configuration file. Read the comments
-		in the supplied mslcli.cfg configuration file to understand
-		what each parameter means and how this file can be changed
-		to support your specific needs.
-		Notice: configuration file can only be set once and only
-		from the command-line.
-
-	-url <server-url>
-		The URL of the server to send messages to.
-
-	-eid <entity-id>
-		Client entity id string with no spaces in it. The value must
-		have presence in the configuration file by defining its
-		allowed entity authentication scheme(s), key exchange scheme(s),
-		etc. 
-
-	-uid <user-id>
-		OPTIONAL. User id internal to a given mslclient configuration.
-		It is typically used for forming user authentication data in
-		a MSL request, in order to acquire UserIdToken.
-
-	-psk <file-path>
-		OPTIONAL. Pre-shared key file which should have exactly 3
-		lines, in this order:
-		* entityId string
-		* encryption key, Base64-encoded
-		* HMAC key, Base64-encoded
-		Using this option may be more convenient than changing a
-		configuration file.
-
 	-mst <file-path>
 		OPTIONAL. MSL store file path. MSL store contains
 		master, user id, and service tokens acquired by the client.
@@ -90,33 +70,79 @@ OPTIONS
 		file names space, especially when switching between
 		different entities in interactive mode.
 
+	-v (true|false), default false
+		OPTIONAL. Whether to turn verbose mode on or off. Diagnostic
+		messages will be dumped to stdout in verbose mode.
+
+ENTITY AUTHENTICATION OPTIONS
+	-eid <entity-id>
+		REQUIRED. Client entity id string with no spaces in it.
+		The value must have presence in the configuration file by
+		defining its allowed entity authentication scheme(s), key
+		exchange scheme(s), etc. 
+
+	-eas <entity-authentication-scheme>
+		REQUIRED. Entity authentication scheme. Allowed values:
+		* PSK - pre-shared keys
+		* MGK - model group keys
+
+	-psk <file-path>
+		OPTIONAL. Pre-shared key file which should have exactly 3
+		lines, in this order:
+		* entityId string
+		* encryption key, Base64-encoded
+		* HMAC key, Base64-encoded
+		Using this option may be more convenient than changing a
+		configuration file.
+
+	-mgk <file-path>
+		OPTIONAL. Model group key file which should have exactly 3
+		lines, in this order:
+		* entityId string
+		* encryption key, Base64-encoded
+		* HMAC key, Base64-encoded
+		Using this option may be more convenient than changing a
+		configuration file.
+
+KEY EXCHANGE OPTIONS
 	-kx <supported-key-exchange-scheme>
-		The following are the allowed values:
-		DIFFIE_HELLMAN - for Diffie-Hellman key exchange
-		SYMMETRIC_WRAPPED - for Symmetric Wrapped key exchange
-		ASYMMETRIC_WRAPPED - for Asymmetric Wrapped key exchange
-		JWE_LADDER - for JSON Web Encryption Ladder Key Exchange
-		JWK_LADDER - for JSON Web Key Ladder Key Exchange
+		REQUIRED. The following are supported values:
+		* DIFFIE_HELLMAN - for Diffie-Hellman key exchange
+		* SYMMETRIC_WRAPPED - for Symmetric Wrapped key exchange
+		* ASYMMETRIC_WRAPPED - for Asymmetric Wrapped key exchange
+		* JWE_LADDER - for JSON Web Encryption Ladder Key Exchange
+		* JWK_LADDER - for JSON Web Key Ladder Key Exchange
 
 	-kxm <supported-key-exchange-mechanism>
-		The following are the legal values per key exchange scheme:
-		-kx DIFFIE_HELLMAN:
-			should not be specified
-		-kx SYMMETRIC_WRAPPED:
-			PSK - using pre-shared keys
-			SESSION - using session keys
-		-kx ASYMMETRIC_WRAPPED:
-			JWE_RSA   - RSA-OAEP JSON Web ENcryption Compact Serialization
-			JWEJS_RSA - RSA-OAEP JSON Web Encryption JSON Serialization
-			JWK_RSA   - RSA-OAEP Json Web Key 
-			JWK_RSAES - RSA PKCS#1 JSON Web Key
-		-kx JWE_LADDER:
-			PSK - using pre-shared keys
-			WRAP - using session wrap keys
-		-kx JWK_LADDER:
-			PSK - using pre-shared keys
-			WRAP - using session wrap keys
+		REQUIRED. The following are supported values:
+		for -kx DIFFIE_HELLMAN:
+			* should not be specified
+		for -kx SYMMETRIC_WRAPPED:
+			* PSK - using pre-shared keys
+			* SESSION - using session keys
+		for -kx ASYMMETRIC_WRAPPED:
+			* JWE_RSA   - RSA-OAEP JSON Web Encryption Compact Serialization
+			* JWEJS_RSA - RSA-OAEP JSON Web Encryption JSON Serialization
+			* JWK_RSA   - RSA-OAEP Json Web Key 
+			* JWK_RSAES - RSA PKCS#1 JSON Web Key
+		for -kx JWE_LADDER:
+			* PSK - using pre-shared keys
+			* WRAP - using session wrap keys
+		for -kx JWK_LADDER:
+			* PSK - using pre-shared keys
+			* WRAP - using session wrap keys
 
+USER AUTHETICATION OPTIONS
+	-uid <user-id>
+		OPTIONAL. User id internal to a given mslclient configuration.
+		It is typically used for forming user authentication data in
+		a MSL request, in order to acquire UserIdToken.
+
+	-uas <user-authentication-scheme>
+		OPTIONAL. User authentication scheme to use. Supported values:
+		* EMAIL_PASSWORD for email-password user authentication.
+
+MESSAGE OPTIONS
 	-enc (true|false), default true
 		OPTIONAL. Whether the request must be encrypted or not.
 
@@ -127,12 +153,12 @@ OPTIONS
 		OPTIONAL. Whether the request must be marked as non-replayable
 		or not.
 
-	-if <input-payload_file>
+	-if <input-payload-file>
 		OPTIONAL. Path to the existing file with the request payload.
 		If omitted, either payload must be specified with "-msg"
 		option or a no-payload message will be sent.
 
-	-of <output-payload_file>
+	-of <output-payload-file>
 		OPTIONAL. Path to the non-existing file to which the response
 		payload shall be written. If omitted, the response payload
 		will be written to stdout.
@@ -142,20 +168,17 @@ OPTIONS
 		If omitted, either payload must be specified with "-if"
 		option or a no-payload message will be sent.
 
-	-v (true|false), default false
-		OPTIONAL. Whether to turn verbose mode on or off. Diagnostic
-		messages will be dumped to stdout in verbose mode.
-
-	help
+INTERACTIVE OPTIONS
+	help (h)
 		Printing help to stdout. Must be specified as the only
 		command-line argument or at the "args>" prompt in interactive
 		mode.
 
-	list
+	list (l)
 		Interactive mode only. List currently selected options. Must
 		be specified as the only argument at the "args>" prompt.
 
-	quit
+	quit (q)
 		Interactive mode only. Entered from the "args>" prompt to quit
 		mslclient program.
 
