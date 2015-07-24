@@ -83,6 +83,7 @@ public class X509AuthenticationFactoryTest {
         
         final X509Store caStore = new X509Store();
         caStore.addTrusted(MockX509AuthenticationFactory.X509_CERT);
+        caStore.addTrusted(MockX509AuthenticationFactory.X509_ROOT);
         authutils = new MockAuthenticationUtils();
         factory = new X509AuthenticationFactory(caStore, authutils);
         ctx.addEntityAuthenticationFactory(factory);
@@ -159,6 +160,13 @@ public class X509AuthenticationFactoryTest {
         authutils.revokeEntity(MockX509AuthenticationFactory.X509_ESN);
         final X509AuthenticationData data = new X509AuthenticationData(MockX509AuthenticationFactory.X509_CERT);
         factory.getCryptoContext(ctx, data);
+    }
+    
+    @Test
+    public void chain() throws MslEncodingException, MslCryptoException, MslEntityAuthException {
+    	final X509AuthenticationData data = new X509AuthenticationData(MockX509AuthenticationFactory.X509_CHAIN_JO);
+    	factory.getCryptoContext(ctx, data);
+        // FIXME TODO
     }
 
     /** MSL context. */

@@ -16,6 +16,7 @@
 package com.netflix.msl.entityauth;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.security.KeyFactory;
@@ -24,6 +25,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.KeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.Scanner;
 
 import org.json.JSONObject;
 
@@ -47,6 +49,10 @@ public class MockX509AuthenticationFactory extends EntityAuthenticationFactory {
     private static final String X509_PRIVATE_KEY = "entityauth/msl.key";
     /** X.509 self-signed resource certificate. */
     private static final String X509_SELF_SIGNED_CERT = "entityauth/msl.pem";
+    /** X.509 certificate chain. */
+    private static final String X509_CHAIN_JSON = "entityauth/chain.json";
+    /** X.509 root certificate */
+    private static final String X509_ROOT_FN = "entityauth/root.pem";
     
     /** X.509 ESN. */
     public static final String X509_ESN;
@@ -54,13 +60,18 @@ public class MockX509AuthenticationFactory extends EntityAuthenticationFactory {
     public static final X509Certificate X509_CERT;
     /** Private key. */
     public static final PrivateKey X509_PRIVKEY;
+    /** X.509 certificate chain authentication data*/
+    public static final JSONObject X509_CHAIN_JO;
+    /** X.509 root certificate */
+    public static final X509Certificate X509_ROOT;
     
     static {
         final ClassLoader loader = X509AuthenticationDataTest.class.getClassLoader();
+        final CertificateFactory factory;
         try {
             final URL certUrl = loader.getResource(X509_SELF_SIGNED_CERT);
             final InputStream certInputStream = certUrl.openStream();
-            final CertificateFactory factory = CertificateFactory.getInstance("X.509");
+            factory = CertificateFactory.getInstance("X.509");
             X509_CERT = (X509Certificate)factory.generateCertificate(certInputStream);
             X509_ESN = X509_CERT.getSubjectX500Principal().getName();
         } catch (final Exception e) {
@@ -85,6 +96,21 @@ public class MockX509AuthenticationFactory extends EntityAuthenticationFactory {
         } catch (final Exception e) {
             throw new MslInternalException("Hard-coded X.509 private key failure.", e);
         }
+        
+        try {
+        	X509_CHAIN_JO = new JSONObject(readFile(X509_CHAIN_JSON));
+        } catch (final Exception e) {
+            throw new MslInternalException("Hard-coded X.509 cert chain read failure.", e);
+        }
+
+        try {
+            final URL certUrl = loader.getResource(X509_ROOT_FN);
+            final InputStream certInputStream = certUrl.openStream();
+            X509_ROOT = (X509Certificate)factory.generateCertificate(certInputStream);
+        } catch (final Exception e) {
+            throw new MslInternalException("Hard-coded X.509 root cert read failure.", e);
+        }
+
     }
     
     /**
@@ -120,4 +146,14 @@ public class MockX509AuthenticationFactory extends EntityAuthenticationFactory {
         // Certificate verification failed.
         throw new MslEntityAuthException(MslError.X509CERT_VERIFICATION_FAILED, xad.getX509Cert().toString()).setEntity(xad);
     }
+    
+    private static String readFile(String filename) throws IOException {
+    	InputStream is = X509AuthenticationDataTest.class.getClassLoader().getResourceAsStream(filename);
+        Scanner scanner = new Scanner(is);
+        String fileContents = scanner.useDelimiter("\\A").next();
+        scanner.close();
+        return fileContents;
+    }
+    
+
 }
