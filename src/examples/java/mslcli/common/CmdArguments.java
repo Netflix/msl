@@ -114,6 +114,11 @@ public final class CmdArguments {
             P_V
         )));
 
+    /** prefix for ad-hock properties that can be set for functionality extensions */
+    private static final String EXT_PREFIX = "-ext.";
+    /** separator for ad-hock property names */
+    private static final String EXT_SEP = ".";
+
     /** order of listing of supported arguments */
     private static final Map<String,Integer> supportedArgumentsRank = rankSupportedArguments();
 
@@ -176,8 +181,8 @@ public final class CmdArguments {
         String param = null;
         String value = null;
         for (String s : args) {
-            // one of the supported parameters
-            if (supportedArguments.contains(s)) {
+            // one of the supported parameters or extension (ad hock) parameter
+            if (supportedArguments.contains(s) || s.startsWith(EXT_PREFIX)) {
                 // already occured - error
                 if (argMap.containsKey(s)) {
                     throw new IllegalCmdArgumentException("Multiple Occurences of " + s);
@@ -473,5 +478,20 @@ public final class CmdArguments {
         } else {
             throw new IllegalCmdArgumentException("Missing Required Argument " + name);
         }
+    }
+
+    /**
+     * @param group group of properties. property name prefix is composed as EXT_PREFIX + group.
+     * @return Map of properties with stripped off preffixes
+     */
+    public Map<String,String> getExtensionProperties(String group) {
+        group = EXT_PREFIX + group + EXT_SEP;
+        final Map<String,String> m = new HashMap<String,String>();
+        for (Map.Entry<String,String> entry : argMap.entrySet()) {
+            if (entry.getKey().startsWith(group)) {
+                m.put(entry.getKey().substring(group.length()), entry.getValue());
+            }
+        }
+        return m;
     }
 }
