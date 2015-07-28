@@ -397,6 +397,9 @@ public final class ClientApp {
             if (thr instanceof ConfigurationException) {
                 System.err.println("Error: " + thr.getMessage());
                 status = Status.CFG_ERROR;
+            } else if (thr instanceof IllegalCmdArgumentException) {
+                System.err.println("Error: " + thr.getMessage());
+                status = Status.ARG_ERROR;
             } else if (thr instanceof MslException) {
                 System.err.println(SharedUtil.getMslExceptionInfo((MslException)thr));
                 status = Status.MSL_EXC_ERROR;
