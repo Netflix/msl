@@ -34,11 +34,11 @@ import mslcli.common.util.ConfigurationException;
  * @author Vadim Spector <vspector@netflix.com>
  */
 
-public abstract class AuthenticationDataHandle {
+public abstract class EntityAuthenticationHandle {
     /**
      * @param scheme EntityAuthenticationScheme
      */
-    protected AuthenticationDataHandle(final EntityAuthenticationScheme scheme) {
+    protected EntityAuthenticationHandle(final EntityAuthenticationScheme scheme) {
         this.scheme = scheme;
     }
 

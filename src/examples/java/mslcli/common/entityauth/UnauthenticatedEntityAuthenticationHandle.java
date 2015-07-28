@@ -19,42 +19,42 @@ package mslcli.common.entityauth;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
-import com.netflix.msl.entityauth.RsaAuthenticationData;
-import com.netflix.msl.entityauth.RsaAuthenticationFactory;
+import com.netflix.msl.entityauth.UnauthenticatedAuthenticationData;
+import com.netflix.msl.entityauth.UnauthenticatedAuthenticationFactory;
 import com.netflix.msl.util.AuthenticationUtils;
 
 import mslcli.common.CmdArguments;
 import mslcli.common.IllegalCmdArgumentException;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
-
+ 
 /**
  * <p>
- * Interface facilitating plugin implementation for generating entity authentication data
+ * Plugin implementation for generating entity authentication data and factory
  * </p>
  * 
  * @author Vadim Spector <vspector@netflix.com>
  */
 
-public class RsaAuthenticationDataHandle extends AuthenticationDataHandle {
+public class UnauthenticatedEntityAuthenticationHandle extends EntityAuthenticationHandle {
     /**
      * ctor
      */
-    public RsaAuthenticationDataHandle() {
-        super(EntityAuthenticationScheme.RSA);
+    public UnauthenticatedEntityAuthenticationHandle() {
+        super(EntityAuthenticationScheme.NONE);
     }
 
     @Override
     public EntityAuthenticationData getEntityAuthenticationData(final AppContext appCtx, final CmdArguments args)
-        throws ConfigurationException, IllegalCmdArgumentException
+        throws IllegalCmdArgumentException
     {
-        return new RsaAuthenticationData(args.getEntityId(), appCtx.getRsaKeyId(args.getEntityId()));
+        return new UnauthenticatedAuthenticationData(args.getEntityId());
     }
 
     @Override
     public EntityAuthenticationFactory getEntityAuthenticationFactory(final AppContext appCtx, final CmdArguments args, final AuthenticationUtils authutils)
         throws ConfigurationException, IllegalCmdArgumentException
     {
-        return new RsaAuthenticationFactory(appCtx.getRsaStore(), authutils);
+        return new UnauthenticatedAuthenticationFactory(authutils);
     }
 }

@@ -53,7 +53,7 @@ import com.netflix.msl.util.SimpleMslStore;
 
 import mslcli.common.CmdArguments;
 import mslcli.common.IllegalCmdArgumentException;
-import mslcli.common.entityauth.AuthenticationDataHandle;
+import mslcli.common.entityauth.EntityAuthenticationHandle;
 import mslcli.common.keyx.KeyExchangeHandle;
 import mslcli.common.userauth.UserAuthenticationHandle;
 import mslcli.common.util.AppContext;
@@ -127,7 +127,7 @@ public abstract class MslConfig {
         if (easName == null || easName.trim().length() == 0)
             throw new IllegalCmdArgumentException("Entity Authentication Scheme is not set");
         easName = easName.trim();
-        for(final AuthenticationDataHandle eah : appCtx.getAuthenticationDataHandles()) {
+        for(final EntityAuthenticationHandle eah : appCtx.getEntityAuthenticationHandles()) {
             if (easName.equals(eah.getScheme().name())) {
                 final EntityAuthenticationData ead = eah.getEntityAuthenticationData(appCtx, args);
                 appCtx.info(String.format("%s: Generated EntityAuthenticationData{%s}, %s",
@@ -136,7 +136,7 @@ public abstract class MslConfig {
             }
         }
         final List<String> schemes = new ArrayList<String>();
-        for (final AuthenticationDataHandle eah : appCtx.getAuthenticationDataHandles())
+        for (final EntityAuthenticationHandle eah : appCtx.getEntityAuthenticationHandles())
             schemes.add(eah.getScheme().name());
         throw new IllegalCmdArgumentException(String.format("Unsupported Entity Authentication Scheme %s, Supported: %s", easName, schemes));
     }
@@ -150,7 +150,7 @@ public abstract class MslConfig {
         throws ConfigurationException, IllegalCmdArgumentException
     {
         final Set<EntityAuthenticationFactory> entityAuthFactories = new HashSet<EntityAuthenticationFactory>();
-        for (final AuthenticationDataHandle adh : appCtx.getAuthenticationDataHandles()) {
+        for (final EntityAuthenticationHandle adh : appCtx.getEntityAuthenticationHandles()) {
             entityAuthFactories.add(adh.getEntityAuthenticationFactory(appCtx, args, authutils));
         }
         return Collections.<EntityAuthenticationFactory>unmodifiableSet(entityAuthFactories);

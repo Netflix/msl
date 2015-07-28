@@ -19,8 +19,8 @@ package mslcli.common.entityauth;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
-import com.netflix.msl.entityauth.UnauthenticatedSuffixedAuthenticationData;
-import com.netflix.msl.entityauth.UnauthenticatedSuffixedAuthenticationFactory;
+import com.netflix.msl.entityauth.PresharedAuthenticationData;
+import com.netflix.msl.entityauth.PresharedAuthenticationFactory;
 import com.netflix.msl.util.AuthenticationUtils;
 
 import mslcli.common.CmdArguments;
@@ -30,31 +30,31 @@ import mslcli.common.util.ConfigurationException;
  
 /**
  * <p>
- * Plugin implementation for generating entity authentication data and authentication factory
+ * Interface facilitating plugin implementation for generating entity authentication data
  * </p>
  * 
  * @author Vadim Spector <vspector@netflix.com>
  */
 
-public class UnauthenticatedSuffixedAuthenticationHandle extends AuthenticationDataHandle {
+public class PresharedEntityAuthenticationHandle extends EntityAuthenticationHandle {
     /**
      * ctor
      */
-    public UnauthenticatedSuffixedAuthenticationHandle() {
-        super(EntityAuthenticationScheme.NONE_SUFFIXED);
+    public PresharedEntityAuthenticationHandle() {
+        super(EntityAuthenticationScheme.PSK);
     }
 
     @Override
     public EntityAuthenticationData getEntityAuthenticationData(final AppContext appCtx, final CmdArguments args)
         throws IllegalCmdArgumentException
     {
-        return new UnauthenticatedSuffixedAuthenticationData(args.getEntityId(), "1");
+        return new PresharedAuthenticationData(args.getEntityId());
     }
 
     @Override
     public EntityAuthenticationFactory getEntityAuthenticationFactory(final AppContext appCtx, final CmdArguments args, final AuthenticationUtils authutils)
         throws ConfigurationException, IllegalCmdArgumentException
     {
-        return new UnauthenticatedSuffixedAuthenticationFactory(authutils);
+        return new PresharedAuthenticationFactory(appCtx.getPresharedKeyStore(), authutils);
     }
 }

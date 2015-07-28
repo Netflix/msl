@@ -19,15 +19,15 @@ package mslcli.common.entityauth;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
-import com.netflix.msl.entityauth.PresharedAuthenticationData;
-import com.netflix.msl.entityauth.PresharedAuthenticationFactory;
+import com.netflix.msl.entityauth.RsaAuthenticationData;
+import com.netflix.msl.entityauth.RsaAuthenticationFactory;
 import com.netflix.msl.util.AuthenticationUtils;
 
 import mslcli.common.CmdArguments;
 import mslcli.common.IllegalCmdArgumentException;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
- 
+
 /**
  * <p>
  * Interface facilitating plugin implementation for generating entity authentication data
@@ -36,25 +36,25 @@ import mslcli.common.util.ConfigurationException;
  * @author Vadim Spector <vspector@netflix.com>
  */
 
-public class PresharedAuthenticationDataHandle extends AuthenticationDataHandle {
+public class RsaEntityAuthenticationHandle extends EntityAuthenticationHandle {
     /**
      * ctor
      */
-    public PresharedAuthenticationDataHandle() {
-        super(EntityAuthenticationScheme.PSK);
+    public RsaEntityAuthenticationHandle() {
+        super(EntityAuthenticationScheme.RSA);
     }
 
     @Override
     public EntityAuthenticationData getEntityAuthenticationData(final AppContext appCtx, final CmdArguments args)
-        throws IllegalCmdArgumentException
+        throws ConfigurationException, IllegalCmdArgumentException
     {
-        return new PresharedAuthenticationData(args.getEntityId());
+        return new RsaAuthenticationData(args.getEntityId(), appCtx.getRsaKeyId(args.getEntityId()));
     }
 
     @Override
     public EntityAuthenticationFactory getEntityAuthenticationFactory(final AppContext appCtx, final CmdArguments args, final AuthenticationUtils authutils)
         throws ConfigurationException, IllegalCmdArgumentException
     {
-        return new PresharedAuthenticationFactory(appCtx.getPresharedKeyStore(), authutils);
+        return new RsaAuthenticationFactory(appCtx.getRsaStore(), authutils);
     }
 }

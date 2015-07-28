@@ -68,7 +68,7 @@ import com.netflix.msl.userauth.UserAuthenticationScheme;
 
 import mslcli.common.Pair;
 import mslcli.common.Triplet;
-import mslcli.common.entityauth.AuthenticationDataHandle;
+import mslcli.common.entityauth.EntityAuthenticationHandle;
 import mslcli.common.entityauth.SimplePresharedKeyStore;
 import mslcli.common.entityauth.SimpleRsaStore;
 import mslcli.common.keyx.KeyExchangeHandle;
@@ -107,7 +107,7 @@ public final class AppContext {
     /** named Diffie-Hellman algorithm parameters database */
     private final DiffieHellmanParameters diffieHellmanParameters;
     /** entity authentication handles configured for this app */
-    private final Set<AuthenticationDataHandle> entityAuthenticationHandles;
+    private final Set<EntityAuthenticationHandle> entityAuthenticationHandles;
     /** ordered list of key exchange handles configured for this app in the order of their preference */
     private final List<KeyExchangeHandle> keyExchangeHandles;
     /** user authentication handles configured for this app */
@@ -146,7 +146,7 @@ public final class AppContext {
         this.mgkKeyStore = initMgkKeyStore(p);
         this.emailPasswordStore = initEmailPasswordStore(p);
         this.rsaStore = initRsaStore(p);
-        this.entityAuthenticationHandles = new HashSet<AuthenticationDataHandle>();
+        this.entityAuthenticationHandles = new HashSet<EntityAuthenticationHandle>();
         for (String s : p.getEntityAuthenticationHandles()) {
             final Class<? extends Object> cls;
             try {
@@ -162,8 +162,8 @@ public final class AppContext {
             } catch (IllegalAccessException e) {
                 throw new ConfigurationException(String.format("Authentication Data Handle class %s: object cannot be instantiated", s), e);
             }
-            if (h instanceof AuthenticationDataHandle) {
-                entityAuthenticationHandles.add((AuthenticationDataHandle)h);
+            if (h instanceof EntityAuthenticationHandle) {
+                entityAuthenticationHandles.add((EntityAuthenticationHandle)h);
             } else {
                 throw new ConfigurationException(String.format("Authentication Data Handle class %s: wrong type %s", s, h.getClass().getName()));
             }
@@ -246,7 +246,7 @@ public final class AppContext {
      * @param scheme authentication scheme name
      * @return entity authentication data handle for a given scheme
      */
-    public Set<AuthenticationDataHandle> getAuthenticationDataHandles() {
+    public Set<EntityAuthenticationHandle> getEntityAuthenticationHandles() {
         return Collections.unmodifiableSet(entityAuthenticationHandles);
     }
 
