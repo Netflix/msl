@@ -118,7 +118,7 @@ public class SimpleHttpServer {
                 os.close();
             }
 
-            System.out.println(String.format("SUCCESS: %1$te/%1$tm/%1$tY %1$tH:%1$tM:%1$tS.%1$tL\n", new Date()));
+            System.out.println(String.format("SUCCESS: %1$te/%1$tm/%1$tY %1$tH:%1$tM:%1$tS.%1$tL", new Date()));
         }
 
         /** MSL server to delegate requests to */

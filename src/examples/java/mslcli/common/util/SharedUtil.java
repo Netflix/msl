@@ -343,6 +343,23 @@ public final class SharedUtil {
      * @throws IOException
      */
     public static Triplet<String,String,String> readPskFile(final String file) throws IOException {
+        final List<String> lines = readTextFile(file);
+        if (lines.size() != 3)
+            throw new IOException("Invalid PSK File " + file);
+        final String entityId = lines.get(0);
+        final String encKey   = lines.get(1);
+        final String hmacKey  = lines.get(2);
+        return new Triplet<String,String,String>(entityId.trim(), "b64:" + encKey.trim(), "b64:" + hmacKey.trim());
+    }
+
+    /**
+     * read text file into a list of strings
+     *
+     * @param file file path
+     * @return List of strings, each string representing a line of text
+     * @throws IOException
+     */
+    public static List<String> readTextFile(final String file) throws IOException {
         FileInputStream fis = null;
         InputStreamReader isr = null;
         BufferedReader br = null;
@@ -350,22 +367,17 @@ public final class SharedUtil {
             fis = new FileInputStream(file);
             isr = new InputStreamReader(fis, MslConstants.DEFAULT_CHARSET);
             br  = new BufferedReader(isr);
-            final String entityId = br.readLine();
-            final String encKey = br.readLine();
-            final String hmacKey = br.readLine();
-            if (entityId == null || entityId.trim().length() == 0 ||
-                encKey   == null || encKey.trim().length()   == 0 ||
-                hmacKey  == null || hmacKey.trim().length()  == 0)
-            {
-                throw new IOException("Invalid PSK File " + file);
+            String line;
+            final List<String> lines = new ArrayList<String>();
+            while ((line = br.readLine()) != null) {
+                lines.add(line);
             }
-            return new Triplet<String,String,String>(entityId.trim(), "b64:" + encKey.trim(), "b64:" + hmacKey.trim());
+            return lines;
         } finally {
             if (fis != null) try { fis.close(); } catch (IOException ignore) {}
             if (isr != null) try { isr.close(); } catch (IOException ignore) {}
             if (br != null) try { br.close(); } catch (IOException ignore) {}
         }
-
     }
  
     /**
