@@ -123,16 +123,22 @@ public abstract class MslConfig {
      * @throws IllegalCmdArgumentException
      */
     public final EntityAuthenticationData getEntityAuthenticationData() throws ConfigurationException, IllegalCmdArgumentException {
-        String scheme = args.getEntityAuthenticationScheme();
-        if (scheme == null || scheme.trim().length() == 0)
+        String easName = args.getEntityAuthenticationScheme();
+        if (easName == null || easName.trim().length() == 0)
             throw new IllegalCmdArgumentException("Entity Authentication Scheme is not set");
-        scheme = scheme.trim();
-        for(final AuthenticationDataHandle adh : appCtx.getAuthenticationDataHandles()) {
-            if (scheme.equals(adh.getScheme().name())) {
-                return adh.getEntityAuthenticationData(appCtx, args);
+        easName = easName.trim();
+        for(final AuthenticationDataHandle eah : appCtx.getAuthenticationDataHandles()) {
+            if (easName.equals(eah.getScheme().name())) {
+                final EntityAuthenticationData ead = eah.getEntityAuthenticationData(appCtx, args);
+                appCtx.info(String.format("%s: Generated EntityAuthenticationData{%s}, %s",
+                    this, easName, ead.getClass().getName()));
+                return ead;
             }
         }
-        throw new IllegalCmdArgumentException("Unsupported Entity Authentication Scheme " + scheme);
+        final List<String> schemes = new ArrayList<String>();
+        for (final AuthenticationDataHandle eah : appCtx.getAuthenticationDataHandles())
+            schemes.add(eah.getScheme().name());
+        throw new IllegalCmdArgumentException(String.format("Unsupported Entity Authentication Scheme %s, Supported: %s", easName, schemes));
     }
 
     /**
@@ -160,9 +166,9 @@ public abstract class MslConfig {
     public UserAuthenticationData getUserAuthenticationData()
         throws ConfigurationException, IllegalCmdArgumentException
     {
-        appCtx.info(String.format("%s: Requesting UserAuthenticationData, UserId %s, Interactive %b, scheme %s",
-            this, args.getUserId(), args.isInteractive(), args.getUserAuthenticationScheme()));
         final String uasName = args.getUserAuthenticationScheme();
+        if (uasName == null || uasName.trim().length() == 0)
+            throw new IllegalCmdArgumentException("Entity Authentication Scheme is not set");
         for (final UserAuthenticationHandle uah : appCtx.getUserAuthenticationHandles()) {
             if (uah.getScheme().name().equals(uasName)) {
                 final UserAuthenticationData uad = uah.getUserAuthenticationData(appCtx, args);
