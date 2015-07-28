@@ -34,11 +34,20 @@ import mslcli.common.util.ConfigurationException;
  * @author Vadim Spector <vspector@netflix.com>
  */
 
-public interface AuthenticationDataHandle {
+public abstract class AuthenticationDataHandle {
     /**
-     * @return entity authentication scheme
+     * @param scheme EntityAuthenticationScheme
      */
-    EntityAuthenticationScheme getScheme();
+    protected AuthenticationDataHandle(final EntityAuthenticationScheme scheme) {
+        this.scheme = scheme;
+    }
+
+    /**
+     * @return key exchange scheme
+     */
+    public final EntityAuthenticationScheme getScheme() {
+        return scheme;
+    }
 
     /**
      * @param appCtx application context
@@ -47,7 +56,7 @@ public interface AuthenticationDataHandle {
      * @throws ConfigurationException
      * @throws IllegalCmdArgumentException
      */
-    EntityAuthenticationData getEntityAuthenticationData(final AppContext appCtx, final CmdArguments args)
+    public abstract EntityAuthenticationData getEntityAuthenticationData(final AppContext appCtx, final CmdArguments args)
         throws ConfigurationException, IllegalCmdArgumentException;
 
     /**
@@ -58,6 +67,14 @@ public interface AuthenticationDataHandle {
      * @throws ConfigurationException
      * @throws IllegalCmdArgumentException
      */
-    EntityAuthenticationFactory getEntityAuthenticationFactory(final AppContext appCtx, final CmdArguments args, final AuthenticationUtils authutils)
+    public abstract EntityAuthenticationFactory getEntityAuthenticationFactory(final AppContext appCtx, final CmdArguments args, final AuthenticationUtils authutils)
         throws ConfigurationException, IllegalCmdArgumentException;
+
+    @Override
+    public String toString() {
+        return String.format("EntityAuthenticationHandle{%s}", scheme.toString());
+    }
+
+    /** entity authentication scheme */
+    private final EntityAuthenticationScheme scheme;
 }

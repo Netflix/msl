@@ -36,10 +36,12 @@ import mslcli.common.util.ConfigurationException;
  * @author Vadim Spector <vspector@netflix.com>
  */
 
-public class PresharedAuthenticationDataHandle implements AuthenticationDataHandle {
-    @Override
-    public EntityAuthenticationScheme getScheme() {
-        return EntityAuthenticationScheme.PSK;
+public class PresharedAuthenticationDataHandle extends AuthenticationDataHandle {
+    /**
+     * ctor
+     */
+    public PresharedAuthenticationDataHandle() {
+        super(EntityAuthenticationScheme.PSK);
     }
 
     @Override

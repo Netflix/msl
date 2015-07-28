@@ -106,6 +106,11 @@ public abstract class KeyExchangeHandle {
         }
     }
 
+    @Override
+    public String toString() {
+        return String.format("KeyExchangeHandle{%s}", scheme.toString());
+    }
+
     /**
      * extension of WrapCryptoContextRepositoryWrapper class to intercept and report calls
      */

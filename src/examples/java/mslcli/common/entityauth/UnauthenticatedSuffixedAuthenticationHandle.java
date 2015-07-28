@@ -36,10 +36,12 @@ import mslcli.common.util.ConfigurationException;
  * @author Vadim Spector <vspector@netflix.com>
  */
 
-public class UnauthenticatedSuffixedAuthenticationHandle implements AuthenticationDataHandle {
-    @Override
-    public EntityAuthenticationScheme getScheme() {
-        return EntityAuthenticationScheme.NONE_SUFFIXED;
+public class UnauthenticatedSuffixedAuthenticationHandle extends AuthenticationDataHandle {
+    /**
+     * ctor
+     */
+    public UnauthenticatedSuffixedAuthenticationHandle() {
+        super(EntityAuthenticationScheme.NONE_SUFFIXED);
     }
 
     @Override

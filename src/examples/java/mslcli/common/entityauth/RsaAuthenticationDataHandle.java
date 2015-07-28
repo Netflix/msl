@@ -36,10 +36,12 @@ import mslcli.common.util.ConfigurationException;
  * @author Vadim Spector <vspector@netflix.com>
  */
 
-public class RsaAuthenticationDataHandle implements AuthenticationDataHandle {
-   @Override
-    public EntityAuthenticationScheme getScheme() {
-        return EntityAuthenticationScheme.RSA;
+public class RsaAuthenticationDataHandle extends AuthenticationDataHandle {
+    /**
+     * ctor
+     */
+    public RsaAuthenticationDataHandle() {
+        super(EntityAuthenticationScheme.RSA);
     }
 
     @Override
