@@ -102,11 +102,11 @@ public class SimpleHttpServer {
                 System.err.println(SharedUtil.getMslExceptionInfo(e));
             } catch (IOException e) {
                 final Throwable thr = SharedUtil.getRootCause(e);
-                System.err.println("\nIO-ERROR: " + e);
+                System.err.println("IO-ERROR: " + e);
                 System.err.println("ROOT CAUSE:");
                 thr.printStackTrace(System.err);
             } catch (RuntimeException e) {
-                System.err.println("\nRT-ERROR: " + e);
+                System.err.println("RT-ERROR: " + e);
                 System.err.println("ROOT CAUSE:");
                 SharedUtil.getRootCause(e).printStackTrace(System.err);
             } finally {

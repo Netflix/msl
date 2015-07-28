@@ -459,6 +459,25 @@ public final class MslProperties {
     public List<String> getUserAuthenticationHandles() throws ConfigurationException {
         return getValueList(APP_USER_AUTH_HANDLE);
     }
+
+    /**
+     * @param prefix property name prefix
+     * @return subset of properties  with the given name prefix. Prefix is removed.
+     * @throws ConfigurationException
+     */
+    public Map<String,String> getPropertyFamily(String prefix) throws ConfigurationException {
+        if (prefix == null || prefix.trim().length() == 0)
+            throw new IllegalArgumentException("NULL prefix");
+        prefix = prefix.trim();
+        if (!prefix.endsWith(SEP)) prefix += SEP;
+        final Map<String,String> propFamily = new HashMap<String,String>();
+        for (String name : p.stringPropertyNames()) {
+            if (name.startsWith(prefix))
+                propFamily.put(name.substring(prefix.length()), p.getProperty(name));
+        }
+        return propFamily;
+    }
+
     /* ****************
      * Helper classes *
      ******************/

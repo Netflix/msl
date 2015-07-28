@@ -89,23 +89,53 @@ public final class CmdArguments {
             P_INT,
             P_CFG,
             P_URL,
+
             P_EID,
-            P_UID,
-            P_UAS,
             P_EAS,
+
             P_KX,
             P_KXM,
-            P_ENC,
-            P_SIG,
-            P_NREP,
-            P_IF,
-            P_OF,
-            P_MSG,
+
+            P_UID,
+            P_UAS,
+
             P_PSK,
             P_MGK,
             P_MST,
+
+            P_ENC,
+            P_SIG,
+            P_NREP,
+
+            P_IF,
+            P_OF,
+            P_MSG,
+
             P_V
         )));
+
+    /** order of listing of supported arguments */
+    private static final Map<String,Integer> supportedArgumentsRank = rankSupportedArguments();
+
+    /**
+     * @return mapping between argument name and its rank
+     */
+    private static Map<String,Integer> rankSupportedArguments() {
+        final Map<String,Integer> hm = new HashMap<String,Integer>();
+        int i = 0;
+        for (String key : supportedArguments) {
+            hm.put(key, i++);
+        }
+        return Collections.unmodifiableMap(hm);
+    }
+
+    /**
+     * @param key propertry name
+     * @return property order of preference
+     */
+    private static int getArgRank(final String key) {
+        return supportedArgumentsRank.containsKey(key) ? supportedArgumentsRank.get(key) : supportedArgumentsRank.size();
+    }
 
     /**
      * comparator class for listing arguments in preferable order
@@ -113,11 +143,11 @@ public final class CmdArguments {
     private static final class ArgComparator implements Comparator<String> {
         @Override
         public int compare(String x, String y) {
-            return supportedArguments.indexOf(x) - supportedArguments.indexOf(y);
+            return getArgRank(x) - getArgRank(y);
         }
         @Override
         public boolean equals(Object o) {
-            throw new UnsupportedOperationException();
+            return this == o;
         }
         @Override
         public int hashCode() {
