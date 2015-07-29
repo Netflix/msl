@@ -18,14 +18,20 @@ package mslcli.client;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import com.netflix.msl.MslException;
+import com.netflix.msl.MslKeyExchangeException;
+import com.netflix.msl.keyx.KeyRequestData;
 import com.netflix.msl.msg.ErrorHeader;
 import com.netflix.msl.msg.MessageContext;
 import com.netflix.msl.msg.MslControl;
 import com.netflix.msl.msg.MslControl.MslChannel;
+import com.netflix.msl.userauth.UserAuthenticationData;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslStore;
 
@@ -36,9 +42,12 @@ import mslcli.client.util.UserAuthenticationDataHandle;
 
 import mslcli.client.util.ClientMslContext;
 
+import mslcli.common.CmdArguments;
 import mslcli.common.IllegalCmdArgumentException;
+import mslcli.common.IllegalCmdArgumentRuntimeException;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
+import mslcli.common.util.ConfigurationRuntimeException;
 import mslcli.common.util.SharedUtil;
 
 /**
@@ -88,45 +97,43 @@ public final class Client {
         
     /**
      * @param appCtx application context
-     * @param userAuthenticationDataHandle callback for obtaining user authentication data
-     * @param keyRequestDataHandle callback for obtaining key request data
-     * @param mslCfg encapsulation of MSL configuration parameters
+     * @param args command-line arguments (well, they may not be necessarily specified from the command line, just the same parsing scheme)
      * @throws ConfigurationException
      * @throws IllegalCmdArgumentException
      */
-    public Client(final AppContext appCtx,
-                  final UserAuthenticationDataHandle userAuthenticationDataHandle,
-                  final KeyRequestDataHandle keyRequestDataHandle,
-                  final ClientMslConfig mslCfg
-                 ) throws ConfigurationException, IllegalCmdArgumentException
+    public Client(final AppContext appCtx, final CmdArguments args)
+        throws ConfigurationException, IllegalCmdArgumentException
     {
         if (appCtx == null) {
             throw new IllegalArgumentException("NULL app context");
         }
-        if (userAuthenticationDataHandle == null) {
-            throw new IllegalArgumentException("NULL user authentication data handle");
-        }
-        if (keyRequestDataHandle == null) {
-            throw new IllegalArgumentException("NULL key request data handle");
+        if (args == null) {
+            throw new IllegalArgumentException("NULL arguments");
         }
 
-        // Initialize app context.
+        // Set app context.
         this.appCtx = appCtx;
 
-        // Set user authentication data handle
-        this.userAuthenticationDataHandle = userAuthenticationDataHandle;
+        // Set args.
+        this.args = args;
 
-        // Set key request data handle
-        this.keyRequestDataHandle = keyRequestDataHandle;
+        // Init MSL configuration
+        this.mslCfg = new ClientMslConfig(appCtx, args);
 
-        // set MSL configuration
-        this.mslCfg = mslCfg;
+        // Init user authentication data handle
+        this.userAuthenticationDataHandle = new ClientUserAuthenticationDataHandle();
 
-        // Set up the MSL context
+        // Init key request data handle
+        this.keyRequestDataHandle = new ClientKeyRequestDataHandle();
+
+        // Init up the MSL context
         this.mslCtx = new ClientMslContext(appCtx, mslCfg);
 
         // Set up the MSL Control
         this.mslCtrl = appCtx.getMslControl();
+
+        // set up entity identity
+        this.entityId = args.getEntityId();
     }
 
     /**
@@ -135,16 +142,31 @@ public final class Client {
      * @param cfg message security policies
      * @param remoteUrl target URL for sending message
      * @return response encapsulating payload and/or error header
+     * @throws ConfigurationException
      * @throws ExecutionException
+     * @throws IllegalCmdArgumentException
      * @throws IOException
      * @throws InterruptedException
      * @throws MslException
      */
-    public Response sendRequest(final byte[] request, final MessageConfig cfg, final URL remoteUrl)
-        throws ExecutionException, IOException, InterruptedException, MslException
+    public Response sendRequest(final byte[] request)
+        throws ConfigurationException, ExecutionException, IllegalCmdArgumentException, IOException, InterruptedException, MslException
     {
-        if (userAuthenticationDataHandle == null) {
-            throw new IllegalStateException("Uninitialized UserAuthenticationDataHandle");
+        // set message mslProperties
+        final MessageConfig cfg = new MessageConfig();
+        cfg.userId = args.getUserId();
+        cfg.isEncrypted = args.isEncrypted();
+        cfg.isIntegrityProtected = args.isIntegrityProtected();
+        cfg.isNonReplayable = args.isNonReplayable();
+
+        // set remote URL
+        final URL remoteUrl = args.getUrl();
+
+        // set key exchange scheme / mechanism
+        final String kx = args.getKeyExchangeScheme();
+        if (kx != null) {
+            final String kxm = args.getKeyExchangeMechanism();
+            keyRequestDataHandle.setKeyExchange(kx, kxm);
         }
 
         final MessageContext msgCtx = new ClientRequestMessageContext(
@@ -183,8 +205,97 @@ public final class Client {
         mslCfg.saveMslStore();
     }
 
+    /**
+     * @return entity identity
+     */
+    public String getEntityId() {
+        return entityId;
+    }
+
+    /**
+     * This class facilitates on-demand fetching of user authentication data.
+     * Other implementations may prompt users to enter their credentials from the console.
+     */
+    private final class ClientUserAuthenticationDataHandle implements UserAuthenticationDataHandle {
+        @Override
+        public UserAuthenticationData getUserAuthenticationData()
+        {
+            try {
+                return mslCfg.getUserAuthenticationData();
+            } catch (IllegalCmdArgumentException e) {
+                throw new IllegalCmdArgumentRuntimeException(e);
+            } catch (ConfigurationException e) {
+                throw new ConfigurationRuntimeException(e);
+            }
+        }
+
+        @Override
+        public String toString() {
+            return String.format("UserAuthenticationDataHandle[%s]", entityId);
+        }
+    }
+
+    /**
+     * This class facilitates on-demand fetching of key request data and configuring this data on the fly.
+     */
+    private final class ClientKeyRequestDataHandle implements KeyRequestDataHandle {
+       /**
+         * ctor
+         */
+        ClientKeyRequestDataHandle() {
+            this.keyRequestDataSet = new HashSet<KeyRequestData>();
+            this.lastKxsName = null;
+            this.lastKxmName = null;
+            this.lastRequested = false;
+        }
+
+        @Override
+        public synchronized Set<KeyRequestData> getKeyRequestData() {
+            appCtx.info(String.format("%s: Requesting Key Request Data", this));
+            lastRequested = true;
+            return Collections.<KeyRequestData>unmodifiableSet(keyRequestDataSet);
+        }
+
+        /**
+         * Set key request data for specific key request scheme and (if applicable) mechanism.
+         * @param kxsName key exchange scheme name
+         * @param kxmName key exchange mechanism name
+         * @throws ConfigurationException
+         * @throws IllegalCmdArgumentException
+         * @throws MslKeyExchangeException
+         */
+        private synchronized void setKeyExchange(final String kxsName, final String kxmName)
+            throws ConfigurationException, IllegalCmdArgumentException, MslKeyExchangeException {
+            if (SharedUtil.safeEqual(kxsName, lastKxsName) && SharedUtil.safeEqual(kxmName, lastKxmName) && !lastRequested)
+                return;
+            final KeyRequestData keyRequestData = mslCfg.getKeyRequestData();
+            keyRequestDataSet.clear();
+            keyRequestDataSet.add(keyRequestData);
+            lastKxsName = kxsName;
+            lastKxmName = kxmName;
+            lastRequested = false;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("KeyRequestDataHandle[%s]", entityId);
+        }
+
+        /** set of key request data objects, sorted in order of their preference */
+        private final Set<KeyRequestData> keyRequestDataSet;
+        /** last key exchange scheme name */
+        private String lastKxsName;
+        /** last key exchange mechanism name */
+        private String lastKxmName;
+        /** true if getKeyRequestData() was called exactly once after the last call to setKeyExchange() */
+        private boolean lastRequested;
+    }
+
     /** App context */
     private final AppContext appCtx;
+
+    /** Args */
+    private final CmdArguments args;
 
     /** MSL context */
     private final MslContext mslCtx;
@@ -199,5 +310,8 @@ public final class Client {
     private final UserAuthenticationDataHandle userAuthenticationDataHandle;
 
     /** Key Request Data Supplier */
-    private final KeyRequestDataHandle keyRequestDataHandle;
+    private final ClientKeyRequestDataHandle keyRequestDataHandle;
+
+    /** Entity identity */
+    private final String entityId;
 }

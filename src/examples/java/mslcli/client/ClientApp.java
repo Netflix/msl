@@ -21,26 +21,13 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import java.io.InputStream;
 import java.io.IOException;
 import java.net.ConnectException;
-import java.net.URL;
 import java.security.Security;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import com.netflix.msl.MslConstants;
-import com.netflix.msl.MslConstants.ResponseCode;
-import com.netflix.msl.MslError;
 import com.netflix.msl.MslException;
-import com.netflix.msl.MslKeyExchangeException;
-import com.netflix.msl.keyx.KeyRequestData;
 import com.netflix.msl.msg.ConsoleFilterStreamFactory;
-import com.netflix.msl.userauth.UserAuthenticationData;
 
-import mslcli.common.MslConfig;
-import mslcli.client.msg.MessageConfig;
-import mslcli.client.util.KeyRequestDataHandle;
-import mslcli.client.util.UserAuthenticationDataHandle;
 import mslcli.common.CmdArguments;
 import mslcli.common.IllegalCmdArgumentException;
 import mslcli.common.IllegalCmdArgumentRuntimeException;
@@ -50,7 +37,6 @@ import mslcli.common.util.ConfigurationException;
 import mslcli.common.util.ConfigurationRuntimeException;
 import mslcli.common.util.MslProperties;
 import mslcli.common.util.SharedUtil;
-import mslcli.common.util.WrapCryptoContextRepositoryWrapper;
 
 /**
  * <p>
@@ -124,16 +110,10 @@ public final class ClientApp {
 
     /** runtime arguments */
     private final CmdArguments cmdParam;
-    /** configuration properties */
-    private final MslProperties mslProp;
     /** application context */
     private final AppContext appCtx;
-    /** client handle */
+    /** client bound to the given entity identity */
     private Client client;
-    /** current client entity id */
-    private String clientId = null;
-    /** key request data handle callback */
-    private AppKeyRequestDataHandle keyRequestDataHandle = null;
 
     /**
      * Launcher of MSL CLI client. See user manual in HELP_FILE.
@@ -198,7 +178,7 @@ public final class ClientApp {
         this.cmdParam = cmdParam;
 
         // load configuration from the configuration file
-        this.mslProp = MslProperties.getInstance(SharedUtil.loadPropertiesFromFile(cmdParam.getConfigFilePath()));
+        final MslProperties mslProp = MslProperties.getInstance(SharedUtil.loadPropertiesFromFile(cmdParam.getConfigFilePath()));
 
         // load PSK if specified
         final String pskFile = cmdParam.getPskFile();
@@ -306,29 +286,11 @@ public final class ClientApp {
             System.out.println("Options: " + cmdParam.getParameters());
 
             // initialize Client for the first time or whenever its identity changes
-            if (!cmdParam.getEntityId().equals(clientId) || (client == null)) {
-                clientId = cmdParam.getEntityId();
+            if ((client == null) || !cmdParam.getEntityId().equals(client.getEntityId())) {
                 if (client != null)
                     client.saveMslStore();
                 client = null; // required for keeping the state, in case the next line throws exception
-                final ClientMslConfig mslCfg = new ClientMslConfig(appCtx, cmdParam);
-                keyRequestDataHandle = new AppKeyRequestDataHandle(appCtx, mslCfg);
-                client = new Client(appCtx, new AppUserAuthenticationDataHandle(mslCfg),
-                                    keyRequestDataHandle, mslCfg);
-            }
-
-            // set message mslProperties
-            final MessageConfig mcfg = new MessageConfig();
-            mcfg.userId = cmdParam.getUserId();
-            mcfg.isEncrypted = cmdParam.isEncrypted();
-            mcfg.isIntegrityProtected = cmdParam.isIntegrityProtected();
-            mcfg.isNonReplayable = cmdParam.isNonReplayable();
-
-            // set key exchange scheme / mechanism
-            final String kx = cmdParam.getKeyExchangeScheme();
-            if (kx != null) {
-                final String kxm = cmdParam.getKeyExchangeMechanism();
-                keyRequestDataHandle.setKeyExchange(kx, kxm);
+                client = new Client(appCtx, cmdParam);
             }
 
             // set request payload
@@ -348,10 +310,16 @@ public final class ClientApp {
                 }
             }
 
-            // send request and process response
+            /* See if the output file for response payload is specified.
+             * If it is, it must either exist or be creatable.
+             */
             final String outputFile = cmdParam.getPayloadOutputFile();
-            final URL url = cmdParam.getUrl();
-            final Client.Response response = client.sendRequest(requestPayload, mcfg, url);
+
+            /* ********************************************
+             * FINALLY: SEND REQUEST AND PROCESS RESPONSE *
+             **********************************************/
+            final Client.Response response = client.sendRequest(requestPayload);
+
             // Non-NULL response payload - good
             if (response.getPayload() != null) {
                 if (outputFile != null) {
@@ -360,6 +328,7 @@ public final class ClientApp {
                     System.out.println("Response: " + new String(response.getPayload(), MslConstants.DEFAULT_CHARSET));
                 }
                 status = Status.OK;
+            // NULL payload, must be MSL error response
             } else if (response.getErrorHeader() != null) {
                 if (response.getErrorHeader().getErrorMessage() != null) {
                     System.err.println(String.format("MSL RESPONSE ERROR: error_code %d, error_msg \"%s\"",
@@ -369,6 +338,7 @@ public final class ClientApp {
                     System.err.println(String.format("ERROR: %s" + response.getErrorHeader().toJSONString()));
                 }
                 status = Status.MSL_ERROR;
+            // NULL payload, NULL error header - should never happen
             } else {
                 System.out.println("Response with no payload or error header ???");
                 status = Status.MSL_ERROR;
@@ -436,98 +406,6 @@ public final class ClientApp {
     public void shutdown() throws IOException {
         if (client != null)
             client.saveMslStore();
-    }
-
-    /**
-     * This class facilitates on-demand fetching of user authentication data.
-     * Other implementations may prompt users to enter their credentials from the console.
-     */
-    private static final class AppUserAuthenticationDataHandle implements UserAuthenticationDataHandle {
-        /**
-         * @param mslCfg MSL configuration
-         * @param interactive true for interactive mode
-         */
-        AppUserAuthenticationDataHandle(final ClientMslConfig mslCfg) {
-            this.mslCfg = mslCfg;
-        }
-
-        @Override
-        public UserAuthenticationData getUserAuthenticationData()
-        {
-            try {
-                return mslCfg.getUserAuthenticationData();
-            } catch (IllegalCmdArgumentException e) {
-                throw new IllegalCmdArgumentRuntimeException(e);
-            } catch (ConfigurationException e) {
-                throw new ConfigurationRuntimeException(e);
-            }
-        }
-        /** MSL configuration */
-        private final ClientMslConfig mslCfg;
-    }
-
-    /**
-     * This class facilitates on-demand fetching of key request data and configuring this data on the fly.
-     */
-    private static final class AppKeyRequestDataHandle implements KeyRequestDataHandle {
-        
-        /**
-         * @param appCtx application context
-         * @param mslConfig MSL configuration
-         */
-        AppKeyRequestDataHandle(final AppContext appCtx, final ClientMslConfig mslConfig) {
-            this.appCtx = appCtx;
-            this.mslConfig = mslConfig;
-            this.keyRequestDataSet = new HashSet<KeyRequestData>();
-            this.lastKxsName = null;
-            this.lastKxmName = null;
-            this.lastRequested = false;
-        }
-
-        @Override
-        public synchronized Set<KeyRequestData> getKeyRequestData() {
-            appCtx.info(String.format("%s: Requesting Key Request Data", this));
-            lastRequested = true;
-            return Collections.<KeyRequestData>unmodifiableSet(keyRequestDataSet);
-        }
-
-        /**
-         * Set key request data for specific key request scheme and (if applicable) mechanism.
-         * @param kxsName key exchange scheme name
-         * @param kxmName key exchange mechanism name
-         * @throws ConfigurationException
-         * @throws IllegalCmdArgumentException
-         * @throws MslKeyExchangeException
-         */
-        private synchronized void setKeyExchange(final String kxsName, final String kxmName)
-            throws ConfigurationException, IllegalCmdArgumentException, MslKeyExchangeException {
-            if (SharedUtil.safeEqual(kxsName, lastKxsName) && SharedUtil.safeEqual(kxmName, lastKxmName) && !lastRequested)
-                return;
-            final KeyRequestData keyRequestData = mslConfig.getKeyRequestData();
-            keyRequestDataSet.clear();
-            keyRequestDataSet.add(keyRequestData);
-            lastKxsName = kxsName;
-            lastKxmName = kxmName;
-            lastRequested = false;
-        }
-
-        @Override
-        public String toString() {
-            return String.format("KeyRequestDataHandle[%s]", mslConfig.getEntityId());
-        }
-
-        /** application context */
-        private final AppContext appCtx;
-        /** MSL configuration */
-        private final ClientMslConfig mslConfig;
-        /** set of key request data objects, sorted in order of their preference */
-        private final Set<KeyRequestData> keyRequestDataSet;
-        /** last key exchange scheme name */
-        private String lastKxsName;
-        /** last key exchange mechanism name */
-        private String lastKxmName;
-        /** true if getKeyRequestData() was called exactly once after the last call to setKeyExchange() */
-        private boolean lastRequested;
     }
 
     /**
