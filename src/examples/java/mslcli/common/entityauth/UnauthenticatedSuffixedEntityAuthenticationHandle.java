@@ -30,7 +30,7 @@ import mslcli.common.util.ConfigurationException;
  
 /**
  * <p>
- * Plugin implementation for generating entity authentication data and authentication factory
+ * Plugin implementation for generating unauthenticated suffixed entity authentication data and authentication factory
  * </p>
  * 
  * @author Vadim Spector <vspector@netflix.com>

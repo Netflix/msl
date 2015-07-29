@@ -28,7 +28,7 @@ import mslcli.common.util.ConfigurationException;
 
 /**
  * <p>
- * Common abstract class for plugin implementation of user various authentication mechanisms
+ * Common abstract class for plugin implementation of user authentication mechanisms
  * </p>
  * 
  * @author Vadim Spector <vspector@netflix.com>

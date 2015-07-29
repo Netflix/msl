@@ -30,7 +30,7 @@ import mslcli.common.util.ConfigurationException;
 
 /**
  * <p>
- * Interface facilitating plugin implementation for generating entity authentication data
+ * Plugin implementation for generating RSA entity authentication data and authentication factory
  * </p>
  * 
  * @author Vadim Spector <vspector@netflix.com>

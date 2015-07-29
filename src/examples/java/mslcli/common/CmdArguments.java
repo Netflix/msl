@@ -34,8 +34,7 @@ import com.netflix.msl.MslConstants;
 
 /**
  * <p>
- * This class parses MSL CLI command-line arguments, validates them,
- * and provides access methods.
+ * MSL CLI command-line arguments parser, validator, and accessor class.
  * </p>
  *
  * @author Vadim Spector <vspector@netflix.com>

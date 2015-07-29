@@ -28,7 +28,8 @@ import mslcli.common.util.ConfigurationException;
 
 /**
  * <p>
- * Interface facilitating plugin implementation for generating entity authentication data
+ * Abstract class to facilitate creating plugin implementations for generating
+ * entity authentication data and entity authentication factory.
  * </p>
  * 
  * @author Vadim Spector <vspector@netflix.com>
