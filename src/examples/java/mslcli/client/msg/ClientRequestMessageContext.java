@@ -17,6 +17,7 @@ package mslcli.client.msg;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,8 +35,11 @@ import com.netflix.msl.msg.MessageServiceTokenBuilder;
 import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.userauth.UserAuthenticationData;
 
-import mslcli.client.util.KeyRequestDataHandle;
-import mslcli.client.util.UserAuthenticationDataHandle;
+import mslcli.common.IllegalCmdArgumentException;
+import mslcli.common.IllegalCmdArgumentRuntimeException;
+import mslcli.common.util.ConfigurationException;
+import mslcli.common.util.ConfigurationRuntimeException;
+import mslcli.common.MslConfig;
 
 /**
  * <p>Client Request message context.</p>
@@ -44,18 +48,16 @@ import mslcli.client.util.UserAuthenticationDataHandle;
  */
 
 public class ClientRequestMessageContext implements MessageContext {
+    /** MSL configuration */
+    private final MslConfig mslCfg;
     /** whether message should be encrypted */
     private final boolean                    isEncrypted;
     /** whether message should be integrity protected */
     private final boolean                    isIntegrityProtected;
     /** whether message should be non-replayable */
     private final boolean                    isNonReplayable;
-    /** callback for asking user authentication data */
-    private final UserAuthenticationDataHandle userAuthenticationDataHandle;
     /** user id */
     private final String                     userId; 
-    /** callback for asking key request data */
-    private final KeyRequestDataHandle       keyRequestDataHandle; 
     /** message payload */
     private final byte[]                     payload;
     /** map of crypto contexts */
@@ -64,32 +66,25 @@ public class ClientRequestMessageContext implements MessageContext {
     /**
      * Constructor
      *
+     * @param mslCfg MSL configuration
      * @param msgCfg message configuration
      * @param userAuthenticationDataHandle user authentication data getter
      * @param keyRequestDataHandle key request data getter
      * @param payload message payload
      */
-    public ClientRequestMessageContext(final MessageConfig                msgCfg,
-                                       final UserAuthenticationDataHandle userAuthenticationDataHandle,
-                                       final KeyRequestDataHandle         keyRequestDataHandle,
-                                       final byte[]                       payload
-                                      )
+    public ClientRequestMessageContext(final MslConfig mslCfg, final MessageConfig msgCfg, final byte[] payload)
     {
+        if (mslCfg == null) {
+            throw new IllegalArgumentException("NULL MSL config");
+        }
         if (msgCfg == null) {
             throw new IllegalArgumentException("NULL message config data");
         }
-        if (userAuthenticationDataHandle == null) {
-            throw new IllegalArgumentException("NULL user authentication data handle");
-        }
-        if (keyRequestDataHandle == null) {
-            throw new IllegalArgumentException("NULL key request data handle");
-        }
+        this.mslCfg               = mslCfg;
         this.isEncrypted          = msgCfg.isEncrypted;
         this.isIntegrityProtected = msgCfg.isIntegrityProtected;
         this.isNonReplayable      = msgCfg.isNonReplayable;
         this.userId               = msgCfg.userId;
-        this.userAuthenticationDataHandle = userAuthenticationDataHandle;
-        this.keyRequestDataHandle = keyRequestDataHandle;
         this.payload              = payload;
         this.cryptoContexts       = Collections.<String,ICryptoContext>emptyMap();
     }
@@ -156,7 +151,13 @@ public class ClientRequestMessageContext implements MessageContext {
     @Override
     public UserAuthenticationData getUserAuthData(final ReauthCode reauthCode, final boolean renewable, final boolean required) {
         if ((reauthCode == null) && required) {
-            return userAuthenticationDataHandle.getUserAuthenticationData();
+            try {
+                return mslCfg.getUserAuthenticationData();
+            } catch (ConfigurationException e) {
+                throw new ConfigurationRuntimeException(e);
+            } catch (IllegalCmdArgumentException e) {
+                throw new IllegalCmdArgumentRuntimeException(e);
+            }
         } else {
             return null;
         }
@@ -175,7 +176,15 @@ public class ClientRequestMessageContext implements MessageContext {
      */
     @Override
     public Set<KeyRequestData> getKeyRequestData() throws MslKeyExchangeException {
-        return keyRequestDataHandle.getKeyRequestData();
+        Set<KeyRequestData> krd = new HashSet<KeyRequestData>();
+        try {
+            krd.add(mslCfg.getKeyRequestData());
+        } catch (ConfigurationException e) {
+            throw new ConfigurationRuntimeException(e);
+        } catch (IllegalCmdArgumentException e) {
+            throw new IllegalCmdArgumentRuntimeException(e);
+        }
+        return Collections.unmodifiableSet(krd);
     }
 
     /* (non-Javadoc)

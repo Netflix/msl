@@ -43,9 +43,11 @@ import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslStore;
 
 import mslcli.common.IllegalCmdArgumentException;
+import mslcli.common.IllegalCmdArgumentRuntimeException;
 import mslcli.common.Triplet;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
+import mslcli.common.util.ConfigurationRuntimeException;
 import mslcli.server.ServerMslConfig;
 import mslcli.server.tokens.ServerTokenFactory;
 
@@ -72,9 +74,8 @@ public class ServerMslContext implements MslContext {
             throw new IllegalArgumentException("NULL server MSL config");
         }
 
-        /* Initialize MSL store.
-         */
-        this.mslStore = mslCfg.getMslStore();
+        // Initialize MSL config.
+        this.mslCfg = mslCfg;
 
         // Message capabilities.
         final Set<CompressionAlgorithm> compressionAlgos = new HashSet<CompressionAlgorithm>(Arrays.asList(CompressionAlgorithm.GZIP, CompressionAlgorithm.LZW));
@@ -85,9 +86,6 @@ public class ServerMslContext implements MslContext {
         final Triplet<SecretKey,SecretKey,SecretKey> mslKeys = appCtx.getMslKeys();
         this.mslCryptoContext = new SymmetricCryptoContext(this, mslCfg.getEntityId(), mslKeys.x, mslKeys.y, mslKeys.z);
 
-        // Entity authentication.
-        this.entityAuthData = mslCfg.getEntityAuthenticationData();
-        
         // Entity authentication factories.
         this.entityAuthFactories = mslCfg.getEntityAuthenticationFactories();
         
@@ -138,7 +136,13 @@ public class ServerMslContext implements MslContext {
      */
     @Override
     public EntityAuthenticationData getEntityAuthenticationData(final ReauthCode reauthCode) {
-        return entityAuthData;
+        try {
+            return mslCfg.getEntityAuthenticationData();
+        } catch (ConfigurationException e) {
+            throw new ConfigurationRuntimeException(e);
+        } catch (IllegalCmdArgumentException e) {
+            throw new IllegalCmdArgumentRuntimeException(e);
+        }
     }
 
     /* (non-Javadoc)
@@ -206,19 +210,17 @@ public class ServerMslContext implements MslContext {
      */
     @Override
     public MslStore getMslStore() {
-        return mslStore;
+        return mslCfg.getMslStore();
     }
 
+    /** MSL config */
+    private final ServerMslConfig mslCfg;
     /** message capabilities */
     private final MessageCapabilities messageCaps;
     /** MSL crypto context */
     private final ICryptoContext mslCryptoContext;
     /** MSL token factory */
     private final TokenFactory tokenFactory;
-    /** MSL store */
-    private final MslStore mslStore;
-    /** entity authentication data */
-    private final EntityAuthenticationData entityAuthData;
     /** entity authentication factories */
     private final Set<EntityAuthenticationFactory> entityAuthFactories;
     /** user authentication factories */

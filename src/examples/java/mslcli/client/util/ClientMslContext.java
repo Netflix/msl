@@ -43,8 +43,10 @@ import com.netflix.msl.util.MslStore;
 
 import mslcli.client.ClientMslConfig;
 import mslcli.common.IllegalCmdArgumentException;
+import mslcli.common.IllegalCmdArgumentRuntimeException;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
+import mslcli.common.util.ConfigurationRuntimeException;
 
 /**
  * <p>
@@ -71,9 +73,12 @@ public final class ClientMslContext implements MslContext {
         if (appCtx == null) {
             throw new IllegalArgumentException("NULL AppContext");
         }
+        if (mslCfg == null) {
+            throw new IllegalArgumentException("NULL MslConfig");
+        }
 
-        // MSL store
-        this.mslStore = mslCfg.getMslStore();
+        // MSL config
+        this.mslCfg = mslCfg;
 
         // Message capabilities.
         final Set<CompressionAlgorithm> compressionAlgos =
@@ -87,11 +92,6 @@ public final class ClientMslContext implements MslContext {
          */
         this.mslCryptoContext = new ClientMslCryptoContext();
 
-        // Entity authentication.
-        //
-        // Use the local entity identity for the preshared keys database ID.
-        this.entityAuthData = mslCfg.getEntityAuthenticationData();
-        
         // Entity authentication factories.
         this.entityAuthFactories = mslCfg.getEntityAuthenticationFactories();
         
@@ -142,7 +142,13 @@ public final class ClientMslContext implements MslContext {
      */
     @Override
     public EntityAuthenticationData getEntityAuthenticationData(final ReauthCode reauthCode) {
-        return entityAuthData;
+        try {
+            return mslCfg.getEntityAuthenticationData();
+        } catch (ConfigurationException e) {
+            throw new ConfigurationRuntimeException(e);
+        } catch (IllegalCmdArgumentException e) {
+            throw new IllegalCmdArgumentRuntimeException(e);
+        }
     }
 
     /* (non-Javadoc)
@@ -210,19 +216,17 @@ public final class ClientMslContext implements MslContext {
      */
     @Override
     public MslStore getMslStore() {
-        return mslStore;
+        return mslCfg.getMslStore();
     }
 
+    /** MSL config */
+    private final ClientMslConfig mslCfg;
     /** message capabilities */
     private final MessageCapabilities messageCaps;
     /** MSL crypt context */
     private final ICryptoContext mslCryptoContext;
     /** client token factory */
     private final TokenFactory tokenFactory;
-    /** MSL store */
-    private final MslStore mslStore;
-    /** entity authentication data */
-    private final EntityAuthenticationData entityAuthData;
     /** set of entity authentication factories */
     private final Set<EntityAuthenticationFactory> entityAuthFactories;
     /** set of user authentication factories */

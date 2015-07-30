@@ -106,6 +106,7 @@ public abstract class MslConfig {
             this.mslStorePath = null;
         }
         this.mslStoreWrapper = new AppMslStoreWrapper(appCtx, entityId, initMslStore(appCtx, mslStorePath));
+        this.eadMap = new HashMap<String,EntityAuthenticationData>();
     }
 
     /**
@@ -129,10 +130,15 @@ public abstract class MslConfig {
         easName = easName.trim();
         for(final EntityAuthenticationHandle eah : appCtx.getEntityAuthenticationHandles()) {
             if (easName.equals(eah.getScheme().name())) {
-                final EntityAuthenticationData ead = eah.getEntityAuthenticationData(appCtx, args);
-                appCtx.info(String.format("%s: Generated EntityAuthenticationData{%s}, %s",
-                    this, easName, ead.getClass().getName()));
-                return ead;
+                synchronized (eadMap) {
+                    EntityAuthenticationData ead = eadMap.get(easName);
+                    if (ead == null) {
+                        eadMap.put(easName, ead = eah.getEntityAuthenticationData(appCtx, args));
+                        appCtx.info(String.format("%s: Generated EntityAuthenticationData{%s}, %s",
+                            this, easName, ead.getClass().getName()));
+                    }
+                    return ead;
+                }
             }
         }
         final List<String> schemes = new ArrayList<String>();
@@ -431,4 +437,6 @@ public abstract class MslConfig {
     private final MslStoreWrapper mslStoreWrapper;
     /** MSL store file path */
     private final String mslStorePath;
+    /** entity authentication data per scheme */
+    private final Map<String,EntityAuthenticationData> eadMap;
 }

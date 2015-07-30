@@ -37,11 +37,7 @@ import com.netflix.msl.util.MslStore;
 
 import mslcli.client.msg.ClientRequestMessageContext;
 import mslcli.client.msg.MessageConfig;
-import mslcli.client.util.KeyRequestDataHandle;
-import mslcli.client.util.UserAuthenticationDataHandle;
-
 import mslcli.client.util.ClientMslContext;
-
 import mslcli.common.CmdArguments;
 import mslcli.common.IllegalCmdArgumentException;
 import mslcli.common.IllegalCmdArgumentRuntimeException;
@@ -120,12 +116,6 @@ public final class Client {
         // Init MSL configuration
         this.mslCfg = new ClientMslConfig(appCtx, args);
 
-        // Init user authentication data handle
-        this.userAuthenticationDataHandle = new ClientUserAuthenticationDataHandle();
-
-        // Init key request data handle
-        this.keyRequestDataHandle = new ClientKeyRequestDataHandle();
-
         // Init up the MSL context
         this.mslCtx = new ClientMslContext(appCtx, mslCfg);
 
@@ -139,8 +129,6 @@ public final class Client {
     /**
      * Send single request.
      * @param request message payload to send
-     * @param cfg message security policies
-     * @param remoteUrl target URL for sending message
      * @return response encapsulating payload and/or error header
      * @throws ConfigurationException
      * @throws ExecutionException
@@ -162,19 +150,7 @@ public final class Client {
         // set remote URL
         final URL remoteUrl = args.getUrl();
 
-        // set key exchange scheme / mechanism
-        final String kx = args.getKeyExchangeScheme();
-        if (kx != null) {
-            final String kxm = args.getKeyExchangeMechanism();
-            keyRequestDataHandle.setKeyExchange(kx, kxm);
-        }
-
-        final MessageContext msgCtx = new ClientRequestMessageContext(
-            cfg,
-            userAuthenticationDataHandle,
-            keyRequestDataHandle,
-            request
-            );
+        final MessageContext msgCtx = new ClientRequestMessageContext(mslCfg, cfg, request);
 
         final Future<MslChannel> f = mslCtrl.request(mslCtx, msgCtx, remoteUrl, TIMEOUT_MS);
         final MslChannel ch;
@@ -212,85 +188,6 @@ public final class Client {
         return entityId;
     }
 
-    /**
-     * This class facilitates on-demand fetching of user authentication data.
-     * Other implementations may prompt users to enter their credentials from the console.
-     */
-    private final class ClientUserAuthenticationDataHandle implements UserAuthenticationDataHandle {
-        @Override
-        public UserAuthenticationData getUserAuthenticationData()
-        {
-            try {
-                return mslCfg.getUserAuthenticationData();
-            } catch (IllegalCmdArgumentException e) {
-                throw new IllegalCmdArgumentRuntimeException(e);
-            } catch (ConfigurationException e) {
-                throw new ConfigurationRuntimeException(e);
-            }
-        }
-
-        @Override
-        public String toString() {
-            return String.format("UserAuthenticationDataHandle[%s]", entityId);
-        }
-    }
-
-    /**
-     * This class facilitates on-demand fetching of key request data and configuring this data on the fly.
-     */
-    private final class ClientKeyRequestDataHandle implements KeyRequestDataHandle {
-       /**
-         * ctor
-         */
-        ClientKeyRequestDataHandle() {
-            this.keyRequestDataSet = new HashSet<KeyRequestData>();
-            this.lastKxsName = null;
-            this.lastKxmName = null;
-            this.lastRequested = false;
-        }
-
-        @Override
-        public synchronized Set<KeyRequestData> getKeyRequestData() {
-            appCtx.info(String.format("%s: Requesting Key Request Data", this));
-            lastRequested = true;
-            return Collections.<KeyRequestData>unmodifiableSet(keyRequestDataSet);
-        }
-
-        /**
-         * Set key request data for specific key request scheme and (if applicable) mechanism.
-         * @param kxsName key exchange scheme name
-         * @param kxmName key exchange mechanism name
-         * @throws ConfigurationException
-         * @throws IllegalCmdArgumentException
-         * @throws MslKeyExchangeException
-         */
-        private synchronized void setKeyExchange(final String kxsName, final String kxmName)
-            throws ConfigurationException, IllegalCmdArgumentException, MslKeyExchangeException {
-            if (SharedUtil.safeEqual(kxsName, lastKxsName) && SharedUtil.safeEqual(kxmName, lastKxmName) && !lastRequested)
-                return;
-            final KeyRequestData keyRequestData = mslCfg.getKeyRequestData();
-            keyRequestDataSet.clear();
-            keyRequestDataSet.add(keyRequestData);
-            lastKxsName = kxsName;
-            lastKxmName = kxmName;
-            lastRequested = false;
-        }
-
-        @Override
-        public String toString() {
-            return String.format("KeyRequestDataHandle[%s]", entityId);
-        }
-
-        /** set of key request data objects, sorted in order of their preference */
-        private final Set<KeyRequestData> keyRequestDataSet;
-        /** last key exchange scheme name */
-        private String lastKxsName;
-        /** last key exchange mechanism name */
-        private String lastKxmName;
-        /** true if getKeyRequestData() was called exactly once after the last call to setKeyExchange() */
-        private boolean lastRequested;
-    }
-
     /** App context */
     private final AppContext appCtx;
 
@@ -305,12 +202,6 @@ public final class Client {
 
     /** MSL control */
     private final MslControl mslCtrl;
-
-    /** User Authentication Data Supplier */
-    private final UserAuthenticationDataHandle userAuthenticationDataHandle;
-
-    /** Key Request Data Supplier */
-    private final ClientKeyRequestDataHandle keyRequestDataHandle;
 
     /** Entity identity */
     private final String entityId;
