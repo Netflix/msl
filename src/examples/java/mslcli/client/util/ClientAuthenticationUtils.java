@@ -16,40 +16,21 @@
 
 package mslcli.client.util;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
-import com.netflix.msl.entityauth.EntityAuthenticationScheme;
-import com.netflix.msl.keyx.KeyExchangeScheme;
-import com.netflix.msl.tokens.MslUser;
-import com.netflix.msl.userauth.UserAuthenticationScheme;
-import com.netflix.msl.util.AuthenticationUtils;
-
 import mslcli.common.util.AppContext;
+import mslcli.common.util.CommonAuthenticationUtils;
 import mslcli.common.util.ConfigurationException;
-import mslcli.common.util.ConfigurationRuntimeException;
 
 /**
  * <p>
- *    Utility telling which entity authentication, user authentication, and key exchange
- *    mechanisms are allowed/supported for a given entity
+ *    Utility telling which entity authentication, user authentication,
+ *    and key exchange schemes are permitted/supported for a given entity.
+ *    So far, the base class functionality is sufficient.
  * </p>
  * 
  * @author Vadim Spector <vspector@netflix.com>
  */
 
-public class ClientAuthenticationUtils implements AuthenticationUtils {
-
-   // should be configurable
-
-    /** set of entity authentication schemes allowed for this client */
-    private final Set<EntityAuthenticationScheme> allowedClientEntityAuthenticationSchemes;
-    /** set of user authentication schemes allowed for this client */
-    private final Set<UserAuthenticationScheme>   allowedClientUserAuthenticationSchemes;
-    /** set of key exchange schemes allowed for this client */
-    private final Set<KeyExchangeScheme>          allowedClientKeyExchangeSchemes;
-
+public class ClientAuthenticationUtils extends CommonAuthenticationUtils {
     /**
      * <p>Create a new authentication utils instance for the specified client identity.</p>
      * 
@@ -58,91 +39,6 @@ public class ClientAuthenticationUtils implements AuthenticationUtils {
      * @throws ConfigurationException
      */
     public ClientAuthenticationUtils(final String clientId, final AppContext appCtx) throws ConfigurationException {
-        if (clientId == null || clientId.isEmpty()) {
-            throw new IllegalArgumentException("NULL clientId");
-        }
-        if (appCtx == null) {
-            throw new IllegalArgumentException("NULL app context");
-        }
-        this.clientId = clientId;
-        this.appCtx = appCtx;
-
-        // set allowed entity authentication schemes
-        this.allowedClientEntityAuthenticationSchemes = appCtx.getAllowedEntityAuthenticationSchemes(clientId);
-
-        // set allowed user authentication schemes
-        this.allowedClientUserAuthenticationSchemes = appCtx.getAllowedUserAuthenticationSchemes(clientId);
-
-        // set allowed key exchange schemes
-        this.allowedClientKeyExchangeSchemes = appCtx.getAllowedKeyExchangeSchemes(clientId);
+        super(clientId, appCtx);
     }
-    
-    /* (non-Javadoc)
-     * @see com.netflix.msl.util.AuthenticationUtils#isEntityRevoked(java.lang.String)
-     *
-     * typical client entity probably won't be able to check its revocation status
-     */
-    @Override
-    public boolean isEntityRevoked(final String identity) {
-        return false;
-    }
-
-    /* (non-Javadoc)
-     * @see com.netflix.msl.util.AuthenticationUtils#isSchemePermitted(java.lang.String, com.netflix.msl.entityauth.EntityAuthenticationScheme)
-     */
-    @Override
-    public boolean isSchemePermitted(final String identity, final EntityAuthenticationScheme scheme) {
-        if (clientId.equals(identity)) {
-            return allowedClientEntityAuthenticationSchemes.contains(scheme);
-        } else {
-            try {
-                return appCtx.getAllowedEntityAuthenticationSchemes(identity).contains(scheme);
-            } catch (ConfigurationException e) {
-                throw new ConfigurationRuntimeException(e);
-            }
-        }
-    }
-
-    /* (non-Javadoc)
-     * @see com.netflix.msl.util.AuthenticationUtils#isSchemePermitted(java.lang.String, com.netflix.msl.userauth.UserAuthenticationScheme)
-     */
-    @Override
-    public boolean isSchemePermitted(final String identity, final UserAuthenticationScheme scheme) {
-       if (clientId.equals(identity)) {
-            return allowedClientUserAuthenticationSchemes.contains(scheme);
-       } else {
-            appCtx.warning(String.format("client %s: user authentication schema support inquiry for entity %s", clientId, identity));
-            return false;
-       }
-    }
-    
-    /* (non-Javadoc)
-     * @see com.netflix.msl.util.AuthenticationUtils#isSchemePermitted(java.lang.String, com.netflix.msl.tokens.MslUser, com.netflix.msl.userauth.UserAuthenticationScheme)
-     *
-     * In this specific implementation, allowed user authentication schemes depend on entity identity, not a specific user of that entity,
-     * so the implementation is the same as in the method above.
-     */
-    @Override
-    public boolean isSchemePermitted(final String identity, final MslUser user, final UserAuthenticationScheme scheme) {
-        return isSchemePermitted(identity, scheme);
-    }
-
-    /* (non-Javadoc)
-     * @see com.netflix.msl.util.AuthenticationUtils#isSchemePermitted(java.lang.String, com.netflix.msl.keyx.KeyExchangeScheme)
-     */
-    @Override
-    public boolean isSchemePermitted(final String identity, final KeyExchangeScheme scheme) {
-        if (clientId.equals(identity)) {
-            return allowedClientKeyExchangeSchemes.contains(scheme);
-        } else {
-            appCtx.warning(String.format("client %s: key exchange schema support inquiry for entity %s", clientId, identity));
-            return false;
-        }
-    }
-    
-    /** Local client entity identity. */
-    private final String clientId;
-
-    /** Local client entity identity. */
-    private final AppContext appCtx;
 }

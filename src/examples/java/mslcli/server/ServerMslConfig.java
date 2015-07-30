@@ -45,6 +45,6 @@ public final class ServerMslConfig extends MslConfig {
     public ServerMslConfig(final AppContext appCtx, final CmdArguments args)
         throws ConfigurationException, IllegalCmdArgumentException
     {
-        super(appCtx, args, new ServerAuthenticationUtils(appCtx, args.getEntityId()));
+        super(appCtx, args, new ServerAuthenticationUtils(args.getEntityId(), appCtx));
     }
 }
