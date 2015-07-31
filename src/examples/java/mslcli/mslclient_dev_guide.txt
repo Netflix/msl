@@ -1,8 +1,8 @@
-OVERVIEW
+﻿OVERVIEW
 	mslclient is a tool to send MSL messages to a server, using common
 	client configuration options supported by the MSL core library.
 
-        mslclient can run in interactive and non-interactive modes. Non-
+	mslclient can run in interactive and non-interactive modes. Non-
 	interactive mode allows sending single message to the server.
 
 	Interactive mode allows sending multiple messages and interactive
@@ -52,7 +52,7 @@ CONFIGURATION FILE
 	  Multiple entities may share the same set.
 
 	* Named sets of RSA { public, private } key pairs to use
-	  for RSA machanism of entity authentication. The entity
+	  for RSA mechanism of entity authentication. The entity
 	  using these keys to authenticate itself needs to know
 	  both public and private keys. The entity using these
 	  keys to authenticate another entity only need public key.
@@ -64,7 +64,7 @@ CONFIGURATION FILE
 
 	* Master token issuance parameters - renewal window,
 	  expiration window, maximum non-replay id window,
-	  maxumim sequence gap window (between the current
+	  maximum sequence gap window (between the current
 	  current sequence number kept on the server vs the actual
 	  sequence number of the master token presented by the
 	  client for master token renewal.
@@ -175,7 +175,7 @@ CLIENT APPLICATION CLASSES
 		c) If CmdArguments also specify the path(s) to
 		   pre-shared and/or model group key files, ClientApp
 		   constructor extracts those keys and adds them
-		   to the current conmfiguration in MslProperties.
+		   to the current configuration in MslProperties.
 		   This is the only case when MslProperties
 		   configuration gets formed from the data coming
 		   NOT from the configuration file. It is due
@@ -211,11 +211,11 @@ CLIENT APPLICATION CLASSES
 		     input.
 
 		   - Re-instantiate Client if the user's CmdArguments
-		     passed to this function specify diferent entity
+		     passed to this function specify different entity
 		     identity. As mentioned earlier, Client instance
 		     is bound to a given entity identity and cannot
 		     change it dynamically. A new Client takes its
-		     CmdArgumenmts from the ones of the previous
+		     CmdArguments from the ones of the previous
 		     Client instance merged with whatever CmdArguments
 		     passed as an input to ClientApp.sendSingleRequest().
 
@@ -250,7 +250,7 @@ HANDLES PLUG-IN FRAMEWORK
 	2. Key exchange schemes
 	3. User authentication schemes
 
-	MSL CLI library supports plugin implementations of
+	MSL CLI library supports plug-in implementations of
 	all of the above without changing the rest of the
 	code. Only configuration files need to be changed
 	to load a new handle class at startup.
@@ -284,4 +284,5 @@ HANDLES PLUG-IN FRAMEWORK
 	These implementations are located in the same
 	packages as their corresponding base classes.
 
-
+QUESTIONS?
+	Contact Vadim Spector vspector@netflix.com
