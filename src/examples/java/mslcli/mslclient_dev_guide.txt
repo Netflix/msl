@@ -9,7 +9,7 @@ OVERVIEW
 	change of configuration before sending each message.
 
 	This document provides the details of mslclient implementation
-	that shoudl be sufficient for developers to understand the
+	that should be sufficient for developers to understand the
 	implementation and modify/extend its functionality if needed.
 
 CONFIGURATION FILE
@@ -21,7 +21,7 @@ CONFIGURATION FILE
 	Property names consist of dot-separated alphanumeric tokens.
 	Some properties are unique to specific entity IDs. The ID
 	is specified as the last token in the property's name.
-	Replacing specific entity ID with the ild character "*"
+	Replacing specific entity ID with the wild character "*"
 	makes it applicable to any entity ID. At run-time entity-
 	specific properties will be searched first; if not found,
 	then wild character ones.
@@ -50,14 +50,12 @@ CONFIGURATION FILE
 	  Each entity can be configured to use Diffie-Hellman
 	  algorithm parameters with specific set's name.
 	  Multiple entities may share the same set.
-	  Wild characters are supported.
 
 	* Named sets of RSA { public, private } key pairs to use
 	  for RSA machanism of entity authentication. The entity
 	  using these keys to authenticate itself needs to know
 	  both public and private keys. The entity using these
 	  keys to authenticate another entity only need public key.
-	  Wild characters are supported.
 
 	* User { email, password } tuple.
 
@@ -76,6 +74,10 @@ CONFIGURATION FILE
 
 	* MSL keys for issuing and processing MSL (master and user
 	  ID) tokens.
+
+	* The name of the RSA key set to be used by specific service
+	  entity ID for RSA entity authentication mechanism.
+	  Wild characters are supported.
 
 	* Named service key sets for issuing and processing service
 	  tokens.
@@ -240,7 +242,7 @@ CLIENT APPLICATION CLASSES
 		     app should either mimic this logic or implement
 		     its own.
 
-HANDLES FRAMEWORK
+HANDLES PLUG-IN FRAMEWORK
 	MSL framework allows the adopters to implement the
 	following security aspects of MSL interactions:
 
@@ -250,7 +252,8 @@ HANDLES FRAMEWORK
 
 	MSL CLI library supports plugin implementations of
 	all of the above without changing the rest of the
-	code.
+	code. Only configuration files need to be changed
+	to load a new handle class at startup.
 
 	1. EntityAuthenticationHandle.java is the base class
 	to be extended to introduce support to a new entity
