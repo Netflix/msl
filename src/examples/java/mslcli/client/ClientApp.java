@@ -114,6 +114,8 @@ public final class ClientApp {
     private final AppContext appCtx;
     /** client bound to the given entity identity */
     private Client client;
+    /** console filter stream factory for logging */
+    private final ConsoleFilterStreamFactory consoleFilterStreamFactory;
 
     /**
      * Launcher of MSL CLI client. See user manual in HELP_FILE.
@@ -135,7 +137,7 @@ public final class ClientApp {
                     clientApp.sendMultipleRequests();
                     status = Status.OK;
                 } else {
-                    status = clientApp.sendSingleRequest();
+                    status = clientApp.sendSingleRequest(null);
                 }
                 clientApp.shutdown();
             }
@@ -208,6 +210,9 @@ public final class ClientApp {
 
         // initialize application context
         this.appCtx = AppContext.getInstance(mslProp);
+
+        // initialize console steram factory for logging
+        this.consoleFilterStreamFactory = new ConsoleFilterStreamFactory();
     }
 
     /**
@@ -229,7 +234,11 @@ public final class ClientApp {
                 continue;
             }
             if (optMatch(CMD_LIST, options)) {
-                System.out.println(cmdParam.getParameters());
+                if (client != null) {
+                    System.out.println(client.getConfigInfo());
+                } else {
+                    System.err.println(cmdParam.getParameters());
+                }
                 continue;
             }
             if (optMatch(CMD_SAVE, options)) {
@@ -243,11 +252,13 @@ public final class ClientApp {
             }
             try {
                 // parse entered parameters just  like command-line arguments
+                final CmdArguments p;
                 if (options != null && !options.trim().isEmpty()) {
-                    final CmdArguments p = new CmdArguments(SharedUtil.split(options));
-                    cmdParam.merge(p);
+                    p = new CmdArguments(SharedUtil.split(options));
+                } else {
+                    p = null;
                 }
-                final Status status = sendSingleRequest();
+                final Status status = sendSingleRequest(p);
                 if (status != Status.OK) {
                     System.out.println("Status: " + status.toString());
                 }
@@ -271,32 +282,42 @@ public final class ClientApp {
     /**
      * send single request
      *
+     * @param args additional command-line arguments specified in interactive mode (null in non-interactive mode)
      * @return Status containing either reply payload or MSL error
      */
-    public Status sendSingleRequest() {
+    public Status sendSingleRequest(final CmdArguments args) {
         Status status = Status.OK;
 
         try_label: try {
+            CmdArguments currentCmdParam = (client != null) ? client.getConfig() : cmdParam;
+
             // set verbose mode
-            if (cmdParam.isVerbose()) {
-                appCtx.getMslControl().setFilterFactory(new ConsoleFilterStreamFactory());
+            if (currentCmdParam.isVerbose()) {
+                appCtx.getMslControl().setFilterFactory(consoleFilterStreamFactory);
             } else {
                 appCtx.getMslControl().setFilterFactory(null);
             }
-            System.out.println("Options: " + cmdParam.getParameters());
 
-            // initialize Client for the first time or whenever its identity changes
-            if ((client == null) || !cmdParam.getEntityId().equals(client.getEntityId())) {
-                if (client != null)
+            // (re)initialize Client for the first time or whenever entity identity changes
+            if ((client == null) || ((args != null) && (args.getOptEntityId() != null) && !client.getEntityId().equals(args.getOptEntityId()))) {
+                System.out.println("New Client");
+                // update current args
+                if (args != null)
+                    currentCmdParam.merge(args);
+                if (client != null) {
                     client.saveMslStore();
-                client = null; // required for keeping the state, in case the next line throws exception
-                client = new Client(appCtx, cmdParam);
+                    client = null; // required for keeping the state, in case the next line throws exception
+                }
+                // create new client
+                client = new Client(appCtx, currentCmdParam);
+            } else if (args != null) {
+                currentCmdParam = client.modifyConfig(args);
             }
 
             // set request payload
             byte[] requestPayload = null;
-            final String inputFile = cmdParam.getPayloadInputFile();
-            requestPayload = cmdParam.getPayloadMessage();
+            final String inputFile = currentCmdParam.getPayloadInputFile();
+            requestPayload = currentCmdParam.getPayloadMessage();
             if (inputFile != null && requestPayload != null) {
                 appCtx.error("Input File and Input Message cannot be both specified");
                 status = Status.ARG_ERROR;
@@ -313,7 +334,7 @@ public final class ClientApp {
             /* See if the output file for response payload is specified.
              * If it is, it must either exist or be creatable.
              */
-            final String outputFile = cmdParam.getPayloadOutputFile();
+            final String outputFile = currentCmdParam.getPayloadOutputFile();
 
             /* ********************************************
              * FINALLY: SEND REQUEST AND PROCESS RESPONSE *

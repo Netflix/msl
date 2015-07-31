@@ -304,7 +304,7 @@ public abstract class MslConfig {
     */
     public void saveMslStore() throws IOException {
         if (mslStorePath == null) {
-            appCtx.info("Not Persisting In-Memory MSL Store");
+            appCtx.info(String.format("%s: Not Persisting In-Memory MSL Store", this));
             return;
         }
         synchronized (mslStoreWrapper) {
@@ -313,7 +313,7 @@ public abstract class MslConfig {
             } catch (MslEncodingException e) {
                 throw new IOException("Error Saving MslStore file " + mslStorePath, e);
             }
-            appCtx.info(String.format("MSL Store %s Updated", mslStorePath));
+            appCtx.info(String.format("%s: MSL Store %s Updated", this, mslStorePath));
         }
     }
 

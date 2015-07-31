@@ -212,6 +212,20 @@ public final class CmdArguments {
     }
 
     /**
+     * Copy Ctor.
+     *
+     * @param other another CmdArguments instance
+     * @throws IllegalCmdArgumentException
+     */
+    public CmdArguments(final CmdArguments other) throws IllegalCmdArgumentException {
+        if (other == null) {
+            throw new IllegalCmdArgumentException("NULL CmdArguments object passed for copying");
+        }
+        this.argMap = new HashMap<String,String>();
+        this.argMap.putAll(other.argMap);
+    }
+
+    /**
      * @return all parameters as unmodifiable Map
      */
     public String getParameters() {
@@ -389,6 +403,21 @@ public final class CmdArguments {
      */
     public String getEntityId() throws IllegalCmdArgumentException {
         return getRequiredValue(P_EID);
+    }
+
+    /**
+     * @return entityId or null if not initialized
+     * @throws IllegalCmdArgumentException
+     */
+    public String getOptEntityId() {
+        return argMap.get(P_EID);
+    }
+
+    /**
+     * @return whether entity identity key is defined (value can be null)
+     */
+    public boolean hasEntityId() {
+        return argMap.containsKey(P_EID);
     }
 
     /**

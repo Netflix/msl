@@ -110,11 +110,11 @@ public final class Client {
         // Set app context.
         this.appCtx = appCtx;
 
-        // Set args.
-        this.args = args;
+        // Set args - create independent instance
+        this.args = new CmdArguments(args);
 
         // Init MSL configuration
-        this.mslCfg = new ClientMslConfig(appCtx, args);
+        this.mslCfg = new ClientMslConfig(appCtx, this.args);
 
         // Init up the MSL context
         this.mslCtx = new ClientMslContext(appCtx, mslCfg);
@@ -123,7 +123,37 @@ public final class Client {
         this.mslCtrl = appCtx.getMslControl();
 
         // set up entity identity
-        this.entityId = args.getEntityId();
+        this.entityId = this.args.getEntityId();
+    }
+
+    /**
+     * modify current args with the diff
+     * @param diffArgs additional arguments to modify the existing configuration
+     * @return copy of the current args
+     * @throws IllegalCmdArgumentException
+     */
+    public CmdArguments modifyConfig(final CmdArguments diffArgs) throws IllegalCmdArgumentException {
+       if (diffArgs.hasEntityId()) {
+            throw new IllegalCmdArgumentException("Cannot Reset Entity Identity");
+        }
+        args.merge(diffArgs);
+        appCtx.info(String.format("%s: %s", this, args.getParameters()));
+        return new CmdArguments(args);
+    }
+
+    /**
+     * @return current args as a string
+     */
+    public String getConfigInfo() {
+        return args.getParameters();
+    }
+
+    /**
+     * @return copy of the current args
+     * @throws IllegalCmdArgumentException
+     */
+    public CmdArguments getConfig() throws IllegalCmdArgumentException {
+        return new CmdArguments(args);
     }
 
     /**
@@ -186,6 +216,11 @@ public final class Client {
      */
     public String getEntityId() {
         return entityId;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Client[%s]", entityId);
     }
 
     /** App context */
