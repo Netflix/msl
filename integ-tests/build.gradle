@@ -1,4 +1,10 @@
+buildscript {
+    repositories { jcenter() }
+    dependencies { classpath 'org.akhikhl.gretty:gretty:latest.release' }
+}
 apply plugin: 'war'
+apply plugin: 'org.akhikhl.gretty'
+
 dependencies {
     compile 'javax.servlet:servlet-api:2.5'
     compile project(':message-security-layer')
@@ -6,5 +12,8 @@ dependencies {
     testCompile 'org.testng:testng:latest.release'
 }
 
-war.baseName "msl-test-server"
 test.useTestNG()
+
+gretty {
+    integrationTestTask = 'test'
+}

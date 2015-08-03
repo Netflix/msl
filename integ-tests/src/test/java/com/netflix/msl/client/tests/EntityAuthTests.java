@@ -44,7 +44,7 @@ public class EntityAuthTests extends BaseTestClass {
     private int numThreads = 0;
     private ServerConfiguration serverConfig = null;
     private static final int TIME_OUT = 60000; //60 seconds
-    private static final String PATH = "/msl-test-server/test";
+    private static final String PATH = "/test";
 
     @BeforeMethod
     public void setup() throws IOException, URISyntaxException {

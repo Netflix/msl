@@ -107,7 +107,15 @@ public class BaseTestClass {
         Properties prop = new Properties();
         prop.load(BaseTestClass.class.getClassLoader().getResourceAsStream("test.properties"));
 
-        setRemoteEntityUrl(prop.getProperty("remoteEntityUrl"));
+        String grettyHttpPort = System.getProperty("gretty.httpPort");
+        String grettyContextPath = System.getProperty("gretty.contextPath");
+        if (grettyHttpPort != null && grettyContextPath != null) {
+            // By definition, Gretty is localhost
+            setRemoteEntityUrl("localhost:" + grettyHttpPort + grettyContextPath);
+        } else {
+            // Fallback to test.properties
+            setRemoteEntityUrl(prop.getProperty("remoteEntityUrl"));
+        }
     }
 
     public String getRemoteEntityUrl() {

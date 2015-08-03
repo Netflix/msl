@@ -173,7 +173,7 @@ public class BaseServlet extends HttpServlet {
             mslCtrl.respond(mslCtx, msgCtx, inStream, outStream, msgInputStream.get(), TIMEOUT);
 
         } catch (Exception ex) {
-            ex.printStackTrace();
+            ex.printStackTrace(System.out);
         } finally {
             if (mslInputStream != null) {
                 mslInputStream.close();
