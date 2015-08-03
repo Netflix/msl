@@ -1,5 +1,5 @@
 apply plugin: 'java'
 
 dependencies {
-    compile project(':message-service-layer')
+    compile project(':message-security-layer')
 }
