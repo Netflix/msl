@@ -25,8 +25,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import com.netflix.msl.MslConstants.ResponseCode;
 import com.netflix.msl.MslConstants;
+import com.netflix.msl.MslConstants.ResponseCode;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
@@ -102,7 +102,8 @@ public class MessageBuilder {
      * @param masterToken master token to renew. Null if the identity is
      *        provided.
      * @param identity entity identity. Null if a master token is provided.
-     * @return the new master token and crypto context.
+     * @return the new master token and crypto context or {@code} null if the
+     *         factory chooses not to perform key exchange. 
      * @throws MslCryptoException if the crypto context cannot be created.
      * @throws MslKeyExchangeException if there is an error with the key
      *         request data or the key response data cannot be created or none
@@ -254,10 +255,9 @@ public class MessageBuilder {
                 // If the message contains a master token...
                 if (masterToken != null) {
                     // If the master token is renewable/expired or not the
-                    // newest master token, or the message is non-replayable,
-                    // then renew the master token.
+                    // newest master token, then renew the master token.
                     final TokenFactory factory = ctx.getTokenFactory();
-                    if (masterToken.isRenewable(null) || masterToken.isExpired(null) || !factory.isNewestMasterToken(ctx, masterToken) || requestHeader.isNonReplayable())
+                    if (masterToken.isRenewable(null) || masterToken.isExpired(null) || !factory.isNewestMasterToken(ctx, masterToken))
                         keyExchangeData = issueMasterToken(ctx, keyRequestData, masterToken, null);
                     // Otherwise we don't need to do anything special.
                     else

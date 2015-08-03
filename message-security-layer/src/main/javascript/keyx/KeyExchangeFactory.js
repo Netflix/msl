@@ -101,7 +101,9 @@ var KeyExchangeFactory;
          *        the entity identity.
          * @param {{result: function(KeyExchangeData), error: function(Error)}}
          *        callback the callback functions that will receive the key
-         *        response data and crypto context or any thrown exception.
+         *        response data and crypto context, or {@code null} if the
+         *        factory chooses not to perform key exchange, or any thrown
+         *        exception.
          * @throws MslKeyExchangeException if there is an error with the key
          *         request data or the key response data cannot be created.
          * @throws MslCryptoException if the crypto context cannot be created.

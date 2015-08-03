@@ -112,7 +112,7 @@ public class MockMslContext implements MslContext {
          * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
          */
         @Override
-        public int compare(KeyExchangeFactory a, KeyExchangeFactory b) {
+        public int compare(final KeyExchangeFactory a, final KeyExchangeFactory b) {
             final KeyExchangeScheme schemeA = a.getScheme();
             final KeyExchangeScheme schemeB = b.getScheme();
             final Integer priorityA = schemePriorities.get(schemeA);
@@ -241,10 +241,10 @@ public class MockMslContext implements MslContext {
     public ICryptoContext getMslCryptoContext() throws MslCryptoException {
         return mslCryptoContext;
     }
-
+    
     @Override
-    public EntityAuthenticationFactory getEntityAuthenticationFactory(final EntityAuthenticationScheme scheme) {
-        return entityAuthFactories.get(scheme);
+    public EntityAuthenticationScheme getEntityAuthenticationScheme(final String name) {
+        return EntityAuthenticationScheme.getScheme(name);
     }
 
     /**
@@ -268,8 +268,13 @@ public class MockMslContext implements MslContext {
     }
 
     @Override
-    public UserAuthenticationFactory getUserAuthenticationFactory(final UserAuthenticationScheme scheme) {
-        return userAuthFactories.get(scheme);
+    public EntityAuthenticationFactory getEntityAuthenticationFactory(final EntityAuthenticationScheme scheme) {
+        return entityAuthFactories.get(scheme);
+    }
+    
+    @Override
+    public UserAuthenticationScheme getUserAuthenticationScheme(final String name) {
+        return UserAuthenticationScheme.getScheme(name);
     }
 
     /**
@@ -292,6 +297,11 @@ public class MockMslContext implements MslContext {
         userAuthFactories.remove(scheme);
     }
 
+    @Override
+    public UserAuthenticationFactory getUserAuthenticationFactory(final UserAuthenticationScheme scheme) {
+        return userAuthFactories.get(scheme);
+    }
+
     /**
      * Sets the token factory.
      *
@@ -305,19 +315,10 @@ public class MockMslContext implements MslContext {
     public TokenFactory getTokenFactory() {
         return tokenFactory;
     }
-
+    
     @Override
-    public KeyExchangeFactory getKeyExchangeFactory(final KeyExchangeScheme scheme) {
-        for (final KeyExchangeFactory factory : keyxFactories) {
-            if (factory.getScheme().equals(scheme))
-                return factory;
-        }
-        return null;
-    }
-
-    @Override
-    public SortedSet<KeyExchangeFactory> getKeyExchangeFactories() {
-        return Collections.unmodifiableSortedSet(keyxFactories);
+    public KeyExchangeScheme getKeyExchangeScheme(final String name) {
+        return KeyExchangeScheme.getScheme(name);
     }
 
     /**
@@ -342,6 +343,20 @@ public class MockMslContext implements MslContext {
             if (factory.getScheme().equals(scheme))
                 factories.remove();
         }
+    }
+
+    @Override
+    public KeyExchangeFactory getKeyExchangeFactory(final KeyExchangeScheme scheme) {
+        for (final KeyExchangeFactory factory : keyxFactories) {
+            if (factory.getScheme().equals(scheme))
+                return factory;
+        }
+        return null;
+    }
+
+    @Override
+    public SortedSet<KeyExchangeFactory> getKeyExchangeFactories() {
+        return Collections.unmodifiableSortedSet(keyxFactories);
     }
 
     @Override

@@ -72,8 +72,9 @@ var MessageBuilder$createErrorResponse;
      *        provided.
      * @param {string} identity entity identity. Null if a master token is provided.
      * @param {{result: function(KeyExchangeData), error: function(Error)}}
-     *        callback the callback that will receive the key exchange data or
-     *        any thrown exceptions.
+     *        callback the callback that will receive the key exchange data, or
+     *        null if the factory chooses not to perform key exchange, or any
+     *        thrown exceptions.
      * @throws MslCryptoException if the crypto context cannot be created.
      * @throws MslKeyExchangeException if there is an error with the key
      *         request data or the key response data cannot be created or none
@@ -180,9 +181,8 @@ var MessageBuilder$createErrorResponse;
                 // If the message contains a master token...
                 if (masterToken) {
                     // If the master token is renewable/expired or not the
-                    // newest master token, or the message is non-replayable,
-                    // then renew the master token.
-                    if (masterToken.isRenewable(null) || masterToken.isExpired(null) || requestHeader.isNonReplayable()) {
+                    // newest master token, then renew the master token.
+                    if (masterToken.isRenewable(null) || masterToken.isExpired(null)) {
                         issueMasterToken(ctx, keyRequestData, masterToken, null, callback);
                     } else {
                         var factory = ctx.getTokenFactory();

@@ -84,7 +84,7 @@ public abstract class KeyExchangeFactory {
      *         request data.
      * @throws MslCryptoException if the keying material cannot be created.
      */
-    abstract KeyRequestData createRequestData(final MslContext ctx, final JSONObject keyRequestJO) throws MslEncodingException, MslKeyExchangeException, MslCryptoException;
+    protected abstract KeyRequestData createRequestData(final MslContext ctx, final JSONObject keyRequestJO) throws MslEncodingException, MslKeyExchangeException, MslCryptoException;
     
     /**
      * Construct a new key response data instance from the provided JSON.
@@ -97,7 +97,7 @@ public abstract class KeyExchangeFactory {
      * @throws MslKeyExchangeException if there is an error creating the key
      *         response data.
      */
-    abstract KeyResponseData createResponseData(final MslContext ctx, final MasterToken masterToken, final JSONObject keyDataJO) throws MslEncodingException, MslKeyExchangeException;
+    protected abstract KeyResponseData createResponseData(final MslContext ctx, final MasterToken masterToken, final JSONObject keyDataJO) throws MslEncodingException, MslKeyExchangeException;
     
     /**
      * <p>Generate a new key response data instance and crypto context in
@@ -111,7 +111,8 @@ public abstract class KeyExchangeFactory {
      * @param ctx MSL context.
      * @param keyRequestData the key request data.
      * @param masterToken the master token to renew.
-     * @return the key response data and crypto context.
+     * @return the key response data and crypto context or {@code null} if the
+     *         factory chooses not to perform key exchange. 
      * @throws MslKeyExchangeException if there is an error with the key
      *         request data or the key response data cannot be created.
      * @throws MslCryptoException if the crypto context cannot be created.
@@ -133,7 +134,8 @@ public abstract class KeyExchangeFactory {
      * @param ctx MSL context.
      * @param keyRequestData the key request data.
      * @param identity the entity identity.
-     * @return the key response data and crypto context.
+     * @return the key response data and crypto context or {@code null} if the
+     *         factory chooses not to perform key exchange.
      * @throws MslKeyExchangeException if there is an error with the key
      *         request data or the key response data cannot be created.
      * @throws MslCryptoException if the crypto context cannot be created.

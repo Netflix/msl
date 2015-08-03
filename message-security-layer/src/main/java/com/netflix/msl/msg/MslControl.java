@@ -373,6 +373,14 @@ public class MslControl {
         public ICryptoContext getMslCryptoContext() throws MslCryptoException {
             return new NullCryptoContext();
         }
+        
+        /* (non-Javadoc)
+         * @see com.netflix.msl.util.MslContext#getEntityAuthenticationScheme(java.lang.String)
+         */
+        @Override
+        public EntityAuthenticationScheme getEntityAuthenticationScheme(final String name) {
+            return EntityAuthenticationScheme.getScheme(name);
+        }
 
         /* (non-Javadoc)
          * @see com.netflix.msl.util.MslContext#getEntityAuthenticationFactory(com.netflix.msl.entityauth.EntityAuthenticationScheme)
@@ -380,6 +388,14 @@ public class MslControl {
         @Override
         public EntityAuthenticationFactory getEntityAuthenticationFactory(final EntityAuthenticationScheme scheme) {
             return null;
+        }
+        
+        /* (non-Javadoc)
+         * @see com.netflix.msl.util.MslContext#getUserAuthenticationScheme(java.lang.String)
+         */
+        @Override
+        public UserAuthenticationScheme getUserAuthenticationScheme(final String name) {
+            return UserAuthenticationScheme.getScheme(name);
         }
 
         /* (non-Javadoc)
@@ -396,6 +412,14 @@ public class MslControl {
         @Override
         public TokenFactory getTokenFactory() {
             throw new MslInternalException("Dummy token factory should never actually get used.");
+        }
+        
+        /* (non-Javadoc)
+         * @see com.netflix.msl.util.MslContext#getKeyExchangeScheme(java.lang.String)
+         */
+        @Override
+        public KeyExchangeScheme getKeyExchangeScheme(final String name) {
+            return KeyExchangeScheme.getScheme(name);
         }
 
         /* (non-Javadoc)
@@ -1245,9 +1269,20 @@ public class MslControl {
             {
                 // Grab the newest master token and its read lock.
                 final MasterToken masterToken = getNewestMasterToken(ctx);
+                final UserIdToken userIdToken;
+                if (masterToken != null) {
+                    // Grab the user ID token for the message's user. It may not be bound
+                    // to the newest master token if the newest master token invalidated
+                    // it.
+                    final String userId = msgCtx.getUserId();
+                    final MslStore store = ctx.getMslStore();
+                    final UserIdToken storedUserIdToken = (userId != null) ? store.getUserIdToken(userId) : null;
+                    userIdToken = (storedUserIdToken != null && storedUserIdToken.isBoundTo(masterToken)) ? storedUserIdToken : null;
+                } else {
+                    userIdToken = null;
+                }
                 
                 // Resend the request.
-                final UserIdToken userIdToken = requestHeader.getUserIdToken();
                 final long messageId = MessageBuilder.incrementMessageId(errorHeader.getMessageId());
                 final MessageContext resendMsgCtx = new ResendMessageContext(payloads, msgCtx);
                 final String recipient = resendMsgCtx.getRecipient();
@@ -1272,21 +1307,26 @@ public class MslControl {
             }
             case REPLAYED:
             {
-                // TODO: The master token-oriented logic remains to support the
-                // legacy non-replayable flag implementation. It can be removed
-                // once support for the flag is removed.
+                // This error will be received if the previous request's non-
+                // replayable ID is not accepted by the remote entity. In this
+                // situation simply try again.
                 //
-                // This error will only be received if the previous request's
-                // master token has an old sequence number. If a new master
-                // token was issued then we know that this old master token's
-                // renewal window has already been entered and we should get a
-                // new master token by sending a renewable message.
-                
                 // Grab the newest master token and its read lock.
                 final MasterToken masterToken = getNewestMasterToken(ctx);
+                final UserIdToken userIdToken;
+                if (masterToken != null) {
+                    // Grab the user ID token for the message's user. It may not be bound
+                    // to the newest master token if the newest master token invalidated
+                    // it.
+                    final String userId = msgCtx.getUserId();
+                    final MslStore store = ctx.getMslStore();
+                    final UserIdToken storedUserIdToken = (userId != null) ? store.getUserIdToken(userId) : null;
+                    userIdToken = (storedUserIdToken != null && storedUserIdToken.isBoundTo(masterToken)) ? storedUserIdToken : null;
+                } else {
+                    userIdToken = null;
+                }
                 
                 // Resend the request.
-                final UserIdToken userIdToken = requestHeader.getUserIdToken();
                 final long messageId = MessageBuilder.incrementMessageId(errorHeader.getMessageId());
                 final MessageContext resendMsgCtx = new ResendMessageContext(payloads, msgCtx);
                 final String recipient = resendMsgCtx.getRecipient();
@@ -1296,29 +1336,10 @@ public class MslControl {
                     final UserIdToken peerUserIdToken = requestHeader.getPeerUserIdToken();
                     requestBuilder.setPeerAuthTokens(peerMasterToken, peerUserIdToken);
                 }
-                // If the newest master token is equal to the previous
-                // request's master token then mark this message as renewable
-                // and replayable.
-                //
-                // During renewal lock acquisition we will either block until
-                // we acquire the renewal lock or receive a master token.
-                //
-                // During send the application data will be delayed because the
-                // message is replayable but the message context indicates the
-                // application data must sent in a non-replayable message.
-                //
-                // Check for a missing master token in case the remote entity
-                // returned an incorrect error code.
-                final MasterToken requestMasterToken = requestHeader.getMasterToken();
-                if (requestMasterToken == null || requestMasterToken.equals(masterToken)) {
-                    requestBuilder.setRenewable(true);
-                    requestBuilder.setNonReplayable(false);
-                }
-                // Otherwise mark it as replayable as dictated by the message
-                // context.
-                else {
-                    requestBuilder.setNonReplayable(resendMsgCtx.isNonReplayable());
-                }
+                
+                // Mark the message as replayable or not as dictated by the
+                // message context.
+                requestBuilder.setNonReplayable(resendMsgCtx.isNonReplayable());
                 return new ErrorResult(requestBuilder, resendMsgCtx);
             }
             default:
@@ -2815,7 +2836,7 @@ public class MslControl {
         /** Request message input stream. */
         private final MessageInputStream request;
         /** Remote entity output stream. */
-        private OutputStream out;
+        private final OutputStream out;
         
         /**
          * Create a new error service.
@@ -2934,7 +2955,7 @@ public class MslControl {
             }
 
             @Override
-            public synchronized void mark(int readlimit) {
+            public synchronized void mark(final int readlimit) {
             }
 
             @Override
@@ -2950,14 +2971,14 @@ public class MslControl {
             }
 
             @Override
-            public int read(byte[] b, int off, int len) throws IOException {
+            public int read(final byte[] b, final int off, final int len) throws IOException {
                 if (in == null)
                     in = conn.getInputStream();
                 return super.read(b, off, len);
             }
 
             @Override
-            public int read(byte[] b) throws IOException {
+            public int read(final byte[] b) throws IOException {
                 if (in == null)
                     in = conn.getInputStream();
                 return super.read(b);
@@ -2971,7 +2992,7 @@ public class MslControl {
             }
 
             @Override
-            public long skip(long n) throws IOException {
+            public long skip(final long n) throws IOException {
                 if (in == null)
                     in = conn.getInputStream();
                 return super.skip(n);

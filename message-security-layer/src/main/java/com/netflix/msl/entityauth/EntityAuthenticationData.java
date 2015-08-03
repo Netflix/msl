@@ -21,8 +21,8 @@ import org.json.JSONString;
 import org.json.JSONStringer;
 
 import com.netflix.msl.MslCryptoException;
-import com.netflix.msl.MslEntityAuthException;
 import com.netflix.msl.MslEncodingException;
+import com.netflix.msl.MslEntityAuthException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslInternalException;
 import com.netflix.msl.util.MslContext;
@@ -81,7 +81,7 @@ public abstract class EntityAuthenticationData implements JSONString {
         try {
             // Identify the concrete subclass from the authentication scheme.
             final String schemeName = entityAuthJO.getString(KEY_SCHEME);
-            final EntityAuthenticationScheme scheme = EntityAuthenticationScheme.getScheme(schemeName);
+            final EntityAuthenticationScheme scheme = ctx.getEntityAuthenticationScheme(schemeName);
             if (scheme == null)
                 throw new MslEntityAuthException(MslError.UNIDENTIFIED_ENTITYAUTH_SCHEME, schemeName);
             final JSONObject authdata = entityAuthJO.getJSONObject(KEY_AUTHDATA);

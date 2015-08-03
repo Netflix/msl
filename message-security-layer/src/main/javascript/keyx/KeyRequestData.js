@@ -135,7 +135,7 @@ var KeyRequestData$parse;
             }
 
             // Verify scheme.
-            var scheme = KeyExchangeScheme$getScheme(schemeName);
+            var scheme = ctx.getKeyExchangeScheme(schemeName);
             if (!scheme)
                 throw new MslKeyExchangeException(MslError.UNIDENTIFIED_KEYX_SCHEME, schemeName);
 

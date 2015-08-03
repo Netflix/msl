@@ -591,7 +591,7 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
      * @see com.netflix.msl.keyx.KeyExchangeFactory#createRequestData(com.netflix.msl.util.MslContext, org.json.JSONObject)
      */
     @Override
-    KeyRequestData createRequestData(final MslContext ctx, final JSONObject keyRequestJO) throws MslEncodingException, MslCryptoException, MslKeyExchangeException {
+    protected KeyRequestData createRequestData(final MslContext ctx, final JSONObject keyRequestJO) throws MslEncodingException, MslCryptoException, MslKeyExchangeException {
         return new RequestData(keyRequestJO);
     }
 
@@ -599,7 +599,7 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
      * @see com.netflix.msl.keyx.KeyExchangeFactory#createResponseData(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, org.json.JSONObject)
      */
     @Override
-    KeyResponseData createResponseData(final MslContext ctx, final MasterToken masterToken, final JSONObject keyDataJO) throws MslEncodingException, MslKeyExchangeException {
+    protected KeyResponseData createResponseData(final MslContext ctx, final MasterToken masterToken, final JSONObject keyDataJO) throws MslEncodingException, MslKeyExchangeException {
         return new ResponseData(masterToken, keyDataJO);
     }
 

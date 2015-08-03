@@ -120,7 +120,7 @@ var EntityAuthenticationData$parse;
         }
 
         // Verify entity authentication scheme.
-        var scheme = EntityAuthenticationScheme$getScheme(schemeName);
+        var scheme = ctx.getEntityAuthenticationScheme(schemeName);
         if (!scheme)
             throw new MslEntityAuthException(MslError.UNIDENTIFIED_ENTITYAUTH_SCHEME, schemeName);
 
