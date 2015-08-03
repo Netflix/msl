@@ -24,6 +24,7 @@ import com.netflix.msl.userauth.UserAuthenticationData;
 import com.netflix.msl.userauth.UserAuthenticationFactory;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
 import com.netflix.msl.util.AuthenticationUtils;
+import com.netflix.msl.util.MslStore;
 
 import mslcli.common.CmdArguments;
 import mslcli.common.IllegalCmdArgumentException;
@@ -48,7 +49,7 @@ public class EmailPasswordUserAuthenticationHandle extends UserAuthenticationHan
     }
 
     @Override
-    public UserAuthenticationData getUserAuthenticationData(final AppContext appCtx, final CmdArguments args)
+    public UserAuthenticationData getUserAuthenticationData(final AppContext appCtx, final CmdArguments args, final MslStore mslStore)
         throws ConfigurationException, IllegalCmdArgumentException
     {
         final String userId = args.getUserId();

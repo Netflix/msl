@@ -20,6 +20,7 @@ import com.netflix.msl.userauth.UserAuthenticationData;
 import com.netflix.msl.userauth.UserAuthenticationFactory;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
 import com.netflix.msl.util.AuthenticationUtils;
+import com.netflix.msl.util.MslStore;
 
 import mslcli.common.CmdArguments;
 import mslcli.common.IllegalCmdArgumentException;
@@ -55,11 +56,12 @@ public abstract class UserAuthenticationHandle {
     /**
      * @param appCtx application context
      * @param args command line arguments
+     * @param mslStore MSL store 
      * @return entity authentication data to be included into a message
      * @throws ConfigurationException
      * @throws IllegalCmdArgumentException
      */
-    public abstract UserAuthenticationData getUserAuthenticationData(final AppContext appCtx, final CmdArguments args)
+    public abstract UserAuthenticationData getUserAuthenticationData(final AppContext appCtx, final CmdArguments args, final MslStore mslStore)
         throws ConfigurationException, IllegalCmdArgumentException;
 
     /**

@@ -177,7 +177,7 @@ public abstract class MslConfig {
             throw new IllegalCmdArgumentException("Entity Authentication Scheme is not set");
         for (final UserAuthenticationHandle uah : appCtx.getUserAuthenticationHandles()) {
             if (uah.getScheme().name().equals(uasName)) {
-                final UserAuthenticationData uad = uah.getUserAuthenticationData(appCtx, args);
+                final UserAuthenticationData uad = uah.getUserAuthenticationData(appCtx, args, getMslStore());
                 appCtx.info(String.format("%s: Generated UserAuthenticationData{%s}, %s",
                     this, (uasName != null) ? uasName.trim() : null, uad.getClass().getName()));
                 return uad;
