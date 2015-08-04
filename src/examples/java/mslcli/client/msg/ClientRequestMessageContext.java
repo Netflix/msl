@@ -40,6 +40,7 @@ import mslcli.common.IllegalCmdArgumentRuntimeException;
 import mslcli.common.util.ConfigurationException;
 import mslcli.common.util.ConfigurationRuntimeException;
 import mslcli.common.MslConfig;
+import mslcli.common.msg.MessageConfig;
 
 /**
  * <p>Client Request message context.</p>
@@ -72,21 +73,19 @@ public class ClientRequestMessageContext implements MessageContext {
      * @param keyRequestDataHandle key request data getter
      * @param payload message payload
      */
-    public ClientRequestMessageContext(final MslConfig mslCfg, final MessageConfig msgCfg, final byte[] payload)
+    public ClientRequestMessageContext(final MslConfig mslCfg, final byte[] payload)
     {
         if (mslCfg == null) {
             throw new IllegalArgumentException("NULL MSL config");
         }
-        if (msgCfg == null) {
-            throw new IllegalArgumentException("NULL message config data");
-        }
-        this.mslCfg               = mslCfg;
-        this.isEncrypted          = msgCfg.isEncrypted;
-        this.isIntegrityProtected = msgCfg.isIntegrityProtected;
-        this.isNonReplayable      = msgCfg.isNonReplayable;
-        this.userId               = msgCfg.userId;
-        this.payload              = payload;
-        this.cryptoContexts       = Collections.<String,ICryptoContext>emptyMap();
+        this.mslCfg                = mslCfg;
+        final MessageConfig msgCfg = mslCfg.getMessageConfig();
+        this.isEncrypted           = msgCfg.isEncrypted;
+        this.isIntegrityProtected  = msgCfg.isIntegrityProtected;
+        this.isNonReplayable       = msgCfg.isNonReplayable;
+        this.userId                = msgCfg.userId;
+        this.payload               = payload;
+        this.cryptoContexts        = Collections.<String,ICryptoContext>emptyMap();
     }
 
     /* (non-Javadoc)

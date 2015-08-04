@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package mslcli.client.msg;
+package mslcli.common.msg;
 
 /**
  * <p>

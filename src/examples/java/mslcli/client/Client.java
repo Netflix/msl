@@ -36,7 +36,6 @@ import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslStore;
 
 import mslcli.client.msg.ClientRequestMessageContext;
-import mslcli.client.msg.MessageConfig;
 import mslcli.client.util.ClientMslContext;
 import mslcli.common.CmdArguments;
 import mslcli.common.IllegalCmdArgumentException;
@@ -170,17 +169,10 @@ public final class Client {
     public Response sendRequest(final byte[] request)
         throws ConfigurationException, ExecutionException, IllegalCmdArgumentException, IOException, InterruptedException, MslException
     {
-        // set message mslProperties
-        final MessageConfig cfg = new MessageConfig();
-        cfg.userId = args.getUserId();
-        cfg.isEncrypted = args.isEncrypted();
-        cfg.isIntegrityProtected = args.isIntegrityProtected();
-        cfg.isNonReplayable = args.isNonReplayable();
-
         // set remote URL
         final URL remoteUrl = args.getUrl();
 
-        final MessageContext msgCtx = new ClientRequestMessageContext(mslCfg, cfg, request);
+        final MessageContext msgCtx = new ClientRequestMessageContext(mslCfg, request);
 
         final Future<MslChannel> f = mslCtrl.request(mslCtx, msgCtx, remoteUrl, TIMEOUT_MS);
         final MslChannel ch;

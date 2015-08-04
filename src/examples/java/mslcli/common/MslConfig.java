@@ -55,6 +55,7 @@ import mslcli.common.CmdArguments;
 import mslcli.common.IllegalCmdArgumentException;
 import mslcli.common.entityauth.EntityAuthenticationHandle;
 import mslcli.common.keyx.KeyExchangeHandle;
+import mslcli.common.msg.MessageConfig;
 import mslcli.common.userauth.UserAuthenticationHandle;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
@@ -115,6 +116,23 @@ public abstract class MslConfig {
     public final String getEntityId() {
         return entityId;
     }
+
+    /**
+     * @return message config parameters
+     */
+    public MessageConfig getMessageConfig() {
+        // set message mslProperties
+        final MessageConfig cfg = new MessageConfig();
+        cfg.userId = args.getUserId();
+        cfg.isEncrypted = args.isEncrypted();
+        cfg.isIntegrityProtected = args.isIntegrityProtected();
+        cfg.isNonReplayable = args.isNonReplayable();
+        return cfg;
+    }
+
+    /**
+     * @return user ID
+     */
 
     /* ================================== ENTITY AUTHENTICATION APIs ================================================ */
 
