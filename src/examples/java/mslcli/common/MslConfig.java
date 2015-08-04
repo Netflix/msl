@@ -123,7 +123,6 @@ public abstract class MslConfig {
     public MessageConfig getMessageConfig() {
         // set message mslProperties
         final MessageConfig cfg = new MessageConfig();
-        cfg.userId = args.getUserId();
         cfg.isEncrypted = args.isEncrypted();
         cfg.isIntegrityProtected = args.isIntegrityProtected();
         cfg.isNonReplayable = args.isNonReplayable();
@@ -190,17 +189,42 @@ public abstract class MslConfig {
     public UserAuthenticationData getUserAuthenticationData()
         throws ConfigurationException, IllegalCmdArgumentException
     {
+        final UserAuthenticationHandle uah = getUserAuthenticationHandle();
+        final UserAuthenticationData uad = uah.getUserAuthenticationData(appCtx, args, getMslStore());
+        appCtx.info(String.format("%s: Generated UserAuthenticationData{%s}, %s",
+            this, uah.getScheme(), uad.getClass().getName()));
+        return uad;
+    }
+
+    /**
+     * @return current user ID
+     * @throws ConfigurationException
+     * @throws IllegalCmdArgumentException
+     */
+    public String getUserId()
+        throws ConfigurationException, IllegalCmdArgumentException
+    {
+        final UserAuthenticationHandle uah = getUserAuthenticationHandle();
+        return uah.getUserId(appCtx, args);
+    }
+
+    /**
+     * @return UserAuthenticationHandle for a given user authentication scheme
+     * @throws ConfigurationException
+     * @throws IllegalCmdArgumentException
+     */
+    private UserAuthenticationHandle getUserAuthenticationHandle()
+        throws ConfigurationException, IllegalCmdArgumentException
+    {
         final String uasName = args.getUserAuthenticationScheme();
         if (uasName == null || uasName.trim().length() == 0)
             throw new IllegalCmdArgumentException("Entity Authentication Scheme is not set");
         for (final UserAuthenticationHandle uah : appCtx.getUserAuthenticationHandles()) {
             if (uah.getScheme().name().equals(uasName)) {
-                final UserAuthenticationData uad = uah.getUserAuthenticationData(appCtx, args, getMslStore());
-                appCtx.info(String.format("%s: Generated UserAuthenticationData{%s}, %s",
-                    this, (uasName != null) ? uasName.trim() : null, uad.getClass().getName()));
-                return uad;
+                return uah;
             }
         }
+        // UserAuthenticationHandle not found. Generate helpful exception 
         final List<String> schemes = new ArrayList<String>();
         for (final UserAuthenticationHandle uah : appCtx.getUserAuthenticationHandles())
             schemes.add(uah.getScheme().name());

@@ -57,8 +57,6 @@ public class ClientRequestMessageContext implements MessageContext {
     private final boolean                    isIntegrityProtected;
     /** whether message should be non-replayable */
     private final boolean                    isNonReplayable;
-    /** user id */
-    private final String                     userId; 
     /** message payload */
     private final byte[]                     payload;
     /** map of crypto contexts */
@@ -83,7 +81,6 @@ public class ClientRequestMessageContext implements MessageContext {
         this.isEncrypted           = msgCfg.isEncrypted;
         this.isIntegrityProtected  = msgCfg.isIntegrityProtected;
         this.isNonReplayable       = msgCfg.isNonReplayable;
-        this.userId                = msgCfg.userId;
         this.payload               = payload;
         this.cryptoContexts        = Collections.<String,ICryptoContext>emptyMap();
     }
@@ -140,8 +137,15 @@ public class ClientRequestMessageContext implements MessageContext {
      * @see com.netflix.msl.msg.MessageContext#getUserId()
      */
     @Override
-    public String getUserId() {
-        return userId;
+    public String getUserId()
+    {
+        try {
+            return mslCfg.getUserId();
+        } catch (ConfigurationException e) {
+            throw new ConfigurationRuntimeException(e);
+        } catch (IllegalCmdArgumentException e) {
+            throw new IllegalCmdArgumentRuntimeException(e);
+        }
     }
 
     /* (non-Javadoc)

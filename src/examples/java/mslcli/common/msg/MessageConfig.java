@@ -26,8 +26,6 @@ package mslcli.common.msg;
  */
 
 public final class MessageConfig {
-    /** current user id */
-    public String userId;
     /** whether message should be encrypted */
     public boolean isEncrypted;
     /** whether message should be integrity protected */
@@ -37,6 +35,6 @@ public final class MessageConfig {
 
     @Override
     public String toString() {
-        return String.format("userid: %s, encrypted: %b, integrity protected: %b, non-replayable: %b", userId, isEncrypted, isIntegrityProtected, isNonReplayable);
+        return String.format("encrypted: %b, integrity protected: %b, non-replayable: %b", isEncrypted, isIntegrityProtected, isNonReplayable);
     }
 }

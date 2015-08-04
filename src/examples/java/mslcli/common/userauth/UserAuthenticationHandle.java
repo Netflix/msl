@@ -75,6 +75,19 @@ public abstract class UserAuthenticationHandle {
     public abstract UserAuthenticationFactory getUserAuthenticationFactory(final AppContext appCtx, final CmdArguments args, final AuthenticationUtils authutils)
         throws ConfigurationException, IllegalCmdArgumentException;
 
+    /**
+     * @param appCtx application context
+     * @param args runtime arguments
+     * @return current user id
+     * @throws ConfigurationException
+     * @throws IllegalCmdArgumentException
+     */
+    public String getUserId(final AppContext appCtx, final CmdArguments args)
+        throws ConfigurationException, IllegalCmdArgumentException
+    {
+        return args.getUserId();
+    }
+
     @Override
     public String toString() {
         return String.format("UserAuthenticationHandle{%s}", scheme.toString());
