@@ -16,6 +16,9 @@
 
 package mslcli.common.userauth;
 
+import java.io.Console;
+import java.util.Map;
+
 import com.netflix.msl.userauth.UserAuthenticationData;
 import com.netflix.msl.userauth.UserAuthenticationFactory;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
@@ -86,6 +89,73 @@ public abstract class UserAuthenticationHandle {
         throws ConfigurationException, IllegalCmdArgumentException
     {
         return args.getUserId();
+    }
+
+    /**
+     * @param args runtime arguments
+     * @param name handle-specific argument name, with "-ext.uah.scheme." prefix implied
+     * @return argument value
+     * @throws ConfigurationException
+     * @throws IllegalCmdArgumentException
+     */
+    protected String getHandleArg(final CmdArguments args, final String name)
+        throws ConfigurationException, IllegalCmdArgumentException
+    {
+        return _getHandleArg(args, name, false);
+    }
+
+    /**
+     * @param args runtime arguments
+     * @param name handle-specific argument name, with "-ext.uah.scheme." prefix implied
+     * @return argument value
+     * @throws ConfigurationException
+     * @throws IllegalCmdArgumentException
+     */
+    protected String getHandlePwdArg(final CmdArguments args, final String name)
+        throws ConfigurationException, IllegalCmdArgumentException
+    {
+        return _getHandleArg(args, name, true);
+    }
+
+    /**
+     * @param args runtime arguments
+     * @param name handle-specific argument name, with "-ext.uah.scheme." prefix implied
+     * @param isPassword true if the argument is password, so its value should not be echoed
+     * @return argument value
+     * @throws ConfigurationException
+     * @throws IllegalCmdArgumentException
+     */
+    private String _getHandleArg(final CmdArguments args, final String name, final boolean isPassword)
+        throws ConfigurationException, IllegalCmdArgumentException
+    {
+        if (args == null)
+            throw new IllegalArgumentException(String.format("%s: NULL arguments", this));
+        if (name == null || name.length() == 0)
+            throw new IllegalArgumentException(String.format("%s: NULL or empty property name", this));
+
+        final String prefix = "uah." + scheme.toString().toLowerCase();
+
+        final String value;
+        final Map<String,String> m = args.getExtensionProperties(prefix);
+        if (!m.isEmpty()) {
+            value = m.get(name);
+            if (value == null)
+                throw new IllegalCmdArgumentException(String.format("%s: Missing Extension Property \"%s.%s\" - %s", this, prefix, name, m.toString()));
+        } else if (args.isInteractive()) {
+           final Console cons = System.console();
+            if (cons != null) {
+                if (isPassword)
+                    value = new String(cons.readPassword("%s.%s> ", prefix, name));
+                else
+                    value = cons.readLine("%s.%s> ", prefix, name);
+            } else {
+                throw new IllegalCmdArgumentException(String.format("%s: Cannot get Console", this));
+            }
+        } else {
+            throw new IllegalCmdArgumentException(String.format("%s: No support in non-interactive mode and without \"%s.%s\" extension property",
+                this, prefix, name));
+        }
+        return value;
     }
 
     @Override

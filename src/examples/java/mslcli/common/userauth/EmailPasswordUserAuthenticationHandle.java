@@ -16,8 +16,6 @@
 
 package mslcli.common.userauth;
 
-import java.io.Console;
-
 import com.netflix.msl.userauth.EmailPasswordAuthenticationData;
 import com.netflix.msl.userauth.EmailPasswordAuthenticationFactory;
 import com.netflix.msl.userauth.UserAuthenticationData;
@@ -60,18 +58,9 @@ public class EmailPasswordUserAuthenticationHandle extends UserAuthenticationHan
             final Pair<String,String> ep = appCtx.getProperties().getEmailPassword(userId);
             return new EmailPasswordAuthenticationData(ep.x, ep.y);
         } catch (ConfigurationException e) {
-            if (interactive) {
-                final Console cons = System.console();
-                if (cons != null) {
-                    final String email = cons.readLine("Email> ");
-                    final char[] pwd = cons.readPassword("Password> ");
-                    return new EmailPasswordAuthenticationData(email, new String(pwd));
-                } else {
-                    throw new IllegalArgumentException("Invalid Email-Password Configuration for User " + userId);
-                }
-            } else {
-                throw new IllegalArgumentException("Invalid Email-Password Configuration for User " + userId);
-            }
+            final String email = getHandleArg(args, "email");
+            final String pwd = getHandlePwdArg(args, "password");
+            return new EmailPasswordAuthenticationData(email, pwd);
         }
     }
 

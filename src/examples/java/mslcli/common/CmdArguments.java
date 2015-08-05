@@ -138,7 +138,7 @@ public final class CmdArguments {
      * @return property order of preference
      */
     private static int getArgRank(final String key) {
-        return supportedArgumentsRank.containsKey(key) ? supportedArgumentsRank.get(key) : supportedArgumentsRank.size();
+        return supportedArgumentsRank.containsKey(key) ? supportedArgumentsRank.get(key) : -1;
     }
 
     /**
@@ -147,7 +147,17 @@ public final class CmdArguments {
     private static final class ArgComparator implements Comparator<String> {
         @Override
         public int compare(String x, String y) {
-            return getArgRank(x) - getArgRank(y);
+            final int rx = getArgRank(x);
+            final int ry = getArgRank(y);
+            if (rx != -1 && ry != -1) {
+                return (rx - ry);
+            } else if (rx != -1) {
+                return -1;
+            } else if (ry != -1) {
+                return 1;
+            } else {
+                return x.compareTo(y);
+            }
         }
         @Override
         public boolean equals(Object o) {
