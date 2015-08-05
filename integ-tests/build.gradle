@@ -7,7 +7,7 @@ apply plugin: 'org.akhikhl.gretty'
 
 dependencies {
     compile 'javax.servlet:servlet-api:2.5'
-    compile project(':message-security-layer')
+    compile project(':message-security-layer-tests')
     compile project(':message-security-layer-example-server')
     testCompile 'org.testng:testng:latest.release'
 }

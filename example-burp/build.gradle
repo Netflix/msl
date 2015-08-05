@@ -3,6 +3,7 @@ apply plugin: 'java'
 dependencies {
     compile 'javax.servlet:servlet-api:2.5'
     compile project(':message-security-layer')
+    compile project(':message-security-layer-tests')
 }
 
-jar.baseName "msl-burp-extender"
+jar.baseName 'msl-burp-extender'
