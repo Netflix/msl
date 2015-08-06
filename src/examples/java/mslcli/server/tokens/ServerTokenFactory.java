@@ -136,7 +136,7 @@ public class ServerTokenFactory implements TokenFactory {
         final String key = masterToken.getIdentity() + ":" + masterToken.getSerialNumber();
         final Long storedNonReplayableId = nonReplayableIds.putIfAbsent(key, nonReplayableId);
         if (storedNonReplayableId == null) {
-            appCtx.info(String.format("%s: First Non-Replayable ID %d", key, nonReplayableId));
+            appCtx.info(String.format("%s: %s: First Non-Replayable ID %d", this, key, nonReplayableId));
             return null;
         }
 
@@ -167,7 +167,7 @@ public class ServerTokenFactory implements TokenFactory {
         // This is not perfect, since it's possible a smaller value will
         // overwrite a larger value, but it's good enough for the example.
         nonReplayableIds.put(key, nonReplayableId);
-        appCtx.info(String.format("%s: Update Non-Replayable ID %d", key, nonReplayableId));
+        appCtx.info(String.format("%s: %s: Update Non-Replayable ID %d", this, key, nonReplayableId));
         return null;
         } // synchronized (nonReplayableIdsLock)
     }
@@ -177,7 +177,7 @@ public class ServerTokenFactory implements TokenFactory {
      */
     @Override
     public MasterToken createMasterToken(final MslContext ctx, final String identity, final SecretKey encryptionKey, final SecretKey hmacKey) throws MslEncodingException, MslCryptoException {
-        appCtx.info("Creating MasterToken for " + identity);
+        appCtx.info(String.format("%s: Creating MasterToken for %s", this, identity));
         final Date renewalWindow = new Date(ctx.getTime() + renewalOffset);
         final Date expiration = new Date(ctx.getTime() + expirationOffset);
         final long sequenceNumber = 0;
@@ -210,7 +210,7 @@ public class ServerTokenFactory implements TokenFactory {
      */
     @Override
     public MasterToken renewMasterToken(final MslContext ctx, final MasterToken masterToken, final SecretKey encryptionKey, final SecretKey hmacKey) throws MslEncodingException, MslCryptoException, MslMasterTokenException {
-        appCtx.info("Renewing " + SharedUtil.getMasterTokenInfo(masterToken));
+        appCtx.info(String.format("%s: Renewing %s", this, SharedUtil.getMasterTokenInfo(masterToken)));
         if (!isNewestMasterToken(ctx, masterToken))
             throw new MslMasterTokenException(MslError.MASTERTOKEN_SEQUENCE_NUMBER_OUT_OF_SYNC, masterToken);
         
@@ -249,7 +249,7 @@ public class ServerTokenFactory implements TokenFactory {
      */
     @Override
     public UserIdToken createUserIdToken(final MslContext ctx, final MslUser user, final MasterToken masterToken) throws MslEncodingException, MslCryptoException {
-        appCtx.info("Creating UserIdToken for user " + ((user != null) ? user.getEncoded() : null));
+        appCtx.info(String.format("%s: Creating UserIdToken for user %s", this, ((user != null) ? user.getEncoded() : null)));
         final JSONObject issuerData = null;
         final Date renewalWindow = new Date(ctx.getTime() + uitRenewalOffset);
         final Date expiration = new Date(ctx.getTime() + uitExpirationOffset);
@@ -262,7 +262,7 @@ public class ServerTokenFactory implements TokenFactory {
      */
     @Override
     public UserIdToken renewUserIdToken(final MslContext ctx, final UserIdToken userIdToken, final MasterToken masterToken) throws MslEncodingException, MslCryptoException, MslUserIdTokenException {
-        appCtx.info("Renewing " + SharedUtil.getUserIdTokenInfo(userIdToken));
+        appCtx.info(String.format("%s: Renewing %s", this, SharedUtil.getUserIdTokenInfo(userIdToken)));
         if (!userIdToken.isDecrypted())
             throw new MslUserIdTokenException(MslError.USERIDTOKEN_NOT_DECRYPTED, userIdToken).setEntity(masterToken);
 
@@ -281,6 +281,11 @@ public class ServerTokenFactory implements TokenFactory {
     public MslUser createUser(final MslContext ctx, final String userdata) {
         return new SimpleUser(userdata);
     }
+
+    @Override
+    public String toString() {
+        return SharedUtil.toString(this);
+    }
     
     /**
      * helper - generate random serial number in [0 ... MslConstants.MAX_LONG_VALUE] range
@@ -291,7 +296,7 @@ public class ServerTokenFactory implements TokenFactory {
         long serialNumber = -1L;
         do {
             serialNumber = new BigInteger(MAX_LONG_VALUE_BITS, r).longValue();
-            appCtx.info(String.format("Serial Number %x, Max %x", serialNumber, MslConstants.MAX_LONG_VALUE));
+            appCtx.info(String.format("%s: Serial Number %x, Max %x", this, serialNumber, MslConstants.MAX_LONG_VALUE));
         } while (serialNumber > MslConstants.MAX_LONG_VALUE);
         return serialNumber;
     }

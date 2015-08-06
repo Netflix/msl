@@ -113,7 +113,7 @@ public class CommonAuthenticationUtils implements AuthenticationUtils {
     
     @Override
     public String toString() {
-        return String.format("AuthenticationUtils[%s]", entityId);
+        return SharedUtil.toString(this, entityId);
     }
 
     /** Local client entity identity. */

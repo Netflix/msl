@@ -117,6 +117,11 @@ public abstract class MslConfig {
         return entityId;
     }
 
+    @Override
+    public String toString() {
+        return SharedUtil.toString(this, entityId);
+    }
+
     /**
      * @return message config parameters
      */
@@ -456,7 +461,7 @@ public abstract class MslConfig {
 
         @Override
         public String toString() {
-            return String.format("MslStore[%s]", entityId);
+            return String.format("%s{%s}", super.toString(), entityId);
         }
 
         /** application context */

@@ -16,6 +16,8 @@
 
 package mslcli.common;
 
+import mslcli.common.util.SharedUtil;
+
 /**
  * <p>Generic Pair class. Some or all values can be null.</p>
  *
@@ -36,5 +38,10 @@ public final class Pair<X,Y> {
     public Pair(X x, Y y) {
       this.x = x;
       this.y = y;
+    }
+
+    @Override
+    public String toString() {
+        return SharedUtil.toString(this);
     }
 }

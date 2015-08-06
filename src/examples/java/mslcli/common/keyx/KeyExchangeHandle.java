@@ -33,6 +33,7 @@ import mslcli.common.CmdArguments;
 import mslcli.common.IllegalCmdArgumentException;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
+import mslcli.common.util.SharedUtil;
 import mslcli.common.util.WrapCryptoContextRepositoryHandle;
 import mslcli.common.util.WrapCryptoContextRepositoryWrapper;
 
@@ -107,8 +108,8 @@ public abstract class KeyExchangeHandle {
     }
 
     @Override
-    public String toString() {
-        return String.format("KeyExchangeHandle{%s}", scheme.toString());
+    public final String toString() {
+        return SharedUtil.toString(this, scheme);
     }
 
     /**
@@ -123,30 +124,28 @@ public abstract class KeyExchangeHandle {
         public AppWrapCryptoContextRepository(final AppContext appCtx, final String entityId, final KeyExchangeScheme scheme) {
             super(new SimpleWrapCryptoContextRepository(entityId, scheme));
             this.appCtx = appCtx;
-            this.id = String.format("WrapCryptoContextRepo[%s %s]", entityId, scheme.toString());
         }
 
         @Override
         public void addCryptoContext(final byte[] wrapdata, final ICryptoContext cryptoContext) {
-            appCtx.info(String.format("%s: addCryptoContext %s", id, cryptoContext.getClass().getName()));
+            appCtx.info(String.format("%s: addCryptoContext %s", this, cryptoContext.getClass().getName()));
             super.addCryptoContext(wrapdata, cryptoContext);
         }
 
         @Override
         public ICryptoContext getCryptoContext(final byte[] wrapdata) {
-            appCtx.info(String.format("%s: getCryptoContext", id));
+            appCtx.info(String.format("%s: getCryptoContext", this));
             return super.getCryptoContext(wrapdata);
         }
 
         @Override
         public void removeCryptoContext(final byte[] wrapdata) {
-            appCtx.info(String.format("%s: removeCryptoContext", id));
+            appCtx.info(String.format("%s: removeCryptoContext", this));
             super.removeCryptoContext(wrapdata);
         }
+
         /** application context */
         private final AppContext appCtx;
-        /** id for this instance */
-        private final String id;
     }
 
     /**

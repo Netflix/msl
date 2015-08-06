@@ -23,6 +23,7 @@ import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.userauth.EmailPasswordStore;
 
 import mslcli.common.tokens.SimpleUser;
+import mslcli.common.util.SharedUtil;
 
 /**
  * <p>Memory-backed user email/password store.</p>
@@ -53,6 +54,11 @@ public class SimpleEmailPasswordStore implements EmailPasswordStore {
         if (expectedPassword == null || !expectedPassword.equals(password))
             return null;
         return new SimpleUser(email);
+    }
+
+    @Override
+    public String toString() {
+        return SharedUtil.toString(this);
     }
 
     /** Email/password database. */

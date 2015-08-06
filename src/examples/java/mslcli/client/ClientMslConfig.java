@@ -47,8 +47,4 @@ public final class ClientMslConfig extends MslConfig {
     {
         super(appCtx, args, new ClientAuthenticationUtils(args.getEntityId(), appCtx));
     }
-
-    public String toString() {
-        return String.format("ClientMslConfig[%s]", entityId);
-    }
 }

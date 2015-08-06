@@ -29,6 +29,7 @@ import mslcli.common.CmdArguments;
 import mslcli.common.IllegalCmdArgumentException;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
+import mslcli.common.util.SharedUtil;
 
 /**
  * <p>
@@ -159,7 +160,7 @@ public abstract class UserAuthenticationHandle {
     }
 
     @Override
-    public String toString() {
-        return String.format("UserAuthenticationHandle{%s}", scheme.toString());
+    public final String toString() {
+        return SharedUtil.toString(this, scheme);
     }
 }

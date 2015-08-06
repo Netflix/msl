@@ -16,6 +16,8 @@
 
 package mslcli.common;
 
+import mslcli.common.util.SharedUtil;
+
 /**
  * <p>Generic data object class for storing triplet values. Values can be null.</p>
  *
@@ -40,5 +42,10 @@ public final class Triplet<X,Y,Z> {
       this.x = x;
       this.y = y;
       this.z = z;
+    }
+
+    @Override
+    public String toString() {
+        return SharedUtil.toString(this);
     }
 }

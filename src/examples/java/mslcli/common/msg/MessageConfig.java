@@ -16,6 +16,8 @@
 
 package mslcli.common.msg;
 
+import mslcli.common.util.SharedUtil;
+
 /**
  * <p>
  * MSL message security configuration data object.
@@ -35,6 +37,6 @@ public final class MessageConfig {
 
     @Override
     public String toString() {
-        return String.format("encrypted: %b, integrity protected: %b, non-replayable: %b", isEncrypted, isIntegrityProtected, isNonReplayable);
+        return String.format("%s{encrypted: %b, integrity protected: %b, non-replayable: %b}", SharedUtil.getSimpleClassName(this), isEncrypted, isIntegrityProtected, isNonReplayable);
     }
 }

@@ -23,6 +23,8 @@ import java.util.Set;
 
 import com.netflix.msl.entityauth.RsaStore;
 
+import mslcli.common.util.SharedUtil;
+
 /**
  * <p>
  * Memory-backed RSA key store, mapping IDs to RSA key pairs.
@@ -76,6 +78,11 @@ public class SimpleRsaStore implements RsaStore {
     public PrivateKey getPrivateKey(final String identity) {
         final KeyPair pair = keys.get(identity);
         return (pair != null) ? pair.getPrivate() : null;
+    }
+
+    @Override
+    public String toString() {
+        return SharedUtil.toString(this);
     }
 
     /** map of RSA key pair IDs into key pairs */

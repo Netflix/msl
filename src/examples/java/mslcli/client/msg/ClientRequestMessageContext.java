@@ -37,10 +37,11 @@ import com.netflix.msl.userauth.UserAuthenticationData;
 
 import mslcli.common.IllegalCmdArgumentException;
 import mslcli.common.IllegalCmdArgumentRuntimeException;
-import mslcli.common.util.ConfigurationException;
-import mslcli.common.util.ConfigurationRuntimeException;
 import mslcli.common.MslConfig;
 import mslcli.common.msg.MessageConfig;
+import mslcli.common.util.ConfigurationException;
+import mslcli.common.util.ConfigurationRuntimeException;
+import mslcli.common.util.SharedUtil;
 
 /**
  * <p>Client Request message context.</p>
@@ -217,5 +218,10 @@ public class ClientRequestMessageContext implements MessageContext {
     @Override
     public MessageDebugContext getDebugContext() {
         return null;
+    }
+
+    @Override
+    public String toString() {
+        return SharedUtil.toString(this);
     }
 }

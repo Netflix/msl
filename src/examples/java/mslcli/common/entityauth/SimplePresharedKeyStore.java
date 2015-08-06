@@ -22,6 +22,8 @@ import java.util.Map;
 import com.netflix.msl.entityauth.PresharedKeyStore;
 import com.netflix.msl.entityauth.PresharedKeyStore.KeySet;
 
+import mslcli.common.util.SharedUtil;
+
 /**
  * <p>
  * Sample preshared key store backed by memory.
@@ -55,6 +57,11 @@ public class SimplePresharedKeyStore implements PresharedKeyStore {
         return presharedKeys.get(identity);
     }
 
+    @Override
+    public String toString() {
+        return SharedUtil.toString(this);
+    }
+
     /** preshared keys database */
     private final Map<String,KeySet> presharedKeys = new HashMap<String,KeySet>();
-};
+}

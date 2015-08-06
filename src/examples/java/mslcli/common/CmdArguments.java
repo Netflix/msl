@@ -32,6 +32,8 @@ import java.util.TreeMap;
 
 import com.netflix.msl.MslConstants;
 
+import mslcli.common.util.SharedUtil;
+
 /**
  * <p>
  * MSL CLI command-line arguments parser, validator, and accessor class.
@@ -531,5 +533,10 @@ public final class CmdArguments {
             }
         }
         return m;
+    }
+
+    @Override
+    public String toString() {
+        return SharedUtil.toString(this);
     }
 }

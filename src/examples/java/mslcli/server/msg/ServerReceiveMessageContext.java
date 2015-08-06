@@ -31,6 +31,8 @@ import com.netflix.msl.msg.MessageServiceTokenBuilder;
 import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.userauth.UserAuthenticationData;
 
+import mslcli.common.util.SharedUtil;
+
 /**
  * <p>Example server message context for receiving messages.</p>
  * 
@@ -147,6 +149,11 @@ public class ServerReceiveMessageContext implements MessageContext {
     @Override
     public MessageDebugContext getDebugContext() {
         return null;
+    }
+
+    @Override
+    public String toString() {
+        return SharedUtil.toString(this);
     }
 
     /** Service token crypto contexts. */

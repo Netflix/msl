@@ -77,4 +77,9 @@ public class WrapCryptoContextRepositoryWrapper implements WrapCryptoContextRepo
     public byte[] getLastWrapdata() {
         return rep.getLastWrapdata();
     }
+
+    @Override
+    public String toString() {
+        return rep.toString();
+    }
 }

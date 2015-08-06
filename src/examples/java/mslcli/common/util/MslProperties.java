@@ -352,7 +352,7 @@ public final class MslProperties {
     }
 
     /**
-     * @return mappings between Diffie-Hellman parameters ID and actual Diffie-Hellman {P,G) parameters
+     * @return mappings between Diffie-Hellman parameters ID and actual Diffie-Hellman (P,G) parameters
      * @throws ConfigurationException if the value is not defined or is not valid
      */
     public Map<String,Pair<String,String>> getDHParameterStore() throws ConfigurationException {
@@ -650,5 +650,10 @@ public final class MslProperties {
         final Set<String> set = new HashSet<String>();
         set.addAll(Arrays.asList(value.split(SPACE_REGEX)));
         return Collections.unmodifiableSet(set);
+    }
+
+    @Override
+    public String toString() {
+        return SharedUtil.toString(this);
     }
 }

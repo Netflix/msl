@@ -212,7 +212,7 @@ public final class Client {
 
     @Override
     public String toString() {
-        return String.format("Client[%s]", entityId);
+        return SharedUtil.toString(this, entityId);
     }
 
     /** App context */

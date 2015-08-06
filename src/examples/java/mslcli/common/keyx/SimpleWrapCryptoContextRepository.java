@@ -25,6 +25,7 @@ import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.keyx.WrapCryptoContextRepository;
 
+import mslcli.common.util.SharedUtil;
 import mslcli.common.util.WrapCryptoContextRepositoryHandle;
 
 /**
@@ -88,5 +89,10 @@ public class SimpleWrapCryptoContextRepository implements WrapCryptoContextRepos
             bb1 = bb;
         }
         return (bb1 != null) ? bb1.array() : null;
+    }
+
+    @Override
+    public String toString() {
+        return SharedUtil.toString(this, entityId, scheme);
     }
 }

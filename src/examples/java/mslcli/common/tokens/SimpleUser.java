@@ -18,6 +18,8 @@ package mslcli.common.tokens;
 
 import com.netflix.msl.tokens.MslUser;
 
+import mslcli.common.util.SharedUtil;
+
 /**
  * <p>A MSL user that is just the user ID.</p>
  * 
@@ -47,7 +49,7 @@ public class SimpleUser implements MslUser {
      */
     @Override
     public String toString() {
-        return userId;
+        return SharedUtil.toString(this, userId);
     }
 
     /** User string representation. */

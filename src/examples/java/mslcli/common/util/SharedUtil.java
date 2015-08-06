@@ -92,8 +92,12 @@ public final class SharedUtil {
         final long t_now = System.currentTimeMillis();
         final long t_rnw = (masterToken.getRenewalWindow().getTime() - t_now)/1000L;
         final long t_exp = (masterToken.getExpiration().getTime() - t_now)/1000L;
-        return String.format("MasterToken{ser_num %d, seq_num %d, renewable in %d sec, expires in %d sec}",
-            masterToken.getSerialNumber(), masterToken.getSequenceNumber(), t_rnw, t_exp);
+        return String.format("%s{ser_num %x, seq_num %x, renew %d sec, expire %d sec}",
+            getSimpleClassName(masterToken),
+            masterToken.getSerialNumber(),
+            masterToken.getSequenceNumber(),
+            t_rnw,
+            t_exp);
     }
 
     /**
@@ -109,7 +113,8 @@ public final class SharedUtil {
         final long t_now = System.currentTimeMillis();
         final long t_rnw = (userIdToken.getRenewalWindow().getTime() - t_now)/1000L;
         final long t_exp = (userIdToken.getExpiration().getTime() - t_now)/1000L;
-        return String.format("UserIdToken{user %s, ser_num %d, mt_ser_num: %d, renewable in %d sec, expires in %d sec}",
+        return String.format("%s{user %s, ser_num %x, mt_ser_num %x, renew %d sec, expire %d sec}",
+            getSimpleClassName(userIdToken),
             (userIdToken.getUser() != null) ? userIdToken.getUser().getEncoded() : null,
             userIdToken.getSerialNumber(),
             userIdToken.getMasterTokenSerialNumber(),
@@ -127,8 +132,12 @@ public final class SharedUtil {
         if (serviceToken == null) {
             return null;
         }
-        return String.format("ServiceToken{name %s, mt_ser_num %d, ut_ser_num %d, enc %b}",
-            serviceToken.getName(), serviceToken.getMasterTokenSerialNumber(), serviceToken.getUserIdTokenSerialNumber(), serviceToken.isEncrypted());
+        return String.format("%s{name %s, mt_ser_num %x, ut_ser_num %x, enc %b}",
+            getSimpleClassName(serviceToken),
+            serviceToken.getName(),
+            serviceToken.getMasterTokenSerialNumber(),
+            serviceToken.getUserIdTokenSerialNumber(),
+            serviceToken.isEncrypted());
     }
 
     /**
@@ -601,5 +610,51 @@ public final class SharedUtil {
 
     public static boolean safeEqual(final Object x, final Object y) {
         return (x == null) ? (y == null) : x.equals(y); 
+    }
+
+    /**
+     * @param obj object to stringize
+     * @return simple toString() implementation for this object
+     */
+    public static String toString(final Object obj) {
+        return String.format("%s[%x]", getSimpleClassName(obj), (obj != null) ? obj.hashCode() : "");
+    }
+
+    /**
+     * @param obj object to stringize
+     * @param p object's parameter to include into the result
+     * @return simple toString() implementation for this object
+     */
+    public static String toString(final Object obj, final Object p) {
+        return String.format("%s{%s}", toString(obj), p);
+    }
+
+    /**
+     * @param obj object to stringize
+     * @param p0 object's 1st parameter to include into the result
+     * @param p1 object's 2nd parameter to include into the result
+     * @return simple toString() implementation for this object
+     */
+    public static String toString(final Object obj, final Object p0, final Object p1) {
+        return String.format("%s{%s %s}", toString(obj), p0, p1);
+    }
+
+    /**
+     * @param obj object to stringize
+     * @param p0 object's 1st parameter to include into the result
+     * @param p1 object's 2nd parameter to include into the result
+     * @param p2 object's 3rd parameter to include into the result
+     * @return simple toString() implementation for this object
+     */
+    public static String toString(final Object obj, final Object p0, final Object p1, final Object p2) {
+        return String.format("%s{%s %s %s}", toString(obj), p0, p1, p2);
+    }
+
+    /**
+     * @param o object
+     * @return object's simple class name
+     */
+    public static String getSimpleClassName(final Object o) {
+        return (o != null) ? o.getClass().getSimpleName() : "null";
     }
 }

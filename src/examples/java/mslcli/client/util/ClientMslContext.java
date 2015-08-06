@@ -47,6 +47,7 @@ import mslcli.common.IllegalCmdArgumentRuntimeException;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
 import mslcli.common.util.ConfigurationRuntimeException;
+import mslcli.common.util.SharedUtil;
 
 /**
  * <p>
@@ -217,6 +218,11 @@ public final class ClientMslContext implements MslContext {
     @Override
     public MslStore getMslStore() {
         return mslCfg.getMslStore();
+    }
+
+    @Override
+    public String toString() {
+        return SharedUtil.toString(this);
     }
 
     /** MSL config */

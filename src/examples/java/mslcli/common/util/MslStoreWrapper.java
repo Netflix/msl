@@ -172,4 +172,9 @@ public class MslStoreWrapper implements MslStore {
     public void clearServiceTokens() {
         mslStore.clearServiceTokens();
     }
+
+    @Override
+    public String toString() {
+        return SharedUtil.toString(mslStore);
+    }
 }

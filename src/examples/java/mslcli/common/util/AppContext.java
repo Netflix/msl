@@ -606,4 +606,9 @@ public final class AppContext {
     public void error(final String msg) {
         System.err.println("ERROR: " + msg);
     }
+
+    @Override
+    public String toString() {
+        return SharedUtil.toString(this);
+    }
 }
