@@ -247,7 +247,7 @@ describe("MessageBuilder", function() {
 			runs(function() {
 				expect(header).not.toBeNull();
 	
-				expect(header.nonReplayableId).toBeFalsy();
+				expect(header.nonReplayableId).toBeNull();
 				expect(header.isRenewable()).toBeFalsy();
 				expect(header.isHandshake()).toBeFalsy();
 				expect(header.cryptoContext).not.toBeNull();
@@ -295,7 +295,7 @@ describe("MessageBuilder", function() {
 			runs(function() {
 				expect(header).not.toBeNull();
 
-				expect(header.nonReplayableId).toBeFalsy();
+				expect(header.nonReplayableId).toBeNull();
 				expect(header.isRenewable()).toBeFalsy();
 				expect(header.isHandshake()).toBeFalsy();
 				expect(header.cryptoContext).not.toBeNull();
@@ -360,7 +360,7 @@ describe("MessageBuilder", function() {
 			runs(function() {
 				expect(header).not.toBeNull();
 	
-				expect(header.nonReplayableId).toBeTruthy();
+				expect(header.isNonReplayable()).toBeFalsy();
 				expect(header.isRenewable()).toBeTruthy();
 				expect(header.cryptoContext).not.toBeNull();
 				expect(header.entityAuthenticationData).toBeNull();
@@ -533,7 +533,7 @@ describe("MessageBuilder", function() {
                 builder.setNonReplayable(true);
                 builder.setRenewable(false);
                 builder.setHandshake(true);
-                expect(builder.nonReplayableId).toBeFalsy();
+                expect(builder.isNonReplayable()).toBeFalsy();
                 expect(builder.isRenewable()).toBeTruthy();
                 expect(builder.isHandshake()).toBeTruthy();
                 builder.getHeader({
@@ -555,7 +555,7 @@ describe("MessageBuilder", function() {
                 expect(header.masterToken).toBeNull();
                 expect(header.messageId).toBeGreaterThan(0);
                 expect(header.messageCapabilities).toEqual(trustedNetCtx.getMessageCapabilities());
-                expect(header.nonReplayableId).toBeFalsy();
+                expect(header.nonReplayableId).toBeNull();
                 expect(header.peerMasterToken).toBeNull();
                 expect(header.peerServiceTokens.length).toEqual(0);
                 expect(header.peerUserIdToken).toBeNull();
@@ -581,7 +581,7 @@ describe("MessageBuilder", function() {
                 builder.setNonReplayable(true);
                 builder.setRenewable(false);
                 builder.setHandshake(true);
-                expect(builder.nonReplayableId).toBeFalsy();
+                expect(builder.isNonReplayable()).toBeFalsy();
                 expect(builder.isRenewable()).toBeTruthy();
                 expect(builder.isHandshake()).toBeTruthy();
                 
@@ -603,7 +603,7 @@ describe("MessageBuilder", function() {
                 expect(header.masterToken).toBeNull();
                 expect(header.messageId).toBeGreaterThan(0);
                 expect(header.messageCapabilities).toEqual(p2pCtx.getMessageCapabilities());
-                expect(header.nonReplayableId).toBeFalsy();
+                expect(header.nonReplayableId).toBeNull();
                 expect(header.peerMasterToken).toBeNull();
                 expect(header.peerServiceTokens.length).toEqual(0);
                 expect(header.peerUserIdToken).toBeNull();
@@ -991,7 +991,7 @@ describe("MessageBuilder", function() {
 			waitsFor(function() { return header; }, "header not received", 100);
 
 			runs(function() {
-				expect(header.nonReplayableId).toBeFalsy();
+				expect(header.nonReplayableId).toBeNull();
 				expect(header.isRenewable()).toBeFalsy();
 				expect(header.isHandshake()).toBeFalsy();
 				expect(header.cryptoContext).not.toBeNull();
@@ -1038,7 +1038,7 @@ describe("MessageBuilder", function() {
 			waitsFor(function() { return header; }, "header not received", 100);
 
 			runs(function() {
-				expect(header.nonReplayableId).toBeFalsy();
+				expect(header.nonReplayableId).toBeNull();
 				expect(header.isRenewable()).toBeFalsy();
 				expect(header.isHandshake()).toBeFalsy();
 				expect(header.cryptoContext).not.toBeNull();
@@ -2387,7 +2387,7 @@ describe("MessageBuilder", function() {
 			
 			runs(function() {
 				expect(response).not.toBeNull();
-                expect(response.nonReplayableId).toBeFalsy();
+				expect(response.isNonReplayable()).toBeFalsy();
 				expect(response.isRenewable()).toBeFalsy();
 				expect(response.isHandshake()).toBeFalsy();
 				expect(response.cryptoContext).not.toBeNull();
@@ -2475,7 +2475,7 @@ describe("MessageBuilder", function() {
 			waitsFor(function() { return response; }, "response not received", 100);
 			runs(function() {
 				expect(response).not.toBeNull();
-                expect(response.nonReplayableId).toBeFalsy();
+				expect(response.isNonReplayable()).toBeFalsy();
 				expect(response.isRenewable()).toBeFalsy();
                 expect(response.isHandshake()).toBeFalsy();
 				expect(response.cryptoContext).not.toBeNull();
@@ -2558,7 +2558,7 @@ describe("MessageBuilder", function() {
             
             runs(function() {
                 expect(response).not.toBeNull();
-                expect(response.nonReplayableId).toBeFalsy();
+                expect(response.isNonReplayable()).toBeFalsy();
                 expect(response.isRenewable()).toBeFalsy();
                 expect(response.isHandshake()).toBeFalsy();
                 expect(response.cryptoContext).not.toBeNull();
@@ -2649,7 +2649,7 @@ describe("MessageBuilder", function() {
             
             runs(function() {
                 expect(response).not.toBeNull();
-                expect(response.nonReplayableId).toBeFalsy();
+                expect(response.isNonReplayable()).toBeFalsy();
                 expect(response.isRenewable()).toBeFalsy();
                 expect(response.isHandshake()).toBeFalsy();
                 expect(response.cryptoContext).not.toBeNull();
@@ -2818,7 +2818,7 @@ describe("MessageBuilder", function() {
 			
 			runs(function() {
 				expect(response).not.toBeNull();
-				expect(response.nonReplayableId).toBeFalsy();
+				expect(response.nonReplayableId).toBeNull();
 				expect(response.isRenewable()).toBeFalsy();
                 expect(response.isHandshake()).toBeFalsy();
 				expect(response.cryptoContext).not.toBeNull();
@@ -2901,7 +2901,7 @@ describe("MessageBuilder", function() {
             
             runs(function() {
                 expect(response).not.toBeNull();
-                expect(response.nonReplayableId).toBeFalsy();
+                expect(response.nonReplayableId).toBeNull();
                 expect(response.isRenewable()).toBeTruthy();
                 expect(response.isHandshake()).toBeTruthy();
                 expect(response.cryptoContext).not.toBeNull();
@@ -2992,7 +2992,7 @@ describe("MessageBuilder", function() {
             waitsFor(function() { return response; }, "response not received", 100);
             runs(function() {
                 expect(response).not.toBeNull();
-                expect(response.nonReplayableId).toBeFalsy();
+                expect(response.nonReplayableId).toBeNull();
                 expect(response.isRenewable()).toBeTruthy();
                 expect(response.isHandshake()).toBeTruthy();
                 expect(response.cryptoContext).not.toBeNull();
