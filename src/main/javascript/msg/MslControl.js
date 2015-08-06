@@ -1211,21 +1211,9 @@ var MslControl$MslChannel;
                         this.getNewestMasterToken(service, ctx, timeout, {
                             result: function(tokenTicket) {
                                 InterruptibleExecutor(callback, function() {
-                                    var masterToken = (tokenTicket && tokenTicket.masterToken);
-                                    var userIdToken;
-                                    if (masterToken) {
-                                        // Grab the user ID token for the message's user. It may not be bound
-                                        // to the newest master token if the newest master token invalidated
-                                        // it.
-                                        var userId = msgCtx.getUserId();
-                                        var store = ctx.getMslStore();
-                                        var storedUserIdToken = (userId) ? store.getUserIdToken(userId) : null;
-                                        userIdToken = (storedUserIdToken && storedUserIdToken.isBoundTo(masterToken)) ? storedUserIdToken : null;
-                                    } else {
-                                        userIdToken = null;
-                                    }
-                                    
                                     // Resend the request.
+                                    var masterToken = tokenTicket && tokenTicket.masterToken;
+                                    var userIdToken = requestHeader.userIdToken;
                                     var messageId = MessageBuilder$incrementMessageId(errorHeader.messageId);
                                     var resendMsgCtx = new ResendMessageContext(payloads, msgCtx);
                                     var recipient = resendMsgCtx.getRecipient();
@@ -1264,29 +1252,23 @@ var MslControl$MslChannel;
                     }
                     case MslConstants$ResponseCode.REPLAYED:
                     {
-                        // This error will be received if the previous request's non-
-                        // replayable ID is not accepted by the remote entity. In this
-                        // situation simply try again.
+                        // TODO: The master token-oriented logic remains to support the
+                        // legacy non-replayable flag implementation. It can be removed
+                        // once support for the flag is removed.
                         //
+                        // This error will only be received if the previous request's
+                        // master token has an old sequence number. If a new master
+                        // token was issued then we know that this old master token's
+                        // renewal window has already been entered and we should get a
+                        // new master token by sending a renewable message.
+
                         // Grab the newest master token and its read lock.
                         this.getNewestMasterToken(service, ctx, timeout, {
                             result: function(tokenTicket) {
                                 InterruptibleExecutor(callback, function() {
-                                    var masterToken = (tokenTicket && tokenTicket.masterToken);
-                                    var userIdToken;
-                                    if (masterToken) {
-                                        // Grab the user ID token for the message's user. It may not be bound
-                                        // to the newest master token if the newest master token invalidated
-                                        // it.
-                                        var userId = msgCtx.getUserId();
-                                        var store = ctx.getMslStore();
-                                        var storedUserIdToken = (userId) ? store.getUserIdToken(userId) : null;
-                                        userIdToken = (storedUserIdToken && storedUserIdToken.isBoundTo(masterToken)) ? storedUserIdToken : null;
-                                    } else {
-                                        userIdToken = null;
-                                    }
-                                    
                                     // Resend the request.
+                                    var masterToken = tokenTicket && tokenTicket.masterToken;
+                                    var userIdToken = requestHeader.userIdToken;
                                     var messageId = MessageBuilder$incrementMessageId(errorHeader.messageId);
                                     var resendMsgCtx = new ResendMessageContext(payloads, msgCtx);
                                     var recipient = resendMsgCtx.getRecipient();
@@ -1298,10 +1280,28 @@ var MslControl$MslChannel;
                                                     var peerUserIdToken = requestHeader.peerUserIdToken;
                                                     requestBuilder.setPeerAuthTokens(peerMasterToken, peerUserIdToken);
                                                 }
-                                                
-                                                // Mark the message as replayable or not as dictated by the
-                                                // message context.
-                                                requestBuilder.setNonReplayable(resendMsgCtx.isNonReplayable());
+                                                // If the newest master token is equal to the previous
+                                                // request's master token then mark this message as renewable
+                                                // and replayable.
+                                                //
+                                                // During renewal lock acquisition we will either block until
+                                                // we acquire the renewal lock or receive a master token.
+                                                //
+                                                // During send the application data will be delayed because the
+                                                // message is replayable but the message context indicates the
+                                                // application data must sent in a non-replayable message.
+                                                //
+                                                // Check for a missing master token in case the error is incorrect
+                                                var requestMasterToken = requestHeader.masterToken;
+                                                if (!requestMasterToken || requestMasterToken.equals(masterToken)) {
+                                                    requestBuilder.setRenewable(true);
+                                                    requestBuilder.setNonReplayable(false);
+                                                }
+                                                // Otherwise mark it as replayable as dictated by the message
+                                                // context.
+                                                else {
+                                                    requestBuilder.setNonReplayable(resendMsgCtx.isNonReplayable());
+                                                }
                                                 return {
                                                     errorResult: new ErrorResult(requestBuilder, resendMsgCtx),
                                                     tokenTicket: tokenTicket

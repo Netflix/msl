@@ -2054,7 +2054,7 @@ describe("MessageHeader", function() {
             expect(header instanceof MessageHeader).toBeTruthy();
             var joMessageHeader = header;
     
-            expect(joMessageHeader.nonReplayableId).toEqual(messageHeader.nonReplayableId);
+            expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
             expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
             expect(messageHeader.cryptoContext).not.toBeNull();
             expect(joMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
@@ -2121,7 +2121,7 @@ describe("MessageHeader", function() {
             expect(header instanceof MessageHeader).toBeTruthy();
             var joMessageHeader = header;
     
-            expect(joMessageHeader.nonReplayableId).toEqual(messageHeader.nonReplayableId);
+            expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
             expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
             expect(messageHeader.cryptoContext).not.toBeNull();
             expect(joMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
@@ -2187,7 +2187,7 @@ describe("MessageHeader", function() {
             expect(header instanceof MessageHeader).toBeTruthy();
             var joMessageHeader = header;
     
-            expect(joMessageHeader.nonReplayableId).toEqual(messageHeader.nonReplayableId);
+            expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
             expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
             expect(messageHeader.cryptoContext).not.toBeNull();
             expect(joMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
@@ -2251,7 +2251,7 @@ describe("MessageHeader", function() {
             expect(header instanceof MessageHeader).toBeTruthy();
             var joMessageHeader = header;
     
-            expect(joMessageHeader.nonReplayableId).toEqual(messageHeader.nonReplayableId);
+            expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
             expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
             expect(messageHeader.cryptoContext).not.toBeNull();
             expect(joMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
@@ -2317,7 +2317,7 @@ describe("MessageHeader", function() {
             expect(header instanceof MessageHeader).toBeTruthy();
             var joMessageHeader = header;
     
-            expect(joMessageHeader.nonReplayableId).toEqual(messageHeader.nonReplayableId);
+            expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
             expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
             expect(messageHeader.cryptoContext).not.toBeNull();
             expect(joMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
@@ -2381,7 +2381,7 @@ describe("MessageHeader", function() {
             expect(header instanceof MessageHeader).toBeTruthy();
             var joMessageHeader = header;
     
-            expect(joMessageHeader.nonReplayableId).toEqual(messageHeader.nonReplayableId);
+            expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
             expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
             expect(messageHeader.cryptoContext).not.toBeNull();
             expect(joMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
@@ -2656,7 +2656,7 @@ describe("MessageHeader", function() {
             expect(header instanceof MessageHeader).toBeTruthy();
             var joMessageHeader = header;
     
-            expect(joMessageHeader.nonReplayableId).toEqual(messageHeader.nonReplayableId);
+            expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
             expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
             expect(messageHeader.cryptoContext).not.toBeNull();
             expect(joMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
@@ -3061,7 +3061,7 @@ describe("MessageHeader", function() {
             expect(header instanceof MessageHeader).toBeTruthy();
             var joMessageHeader = header;
     
-            expect(joMessageHeader.nonReplayableId).toEqual(messageHeader.nonReplayableId);
+            expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
             expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
             expect(messageHeader.cryptoContext).not.toBeNull();
             expect(joMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
@@ -3163,7 +3163,7 @@ describe("MessageHeader", function() {
             expect(header instanceof MessageHeader).toBeTruthy();
             var joMessageHeader = header;
     
-            expect(joMessageHeader.nonReplayableId).toEqual(messageHeader.nonReplayableId);
+            expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
             expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
             expect(messageHeader.cryptoContext).not.toBeNull();
             expect(joMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
@@ -3229,7 +3229,7 @@ describe("MessageHeader", function() {
             expect(header instanceof MessageHeader).toBeTruthy();
             var joMessageHeader = header;
     
-            expect(joMessageHeader.nonReplayableId).toEqual(messageHeader.nonReplayableId);
+            expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
             expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
             expect(messageHeader.cryptoContext).not.toBeNull();
             expect(joMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
@@ -3326,7 +3326,7 @@ describe("MessageHeader", function() {
             expect(header instanceof MessageHeader).toBeTruthy();
             var joMessageHeader = header;
     
-            expect(joMessageHeader.nonReplayableId).toEqual(messageHeader.nonReplayableId);
+            expect(joMessageHeader.isNonReplayable()).toEqual(messageHeader.isNonReplayable());
             expect(joMessageHeader.isRenewable()).toEqual(messageHeader.isRenewable());
             expect(messageHeader.cryptoContext).not.toBeNull();
             expect(joMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);

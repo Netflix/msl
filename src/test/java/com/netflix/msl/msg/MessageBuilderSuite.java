@@ -262,8 +262,8 @@ public class MessageBuilderSuite {
             assertTrue(builder.willIntegrityProtectPayloads());
             final MessageHeader header = builder.getHeader();
             assertNotNull(header);
-
-            assertNull(header.getNonReplayableId());
+            
+            assertFalse(header.isNonReplayable());
             assertFalse(header.isRenewable());
             assertFalse(header.isHandshake());
             assertNotNull(header.getCryptoContext());
@@ -292,7 +292,7 @@ public class MessageBuilderSuite {
             final MessageHeader header = builder.getHeader();
             assertNotNull(header);
             
-            assertNull(header.getNonReplayableId());
+            assertFalse(header.isNonReplayable());
             assertFalse(header.isRenewable());
             assertFalse(header.isHandshake());
             assertNotNull(header.getCryptoContext());
@@ -330,8 +330,8 @@ public class MessageBuilderSuite {
             
             final MessageHeader header = builder.getHeader();
             assertNotNull(header);
-
-            assertNotNull(header.getNonReplayableId());
+            
+            assertFalse(header.isNonReplayable());
             assertTrue(header.isRenewable());
             assertFalse(header.isHandshake());
             assertNotNull(header.getCryptoContext());
@@ -692,8 +692,8 @@ public class MessageBuilderSuite {
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
                 builder.addKeyRequestData(keyRequestData);
             final MessageHeader header = builder.getHeader();
-
-            assertNull(header.getNonReplayableId());
+            
+            assertFalse(header.isNonReplayable());
             assertFalse(header.isRenewable());
             assertNotNull(header.getCryptoContext());
             assertEquals(trustedNetCtx.getEntityAuthenticationData(null), header.getEntityAuthenticationData());
@@ -721,8 +721,8 @@ public class MessageBuilderSuite {
             builder.removeKeyRequestData(keyRequestData);
             builder.removeKeyRequestData(keyRequestData);
             final MessageHeader header = builder.getHeader();
-
-            assertNull(header.getNonReplayableId());
+            
+            assertFalse(header.isNonReplayable());
             assertFalse(header.isRenewable());
             assertNotNull(header.getCryptoContext());
             assertEquals(trustedNetCtx.getEntityAuthenticationData(null), header.getEntityAuthenticationData());
@@ -1310,7 +1310,7 @@ public class MessageBuilderSuite {
             
             final MessageHeader response = responseBuilder.getHeader();
             assertNotNull(response);
-            assertNull(response.getNonReplayableId());
+            assertFalse(response.isNonReplayable());
             assertFalse(response.isRenewable());
             assertFalse(response.isHandshake());
             assertNotNull(response.getCryptoContext());
@@ -1351,7 +1351,7 @@ public class MessageBuilderSuite {
             assertEquals(peerServiceTokens, responseBuilder.getServiceTokens());
             final MessageHeader response = responseBuilder.getHeader();
             assertNotNull(response);
-            assertNull(response.getNonReplayableId());
+            assertFalse(response.isNonReplayable());
             assertFalse(response.isRenewable());
             assertFalse(response.isHandshake());
             assertNotNull(response.getCryptoContext());
@@ -1386,7 +1386,7 @@ public class MessageBuilderSuite {
             
             final MessageHeader response = responseBuilder.getHeader();
             assertNotNull(response);
-            assertNull(response.getNonReplayableId());
+            assertFalse(response.isNonReplayable());
             assertFalse(response.isRenewable());
             assertFalse(response.isHandshake());
             assertNotNull(response.getCryptoContext());
@@ -1426,7 +1426,7 @@ public class MessageBuilderSuite {
             assertEquals(peerServiceTokens, responseBuilder.getServiceTokens());
             final MessageHeader response = responseBuilder.getHeader();
             assertNotNull(response);
-            assertNull(response.getNonReplayableId());
+            assertFalse(response.isNonReplayable());
             assertFalse(response.isRenewable());
             assertFalse(response.isHandshake());
             assertNotNull(response.getCryptoContext());
