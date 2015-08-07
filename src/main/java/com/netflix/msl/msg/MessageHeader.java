@@ -128,6 +128,8 @@ public class MessageHeader extends Header {
     private static final String KEY_MESSAGE_ID = "messageid";
     /** JSON key non-replayable ID. */
     private static final String KEY_NON_REPLAYABLE_ID = "nonreplayableid";
+    /** JSON key non-replayable flag. */
+    private static final String KEY_NON_REPLAYABLE = "nonreplayable";
     /** JSON key renewable flag. */
     private static final String KEY_RENEWABLE = "renewable";
     /** JSON key handshake flag */
@@ -346,6 +348,7 @@ public class MessageHeader extends Header {
             if (this.recipient != null) headerJO.put(KEY_RECIPIENT, this.recipient);
             headerJO.put(KEY_TIMESTAMP, this.timestamp);
             headerJO.put(KEY_MESSAGE_ID, this.messageId);
+            headerJO.put(KEY_NON_REPLAYABLE, this.nonReplayableId != null);
             if (this.nonReplayableId != null) headerJO.put(KEY_NON_REPLAYABLE_ID, this.nonReplayableId);
             headerJO.put(KEY_RENEWABLE, this.renewable);
             headerJO.put(KEY_HANDSHAKE, this.handshake);
