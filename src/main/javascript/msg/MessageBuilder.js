@@ -181,9 +181,8 @@ var MessageBuilder$createErrorResponse;
                 // If the message contains a master token...
                 if (masterToken) {
                     // If the master token is renewable/expired or not the
-                    // newest master token, or the message is non-replayable,
-                    // then renew the master token.
-                    if (masterToken.isRenewable(null) || masterToken.isExpired(null) || requestHeader.isNonReplayable()) {
+                    // newest master token, then renew the master token.
+                    if (masterToken.isRenewable(null) || masterToken.isExpired(null)) {
                         issueMasterToken(ctx, keyRequestData, masterToken, null, callback);
                     } else {
                         var factory = ctx.getTokenFactory();
