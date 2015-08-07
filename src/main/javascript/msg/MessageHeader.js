@@ -39,7 +39,6 @@
  *   "timestamp" : "int64(0,2^53^)",
  *   "messageid" : "int64(0,2^53^)",
  *   "nonreplayableid" : "int64(0,2^53^)",
- *   "nonreplayable" : "boolean",
  *   "renewable" : "boolean",
  *   "handshake" : "boolean",
  *   "capabilities" : capabilities,
@@ -58,7 +57,6 @@
  * <li>{@code timestamp} is the sender time when the header is created in seconds since the UNIX epoch</li>
  * <li>{@code messageid} is the message ID</li>
  * <li>{@code nonreplayableid} is the non-replayable ID</li>
- * <li>{@code nonreplayable} indicates if the message is nonreplayable</li>
  * <li>{@code renewable} indicates if the master token and user ID are renewable</li>
  * <li>{@code handshake} indicates a handshake message</li>
  * <li>{@code capabilities} lists the sender's message capabilities</li>
@@ -272,10 +270,9 @@ var MessageHeader$HeaderPeerData;
      * @param {Uint8Array} plaintext decrypted header data.
      * @param {Uint8Array} signature raw signature.
      * @param {boolean} verified true if the headerdata was verified.
-     * @param {number} legacy non-replayable boolean.
      * @constructor
      */
-    function CreationData(user, sender, timestampSeconds, messageCryptoContext, headerdata, plaintext, signature, verified, nonReplayable) {
+    function CreationData(user, sender, timestampSeconds, messageCryptoContext, headerdata, plaintext, signature, verified) {
         this.user = user;
         this.sender = sender;
         this.timestampSeconds = timestampSeconds;
@@ -284,7 +281,6 @@ var MessageHeader$HeaderPeerData;
         this.plaintext = plaintext;
         this.signature = signature;
         this.verified = verified;
-        this.nonReplayable = nonReplayable;
     };
 
     /**
@@ -308,7 +304,6 @@ var MessageHeader$HeaderPeerData;
      * @param {UserIdToken} peerUserIdToken
      * @param {Array.<ServiceToken>} peerServiceTokens
      * @param {number} nonReplayableId
-     * @param {boolean} nonReplayable
      * @param {boolean} renewable
      * @param {MessageCapabilities} capabilities
      * @param {Uint8Array} headerdata
@@ -322,7 +317,7 @@ var MessageHeader$HeaderPeerData;
             keyRequestData, keyResponseData,
             userAuthData, userIdToken, serviceTokens,
             peerMasterToken, peerUserIdToken, peerServiceTokens,
-            nonReplayableId, nonReplayable, renewable, handshake, capabilities,
+            nonReplayableId, renewable, handshake, capabilities,
             headerdata, plaintext, signature, verified)
     {
         // The properties.
@@ -392,7 +387,6 @@ var MessageHeader$HeaderPeerData;
             /** Message capabilities. */
             messageCapabilities: { value: capabilities, writable: false, configurable: false },
             // Private properties.
-            nonReplayable: { value: nonReplayable, writable: false, enumerable: false, configurable: false },
             renewable: { value: renewable, writable: false, enumerable: false, configurable: false },
             handshake: { value: handshake, writable: false, enumerable: false, configurable: false },
             headerdata: { value: headerdata, writable: false, enumerable: false, configurable: false },
@@ -497,7 +491,6 @@ var MessageHeader$HeaderPeerData;
                 AsyncExecutor(callback, function() {
                     entityAuthData = (!masterToken) ? entityAuthData : null;
                     var nonReplayableId = headerData.nonReplayableId;
-                    var nonReplayable = false;
                     var renewable = headerData.renewable;
                     var handshake = headerData.handshake;
                     var capabilities = headerData.capabilities;
@@ -580,7 +573,7 @@ var MessageHeader$HeaderPeerData;
                         if (recipient) headerJO[KEY_RECIPIENT] = recipient;
                         headerJO[KEY_TIMESTAMP] = timestampSeconds;
                         headerJO[KEY_MESSAGE_ID] = messageId;
-                        headerJO[KEY_NON_REPLAYABLE] = nonReplayable;
+                        headerJO[KEY_NON_REPLAYABLE] = (typeof nonReplayableId === 'number');
                         if (typeof nonReplayableId === 'number') headerJO[KEY_NON_REPLAYABLE_ID] = nonReplayableId;
                         headerJO[KEY_RENEWABLE] = renewable;
                         headerJO[KEY_HANDSHAKE] = handshake;
@@ -622,7 +615,7 @@ var MessageHeader$HeaderPeerData;
                                                     keyRequestData, keyResponseData,
                                                     userAuthData, userIdToken, serviceTokens,
                                                     peerMasterToken, peerUserIdToken, peerServiceTokens,
-                                                    nonReplayableId, nonReplayable, renewable, handshake, capabilities,
+                                                    nonReplayableId, renewable, handshake, capabilities,
                                                     headerdata, plaintext, signature, true);
                                                 Object.defineProperties(this, props);
                                                 return this;
@@ -664,14 +657,13 @@ var MessageHeader$HeaderPeerData;
                         var plaintext = creationData.plaintext;
                         var signature = creationData.signature;
                         var verified = creationData.verified;
-                        nonReplayable = creationData.nonReplayable;
-
+                        
                         var props = buildProperties(ctx, messageCryptoContext, user, entityAuthData,
                             masterToken, sender, recipient, timestampSeconds, messageId,
                             keyRequestData, keyResponseData,
                             userAuthData, userIdToken, serviceTokens,
                             peerMasterToken, peerUserIdToken, peerServiceTokens,
-                            nonReplayableId, nonReplayable, renewable, handshake, capabilities,
+                            nonReplayableId, renewable, handshake, capabilities,
                             headerdata, plaintext, signature, verified);
                         Object.defineProperties(this, props);
                         return this;
@@ -712,13 +704,6 @@ var MessageHeader$HeaderPeerData;
          */
         isEncrypting: function isEncrypting() {
             return this.masterToken || this.entityAuthenticationData.scheme.encrypts;
-        },
-
-        /**
-         * @return {boolean} true if the message non-replayable flag is set.
-         */
-        isNonReplayable: function isNonReplayable() {
-            return this.nonReplayable;
         },
 
         /**
@@ -1234,15 +1219,13 @@ var MessageHeader$HeaderPeerData;
                                                         result: function(serviceTokens) {
                                                             AsyncExecutor(callback, function() {
                                                                 var nonReplayableId = (headerdataJO[KEY_NON_REPLAYABLE_ID] !== undefined) ? parseInt(headerdataJO[KEY_NON_REPLAYABLE_ID]) : null;
-                                                                var nonReplayable = (headerdataJO[KEY_NON_REPLAYABLE] !== undefined) ? headerdataJO[KEY_NON_REPLAYABLE] : false;
                                                                 var renewable = headerdataJO[KEY_RENEWABLE];
                                                                 var handshake = (headerdataJO[KEY_HANDSHAKE] !== undefined) ? headerdataJO[KEY_HANDSHAKE] : false;
 
                                                                 // Verify values.
                                                                 if (nonReplayableId != nonReplayableId ||
-                                                                        typeof nonReplayable !== 'boolean' ||
-                                                                        typeof renewable !== 'boolean' ||
-                                                                        typeof handshake !== 'boolean')
+                                                                    typeof renewable !== 'boolean' ||
+                                                                    typeof handshake !== 'boolean')
                                                                 {
                                                                     throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson);
                                                                 }
@@ -1274,7 +1257,7 @@ var MessageHeader$HeaderPeerData;
                                                                                             keyRequestData, keyResponseData, userAuthData, userIdToken,
                                                                                             serviceTokens);
                                                                                     var headerPeerData = new HeaderPeerData(peerMasterToken, peerUserIdToken, peerServiceTokens);
-                                                                                    var creationData = new CreationData(user, sender, timestampSeconds, messageCryptoContext, headerdata, plaintext, signature, verified, nonReplayable);
+                                                                                    var creationData = new CreationData(user, sender, timestampSeconds, messageCryptoContext, headerdata, plaintext, signature, verified);
                                                                                     new MessageHeader(ctx, entityAuthData, masterToken, headerData, headerPeerData, creationData, callback);
                                                                                 });
                                                                             },

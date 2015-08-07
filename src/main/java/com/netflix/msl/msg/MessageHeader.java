@@ -80,7 +80,6 @@ import com.netflix.msl.util.MslContext;
  *   "timestamp" : "int64(0,2^53^)",
  *   "messageid" : "int64(0,2^53^)",
  *   "nonreplayableid" : "int64(0,2^53^)",
- *   "nonreplayable" : "boolean",
  *   "renewable" : "boolean",
  *   "handshake" : "boolean",
  *   "capabilities" : capabilities,
@@ -99,7 +98,6 @@ import com.netflix.msl.util.MslContext;
  * <li>{@code timestamp} is the sender time when the header is created in seconds since the UNIX epoch</li>
  * <li>{@code messageid} is the message ID</li>
  * <li>{@code nonreplayableid} is the non-replayable ID</li>
- * <li>{@code nonreplayable} indicates if the message is nonreplayable</li>
  * <li>{@code renewable} indicates if the master token and user ID are renewable</li>
  * <li>{@code handshake} indicates a handshake message</li>
  * <li>{@code capabilities} lists the sender's message capabilities</li>
@@ -268,7 +266,6 @@ public class MessageHeader extends Header {
         this.entityAuthData = (masterToken == null) ? entityAuthData : null;
         this.masterToken = masterToken;
         this.nonReplayableId = headerData.nonReplayableId;
-        this.nonReplayable = false;
         this.renewable = headerData.renewable;
         this.handshake = headerData.handshake;
         this.capabilities = headerData.capabilities;
@@ -351,7 +348,7 @@ public class MessageHeader extends Header {
             if (this.recipient != null) headerJO.put(KEY_RECIPIENT, this.recipient);
             headerJO.put(KEY_TIMESTAMP, this.timestamp);
             headerJO.put(KEY_MESSAGE_ID, this.messageId);
-            headerJO.put(KEY_NON_REPLAYABLE, this.nonReplayable);
+            headerJO.put(KEY_NON_REPLAYABLE, this.nonReplayableId != null);
             if (this.nonReplayableId != null) headerJO.put(KEY_NON_REPLAYABLE_ID, this.nonReplayableId);
             headerJO.put(KEY_RENEWABLE, this.renewable);
             headerJO.put(KEY_HANDSHAKE, this.handshake);
@@ -541,7 +538,6 @@ public class MessageHeader extends Header {
             this.user = null;
             this.serviceTokens = Collections.emptySet();
             this.nonReplayableId = null;
-            this.nonReplayable = false;
             this.renewable = false;
             this.handshake = false;
             this.capabilities = null;
@@ -638,7 +634,6 @@ public class MessageHeader extends Header {
         
         try {
             this.nonReplayableId = (headerdataJO.has(KEY_NON_REPLAYABLE_ID)) ? headerdataJO.getLong(KEY_NON_REPLAYABLE_ID) : null;
-            this.nonReplayable = (headerdataJO.has(KEY_NON_REPLAYABLE)) ? headerdataJO.getBoolean(KEY_NON_REPLAYABLE) : false;
             this.renewable = headerdataJO.getBoolean(KEY_RENEWABLE);
             // FIXME: Make handshake required once all MSL stacks are updated.
             this.handshake = (headerdataJO.has(KEY_HANDSHAKE)) ? headerdataJO.getBoolean(KEY_HANDSHAKE) : false;
@@ -834,13 +829,6 @@ public class MessageHeader extends Header {
     }
     
     /**
-     * @return true if the message non-replayable flag is set.
-     */
-    public boolean isNonReplayable() {
-        return nonReplayable;
-    }
-    
-    /**
      * @return true if the message renewable flag is set.
      */
     public boolean isRenewable() {
@@ -983,7 +971,6 @@ public class MessageHeader extends Header {
                messageId == that.messageId &&
                (nonReplayableId != null && nonReplayableId.equals(that.nonReplayableId) ||
                 nonReplayableId == null && that.nonReplayableId == null) &&
-               nonReplayable == that.nonReplayable &&
                renewable == that.renewable &&
                handshake == that.handshake &&
                (capabilities != null && capabilities.equals(that.capabilities) ||
@@ -1014,7 +1001,6 @@ public class MessageHeader extends Header {
             ((timestamp != null) ? timestamp.hashCode() : 0) ^
             Long.valueOf(messageId).hashCode() ^
             ((nonReplayableId != null) ? nonReplayableId.hashCode() : 0) ^
-            Boolean.valueOf(nonReplayable).hashCode() ^
             Boolean.valueOf(renewable).hashCode() ^
             Boolean.valueOf(handshake).hashCode() ^
             ((capabilities != null) ? capabilities.hashCode() : 0) ^
@@ -1049,8 +1035,6 @@ public class MessageHeader extends Header {
     private final long messageId;
     /** Non-replayable ID. */
     private final Long nonReplayableId;
-    /** Non-replayable. */
-    private final boolean nonReplayable;
     /** Renewable. */
     private final boolean renewable;
     /** Handshake message. */
