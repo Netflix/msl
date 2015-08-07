@@ -204,7 +204,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
                 
-                MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSA_OAEP, WebCryptoUsage.WRAP_UNWRAP, 1024, {
+                MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSA_OAEP, WebCryptoUsage.WRAP_UNWRAP, 2048, {
                     result: function(publicKey, privateKey) {
                         RSA_PUBLIC_KEY = publicKey;
                         RSA_PRIVATE_KEY = privateKey;
@@ -219,7 +219,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx && AES_128_KEY && HMAC_256_KEY && RSA_PUBLIC_KEY && RSA_PRIVATE_KEY && AES_WRAP_KEY; }, "static initialization", 100);
+            waitsFor(function() { return ctx && AES_128_KEY && HMAC_256_KEY && RSA_PUBLIC_KEY && RSA_PRIVATE_KEY && AES_WRAP_KEY; }, "static initialization", 600);
             runs(function() {
                 SYMMETRIC_CRYPTO_CONTEXT = new SymmetricCryptoContext(ctx, KEY_ID, AES_128_KEY, HMAC_256_KEY, null);
                 initialized = true;

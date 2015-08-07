@@ -2313,7 +2313,7 @@ describe("MessageBuilder", function() {
             
 		    if (!initialized) {
 		        runs(function() {
-		            MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSA_OAEP, WebCryptoUsage.WRAP_UNWRAP, 1024, {
+		            MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSA_OAEP, WebCryptoUsage.WRAP_UNWRAP, 2048, {
 		                result: function(publicKey, privateKey) {
 		                    RSA_PUBLIC_KEY = publicKey;
 		                    RSA_PRIVATE_KEY = privateKey;
@@ -2321,7 +2321,7 @@ describe("MessageBuilder", function() {
 		                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		            });
 		        });
-		        waitsFor(function() { return RSA_PUBLIC_KEY && RSA_PRIVATE_KEY; }, "RSA keys", 300);
+		        waitsFor(function() { return RSA_PUBLIC_KEY && RSA_PRIVATE_KEY; }, "RSA keys", 600);
 		        runs(function() { initialized = true; });
 		    }
 		});
