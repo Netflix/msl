@@ -138,7 +138,7 @@ var MockRsaAuthenticationFactory$create;
     MockRsaAuthenticationFactory.RSA_ESN = RSA_ESN;
     MockRsaAuthenticationFactory.RSA_PUBKEY_ID = RSA_PUBKEY_ID;
     // FIXME: Use the hard-coded RSA keys.
-    MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSASSA, WebCryptoUsage.SIGN_VERIFY, 1024, {
+    MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSASSA, WebCryptoUsage.SIGN_VERIFY, 2048, {
         result: function(publicKey, privateKey) {
             RSA_PUBKEY = MockRsaAuthenticationFactory.RSA_PUBKEY = publicKey;
             RSA_PRIVKEY = MockRsaAuthenticationFactory.RSA_PRIVKEY = privateKey;

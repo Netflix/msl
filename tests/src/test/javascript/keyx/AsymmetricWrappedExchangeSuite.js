@@ -421,12 +421,12 @@ describe("AsymmetricWrappedExchangeSuite", function() {
         	var rsaPublicKey;
         	runs(function() {
         	    // FIXME: Read from RSA_KEYPAIR_B.
-        	    MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSA_OAEP, WebCryptoUsage.WRAP_UNWRAP, 1024, {
+        	    MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSA_OAEP, WebCryptoUsage.WRAP_UNWRAP, 2048, {
         	        result: function(publicKey, privateKey) { rsaPublicKey = publicKey; },
         	        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	    });
         	});
-        	waitsFor(function() { return rsaPublicKey; }, "RSA public key", 300);
+        	waitsFor(function() { return rsaPublicKey; }, "RSA public key", 600);
         	
         	var dataA = undefined, dataB = undefined, dataA2;
         	runs(function() {
@@ -457,12 +457,12 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             var rsaPrivateKey;
             runs(function() {
                 // FIXME: Read from RSA_KEYPAIR_B.
-                MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSA_OAEP, WebCryptoUsage.WRAP_UNWRAP, 1024, {
+                MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSA_OAEP, WebCryptoUsage.WRAP_UNWRAP, 2048, {
                     result: function(publicKey, privateKey) { rsaPrivateKey = privateKey; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return rsaPrivateKey; }, "RSA private key", 300);
+            waitsFor(function() { return rsaPrivateKey; }, "RSA private key", 600);
 
             var dataA = undefined, dataB = undefined, dataA2;
             runs(function() {

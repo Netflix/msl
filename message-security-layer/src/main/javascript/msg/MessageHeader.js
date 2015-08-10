@@ -114,6 +114,12 @@ var MessageHeader$HeaderPeerData;
      */
     var KEY_NON_REPLAYABLE_ID = "nonreplayableid";
     /**
+     * JSON key non-replayable flag.
+     * @const
+     * @type {string}
+     */
+    var KEY_NON_REPLAYABLE = "nonreplayable";
+    /**
      * JSON key renewable flag.
      * @const
      * @type {string}
@@ -567,6 +573,7 @@ var MessageHeader$HeaderPeerData;
                         if (recipient) headerJO[KEY_RECIPIENT] = recipient;
                         headerJO[KEY_TIMESTAMP] = timestampSeconds;
                         headerJO[KEY_MESSAGE_ID] = messageId;
+                        headerJO[KEY_NON_REPLAYABLE] = (typeof nonReplayableId === 'number');
                         if (typeof nonReplayableId === 'number') headerJO[KEY_NON_REPLAYABLE_ID] = nonReplayableId;
                         headerJO[KEY_RENEWABLE] = renewable;
                         headerJO[KEY_HANDSHAKE] = handshake;

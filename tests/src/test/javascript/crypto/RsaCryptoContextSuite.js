@@ -146,7 +146,7 @@ describe("RsaCryptoContext", function() {
             runs(function () {
                 // TODO: read from RSA_KEYPAIR_A.publicKey
                 // TODO: read from RSA_KEYPAIR_A.privateKey
-                MslTestUtils.generateRsaKeys(algorithm, WebCryptoUsage.ENCRYPT_DECRYPT, 1024, {
+                MslTestUtils.generateRsaKeys(algorithm, WebCryptoUsage.ENCRYPT_DECRYPT, 2048, {
                     result: function(publicKey, privateKey) {
                         publicKeyA = publicKey;
                         privateKeyA = privateKey;
@@ -154,12 +154,12 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return publicKeyA && privateKeyA; }, "did not create publicKeyA && privateKeyA", 300);
+            waitsFor(function() { return publicKeyA && privateKeyA; }, "did not create publicKeyA && privateKeyA", 600);
 
             runs(function() {
                 // TODO: read from RSA_KEYPAIR_B.publicKey
                 // TODO: read from RSA_KEYPAIR_B.privateKey
-                MslTestUtils.generateRsaKeys(algorithm, WebCryptoUsage.ENCRYPT_DECRYPT, 1024, {
+                MslTestUtils.generateRsaKeys(algorithm, WebCryptoUsage.ENCRYPT_DECRYPT, 2048, {
                     result: function(publicKey, privateKey) {
                         publicKeyB = publicKey;
                         privateKeyB = privateKey;
@@ -167,7 +167,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function () { return publicKeyB && privateKeyB; }, "did not create publicKeyB && privateKeyB", 300);
+            waitsFor(function () { return publicKeyB && privateKeyB; }, "did not create publicKeyB && privateKeyB", 600);
         });
         
     	it("encrypt/decrypt", function() {
@@ -897,7 +897,7 @@ describe("RsaCryptoContext", function() {
             runs(function () {
                 // TODO: read from RSA_KEYPAIR_A.publicKey
                 // TODO: read from RSA_KEYPAIR_A.privateKey
-                MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSASSA, WebCryptoUsage.SIGN_VERIFY, 1024, {
+                MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSASSA, WebCryptoUsage.SIGN_VERIFY, 2048, {
                     result: function(publicKey, privateKey) {
                         publicKeyA = publicKey;
                         privateKeyA = privateKey;
@@ -905,12 +905,12 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return publicKeyA && privateKeyA; }, "publicKeyA && privateKeyA", 300);
+            waitsFor(function() { return publicKeyA && privateKeyA; }, "publicKeyA && privateKeyA", 600);
 
             runs(function() {
                 // TODO: read from RSA_KEYPAIR_B.publicKey
                 // TODO: read from RSA_KEYPAIR_B.privateKey
-                MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSASSA, WebCryptoUsage.SIGN_VERIFY, 1024, {
+                MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSASSA, WebCryptoUsage.SIGN_VERIFY, 2048, {
                     result: function(publicKey, privateKey) {
                         publicKeyB = publicKey;
                         privateKeyB = privateKey;
@@ -918,7 +918,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function () { return publicKeyB && privateKeyB; }, "publicKeyB && privateKeyB", 300);
+            waitsFor(function () { return publicKeyB && privateKeyB; }, "publicKeyB && privateKeyB", 600);
             
             runs(function() { initialized = true; });
         });
