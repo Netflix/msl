@@ -85,7 +85,7 @@ var Header$KEY_SIGNATURE;
      */
     var KEY_ERRORDATA = Header$KEY_ERRORDATA = "errordata";
     /**
-     * JSON key error data signature.
+     * JSON key signature.
      * @const
      * @type {string}
      */
