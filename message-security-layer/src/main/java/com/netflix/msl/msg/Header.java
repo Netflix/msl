@@ -83,7 +83,7 @@ public abstract class Header implements JSONString {
     protected static final String KEY_HEADERDATA = "headerdata";
     /** JSON key error data. */
     protected static final String KEY_ERRORDATA = "errordata";
-    /** JSON key error data signature. */
+    /** JSON key signature. */
     protected static final String KEY_SIGNATURE = "signature";
     
     /**
