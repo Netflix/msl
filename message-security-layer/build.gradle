@@ -1,0 +1,70 @@
+apply plugin: 'java'
+
+dependencies {
+    compile 'org.bouncycastle:bcprov-jdk15on:1.46'
+    compile 'org.json:json:20140107'
+}
+
+task javadoc(type: Javadoc, overwrite: true) {
+    options.overview = "overview.html"
+    options.links = [
+        "http://docs.oracle.com/javase/7/docs/api/",
+        "http://junit.org/javadoc/4.11/",
+        "http://www.bouncycastle.org/docs/docs1.5on/"
+    ]
+    source = sourceSets.main.allJava
+}
+
+task javadoc_public(type: Javadoc) {
+    destinationDir = file("$docsDir/javadoc-public")
+    options.overview = "overview-public.html"
+    options.links = [
+        "http://docs.oracle.com/javase/7/docs/api/",
+        "http://junit.org/javadoc/4.11/",
+        "http://www.bouncycastle.org/docs/docs1.5on/"
+    ]
+    source = sourceSets.main.allJava
+    includes = [
+        "**/EntityAuthenticationData.java",
+        "**/EntityAuthenticationFactory.java",
+        "**/EntityAuthenticationScheme.java",
+        "**/ErrorHeader.java",
+        "**/ErrorMessageRegistry.java",
+        "**/FilterStreamFactory.java",
+        "**/Header.java",
+        "**/ICryptoContext.java",
+        "**/KeyExchangeFactory.java",
+        "**/KeyExchangeScheme.java",
+        "**/KeyRequestData.java",
+        "**/KeyResponseData.java",
+        "**/MasterToken.java",
+        "**/MessageCapabilities.java",
+        "**/MessageContext.java",
+        "**/MessageDebugContext.java",
+        "**/MessageHeader.java",
+        "**/MessageInputStream.java",
+        "**/MessageServiceTokenBuilder.java",
+        "**/MslConstants.java",
+        "**/MslContext.java",
+        "**/MslControl.java",
+        "**/MslCryptoException.java",
+        "**/MslEncodingException.java",
+        "**/MslEntityAuthException.java",
+        "**/MslError.java",
+        "**/MslErrorResponseException.java",
+        "**/MslException.java",
+        "**/MslInternalException.java",
+        "**/MslKeyExchangeException.java",
+        "**/MslMasterTokenException.java",
+        "**/MslMessageException.java",
+        "**/MslStore.java",
+        "**/MslUserAuthException.java",
+        "**/MslUserIdTokenException.java",
+        "**/ServiceToken.java",
+        "**/TokenFactory.java",
+        "**/UserAuthenticationData.java",
+        "**/UserAuthenticationFactory.java",
+        "**/UserAuthenticationScheme.java",
+        "**/UserIdToken.java"
+    ]
+}

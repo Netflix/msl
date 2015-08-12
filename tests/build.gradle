@@ -1,0 +1,12 @@
+apply plugin: 'java'
+
+test {
+    includes = [ "**/*Test.class", "**/*Suite.class" ]
+    excludes = [ "**/*\$*.class" ]
+    scanForTestClasses = false
+}
+
+dependencies {
+    compile project(':message-security-layer')
+    compile 'junit:junit:4.11'
+}

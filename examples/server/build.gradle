@@ -1,0 +1,9 @@
+apply plugin: 'war'
+dependencies {
+    compile 'javax.servlet:servlet-api:2.5'
+    compile project(':message-security-layer')
+    testCompile 'org.testng:testng:latest.release'
+}
+
+war.baseName "msl-example-server"
+test.useTestNG()
