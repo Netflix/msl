@@ -1,7 +1,7 @@
 apply plugin: 'war'
 dependencies {
     compile 'javax.servlet:servlet-api:2.5'
-    compile project(':message-security-layer')
+    compile project(':msl-core')
     testCompile 'org.testng:testng:latest.release'
 }
 

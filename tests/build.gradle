@@ -7,6 +7,6 @@ test {
 }
 
 dependencies {
-    compile project(':message-security-layer')
+    compile project(':msl-core')
     compile 'junit:junit:4.11'
 }

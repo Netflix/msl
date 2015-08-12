@@ -4,5 +4,7 @@
 /.idea/workspace.xml
 /.gradle
 /.settings
+/.project
+/.classpath
 /build
 /test-output

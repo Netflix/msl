@@ -1,8 +1,9 @@
 rootProject.name = 'msl-root'
 
-include 'message-security-layer', 'tests', 'examples/server', 'examples/burp', 'integ-tests'
+include 'core', 'tests', 'examples/server', 'examples/burp', 'integ-tests'
 
-project(':tests').name = 'message-security-layer-tests'
-project(':integ-tests').name = 'message-security-layer-integ-tests'
-project(':examples/server').name = 'message-security-layer-example-server'
-project(':examples/burp').name = 'message-security-layer-burp'
+project(':core').name = 'msl-core'
+project(':tests').name = 'msl-tests'
+project(':integ-tests').name = 'msl-integ-tests'
+project(':examples/server').name = 'msl-example-server'
+project(':examples/burp').name = 'msl-burp'
