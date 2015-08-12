@@ -1,0 +1,3 @@
+apply plugin: 'java'
+
+jar.baseName 'burp-extender'

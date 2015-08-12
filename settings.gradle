@@ -1,9 +1,10 @@
 rootProject.name = 'msl-root'
 
-include 'core', 'tests', 'examples/server', 'examples/burp', 'integ-tests'
+include 'core', 'tests', 'examples/server', 'examples/burp', 'examples/burp-extender', 'integ-tests'
 
 project(':core').name = 'msl-core'
 project(':tests').name = 'msl-tests'
 project(':integ-tests').name = 'msl-integ-tests'
 project(':examples/server').name = 'msl-example-server'
 project(':examples/burp').name = 'msl-burp'
+project(':examples/burp-extender').name = 'burp-extender'

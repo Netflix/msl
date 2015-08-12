@@ -4,6 +4,7 @@ dependencies {
     compile 'javax.servlet:servlet-api:2.5'
     compile project(':msl-core')
     compile project(':msl-tests')
+    compile project(':burp-extender')
 }
 
 jar.baseName 'msl-burp-extender'
