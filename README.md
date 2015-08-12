@@ -15,9 +15,9 @@ For questions and support please contact [Wesley Miaw](mailto:wmiaw@netflix.com)
 
 ## Third-Party Libraries
 
-The Java MSL code base requires the [org.json](http://www.json.org/java/) and [Bouncy Castle](http://www.bouncycastle.org) libraries. The unit tests require [JUnit 4](http://junit.org) and the integration tests require [TestNG](http://testng.org).
+The Java MSL code base requires the [org.json](http://www.json.org/java/) and [Bouncy Castle](http://www.bouncycastle.org) libraries. The unit tests require [JUnit 4](http://junit.org) and [Hamcrest](http://hamcrest.org). The integration tests require [TestNG](http://testng.org).
 
-The JavaScript MSL code base includes some third-party libraries within the lib/ directory, most notably the [Clarinet](https://github.com/dscape/clarinet) parser. The [jsrsasign](http://kjur.github.io/jsrsasign/) and [crypto-js](https://code.google.com/p/crypto-js/) libraries are currently included but are planned for removal.
+The JavaScript MSL code base includes some third-party libraries within the lib/ directory, most notably the [Clarinet](https://github.com/dscape/clarinet) parser and [jsrsasign](http://kjur.github.io/jsrsasign/).
 
 All third-party libraries are subject to their respective license agreements.
 
