@@ -19,7 +19,7 @@ package mslcli.common;
 import mslcli.common.util.SharedUtil;
 
 /**
- * <p>Generic data object class for storing triplet values. Values can be null.</p>
+ * <p>Generic data object class for holding 3 values. Values can be null.</p>
  *
  * @author Vadim Spector <vspector@netflix.com>
  */

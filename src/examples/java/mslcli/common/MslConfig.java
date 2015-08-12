@@ -123,6 +123,17 @@ public abstract class MslConfig {
     }
 
     /**
+     * validate current CmdArguments data in respect to entity, user, and key exchange handles
+     * @throws ConfigurationException
+     * @throws IllegalCmdArgumentException
+     */
+    public void validate() throws IllegalCmdArgumentException {
+        validateEntityAuthenticationArgs();
+        validateUserAuthenticationArgs();
+        validateKeyExchangeArgs();
+    }
+
+    /**
      * @return message config parameters
      */
     public MessageConfig getMessageConfig() {
@@ -163,9 +174,7 @@ public abstract class MslConfig {
                 }
             }
         }
-        final List<String> schemes = new ArrayList<String>();
-        for (final EntityAuthenticationHandle eah : appCtx.getEntityAuthenticationHandles())
-            schemes.add(eah.getScheme().name());
+        final List<String> schemes = getEntityAuthenticationSchemeNames();
         throw new IllegalCmdArgumentException(String.format("Unsupported Entity Authentication Scheme %s, Supported: %s", easName, schemes));
     }
 
@@ -184,6 +193,30 @@ public abstract class MslConfig {
         return Collections.<EntityAuthenticationFactory>unmodifiableSet(entityAuthFactories);
     }
  
+    /**
+     * @return registered entity authentication scheme names
+     */
+    private List<String> getEntityAuthenticationSchemeNames() {
+        final List<String> schemes = new ArrayList<String>();
+        for (final EntityAuthenticationHandle eah : appCtx.getEntityAuthenticationHandles())
+            schemes.add(eah.getScheme().name());
+        return schemes;
+    }
+
+    /**
+     * validate entity authentication arguments
+     * @throws IllegalCmdArgumentException
+     */
+    private void validateEntityAuthenticationArgs() throws IllegalCmdArgumentException {
+        String easName = args.getEntityAuthenticationScheme();
+        if (easName != null && easName.trim().length() != 0) {
+            easName = easName.trim();
+            final List<String> schemes = getEntityAuthenticationSchemeNames();
+            if (!schemes.contains(easName))
+                throw new IllegalCmdArgumentException(String.format("Unsupported Entity Authentication Scheme %s, Supported: %s", easName, schemes));
+        }
+    }
+
     /* ================================== USER AUTHENTICATION APIs ================================================ */
 
     /**
@@ -230,9 +263,7 @@ public abstract class MslConfig {
             }
         }
         // UserAuthenticationHandle not found. Generate helpful exception 
-        final List<String> schemes = new ArrayList<String>();
-        for (final UserAuthenticationHandle uah : appCtx.getUserAuthenticationHandles())
-            schemes.add(uah.getScheme().name());
+        final List<String> schemes = getUserAuthenticationSchemeNames();
         throw new IllegalCmdArgumentException(String.format("Unsupported User Authentication Scheme %s, Supported: %s", uasName, schemes));
     }
 
@@ -251,6 +282,30 @@ public abstract class MslConfig {
         return Collections.<UserAuthenticationFactory>unmodifiableSet(userAuthFactories);
     }
  
+    /**
+     * @return registered user authentication scheme names
+     */
+    private List<String> getUserAuthenticationSchemeNames() {
+        final List<String> schemes = new ArrayList<String>();
+        for (final UserAuthenticationHandle uah : appCtx.getUserAuthenticationHandles())
+            schemes.add(uah.getScheme().name());
+        return schemes;
+    }
+
+    /**
+     * validate user authentication arguments
+     * @throws IllegalCmdArgumentException
+     */
+    private void validateUserAuthenticationArgs() throws IllegalCmdArgumentException {
+        String uasName = args.getUserAuthenticationScheme();
+        if (uasName != null && uasName.trim().length() != 0) {
+            uasName = uasName.trim();
+            final List<String> schemes = getUserAuthenticationSchemeNames();
+            if (!schemes.contains(uasName))
+                throw new IllegalCmdArgumentException(String.format("Unsupported User Authentication Scheme %s, Supported: %s", uasName, schemes));
+        }
+    }
+
     /* ================================== KEY EXCHANGE APIs ================================================ */
 
     /**
@@ -266,7 +321,7 @@ public abstract class MslConfig {
     {
         final String kxsName = args.getKeyExchangeScheme();
         if (kxsName == null || kxsName.trim().isEmpty()) {
-            throw new IllegalArgumentException("NULL Key Exchange Type");
+            throw new IllegalCmdArgumentException("NULL Key Exchange Type");
         }
         final String kxmName = args.getKeyExchangeMechanism();
 
@@ -278,9 +333,7 @@ public abstract class MslConfig {
                 return krd;
             }
         }
-        final List<String> schemes = new ArrayList<String>();
-        for (final KeyExchangeHandle kxh : appCtx.getKeyExchangeHandles())
-            schemes.add(kxh.getScheme().name());
+        final List<String> schemes = getKeyExchangeSchemeNames();
         throw new IllegalCmdArgumentException(String.format("Unsupported Key Exchange Scheme %s, Supported: %s", kxsName, schemes));
     }
 
@@ -302,6 +355,30 @@ public abstract class MslConfig {
         final TreeSet<KeyExchangeFactory> keyxFactoriesSet = new TreeSet<KeyExchangeFactory>(keyxFactoryComparator);
         keyxFactoriesSet.addAll(keyxFactoriesList);
         return  Collections.unmodifiableSortedSet(keyxFactoriesSet);
+    }
+
+    /**
+     * @return registered user authentication scheme names
+     */
+    private List<String> getKeyExchangeSchemeNames() {
+        final List<String> schemes = new ArrayList<String>();
+        for (final KeyExchangeHandle kxh : appCtx.getKeyExchangeHandles())
+            schemes.add(kxh.getScheme().name());
+        return schemes;
+    }
+
+    /**
+     * validate key exchange arguments
+     * @throws IllegalCmdArgumentException
+     */
+    private void validateKeyExchangeArgs() throws IllegalCmdArgumentException {
+        String kxsName = args.getKeyExchangeScheme();
+        if (kxsName != null && kxsName.trim().length() != 0) {
+            kxsName = kxsName.trim();
+            final List<String> schemes = getKeyExchangeSchemeNames();
+            if (!schemes.contains(kxsName))
+                throw new IllegalCmdArgumentException(String.format("Unsupported Key Exchange Scheme %s, Supported: %s", kxsName, schemes));
+        }
     }
 
     /**

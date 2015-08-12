@@ -114,6 +114,7 @@ public final class Client {
 
         // Init MSL configuration
         this.mslCfg = new ClientMslConfig(appCtx, this.args);
+        this.mslCfg.validate();
 
         // Init up the MSL context
         this.mslCtx = new ClientMslContext(appCtx, mslCfg);
@@ -136,6 +137,7 @@ public final class Client {
             throw new IllegalCmdArgumentException("Cannot Reset Entity Identity");
         }
         args.merge(diffArgs);
+        mslCfg.validate();
         appCtx.info(String.format("%s: %s", this, args.getParameters()));
         return new CmdArguments(args);
     }
@@ -169,6 +171,9 @@ public final class Client {
     public Response sendRequest(final byte[] request)
         throws ConfigurationException, ExecutionException, IllegalCmdArgumentException, IOException, InterruptedException, MslException
     {
+        // validate MslConfig
+        mslCfg.validate();
+
         // set remote URL
         final URL remoteUrl = args.getUrl();
 
