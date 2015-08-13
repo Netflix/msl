@@ -2,8 +2,10 @@ buildscript {
     repositories { jcenter() }
     dependencies { classpath 'org.akhikhl.gretty:gretty:latest.release' }
 }
+
 apply plugin: 'war'
 apply plugin: 'org.akhikhl.gretty'
+apply plugin: 'eclipse-wtp'
 
 dependencies {
     compile 'javax.servlet:servlet-api:2.5'
@@ -16,3 +18,5 @@ test.useTestNG()
 gretty {
     integrationTestTask = 'test'
 }
+
+war.baseName = "msl-test-server"
