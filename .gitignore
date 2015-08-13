@@ -1,10 +1,9 @@
 /bin
-/.idea/codeStyleSettings.xml
-/.idea/misc.xml
-/.idea/workspace.xml
+/.idea
 /.gradle
 /.settings
 /.project
 /.classpath
 /build
 /test-output
+*.iml
