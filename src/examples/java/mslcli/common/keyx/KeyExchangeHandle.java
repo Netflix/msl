@@ -128,7 +128,7 @@ public abstract class KeyExchangeHandle {
 
         @Override
         public void addCryptoContext(final byte[] wrapdata, final ICryptoContext cryptoContext) {
-            appCtx.info(String.format("%s: addCryptoContext %s", this, SharedUtil.getSimpleClassName(cryptoContext)));
+            appCtx.info(String.format("%s: addCryptoContext %s", this, SharedUtil.toString(cryptoContext)));
             super.addCryptoContext(wrapdata, cryptoContext);
         }
 

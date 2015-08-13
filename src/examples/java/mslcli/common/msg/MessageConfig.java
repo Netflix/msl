@@ -35,6 +35,6 @@ public final class MessageConfig {
     @Override
     public String toString() {
         return String.format("%s{encrypted: %b, integrity protected: %b, non-replayable: %b}",
-            SharedUtil.getSimpleClassName(this), isEncrypted, isIntegrityProtected, isNonReplayable);
+            SharedUtil.toString(this), isEncrypted, isIntegrityProtected, isNonReplayable);
     }
 }
