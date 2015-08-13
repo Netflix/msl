@@ -167,8 +167,7 @@ public abstract class MslConfig {
                     EntityAuthenticationData ead = eadMap.get(easName);
                     if (ead == null) {
                         eadMap.put(easName, ead = eah.getEntityAuthenticationData(appCtx, args));
-                        appCtx.info(String.format("%s: Generated EntityAuthenticationData{%s}, %s",
-                            this, easName, ead.getClass().getName()));
+                        appCtx.info(String.format("%s: Generated %s", this, SharedUtil.toString(ead, easName)));
                     }
                     return ead;
                 }
@@ -229,8 +228,7 @@ public abstract class MslConfig {
     {
         final UserAuthenticationHandle uah = getUserAuthenticationHandle();
         final UserAuthenticationData uad = uah.getUserAuthenticationData(appCtx, args, getMslStore());
-        appCtx.info(String.format("%s: Generated UserAuthenticationData{%s}, %s",
-            this, uah.getScheme(), uad.getClass().getName()));
+        appCtx.info(String.format("%s: Generated %s", this, SharedUtil.toString(uad, uad.getScheme())));
         return uad;
     }
 
@@ -328,8 +326,7 @@ public abstract class MslConfig {
         for (final KeyExchangeHandle kxh : appCtx.getKeyExchangeHandles()) {
             if (kxh.getScheme().name().equals(kxsName)) {
                 final KeyRequestData krd =  kxh.getKeyRequestData(appCtx, args);
-                appCtx.info(String.format("%s: Generated KeyRequestData{%s %s}, %s",
-                    this, kxsName.trim(), (kxmName != null) ? kxmName.trim() : null, krd.getClass().getName()));
+                appCtx.info(String.format("%s: Generated %s", this, SharedUtil.toString(krd, krd.getKeyExchangeScheme(), kxmName)));
                 return krd;
             }
         }

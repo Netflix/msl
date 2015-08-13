@@ -115,7 +115,7 @@ public final class SharedUtil {
         final long t_exp = (userIdToken.getExpiration().getTime() - t_now)/1000L;
         return String.format("%s{user %s, ser_num %x, mt_ser_num %x, renew %d sec, expire %d sec}",
             getSimpleClassName(userIdToken),
-            (userIdToken.getUser() != null) ? userIdToken.getUser().getEncoded() : null,
+            (userIdToken.getUser() != null) ? userIdToken.getUser().getEncoded() : "opaque",
             userIdToken.getSerialNumber(),
             userIdToken.getMasterTokenSerialNumber(),
             t_rnw,
@@ -651,10 +651,18 @@ public final class SharedUtil {
     }
 
     /**
+     * <p>
+     * Class.getSimpleName() is stripping off too much for nested classes, so using this method instead.
+     * </p>
+     *
      * @param o object
      * @return object's simple class name
      */
     public static String getSimpleClassName(final Object o) {
-        return (o != null) ? o.getClass().getSimpleName() : "null";
+        if (o == null) return "null";
+
+        final String cls = o.getClass().getName();
+        final int lastDot = cls.lastIndexOf('.');
+        return (lastDot >= 0 && lastDot < (cls.length() - 1)) ? cls.substring(lastDot + 1) : cls;
     }
 }
