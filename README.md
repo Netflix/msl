@@ -29,7 +29,7 @@ The application interface to the MSL stack is <code>MslControl</code>. The appli
 
 ### Java
 
-[IntelliJ IDEA](http://www.jetbrains.com/idea/) @.idea@ project files are included and the project must be opened directly by selecting the top-level directory. You should perform a Gradle refresh after opening the project.
+[IntelliJ IDEA](http://www.jetbrains.com/idea/) `.idea` project files are included and the project must be opened directly by selecting the top-level directory. You should perform a Gradle refresh after opening the project.
 
 [Eclipse](http://www.eclipse.org) users should use the Gradle IDE (available in the Eclipse Marketplace) and Web Tools Platform (included with the Eclipse IDE for Java EE developers) to import the Java MSL code as a Gradle project.
 
