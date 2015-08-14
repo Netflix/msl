@@ -491,6 +491,18 @@ public final class SharedUtil {
             throw new UnsupportedOperationException();
         }
         @Override
+        public EntityAuthenticationScheme getEntityAuthenticationScheme(final String name) {
+            throw new UnsupportedOperationException();
+        }
+        @Override
+        public KeyExchangeScheme getKeyExchangeScheme(final String name) {
+            throw new UnsupportedOperationException();
+        }
+        @Override
+        public UserAuthenticationScheme getUserAuthenticationScheme(final String name) {
+            throw new UnsupportedOperationException();
+        }
+        @Override
         public MslStore getMslStore() {
             throw new UnsupportedOperationException();
         }
