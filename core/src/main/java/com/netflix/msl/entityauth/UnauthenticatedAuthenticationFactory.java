@@ -72,6 +72,7 @@ public class UnauthenticatedAuthenticationFactory extends EntityAuthenticationFa
         // Return the crypto context.
         return new NullCryptoContext();
     }
+    
     /** Authentication utilities. */
     final AuthenticationUtils authutils;
 }
