@@ -27,7 +27,6 @@ import java.util.SortedSet;
 import com.netflix.msl.MslConstants.CompressionAlgorithm;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.crypto.ICryptoContext;
-import com.netflix.msl.crypto.SymmetricCryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;

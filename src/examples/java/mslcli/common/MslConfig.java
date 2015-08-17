@@ -452,21 +452,18 @@ public abstract class MslConfig {
         if (mslStorePath == null) {
             appCtx.info("Creating Non-Persistent MSL Store");
             return new SimpleMslStore();
-        }
-
-        try {
-            final File f = new File(mslStorePath);
-            if (f.isFile()) {
-                appCtx.info("Loading MSL Store from " + mslStorePath);
+        } else if (SharedUtil.isExistingFile(mslStorePath)) {
+            appCtx.info("Loading Existing MSL Store " + mslStorePath);
+            try {
                 return (SimpleMslStore)SharedUtil.unmarshalMslStore(SharedUtil.readFromFile(mslStorePath));
-            } else if (f.exists()){
-                throw new IllegalArgumentException("MSL Store Path Exists but not a File: " + mslStorePath);
-            } else {
-                appCtx.info("Creating Empty MSL Store " + mslStorePath);
-                return new SimpleMslStore();
+            } catch (Exception e) {
+                throw new ConfigurationException("Error Loading MSL Store " + mslStorePath, e);
             }
-        } catch (Exception e) {
-            throw new ConfigurationException("Error reading MSL Store File " + mslStorePath, e);
+        } else if (SharedUtil.isValidNewFile(mslStorePath)) {
+            appCtx.info("Creating New MSL Store " + mslStorePath);
+            return new SimpleMslStore();
+        } else {
+            throw new IllegalArgumentException("MSL Store: Invalid File Path: " + mslStorePath);
         }
     }
 

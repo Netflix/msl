@@ -677,4 +677,30 @@ public final class SharedUtil {
         final int lastDot = cls.lastIndexOf('.');
         return (lastDot >= 0 && lastDot < (cls.length() - 1)) ? cls.substring(lastDot + 1) : cls;
     }
+
+    /**
+     * @param path file path
+     * @return true if the file path corresponds to the existing file
+     */
+    public static boolean isExistingFile(final String path) {
+        if (path == null || path.trim().length() == 0)
+            throw new IllegalArgumentException("NULL or empty file path");
+        return new File(path).isFile();
+    }
+
+    /**
+     * @param path file path
+     * @return true if the file path corresponds to the non-existing file that can be created
+     * @throws IOException
+     */
+    public static boolean isValidNewFile(final String path) {
+        if (path == null || path.trim().length() == 0)
+            throw new IllegalArgumentException("NULL or empty file path");
+        final File f = new File(path);
+        try {
+            return !f.exists() && f.getCanonicalFile().getParentFile().isDirectory();
+        } catch (IOException e) {
+            throw new IllegalArgumentException(String.format("Invalid file path %s: %s", path, e.getMessage()), e);
+        }
+    }
 }

@@ -16,7 +16,6 @@
 
 package mslcli.common;
 
-import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -24,7 +23,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -306,8 +304,7 @@ public final class CmdArguments {
      */
     public String getConfigFilePath() throws IllegalCmdArgumentException {
         final String file = getRequiredValue(P_CFG);
-        final File f = new File(file);
-        if (f.isFile()) {
+        if (SharedUtil.isExistingFile(file)) {
             return file;
         } else {
             throw new IllegalCmdArgumentException("Not a File: " + file);
@@ -323,8 +320,7 @@ public final class CmdArguments {
         if (file == null) {
             return null;
         }
-        final File f = new File(file);
-        if (f.isFile()) {
+        if (SharedUtil.isExistingFile(file)) {
             return file;
         } else {
             throw new IllegalCmdArgumentException("Not a File: " + file);
@@ -340,11 +336,12 @@ public final class CmdArguments {
         if (file == null) {
             return null;
         }
-        final File f = new File(file);
-        if (!f.exists()) {
+        if (SharedUtil.isValidNewFile(file)) {
             return file;
-        } else {
+        } else if (SharedUtil.isExistingFile(file)) {
             throw new IllegalCmdArgumentException("Cannot Overwrite Existing File: " + file);
+        } else {
+            throw new IllegalCmdArgumentException("Invalid File Path: " + file);
         }
     }
 
@@ -357,8 +354,7 @@ public final class CmdArguments {
         if (file == null) {
             return null;
         }
-        final File f = new File(file);
-        if (f.isFile()) {
+        if (SharedUtil.isExistingFile(file)) {
             return file;
         } else {
             throw new IllegalCmdArgumentException("Not a File: " + file);
@@ -374,8 +370,7 @@ public final class CmdArguments {
         if (file == null) {
             return null;
         }
-        final File f = new File(file);
-        if (f.isFile()) {
+        if (SharedUtil.isExistingFile(file)) {
             return file;
         } else {
             throw new IllegalCmdArgumentException("Not a File: " + file);
@@ -391,10 +386,7 @@ public final class CmdArguments {
         if (file == null) {
             return null;
         }
-        final File f = new File(file);
-        if (f.isFile()) {
-            return file;
-        } else if (!f.exists() && (f.getParentFile() == null || f.getParentFile().isDirectory())) {
+        if (SharedUtil.isExistingFile(file) || SharedUtil.isValidNewFile(file)) {
             return file;
         } else {
             throw new IllegalCmdArgumentException("Invalid File Path: " + file);
