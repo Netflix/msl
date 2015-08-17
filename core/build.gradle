@@ -1,4 +1,5 @@
 apply plugin: 'java'
+apply plugin: 'eclipse-wtp'
 
 dependencies {
     compile 'org.bouncycastle:bcprov-jdk15on:1.46'

@@ -1,8 +1,11 @@
 /bin
-/.idea/codeStyleSettings.xml
-/.idea/misc.xml
-/.idea/workspace.xml
 /.gradle
 /.settings
+/.project
+/.classpath
 /build
 /test-output
+*.iml
+/.idea/artifacts
+/.idea/copyright
+/.idea/libraries

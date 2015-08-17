@@ -2,13 +2,14 @@ buildscript {
     repositories { jcenter() }
     dependencies { classpath 'org.akhikhl.gretty:gretty:latest.release' }
 }
+
 apply plugin: 'war'
 apply plugin: 'org.akhikhl.gretty'
+apply plugin: 'eclipse-wtp'
 
 dependencies {
     compile 'javax.servlet:servlet-api:2.5'
-    compile project(':message-security-layer-tests')
-    compile project(':message-security-layer-example-server')
+    compile project(':msl-tests')
     testCompile 'org.testng:testng:latest.release'
 }
 
@@ -17,3 +18,5 @@ test.useTestNG()
 gretty {
     integrationTestTask = 'test'
 }
+
+war.baseName = "msl-test-server"

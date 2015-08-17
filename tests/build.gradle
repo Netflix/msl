@@ -1,4 +1,5 @@
 apply plugin: 'java'
+apply plugin: 'eclipse-wtp'
 
 test {
     includes = [ "**/*Test.class", "**/*Suite.class" ]
@@ -7,6 +8,6 @@ test {
 }
 
 dependencies {
-    compile project(':message-security-layer')
+    compile project(':msl-core')
     compile 'junit:junit:4.11'
 }

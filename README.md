@@ -29,9 +29,11 @@ The application interface to the MSL stack is <code>MslControl</code>. The appli
 
 ### Java
 
-The Java MSL code base includes project files for [Eclipse](http://www.eclipse.org) and [IntelliJ IDEA](http://www.jetbrains.com/idea/).
+[IntelliJ IDEA](http://www.jetbrains.com/idea/) `.idea` project files are included and the project must be opened directly by selecting the top-level directory. You should perform a Gradle refresh after opening the project.
 
-An example server is provided under [src/examples/java/server/](src/examples/java/server/). The Eclipse project is a web project that can be deployed onto a Tomcat server. The example server is a J2EE servlet that will respond to requests from the example JavaScript client. The example server MSL configuration is specific to this server and should not be used to configure your application, but it can be used as the basis for doing so.
+[Eclipse](http://www.eclipse.org) users should use the Gradle IDE (available in the Eclipse Marketplace) and Web Tools Platform (included with the Eclipse IDE for Java EE developers) to import the Java MSL code as a Gradle project.
+
+An example server is provided under [src/examples/simple/src/main/java/server/](src/examples/simple/src/main/java/server/). The Eclipse project is a web project that can be deployed onto a Tomcat server. The example server is a J2EE servlet that will respond to requests from the example JavaScript client. The example server MSL configuration is specific to this server and should not be used to configure your application, but it can be used as the basis for doing so.
 
 You may need to install the [Java Cryptography Extension (JCE) Unlimited Strength Jurisdiction Policy Files](http://www.oracle.com/technetwork/java/javase/downloads/) to use cryptographic keys above a certain size.
 
@@ -52,7 +54,7 @@ Your browser may not support all Web Crypto API algorithms, key sizes, and featu
 
 To include the JavaScript MSL stack in your JavaScript application you must include all of the MSL JavaScript source files required by your MSL configuration. An example list of the required source files can be found in [src/test/javascript/msltests.html](src/test/javascript/msltests.html).
 
-An example client is provided under [src/examples/javascript/client/](src/examples/javascript/client/). The example client is a web page that will send requests to the example Java server. The example client MSL configuration is specific to this client and should not be used to configure your appplication, but it can be used as the basis for doing so.
+An example client is provided under [src/examples/simple/src/main/javascript/client/](src/examples/simple/src/main/javascript/client/). The example client is a web page that will send requests to the example Java server. The example client MSL configuration is specific to this client and should not be used to configure your appplication, but it can be used as the basis for doing so.
 
 ## LICENSE
 
