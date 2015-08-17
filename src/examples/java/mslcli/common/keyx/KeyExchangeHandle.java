@@ -128,19 +128,19 @@ public abstract class KeyExchangeHandle {
 
         @Override
         public void addCryptoContext(final byte[] wrapdata, final ICryptoContext cryptoContext) {
-            appCtx.info(String.format("%s: addCryptoContext %s", this, SharedUtil.toString(cryptoContext)));
+            appCtx.info(String.format("%s: addCryptoContext(%s %s)", this, SharedUtil.getWrapDataInfo(wrapdata), SharedUtil.toString(cryptoContext)));
             super.addCryptoContext(wrapdata, cryptoContext);
         }
 
         @Override
         public ICryptoContext getCryptoContext(final byte[] wrapdata) {
-            appCtx.info(String.format("%s: getCryptoContext", this));
+            appCtx.info(String.format("%s: getCryptoContext(%s)", this, SharedUtil.getWrapDataInfo(wrapdata)));
             return super.getCryptoContext(wrapdata);
         }
 
         @Override
         public void removeCryptoContext(final byte[] wrapdata) {
-            appCtx.info(String.format("%s: removeCryptoContext", this));
+            appCtx.info(String.format("%s: delCryptoContext(%s)", this, SharedUtil.getWrapDataInfo(wrapdata)));
             super.removeCryptoContext(wrapdata);
         }
 

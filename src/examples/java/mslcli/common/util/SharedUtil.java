@@ -703,4 +703,12 @@ public final class SharedUtil {
             throw new IllegalArgumentException(String.format("Invalid file path %s: %s", path, e.getMessage()), e);
         }
     }
+
+    /**
+     * @param wrapdata wrap data as raw bytes
+     * @return wrap data as a string (implemented using b64 encoding) or null if wrapdata input parameter is null
+     */
+    public static String getWrapDataInfo(final byte[] wrapdata) {
+        return (wrapdata != null) ? Base64Util.encode(wrapdata) : null;
+    }
 }
