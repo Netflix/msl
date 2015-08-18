@@ -626,40 +626,16 @@ public final class SharedUtil {
 
     /**
      * @param obj object to stringize
-     * @return simple toString() implementation for this object
+     * @param args object's parameters to include into the result
+     * @return simple toString() implementation for this object and parameters
      */
-    public static String toString(final Object obj) {
-        return String.format("%s[%x]", getSimpleClassName(obj), (obj != null) ? obj.hashCode() : "");
-    }
-
-    /**
-     * @param obj object to stringize
-     * @param p object's parameter to include into the result
-     * @return simple toString() implementation for this object
-     */
-    public static String toString(final Object obj, final Object p) {
-        return String.format("%s{%s}", toString(obj), p);
-    }
-
-    /**
-     * @param obj object to stringize
-     * @param p0 object's 1st parameter to include into the result
-     * @param p1 object's 2nd parameter to include into the result
-     * @return simple toString() implementation for this object
-     */
-    public static String toString(final Object obj, final Object p0, final Object p1) {
-        return String.format("%s{%s %s}", toString(obj), p0, p1);
-    }
-
-    /**
-     * @param obj object to stringize
-     * @param p0 object's 1st parameter to include into the result
-     * @param p1 object's 2nd parameter to include into the result
-     * @param p2 object's 3rd parameter to include into the result
-     * @return simple toString() implementation for this object
-     */
-    public static String toString(final Object obj, final Object p0, final Object p1, final Object p2) {
-        return String.format("%s{%s %s %s}", toString(obj), p0, p1, p2);
+    public static String toString(final Object obj, final Object... args) {
+        if (args.length == 0) {
+            return String.format("%s[%x]", getSimpleClassName(obj), (obj != null) ? obj.hashCode() : "");
+        } else {
+            return String.format("%s[%x]%s", getSimpleClassName(obj), (obj != null) ? obj.hashCode() : "",
+                Arrays.toString(args).replaceFirst("^\\[", "{").replaceFirst("\\]$", "}"));
+        }
     }
 
     /**

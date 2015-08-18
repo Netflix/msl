@@ -647,9 +647,7 @@ public final class MslProperties {
      * @return set of values parsed out of the input string
      */
     private Set<String> split(final String value) {
-        final Set<String> set = new HashSet<String>();
-        set.addAll(Arrays.asList(value.split(SPACE_REGEX)));
-        return Collections.unmodifiableSet(set);
+        return Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(value.split(SPACE_REGEX))));
     }
 
     @Override
