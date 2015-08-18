@@ -140,72 +140,41 @@ public final class AppContext {
         this.mgkKeyStore = initMgkKeyStore(p);
         this.emailPasswordStore = initEmailPasswordStore(p);
         this.rsaStore = initRsaStore(p);
-        this.entityAuthenticationHandles = new HashSet<EntityAuthenticationHandle>();
-        for (String s : p.getEntityAuthenticationHandles()) {
-            final Class<? extends Object> cls;
-            try {
-                cls = Class.forName(s);
-            } catch (ClassNotFoundException e) {
-                throw new ConfigurationException("Authentication Data Handle class not found: " + s);
-            }
+        this.entityAuthenticationHandles = new HashSet<EntityAuthenticationHandle>(populateHandles(EntityAuthenticationHandle.class, p.getEntityAuthenticationHandles()));
+        this.keyExchangeHandles = populateHandles(KeyExchangeHandle.class, p.getKeyExchangeHandles());
+        this.userAuthenticationHandles = new HashSet<UserAuthenticationHandle>(populateHandles(UserAuthenticationHandle.class, p.getUserAuthenticationHandles()));
+    }
+
+    /**
+     * populate list of handles
+     * @param cls handle super-class
+     * @param clspaths list of handle class names
+     * @param <T> handle super-class template type
+     * @return list of handle instances
+     * @throws ConfigurationException
+     */
+    private static <T> List<T> populateHandles(final Class<T> cls, final List<String> clspaths)
+        throws ConfigurationException
+    {
+        final List<T> handles = new ArrayList<T>();
+        for (String s : clspaths) {
             final Object h;
             try {
-                h = cls.newInstance();
-            } catch (InstantiationException e) {
-                throw new ConfigurationException(String.format("Authentication Data Handle class %s: object cannot be instantiated", s), e);
-            } catch (IllegalAccessException e) {
-                throw new ConfigurationException(String.format("Authentication Data Handle class %s: object cannot be instantiated", s), e);
-            }
-            if (h instanceof EntityAuthenticationHandle) {
-                entityAuthenticationHandles.add((EntityAuthenticationHandle)h);
-            } else {
-                throw new ConfigurationException(String.format("Authentication Data Handle class %s: wrong type %s", s, h.getClass().getName()));
-            }
-        }
-        this.keyExchangeHandles = new ArrayList<KeyExchangeHandle>();
-        for (String s : p.getKeyExchangeHandles()) {
-            final Class<? extends Object> cls;
-            try {
-                cls = Class.forName(s);
+                h = Class.forName(s).newInstance();
             } catch (ClassNotFoundException e) {
-                throw new ConfigurationException("Key Exchange Handle class not found: " + s);
-            }
-            final Object h;
-            try {
-                h = cls.newInstance();
+                throw new ConfigurationException(String.format("%s class not found", s), e);
             } catch (InstantiationException e) {
-                throw new ConfigurationException(String.format("Key Exchange Handle class %s: object cannot be instantiated", s), e);
+                throw new ConfigurationException(String.format("%s class cannot be instantiated", s), e);
             } catch (IllegalAccessException e) {
-                throw new ConfigurationException(String.format("Key Exchange Handle class %s: object cannot be instantiated", s), e);
+                throw new ConfigurationException(String.format("%s class cannot be instantiated", s), e);
             }
-            if (h instanceof KeyExchangeHandle) {
-                keyExchangeHandles.add((KeyExchangeHandle)h);
+            if (cls.isAssignableFrom(h.getClass())) {
+                handles.add(cls.cast(h));
             } else {
-                throw new ConfigurationException(String.format("key Exchange Handle class %s: wrong type %s", s, h.getClass().getName()));
+                throw new ConfigurationException(String.format("%s class %s: wrong type", cls.getSimpleName(), s));
             }
         }
-        this.userAuthenticationHandles = new HashSet<UserAuthenticationHandle>();
-        for (String s : p.getUserAuthenticationHandles()) {
-            final Class<? extends Object> cls;
-            try {
-                cls = Class.forName(s);
-            } catch (ClassNotFoundException e) {
-                throw new ConfigurationException("User Authentication Handle class not found: " + s);
-            }
-            final Object h;
-            try {
-                h = cls.newInstance();
-            } catch (InstantiationException e) {
-                throw new ConfigurationException(String.format("User Authentication Handle class %s: object cannot be instantiated", s), e);
-            } catch (IllegalAccessException e) {
-                throw new ConfigurationException(String.format("User Authentication Handle class %s: object cannot be instantiated", s), e);
-            }
-            if (h instanceof UserAuthenticationHandle) {
-                userAuthenticationHandles.add((UserAuthenticationHandle)h);
-            } else {
-                throw new ConfigurationException(String.format("User Authentication Handle class %s: wrong type %s", s, h.getClass().getName()));
-            }
-        }
+        return handles;
     }
 
     /**
