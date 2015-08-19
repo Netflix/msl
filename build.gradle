@@ -7,6 +7,7 @@ subprojects {
         jcenter()
     }
 
+    apply plugin: 'nebula.netflixoss'
     apply plugin: 'nebula-javadoc-jar'
     apply plugin: 'nebula-source-jar'
     apply plugin: 'findbugs'
