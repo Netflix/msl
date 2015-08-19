@@ -3,6 +3,8 @@ plugins {
 }
 
 subprojects {
+    group = 'com.netflix.msl'
+
     repositories {
         jcenter()
     }
