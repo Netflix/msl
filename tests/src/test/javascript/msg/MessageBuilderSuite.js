@@ -2321,7 +2321,7 @@ describe("MessageBuilder", function() {
 		                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		            });
 		        });
-		        waitsFor(function() { return RSA_PUBLIC_KEY && RSA_PRIVATE_KEY; }, "RSA keys", 600);
+		        waitsFor(function() { return RSA_PUBLIC_KEY && RSA_PRIVATE_KEY; }, "RSA keys", 900);
 		        runs(function() { initialized = true; });
 		    }
 		});
