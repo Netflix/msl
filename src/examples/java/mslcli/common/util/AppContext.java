@@ -448,7 +448,7 @@ public final class AppContext {
      */
     public KeyPair generateAsymmetricWrappedExchangeKeyPair() throws MslInternalException {
         try {
-            System.out.println("Generating RSA Key Pair - please, wait ...");
+            info("Generating RSA Key Pair - please, wait ...");
             final KeyPairGenerator generator = CryptoCache.getKeyPairGenerator("RSA");
             generator.initialize(4096);
             return generator.generateKeyPair();

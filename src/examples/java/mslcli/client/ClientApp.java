@@ -125,7 +125,7 @@ public final class ClientApp {
         Status status = Status.OK;
         try {
             if (args.length == 0) {
-                System.err.println("Use " + CMD_HELP + " for help");
+                err("Use " + CMD_HELP + " for help");
                 status = Status.ARG_ERROR;
             } else if (CMD_HELP.equalsIgnoreCase(args[0])) {
                 help();
@@ -142,21 +142,21 @@ public final class ClientApp {
                 clientApp.shutdown();
             }
         } catch (ConfigurationException e) {
-            System.err.println(e.getMessage());
+            err(e.getMessage());
             status = Status.CFG_ERROR;
         } catch (IllegalCmdArgumentException e) {
-            System.err.println(e.getMessage());
+            err(e.getMessage());
             status = Status.ARG_ERROR;
         } catch (IOException e) {
-            System.err.println(e.getMessage());
+            err(e.getMessage());
             status = Status.EXE_ERROR;
             SharedUtil.getRootCause(e).printStackTrace(System.err);
         } catch (RuntimeException e) {
-            System.err.println(e.getMessage());
+            err(e.getMessage());
             status = Status.EXE_ERROR;
             SharedUtil.getRootCause(e).printStackTrace(System.err);
         }
-        System.out.println("Exit Status " + status);
+        out("Exit Status " + status);
         System.exit(status.code);
     }
 
@@ -235,9 +235,9 @@ public final class ClientApp {
             }
             if (optMatch(CMD_LIST, options)) {
                 if (client != null) {
-                    System.out.println(client.getConfigInfo());
+                    out(client.getConfigInfo());
                 } else {
-                    System.err.println(cmdParam.getParameters());
+                    err(cmdParam.getParameters());
                 }
                 continue;
             }
@@ -260,12 +260,12 @@ public final class ClientApp {
                 }
                 final Status status = sendSingleRequest(p);
                 if (status != Status.OK) {
-                    System.out.println("Status: " + status.toString());
+                    out("Status: " + status.toString());
                 }
             } catch (IllegalCmdArgumentException e) {
-                System.err.println(e.getMessage());
+                err(e.getMessage());
             } catch (RuntimeException e) {
-                System.err.println(e.getMessage());
+                err(e.getMessage());
             }
         }
     }
@@ -300,7 +300,7 @@ public final class ClientApp {
 
             // (re)initialize Client for the first time or whenever entity identity changes
             if ((client == null) || ((args != null) && (args.getOptEntityId() != null) && !client.getEntityId().equals(args.getOptEntityId()))) {
-                System.out.println("New Client");
+                out("New Client");
                 // update current args
                 if (args != null)
                     currentCmdParam.merge(args);
@@ -346,73 +346,73 @@ public final class ClientApp {
                 if (outputFile != null) {
                     SharedUtil.saveToFile(outputFile, response.getPayload(), false /*overwrite*/);
                 } else {
-                    System.out.println("Response: " + new String(response.getPayload(), MslConstants.DEFAULT_CHARSET));
+                    out("Response: " + new String(response.getPayload(), MslConstants.DEFAULT_CHARSET));
                 }
                 status = Status.OK;
             // NULL payload, must be MSL error response
             } else if (response.getErrorHeader() != null) {
                 if (response.getErrorHeader().getErrorMessage() != null) {
-                    System.err.println(String.format("MSL RESPONSE ERROR: error_code %d, error_msg \"%s\"",
+                    err(String.format("MSL RESPONSE ERROR: error_code %d, error_msg \"%s\"",
                         response.getErrorHeader().getErrorCode().intValue(),
                         response.getErrorHeader().getErrorMessage()));
                 } else {
-                    System.err.println(String.format("ERROR: %s" + response.getErrorHeader().toJSONString()));
+                    err(String.format("ERROR: %s" + response.getErrorHeader().toJSONString()));
                 }
                 status = Status.MSL_ERROR;
             // NULL payload, NULL error header - should never happen
             } else {
-                System.out.println("Response with no payload or error header ???");
+                out("Response with no payload or error header ???");
                 status = Status.MSL_ERROR;
             }
         } catch (MslException e) {
-            System.err.println(SharedUtil.getMslExceptionInfo(e));
+            err(SharedUtil.getMslExceptionInfo(e));
             status = Status.MSL_EXC_ERROR;
             SharedUtil.getRootCause(e).printStackTrace(System.err);
         } catch (ConfigurationException e) {
-            System.err.println("Error: " + e.getMessage());
+            err("Error: " + e.getMessage());
             status = Status.CFG_ERROR;
         } catch (ConfigurationRuntimeException e) {
-            System.err.println("Error: " + e.getCause().getMessage());
+            err("Error: " + e.getCause().getMessage());
             status = Status.CFG_ERROR;
         } catch (IllegalCmdArgumentException e) {
-            System.err.println("Error: " + e.getMessage());
+            err("Error: " + e.getMessage());
             status = Status.ARG_ERROR;
         } catch (IllegalCmdArgumentRuntimeException e) {
-            System.err.println("Error: " + e.getCause().getMessage());
+            err("Error: " + e.getCause().getMessage());
             status = Status.ARG_ERROR;
         } catch (ConnectException e) {
-            System.err.println("Error: " + e.getMessage());
+            err("Error: " + e.getMessage());
             status = Status.COMM_ERROR;
         } catch (ExecutionException e) {
             final Throwable thr = SharedUtil.getRootCause(e);
             if (thr instanceof ConfigurationException) {
-                System.err.println("Error: " + thr.getMessage());
+                err("Error: " + thr.getMessage());
                 status = Status.CFG_ERROR;
             } else if (thr instanceof IllegalCmdArgumentException) {
-                System.err.println("Error: " + thr.getMessage());
+                err("Error: " + thr.getMessage());
                 status = Status.ARG_ERROR;
             } else if (thr instanceof MslException) {
-                System.err.println(SharedUtil.getMslExceptionInfo((MslException)thr));
+                err(SharedUtil.getMslExceptionInfo((MslException)thr));
                 status = Status.MSL_EXC_ERROR;
                 SharedUtil.getRootCause(e).printStackTrace(System.err);
             } else if (thr instanceof ConnectException) {
-                System.err.println("Error: " + thr.getMessage());
+                err("Error: " + thr.getMessage());
                 status = Status.COMM_ERROR;
             } else {
-                System.err.println("Error: " + thr.getMessage());
+                err("Error: " + thr.getMessage());
                 thr.printStackTrace(System.err);
                 status = Status.EXE_ERROR;
             }
         } catch (IOException e) {
-            System.err.println("Error: " + e.getMessage());
+            err("Error: " + e.getMessage());
             SharedUtil.getRootCause(e).printStackTrace(System.err);
             status = Status.EXE_ERROR;
         } catch (InterruptedException e) {
-            System.err.println("Error: " + e.getMessage());
+            err("Error: " + e.getMessage());
             SharedUtil.getRootCause(e).printStackTrace(System.err);
             status = Status.EXE_ERROR;
         } catch (RuntimeException e) {
-            System.err.println("Error: " + e.getMessage());
+            err("Error: " + e.getMessage());
             SharedUtil.getRootCause(e).printStackTrace(System.err);
             status = Status.EXE_ERROR;
         }
@@ -437,9 +437,9 @@ public final class ClientApp {
         try {
             input = ClientApp.class.getResourceAsStream(HELP_FILE);
             final String helpInfo = new String(SharedUtil.readIntoArray(input), MslConstants.DEFAULT_CHARSET);
-            System.out.println(helpInfo);
+            out(helpInfo);
         } catch (Exception e) {
-            System.err.println(String.format("Cannot read help file %s: %s", HELP_FILE, e.getMessage()));
+            err(String.format("Cannot read help file %s: %s", HELP_FILE, e.getMessage()));
         } finally {
             if (input != null) try { input.close(); } catch (Exception ignore) {}
         }
@@ -449,12 +449,26 @@ public final class ClientApp {
      * helper - interactive mode hint
      */
     private static void hint() {
-        System.out.println("Choices:");
-        System.out.println("a) Modify Command-line arguments, if any need to be modified, and press Enter to send a message.");
-        System.out.println("   Use exactly the same syntax as from the command line.");
-        System.out.println(String.format("b) Type \"%s\" for listing currently selected command-line arguments.", CMD_LIST));
-        System.out.println(String.format("c) Type \"%s\" for the detailed instructions on using this tool.", CMD_HELP));
-        System.out.println(String.format("d) Type \"%s\" to save MSL store to the disk. MSL store is saved automatically on exit.", CMD_SAVE));
-        System.out.println(String.format("e) Type \"%s\" to quit this tool.", CMD_QUIT));
+        out("Choices:");
+        out("a) Modify Command-line arguments, if any need to be modified, and press Enter to send a message.");
+        out("   Use exactly the same syntax as from the command line.");
+        out(String.format("b) Type \"%s\" for listing currently selected command-line arguments.", CMD_LIST));
+        out(String.format("c) Type \"%s\" for the detailed instructions on using this tool.", CMD_HELP));
+        out(String.format("d) Type \"%s\" to save MSL store to the disk. MSL store is saved automatically on exit.", CMD_SAVE));
+        out(String.format("e) Type \"%s\" to quit this tool.", CMD_QUIT));
+    }
+
+    /**
+     * @param msg message to log
+     */
+    private static void out(final String msg) {
+        System.out.println(msg);
+    }
+
+    /**
+     * @param msg message to log
+     */
+    private static void err(final String msg) {
+        System.err.println(msg);
     }
 }

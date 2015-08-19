@@ -49,7 +49,7 @@ public class SimpleHttpServer {
      */
     public static void main(String[] args) {
         if (args.length < 1) {
-            System.out.println("Parameters: config_file");
+            log("Parameters: config_file");
             System.exit(1);
         }
         try {
@@ -59,16 +59,16 @@ public class SimpleHttpServer {
             final HttpServer server = HttpServer.create(new InetSocketAddress(prop.getServerPort()), 0);
             server.createContext("/msl", new MyHandler(mslServer));
             server.setExecutor(null); // creates a default executor
-            System.out.println(String.format("waiting for requests on http://localhost:%d/msl ...", prop.getServerPort()));
+            log(String.format("waiting for requests on http://localhost:%d/msl ...", prop.getServerPort()));
             server.start();
         } catch (ConfigurationException e) {
-            System.err.println("Server Configuration Error: " + e.getMessage());
+            log("Server Configuration Error: " + e.getMessage());
             System.exit(1);
         } catch (IOException e) {
-            System.err.println("Server Initialization Error: " + e.getMessage());
+            log("Server Initialization Error: " + e.getMessage());
             System.exit(1);
         } catch (Exception e) {
-            System.err.println("Server Internal Error: " + e.getMessage());
+            log("Server Internal Error: " + e.getMessage());
             SharedUtil.getRootCause(e).printStackTrace(System.err);
             System.exit(1);
         }
@@ -87,7 +87,7 @@ public class SimpleHttpServer {
 
         @Override
         public void handle(HttpExchange t) throws IOException {
-            System.out.println("Processing request");
+            log("Processing request");
 
             final ByteArrayOutputStream out = new ByteArrayOutputStream();
             try {
@@ -95,19 +95,19 @@ public class SimpleHttpServer {
                 t.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
                 mslServer.processRequest(t.getRequestBody(), out);
             } catch (ConfigurationException e) {
-                System.err.println("Server Configuration Error: " + e.getMessage());
+                log("Server Configuration Error: " + e.getMessage());
             } catch (ConfigurationRuntimeException e) {
-                System.err.println("Server Configuration Error: " + e.getCause().getMessage());
+                log("Server Configuration Error: " + e.getCause().getMessage());
             } catch (MslException e) {
-                System.err.println(SharedUtil.getMslExceptionInfo(e));
+                log(SharedUtil.getMslExceptionInfo(e));
             } catch (IOException e) {
                 final Throwable thr = SharedUtil.getRootCause(e);
-                System.err.println("IO-ERROR: " + e);
-                System.err.println("ROOT CAUSE:");
+                log("IO-ERROR: " + e);
+                log("ROOT CAUSE:");
                 thr.printStackTrace(System.err);
             } catch (RuntimeException e) {
-                System.err.println("RT-ERROR: " + e);
-                System.err.println("ROOT CAUSE:");
+                log("RT-ERROR: " + e);
+                log("ROOT CAUSE:");
                 SharedUtil.getRootCause(e).printStackTrace(System.err);
             } finally {
                 final byte[] response = out.toByteArray();
@@ -118,10 +118,17 @@ public class SimpleHttpServer {
                 os.close();
             }
 
-            System.out.println(String.format("SUCCESS: %1$te/%1$tm/%1$tY %1$tH:%1$tM:%1$tS.%1$tL", new Date()));
+            log(String.format("SUCCESS: %1$te/%1$tm/%1$tY %1$tH:%1$tM:%1$tS.%1$tL", new Date()));
         }
 
         /** MSL server to delegate requests to */
         private final SimpleMslServer mslServer;
+    }
+
+    /**
+     * @param msg message to log
+     */
+    private static void log(final String msg) {
+        System.out.println(msg);
     }
 }

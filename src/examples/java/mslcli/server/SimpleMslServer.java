@@ -152,7 +152,7 @@ public class SimpleMslServer {
         }
 
         if (requestInputStream == null) {
-            System.err.println("NULL Input Stream ?");
+            appCtx.info("NULL Input Stream");
             return;
         }
 

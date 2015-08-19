@@ -329,7 +329,6 @@ public class MslStoreData implements Serializable {
         ICryptoContext get(final MslContext mctx, final MasterToken mt) {
             final String suffix = "_" + mt.getSequenceNumber();
             if (!id.endsWith(suffix)) {
-                System.out.println(String.format("Internal Error: Unexpected Crypto Context ID %s, should end with %s", id, suffix));
                 throw new IllegalArgumentException(String.format("Internal Error: Unexpected Crypto Context ID %s, should end with %s", id, suffix));
             }
             final String id_without_suffix = id.substring(0, id.length() - suffix.length());
