@@ -32,7 +32,7 @@ describe("MslException", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "static initialization", 100);
+            waitsFor(function() { return ctx; }, "static initialization", 300);
         }
     });
     

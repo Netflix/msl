@@ -1,5 +1,4 @@
-/bin
-/.idea
+bin
 /.gradle
 /.settings
 /.project
@@ -7,3 +6,7 @@
 /build
 /test-output
 *.iml
+/.idea/artifacts
+/.idea/copyright
+/.idea/libraries
+

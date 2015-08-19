@@ -49,9 +49,6 @@ public class UnauthenticatedAuthenticationFactoryTest {
     public ExpectedMslException thrown = ExpectedMslException.none();
     
     private static final String UNAUTHENTICATED_ESN = "MOCKUNAUTH-ESN";
-
-    /** Authentication utilities. */
-    private static MockAuthenticationUtils authutils;
     
     @BeforeClass
     public static void setup() throws MslEncodingException, MslCryptoException {
@@ -64,6 +61,7 @@ public class UnauthenticatedAuthenticationFactoryTest {
     @AfterClass
     public static void teardown() {
         factory = null;
+        authutils = null;
         ctx = null;
     }
     
@@ -116,6 +114,8 @@ public class UnauthenticatedAuthenticationFactoryTest {
     
     /** MSL context. */
     private static MockMslContext ctx;
+    /** Authentication utilities. */
+    private static MockAuthenticationUtils authutils;
     /** Entity authentication factory. */
     private static EntityAuthenticationFactory factory;
 }

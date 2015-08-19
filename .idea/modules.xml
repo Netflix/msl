@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/examples/burp-extender/burp-extender.iml" filepath="$PROJECT_DIR$/examples/burp-extender/burp-extender.iml" />
+      <module fileurl="file://$PROJECT_DIR$/examples/burp/msl-burp.iml" filepath="$PROJECT_DIR$/examples/burp/msl-burp.iml" />
+      <module fileurl="file://$PROJECT_DIR$/core/msl-core.iml" filepath="$PROJECT_DIR$/core/msl-core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/examples/simple/msl-example.iml" filepath="$PROJECT_DIR$/examples/simple/msl-example.iml" />
+      <module fileurl="file://$PROJECT_DIR$/integ-tests/msl-integ-tests.iml" filepath="$PROJECT_DIR$/integ-tests/msl-integ-tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/examples/kancolle/msl-kancolle.iml" filepath="$PROJECT_DIR$/examples/kancolle/msl-kancolle.iml" />
+      <module fileurl="file://$PROJECT_DIR$/msl-root.iml" filepath="$PROJECT_DIR$/msl-root.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tests/msl-tests.iml" filepath="$PROJECT_DIR$/tests/msl-tests.iml" />
+    </modules>
+  </component>
+</project>

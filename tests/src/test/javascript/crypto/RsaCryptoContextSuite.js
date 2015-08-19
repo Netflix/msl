@@ -115,7 +115,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx && AES_128_KEY && HMAC_256_KEY; }, "static initialization", 300);
+            waitsFor(function() { return ctx && AES_128_KEY && HMAC_256_KEY; }, "static initialization", 600);
             runs(function() {
                 SYMMETRIC_CRYPTO_CONTEXT = new SymmetricCryptoContext(ctx, KEY_ID, AES_128_KEY, HMAC_256_KEY, null);
                 initialized = true;

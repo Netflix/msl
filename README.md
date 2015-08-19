@@ -29,7 +29,9 @@ The application interface to the MSL stack is <code>MslControl</code>. The appli
 
 ### Java
 
-The Java MSL code base includes project files for [Eclipse](http://www.eclipse.org) and [IntelliJ IDEA](http://www.jetbrains.com/idea/).
+[IntelliJ IDEA](http://www.jetbrains.com/idea/) `.idea` project files are included and the project must be opened directly by selecting the top-level directory. You should perform a Gradle refresh after opening the project.
+
+[Eclipse](http://www.eclipse.org) users should use the Gradle IDE (available in the Eclipse Marketplace) and Web Tools Platform (included with the Eclipse IDE for Java EE developers) to import the Java MSL code as a Gradle project.
 
 An example server is provided under [src/examples/simple/src/main/java/server/](src/examples/simple/src/main/java/server/). The Eclipse project is a web project that can be deployed onto a Tomcat server. The example server is a J2EE servlet that will respond to requests from the example JavaScript client. The example server MSL configuration is specific to this server and should not be used to configure your application, but it can be used as the basis for doing so.
 
