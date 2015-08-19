@@ -44,33 +44,60 @@ describe("EntityAuthenticationData", function() {
     });
     
     it("no scheme", function() {
-    	var f = function() {
+        var exception;
+        runs(function() {
 	        var jo = {};
 	        jo[KEY_SCHEME + "x"] = EntityAuthenticationScheme.NONE;
 	        jo[KEY_AUTHDATA] = {};
-	        EntityAuthenticationData$parse(ctx, jo);
-    	};
-    	expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+	        EntityAuthenticationData$parse(ctx, jo, {
+	            result: function() {},
+	            error: function(e) { exception = e; },
+	        });
+        });
+        waitsFor(function() { return exception; }, "exception", 100);
+    	
+        runs(function() {
+            var f = function() { throw exception; };
+            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+        });
     });
     
     it("no authdata", function() {
-    	var f = function() {
+        var exception;
+        runs(function() {
 	        var jo = {};
 	        jo[KEY_SCHEME] = EntityAuthenticationScheme.NONE;
 	        jo[KEY_AUTHDATA + "x"] = {};
-	        EntityAuthenticationData$parse(ctx, jo);
-    	};
-    	expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            EntityAuthenticationData$parse(ctx, jo, {
+                result: function() {},
+                error: function(e) { exception = e; },
+            });
+        });
+        waitsFor(function() { return exception; }, "exception", 100);
+        
+        runs(function() {
+            var f = function() { throw exception; };
+            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+        });
     });
     
     it("unidentified scheme", function() {
-    	var f = function() {
+        var exception;
+        runs(function() {
 	        var jo = {};
 	        jo[KEY_SCHEME] = "x";
 	        jo[KEY_AUTHDATA] = {};
-	        EntityAuthenticationData$parse(ctx, jo);
-    	};
-    	expect(f).toThrow(new MslEntityAuthException(MslError.UNIDENTIFIED_ENTITYAUTH_SCHEME));
+            EntityAuthenticationData$parse(ctx, jo, {
+                result: function() {},
+                error: function(e) { exception = e; },
+            });
+        });
+        waitsFor(function() { return exception; }, "exception", 100);
+        
+        runs(function() {
+            var f = function() { throw exception; };
+            expect(f).toThrow(new MslEntityAuthException(MslError.UNIDENTIFIED_ENTITYAUTH_SCHEME));
+        });
     });
     
     it("authentication factory not found", function() {
@@ -83,14 +110,21 @@ describe("EntityAuthenticationData", function() {
         });
         waitsFor(function() { return ctx; }, "ctx", 100);
 
+        var exception;
         runs(function() {
-            var f = function() {
-                ctx.removeEntityAuthenticationFactory(EntityAuthenticationScheme.NONE);
-                var jo = {};
-                jo[KEY_SCHEME] = EntityAuthenticationScheme.NONE.name;
-                jo[KEY_AUTHDATA] = {};
-                EntityAuthenticationData$parse(ctx, jo);
-            };
+            ctx.removeEntityAuthenticationFactory(EntityAuthenticationScheme.NONE);
+            var jo = {};
+            jo[KEY_SCHEME] = EntityAuthenticationScheme.NONE.name;
+            jo[KEY_AUTHDATA] = {};
+            EntityAuthenticationData$parse(ctx, jo, {
+                result: function() {},
+                error: function(e) { exception = e; },
+            });
+        });
+        waitsFor(function() { return exception; }, "exception", 100);
+
+        runs(function() {
+            var f = function() { throw exception; };
             expect(f).toThrow(new MslEntityAuthException(MslError.ENTITYAUTH_FACTORY_NOT_FOUND));
         });
     });

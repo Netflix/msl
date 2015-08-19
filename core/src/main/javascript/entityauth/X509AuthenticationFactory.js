@@ -39,8 +39,10 @@ var X509AuthenticationFactory = EntityAuthenticationFactory.extend({
     },
 
     /** @inheritDoc */
-    createData: function createData(ctx, entityAuthJO) {
-        return X509AuthenticationData$parse(entityAuthJO);
+    createData: function createData(ctx, entityAuthJO, callback) {
+        AsyncExecutor(callback, function() {
+            return X509AuthenticationData$parse(entityAuthJO);
+        });
     },
 
     /** @inheritDoc */

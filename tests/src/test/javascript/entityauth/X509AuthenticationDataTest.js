@@ -103,20 +103,30 @@ describe("X509AuthenticationData", function() {
     	var json = JSON.stringify(data);
     	var jo = JSON.parse(json);
     	
-    	var entitydata = EntityAuthenticationData$parse(ctx, jo);
-    	expect(entitydata).not.toBeNull();
-    	expect(entitydata instanceof X509AuthenticationData).toBeTruthy();
+    	var entitydata;
+    	runs(function() {
+    	    EntityAuthenticationData$parse(ctx, jo, {
+    	        result: function(x) { entitydata = x; },
+    	        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+    	    });
+    	});
+    	waitsFor(function() { return entitydata; }, "entitydata", 100);
     	
-    	var joData = entitydata;
-    	expect(joData.scheme).toEqual(data.scheme);
-    	expect(joData.x509cert.hex).toEqual(data.x509cert.hex);
-    	expect(joData.identity).toEqual(data.identity);
-    	var joAuthdata = joData.getAuthData();
-    	expect(joAuthdata).not.toBeNull();
-    	expect(joAuthdata).toEqual(data.getAuthData());
-    	var joJson = JSON.stringify(joData);
-    	expect(joJson).not.toBeNull();
-    	expect(joJson).toEqual(json);
+    	runs(function() {
+        	expect(entitydata).not.toBeNull();
+        	expect(entitydata instanceof X509AuthenticationData).toBeTruthy();
+        	
+        	var joData = entitydata;
+        	expect(joData.scheme).toEqual(data.scheme);
+        	expect(joData.x509cert.hex).toEqual(data.x509cert.hex);
+        	expect(joData.identity).toEqual(data.identity);
+        	var joAuthdata = joData.getAuthData();
+        	expect(joAuthdata).not.toBeNull();
+        	expect(joAuthdata).toEqual(data.getAuthData());
+        	var joJson = JSON.stringify(joData);
+        	expect(joJson).not.toBeNull();
+        	expect(joJson).toEqual(json);
+    	});
 	});
 	
 	it("missing X.509 cert", function() {
@@ -144,17 +154,26 @@ describe("X509AuthenticationData", function() {
 	});
     
 	it("equals identity", function() {
-		var dataA = new X509AuthenticationData(MockX509AuthenticationFactory.X509_CERT);
-        var dataB = new X509AuthenticationData(expiredCert);
-        var dataA2 = EntityAuthenticationData$parse(ctx, JSON.parse(JSON.stringify(dataA)));
+	    var dataA, dataB, dataA2;
+	    runs(function() {
+    		dataA = new X509AuthenticationData(MockX509AuthenticationFactory.X509_CERT);
+            dataB = new X509AuthenticationData(expiredCert);
+            EntityAuthenticationData$parse(ctx, JSON.parse(JSON.stringify(dataA)), {
+                result: function(x) { dataA2 = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+	    });
+	    waitsFor(function() { return dataA && dataB && dataA2; }, "data", 100);
         
-        expect(dataA.equals(dataA)).toBeTruthy();
-        
-        expect(dataB.equals(dataA)).toBeFalsy();
-        expect(dataA.equals(dataB)).toBeFalsy();
-        
-        expect(dataA2.equals(dataA)).toBeTruthy();
-        expect(dataA.equals(dataA2)).toBeTruthy();
+	    runs(function() {
+            expect(dataA.equals(dataA)).toBeTruthy();
+            
+            expect(dataB.equals(dataA)).toBeFalsy();
+            expect(dataA.equals(dataB)).toBeFalsy();
+            
+            expect(dataA2.equals(dataA)).toBeTruthy();
+            expect(dataA.equals(dataA2)).toBeTruthy();
+	    });
 	});
     
 	it("equals object", function() {

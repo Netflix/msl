@@ -28,8 +28,10 @@ var UnauthenticatedSuffixedAuthenticationFactory = EntityAuthenticationFactory.e
     },
 
     /** @inheritDoc */
-    createData: function createData(ctx, entityAuthJO) {
-        return UnauthenticatedSuffixedAuthenticationData$parse(entityAuthJO);
+    createData: function createData(ctx, entityAuthJO, callback) {
+        AsyncExecutor(callback, function() {
+            return UnauthenticatedSuffixedAuthenticationData$parse(entityAuthJO);
+        });
     },
 
     /** @inheritDoc */

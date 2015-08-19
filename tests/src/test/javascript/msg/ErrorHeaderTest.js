@@ -94,7 +94,7 @@ describe("ErrorHeader", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 100);
+            waitsFor(function() { return ctx; }, "ctx", 300);
     		runs(function() {
     			ctx.getEntityAuthenticationData(null, {
     				result: function(entityAuthData) { ENTITY_AUTH_DATA = entityAuthData; },

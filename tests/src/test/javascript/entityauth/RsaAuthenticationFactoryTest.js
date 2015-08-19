@@ -52,24 +52,43 @@ describe("RsaAuthenticationFactory", function() {
     it("createData", function() {
         var data = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
         var entityAuthJO = data.getAuthData();
-        
-        var authdata = factory.createData(ctx, entityAuthJO);
-        expect(authdata).not.toBeNull();
-        expect(authdata instanceof RsaAuthenticationData).toBeTruthy();
-        
-        var dataJo = JSON.parse(JSON.stringify(data));
-        var authdataJo = JSON.parse(JSON.stringify(authdata));
-        expect(authdataJo).toEqual(dataJo);
+
+        var authdata;
+        runs(function() {
+            factory.createData(ctx, entityAuthJO, {
+                result: function(x) { authdata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return authdata; }, "authdata", 100);
+
+        runs(function() {
+            expect(authdata).not.toBeNull();
+            expect(authdata instanceof RsaAuthenticationData).toBeTruthy();
+            
+            var dataJo = JSON.parse(JSON.stringify(data));
+            var authdataJo = JSON.parse(JSON.stringify(authdata));
+            expect(authdataJo).toEqual(dataJo);
+        });
     });
     
     it("encode exception", function() {
-        var f = function() {
+        var exception;
+        runs(function() {
 	        var data = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
 	        var entityAuthJO = data.getAuthData();
 	        delete entityAuthJO[KEY_IDENTITY];
-	        factory.createData(ctx, entityAuthJO);
-	    };
-        expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            factory.createData(ctx, entityAuthJO, {
+                result: function() {},
+                error: function(e) { exception = e; },
+            });
+        });
+        waitsFor(function() { return exception; }, "exception", 100);
+        
+        runs(function() {
+            var f = function() { throw exception; };
+            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+        });
     });
     
     it("crypto context", function() {

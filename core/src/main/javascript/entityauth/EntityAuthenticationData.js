@@ -100,7 +100,9 @@ var EntityAuthenticationData$parse;
      *
      * @param ctx {MslContext} MSL context.
      * @param entityAuthJO {Object} the JSON object.
-     * @return {EntityAuthenticationData} the entity authentication data concrete instance.
+     * @param {{result: function(EntityAuthenticationData), error: function(Error)}}
+     *        callback the callback that will receive the entity authentication
+     *        data or any thrown exceptions.
      * @throws MslEntityAuthException if unable to create the entity
      *         authentication data.
      * @throws MslEncodingException if there is an error parsing the entity
@@ -108,26 +110,28 @@ var EntityAuthenticationData$parse;
      * @throws MslCryptoException if there is an error creating the entity
      *         authentication data crypto.
      */
-    EntityAuthenticationData$parse = function EntityAuthenticationData$parse(ctx, entityAuthJO) {
-        var schemeName = entityAuthJO[KEY_SCHEME];
-        var authdata = entityAuthJO[KEY_AUTHDATA];
-
-        // Verify entity authentication data.
-        if (typeof schemeName !== 'string' ||
-            typeof authdata !== 'object')
-        {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "entityauthdata " + JSON.stringify(entityAuthJO));
-        }
-
-        // Verify entity authentication scheme.
-        var scheme = ctx.getEntityAuthenticationScheme(schemeName);
-        if (!scheme)
-            throw new MslEntityAuthException(MslError.UNIDENTIFIED_ENTITYAUTH_SCHEME, schemeName);
-
-        // Construct an instance of the concrete subclass.
-        var factory = ctx.getEntityAuthenticationFactory(scheme);
-        if (!factory)
-            throw new MslEntityAuthException(MslError.ENTITYAUTH_FACTORY_NOT_FOUND, scheme.name);
-        return factory.createData(ctx, authdata);
+    EntityAuthenticationData$parse = function EntityAuthenticationData$parse(ctx, entityAuthJO, callback) {
+        AsyncExecutor(callback, function() {
+            var schemeName = entityAuthJO[KEY_SCHEME];
+            var authdata = entityAuthJO[KEY_AUTHDATA];
+    
+            // Verify entity authentication data.
+            if (typeof schemeName !== 'string' ||
+                typeof authdata !== 'object')
+            {
+                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "entityauthdata " + JSON.stringify(entityAuthJO));
+            }
+    
+            // Verify entity authentication scheme.
+            var scheme = ctx.getEntityAuthenticationScheme(schemeName);
+            if (!scheme)
+                throw new MslEntityAuthException(MslError.UNIDENTIFIED_ENTITYAUTH_SCHEME, schemeName);
+    
+            // Construct an instance of the concrete subclass.
+            var factory = ctx.getEntityAuthenticationFactory(scheme);
+            if (!factory)
+                throw new MslEntityAuthException(MslError.ENTITYAUTH_FACTORY_NOT_FOUND, scheme.name);
+            return factory.createData(ctx, authdata, callback);
+        });
     };
 })();

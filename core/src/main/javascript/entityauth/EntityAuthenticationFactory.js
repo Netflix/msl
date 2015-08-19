@@ -42,14 +42,16 @@ var EntityAuthenticationFactory = util.Class.create({
      *
      * @param {MslContext} ctx MSL context.
      * @param {Object} entityAuthJO the JSON object.
-     * @return {EntityAuthenticationData} the entity authentication data.
+     * @param {{result: function(EntityAuthenticationData), error: function(Error)}}
+     *        callback the callback that will receive the entity authentication
+     *        data or any thrown exceptions.
      * @throws MslEncodingException if there is an error parsing the JSON.
      * @throws MslCryptoException if there is an error with the entity
      *         authentication data cryptography.
      * @throws MslEntityAuthException if there is an error creating the entity
      *         authentication data.
      */
-    createData: function(ctx, entityAuthJO) {},
+    createData: function(ctx, entityAuthJO, callback) {},
 
     /**
      * Create a crypto context that can be used to encrypt/decrypt and

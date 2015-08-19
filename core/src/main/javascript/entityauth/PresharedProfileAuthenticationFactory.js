@@ -39,8 +39,10 @@ var PresharedProfileAuthenticationFactory = EntityAuthenticationFactory.extend({
     },
 
     /** @inheritDoc */
-    createData: function createData(ctx, entityAuthJO) {
-        return PresharedProfileAuthenticationData$parse(entityAuthJO);
+    createData: function createData(ctx, entityAuthJO, callback) {
+        AsyncExecutor(callback, function() {
+            return PresharedProfileAuthenticationData$parse(entityAuthJO);
+        });
     },
 
     /** @inheritDoc */
