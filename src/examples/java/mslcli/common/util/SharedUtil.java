@@ -148,9 +148,7 @@ public final class SharedUtil {
      * @throws IOException
      */
     public static byte[] readIntoArray(final InputStream in) throws IOException {
-        if (in == null) {
-            throw new IllegalArgumentException("NULL input Stream");
-        }
+        assertNotNull(in, "Input Stream");
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         int b;
         while ((b = in.read()) != -1) {
@@ -167,9 +165,7 @@ public final class SharedUtil {
      * @throws IOException
      */
     public static String readInput(final String prompt) throws IOException {
-        if (prompt == null) {
-            throw new IllegalArgumentException("NULL prompt");
-        }
+        assertNotNull(prompt, "prompt");
         final BufferedReader br = new BufferedReader(new InputStreamReader(System.in, MslConstants.DEFAULT_CHARSET));
         System.out.print(prompt.trim() + "> ");
         return br.readLine();
@@ -184,9 +180,7 @@ public final class SharedUtil {
      * @throws IOException
      */
     public static String readParameter(final String prompt, final String def) throws IOException {
-        if (prompt == null) {
-            throw new IllegalArgumentException("NULL prompt");
-        }
+        assertNotNull(prompt, "prompt");
         final String value = readInput(String.format("%s[%s]", prompt, def));
         if (value == null || value.isEmpty()) {
             return def;
@@ -209,15 +203,9 @@ public final class SharedUtil {
      * @throws IOException
      */
     public static boolean readBoolean(final String name, final boolean def, final String yesStr, final String noStr) throws IOException {
-        if (name == null) {
-            throw new IllegalArgumentException("NULL name");
-        }
-        if (yesStr == null) {
-            throw new IllegalArgumentException("NULL yesStr");
-        }
-        if (noStr == null) {
-            throw new IllegalArgumentException("NULL noStr");
-        }
+        assertNotNull(name, "name");
+        assertNotNull(yesStr, "yesStr");
+        assertNotNull(noStr, "noStr");
         String value;
         do {
             value = readInput(String.format("%s[%s]", name, def ? "y" : "n"));
@@ -238,9 +226,7 @@ public final class SharedUtil {
      * @return byte array
      */
     public static byte[] hexStringToByteArray(final String hex) {
-        if (hex == null) {
-            throw new IllegalArgumentException("NULL hex string");
-        }
+        assertNotNull(hex, "hex string");
         final int len = hex.length();
         if (len % 2 != 0) {
             throw new IllegalArgumentException("hex-encoded string size " + len + " - must be even");
@@ -276,9 +262,7 @@ public final class SharedUtil {
      * @return innermost cause Throwable
      */
     public static Throwable getRootCause(Throwable t) {
-        if (t == null) {
-            throw new IllegalArgumentException("NULL throwable");
-        }
+        assertNotNull(t, "throwable");
         while (t.getCause() != null) {
             t = t.getCause();
         }
@@ -293,9 +277,7 @@ public final class SharedUtil {
      * @throws IOException
      */
     public static Properties loadPropertiesFromFile(final String file) throws IOException {
-        if (file == null) {
-            throw new IllegalArgumentException("NULL file");
-        }
+        assertNotNull(file, "file");
         final File f = new File(file);
         if (!f.isFile()) {
             throw new IllegalArgumentException(file + " not a file");
@@ -325,9 +307,7 @@ public final class SharedUtil {
      * @throws IOException
      */
     public static byte[] readFromFile(final String file) throws IOException {
-        if (file == null) {
-            throw new IllegalArgumentException("NULL file");
-        }
+        assertNotNull(file, "file");
         final File f = new File(file);
         if (!f.isFile()) {
             throw new IllegalArgumentException(file + " not a file");
@@ -398,12 +378,8 @@ public final class SharedUtil {
      * @throws IOException
      */
     public static void saveToFile(final String file, final byte[] data, final boolean overwrite) throws IOException {
-        if (file == null) {
-            throw new IllegalArgumentException("NULL file");
-        }
-        if (data == null) {
-            throw new IllegalArgumentException("NULL data");
-        }
+        assertNotNull(file, "file");
+        assertNotNull(data, "data");
         final File f = new File(file);
         if (f.exists() && !overwrite) {
             throw new IllegalArgumentException("cannot overwrite file " + file);
@@ -686,5 +662,13 @@ public final class SharedUtil {
      */
     public static String getWrapDataInfo(final byte[] wrapdata) {
         return (wrapdata != null) ? Base64Util.encode(wrapdata) : null;
+    }
+
+    /**
+     * @param param parameter
+     * @param name parameter name
+     */
+    public static void assertNotNull(Object param, String name) {
+        if (param == null) throw new IllegalArgumentException(String.format("NULL %s", (name != null) ? name : "parameter"));
     }
 }
