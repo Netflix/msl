@@ -131,7 +131,7 @@ var EntityAuthenticationData$parse;
             var factory = ctx.getEntityAuthenticationFactory(scheme);
             if (!factory)
                 throw new MslEntityAuthException(MslError.ENTITYAUTH_FACTORY_NOT_FOUND, scheme.name);
-            return factory.createData(ctx, authdata, callback);
+            factory.createData(ctx, authdata, callback);
         });
     };
 })();
