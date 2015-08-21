@@ -1,9 +1,10 @@
-apply plugin: 'war'
-apply plugin: 'eclipse-wtp'
+apply plugin: 'java'
 
 dependencies {
     compile 'javax.servlet:servlet-api:2.5'
     compile project(':msl-core')
+    compile 'org.bouncycastle:bcprov-jdk15on:1.46'
+    compile 'org.json:json:20140107'
 }
 
-war.baseName "msl-example-cli"
+jar.baseName "mslcli-core"

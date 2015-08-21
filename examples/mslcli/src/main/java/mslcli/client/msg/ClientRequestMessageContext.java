@@ -67,9 +67,6 @@ public class ClientRequestMessageContext implements MessageContext {
      * Constructor
      *
      * @param mslCfg MSL configuration
-     * @param msgCfg message configuration
-     * @param userAuthenticationDataHandle user authentication data getter
-     * @param keyRequestDataHandle key request data getter
      * @param payload message payload
      */
     public ClientRequestMessageContext(final MslConfig mslCfg, final byte[] payload)

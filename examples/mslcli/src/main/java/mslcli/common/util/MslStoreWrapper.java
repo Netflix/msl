@@ -62,7 +62,7 @@ public class MslStoreWrapper implements MslStore {
     }
 
     /**
-     * @see com.netflix.msl.util.MslStore.setCryptoContext()
+     * @see com.netflix.msl.util.MslStore#setCryptoContext(MasterToken,ICryptoContext)
      */
     @Override
     public void setCryptoContext(final MasterToken masterToken, final ICryptoContext cryptoContext) {
@@ -70,7 +70,7 @@ public class MslStoreWrapper implements MslStore {
     }
     
     /**
-     * @see com.netflix.msl.util.MslStore.getMasterToken()
+     * @see com.netflix.msl.util.MslStore#getMasterToken()
      */
     @Override
     public MasterToken getMasterToken() {
@@ -78,7 +78,7 @@ public class MslStoreWrapper implements MslStore {
     }
     
     /**
-     * @see com.netflix.msl.util.MslStore.getNonReplayableId()
+     * @see com.netflix.msl.util.MslStore#getNonReplayableId(MasterToken)
      */
     @Override
     public long getNonReplayableId(final MasterToken masterToken) {
@@ -86,7 +86,7 @@ public class MslStoreWrapper implements MslStore {
     }
 
     /**
-     * @see com.netflix.msl.util.MslStore.getCryptoContext()
+     * @see com.netflix.msl.util.MslStore#getCryptoContext(MasterToken)
      */
     @Override
     public ICryptoContext getCryptoContext(final MasterToken masterToken) {
@@ -94,7 +94,7 @@ public class MslStoreWrapper implements MslStore {
     }
     
     /**
-     * @see com.netflix.msl.util.MslStore.removeCryptoContext()
+     * @see com.netflix.msl.util.MslStore#removeCryptoContext(MasterToken)
      */
     @Override
     public void removeCryptoContext(final MasterToken masterToken) {
@@ -102,7 +102,7 @@ public class MslStoreWrapper implements MslStore {
     }
 
     /**
-     * @see com.netflix.msl.util.MslStore.clearCryptoContexts()
+     * @see com.netflix.msl.util.MslStore#clearCryptoContexts()
      */
     @Override
     public void clearCryptoContexts() {
@@ -110,7 +110,7 @@ public class MslStoreWrapper implements MslStore {
     }
     
     /**
-     * @see com.netflix.msl.util.MslStore.addUserIdToken()
+     * @see com.netflix.msl.util.MslStore#addUserIdToken(String,UserIdToken)
      */
     @Override
     public void addUserIdToken(final String userId, final UserIdToken userIdToken) throws MslException {
@@ -118,7 +118,7 @@ public class MslStoreWrapper implements MslStore {
     }
     
     /**
-     * @see com.netflix.msl.util.MslStore.getUserIdToken()
+     * @see com.netflix.msl.util.MslStore#getUserIdToken(String)
      */
     @Override
     public UserIdToken getUserIdToken(final String userId) {
@@ -126,7 +126,7 @@ public class MslStoreWrapper implements MslStore {
     }
     
     /**
-     * @see com.netflix.msl.util.MslStore.removeUserIdToken()
+     * @see com.netflix.msl.util.MslStore#removeUserIdToken(UserIdToken)
      */
     @Override
     public void removeUserIdToken(final UserIdToken userIdToken) {
@@ -134,7 +134,7 @@ public class MslStoreWrapper implements MslStore {
     }
     
     /**
-     * @see com.netflix.msl.util.MslStore.clearUserIdTokens()
+     * @see com.netflix.msl.util.MslStore#clearUserIdTokens()
      */
     @Override
     public void clearUserIdTokens() {
@@ -142,7 +142,7 @@ public class MslStoreWrapper implements MslStore {
     }
     
     /**
-     * @see com.netflix.msl.util.MslStore.addServiceTokens()
+     * @see com.netflix.msl.util.MslStore#addServiceTokens(Set)
      */
     @Override
     public void addServiceTokens(final Set<ServiceToken> tokens) throws MslException {
@@ -150,7 +150,7 @@ public class MslStoreWrapper implements MslStore {
     }
 
     /**
-     * @see com.netflix.msl.util.MslStore.getServiceTokens()
+     * @see com.netflix.msl.util.MslStore#getServiceTokens(MasterToken,UserIdToken)
      */
     @Override
     public Set<ServiceToken> getServiceTokens(final MasterToken masterToken, final UserIdToken userIdToken) throws MslException {
@@ -158,7 +158,7 @@ public class MslStoreWrapper implements MslStore {
     }
 
     /**
-     * @see com.netflix.msl.util.MslStore.removeServiceTokens()
+     * @see com.netflix.msl.util.MslStore#removeServiceTokens(String,MasterToken,UserIdToken)
      */
     @Override
     public void removeServiceTokens(final String name, final MasterToken masterToken, final UserIdToken userIdToken) throws MslException {
@@ -166,7 +166,7 @@ public class MslStoreWrapper implements MslStore {
     }
 
     /**
-     * @see com.netflix.msl.util.MslStore.clearServiceTokens()
+     * @see com.netflix.msl.util.MslStore#clearServiceTokens()
      */
     @Override
     public void clearServiceTokens() {

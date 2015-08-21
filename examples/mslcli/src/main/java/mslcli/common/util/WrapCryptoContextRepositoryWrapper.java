@@ -50,7 +50,7 @@ public class WrapCryptoContextRepositoryWrapper implements WrapCryptoContextRepo
     }
 
     /**
-     * @see com.netflix.msl.keyx.WrapCryptoContextRepository.addCryptoContext()
+     * @see com.netflix.msl.keyx.WrapCryptoContextRepository#addCryptoContext(byte[],ICryptoContext)
      */
     @Override
     public void addCryptoContext(final byte[] wrapdata, final ICryptoContext cryptoContext) {
@@ -58,7 +58,7 @@ public class WrapCryptoContextRepositoryWrapper implements WrapCryptoContextRepo
     }
 
     /**
-     * @see com.netflix.msl.keyx.WrapCryptoContextRepository.getCryptoContext()
+     * @see com.netflix.msl.keyx.WrapCryptoContextRepository#getCryptoContext(byte[])
      */
     @Override
     public ICryptoContext getCryptoContext(final byte[] wrapdata) {
@@ -66,7 +66,7 @@ public class WrapCryptoContextRepositoryWrapper implements WrapCryptoContextRepo
     }
 
     /**
-     *@see com.netflix.msl.keyx.WrapCryptoContextRepository.removeCryptoContext()
+     *@see com.netflix.msl.keyx.WrapCryptoContextRepository#removeCryptoContext(byte[])
      */
     @Override
     public void removeCryptoContext(final byte[] wrapdata) {

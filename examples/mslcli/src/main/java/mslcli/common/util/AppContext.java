@@ -206,7 +206,6 @@ public final class AppContext {
     }
 
     /**
-     * @param scheme authentication scheme name
      * @return entity authentication data handle for a given scheme
      */
     public Set<EntityAuthenticationHandle> getEntityAuthenticationHandles() {

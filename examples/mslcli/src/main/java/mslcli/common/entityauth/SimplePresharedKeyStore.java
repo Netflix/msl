@@ -47,7 +47,7 @@ public class SimplePresharedKeyStore implements PresharedKeyStore {
     }
 
     /**
-     * @see com.netflix.msl.entityauth.PresharedKeyStore.getKeys()
+     * @see com.netflix.msl.entityauth.PresharedKeyStore#getKeys(String)
      */
     @Override
     public KeySet getKeys(final String identity) {

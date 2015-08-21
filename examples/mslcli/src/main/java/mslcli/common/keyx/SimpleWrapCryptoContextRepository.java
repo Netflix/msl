@@ -56,7 +56,7 @@ public class SimpleWrapCryptoContextRepository implements WrapCryptoContextRepos
     }
 
     /**
-     * @see com.netflix.msl.keyx.WrapCryptoContextRepository.addCryptoContext()
+     * @see com.netflix.msl.keyx.WrapCryptoContextRepository#addCryptoContext(byte[],ICryptoContext)
      */
     @Override
     public synchronized void addCryptoContext(final byte[] wrapdata, final ICryptoContext cryptoContext) {
@@ -64,7 +64,7 @@ public class SimpleWrapCryptoContextRepository implements WrapCryptoContextRepos
     }
 
     /**
-     * @see com.netflix.msl.keyx.WrapCryptoContextRepository.getCryptoContext()
+     * @see com.netflix.msl.keyx.WrapCryptoContextRepository#getCryptoContext(byte[])
      */
     @Override
     public synchronized ICryptoContext getCryptoContext(final byte[] wrapdata) {
@@ -72,7 +72,7 @@ public class SimpleWrapCryptoContextRepository implements WrapCryptoContextRepos
     }
 
     /**
-     * @see com.netflix.msl.keyx.WrapCryptoContextRepository.removeCryptoContext()
+     * @see com.netflix.msl.keyx.WrapCryptoContextRepository#removeCryptoContext(byte[])
      */
     @Override
     public synchronized void removeCryptoContext(final byte[] wrapdata) {
@@ -80,7 +80,7 @@ public class SimpleWrapCryptoContextRepository implements WrapCryptoContextRepos
     }
 
     /**
-     * @see mslcli.common.util.WrapCryptoContextRepositoryHandle.getLastWrapData()
+     * @see mslcli.common.util.WrapCryptoContextRepositoryHandle#getLastWrapdata()
      */
     @Override
     public synchronized byte[] getLastWrapdata() {

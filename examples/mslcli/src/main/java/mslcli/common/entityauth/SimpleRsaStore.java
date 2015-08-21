@@ -55,7 +55,7 @@ public class SimpleRsaStore implements RsaStore {
     }
 
     /**
-     * @see com.netflix.msl.entityauth.RsaStore.getIdentities()
+     * @see com.netflix.msl.entityauth.RsaStore#getIdentities()
      */
     @Override
     public Set<String> getIdentities() {
@@ -63,7 +63,7 @@ public class SimpleRsaStore implements RsaStore {
     }
 
     /**
-     * @see com.netflix.msl.entityauth.RsaStore.getPublicKey()
+     * @see com.netflix.msl.entityauth.RsaStore#getPublicKey(String)
      */
     @Override
     public PublicKey getPublicKey(final String identity) {
@@ -72,7 +72,7 @@ public class SimpleRsaStore implements RsaStore {
     }
 
     /**
-     * @see com.netflix.msl.entityauth.RsaStore.getPrivateKey()
+     * @see com.netflix.msl.entityauth.RsaStore#getPrivateKey(String)
      */
     @Override
     public PrivateKey getPrivateKey(final String identity) {

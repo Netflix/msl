@@ -78,7 +78,6 @@ public abstract class MslConfig {
      * Ctor
      * @param appCtx application context
      * @param args command line arguments
-     * @param entityAuthData entity authentication data
      * @param authutils authentication utils
      * @throws ConfigurationException
      * @throws IllegalCmdArgumentException
@@ -307,8 +306,6 @@ public abstract class MslConfig {
     /* ================================== KEY EXCHANGE APIs ================================================ */
 
     /**
-     * @param kxsName the name of key exchange scheme
-     * @param kxmName the name of key exchange scheme mechanism
      * @return key request data
      * @throws ConfigurationException
      * @throws IllegalCmdArgumentException
