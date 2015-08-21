@@ -7,14 +7,24 @@ layer for payload marshalling/unmarshalling was not viewed as an
 essential goal, because it does not help in understanding of MSL
 core; MSL messages in general can carry arbitrary payload data.
 
-To build MSL CLI:
-% cd mslcli
-% ./build.sh
+MSL CLI should be built from the top level, as one of the msl sub-projects, e.g.:
+% cd ~/Git/msl
+% ./gradlew build
 
-Open two terminals. From one, type
+Build distribution, so all dependencies can be picked up easily:
+% ./gradlew distZip
+
+Then go to the mslcli bin directory:
+% cd examples/mslcli/bin
+
+Unzip the distribution ZIP, to access all jar files:
+./mslcli_unzip.sh
+
+Have two terminals, for running MSL CLI client and server.
+From one, start the client
 % ./mslclient.sh [options]
 
-From another
+From another start the server
 % ./mslserver.sh
 
 Please, read mslclient_manual.txt for the detailed information on how to run mslclient.sh.
