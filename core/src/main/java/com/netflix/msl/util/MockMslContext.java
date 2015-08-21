@@ -40,6 +40,7 @@ import com.netflix.msl.crypto.SymmetricCryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.entityauth.MasterTokenProtectedAuthenticationFactory;
 import com.netflix.msl.entityauth.MockPresharedAuthenticationFactory;
 import com.netflix.msl.entityauth.MockPresharedProfileAuthenticationFactory;
 import com.netflix.msl.entityauth.MockRsaAuthenticationFactory;
@@ -174,6 +175,7 @@ public class MockMslContext implements MslContext {
         entityAuthFactories.put(EntityAuthenticationScheme.NONE, new UnauthenticatedAuthenticationFactory(authutils));
         entityAuthFactories.put(EntityAuthenticationScheme.X509, new MockX509AuthenticationFactory());
         entityAuthFactories.put(EntityAuthenticationScheme.NONE_SUFFIXED, new UnauthenticatedSuffixedAuthenticationFactory(authutils));
+        entityAuthFactories.put(EntityAuthenticationScheme.MT_PROTECTED, new MasterTokenProtectedAuthenticationFactory(authutils));
 
         userAuthFactories = new HashMap<UserAuthenticationScheme,UserAuthenticationFactory>();
         userAuthFactories.put(UserAuthenticationScheme.EMAIL_PASSWORD, new MockEmailPasswordAuthenticationFactory());

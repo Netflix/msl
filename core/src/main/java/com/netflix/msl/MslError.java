@@ -164,6 +164,11 @@ public class MslError {
     public static final MslError X509CERT_NOT_YET_VALID = new MslError(4029, ResponseCode.ENTITYDATA_REAUTH, "X.509 certificate is not yet valid.");
     public static final MslError X509CERT_INVALID = new MslError(4030, ResponseCode.ENTITYDATA_REAUTH, "X.509 certificate is invalid.");
     public static final MslError RSA_PRIVATEKEY_NOT_FOUND = new MslError(4031, ResponseCode.ENTITYDATA_REAUTH, "RSA private key not found.");
+    public static final MslError ENTITYAUTH_MASTERTOKEN_NOT_DECRYPTED = new MslError(4032, ResponseCode.FAIL, "Entity authentication data master token is not decrypted or verified.");
+    public static final MslError ENTITYAUTH_SIGNATURE_INVALID = new MslError(4033, ResponseCode.ENTITYDATA_REAUTH, "Invalid entity authentication data siganture.");
+    public static final MslError ENTITYAUTH_CIPHERTEXT_INVALID = new MslError(4034, ResponseCode.ENTITYDATA_REAUTH, "Invalid entity authentication data ciphertext.");
+    public static final MslError ENTITYAUTH_VERIFICATION_FAILED = new MslError(4035, ResponseCode.ENTITYDATA_REAUTH, "Entity authentication data signature verification failed.");
+    public static final MslError ENTITYAUTH_MASTERTOKEN_INVALID = new MslError(4036, ResponseCode.FAIL, "Invalid entity authentication data master token.");
     
     // 5 User Authentication
     public static final MslError UNIDENTIFIED_USERAUTH_SCHEME = new MslError(5003, ResponseCode.FAIL, "Unable to identify user authentication scheme.");

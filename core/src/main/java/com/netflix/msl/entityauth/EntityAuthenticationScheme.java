@@ -43,6 +43,8 @@ public class EntityAuthenticationScheme {
     public static final EntityAuthenticationScheme NONE = new EntityAuthenticationScheme("NONE", false, false);
     /** Unauthenticated suffixed. */
     public static final EntityAuthenticationScheme NONE_SUFFIXED = new EntityAuthenticationScheme("NONE_SUFFIXED", false, false);
+    /** Master token protected. */
+    public static final EntityAuthenticationScheme MT_PROTECTED = new EntityAuthenticationScheme("MT_PROTECTED", false, false);
     
     /**
      * Define an entity authentication scheme with the specified name and

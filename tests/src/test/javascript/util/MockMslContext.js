@@ -51,46 +51,48 @@ var MockMslContext$create;
 
 		    // Set up entity authentication factories.
 		    AsyncExecutor(callback, function pskAuthFactory() {
+                var authutils = new MockAuthenticationUtils();
 		        var entityAuthFactories = {};
 		        MockPresharedAuthenticationFactory$create({
 		            result: function(factory) {
 		                AsyncExecutor(callback, function() {
 		                    entityAuthFactories[EntityAuthenticationScheme.PSK.name] = factory;
-		                    pskProfileAuthFactory(entityAuthFactories);
+		                    pskProfileAuthFactory(authutils, entityAuthFactories);
 		                }, self);
 		            },
 		            error: callback.error,
 		        });
 		    });
-		    function pskProfileAuthFactory(entityAuthFactories) {
+		    function pskProfileAuthFactory(authutils, entityAuthFactories) {
 		        MockPresharedProfileAuthenticationFactory$create({
                     result: function(factory) {
                         AsyncExecutor(callback, function() {
                             entityAuthFactories[EntityAuthenticationScheme.PSK_PROFILE.name] = factory;
-                            rsaAuthFactory(entityAuthFactories);
+                            rsaAuthFactory(authutils, entityAuthFactories);
                         }, self);
                     },
                     error: callback.error,
                 });
 		    }
-		    function rsaAuthFactory(entityAuthFactories) {
+		    function rsaAuthFactory(authutils, entityAuthFactories) {
 		        MockRsaAuthenticationFactory$create(null, {
 		            result: function(factory) {
 		                AsyncExecutor(callback, function() {
 		                    entityAuthFactories[EntityAuthenticationScheme.RSA.name] = factory;
-		                    syncEntityAuthFactories(entityAuthFactories);
+		                    syncEntityAuthFactories(authutils, entityAuthFactories);
 		                }, self);
 		            },
 		            error: callback.error,
 		        });
 		    }
-		    function syncEntityAuthFactories(entityAuthFactories) {
+		    function syncEntityAuthFactories(authutils, entityAuthFactories) {
 		        entityAuthFactories[EntityAuthenticationScheme.X509.name] = new MockX509AuthenticationFactory();
 		        entityAuthFactories[EntityAuthenticationScheme.NONE.name] = new UnauthenticatedAuthenticationFactory();
 		        entityAuthFactories[EntityAuthenticationScheme.NONE_SUFFIXED.name] = new UnauthenticatedSuffixedAuthenticationFactory();
-                syncUserAuthFactories(entityAuthFactories);
+		        entityAuthFactories[EntityAuthenticationScheme.MT_PROTECTED.name] = new MasterTokenProtectedAuthenticationFactory(authutils);
+                syncUserAuthFactories(authutils, entityAuthFactories);
 		    }
-		    function syncUserAuthFactories(entityAuthFactories, userAuthFactories) {
+		    function syncUserAuthFactories(authutils, entityAuthFactories) {
 		        var userAuthFactories = {};
 		        userAuthFactories[UserAuthenticationScheme.EMAIL_PASSWORD.name] = new MockEmailPasswordAuthenticationFactory();
 		        userAuthFactories[UserAuthenticationScheme.USER_ID_TOKEN.name] = new MockUserIdTokenAuthenticationFactory();

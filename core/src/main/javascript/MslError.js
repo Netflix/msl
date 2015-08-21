@@ -191,6 +191,11 @@ util.Class.mixin(MslError,
     X509CERT_NOT_YET_VALID : new MslError(4029, MslConstants$ResponseCode.ENTITYDATA_REAUTH, "X.509 certificate is not yet valid."),
     X509CERT_INVALID : new MslError(4030, MslConstants$ResponseCode.ENTITYDATA_REAUTH, "X.509 certificate is invalid."),
     RSA_PRIVATEKEY_NOT_FOUND : new MslError(4031, MslConstants$ResponseCode.ENTITYDATA_REAUTH, "RSA private key not found."),
+    ENTITYAUTH_MASTERTOKEN_NOT_DECRYPTED : new MslError(4032, MslConstants$ResponseCode.FAIL, "Entity authentication data master token is not decrypted or verified."),
+    ENTITYAUTH_SIGNATURE_INVALID : new MslError(4033, MslConstants$ResponseCode.ENTITYDATA_REAUTH, "Invalid entity authentication data siganture."),
+    ENTITYAUTH_CIPHERTEXT_INVALID : new MslError(4034, MslConstants$ResponseCode.ENTITYDATA_REAUTH, "Invalid entity authentication data ciphertext."),
+    ENTITYAUTH_VERIFICATION_FAILED : new MslError(4035, MslConstants$ResponseCode.ENTITYDATA_REAUTH, "Entity authentication data signature verification failed."),
+    ENTITYAUTH_MASTERTOKEN_INVALID : new MslError(4036, MslConstants$ResponseCode.FAIL, "Invalid entity authentication data master token."),
     
     // 5 User Authentication
     UNIDENTIFIED_USERAUTH_SCHEME : new MslError(5003, MslConstants$ResponseCode.FAIL, "Unable to identify user authentication scheme."),
