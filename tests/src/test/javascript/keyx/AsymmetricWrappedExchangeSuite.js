@@ -426,7 +426,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
         	        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	    });
         	});
-        	waitsFor(function() { return rsaPublicKey; }, "RSA public key", 600);
+        	waitsFor(function() { return rsaPublicKey; }, "RSA public key", 1200);
         	
         	var dataA = undefined, dataB = undefined, dataA2;
         	runs(function() {
@@ -462,7 +462,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return rsaPrivateKey; }, "RSA private key", 600);
+            waitsFor(function() { return rsaPrivateKey; }, "RSA private key", 1200);
 
             var dataA = undefined, dataB = undefined, dataA2;
             runs(function() {
@@ -535,7 +535,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return jo && masterToken; }, "json object and master token not received", 300);
+            waitsFor(function() { return jo && masterToken; }, "json object and master token not received", 600);
             runs(function() {
 	            expect(masterToken).toEqual(MASTER_TOKEN);
 	            var keydata = jo[KEY_KEYDATA];
