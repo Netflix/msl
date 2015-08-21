@@ -1,6 +1,9 @@
-/bin
-/build
-/test-output
-/.gradle
-/.settings
-/.idea
+bin
+build
+test-output
+.gradle
+.settings
+.idea
+.project
+.classpath
+*.iml
