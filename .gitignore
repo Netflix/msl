@@ -1,4 +1,4 @@
-bin
+/bin
 /.gradle
 /.settings
 /.project
