@@ -1,0 +1,209 @@
+mslclient
+
+NAME
+	mslclient - start MSL CLI client
+
+SYNOPSIS
+	mslclient [options]
+
+DESCRIPTION
+	mslclient is a tool to send MSL messages to a server, using common
+	client configuration options supported by MSL core library.
+
+        mslclient can run in interactive and non-interactive modes. Non-
+	interactive mode allows sending single message to the server.
+
+	Interactive mode allows sending multiple messages and interactive
+	change of configuration before sending each message.
+
+GENERAL OPTIONS
+	All options start with "-". No option value can start with "-"
+	unless "-" is an entire value. Specifying "-" value in non-
+	interactive mode is illegal. Specifying "-" value in interactiv
+	mode results in deleting the corresponding option from the current
+	options list. All values are mandatory unless explicitly marked
+	as OPTIONAL or having the default value.
+
+	-cfg <configuration-file-path>
+		REQUIRED. Path to the existing configuration file. Read the
+		comments in the supplied mslcli.cfg configuration file to
+		understand what each parameter means and how this file can
+		be changed to support your specific needs.
+		Notice: configuration file can only be set once and only
+		from the command-line.
+
+	-url <server-url>
+		REQUIRED. The URL of the server to send messages to.
+
+	-int (true|false), default false
+		OPTIONAL. Make mslclient run in interactive (true) or non-
+		interactive (false) modes.
+
+		In non-interactive mode a single message is sent to a server;
+		all required options must be set from the command line.
+
+		In interactive mode the configuration is first populated
+		from the command-line arguments. Then a user is repetitively
+		presented with the "args>" prompt, from which parameters can
+		be entered to alter the existing configuration, by deleting,
+		adding, or changing, the existing options, following the
+		exact same syntax as in the command-line arguments.
+
+		Pressing ENTER upon completion of parameters entry results
+		in sending a message to the server. Pressing ENTER without
+		entering any parameters results in sending the same payload
+		under the same configuration.
+
+	-mst <file-path>
+		OPTIONAL. MSL store file path. MSL store contains
+		master, user id, and service tokens acquired by the client.
+		If the file exists, MSL store will be populated from it.
+		If the file does not exist, the app will start with empty
+		MSL store. At the exit, the app will update this file
+		with the new content. If this option is not defined,
+		the app will start with the empty MSL store and all
+		changes to it will be lost at the exit of the app.
+
+		Note: String "{eid}" within the file path will be
+		replaced by th entity id string value specified with
+		"-eid" option. It is handy to manage MSL store
+		file names space, especially when switching between
+		different entities in interactive mode.
+
+	-v (true|false), default false
+		OPTIONAL. Whether to turn verbose mode on or off. Diagnostic
+		messages will be dumped to stdout in verbose mode.
+
+ENTITY AUTHENTICATION OPTIONS
+	-eid <entity-id>
+		REQUIRED. Client entity id string with no spaces in it.
+		The value must have presence in the configuration file by
+		defining its allowed entity authentication scheme(s), key
+		exchange scheme(s), etc. 
+
+	-eas <entity-authentication-scheme>
+		REQUIRED. Entity authentication scheme. Allowed values:
+		* PSK - pre-shared keys
+		* MGK - model group keys
+
+	-psk <file-path>
+		OPTIONAL. Pre-shared key file which should have exactly 3
+		lines, in this order:
+		* entityId string
+		* encryption key, Base64-encoded
+		* HMAC key, Base64-encoded
+		Using this option may be more convenient than changing a
+		configuration file.
+
+	-mgk <file-path>
+		OPTIONAL. Model group key file which should have exactly 3
+		lines, in this order:
+		* entityId string
+		* encryption key, Base64-encoded
+		* HMAC key, Base64-encoded
+		Using this option may be more convenient than changing a
+		configuration file.
+
+KEY EXCHANGE OPTIONS
+	-kx <supported-key-exchange-scheme>
+		REQUIRED. The following are supported values:
+		* DIFFIE_HELLMAN - for Diffie-Hellman key exchange
+		* SYMMETRIC_WRAPPED - for Symmetric Wrapped key exchange
+		* ASYMMETRIC_WRAPPED - for Asymmetric Wrapped key exchange
+		* JWE_LADDER - for JSON Web Encryption Ladder Key Exchange
+		* JWK_LADDER - for JSON Web Key Ladder Key Exchange
+
+	-kxm <supported-key-exchange-mechanism>
+		REQUIRED. The following are supported values:
+		for -kx DIFFIE_HELLMAN:
+			* should not be specified
+		for -kx SYMMETRIC_WRAPPED:
+			* PSK - using pre-shared keys
+			* SESSION - using session keys
+		for -kx ASYMMETRIC_WRAPPED:
+			* JWE_RSA   - RSA-OAEP JSON Web Encryption Compact Serialization
+			* JWEJS_RSA - RSA-OAEP JSON Web Encryption JSON Serialization
+			* JWK_RSA   - RSA-OAEP Json Web Key 
+			* JWK_RSAES - RSA PKCS#1 JSON Web Key
+		for -kx JWE_LADDER:
+			* PSK - using pre-shared keys
+			* WRAP - using session wrap keys
+		for -kx JWK_LADDER:
+			* PSK - using pre-shared keys
+			* WRAP - using session wrap keys
+
+USER AUTHETICATION OPTIONS
+	-uid <user-id>
+		OPTIONAL. User id internal to a given mslclient configuration.
+		It is typically used for forming user authentication data in
+		a MSL request, in order to acquire UserIdToken.
+
+	-uas <user-authentication-scheme>
+		OPTIONAL. User authentication scheme to use. Supported values:
+		* EMAIL_PASSWORD for email-password user authentication.
+
+MESSAGE OPTIONS
+	-enc (true|false), default true
+		OPTIONAL. Whether the request must be encrypted or not.
+
+	-sig (true|false), default true
+		OPTIONAL. Whether the request must be HMAC'ed or not.
+
+	-nrep (true|false), default false
+		OPTIONAL. Whether the request must be marked as non-replayable
+		or not.
+
+	-if <input-payload-file>
+		OPTIONAL. Path to the existing file with the request payload.
+		If omitted, either payload must be specified with "-msg"
+		option or a no-payload message will be sent.
+
+	-of <output-payload-file>
+		OPTIONAL. Path to the non-existing file to which the response
+		payload shall be written. If omitted, the response payload
+		will be written to stdout.
+
+	-msg <request-payload-text>
+		OPTIONAL. The one-line text to be sent as a message payload.
+		If omitted, either payload must be specified with "-if"
+		option or a no-payload message will be sent.
+
+INTERACTIVE OPTIONS
+	help (h)
+		Printing help to stdout. Must be specified as the only
+		command-line argument or at the "args>" prompt in interactive
+		mode.
+
+	list (l)
+		Interactive mode only. List currently selected options. Must
+		be specified as the only argument at the "args>" prompt.
+
+	quit (q)
+		Interactive mode only. Entered from the "args>" prompt to quit
+		mslclient program.
+
+	?
+		Interactive mode only. Lists the actions available in
+		interactive mode.
+
+ENVIRONMENT
+	No environment variables are required.
+	
+EXIT CODES
+	Exit codes are to facilitate embedding mslclient into scripts.
+
+	0 - success. In interactive mode exit code is always 0. The rest
+	    of the exit codes only apply to non-interactive mode.
+
+	1 - invalid command-line arguments.
+
+	2 - configuration file reading and/or validation error.
+
+	3 - exception from MSL core protocol stack.
+
+	4 - MSL protocol error: Error header in MSL response
+
+	5 - server communication error
+
+	6 - internal execution error
+

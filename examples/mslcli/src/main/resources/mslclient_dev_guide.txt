@@ -1,0 +1,288 @@
+﻿OVERVIEW
+	mslclient is a tool to send MSL messages to a server, using common
+	client configuration options supported by the MSL core library.
+
+	mslclient can run in interactive and non-interactive modes. Non-
+	interactive mode allows sending single message to the server.
+
+	Interactive mode allows sending multiple messages and interactive
+	change of configuration before sending each message.
+
+	This document provides the details of mslclient implementation
+	that should be sufficient for developers to understand the
+	implementation and modify/extend its functionality if needed.
+
+CONFIGURATION FILE
+	This file defines static properties of a MSL ecosystem that
+	do not change through MSL interactions. Two sample files
+	supplied with the library are mslcli.cfg for clients and
+	mslsrv.cfg for servers.
+
+	Property names consist of dot-separated alphanumeric tokens.
+	Some properties are unique to specific entity IDs. The ID
+	is specified as the last token in the property's name.
+	Replacing specific entity ID with the wild character "*"
+	makes it applicable to any entity ID. At run-time entity-
+	specific properties will be searched first; if not found,
+	then wild character ones.
+	
+	This is the list of currently supported properties:
+
+	* Entity authentication schemes allowed for specific entities.
+	  Wild characters are supported.
+
+	* User authentication schemes allowed for specific entities.
+	  Wild characters are supported.
+
+	* Key exchange schemes allowed for specific entities.
+	  Wild characters are supported.
+
+	* Diffie-Hellman algorithm parameters ID used by a given
+	  entity. Wild characters are supported.
+
+	* Pre-shared keys used by a given entity. Wild characters
+	  are not supported, as pre-shared keys must be unique.
+
+	* Model group keys used by a given entity. Wild characters
+	  are not supported, as model group keys must be unique.
+
+	* Named sets of Diffie-Hellman algorithm parameters.
+	  Each entity can be configured to use Diffie-Hellman
+	  algorithm parameters with specific set's name.
+	  Multiple entities may share the same set.
+
+	* Named sets of RSA { public, private } key pairs to use
+	  for RSA mechanism of entity authentication. The entity
+	  using these keys to authenticate itself needs to know
+	  both public and private keys. The entity using these
+	  keys to authenticate another entity only need public key.
+
+	* User { email, password } tuple.
+
+	In addition, the following properties are only applicable
+	to the entities acting as servers in MSL trusted network:
+
+	* Master token issuance parameters - renewal window,
+	  expiration window, maximum non-replay id window,
+	  maximum sequence gap window (between the current
+	  current sequence number kept on the server vs the actual
+	  sequence number of the master token presented by the
+	  client for master token renewal.
+
+	* User Id token issuance parameters: renewal and expiration
+	  windows.
+
+	* MSL keys for issuing and processing MSL (master and user
+	  ID) tokens.
+
+	* The name of the RSA key set to be used by specific service
+	  entity ID for RSA entity authentication mechanism.
+	  Wild characters are supported.
+
+	* Named service key sets for issuing and processing service
+	  tokens.
+
+	* The name of the service key set name to be used by
+	  specific service entity ID. Wild characters are supported.
+
+COMMAND LINE ARGUMENTS
+	Command-line arguments describe specific run-time choices
+	for running MSL CLI clients or servers. They define
+	specific aspects of configuration to use, as well as
+	message-specific configuration choices.
+
+	Whether mslclient runs as a standalone program or embedded
+	into another app as a library, its run-time configuration
+	is specified by an array of strings parsed as command line
+	arguments.
+
+	See mslclient_manual.txt document describing in details
+	the command-line arguments, their syntax and meaning.
+
+CLIENT APPLICATION CLASSES
+	All Java classes referred to below are implied to be under one
+	of the "mslcli." sub-packages, unless their full paths are
+	given.
+
+	CmdArguments.java:
+		Wrapper class for parsing, validation, and access
+		to the command line arguments described earlier.
+		CmdArguments class supports two important
+		operations: a) initialization from the command line
+		array of strings, and b) merge from another
+		CmdArguments instance for incremental configuration
+		changes, used mostly in an interactive mode.
+
+	MslProperties.java:
+		Wrapper class for parsing, validation, and access
+		to a configuration file described earlier.
+		The instance is created from a configuration file
+		by passing its path to the constructor.
+
+	AppContext.java:
+		Encapsulates application-specific data and services
+		based on the MslProperties data.
+
+	Client.java:
+		Class managing MSL communication with remote
+		entities based on the application context and
+		command line arguments.
+
+		This is the most important class for building mslclient
+		applications. It is bound to a specific entity identity.
+		For each new entity identity the app needs to create
+		another Client instance.
+
+		Client instance has the following use sequence:
+
+		a) create an instance for the given AppContext and
+		   CmdArguments (initial configuration).
+
+		b) send any number of messages via the method
+		   Client.sendRequest(byte[] payload) and process
+		   the response.
+
+		c) between sending messages, modify client configuration
+		   with Client.modifyConfig(CmdArguments diffArgs) with	
+		   whatever command line arguments introduced by the app
+		   or via user input.
+
+		d) at any point between sending messages, persist current
+		   state of the Client's MSL store via the method
+		   Client.saveMslStore().
+
+		Client's current configuration can be displayed via the
+		Client.getConfigInfo() method.
+
+	SharedUtil.java:
+		Implements some useful utilities to simplify writing
+		mslclient applications.
+
+	ClientApp.java:
+		Example mslclient implementation with main() entry point
+		which can be run as a standalone program. Its flow
+		is described in mslclient_manual.txt document.
+
+		From the developers' standpoint this is how its flow
+		is organized:
+
+		a) Create CmdArguments instance based on the command
+		   line arguments and instantiate ClientApp object.
+
+		b) ClientApp gets the name of the configuration file
+		   from CmdArguments and instantiates MslProperties.
+
+		c) If CmdArguments also specify the path(s) to
+		   pre-shared and/or model group key files, ClientApp
+		   constructor extracts those keys and adds them
+		   to the current configuration in MslProperties.
+		   This is the only case when MslProperties
+		   configuration gets formed from the data coming
+		   NOT from the configuration file. It is due
+		   to the fact that specifying device keys in
+		   separate files is very common, so forcing the users
+		   to save them into the configuration files would
+		   be inconvenient.
+
+		d) Create AppContext based on MslProperties.
+
+		e) The logic then forks based on whether CmdArguments
+		   specify interactive or non-interactive modes.
+
+		f) In an interactive mode, ClientApp enters an infinite
+		   loop, in which the user is presented with the "args>"
+		   prompt. At this prompt the user can modify the
+		   existing command line arguments by entering whatever
+		   parameters that need to be modified. See
+		   mslclient_manual.txt for more details. Pressing Enter
+		   results each time in calling ClientApp.sendSingleRequest()
+		   for sending a single message according to the current
+		   configuration. Entering "q" or "quit" at the "args>"
+		   prompt results in exiting the program.
+
+		g) In a non-interactive mode, ClientApp calls
+		   ClientAPp.sendSingleRequest() to send a single request
+		   using the current configuration.
+
+		h) ClientApp.sendSingleRequest() does the following:
+		   - Instantiate Client object if it's never been
+		     instantiated, i.e. on the first call. Client()
+		     constructor takes AppContext and CmdArguments as an
+		     input.
+
+		   - Re-instantiate Client if the user's CmdArguments
+		     passed to this function specify different entity
+		     identity. As mentioned earlier, Client instance
+		     is bound to a given entity identity and cannot
+		     change it dynamically. A new Client takes its
+		     CmdArguments from the ones of the previous
+		     Client instance merged with whatever CmdArguments
+		     passed as an input to ClientApp.sendSingleRequest().
+
+		   - If entity identity did not change, just chanange
+		     the existing Client's configuration with the user-
+		     specified CmdArguments via Client.modifyConfig()
+		     API.
+
+		   - If CmdArguments specify the payload file, load
+		     the payload from this file.
+
+		   - Finally, send a request via the API
+		     Client.sendRequest(byte[] payload)
+
+		   - The return value of Client.sendRequest() is
+		     Client.Response which contains response payload
+		     or MSL ErrorHeader.
+
+		     In general, any of the operations described above
+		     can throw exceptions. ClientApp implements
+		     the handling logic that translates the outcome
+		     into one of the 7 states (including SUCCESS),
+		     described in mslclient_manual.txt. The embedding
+		     app should either mimic this logic or implement
+		     its own.
+
+HANDLES PLUG-IN FRAMEWORK
+	MSL framework allows the adopters to implement the
+	following security aspects of MSL interactions:
+
+	1. Entity authentication schemes
+	2. Key exchange schemes
+	3. User authentication schemes
+
+	MSL CLI library supports plug-in implementations of
+	all of the above without changing the rest of the
+	code. Only configuration files need to be changed
+	to load a new handle class at startup.
+
+	1. EntityAuthenticationHandle.java is the base class
+	to be extended to introduce support to a new entity
+	authentication scheme.
+	See "app.entityauth.handle.*" properties in the
+	configuration files to see how handles are
+	registered with a single line defining the handle's
+	full class path.
+
+	2. KeyExchangeHandle.java is the base class
+	to be extended to introduce support to a new key
+	exchange scheme.
+	See "app.keyx.handle.*" properties in the
+	configuration files to see how handles are
+	registered with a single line defining the handle's
+	full class path.
+
+	3. UserAuthenticationHandle.java is the base class
+	to be extended to introduce support to a new user
+	authentication scheme.
+	See "app.userauth.handle.*" properties in the
+	configuration files to see how handles are
+	registered in a single line defining the handle's
+	full class path.
+
+	For each handle type see the implementation of the
+	common mechanisms defined in MSL Core design docs.
+	These implementations are located in the same
+	packages as their corresponding base classes.
+
+QUESTIONS?
+	Contact Vadim Spector vspector@netflix.com

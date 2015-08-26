@@ -1,0 +1,13 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+dependencies {
+    compile 'javax.servlet:servlet-api:2.5'
+    compile project(':msl-core')
+    compile 'org.bouncycastle:bcprov-jdk15on:1.46'
+    compile 'org.json:json:20140107'
+}
+
+mainClassName = "mslcli.client.ClientApp"
+
+jar.baseName "mslcli-core"
