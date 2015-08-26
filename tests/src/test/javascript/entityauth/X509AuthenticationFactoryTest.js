@@ -112,24 +112,43 @@ describe("X509AuthenticationFactory", function() {
     it("createData", function() {
         var data = new X509AuthenticationData(MockX509AuthenticationFactory.X509_CERT);
         var entityAuthJO = data.getAuthData();
-        
-        var authdata = factory.createData(ctx, entityAuthJO);
-        expect(authdata).not.toBeNull();
-        expect(authdata instanceof X509AuthenticationData).toBeTruthy();
-        
-        var dataJo = JSON.parse(JSON.stringify(data));
-        var authdataJo = JSON.parse(JSON.stringify(authdata));
-        expect(authdataJo).toEqual(dataJo);
+
+        var authdata;
+        runs(function() {
+            factory.createData(ctx, entityAuthJO, {
+                result: function(x) { authdata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return authdata; }, "authdata", 100);
+
+        runs(function() {
+            expect(authdata).not.toBeNull();
+            expect(authdata instanceof X509AuthenticationData).toBeTruthy();
+            
+            var dataJo = JSON.parse(JSON.stringify(data));
+            var authdataJo = JSON.parse(JSON.stringify(authdata));
+            expect(authdataJo).toEqual(dataJo);
+        });
     });
     
-    it("encodeException", function() {
-    	var f = function() {
+    it("encode exception", function() {
+        var exception;
+        runs(function() {
 	        var data = new X509AuthenticationData(MockX509AuthenticationFactory.X509_CERT);
 	        var entityAuthJO = data.getAuthData();
 	        delete entityAuthJO[KEY_X509_CERT];
-	        factory.createData(ctx, entityAuthJO);
-	    };
-        expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            factory.createData(ctx, entityAuthJO, {
+                result: function() {},
+                error: function(e) { exception = e; },
+            });
+        });
+        waitsFor(function() { return exception; }, "exception", 100);
+        
+        runs(function() {
+            var f = function() { throw exception; };
+            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+        });
     });
     
     xit("crypto context", function() {

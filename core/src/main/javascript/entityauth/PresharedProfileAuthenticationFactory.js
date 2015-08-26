@@ -39,8 +39,10 @@ var PresharedProfileAuthenticationFactory = EntityAuthenticationFactory.extend({
     },
 
     /** @inheritDoc */
-    createData: function createData(ctx, entityAuthJO) {
-        return PresharedProfileAuthenticationData$parse(entityAuthJO);
+    createData: function createData(ctx, entityAuthJO, callback) {
+        AsyncExecutor(callback, function() {
+            return PresharedProfileAuthenticationData$parse(entityAuthJO);
+        });
     },
 
     /** @inheritDoc */
@@ -57,7 +59,7 @@ var PresharedProfileAuthenticationFactory = EntityAuthenticationFactory.extend({
         
         // Verify the scheme is permitted.
         if (!this.authutils.isSchemePermitted(pskId, this.scheme))
-            throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication Scheme for Device Type Not Supported " + pskId + ":" + this.scheme).setEntity(ppad);
+            throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication scheme for entity " + pskId + " not supported:" + this.scheme).setEntity(ppad);
         
         // Load preshared keys authentication data.
         var keys = this.store.getKeys(pskId);

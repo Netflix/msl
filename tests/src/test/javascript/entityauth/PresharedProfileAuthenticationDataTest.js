@@ -83,21 +83,32 @@ describe("PresharedProfileAuthenticationData", function() {
         var data = new PresharedProfileAuthenticationData(MockPresharedProfileAuthenticationFactory.PSK_ESN, MockPresharedProfileAuthenticationFactory.PROFILE);
         var jsonString = JSON.stringify(data);
         var jo = JSON.parse(jsonString);
-        var entitydata = EntityAuthenticationData$parse(ctx, jo);
-        expect(entitydata).not.toBeNull();
-        expect(entitydata instanceof PresharedProfileAuthenticationData).toBeTruthy();
         
-        var joData = entitydata;
-        expect(joData.getIdentity()).toEqual(data.getIdentity());
-        expect(joData.presharedKeysId).toEqual(data.presharedKeysId);
-        expect(joData.profile).toEqual(data.profile);
-        expect(joData.scheme).toEqual(data.scheme);
-        var joAuthdata = joData.getAuthData();
-        expect(joAuthdata).not.toBeNull();
-        expect(joAuthdata).toEqual(data.getAuthData());
-        var joJsonString = JSON.stringify(joData);
-        expect(joJsonString).not.toBeNull();
-        expect(joJsonString).toEqual(jsonString);
+        var entitydata;
+        runs(function() {
+            EntityAuthenticationData$parse(ctx, jo, {
+                result: function(x) { entitydata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return entitydata; }, "entitydata", 100);
+        
+        runs(function() {
+            expect(entitydata).not.toBeNull();
+            expect(entitydata instanceof PresharedProfileAuthenticationData).toBeTruthy();
+            
+            var joData = entitydata;
+            expect(joData.getIdentity()).toEqual(data.getIdentity());
+            expect(joData.presharedKeysId).toEqual(data.presharedKeysId);
+            expect(joData.profile).toEqual(data.profile);
+            expect(joData.scheme).toEqual(data.scheme);
+            var joAuthdata = joData.getAuthData();
+            expect(joAuthdata).not.toBeNull();
+            expect(joAuthdata).toEqual(data.getAuthData());
+            var joJsonString = JSON.stringify(joData);
+            expect(joJsonString).not.toBeNull();
+            expect(joJsonString).toEqual(jsonString);
+        });
     });
     
     it("missing preshared keys ID", function() {
@@ -121,35 +132,53 @@ describe("PresharedProfileAuthenticationData", function() {
     });
 
     it("equals preshared keys ID", function() {
-        var pskIdA = MockPresharedProfileAuthenticationFactory.PSK_ESN + "A";
-        var pskIdB = MockPresharedProfileAuthenticationFactory.PSK_ESN + "B";
-        var dataA = new PresharedProfileAuthenticationData(pskIdA, MockPresharedProfileAuthenticationFactory.PROFILE);
-        var dataB = new PresharedProfileAuthenticationData(pskIdB, MockPresharedProfileAuthenticationFactory.PROFILE);
-        var dataA2 = EntityAuthenticationData$parse(ctx, JSON.parse(JSON.stringify(dataA)));
+        var dataA, dataB, dataA2;
+        runs(function() {
+            var pskIdA = MockPresharedProfileAuthenticationFactory.PSK_ESN + "A";
+            var pskIdB = MockPresharedProfileAuthenticationFactory.PSK_ESN + "B";
+            dataA = new PresharedProfileAuthenticationData(pskIdA, MockPresharedProfileAuthenticationFactory.PROFILE);
+            dataB = new PresharedProfileAuthenticationData(pskIdB, MockPresharedProfileAuthenticationFactory.PROFILE);
+            EntityAuthenticationData$parse(ctx, JSON.parse(JSON.stringify(dataA)), {
+                result: function(x) { dataA2 = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return dataA && dataB && dataA2; }, "data", 100);
         
-        expect(dataA.equals(dataA)).toBeTruthy();
-        
-        expect(dataA.equals(dataB)).toBeFalsy();
-        expect(dataB.equals(dataA)).toBeFalsy();
-        
-        expect(dataA.equals(dataA2)).toBeTruthy();
-        expect(dataA2.equals(dataA)).toBeTruthy();
+        runs(function() {
+            expect(dataA.equals(dataA)).toBeTruthy();
+            
+            expect(dataA.equals(dataB)).toBeFalsy();
+            expect(dataB.equals(dataA)).toBeFalsy();
+            
+            expect(dataA.equals(dataA2)).toBeTruthy();
+            expect(dataA2.equals(dataA)).toBeTruthy();
+        });
     });
 
     it("equals profile", function() {
-        var profileA = MockPresharedProfileAuthenticationFactory.PROFILE + "A";
-        var profileB = MockPresharedProfileAuthenticationFactory.PROFILE + "B";
-        var dataA = new PresharedProfileAuthenticationData(MockPresharedProfileAuthenticationFactory.PSK_ESN, profileA);
-        var dataB = new PresharedProfileAuthenticationData(MockPresharedProfileAuthenticationFactory.PSK_ESN, profileB);
-        var dataA2 = EntityAuthenticationData$parse(ctx, JSON.parse(JSON.stringify(dataA)));
+        var dataA, dataB, dataA2;
+        runs(function() {
+            var profileA = MockPresharedProfileAuthenticationFactory.PROFILE + "A";
+            var profileB = MockPresharedProfileAuthenticationFactory.PROFILE + "B";
+            dataA = new PresharedProfileAuthenticationData(MockPresharedProfileAuthenticationFactory.PSK_ESN, profileA);
+            dataB = new PresharedProfileAuthenticationData(MockPresharedProfileAuthenticationFactory.PSK_ESN, profileB);
+            EntityAuthenticationData$parse(ctx, JSON.parse(JSON.stringify(dataA)), {
+                result: function(x) { dataA2 = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return dataA && dataB && dataA2; }, "data", 100);
         
-        expect(dataA.equals(dataA)).toBeTruthy();
-        
-        expect(dataA.equals(dataB)).toBeFalsy();
-        expect(dataB.equals(dataA)).toBeFalsy();
-        
-        expect(dataA.equals(dataA2)).toBeTruthy();
-        expect(dataA2.equals(dataA)).toBeTruthy();
+        runs(function() {
+            expect(dataA.equals(dataA)).toBeTruthy();
+            
+            expect(dataA.equals(dataB)).toBeFalsy();
+            expect(dataB.equals(dataA)).toBeFalsy();
+            
+            expect(dataA.equals(dataA2)).toBeTruthy();
+            expect(dataA2.equals(dataA)).toBeTruthy();
+        });
     });
     
     it("equals object", function() {

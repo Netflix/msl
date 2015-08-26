@@ -75,19 +75,30 @@ describe("UnauthenticatedAuthenticationData", function() {
         var data = new UnauthenticatedAuthenticationData(IDENTITY);
         var jsonString = JSON.stringify(data);
         var jo = JSON.parse(jsonString);
-        var entitydata = EntityAuthenticationData$parse(ctx, jo);
-        expect(entitydata).not.toBeNull();
-        expect(entitydata instanceof UnauthenticatedAuthenticationData).toBeTruthy();
         
-        var joData = entitydata;
-        expect(joData.getIdentity()).toEqual(data.getIdentity());
-        expect(joData.scheme).toEqual(data.scheme);
-        var joAuthdata = joData.getAuthData();
-        expect(joAuthdata).not.toBeNull();
-        expect(joAuthdata).toEqual(data.getAuthData());
-        var joJsonString = JSON.stringify(joData);
-        expect(joJsonString).not.toBeNull();
-        expect(joJsonString).toEqual(jsonString);
+        var entitydata;
+        runs(function() {
+            EntityAuthenticationData$parse(ctx, jo, {
+                result: function(x) { entitydata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return entitydata; }, "entitydata", 100);
+        
+        runs(function() {
+            expect(entitydata).not.toBeNull();
+            expect(entitydata instanceof UnauthenticatedAuthenticationData).toBeTruthy();
+
+            var joData = entitydata;
+            expect(joData.getIdentity()).toEqual(data.getIdentity());
+            expect(joData.scheme).toEqual(data.scheme);
+            var joAuthdata = joData.getAuthData();
+            expect(joAuthdata).not.toBeNull();
+            expect(joAuthdata).toEqual(data.getAuthData());
+            var joJsonString = JSON.stringify(joData);
+            expect(joJsonString).not.toBeNull();
+            expect(joJsonString).toEqual(jsonString);
+        });
     });
     
     it("missing identity", function() {
@@ -101,19 +112,28 @@ describe("UnauthenticatedAuthenticationData", function() {
     });
 
     it("equals identity", function() {
-        var identityA = IDENTITY + "A";
-        var identityB = IDENTITY + "B";
-        var dataA = new UnauthenticatedAuthenticationData(identityA);
-        var dataB = new UnauthenticatedAuthenticationData(identityB);
-        var dataA2 = EntityAuthenticationData$parse(ctx, JSON.parse(JSON.stringify(dataA)));
+        var dataA, dataB, dataA2;
+        runs(function() {
+            var identityA = IDENTITY + "A";
+            var identityB = IDENTITY + "B";
+            dataA = new UnauthenticatedAuthenticationData(identityA);
+            dataB = new UnauthenticatedAuthenticationData(identityB);
+            EntityAuthenticationData$parse(ctx, JSON.parse(JSON.stringify(dataA)), {
+                result: function(x) { dataA2 = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return dataA && dataB && dataA2; }, "data", 100);
         
-        expect(dataA.equals(dataA)).toBeTruthy();
-        
-        expect(dataA.equals(dataB)).toBeFalsy();
-        expect(dataB.equals(dataA)).toBeFalsy();
-        
-        expect(dataA.equals(dataA2)).toBeTruthy();
-        expect(dataA2.equals(dataA)).toBeTruthy();
+        runs(function() {
+            expect(dataA.equals(dataA)).toBeTruthy();
+            
+            expect(dataA.equals(dataB)).toBeFalsy();
+            expect(dataB.equals(dataA)).toBeFalsy();
+            
+            expect(dataA.equals(dataA2)).toBeTruthy();
+            expect(dataA2.equals(dataA)).toBeTruthy();
+        });
     });
     
     it("equals object", function() {

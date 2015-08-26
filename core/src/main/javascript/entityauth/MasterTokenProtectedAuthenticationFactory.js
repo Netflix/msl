@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2015 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var PresharedAuthenticationFactory;
 
 /**
- * Preshared keys entity authentication factory.
- *
+ * <p>Master token protected entity authentication factory.</p>
+ * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-PresharedAuthenticationFactory = EntityAuthenticationFactory.extend({
+MasterTokenProtectedAuthenticationFactory = EntityAuthenticationFactory.extend({
     /**
-     * Construct a new preshared keys authentication factory instance.
-     *
-     * @param {PresharedKeyStore} store preshared key store.
+     * <p>Construct a new master token protected entity authentication factory
+     * instance.</p>
+     * 
      * @param {AuthenticationUtils} authutils authentication utilities.
      */
-    init: function init(store, authutils) {
-        init.base.call(this, EntityAuthenticationScheme.PSK);
-
+    init: function init(authutils) {
+        init.base.call(this, EntityAuthenticationScheme.MT_PROTECTED);
+        
         // The properties.
         var props = {
-            store: { value: store, writable: false, enumerable: false, configurable: false },
             authutils: { value: authutils, writable: false, enumerable: false, configurable: false },
         };
         Object.defineProperties(this, props);
@@ -40,33 +38,31 @@ PresharedAuthenticationFactory = EntityAuthenticationFactory.extend({
 
     /** @inheritDoc */
     createData: function createData(ctx, entityAuthJO, callback) {
-        AsyncExecutor(callback, function() {
-            return PresharedAuthenticationData$parse(entityAuthJO);
-        });
+        MasterTokenProtectedAuthenticationData$parse(ctx, entityAuthJO, callback);
     },
 
     /** @inheritDoc */
     getCryptoContext: function getCryptoContext(ctx, authdata) {
         // Make sure we have the right kind of entity authentication data.
-        if (!(authdata instanceof PresharedAuthenticationData))
+        if (!(authdata instanceof MasterTokenProtectedAuthenticationData))
             throw new MslInternalException("Incorrect authentication data type " + JSON.stringify(authdata) + ".");
-        var pad = authdata;
-     
+        var mtpad = authdata;
+
         // Check for revocation.
-        var identity = pad.getIdentity();
+        var identity = mtpad.getIdentity();
         if (this.authutils.isEntityRevoked(identity))
-            throw new MslEntityAuthException(MslError.ENTITY_REVOKED, "psk " + identity).setEntity(pad);
-        
+            throw new MslEntityAuthException(MslError.ENTITY_REVOKED, "mt protected " + identity).setEntity(mtpad);
+
         // Verify the scheme is permitted.
         if (!this.authutils.isSchemePermitted(identity, this.scheme))
-            throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication scheme for entity " + identity + " not supported:" + this.scheme).setEntity(pad);
+            throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication scheme for entity " + identity + " not supported:" + this.scheme).setEntity(mtpad);
         
-        // Load preshared keys authentication data.
-        var keys = this.store.getKeys(identity);
-        if (!keys)
-            throw new MslEntityAuthException(MslError.ENTITY_NOT_FOUND, "psk " + identity).setEntity(pad);
-        
-        // Return the crypto context.
-        return new SymmetricCryptoContext(ctx, identity, keys.encryptionKey, keys.hmacKey, keys.wrappingKey);
+        // Authenticate using the encapsulated authentication data.
+        var ead = mtpad.encapsulatedAuthdata;
+        var scheme = ead.scheme;
+        var factory = ctx.getEntityAuthenticationFactory(scheme);
+        if (!factory)
+            throw new MslEntityAuthException(MslError.ENTITYAUTH_FACTORY_NOT_FOUND, scheme.name).setEntity(mtpad);
+        return factory.getCryptoContext(ctx, ead);
     },
 });

@@ -87,21 +87,32 @@ describe("UnauthenticatedSuffixedAuthenticationData", function() {
         var data = new UnauthenticatedSuffixedAuthenticationData(ROOT, SUFFIX);
         var jsonString = JSON.stringify(data);
         var jo = JSON.parse(jsonString);
-        var entitydata = EntityAuthenticationData$parse(ctx, jo);
-        expect(entitydata).not.toBeNull();
-        expect(entitydata instanceof UnauthenticatedSuffixedAuthenticationData).toBeTruthy();
         
-        var joData = entitydata;
-        expect(joData.getIdentity()).toEqual(data.getIdentity());
-        expect(joData.root).toEqual(data.root);
-        expect(joData.suffix).toEqual(data.suffix);
-        expect(joData.scheme).toEqual(data.scheme);
-        var joAuthdata = joData.getAuthData();
-        expect(joAuthdata).not.toBeNull();
-        expect(joAuthdata).toEqual(data.getAuthData());
-        var joJsonString = JSON.stringify(joData);
-        expect(joJsonString).not.toBeNull();
-        expect(joJsonString).toEqual(jsonString);
+        var entitydata;
+        runs(function() {
+            EntityAuthenticationData$parse(ctx, jo, {
+                result: function(x) { entitydata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return entitydata; }, "entitydata", 100);
+        
+        runs(function() {
+            expect(entitydata).not.toBeNull();
+            expect(entitydata instanceof UnauthenticatedSuffixedAuthenticationData).toBeTruthy();
+            
+            var joData = entitydata;
+            expect(joData.getIdentity()).toEqual(data.getIdentity());
+            expect(joData.root).toEqual(data.root);
+            expect(joData.suffix).toEqual(data.suffix);
+            expect(joData.scheme).toEqual(data.scheme);
+            var joAuthdata = joData.getAuthData();
+            expect(joAuthdata).not.toBeNull();
+            expect(joAuthdata).toEqual(data.getAuthData());
+            var joJsonString = JSON.stringify(joData);
+            expect(joJsonString).not.toBeNull();
+            expect(joJsonString).toEqual(jsonString);
+        });
     });
     
     it("missing root", function() {
@@ -125,31 +136,49 @@ describe("UnauthenticatedSuffixedAuthenticationData", function() {
     });
 
     it("equals root", function() {
-        var dataA = new UnauthenticatedSuffixedAuthenticationData(ROOT + "A", SUFFIX);
-        var dataB = new UnauthenticatedSuffixedAuthenticationData(ROOT + "B", SUFFIX);
-        var dataA2 = EntityAuthenticationData$parse(ctx, JSON.parse(JSON.stringify(dataA)));
+        var dataA, dataB, dataA2;
+        runs(function() {
+            dataA = new UnauthenticatedSuffixedAuthenticationData(ROOT + "A", SUFFIX);
+            dataB = new UnauthenticatedSuffixedAuthenticationData(ROOT + "B", SUFFIX);
+            EntityAuthenticationData$parse(ctx, JSON.parse(JSON.stringify(dataA)), {
+                result: function(x) { dataA2 = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return dataA && dataB && dataA2; }, "data", 100);
         
-        expect(dataA.equals(dataA)).toBeTruthy();
-        
-        expect(dataA.equals(dataB)).toBeFalsy();
-        expect(dataB.equals(dataA)).toBeFalsy();
-        
-        expect(dataA.equals(dataA2)).toBeTruthy();
-        expect(dataA2.equals(dataA)).toBeTruthy();
+        runs(function() {
+            expect(dataA.equals(dataA)).toBeTruthy();
+            
+            expect(dataA.equals(dataB)).toBeFalsy();
+            expect(dataB.equals(dataA)).toBeFalsy();
+            
+            expect(dataA.equals(dataA2)).toBeTruthy();
+            expect(dataA2.equals(dataA)).toBeTruthy();
+        });
     });
 
     it("equals suffix", function() {
-        var dataA = new UnauthenticatedSuffixedAuthenticationData(ROOT, SUFFIX + "A");
-        var dataB = new UnauthenticatedSuffixedAuthenticationData(ROOT, SUFFIX + "B");
-        var dataA2 = EntityAuthenticationData$parse(ctx, JSON.parse(JSON.stringify(dataA)));
+        var dataA, dataB, dataA2;
+        runs(function() {
+            dataA = new UnauthenticatedSuffixedAuthenticationData(ROOT, SUFFIX + "A");
+            dataB = new UnauthenticatedSuffixedAuthenticationData(ROOT, SUFFIX + "B");
+            EntityAuthenticationData$parse(ctx, JSON.parse(JSON.stringify(dataA)), {
+                result: function(x) { dataA2 = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return dataA && dataB && dataA2; }, "data", 100);
         
-        expect(dataA.equals(dataA)).toBeTruthy();
-        
-        expect(dataA.equals(dataB)).toBeFalsy();
-        expect(dataB.equals(dataA)).toBeFalsy();
-        
-        expect(dataA.equals(dataA2)).toBeTruthy();
-        expect(dataA2.equals(dataA)).toBeTruthy();
+        runs(function() {
+            expect(dataA.equals(dataA)).toBeTruthy();
+            
+            expect(dataA.equals(dataB)).toBeFalsy();
+            expect(dataB.equals(dataA)).toBeFalsy();
+            
+            expect(dataA.equals(dataA2)).toBeTruthy();
+            expect(dataA2.equals(dataA)).toBeTruthy();
+        });
     });
     
     it("equals object", function() {
