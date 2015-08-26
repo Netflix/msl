@@ -1,4 +1,4 @@
-/bin
+/bin/mslcli/
 /.gradle
 /build
 /.classpath
