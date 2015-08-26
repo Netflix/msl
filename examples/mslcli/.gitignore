@@ -1,0 +1,10 @@
+/bin
+/.gradle
+/build
+/.classpath
+/.project
+/.settings
+*.iml
+/.idea/artifacts
+/.idea/copyright
+/.idea/libraries
