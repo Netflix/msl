@@ -54,7 +54,7 @@ Your browser may not support all Web Crypto API algorithms, key sizes, and featu
 
 To include the JavaScript MSL stack in your JavaScript application you must include all of the MSL JavaScript source files required by your MSL configuration. An example list of the required source files can be found in [src/test/javascript/msltests.html](src/test/javascript/msltests.html).
 
-An example client is provided under [src/examples/simple/src/main/javascript/client/](src/examples/simple/src/main/javascript/client/). The example client is a web page that will send requests to the example Java server. The example client MSL configuration is specific to this client and should not be used to configure your appplication, but it can be used as the basis for doing so.
+An example client is provided under [src/examples/simple/src/main/javascript/client/](src/examples/simple/src/main/javascript/client/). The example client is a web page that will send requests to the example Java server. The example client MSL configuration is specific to this client and should not be used to configure your application, but it can be used as the basis for doing so.
 
 ## LICENSE
 
