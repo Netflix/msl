@@ -13,6 +13,8 @@
             <option value="$PROJECT_DIR$/examples/burp" />
             <option value="$PROJECT_DIR$/examples/burp-extender" />
             <option value="$PROJECT_DIR$/examples/kancolle" />
+            <option value="$PROJECT_DIR$/examples/mslcli" />
+            <option value="$PROJECT_DIR$/examples/proxy" />
             <option value="$PROJECT_DIR$/examples/simple" />
             <option value="$PROJECT_DIR$/integ-tests" />
             <option value="$PROJECT_DIR$/tests" />
