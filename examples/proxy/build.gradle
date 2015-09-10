@@ -1,0 +1,7 @@
+apply plugin: 'java'
+
+dependencies {
+    compile project(':msl-core')
+}
+
+jar.baseName = "msl-proxy"
