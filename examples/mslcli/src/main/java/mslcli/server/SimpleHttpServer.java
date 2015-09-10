@@ -88,6 +88,7 @@ public class SimpleHttpServer {
         @Override
         public void handle(HttpExchange t) throws IOException {
             log("Processing request");
+            final long t_start = System.currentTimeMillis();
 
             final ByteArrayOutputStream out = new ByteArrayOutputStream();
             try {
@@ -118,7 +119,9 @@ public class SimpleHttpServer {
                 os.close();
             }
 
+            final long t_total = System.currentTimeMillis() - t_start;
             log(String.format("SUCCESS: %1$te/%1$tm/%1$tY %1$tH:%1$tM:%1$tS.%1$tL", new Date()));
+            log(String.format("Processing Time %d msec", t_total));
         }
 
         /** MSL server to delegate requests to */

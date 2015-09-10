@@ -9,7 +9,7 @@ core; MSL messages in general can carry arbitrary payload data.
 
 MSL CLI should be built from the top level, as one of the msl sub-projects, e.g.:
 % cd ~/Git/msl
-% ./gradlew build
+% ./gradlew compileJava
 
 Build distribution, so all dependencies can be picked up easily:
 % ./gradlew distZip

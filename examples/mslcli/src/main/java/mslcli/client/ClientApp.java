@@ -134,10 +134,10 @@ public final class ClientApp {
                 final CmdArguments cmdParam = new CmdArguments(args);
                 final ClientApp clientApp = new ClientApp(cmdParam);
                 if (cmdParam.isInteractive()) {
-                    clientApp.sendMultipleRequests();
+                    clientApp.sendInteractive();
                     status = Status.OK;
                 } else {
-                    status = clientApp.sendSingleRequest(null);
+                    status = clientApp.sendRequest(null);
                 }
                 clientApp.shutdown();
             }
@@ -223,7 +223,7 @@ public final class ClientApp {
      * @throws IOException in case of user input reading error
      */
 
-    public void sendMultipleRequests() throws IllegalCmdArgumentException, IOException {
+    public void sendInteractive() throws IllegalCmdArgumentException, IOException {
         while (true) {
             final String options = SharedUtil.readInput(CMD_PROMPT);
             if (optMatch(CMD_QUIT, options)) {
@@ -258,7 +258,7 @@ public final class ClientApp {
                 } else {
                     p = null;
                 }
-                final Status status = sendSingleRequest(p);
+                final Status status = sendRequest(p);
                 if (status != Status.OK) {
                     out("Status: " + status.toString());
                 }
@@ -285,7 +285,7 @@ public final class ClientApp {
      * @param args additional command-line arguments specified in interactive mode (null in non-interactive mode)
      * @return Status containing either reply payload or MSL error
      */
-    public Status sendSingleRequest(final CmdArguments args) {
+    public Status sendRequest(final CmdArguments args) {
         Status status = Status.OK;
 
         try_label: try {
@@ -339,30 +339,41 @@ public final class ClientApp {
             /* ********************************************
              * FINALLY: SEND REQUEST AND PROCESS RESPONSE *
              **********************************************/
-            final Client.Response response = client.sendRequest(requestPayload);
+            final int nsend = client.getConfig().getNumSends();
+            int count;
+            final long t_start = System.currentTimeMillis();
+            for (count = 0; count < nsend; count++) {
+                final Client.Response response = client.sendRequest(requestPayload);
 
-            // Non-NULL response payload - good
-            if (response.getPayload() != null) {
-                if (outputFile != null) {
-                    SharedUtil.saveToFile(outputFile, response.getPayload(), false /*overwrite*/);
+                // Non-NULL response payload - good
+                if (response.getPayload() != null) {
+                    if (count == 0) {
+                        if (outputFile != null) {
+                            SharedUtil.saveToFile(outputFile, response.getPayload(), false /*overwrite*/);
+                        } else {
+                            out("Response: " + new String(response.getPayload(), MslConstants.DEFAULT_CHARSET));
+                        }
+                    }
+                    status = Status.OK;
+                // NULL payload, must be MSL error response
+                } else if (response.getErrorHeader() != null) {
+                    if (response.getErrorHeader().getErrorMessage() != null) {
+                        err(String.format("MSL RESPONSE ERROR: error_code %d, error_msg \"%s\"",
+                            response.getErrorHeader().getErrorCode().intValue(),
+                            response.getErrorHeader().getErrorMessage()));
+                    } else {
+                        err(String.format("ERROR: %s" + response.getErrorHeader().toJSONString()));
+                    }
+                    status = Status.MSL_ERROR;
+                // NULL payload, NULL error header - should never happen
                 } else {
-                    out("Response: " + new String(response.getPayload(), MslConstants.DEFAULT_CHARSET));
+                    out("Response with no payload or error header ???");
+                    status = Status.MSL_ERROR;
                 }
-                status = Status.OK;
-            // NULL payload, must be MSL error response
-            } else if (response.getErrorHeader() != null) {
-                if (response.getErrorHeader().getErrorMessage() != null) {
-                    err(String.format("MSL RESPONSE ERROR: error_code %d, error_msg \"%s\"",
-                        response.getErrorHeader().getErrorCode().intValue(),
-                        response.getErrorHeader().getErrorMessage()));
-                } else {
-                    err(String.format("ERROR: %s" + response.getErrorHeader().toJSONString()));
-                }
-                status = Status.MSL_ERROR;
-            // NULL payload, NULL error header - should never happen
-            } else {
-                out("Response with no payload or error header ???");
-                status = Status.MSL_ERROR;
+            }
+            final long t_total = System.currentTimeMillis() - t_start;
+            if (count != 0) {
+                out(String.format("Messages Sent: %d, Total Time: %d msec, Per Message: %d msec", count, t_total, t_total/count));
             }
         } catch (MslException e) {
             err(SharedUtil.getMslExceptionInfo(e));
