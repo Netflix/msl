@@ -51,6 +51,7 @@ import com.netflix.msl.crypto.CryptoCache;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.crypto.JcaAlgorithm;
 import com.netflix.msl.crypto.SessionCryptoContext;
+import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.util.AuthenticationUtils;
@@ -500,23 +501,24 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.keyx.KeyExchangeFactory#generateResponse(com.netflix.msl.util.MslContext, com.netflix.msl.keyx.KeyRequestData, java.lang.String)
+     * @see com.netflix.msl.keyx.KeyExchangeFactory#generateResponse(com.netflix.msl.util.MslContext, com.netflix.msl.keyx.KeyRequestData, com.netflix.msl.entityauth.EntityAuthenticationData)
      */
     @Override
-    public KeyExchangeData generateResponse(final MslContext ctx, final KeyRequestData keyRequestData, final String identity) throws MslException {
+    public KeyExchangeData generateResponse(final MslContext ctx, final KeyRequestData keyRequestData, final EntityAuthenticationData entityAuthData) throws MslException {
         if (!(keyRequestData instanceof RequestData))
             throw new MslInternalException("Key request data " + keyRequestData.getClass().getName() + " was not created by this factory.");
         final RequestData request = (RequestData)keyRequestData;
 
         // Verify the scheme is permitted.
+        final String identity = entityAuthData.getIdentity();
         if(!authutils.isSchemePermitted(identity, this.getScheme()))
-            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + this.getScheme());
+            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + this.getScheme()).setEntity(entityAuthData);
 
         // Load matching Diffie-Hellman parameter specification.
         final String parametersId = request.getParametersId();
         final DHParameterSpec paramSpec = params.getParameterSpec(parametersId);
         if (paramSpec == null)
-            throw new MslKeyExchangeException(MslError.UNKNOWN_KEYX_PARAMETERS_ID, parametersId);
+            throw new MslKeyExchangeException(MslError.UNKNOWN_KEYX_PARAMETERS_ID, parametersId).setEntity(entityAuthData);
 
         // Reconstitute request public key.
         final PublicKey requestPublicKey;
@@ -551,7 +553,7 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
 
         // Create the master token.
         final TokenFactory tokenFactory = ctx.getTokenFactory();
-        final MasterToken masterToken = tokenFactory.createMasterToken(ctx, identity, sessionKeys.encryptionKey, sessionKeys.hmacKey);
+        final MasterToken masterToken = tokenFactory.createMasterToken(ctx, entityAuthData, sessionKeys.encryptionKey, sessionKeys.hmacKey);
 
         // Create crypto context.
         final ICryptoContext cryptoContext;

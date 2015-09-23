@@ -331,7 +331,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
                     },
                     error: function(e) {
                         AsyncExecutor(callback, function() {
-                            if (e instanceof MslException && entityToken instanceof MasterToken)
+                            if (e instanceof MslException)
                                 e.setEntity(entityToken);
                             throw e;
                         }, self);
@@ -347,7 +347,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
                     // from the master token. Otherwise we were provided the
                     // identity and will be issuing a new master token.
                     var masterToken, identity;
-                    if (typeof entityToken !== 'string') {
+                    if (entityToken instanceof MasterToken) {
                         // If the master token was not issued by the local entity then we
                         // should not be generating a key response for it.
                         if (!entityToken.isVerified())
@@ -357,7 +357,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
                         identity = masterToken.identity;
                     } else {
                         masterToken = null;
-                        identity = entityToken;
+                        identity = entityToken.getIdentity();
                     }
 
                     // Wrap session keys with identified key.
@@ -373,7 +373,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
                                         error: function(e) {
                                             AsyncExecutor(callback, function() {
                                                 if (e instanceof MslException)
-                                                    e.setEntity(masterToken);
+                                                    e.setEntity(entityToken);
                                                 throw e;
                                             }, self);
                                         }
@@ -382,7 +382,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
                                 error: function(e) {
                                     AsyncExecutor(callback, function() {
                                         if (e instanceof MslException)
-                                            e.setEntity(masterToken);
+                                            e.setEntity(entityToken);
                                         throw e;
                                     }, self);
                                 }
@@ -391,7 +391,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
                         error: function(e) {
                             AsyncExecutor(callback, function() {
                                 if (e instanceof MslException)
-                                    e.setEntity(masterToken);
+                                    e.setEntity(entityToken);
                                 throw e;
                             }, self);
                         }
@@ -453,7 +453,13 @@ var SymmetricWrappedExchange$ResponseData$parse;
                                     return new KeyExchangeFactory.KeyExchangeData(keyResponseData, cryptoContext);
                                 }, self);
                             },
-                            error: callback.error,
+                            error: function(e) {
+                                AsyncExecutor(callback, function() {
+                                    if (e instanceof MslException)
+                                        e.setEntity(entityToken);
+                                    throw e;
+                                }, self);
+                            }
                         });
                     }
                 }, self);

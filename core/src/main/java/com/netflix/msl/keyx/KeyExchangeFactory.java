@@ -24,6 +24,7 @@ import com.netflix.msl.MslException;
 import com.netflix.msl.MslKeyExchangeException;
 import com.netflix.msl.MslMasterTokenException;
 import com.netflix.msl.crypto.ICryptoContext;
+import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.util.MslContext;
 
@@ -128,12 +129,12 @@ public abstract class KeyExchangeFactory {
     
     /**
      * <p>Generate a new key response data instance and crypto context in
-     * response to the provided key request data and entity identity. The key
-     * request data will be from the the remote entity.</p>
+     * response to the provided key request data and entity authentication
+     * data. The key request data will be from the the remote entity.</p>
      * 
      * @param ctx MSL context.
      * @param keyRequestData the key request data.
-     * @param identity the entity identity.
+     * @param entityAuthData the entity authentication data.
      * @return the key response data and crypto context or {@code null} if the
      *         factory chooses not to perform key exchange.
      * @throws MslKeyExchangeException if there is an error with the key
@@ -145,7 +146,7 @@ public abstract class KeyExchangeFactory {
      *         identity.
      * @throws MslException if there is an error creating the master token.
      */
-    public abstract KeyExchangeData generateResponse(final MslContext ctx, final KeyRequestData keyRequestData, final String identity) throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslEntityAuthException, MslException;
+    public abstract KeyExchangeData generateResponse(final MslContext ctx, final KeyRequestData keyRequestData, final EntityAuthenticationData entityAuthData) throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslEntityAuthException, MslException;
     
     /**
      * Create a crypto context from the provided key request data and key

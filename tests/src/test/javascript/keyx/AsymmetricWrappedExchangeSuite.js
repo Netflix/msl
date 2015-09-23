@@ -744,6 +744,8 @@ describe("AsymmetricWrappedExchangeSuite", function() {
         var random = new Random();
         /** Key exchange factory. */
         var factory = new AsymmetricWrappedExchange();
+        /** Entity authentication data. */
+        var entityAuthData = new PresharedAuthenticationData(IDENTITY);
         
         beforeEach(function() {
             ctx.getMslStore().clearCryptoContexts();
@@ -758,7 +760,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             var exception;
             runs(function() {
                 var keyRequestData = new FakeKeyRequestData();
-                factory.generateResponse(ctx, keyRequestData, IDENTITY, {
+                factory.generateResponse(ctx, keyRequestData, entityAuthData, {
                     result: function() {},
                     error: function(err) { exception = err; }
                 });
@@ -825,7 +827,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                 var keyRequestData = new RequestData(KEYPAIR_ID, mechanism, publicKey, privateKey);
                 var keyxData;
                 runs(function() {
-                    factory.generateResponse(ctx, keyRequestData, IDENTITY, {
+                    factory.generateResponse(ctx, keyRequestData, entityAuthData, {
                         result: function(data) { keyxData = data; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
@@ -900,7 +902,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                 var keyRequestData = new RequestData(KEYPAIR_ID, mechanism, publicKey, privateKey);
                 var keyxData;
                 runs(function() {
-                    factory.generateResponse(ctx, keyRequestData, IDENTITY, {
+                    factory.generateResponse(ctx, keyRequestData, entityAuthData, {
                         result: function(data) { keyxData = data; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
@@ -1004,7 +1006,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
 
                 var keyxData;
                 runs(function() {
-                    factory.generateResponse(ctx, keyRequestData, IDENTITY, {
+                    factory.generateResponse(ctx, keyRequestData, entityAuthData, {
                         result: function(data) { keyxData = data; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
@@ -1052,7 +1054,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
 
                 var keyxData;
                 runs(function() {
-                    factory.generateResponse(ctx, keyRequestData, IDENTITY, {
+                    factory.generateResponse(ctx, keyRequestData, entityAuthData, {
                         result: function(data) { keyxData = data; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
@@ -1083,7 +1085,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
 
                 var keyxData;
                 runs(function() {
-                    factory.generateResponse(ctx, keyRequestData, IDENTITY, {
+                    factory.generateResponse(ctx, keyRequestData, entityAuthData, {
                         result: function(data) { keyxData = data; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
@@ -1111,7 +1113,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
 
                 var keyxData;
                 runs(function() {
-                    factory.generateResponse(ctx, keyRequestData, IDENTITY, {
+                    factory.generateResponse(ctx, keyRequestData, entityAuthData, {
                         result: function(data) { keyxData = data; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
@@ -1148,7 +1150,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
 
                 var keyxData;
                 runs(function() {
-                    factory.generateResponse(ctx, keyRequestData, IDENTITY, {
+                    factory.generateResponse(ctx, keyRequestData, entityAuthData, {
                         result: function(data) { keyxData = data; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });

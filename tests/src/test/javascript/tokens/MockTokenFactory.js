@@ -136,7 +136,7 @@ var MockTokenFactory;
         },
 
         /** @inheritDoc */
-        createMasterToken: function(ctx, identity, encryptionKey, hmacKey, callback) {
+        createMasterToken: function(ctx, entityAuthData, encryptionKey, hmacKey, callback) {
             AsyncExecutor(callback, function() {
                 var renewalWindow = new Date(ctx.getTime() + RENEWAL_OFFSET);
                 var expiration = new Date(ctx.getTime() + EXPIRATION_OFFSET);
@@ -146,6 +146,7 @@ var MockTokenFactory;
                     serialNumber = ctx.getRandom().nextLong();
                 } while (serialNumber < 0 || serialNumber > MslConstants$MAX_LONG_VALUE);
                 var issuerData = null;
+                var identity = entityAuthData.getIdentity();
                 MasterToken$create(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey, callback);
             }, this);
         },

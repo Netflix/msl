@@ -70,7 +70,8 @@ var MessageBuilder$createErrorResponse;
      * @param {Array.<KeyRequestData>} keyRequestData available key request data.
      * @param {MasterToken} masterToken master token to renew. Null if the identity is
      *        provided.
-     * @param {string} identity entity identity. Null if a master token is provided.
+     * @param {EntityAuthenticationData} entityAuthData entity authentication data. Null if a master token
+     *        is provided.
      * @param {{result: function(KeyExchangeData), error: function(Error)}}
      *        callback the callback that will receive the key exchange data, or
      *        null if the factory chooses not to perform key exchange, or any
@@ -87,11 +88,11 @@ var MessageBuilder$createErrorResponse;
      * @throws MslException if there is an error creating or renewing the
      *         master token.
      */
-    function issueMasterToken(ctx, keyRequestData, masterToken, identity, callback) {
+    function issueMasterToken(ctx, keyRequestData, masterToken, entityAuthData, callback) {
         var factoryIndex = 0, requestIndex = 0;
         var factories = ctx.getKeyExchangeFactories();
         var keyxException;
-        var entityToken = (masterToken) ? masterToken : identity;
+        var entityToken = (masterToken) ? masterToken : entityAuthData;
 
         // Attempt key exchange in the preferred order.
         function nextExchange() {
@@ -206,7 +207,7 @@ var MessageBuilder$createErrorResponse;
                     // The message header is already authenticated via the
                     // entity authentication data's crypto context so we can
                     // simply proceed with the master token issuance.
-                    issueMasterToken(ctx, keyRequestData, null, entityAuthData.getIdentity(), callback);
+                    issueMasterToken(ctx, keyRequestData, null, entityAuthData, callback);
                 }
             }
 

@@ -33,8 +33,10 @@ import com.netflix.msl.MslError;
 import com.netflix.msl.MslException;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.crypto.NullCryptoContext;
+import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.entityauth.MockPresharedAuthenticationFactory;
+import com.netflix.msl.entityauth.PresharedAuthenticationData;
 import com.netflix.msl.test.ExpectedMslException;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.MockTokenFactory;
@@ -58,10 +60,12 @@ public class NullMslStoreTest {
     public static void setup() throws MslEncodingException, MslCryptoException {
         ctx = new MockMslContext(EntityAuthenticationScheme.NONE, false);
         factory = new MockTokenFactory();
+        entityAuthData = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN);
     }
     
     @AfterClass
     public static void teardown() {
+    	entityAuthData = null;
         factory = null;
         ctx = null;
     }
@@ -78,7 +82,7 @@ public class NullMslStoreTest {
     
     @Test
     public void cryptoContexts() throws MslException {
-        final MasterToken masterToken = factory.createMasterToken(ctx, MockPresharedAuthenticationFactory.PSK_ESN, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH);
+        final MasterToken masterToken = factory.createMasterToken(ctx, entityAuthData, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH);
         assertNull(store.getCryptoContext(masterToken));
         
         final ICryptoContext cryptoContext = new NullCryptoContext();
@@ -89,7 +93,7 @@ public class NullMslStoreTest {
     
     @Test
     public void nonReplayableId() throws MslEncodingException, MslCryptoException, MslException {
-        final MasterToken masterToken = factory.createMasterToken(ctx, MockPresharedAuthenticationFactory.PSK_ESN, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH);
+        final MasterToken masterToken = factory.createMasterToken(ctx, entityAuthData, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH);
         for (int i = 0; i < 10; ++i)
             assertEquals(1, store.getNonReplayableId(masterToken));
     }
@@ -150,6 +154,8 @@ public class NullMslStoreTest {
     private static MslContext ctx;
     /** Token factory. */
     private static TokenFactory factory;
+    /** Entity authentication data. */
+    private static EntityAuthenticationData entityAuthData;
     
     /** MSL store. */
     private MslStore store;

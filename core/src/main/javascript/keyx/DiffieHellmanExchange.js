@@ -385,10 +385,8 @@ var DiffieHellmanExchange$ResponseData$parse;
                 // Load matching Diffie-Hellman parameter specification.
                 var parametersId = request.parametersId;
                 var params = this.paramSpecs.getParameterSpec(parametersId);
-                if (!params) {
-                    throw new MslKeyExchangeException(MslError.UNKNOWN_KEYX_PARAMETERS_ID, parametersId)
-                        .setEntity((entityToken instanceof MasterToken) ? entityToken : null);
-                }
+                if (!params)
+                    throw new MslKeyExchangeException(MslError.UNKNOWN_KEYX_PARAMETERS_ID, parametersId).setEntity(entityToken);
                 
                 // Reconstitute request public key.
                 var requestPublicKey = request.publicKey;
@@ -398,7 +396,7 @@ var DiffieHellmanExchange$ResponseData$parse;
                     constructKeys(parametersId, params, requestPublicKey, keyPair.publicKey, keyPair.privateKey);
                 };
                 var onerror = function(e) {
-                    callback.error(new MslCryptoException(MslError.GENERATEKEY_ERROR, "Error generating Diffie-Hellman key pair.", e));
+                    callback.error(new MslCryptoException(MslError.GENERATEKEY_ERROR, "Error generating Diffie-Hellman key pair.", e).setEntity(entityToken));
                 };
                 mslCrypto['generateKey']({
                     'name': WebCryptoAlgorithm.DIFFIE_HELLMAN,
@@ -446,7 +444,13 @@ var DiffieHellmanExchange$ResponseData$parse;
                                             return new KeyExchangeFactory.KeyExchangeData(keyResponseData, cryptoContext);
                                         }, self);
                                     },
-                                    error: callback.error,
+                                    error: function(e) {
+                                        AsyncExecutor(callback, function() {
+                                            if (e instanceof MslException)
+                                                e.setEntity(entityToken);
+                                            throw e;
+                                        }, self);
+                                    }
                                 });
                             }
                         }, self);
