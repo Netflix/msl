@@ -702,6 +702,8 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
         var repository = new MockCryptoContextRepository();
         /** Key exchange factory. */
         var factory = new JsonWebEncryptionLadderExchange(repository);
+        /** Entity authentication data. */
+        var entityAuthData = new PresharedAuthenticationData(PSK_IDENTITY);
         
         beforeEach(function() {
             pskCtx.getMslStore().clearCryptoContexts();
@@ -717,7 +719,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             var req, keyxData;
             runs(function() {
                 req = new RequestData(Mechanism.WRAP, WRAPDATA);
-                factory.generateResponse(pskCtx, req, PSK_IDENTITY, {
+                factory.generateResponse(pskCtx, req, entityAuthData, {
                     result: function(x) { keyxData = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -819,7 +821,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             var keyxData;
             runs(function() {
                 var req = new RequestData(Mechanism.PSK, null);
-                factory.generateResponse(pskCtx, req, PSK_IDENTITY, {
+                factory.generateResponse(pskCtx, req, entityAuthData, {
                     result: function(x) { keyxData = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -919,7 +921,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             var exception;
             runs(function() {
                 var req = new FakeKeyRequestData();
-                factory.generateResponse(pskCtx, req, PSK_IDENTITY, {
+                factory.generateResponse(pskCtx, req, entityAuthData, {
                     result: function() {},
                     error: function(e) { exception = e; }
                 });
@@ -1181,7 +1183,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             var req, keyxData;
             runs(function() {
                 req = new RequestData(Mechanism.WRAP, WRAPDATA);
-                factory.generateResponse(pskCtx, req, PSK_IDENTITY, {
+                factory.generateResponse(pskCtx, req, entityAuthData, {
                     result: function(x) { keyxData = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1291,7 +1293,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             var req, keyxData;
             runs(function() {
                 req = new RequestData(Mechanism.PSK, null);
-                factory.generateResponse(pskCtx, req, PSK_IDENTITY, {
+                factory.generateResponse(pskCtx, req, entityAuthData, {
                     result: function(x) { keyxData = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1395,7 +1397,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             var keyxData;
             runs(function() {
                 var req = new RequestData(Mechanism.WRAP, WRAPDATA);
-                factory.generateResponse(pskCtx, req, PSK_IDENTITY, {
+                factory.generateResponse(pskCtx, req, entityAuthData, {
                     result: function(x) { keyxData = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1452,7 +1454,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             var keyxData;
             runs(function() {
                 var req = new RequestData(Mechanism.PSK, null);
-                factory.generateResponse(ctx, req, PSK_IDENTITY, {
+                factory.generateResponse(ctx, req, entityAuthData, {
                     result: function(x) { keyxData = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1481,7 +1483,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             var req, keyxData;
             runs(function() {
                 req = new RequestData(Mechanism.WRAP, WRAPDATA);
-                factory.generateResponse(pskCtx, req, PSK_IDENTITY, {
+                factory.generateResponse(pskCtx, req, entityAuthData, {
                     result: function(x) { keyxData = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1532,7 +1534,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             var req, keyxData;
             runs(function() {
                 req = new RequestData(Mechanism.WRAP, WRAPDATA);
-                factory.generateResponse(pskCtx, req, PSK_IDENTITY, {
+                factory.generateResponse(pskCtx, req, entityAuthData, {
                     result: function(x) { keyxData = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1589,7 +1591,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             var req, keyxData;
             runs(function() {
                 req = new RequestData(Mechanism.WRAP, WRAPDATA);
-                factory.generateResponse(pskCtx, req, PSK_IDENTITY, {
+                factory.generateResponse(pskCtx, req, entityAuthData, {
                     result: function(x) { keyxData = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });

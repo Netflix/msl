@@ -193,7 +193,7 @@ public class MessageInputStreamTest {
         final KeyRequestData keyRequest = new SymmetricWrappedExchange.RequestData(KeyId.PSK);
         KEY_REQUEST_DATA.add(keyRequest);
         final KeyExchangeFactory factory = trustedNetCtx.getKeyExchangeFactory(keyRequest.getKeyExchangeScheme());
-        final KeyExchangeData keyxData = factory.generateResponse(trustedNetCtx, keyRequest, entityAuthData.getIdentity());
+        final KeyExchangeData keyxData = factory.generateResponse(trustedNetCtx, keyRequest, entityAuthData);
         KEY_RESPONSE_DATA = keyxData.keyResponseData;
         KEYX_CRYPTO_CONTEXT = keyxData.cryptoContext;
         
@@ -561,7 +561,7 @@ public class MessageInputStreamTest {
         final KeyRequestData keyRequest = new SymmetricWrappedExchange.RequestData(KeyId.PSK);
         final KeyExchangeFactory factory = ctx.getKeyExchangeFactory(keyRequest.getKeyExchangeScheme());
         final EntityAuthenticationData entityAuthData = ctx.getEntityAuthenticationData(null);
-        final KeyExchangeData keyExchangeData = factory.generateResponse(ctx, keyRequest, entityAuthData.getIdentity());
+        final KeyExchangeData keyExchangeData = factory.generateResponse(ctx, keyRequest, entityAuthData);
         final KeyResponseData keyResponseData = keyExchangeData.keyResponseData;
         
         final HeaderData headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, keyResponseData, null, null, null);
@@ -586,7 +586,7 @@ public class MessageInputStreamTest {
         
         final KeyExchangeFactory factory = trustedNetCtx.getKeyExchangeFactory(keyRequest.getKeyExchangeScheme());
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
-        final KeyExchangeData keyExchangeData = factory.generateResponse(trustedNetCtx, keyRequest, entityAuthData.getIdentity());
+        final KeyExchangeData keyExchangeData = factory.generateResponse(trustedNetCtx, keyRequest, entityAuthData);
         final KeyResponseData keyResponseData = keyExchangeData.keyResponseData;
         
         final HeaderData headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, keyResponseData, null, null, null);

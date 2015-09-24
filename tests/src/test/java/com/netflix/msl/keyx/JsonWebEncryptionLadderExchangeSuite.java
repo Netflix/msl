@@ -66,6 +66,7 @@ import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.entityauth.MockPresharedAuthenticationFactory;
+import com.netflix.msl.entityauth.PresharedAuthenticationData;
 import com.netflix.msl.keyx.JsonWebEncryptionLadderExchange.Mechanism;
 import com.netflix.msl.keyx.JsonWebEncryptionLadderExchange.RequestData;
 import com.netflix.msl.keyx.JsonWebEncryptionLadderExchange.ResponseData;
@@ -638,6 +639,7 @@ public class JsonWebEncryptionLadderExchangeSuite {
             repository = new MockCryptoContextRepository();
             authutils = new MockAuthenticationUtils();
             factory = new JsonWebEncryptionLadderExchange(repository, authutils);
+            entityAuthData = new PresharedAuthenticationData(PSK_IDENTITY);
 
             // Not sure why I have to do this again since it's already done by
             // the parent class.
@@ -646,6 +648,7 @@ public class JsonWebEncryptionLadderExchangeSuite {
         
         @AfterClass
         public static void teardown() {
+        	entityAuthData = null;
             factory = null;
             authutils = null;
             repository = null;
@@ -668,6 +671,8 @@ public class JsonWebEncryptionLadderExchangeSuite {
         private static MockAuthenticationUtils authutils;
         /** Key exchange factory. */
         private static KeyExchangeFactory factory;
+        /** Entity authentication data. */
+        private static EntityAuthenticationData entityAuthData;
         
         @Test
         public void factory() {
@@ -677,7 +682,7 @@ public class JsonWebEncryptionLadderExchangeSuite {
         @Test
         public void generateWrapInitialResponse() throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslEntityAuthException, MslException, JSONException {
             final KeyRequestData req = new RequestData(Mechanism.WRAP, WRAPDATA);
-            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, req, PSK_IDENTITY);
+            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, req, entityAuthData);
             assertNotNull(keyxData);
             assertNotNull(keyxData.cryptoContext);
             assertNotNull(keyxData.keyResponseData);
@@ -705,7 +710,7 @@ public class JsonWebEncryptionLadderExchangeSuite {
         @Test
         public void generatePskInitialResponse() throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslEntityAuthException, MslException, JSONException {
             final KeyRequestData req = new RequestData(Mechanism.PSK, null);
-            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, req, PSK_IDENTITY);
+            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, req, entityAuthData);
             assertNotNull(keyxData);
             assertNotNull(keyxData.cryptoContext);
             assertNotNull(keyxData.keyResponseData);
@@ -733,7 +738,7 @@ public class JsonWebEncryptionLadderExchangeSuite {
         @Test(expected = MslInternalException.class)
         public void wrongRequestInitialResponse() throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslEntityAuthException, MslException {
             final KeyRequestData req = new FakeKeyRequestData();
-            factory.generateResponse(pskCtx, req, PSK_IDENTITY);
+            factory.generateResponse(pskCtx, req, entityAuthData);
         }
         
         @Test
@@ -812,7 +817,7 @@ public class JsonWebEncryptionLadderExchangeSuite {
         @Test
         public void getWrapCryptoContext() throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslEntityAuthException, MslException {
             final KeyRequestData req = new RequestData(Mechanism.WRAP, WRAPDATA);
-            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, req, PSK_IDENTITY);
+            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, req, entityAuthData);
             final ICryptoContext reqCryptoContext = keyxData.cryptoContext;
             final KeyResponseData resp = keyxData.keyResponseData;
 
@@ -861,7 +866,7 @@ public class JsonWebEncryptionLadderExchangeSuite {
         @Test
         public void getPskCryptoContext() throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslEntityAuthException, MslException {
             final KeyRequestData req = new RequestData(Mechanism.PSK, null);
-            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, req, PSK_IDENTITY);
+            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, req, entityAuthData);
             final ICryptoContext reqCryptoContext = keyxData.cryptoContext;
             final KeyResponseData resp = keyxData.keyResponseData;
             
@@ -905,7 +910,7 @@ public class JsonWebEncryptionLadderExchangeSuite {
         @Test(expected = MslInternalException.class)
         public void wrongRequestCryptoContext() throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslEntityAuthException, MslException {
             final KeyRequestData req = new RequestData(Mechanism.PSK, null);
-            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, req, PSK_IDENTITY);
+            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, req, entityAuthData);
             final KeyResponseData resp = keyxData.keyResponseData;
             
             final KeyRequestData fakeReq = new FakeKeyRequestData();
@@ -927,7 +932,7 @@ public class JsonWebEncryptionLadderExchangeSuite {
             final MockMslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
             
             final KeyRequestData req = new RequestData(Mechanism.PSK, null);
-            final KeyExchangeData keyxData = factory.generateResponse(ctx, req, PSK_IDENTITY);
+            final KeyExchangeData keyxData = factory.generateResponse(ctx, req, entityAuthData);
             final KeyResponseData resp = keyxData.keyResponseData;
             
             ctx.removeEntityAuthenticationFactory(EntityAuthenticationScheme.PSK);
@@ -940,7 +945,7 @@ public class JsonWebEncryptionLadderExchangeSuite {
             thrown.expectMslError(MslError.KEYX_WRAPPING_KEY_MISSING);
 
             final KeyRequestData req = new RequestData(Mechanism.WRAP, WRAPDATA);
-            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, req, PSK_IDENTITY);
+            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, req, entityAuthData);
             final KeyResponseData resp = keyxData.keyResponseData;
             
             factory.getCryptoContext(pskCtx, req, resp, null);
@@ -968,7 +973,7 @@ public class JsonWebEncryptionLadderExchangeSuite {
             thrown.expectMslError(MslError.INVALID_JWK);
 
             final KeyRequestData req = new RequestData(Mechanism.WRAP, WRAPDATA);
-            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, req, PSK_IDENTITY);
+            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, req, entityAuthData);
             final ResponseData resp = (ResponseData)keyxData.keyResponseData;
             
             // First get the new crypto context. This installs the returned
@@ -1004,7 +1009,7 @@ public class JsonWebEncryptionLadderExchangeSuite {
             thrown.expectMslError(MslError.INVALID_JWK);
 
             final KeyRequestData req = new RequestData(Mechanism.WRAP, WRAPDATA);
-            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, req, PSK_IDENTITY);
+            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, req, entityAuthData);
             final ResponseData resp = (ResponseData)keyxData.keyResponseData;
             
             // First get the new crypto context. This installs the returned

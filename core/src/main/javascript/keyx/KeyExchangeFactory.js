@@ -97,8 +97,8 @@ var KeyExchangeFactory;
          *
          * @param {MslContext} ctx MSL context.
          * @param {KeyRequestData} keyRequestData the key request data.
-         * @param {MasterToken|string} entityToken the master token to renew or
-         *        the entity identity.
+         * @param {MasterToken|EntityAuthenticationData} entityToken the master token to renew or
+         *        the entity authentication data.
          * @param {{result: function(KeyExchangeData), error: function(Error)}}
          *        callback the callback functions that will receive the key
          *        response data and crypto context, or {@code null} if the

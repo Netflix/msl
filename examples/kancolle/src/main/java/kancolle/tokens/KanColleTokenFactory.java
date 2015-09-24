@@ -34,6 +34,7 @@ import com.netflix.msl.MslException;
 import com.netflix.msl.MslInternalException;
 import com.netflix.msl.MslMasterTokenException;
 import com.netflix.msl.MslUserIdTokenException;
+import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.tokens.TokenFactory;
@@ -169,10 +170,10 @@ public class KanColleTokenFactory implements TokenFactory {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.tokens.TokenFactory#createMasterToken(com.netflix.msl.util.MslContext, java.lang.String, javax.crypto.SecretKey, javax.crypto.SecretKey)
+     * @see com.netflix.msl.tokens.TokenFactory#createMasterToken(com.netflix.msl.util.MslContext, com.netflix.msl.entityauth.EntityAuthenticationData, javax.crypto.SecretKey, javax.crypto.SecretKey)
      */
     @Override
-    public MasterToken createMasterToken(final MslContext ctx, final String identity, final SecretKey encryptionKey, final SecretKey hmacKey) throws MslEncodingException, MslCryptoException {
+    public MasterToken createMasterToken(final MslContext ctx, final EntityAuthenticationData entityAuthData, final SecretKey encryptionKey, final SecretKey hmacKey) throws MslEncodingException, MslCryptoException {
         final Date renewal = new Date(ctx.getTime() + mtRenewalOffset);
         final Date expiration = new Date(ctx.getTime() + mtExpirationOffset);
         final long sequenceNumber = 0;
@@ -181,6 +182,7 @@ public class KanColleTokenFactory implements TokenFactory {
             serialNumber = ctx.getRandom().nextLong();
         } while (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE);
         final JSONObject issuerData = null;
+        final String identity = entityAuthData.getIdentity();
         return new MasterToken(ctx, renewal, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey);
     }
 

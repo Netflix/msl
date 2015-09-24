@@ -56,8 +56,10 @@ import com.netflix.msl.MslInternalException;
 import com.netflix.msl.MslKeyExchangeException;
 import com.netflix.msl.MslMasterTokenException;
 import com.netflix.msl.crypto.ICryptoContext;
+import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.entityauth.MockPresharedAuthenticationFactory;
+import com.netflix.msl.entityauth.PresharedAuthenticationData;
 import com.netflix.msl.keyx.DiffieHellmanExchange.RequestData;
 import com.netflix.msl.keyx.DiffieHellmanExchange.ResponseData;
 import com.netflix.msl.keyx.KeyExchangeFactory.KeyExchangeData;
@@ -516,10 +518,12 @@ public class DiffieHellmanExchangeSuite {
             authutils = new MockAuthenticationUtils();
             final DiffieHellmanParameters params = MockDiffieHellmanParameters.getDefaultParameters();
             factory = new DiffieHellmanExchange(params, authutils);
+            entityAuthData = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN);
         }
         
         @AfterClass
         public static void teardown() {
+        	entityAuthData = null;
             factory = null;
             authutils = null;
         }
@@ -539,7 +543,7 @@ public class DiffieHellmanExchangeSuite {
         @Test
         public void generateInitialResponse() throws MslException {
             final KeyRequestData keyRequestData = new RequestData(PARAMETERS_ID, REQUEST_PUBLIC_KEY, REQUEST_PRIVATE_KEY);
-            final KeyExchangeData keyxData = factory.generateResponse(ctx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN);
+            final KeyExchangeData keyxData = factory.generateResponse(ctx, keyRequestData, entityAuthData);
             assertNotNull(keyxData);
             assertNotNull(keyxData.cryptoContext);
             assertNotNull(keyxData.keyResponseData);
@@ -554,7 +558,7 @@ public class DiffieHellmanExchangeSuite {
         @Test(expected = MslInternalException.class)
         public void wrongRequestInitialResponse() throws MslException {
             final KeyRequestData keyRequestData = new FakeKeyRequestData();
-            factory.generateResponse(ctx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN);
+            factory.generateResponse(ctx, keyRequestData, entityAuthData);
         }
         
         @Test
@@ -563,7 +567,7 @@ public class DiffieHellmanExchangeSuite {
             thrown.expectMslError(MslError.UNKNOWN_KEYX_PARAMETERS_ID);
 
             final KeyRequestData keyRequestData = new RequestData("x", REQUEST_PUBLIC_KEY, REQUEST_PRIVATE_KEY);
-            factory.generateResponse(ctx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN);
+            factory.generateResponse(ctx, keyRequestData, entityAuthData);
         }
         
         @Test
@@ -572,7 +576,7 @@ public class DiffieHellmanExchangeSuite {
             thrown.expectMslError(MslError.UNKNOWN_KEYX_PARAMETERS_ID);
 
             final KeyRequestData keyRequestData = new RequestData(Integer.toString(98765), REQUEST_PUBLIC_KEY, REQUEST_PRIVATE_KEY);
-            factory.generateResponse(ctx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN);
+            factory.generateResponse(ctx, keyRequestData, entityAuthData);
         }
         
         @Test
@@ -629,7 +633,7 @@ public class DiffieHellmanExchangeSuite {
         @Test
         public void getCryptoContext() throws MslException {
             final KeyRequestData keyRequestData = new RequestData(PARAMETERS_ID, REQUEST_PUBLIC_KEY, REQUEST_PRIVATE_KEY);
-            final KeyExchangeData keyxData = factory.generateResponse(ctx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN);
+            final KeyExchangeData keyxData = factory.generateResponse(ctx, keyRequestData, entityAuthData);
             final ICryptoContext requestCryptoContext = keyxData.cryptoContext;
             final KeyResponseData keyResponseData = keyxData.keyResponseData;
             final ICryptoContext responseCryptoContext = factory.getCryptoContext(ctx, keyRequestData, keyResponseData, null);
@@ -667,7 +671,7 @@ public class DiffieHellmanExchangeSuite {
         @Test(expected = MslInternalException.class)
         public void wrongRequestCryptoContext() throws MslException {
             final KeyRequestData keyRequestData = new RequestData(PARAMETERS_ID, REQUEST_PUBLIC_KEY, REQUEST_PRIVATE_KEY);
-            final KeyExchangeData keyxData = factory.generateResponse(ctx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN);
+            final KeyExchangeData keyxData = factory.generateResponse(ctx, keyRequestData, entityAuthData);
             final KeyResponseData keyResponseData = keyxData.keyResponseData;
             
             final KeyRequestData fakeKeyRequestData = new FakeKeyRequestData();
@@ -687,7 +691,7 @@ public class DiffieHellmanExchangeSuite {
             thrown.expectMslError(MslError.KEYX_RESPONSE_REQUEST_MISMATCH);
 
             final KeyRequestData keyRequestData = new RequestData(PARAMETERS_ID, REQUEST_PUBLIC_KEY, REQUEST_PRIVATE_KEY);
-            final KeyExchangeData keyxData = factory.generateResponse(ctx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN);
+            final KeyExchangeData keyxData = factory.generateResponse(ctx, keyRequestData, entityAuthData);
             final KeyResponseData keyResponseData = keyxData.keyResponseData;
             final MasterToken masterToken = keyResponseData.getMasterToken();
             
@@ -702,7 +706,7 @@ public class DiffieHellmanExchangeSuite {
             thrown.expectMslError(MslError.KEYX_PRIVATE_KEY_MISSING);
 
             final KeyRequestData keyRequestData = new RequestData(PARAMETERS_ID, REQUEST_PUBLIC_KEY, null);
-            final KeyExchangeData keyxData = factory.generateResponse(ctx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN);
+            final KeyExchangeData keyxData = factory.generateResponse(ctx, keyRequestData, entityAuthData);
             final KeyResponseData keyResponseData = keyxData.keyResponseData;
             
             factory.getCryptoContext(ctx, keyRequestData, keyResponseData, null);
@@ -712,5 +716,7 @@ public class DiffieHellmanExchangeSuite {
         private static MockAuthenticationUtils authutils;
         /** Key exchange factory. */
         private static KeyExchangeFactory factory;
+        /** Entity authentication data. */
+        private static EntityAuthenticationData entityAuthData;
     }
 }

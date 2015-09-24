@@ -710,15 +710,16 @@ public class JsonWebKeyLadderExchange extends KeyExchangeFactory {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.keyx.KeyExchangeFactory#generateResponse(com.netflix.msl.util.MslContext, com.netflix.msl.keyx.KeyRequestData, java.lang.String)
+     * @see com.netflix.msl.keyx.KeyExchangeFactory#generateResponse(com.netflix.msl.util.MslContext, com.netflix.msl.keyx.KeyRequestData, com.netflix.msl.entityauth.EntityAuthenticationData)
      */
     @Override
-    public KeyExchangeData generateResponse(final MslContext ctx, final KeyRequestData keyRequestData,final String identity) throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslEntityAuthException, MslException {
+    public KeyExchangeData generateResponse(final MslContext ctx, final KeyRequestData keyRequestData,final EntityAuthenticationData entityAuthData) throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslEntityAuthException, MslException {
         if (!(keyRequestData instanceof RequestData))
             throw new MslInternalException("Key request data " + keyRequestData.getClass().getName() + " was not created by this factory.");
         final RequestData request = (RequestData)keyRequestData;
         
         // Verify the scheme is permitted.
+        final String identity = entityAuthData.getIdentity();
         if(!authutils.isSchemePermitted(identity, this.getScheme()))
             throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + this.getScheme());
 
@@ -757,7 +758,7 @@ public class JsonWebKeyLadderExchange extends KeyExchangeFactory {
         
         // Create the master token.
         final TokenFactory tokenFactory = ctx.getTokenFactory();
-        final MasterToken newMasterToken = tokenFactory.createMasterToken(ctx, identity, encryptionKey, hmacKey);
+        final MasterToken newMasterToken = tokenFactory.createMasterToken(ctx, entityAuthData, encryptionKey, hmacKey);
         
         // Create session crypto context.
         final ICryptoContext cryptoContext = new SessionCryptoContext(ctx, newMasterToken);

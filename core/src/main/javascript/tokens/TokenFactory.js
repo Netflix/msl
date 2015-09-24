@@ -100,7 +100,7 @@ var TokenFactory = util.Class.create({
      * @throws MslMasterTokenException if the master token is not trusted.
      * @throws MslException if there is an error comparing or updating the non-
      *         replayable ID associated with this master token.
-     * @see #createMasterToken(MslContext, String, SecretKey, SecretKey)
+     * @see #createMasterToken(MslContext, EntityAuthenticationData, SecretKey, SecretKey)
      * @see MslError.MESSAGE_REPLAYED
      * @see MslError.MESSAGE_REPLAYED_UNRECOVERABLE
      */
@@ -116,7 +116,7 @@ var TokenFactory = util.Class.create({
      * discarded.</p>
      * 
      * @param {MslContext} ctx MSL context.
-     * @param {string} identity the singular identity this master token represents.
+     * @param {EntityAuthenticationData} entityAuthData the entity authentication data.
      * @param {CipherKey} encryptionKey the session encryption key.
      * @param {CipherKey} hmacKey the session HMAC key.
      * @param {{result: function(MasterToken), error: function(Error)}}
@@ -129,7 +129,7 @@ var TokenFactory = util.Class.create({
      * @throws MslException if there is an error creating the master token.
      * @see #acceptNonReplayableId(MslContext, MasterToken, long)
      */
-    createMasterToken: function(ctx, identity, encryptionKey, hmacKey, callback) {},
+    createMasterToken: function(ctx, entityAuthData, encryptionKey, hmacKey, callback) {},
 
     /**
      * <p>Check if the master token would be renewed by a call to

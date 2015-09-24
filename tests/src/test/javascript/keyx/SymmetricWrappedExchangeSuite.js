@@ -470,6 +470,8 @@ describe("SymmetricWrappedExchangeSuite", function() {
         
         /** Key exchange factory. */
         var factory = new SymmetricWrappedExchange();
+        /** Entity authentication data. */
+        var entityAuthData = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN);
         
         beforeEach(function() {
             pskCtx.getMslStore().clearCryptoContexts();
@@ -484,7 +486,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             var keyRequestData = new RequestData(KeyId.PSK);
             var keyxData;
             runs(function() {
-                factory.generateResponse(unauthCtx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN, {
+                factory.generateResponse(unauthCtx, keyRequestData, entityAuthData, {
                     result: function(data) { keyxData = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -532,7 +534,8 @@ describe("SymmetricWrappedExchangeSuite", function() {
         	var exception;
             runs(function() {
 	            var keyRequestData = new RequestData(KeyId.PSK);
-	            factory.generateResponse(unauthCtx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN + "x", {
+	            var entityAuthData = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN + "x");
+	            factory.generateResponse(unauthCtx, keyRequestData, entityAuthData, {
                     result: function() {},
                     error: function(err) { exception = err; }
                 });
@@ -548,7 +551,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         	var exception;
             runs(function() {
 	            var keyRequestData = new FakeKeyRequestData();
-	            factory.generateResponse(unauthCtx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN, {
+	            factory.generateResponse(unauthCtx, keyRequestData, entityAuthData, {
                     result: function() {},
                     error: function(err) { exception = err; }
                 });
@@ -688,7 +691,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             var keyRequestData = new RequestData(KeyId.PSK);
             var keyxData;
             runs(function() {
-                factory.generateResponse(unauthCtx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN, {
+                factory.generateResponse(unauthCtx, keyRequestData, entityAuthData, {
                     result: function(data) { keyxData = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -921,7 +924,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         	var keyRequestData = new RequestData(KeyId.PSK);
         	var keyxData;
         	runs(function() {
-        		factory.generateResponse(unauthCtx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN, {
+        		factory.generateResponse(unauthCtx, keyRequestData, entityAuthData, {
         			result: function(data) { keyxData = data; },
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
@@ -967,7 +970,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         	var keyRequestData = new RequestData(KeyId.PSK);
         	var keyxData;
         	runs(function() {
-        		factory.generateResponse(unauthCtx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN, {
+        		factory.generateResponse(unauthCtx, keyRequestData, entityAuthData, {
         			result: function(data) { keyxData = data; },
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
@@ -997,7 +1000,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         	var keyRequestData = new RequestData(KeyId.PSK);
         	var keyxData;
         	runs(function() {
-        		factory.generateResponse(unauthCtx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN, {
+        		factory.generateResponse(unauthCtx, keyRequestData, entityAuthData, {
         			result: function(data) { keyxData = data; },
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
@@ -1032,7 +1035,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             var keyRequestData = new RequestData(KeyId.PSK);
             var keyxData;
             runs(function() {
-                factory.generateResponse(unauthCtx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN, {
+                factory.generateResponse(unauthCtx, keyRequestData, entityAuthData, {
                     result: function(data) { keyxData = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });

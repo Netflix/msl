@@ -17,12 +17,14 @@ package com.netflix.msl.tokens;
 
 import javax.crypto.SecretKey;
 
+import com.netflix.msl.MslConstants.ResponseCode;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslException;
 import com.netflix.msl.MslMasterTokenException;
 import com.netflix.msl.MslUserIdTokenException;
+import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -105,7 +107,7 @@ public interface TokenFactory {
      * @throws MslMasterTokenException if the master token is not trusted.
      * @throws MslException if there is an error comparing or updating the non-
      *         replayable ID associated with this master token.
-     * @see #createMasterToken(MslContext, String, SecretKey, SecretKey)
+     * @see #createMasterToken(MslContext, EntityAuthenticationData, SecretKey, SecretKey)
      * @see MslError.MESSAGE_REPLAYED
      * @see MslError.MESSAGE_REPLAYED_UNRECOVERABLE
      */
@@ -121,7 +123,7 @@ public interface TokenFactory {
      * discarded.</p>
      *
      * @param ctx MSL context.
-     * @param identity the singular identity this master token represents.
+     * @param entityAuthData the entity authentication data.
      * @param encryptionKey the session encryption key.
      * @param hmacKey the session HMAC key.
      * @return the new master token.
@@ -132,7 +134,7 @@ public interface TokenFactory {
      * @throws MslException if there is an error creating the master token.
      * @see #acceptNonReplayableId(MslContext, MasterToken, long)
      */
-    public MasterToken createMasterToken(final MslContext ctx, final String identity, final SecretKey encryptionKey, final SecretKey hmacKey) throws MslEncodingException, MslCryptoException, MslException;
+    public MasterToken createMasterToken(final MslContext ctx, final EntityAuthenticationData entityAuthData, final SecretKey encryptionKey, final SecretKey hmacKey) throws MslEncodingException, MslCryptoException, MslException;
 
     /**
      * <p>Check if the master token would be renewed by a call to

@@ -166,7 +166,7 @@ describe("MessageInputStream", function() {
     			var keyRequest = new SymmetricWrappedExchange$RequestData(SymmetricWrappedExchange$KeyId.PSK);
     			KEY_REQUEST_DATA.push(keyRequest);
     			var factory = trustedNetCtx.getKeyExchangeFactory(keyRequest.keyExchangeScheme);
-    			factory.generateResponse(trustedNetCtx, keyRequest, ENTITY_AUTH_DATA.getIdentity(), {
+    			factory.generateResponse(trustedNetCtx, keyRequest, ENTITY_AUTH_DATA, {
     				result: function(x) { keyxData = x; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
@@ -1436,7 +1436,7 @@ describe("MessageInputStream", function() {
         runs(function() {
             var keyRequest = new SymmetricWrappedExchange$RequestData(SymmetricWrappedExchange$KeyId.PSK);
             var factory = ctx.getKeyExchangeFactory(keyRequest.keyExchangeScheme);
-            factory.generateResponse(ctx, keyRequest, entityAuthData.getIdentity(), {
+            factory.generateResponse(ctx, keyRequest, entityAuthData, {
                 result: function(x) { keyExchangeData = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1512,7 +1512,7 @@ describe("MessageInputStream", function() {
         var keyExchangeData;
         runs(function() {
             var factory = trustedNetCtx.getKeyExchangeFactory(keyRequest.keyExchangeScheme);
-            factory.generateResponse(trustedNetCtx, keyRequest, entityAuthData.getIdentity(), {
+            factory.generateResponse(trustedNetCtx, keyRequest, entityAuthData, {
                 result: function(x) { keyExchangeData = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });

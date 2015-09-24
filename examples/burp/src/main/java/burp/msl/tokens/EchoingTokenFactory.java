@@ -19,6 +19,7 @@ import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslException;
+import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.MockMslUser;
 import com.netflix.msl.tokens.MslUser;
@@ -27,6 +28,7 @@ import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.util.MslContext;
 
 import javax.crypto.SecretKey;
+
 import java.util.Date;
 
 /**
@@ -64,12 +66,13 @@ public class EchoingTokenFactory implements TokenFactory {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.tokens.TokenFactory#createMasterToken(com.netflix.msl.util.MslContext, java.lang.String, javax.crypto.SecretKey, javax.crypto.SecretKey)
+     * @see com.netflix.msl.tokens.TokenFactory#createMasterToken(com.netflix.msl.util.MslContext, com.netflix.msl.entityauth.EntityAuthenticationData, javax.crypto.SecretKey, javax.crypto.SecretKey)
      */
     @Override
-    public MasterToken createMasterToken(final MslContext ctx, final String identity, final SecretKey encryptionKey, final SecretKey hmacKey) throws MslEncodingException, MslCryptoException {
+    public MasterToken createMasterToken(final MslContext ctx, final EntityAuthenticationData entityAuthData, final SecretKey encryptionKey, final SecretKey hmacKey) throws MslEncodingException, MslCryptoException {
         final Date renewalWindow = new Date();
         final Date expiration = renewalWindow;
+        final String identity = entityAuthData.getIdentity();
         return new MasterToken(ctx, renewalWindow, expiration, 0, 0, null, identity, hmacKey, hmacKey);
     }
 

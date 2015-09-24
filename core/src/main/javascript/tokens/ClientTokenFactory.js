@@ -39,7 +39,7 @@ var ClientTokenFactory = TokenFactory.extend({
     },
     
     /** @inheritDoc */
-    createMasterToken: function createMasterToken(ctx, identity, encryptionKey, hmacKey, callback) {
+    createMasterToken: function createMasterToken(ctx, entityToken, encryptionKey, hmacKey, callback) {
         callback.error(new MslInternalException("Creating master tokens is unsupported by the token factory."));
     },
 

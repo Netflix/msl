@@ -401,7 +401,7 @@ var AsymmetricWrappedExchange$ResponseData$parse;
                     },
                     error: function(e) {
                         AsyncExecutor(callback, function() {
-                            if (e instanceof MslException && entityToken instanceof MasterToken)
+                            if (e instanceof MslException)
                                 e.setEntity(entityToken);
                             throw e;
                         }, self);
@@ -427,7 +427,7 @@ var AsymmetricWrappedExchange$ResponseData$parse;
                                     },
                                     error: function(e) {
                                         AsyncExecutor(callback, function() {
-                                            if (e instanceof MslException && entityToken instanceof MasterToken)
+                                            if (e instanceof MslException)
                                                 e.setEntity(entityToken);
                                             throw e;
                                         }, self);
@@ -437,7 +437,7 @@ var AsymmetricWrappedExchange$ResponseData$parse;
                         },
                         error: function(e) {
                             AsyncExecutor(callback, function() {
-                                if (e instanceof MslException && entityToken instanceof MasterToken)
+                                if (e instanceof MslException)
                                     e.setEntity(entityToken);
                                 throw e;
                             }, self);
@@ -484,7 +484,13 @@ var AsymmetricWrappedExchange$ResponseData$parse;
                                     return new KeyExchangeFactory.KeyExchangeData(keyResponseData, cryptoContext, callback);
                                 }, self);
                             },
-                            error: callback.error,
+                            error: function(e) {
+                                AsyncExecutor(callback, function() {
+                                    if (e instanceof MslException)
+                                        e.setEntity(entityToken);
+                                    throw e;
+                                }, self);
+                            }
                         });
                     }
                 }, self);

@@ -521,6 +521,9 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         /** Key exchange factory. */
         var factory = new DiffieHellmanExchange(paramSpecs);
         
+        /** Entity authentication data. */
+        var entityAuthData = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN);
+        
         beforeEach(function() {
             ctx.getMslStore().clearCryptoContexts();
             ctx.getMslStore().clearServiceTokens();
@@ -534,7 +537,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             var keyRequestData = new RequestData(PARAMETERS_ID, REQUEST_PUBLIC_KEY, REQUEST_PRIVATE_KEY);
             var keyxData;
             runs(function() {
-                factory.generateResponse(ctx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN, {
+                factory.generateResponse(ctx, keyRequestData, entityAuthData, {
                     result: function(data) { keyxData = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -557,7 +560,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             var exception;
             runs(function() {
 	            var keyRequestData = new FakeKeyRequestData();
-	            factory.generateResponse(ctx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN, {
+	            factory.generateResponse(ctx, keyRequestData, entityAuthData, {
                     result: function() {},
                     error: function(err) { exception = err; }
                 });
@@ -573,7 +576,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         	var exception;
             runs(function() {
 	            var keyRequestData = new RequestData("x", REQUEST_PUBLIC_KEY, REQUEST_PRIVATE_KEY);
-	            factory.generateResponse(ctx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN, {
+	            factory.generateResponse(ctx, keyRequestData, entityAuthData, {
                     result: function() {},
                     error: function(err) { exception = err; }
                 });
@@ -589,7 +592,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         	var exception;
             runs(function() {
 	            var keyRequestData = new RequestData('98765', REQUEST_PUBLIC_KEY, REQUEST_PRIVATE_KEY);
-	            factory.generateResponse(ctx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN, {
+	            factory.generateResponse(ctx, keyRequestData, entityAuthData, {
                     result: function() {},
                     error: function(err) { exception = err; }
                 });
@@ -704,7 +707,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             var keyRequestData = new RequestData(PARAMETERS_ID, REQUEST_PUBLIC_KEY, REQUEST_PRIVATE_KEY);
             var keyxData;
             runs(function() {
-                factory.generateResponse(ctx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN, {
+                factory.generateResponse(ctx, keyRequestData, entityAuthData, {
                     result: function(data) { keyxData = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -805,7 +808,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         	var keyRequestData = new RequestData(PARAMETERS_ID, REQUEST_PUBLIC_KEY, REQUEST_PRIVATE_KEY);
         	var keyxData;
         	runs(function() {
-        		factory.generateResponse(ctx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN, {
+        		factory.generateResponse(ctx, keyRequestData, entityAuthData, {
         			result: function(data) { keyxData = data; },
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
@@ -852,7 +855,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             var keyRequestData = new RequestData(PARAMETERS_ID, REQUEST_PUBLIC_KEY, REQUEST_PRIVATE_KEY);
             var keyxData;
             runs(function() {
-                factory.generateResponse(ctx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN, {
+                factory.generateResponse(ctx, keyRequestData, entityAuthData, {
                     result: function(data) { keyxData = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -883,7 +886,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             var keyRequestData = new RequestData(PARAMETERS_ID, REQUEST_PUBLIC_KEY, null);
             var keyxData;
             runs(function() {
-                factory.generateResponse(ctx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN, {
+                factory.generateResponse(ctx, keyRequestData, entityAuthData, {
                     result: function(data) { keyxData = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });

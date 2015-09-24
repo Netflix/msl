@@ -51,8 +51,10 @@ import com.netflix.msl.MslInternalException;
 import com.netflix.msl.MslKeyExchangeException;
 import com.netflix.msl.MslMasterTokenException;
 import com.netflix.msl.crypto.ICryptoContext;
+import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.entityauth.MockPresharedAuthenticationFactory;
+import com.netflix.msl.entityauth.PresharedAuthenticationData;
 import com.netflix.msl.keyx.KeyExchangeFactory.KeyExchangeData;
 import com.netflix.msl.keyx.SymmetricWrappedExchange.KeyId;
 import com.netflix.msl.keyx.SymmetricWrappedExchange.RequestData;
@@ -490,10 +492,12 @@ public class SymmetricWrappedExchangeSuite {
         public static void setup() {
             authutils = new MockAuthenticationUtils();
             factory = new SymmetricWrappedExchange(authutils);
+            entityAuthData = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN);
         }
         
         @AfterClass
         public static void teardown() {
+        	entityAuthData = null;
             factory = null;
             authutils = null;
         }
@@ -513,7 +517,7 @@ public class SymmetricWrappedExchangeSuite {
         @Test
         public void generatePskInitialResponse() throws MslException {
             final KeyRequestData keyRequestData = new RequestData(KeyId.PSK);
-            final KeyExchangeData keyxData = factory.generateResponse(unauthCtx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN);
+            final KeyExchangeData keyxData = factory.generateResponse(unauthCtx, keyRequestData, entityAuthData);
             assertNotNull(keyxData);
             assertNotNull(keyxData.cryptoContext);
             assertNotNull(keyxData.keyResponseData);
@@ -544,13 +548,14 @@ public class SymmetricWrappedExchangeSuite {
         @Test(expected = MslEntityAuthException.class)
         public void invalidPskInitialResponse() throws MslException {
             final KeyRequestData keyRequestData = new RequestData(KeyId.PSK);
-            factory.generateResponse(unauthCtx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN + "x");
+            final EntityAuthenticationData entityAuthData = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN + "x");
+            factory.generateResponse(unauthCtx, keyRequestData, entityAuthData);
         }
         
         @Test(expected = MslInternalException.class)
         public void wrongRequestInitialResponse() throws MslInternalException, MslException {
             final KeyRequestData keyRequestData = new FakeKeyRequestData();
-            factory.generateResponse(unauthCtx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN);
+            factory.generateResponse(unauthCtx, keyRequestData, entityAuthData);
         }
         
         @Test
@@ -620,7 +625,7 @@ public class SymmetricWrappedExchangeSuite {
         @Test
         public void getPskCryptoContext() throws MslException {
             final KeyRequestData keyRequestData = new RequestData(KeyId.PSK);
-            final KeyExchangeData keyxData = factory.generateResponse(unauthCtx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN);
+            final KeyExchangeData keyxData = factory.generateResponse(unauthCtx, keyRequestData, entityAuthData);
             final ICryptoContext requestCryptoContext = keyxData.cryptoContext;
             final KeyResponseData keyResponseData = keyxData.keyResponseData;
             final ICryptoContext responseCryptoContext = factory.getCryptoContext(pskCtx, keyRequestData, keyResponseData, null);
@@ -703,7 +708,7 @@ public class SymmetricWrappedExchangeSuite {
         @Test(expected = MslInternalException.class)
         public void wrongRequestCryptoContext() throws MslException {
             final KeyRequestData keyRequestData = new RequestData(KeyId.PSK);
-            final KeyExchangeData keyxData = factory.generateResponse(unauthCtx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN);
+            final KeyExchangeData keyxData = factory.generateResponse(unauthCtx, keyRequestData, entityAuthData);
             final KeyResponseData keyResponseData = keyxData.keyResponseData;
             
             final KeyRequestData fakeKeyRequestData = new FakeKeyRequestData();
@@ -723,7 +728,7 @@ public class SymmetricWrappedExchangeSuite {
             thrown.expectMslError(MslError.KEYX_RESPONSE_REQUEST_MISMATCH);
 
             final KeyRequestData keyRequestData = new RequestData(KeyId.PSK);
-            final KeyExchangeData keyxData = factory.generateResponse(unauthCtx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN);
+            final KeyExchangeData keyxData = factory.generateResponse(unauthCtx, keyRequestData, entityAuthData);
             final KeyResponseData keyResponseData = keyxData.keyResponseData;
             final MasterToken masterToken = keyResponseData.getMasterToken();
             
@@ -735,7 +740,7 @@ public class SymmetricWrappedExchangeSuite {
         @Test(expected = MslCryptoException.class)
         public void invalidWrappedEncryptionKeyCryptoContext() throws JSONException, MslException {
             final KeyRequestData keyRequestData = new RequestData(KeyId.PSK);
-            final KeyExchangeData keyxData = factory.generateResponse(unauthCtx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN);
+            final KeyExchangeData keyxData = factory.generateResponse(unauthCtx, keyRequestData, entityAuthData);
             final KeyResponseData keyResponseData = keyxData.keyResponseData;
             final MasterToken masterToken = keyResponseData.getMasterToken();
             
@@ -752,7 +757,7 @@ public class SymmetricWrappedExchangeSuite {
         @Test(expected = MslCryptoException.class)
         public void invalidWrappedHmacKeyCryptoContext() throws JSONException, MslException {
             final KeyRequestData keyRequestData = new RequestData(KeyId.PSK);
-            final KeyExchangeData keyxData = factory.generateResponse(unauthCtx, keyRequestData, MockPresharedAuthenticationFactory.PSK_ESN);
+            final KeyExchangeData keyxData = factory.generateResponse(unauthCtx, keyRequestData, entityAuthData);
             final KeyResponseData keyResponseData = keyxData.keyResponseData;
             final MasterToken masterToken = keyResponseData.getMasterToken();
             
@@ -770,5 +775,7 @@ public class SymmetricWrappedExchangeSuite {
         private static MockAuthenticationUtils authutils;
         /** Key exchange factory. */
         private static KeyExchangeFactory factory;
+        /** Entity authentication data. */
+        private static EntityAuthenticationData entityAuthData;
     }
 }

@@ -101,7 +101,8 @@ public class MessageBuilder {
      * @param keyRequestData available key request data.
      * @param masterToken master token to renew. Null if the identity is
      *        provided.
-     * @param identity entity identity. Null if a master token is provided.
+     * @param entityAuthData entity authentication data. Null if a master token
+     *        is provided.
      * @return the new master token and crypto context or {@code} null if the
      *         factory chooses not to perform key exchange. 
      * @throws MslCryptoException if the crypto context cannot be created.
@@ -116,7 +117,7 @@ public class MessageBuilder {
      * @throws MslException if there is an error creating or renewing the
      *         master token.
      */
-    private static KeyExchangeData issueMasterToken(final MslContext ctx, final Set<KeyRequestData> keyRequestData, final MasterToken masterToken, final String identity) throws MslKeyExchangeException, MslCryptoException, MslMasterTokenException, MslEncodingException, MslEntityAuthException, MslException {
+    private static KeyExchangeData issueMasterToken(final MslContext ctx, final Set<KeyRequestData> keyRequestData, final MasterToken masterToken, final EntityAuthenticationData entityAuthData) throws MslKeyExchangeException, MslCryptoException, MslMasterTokenException, MslEncodingException, MslEntityAuthException, MslException {
         // Attempt key exchange in the preferred order.
         MslException keyxException = null;
         final Iterator<KeyExchangeFactory> factories = ctx.getKeyExchangeFactories().iterator();
@@ -132,7 +133,7 @@ public class MessageBuilder {
                     if (masterToken != null)
                         return factory.generateResponse(ctx, request, masterToken);
                     else
-                        return factory.generateResponse(ctx, request, identity);
+                        return factory.generateResponse(ctx, request, entityAuthData);
                 } catch (final MslCryptoException e) {
                     if (!factories.hasNext()) throw e;
                     keyxException = e;
@@ -270,7 +271,7 @@ public class MessageBuilder {
                     // The message header is already authenticated via the
                     // entity authentication data's crypto context so we can
                     // simply proceed with the master token issuance.
-                    keyExchangeData = issueMasterToken(ctx, keyRequestData, null, entityAuthData.getIdentity());
+                    keyExchangeData = issueMasterToken(ctx, keyRequestData, null, entityAuthData);
                 }
             }
 
