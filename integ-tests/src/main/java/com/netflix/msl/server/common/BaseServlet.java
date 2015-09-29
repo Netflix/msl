@@ -122,6 +122,7 @@ public class BaseServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         PrintWriter out = response.getWriter();
 
+        @SuppressWarnings("unchecked")
         Map<String, String[]> params = request.getParameterMap();
         for (Entry<String,String[]> entry : params.entrySet()) {
             try {
