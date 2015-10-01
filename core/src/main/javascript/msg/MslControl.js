@@ -565,14 +565,22 @@ var MslControl$MslChannel;
         /**
          * Create a new instance of MSL control.
          *
-         * @param {ErrorMessageRegistry} messageRegistry error message registry.
+         * @param {?MessageStreamFactory} streamFactory message stream factory. May be {@code null}.
+         * @param {?ErrorMessageRegistry} messageRegistry error message registry. May be {@code null}.
          */
-        init: function init(messageRegistry) {
+        init: function init(streamFactory, messageRegistry) {
+            if (!streamFactory)
+                streamFactory = new MessageStreamFactory();
             if (!messageRegistry)
                 messageRegistry = new DummyMessageRegistry();
 
             // The properties.
             var props = {
+                /**
+                 * Message stream factory.
+                 * @type {MessageStreamFactory}
+                 */
+                _streamFactory: { value: streamFactory, writable: false, enumerable: false, configurable: false },
                 /**
                  * Error message registry.
                  * @type {ErrorMessageRegistry}
@@ -1594,7 +1602,7 @@ var MslControl$MslChannel;
 
                                         // Send the request.
                                         var os = (this._filterFactory != null) ? this._filterFactory.getOutputStream(out) : out;
-                                        MessageOutputStream$create(ctx, os, MslConstants$DEFAULT_CHARSET, requestHeader, payloadCryptoContext, timeout, {
+                                        this._streamFactory.createOutputStream(ctx, os, MslConstants$DEFAULT_CHARSET, requestHeader, payloadCryptoContext, timeout, {
                                             result: function(request) {
                                                 InterruptibleExecutor(callback, function() {
                                                     service.setAbort(function() { request.abort(); });
@@ -1694,7 +1702,7 @@ var MslControl$MslChannel;
                     keyRequestData = request.keyRequestData.filter(function() { return true; });
                 var cryptoContexts = msgCtx.getCryptoContexts();
                 var is = (this._filterFactory) ? this._filterFactory.getInputStream(input) : input;
-                MessageInputStream$create(ctx, is, MslConstants$DEFAULT_CHARSET, keyRequestData, cryptoContexts, timeout, {
+                this._streamFactory.createInputStream(ctx, is, MslConstants$DEFAULT_CHARSET, keyRequestData, cryptoContexts, timeout, {
                     result: function(response) {
                         // Register abort function.
                         service.setAbort(function() { response.abort(); });
@@ -2438,12 +2446,15 @@ var MslControl$MslChannel;
     MslControl = util.Class.create({
         /**
          * Create a new instance of MSL control.
+         *
+         * @param {?MessageStreamFactory=} streamFactory message stream factory. May be {@code null}.
+         * @param {?ErrorMessageRegistry=} messageRegistry error message registry. May be {@code null}.
          */
-        init: function init() {
+        init: function init(streamFactory, messageRegistry) {
             // The properties.
             var props = {
                 /** @type {MslControlImpl} */
-                _impl: { value: new MslControlImpl(), writable: false, enumerable: false, configurable: false },
+                _impl: { value: new MslControlImpl(streamFactory, messageRegistry), writable: false, enumerable: false, configurable: false },
                 /** True if shutdown. */
                 _shutdown: { value: false, writable: false, enumerable: false, configurable: false }
             };
@@ -2741,6 +2752,7 @@ var MslControl$MslChannel;
      * Send an error response over the provided output stream.
      *
      * @param {ReceiveService|RespondService|ErrorService|RequestService} service the calling service.
+     * @param {MslControlImpl} ctrl MSL control.
      * @param {MslContext} ctx MSL context.
      * @param {?MessageDebugContext} debugCtx message debug context. May be null.
      * @param {?string} recipient error response recipient. May be null.
@@ -2753,11 +2765,11 @@ var MslControl$MslChannel;
      *        callback the callback will receive true on success, be notified
      *        of timeout and any thrown exceptions.
      */
-    function sendError(service, ctx, debugCtx, recipient, messageId, error, userMessage, output, timeout, callback) {
+    function sendError(service, ctrl, ctx, debugCtx, recipient, messageId, error, userMessage, output, timeout, callback) {
         MessageBuilder$createErrorResponse(ctx, recipient, messageId, error, userMessage, {
             result: function(errorHeader) {
                 if (debugCtx) debugCtx.sentHeader(errorHeader);
-                MessageOutputStream$create(ctx, output, MslConstants$DEFAULT_CHARSET, errorHeader, null, null, timeout, {
+                ctrl._streamFactory.createOutputStream(ctx, output, MslConstants$DEFAULT_CHARSET, errorHeader, null, null, timeout, {
                     result: function(response) {
                         service.setAbort(function() { response.abort(); });
                         response.close(timeout, {
@@ -2794,7 +2806,7 @@ var MslControl$MslChannel;
         /**
          * Create a new message receive service.
          *
-         * @param {MslControl} ctrl parent MSL control.
+         * @param {MslControlImpl} ctrl parent MSL control.
          * @param {MslContext} ctx MSL context.
          * @param {MessageContext} msgCtx message context.
          * @param {InputStream} input remote entity input stream.
@@ -2884,7 +2896,7 @@ var MslControl$MslChannel;
                                 userMessage = null;
                                 toThrow = new MslInternalException("Error receiving the message header.", e);
                             }
-                            sendError(this, this._ctx, this._msgCtx.getDebugContext(), recipient, requestMessageId, mslError, userMessage, this._output, this._timeout, {
+                            sendError(this, this._ctrl, this._ctx, this._msgCtx.getDebugContext(), recipient, requestMessageId, mslError, userMessage, this._output, this._timeout, {
                                 result: function(success) { callback.error(toThrow); },
                                 timeout: function() { callback.timeout(); },
                                 error: function(re) {
@@ -2938,7 +2950,7 @@ var MslControl$MslChannel;
                                var requestMessageId = requestHeader.messageId;
                                var mslError = MslError.INTERNAL_EXCEPTION;
                                var toThrow = new MslInternalException("Error peeking into the message payloads.");
-                               sendError(this, this._ctx, this._msgCtx.getDebugContext(), recipient, requestMessageId, mslError, null, this._output, this._timeout, {
+                               sendError(this, this._ctrl, this._ctx, this._msgCtx.getDebugContext(), recipient, requestMessageId, mslError, null, this._output, this._timeout, {
                                    result: function(success) { callback.error(toThrow); },
                                    timeout: function() { callback.timeout(); },
                                    error: function(re) {
@@ -3031,7 +3043,7 @@ var MslControl$MslChannel;
                                     userMessage = null;
                                     toThrow = new MslInternalException("Error creating an automatic handshake response.", e);
                                 }
-                                sendError(this, this._ctx, this._msgCtx.getDebugContext(), recipient, requestMessageId, mslError, userMessage, this._output, this._timeout, {
+                                sendError(this, this._ctrl, this._ctx, this._msgCtx.getDebugContext(), recipient, requestMessageId, mslError, userMessage, this._output, this._timeout, {
                                     result: function(success) { callback.error(toThrow); },
                                     timeout: function() { callback.timeout(); },
                                     error: function(re) {
@@ -3099,7 +3111,7 @@ var MslControl$MslChannel;
                                     userMessage = null;
                                     toThrow = new MslInternalException("Error sending an automatic handshake response.", e);
                                 }
-                                sendError(this, this._ctx, this._msgCtx.getDebugContext(), recipient, requestMessageId, mslError, userMessage, this._output, this._timeout, {
+                                sendError(this, this._ctrl, this._ctx, this._msgCtx.getDebugContext(), recipient, requestMessageId, mslError, userMessage, this._output, this._timeout, {
                                     result: function(success) { callback.error(toThrow); },
                                     timeout: function() { callback.timeout(); },
                                     error: function(re) {
@@ -3129,7 +3141,7 @@ var MslControl$MslChannel;
         /**
          * Create a new message respond service.
          *
-         * @param {MslControl} ctrl parent MSL control.
+         * @param {MslControlImpl} ctrl parent MSL control.
          * @param {MslContext} ctx MSL context.
          * @param {MessageContext} msgCtx message context.
          * @param {InputStream} input remote entity input stream.
@@ -3229,7 +3241,7 @@ var MslControl$MslChannel;
                         // Try to send an error response.
                         var recipient = getIdentity(this._request);
                         var requestMessageId = MessageBuilder$decrementMessageId(builder.getMessageId());
-                        sendError(this, this._ctx, this._msgCtx.getDebugContext(), recipient, requestMessageId, securityRequired, null, this._output, this._timeout, {
+                        sendError(this, this._ctrl, this._ctx, this._msgCtx.getDebugContext(), recipient, requestMessageId, securityRequired, null, this._output, this._timeout, {
                             result: function(success) { callback.result(null); },
                             timeout: callback.timeout,
                             error: function(re) {
@@ -3255,7 +3267,7 @@ var MslControl$MslChannel;
                         // Try to send an error response.
                         var recipient = getIdentity(this._request);
                         var requestMessageId = MessageBuilder$decrementMessageId(builder.getMessageId());
-                        sendError(this, this._ctx, this._msgCtx.getDebugContext(), recipient, requestMessageId, MslError.RESPONSE_REQUIRES_MASTERTOKEN, null, this._output, this._timeout, {
+                        sendError(this, this._ctrl, this._ctx, this._msgCtx.getDebugContext(), recipient, requestMessageId, MslError.RESPONSE_REQUIRES_MASTERTOKEN, null, this._output, this._timeout, {
                             result: function(success) { callback.result(null); },
                             timeout: callback.timeout,
                             error: function(re) {
@@ -3357,7 +3369,7 @@ var MslControl$MslChannel;
                     this._ctrl.releaseMasterToken(tokenTicket);
                     var recipient = getIdentity(this._request);
                     var requestMessageId = MessageBuilder$decrementMessageId(builder.getMessageId());
-                    sendError(this, this._ctx, msgCtx.getDebugContext(), recipient, requestMessageId, MslError.RESPONSE_REQUIRES_MASTERTOKEN, null, this._output, this._timeout, {
+                    sendError(this, this._ctrl, this._ctx, msgCtx.getDebugContext(), recipient, requestMessageId, MslError.RESPONSE_REQUIRES_MASTERTOKEN, null, this._output, this._timeout, {
                         result: function(success) { callback.result(null); },
                         timeout: callback.timeout,
                         error: function(e) {
@@ -3583,7 +3595,7 @@ var MslControl$MslChannel;
                                                 userMessage = null;
                                                 toThrow = new MslInternalException("Error sending the response.", e);
                                             }
-                                            sendError(this, this._ctx, this._msgCtx.getDebugContext(), recipient, requestMessageId, mslError, userMessage, this._output, this._timeout, {
+                                            sendError(this, this._ctrl, this._ctx, this._msgCtx.getDebugContext(), recipient, requestMessageId, mslError, userMessage, this._output, this._timeout, {
                                                 result: function(success) { callback.error(toThrow); },
                                                 timeout: function() { callback.timeout(); },
                                                 error: function(re) {
@@ -3635,7 +3647,7 @@ var MslControl$MslChannel;
                                                 userMessage = null;
                                                 toThrow = new MslInternalException("Error sending the response.", e);
                                             }
-                                            sendError(this, this._ctx, this._msgCtx.getDebugContext(), recipient, requestMessageId, mslError, userMessage, this._output, this._timeout, {
+                                            sendError(this, this._ctrl, this._ctx, this._msgCtx.getDebugContext(), recipient, requestMessageId, mslError, userMessage, this._output, this._timeout, {
                                                 result: function(success) { callback.error(toThrow); },
                                                 timeout: function() { callback.timeout(); },
                                                 error: function(re) {
@@ -3675,7 +3687,7 @@ var MslControl$MslChannel;
                                 userMessage = null;
                                 toThrow = new MslInternalException("Error building the response.", e);
                             }
-                            sendError(this, this._ctx, this._msgCtx.getDebugContext(), recipient, requestMessageId, mslError, userMessage, this._output, this._timeout, {
+                            sendError(this, this._ctrl, this._ctx, this._msgCtx.getDebugContext(), recipient, requestMessageId, mslError, userMessage, this._output, this._timeout, {
                                 result: function(success) { callback.error(toThrow); },
                                 timeout: callback.timeout,
                                 error: function(re) {
@@ -3704,7 +3716,7 @@ var MslControl$MslChannel;
         /**
          * Create a new error service.
          *
-         * @param {MslControl} ctrl parent MSL control.
+         * @param {MslControlImpl} ctrl parent MSL control.
          * @param {MslContext} ctx MSL context.
          * @param {MessageContext} msgCtx message context.
          * @param {MslControl$ApplicationError} err the application error.
@@ -3783,7 +3795,7 @@ var MslControl$MslChannel;
                 var caps = this._request.messageCapabilities;
                 var languages = (caps) ? caps.languages : null;
                 var userMessage = this._ctrl.messageRegistry.getUserMessage(err, languages);
-                sendError(this, this._ctx, this._msgCtx.getDebugContext(), this._request.messageId, err, userMessage, this._output, this._timeout, {
+                sendError(this, this._ctrl, this._ctx, this._msgCtx.getDebugContext(), this._request.messageId, err, userMessage, this._output, this._timeout, {
                     result: function(success) { callback.result(success); },
                     timeout: callback.timeout,
                     error: function(e) {
@@ -3829,7 +3841,7 @@ var MslControl$MslChannel;
         /**
          * Create a new message request service.
          *
-         * @param {MslControl} ctrl parent MSL control.
+         * @param {MslControlImpl} ctrl parent MSL control.
          * @param {MslContext} ctx MSL context.
          * @param {MessageContext} msgCtx message context.
          * @param {?Url} remoteEntity remote entity URL.

@@ -61,6 +61,7 @@ var SimpleMslContext;
                 _entityAuthData: { value: entityAuthData, writable: false, enumerable: false, configurable: false },
                 _mslCryptoContext: { value: new ClientMslCryptoContext(), writable: false, enumerable: false, configurable: false },
                 _entityAuthFactories: { value: entityAuthFactories, writable: false, enumerable: false, configurable: false },
+                _messageStreamFactory: { value: new MessageStreamFactory(), writable: false, enumerable: false, configurable: false },
                 _tokenFactory: { value: new ClientTokenFactory(), writable: false, enumerable: false, configurable: false },
                 _keyxFactories: { value: keyxFactories, writable: false, enumerable: false, configurable: false },
                 _store: { value: store, writable: false, enumerable: false, configurable: false },

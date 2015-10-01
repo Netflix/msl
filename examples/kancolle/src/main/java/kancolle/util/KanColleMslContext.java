@@ -49,6 +49,7 @@ import com.netflix.msl.keyx.DiffieHellmanParameters;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.msg.MessageCapabilities;
+import com.netflix.msl.msg.MessageStreamFactory;
 import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.userauth.UserAuthenticationFactory;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
@@ -75,6 +76,9 @@ public abstract class KanColleMslContext implements MslContext {
         compressionAlgos.add(CompressionAlgorithm.GZIP);
         final List<String> languages = Arrays.asList(KanColleConstants.en_US, KanColleConstants.ja_JP);
         this.messageCaps = new MessageCapabilities(compressionAlgos, languages);
+        
+        // Message factory.
+        this.messageStreamFactory = new MessageStreamFactory();
         
         // Auxiliary authentication classes.
         final DiffieHellmanParameters params = new KanColleDiffieHellmanParameters();
@@ -205,6 +209,8 @@ public abstract class KanColleMslContext implements MslContext {
     
     /** Message capabilities. */
     private final MessageCapabilities messageCaps;
+    /** Message factory. */
+    private final MessageStreamFactory messageStreamFactory;
     /** Entity authentication factories by scheme. */
     private final Map<EntityAuthenticationScheme,EntityAuthenticationFactory> entityAuthFactories = new HashMap<EntityAuthenticationScheme,EntityAuthenticationFactory>();
     /** User authentication factories by scheme. */
