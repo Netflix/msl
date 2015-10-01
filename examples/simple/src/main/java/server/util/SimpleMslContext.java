@@ -241,14 +241,6 @@ public class SimpleMslContext implements MslContext {
             return userAuthFactory;
         return null;
     }
-    
-    /* (non-Javadoc)
-     * @see com.netflix.msl.util.MslContext#getMessageStreamFactory()
-     */
-    @Override
-    public MessageStreamFactory getMessageStreamFactory() {
-        return messageStreamFactory;
-    }
 
     /* (non-Javadoc)
      * @see com.netflix.msl.util.MslContext#getTokenFactory()

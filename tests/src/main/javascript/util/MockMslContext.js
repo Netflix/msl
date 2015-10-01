@@ -299,20 +299,6 @@ var MockMslContext$create;
 		getUserAuthenticationFactory: function getUserAuthenticationFactory(scheme) {
 			return this._userAuthFactories[scheme.name];
 		},
-		
-		/**
-		 * Sets the message factory.
-		 * 
-		 * @param {MessageStreamFactory} factory the message factory.
-		 */
-		setMessageStreamFactory: function setMessageStreamFactory(factory) {
-		    this._messageStreamFactory = factory;
-		},
-		
-		/** @inheritDoc */
-		getMessageStreamFactory: function getMessageStreamFactory() {
-		    return this._messageStreamFactory;
-		},
 	    
 	    /**
 	     * Sets the token factory.

@@ -313,11 +313,6 @@ public class MockMslContext implements MslContext {
     public void setMessageStreamFactory(final MessageStreamFactory factory) {
         this.messageStreamFactory = factory;
     }
-    
-    @Override
-    public MessageStreamFactory getMessageStreamFactory() {
-        return messageStreamFactory;
-    }
 
     /**
      * Sets the token factory.

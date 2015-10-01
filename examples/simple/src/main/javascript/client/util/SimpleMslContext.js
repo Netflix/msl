@@ -120,11 +120,6 @@ var SimpleMslContext;
         getUserAuthenticationFactory: function getUserAuthenticationFactory(scheme) {
             return null;
         },
-        
-        /** @inheritDoc */
-        getMessageStreamFactory: function getMessageStreamFactory() {
-            return _messageStreamFactory;
-        }
     
         /** @inheritDoc */
         getTokenFactory: function getTokenFactory() {

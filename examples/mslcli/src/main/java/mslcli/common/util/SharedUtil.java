@@ -58,7 +58,6 @@ import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.msg.MessageCapabilities;
-import com.netflix.msl.msg.MessageStreamFactory;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.ServiceToken;
 import com.netflix.msl.tokens.TokenFactory;
@@ -453,10 +452,6 @@ public final class SharedUtil {
         }
         @Override
         public UserAuthenticationFactory getUserAuthenticationFactory(final UserAuthenticationScheme scheme) {
-            throw new UnsupportedOperationException();
-        }
-        @Override
-        public MessageStreamFactory getMessageStreamFactory() {
             throw new UnsupportedOperationException();
         }
         @Override

@@ -162,14 +162,6 @@ public abstract class KanColleMslContext implements MslContext {
     public UserAuthenticationFactory getUserAuthenticationFactory(final UserAuthenticationScheme scheme) {
         return userAuthFactories.get(scheme);
     }
-    
-    /* (non-Javadoc)
-     * @see com.netflix.msl.util.MslContext#getMessageStreamFactory()
-     */
-    @Override
-    public MessageStreamFactory getMessageStreamFactory() {
-        return messageStreamFactory;
-    }
 
     /* (non-Javadoc)
      * @see com.netflix.msl.util.MslContext#getTokenFactory()
