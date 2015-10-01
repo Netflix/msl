@@ -51,6 +51,7 @@ import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.keyx.MockDiffieHellmanParameters;
 import com.netflix.msl.keyx.SymmetricWrappedExchange;
 import com.netflix.msl.msg.MessageCapabilities;
+import com.netflix.msl.msg.MessageFactory;
 import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.userauth.UserAuthenticationFactory;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
@@ -109,6 +110,8 @@ public class WiretapMslContext implements MslContext {
         final SecretKey mslHmacKey = new SecretKeySpec(MSL_HMAC_KEY, JcaAlgorithm.HMAC_SHA256);
         final SecretKey mslWrappingKey = new SecretKeySpec(MSL_WRAPPING_KEY, JcaAlgorithm.AESKW);
         this.mslCryptoContext = new SymmetricCryptoContext(this, "TestMslKeys", mslEncryptionKey, mslHmacKey, mslWrappingKey);
+        
+        this.messageFactory = new MessageFactory();
 
         // Entity authentication factories are mapped as-is.
         final Map<EntityAuthenticationScheme,EntityAuthenticationFactory> entityAuthFactoriesMap = new HashMap<EntityAuthenticationScheme,EntityAuthenticationFactory>();
@@ -123,7 +126,6 @@ public class WiretapMslContext implements MslContext {
             userAuthFactoriesMap.put(factory.getScheme(), factory);
         }
         this.userAuthFactories = Collections.unmodifiableMap(userAuthFactoriesMap);
-
 
         final MockDiffieHellmanParameters params = MockDiffieHellmanParameters.getDefaultParameters();
         final AuthenticationUtils authutils = new MockAuthenticationUtils();
@@ -227,6 +229,14 @@ public class WiretapMslContext implements MslContext {
     public UserAuthenticationFactory getUserAuthenticationFactory(final UserAuthenticationScheme scheme) {
         return userAuthFactories.get(scheme);
     }
+    
+    /* (non-Javadoc)
+     * @see com.netflix.msl.util.MslContext#getMessageFactory()
+     */
+    @Override
+    public MessageFactory getMessageFactory() {
+        return messageFactory;
+    }
 
     /* (non-Javadoc)
      * @see com.netflix.msl.util.MslContext#getTokenFactory()
@@ -297,6 +307,8 @@ public class WiretapMslContext implements MslContext {
     private EntityAuthenticationData entityAuthData = new UnauthenticatedAuthenticationData("WireTap");
     /** MSL token crypto context. */
     private final ICryptoContext mslCryptoContext;
+    /** Message factory. */
+    private final MessageFactory messageFactory;
     /** Map of supported entity authentication schemes onto factories. */
     private final Map<EntityAuthenticationScheme, EntityAuthenticationFactory> entityAuthFactories;
     /** Map of supported user authentication schemes onto factories. */

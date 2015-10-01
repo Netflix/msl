@@ -24,6 +24,10 @@ import java.util.Random;
 import java.util.Set;
 import java.util.SortedSet;
 
+import mslcli.common.IllegalCmdArgumentException;
+import mslcli.common.IllegalCmdArgumentRuntimeException;
+import mslcli.common.MslConfig;
+
 import com.netflix.msl.MslConstants.CompressionAlgorithm;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.crypto.ICryptoContext;
@@ -33,19 +37,12 @@ import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.msg.MessageCapabilities;
+import com.netflix.msl.msg.MessageFactory;
 import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.userauth.UserAuthenticationFactory;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
-import com.netflix.msl.util.AuthenticationUtils;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslStore;
-
-import mslcli.common.IllegalCmdArgumentException;
-import mslcli.common.IllegalCmdArgumentRuntimeException;
-import mslcli.common.MslConfig;
-import mslcli.common.util.AppContext;
-import mslcli.common.util.ConfigurationException;
-import mslcli.common.util.ConfigurationRuntimeException;
 
 /**
  * <p>ABstract class for MSL context specific to the given entity.</p>
@@ -77,6 +74,9 @@ public abstract class CommonMslContext implements MslContext {
         final Set<CompressionAlgorithm> compressionAlgos = new HashSet<CompressionAlgorithm>(Arrays.asList(CompressionAlgorithm.GZIP, CompressionAlgorithm.LZW));
         final List<String> languages = Arrays.asList("en-US");
         this.messageCaps = new MessageCapabilities(compressionAlgos, languages);
+        
+        // Message factory.
+        this.messageFactory = new MessageFactory();
         
         // Entity authentication factories.
         this.entityAuthFactories = mslCfg.getEntityAuthenticationFactories();
@@ -127,9 +127,9 @@ public abstract class CommonMslContext implements MslContext {
     public final EntityAuthenticationData getEntityAuthenticationData(final ReauthCode reauthCode) {
         try {
             return mslCfg.getEntityAuthenticationData();
-        } catch (ConfigurationException e) {
+        } catch (final ConfigurationException e) {
             throw new ConfigurationRuntimeException(e);
-        } catch (IllegalCmdArgumentException e) {
+        } catch (final IllegalCmdArgumentException e) {
             throw new IllegalCmdArgumentRuntimeException(e);
         }
     }
@@ -162,6 +162,14 @@ public abstract class CommonMslContext implements MslContext {
                 return factory;
         }
         return null;
+    }
+    
+    /* (non-Javadoc)
+     * @see com.netflix.msl.util.MslContext#getMessageFactory()
+     */
+    @Override
+    public MessageFactory getMessageFactory() {
+        return messageFactory;
     }
 
     /* (non-Javadoc)
@@ -231,6 +239,8 @@ public abstract class CommonMslContext implements MslContext {
     private final MslConfig mslCfg;
     /** message capabilities */
     private final MessageCapabilities messageCaps;
+    /** message factory */
+    private final MessageFactory messageFactory;
     /** entity authentication factories */
     private final Set<EntityAuthenticationFactory> entityAuthFactories;
     /** user authentication factories */

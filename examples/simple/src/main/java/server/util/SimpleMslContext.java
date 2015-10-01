@@ -47,6 +47,7 @@ import com.netflix.msl.keyx.AsymmetricWrappedExchange;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.msg.MessageCapabilities;
+import com.netflix.msl.msg.MessageFactory;
 import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.userauth.EmailPasswordAuthenticationFactory;
 import com.netflix.msl.userauth.EmailPasswordStore;
@@ -133,6 +134,9 @@ public class SimpleMslContext implements MslContext {
         
         // Create authentication utils.
         final AuthenticationUtils authutils = new SimpleAuthenticationUtils(serverId);
+        
+        // Message factory.
+        this.messageFactory = new MessageFactory();
         
         // Entity authentication.
         //
@@ -237,6 +241,14 @@ public class SimpleMslContext implements MslContext {
             return userAuthFactory;
         return null;
     }
+    
+    /* (non-Javadoc)
+     * @see com.netflix.msl.util.MslContext#getMessageFactory()
+     */
+    @Override
+    public MessageFactory getMessageFactory() {
+        return messageFactory;
+    }
 
     /* (non-Javadoc)
      * @see com.netflix.msl.util.MslContext#getTokenFactory()
@@ -285,6 +297,7 @@ public class SimpleMslContext implements MslContext {
     private final MessageCapabilities messageCaps;
     private final EntityAuthenticationData entityAuthData;
     private final ICryptoContext mslCryptoContext;
+    private final MessageFactory messageFactory;
     private final Set<EntityAuthenticationFactory> entityAuthFactories;
     private final UserAuthenticationFactory userAuthFactory;
     private final TokenFactory tokenFactory = new SimpleTokenFactory();

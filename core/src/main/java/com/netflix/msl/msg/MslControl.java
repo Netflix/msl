@@ -407,6 +407,14 @@ public class MslControl {
         }
 
         /* (non-Javadoc)
+         * @see com.netflix.msl.util.MslContext#getMessageFactory()
+         */
+        @Override
+        public MessageFactory getMessageFactory() {
+            throw new MslInternalException("Dummy message factory should never actually get used.");
+        }
+        
+        /* (non-Javadoc)
          * @see com.netflix.msl.util.MslContext#getTokenFactory()
          */
         @Override
@@ -2189,6 +2197,7 @@ public class MslControl {
          */
         @Override
         public MessageInputStream call() throws MslException, MslErrorResponseException, IOException {
+            final MessageFactory msgFactory = ctx.getMessageFactory();
             final MessageDebugContext debugCtx = msgCtx.getDebugContext();
             
             // Read the incoming message.
@@ -2211,7 +2220,7 @@ public class MslControl {
                     final String userMessage = messageRegistry.getUserMessage(error, null);
                     final ErrorHeader errorHeader = MessageBuilder.createErrorResponse(ctx, recipient, e.getMessageId(), error, userMessage);
                     if (debugCtx != null) debugCtx.sentHeader(errorHeader);
-                    final MessageOutputStream response = new MessageOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
+                    final MessageOutputStream response = msgFactory.createOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
                     response.close();
                 } catch (final Throwable rt) {
                     // If we were cancelled then return null.
@@ -2228,7 +2237,7 @@ public class MslControl {
                 try {
                     final ErrorHeader errorHeader = MessageBuilder.createErrorResponse(ctx, null, null, MslError.INTERNAL_EXCEPTION, null);
                     if (debugCtx != null) debugCtx.sentHeader(errorHeader);
-                    final MessageOutputStream response = new MessageOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
+                    final MessageOutputStream response = msgFactory.createOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
                     response.close();
                 } catch (final Throwable rt) {
                     // If we were cancelled then return null.
@@ -2259,7 +2268,7 @@ public class MslControl {
                     final Long requestMessageId = requestHeader.getMessageId();
                     final ErrorHeader errorHeader = MessageBuilder.createErrorResponse(ctx, recipient, requestMessageId, MslError.INTERNAL_EXCEPTION, null);
                     if (debugCtx != null) debugCtx.sentHeader(errorHeader);
-                    final MessageOutputStream response = new MessageOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
+                    final MessageOutputStream response = msgFactory.createOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
                     response.close();
                 } catch (final Throwable rt) {
                     // If we were cancelled then return null.
@@ -2292,7 +2301,7 @@ public class MslControl {
                     final String userMessage = messageRegistry.getUserMessage(error, languages);
                     final ErrorHeader errorHeader = MessageBuilder.createErrorResponse(ctx, recipient, e.getMessageId(), error, userMessage);
                     if (debugCtx != null) debugCtx.sentHeader(errorHeader);
-                    final MessageOutputStream response = new MessageOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
+                    final MessageOutputStream response = msgFactory.createOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
                     response.close();
                 } catch (final Throwable rt) {
                     // If we were cancelled then return null.
@@ -2311,7 +2320,7 @@ public class MslControl {
                     final Long requestMessageId = requestHeader.getMessageId();
                     final ErrorHeader errorHeader = MessageBuilder.createErrorResponse(ctx, recipient, requestMessageId, MslError.INTERNAL_EXCEPTION, null);
                     if (debugCtx != null) debugCtx.sentHeader(errorHeader);
-                    final MessageOutputStream response = new MessageOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
+                    final MessageOutputStream response = msgFactory.createOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
                     response.close();
                 } catch (final Throwable rt) {
                     // If we were cancelled then return null.
@@ -2351,7 +2360,7 @@ public class MslControl {
                         final String userMessage = messageRegistry.getUserMessage(error, languages);
                         final ErrorHeader errorHeader = MessageBuilder.createErrorResponse(ctx, recipient, requestMessageId, error, userMessage);
                         if (debugCtx != null) debugCtx.sentHeader(errorHeader);
-                        final MessageOutputStream response = new MessageOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
+                        final MessageOutputStream response = msgFactory.createOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
                         response.close();
                     } catch (final Throwable rt) {
                         // If we were cancelled then return null.
@@ -2370,7 +2379,7 @@ public class MslControl {
                         final Long requestMessageId = requestHeader.getMessageId();
                         final ErrorHeader errorHeader = MessageBuilder.createErrorResponse(ctx, recipient, requestMessageId, MslError.MSL_COMMS_FAILURE, null);
                         if (debugCtx != null) debugCtx.sentHeader(errorHeader);
-                        final MessageOutputStream response = new MessageOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
+                        final MessageOutputStream response = msgFactory.createOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
                         response.close();
                     } catch (final Throwable rt) {
                         // If we were cancelled then return null.
@@ -2389,7 +2398,7 @@ public class MslControl {
                         final Long requestMessageId = requestHeader.getMessageId();
                         final ErrorHeader errorHeader = MessageBuilder.createErrorResponse(ctx, recipient, requestMessageId, MslError.INTERNAL_EXCEPTION, null);
                         if (debugCtx != null) debugCtx.sentHeader(errorHeader);
-                        final MessageOutputStream response = new MessageOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
+                        final MessageOutputStream response = msgFactory.createOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
                         response.close();
                     } catch (final Throwable rt) {
                         // If we were cancelled then return null.
@@ -2487,6 +2496,7 @@ public class MslControl {
          */
         private MslChannel trustedNetworkExecute(final MessageBuilder builder, final int msgCount) throws MslException, MslErrorResponseException, IOException, InterruptedException {
             try {
+                final MessageFactory msgFactory = ctx.getMessageFactory();
                 final MessageDebugContext debugCtx = msgCtx.getDebugContext();
                 
                 // Do nothing if we cannot send one more message.
@@ -2510,7 +2520,7 @@ public class MslControl {
                         final long requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
                         final ErrorHeader errorHeader = MessageBuilder.createErrorResponse(ctx, recipient, requestMessageId, securityRequired, null);
                         if (debugCtx != null) debugCtx.sentHeader(errorHeader);
-                        final MessageOutputStream response = new MessageOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
+                        final MessageOutputStream response = msgFactory.createOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
                         response.close();
                         return null;
                     } catch (final Throwable rt) {
@@ -2531,7 +2541,7 @@ public class MslControl {
                         final long requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
                         final ErrorHeader errorHeader = MessageBuilder.createErrorResponse(ctx, recipient, requestMessageId, MslError.RESPONSE_REQUIRES_MASTERTOKEN, null);
                         if (debugCtx != null) debugCtx.sentHeader(errorHeader);
-                        final MessageOutputStream response = new MessageOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
+                        final MessageOutputStream response = msgFactory.createOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
                         response.close();
                         return null;
                     } catch (final Throwable rt) {
@@ -2571,6 +2581,7 @@ public class MslControl {
          *         trying to acquire the master token lock.
          */
         private MslChannel peerToPeerExecute(final MessageContext msgCtx, final MessageBuilder builder, int msgCount) throws MslException, IOException, InterruptedException, MslErrorResponseException {
+            final MessageFactory msgFactory = ctx.getMessageFactory();
             final MessageDebugContext debugCtx = msgCtx.getDebugContext();
             
             // Do nothing if we cannot send and receive two more messages.
@@ -2593,7 +2604,7 @@ public class MslControl {
                     final long requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
                     final ErrorHeader errorHeader = MessageBuilder.createErrorResponse(ctx, recipient, requestMessageId, MslError.RESPONSE_REQUIRES_MASTERTOKEN, null);
                     if (debugCtx != null) debugCtx.sentHeader(errorHeader);
-                    final MessageOutputStream response = new MessageOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
+                    final MessageOutputStream response = msgFactory.createOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
                     response.close();
                     return null;
                 } catch (final Throwable rt) {
@@ -2690,6 +2701,7 @@ public class MslControl {
          */
         @Override
         public MslChannel call() throws MslException, MslErrorResponseException, IOException {
+            final MessageFactory msgFactory = ctx.getMessageFactory();
             final MessageDebugContext debugCtx = msgCtx.getDebugContext();
             
             final MessageHeader requestHeader = request.getMessageHeader();
@@ -2713,7 +2725,7 @@ public class MslControl {
                     final String userMessage = messageRegistry.getUserMessage(error, languages);
                     final ErrorHeader errorHeader = MessageBuilder.createErrorResponse(ctx, recipient, e.getMessageId(), error, userMessage);
                     if (debugCtx != null) debugCtx.sentHeader(errorHeader);
-                    final MessageOutputStream response = new MessageOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
+                    final MessageOutputStream response = msgFactory.createOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
                     response.close();
                 } catch (final Throwable rt) {
                     throw new MslErrorResponseException("Error building the response.", rt, e);
@@ -2727,7 +2739,7 @@ public class MslControl {
                     final String recipient = MslControl.getIdentity(request);
                     final ErrorHeader errorHeader = MessageBuilder.createErrorResponse(ctx, recipient, null, MslError.INTERNAL_EXCEPTION, null);
                     if (debugCtx != null) debugCtx.sentHeader(errorHeader);
-                    final MessageOutputStream response = new MessageOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
+                    final MessageOutputStream response = msgFactory.createOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
                     response.close();
                 } catch (final Throwable rt) {
                     throw new MslErrorResponseException("Error building the response.", rt, t);
@@ -2764,7 +2776,7 @@ public class MslControl {
                     final long requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
                     final ErrorHeader errorHeader = MessageBuilder.createErrorResponse(ctx, recipient, requestMessageId, MslError.MSL_COMMS_FAILURE, null);
                     if (debugCtx != null) debugCtx.sentHeader(errorHeader);
-                    final MessageOutputStream response = new MessageOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
+                    final MessageOutputStream response = msgFactory.createOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
                     response.close();
                 } catch (final Throwable rt) {
                     // If we were cancelled then return null.
@@ -2787,7 +2799,7 @@ public class MslControl {
                     final String userMessage = messageRegistry.getUserMessage(error, languages);
                     final ErrorHeader errorHeader = MessageBuilder.createErrorResponse(ctx, recipient, requestMessageId, error, userMessage);
                     if (debugCtx != null) debugCtx.sentHeader(errorHeader);
-                    final MessageOutputStream response = new MessageOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
+                    final MessageOutputStream response = msgFactory.createOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
                     response.close();
                 } catch (final Throwable rt) {
                     // If we were cancelled then return null.
@@ -2806,7 +2818,7 @@ public class MslControl {
                     final long requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
                     final ErrorHeader errorHeader = MessageBuilder.createErrorResponse(ctx, recipient, requestMessageId, MslError.INTERNAL_EXCEPTION, null);
                     if (debugCtx != null) debugCtx.sentHeader(errorHeader);
-                    final MessageOutputStream response = new MessageOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
+                    final MessageOutputStream response = msgFactory.createOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
                     response.close();
                 } catch (final Throwable rt) {
                     // If we were cancelled then return null.
@@ -2893,7 +2905,7 @@ public class MslControl {
                 final String userMessage = messageRegistry.getUserMessage(error, languages);
                 final ErrorHeader errorHeader = MessageBuilder.createErrorResponse(ctx, recipient, header.getMessageId(), error, userMessage);
                 if (debugCtx != null) debugCtx.sentHeader(errorHeader);
-                final MessageOutputStream response = new MessageOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
+                final MessageOutputStream response = ctx.getMessageFactory().createOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
                 response.close();
                 
                 // Success.

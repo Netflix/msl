@@ -1594,7 +1594,7 @@ var MslControl$MslChannel;
 
                                         // Send the request.
                                         var os = (this._filterFactory != null) ? this._filterFactory.getOutputStream(out) : out;
-                                        MessageOutputStream$create(ctx, os, MslConstants$DEFAULT_CHARSET, requestHeader, payloadCryptoContext, timeout, {
+                                        ctx.getMessageFactory().createOutputStream(ctx, os, MslConstants$DEFAULT_CHARSET, requestHeader, payloadCryptoContext, timeout, {
                                             result: function(request) {
                                                 InterruptibleExecutor(callback, function() {
                                                     service.setAbort(function() { request.abort(); });
@@ -1694,7 +1694,7 @@ var MslControl$MslChannel;
                     keyRequestData = request.keyRequestData.filter(function() { return true; });
                 var cryptoContexts = msgCtx.getCryptoContexts();
                 var is = (this._filterFactory) ? this._filterFactory.getInputStream(input) : input;
-                MessageInputStream$create(ctx, is, MslConstants$DEFAULT_CHARSET, keyRequestData, cryptoContexts, timeout, {
+                ctx.getMessageFactory().createInputStream(ctx, is, MslConstants$DEFAULT_CHARSET, keyRequestData, cryptoContexts, timeout, {
                     result: function(response) {
                         // Register abort function.
                         service.setAbort(function() { response.abort(); });
@@ -2757,7 +2757,7 @@ var MslControl$MslChannel;
         MessageBuilder$createErrorResponse(ctx, recipient, messageId, error, userMessage, {
             result: function(errorHeader) {
                 if (debugCtx) debugCtx.sentHeader(errorHeader);
-                MessageOutputStream$create(ctx, output, MslConstants$DEFAULT_CHARSET, errorHeader, null, null, timeout, {
+                ctx.getMessageFactory().createOutputStream(ctx, output, MslConstants$DEFAULT_CHARSET, errorHeader, null, null, timeout, {
                     result: function(response) {
                         service.setAbort(function() { response.abort(); });
                         response.close(timeout, {

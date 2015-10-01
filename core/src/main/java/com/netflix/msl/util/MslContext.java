@@ -27,6 +27,7 @@ import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.msg.MessageCapabilities;
+import com.netflix.msl.msg.MessageFactory;
 import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.userauth.UserAuthenticationFactory;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
@@ -206,6 +207,13 @@ public interface MslContext {
      *         available.
      */
     public UserAuthenticationFactory getUserAuthenticationFactory(final UserAuthenticationScheme scheme);
+    
+    /**
+     * Returns the message factory.
+     * 
+     * @return the message factory.
+     */
+    public MessageFactory getMessageFactory();
     
     /**
      * Returns the token factory.

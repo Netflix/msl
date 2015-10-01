@@ -21,9 +21,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -41,6 +41,8 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
 
+import mslcli.common.Triplet;
+
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslConstants.ResponseCode;
 import com.netflix.msl.MslCryptoException;
@@ -56,6 +58,7 @@ import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.msg.MessageCapabilities;
+import com.netflix.msl.msg.MessageFactory;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.ServiceToken;
 import com.netflix.msl.tokens.TokenFactory;
@@ -65,8 +68,6 @@ import com.netflix.msl.userauth.UserAuthenticationScheme;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslStore;
 import com.netflix.msl.util.SimpleMslStore;
-
-import mslcli.common.Triplet;
 
 /**
  * <p>Collection of utilities.</p>
@@ -292,9 +293,9 @@ public final class SharedUtil {
             br  = new BufferedReader(isr);
             p.load(br);
         } finally {
-            if (fis != null) try { fis.close(); } catch (IOException ignore) {}
-            if (isr != null) try { isr.close(); } catch (IOException ignore) {}
-            if (br != null) try { br.close(); } catch (IOException ignore) {}
+            if (fis != null) try { fis.close(); } catch (final IOException ignore) {}
+            if (isr != null) try { isr.close(); } catch (final IOException ignore) {}
+            if (br != null) try { br.close(); } catch (final IOException ignore) {}
         }
         return p;
     }
@@ -317,7 +318,7 @@ public final class SharedUtil {
             fis = new FileInputStream(f);
             return readIntoArray(fis);
         } finally {
-            if (fis != null) try { fis.close(); } catch (IOException ignore) {}
+            if (fis != null) try { fis.close(); } catch (final IOException ignore) {}
         }
     }
 
@@ -363,9 +364,9 @@ public final class SharedUtil {
             }
             return lines;
         } finally {
-            if (fis != null) try { fis.close(); } catch (IOException ignore) {}
-            if (isr != null) try { isr.close(); } catch (IOException ignore) {}
-            if (br != null) try { br.close(); } catch (IOException ignore) {}
+            if (fis != null) try { fis.close(); } catch (final IOException ignore) {}
+            if (isr != null) try { isr.close(); } catch (final IOException ignore) {}
+            if (br != null) try { br.close(); } catch (final IOException ignore) {}
         }
     }
  
@@ -389,7 +390,7 @@ public final class SharedUtil {
             fos = new FileOutputStream(f);
             fos.write(data);
         } finally {
-            if (fos != null) try { fos.close(); } catch (IOException ignore) {}
+            if (fos != null) try { fos.close(); } catch (final IOException ignore) {}
         }
     }
  
@@ -452,6 +453,10 @@ public final class SharedUtil {
         }
         @Override
         public UserAuthenticationFactory getUserAuthenticationFactory(final UserAuthenticationScheme scheme) {
+            throw new UnsupportedOperationException();
+        }
+        @Override
+        public MessageFactory getMessageFactory() {
             throw new UnsupportedOperationException();
         }
         @Override
@@ -651,7 +656,7 @@ public final class SharedUtil {
         final File f = new File(path);
         try {
             return !f.exists() && f.getCanonicalFile().getParentFile().isDirectory();
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new IllegalArgumentException(String.format("Invalid file path %s: %s", path, e.getMessage()), e);
         }
     }
@@ -668,7 +673,7 @@ public final class SharedUtil {
      * @param param parameter
      * @param name parameter name
      */
-    public static void assertNotNull(Object param, String name) {
+    public static void assertNotNull(final Object param, final String name) {
         if (param == null) throw new IllegalArgumentException(String.format("NULL %s", (name != null) ? name : "parameter"));
     }
 }

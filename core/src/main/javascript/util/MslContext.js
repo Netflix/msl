@@ -167,6 +167,13 @@ var MslContext = util.Class.create({
      *         available.
      */
     getUserAuthenticationFactory: function(scheme) {},
+    
+    /**
+     * Returns the message factory.
+     * 
+     * @return {MessageFactory} the message factory.
+     */
+    getMessageFactory: function getMessageFactory() {},
 
     /**
      * Returns the token factory.
