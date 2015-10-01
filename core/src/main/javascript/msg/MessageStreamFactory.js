@@ -19,7 +19,7 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MessageFactory = util.Class.create({
+var MessageStreamFactory = util.Class.create({
     /**
      * <p>Construct a new message input stream. The header is parsed.</p>
      *

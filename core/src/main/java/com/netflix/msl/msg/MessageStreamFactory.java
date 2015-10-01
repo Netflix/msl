@@ -36,11 +36,11 @@ import com.netflix.msl.keyx.KeyRequestData;
 import com.netflix.msl.util.MslContext;
 
 /**
- * <p>The message factory is used to create message-related objects.</p>
+ * <p>A message stream factory is used to create message streams.</p>
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-public class MessageFactory {
+public class MessageStreamFactory {
     /**
      * <p>Construct a new message input stream. The header is parsed.</p>
      * 

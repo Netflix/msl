@@ -49,7 +49,7 @@ import com.netflix.msl.keyx.DiffieHellmanParameters;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.msg.MessageCapabilities;
-import com.netflix.msl.msg.MessageFactory;
+import com.netflix.msl.msg.MessageStreamFactory;
 import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.userauth.UserAuthenticationFactory;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
@@ -78,7 +78,7 @@ public abstract class KanColleMslContext implements MslContext {
         this.messageCaps = new MessageCapabilities(compressionAlgos, languages);
         
         // Message factory.
-        this.messageFactory = new MessageFactory();
+        this.messageStreamFactory = new MessageStreamFactory();
         
         // Auxiliary authentication classes.
         final DiffieHellmanParameters params = new KanColleDiffieHellmanParameters();
@@ -164,11 +164,11 @@ public abstract class KanColleMslContext implements MslContext {
     }
     
     /* (non-Javadoc)
-     * @see com.netflix.msl.util.MslContext#getMessageFactory()
+     * @see com.netflix.msl.util.MslContext#getMessageStreamFactory()
      */
     @Override
-    public MessageFactory getMessageFactory() {
-        return messageFactory;
+    public MessageStreamFactory getMessageStreamFactory() {
+        return messageStreamFactory;
     }
 
     /* (non-Javadoc)
@@ -218,7 +218,7 @@ public abstract class KanColleMslContext implements MslContext {
     /** Message capabilities. */
     private final MessageCapabilities messageCaps;
     /** Message factory. */
-    private final MessageFactory messageFactory;
+    private final MessageStreamFactory messageStreamFactory;
     /** Entity authentication factories by scheme. */
     private final Map<EntityAuthenticationScheme,EntityAuthenticationFactory> entityAuthFactories = new HashMap<EntityAuthenticationScheme,EntityAuthenticationFactory>();
     /** User authentication factories by scheme. */

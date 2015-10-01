@@ -407,11 +407,11 @@ public class MslControl {
         }
 
         /* (non-Javadoc)
-         * @see com.netflix.msl.util.MslContext#getMessageFactory()
+         * @see com.netflix.msl.util.MslContext#getMessageStreamFactory()
          */
         @Override
-        public MessageFactory getMessageFactory() {
-            throw new MslInternalException("Dummy message factory should never actually get used.");
+        public MessageStreamFactory getMessageStreamFactory() {
+            throw new MslInternalException("Dummy message stream factory should never actually get used.");
         }
         
         /* (non-Javadoc)
@@ -2197,7 +2197,7 @@ public class MslControl {
          */
         @Override
         public MessageInputStream call() throws MslException, MslErrorResponseException, IOException {
-            final MessageFactory msgFactory = ctx.getMessageFactory();
+            final MessageStreamFactory msgFactory = ctx.getMessageStreamFactory();
             final MessageDebugContext debugCtx = msgCtx.getDebugContext();
             
             // Read the incoming message.
@@ -2496,7 +2496,7 @@ public class MslControl {
          */
         private MslChannel trustedNetworkExecute(final MessageBuilder builder, final int msgCount) throws MslException, MslErrorResponseException, IOException, InterruptedException {
             try {
-                final MessageFactory msgFactory = ctx.getMessageFactory();
+                final MessageStreamFactory msgFactory = ctx.getMessageStreamFactory();
                 final MessageDebugContext debugCtx = msgCtx.getDebugContext();
                 
                 // Do nothing if we cannot send one more message.
@@ -2581,7 +2581,7 @@ public class MslControl {
          *         trying to acquire the master token lock.
          */
         private MslChannel peerToPeerExecute(final MessageContext msgCtx, final MessageBuilder builder, int msgCount) throws MslException, IOException, InterruptedException, MslErrorResponseException {
-            final MessageFactory msgFactory = ctx.getMessageFactory();
+            final MessageStreamFactory msgFactory = ctx.getMessageStreamFactory();
             final MessageDebugContext debugCtx = msgCtx.getDebugContext();
             
             // Do nothing if we cannot send and receive two more messages.
@@ -2701,7 +2701,7 @@ public class MslControl {
          */
         @Override
         public MslChannel call() throws MslException, MslErrorResponseException, IOException {
-            final MessageFactory msgFactory = ctx.getMessageFactory();
+            final MessageStreamFactory msgFactory = ctx.getMessageStreamFactory();
             final MessageDebugContext debugCtx = msgCtx.getDebugContext();
             
             final MessageHeader requestHeader = request.getMessageHeader();
@@ -2905,7 +2905,7 @@ public class MslControl {
                 final String userMessage = messageRegistry.getUserMessage(error, languages);
                 final ErrorHeader errorHeader = MessageBuilder.createErrorResponse(ctx, recipient, header.getMessageId(), error, userMessage);
                 if (debugCtx != null) debugCtx.sentHeader(errorHeader);
-                final MessageOutputStream response = ctx.getMessageFactory().createOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
+                final MessageOutputStream response = ctx.getMessageStreamFactory().createOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
                 response.close();
                 
                 // Success.

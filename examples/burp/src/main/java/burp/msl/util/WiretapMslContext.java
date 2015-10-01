@@ -51,7 +51,7 @@ import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.keyx.MockDiffieHellmanParameters;
 import com.netflix.msl.keyx.SymmetricWrappedExchange;
 import com.netflix.msl.msg.MessageCapabilities;
-import com.netflix.msl.msg.MessageFactory;
+import com.netflix.msl.msg.MessageStreamFactory;
 import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.userauth.UserAuthenticationFactory;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
@@ -111,7 +111,7 @@ public class WiretapMslContext implements MslContext {
         final SecretKey mslWrappingKey = new SecretKeySpec(MSL_WRAPPING_KEY, JcaAlgorithm.AESKW);
         this.mslCryptoContext = new SymmetricCryptoContext(this, "TestMslKeys", mslEncryptionKey, mslHmacKey, mslWrappingKey);
         
-        this.messageFactory = new MessageFactory();
+        this.messageStreamFactory = new MessageStreamFactory();
 
         // Entity authentication factories are mapped as-is.
         final Map<EntityAuthenticationScheme,EntityAuthenticationFactory> entityAuthFactoriesMap = new HashMap<EntityAuthenticationScheme,EntityAuthenticationFactory>();
@@ -231,11 +231,11 @@ public class WiretapMslContext implements MslContext {
     }
     
     /* (non-Javadoc)
-     * @see com.netflix.msl.util.MslContext#getMessageFactory()
+     * @see com.netflix.msl.util.MslContext#getMessageStreamFactory()
      */
     @Override
-    public MessageFactory getMessageFactory() {
-        return messageFactory;
+    public MessageStreamFactory getMessageStreamFactory() {
+        return messageStreamFactory;
     }
 
     /* (non-Javadoc)
@@ -308,7 +308,7 @@ public class WiretapMslContext implements MslContext {
     /** MSL token crypto context. */
     private final ICryptoContext mslCryptoContext;
     /** Message factory. */
-    private final MessageFactory messageFactory;
+    private final MessageStreamFactory messageStreamFactory;
     /** Map of supported entity authentication schemes onto factories. */
     private final Map<EntityAuthenticationScheme, EntityAuthenticationFactory> entityAuthFactories;
     /** Map of supported user authentication schemes onto factories. */

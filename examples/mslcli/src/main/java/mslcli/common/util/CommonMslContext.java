@@ -37,7 +37,7 @@ import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.msg.MessageCapabilities;
-import com.netflix.msl.msg.MessageFactory;
+import com.netflix.msl.msg.MessageStreamFactory;
 import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.userauth.UserAuthenticationFactory;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
@@ -76,7 +76,7 @@ public abstract class CommonMslContext implements MslContext {
         this.messageCaps = new MessageCapabilities(compressionAlgos, languages);
         
         // Message factory.
-        this.messageFactory = new MessageFactory();
+        this.messageStreamFactory = new MessageStreamFactory();
         
         // Entity authentication factories.
         this.entityAuthFactories = mslCfg.getEntityAuthenticationFactories();
@@ -165,11 +165,11 @@ public abstract class CommonMslContext implements MslContext {
     }
     
     /* (non-Javadoc)
-     * @see com.netflix.msl.util.MslContext#getMessageFactory()
+     * @see com.netflix.msl.util.MslContext#getMessageStreamFactory()
      */
     @Override
-    public MessageFactory getMessageFactory() {
-        return messageFactory;
+    public MessageStreamFactory getMessageStreamFactory() {
+        return messageStreamFactory;
     }
 
     /* (non-Javadoc)
@@ -240,7 +240,7 @@ public abstract class CommonMslContext implements MslContext {
     /** message capabilities */
     private final MessageCapabilities messageCaps;
     /** message factory */
-    private final MessageFactory messageFactory;
+    private final MessageStreamFactory messageStreamFactory;
     /** entity authentication factories */
     private final Set<EntityAuthenticationFactory> entityAuthFactories;
     /** user authentication factories */

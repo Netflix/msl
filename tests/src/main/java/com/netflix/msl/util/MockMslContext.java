@@ -60,7 +60,7 @@ import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.keyx.MockDiffieHellmanParameters;
 import com.netflix.msl.keyx.SymmetricWrappedExchange;
 import com.netflix.msl.msg.MessageCapabilities;
-import com.netflix.msl.msg.MessageFactory;
+import com.netflix.msl.msg.MessageStreamFactory;
 import com.netflix.msl.tokens.MockTokenFactory;
 import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.userauth.MockEmailPasswordAuthenticationFactory;
@@ -310,13 +310,13 @@ public class MockMslContext implements MslContext {
      * 
      * @param factory the message factory.
      */
-    public void setMessageFactory(final MessageFactory factory) {
-        this.messageFactory = factory;
+    public void setMessageStreamFactory(final MessageStreamFactory factory) {
+        this.messageStreamFactory = factory;
     }
     
     @Override
-    public MessageFactory getMessageFactory() {
-        return messageFactory;
+    public MessageStreamFactory getMessageStreamFactory() {
+        return messageStreamFactory;
     }
 
     /**
@@ -394,7 +394,7 @@ public class MockMslContext implements MslContext {
     /** MSL crypto context. */
     private ICryptoContext mslCryptoContext;
     /** Message factory. */
-    private MessageFactory messageFactory;
+    private MessageStreamFactory messageStreamFactory;
     /** Map of supported entity authentication schemes onto factories. */
     private final Map<EntityAuthenticationScheme,EntityAuthenticationFactory> entityAuthFactories;
     /** Map of supported user authentication schemes onto factories. */

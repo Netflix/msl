@@ -149,7 +149,7 @@ var MockMslContext$create;
 		            var mslCryptoContext = new SymmetricCryptoContext(this, "TestMslKeys", mslEncryptionKey, mslHmacKey, mslWrapKey);
 		            
 		            // Set up message factory.
-		            var messageFactory = new MessageFactory();
+		            var messageStreamFactory = new MessageStreamFactory();
 
 		            // Set up token factory.
 		            var tokenFactory = new MockTokenFactory();
@@ -174,7 +174,7 @@ var MockMslContext$create;
 		                _entityAuthData: { value: entityAuthData, writable: true, enumerable: false, configurable: false },
 		                _entityAuthFactories: { value: entityAuthFactories, writable: false, enumerable: false, configurable: false },
 		                _userAuthFactories: { value: userAuthFactories, writable: false, enumerable: false, configurable: false },
-		                _messageFactory: { value: messageFactory, writable: true, enumerable: false, configurable: false },
+		                _messageStreamFactory: { value: messageStreamFactory, writable: true, enumerable: false, configurable: false },
 		                _tokenFactory: { value: tokenFactory, writable: true, enumerable: false, configurable: false },
 		                _paramSpecs: { value: paramSpecs, writable: false, enumerable: false, configurable: false },
 		                _keyxFactories: { value: keyxFactories, writable: false, enumerable: false, configurable: false },
@@ -303,15 +303,15 @@ var MockMslContext$create;
 		/**
 		 * Sets the message factory.
 		 * 
-		 * @param {MessageFactory} factory the message factory.
+		 * @param {MessageStreamFactory} factory the message factory.
 		 */
-		setMessageFactory: function setMessageFactory(factory) {
-		    this._messageFactory = factory;
+		setMessageStreamFactory: function setMessageStreamFactory(factory) {
+		    this._messageStreamFactory = factory;
 		},
 		
 		/** @inheritDoc */
-		getMessageFactory: function getMessageFactory() {
-		    return this._messageFactory;
+		getMessageStreamFactory: function getMessageStreamFactory() {
+		    return this._messageStreamFactory;
 		},
 	    
 	    /**
