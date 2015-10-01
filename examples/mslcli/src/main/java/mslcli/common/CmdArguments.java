@@ -81,6 +81,8 @@ public final class CmdArguments {
     public static final String P_EAS  = "-eas" ;
     /** verbose */
     public static final String P_V    = "-v"   ;
+    /** send message N times */
+    public static final String P_NSND = "-nsnd";
 
     /** list of supported arguments */
     private static final List<String> supportedArguments =
@@ -110,6 +112,7 @@ public final class CmdArguments {
             P_OF,
             P_MSG,
 
+            P_NSND,
             P_V
         )));
 
@@ -484,6 +487,13 @@ public final class CmdArguments {
     /**
      * @return verbose mode y/n
      */
+    public int getNumSends() {
+        return getInteger(P_NSND, 1);
+    }
+
+    /**
+     * @return verbose mode y/n
+     */
     public boolean isVerbose() {
         return getBoolean(P_V, false);
     }
@@ -496,6 +506,16 @@ public final class CmdArguments {
     private boolean getBoolean(final String name, final boolean def) {
         final String s = argMap.get(name);
         return (s != null) ? Boolean.parseBoolean(s) : def;
+    }
+
+    /**
+     * @param name name of the integer property
+     * @param def default value of the integer property
+     * @return property parsed as integer or default value if it does not exist
+     */
+    private int getInteger(final String name, final int def) {
+        final String s = argMap.get(name);
+        return (s != null) ? Integer.valueOf(s) : def;
     }
 
     /**
