@@ -429,7 +429,7 @@ var MessageHeader$HeaderPeerData;
             var scheme = entityAuthData.scheme;
             var factory = ctx.getEntityAuthenticationFactory(scheme);
             if (!factory)
-                throw new MslEntityAuthException(MslError.ENTITYAUTH_FACTORY_NOT_FOUND, scheme);
+                throw new MslEntityAuthException(MslError.ENTITYAUTH_FACTORY_NOT_FOUND, scheme.name);
             return factory.getCryptoContext(ctx, entityAuthData);
         }
     }
