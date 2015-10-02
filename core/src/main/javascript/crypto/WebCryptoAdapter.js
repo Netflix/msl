@@ -79,14 +79,18 @@ var MslCrypto$setCryptoSubtle;
 
     // Determine crypto subtle.
     var nfCryptoSubtle;
-    if (window.msCrypto) {
-    	nfCryptoSubtle = window.msCrypto.subtle;
-    	MslCrypto$setWebCryptoVersion(MslCrypto$WebCryptoVersion.LEGACY);
-    } else if (window.crypto.webkitSubtle) {
-    	nfCryptoSubtle = window.crypto.webkitSubtle;
-    	MslCrypto$setWebCryptoVersion(MslCrypto$WebCryptoVersion.V2014_02_SAFARI);
-    } else {
-    	nfCryptoSubtle = window.crypto.subtle;
+    if (typeof window !== "undefined") {
+        if (window.msCrypto) {
+            nfCryptoSubtle = window.msCrypto.subtle;
+            MslCrypto$setWebCryptoVersion(MslCrypto$WebCryptoVersion.LEGACY);
+        } else if (window.crypto) {
+            if (window.crypto.webkitSubtle) {
+                nfCryptoSubtle = window.crypto.webkitSubtle;
+                MslCrypto$setWebCryptoVersion(MslCrypto$WebCryptoVersion.V2014_02_SAFARI);
+            } else if (window.crypto.subtle) {
+                nfCryptoSubtle = window.crypto.subtle;
+            }
+        }
     }
 
     /**

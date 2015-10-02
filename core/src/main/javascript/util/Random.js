@@ -26,10 +26,8 @@ var Random$setCrypto;
 
     // Determine nfCrypto.
     var nfCrypto;
-    if (window.msCrypto) {
-    	nfCrypto = window.msCrypto;
-    } else {
-    	nfCrypto = window.crypto;
+    if (typeof window !== "undefined") {
+        nfCrypto = window.msCrypto || window.crypto;
     }
 
     /**
