@@ -216,7 +216,7 @@ var IHttpLocation = util.Class.create({
                 if (this._buffer)
                     this._buffer.close();
                 return true;
-            });
+            }, this);
         },
 
         /** @inheritDoc */
