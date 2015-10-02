@@ -50,9 +50,9 @@
  * setTimeout(function() { // x is now 7 }, 2000);
  * </p>
  *
- * @param {{result:Function, error: function(Error)}} callback the callback
+ * @param {{result: function(*), error: function(Error)}} callback the callback
  *        functions that will receive the result or any thrown errors.
- * @param {function({result: Function, error: function(Error)}): *=} func
+ * @param {function({result: function(*), error: function(Error)}): *=} func
  *        the function to execute.
  * @param {Object=} thisArg object to use as this when executing the function.
  * @author Wesley Miaw <wmiaw@netflix.com>
@@ -93,9 +93,10 @@ function AsyncExecutor(callback, func, thisArg) {
  * <p>This is identical to AsyncExecutor except it also enforces the existence
  * of a timeout callback.</p>
  *
- * @param {{result:Function, error:function(Error)}} callback the callback
- *        functions that will receive the result or any thrown errors.
- * @param {function({result: Function, error: function(Error)}): *=} func
+ * @param {{result: function(*), timeout: function(), error:function(Error)}}
+ *        callback the callback functions that will receive the result, be
+ *        notified of timeout, or any thrown errors.
+ * @param {function({result: function(*), error: function(Error)}): *=} func
  *        the function to execute.
  * @param {Object=} thisArg object to use as this when executing the function.
  * @author Wesley Miaw <wmiaw@netflix.com>
