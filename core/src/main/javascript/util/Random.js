@@ -1,6 +1,6 @@
 /**
- * Copyright (c) 2012-2014 Netflix, Inc.  All rights reserved.
- * 
+ * Copyright (c) 2012-2015 Netflix, Inc.  All rights reserved.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,12 +18,12 @@ var Random$setCrypto;
 
 (function() {
     "use strict";
-    
+
     // Shift multiplication.
     var SHIFT_24 = 0x1000000;
     // Minimum integer.
     var MIN_LONG_VALUE = 0 - MslConstants$MAX_LONG_VALUE;
-    
+
     // Determine nfCrypto.
     var nfCrypto;
     if (window.msCrypto) {
@@ -31,16 +31,16 @@ var Random$setCrypto;
     } else {
     	nfCrypto = window.crypto;
     }
-    
+
     /**
      * Override the crypto interface providing the function getRandomValues().
-     * 
+     *
      * @param {object} the new crypto interface.
      */
     Random$setCrypto = function Random$setCrypto(crypto) {
     	nfCrypto = crypto;
     };
-    
+
     /**
      * @param min minimum value.
      * @param max maximum value.
@@ -82,7 +82,7 @@ var Random$setCrypto;
                     throw new RangeError('n must be greater than zero');
                 return random(0, n - 1);
             }
-            
+
             var b = new Uint8Array(4);
             nfCrypto.getRandomValues(b);
             var abs = ((b[3] & 0x7f) << 24) | (b[2] << 16) | (b[1] << 8) | b[0];
