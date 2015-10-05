@@ -1,6 +1,6 @@
 /**
- * Copyright (c) 2012-2014 Netflix, Inc.  All rights reserved.
- * 
+ * Copyright (c) 2012-2015 Netflix, Inc.  All rights reserved.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -36,10 +36,10 @@ var MslConstants$ResponseCode;
 
 (function() {
     "use strict";
-    
+
     /** RFC-4327 defines UTF-8 as the default encoding. */
     MslConstants$DEFAULT_CHARSET = "utf-8";
-    
+
     /** Maximum long integer value (2^53 limited by JavaScript). */
     MslConstants$MAX_LONG_VALUE = 9007199254740992;
 
@@ -53,7 +53,7 @@ var MslConstants$ResponseCode;
      * @const
      */
     MslConstants$MAX_MESSAGES = 12;
-    
+
     /**
      * Compression algorithm.
      * @enum {string}
@@ -67,11 +67,11 @@ var MslConstants$ResponseCode;
         LZW : "LZW",
     };
     Object.freeze(MslConstants$CompressionAlgorithm);
-    
+
     /**
      * Returns the most preferred compression algorithm from the provided
      * set of algorithms.
-     * 
+     *
      * @param {Array.<MslConstants$CompressionAlgorithm>} algos the set of algorithms to choose from.
      * @return {?MslConstants$CompressionAlgorithm>} the most preferred compression algorithm or {@code null} if
      *         the algorithm set is empty.
@@ -87,14 +87,14 @@ var MslConstants$ResponseCode;
         }
         return null;
     };
-    
+
     /** Encryption algorithms. */
     var EncryptionAlgo = MslConstants$EncryptionAlgo = {
         /** AES */
         AES : "AES",
     };
     Object.freeze(MslConstants$EncryptionAlgo);
-    
+
     /**
      * @param {WebCryptoAlgorithm|string} value the Web Crypto algorithm or
      *        string value of the encryption algorithm.
@@ -108,7 +108,7 @@ var MslConstants$ResponseCode;
             algoName = value.toLowerCase();
         if (typeof value === 'object' && typeof value['name'] === 'string')
             algoName = value['name'].toLowerCase();
-        
+
         // Web Crypto does not define key types independent of cipher
         // specifications, so unfortunately the AES-CBC cipher spcification
         // maps onto the AES key type.
@@ -116,7 +116,7 @@ var MslConstants$ResponseCode;
             return EncryptionAlgo.AES;
         return EncryptionAlgo[value];
     };
-    
+
     /**
      * @param {EncryptionAlgo} the encryption algorithm.
      * @return {?WebCryptoAlgorithm} the Web Crypto algorithm associated with
@@ -130,7 +130,7 @@ var MslConstants$ResponseCode;
             return WebCryptoAlgorithm.AES_CBC;
         return undefined;
     };
-    
+
     /** Cipher specifications. */
     var CipherSpec = MslConstants$CipherSpec = {
         /** AES/CBC/PKCS5Padding */
@@ -141,7 +141,7 @@ var MslConstants$ResponseCode;
         RSA_ECB_PKCS1Padding : "RSA/ECB/PKCS1Padding",
     };
     Object.freeze(MslConstants$CipherSpec);
-    
+
     /**
      * @param {string} value the string value of the cipher specification.
      * @return {?MslConstants$CipherSpec} the cipher specification associated
@@ -154,7 +154,7 @@ var MslConstants$ResponseCode;
             return CipherSpec.RSA_ECB_PKCS1Padding;
         return CipherSpec[value];
     };
-    
+
     /** Signature algorithms. */
     var SignatureAlgo = MslConstants$SignatureAlgo = {
         /** HmacSHA256 */
@@ -165,7 +165,7 @@ var MslConstants$ResponseCode;
         AESCmac : "AESCmac",
     };
     Object.freeze(MslConstants$SignatureAlgo);
-    
+
     /**
      * @param {WebCryptoAlgorithm|string} value the Web Crypto algorithm or
      *        string value of the signature algorithm.
@@ -182,7 +182,7 @@ var MslConstants$ResponseCode;
         var hashName = undefined;
         if (typeof value['hash'] === 'object')
             hashName = value['hash']['name'].toLowerCase();
-        
+
         // FIXME
         // This is an ugly approach to mapping Web Crypto algorithms onto
         // signature algorithms. We should probably use some sort of subset-
@@ -199,10 +199,10 @@ var MslConstants$ResponseCode;
         }
         if (WebCryptoAlgorithm.AES_CMAC['name'].toLowerCase() == algoName) {
             return SignatureAlgo.AESCmac;
-        }   
+        }
         return SignatureAlgo[value];
     };
-    
+
     /**
      * @param {SignatureAlgo} the signature algorithm.
      * @return {?WebCryptoAlgorithm} the Web Crypto algorithm associated with
@@ -217,7 +217,7 @@ var MslConstants$ResponseCode;
             return WebCryptoAlgorithm.AES_CMAC;
         return undefined;
     };
-    
+
     /**
      * Error response codes.
      * @enum {number}

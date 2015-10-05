@@ -1,6 +1,6 @@
 /**
- * Copyright (c) 2014 Netflix, Inc.  All rights reserved.
- * 
+ * Copyright (c) 2014-2015 Netflix, Inc.  All rights reserved.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,7 +17,7 @@
 /**
  * <p>The MSL crypto abstraction provides support for multiple versions of the
  * Web Crypto specification.</p>
- * 
+ *
  * @author Kevin Gallagher <keving@netflix.com>
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
@@ -29,7 +29,7 @@ var MslCrypto$setCryptoSubtle;
 
 (function(){
     "use strict";
-    
+
     /**
      * Web Crypto API version.
      * @enum {number}
@@ -54,44 +54,48 @@ var MslCrypto$setCryptoSubtle;
         LATEST: 3,
     };
     Object.freeze(MslCrypto$WebCryptoVersion);
-    
+
     // Default to the latest Web Crypto version.
     var mslCrypto$version = WebCryptoVersion.LATEST;
 
     /**
      * <p>Set the Web Crypto version that should be used by MSL. This will
      * override the default version detected.</p>
-     * 
+     *
      * @param {MslCrypto$WebCryptoVersion} version Web Crypto version to use.
      */
     MslCrypto$setWebCryptoVersion = function MslCrypto$setWebCryptoVersion(version) {
         mslCrypto$version = version;
     };
-    
+
     /**
      * <p>Return the Web Crypto version that is being used.</p>
-     * 
+     *
      * @return {MslCrypto$WebCryptoVersion} the Web Crypto version in use.
      */
     MslCrypto$getWebCryptoVersion = function MslCrypto$getWebCryptoVersion() {
     	return mslCrypto$version;
     };
-    
+
     // Determine crypto subtle.
     var nfCryptoSubtle;
-    if (window.msCrypto) {
-    	nfCryptoSubtle = window.msCrypto.subtle;
-    	MslCrypto$setWebCryptoVersion(MslCrypto$WebCryptoVersion.LEGACY);
-    } else if (window.crypto.webkitSubtle) {
-    	nfCryptoSubtle = window.crypto.webkitSubtle;
-    	MslCrypto$setWebCryptoVersion(MslCrypto$WebCryptoVersion.V2014_02_SAFARI);
-    } else {
-    	nfCryptoSubtle = window.crypto.subtle;
+    if (typeof window !== "undefined") {
+        if (window.msCrypto) {
+            nfCryptoSubtle = window.msCrypto.subtle;
+            MslCrypto$setWebCryptoVersion(MslCrypto$WebCryptoVersion.LEGACY);
+        } else if (window.crypto) {
+            if (window.crypto.webkitSubtle) {
+                nfCryptoSubtle = window.crypto.webkitSubtle;
+                MslCrypto$setWebCryptoVersion(MslCrypto$WebCryptoVersion.V2014_02_SAFARI);
+            } else if (window.crypto.subtle) {
+                nfCryptoSubtle = window.crypto.subtle;
+            }
+        }
     }
 
     /**
      * Override the crypto subtle interface providing the Web Crypto API.
-     * 
+     *
      * @param {object} the new crypto subtle interface.
      */
     MslCrypto$setCryptoSubtle = function MslCrypto$setCryptoSubtle(cryptoSubtle) {
@@ -133,7 +137,7 @@ var MslCrypto$setCryptoSubtle;
             }
         }
     }
-    
+
     // If the native operation type is not a Promise, wrap it inside one.
     function promisedOperation(op) {
     	if (!op.then) {
@@ -148,7 +152,7 @@ var MslCrypto$setCryptoSubtle;
     	}
     	return op;
     }
-    
+
     mslCrypto = {
         'encrypt': function(algorithm, key, buffer) {
             switch (mslCrypto$version) {
