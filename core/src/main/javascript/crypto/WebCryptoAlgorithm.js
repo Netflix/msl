@@ -36,8 +36,9 @@ var WebCryptoAlgorithm = {
     RSASSA: { 'name': 'RSASSA-PKCS1-v1_5', 'hash': { 'name': 'SHA-1' } },
     /** sign/verify */
     AES_CMAC: { 'name': 'AES-CMAC' },
-    RSASSA_SHA256: { 'name': 'RSASSA-PKCS1-v1_5', 'hash': { 'name': 'SHA-256' } },
+    ECDSA_SHA256: { 'name': 'ECDSA', 'hash': { 'name': 'SHA-256' } },
     RSASSA_SHA1: { 'name': 'RSASSA-PKCS1-v1_5', 'hash': { 'name': 'SHA-1' } },
+    RSASSA_SHA256: { 'name': 'RSASSA-PKCS1-v1_5', 'hash': { 'name': 'SHA-256' } },
     /** deriveKey */
     AUTHENTICATED_DH: { 'name' : 'NFLX-DH' },
     /** digest */
