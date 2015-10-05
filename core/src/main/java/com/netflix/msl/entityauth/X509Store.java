@@ -155,7 +155,7 @@ public class X509Store {
             
             // Otherwise if this certificate's path length is too large then
             // fail.
-            else if (nextPathLength >= expectedPathLength) {
+            else if (nextPathLength > expectedPathLength) {
                 return false;
             }
             
@@ -172,7 +172,7 @@ public class X509Store {
         // Make sure this certificate's path length is equal to or less than
         // the expected path length.
         final int next = cert.getBasicConstraints();
-        if (next != -1 && next >= expectedPathLength)
+        if (next != -1 && next > expectedPathLength)
             return false;
         
         // Success.
@@ -234,7 +234,7 @@ public class X509Store {
      * @throws CertificateException if a certificate is malformed or the first
      *         certificate is not a self-signed certificate.
      */
-    public void addTrusted(List<X509Certificate> chain) throws CertificateExpiredException, CertificateNotYetValidException, CertificateException, NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException, SignatureException {
+    public void addTrusted(final List<X509Certificate> chain) throws CertificateExpiredException, CertificateNotYetValidException, CertificateException, NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException, SignatureException {
         // Do nothing if the chain is null or empty.
         if (chain == null || chain.isEmpty())
             return;
