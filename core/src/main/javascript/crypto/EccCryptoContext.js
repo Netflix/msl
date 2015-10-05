@@ -17,7 +17,7 @@
 /**
  * <p>An ECC crypto context supports sign.</p>
  *
-  * @author Pablo Pissanetzky <ppissanetzky@netflix.com>
+ * @author Pablo Pissanetzky <ppissanetzky@netflix.com>
  * @implements {ICryptoContext}
  */
 var EccCryptoContext;
@@ -53,7 +53,7 @@ var EccCryptoContext;
         /** @inheritDoc */
         decrypt: function decrypt(data, callback) {
             AsyncExecutor(callback, function() {
-                throw new MslCryptoException(MslError.WRAP_NOT_SUPPORTED, "ECC does not decrypt");
+                return data;
             }, this);
         },
 
@@ -86,7 +86,7 @@ var EccCryptoContext;
                 var onerror = function(e) {
                     callback.error(new MslCryptoException(MslError.SIGNATURE_ERROR));
                 };
-                mslCrypto['sign']({name: 'ECC', hash: 'SHA-256'}, this.privateKey, data)
+                mslCrypto['sign'](WebCryptoAlgorithm.ECDSA_SHA256, this.privateKey, data)
                     .then(oncomplete, onerror);
             }, this);
         },
@@ -97,6 +97,5 @@ var EccCryptoContext;
                 throw new MslCryptoException(MslError.VERIFY_NOT_SUPPORTED, "ECC does not verify");
             }, this);
         }
-
     });
 })();
