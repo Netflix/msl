@@ -26,7 +26,15 @@ public abstract class MslTokenizer {
      * <p>Create a new tokenizer.</p>
      */
     protected MslTokenizer() {
+        this.aborted = false;
         this.next = null;
+    }
+    
+    /**
+     * <p>Aborts future reading off the tokenizer.</p>
+     */
+    public void abort() {
+        aborted = true;
     }
     
     /**
@@ -34,11 +42,13 @@ public abstract class MslTokenizer {
      * method determines that by actually trying to read the next object.</p>
      * 
      * @param timeout read timeout in milliseconds.
-     * @return true if more objects are available from the data source.
+     * @return true if more objects are available from the data source, false
+     *         if the tokenizer has been aborted.
      * @throws MslEncoderException if the next object cannot be read or the
      *         source data at the current position is invalid.
      */
     public boolean more(final int timeout) throws MslEncoderException {
+        if (aborted) return false;
         if (next != null) return true;
         next = nextObject(timeout);
         return (next != null);
@@ -66,11 +76,13 @@ public abstract class MslTokenizer {
      * <p>Return the next object.</p>
      * 
      * @param timeout read timeout in milliseconds.
-     * @return the next object or {@code null} if there are no more.
+     * @return the next object or {@code null} if there are no more or the
+     *         tokenizer has been aborted.
      * @throws MslEncoderException if the next object cannot be read or the
      *         source data at the current position is invalid.
      */
     public MslObject nextObject(final int timeout) throws MslEncoderException {
+        if (aborted) return null;
         if (next != null) {
             final MslObject mo = next;
             next = null;
@@ -79,6 +91,8 @@ public abstract class MslTokenizer {
         return next(timeout);
     }
     
+    /** Aborted. */
+    private boolean aborted;
     /** Cached next object. */
     private MslObject next;
 }

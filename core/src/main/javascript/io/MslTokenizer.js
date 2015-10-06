@@ -36,9 +36,18 @@ var MslTokenizer;
                  * Cached next object.
                  * @type {?MslObject}
                  */
-                next: { value: null, writable: true, enumerable: false, configurable: false },
+                _next: { value: null, writable: true, enumerable: false, configurable: false },
+                /** @type {boolean} */
+                _aborted: { value: false, writable: true, enumerable: false, configurable: false },
             };
             Object.defineProperties(this, props);
+        },
+        
+        /**
+         * <p>Aborts future reading off the tokenizer.</p>
+         */
+        abort: function abort() {
+            this._aborted = true;
         },
         
         /**
@@ -48,7 +57,8 @@ var MslTokenizer;
          * @param {number} timeout read timeout in milliseconds.
          * @param {{result: function(boolean), timeout: function(), error: function(Error)}}
          *        callback the callback that will receive true if more objects
-         *        are available from the data source or any thrown exceptions.
+         *        are available from the data source, false if the tokenizer
+         *        has been aborted, or any thrown exceptions.
          * @throws MslEncoderException if the next object cannot be read or the
          *         source data at the current position is invalid.
          */
@@ -56,12 +66,13 @@ var MslTokenizer;
             var self = this;
             
             InterruptibleExecutor(callback, function() {
-                if (this.next) return true;
+                if (this._aborted) return false;
+                if (this._next) return true;
                 nextObject(timeout, {
                     result: function(o) {
                         InterruptibleExecutor(callback, function() {
-                            this.next = o;
-                            return (this.next);
+                            this._next = o;
+                            return (this._next);
                         }, self);
                     },
                     timeout: callback.timeout,
@@ -98,7 +109,8 @@ var MslTokenizer;
          * @param {number} timeout read timeout in milliseconds.
          * @param {{result: function(MslObject), timeout: function(), error: function(Error)}}
          *        callback the callback that will receive the next object or
-         *        {@code null} if there are no more, or any thrown exceptions.
+         *        {@code null} if there are no more or the tokenizer has been
+         *        aborted, or any thrown exceptions.
          * @throws MslEncoderException if the next object cannot be read or the
          *         source data at the current position is invalid.
          */
@@ -106,9 +118,11 @@ var MslTokenizer;
             var self = this;
             
             InterruptibleExecutor(callback, function() {
-                if (this.next != null) {
+                if (this._aborted)
+                    return null;
+                if (this._next != null) {
                     var mo = next;
-                    this.next = null;
+                    this._next = null;
                     return mo;
                 }
                 next(timeout, callback);
