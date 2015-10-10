@@ -1701,7 +1701,7 @@ public class MslControl {
                 // equal to the local entity.
                 final String recipient = responseHeader.getRecipient();
                 if (recipient != null && !recipient.equals(localIdentity))
-                    throw new MslMessageException(MslError.MESSAGE_RECIPIENT_MISMATCH, recipient);
+                    throw new MslMessageException(MslError.MESSAGE_RECIPIENT_MISMATCH, recipient + " != " + localIdentity);
 
                 // If there is a request update the stored crypto contexts.
                 if (request != null)
