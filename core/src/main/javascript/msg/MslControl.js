@@ -1346,34 +1346,38 @@ var MslControl$MslChannel;
          *         to delete the old master token.
          */
         cleanupContext: function cleanupContext(ctx, requestHeader, errorHeader) {
+        	// The data-reauth error codes also delete tokens in case those errors
+        	// are returned when a token does exist.
             switch (errorHeader.errorCode) {
-            case MslConstants$ResponseCode.ENTITY_REAUTH:
-            {
-                // The old master token is invalid. Delete the old
-                // crypto context and any bound service tokens.
-                this.deleteMasterToken(ctx, requestHeader.masterToken);
-                break;
-            }
-            case MslConstants$ResponseCode.USER_REAUTH:
-            {
-                // The old user ID token is invalid. Delete the old user ID
-                // token and any bound service tokens. It is okay to stomp on
-                // other requests when doing this because automatically
-                // generated messages and replies to outstanding requests that
-                // use the user ID token and service tokens will work fine.
-                //
-                // This will be a no-op if we received a new user ID token that
-                // overwrote the old one.
-                var masterToken = requestHeader.masterToken;
-                var userIdToken = requestHeader.userIdToken;
-                if (masterToken && userIdToken) {
-                    var store = ctx.getMslStore();
-                    store.removeUserIdToken(userIdToken);
-                }
-                break;
-            }
-            default:
-                // No cleanup required.
+	            case MslConstants$ResponseCode.ENTITY_REAUTH:
+	            case MslConstants$ResponseCode.ENTITYDATA_REAUTH:
+	            {
+	                // The old master token is invalid. Delete the old
+	                // crypto context and any bound service tokens.
+	                this.deleteMasterToken(ctx, requestHeader.masterToken);
+	                break;
+	            }
+	            case MslConstants$ResponseCode.USER_REAUTH:
+	            case MslConstants$ResponseCode.USERDATA_REAUTH:
+	            {
+	                // The old user ID token is invalid. Delete the old user ID
+	                // token and any bound service tokens. It is okay to stomp on
+	                // other requests when doing this because automatically
+	                // generated messages and replies to outstanding requests that
+	                // use the user ID token and service tokens will work fine.
+	                //
+	                // This will be a no-op if we received a new user ID token that
+	                // overwrote the old one.
+	                var masterToken = requestHeader.masterToken;
+	                var userIdToken = requestHeader.userIdToken;
+	                if (masterToken && userIdToken) {
+	                    var store = ctx.getMslStore();
+	                    store.removeUserIdToken(userIdToken);
+	                }
+	                break;
+	            }
+	            default:
+	                // No cleanup required.
             }
         },
         
