@@ -604,7 +604,8 @@ var MslControl$MslChannel;
                  */
                 _masterTokenLocks: { value: {}, writable: false, enumerable: false, configurable: false },
                 /**
-                 * Map of remote entity clocks by MSL context.
+                 * Map of remote entity clocks by MSL context. This data is only relevant
+                 * to trusted network clients and peer-to-peer entities.
                  * @type {Array.<{ctx: MslContext, clock: SynchronizedClock}>}
                  */
                 _remoteClocks: { value: [], writable: false, enumerable: false, configurable: false },
@@ -1822,9 +1823,10 @@ var MslControl$MslChannel;
                                                             throw new MslMessageException(MslError.UNEXPECTED_MESSAGE_SENDER, sender);
                                                     }
                                                     
-                                                    // Update the synchronized clock.
+                                                    // Update the synchronized clock if we are a trusted network client
+                                                    // (there is a request) or peer-to-peer entity.
                                                     var timestamp = (responseHeader) ? responseHeader.timestamp : errorHeader.timestamp;
-                                                    if (timestamp) {
+                                                    if (timestamp && (request || ctx.isPeerToPeer())) {
                                                         var clock;
                                                         for (var i = 0; i < this._remoteClocks.length; ++i) {
                                                             var ctxClock = this._remoteClocks[i];
