@@ -1743,9 +1743,10 @@ public class MslControl {
                     throw new MslMessageException(MslError.UNEXPECTED_MESSAGE_SENDER, sender);
             }
             
-            // Update the synchronized clock.
+            // Update the synchronized clock if we are a trusted network client
+            // (there is a request) or peer-to-peer entity.
             final Date timestamp = (responseHeader != null) ? responseHeader.getTimestamp() : errorHeader.getTimestamp();
-            if (timestamp != null) {
+            if (timestamp != null && (request != null || ctx.isPeerToPeer())) {
                 remoteClocks.putIfAbsent(ctx, new SynchronizedClock());
                 final SynchronizedClock clock = remoteClocks.get(ctx);
                 clock.update(ctx, timestamp);
@@ -3730,6 +3731,9 @@ public class MslControl {
      */
     private final ConcurrentHashMap<MasterToken,ReadWriteLock> masterTokenLocks = new ConcurrentHashMap<MasterToken,ReadWriteLock>();
     
-    /** Map of remote entity clocks by MSL context. */
+    /**
+     * Map of remote entity clocks by MSL context. This data is only relevant
+     * to trusted network clients and peer-to-peer entities.
+     */
     private final ConcurrentHashMap<MslContext,SynchronizedClock> remoteClocks = new ConcurrentHashMap<MslContext,SynchronizedClock>();
 }
