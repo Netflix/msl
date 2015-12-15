@@ -1366,8 +1366,11 @@ public class MslControl {
      *         to delete the old master token.
      */
     private void cleanupContext(final MslContext ctx, final MessageHeader requestHeader, final ErrorHeader errorHeader) throws MslException, InterruptedException {
+    	// The data-reauth error codes also delete tokens in case those errors
+    	// are returned when a token does exist.
         switch (errorHeader.getErrorCode()) {
             case ENTITY_REAUTH:
+            case ENTITYDATA_REAUTH:
             {
                 // The old master token is invalid. Delete the old
                 // crypto context and any bound service tokens.
@@ -1375,6 +1378,7 @@ public class MslControl {
                 break;
             }
             case USER_REAUTH:
+            case USERDATA_REAUTH:
             {
                 // The old user ID token is invalid. Delete the old user ID
                 // token and any bound service tokens. It is okay to stomp on
