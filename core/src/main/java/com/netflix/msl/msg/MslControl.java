@@ -217,46 +217,43 @@ public class MslControl {
     }
     
     /**
-     * A clock synchronized against an external time.
+     * A map key based off a MSL context and master token pair.
      */
-    private static class SynchronizedClock {
-        /** Milliseconds per second. */
-        private static final long MILLISECONDS_PER_SECOND = 1000;
-        
+    private static class MslContextMasterTokenKey {
         /**
-         * Create a new synchronized clock. The clock is not synchronized until
-         * {@link #update(MslContext, Date)} is called.
-         */
-        public SynchronizedClock() {
-            offset = 0;
-        }
-        
-        /**
-         * Update the synchronized clock based on the remote entity time.
+         * Create a new MSL context and master token map key.
          * 
-         * @param ctx local entity MSL context.
-         * @param time remote entity time.
+         * @param ctx MSL context.
+         * @param masterToken master token.
          */
-        public void update(final MslContext ctx, final Date time) {
-            final long localSeconds = ctx.getTime() / MILLISECONDS_PER_SECOND;
-            final long remoteSeconds = time.getTime() / MILLISECONDS_PER_SECOND;
-            offset = remoteSeconds - localSeconds;
+        public MslContextMasterTokenKey(final MslContext ctx, final MasterToken masterToken) {
+            this.ctx = ctx;
+            this.masterToken = masterToken;
+        }
+
+        /* (non-Javadoc)
+         * @see java.lang.Object#hashCode()
+         */
+        @Override
+        public int hashCode() {
+            return this.ctx.hashCode() ^ this.masterToken.hashCode();
+        }
+
+        /* (non-Javadoc)
+         * @see java.lang.Object#equals(java.lang.Object)
+         */
+        @Override
+        public boolean equals(final Object obj) {
+            if (obj == this) return true;
+            if (!(obj instanceof MslContextMasterTokenKey)) return false;
+            final MslContextMasterTokenKey that = (MslContextMasterTokenKey)obj;
+            return this.ctx.equals(that.ctx) && this.masterToken.equals(that.masterToken);
         }
         
-        /**
-         * Return the expected remote entity time.
-         * 
-         * @param ctx local entity MSL context.
-         * @return the expected remote entity time.
-         */
-        public Date getTime(final MslContext ctx) {
-            final long localSeconds = ctx.getTime() / MILLISECONDS_PER_SECOND;
-            final long remoteSeconds = localSeconds + offset;
-            return new Date(remoteSeconds * MILLISECONDS_PER_SECOND);
-        }
-        
-        /** Remote entity time offset from local time in seconds. */
-        private volatile long offset;
+        /** MSL context. */
+        private final MslContext ctx;
+        /** Master token. */
+        private final MasterToken masterToken;
     }
     
     /**
@@ -325,7 +322,7 @@ public class MslControl {
      * A dummy MSL context only used for our dummy
      * {@link MslControl#NULL_MASTER_TOKEN}.
      */
-    private static class DummyMslContext implements MslContext {
+    private static class DummyMslContext extends MslContext {
         /* (non-Javadoc)
          * @see com.netflix.msl.util.MslContext#getTime()
          */
@@ -839,8 +836,9 @@ public class MslControl {
             if (masterToken == null) return null;
 
             // Acquire the master token read lock, creating it if necessary.
+            final MslContextMasterTokenKey key = new MslContextMasterTokenKey(ctx, masterToken);
             final ReadWriteLock newLock = new ReentrantReadWriteLock();
-            final ReadWriteLock oldLock = masterTokenLocks.putIfAbsent(masterToken, newLock);
+            final ReadWriteLock oldLock = masterTokenLocks.putIfAbsent(key, newLock);
             final ReadWriteLock finalLock = (oldLock != null) ? oldLock : newLock;
             finalLock.readLock().lockInterruptibly();
 
@@ -857,7 +855,7 @@ public class MslControl {
             // lock (it may already be deleted). Then try again.
             finalLock.readLock().unlock();
             finalLock.writeLock().lockInterruptibly();
-            masterTokenLocks.remove(masterToken);
+            masterTokenLocks.remove(key);
             finalLock.writeLock().unlock();
         } while (true);
     }
@@ -880,8 +878,9 @@ public class MslControl {
         //
         // TODO it would be nice to do this on another thread to avoid delaying
         // the application.
+        final MslContextMasterTokenKey key = new MslContextMasterTokenKey(ctx, masterToken);
         final ReadWriteLock newLock = new ReentrantReadWriteLock();
-        final ReadWriteLock oldLock = masterTokenLocks.putIfAbsent(masterToken, newLock);
+        final ReadWriteLock oldLock = masterTokenLocks.putIfAbsent(key, newLock);
 
         // ReentrantReadWriteLock requires us to release the read lock if
         // we are holding it before acquiring the write lock. If there is
@@ -902,7 +901,7 @@ public class MslControl {
             // one should be using the deleted master token anymore; a new
             // master token would have been received before deleting the
             // old one.
-            masterTokenLocks.remove(masterToken);
+            masterTokenLocks.remove(key);
             writeLock.unlock();
         }
     }
@@ -911,12 +910,14 @@ public class MslControl {
      * Release the read lock of the provided master token. If no master token
      * is provided then this method is a no-op.
      * 
+     * @param ctx MSL context.
      * @param masterToken the master token. May be null.
      * @see #getNewestMasterToken(MslContext)
      */
-    private void releaseMasterToken(final MasterToken masterToken) {
+    private void releaseMasterToken(final MslContext ctx, final MasterToken masterToken) {
         if (masterToken != null) {
-            final ReadWriteLock lock = masterTokenLocks.get(masterToken);
+            final MslContextMasterTokenKey key = new MslContextMasterTokenKey(ctx, masterToken);
+            final ReadWriteLock lock = masterTokenLocks.get(key);
             
             // The lock may be null if the master token was deleted.
             if (lock != null)
@@ -1053,11 +1054,11 @@ public class MslControl {
             return builder;
         } catch (final MslException e) {
             // Release the master token lock.
-            releaseMasterToken(masterToken);
+            releaseMasterToken(ctx, masterToken);
             throw new MslInternalException("User ID token not bound to master token despite internal check.", e);
         } catch (final RuntimeException re) {
             // Release the master token lock.
-            releaseMasterToken(masterToken);
+            releaseMasterToken(ctx, masterToken);
             throw re;
         }
     }
@@ -1403,18 +1404,6 @@ public class MslControl {
     }
     
     /**
-     * <p>Return the current time of the remote entity (i.e. the remote peer-to-
-     * peer entity or the trusted services servers).</p>
-     * 
-     * @param ctx MSL context.
-     * @return the remote time or {@code null} if unknown.
-     */
-    private Date getRemoteTime(final MslContext ctx) {
-        final SynchronizedClock clock = remoteClocks.get(ctx);
-        return (clock != null) ? clock.getTime(ctx) : null;
-    }
-    
-    /**
      * The result of sending a message.
      */
     private static class SendResult {
@@ -1546,7 +1535,7 @@ public class MslControl {
             // Ask for key request data if we are using entity authentication
             // data or if the master token needs renewing or if the message is
             // non-replayable.
-            final Date now = getRemoteTime(ctx);
+            final Date now = ctx.getRemoteTime();
             if (masterToken == null || masterToken.isRenewable(now) || msgCtx.isNonReplayable()) {
                 keyRequests.addAll(msgCtx.getKeyRequestData());
                 for (final KeyRequestData keyRequest : keyRequests)
@@ -1746,11 +1735,8 @@ public class MslControl {
             // Update the synchronized clock if we are a trusted network client
             // (there is a request) or peer-to-peer entity.
             final Date timestamp = (responseHeader != null) ? responseHeader.getTimestamp() : errorHeader.getTimestamp();
-            if (timestamp != null && (request != null || ctx.isPeerToPeer())) {
-                remoteClocks.putIfAbsent(ctx, new SynchronizedClock());
-                final SynchronizedClock clock = remoteClocks.get(ctx);
-                clock.update(ctx, timestamp);
-            }
+            if (timestamp != null && (request != null || ctx.isPeerToPeer()))
+                ctx.updateRemoteTime(timestamp);
         } catch (final MslException e) {
             e.setEntity(masterToken);
             e.setEntity(entityAuthData);
@@ -1843,13 +1829,13 @@ public class MslControl {
             renewing = acquireRenewalLock(ctx, msgCtx, renewalQueue, builder, timeout);
         } catch (final InterruptedException e) {
             // Release the master token lock.
-            releaseMasterToken(builder.getMasterToken());
+            releaseMasterToken(ctx, builder.getMasterToken());
             
             // This should only be if we were cancelled so return null.
             return null;
         } catch (final RuntimeException e) {
             // Release the master token lock.
-            releaseMasterToken(builder.getMasterToken());
+            releaseMasterToken(ctx, builder.getMasterToken());
             throw e;
         }
 
@@ -1883,7 +1869,7 @@ public class MslControl {
                 releaseRenewalLock(ctx, renewalQueue, response);
             
             // Release the master token lock.
-            releaseMasterToken(builder.getMasterToken());
+            releaseMasterToken(ctx, builder.getMasterToken());
         }
         
         // Return the response.
@@ -1962,7 +1948,7 @@ public class MslControl {
         // If the message must be marked non-replayable and we do not have a
         // master token then we must mark this message as renewable to perform
         // a handshake or receive a new master token.
-        final Date startTime = getRemoteTime(ctx);
+        final Date startTime = ctx.getRemoteTime();
         if ((msgCtx.isEncrypted() && !builder.willEncryptPayloads()) ||
             (msgCtx.isIntegrityProtected() && !builder.willIntegrityProtectPayloads()) ||
             builder.isRenewable() ||
@@ -2003,7 +1989,7 @@ public class MslControl {
                 // have not acquired its master token lock.
                 final MasterToken previousMasterToken = masterToken;
                 if (masterToken == null || !masterToken.equals(newMasterToken)) {
-                    releaseMasterToken(masterToken);
+                    releaseMasterToken(ctx, masterToken);
                     masterToken = getNewestMasterToken(ctx);
                     
                     // If there is no newest master token (it could have been
@@ -2033,7 +2019,7 @@ public class MslControl {
                 
                 // If the new master token is still expired then try again to
                 // acquire renewal ownership.
-                final Date updateTime = getRemoteTime(ctx);
+                final Date updateTime = ctx.getRemoteTime();
                 if (masterToken.isExpired(updateTime))
                     continue;
                 
@@ -2059,7 +2045,7 @@ public class MslControl {
         // renewed, or we do not have a user ID token but the message is
         // associated with a user, or if the user ID token should be renewed,
         // then try to mark this message as renewable.
-        final Date finalTime = getRemoteTime(ctx);
+        final Date finalTime = ctx.getRemoteTime();
         if ((masterToken == null || masterToken.isRenewable(finalTime)) ||
             (userIdToken == null && msgCtx.getUserId() != null) ||
             (userIdToken != null && userIdToken.isRenewable(finalTime)))
@@ -2410,7 +2396,7 @@ public class MslControl {
                 } finally {
                     // Release the master token lock.
                     if (ctx.isPeerToPeer())
-                        releaseMasterToken(responseBuilder.getMasterToken());
+                        releaseMasterToken(ctx, responseBuilder.getMasterToken());
                 }
             }
             
@@ -2557,7 +2543,7 @@ public class MslControl {
                 return new MslChannel(request, result.request);
             } finally {
                 // Release the master token lock.
-                releaseMasterToken(builder.getMasterToken());
+                releaseMasterToken(ctx, builder.getMasterToken());
             }
         }
         
@@ -2586,7 +2572,7 @@ public class MslControl {
             //
             // Make sure to release the master token lock.
             if (msgCount + 2 > MslConstants.MAX_MESSAGES) {
-                releaseMasterToken(builder.getMasterToken());
+                releaseMasterToken(ctx, builder.getMasterToken());
                 return null;
             }
             
@@ -2596,7 +2582,7 @@ public class MslControl {
             if (msgCtx.getUser() != null && builder.getPeerMasterToken() == null && builder.getKeyExchangeData() == null) {
                 // Release the master token lock and try to send an error
                 // response.
-                releaseMasterToken(builder.getMasterToken());
+                releaseMasterToken(ctx, builder.getMasterToken());
                 try {
                     final String recipient = MslControl.getIdentity(request);
                     final long requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
@@ -3148,7 +3134,7 @@ public class MslControl {
             //
             // Make sure to release the master token lock.
             if (msgCount + 2 > MslConstants.MAX_MESSAGES) {
-                releaseMasterToken(builder.getMasterToken());
+                releaseMasterToken(ctx, builder.getMasterToken());
                 maxMessagesHit = true;
                 return null;
             }
@@ -3354,7 +3340,7 @@ public class MslControl {
                     }
                 } finally {
                     // Release the master token read lock.
-                    releaseMasterToken(keyxBuilder.getMasterToken());
+                    releaseMasterToken(ctx, keyxBuilder.getMasterToken());
                 }
             }
             
@@ -3396,7 +3382,7 @@ public class MslControl {
                     // If a message builder was provided then release the
                     // master token read lock.
                     if (builder != null)
-                        releaseMasterToken(builder.getMasterToken());
+                        releaseMasterToken(ctx, builder.getMasterToken());
                     
                     // Close any open streams.
                     if (out != null) out.close();
@@ -3409,7 +3395,7 @@ public class MslControl {
                     // If a message builder was provided then release the
                     // master token read lock.
                     if (builder != null)
-                        releaseMasterToken(builder.getMasterToken());
+                        releaseMasterToken(ctx, builder.getMasterToken());
                     
                     // Close any open streams.
                     if (out != null) out.close();
@@ -3727,13 +3713,8 @@ public class MslControl {
     private final MasterToken NULL_MASTER_TOKEN;
 
     /**
-     * Map of in-flight master token in-flight read-write locks by MSL context.
+     * Map of in-flight master token read-write locks by MSL context and master
+     * token.
      */
-    private final ConcurrentHashMap<MasterToken,ReadWriteLock> masterTokenLocks = new ConcurrentHashMap<MasterToken,ReadWriteLock>();
-    
-    /**
-     * Map of remote entity clocks by MSL context. This data is only relevant
-     * to trusted network clients and peer-to-peer entities.
-     */
-    private final ConcurrentHashMap<MslContext,SynchronizedClock> remoteClocks = new ConcurrentHashMap<MslContext,SynchronizedClock>();
+    private final ConcurrentHashMap<MslContextMasterTokenKey,ReadWriteLock> masterTokenLocks = new ConcurrentHashMap<MslContextMasterTokenKey,ReadWriteLock>();
 }
