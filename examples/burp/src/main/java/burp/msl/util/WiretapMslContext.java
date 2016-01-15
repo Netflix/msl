@@ -51,7 +51,6 @@ import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.keyx.MockDiffieHellmanParameters;
 import com.netflix.msl.keyx.SymmetricWrappedExchange;
 import com.netflix.msl.msg.MessageCapabilities;
-import com.netflix.msl.msg.MessageStreamFactory;
 import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.userauth.UserAuthenticationFactory;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
@@ -65,7 +64,7 @@ import com.netflix.msl.util.NullMslStore;
  * User: skommidi
  * Date: 9/22/14
  */
-public class WiretapMslContext implements MslContext {
+public class WiretapMslContext extends MslContext {
 
     /**
      * Key exchange factory comparator.
@@ -111,8 +110,6 @@ public class WiretapMslContext implements MslContext {
         final SecretKey mslWrappingKey = new SecretKeySpec(MSL_WRAPPING_KEY, JcaAlgorithm.AESKW);
         this.mslCryptoContext = new SymmetricCryptoContext(this, "TestMslKeys", mslEncryptionKey, mslHmacKey, mslWrappingKey);
         
-        this.messageStreamFactory = new MessageStreamFactory();
-
         // Entity authentication factories are mapped as-is.
         final Map<EntityAuthenticationScheme,EntityAuthenticationFactory> entityAuthFactoriesMap = new HashMap<EntityAuthenticationScheme,EntityAuthenticationFactory>();
         for (final EntityAuthenticationFactory factory : entityAuthFactories) {
@@ -299,8 +296,6 @@ public class WiretapMslContext implements MslContext {
     private EntityAuthenticationData entityAuthData = new UnauthenticatedAuthenticationData("WireTap");
     /** MSL token crypto context. */
     private final ICryptoContext mslCryptoContext;
-    /** Message factory. */
-    private final MessageStreamFactory messageStreamFactory;
     /** Map of supported entity authentication schemes onto factories. */
     private final Map<EntityAuthenticationScheme, EntityAuthenticationFactory> entityAuthFactories;
     /** Map of supported user authentication schemes onto factories. */
