@@ -421,7 +421,7 @@ public final class SharedUtil {
     /**
      * this class is needed exclusively for deserialization of SimpleMslStore on the client side
      */
-    private static final class DummyMslContext implements MslContext {
+    private static final class DummyMslContext extends MslContext {
         @Override
         public long getTime() {
             return System.currentTimeMillis();

@@ -15,6 +15,7 @@
  */
 package com.netflix.msl.util;
 
+import java.util.Date;
 import java.util.Random;
 import java.util.SortedSet;
 
@@ -27,6 +28,7 @@ import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.msg.MessageCapabilities;
+import com.netflix.msl.msg.MslControl;
 import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.userauth.UserAuthenticationFactory;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
@@ -41,7 +43,10 @@ import com.netflix.msl.userauth.UserAuthenticationScheme;
  * @see MslStore
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-public interface MslContext {
+public abstract class MslContext {
+    /** Milliseconds per second. */
+    private static final long MILLISECONDS_PER_SECOND = 1000;
+    
     /** Re-authentication reason codes. */
     public static enum ReauthCode {
         /** The master token was rejected as bad or invalid. */
@@ -90,7 +95,7 @@ public interface MslContext {
      * 
      * @return {number} the local entity time in milliseconds since the epoch.
      */
-    public long getTime();
+    public abstract long getTime();
     
     /**
      * <p>Returns a random number generator.</p>
@@ -106,7 +111,7 @@ public interface MslContext {
      * 
      * @return a random number generator.
      */
-    public Random getRandom();
+    public abstract Random getRandom();
     
     /**
      * Returns true if the context is operating in a peer-to-peer network. The
@@ -114,14 +119,14 @@ public interface MslContext {
      * 
      * @return true if in peer-to-peer mode.
      */
-    public boolean isPeerToPeer();
+    public abstract boolean isPeerToPeer();
     
     /**
      * Returns the message capabilities for this entity.
      * 
      * @return this entity's message capabilities.
      */
-    public MessageCapabilities getMessageCapabilities();
+    public abstract MessageCapabilities getMessageCapabilities();
     
     /**
      * <p>Returns the entity authentication data for this entity. This is used
@@ -151,7 +156,7 @@ public interface MslContext {
      *        required.
      * @return this entity's entity authentication data or null.
      */
-    public EntityAuthenticationData getEntityAuthenticationData(final ReauthCode reauthCode);
+    public abstract EntityAuthenticationData getEntityAuthenticationData(final ReauthCode reauthCode);
     
     /**
      * <p>Returns the primary crypto context used for MSL-level crypto
@@ -165,7 +170,7 @@ public interface MslContext {
      * @throws MslCryptoException if there is an error creating the crypto
      *         context.
      */
-    public ICryptoContext getMslCryptoContext() throws MslCryptoException;
+    public abstract ICryptoContext getMslCryptoContext() throws MslCryptoException;
     
     /**
      * <p>Returns the entity authentication scheme identified by the specified
@@ -175,7 +180,7 @@ public interface MslContext {
      * @return the scheme identified by the specified name or {@code null} if
      *         there is none.
      */
-    public EntityAuthenticationScheme getEntityAuthenticationScheme(final String name);
+    public abstract EntityAuthenticationScheme getEntityAuthenticationScheme(final String name);
 
     /**
      * Returns the entity authentication factory for the specified scheme.
@@ -184,7 +189,7 @@ public interface MslContext {
      * @return the entity authentication factory, or null if no factory is
      *         available.
      */
-    public EntityAuthenticationFactory getEntityAuthenticationFactory(final EntityAuthenticationScheme scheme);
+    public abstract EntityAuthenticationFactory getEntityAuthenticationFactory(final EntityAuthenticationScheme scheme);
 
     /**
      * <p>Returns the user authentication scheme identified by the specified
@@ -194,7 +199,7 @@ public interface MslContext {
      * @return the scheme identified by the specified name or {@code null} if
      *         there is none.
      */
-    public UserAuthenticationScheme getUserAuthenticationScheme(final String name);
+    public abstract UserAuthenticationScheme getUserAuthenticationScheme(final String name);
 
     /**
      * Returns the user authentication factory for the specified scheme.
@@ -205,7 +210,7 @@ public interface MslContext {
      * @return the user authentication factory, or null if no factory is
      *         available.
      */
-    public UserAuthenticationFactory getUserAuthenticationFactory(final UserAuthenticationScheme scheme);
+    public abstract UserAuthenticationFactory getUserAuthenticationFactory(final UserAuthenticationScheme scheme);
     
     /**
      * Returns the token factory.
@@ -214,7 +219,7 @@ public interface MslContext {
      * 
      * @return the token factory.
      */
-    public TokenFactory getTokenFactory();
+    public abstract TokenFactory getTokenFactory();
 
     /**
      * <p>Returns the key exchange scheme identified by the specified name or
@@ -224,7 +229,7 @@ public interface MslContext {
      * @return the scheme identified by the specified name or {@code null} if
      *         there is none.
      */
-    public KeyExchangeScheme getKeyExchangeScheme(final String name);
+    public abstract KeyExchangeScheme getKeyExchangeScheme(final String name);
 
     /**
      * Returns the key exchange factory for the specified scheme.
@@ -232,7 +237,7 @@ public interface MslContext {
      * @param scheme the key exchange scheme.
      * @return the key exchange factory, or null if no factory is available.
      */
-    public KeyExchangeFactory getKeyExchangeFactory(final KeyExchangeScheme scheme);
+    public abstract KeyExchangeFactory getKeyExchangeFactory(final KeyExchangeScheme scheme);
     
     /**
      * Returns the supported key exchange factories in order of preferred use.
@@ -240,12 +245,48 @@ public interface MslContext {
      * 
      * @return the key exchange factories, or the empty set.
      */
-    public SortedSet<KeyExchangeFactory> getKeyExchangeFactories();
+    public abstract SortedSet<KeyExchangeFactory> getKeyExchangeFactories();
     
     /**
      * Returns the MSL store specific to this MSL context.
      * 
      * @return the MSL store.
      */
-    public MslStore getMslStore();
+    public abstract MslStore getMslStore();
+
+    /**
+     * <p>Update the remote entity time.</p>
+     * 
+     * <p>This function is only used by {@link MslControl} and should not be
+     * used by the application.</p>
+     * 
+     * @param time remote entity time.
+     */
+    public final void updateRemoteTime(final Date time) {
+        final long localSeconds = getTime() / MILLISECONDS_PER_SECOND;
+        final long remoteSeconds = time.getTime() / MILLISECONDS_PER_SECOND;
+        offset = remoteSeconds - localSeconds;
+        synced = true;
+    }
+
+    /**
+     * <p>Return the expected remote entity time or {@code null} if the clock
+     * is not yet synchronized.</p>
+     * 
+     * <p>This function is only used by {@link MslControl} and should not be
+     * used by the application.</p>
+     * 
+     * @return the expected remote entity time or {@code null} if not known.
+     */
+    public final Date getRemoteTime() {
+        if (!synced) return null;
+        final long localSeconds = getTime() / MILLISECONDS_PER_SECOND;
+        final long remoteSeconds = localSeconds + offset;
+        return new Date(remoteSeconds * MILLISECONDS_PER_SECOND);
+    }
+    
+    /** Remote clock is synchronized. */
+    private volatile boolean synced = false;
+    /** Remote entity time offset from local time in seconds. */
+    private volatile long offset = 0;
 }

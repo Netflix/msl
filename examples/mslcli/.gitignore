@@ -1,5 +1,5 @@
-/bin/mslcli/
 /.gradle
+/bin
 /build
 /.classpath
 /.project

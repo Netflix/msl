@@ -108,7 +108,8 @@ import com.netflix.msl.util.MslTestUtils;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 @RunWith(Suite.class)
-@SuiteClasses({MessageBuilderSuite.CreateRequestTest.class,
+@SuiteClasses({MessageBuilderSuite.Tests.class,
+               MessageBuilderSuite.CreateRequestTest.class,
                MessageBuilderSuite.CreateErrorTest.class,
                MessageBuilderSuite.CreateResponseTest.class})
 public class MessageBuilderSuite {
@@ -184,60 +185,63 @@ public class MessageBuilderSuite {
         // classes, so don't do any cleanup.
     }
     
-    @Test
-    public void incrementMessageId() {
-        final long one = MessageBuilder.incrementMessageId(0);
-        assertEquals(1, one);
-        
-        final long zero = MessageBuilder.incrementMessageId(MslConstants.MAX_LONG_VALUE);
-        assertEquals(0, zero);
-        
-        for (int i = 0; i < 1000; ++i) {
-            long initial = -1;
-            do {
-                initial = random.nextLong();
-            } while (initial < 0 || initial > MslConstants.MAX_LONG_VALUE);
-            final long next = MessageBuilder.incrementMessageId(initial);
-            assertEquals((initial != MslConstants.MAX_LONG_VALUE) ? initial + 1 : 0, next);
+    /** Common tests. */
+    public static class Tests {
+        @Test
+        public void incrementMessageId() {
+            final long one = MessageBuilder.incrementMessageId(0);
+            assertEquals(1, one);
+
+            final long zero = MessageBuilder.incrementMessageId(MslConstants.MAX_LONG_VALUE);
+            assertEquals(0, zero);
+
+            for (int i = 0; i < 1000; ++i) {
+                long initial = -1;
+                do {
+                    initial = random.nextLong();
+                } while (initial < 0 || initial > MslConstants.MAX_LONG_VALUE);
+                final long next = MessageBuilder.incrementMessageId(initial);
+                assertEquals((initial != MslConstants.MAX_LONG_VALUE) ? initial + 1 : 0, next);
+            }
         }
-    }
-    
-    @Test(expected = MslInternalException.class)
-    public void incrementNegativeMessageId() {
-        MessageBuilder.incrementMessageId(-1);
-    }
-    
-    @Test(expected = MslInternalException.class)
-    public void incrementTooLargeMessageId() {
-        MessageBuilder.incrementMessageId(MslConstants.MAX_LONG_VALUE + 1);
-    }
-    
-    @Test
-    public void decrementMessageId() {
-        final long max = MessageBuilder.decrementMessageId(0);
-        assertEquals(MslConstants.MAX_LONG_VALUE, max);
-        
-        final long max_m1 = MessageBuilder.decrementMessageId(MslConstants.MAX_LONG_VALUE);
-        assertEquals(MslConstants.MAX_LONG_VALUE - 1, max_m1);
-        
-        for (int i = 0; i < 1000; ++i) {
-            long initial = -1;
-            do {
-                initial = random.nextLong();
-            } while (initial < 0 || initial > MslConstants.MAX_LONG_VALUE);
-            final long next = MessageBuilder.decrementMessageId(initial);
-            assertEquals((initial != 0) ? initial - 1 : MslConstants.MAX_LONG_VALUE, next);
+
+        @Test(expected = MslInternalException.class)
+        public void incrementNegativeMessageId() {
+            MessageBuilder.incrementMessageId(-1);
         }
-    }
-    
-    @Test(expected = MslInternalException.class)
-    public void decrementNegativeMessageId() {
-        MessageBuilder.decrementMessageId(-1);
-    }
-    
-    @Test(expected = MslInternalException.class)
-    public void decrementTooLargeMessageId() {
-        MessageBuilder.decrementMessageId(MslConstants.MAX_LONG_VALUE + 1);
+
+        @Test(expected = MslInternalException.class)
+        public void incrementTooLargeMessageId() {
+            MessageBuilder.incrementMessageId(MslConstants.MAX_LONG_VALUE + 1);
+        }
+
+        @Test
+        public void decrementMessageId() {
+            final long max = MessageBuilder.decrementMessageId(0);
+            assertEquals(MslConstants.MAX_LONG_VALUE, max);
+
+            final long max_m1 = MessageBuilder.decrementMessageId(MslConstants.MAX_LONG_VALUE);
+            assertEquals(MslConstants.MAX_LONG_VALUE - 1, max_m1);
+
+            for (int i = 0; i < 1000; ++i) {
+                long initial = -1;
+                do {
+                    initial = random.nextLong();
+                } while (initial < 0 || initial > MslConstants.MAX_LONG_VALUE);
+                final long next = MessageBuilder.decrementMessageId(initial);
+                assertEquals((initial != 0) ? initial - 1 : MslConstants.MAX_LONG_VALUE, next);
+            }
+        }
+
+        @Test(expected = MslInternalException.class)
+        public void decrementNegativeMessageId() {
+            MessageBuilder.decrementMessageId(-1);
+        }
+
+        @Test(expected = MslInternalException.class)
+        public void decrementTooLargeMessageId() {
+            MessageBuilder.decrementMessageId(MslConstants.MAX_LONG_VALUE + 1);
+        }
     }
     
     /** Create request unit tests. */
