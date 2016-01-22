@@ -18,7 +18,6 @@ package com.netflix.msl.msg;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,6 +31,7 @@ import com.netflix.msl.MslMessageException;
 import com.netflix.msl.MslUserAuthException;
 import com.netflix.msl.MslUserIdTokenException;
 import com.netflix.msl.crypto.ICryptoContext;
+import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.keyx.KeyRequestData;
 import com.netflix.msl.util.MslContext;
 
@@ -56,7 +56,6 @@ public class MessageStreamFactory {
      * 
      * @param ctx MSL context.
      * @param source MSL input stream.
-     * @param charset input stream character set encoding.
      * @param keyRequestData key request data to use when processing key
      *        response data.
      * @param cryptoContexts the map of service token names onto crypto
@@ -82,8 +81,8 @@ public class MessageStreamFactory {
      *         authentication data or a master token, or a token is improperly
      *         bound to another token.
      */
-    public MessageInputStream createInputStream(final MslContext ctx, final InputStream source, final Charset charset, final Set<KeyRequestData> keyRequestData, final Map<String,ICryptoContext> cryptoContexts) throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslUserAuthException, MslMessageException, MslKeyExchangeException, MslMasterTokenException, MslUserIdTokenException, MslMessageException, MslException {
-        return new MessageInputStream(ctx, source, charset, keyRequestData, cryptoContexts);
+    public MessageInputStream createInputStream(final MslContext ctx, final InputStream source, final Set<KeyRequestData> keyRequestData, final Map<String,ICryptoContext> cryptoContexts) throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslUserAuthException, MslMessageException, MslKeyExchangeException, MslMasterTokenException, MslUserIdTokenException, MslMessageException, MslException {
+        return new MessageInputStream(ctx, source, keyRequestData, cryptoContexts);
     }
 
     /**
@@ -93,28 +92,27 @@ public class MessageStreamFactory {
      * 
      * @param ctx the MSL context.
      * @param destination MSL output stream.
-     * @param charset output stream character set encoding.
      * @param header error header.
+     * @param format the MSL encoder format.
      * @throws IOException if there is an error writing the header.
      */
-    public MessageOutputStream createOutputStream(final MslContext ctx, final OutputStream destination, final Charset charset, final ErrorHeader header) throws IOException {
-        return new MessageOutputStream(ctx, destination, charset, header);
+    public MessageOutputStream createOutputStream(final MslContext ctx, final OutputStream destination, final ErrorHeader header, final MslEncoderFormat format) throws IOException {
+        return new MessageOutputStream(ctx, destination, header, format);
     }
 
     /**
      * Construct a new message output stream. The header is output
      * immediately by calling {@code #flush()} on the destination output
-     * stream. The most preferred compression algorithm supported by the
-     * local entity and message header will be used.
+     * stream. The most preferred compression algorithm and encoder format
+     * supported by the local entity and message header will be used.
      * 
      * @param ctx the MSL context.
      * @param destination MSL output stream.
-     * @param charset output stream character set encoding.
      * @param header message header.
      * @param cryptoContext payload data crypto context.
      * @throws IOException if there is an error writing the header.
      */
-    public MessageOutputStream createOutputStream(final MslContext ctx, final OutputStream destination, final Charset charset, final MessageHeader header, final ICryptoContext cryptoContext) throws IOException {
-        return new MessageOutputStream(ctx, destination, charset, header, cryptoContext);
+    public MessageOutputStream createOutputStream(final MslContext ctx, final OutputStream destination, final MessageHeader header, final ICryptoContext cryptoContext) throws IOException {
+        return new MessageOutputStream(ctx, destination, header, cryptoContext);
     }
 }

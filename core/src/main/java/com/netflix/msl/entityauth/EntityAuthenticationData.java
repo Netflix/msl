@@ -15,16 +15,18 @@
  */
 package com.netflix.msl.entityauth;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.json.JSONString;
-import org.json.JSONStringer;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
 import com.netflix.msl.MslError;
-import com.netflix.msl.MslInternalException;
+import com.netflix.msl.io.MslEncodable;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -47,10 +49,10 @@ import com.netflix.msl.util.MslContext;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-public abstract class EntityAuthenticationData implements JSONString {
-    /** JSON key entity authentication scheme. */
+public abstract class EntityAuthenticationData implements MslEncodable {
+    /** Key entity authentication scheme. */
     private static final String KEY_SCHEME = "scheme";
-    /** JSON key entity authentication data. */
+    /** Key entity authentication data. */
     private static final String KEY_AUTHDATA = "authdata";
     
     /**
@@ -65,10 +67,10 @@ public abstract class EntityAuthenticationData implements JSONString {
     
     /**
      * Construct a new entity authentication data instance of the correct type
-     * from the provided JSON object.
+     * from the provided MSL object.
      * 
      * @param ctx MSL context.
-     * @param entityAuthJO the JSON object.
+     * @param entityAuthMo the MSL object.
      * @return the entity authentication data concrete instance.
      * @throws MslEntityAuthException if unable to create the entity
      *         authentication data.
@@ -77,22 +79,23 @@ public abstract class EntityAuthenticationData implements JSONString {
      * @throws MslCryptoException if there is an error creating the entity
      *         authentication data crypto.
      */
-    public static EntityAuthenticationData create(final MslContext ctx, final JSONObject entityAuthJO) throws MslEntityAuthException, MslEncodingException, MslCryptoException {
+    public static EntityAuthenticationData create(final MslContext ctx, final MslObject entityAuthMo) throws MslEntityAuthException, MslEncodingException, MslCryptoException {
         try {
             // Identify the concrete subclass from the authentication scheme.
-            final String schemeName = entityAuthJO.getString(KEY_SCHEME);
+            final String schemeName = entityAuthMo.getString(KEY_SCHEME);
             final EntityAuthenticationScheme scheme = ctx.getEntityAuthenticationScheme(schemeName);
             if (scheme == null)
                 throw new MslEntityAuthException(MslError.UNIDENTIFIED_ENTITYAUTH_SCHEME, schemeName);
-            final JSONObject authdata = entityAuthJO.getJSONObject(KEY_AUTHDATA);
+            final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+            final MslObject authdata = entityAuthMo.getMslObject(KEY_AUTHDATA, encoder);
             
             // Construct an instance of the concrete subclass.
             final EntityAuthenticationFactory factory = ctx.getEntityAuthenticationFactory(scheme);
             if (factory == null)
                 throw new MslEntityAuthException(MslError.ENTITYAUTH_FACTORY_NOT_FOUND, scheme.name());
             return factory.createData(ctx, authdata);
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "entityauthdata " + entityAuthJO.toString(), e);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "entityauthdata " + entityAuthMo, e);
         }
     }
     
@@ -111,32 +114,32 @@ public abstract class EntityAuthenticationData implements JSONString {
     public abstract String getIdentity() throws MslCryptoException;
     
     /**
-     * @return the authentication data JSON representation.
-     * @throws MslEncodingException if there was an error constructing the
-     *         JSON representation.
+     * @param encoder MSL encoder factory.
+     * @param format MSL encoder format.
+     * @return the authentication data MSL representation.
+     * @throws MslEncoderException if there was an error constructing the
+     *         MSL object.
      */
-    public abstract JSONObject getAuthData() throws MslEncodingException;
-    
-    /** Entity authentication scheme. */
-    private final EntityAuthenticationScheme scheme;
+    public abstract MslObject getAuthData(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException;
     
     /* (non-Javadoc)
-     * @see org.json.JSONString#toJSONString()
+     * @see com.netflix.msl.io.MslEncodable#toMslEncoding(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public final String toJSONString() {
-        try {
-            return new JSONStringer()
-                .object()
-                    .key(KEY_SCHEME).value(scheme.name())
-                    .key(KEY_AUTHDATA).value(getAuthData())
-                .endObject()
-                .toString();
-        } catch (final JSONException e) {
-            throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);
-        } catch (final MslEncodingException e) {
-            throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);
-        }
+    public final byte[] toMslEncoding(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException {
+        // Return any cached encoding.
+        if (encodings.containsKey(format))
+            return encodings.get(format);
+        
+        // Encode the entity authentication data.
+        final MslObject mo = encoder.createObject();
+        mo.put(KEY_SCHEME, scheme.name());
+        mo.put(KEY_AUTHDATA, getAuthData(encoder, format));
+        final byte[] encoding = encoder.encodeObject(mo, format);
+        
+        // Cache and return the encoding.
+        encodings.put(format, encoding);
+        return encoding;
     }
 
     /* (non-Javadoc)
@@ -157,4 +160,10 @@ public abstract class EntityAuthenticationData implements JSONString {
     public int hashCode() {
         return scheme.hashCode();
     }
+    
+    /** Entity authentication scheme. */
+    private final EntityAuthenticationScheme scheme;
+    
+    /** Cached encodings. */
+    private final Map<MslEncoderFormat,byte[]> encodings = new HashMap<MslEncoderFormat,byte[]>();
 }

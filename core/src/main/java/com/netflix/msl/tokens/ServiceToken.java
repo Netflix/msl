@@ -15,13 +15,10 @@
  */
 package com.netflix.msl.tokens;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.xml.bind.DatatypeConverter;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.json.JSONString;
 
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslConstants.CompressionAlgorithm;
@@ -31,6 +28,11 @@ import com.netflix.msl.MslError;
 import com.netflix.msl.MslException;
 import com.netflix.msl.MslInternalException;
 import com.netflix.msl.crypto.ICryptoContext;
+import com.netflix.msl.io.MslEncodable;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslUtils;
 
@@ -87,29 +89,29 @@ import com.netflix.msl.util.MslUtils;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-public class ServiceToken implements JSONString {
-    /** JSON key token data. */
+public class ServiceToken implements MslEncodable {
+    /** Key token data. */
     private static final String KEY_TOKENDATA = "tokendata";
-    /** JSON key signature. */
+    /** Key signature. */
     private static final String KEY_SIGNATURE = "signature";
     
     // tokendata
-    /** JSON key token name. */
+    /** Key token name. */
     private static final String KEY_NAME = "name";
-    /** JSON key master token serial number. */
+    /** Key master token serial number. */
     private static final String KEY_MASTER_TOKEN_SERIAL_NUMBER = "mtserialnumber";
-    /** JSON key user ID token serial number. */
+    /** Key user ID token serial number. */
     private static final String KEY_USER_ID_TOKEN_SERIAL_NUMBER = "uitserialnumber";
-    /** JSON key encrypted. */
+    /** Key encrypted. */
     private static final String KEY_ENCRYPTED = "encrypted";
-    /** JSON key compression algorithm. */
+    /** Key compression algorithm. */
     private static final String KEY_COMPRESSION_ALGORITHM = "compressionalgo";
-    /** JSON key service data. */
+    /** Key service data. */
     private static final String KEY_SERVICEDATA = "servicedata";
     
     /**
      * <p>Select the appropriate crypto context for the service token
-     * represented by the provided JSON object.</p>
+     * represented by the provided MSL object.</p>
      * 
      * <p>If the service token name exists as a key in the map of crypto
      * contexts, the mapped crypto context will be returned. Otherwise the
@@ -117,29 +119,25 @@ public class ServiceToken implements JSONString {
      * returned. If no explicit or default crypto context exists null will be
      * returned.</p>
      * 
-     * @param serviceTokenJO the JSON object.
+     * @param encoder the MSL encoder factory.
+     * @param serviceTokenMo the MSL object.
      * @param cryptoContexts the map of service token names onto crypto
      *        contexts used to decrypt and verify service tokens.
      * @return the correct crypto context for the service token or null.
-     * @throws MslEncodingException if there is a problem parsing the JSON.
+     * @throws MslEncodingException if there is a problem parsing the data.
      */
-    private static ICryptoContext selectCryptoContext(final JSONObject serviceTokenJO, final Map<String,ICryptoContext> cryptoContexts) throws MslEncodingException {
+    private static ICryptoContext selectCryptoContext(final MslEncoderFactory encoder, final MslObject serviceTokenMo, final Map<String,ICryptoContext> cryptoContexts) throws MslEncodingException {
         try {
-            final byte[] tokendata;
-            try {
-                tokendata = DatatypeConverter.parseBase64Binary(serviceTokenJO.getString(KEY_TOKENDATA));
-            } catch (final IllegalArgumentException e) {
-                throw new MslEncodingException(MslError.SERVICETOKEN_TOKENDATA_INVALID, "servicetoken " + serviceTokenJO.toString(), e);
-            }
-            if (tokendata == null || tokendata.length == 0)
-                throw new MslEncodingException(MslError.SERVICETOKEN_TOKENDATA_MISSING, "servicetoken " + serviceTokenJO.toString());
-            final JSONObject tokenDataJO = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-            final String name = tokenDataJO.getString(KEY_NAME);
+            final byte[] tokendata = serviceTokenMo.getBytes(KEY_TOKENDATA);
+            if (tokendata.length == 0)
+                throw new MslEncodingException(MslError.SERVICETOKEN_TOKENDATA_MISSING, "servicetoken " + serviceTokenMo);
+            final MslObject tokenDataMo = encoder.parseObject(tokendata);
+            final String name = tokenDataMo.getString(KEY_NAME);
             if (cryptoContexts.containsKey(name))
                 return cryptoContexts.get(name);
             return cryptoContexts.get("");
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "servicetoken " + serviceTokenJO.toString(), e);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "servicetoken " + serviceTokenMo, e);
         }
     }
     
@@ -162,20 +160,28 @@ public class ServiceToken implements JSONString {
      * @param compressionAlgo the compression algorithm. May be {@code null}
      *        for no compression.
      * @param cryptoContext the crypto context.
-     * @throws MslEncodingException if there is an error encoding the JSON
-     *         data.
-     * @throws MslCryptoException if there is an error encrypting or signing
-     *         the token data.
      * @throws MslException if there is an error compressing the data.
      */
-    public ServiceToken(final MslContext ctx, final String name, final byte[] data, final MasterToken masterToken, final UserIdToken userIdToken, final boolean encrypted, final CompressionAlgorithm compressionAlgo, final ICryptoContext cryptoContext) throws MslEncodingException, MslCryptoException, MslException {
+    public ServiceToken(final MslContext ctx, final String name, final byte[] data, final MasterToken masterToken, final UserIdToken userIdToken, final boolean encrypted, final CompressionAlgorithm compressionAlgo, final ICryptoContext cryptoContext) throws MslException {
+        this.ctx = ctx;
+        
         // If both master token and user ID token are provided the user ID
         // token must be bound to the master token.
         if (masterToken != null && userIdToken != null && !userIdToken.isBoundTo(masterToken))
             throw new MslInternalException("Cannot construct a service token bound to a master token and user ID token where the user ID token is not bound to the same master token.");
         
+        // The crypto context may not be null.
+        if (cryptoContext == null)
+            throw new NullPointerException("Crypto context may not be null.");
+        
+        // Set token properties.
+        this.name = name;
+        this.mtSerialNumber = (masterToken != null) ? masterToken.getSerialNumber() : -1;
+        this.uitSerialNumber = (userIdToken != null) ? userIdToken.getSerialNumber() : -1;
+        this.servicedata = data;
+        this.encrypted = encrypted;
+        
         // Optionally compress the service data.
-        final byte[] plaintext;
         if (compressionAlgo != null) {
             final byte[] compressed = MslUtils.compress(compressionAlgo, data);
             
@@ -183,53 +189,26 @@ public class ServiceToken implements JSONString {
             // uncompressed data.
             if (compressed.length < data.length) {
                 this.compressionAlgo = compressionAlgo;
-                plaintext = compressed;
+                this.compressedServicedata = compressed;
             } else {
                 this.compressionAlgo = null;
-                plaintext = data;
+                this.compressedServicedata = data;
             }
         } else {
             this.compressionAlgo = null;
-            plaintext = data;
+            this.compressedServicedata = data;
         }
         
-        this.name = name;
-        this.mtSerialNumber = (masterToken != null) ? masterToken.getSerialNumber() : -1;
-        this.uitSerialNumber = (userIdToken != null) ? userIdToken.getSerialNumber() : -1;
-        this.servicedata = data;
-        this.encrypted = encrypted;
+        // Save the crypto context.
+        this.cryptoContext = cryptoContext;
         
-        try {
-            // Encrypt the service data if the length is > 0. Otherwise encode
-            // as empty data to indicate this token should be deleted.
-            final byte[] ciphertext = (encrypted && plaintext.length > 0) ? cryptoContext.encrypt(plaintext) : plaintext;
-            
-            // Construct the token data.
-            try {
-                final JSONObject tokenDataJO = new JSONObject();
-                tokenDataJO.put(KEY_NAME, this.name);
-                if (this.mtSerialNumber != -1) tokenDataJO.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, this.mtSerialNumber);
-                if (this.uitSerialNumber != -1) tokenDataJO.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, this.uitSerialNumber);
-                tokenDataJO.put(KEY_ENCRYPTED, this.encrypted);
-                if (this.compressionAlgo != null) tokenDataJO.put(KEY_COMPRESSION_ALGORITHM, this.compressionAlgo.name());
-                tokenDataJO.put(KEY_SERVICEDATA, DatatypeConverter.printBase64Binary(ciphertext));
-                this.tokendata = tokenDataJO.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-            } catch (final JSONException e) {
-                throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, "servicetoken", e).setEntity(masterToken).setUser(userIdToken);
-            }
-            
-            // Sign the token data.
-            this.signature = cryptoContext.sign(this.tokendata);
-            this.verified = true;
-        } catch (final MslCryptoException e) {
-            e.setEntity(masterToken);
-            e.setUser(userIdToken);
-            throw e;
-        }
+        this.tokendataBytes = null;
+        this.signatureBytes = null;
+        this.verified = true;
     }
     
     /**
-     * <p>Construct a new service token from the provided JSON object and
+     * <p>Construct a new service token from the provided MSL object and
      * attempt to decrypt and verify the signature of the service token using
      * the appropriate crypto context. If the data cannot be decrypted or the
      * signature cannot be verified, the token will still be created.</p>
@@ -246,11 +225,11 @@ public class ServiceToken implements JSONString {
      * which must not be null.</p>
      * 
      * @param ctx the MSL context.
-     * @param serviceTokenJO the JSON object.
+     * @param serviceTokenMo the MSL object.
      * @param masterToken the master token. May be null.
      * @param userIdToken the user ID token. May be null.
      * @param cryptoContexts a map of service token names onto crypto contexts.
-     * @throws MslEncodingException if there is a problem parsing the JSON.
+     * @throws MslEncodingException if there is a problem parsing the data.
      * @throws MslCryptoException if there is an error decrypting or verifying
      *         the token data.
      * @throws MslException if the service token is bound to a master token or
@@ -260,12 +239,12 @@ public class ServiceToken implements JSONString {
      *         compression algorithm is not known or there is an error
      *         uncompressing the data.
      */
-    public ServiceToken(final MslContext ctx, final JSONObject serviceTokenJO, final MasterToken masterToken, final UserIdToken userIdToken, final Map<String,ICryptoContext> cryptoContexts) throws MslEncodingException, MslCryptoException, MslException {
-        this(ctx, serviceTokenJO, masterToken, userIdToken, selectCryptoContext(serviceTokenJO, cryptoContexts));
+    public ServiceToken(final MslContext ctx, final MslObject serviceTokenMo, final MasterToken masterToken, final UserIdToken userIdToken, final Map<String,ICryptoContext> cryptoContexts) throws MslEncodingException, MslCryptoException, MslException {
+        this(ctx, serviceTokenMo, masterToken, userIdToken, selectCryptoContext(ctx.getMslEncoderFactory(), serviceTokenMo, cryptoContexts));
     }
     
     /**
-     * <p>Construct a new service token from the provided JSON object.</p>
+     * <p>Construct a new service token from the provided MSL object.</p>
      * 
      * <p>If a crypto context is provided, the token data will be decrypted and
      * its signature verified. If the data cannot be decrypted or the signature
@@ -276,13 +255,13 @@ public class ServiceToken implements JSONString {
      * which must not be null.</p>
      * 
      * @param ctx the MSL context.
-     * @param serviceTokenJO the JSON object.
+     * @param serviceTokenMo the MSL object.
      * @param masterToken the master token. May be null.
      * @param userIdToken the user ID token. May be null.
      * @param cryptoContext the crypto context. May be null.
      * @throws MslCryptoException if there is a problem decrypting or verifying
      *         the token data.
-     * @throws MslEncodingException if there is a problem parsing the JSON, the
+     * @throws MslEncodingException if there is a problem parsing the data, the
      *         token data is missing or invalid, or the signature is invalid.
      * @throws MslException if the service token is bound to a master token or
      *         user ID token and the provided tokens are null or the serial
@@ -293,54 +272,49 @@ public class ServiceToken implements JSONString {
      *         or if the compression algorithm is not known or there is an
      *         error uncompressing the data.
      */
-    public ServiceToken(final MslContext ctx, final JSONObject serviceTokenJO, final MasterToken masterToken, final UserIdToken userIdToken, final ICryptoContext cryptoContext) throws MslCryptoException, MslEncodingException, MslException {
-        // Verify the JSON representation.
+    public ServiceToken(final MslContext ctx, final MslObject serviceTokenMo, final MasterToken masterToken, final UserIdToken userIdToken, final ICryptoContext cryptoContext) throws MslCryptoException, MslEncodingException, MslException {
+        this.ctx = ctx;
+        this.cryptoContext = cryptoContext;
+        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+        
+        // Verify the data representation.
         try {
-            try {
-                tokendata = DatatypeConverter.parseBase64Binary(serviceTokenJO.getString(KEY_TOKENDATA));
-            } catch (final IllegalArgumentException e) {
-                throw new MslEncodingException(MslError.SERVICETOKEN_TOKENDATA_INVALID, "servicetoken " + serviceTokenJO.toString(), e).setEntity(masterToken).setUser(userIdToken);
-            }
-            if (tokendata == null || tokendata.length == 0)
-                throw new MslEncodingException(MslError.SERVICETOKEN_TOKENDATA_MISSING, "servicetoken " + serviceTokenJO.toString()).setEntity(masterToken).setUser(userIdToken);
-            try {
-                signature = DatatypeConverter.parseBase64Binary(serviceTokenJO.getString(KEY_SIGNATURE));
-            } catch (final IllegalArgumentException e) {
-                throw new MslEncodingException(MslError.SERVICETOKEN_SIGNATURE_INVALID, "servicetoken " + serviceTokenJO.toString(), e).setEntity(masterToken).setUser(userIdToken);
-            }
-            verified = (cryptoContext != null) ? cryptoContext.verify(tokendata, signature) : false;
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "servicetoken " + serviceTokenJO.toString(), e).setEntity(masterToken).setUser(userIdToken);
+            tokendataBytes = serviceTokenMo.getBytes(KEY_TOKENDATA);
+            if (tokendataBytes.length == 0)
+                throw new MslEncodingException(MslError.SERVICETOKEN_TOKENDATA_MISSING, "servicetoken " + serviceTokenMo).setEntity(masterToken).setUser(userIdToken);
+            signatureBytes = serviceTokenMo.getBytes(KEY_SIGNATURE);
+            verified = (cryptoContext != null) ? cryptoContext.verify(tokendataBytes, signatureBytes, encoder) : false;
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "servicetoken " + serviceTokenMo, e).setEntity(masterToken).setUser(userIdToken);
         } catch (final MslCryptoException e) {
             e.setEntity(masterToken);
             throw e;
         }
         
         // Pull the token data.
-        final String tokenDataJson = new String(tokendata, MslConstants.DEFAULT_CHARSET);
         try {
-            final JSONObject tokenDataJO = new JSONObject(tokenDataJson);
-            name = tokenDataJO.getString(KEY_NAME);
-            if (tokenDataJO.has(KEY_MASTER_TOKEN_SERIAL_NUMBER)) {
-                mtSerialNumber = tokenDataJO.getLong(KEY_MASTER_TOKEN_SERIAL_NUMBER);
+            final MslObject tokendata = encoder.parseObject(tokendataBytes);
+            name = tokendata.getString(KEY_NAME);
+            if (tokendata.has(KEY_MASTER_TOKEN_SERIAL_NUMBER)) {
+                mtSerialNumber = tokendata.getLong(KEY_MASTER_TOKEN_SERIAL_NUMBER);
                 if (mtSerialNumber < 0 || mtSerialNumber > MslConstants.MAX_LONG_VALUE)
-                    throw new MslException(MslError.SERVICETOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "servicetokendata " + tokenDataJson).setEntity(masterToken).setUser(userIdToken);
+                    throw new MslException(MslError.SERVICETOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "servicetokendata " + tokendata).setEntity(masterToken).setUser(userIdToken);
             } else {
                 mtSerialNumber = -1;
             }
-            if (tokenDataJO.has(KEY_USER_ID_TOKEN_SERIAL_NUMBER)) {
-                uitSerialNumber = tokenDataJO.getLong(KEY_USER_ID_TOKEN_SERIAL_NUMBER);
+            if (tokendata.has(KEY_USER_ID_TOKEN_SERIAL_NUMBER)) {
+                uitSerialNumber = tokendata.getLong(KEY_USER_ID_TOKEN_SERIAL_NUMBER);
                 if (uitSerialNumber < 0 || uitSerialNumber > MslConstants.MAX_LONG_VALUE)
-                    throw new MslException(MslError.SERVICETOKEN_USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "servicetokendata " + tokenDataJson).setEntity(masterToken).setUser(userIdToken);
+                    throw new MslException(MslError.SERVICETOKEN_USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "servicetokendata " + tokendata).setEntity(masterToken).setUser(userIdToken);
             } else {
                 uitSerialNumber = -1;
             }
             // There has to be a master token serial number if there is a
             // user ID token serial number.
             
-            encrypted = tokenDataJO.getBoolean(KEY_ENCRYPTED);
-            if (tokenDataJO.has(KEY_COMPRESSION_ALGORITHM)) {
-                final String algoName = tokenDataJO.getString(KEY_COMPRESSION_ALGORITHM);
+            encrypted = tokendata.getBoolean(KEY_ENCRYPTED);
+            if (tokendata.has(KEY_COMPRESSION_ALGORITHM)) {
+                final String algoName = tokendata.getString(KEY_COMPRESSION_ALGORITHM);
                 try {
                     compressionAlgo = CompressionAlgorithm.valueOf(algoName);
                 } catch (final IllegalArgumentException e) {
@@ -353,27 +327,21 @@ public class ServiceToken implements JSONString {
             // If encrypted, and we were able to verify the data then we better
             // be able to decrypt it. (An exception is thrown if decryption
             // fails.)
-            final String data = tokenDataJO.getString(KEY_SERVICEDATA);
+            final byte[] data = tokendata.getBytes(KEY_SERVICEDATA);
             if (verified) {
-                final byte[] ciphertext;
-                try {
-                    ciphertext = DatatypeConverter.parseBase64Binary(data);
-                } catch (final IllegalArgumentException e) {
-                    throw new MslException(MslError.SERVICETOKEN_SERVICEDATA_INVALID, "servicetokendata " + tokenDataJson).setEntity(masterToken).setUser(userIdToken);
-                }
-                if (ciphertext == null)
-                    throw new MslException(MslError.SERVICETOKEN_SERVICEDATA_INVALID, "servicetokendata " + tokenDataJson).setEntity(masterToken).setUser(userIdToken);
-                final byte[] compressedData = (encrypted && ciphertext.length > 0)
-                    ? cryptoContext.decrypt(ciphertext)
+                final byte[] ciphertext = data;
+                compressedServicedata = (encrypted && ciphertext.length > 0)
+                    ? cryptoContext.decrypt(ciphertext, encoder)
                     : ciphertext;
                 servicedata = (compressionAlgo != null)
-                    ? MslUtils.uncompress(compressionAlgo, compressedData)
-                    : compressedData;
+                    ? MslUtils.uncompress(compressionAlgo, compressedServicedata)
+                    : compressedServicedata;
             } else {
-                servicedata = (data.isEmpty()) ? new byte[0] : null;
+                compressedServicedata = data;
+                servicedata = (data.length == 0) ? new byte[0] : null;
             }
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "servicetokendata " + tokenDataJson, e).setEntity(masterToken).setUser(userIdToken);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "servicetokendata " + DatatypeConverter.printBase64Binary(tokendataBytes), e).setEntity(masterToken).setUser(userIdToken);
         } catch (final MslCryptoException e) {
             e.setEntity(masterToken);
             e.setUser(userIdToken);
@@ -505,10 +473,10 @@ public class ServiceToken implements JSONString {
         return mtSerialNumber == -1 && uitSerialNumber == -1;
     }
     
-    /** Token data. */
-    private final byte[] tokendata;
-    /** Token data signature. */
-    private final byte[] signature;
+    /** MSL context. */
+    private final MslContext ctx;
+    /** Service token crypto context. */
+    private final ICryptoContext cryptoContext;
     
     /** The service token name. */
     private final String name;
@@ -522,23 +490,78 @@ public class ServiceToken implements JSONString {
     private final CompressionAlgorithm compressionAlgo;
     /** The service token data. */
     private final byte[] servicedata;
+    /** The compressed service token data. */
+    private final byte[] compressedServicedata;
+
+    /** Token data bytes. */
+    private final byte[] tokendataBytes;
+    /** Signature bytes. */
+    private final byte[] signatureBytes;
     
     /** Token is verified. */
     private final boolean verified;
-
+    
+    /** Cached encodings. */
+    private final Map<MslEncoderFormat,byte[]> encodings = new HashMap<MslEncoderFormat,byte[]>();
+    
     /* (non-Javadoc)
-     * @see org.json.JSONString#toJSONString()
+     * @see com.netflix.msl.io.MslEncodable#toMslEncoding(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public String toJSONString() {
-        try {
-            final JSONObject jsonObj = new JSONObject();
-            jsonObj.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendata));
-            jsonObj.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
-            return jsonObj.toString();
-        } catch (final JSONException e) {
-            throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);
+    public byte[] toMslEncoding(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException {
+        // Return any cached encoding.
+        if (encodings.containsKey(format))
+            return encodings.get(format);
+        
+        // If we parsed this token (i.e. did not create it from scratch) then
+        // we should not re-encrypt or re-sign as there is no guarantee out MSL
+        // crypto context is capable of encrypting and signing with the same
+        // keys, even if it is capable of decrypting and verifying.
+        //
+        // Otherwise create the token data and signature.
+        final byte[] data, signature;
+        if (tokendataBytes == null && signatureBytes == null) {
+            // Encrypt the service data if the length is > 0. Otherwise encode
+            // as empty data to indicate this token should be deleted.
+            final byte[] ciphertext;
+            try {
+                ciphertext = (encrypted && compressedServicedata.length > 0)
+                    ? cryptoContext.encrypt(compressedServicedata, encoder, format)
+                    : compressedServicedata;
+            } catch (final MslCryptoException e) {
+                throw new MslEncoderException("Error encrypting the service data.", e);
+            }
+            
+            // Construct the token data.
+            final MslObject tokendata = encoder.createObject();
+            tokendata.put(KEY_NAME, this.name);
+            if (this.mtSerialNumber != -1) tokendata.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, this.mtSerialNumber);
+            if (this.uitSerialNumber != -1) tokendata.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, this.uitSerialNumber);
+            tokendata.put(KEY_ENCRYPTED, this.encrypted);
+            if (this.compressionAlgo != null) tokendata.put(KEY_COMPRESSION_ALGORITHM, this.compressionAlgo.name());
+            tokendata.put(KEY_SERVICEDATA, ciphertext);
+
+            // Sign the token data.
+            data = encoder.encodeObject(tokendata, format);
+            try {
+                signature = cryptoContext.sign(data, encoder, format);
+            } catch (final MslCryptoException e) {
+                throw new MslEncoderException("Error signing the token data.", e);
+            }
+        } else {
+            data = tokendataBytes;
+            signature = signatureBytes;
         }
+
+        // Encode the token.
+        final MslObject token = encoder.createObject();
+        token.put(KEY_TOKENDATA, data);
+        token.put(KEY_SIGNATURE, signature);
+        final byte[] encoding = encoder.encodeObject(token, format);
+
+        // Cache and return the encoding.
+        encodings.put(format, encoding);
+        return encoding;
     }
     
     /* (non-Javadoc)
@@ -546,20 +569,18 @@ public class ServiceToken implements JSONString {
      */
     @Override
     public String toString() {
-        try {
-            final JSONObject tokendataJO = new JSONObject();
-            tokendataJO.put(KEY_NAME, name);
-            tokendataJO.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, mtSerialNumber);
-            tokendataJO.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, uitSerialNumber);
-            tokendataJO.put(KEY_SERVICEDATA, DatatypeConverter.printBase64Binary(servicedata));
-            
-            final JSONObject jsonObj = new JSONObject();
-            jsonObj.put(KEY_TOKENDATA, tokendataJO);
-            jsonObj.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
-            return jsonObj.toString();
-        } catch (final JSONException e) {
-            throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);
-        }
+        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+
+        final MslObject tokendata = encoder.createObject();
+        tokendata.put(KEY_NAME, name);
+        tokendata.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, mtSerialNumber);
+        tokendata.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, uitSerialNumber);
+        tokendata.put(KEY_SERVICEDATA, servicedata);
+
+        final MslObject token = encoder.createObject();
+        token.put(KEY_TOKENDATA, tokendata);
+        token.put(KEY_SIGNATURE, null);
+        return token.toString();
     }
 
     /**

@@ -29,14 +29,14 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslInternalException;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 
 /**
  * An asymmetric crypto context performs encrypt/decrypt and sign/verify using
@@ -84,10 +84,10 @@ public abstract class AsymmetricCryptoContext implements ICryptoContext {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.crypto.ICryptoContext#encrypt(byte[])
+     * @see com.netflix.msl.crypto.ICryptoContext#encrypt(byte[], com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public byte[] encrypt(final byte[] data) throws MslCryptoException {
+    public byte[] encrypt(final byte[] data, final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslCryptoException {
         if (NULL_OP.equals(transform))
             return data;
         if (publicKey == null)
@@ -100,7 +100,8 @@ public abstract class AsymmetricCryptoContext implements ICryptoContext {
             final byte[] ciphertext = cipher.doFinal(data);
             
             // Return encryption envelope byte representation.
-            return new MslCiphertextEnvelope(id, null, ciphertext).toJSONString().getBytes(MslConstants.DEFAULT_CHARSET);
+            final MslCiphertextEnvelope envelope = new MslCiphertextEnvelope(id, null, ciphertext);
+            return envelope.toMslEncoding(encoder, format);
         } catch (final NoSuchPaddingException e) {
             reset = e;
             throw new MslInternalException("Unsupported padding exception.", e);
@@ -119,6 +120,9 @@ public abstract class AsymmetricCryptoContext implements ICryptoContext {
         } catch (final InvalidAlgorithmParameterException e) {
             reset = e;
             throw new MslCryptoException(MslError.INVALID_ALGORITHM_PARAMS, e);
+        } catch (final MslEncoderException e) {
+            reset = e;
+            throw new MslCryptoException(MslError.CIPHERTEXT_ENVELOPE_ENCODE_ERROR, e);
         } catch (final RuntimeException e) {
             reset = e;
             throw e;
@@ -130,10 +134,10 @@ public abstract class AsymmetricCryptoContext implements ICryptoContext {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.crypto.ICryptoContext#decrypt(byte[])
+     * @see com.netflix.msl.crypto.ICryptoContext#decrypt(byte[], com.netflix.msl.io.MslEncoderFactory)
      */
     @Override
-    public byte[] decrypt(final byte[] data) throws MslCryptoException {
+    public byte[] decrypt(final byte[] data, final MslEncoderFactory encoder) throws MslCryptoException {
         if (NULL_OP.equals(transform))
             return data;
         if (privateKey == null)
@@ -141,8 +145,8 @@ public abstract class AsymmetricCryptoContext implements ICryptoContext {
         Throwable reset = null;
         try {
             // Reconstitute encryption envelope.
-            final JSONObject encryptionEnvelopeJsonObj = new JSONObject(new String(data, MslConstants.DEFAULT_CHARSET));
-            final MslCiphertextEnvelope encryptionEnvelope = new MslCiphertextEnvelope(encryptionEnvelopeJsonObj, MslCiphertextEnvelope.Version.V1);
+            final MslObject encryptionEnvelopeMo = encoder.parseObject(data);
+            final MslCiphertextEnvelope encryptionEnvelope = new MslCiphertextEnvelope(encryptionEnvelopeMo, MslCiphertextEnvelope.Version.V1);
             
             // Verify key ID.
             if (!encryptionEnvelope.getKeyId().equals(id))
@@ -167,7 +171,7 @@ public abstract class AsymmetricCryptoContext implements ICryptoContext {
         } catch (final BadPaddingException e) {
             reset = e;
             throw new MslCryptoException(MslError.CIPHERTEXT_BAD_PADDING, e);
-        } catch (final JSONException e) {
+        } catch (final MslEncoderException e) {
             reset = e;
             throw new MslCryptoException(MslError.CIPHERTEXT_ENVELOPE_PARSE_ERROR, e);
         } catch (final MslEncodingException e) {
@@ -187,26 +191,26 @@ public abstract class AsymmetricCryptoContext implements ICryptoContext {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.crypto.ICryptoContext#wrap(byte[])
+     * @see com.netflix.msl.crypto.ICryptoContext#wrap(byte[], com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public byte[] wrap(final byte[] data) throws MslCryptoException {
+    public byte[] wrap(final byte[] data, final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslCryptoException {
         throw new MslCryptoException(MslError.WRAP_NOT_SUPPORTED);
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.crypto.ICryptoContext#unwrap(byte[])
+     * @see com.netflix.msl.crypto.ICryptoContext#unwrap(byte[], com.netflix.msl.io.MslEncoderFactory)
      */
     @Override
-    public byte[] unwrap(final byte[] data) throws MslCryptoException {
+    public byte[] unwrap(final byte[] data, final MslEncoderFactory encoder) throws MslCryptoException {
         throw new MslCryptoException(MslError.UNWRAP_NOT_SUPPORTED);
     }
     
     /* (non-Javadoc)
-     * @see com.netflix.msl.crypto.ICryptoContext#sign(byte[])
+     * @see com.netflix.msl.crypto.ICryptoContext#sign(byte[], com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public byte[] sign(final byte[] data) throws MslCryptoException {
+    public byte[] sign(final byte[] data, final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslCryptoException {
         if (NULL_OP.equals(algo))
             return new byte[0];
         if (privateKey == null)
@@ -218,28 +222,30 @@ public abstract class AsymmetricCryptoContext implements ICryptoContext {
             final byte[] signature = sig.sign();
             
             // Return the signature envelope byte representation.
-            return new MslSignatureEnvelope(signature).getBytes();
+            return new MslSignatureEnvelope(signature).getBytes(encoder, format);
         } catch (final NoSuchAlgorithmException e) {
             throw new MslInternalException("Invalid signature algorithm specified.", e);
         } catch (final InvalidKeyException e) {
             throw new MslCryptoException(MslError.INVALID_PRIVATE_KEY, e);
         } catch (final SignatureException e) {
             throw new MslCryptoException(MslError.SIGNATURE_ERROR, e);
+        } catch (final MslEncoderException e) {
+            throw new MslCryptoException(MslError.SIGNATURE_ENVELOPE_ENCODE_ERROR, e);
         }
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.crypto.ICryptoContext#verify(byte[], byte[])
+     * @see com.netflix.msl.crypto.ICryptoContext#verify(byte[], byte[], com.netflix.msl.io.MslEncoderFactory)
      */
     @Override
-    public boolean verify(final byte[] data, final byte[] signature) throws MslCryptoException {
+    public boolean verify(final byte[] data, final byte[] signature, final MslEncoderFactory encoder) throws MslCryptoException {
         if (NULL_OP.equals(algo))
             return true;
         if (publicKey == null)
             throw new MslCryptoException(MslError.VERIFY_NOT_SUPPORTED, "no public key.");
         try {
             // Reconstitute the signature envelope.
-            final MslSignatureEnvelope envelope = MslSignatureEnvelope.parse(signature);
+            final MslSignatureEnvelope envelope = MslSignatureEnvelope.parse(signature, encoder);
             
             final Signature sig = CryptoCache.getSignature(algo);
             sig.initVerify(publicKey);

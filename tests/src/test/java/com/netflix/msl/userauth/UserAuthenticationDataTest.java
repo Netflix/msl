@@ -15,8 +15,6 @@
  */
 package com.netflix.msl.userauth;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -27,6 +25,8 @@ import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslUserAuthException;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.test.ExpectedMslException;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslContext;
@@ -35,7 +35,7 @@ import com.netflix.msl.util.MslContext;
  * User authentication data unit tests.
  * 
  * Successful calls to
- * {@link UserAuthenticationData#create(com.netflix.msl.util.MslContext, org.json.JSONObject)}
+ * {@link UserAuthenticationData#create(com.netflix.msl.util.MslContext, org.json.MslObject)}
  * covered in the individual user authentication data unit tests.
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
@@ -60,49 +60,49 @@ public class UserAuthenticationDataTest {
     }
     
     @Test
-    public void noScheme() throws JSONException, MslUserAuthException, MslEncodingException, MslCryptoException {
+    public void noScheme() throws MslEncoderException, MslUserAuthException, MslEncodingException, MslCryptoException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
-        final JSONObject jo = new JSONObject();
-        jo.put(KEY_SCHEME + "x", UserAuthenticationScheme.EMAIL_PASSWORD);
-        jo.put(KEY_AUTHDATA, new JSONObject());
-        UserAuthenticationData.create(ctx, null, jo);
+        final MslObject mo = new MslObject();
+        mo.put(KEY_SCHEME + "x", UserAuthenticationScheme.EMAIL_PASSWORD.name());
+        mo.put(KEY_AUTHDATA, new MslObject());
+        UserAuthenticationData.create(ctx, null, mo);
     }
     
     @Test
-    public void noAuthdata() throws JSONException, MslUserAuthException, MslEncodingException, MslCryptoException {
+    public void noAuthdata() throws MslEncoderException, MslUserAuthException, MslEncodingException, MslCryptoException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
-        final JSONObject jo = new JSONObject();
-        jo.put(KEY_SCHEME, UserAuthenticationScheme.EMAIL_PASSWORD);
-        jo.put(KEY_AUTHDATA + "x", new JSONObject());
-        UserAuthenticationData.create(ctx, null, jo);
+        final MslObject mo = new MslObject();
+        mo.put(KEY_SCHEME, UserAuthenticationScheme.EMAIL_PASSWORD.name());
+        mo.put(KEY_AUTHDATA + "x", new MslObject());
+        UserAuthenticationData.create(ctx, null, mo);
     }
     
     @Test
-    public void unidentifiedScheme() throws JSONException, MslUserAuthException, MslEncodingException, MslCryptoException {
+    public void unidentifiedScheme() throws MslEncoderException, MslUserAuthException, MslEncodingException, MslCryptoException {
         thrown.expect(MslUserAuthException.class);
         thrown.expectMslError(MslError.UNIDENTIFIED_USERAUTH_SCHEME);
 
-        final JSONObject jo = new JSONObject();
-        jo.put(KEY_SCHEME, "x");
-        jo.put(KEY_AUTHDATA, new JSONObject());
-        UserAuthenticationData.create(ctx, null, jo);
+        final MslObject mo = new MslObject();
+        mo.put(KEY_SCHEME, "x");
+        mo.put(KEY_AUTHDATA, new MslObject());
+        UserAuthenticationData.create(ctx, null, mo);
     }
     
     @Test
-    public void authFactoryNotFound() throws JSONException, MslUserAuthException, MslEncodingException, MslCryptoException {
+    public void authFactoryNotFound() throws MslEncoderException, MslUserAuthException, MslEncodingException, MslCryptoException {
         thrown.expect(MslUserAuthException.class);
         thrown.expectMslError(MslError.USERAUTH_FACTORY_NOT_FOUND);
 
         final MockMslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
         ctx.removeUserAuthenticationFactory(UserAuthenticationScheme.EMAIL_PASSWORD);
-        final JSONObject jo = new JSONObject();
-        jo.put(KEY_SCHEME, UserAuthenticationScheme.EMAIL_PASSWORD.name());
-        jo.put(KEY_AUTHDATA, new JSONObject());
-        UserAuthenticationData.create(ctx, null, jo);
+        final MslObject mo = new MslObject();
+        mo.put(KEY_SCHEME, UserAuthenticationScheme.EMAIL_PASSWORD.name());
+        mo.put(KEY_AUTHDATA, new MslObject());
+        UserAuthenticationData.create(ctx, null, mo);
     }
     
     /** MSL context. */

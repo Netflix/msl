@@ -16,12 +16,10 @@
 package com.netflix.msl.msg;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.xml.bind.DatatypeConverter;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.json.JSONString;
 
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslConstants.CompressionAlgorithm;
@@ -32,6 +30,12 @@ import com.netflix.msl.MslException;
 import com.netflix.msl.MslInternalException;
 import com.netflix.msl.MslMessageException;
 import com.netflix.msl.crypto.ICryptoContext;
+import com.netflix.msl.io.MslEncodable;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
+import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslUtils;
 
 /**
@@ -77,22 +81,22 @@ import com.netflix.msl.util.MslUtils;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-public class PayloadChunk implements JSONString {
-    /** JSON key payload. */
+public class PayloadChunk implements MslEncodable {
+    /** Key payload. */
     private static final String KEY_PAYLOAD = "payload";
-    /** JSON key signature. */
+    /** Key signature. */
     private static final String KEY_SIGNATURE = "signature";
     
     // payload
-    /** JSON key sequence number. */
+    /** Key sequence number. */
     private static final String KEY_SEQUENCE_NUMBER = "sequencenumber";
-    /** JSON key message ID. */
+    /** Key message ID. */
     private static final String KEY_MESSAGE_ID = "messageid";
-    /** JSON key end of message. */
+    /** Key end of message. */
     private static final String KEY_END_OF_MESSAGE = "endofmsg";
-    /** JSON key compression algorithm. */
+    /** Key compression algorithm. */
     private static final String KEY_COMPRESSION_ALGORITHM = "compressionalgo";
-    /** JSON key encrypted data. */
+    /** Key encrypted data. */
     private static final String KEY_DATA = "data";
     
     /**
@@ -107,13 +111,12 @@ public class PayloadChunk implements JSONString {
      *        for no compression.
      * @param data the payload chunk application data.
      * @param cryptoContext the crypto context.
-     * @throws MslEncodingException if there is an error encoding the JSON
-     *         data.
+     * @throws MslEncodingException if there is an error encoding the data.
      * @throws MslCryptoException if there is an error encrypting or signing
      *         the payload chunk.
      * @throws MslException if there is an error compressing the data.
      */
-    public PayloadChunk(final long sequenceNumber, final long messageId, final boolean endofmsg, final CompressionAlgorithm compressionAlgo, final byte[] data, final ICryptoContext cryptoContext) throws MslEncodingException, MslCryptoException, MslException {
+    public PayloadChunk(final MslContext ctx, final long sequenceNumber, final long messageId, final boolean endofmsg, final CompressionAlgorithm compressionAlgo, final byte[] data, final ICryptoContext cryptoContext) throws MslEncodingException, MslCryptoException, MslException {
         // Verify sequence number and message ID.
         if (sequenceNumber < 0 || sequenceNumber > MslConstants.MAX_LONG_VALUE)
             throw new MslInternalException("Sequence number " + sequenceNumber + " is outside the valid range.");
@@ -139,77 +142,71 @@ public class PayloadChunk implements JSONString {
             payloadData = data;
         }
         
+        // Set the payload properties.
         this.sequenceNumber = sequenceNumber;
         this.messageId = messageId;
         this.endofmsg = endofmsg;
         this.data = data;
         
         // Construct the payload.
-        try {
-            final JSONObject payloadJO = new JSONObject();
-            payloadJO.put(KEY_SEQUENCE_NUMBER, this.sequenceNumber);
-            payloadJO.put(KEY_MESSAGE_ID, this.messageId);
-            if (this.endofmsg) payloadJO.put(KEY_END_OF_MESSAGE, this.endofmsg);
-            if (this.compressionAlgo != null) payloadJO.put(KEY_COMPRESSION_ALGORITHM, this.compressionAlgo.name());
-            payloadJO.put(KEY_DATA, DatatypeConverter.printBase64Binary(payloadData));
-            final byte[] plaintext = payloadJO.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-            this.payload = cryptoContext.encrypt(plaintext);
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, "payloadchunk payload", e);
-        }
-
-        // Sign the payload chunk.
-        this.signature = cryptoContext.sign(this.payload);
+        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+        this.payload = encoder.createObject();
+        this.payload.put(KEY_SEQUENCE_NUMBER, this.sequenceNumber);
+        this.payload.put(KEY_MESSAGE_ID, this.messageId);
+        if (this.endofmsg) this.payload.put(KEY_END_OF_MESSAGE, this.endofmsg);
+        if (this.compressionAlgo != null) this.payload.put(KEY_COMPRESSION_ALGORITHM, this.compressionAlgo.name());
+        this.payload.put(KEY_DATA, payloadData);
+        
+        // Save the crypto context.
+        this.cryptoContext = cryptoContext;
     }
     
     /**
-     * <p>Construct a new payload chunk from the provided JSON object.</p>
+     * <p>Construct a new payload chunk from the provided MSL object.</p>
      * 
      * <p>The provided crypto context will be used to decrypt and verify the
      * data signature.</p>
      * 
-     * @param payloadChunkJO the JSON object.
+     * @param ctx the MSL context.
+     * @param payloadChunkMo the MSL object.
      * @param cryptoContext the crypto context.
      * @throws MslCryptoException if there is a problem decrypting or verifying
      *         the payload chunk.
-     * @throws MslEncodingException if there is a problem parsing the JSON.
+     * @throws MslEncodingException if there is a problem parsing the data.
      * @throws MslMessageException if the compression algorithm is not known,
      *         or the payload data is corrupt or missing.
      * @throws MslException if there is an error uncompressing the data.
      */
-    public PayloadChunk(final JSONObject payloadChunkJO, final ICryptoContext cryptoContext) throws MslEncodingException, MslCryptoException, MslMessageException, MslException {
+    public PayloadChunk(final MslContext ctx, final MslObject payloadChunkMo, final ICryptoContext cryptoContext) throws MslEncodingException, MslCryptoException, MslMessageException, MslException {
+        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+        
+        // Save the crypto context.
+        this.cryptoContext = cryptoContext;
+        
         // Verify the JSON representation.
+        final byte[] ciphertext;
         try {
-            try {
-                payload = DatatypeConverter.parseBase64Binary(payloadChunkJO.getString(KEY_PAYLOAD));
-            } catch (final IllegalArgumentException e) {
-                throw new MslMessageException(MslError.PAYLOAD_INVALID, "payload chunk " + payloadChunkJO.toString(), e);
-            }
-            try {
-                signature = DatatypeConverter.parseBase64Binary(payloadChunkJO.getString(KEY_SIGNATURE));
-            } catch (final IllegalArgumentException e) {
-                throw new MslMessageException(MslError.PAYLOAD_SIGNATURE_INVALID, "payload chunk " + payloadChunkJO.toString(), e);
-            }
-            if (!cryptoContext.verify(payload, signature))
+            ciphertext = payloadChunkMo.getBytes(KEY_PAYLOAD);
+            final byte[] signature = payloadChunkMo.getBytes(KEY_SIGNATURE);
+            if (!cryptoContext.verify(ciphertext, signature, encoder))
                 throw new MslCryptoException(MslError.PAYLOAD_VERIFICATION_FAILED);
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "payload chunk " + payloadChunkJO.toString(), e);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "payload chunk " + payloadChunkMo, e);
         }
         
         // Pull the payload data.
-        final byte[] plaintext = cryptoContext.decrypt(payload);
-        final String payloadJson = new String(plaintext, MslConstants.DEFAULT_CHARSET);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         try {
-            final JSONObject payloadJO = new JSONObject(payloadJson);
-            sequenceNumber = payloadJO.getLong(KEY_SEQUENCE_NUMBER);
+            payload = encoder.parseObject(plaintext);
+            sequenceNumber = payload.getLong(KEY_SEQUENCE_NUMBER);
             if (sequenceNumber < 0 || sequenceNumber > MslConstants.MAX_LONG_VALUE)
-                throw new MslException(MslError.PAYLOAD_SEQUENCE_NUMBER_OUT_OF_RANGE, "payload chunk payload " + payloadJson);
-            messageId = payloadJO.getLong(KEY_MESSAGE_ID);
+                throw new MslException(MslError.PAYLOAD_SEQUENCE_NUMBER_OUT_OF_RANGE, "payload chunk payload " + payload);
+            messageId = payload.getLong(KEY_MESSAGE_ID);
             if (messageId < 0 || messageId > MslConstants.MAX_LONG_VALUE)
-                throw new MslException(MslError.PAYLOAD_MESSAGE_ID_OUT_OF_RANGE, "payload chunk payload " + payloadJson);
-            endofmsg = (payloadJO.has(KEY_END_OF_MESSAGE)) ? payloadJO.getBoolean(KEY_END_OF_MESSAGE) : false;
-            if (payloadJO.has(KEY_COMPRESSION_ALGORITHM)) {
-                final String algoName = payloadJO.getString(KEY_COMPRESSION_ALGORITHM);
+                throw new MslException(MslError.PAYLOAD_MESSAGE_ID_OUT_OF_RANGE, "payload chunk payload " + payload);
+            endofmsg = (payload.has(KEY_END_OF_MESSAGE)) ? payload.getBoolean(KEY_END_OF_MESSAGE) : false;
+            if (payload.has(KEY_COMPRESSION_ALGORITHM)) {
+                final String algoName = payload.getString(KEY_COMPRESSION_ALGORITHM);
                 try {
                     compressionAlgo = CompressionAlgorithm.valueOf(algoName);
                 } catch (final IllegalArgumentException e) {
@@ -218,30 +215,18 @@ public class PayloadChunk implements JSONString {
             } else {
                 compressionAlgo = null;
             }
-            final String payloadData = payloadJO.getString(KEY_DATA);
-            byte[] compressedData;
-            try {
-                compressedData = DatatypeConverter.parseBase64Binary(payloadData);
-            } catch (final IllegalArgumentException e) {
-                // Fall through to the error handling below.
-                compressedData = null;
-            }
-            if (compressedData == null || compressedData.length == 0) {
-                if (payloadData.length() > 0)
-                    throw new MslMessageException(MslError.PAYLOAD_DATA_CORRUPT, payloadData);
-                else if (!endofmsg)
-                    throw new MslMessageException(MslError.PAYLOAD_DATA_MISSING, payloadData);
-                else
-                    data = new byte[0];
+            final byte[] compressedData = payload.getBytes(KEY_DATA);
+            if (compressedData.length == 0) {
+                if (!endofmsg)
+                    throw new MslMessageException(MslError.PAYLOAD_DATA_MISSING);
+                data = new byte[0];
+            } else if (compressionAlgo == null) {
+                data = compressedData;
             } else {
-                if (compressionAlgo == null) {
-                    data = compressedData;
-                } else {
-                    data = MslUtils.uncompress(compressionAlgo, compressedData);
-                }
+                data = MslUtils.uncompress(compressionAlgo, compressedData);
             }
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "payload chunk payload " + payloadJson, e);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "payload chunk payload " + DatatypeConverter.printBase64Binary(plaintext), e);
         }
     }
     
@@ -282,20 +267,42 @@ public class PayloadChunk implements JSONString {
     public byte[] getData() {
         return data;
     }
-
+    
     /* (non-Javadoc)
-     * @see org.json.JSONString#toJSONString()
+     * @see com.netflix.msl.io.MslEncodable#toMslEncoding(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public String toJSONString() {
-        try {
-            final JSONObject jsonObj = new JSONObject();
-            jsonObj.put(KEY_PAYLOAD, DatatypeConverter.printBase64Binary(payload));
-            jsonObj.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
-            return jsonObj.toString();
-        } catch (final JSONException e) {
-            throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);
+    public byte[] toMslEncoding(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException {
+        // Return any cached encoding.
+        if (encodings.containsKey(format))
+            return encodings.get(format);
+        
+        // Encrypt the payload.
+        final byte[] plaintext = encoder.encodeObject(payload, format);
+        final byte[] ciphertext;
+        try{
+            ciphertext = cryptoContext.encrypt(plaintext, encoder, format);
+        } catch (final MslCryptoException e) {
+            throw new MslEncoderException("Error encrypting the payload.", e);
         }
+
+        // Sign the payload.
+        final byte[] signature;
+        try {
+            signature = cryptoContext.sign(ciphertext, encoder, format);
+        } catch (final MslCryptoException e) {
+            throw new MslEncoderException("Error signing the payload.", e);
+        }
+        
+        // Encode the payload chunk.
+        final MslObject mo = encoder.createObject();
+        mo.put(KEY_PAYLOAD, ciphertext);
+        mo.put(KEY_SIGNATURE, signature);
+        final byte[] encoding = encoder.encodeObject(mo, format);
+
+        // Cache and return the encoding.
+        encodings.put(format, encoding);
+        return encoding;
     }
     
     /* (non-Javadoc)
@@ -325,10 +332,8 @@ public class PayloadChunk implements JSONString {
             Arrays.hashCode(data);
     }
 
-    /** Payload (ciphertext). */
-    private final byte[] payload;
-    /** Payload data signature. */
-    private final byte[] signature;
+    /** Payload. */
+    private final MslObject payload;
     
     /** Sequence number. */
     private final long sequenceNumber;
@@ -340,4 +345,10 @@ public class PayloadChunk implements JSONString {
     private final CompressionAlgorithm compressionAlgo;
     /** The application data. */
     private final byte[] data;
+    
+    /** Payload crypto context. */
+    private final ICryptoContext cryptoContext;
+
+    /** Cached encodings. */
+    private final Map<MslEncoderFormat,byte[]> encodings = new HashMap<MslEncoderFormat,byte[]>();
 }

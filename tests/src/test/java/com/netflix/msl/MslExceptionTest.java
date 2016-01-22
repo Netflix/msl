@@ -56,16 +56,16 @@ public class MslExceptionTest {
     
     @Test
     public void error() {
-        final MslException e = new MslException(MslError.JSON_PARSE_ERROR);
-        assertEquals(MslError.JSON_PARSE_ERROR, e.getError());
-        assertEquals(MslError.JSON_PARSE_ERROR.getMessage(), e.getMessage());
+        final MslException e = new MslException(MslError.MSL_PARSE_ERROR);
+        assertEquals(MslError.MSL_PARSE_ERROR, e.getError());
+        assertEquals(MslError.MSL_PARSE_ERROR.getMessage(), e.getMessage());
     }
     
     @Test
     public void errorDetails() {
-        final MslException e = new MslException(MslError.JSON_ENCODE_ERROR, "details");
-        assertEquals(MslError.JSON_ENCODE_ERROR, e.getError());
-        assertEquals(MslError.JSON_ENCODE_ERROR.getMessage() + " [details]", e.getMessage());
+        final MslException e = new MslException(MslError.MSL_ENCODE_ERROR, "details");
+        assertEquals(MslError.MSL_ENCODE_ERROR, e.getError());
+        assertEquals(MslError.MSL_ENCODE_ERROR.getMessage() + " [details]", e.getMessage());
     }
     
     @Test
@@ -90,7 +90,7 @@ public class MslExceptionTest {
     
     @Test
     public void setEntityMasterToken() throws MslEncodingException, MslCryptoException {
-        final MslException e = new MslException(MslError.JSON_PARSE_ERROR);
+        final MslException e = new MslException(MslError.MSL_PARSE_ERROR);
         assertNull(e.getMasterToken());
         assertNull(e.getEntityAuthenticationData());
         final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, 1, 1);
@@ -102,7 +102,7 @@ public class MslExceptionTest {
     
     @Test
     public void setEntityEntityAuthData() {
-        final MslException e = new MslException(MslError.JSON_PARSE_ERROR);
+        final MslException e = new MslException(MslError.MSL_PARSE_ERROR);
         assertNull(e.getMasterToken());
         assertNull(e.getEntityAuthenticationData());
         final EntityAuthenticationData entityAuthData = ctx.getEntityAuthenticationData(null);
@@ -113,7 +113,7 @@ public class MslExceptionTest {
     
     @Test
     public void setUserUserIdToken() throws MslEncodingException, MslCryptoException {
-        final MslException e = new MslException(MslError.JSON_PARSE_ERROR);
+        final MslException e = new MslException(MslError.MSL_PARSE_ERROR);
         assertNull(e.getUserIdToken());
         assertNull(e.getUserAuthenticationData());
         final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, 1, 1);
@@ -127,7 +127,7 @@ public class MslExceptionTest {
     
     @Test
     public void setUserUserAuthData() {
-        final MslException e = new MslException(MslError.JSON_PARSE_ERROR);
+        final MslException e = new MslException(MslError.MSL_PARSE_ERROR);
         assertNull(e.getUserIdToken());
         assertNull(e.getUserAuthenticationData());
         final UserAuthenticationData userAuthData = getUserAuthenticationData();
@@ -138,7 +138,7 @@ public class MslExceptionTest {
     
     @Test
     public void setMessageId() {
-        final MslException e = new MslException(MslError.JSON_PARSE_ERROR);
+        final MslException e = new MslException(MslError.MSL_PARSE_ERROR);
         assertNull(e.getMessageId());
         e.setMessageId(1);
         assertEquals(Long.valueOf(1), e.getMessageId());
@@ -146,13 +146,13 @@ public class MslExceptionTest {
     
     @Test(expected = IllegalArgumentException.class)
     public void negativeMessageId() {
-        final MslException e = new MslException(MslError.JSON_PARSE_ERROR);
+        final MslException e = new MslException(MslError.MSL_PARSE_ERROR);
         e.setMessageId(-1);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void tooLargeMessageId() {
-        final MslException e = new MslException(MslError.JSON_PARSE_ERROR);
+        final MslException e = new MslException(MslError.MSL_PARSE_ERROR);
         e.setMessageId(MslConstants.MAX_LONG_VALUE + 1);
     }
 }

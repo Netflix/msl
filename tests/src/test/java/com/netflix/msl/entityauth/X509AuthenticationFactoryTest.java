@@ -29,8 +29,6 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -42,10 +40,15 @@ import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.crypto.ICryptoContext;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslEncoderUtils;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.test.ExpectedMslException;
-import com.netflix.msl.util.JsonUtils;
 import com.netflix.msl.util.MockAuthenticationUtils;
 import com.netflix.msl.util.MockMslContext;
+import com.netflix.msl.util.MslTestUtils;
 
 /**
  * X.509 asymmetric keys entity authentication factory unit tests.
@@ -53,6 +56,9 @@ import com.netflix.msl.util.MockMslContext;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class X509AuthenticationFactoryTest {
+	/** MSL encoder format. */
+	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
+
     /** X.509 expired resource certificate. */
     private static final String X509_EXPIRED_CERT = "entityauth/expired.pem";
     /** X.509 untrusted resource certificate. */
@@ -70,6 +76,7 @@ public class X509AuthenticationFactoryTest {
     @BeforeClass
     public static void setup() throws IOException, MslEncodingException, MslCryptoException, CertificateException, InvalidKeyException, SignatureException, NoSuchAlgorithmException, NoSuchProviderException {
         ctx = new MockMslContext(EntityAuthenticationScheme.X509, false);
+        encoder = ctx.getMslEncoderFactory();
         
         final CertificateFactory x509Factory = CertificateFactory.getInstance("X.509");
         
@@ -93,6 +100,7 @@ public class X509AuthenticationFactoryTest {
         untrustedCert = null;
         expiredCert = null;
         factory = null;
+        encoder = null;
         ctx = null;
     }
     
@@ -102,26 +110,26 @@ public class X509AuthenticationFactoryTest {
     }
     
     @Test
-    public void createData() throws MslEncodingException, MslCryptoException, MslEntityAuthException, JSONException {
+    public void createData() throws MslEncodingException, MslCryptoException, MslEntityAuthException, MslEncoderException {
         final X509AuthenticationData data = new X509AuthenticationData(MockX509AuthenticationFactory.X509_CERT);
-        final JSONObject entityAuthJO = data.getAuthData();
+        final MslObject entityAuthJO = data.getAuthData(encoder, ENCODER_FORMAT);
         
         final EntityAuthenticationData authdata = factory.createData(ctx, entityAuthJO);
         assertNotNull(authdata);
         assertTrue(authdata instanceof X509AuthenticationData);
         
-        final JSONObject dataJo = new JSONObject(data.toJSONString());
-        final JSONObject authdataJo = new JSONObject(authdata.toJSONString());
-        assertTrue(JsonUtils.equals(dataJo, authdataJo));
+        final MslObject dataMo = MslTestUtils.toMslObject(encoder, data);
+        final MslObject authdataMo = MslTestUtils.toMslObject(encoder, authdata);
+        assertTrue(MslEncoderUtils.equals(dataMo, authdataMo));
     }
     
     @Test
-    public void encodeException() throws MslEncodingException, MslCryptoException, MslEntityAuthException {
+    public void encodeException() throws MslEncodingException, MslCryptoException, MslEntityAuthException, MslEncoderException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final X509AuthenticationData data = new X509AuthenticationData(MockX509AuthenticationFactory.X509_CERT);
-        final JSONObject entityAuthJO = data.getAuthData();
+        final MslObject entityAuthJO = data.getAuthData(encoder, ENCODER_FORMAT);
         entityAuthJO.remove(KEY_X509_CERT);
         factory.createData(ctx, entityAuthJO);
     }
@@ -163,6 +171,8 @@ public class X509AuthenticationFactoryTest {
 
     /** MSL context. */
     private static MockMslContext ctx;
+    /** MSL encoder factory. */
+    private static MslEncoderFactory encoder;
     /** Entity authentication factory. */
     private static EntityAuthenticationFactory factory;
     

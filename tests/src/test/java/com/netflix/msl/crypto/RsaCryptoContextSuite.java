@@ -56,6 +56,8 @@ import com.netflix.msl.MslError;
 import com.netflix.msl.MslMasterTokenException;
 import com.netflix.msl.crypto.RsaCryptoContext.Mode;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.test.ExpectedMslException;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslContext;
@@ -72,11 +74,17 @@ import com.netflix.msl.util.MslContext;
 public class RsaCryptoContextSuite{
     /** Key pair ID. */
     private static final String KEYPAIR_ID = "keypairid";
+    /** MSL encoder format. */
+    private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
+    
+    /** MSL encoder factory. */
+    private static MslEncoderFactory encoder;
 
     @BeforeClass
     public static synchronized void setup() throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidParameterSpecException, NoSuchProviderException, MslEncodingException, MslCryptoException {
         if (random == null) {
             ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
+            encoder = ctx.getMslEncoderFactory();
             Security.addProvider(new BouncyCastleProvider());
             
             final KeyPairGenerator keypairGenerator = KeyPairGenerator.getInstance("RSA");
@@ -136,23 +144,23 @@ public class RsaCryptoContextSuite{
             random.nextBytes(messageA);
             
             final RsaCryptoContext cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, mode);
-            final byte[] ciphertextA = cryptoContext.encrypt(messageA);
+            final byte[] ciphertextA = cryptoContext.encrypt(messageA, encoder, ENCODER_FORMAT);
             assertNotNull(ciphertextA);
             assertThat(messageA, is(not(ciphertextA)));
             
-            final byte[] plaintextA = cryptoContext.decrypt(ciphertextA);
+            final byte[] plaintextA = cryptoContext.decrypt(ciphertextA, encoder);
             assertNotNull(plaintextA);
             assertArrayEquals(messageA, plaintextA);
             
             final byte[] messageB = new byte[messageSize];
             random.nextBytes(messageB);
             
-            final byte[] ciphertextB = cryptoContext.encrypt(messageB);
+            final byte[] ciphertextB = cryptoContext.encrypt(messageB, encoder, ENCODER_FORMAT);
             assertNotNull(ciphertextB);
             assertThat(messageB, is(not(ciphertextB)));
             assertThat(ciphertextB, is(not(ciphertextA)));
             
-            final byte[] plaintextB = cryptoContext.decrypt(ciphertextB);
+            final byte[] plaintextB = cryptoContext.decrypt(ciphertextB, encoder);
             assertNotNull(plaintextB);
             assertArrayEquals(messageB, plaintextB);
         }
@@ -166,7 +174,7 @@ public class RsaCryptoContextSuite{
             random.nextBytes(message);
             
             final RsaCryptoContext cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, null, mode);
-            cryptoContext.encrypt(message);
+            cryptoContext.encrypt(message, encoder, ENCODER_FORMAT);
         }
         
         @Test
@@ -178,8 +186,8 @@ public class RsaCryptoContextSuite{
             random.nextBytes(message);
             
             final RsaCryptoContext cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, null, publicKeyA, mode);
-            final byte[] ciphertext = cryptoContext.encrypt(message);
-            cryptoContext.decrypt(ciphertext);
+            final byte[] ciphertext = cryptoContext.encrypt(message, encoder, ENCODER_FORMAT);
+            cryptoContext.decrypt(ciphertext, encoder);
         }
         
         @Test
@@ -191,10 +199,10 @@ public class RsaCryptoContextSuite{
             random.nextBytes(message);
             
             final RsaCryptoContext cryptoContextA = new RsaCryptoContext(ctx, KEYPAIR_ID + "A", privateKeyA, publicKeyA, mode);
-            final byte[] ciphertext = cryptoContextA.encrypt(message);
+            final byte[] ciphertext = cryptoContextA.encrypt(message, encoder, ENCODER_FORMAT);
             
             final RsaCryptoContext cryptoContextB = new RsaCryptoContext(ctx, KEYPAIR_ID + "B", privateKeyA, publicKeyA, mode);
-            cryptoContextB.decrypt(ciphertext);
+            cryptoContextB.decrypt(ciphertext, encoder);
         }
         
         @Test
@@ -206,10 +214,10 @@ public class RsaCryptoContextSuite{
             random.nextBytes(message);
             
             final RsaCryptoContext cryptoContextA = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, mode);
-            final byte[] ciphertext = cryptoContextA.encrypt(message);
+            final byte[] ciphertext = cryptoContextA.encrypt(message, encoder, ENCODER_FORMAT);
             
             final RsaCryptoContext cryptoContextB = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyB, publicKeyB, mode);
-            cryptoContextB.decrypt(ciphertext);
+            cryptoContextB.decrypt(ciphertext, encoder);
         }
 
         @Test
@@ -222,7 +230,7 @@ public class RsaCryptoContextSuite{
             final byte[] keydataA = new byte[8];
             random.nextBytes(keydataA);
             
-            final byte[] ciphertextA = cryptoContext.wrap(keydataA);
+            final byte[] ciphertextA = cryptoContext.wrap(keydataA, encoder, ENCODER_FORMAT);
             assertNotNull(ciphertextA);
             assertArrayEquals(keydataA, ciphertextA);
         }
@@ -237,7 +245,7 @@ public class RsaCryptoContextSuite{
             final byte[] keydataA = new byte[messageSize];
             random.nextBytes(keydataA);
             
-            final byte[] ciphertextA = cryptoContext.wrap(keydataA);
+            final byte[] ciphertextA = cryptoContext.wrap(keydataA, encoder, ENCODER_FORMAT);
             assertNotNull(ciphertextA);
             assertArrayEquals(keydataA, ciphertextA);
         }
@@ -252,7 +260,7 @@ public class RsaCryptoContextSuite{
             final byte[] keydataA = new byte[127];
             random.nextBytes(keydataA);
             
-            final byte[] ciphertextA = cryptoContext.wrap(keydataA);
+            final byte[] ciphertextA = cryptoContext.wrap(keydataA, encoder, ENCODER_FORMAT);
             assertNotNull(ciphertextA);
             assertArrayEquals(keydataA, ciphertextA);
         }
@@ -267,7 +275,7 @@ public class RsaCryptoContextSuite{
             final byte[] messageA = new byte[messageSize];
             random.nextBytes(messageA);
             
-            final byte[] ciphertextA = cryptoContext.wrap(messageA);
+            final byte[] ciphertextA = cryptoContext.wrap(messageA, encoder, ENCODER_FORMAT);
             assertNotNull(ciphertextA);
             assertArrayEquals(messageA, ciphertextA);
         }
@@ -282,7 +290,7 @@ public class RsaCryptoContextSuite{
             final byte[] messageA = new byte[messageSize];
             random.nextBytes(messageA);
 
-            final byte[] plaintextA = cryptoContext.unwrap(messageA);
+            final byte[] plaintextA = cryptoContext.unwrap(messageA, encoder);
             assertNotNull(plaintextA);
             assertArrayEquals(messageA, plaintextA);
         }
@@ -297,7 +305,7 @@ public class RsaCryptoContextSuite{
             final byte[] keydataA = new byte[1];
             random.nextBytes(keydataA);
 
-            final byte[] plaintextA = cryptoContext.unwrap(keydataA);
+            final byte[] plaintextA = cryptoContext.unwrap(keydataA, encoder);
             assertNotNull(plaintextA);
             assertArrayEquals(keydataA, plaintextA);
         }
@@ -308,11 +316,11 @@ public class RsaCryptoContextSuite{
             random.nextBytes(message);
             
             final RsaCryptoContext cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, mode);
-            final byte[] signature = cryptoContext.sign(message);
+            final byte[] signature = cryptoContext.sign(message, encoder, ENCODER_FORMAT);
             assertNotNull(signature);
             assertEquals(0, signature.length);
             
-            assertTrue(cryptoContext.verify(message, signature));
+            assertTrue(cryptoContext.verify(message, signature, encoder));
         }
         
         @Test
@@ -321,9 +329,9 @@ public class RsaCryptoContextSuite{
             random.nextBytes(message);
             
             final RsaCryptoContext cryptoContextA = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, mode);
-            final byte [] signature = cryptoContextA.sign(message);
+            final byte [] signature = cryptoContextA.sign(message, encoder, ENCODER_FORMAT);
             final RsaCryptoContext cryptoContextB = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyB, publicKeyB, mode);
-            assertTrue(cryptoContextB.verify(message, signature));
+            assertTrue(cryptoContextB.verify(message, signature, encoder));
         }
         
         @Test
@@ -332,11 +340,11 @@ public class RsaCryptoContextSuite{
             random.nextBytes(message);
             
             final RsaCryptoContext cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, null, publicKeyA, mode);
-            final byte[] signature = cryptoContext.sign(message);
+            final byte[] signature = cryptoContext.sign(message, encoder, ENCODER_FORMAT);
             assertNotNull(signature);
             assertEquals(0, signature.length);
             
-            assertTrue(cryptoContext.verify(message, signature));
+            assertTrue(cryptoContext.verify(message, signature, encoder));
         }
         
         @Test
@@ -345,11 +353,11 @@ public class RsaCryptoContextSuite{
             random.nextBytes(message);
             
             final RsaCryptoContext cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, null, mode);
-            final byte[] signature = cryptoContext.sign(message);
+            final byte[] signature = cryptoContext.sign(message, encoder, ENCODER_FORMAT);
             assertNotNull(signature);
             assertEquals(0, signature.length);
             
-            assertTrue(cryptoContext.verify(message, signature));
+            assertTrue(cryptoContext.verify(message, signature, encoder));
         }
     }
 
@@ -365,11 +373,11 @@ public class RsaCryptoContextSuite{
             random.nextBytes(message);
             
             final RsaCryptoContext cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, Mode.SIGN_VERIFY);
-            final byte[] ciphertext = cryptoContext.encrypt(message);
+            final byte[] ciphertext = cryptoContext.encrypt(message, encoder, ENCODER_FORMAT);
             assertNotNull(ciphertext);
             assertArrayEquals(message, ciphertext);
             
-            final byte[] plaintext = cryptoContext.decrypt(ciphertext);
+            final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
             assertNotNull(plaintext);
             assertArrayEquals(message, plaintext);
         }
@@ -380,11 +388,11 @@ public class RsaCryptoContextSuite{
             random.nextBytes(message);
             
             final RsaCryptoContext cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, null, Mode.SIGN_VERIFY);
-            final byte[] ciphertext = cryptoContext.encrypt(message);
+            final byte[] ciphertext = cryptoContext.encrypt(message, encoder, ENCODER_FORMAT);
             assertNotNull(ciphertext);
             assertArrayEquals(message, ciphertext);
             
-            final byte[] plaintext = cryptoContext.decrypt(ciphertext);
+            final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
             assertNotNull(plaintext);
             assertArrayEquals(message, plaintext);
         }
@@ -395,11 +403,11 @@ public class RsaCryptoContextSuite{
             random.nextBytes(message);
             
             final RsaCryptoContext cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, null, publicKeyA, Mode.SIGN_VERIFY);
-            final byte[] ciphertext = cryptoContext.encrypt(message);
+            final byte[] ciphertext = cryptoContext.encrypt(message, encoder, ENCODER_FORMAT);
             assertNotNull(ciphertext);
             assertArrayEquals(message, ciphertext);
             
-            final byte[] plaintext = cryptoContext.decrypt(ciphertext);
+            final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
             assertNotNull(plaintext);
             assertArrayEquals(message, plaintext);
         }
@@ -410,12 +418,12 @@ public class RsaCryptoContextSuite{
             random.nextBytes(message);
             
             final RsaCryptoContext cryptoContextA = new RsaCryptoContext(ctx, KEYPAIR_ID + "A", privateKeyA, publicKeyA, Mode.SIGN_VERIFY);
-            final byte[] ciphertext = cryptoContextA.encrypt(message);
+            final byte[] ciphertext = cryptoContextA.encrypt(message, encoder, ENCODER_FORMAT);
             assertNotNull(ciphertext);
             assertArrayEquals(message, ciphertext);
             
             final RsaCryptoContext cryptoContextB = new RsaCryptoContext(ctx, KEYPAIR_ID + "B", privateKeyA, publicKeyA, Mode.SIGN_VERIFY);
-            final byte[] plaintext = cryptoContextB.decrypt(ciphertext);
+            final byte[] plaintext = cryptoContextB.decrypt(ciphertext, encoder);
             assertNotNull(plaintext);
             assertArrayEquals(message, plaintext);
         }
@@ -426,12 +434,12 @@ public class RsaCryptoContextSuite{
             random.nextBytes(message);
             
             final RsaCryptoContext cryptoContextA = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, Mode.SIGN_VERIFY);
-            final byte[] ciphertext = cryptoContextA.encrypt(message);
+            final byte[] ciphertext = cryptoContextA.encrypt(message, encoder, ENCODER_FORMAT);
             assertNotNull(ciphertext);
             assertArrayEquals(message, ciphertext);
             
             final RsaCryptoContext cryptoContextB = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyB, publicKeyB, Mode.SIGN_VERIFY);
-            final byte[] plaintext = cryptoContextB.decrypt(ciphertext);
+            final byte[] plaintext = cryptoContextB.decrypt(ciphertext, encoder);
             assertNotNull(plaintext);
             assertArrayEquals(message, plaintext);
         }
@@ -443,23 +451,23 @@ public class RsaCryptoContextSuite{
             final byte[] keydataA = new byte[8];
             random.nextBytes(keydataA);
             
-            final byte[] ciphertextA = cryptoContext.wrap(keydataA);
+            final byte[] ciphertextA = cryptoContext.wrap(keydataA, encoder, ENCODER_FORMAT);
             assertNotNull(ciphertextA);
             assertThat(keydataA, is(not(ciphertextA)));
             
-            final byte[] plaintextA = cryptoContext.unwrap(ciphertextA);
+            final byte[] plaintextA = cryptoContext.unwrap(ciphertextA, encoder);
             assertNotNull(plaintextA);
             assertArrayEquals(keydataA, plaintextA);
             
             final byte[] keydataB = new byte[8];
             random.nextBytes(keydataB);
             
-            final byte[] ciphertextB = cryptoContext.wrap(keydataB);
+            final byte[] ciphertextB = cryptoContext.wrap(keydataB, encoder, ENCODER_FORMAT);
             assertNotNull(ciphertextB);
             assertThat(keydataB, is(not(ciphertextB)));
             assertThat(ciphertextB, is(not(ciphertextA)));
             
-            final byte[] plaintextB = cryptoContext.unwrap(ciphertextB);
+            final byte[] plaintextB = cryptoContext.unwrap(ciphertextB, encoder);
             assertNotNull(plaintextB);
             assertArrayEquals(keydataB, plaintextB);
         }
@@ -471,23 +479,23 @@ public class RsaCryptoContextSuite{
             final byte[] keydataA = new byte[32];
             random.nextBytes(keydataA);
             
-            final byte[] ciphertextA = cryptoContext.wrap(keydataA);
+            final byte[] ciphertextA = cryptoContext.wrap(keydataA, encoder, ENCODER_FORMAT);
             assertNotNull(ciphertextA);
             assertThat(keydataA, is(not(ciphertextA)));
             
-            final byte[] plaintextA = cryptoContext.unwrap(ciphertextA);
+            final byte[] plaintextA = cryptoContext.unwrap(ciphertextA, encoder);
             assertNotNull(plaintextA);
             assertArrayEquals(keydataA, plaintextA);
             
             final byte[] keydataB = new byte[32];
             random.nextBytes(keydataB);
             
-            final byte[] ciphertextB = cryptoContext.wrap(keydataB);
+            final byte[] ciphertextB = cryptoContext.wrap(keydataB, encoder, ENCODER_FORMAT);
             assertNotNull(ciphertextB);
             assertThat(keydataB, is(not(ciphertextB)));
             assertThat(ciphertextB, is(not(ciphertextA)));
             
-            final byte[] plaintextB = cryptoContext.unwrap(ciphertextB);
+            final byte[] plaintextB = cryptoContext.unwrap(ciphertextB, encoder);
             assertNotNull(plaintextB);
             assertArrayEquals(keydataB, plaintextB);
         }
@@ -499,23 +507,23 @@ public class RsaCryptoContextSuite{
             final byte[] keydataA = new byte[127];
             random.nextBytes(keydataA);
             
-            final byte[] ciphertextA = cryptoContext.wrap(keydataA);
+            final byte[] ciphertextA = cryptoContext.wrap(keydataA, encoder, ENCODER_FORMAT);
             assertNotNull(ciphertextA);
             assertThat(keydataA, is(not(ciphertextA)));
             
-            final byte[] plaintextA = cryptoContext.unwrap(ciphertextA);
+            final byte[] plaintextA = cryptoContext.unwrap(ciphertextA, encoder);
             assertNotNull(plaintextA);
             assertArrayEquals(keydataA, plaintextA);
             
             final byte[] keydataB = new byte[127];
             random.nextBytes(keydataB);
             
-            final byte[] ciphertextB = cryptoContext.wrap(keydataB);
+            final byte[] ciphertextB = cryptoContext.wrap(keydataB, encoder, ENCODER_FORMAT);
             assertNotNull(ciphertextB);
             assertThat(keydataB, is(not(ciphertextB)));
             assertThat(ciphertextB, is(not(ciphertextA)));
             
-            final byte[] plaintextB = cryptoContext.unwrap(ciphertextB);
+            final byte[] plaintextB = cryptoContext.unwrap(ciphertextB, encoder);
             assertNotNull(plaintextB);
             assertArrayEquals(keydataB, plaintextB);
         }
@@ -530,7 +538,7 @@ public class RsaCryptoContextSuite{
             final byte[] messageA = new byte[32];
             random.nextBytes(messageA);
             
-            cryptoContext.wrap(messageA);
+            cryptoContext.wrap(messageA, encoder, ENCODER_FORMAT);
         }
         
         @Test
@@ -543,7 +551,7 @@ public class RsaCryptoContextSuite{
             final byte[] messageA = new byte[32];
             random.nextBytes(messageA);
             
-            cryptoContext.unwrap(messageA);
+            cryptoContext.unwrap(messageA, encoder);
         }
         
         @Test
@@ -556,7 +564,7 @@ public class RsaCryptoContextSuite{
             final byte[] keydataA = new byte[1];
             random.nextBytes(keydataA);
             
-            cryptoContext.unwrap(keydataA);
+            cryptoContext.unwrap(keydataA, encoder);
         }
         
         @Test
@@ -565,11 +573,11 @@ public class RsaCryptoContextSuite{
             random.nextBytes(message);
             
             final RsaCryptoContext cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, Mode.WRAP_UNWRAP);
-            final byte[] signature = cryptoContext.sign(message);
+            final byte[] signature = cryptoContext.sign(message, encoder, ENCODER_FORMAT);
             assertNotNull(signature);
             assertEquals(0, signature.length);
             
-            assertTrue(cryptoContext.verify(message, signature));
+            assertTrue(cryptoContext.verify(message, signature, encoder));
         }
         
         @Test
@@ -578,9 +586,9 @@ public class RsaCryptoContextSuite{
             random.nextBytes(message);
             
             final RsaCryptoContext cryptoContextA = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, Mode.WRAP_UNWRAP);
-            final byte [] signature = cryptoContextA.sign(message);
+            final byte [] signature = cryptoContextA.sign(message, encoder, ENCODER_FORMAT);
             final RsaCryptoContext cryptoContextB = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyB, publicKeyB, Mode.WRAP_UNWRAP);
-            assertTrue(cryptoContextB.verify(message, signature));
+            assertTrue(cryptoContextB.verify(message, signature, encoder));
         }
         
         @Test
@@ -589,11 +597,11 @@ public class RsaCryptoContextSuite{
             random.nextBytes(message);
             
             final RsaCryptoContext cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, null, publicKeyA, Mode.WRAP_UNWRAP);
-            final byte[] signature = cryptoContext.sign(message);
+            final byte[] signature = cryptoContext.sign(message, encoder, ENCODER_FORMAT);
             assertNotNull(signature);
             assertEquals(0, signature.length);
             
-            assertTrue(cryptoContext.verify(message, signature));
+            assertTrue(cryptoContext.verify(message, signature, encoder));
         }
         
         @Test
@@ -602,11 +610,11 @@ public class RsaCryptoContextSuite{
             random.nextBytes(message);
             
             final RsaCryptoContext cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, null, Mode.WRAP_UNWRAP);
-            final byte[] signature = cryptoContext.sign(message);
+            final byte[] signature = cryptoContext.sign(message, encoder, ENCODER_FORMAT);
             assertNotNull(signature);
             assertEquals(0, signature.length);
             
-            assertTrue(cryptoContext.verify(message, signature));
+            assertTrue(cryptoContext.verify(message, signature, encoder));
         }
     }
     
@@ -621,11 +629,11 @@ public class RsaCryptoContextSuite{
             random.nextBytes(message);
             
             final RsaCryptoContext cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, Mode.SIGN_VERIFY);
-            final byte[] ciphertext = cryptoContext.encrypt(message);
+            final byte[] ciphertext = cryptoContext.encrypt(message, encoder, ENCODER_FORMAT);
             assertNotNull(ciphertext);
             assertArrayEquals(message, ciphertext);
             
-            final byte[] plaintext = cryptoContext.decrypt(ciphertext);
+            final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
             assertNotNull(plaintext);
             assertArrayEquals(message, plaintext);
         }
@@ -636,11 +644,11 @@ public class RsaCryptoContextSuite{
             random.nextBytes(message);
             
             final RsaCryptoContext cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, null, Mode.SIGN_VERIFY);
-            final byte[] ciphertext = cryptoContext.encrypt(message);
+            final byte[] ciphertext = cryptoContext.encrypt(message, encoder, ENCODER_FORMAT);
             assertNotNull(ciphertext);
             assertArrayEquals(message, ciphertext);
             
-            final byte[] plaintext = cryptoContext.decrypt(ciphertext);
+            final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
             assertNotNull(plaintext);
             assertArrayEquals(message, plaintext);
         }
@@ -651,11 +659,11 @@ public class RsaCryptoContextSuite{
             random.nextBytes(message);
             
             final RsaCryptoContext cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, null, publicKeyA, Mode.SIGN_VERIFY);
-            final byte[] ciphertext = cryptoContext.encrypt(message);
+            final byte[] ciphertext = cryptoContext.encrypt(message, encoder, ENCODER_FORMAT);
             assertNotNull(ciphertext);
             assertArrayEquals(message, ciphertext);
             
-            final byte[] plaintext = cryptoContext.decrypt(ciphertext);
+            final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
             assertNotNull(plaintext);
             assertArrayEquals(message, plaintext);
         }
@@ -666,12 +674,12 @@ public class RsaCryptoContextSuite{
             random.nextBytes(message);
             
             final RsaCryptoContext cryptoContextA = new RsaCryptoContext(ctx, KEYPAIR_ID + "A", privateKeyA, publicKeyA, Mode.SIGN_VERIFY);
-            final byte[] ciphertext = cryptoContextA.encrypt(message);
+            final byte[] ciphertext = cryptoContextA.encrypt(message, encoder, ENCODER_FORMAT);
             assertNotNull(ciphertext);
             assertArrayEquals(message, ciphertext);
             
             final RsaCryptoContext cryptoContextB = new RsaCryptoContext(ctx, KEYPAIR_ID + "B", privateKeyA, publicKeyA, Mode.SIGN_VERIFY);
-            final byte[] plaintext = cryptoContextB.decrypt(ciphertext);
+            final byte[] plaintext = cryptoContextB.decrypt(ciphertext, encoder);
             assertNotNull(plaintext);
             assertArrayEquals(message, plaintext);
         }
@@ -682,12 +690,12 @@ public class RsaCryptoContextSuite{
             random.nextBytes(message);
             
             final RsaCryptoContext cryptoContextA = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, Mode.SIGN_VERIFY);
-            final byte[] ciphertext = cryptoContextA.encrypt(message);
+            final byte[] ciphertext = cryptoContextA.encrypt(message, encoder, ENCODER_FORMAT);
             assertNotNull(ciphertext);
             assertArrayEquals(message, ciphertext);
             
             final RsaCryptoContext cryptoContextB = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyB, publicKeyB, Mode.SIGN_VERIFY);
-            final byte[] plaintext = cryptoContextB.decrypt(ciphertext);
+            final byte[] plaintext = cryptoContextB.decrypt(ciphertext, encoder);
             assertNotNull(plaintext);
             assertArrayEquals(message, plaintext);
         }
@@ -702,7 +710,7 @@ public class RsaCryptoContextSuite{
             final byte[] keydataA = new byte[8];
             random.nextBytes(keydataA);
             
-            final byte[] ciphertextA = cryptoContext.wrap(keydataA);
+            final byte[] ciphertextA = cryptoContext.wrap(keydataA, encoder, ENCODER_FORMAT);
             assertNotNull(ciphertextA);
             assertArrayEquals(keydataA, ciphertextA);
         }
@@ -717,7 +725,7 @@ public class RsaCryptoContextSuite{
             final byte[] keydataA = new byte[32];
             random.nextBytes(keydataA);
             
-            final byte[] ciphertextA = cryptoContext.wrap(keydataA);
+            final byte[] ciphertextA = cryptoContext.wrap(keydataA, encoder, ENCODER_FORMAT);
             assertNotNull(ciphertextA);
             assertArrayEquals(keydataA, ciphertextA);
         }
@@ -732,7 +740,7 @@ public class RsaCryptoContextSuite{
             final byte[] keydataA = new byte[127];
             random.nextBytes(keydataA);
             
-            final byte[] ciphertextA = cryptoContext.wrap(keydataA);
+            final byte[] ciphertextA = cryptoContext.wrap(keydataA, encoder, ENCODER_FORMAT);
             assertNotNull(ciphertextA);
             assertArrayEquals(keydataA, ciphertextA);
         }
@@ -747,7 +755,7 @@ public class RsaCryptoContextSuite{
             final byte[] messageA = new byte[32];
             random.nextBytes(messageA);
             
-            final byte[] ciphertextA = cryptoContext.wrap(messageA);
+            final byte[] ciphertextA = cryptoContext.wrap(messageA, encoder, ENCODER_FORMAT);
             assertNotNull(ciphertextA);
             assertArrayEquals(messageA, ciphertextA);
         }
@@ -762,7 +770,7 @@ public class RsaCryptoContextSuite{
             final byte[] messageA = new byte[32];
             random.nextBytes(messageA);
 
-            final byte[] plaintextA = cryptoContext.unwrap(messageA);
+            final byte[] plaintextA = cryptoContext.unwrap(messageA, encoder);
             assertNotNull(plaintextA);
             assertArrayEquals(messageA, plaintextA);
         }
@@ -777,7 +785,7 @@ public class RsaCryptoContextSuite{
             final byte[] keydataA = new byte[1];
             random.nextBytes(keydataA);
 
-            final byte[] plaintextA = cryptoContext.unwrap(keydataA);
+            final byte[] plaintextA = cryptoContext.unwrap(keydataA, encoder);
             assertNotNull(plaintextA);
             assertArrayEquals(keydataA, plaintextA);
         }
@@ -788,22 +796,22 @@ public class RsaCryptoContextSuite{
             random.nextBytes(messageA);
             
             final RsaCryptoContext cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, Mode.SIGN_VERIFY);
-            final byte[] signatureA = cryptoContext.sign(messageA);
+            final byte[] signatureA = cryptoContext.sign(messageA, encoder, ENCODER_FORMAT);
             assertNotNull(signatureA);
             assertTrue(signatureA.length > 0);
             assertThat(messageA, is(not(signatureA)));
             
-            assertTrue(cryptoContext.verify(messageA, signatureA));
+            assertTrue(cryptoContext.verify(messageA, signatureA, encoder));
             
             final byte[] messageB = new byte[32];
             random.nextBytes(messageB);
             
-            final byte[] signatureB = cryptoContext.sign(messageB);
+            final byte[] signatureB = cryptoContext.sign(messageB, encoder, ENCODER_FORMAT);
             assertTrue(signatureB.length > 0);
             assertThat(signatureA, is(not(signatureB)));
             
-            assertTrue(cryptoContext.verify(messageB, signatureB));
-            assertFalse(cryptoContext.verify(messageB, signatureA));
+            assertTrue(cryptoContext.verify(messageB, signatureB, encoder));
+            assertFalse(cryptoContext.verify(messageB, signatureA, encoder));
         }
         
         @Test
@@ -812,9 +820,9 @@ public class RsaCryptoContextSuite{
             random.nextBytes(message);
             
             final RsaCryptoContext cryptoContextA = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, Mode.SIGN_VERIFY);
-            final byte [] signature = cryptoContextA.sign(message);
+            final byte [] signature = cryptoContextA.sign(message, encoder, ENCODER_FORMAT);
             final RsaCryptoContext cryptoContextB = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyB, publicKeyB, Mode.SIGN_VERIFY);
-            assertFalse(cryptoContextB.verify(message, signature));
+            assertFalse(cryptoContextB.verify(message, signature, encoder));
         }
         
         @Test
@@ -826,7 +834,7 @@ public class RsaCryptoContextSuite{
             random.nextBytes(message);
             
             final RsaCryptoContext cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, null, publicKeyA, Mode.SIGN_VERIFY);
-            cryptoContext.sign(message);
+            cryptoContext.sign(message, encoder, ENCODER_FORMAT);
         }
         
         @Test
@@ -840,12 +848,12 @@ public class RsaCryptoContextSuite{
             final RsaCryptoContext cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, null, Mode.SIGN_VERIFY);
             final byte[] signature;
             try {
-                signature = cryptoContext.sign(message);
+                signature = cryptoContext.sign(message, encoder, ENCODER_FORMAT);
             } catch (final MslCryptoException e) {
                 fail(e.getMessage());
                 return;
             }
-            cryptoContext.verify(message, signature);
+            cryptoContext.verify(message, signature, encoder);
         }
     }
     

@@ -127,8 +127,7 @@ public interface TokenFactory {
      * @param encryptionKey the session encryption key.
      * @param hmacKey the session HMAC key.
      * @return the new master token.
-     * @throws MslEncodingException if there is an error encoding the JSON
-     *         data.
+     * @throws MslEncodingException if there is an error encoding the data.
      * @throws MslCryptoException if there is an error encrypting or signing
      *         the token data.
      * @throws MslException if there is an error creating the master token.
@@ -165,8 +164,7 @@ public interface TokenFactory {
      * @param encryptionKey the session encryption key.
      * @param hmacKey the session HMAC key.
      * @return the new master token.
-     * @throws MslEncodingException if there is an error encoding the JSON
-     *         data.
+     * @throws MslEncodingException if there is an error encoding the data.
      * @throws MslCryptoException if there is an error encrypting or signing
      *         the token data.
      * @throws MslMasterTokenException if the master token is not trusted or
@@ -206,8 +204,7 @@ public interface TokenFactory {
      * @param user MSL user.
      * @param masterToken the master token to bind the user token against.
      * @return the new user ID token.
-     * @throws MslEncodingException if there is an error encoding the JSON
-     *         data.
+     * @throws MslEncodingException if there is an error encoding the data.
      * @throws MslCryptoException if there is an error encrypting or signing
      *         the token data.
      * @throws MslMasterTokenException if the master token is not trusted.
@@ -225,8 +222,7 @@ public interface TokenFactory {
      * @param userIdToken the user ID token to renew.
      * @param masterToken the master token to bind the user token against.
      * @return the new user ID token.
-     * @throws MslEncodingException if there is an error encoding the JSON
-     *         data.
+     * @throws MslEncodingException if there is an error encoding the data.
      * @throws MslCryptoException if there is an error encrypting or signing
      *         the token data.
      * @throws MslUserIdTokenException if the user ID token is not decrypted or

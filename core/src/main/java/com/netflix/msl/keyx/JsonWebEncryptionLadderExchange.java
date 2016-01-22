@@ -22,9 +22,6 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
@@ -48,6 +45,10 @@ import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.entityauth.PresharedAuthenticationData;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.util.AuthenticationUtils;
@@ -99,9 +100,9 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
      * </ul></p>
      */
     public static class RequestData extends KeyRequestData {
-        /** JSON key wrap key wrapping mechanism. */
+        /** Key wrap key wrapping mechanism. */
         private static final String KEY_MECHANISM = "mechanism";
-        /** JSON key wrap data. */
+        /** Key wrap data. */
         private static final String KEY_WRAPDATA = "wrapdata";
         
         /**
@@ -136,27 +137,27 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
         
         /**
          * Create a new JSON Web Encryption ladder key request data instance
-         * from the provided JSON object.
+         * from the provided MSL object.
          * 
-         * @param keyRequestJO the JSON object.
-         * @throws MslEncodingException if there is an error parsing the JSON.
+         * @param keyRequestMo the MSL object.
+         * @throws MslEncodingException if there is an error parsing the data.
          * @throws MslCryptoException the wrapped key data cannot be verified
          *         or decrypted, or the specified mechanism is not supported.
          * @throws MslKeyExchangeException if the specified mechanism is not
          *         recognized or the wrap data is missing or invalid.
          */
-        public RequestData(final JSONObject keyRequestJO) throws MslCryptoException, MslKeyExchangeException, MslEncodingException {
+        public RequestData(final MslObject keyRequestMo) throws MslCryptoException, MslKeyExchangeException, MslEncodingException {
             super(KeyExchangeScheme.JWE_LADDER);
             
             try {
-                final String mechanismName = keyRequestJO.getString(KEY_MECHANISM);
+                final String mechanismName = keyRequestMo.getString(KEY_MECHANISM);
                 try {
                     mechanism = Mechanism.valueOf(mechanismName);
                 } catch (final IllegalArgumentException e) {
                     throw new MslKeyExchangeException(MslError.UNIDENTIFIED_KEYX_MECHANISM, mechanismName, e);
                 }
-            } catch (final JSONException e) {
-                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + keyRequestJO.toString(), e);
+            } catch (final MslEncoderException e) {
+                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "keydata " + keyRequestMo, e);
             }
             
             try {
@@ -168,20 +169,16 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
                     }
                     case WRAP:
                     {
-                        try {
-                            wrapdata = DatatypeConverter.parseBase64Binary(keyRequestJO.getString(KEY_WRAPDATA));
-                        } catch (final IllegalArgumentException e) {
-                            throw new MslKeyExchangeException(MslError.KEYX_INVALID_WRAPPING_KEY, "keydata " + keyRequestJO.toString());
-                        }
-                        if (wrapdata == null || wrapdata.length == 0)
-                            throw new MslKeyExchangeException(MslError.KEYX_WRAPPING_KEY_MISSING, "keydata " + keyRequestJO.toString());
+                        wrapdata = keyRequestMo.getBytes(KEY_WRAPDATA);
+                        if (wrapdata.length == 0)
+                            throw new MslKeyExchangeException(MslError.KEYX_WRAPPING_KEY_MISSING, "keydata " + keyRequestMo.toString());
                         break;
                     }
                     default:
                         throw new MslCryptoException(MslError.UNSUPPORTED_KEYX_MECHANISM, mechanism.name());
                 }
-            } catch (final JSONException e) {
-                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + keyRequestJO.toString(), e);
+            } catch (final MslEncoderException e) {
+                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "keydata " + keyRequestMo.toString(), e);
             }
         }
 
@@ -200,14 +197,14 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
         }
         
         /* (non-Javadoc)
-         * @see com.netflix.msl.keyx.KeyRequestData#getKeydata()
+         * @see com.netflix.msl.keyx.KeyRequestData#getKeydata(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
          */
         @Override
-        protected JSONObject getKeydata() throws JSONException {
-            final JSONObject jsonObj = new JSONObject();
-            jsonObj.put(KEY_MECHANISM, mechanism.name());
-            if (wrapdata != null) jsonObj.put(KEY_WRAPDATA, DatatypeConverter.printBase64Binary(wrapdata));
-            return jsonObj;
+        protected MslObject getKeydata(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException {
+            final MslObject mo = encoder.createObject();
+            mo.put(KEY_MECHANISM, mechanism.name());
+            if (wrapdata != null) mo.put(KEY_WRAPDATA, wrapdata);
+            return mo;
         }
         
         /* (non-Javadoc)
@@ -260,13 +257,13 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
      * </ul></p>
      */
     public static class ResponseData extends KeyResponseData {
-        /** JSON key wrapping key. */
+        /** Key wrapping key. */
         private static final String KEY_WRAP_KEY = "wrapkey";
-        /** JSON key wrapping key data. */
+        /** Key wrapping key data. */
         private static final String KEY_WRAPDATA = "wrapdata";
-        /** JSON key encrypted encryption key. */
+        /** Key encrypted encryption key. */
         private static final String KEY_ENCRYPTION_KEY = "encryptionkey";
-        /** JSON key encrypted HMAC key. */
+        /** Key encrypted HMAC key. */
         private static final String KEY_HMAC_KEY = "hmackey";
         
         /**
@@ -289,39 +286,23 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
 
         /**
          * Create a new JSON Web Encryption ladder key response data instance
-         * with the provided master token from the provided JSON object.
+         * with the provided master token from the provided MSL object.
          * 
          * @param masterToken the master token.
-         * @param keyDataJO the JSON object.
-         * @throws MslEncodingException if there is an error parsing the JSON.
+         * @param keyDataMo the MSL object.
+         * @throws MslEncodingException if there is an error parsing the data.
          * @throws MslKeyExchangeException if the mechanism is not recognized,
          *         any of the keys are invalid, or if the wrap data is invalid.
          */
-        public ResponseData(final MasterToken masterToken, final JSONObject keyDataJO) throws MslKeyExchangeException, MslEncodingException {
+        public ResponseData(final MasterToken masterToken, final MslObject keyDataMo) throws MslKeyExchangeException, MslEncodingException {
             super(masterToken, KeyExchangeScheme.JWE_LADDER);
             try {
-                try {
-                    wrapKey = DatatypeConverter.parseBase64Binary(keyDataJO.getString(KEY_WRAP_KEY));
-                } catch (final IllegalArgumentException e) {
-                    throw new MslKeyExchangeException(MslError.KEYX_INVALID_WRAPPING_KEY, "keydata " + keyDataJO.toString(), e);
-                }
-                try {
-                    wrapdata = DatatypeConverter.parseBase64Binary(keyDataJO.getString(KEY_WRAPDATA));
-                } catch (final IllegalArgumentException e) {
-                    throw new MslKeyExchangeException(MslError.KEYX_INVALID_WRAPDATA, "keydata " + keyDataJO.toString(), e);
-                }
-                try {
-                    encryptionKey = DatatypeConverter.parseBase64Binary(keyDataJO.getString(KEY_ENCRYPTION_KEY));
-                } catch (final IllegalArgumentException e) {
-                    throw new MslKeyExchangeException(MslError.KEYX_INVALID_ENCRYPTION_KEY, "keydata " + keyDataJO.toString(), e);
-                }
-                try {
-                    hmacKey = DatatypeConverter.parseBase64Binary(keyDataJO.getString(KEY_HMAC_KEY));
-                } catch (final IllegalArgumentException e) {
-                    throw new MslKeyExchangeException(MslError.KEYX_INVALID_HMAC_KEY, "keydata " + keyDataJO.toString(), e);
-                }
-            } catch (final JSONException e) {
-                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + keyDataJO.toString(), e);
+                wrapKey = keyDataMo.getBytes(KEY_WRAP_KEY);
+                wrapdata = keyDataMo.getBytes(KEY_WRAPDATA);
+                encryptionKey = keyDataMo.getBytes(KEY_ENCRYPTION_KEY);
+                hmacKey = keyDataMo.getBytes(KEY_HMAC_KEY);
+            } catch (final MslEncoderException e) {
+                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "keydata " + keyDataMo, e);
             }
         }
         
@@ -354,16 +335,16 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
         }
 
         /* (non-Javadoc)
-         * @see com.netflix.msl.keyx.KeyResponseData#getKeydata()
+         * @see com.netflix.msl.keyx.KeyResponseData#getKeydata(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
          */
         @Override
-        protected JSONObject getKeydata() throws JSONException {
-            final JSONObject jsonObj = new JSONObject();
-            jsonObj.put(KEY_WRAP_KEY, DatatypeConverter.printBase64Binary(wrapKey));
-            jsonObj.put(KEY_WRAPDATA, DatatypeConverter.printBase64Binary(wrapdata));
-            jsonObj.put(KEY_ENCRYPTION_KEY, DatatypeConverter.printBase64Binary(encryptionKey));
-            jsonObj.put(KEY_HMAC_KEY, DatatypeConverter.printBase64Binary(hmacKey));
-            return jsonObj;
+        protected MslObject getKeydata(final MslEncoderFactory encoder, final MslEncoderFormat format) {
+            final MslObject mo = encoder.createObject();
+            mo.put(KEY_WRAP_KEY, wrapKey);
+            mo.put(KEY_WRAPDATA, wrapdata);
+            mo.put(KEY_ENCRYPTION_KEY, encryptionKey);
+            mo.put(KEY_HMAC_KEY, hmacKey);
+            return mo;
         }
         
         /* (non-Javadoc)
@@ -431,7 +412,8 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
             case WRAP:
             {
                 final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
-                final byte[] wrapBytes = cryptoContext.unwrap(wrapdata);
+                final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+                final byte[] wrapBytes = cryptoContext.unwrap(wrapdata, encoder);
                 if (wrapBytes == null || wrapBytes.length == 0)
                     throw new MslKeyExchangeException(MslError.KEYX_WRAPPING_KEY_MISSING);
                 final SecretKey wrapKey = new SecretKeySpec(wrapBytes, JcaAlgorithm.AESKW);
@@ -456,26 +438,26 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.keyx.KeyExchangeFactory#createRequestData(com.netflix.msl.util.MslContext, org.json.JSONObject)
+     * @see com.netflix.msl.keyx.KeyExchangeFactory#createRequestData(com.netflix.msl.util.MslContext, com.netflix.msl.io.MslObject)
      */
     @Override
-    protected KeyRequestData createRequestData(final MslContext ctx, final JSONObject keyRequestJO) throws MslEncodingException, MslKeyExchangeException, MslCryptoException {
-        return new RequestData(keyRequestJO);
+    protected KeyRequestData createRequestData(final MslContext ctx, final MslObject keyRequestMo) throws MslEncodingException, MslKeyExchangeException, MslCryptoException {
+        return new RequestData(keyRequestMo);
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.keyx.KeyExchangeFactory#createResponseData(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, org.json.JSONObject)
+     * @see com.netflix.msl.keyx.KeyExchangeFactory#createResponseData(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, com.netflix.msl.io.MslObject)
      */
     @Override
-    protected KeyResponseData createResponseData(final MslContext ctx, final MasterToken masterToken, final JSONObject keyDataJO) throws MslEncodingException, MslKeyExchangeException {
-        return new ResponseData(masterToken, keyDataJO);
+    protected KeyResponseData createResponseData(final MslContext ctx, final MasterToken masterToken, final MslObject keyDataMo) throws MslEncodingException, MslKeyExchangeException {
+        return new ResponseData(masterToken, keyDataMo);
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.keyx.KeyExchangeFactory#generateResponse(com.netflix.msl.util.MslContext, com.netflix.msl.keyx.KeyRequestData, com.netflix.msl.tokens.MasterToken)
+     * @see com.netflix.msl.keyx.KeyExchangeFactory#generateResponse(com.netflix.msl.util.MslContext, com.netflix.msl.io.MslEncoderFormat, com.netflix.msl.keyx.KeyRequestData, com.netflix.msl.tokens.MasterToken)
      */
     @Override
-    public KeyExchangeData generateResponse(final MslContext ctx, final KeyRequestData keyRequestData, final MasterToken masterToken) throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslMasterTokenException, MslEntityAuthException, MslException {
+    public KeyExchangeData generateResponse(final MslContext ctx, final MslEncoderFormat format, final KeyRequestData keyRequestData, final MasterToken masterToken) throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslMasterTokenException, MslEntityAuthException, MslException {
         if (!(keyRequestData instanceof RequestData))
             throw new MslInternalException("Key request data " + keyRequestData.getClass().getName() + " was not created by this factory.");
         final RequestData request = (RequestData)keyRequestData;
@@ -493,7 +475,8 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
         
         // Create the wrap data.
         final ICryptoContext mslCryptoContext = ctx.getMslCryptoContext();
-        final byte[] wrapdata = mslCryptoContext.wrap(wrapBytes);
+        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+        final byte[] wrapdata = mslCryptoContext.wrap(wrapBytes, encoder, format);
         
         // Create random AES-128 encryption and SHA-256 HMAC keys.
         final byte[] encryptionBytes = new byte[16];
@@ -514,16 +497,19 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
         
         // Wrap wrapping key using specified wrapping key.
         final JsonWebKey wrapJwk = new JsonWebKey(Usage.wrap, Algorithm.A128KW, false, wrapKeyId, wrapKey);
+        final byte[] wrapJwkBytes = wrapJwk.toMslEncoding(encoder, MslEncoderFormat.JSON);
         final ICryptoContext wrapKeyCryptoContext = createCryptoContext(ctx, mechanism, prevWrapdata, identity);
-        final byte[] wrappedWrapJwk = wrapKeyCryptoContext.wrap(wrapJwk.toJSONString().getBytes(UTF_8));
+        final byte[] wrappedWrapJwk = wrapKeyCryptoContext.wrap(wrapJwkBytes, encoder, format);
         
         // Wrap session keys inside JSON Web Key objects with the wrapping key.
         final CekCryptoContext cekCryptoContext = new AesKwCryptoContext(wrapKey);
         final ICryptoContext wrapCryptoContext = new JsonWebEncryptionCryptoContext(ctx, cekCryptoContext, Encryption.A128GCM, Format.JWE_JS);
         final JsonWebKey encryptionJwk = new JsonWebKey(Usage.enc, Algorithm.A128CBC, false, null, encryptionKey);
         final JsonWebKey hmacJwk = new JsonWebKey(Usage.sig, Algorithm.HS256, false, null, hmacKey);
-        final byte[] wrappedEncryptionJwk = wrapCryptoContext.wrap(encryptionJwk.toJSONString().getBytes(UTF_8));
-        final byte[] wrappedHmacJwk = wrapCryptoContext.wrap(hmacJwk.toJSONString().getBytes(UTF_8));
+        final byte[] encryptionJwkBytes = encryptionJwk.toMslEncoding(encoder, MslEncoderFormat.JSON);
+        final byte[] hmacJwkBytes = hmacJwk.toMslEncoding(encoder, MslEncoderFormat.JSON);
+        final byte[] wrappedEncryptionJwk = wrapCryptoContext.wrap(encryptionJwkBytes, encoder, format);
+        final byte[] wrappedHmacJwk = wrapCryptoContext.wrap(hmacJwkBytes, encoder, format);
         
         // Create the master token.
         final TokenFactory tokenFactory = ctx.getTokenFactory();
@@ -538,10 +524,10 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.keyx.KeyExchangeFactory#generateResponse(com.netflix.msl.util.MslContext, com.netflix.msl.keyx.KeyRequestData, com.netflix.msl.entityauth.EntityAuthenticationData)
+     * @see com.netflix.msl.keyx.KeyExchangeFactory#generateResponse(com.netflix.msl.util.MslContext, com.netflix.msl.io.MslEncoderFormat, com.netflix.msl.keyx.KeyRequestData, com.netflix.msl.entityauth.EntityAuthenticationData)
      */
     @Override
-    public KeyExchangeData generateResponse(final MslContext ctx, final KeyRequestData keyRequestData,final EntityAuthenticationData entityAuthData) throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslEntityAuthException, MslException {
+    public KeyExchangeData generateResponse(final MslContext ctx, final MslEncoderFormat format, final KeyRequestData keyRequestData,final EntityAuthenticationData entityAuthData) throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslEntityAuthException, MslException {
         if (!(keyRequestData instanceof RequestData))
             throw new MslInternalException("Key request data " + keyRequestData.getClass().getName() + " was not created by this factory.");
         final RequestData request = (RequestData)keyRequestData;
@@ -559,7 +545,8 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
         
         // Create the wrap data.
         final ICryptoContext mslCryptoContext = ctx.getMslCryptoContext();
-        final byte[] wrapdata = mslCryptoContext.wrap(wrapBytes);
+        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+        final byte[] wrapdata = mslCryptoContext.wrap(wrapBytes, encoder, format);
         
         // Create random AES-128 encryption and SHA-256 HMAC keys.
         final byte[] encryptionBytes = new byte[16];
@@ -575,16 +562,19 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
         
         // Wrap wrapping key using specified wrapping key.
         final JsonWebKey wrapJwk = new JsonWebKey(Usage.wrap, Algorithm.A128KW, false, wrapKeyId, wrapKey);
+        final byte[] wrapJwkBytes = wrapJwk.toMslEncoding(encoder, MslEncoderFormat.JSON);
         final ICryptoContext wrapKeyCryptoContext = createCryptoContext(ctx, mechanism, prevWrapdata, identity);
-        final byte[] wrappedWrapJwk = wrapKeyCryptoContext.wrap(wrapJwk.toJSONString().getBytes(UTF_8));
+        final byte[] wrappedWrapJwk = wrapKeyCryptoContext.wrap(wrapJwkBytes, encoder, format);
         
         // Wrap session keys inside JSON Web Key objects with the wrapping key.
         final CekCryptoContext cekCryptoContext = new AesKwCryptoContext(wrapKey);
         final ICryptoContext wrapCryptoContext = new JsonWebEncryptionCryptoContext(ctx, cekCryptoContext, Encryption.A128GCM, Format.JWE_JS);
         final JsonWebKey encryptionJwk = new JsonWebKey(Usage.enc, Algorithm.A128CBC, false, null, encryptionKey);
         final JsonWebKey hmacJwk = new JsonWebKey(Usage.sig, Algorithm.HS256, false, null, hmacKey);
-        final byte[] wrappedEncryptionJwk = wrapCryptoContext.wrap(encryptionJwk.toJSONString().getBytes(UTF_8));
-        final byte[] wrappedHmacJwk = wrapCryptoContext.wrap(hmacJwk.toJSONString().getBytes(UTF_8));
+        final byte[] encryptionJwkBytes = encryptionJwk.toMslEncoding(encoder, MslEncoderFormat.JSON);
+        final byte[] hmacJwkBytes = hmacJwk.toMslEncoding(encoder, MslEncoderFormat.JSON);
+        final byte[] wrappedEncryptionJwk = wrapCryptoContext.wrap(encryptionJwkBytes, encoder, format);
+        final byte[] wrappedHmacJwk = wrapCryptoContext.wrap(hmacJwkBytes, encoder, format);
         
         // Create the master token.
         final TokenFactory tokenFactory = ctx.getTokenFactory();
@@ -640,34 +630,35 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
         }
         
         // Unwrap wrapping key.
-        final byte[] unwrappedWrapJwk = wrapKeyCryptoContext.unwrap(response.getWrapKey());
-        final String wrapJwkJson = new String(unwrappedWrapJwk, UTF_8);
+        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+        final byte[] unwrappedWrapJwk = wrapKeyCryptoContext.unwrap(response.getWrapKey(), encoder);
         final JsonWebKey wrapJwk;
         try {
-            wrapJwk = new JsonWebKey(new JSONObject(wrapJwkJson));
-        } catch (final JSONException e) {
-            throw new MslKeyExchangeException(MslError.INVALID_JWK, wrapJwkJson, e).setEntity(entityAuthData);
+            final MslObject wrapJwkMo = encoder.parseObject(unwrappedWrapJwk);
+            wrapJwk = new JsonWebKey(wrapJwkMo);
+        } catch (final MslEncoderException e) {
+            throw new MslKeyExchangeException(MslError.INVALID_JWK, new String(unwrappedWrapJwk, UTF_8), e).setEntity(entityAuthData);
         }
         final SecretKey wrapKey = wrapJwk.getSecretKey();
         
         // Unwrap session keys with wrapping key.
         final CekCryptoContext cekCryptoContext = new AesKwCryptoContext(wrapKey);
         final ICryptoContext unwrapCryptoContext = new JsonWebEncryptionCryptoContext(ctx, cekCryptoContext, Encryption.A128GCM, Format.JWE_JS);
-        final byte[] unwrappedEncryptionJwk = unwrapCryptoContext.unwrap(response.getEncryptionKey());
-        final byte[] unwrappedHmacJwk = unwrapCryptoContext.unwrap(response.getHmacKey());
-        final String encryptionJwkJson = new String(unwrappedEncryptionJwk, UTF_8);
-        final String hmacJwkJson = new String(unwrappedHmacJwk, UTF_8);
+        final byte[] unwrappedEncryptionJwk = unwrapCryptoContext.unwrap(response.getEncryptionKey(), encoder);
+        final byte[] unwrappedHmacJwk = unwrapCryptoContext.unwrap(response.getHmacKey(), encoder);
         final JsonWebKey encryptionJwk;
         try {
-            encryptionJwk = new JsonWebKey(new JSONObject(encryptionJwkJson));
-        } catch (final JSONException e) {
-            throw new MslKeyExchangeException(MslError.INVALID_JWK, encryptionJwkJson, e).setEntity(entityAuthData);
+            final MslObject encryptionJwkMo = encoder.parseObject(unwrappedEncryptionJwk);
+            encryptionJwk = new JsonWebKey(encryptionJwkMo);
+        } catch (final MslEncoderException e) {
+            throw new MslKeyExchangeException(MslError.INVALID_JWK, new String(unwrappedEncryptionJwk, UTF_8), e).setEntity(entityAuthData);
         }
         final JsonWebKey hmacJwk;
         try {
-            hmacJwk = new JsonWebKey(new JSONObject(hmacJwkJson));
-        } catch (final JSONException e) {
-            throw new MslKeyExchangeException(MslError.INVALID_JWK, hmacJwkJson, e).setEntity(entityAuthData);
+            final MslObject hmacJwkMo = encoder.parseObject(unwrappedHmacJwk);
+            hmacJwk = new JsonWebKey(hmacJwkMo);
+        } catch (final MslEncoderException e) {
+            throw new MslKeyExchangeException(MslError.INVALID_JWK, new String(unwrappedHmacJwk, UTF_8), e).setEntity(entityAuthData);
         }
         
         // Deliver wrap data to wrap key repository.

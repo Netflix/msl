@@ -35,8 +35,8 @@ public class MslError {
     private static final Set<Integer> internalCodes = new HashSet<Integer>();
     
     // 0 Message Security Layer
-    public static final MslError JSON_PARSE_ERROR = new MslError(0, ResponseCode.FAIL, "Error parsing JSON.");
-    public static final MslError JSON_ENCODE_ERROR = new MslError(1, ResponseCode.FAIL, "Error encoding JSON.");
+    public static final MslError MSL_PARSE_ERROR = new MslError(0, ResponseCode.FAIL, "Error parsing MSL encodable.");
+    public static final MslError MSL_ENCODE_ERROR = new MslError(1, ResponseCode.FAIL, "Error encoding MSL encodable.");
     public static final MslError ENVELOPE_HASH_MISMATCH = new MslError(2, ResponseCode.FAIL, "Computed hash does not match envelope hash.");
     public static final MslError INVALID_PUBLIC_KEY = new MslError(3, ResponseCode.FAIL, "Invalid public key provided.");
     public static final MslError INVALID_PRIVATE_KEY = new MslError(4, ResponseCode.FAIL, "Invalid private key provided.");

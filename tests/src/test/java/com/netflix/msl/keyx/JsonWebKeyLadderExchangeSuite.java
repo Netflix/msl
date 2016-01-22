@@ -22,7 +22,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.nio.charset.Charset;
 import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.util.Arrays;
@@ -30,11 +29,8 @@ import java.util.Random;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import javax.xml.bind.DatatypeConverter;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -62,6 +58,11 @@ import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.entityauth.MockPresharedAuthenticationFactory;
 import com.netflix.msl.entityauth.PresharedAuthenticationData;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslEncoderUtils;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.keyx.JsonWebKeyLadderExchange.AesKwJwkCryptoContext;
 import com.netflix.msl.keyx.JsonWebKeyLadderExchange.JwkCryptoContext;
 import com.netflix.msl.keyx.JsonWebKeyLadderExchange.Mechanism;
@@ -71,7 +72,6 @@ import com.netflix.msl.keyx.KeyExchangeFactory.KeyExchangeData;
 import com.netflix.msl.test.ExpectedMslException;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.util.AuthenticationUtils;
-import com.netflix.msl.util.JsonUtils;
 import com.netflix.msl.util.MockAuthenticationUtils;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslTestUtils;
@@ -86,9 +86,9 @@ import com.netflix.msl.util.MslTestUtils;
                JsonWebKeyLadderExchangeSuite.RequestDataTest.class,
                JsonWebKeyLadderExchangeSuite.ResponseDataTest.class})
 public class JsonWebKeyLadderExchangeSuite {
-    /** Encoding charset. */
-    private static final Charset UTF_8 = Charset.forName("UTF-8");
-    
+	/** MSL encoder format. */
+	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
+
     /** JSON key key exchange scheme. */
     private static final String KEY_SCHEME = "scheme";
     /** JSON key key request data. */
@@ -109,6 +109,7 @@ public class JsonWebKeyLadderExchangeSuite {
             Security.addProvider(new BouncyCastleProvider());
             
             pskCtx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
+            encoder = pskCtx.getMslEncoderFactory();
             
             // Create PSK wrapping crypto context.
             {
@@ -130,12 +131,12 @@ public class JsonWebKeyLadderExchangeSuite {
             //
             // Wrap the new wrapping key using a PSK wrap crypto context.
             final JsonWebKey wrapJwk = new JsonWebKey(Usage.wrap, Algorithm.A128KW, false, null, wrapKey);
-            WRAP_JWK = PSK_CRYPTO_CONTEXT.wrap(wrapJwk.toJSONString().getBytes(UTF_8));
+            WRAP_JWK = PSK_CRYPTO_CONTEXT.wrap(wrapJwk.toMslEncoding(encoder, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
             
             // The wrap data is an AES-128 key wrapped by the primary MSL
             // context. Technically we shouldn't know this but that's the only
             // way to verify things.
-            WRAPDATA = pskCtx.getMslCryptoContext().wrap(wrappingKey);
+            WRAPDATA = pskCtx.getMslCryptoContext().wrap(wrappingKey, encoder, ENCODER_FORMAT);
 
             final WrapCryptoContextRepository repository = new MockCryptoContextRepository();
             final AuthenticationUtils authutils = new MockAuthenticationUtils();
@@ -145,10 +146,10 @@ public class JsonWebKeyLadderExchangeSuite {
             PSK_MASTER_TOKEN = MslTestUtils.getMasterToken(pskCtx, 1, 1);
             final SecretKey pskEncryptionKey = PSK_MASTER_TOKEN.getEncryptionKey();
             final JsonWebKey pskEncryptionJwk = new JsonWebKey(Usage.enc, Algorithm.A128CBC, false, null, pskEncryptionKey);
-            PSK_ENCRYPTION_JWK = WRAP_CRYPTO_CONTEXT.wrap(pskEncryptionJwk.toJSONString().getBytes(UTF_8));
+            PSK_ENCRYPTION_JWK = WRAP_CRYPTO_CONTEXT.wrap(pskEncryptionJwk.toMslEncoding(encoder, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
             final SecretKey pskHmacKey = PSK_MASTER_TOKEN.getSignatureKey();
             final JsonWebKey pskHmacJwk = new JsonWebKey(Usage.sig, Algorithm.HS256, false, null, pskHmacKey);
-            PSK_HMAC_JWK = WRAP_CRYPTO_CONTEXT.wrap(pskHmacJwk.toJSONString().getBytes(UTF_8));
+            PSK_HMAC_JWK = WRAP_CRYPTO_CONTEXT.wrap(pskHmacJwk.toMslEncoding(encoder, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
         }
     }
     
@@ -160,6 +161,8 @@ public class JsonWebKeyLadderExchangeSuite {
     
     /** PSK MSL context. */
     private static MockMslContext pskCtx;
+    /** MSL encoder factory. */
+    private static MslEncoderFactory encoder;
 
     /** Request data unit tests. */
     public static class RequestDataTest {
@@ -174,46 +177,46 @@ public class JsonWebKeyLadderExchangeSuite {
         public ExpectedMslException thrown = ExpectedMslException.none();
         
         @Test
-        public void ctorsWrap() throws MslCryptoException, MslKeyExchangeException, MslEncodingException, JSONException {
+        public void ctorsWrap() throws MslCryptoException, MslKeyExchangeException, MslEncodingException, MslException, MslEncoderException {
             final RequestData req = new RequestData(Mechanism.WRAP, WRAPDATA);
             assertEquals(KeyExchangeScheme.JWK_LADDER, req.getKeyExchangeScheme());
             assertEquals(Mechanism.WRAP, req.getMechanism());
             assertArrayEquals(WRAPDATA, req.getWrapdata());
-            final JSONObject keydata = req.getKeydata();
+            final MslObject keydata = req.getKeydata(encoder, ENCODER_FORMAT);
             assertNotNull(keydata);
             
-            final RequestData joReq = new RequestData(keydata);
-            assertEquals(req.getKeyExchangeScheme(), joReq.getKeyExchangeScheme());
-            assertEquals(req.getMechanism(), joReq.getMechanism());
-            assertArrayEquals(req.getWrapdata(), joReq.getWrapdata());
-            final JSONObject joKeydata = req.getKeydata();
-            assertNotNull(joKeydata);
-            assertTrue(JsonUtils.equals(keydata, joKeydata));
+            final RequestData moReq = new RequestData(keydata);
+            assertEquals(req.getKeyExchangeScheme(), moReq.getKeyExchangeScheme());
+            assertEquals(req.getMechanism(), moReq.getMechanism());
+            assertArrayEquals(req.getWrapdata(), moReq.getWrapdata());
+            final MslObject moKeydata = req.getKeydata(encoder, ENCODER_FORMAT);
+            assertNotNull(moKeydata);
+            assertTrue(MslEncoderUtils.equals(keydata, moKeydata));
         }
         
         @Test
-        public void jsonWrap() throws JSONException {
+        public void jsonWrap() throws MslException, MslEncoderException {
             final RequestData req = new RequestData(Mechanism.WRAP, WRAPDATA);
-            final JSONObject jo = new JSONObject(req.toJSONString());
-            assertEquals(KeyExchangeScheme.JWK_LADDER.name(), jo.getString(KEY_SCHEME));
-            final JSONObject keydata = jo.getJSONObject(KEY_KEYDATA);
+            final MslObject mo = MslTestUtils.toMslObject(encoder, req);
+            assertEquals(KeyExchangeScheme.JWK_LADDER.name(), mo.getString(KEY_SCHEME));
+            final MslObject keydata = mo.getMslObject(KEY_KEYDATA, encoder);
             assertEquals(Mechanism.WRAP.name(), keydata.getString(KEY_MECHANISM));
             assertFalse(keydata.has(KEY_PUBLIC_KEY));
-            assertArrayEquals(WRAPDATA, DatatypeConverter.parseBase64Binary(keydata.getString(KEY_WRAPDATA)));
+            assertArrayEquals(WRAPDATA, keydata.getBytes(KEY_WRAPDATA));
         }
         
         @Test
-        public void createWrap() throws JSONException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslCryptoException {
+        public void createWrap() throws MslException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslCryptoException, MslEncoderException {
             final RequestData req = new RequestData(Mechanism.WRAP, WRAPDATA);
-            final JSONObject jo = new JSONObject(req.toJSONString());
-            final KeyRequestData keyRequestData = KeyRequestData.create(pskCtx, jo);
+            final MslObject mo = MslTestUtils.toMslObject(encoder, req);
+            final KeyRequestData keyRequestData = KeyRequestData.create(pskCtx, mo);
             assertNotNull(keyRequestData);
             assertTrue(keyRequestData instanceof RequestData);
             
-            final RequestData joReq = (RequestData)keyRequestData;
-            assertEquals(req.getKeyExchangeScheme(), joReq.getKeyExchangeScheme());
-            assertEquals(req.getMechanism(), joReq.getMechanism());
-            assertArrayEquals(req.getWrapdata(), joReq.getWrapdata());
+            final RequestData moReq = (RequestData)keyRequestData;
+            assertEquals(req.getKeyExchangeScheme(), moReq.getKeyExchangeScheme());
+            assertEquals(req.getMechanism(), moReq.getMechanism());
+            assertArrayEquals(req.getWrapdata(), moReq.getWrapdata());
         }
         
         @Test(expected = MslInternalException.class)
@@ -222,55 +225,55 @@ public class JsonWebKeyLadderExchangeSuite {
         }
         
         @Test
-        public void ctorsPsk() throws MslCryptoException, MslKeyExchangeException, MslEncodingException, JSONException {
+        public void ctorsPsk() throws MslCryptoException, MslKeyExchangeException, MslEncodingException, MslException, MslEncoderException {
             final RequestData req = new RequestData(Mechanism.PSK, null);
             assertEquals(KeyExchangeScheme.JWK_LADDER, req.getKeyExchangeScheme());
             assertEquals(Mechanism.PSK, req.getMechanism());
             assertNull(req.getWrapdata());
-            final JSONObject keydata = req.getKeydata();
+            final MslObject keydata = req.getKeydata(encoder, ENCODER_FORMAT);
             assertNotNull(keydata);
             
-            final RequestData joReq = new RequestData(keydata);
-            assertEquals(req.getKeyExchangeScheme(), joReq.getKeyExchangeScheme());
-            assertEquals(req.getMechanism(), joReq.getMechanism());
-            assertNull(joReq.getWrapdata());
-            final JSONObject joKeydata = req.getKeydata();
-            assertNotNull(joKeydata);
-            assertTrue(JsonUtils.equals(keydata, joKeydata));
+            final RequestData moReq = new RequestData(keydata);
+            assertEquals(req.getKeyExchangeScheme(), moReq.getKeyExchangeScheme());
+            assertEquals(req.getMechanism(), moReq.getMechanism());
+            assertNull(moReq.getWrapdata());
+            final MslObject moKeydata = req.getKeydata(encoder, ENCODER_FORMAT);
+            assertNotNull(moKeydata);
+            assertTrue(MslEncoderUtils.equals(keydata, moKeydata));
         }
         
         @Test
-        public void jsonPsk() throws JSONException {
+        public void jsonPsk() throws MslException, MslEncoderException {
             final RequestData req = new RequestData(Mechanism.PSK, null);
-            final JSONObject jo = new JSONObject(req.toJSONString());
-            assertEquals(KeyExchangeScheme.JWK_LADDER.name(), jo.getString(KEY_SCHEME));
-            final JSONObject keydata = jo.getJSONObject(KEY_KEYDATA);
+            final MslObject mo = MslTestUtils.toMslObject(encoder, req);
+            assertEquals(KeyExchangeScheme.JWK_LADDER.name(), mo.getString(KEY_SCHEME));
+            final MslObject keydata = mo.getMslObject(KEY_KEYDATA, encoder);
             assertEquals(Mechanism.PSK.name(), keydata.getString(KEY_MECHANISM));
             assertFalse(keydata.has(KEY_PUBLIC_KEY));
             assertFalse(keydata.has(KEY_WRAPDATA));
         }
         
         @Test
-        public void createPsk() throws MslEncodingException, MslEntityAuthException, MslKeyExchangeException, JSONException, MslCryptoException {
+        public void createPsk() throws MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslException, MslCryptoException, MslEncoderException {
             final RequestData req = new RequestData(Mechanism.PSK, null);
-            final JSONObject jo = new JSONObject(req.toJSONString());
-            final KeyRequestData keyRequestData = KeyRequestData.create(pskCtx, jo);
+            final MslObject mo = MslTestUtils.toMslObject(encoder, req);
+            final KeyRequestData keyRequestData = KeyRequestData.create(pskCtx, mo);
             assertNotNull(keyRequestData);
             assertTrue(keyRequestData instanceof RequestData);
             
-            final RequestData joReq = (RequestData)keyRequestData;
-            assertEquals(req.getKeyExchangeScheme(), joReq.getKeyExchangeScheme());
-            assertEquals(req.getMechanism(), joReq.getMechanism());
-            assertNull(joReq.getWrapdata());
+            final RequestData moReq = (RequestData)keyRequestData;
+            assertEquals(req.getKeyExchangeScheme(), moReq.getKeyExchangeScheme());
+            assertEquals(req.getMechanism(), moReq.getMechanism());
+            assertNull(moReq.getWrapdata());
         }
         
         @Test
-        public void missingMechanism() throws JSONException, MslCryptoException, MslKeyExchangeException, MslEncodingException {
+        public void missingMechanism() throws MslException, MslCryptoException, MslKeyExchangeException, MslEncodingException, MslEncoderException {
             thrown.expect(MslEncodingException.class);
-            thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+            thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
             final RequestData req = new RequestData(Mechanism.PSK, null);
-            final JSONObject keydata = req.getKeydata();
+            final MslObject keydata = req.getKeydata(encoder, ENCODER_FORMAT);
             
             assertNotNull(keydata.remove(KEY_MECHANISM));
             
@@ -278,12 +281,12 @@ public class JsonWebKeyLadderExchangeSuite {
         }
         
         @Test
-        public void invalidMechanism() throws MslCryptoException, MslKeyExchangeException, MslEncodingException, JSONException {
+        public void invalidMechanism() throws MslCryptoException, MslKeyExchangeException, MslEncodingException, MslException, MslEncoderException {
             thrown.expect(MslKeyExchangeException.class);
             thrown.expectMslError(MslError.UNIDENTIFIED_KEYX_MECHANISM);
 
             final RequestData req = new RequestData(Mechanism.PSK, null);
-            final JSONObject keydata = req.getKeydata();
+            final MslObject keydata = req.getKeydata(encoder, ENCODER_FORMAT);
             
             keydata.put(KEY_MECHANISM, "x");
             
@@ -291,12 +294,12 @@ public class JsonWebKeyLadderExchangeSuite {
         }
         
         @Test
-        public void wrapMissingWrapdata() throws MslCryptoException, MslKeyExchangeException, MslEncodingException, JSONException {
+        public void wrapMissingWrapdata() throws MslCryptoException, MslKeyExchangeException, MslEncodingException, MslException, MslEncoderException {
             thrown.expect(MslEncodingException.class);
-            thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+            thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
             final RequestData req = new RequestData(Mechanism.WRAP, WRAPDATA);
-            final JSONObject keydata = req.getKeydata();
+            final MslObject keydata = req.getKeydata(encoder, ENCODER_FORMAT);
             
             assertNotNull(keydata.remove(KEY_WRAPDATA));
             
@@ -304,23 +307,23 @@ public class JsonWebKeyLadderExchangeSuite {
         }
         
         @Test
-        public void wrapInvalidWrapdata() throws MslCryptoException, MslKeyExchangeException, MslEncodingException, JSONException {
+        public void wrapInvalidWrapdata() throws MslCryptoException, MslKeyExchangeException, MslEncodingException, MslException, MslEncoderException {
             thrown.expect(MslKeyExchangeException.class);
             thrown.expectMslError(MslError.KEYX_WRAPPING_KEY_MISSING);
 
             final RequestData req = new RequestData(Mechanism.WRAP, WRAPDATA);
-            final JSONObject keydata = req.getKeydata();
+            final MslObject keydata = req.getKeydata(encoder, ENCODER_FORMAT);
             
-            keydata.put(KEY_WRAPDATA, "x");
+            keydata.put(KEY_WRAPDATA, new byte[0]);
             
             new RequestData(keydata);
         }
         
         @Test
-        public void equalsMechanism() throws MslCryptoException, MslKeyExchangeException, MslEncodingException, JSONException {
+        public void equalsMechanism() throws MslCryptoException, MslKeyExchangeException, MslEncodingException, MslException, MslEncoderException {
             final RequestData dataA = new RequestData(Mechanism.WRAP, WRAPDATA);
             final RequestData dataB = new RequestData(Mechanism.PSK, null);
-            final RequestData dataA2 = new RequestData(dataA.getKeydata());
+            final RequestData dataA2 = new RequestData(dataA.getKeydata(encoder, ENCODER_FORMAT));
             
             assertTrue(dataA.equals(dataA));
             assertEquals(dataA.hashCode(), dataA.hashCode());
@@ -335,13 +338,13 @@ public class JsonWebKeyLadderExchangeSuite {
         }
         
         @Test
-        public void equalsWrapdata() throws MslCryptoException, MslKeyExchangeException, MslEncodingException, JSONException {
+        public void equalsWrapdata() throws MslCryptoException, MslKeyExchangeException, MslEncodingException, MslException, MslEncoderException {
             final byte[] wrapdataB = Arrays.copyOf(WRAPDATA, WRAPDATA.length);
             ++wrapdataB[0];
             
             final RequestData dataA = new RequestData(Mechanism.WRAP, WRAPDATA);
             final RequestData dataB = new RequestData(Mechanism.WRAP, wrapdataB);
-            final RequestData dataA2 = new RequestData(dataA.getKeydata());
+            final RequestData dataA2 = new RequestData(dataA.getKeydata(encoder, ENCODER_FORMAT));
             
             assertTrue(dataA.equals(dataA));
             assertEquals(dataA.hashCode(), dataA.hashCode());
@@ -374,7 +377,7 @@ public class JsonWebKeyLadderExchangeSuite {
         public ExpectedMslException thrown = ExpectedMslException.none();
         
         @Test
-        public void ctors() throws JSONException, MslKeyExchangeException, MslEncodingException {
+        public void ctors() throws MslException, MslKeyExchangeException, MslEncodingException, MslEncoderException {
             final ResponseData resp = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
             assertArrayEquals(PSK_ENCRYPTION_JWK, resp.getEncryptionKey());
             assertArrayEquals(PSK_HMAC_JWK, resp.getHmacKey());
@@ -382,59 +385,59 @@ public class JsonWebKeyLadderExchangeSuite {
             assertEquals(PSK_MASTER_TOKEN, resp.getMasterToken());
             assertArrayEquals(WRAPDATA, resp.getWrapdata());
             assertArrayEquals(WRAP_JWK, resp.getWrapKey());
-            final JSONObject keydata = resp.getKeydata();
+            final MslObject keydata = resp.getKeydata(encoder, ENCODER_FORMAT);
             assertNotNull(keydata);
             
-            final ResponseData joResp = new ResponseData(PSK_MASTER_TOKEN, keydata);
-            assertArrayEquals(resp.getEncryptionKey(), joResp.getEncryptionKey());
-            assertArrayEquals(resp.getHmacKey(), joResp.getHmacKey());
-            assertEquals(resp.getKeyExchangeScheme(), joResp.getKeyExchangeScheme());
-            assertEquals(resp.getMasterToken(), joResp.getMasterToken());
-            assertArrayEquals(resp.getWrapdata(), joResp.getWrapdata());
-            assertArrayEquals(resp.getWrapKey(), joResp.getWrapKey());
-            final JSONObject joKeydata = joResp.getKeydata();
-            assertNotNull(joKeydata);
-            assertTrue(JsonUtils.equals(keydata, joKeydata));
+            final ResponseData moResp = new ResponseData(PSK_MASTER_TOKEN, keydata);
+            assertArrayEquals(resp.getEncryptionKey(), moResp.getEncryptionKey());
+            assertArrayEquals(resp.getHmacKey(), moResp.getHmacKey());
+            assertEquals(resp.getKeyExchangeScheme(), moResp.getKeyExchangeScheme());
+            assertEquals(resp.getMasterToken(), moResp.getMasterToken());
+            assertArrayEquals(resp.getWrapdata(), moResp.getWrapdata());
+            assertArrayEquals(resp.getWrapKey(), moResp.getWrapKey());
+            final MslObject moKeydata = moResp.getKeydata(encoder, ENCODER_FORMAT);
+            assertNotNull(moKeydata);
+            assertTrue(MslEncoderUtils.equals(keydata, moKeydata));
         }
         
         @Test
-        public void json() throws MslEncodingException, MslCryptoException, JSONException, MslException {
+        public void json() throws MslEncodingException, MslCryptoException, MslException, MslException, MslEncoderException {
             final ResponseData resp = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
-            final JSONObject jo = new JSONObject(resp.toJSONString());
-            assertEquals(KeyExchangeScheme.JWK_LADDER.name(), jo.getString(KEY_SCHEME));
-            final MasterToken masterToken = new MasterToken(pskCtx, jo.getJSONObject(KEY_MASTER_TOKEN));
+            final MslObject mo = MslTestUtils.toMslObject(encoder, resp);
+            assertEquals(KeyExchangeScheme.JWK_LADDER.name(), mo.getString(KEY_SCHEME));
+            final MasterToken masterToken = new MasterToken(pskCtx, mo.getMslObject(KEY_MASTER_TOKEN, encoder));
             assertEquals(PSK_MASTER_TOKEN, masterToken);
-            final JSONObject keydata = jo.getJSONObject(KEY_KEYDATA);
-            assertArrayEquals(PSK_ENCRYPTION_JWK, DatatypeConverter.parseBase64Binary(keydata.getString(KEY_ENCRYPTION_KEY)));
-            assertArrayEquals(PSK_HMAC_JWK, DatatypeConverter.parseBase64Binary(keydata.getString(KEY_HMAC_KEY)));
-            assertArrayEquals(WRAPDATA, DatatypeConverter.parseBase64Binary(keydata.getString(KEY_WRAPDATA)));
-            assertArrayEquals(WRAP_JWK, DatatypeConverter.parseBase64Binary(keydata.getString(KEY_WRAP_KEY)));
+            final MslObject keydata = mo.getMslObject(KEY_KEYDATA, encoder);
+            assertArrayEquals(PSK_ENCRYPTION_JWK, keydata.getBytes(KEY_ENCRYPTION_KEY));
+            assertArrayEquals(PSK_HMAC_JWK, keydata.getBytes(KEY_HMAC_KEY));
+            assertArrayEquals(WRAPDATA, keydata.getBytes(KEY_WRAPDATA));
+            assertArrayEquals(WRAP_JWK, keydata.getBytes(KEY_WRAP_KEY));
         }
         
         @Test
-        public void create() throws JSONException, MslEncodingException, MslCryptoException, MslKeyExchangeException, MslException {
+        public void create() throws MslException, MslEncodingException, MslCryptoException, MslKeyExchangeException, MslException, MslEncoderException {
             final ResponseData resp = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
-            final JSONObject jo = new JSONObject(resp.toJSONString());
-            final KeyResponseData keyResponseData = KeyResponseData.create(pskCtx, jo);
+            final MslObject mo = MslTestUtils.toMslObject(encoder, resp);
+            final KeyResponseData keyResponseData = KeyResponseData.create(pskCtx, mo);
             assertNotNull(keyResponseData);
             assertTrue(keyResponseData instanceof ResponseData);
             
-            final ResponseData joResp = (ResponseData)keyResponseData;
-            assertArrayEquals(resp.getEncryptionKey(), joResp.getEncryptionKey());
-            assertArrayEquals(resp.getHmacKey(), joResp.getHmacKey());
-            assertEquals(resp.getKeyExchangeScheme(), joResp.getKeyExchangeScheme());
-            assertEquals(resp.getMasterToken(), joResp.getMasterToken());
-            assertArrayEquals(resp.getWrapdata(), joResp.getWrapdata());
-            assertArrayEquals(resp.getWrapKey(), joResp.getWrapKey());
+            final ResponseData moResp = (ResponseData)keyResponseData;
+            assertArrayEquals(resp.getEncryptionKey(), moResp.getEncryptionKey());
+            assertArrayEquals(resp.getHmacKey(), moResp.getHmacKey());
+            assertEquals(resp.getKeyExchangeScheme(), moResp.getKeyExchangeScheme());
+            assertEquals(resp.getMasterToken(), moResp.getMasterToken());
+            assertArrayEquals(resp.getWrapdata(), moResp.getWrapdata());
+            assertArrayEquals(resp.getWrapKey(), moResp.getWrapKey());
         }
         
         @Test
-        public void missingWrapKey() throws JSONException, MslKeyExchangeException, MslEncodingException {
+        public void missingWrapKey() throws MslException, MslKeyExchangeException, MslEncodingException, MslEncoderException {
             thrown.expect(MslEncodingException.class);
-            thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+            thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
             final ResponseData resp = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
-            final JSONObject keydata = resp.getKeydata();
+            final MslObject keydata = resp.getKeydata(encoder, ENCODER_FORMAT);
             
             assertNotNull(keydata.remove(KEY_WRAP_KEY));
             
@@ -442,12 +445,12 @@ public class JsonWebKeyLadderExchangeSuite {
         }
         
         @Test
-        public void missingWrapdata() throws JSONException, MslKeyExchangeException, MslEncodingException {
+        public void missingWrapdata() throws MslException, MslKeyExchangeException, MslEncodingException, MslEncoderException {
             thrown.expect(MslEncodingException.class);
-            thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+            thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
             final ResponseData resp = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
-            final JSONObject keydata = resp.getKeydata();
+            final MslObject keydata = resp.getKeydata(encoder, ENCODER_FORMAT);
             
             assertNotNull(keydata.remove(KEY_WRAPDATA));
             
@@ -455,12 +458,12 @@ public class JsonWebKeyLadderExchangeSuite {
         }
         
         @Test
-        public void missingEncryptionKey() throws MslKeyExchangeException, MslEncodingException, JSONException {
+        public void missingEncryptionKey() throws MslKeyExchangeException, MslEncodingException, MslException, MslEncoderException {
             thrown.expect(MslEncodingException.class);
-            thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+            thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
             final ResponseData resp = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
-            final JSONObject keydata = resp.getKeydata();
+            final MslObject keydata = resp.getKeydata(encoder, ENCODER_FORMAT);
             
             assertNotNull(keydata.remove(KEY_ENCRYPTION_KEY));
             
@@ -468,12 +471,12 @@ public class JsonWebKeyLadderExchangeSuite {
         }
         
         @Test
-        public void missingHmacKey() throws JSONException, MslKeyExchangeException, MslEncodingException {
+        public void missingHmacKey() throws MslException, MslKeyExchangeException, MslEncodingException, MslEncoderException {
             thrown.expect(MslEncodingException.class);
-            thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+            thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
             final ResponseData resp = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
-            final JSONObject keydata = resp.getKeydata();
+            final MslObject keydata = resp.getKeydata(encoder, ENCODER_FORMAT);
             
             assertNotNull(keydata.remove(KEY_HMAC_KEY));
             
@@ -481,13 +484,13 @@ public class JsonWebKeyLadderExchangeSuite {
         }
         
         @Test
-        public void equalsWrapKey() throws MslKeyExchangeException, MslEncodingException, JSONException {
+        public void equalsWrapKey() throws MslKeyExchangeException, MslEncodingException, MslException, MslEncoderException {
             final byte[] wrapKeyB = Arrays.copyOf(WRAP_JWK, WRAP_JWK.length);
             ++wrapKeyB[0];
             
             final ResponseData dataA = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
             final ResponseData dataB = new ResponseData(PSK_MASTER_TOKEN, wrapKeyB, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
-            final ResponseData dataA2 = new ResponseData(PSK_MASTER_TOKEN, dataA.getKeydata());
+            final ResponseData dataA2 = new ResponseData(PSK_MASTER_TOKEN, dataA.getKeydata(encoder, ENCODER_FORMAT));
             
             assertTrue(dataA.equals(dataA));
             assertEquals(dataA.hashCode(), dataA.hashCode());
@@ -502,13 +505,13 @@ public class JsonWebKeyLadderExchangeSuite {
         }
         
         @Test
-        public void equalsWrapdata() throws MslKeyExchangeException, MslEncodingException, JSONException {
+        public void equalsWrapdata() throws MslKeyExchangeException, MslEncodingException, MslException, MslEncoderException {
             final byte[] wrapdataB = Arrays.copyOf(WRAPDATA, WRAPDATA.length);
             ++wrapdataB[0];
             
             final ResponseData dataA = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
             final ResponseData dataB = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, wrapdataB, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
-            final ResponseData dataA2 = new ResponseData(PSK_MASTER_TOKEN, dataA.getKeydata());
+            final ResponseData dataA2 = new ResponseData(PSK_MASTER_TOKEN, dataA.getKeydata(encoder, ENCODER_FORMAT));
             
             assertTrue(dataA.equals(dataA));
             assertEquals(dataA.hashCode(), dataA.hashCode());
@@ -523,13 +526,13 @@ public class JsonWebKeyLadderExchangeSuite {
         }
         
         @Test
-        public void equalsEncryptionKey() throws MslKeyExchangeException, MslEncodingException, JSONException {
+        public void equalsEncryptionKey() throws MslKeyExchangeException, MslEncodingException, MslException, MslEncoderException {
             final byte[] encryptionKeyB = Arrays.copyOf(PSK_ENCRYPTION_JWK, PSK_ENCRYPTION_JWK.length);
             ++encryptionKeyB[0];
             
             final ResponseData dataA = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
             final ResponseData dataB = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, encryptionKeyB, PSK_HMAC_JWK);
-            final ResponseData dataA2 = new ResponseData(PSK_MASTER_TOKEN, dataA.getKeydata());
+            final ResponseData dataA2 = new ResponseData(PSK_MASTER_TOKEN, dataA.getKeydata(encoder, ENCODER_FORMAT));
             
             assertTrue(dataA.equals(dataA));
             assertEquals(dataA.hashCode(), dataA.hashCode());
@@ -544,13 +547,13 @@ public class JsonWebKeyLadderExchangeSuite {
         }
         
         @Test
-        public void equalsHmacKey() throws MslKeyExchangeException, MslEncodingException, JSONException {
+        public void equalsHmacKey() throws MslKeyExchangeException, MslEncodingException, MslException, MslEncoderException {
             final byte[] hmacKeyB = Arrays.copyOf(PSK_HMAC_JWK, PSK_HMAC_JWK.length);
             ++hmacKeyB[0];
             
             final ResponseData dataA = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
             final ResponseData dataB = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, hmacKeyB);
-            final ResponseData dataA2 = new ResponseData(PSK_MASTER_TOKEN, dataA.getKeydata());
+            final ResponseData dataA2 = new ResponseData(PSK_MASTER_TOKEN, dataA.getKeydata(encoder, ENCODER_FORMAT));
             
             assertTrue(dataA.equals(dataA));
             assertEquals(dataA.hashCode(), dataA.hashCode());
@@ -578,10 +581,10 @@ public class JsonWebKeyLadderExchangeSuite {
             }
 
             /* (non-Javadoc)
-             * @see com.netflix.msl.keyx.KeyRequestData#getKeydata()
+             * @see com.netflix.msl.keyx.KeyRequestData#getKeydata(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
              */
             @Override
-            protected JSONObject getKeydata() throws JSONException {
+            protected MslObject getKeydata(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException {
                 return null;
             }
         }
@@ -597,10 +600,10 @@ public class JsonWebKeyLadderExchangeSuite {
             }
 
             /* (non-Javadoc)
-             * @see com.netflix.msl.keyx.KeyResponseData#getKeydata()
+             * @see com.netflix.msl.keyx.KeyResponseData#getKeydata(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
              */
             @Override
-            protected JSONObject getKeydata() {
+            protected MslObject getKeydata(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException {
                 return null;
             }
         }
@@ -613,15 +616,15 @@ public class JsonWebKeyLadderExchangeSuite {
          * @return the secret key.
          * @throws MslCryptoException if there is an error unwrapping the JSON
          *         Web Key.
-         * @throws JSONException if there is an error reconstructing the JSON
-         *         Web Key JSON object.
+         * @throws MslException if there is an error reconstructing the JSON
+         *         Web Key MSL object.
          * @throws MslEncodingException if there is an error parsing the JSON
-         *         Web Key JSON object.
+         *         Web Key MSL object.
+         * @throws MslEncoderException if there is an error parsing the data.
          */
-        private static SecretKey extractJwkSecretKey(final ICryptoContext wrapCryptoContext, final byte[] wrappedJwk) throws MslCryptoException, JSONException, MslEncodingException {
-            final byte[] unwrappedJwk = wrapCryptoContext.unwrap(wrappedJwk);
-            final String jwkJson = new String(unwrappedJwk, UTF_8);
-            final JsonWebKey jwk = new JsonWebKey(new JSONObject(jwkJson));
+        private static SecretKey extractJwkSecretKey(final ICryptoContext wrapCryptoContext, final byte[] wrappedJwk) throws MslCryptoException, MslException, MslEncodingException, MslEncoderException {
+            final byte[] unwrappedJwk = wrapCryptoContext.unwrap(wrappedJwk, encoder);
+            final JsonWebKey jwk = new JsonWebKey(encoder.parseObject(unwrappedJwk));
             return jwk.getSecretKey();
         }
         
@@ -675,9 +678,9 @@ public class JsonWebKeyLadderExchangeSuite {
         }
         
         @Test
-        public void generateWrapInitialResponse() throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslEntityAuthException, MslException, JSONException {
+        public void generateWrapInitialResponse() throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslEntityAuthException, MslException, MslException, MslEncoderException {
             final KeyRequestData req = new RequestData(Mechanism.WRAP, WRAPDATA);
-            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, req, entityAuthData);
+            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, ENCODER_FORMAT, req, entityAuthData);
             assertNotNull(keyxData);
             assertNotNull(keyxData.cryptoContext);
             assertNotNull(keyxData.keyResponseData);
@@ -702,9 +705,9 @@ public class JsonWebKeyLadderExchangeSuite {
         }
         
         @Test
-        public void generatePskInitialResponse() throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslEntityAuthException, MslException, JSONException {
+        public void generatePskInitialResponse() throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslEntityAuthException, MslException, MslException, MslEncoderException {
             final KeyRequestData req = new RequestData(Mechanism.PSK, null);
-            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, req, entityAuthData);
+            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, ENCODER_FORMAT, req, entityAuthData);
             assertNotNull(keyxData);
             assertNotNull(keyxData.cryptoContext);
             assertNotNull(keyxData.keyResponseData);
@@ -731,13 +734,13 @@ public class JsonWebKeyLadderExchangeSuite {
         @Test(expected = MslInternalException.class)
         public void wrongRequestInitialResponse() throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslEntityAuthException, MslException {
             final KeyRequestData req = new FakeKeyRequestData();
-            factory.generateResponse(pskCtx, req, entityAuthData);
+            factory.generateResponse(pskCtx, ENCODER_FORMAT, req, entityAuthData);
         }
         
         @Test
-        public void generateWrapSubsequentResponse() throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslMasterTokenException, MslEntityAuthException, MslException, JSONException {
+        public void generateWrapSubsequentResponse() throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslMasterTokenException, MslEntityAuthException, MslException, MslException, MslEncoderException {
             final KeyRequestData req = new RequestData(Mechanism.WRAP, WRAPDATA);
-            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, req, PSK_MASTER_TOKEN);
+            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, ENCODER_FORMAT, req, PSK_MASTER_TOKEN);
             assertNotNull(keyxData);
             assertNotNull(keyxData.cryptoContext);
             assertNotNull(keyxData.keyResponseData);
@@ -764,9 +767,9 @@ public class JsonWebKeyLadderExchangeSuite {
         }
         
         @Test
-        public void generatePskSubsequentResponse() throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslMasterTokenException, MslEntityAuthException, MslException, JSONException {
+        public void generatePskSubsequentResponse() throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslMasterTokenException, MslEntityAuthException, MslException, MslException, MslEncoderException {
             final KeyRequestData req = new RequestData(Mechanism.PSK, null);
-            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, req, PSK_MASTER_TOKEN);
+            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, ENCODER_FORMAT, req, PSK_MASTER_TOKEN);
             assertNotNull(keyxData);
             assertNotNull(keyxData.cryptoContext);
             assertNotNull(keyxData.keyResponseData);
@@ -795,20 +798,20 @@ public class JsonWebKeyLadderExchangeSuite {
         @Test(expected = MslInternalException.class)
         public void wrongRequestSubsequentResponse() throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslMasterTokenException, MslEntityAuthException, MslException {
             final KeyRequestData req = new FakeKeyRequestData();
-            factory.generateResponse(pskCtx, req, PSK_MASTER_TOKEN);
+            factory.generateResponse(pskCtx, ENCODER_FORMAT, req, PSK_MASTER_TOKEN);
         }
         
         @Test(expected = MslMasterTokenException.class)
-        public void untrustedMasterTokenSubsequentResponse() throws MslEncodingException, MslCryptoException, JSONException, MslException {
+        public void untrustedMasterTokenSubsequentResponse() throws MslEncodingException, MslCryptoException, MslException, MslException, MslEncoderException {
             final KeyRequestData req = new RequestData(Mechanism.PSK, null);
             final MasterToken masterToken = MslTestUtils.getUntrustedMasterToken(pskCtx);
-            factory.generateResponse(pskCtx, req, masterToken);
+            factory.generateResponse(pskCtx, ENCODER_FORMAT, req, masterToken);
         }
         
         @Test
         public void getWrapCryptoContext() throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslEntityAuthException, MslException {
             final KeyRequestData req = new RequestData(Mechanism.WRAP, WRAPDATA);
-            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, req, entityAuthData);
+            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, ENCODER_FORMAT, req, entityAuthData);
             final ICryptoContext reqCryptoContext = keyxData.cryptoContext;
             final KeyResponseData resp = keyxData.keyResponseData;
 
@@ -830,34 +833,34 @@ public class JsonWebKeyLadderExchangeSuite {
             
             // Ciphertext won't always be equal depending on how it was
             // enveloped. So we cannot check for equality or inequality.
-            final byte[] requestCiphertext = reqCryptoContext.encrypt(data);
-            final byte[] responseCiphertext = respCryptoContext.encrypt(data);
+            final byte[] requestCiphertext = reqCryptoContext.encrypt(data, encoder, ENCODER_FORMAT);
+            final byte[] responseCiphertext = respCryptoContext.encrypt(data, encoder, ENCODER_FORMAT);
             assertFalse(Arrays.equals(data, requestCiphertext));
             assertFalse(Arrays.equals(data, responseCiphertext));
             
             // Signatures should always be equal.
-            final byte[] requestSignature = reqCryptoContext.sign(data);
-            final byte[] responseSignature = respCryptoContext.sign(data);
+            final byte[] requestSignature = reqCryptoContext.sign(data, encoder, ENCODER_FORMAT);
+            final byte[] responseSignature = respCryptoContext.sign(data, encoder, ENCODER_FORMAT);
             assertFalse(Arrays.equals(data, requestSignature));
             assertFalse(Arrays.equals(data, responseSignature));
             assertArrayEquals(requestSignature, responseSignature);
             
             // Plaintext should always be equal to the original message.
-            final byte[] requestPlaintext = reqCryptoContext.decrypt(responseCiphertext);
-            final byte[] responsePlaintext = respCryptoContext.decrypt(requestCiphertext);
+            final byte[] requestPlaintext = reqCryptoContext.decrypt(responseCiphertext, encoder);
+            final byte[] responsePlaintext = respCryptoContext.decrypt(requestCiphertext, encoder);
             assertNotNull(requestPlaintext);
             assertArrayEquals(data, requestPlaintext);
             assertArrayEquals(requestPlaintext, responsePlaintext);
             
             // Verification should always succeed.
-            assertTrue(reqCryptoContext.verify(data, responseSignature));
-            assertTrue(respCryptoContext.verify(data, requestSignature));
+            assertTrue(reqCryptoContext.verify(data, responseSignature, encoder));
+            assertTrue(respCryptoContext.verify(data, requestSignature, encoder));
         }
         
         @Test
         public void getPskCryptoContext() throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslEntityAuthException, MslException {
             final KeyRequestData req = new RequestData(Mechanism.PSK, null);
-            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, req, entityAuthData);
+            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, ENCODER_FORMAT, req, entityAuthData);
             final ICryptoContext reqCryptoContext = keyxData.cryptoContext;
             final KeyResponseData resp = keyxData.keyResponseData;
             
@@ -874,34 +877,34 @@ public class JsonWebKeyLadderExchangeSuite {
             
             // Ciphertext won't always be equal depending on how it was
             // enveloped. So we cannot check for equality or inequality.
-            final byte[] requestCiphertext = reqCryptoContext.encrypt(data);
-            final byte[] responseCiphertext = respCryptoContext.encrypt(data);
+            final byte[] requestCiphertext = reqCryptoContext.encrypt(data, encoder, ENCODER_FORMAT);
+            final byte[] responseCiphertext = respCryptoContext.encrypt(data, encoder, ENCODER_FORMAT);
             assertFalse(Arrays.equals(data, requestCiphertext));
             assertFalse(Arrays.equals(data, responseCiphertext));
             
             // Signatures should always be equal.
-            final byte[] requestSignature = reqCryptoContext.sign(data);
-            final byte[] responseSignature = respCryptoContext.sign(data);
+            final byte[] requestSignature = reqCryptoContext.sign(data, encoder, ENCODER_FORMAT);
+            final byte[] responseSignature = respCryptoContext.sign(data, encoder, ENCODER_FORMAT);
             assertFalse(Arrays.equals(data, requestSignature));
             assertFalse(Arrays.equals(data, responseSignature));
             assertArrayEquals(requestSignature, responseSignature);
             
             // Plaintext should always be equal to the original message.
-            final byte[] requestPlaintext = reqCryptoContext.decrypt(responseCiphertext);
-            final byte[] responsePlaintext = respCryptoContext.decrypt(requestCiphertext);
+            final byte[] requestPlaintext = reqCryptoContext.decrypt(responseCiphertext, encoder);
+            final byte[] responsePlaintext = respCryptoContext.decrypt(requestCiphertext, encoder);
             assertNotNull(requestPlaintext);
             assertArrayEquals(data, requestPlaintext);
             assertArrayEquals(requestPlaintext, responsePlaintext);
             
             // Verification should always succeed.
-            assertTrue(reqCryptoContext.verify(data, responseSignature));
-            assertTrue(respCryptoContext.verify(data, requestSignature));
+            assertTrue(reqCryptoContext.verify(data, responseSignature, encoder));
+            assertTrue(respCryptoContext.verify(data, requestSignature, encoder));
         }
         
         @Test(expected = MslInternalException.class)
         public void wrongRequestCryptoContext() throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslEntityAuthException, MslException {
             final KeyRequestData req = new RequestData(Mechanism.PSK, null);
-            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, req, entityAuthData);
+            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, ENCODER_FORMAT, req, entityAuthData);
             final KeyResponseData resp = keyxData.keyResponseData;
             
             final KeyRequestData fakeReq = new FakeKeyRequestData();
@@ -923,7 +926,7 @@ public class JsonWebKeyLadderExchangeSuite {
             final MockMslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
             
             final KeyRequestData req = new RequestData(Mechanism.PSK, null);
-            final KeyExchangeData keyxData = factory.generateResponse(ctx, req, entityAuthData);
+            final KeyExchangeData keyxData = factory.generateResponse(ctx, ENCODER_FORMAT, req, entityAuthData);
             final KeyResponseData resp = keyxData.keyResponseData;
             
             ctx.removeEntityAuthenticationFactory(EntityAuthenticationScheme.PSK);
@@ -936,7 +939,7 @@ public class JsonWebKeyLadderExchangeSuite {
             thrown.expectMslError(MslError.KEYX_WRAPPING_KEY_MISSING);
 
             final KeyRequestData req = new RequestData(Mechanism.WRAP, WRAPDATA);
-            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, req, entityAuthData);
+            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, ENCODER_FORMAT, req, entityAuthData);
             final KeyResponseData resp = keyxData.keyResponseData;
             
             factory.getCryptoContext(pskCtx, req, resp, null);
@@ -949,7 +952,7 @@ public class JsonWebKeyLadderExchangeSuite {
 
             final byte[] data = new byte[16];
             random.nextBytes(data);
-            final byte[] wrapJwk = WRAP_CRYPTO_CONTEXT.wrap(data);
+            final byte[] wrapJwk = WRAP_CRYPTO_CONTEXT.wrap(data, encoder, ENCODER_FORMAT);
             
             final KeyRequestData req = new RequestData(Mechanism.WRAP, WRAPDATA);
             final KeyResponseData invalidResp = new ResponseData(PSK_MASTER_TOKEN, wrapJwk, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
@@ -964,7 +967,7 @@ public class JsonWebKeyLadderExchangeSuite {
             thrown.expectMslError(MslError.INVALID_JWK);
 
             final KeyRequestData req = new RequestData(Mechanism.WRAP, WRAPDATA);
-            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, req, entityAuthData);
+            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, ENCODER_FORMAT, req, entityAuthData);
             final ResponseData resp = (ResponseData)keyxData.keyResponseData;
             
             // First get the new crypto context. This installs the returned
@@ -978,7 +981,7 @@ public class JsonWebKeyLadderExchangeSuite {
             final byte[] data = new byte[16];
             random.nextBytes(data);
             final ICryptoContext wrapCryptoContext = repository.getCryptoContext(repository.getWrapdata());
-            final byte[] encryptionJwk = wrapCryptoContext.wrap(data);
+            final byte[] encryptionJwk = wrapCryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             
             // Extract values from the response.
             final MasterToken masterToken = resp.getMasterToken();
@@ -1000,7 +1003,7 @@ public class JsonWebKeyLadderExchangeSuite {
             thrown.expectMslError(MslError.INVALID_JWK);
 
             final KeyRequestData req = new RequestData(Mechanism.WRAP, WRAPDATA);
-            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, req, entityAuthData);
+            final KeyExchangeData keyxData = factory.generateResponse(pskCtx, ENCODER_FORMAT, req, entityAuthData);
             final ResponseData resp = (ResponseData)keyxData.keyResponseData;
             
             // First get the new crypto context. This installs the returned
@@ -1014,7 +1017,7 @@ public class JsonWebKeyLadderExchangeSuite {
             final byte[] data = new byte[16];
             random.nextBytes(data);
             final ICryptoContext wrapCryptoContext = repository.getCryptoContext(repository.getWrapdata());
-            final byte[] hmacJwk = wrapCryptoContext.wrap(data);
+            final byte[] hmacJwk = wrapCryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             
             // Extract values from the response.
             final MasterToken masterToken = resp.getMasterToken();

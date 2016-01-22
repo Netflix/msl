@@ -17,15 +17,16 @@ package com.netflix.msl.crypto;
 
 import javax.xml.bind.DatatypeConverter;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslConstants.SignatureAlgo;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslInternalException;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
+import com.netflix.msl.util.MslContext;
 
 /**
  * <p>MSL signature envelopes contain all of the information necessary for
@@ -34,11 +35,11 @@ import com.netflix.msl.MslInternalException;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class MslSignatureEnvelope {
-    /** JSON key version. */
+    /** Key version. */
     private final static String KEY_VERSION = "version";
-    /** JSON key algorithm. */
+    /** Key algorithm. */
     private final static String KEY_ALGORITHM = "algorithm";
-    /** JSON key signature. */
+    /** Key signature. */
     private final static String KEY_SIGNATURE = "signature";
     
     /** Versions. */
@@ -128,56 +129,50 @@ public class MslSignatureEnvelope {
      * Create a new signature envelope for the specified version from the
      * provided envelope bytes.
      * 
+     * @param ctx MSL context.
      * @param envelope the raw envelope bytes.
      * @param version the envelope version.
      * @return the envelope.
      * @throws MslCryptoException if there is an error processing the signature
      *         envelope.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @throws MslEncodingException if there is an error parsing the envelope.
      * @see #getBytes()
      */
-    public static MslSignatureEnvelope parse(final byte[] envelope, final Version version) throws MslCryptoException, MslEncodingException {
-     // Parse envelope.
+    public static MslSignatureEnvelope parse(final MslContext ctx, final byte[] envelope, final Version version) throws MslCryptoException, MslEncodingException {
+        // Parse envelope.
         switch (version) {
             case V1:
                 return new MslSignatureEnvelope(envelope);
             case V2:
                 try {
-                    // We expect the byte representation to be a JSON string.
-                    final String json = new String(envelope, MslConstants.DEFAULT_CHARSET);
-                    final JSONObject envelopeJo = new JSONObject(json);
+                    // We expect the byte representation to be a MSL object.
+                    final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+                    final MslObject envelopeMo = encoder.parseObject(envelope);
                     
                     // Verify version.
                     try {
-                        final Version v = Version.valueOf(envelopeJo.getInt(KEY_VERSION));
+                        final Version v = Version.valueOf(envelopeMo.getInt(KEY_VERSION));
                         if (!Version.V2.equals(v))
-                            throw new MslCryptoException(MslError.UNSUPPORTED_SIGNATURE_ENVELOPE, "signature envelope " + DatatypeConverter.printBase64Binary(envelope));
+                            throw new MslCryptoException(MslError.UNSUPPORTED_SIGNATURE_ENVELOPE, "signature envelope " + envelopeMo);
                     } catch (final IllegalArgumentException e) {
-                        throw new MslCryptoException(MslError.UNIDENTIFIED_SIGNATURE_ENVELOPE, "signature envelope " + DatatypeConverter.printBase64Binary(envelope), e);
+                        throw new MslCryptoException(MslError.UNIDENTIFIED_SIGNATURE_ENVELOPE, "signature envelope " + envelopeMo, e);
                     }
                     
                     // Grab algorithm.
                     final SignatureAlgo algorithm;
                     try {
-                        algorithm = SignatureAlgo.fromString(envelopeJo.getString(KEY_ALGORITHM));
+                        algorithm = SignatureAlgo.fromString(envelopeMo.getString(KEY_ALGORITHM));
                     } catch (final IllegalArgumentException e) {
-                        throw new MslCryptoException(MslError.UNIDENTIFIED_ALGORITHM, "signature envelope " + DatatypeConverter.printBase64Binary(envelope), e);
+                        throw new MslCryptoException(MslError.UNIDENTIFIED_ALGORITHM, "signature envelope " + envelopeMo, e);
                     }
                     
                     // Grab signature.
-                    final byte[] signature;
-                    try {
-                        signature = DatatypeConverter.parseBase64Binary(envelopeJo.getString(KEY_SIGNATURE));
-                    } catch (final IllegalArgumentException e) {
-                        throw new MslCryptoException(MslError.INVALID_SIGNATURE, "signature envelope " + DatatypeConverter.printBase64Binary(envelope));
-                    }
-                    if (signature == null)
-                        throw new MslCryptoException(MslError.INVALID_SIGNATURE, "signature envelope " + DatatypeConverter.printBase64Binary(envelope));
+                    final byte[] signature = envelopeMo.getBytes(KEY_SIGNATURE);
                     
                     // Return the envelope.
                     return new MslSignatureEnvelope(algorithm, signature);
-                } catch (final JSONException e) {
-                    throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "signature envelope " + DatatypeConverter.printBase64Binary(envelope), e);
+                } catch (final MslEncoderException e) {
+                    throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "signature envelope " + DatatypeConverter.printBase64Binary(envelope), e);
                 }
             default:
                 throw new MslCryptoException(MslError.UNSUPPORTED_SIGNATURE_ENVELOPE, "signature envelope " + DatatypeConverter.printBase64Binary(envelope));
@@ -188,36 +183,36 @@ public class MslSignatureEnvelope {
      * Create a new signature envelope from the provided envelope bytes.
      * 
      * @param envelope the raw envelope bytes.
+     * @param encoder MSL encoder factory.
      * @return the envelope.
      * @throws MslCryptoException if there is an error processing the signature
      *         envelope.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @throws MslEncodingException if there is an error parsing the envelope.
      * @see #getBytes()
      */
-    public static MslSignatureEnvelope parse(final byte[] envelope) throws MslCryptoException, MslEncodingException {
-        // Attempt to convert this to a JSON object.
-        JSONObject envelopeJo;
+    public static MslSignatureEnvelope parse(final byte[] envelope, final MslEncoderFactory encoder) throws MslCryptoException, MslEncodingException {
+        // Attempt to convert this to a MSL object.
+        MslObject envelopeMo;
         try {
-            // If this is a JSON object, we expect the byte representation to
-            // be a JSON string.
-            final String json = new String(envelope, MslConstants.DEFAULT_CHARSET);
-            envelopeJo = new JSONObject(json);
-        } catch (final JSONException e) {
-            envelopeJo = null;
+            // If this is a MSL object, we expect the byte representation to
+            // decodable.
+            envelopeMo = encoder.parseObject(envelope);
+        } catch (final MslEncoderException e) {
+            envelopeMo = null;
         }
 
         // Determine the envelope version.
         //
-        // If there is no JSON object, or there is no version field (as the
-        // binary signature may coincidentally parse into JSON), then this is a
-        // version 1 envelope.
+        // If there is no MSL object, or there is no version field (as the
+        // binary signature may coincidentally parse into a MSL object), then
+        // this is a version 1 envelope.
         Version version;
-        if (envelopeJo == null || !envelopeJo.has(KEY_VERSION)) {
+        if (envelopeMo == null || !envelopeMo.has(KEY_VERSION)) {
             version = Version.V1;
         } else {
             try {
-                version = Version.valueOf(envelopeJo.getInt(KEY_VERSION));
-            } catch (final JSONException e) {
+                version = Version.valueOf(envelopeMo.getInt(KEY_VERSION));
+            } catch (final MslEncoderException e) {
                 // There is a possibility that this is a version 1 envelope.
                 version = Version.V1;
             } catch (final IllegalArgumentException e) {
@@ -234,8 +229,8 @@ public class MslSignatureEnvelope {
                 final SignatureAlgo algorithm;
                 final byte[] signature;
                 try {
-                    algorithm = SignatureAlgo.fromString(envelopeJo.getString(KEY_ALGORITHM));
-                    signature = DatatypeConverter.parseBase64Binary(envelopeJo.getString(KEY_SIGNATURE));
+                    algorithm = SignatureAlgo.fromString(envelopeMo.getString(KEY_ALGORITHM));
+                    signature = envelopeMo.getBytes(KEY_SIGNATURE);
                     
                     // If the signature fails to decode then it is extremely
                     // unlikely but possible that this is a version 1 envelope.
@@ -244,7 +239,7 @@ public class MslSignatureEnvelope {
                     // error.
                     if (signature == null)
                         return new MslSignatureEnvelope(envelope);
-                } catch (final JSONException e) {
+                } catch (final MslEncoderException e) {
                     // It is extremely unlikely but possible that this is a
                     // version 1 envelope.
                     return new MslSignatureEnvelope(envelope);
@@ -283,22 +278,22 @@ public class MslSignatureEnvelope {
     /**
      * Returns the signature envelope in byte form.
      * 
+     * @param encoder MSL encoder factory.
+     * @param format MSL encoder format.
      * @return the byte representation of the signature envelope.
+     * @throws MslEncoderException if there is an error encoding the envelope.
+     * @throws MslInternalException if the envelope version is not supported.
      */
-    public byte[] getBytes() {
+    public byte[] getBytes(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException {
         switch (version) {
             case V1:
                 return signature;
             case V2:
-                try {
-                    final JSONObject jsonObj = new JSONObject();
-                    jsonObj.put(KEY_VERSION, version.intValue());
-                    jsonObj.put(KEY_ALGORITHM, algorithm.toString());
-                    jsonObj.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
-                    return jsonObj.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-                } catch (final JSONException e) {
-                    throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);
-                }
+                final MslObject mo = encoder.createObject();
+                mo.put(KEY_VERSION, version.intValue());
+                mo.put(KEY_ALGORITHM, algorithm.name());
+                mo.put(KEY_SIGNATURE, signature);
+                return encoder.encodeObject(mo, format);
             default:
                 throw new MslInternalException("Signature envelope version " + version + " encoding unsupported.");
         }

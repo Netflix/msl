@@ -53,6 +53,8 @@ import com.netflix.msl.entityauth.UnauthenticatedAuthenticationFactory;
 import com.netflix.msl.entityauth.UnauthenticatedSuffixedAuthenticationData;
 import com.netflix.msl.entityauth.UnauthenticatedSuffixedAuthenticationFactory;
 import com.netflix.msl.entityauth.X509AuthenticationData;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.keyx.AsymmetricWrappedExchange;
 import com.netflix.msl.keyx.DiffieHellmanExchange;
 import com.netflix.msl.keyx.KeyExchangeFactory;
@@ -155,7 +157,9 @@ public class MockMslContext extends MslContext {
         algos.add(CompressionAlgorithm.GZIP);
         algos.add(CompressionAlgorithm.LZW);
         final List<String> languages = Arrays.asList(new String[] { "en-US" });
-        capabilities = new MessageCapabilities(algos, languages);
+        final Set<MslEncoderFormat> formats = new HashSet<MslEncoderFormat>();
+        formats.add(MslEncoderFormat.JSON);
+        capabilities = new MessageCapabilities(algos, languages, formats);
 
         final SecretKey mslEncryptionKey = new SecretKeySpec(MSL_ENCRYPTION_KEY, JcaAlgorithm.AES);
         final SecretKey mslHmacKey = new SecretKeySpec(MSL_HMAC_KEY, JcaAlgorithm.HMAC_SHA256);
@@ -164,6 +168,7 @@ public class MockMslContext extends MslContext {
 
         tokenFactory = new MockTokenFactory();
         store = new SimpleMslStore();
+        encoderFactory = new MslEncoderFactory();
 
         final MockDiffieHellmanParameters params = MockDiffieHellmanParameters.getDefaultParameters();
         final AuthenticationUtils authutils = new MockAuthenticationUtils();
@@ -361,13 +366,32 @@ public class MockMslContext extends MslContext {
         return Collections.unmodifiableSortedSet(keyxFactories);
     }
 
+    /**
+     * Sets the MSL store.
+     *
+     * @param store the MSL store.
+     */
+    public void setMslStore(final MslStore store) {
+        this.store = store;
+    }
+
     @Override
     public MslStore getMslStore() {
         return store;
     }
+    
+    /**
+     * Sets the MSL encoder factory.
+     * 
+     * @param encoderFactory the MSL encoder factory.
+     */
+    public void setMslEncoderFactory(final MslEncoderFactory encoderFactory) {
+        this.encoderFactory = encoderFactory;
+    }
 
-    public void setMslStore(final MslStore store) {
-        this.store = store;
+    @Override
+    public MslEncoderFactory getMslEncoderFactory() {
+        return encoderFactory;
     }
 
     /** Peer-to-peer mode. */
@@ -388,4 +412,6 @@ public class MockMslContext extends MslContext {
     private final SortedSet<KeyExchangeFactory> keyxFactories;
     /** MSL store. */
     private MslStore store;
+    /** MSL encoder factory. */
+    private MslEncoderFactory encoderFactory;
 }

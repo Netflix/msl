@@ -15,11 +15,12 @@
  */
 package com.netflix.msl.entityauth;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 
 /**
  * <p>Unauthenticated suffixed entity authentication data. This form of
@@ -49,9 +50,9 @@ import com.netflix.msl.MslError;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class UnauthenticatedSuffixedAuthenticationData extends EntityAuthenticationData {
-    /** JSON key entity root. */
+    /** Key entity root. */
     private static final String KEY_ROOT = "root";
-    /** JSON key entity suffix. */
+    /** Key entity suffix. */
     private static final String KEY_SUFFIX = "suffix";
     
     /** Identity concatenation character. */
@@ -72,25 +73,24 @@ public class UnauthenticatedSuffixedAuthenticationData extends EntityAuthenticat
     
     /**
      * Construct a new unauthenticated suffixed entity authentication data
-     * instance from the provided JSON object.
+     * instance from the provided MSL object.
      * 
-     * @param unauthSuffixedAuthJO the authentication data JSON object.
-     * @throws MslEncodingException if there is an error parsing the JSON
-     *         representation.
+     * @param unauthSuffixedAuthMo the authentication data MSL object.
+     * @throws MslEncodingException if there is an error parsing the MSL data.
      */
-    UnauthenticatedSuffixedAuthenticationData(final JSONObject unauthSuffixedAuthJO) throws MslEncodingException {
+    public UnauthenticatedSuffixedAuthenticationData(final MslObject unauthSuffixedAuthMo) throws MslEncodingException {
         super(EntityAuthenticationScheme.NONE_SUFFIXED);
         try {
-            root = unauthSuffixedAuthJO.getString(KEY_ROOT);
-            suffix = unauthSuffixedAuthJO.getString(KEY_SUFFIX);
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "unauthenticated suffixed authdata " + unauthSuffixedAuthJO.toString(), e);
+            root = unauthSuffixedAuthMo.getString(KEY_ROOT);
+            suffix = unauthSuffixedAuthMo.getString(KEY_SUFFIX);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "unauthenticated suffixed authdata " + unauthSuffixedAuthMo, e);
         }
     }
     
     /**
      * <p>Returns the entity identity. This is equal to the root and suffix
-     * strings joined with a period, e.g. {@code root.suffix}.</p>
+     * strings moined with a period, e.g. {@code root.suffix}.</p>
      * 
      * @return the entity identity.
      */
@@ -114,18 +114,14 @@ public class UnauthenticatedSuffixedAuthenticationData extends EntityAuthenticat
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.entityauth.EntityAuthenticationData#getAuthData()
+     * @see com.netflix.msl.entityauth.EntityAuthenticationData#getAuthData(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public JSONObject getAuthData() throws MslEncodingException {
-        try {
-            final JSONObject jsonObj = new JSONObject();
-            jsonObj.put(KEY_ROOT, root);
-            jsonObj.put(KEY_SUFFIX, suffix);
-            return jsonObj;
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, "unauthenticated suffixed authdata", e);
-        }
+    public MslObject getAuthData(final MslEncoderFactory encoder, final MslEncoderFormat format) {
+        final MslObject mo = encoder.createObject();
+        mo.put(KEY_ROOT, root);
+        mo.put(KEY_SUFFIX, suffix);
+        return mo;
     }
 
     /* (non-Javadoc)

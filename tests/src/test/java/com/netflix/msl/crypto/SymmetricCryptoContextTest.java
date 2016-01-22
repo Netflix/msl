@@ -32,8 +32,6 @@ import java.util.Random;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -42,7 +40,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
@@ -50,6 +47,10 @@ import com.netflix.msl.MslError;
 import com.netflix.msl.MslMasterTokenException;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.entityauth.MockPresharedAuthenticationFactory;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.test.ExpectedMslException;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslContext;
@@ -61,6 +62,9 @@ import com.netflix.msl.util.MslContext;
  */
 @RunWith(Parameterized.class)
 public class SymmetricCryptoContextTest {
+    /** MSL encoder format. */
+    private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
+
     /** Key set ID. */
     private static final String KEYSET_ID = "keysetid";
     /** JSON key ciphertext. */
@@ -90,10 +94,12 @@ public class SymmetricCryptoContextTest {
     public static void setup() throws MslEncodingException, MslCryptoException {
         random = new Random();
         ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
+        encoder = ctx.getMslEncoderFactory();
     }
     
     @AfterClass
     public static void teardown() {
+        encoder = null;
         ctx = null;
         random = null;
     }
@@ -110,7 +116,7 @@ public class SymmetricCryptoContextTest {
     }
     
     /** Crypto context. */
-    private ICryptoContext cryptoContext;
+    private final ICryptoContext cryptoContext;
     
     /**
      * Create a new symmetric crypto context test instance.
@@ -128,74 +134,74 @@ public class SymmetricCryptoContextTest {
         final byte[] messageA = new byte[32];
         random.nextBytes(messageA);
         
-        final byte[] ciphertextA = cryptoContext.encrypt(messageA);
+        final byte[] ciphertextA = cryptoContext.encrypt(messageA, encoder, ENCODER_FORMAT);
         assertNotNull(ciphertextA);
         assertThat(messageA, is(not(ciphertextA)));
         
-        final byte[] plaintextA = cryptoContext.decrypt(ciphertextA);
+        final byte[] plaintextA = cryptoContext.decrypt(ciphertextA, encoder);
         assertNotNull(plaintextA);
         assertArrayEquals(messageA, plaintextA);
         
         final byte[] messageB = new byte[32];
         random.nextBytes(messageB);
         
-        final byte[] ciphertextB = cryptoContext.encrypt(messageB);
+        final byte[] ciphertextB = cryptoContext.encrypt(messageB, encoder, ENCODER_FORMAT);
         assertNotNull(ciphertextB);
         assertThat(messageB, is(not(ciphertextB)));
         assertThat(ciphertextB, is(not(ciphertextA)));
         
-        final byte[] plaintextB = cryptoContext.decrypt(ciphertextB);
+        final byte[] plaintextB = cryptoContext.decrypt(ciphertextB, encoder);
         assertNotNull(plaintextB);
         assertArrayEquals(messageB, plaintextB);
     }
     
     @Test
-    public void invalidCiphertext() throws MslEncodingException, MslCryptoException, JSONException, UnsupportedEncodingException {
+    public void invalidCiphertext() throws MslEncodingException, MslCryptoException, MslEncoderException, UnsupportedEncodingException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.CIPHERTEXT_BAD_PADDING);
 
         final byte[] message = new byte[32];
         random.nextBytes(message);
 
-        final byte[] data = cryptoContext.encrypt(message);
-        final JSONObject envelopeJo = new JSONObject(new String(data, MslConstants.DEFAULT_CHARSET));
-        final MslCiphertextEnvelope envelope = new MslCiphertextEnvelope(envelopeJo);
+        final byte[] data = cryptoContext.encrypt(message, encoder, ENCODER_FORMAT);
+        final MslObject envelopeMo = encoder.parseObject(data);
+        final MslCiphertextEnvelope envelope = new MslCiphertextEnvelope(envelopeMo);
         final byte[] ciphertext = envelope.getCiphertext();
         ++ciphertext[ciphertext.length - 2];
         final MslCiphertextEnvelope shortEnvelope = new MslCiphertextEnvelope(envelope.getKeyId(), envelope.getIv(), ciphertext);
-        cryptoContext.decrypt(shortEnvelope.toJSONString().getBytes(MslConstants.DEFAULT_CHARSET));
+        cryptoContext.decrypt(shortEnvelope.toMslEncoding(encoder, ENCODER_FORMAT), encoder);
     }
 
     @Test
-    public void insufficientCiphertext() throws MslCryptoException, JSONException, MslEncodingException, UnsupportedEncodingException {
+    public void insufficientCiphertext() throws MslCryptoException, MslEncoderException, MslEncodingException, UnsupportedEncodingException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.CIPHERTEXT_ILLEGAL_BLOCK_SIZE);
 
         final byte[] message = new byte[32];
         random.nextBytes(message);
 
-        final byte[] data = cryptoContext.encrypt(message);
-        final JSONObject envelopeJo = new JSONObject(new String(data, MslConstants.DEFAULT_CHARSET));
-        final MslCiphertextEnvelope envelope = new MslCiphertextEnvelope(envelopeJo);
+        final byte[] data = cryptoContext.encrypt(message, encoder, ENCODER_FORMAT);
+        final MslObject envelopeMo = encoder.parseObject(data);
+        final MslCiphertextEnvelope envelope = new MslCiphertextEnvelope(envelopeMo);
         final byte[] ciphertext = envelope.getCiphertext();
         
         final byte[] shortCiphertext = Arrays.copyOf(ciphertext, ciphertext.length - 1);
         final MslCiphertextEnvelope shortEnvelope = new MslCiphertextEnvelope(envelope.getKeyId(), envelope.getIv(), shortCiphertext);
-        cryptoContext.decrypt(shortEnvelope.toJSONString().getBytes(MslConstants.DEFAULT_CHARSET));
+        cryptoContext.decrypt(shortEnvelope.toMslEncoding(encoder, ENCODER_FORMAT), encoder);
     }
     
     @Test
-    public void notEnvelope() throws MslCryptoException, JSONException, MslEncodingException, UnsupportedEncodingException {
+    public void notEnvelope() throws MslCryptoException, MslEncoderException, MslEncodingException, UnsupportedEncodingException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.CIPHERTEXT_ENVELOPE_PARSE_ERROR);
 
         final byte[] message = new byte[32];
         random.nextBytes(message);
 
-        final byte[] data = cryptoContext.encrypt(message);
-        final JSONObject envelopeJo = new JSONObject(new String(data, MslConstants.DEFAULT_CHARSET));
-        envelopeJo.remove(KEY_CIPHERTEXT);
-        cryptoContext.decrypt(envelopeJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
+        final byte[] data = cryptoContext.encrypt(message, encoder, ENCODER_FORMAT);
+        final MslObject envelopeMo = encoder.parseObject(data);
+        envelopeMo.remove(KEY_CIPHERTEXT);
+        cryptoContext.decrypt(encoder.encodeObject(envelopeMo, ENCODER_FORMAT), encoder);
     }
     
     @Test
@@ -206,13 +212,13 @@ public class SymmetricCryptoContextTest {
         final byte[] message = new byte[32];
         random.nextBytes(message);
         
-        final byte[] data = cryptoContext.encrypt(message);
+        final byte[] data = cryptoContext.encrypt(message, encoder, ENCODER_FORMAT);
         data[0] = 0;
-        cryptoContext.decrypt(data);
+        cryptoContext.decrypt(data, encoder);
     }
     
     @Test
-    public void encryptNullEncryption() throws MslEncodingException, MslCryptoException, JSONException {
+    public void encryptNullEncryption() throws MslEncodingException, MslCryptoException, MslEncoderException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.ENCRYPT_NOT_SUPPORTED);
 
@@ -221,11 +227,11 @@ public class SymmetricCryptoContextTest {
         final byte[] messageA = new byte[32];
         random.nextBytes(messageA);
         
-        cryptoContext.encrypt(messageA);
+        cryptoContext.encrypt(messageA, encoder, ENCODER_FORMAT);
     }
     
     @Test
-    public void decryptNullEncryption() throws MslEncodingException, MslCryptoException, JSONException {
+    public void decryptNullEncryption() throws MslEncodingException, MslCryptoException, MslEncoderException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.DECRYPT_NOT_SUPPORTED);
 
@@ -234,39 +240,39 @@ public class SymmetricCryptoContextTest {
         final byte[] messageA = new byte[32];
         random.nextBytes(messageA);
         
-        cryptoContext.decrypt(messageA);
+        cryptoContext.decrypt(messageA, encoder);
     }
     
     @Test
-    public void encryptDecryptNullKeys() throws MslEncodingException, MslCryptoException, JSONException {
+    public void encryptDecryptNullKeys() throws MslEncodingException, MslCryptoException, MslEncoderException {
         final ICryptoContext cryptoContext = new SymmetricCryptoContext(ctx, KEYSET_ID, MockPresharedAuthenticationFactory.KPE, null, null);
         
         final byte[] messageA = new byte[32];
         random.nextBytes(messageA);
         
-        final byte[] ciphertextA = cryptoContext.encrypt(messageA);
+        final byte[] ciphertextA = cryptoContext.encrypt(messageA, encoder, ENCODER_FORMAT);
         assertNotNull(ciphertextA);
         assertThat(messageA, is(not(ciphertextA)));
         
-        final byte[] plaintextA = cryptoContext.decrypt(ciphertextA);
+        final byte[] plaintextA = cryptoContext.decrypt(ciphertextA, encoder);
         assertNotNull(plaintextA);
         assertArrayEquals(messageA, plaintextA);
         
         final byte[] messageB = new byte[32];
         random.nextBytes(messageB);
         
-        final byte[] ciphertextB = cryptoContext.encrypt(messageB);
+        final byte[] ciphertextB = cryptoContext.encrypt(messageB, encoder, ENCODER_FORMAT);
         assertNotNull(ciphertextB);
         assertThat(messageB, is(not(ciphertextB)));
         assertThat(ciphertextB, is(not(ciphertextA)));
         
-        final byte[] plaintextB = cryptoContext.decrypt(ciphertextB);
+        final byte[] plaintextB = cryptoContext.decrypt(ciphertextB, encoder);
         assertNotNull(plaintextB);
         assertArrayEquals(messageB, plaintextB);
     }
     
     @Test
-    public void encryptDecryptIdMismatch() throws MslEncodingException, MslCryptoException, JSONException {
+    public void encryptDecryptIdMismatch() throws MslEncodingException, MslCryptoException, MslEncoderException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.ENVELOPE_KEY_ID_MISMATCH);
 
@@ -278,17 +284,17 @@ public class SymmetricCryptoContextTest {
         
         final byte[] ciphertext;
         try {
-            ciphertext = cryptoContextA.encrypt(message);
+            ciphertext = cryptoContextA.encrypt(message, encoder, ENCODER_FORMAT);
         } catch (final MslCryptoException e) {
             fail(e.getMessage());
             return;
         }
         
-        cryptoContextB.decrypt(ciphertext);
+        cryptoContextB.decrypt(ciphertext, encoder);
     }
     
     @Test
-    public void encryptDecryptKeysMismatch() throws MslEncodingException, MslCryptoException, JSONException {
+    public void encryptDecryptKeysMismatch() throws MslEncodingException, MslCryptoException, MslEncoderException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.CIPHERTEXT_BAD_PADDING);
 
@@ -300,13 +306,13 @@ public class SymmetricCryptoContextTest {
         
         final byte[] ciphertext;
         try {
-            ciphertext = cryptoContextA.encrypt(message);
+            ciphertext = cryptoContextA.encrypt(message, encoder, ENCODER_FORMAT);
         } catch (final MslCryptoException e) {
             fail(e.getMessage());
             return;
         }
         
-        cryptoContextB.decrypt(ciphertext);
+        cryptoContextB.decrypt(ciphertext, encoder);
     }
     
     @Test
@@ -314,23 +320,23 @@ public class SymmetricCryptoContextTest {
         final byte[] keydataA = new byte[8];
         random.nextBytes(keydataA);
         
-        final byte[] ciphertextA = cryptoContext.wrap(keydataA);
+        final byte[] ciphertextA = cryptoContext.wrap(keydataA, encoder, ENCODER_FORMAT);
         assertNotNull(ciphertextA);
         assertThat(keydataA, is(not(ciphertextA)));
         
-        final byte[] plaintextA = cryptoContext.unwrap(ciphertextA);
+        final byte[] plaintextA = cryptoContext.unwrap(ciphertextA, encoder);
         assertNotNull(plaintextA);
         assertArrayEquals(keydataA, plaintextA);
         
         final byte[] keydataB = new byte[8];
         random.nextBytes(keydataB);
         
-        final byte[] ciphertextB = cryptoContext.wrap(keydataB);
+        final byte[] ciphertextB = cryptoContext.wrap(keydataB, encoder, ENCODER_FORMAT);
         assertNotNull(ciphertextB);
         assertThat(keydataB, is(not(ciphertextB)));
         assertThat(ciphertextB, is(not(ciphertextA)));
         
-        final byte[] plaintextB = cryptoContext.unwrap(ciphertextB);
+        final byte[] plaintextB = cryptoContext.unwrap(ciphertextB, encoder);
         assertNotNull(plaintextB);
         assertArrayEquals(keydataB, plaintextB);
     }
@@ -340,23 +346,23 @@ public class SymmetricCryptoContextTest {
         final byte[] keydataA = new byte[32];
         random.nextBytes(keydataA);
         
-        final byte[] ciphertextA = cryptoContext.wrap(keydataA);
+        final byte[] ciphertextA = cryptoContext.wrap(keydataA, encoder, ENCODER_FORMAT);
         assertNotNull(ciphertextA);
         assertThat(keydataA, is(not(ciphertextA)));
         
-        final byte[] plaintextA = cryptoContext.unwrap(ciphertextA);
+        final byte[] plaintextA = cryptoContext.unwrap(ciphertextA, encoder);
         assertNotNull(plaintextA);
         assertArrayEquals(keydataA, plaintextA);
         
         final byte[] keydataB = new byte[32];
         random.nextBytes(keydataB);
         
-        final byte[] ciphertextB = cryptoContext.wrap(keydataB);
+        final byte[] ciphertextB = cryptoContext.wrap(keydataB, encoder, ENCODER_FORMAT);
         assertNotNull(ciphertextB);
         assertThat(keydataB, is(not(ciphertextB)));
         assertThat(ciphertextB, is(not(ciphertextA)));
         
-        final byte[] plaintextB = cryptoContext.unwrap(ciphertextB);
+        final byte[] plaintextB = cryptoContext.unwrap(ciphertextB, encoder);
         assertNotNull(plaintextB);
         assertArrayEquals(keydataB, plaintextB);
     }
@@ -369,7 +375,7 @@ public class SymmetricCryptoContextTest {
         final byte[] keydataA = new byte[127];
         random.nextBytes(keydataA);
         
-        cryptoContext.wrap(keydataA);
+        cryptoContext.wrap(keydataA, encoder, ENCODER_FORMAT);
     }
     
     @Test
@@ -380,7 +386,7 @@ public class SymmetricCryptoContextTest {
         final byte[] ciphertextA = new byte[127];
         random.nextBytes(ciphertextA);
         
-        cryptoContext.unwrap(ciphertextA);
+        cryptoContext.unwrap(ciphertextA, encoder);
     }
     
     @Test
@@ -393,7 +399,7 @@ public class SymmetricCryptoContextTest {
         final byte[] messageA = new byte[32];
         random.nextBytes(messageA);
         
-        cryptoContext.wrap(messageA);
+        cryptoContext.wrap(messageA, encoder, ENCODER_FORMAT);
     }
     
     @Test
@@ -406,7 +412,7 @@ public class SymmetricCryptoContextTest {
         final byte[] messageA = new byte[32];
         random.nextBytes(messageA);
         
-        cryptoContext.unwrap(messageA);
+        cryptoContext.unwrap(messageA, encoder);
     }
     
     @Test
@@ -416,23 +422,23 @@ public class SymmetricCryptoContextTest {
         final byte[] keydataA = new byte[32];
         random.nextBytes(keydataA);
         
-        final byte[] ciphertextA = cryptoContext.wrap(keydataA);
+        final byte[] ciphertextA = cryptoContext.wrap(keydataA, encoder, ENCODER_FORMAT);
         assertNotNull(ciphertextA);
         assertThat(keydataA, is(not(ciphertextA)));
         
-        final byte[] plaintextA = cryptoContext.unwrap(ciphertextA);
+        final byte[] plaintextA = cryptoContext.unwrap(ciphertextA, encoder);
         assertNotNull(plaintextA);
         assertArrayEquals(keydataA, plaintextA);
         
         final byte[] keydataB = new byte[32];
         random.nextBytes(keydataB);
         
-        final byte[] ciphertextB = cryptoContext.wrap(keydataB);
+        final byte[] ciphertextB = cryptoContext.wrap(keydataB, encoder, ENCODER_FORMAT);
         assertNotNull(ciphertextB);
         assertThat(keydataB, is(not(ciphertextB)));
         assertThat(ciphertextB, is(not(ciphertextA)));
         
-        final byte[] plaintextB = cryptoContext.unwrap(ciphertextB);
+        final byte[] plaintextB = cryptoContext.unwrap(ciphertextB, encoder);
         assertNotNull(plaintextB);
         assertArrayEquals(keydataB, plaintextB);
     }
@@ -445,7 +451,7 @@ public class SymmetricCryptoContextTest {
         final byte[] keydataA = new byte[1];
         random.nextBytes(keydataA);
         
-        cryptoContext.unwrap(keydataA);
+        cryptoContext.unwrap(keydataA, encoder);
     }
     
     @Test
@@ -453,10 +459,10 @@ public class SymmetricCryptoContextTest {
         final SecretKey wrappingKey = new SecretKeySpec(RFC_KEY, JcaAlgorithm.AESKW);
         final ICryptoContext cryptoContext = new SymmetricCryptoContext(ctx, "RFC", null, null, wrappingKey);
         
-        final byte[] wrapped = cryptoContext.wrap(RFC_PLAINTEXT);
+        final byte[] wrapped = cryptoContext.wrap(RFC_PLAINTEXT, encoder, ENCODER_FORMAT);
         assertArrayEquals(RFC_CIPHERTEXT, wrapped);
         
-        final byte[] unwrapped = cryptoContext.unwrap(wrapped);
+        final byte[] unwrapped = cryptoContext.unwrap(wrapped, encoder);
         assertArrayEquals(RFC_PLAINTEXT, unwrapped);
     }
     
@@ -465,62 +471,62 @@ public class SymmetricCryptoContextTest {
         final byte[] messageA = new byte[32];
         random.nextBytes(messageA);
         
-        final byte[] signatureA = cryptoContext.sign(messageA);
+        final byte[] signatureA = cryptoContext.sign(messageA, encoder, ENCODER_FORMAT);
         assertNotNull(signatureA);
         assertTrue(signatureA.length > 0);
         assertThat(messageA, is(not(signatureA)));
         
-        assertTrue(cryptoContext.verify(messageA, signatureA));
+        assertTrue(cryptoContext.verify(messageA, signatureA, encoder));
         
         final byte[] messageB = new byte[32];
         random.nextBytes(messageB);
         
-        final byte[] signatureB = cryptoContext.sign(messageB);
+        final byte[] signatureB = cryptoContext.sign(messageB, encoder, ENCODER_FORMAT);
         assertTrue(signatureB.length > 0);
         assertThat(signatureA, is(not(signatureB)));
         
-        assertTrue(cryptoContext.verify(messageB, signatureB));
-        assertFalse(cryptoContext.verify(messageB, signatureA));
+        assertTrue(cryptoContext.verify(messageB, signatureB, encoder));
+        assertFalse(cryptoContext.verify(messageB, signatureA, encoder));
     }
     
     @Test
-    public void signVerifyContextMismatch() throws MslEncodingException, JSONException, MslCryptoException {
+    public void signVerifyContextMismatch() throws MslEncodingException, MslEncoderException, MslCryptoException {
         final ICryptoContext cryptoContextA = new SymmetricCryptoContext(ctx, KEYSET_ID, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH, MockPresharedAuthenticationFactory.KPW);
         final ICryptoContext cryptoContextB = new SymmetricCryptoContext(ctx, KEYSET_ID, MockPresharedAuthenticationFactory.KPE2, MockPresharedAuthenticationFactory.KPH2, MockPresharedAuthenticationFactory.KPW2);
         
         final byte[] message = new byte[32];
         random.nextBytes(message);
-        final byte[] signature = cryptoContextA.sign(message);
-        assertFalse(cryptoContextB.verify(message, signature));
+        final byte[] signature = cryptoContextA.sign(message, encoder, ENCODER_FORMAT);
+        assertFalse(cryptoContextB.verify(message, signature, encoder));
     }
     
     @Test
-    public void signVerifyNullKeys() throws MslCryptoException, MslEncodingException, JSONException {
+    public void signVerifyNullKeys() throws MslCryptoException, MslEncodingException, MslEncoderException {
         final ICryptoContext cryptoContext = new SymmetricCryptoContext(ctx, KEYSET_ID, null, MockPresharedAuthenticationFactory.KPH, null);
         
         final byte[] messageA = new byte[32];
         random.nextBytes(messageA);
         
-        final byte[] signatureA = cryptoContext.sign(messageA);
+        final byte[] signatureA = cryptoContext.sign(messageA, encoder, ENCODER_FORMAT);
         assertNotNull(signatureA);
         assertTrue(signatureA.length > 0);
         assertThat(messageA, is(not(signatureA)));
         
-        assertTrue(cryptoContext.verify(messageA, signatureA));
+        assertTrue(cryptoContext.verify(messageA, signatureA, encoder));
         
         final byte[] messageB = new byte[32];
         random.nextBytes(messageB);
         
-        final byte[] signatureB = cryptoContext.sign(messageB);
+        final byte[] signatureB = cryptoContext.sign(messageB, encoder, ENCODER_FORMAT);
         assertTrue(signatureB.length > 0);
         assertThat(signatureA, is(not(signatureB)));
         
-        assertTrue(cryptoContext.verify(messageB, signatureB));
-        assertFalse(cryptoContext.verify(messageB, signatureA));
+        assertTrue(cryptoContext.verify(messageB, signatureB, encoder));
+        assertFalse(cryptoContext.verify(messageB, signatureA, encoder));
     }
     
     @Test
-    public void signNullHmac() throws MslCryptoException, MslEncodingException, JSONException {
+    public void signNullHmac() throws MslCryptoException, MslEncodingException, MslEncoderException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.SIGN_NOT_SUPPORTED);
 
@@ -528,11 +534,11 @@ public class SymmetricCryptoContextTest {
         
         final byte[] messageA = new byte[32];
         random.nextBytes(messageA);
-        cryptoContext.sign(messageA);
+        cryptoContext.sign(messageA, encoder, ENCODER_FORMAT);
     }
     
     @Test
-    public void verifyNullHmac() throws MslCryptoException, MslEncodingException, JSONException {
+    public void verifyNullHmac() throws MslCryptoException, MslEncodingException, MslEncoderException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.VERIFY_NOT_SUPPORTED);
 
@@ -542,11 +548,13 @@ public class SymmetricCryptoContextTest {
         random.nextBytes(message);
         final byte[] signature = new byte[32];
         random.nextBytes(signature);
-        cryptoContext.verify(message, signature);
+        cryptoContext.verify(message, signature, encoder);
     }
     
     /** MSL context. */
     private static MslContext ctx;
+    /** MSL encoder factory. */
+    private static MslEncoderFactory encoder;
     /** Random. */
     private static Random random;
 }

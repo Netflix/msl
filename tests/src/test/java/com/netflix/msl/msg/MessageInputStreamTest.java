@@ -41,7 +41,6 @@ import java.util.Set;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.json.JSONException;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -71,6 +70,9 @@ import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.entityauth.MockPresharedAuthenticationFactory;
 import com.netflix.msl.entityauth.UnauthenticatedAuthenticationFactory;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeFactory.KeyExchangeData;
 import com.netflix.msl.keyx.KeyExchangeScheme;
@@ -96,6 +98,9 @@ import com.netflix.msl.util.MslTestUtils;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class MessageInputStreamTest {
+	/** MSL encoder format. */
+	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
+
     /** Maximum number of payload chunks to generate. */
     private static final int MAX_PAYLOAD_CHUNKS = 12;
     /** Maximum payload chunk data size in bytes. */
@@ -109,6 +114,8 @@ public class MessageInputStreamTest {
     private static MslContext trustedNetCtx;
     /** Peer-to-peer MSL context. */
     private static MslContext p2pCtx;
+    /** MSL encoder factory. */
+    private static MslEncoderFactory encoder;
     /** Header service token crypto contexts. */
     private static Map<String,ICryptoContext> cryptoContexts = new HashMap<String,ICryptoContext>();
     /** Message payloads (initially empty). */
@@ -133,10 +140,10 @@ public class MessageInputStreamTest {
      */
     private static class RejectingCryptoContext extends NullCryptoContext {
         /* (non-Javadoc)
-         * @see com.netflix.msl.crypto.NullCryptoContext#verify(byte[], byte[])
+         * @see com.netflix.msl.crypto.NullCryptoContext#verify(byte[], byte[], com.netflix.msl.io.MslEncoderFactory)
          */
         @Override
-        public boolean verify(byte[] data, byte[] signature) throws MslCryptoException {
+        public boolean verify(final byte[] data, final byte[] signature, final MslEncoderFactory encoder) throws MslCryptoException {
             return false;
         }
     }
@@ -164,12 +171,13 @@ public class MessageInputStreamTest {
      * @param payloads zero or more payload chunks.
      * @return an input stream containing the MSL message.
      * @throws IOException if there is an error creating the input stream.
+     * @throws MslEncoderException if there is an error encoding the data.
      */
-    private static InputStream generateInputStream(final Header header, final List<PayloadChunk> payloads) throws IOException {
+    private static InputStream generateInputStream(final Header header, final List<PayloadChunk> payloads) throws IOException, MslEncoderException {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        baos.write(header.toJSONString().getBytes(MslConstants.DEFAULT_CHARSET));
+        baos.write(header.toMslEncoding(encoder, ENCODER_FORMAT));
         for (final PayloadChunk payload : payloads)
-            baos.write(payload.toJSONString().getBytes(MslConstants.DEFAULT_CHARSET));
+            baos.write(payload.toMslEncoding(encoder, ENCODER_FORMAT));
         return new ByteArrayInputStream(baos.toByteArray());
     }
     
@@ -180,6 +188,7 @@ public class MessageInputStreamTest {
     public static void setup() throws MslMasterTokenException, MslEntityAuthException, MslException {
         trustedNetCtx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
         p2pCtx = new MockMslContext(EntityAuthenticationScheme.PSK, true);
+        encoder = trustedNetCtx.getMslEncoderFactory();
         random.nextBytes(DATA);
         buffer = new byte[MAX_PAYLOAD_CHUNKS * MAX_DATA_SIZE];
         
@@ -193,7 +202,7 @@ public class MessageInputStreamTest {
         final KeyRequestData keyRequest = new SymmetricWrappedExchange.RequestData(KeyId.PSK);
         KEY_REQUEST_DATA.add(keyRequest);
         final KeyExchangeFactory factory = trustedNetCtx.getKeyExchangeFactory(keyRequest.getKeyExchangeScheme());
-        final KeyExchangeData keyxData = factory.generateResponse(trustedNetCtx, keyRequest, entityAuthData);
+        final KeyExchangeData keyxData = factory.generateResponse(trustedNetCtx, ENCODER_FORMAT, keyRequest, entityAuthData);
         KEY_RESPONSE_DATA = keyxData.keyResponseData;
         KEYX_CRYPTO_CONTEXT = keyxData.cryptoContext;
         
@@ -218,6 +227,7 @@ public class MessageInputStreamTest {
         ERROR_HEADER = null;
         MESSAGE_HEADER = null;
         buffer = null;
+        encoder = null;
         p2pCtx = null;
         trustedNetCtx = null;
     }
@@ -228,12 +238,12 @@ public class MessageInputStreamTest {
     }
     
     @Test
-    public void messageHeaderEmpty() throws MslEncodingException, MslException, IOException {
+    public void messageHeaderEmpty() throws MslEncodingException, MslException, IOException, MslEncoderException {
         // An end-of-message payload is expected.
         final ICryptoContext cryptoContext = MESSAGE_HEADER.getCryptoContext();
-        payloads.add(new PayloadChunk(SEQ_NO, MSG_ID, END_OF_MSG, null, new byte[0], cryptoContext));
+        payloads.add(new PayloadChunk(trustedNetCtx, SEQ_NO, MSG_ID, END_OF_MSG, null, new byte[0], cryptoContext));
         final InputStream is = generateInputStream(MESSAGE_HEADER, payloads);
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
         
         assertEquals(0, mis.available());
         assertNull(mis.getErrorHeader());
@@ -250,12 +260,12 @@ public class MessageInputStreamTest {
     }
     
     @Test
-    public void messageHeaderData() throws MslEncodingException, MslException, IOException {
+    public void messageHeaderData() throws MslEncodingException, MslException, IOException, MslEncoderException {
         // An end-of-message payload is expected.
         final ICryptoContext cryptoContext = MESSAGE_HEADER.getCryptoContext();
-        payloads.add(new PayloadChunk(SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, cryptoContext));
+        payloads.add(new PayloadChunk(trustedNetCtx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, cryptoContext));
         final InputStream is = generateInputStream(MESSAGE_HEADER, payloads);
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
 
         assertEquals(DATA.length, mis.read(buffer));
         assertArrayEquals(DATA, Arrays.copyOf(buffer, DATA.length));
@@ -264,14 +274,14 @@ public class MessageInputStreamTest {
     }
     
     @Test
-    public void entityAuthDataIdentity() throws MslException, IOException {
+    public void entityAuthDataIdentity() throws MslException, IOException, MslEncoderException {
         final HeaderData headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
      
         final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
 
         assertEquals(entityAuthData.getIdentity(), mis.getIdentity());
         
@@ -279,14 +289,14 @@ public class MessageInputStreamTest {
     }
     
     @Test
-    public void masterTokenIdentity() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, MslException, IOException {
+    public void masterTokenIdentity() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, MslException, IOException, MslEncoderException {
         final MasterToken masterToken = MslTestUtils.getMasterToken(trustedNetCtx, 1, 1);
         final HeaderData headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, null, masterToken, headerData, peerData);
      
         final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
 
         assertEquals(masterToken.getIdentity(), mis.getIdentity());
         
@@ -294,12 +304,12 @@ public class MessageInputStreamTest {
     }
     
     @Test
-    public void errorHeaderIdentity() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslUserAuthException, MslMessageException, MslKeyExchangeException, MslMasterTokenException, IOException, MslException {
+    public void errorHeaderIdentity() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslUserAuthException, MslMessageException, MslKeyExchangeException, MslMasterTokenException, IOException, MslException, MslEncoderException {
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final ErrorHeader errorHeader = new ErrorHeader(trustedNetCtx, entityAuthData, null, 1, ResponseCode.FAIL, 3, "errormsg", "usermsg");
         
         final InputStream is = generateInputStream(errorHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
         
         assertEquals(entityAuthData.getIdentity(), mis.getIdentity());
         
@@ -307,7 +317,7 @@ public class MessageInputStreamTest {
     }
     
     @Test
-    public void revokedEntity() throws IOException, MslUserAuthException, MslKeyExchangeException, MslException {
+    public void revokedEntity() throws IOException, MslUserAuthException, MslKeyExchangeException, MslException, MslEncoderException {
         thrown.expect(MslEntityAuthException.class);
         thrown.expectMslError(MslError.ENTITY_REVOKED);
 
@@ -323,12 +333,12 @@ public class MessageInputStreamTest {
      
         authutils.revokeEntity(entityAuthData.getIdentity());
         final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(ctx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(ctx, is, KEY_REQUEST_DATA, cryptoContexts);
         mis.close();
     }
     
     @Test
-    public void revokedMasterToken() throws IOException, MslEncodingException, MslEntityAuthException, MslCryptoException, MslUserAuthException, MslMessageException, MslKeyExchangeException, MslMasterTokenException, MslException {
+    public void revokedMasterToken() throws IOException, MslEncodingException, MslEntityAuthException, MslCryptoException, MslUserAuthException, MslMessageException, MslKeyExchangeException, MslMasterTokenException, MslException, MslEncoderException {
         thrown.expect(MslMasterTokenException.class);
         thrown.expectMslError(MslError.MASTERTOKEN_IDENTITY_REVOKED);
 
@@ -343,14 +353,14 @@ public class MessageInputStreamTest {
 
         factory.setRevokedMasterToken(masterToken);
         final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(ctx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(ctx, is, KEY_REQUEST_DATA, cryptoContexts);
         mis.close();
     }
     
     @Test
-    public void nullUser() throws MslEncodingException, MslEntityAuthException, MslUserAuthException, MslMessageException, MslKeyExchangeException, MslMasterTokenException, MslException, IOException {
+    public void nullUser() throws MslEncodingException, MslEntityAuthException, MslUserAuthException, MslMessageException, MslKeyExchangeException, MslMasterTokenException, MslException, IOException, MslEncoderException {
         final InputStream is = generateInputStream(MESSAGE_HEADER, payloads);
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
         
         assertNull(mis.getUser());
         
@@ -358,7 +368,7 @@ public class MessageInputStreamTest {
     }
     
     @Test
-    public void userIdTokenUser() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, MslException, IOException {
+    public void userIdTokenUser() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, MslException, IOException, MslEncoderException {
         final MasterToken masterToken = MslTestUtils.getMasterToken(trustedNetCtx, 1, 1);
         final UserIdToken userIdToken = MslTestUtils.getUserIdToken(trustedNetCtx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER);
         final HeaderData headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, userIdToken, null);
@@ -366,7 +376,7 @@ public class MessageInputStreamTest {
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, null, masterToken, headerData, peerData);
      
         final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
 
         assertEquals(userIdToken.getUser(), mis.getUser());
         
@@ -374,7 +384,7 @@ public class MessageInputStreamTest {
     }
     
     @Test
-    public void revokedUserIdToken() throws IOException, MslUserAuthException, MslKeyExchangeException, MslUserIdTokenException, MslException {
+    public void revokedUserIdToken() throws IOException, MslUserAuthException, MslKeyExchangeException, MslUserIdTokenException, MslException, MslEncoderException {
         thrown.expect(MslUserIdTokenException.class);
         thrown.expectMslError(MslError.USERIDTOKEN_REVOKED);
 
@@ -390,12 +400,12 @@ public class MessageInputStreamTest {
         
         factory.setRevokedUserIdToken(userIdToken);
         final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(ctx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(ctx, is, KEY_REQUEST_DATA, cryptoContexts);
         mis.close();
     }
     
     @Test
-    public void untrustedUserIdToken() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, MslUserIdTokenException, JSONException, MslException, IOException {
+    public void untrustedUserIdToken() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, MslUserIdTokenException, MslEncoderException, MslException, IOException {
         thrown.expect(MslUserIdTokenException.class);
         thrown.expectMessageId(MSG_ID);
 
@@ -411,20 +421,20 @@ public class MessageInputStreamTest {
         
         factory.setRevokedUserIdToken(userIdToken);
         final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(ctx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(ctx, is, KEY_REQUEST_DATA, cryptoContexts);
         mis.close();
     }
     
     // FIXME This can be removed once the old handshake logic is removed.
     @Test
-    public void explicitHandshake() throws IOException, MslUserAuthException, MslKeyExchangeException, MslUserIdTokenException, MslException {
+    public void explicitHandshake() throws IOException, MslUserAuthException, MslKeyExchangeException, MslUserIdTokenException, MslException, MslEncoderException {
         final HeaderData headerData = new HeaderData(null, MSG_ID, null, true, true, null, KEY_REQUEST_DATA, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
         
         final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
         
         assertTrue(mis.isHandshake());
         
@@ -433,15 +443,15 @@ public class MessageInputStreamTest {
     
     // FIXME This can be removed once the old handshake logic is removed.
     @Test
-    public void inferredHandshake() throws MslException, IOException {
+    public void inferredHandshake() throws MslException, IOException, MslEncoderException {
         final HeaderData headerData = new HeaderData(null, MSG_ID, null, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
         
-        payloads.add(new PayloadChunk(SEQ_NO, MSG_ID, END_OF_MSG, null, new byte[0], messageHeader.getCryptoContext()));
+        payloads.add(new PayloadChunk(trustedNetCtx, SEQ_NO, MSG_ID, END_OF_MSG, null, new byte[0], messageHeader.getCryptoContext()));
         final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
         
         assertTrue(mis.isHandshake());
         
@@ -450,15 +460,15 @@ public class MessageInputStreamTest {
     
     // FIXME This can be removed once the old handshake logic is removed.
     @Test
-    public void notHandshake() throws IOException, MslException {
+    public void notHandshake() throws IOException, MslException, MslEncoderException {
         final HeaderData headerData = new HeaderData(null, MSG_ID, null, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
         
-        payloads.add(new PayloadChunk(SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, messageHeader.getCryptoContext()));
+        payloads.add(new PayloadChunk(trustedNetCtx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, messageHeader.getCryptoContext()));
         final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
         
         assertFalse(mis.isHandshake());
         
@@ -466,16 +476,16 @@ public class MessageInputStreamTest {
     }
     
     @Test
-    public void keyExchange() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, MslException, IOException {
+    public void keyExchange() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, MslException, IOException, MslEncoderException {
         final HeaderData headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
         
         // Encrypt the payload with the key exchange crypto context.
-        payloads.add(new PayloadChunk(SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, KEYX_CRYPTO_CONTEXT));
+        payloads.add(new PayloadChunk(trustedNetCtx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, KEYX_CRYPTO_CONTEXT));
         final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
         
         assertEquals(DATA.length, mis.read(buffer));
         assertArrayEquals(DATA, Arrays.copyOf(buffer, DATA.length));
@@ -485,7 +495,7 @@ public class MessageInputStreamTest {
     }
     
     @Test
-    public void peerKeyExchange() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, MslException, IOException {
+    public void peerKeyExchange() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, MslException, IOException, MslEncoderException {
         final HeaderData headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final EntityAuthenticationData entityAuthData = p2pCtx.getEntityAuthenticationData(null);
@@ -493,9 +503,9 @@ public class MessageInputStreamTest {
         
         // Encrypt the payload with the key exchange crypto context.
         final ICryptoContext cryptoContext = messageHeader.getCryptoContext();
-        payloads.add(new PayloadChunk(SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, cryptoContext));
+        payloads.add(new PayloadChunk(p2pCtx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, cryptoContext));
         final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(p2pCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(p2pCtx, is, KEY_REQUEST_DATA, cryptoContexts);
         
         assertEquals(DATA.length, mis.read(buffer));
         assertArrayEquals(DATA, Arrays.copyOf(buffer, DATA.length));
@@ -505,7 +515,7 @@ public class MessageInputStreamTest {
     }
     
     @Test
-    public void unsupportedKeyExchangeScheme() throws IOException, MslUserAuthException, MslException {
+    public void unsupportedKeyExchangeScheme() throws IOException, MslUserAuthException, MslException, MslEncoderException {
         thrown.expect(MslKeyExchangeException.class);
         thrown.expectMslError(MslError.KEYX_FACTORY_NOT_FOUND);
         thrown.expectMessageId(MSG_ID);
@@ -519,12 +529,12 @@ public class MessageInputStreamTest {
         final MessageHeader messageHeader = new MessageHeader(ctx, entityAuthData, null, headerData, peerData);
         
         final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(ctx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(ctx, is, KEY_REQUEST_DATA, cryptoContexts);
         mis.close();
     }
     
     @Test
-    public void missingKeyRequestData() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, IOException, MslException {
+    public void missingKeyRequestData() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, IOException, MslException, MslEncoderException {
         // We need to replace the MSL crypto context before parsing the message
         // so create a local MSL context.
         final MockMslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, true);
@@ -541,12 +551,12 @@ public class MessageInputStreamTest {
         ctx.setMslCryptoContext(new RejectingCryptoContext());
         final InputStream is = generateInputStream(messageHeader, payloads);
         final Set<KeyRequestData> keyRequestData = Collections.emptySet();
-        final MessageInputStream mis = new MessageInputStream(ctx, is, MslConstants.DEFAULT_CHARSET, keyRequestData, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(ctx, is, keyRequestData, cryptoContexts);
         mis.close();
     }
     
     @Test
-    public void incompatibleKeyRequestData() throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslEntityAuthException, MslMasterTokenException, MslMessageException, MslUserAuthException, IOException, MslException {
+    public void incompatibleKeyRequestData() throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslEntityAuthException, MslMasterTokenException, MslMessageException, MslUserAuthException, IOException, MslException, MslEncoderException {
         // We need to replace the MSL crypto context before parsing the message
         // so create a local MSL context.
         final MockMslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, true);
@@ -561,7 +571,7 @@ public class MessageInputStreamTest {
         final KeyRequestData keyRequest = new SymmetricWrappedExchange.RequestData(KeyId.PSK);
         final KeyExchangeFactory factory = ctx.getKeyExchangeFactory(keyRequest.getKeyExchangeScheme());
         final EntityAuthenticationData entityAuthData = ctx.getEntityAuthenticationData(null);
-        final KeyExchangeData keyExchangeData = factory.generateResponse(ctx, keyRequest, entityAuthData);
+        final KeyExchangeData keyExchangeData = factory.generateResponse(ctx, ENCODER_FORMAT, keyRequest, entityAuthData);
         final KeyResponseData keyResponseData = keyExchangeData.keyResponseData;
         
         final HeaderData headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, keyResponseData, null, null, null);
@@ -570,12 +580,12 @@ public class MessageInputStreamTest {
 
         ctx.setMslCryptoContext(new RejectingCryptoContext());
         final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(ctx, is, MslConstants.DEFAULT_CHARSET, keyRequestData, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(ctx, is, keyRequestData, cryptoContexts);
         mis.close();
     }
     
     @Test
-    public void oneCompatibleKeyRequestData() throws IOException, MslUserAuthException, MslException {
+    public void oneCompatibleKeyRequestData() throws IOException, MslUserAuthException, MslException, MslEncoderException {
         // Populate the key request data such that the compatible data requires
         // iterating through one of the incompatible ones.
         final Set<KeyRequestData> keyRequestData = new HashSet<KeyRequestData>();
@@ -586,7 +596,7 @@ public class MessageInputStreamTest {
         
         final KeyExchangeFactory factory = trustedNetCtx.getKeyExchangeFactory(keyRequest.getKeyExchangeScheme());
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
-        final KeyExchangeData keyExchangeData = factory.generateResponse(trustedNetCtx, keyRequest, entityAuthData);
+        final KeyExchangeData keyExchangeData = factory.generateResponse(trustedNetCtx, ENCODER_FORMAT, keyRequest, entityAuthData);
         final KeyResponseData keyResponseData = keyExchangeData.keyResponseData;
         
         final HeaderData headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, keyResponseData, null, null, null);
@@ -594,12 +604,12 @@ public class MessageInputStreamTest {
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
         
         final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, keyRequestData, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, keyRequestData, cryptoContexts);
         mis.close();
     }
     
     @Test
-    public void expiredRenewableClientMessage() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, IOException, MslException {
+    public void expiredRenewableClientMessage() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, IOException, MslException, MslEncoderException {
         final Date renewalWindow = new Date(System.currentTimeMillis() - 20000);
         final Date expiration = new Date(System.currentTimeMillis() - 10000);
         final MasterToken masterToken = new MasterToken(trustedNetCtx, renewalWindow, expiration, 1L, 1L, null, MockPresharedAuthenticationFactory.PSK_ESN, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH);
@@ -608,12 +618,12 @@ public class MessageInputStreamTest {
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, null, masterToken, headerData, peerData);
         
         final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
         mis.close();
     }
     
     @Test
-    public void expiredRenewablePeerMessage() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, IOException, MslException {
+    public void expiredRenewablePeerMessage() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, IOException, MslException, MslEncoderException {
         final Date renewalWindow = new Date(System.currentTimeMillis() - 20000);
         final Date expiration = new Date(System.currentTimeMillis() - 10000);
         final MasterToken masterToken = new MasterToken(p2pCtx, renewalWindow, expiration, 1L, 1L, null, MockPresharedAuthenticationFactory.PSK_ESN, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH);
@@ -622,12 +632,12 @@ public class MessageInputStreamTest {
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, masterToken, headerData, peerData);
         
         final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(p2pCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(p2pCtx, is, KEY_REQUEST_DATA, cryptoContexts);
         mis.close();
     }
     
     @Test
-    public void expiredNotRenewableClientMessage() throws IOException, MslUserAuthException, MslException {
+    public void expiredNotRenewableClientMessage() throws IOException, MslUserAuthException, MslException, MslEncoderException {
         thrown.expect(MslMessageException.class);
         thrown.expectMslError(MslError.MESSAGE_EXPIRED);
         thrown.expectMessageId(MSG_ID);
@@ -642,12 +652,12 @@ public class MessageInputStreamTest {
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, null, masterToken, headerData, peerData);
         
         final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
         mis.close();
     }
     
     @Test
-    public void expiredNoKeyRequestDataClientMessage() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, IOException, MslException {
+    public void expiredNoKeyRequestDataClientMessage() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, IOException, MslException, MslEncoderException {
         thrown.expect(MslMessageException.class);
         thrown.expectMslError(MslError.MESSAGE_EXPIRED);
         thrown.expectMessageId(MSG_ID);
@@ -662,12 +672,12 @@ public class MessageInputStreamTest {
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, null, masterToken, headerData, peerData);
         
         final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
         mis.close();
     }
     
     @Test
-    public void expiredNotRenewableServerMessage() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, JSONException, MslException, IOException {
+    public void expiredNotRenewableServerMessage() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, MslEncoderException, MslException, IOException {
         final MockMslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
         
         // Expired messages received by a trusted network client should not be
@@ -684,19 +694,21 @@ public class MessageInputStreamTest {
         final ICryptoContext cryptoContext = new SessionCryptoContext(ctx, masterToken);
         ctx.getMslStore().setCryptoContext(masterToken, cryptoContext);
         
+        // Generate the input stream. This will encode the message.
+        final InputStream is = generateInputStream(messageHeader, payloads);
+        
         // Change the MSL crypto context so the master token can no longer be
         // verified or decrypted.
         ctx.setMslCryptoContext(ALT_MSL_CRYPTO_CONTEXT);
-        
+
         // Now "receive" the message with a master token that we cannot verify
         // or decrypt, but for which a cached crypto context exists.
-        final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(ctx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(ctx, is, KEY_REQUEST_DATA, cryptoContexts);
         mis.close();
     }
     
     @Test
-    public void expiredNoKeyRequestDataPeerMessage() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, IOException, MslException {
+    public void expiredNoKeyRequestDataPeerMessage() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, IOException, MslException, MslEncoderException {
         thrown.expect(MslMessageException.class);
         thrown.expectMslError(MslError.MESSAGE_EXPIRED);
         thrown.expectMessageId(MSG_ID);
@@ -709,12 +721,12 @@ public class MessageInputStreamTest {
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, masterToken, headerData, peerData);
         
         final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(p2pCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(p2pCtx, is, KEY_REQUEST_DATA, cryptoContexts);
         mis.close();
     }
     
     @Test
-    public void expiredNotRenewablePeerMessage() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, IOException, MslException {
+    public void expiredNotRenewablePeerMessage() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, IOException, MslException, MslEncoderException {
         thrown.expect(MslMessageException.class);
         thrown.expectMslError(MslError.MESSAGE_EXPIRED);
         thrown.expectMessageId(MSG_ID);
@@ -727,12 +739,12 @@ public class MessageInputStreamTest {
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, masterToken, headerData, peerData);
         
         final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(p2pCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(p2pCtx, is, KEY_REQUEST_DATA, cryptoContexts);
         mis.close();
     }
     
     @Test
-    public void handshakeNotRenewable() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, MslUserIdTokenException, IOException, MslException {
+    public void handshakeNotRenewable() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, MslUserIdTokenException, IOException, MslException, MslEncoderException {
         thrown.expect(MslMessageException.class);
         thrown.expectMslError(MslError.HANDSHAKE_DATA_MISSING);
         thrown.expectMessageId(MSG_ID);
@@ -743,12 +755,12 @@ public class MessageInputStreamTest {
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
         
         final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
         mis.close();
     }
     
     @Test
-    public void handshakeMissingKeyRequestData() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, MslUserIdTokenException, IOException, MslException {
+    public void handshakeMissingKeyRequestData() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, MslUserIdTokenException, IOException, MslException, MslEncoderException {
         thrown.expect(MslMessageException.class);
         thrown.expectMslError(MslError.HANDSHAKE_DATA_MISSING);
         thrown.expectMessageId(MSG_ID);
@@ -759,12 +771,12 @@ public class MessageInputStreamTest {
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
         
         final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
         mis.close();
     }
     
     @Test
-    public void nonReplayableNoMasterTokenClientMessage() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, IOException, MslException {
+    public void nonReplayableNoMasterTokenClientMessage() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, IOException, MslException, MslEncoderException {
         thrown.expect(MslMessageException.class);
         thrown.expectMslError(MslError.INCOMPLETE_NONREPLAYABLE_MESSAGE);
         thrown.expectMessageId(MSG_ID);
@@ -775,12 +787,12 @@ public class MessageInputStreamTest {
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
         
         final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
         mis.close();
     }
     
     @Test
-    public void nonReplayableNoMasterTokenPeerMessage() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, IOException, MslException {
+    public void nonReplayableNoMasterTokenPeerMessage() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, IOException, MslException, MslEncoderException {
         thrown.expect(MslMessageException.class);
         thrown.expectMslError(MslError.INCOMPLETE_NONREPLAYABLE_MESSAGE);
         thrown.expectMessageId(MSG_ID);
@@ -791,12 +803,12 @@ public class MessageInputStreamTest {
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, entityAuthData, null, headerData, peerData);
         
         final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(p2pCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(p2pCtx, is, KEY_REQUEST_DATA, cryptoContexts);
         mis.close();
     }
     
     @Test
-    public void nonReplayableIdEqual() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, IOException, MslException {
+    public void nonReplayableIdEqual() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, IOException, MslException, MslEncoderException {
         thrown.expect(MslMessageException.class);
         thrown.expectMslError(MslError.MESSAGE_REPLAYED);
         thrown.expectMessageId(MSG_ID);
@@ -814,12 +826,12 @@ public class MessageInputStreamTest {
         final MessageHeader messageHeader = new MessageHeader(ctx, null, masterToken, headerData, peerData);
 
         final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(ctx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(ctx, is, KEY_REQUEST_DATA, cryptoContexts);
         mis.close();
     }
     
     @Test
-    public void nonReplayableIdSmaller() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, IOException, MslException {
+    public void nonReplayableIdSmaller() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, IOException, MslException, MslEncoderException {
         thrown.expect(MslMessageException.class);
         thrown.expectMslError(MslError.MESSAGE_REPLAYED);
         thrown.expectMessageId(MSG_ID);
@@ -837,12 +849,12 @@ public class MessageInputStreamTest {
         final MessageHeader messageHeader = new MessageHeader(ctx, null, masterToken, headerData, peerData);
 
         final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(ctx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(ctx, is, KEY_REQUEST_DATA, cryptoContexts);
         mis.close();
     }
     
     @Test
-    public void nonReplayableIdOutsideWindow() throws IOException, MslUserAuthException, MslKeyExchangeException, MslException {
+    public void nonReplayableIdOutsideWindow() throws IOException, MslUserAuthException, MslKeyExchangeException, MslException, MslEncoderException {
         final MockMslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
         
         final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, 1L, 1L);
@@ -861,7 +873,7 @@ public class MessageInputStreamTest {
                 final MessageHeader messageHeader = new MessageHeader(ctx, null, masterToken, headerData, peerData);
 
                 final InputStream is = generateInputStream(messageHeader, payloads);
-                mis = new MessageInputStream(ctx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+                mis = new MessageInputStream(ctx, is, KEY_REQUEST_DATA, cryptoContexts);
                 fail(i + ": Non-replayable ID " + nonReplayableId + " accepted with largest non-replayable ID " + largestNonReplayableId);
             } catch (final MslMessageException e) {
                 assertEquals(MslError.MESSAGE_REPLAYED_UNRECOVERABLE, e.getError());
@@ -876,7 +888,7 @@ public class MessageInputStreamTest {
     }
     
     @Test
-    public void nonReplayableIdInsideWindow() throws MslUserAuthException, MslKeyExchangeException, MslException, IOException {
+    public void nonReplayableIdInsideWindow() throws MslUserAuthException, MslKeyExchangeException, MslException, IOException, MslEncoderException {
         final MockMslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
         
         final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, 1L, 1L);
@@ -895,7 +907,7 @@ public class MessageInputStreamTest {
                 final MessageHeader messageHeader = new MessageHeader(ctx, null, masterToken, headerData, peerData);
 
                 final InputStream is = generateInputStream(messageHeader, payloads);
-                mis = new MessageInputStream(ctx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+                mis = new MessageInputStream(ctx, is, KEY_REQUEST_DATA, cryptoContexts);
             } catch (final MslMessageException e) {
                 fail(i + ": Non-replayable ID " + nonReplayableId + " rejected with largest non-replayable ID " + largestNonReplayableId);
             } finally {
@@ -908,7 +920,7 @@ public class MessageInputStreamTest {
     }
     
     @Test
-    public void replayedClientMessage() throws MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, IOException, MslException {
+    public void replayedClientMessage() throws MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, IOException, MslException, MslEncoderException {
         thrown.expect(MslMessageException.class);
         thrown.expectMslError(MslError.MESSAGE_REPLAYED);
         thrown.expectMessageId(MSG_ID);
@@ -925,12 +937,12 @@ public class MessageInputStreamTest {
         final MessageHeader messageHeader = new MessageHeader(ctx, null, masterToken, headerData, peerData);
         
         final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(ctx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(ctx, is, KEY_REQUEST_DATA, cryptoContexts);
         mis.close();
     }
     
     @Test
-    public void replayedPeerMessage() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, IOException, MslException {
+    public void replayedPeerMessage() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, IOException, MslException, MslEncoderException {
         thrown.expect(MslMessageException.class);
         thrown.expectMslError(MslError.MESSAGE_REPLAYED);
         thrown.expectMessageId(MSG_ID);
@@ -947,14 +959,14 @@ public class MessageInputStreamTest {
         final MessageHeader messageHeader = new MessageHeader(ctx, null, masterToken, headerData, peerData);
         
         final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(ctx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(ctx, is, KEY_REQUEST_DATA, cryptoContexts);
         mis.close();
     }
     
     @Test
-    public void errorHeader() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslUserAuthException, MslException, IOException {
+    public void errorHeader() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslUserAuthException, MslException, IOException, MslEncoderException {
         final InputStream is = generateInputStream(ERROR_HEADER, payloads);
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
         
         assertEquals(0, mis.available());
         assertEquals(ERROR_HEADER, mis.getErrorHeader());
@@ -967,9 +979,9 @@ public class MessageInputStreamTest {
     }
     
     @Test(expected = MslInternalException.class)
-    public void readFromError() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslUserAuthException, MslException, IOException {
+    public void readFromError() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslUserAuthException, MslException, IOException, MslEncoderException {
         final InputStream is = generateInputStream(ERROR_HEADER, payloads);
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
         try {
             mis.read(buffer);
         } finally {
@@ -978,23 +990,23 @@ public class MessageInputStreamTest {
     }
     
     @Test
-    public void readFromHandshakeMessage() throws IOException, MslUserAuthException, MslKeyExchangeException, MslUserIdTokenException, MslException {
+    public void readFromHandshakeMessage() throws IOException, MslUserAuthException, MslKeyExchangeException, MslUserIdTokenException, MslException, MslEncoderException {
         final HeaderData headerData = new HeaderData(null, MSG_ID, null, true, true, null, KEY_REQUEST_DATA, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
         
         final InputStream is = generateInputStream(messageHeader, payloads);
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
         final int read = mis.read();
         assertEquals(-1, read);
         mis.close();
     }
     
     @Test
-    public void missingEndOfMessage() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslUserAuthException, MslException, IOException {
+    public void missingEndOfMessage() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslUserAuthException, MslException, IOException, MslEncoderException {
         final InputStream is = generateInputStream(MESSAGE_HEADER, payloads);
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
 
         // If there's nothing left we'll receive end of message anyway.
         assertEquals(-1, mis.read(buffer));
@@ -1003,24 +1015,24 @@ public class MessageInputStreamTest {
     }
     
     @Test
-    public void prematureEndOfMessage() throws MslCryptoException, MslEncodingException, MslException, IOException {
+    public void prematureEndOfMessage() throws MslCryptoException, MslEncodingException, MslException, IOException, MslEncoderException {
         // Payloads after an end of message are ignored.
-        int extraPayloads = MAX_PAYLOAD_CHUNKS / 2;
+        final int extraPayloads = MAX_PAYLOAD_CHUNKS / 2;
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         final ICryptoContext cryptoContext = MESSAGE_HEADER.getCryptoContext();
         for (int i = 0; i < MAX_PAYLOAD_CHUNKS; ++i) {
             final byte[] data = new byte[random.nextInt(MAX_DATA_SIZE) + 1];
             random.nextBytes(data);
             if (i < extraPayloads) {
-                payloads.add(new PayloadChunk(SEQ_NO + i, MSG_ID, (i == extraPayloads - 1), null, data, cryptoContext));
+                payloads.add(new PayloadChunk(trustedNetCtx, SEQ_NO + i, MSG_ID, (i == extraPayloads - 1), null, data, cryptoContext));
                 baos.write(data);
             } else {
-                payloads.add(new PayloadChunk(SEQ_NO + i, MSG_ID, false, null, data, cryptoContext));
+                payloads.add(new PayloadChunk(trustedNetCtx, SEQ_NO + i, MSG_ID, false, null, data, cryptoContext));
             }
         }
         final byte[] appdata = baos.toByteArray();
         final InputStream is = generateInputStream(MESSAGE_HEADER, payloads);
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
 
         // Read everything. We shouldn't get any of the extra payloads.
         assertEquals(appdata.length, mis.read(buffer));
@@ -1030,7 +1042,7 @@ public class MessageInputStreamTest {
     }
     
     @Test
-    public void mismatchedMessageId() throws MslCryptoException, MslEncodingException, MslException, IOException {
+    public void mismatchedMessageId() throws MslCryptoException, MslEncodingException, MslException, IOException, MslEncoderException {
         // Payloads with an incorrect message ID should be skipped.
         int badPayloads = 0;
         long sequenceNumber = SEQ_NO;
@@ -1040,16 +1052,16 @@ public class MessageInputStreamTest {
             final byte[] data = new byte[random.nextInt(MAX_DATA_SIZE) + 1];
             random.nextBytes(data);
             if (random.nextBoolean()) {
-                payloads.add(new PayloadChunk(sequenceNumber++, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext));
+                payloads.add(new PayloadChunk(trustedNetCtx, sequenceNumber++, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext));
                 baos.write(data);
             } else {
-                payloads.add(new PayloadChunk(sequenceNumber, 2 * MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext));
+                payloads.add(new PayloadChunk(trustedNetCtx, sequenceNumber, 2 * MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext));
                 ++badPayloads;
             }
         }
         final byte[] appdata = baos.toByteArray();
         final InputStream is = generateInputStream(MESSAGE_HEADER, payloads);
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
 
         // Read everything. Each bad payload should throw an exception.
         int offset = 0;
@@ -1070,7 +1082,7 @@ public class MessageInputStreamTest {
     }
     
     @Test
-    public void incorrectSequenceNumber() throws MslCryptoException, MslEncodingException, MslException, IOException {
+    public void incorrectSequenceNumber() throws MslCryptoException, MslEncodingException, MslException, IOException, MslEncoderException {
         // Payloads with an incorrect sequence number should be skipped.
         int badPayloads = 0;
         long sequenceNumber = SEQ_NO;
@@ -1080,16 +1092,16 @@ public class MessageInputStreamTest {
             final byte[] data = new byte[random.nextInt(MAX_DATA_SIZE) + 1];
             random.nextBytes(data);
             if (random.nextBoolean()) {
-                payloads.add(new PayloadChunk(sequenceNumber++, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext));
+                payloads.add(new PayloadChunk(trustedNetCtx, sequenceNumber++, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext));
                 baos.write(data);
             } else {
-                payloads.add(new PayloadChunk(2 * sequenceNumber + i, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext));
+                payloads.add(new PayloadChunk(trustedNetCtx, 2 * sequenceNumber + i, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext));
                 ++badPayloads;
             }
         }
         final byte[] appdata = baos.toByteArray();
         final InputStream is = generateInputStream(MESSAGE_HEADER, payloads);
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
 
         // Read everything. Each bad payload should throw an exception.
         int offset = 0;
@@ -1110,18 +1122,18 @@ public class MessageInputStreamTest {
     }
     
     @Test
-    public void markReset() throws MslEncodingException, MslCryptoException, MslException, IOException {
+    public void markReset() throws MslEncodingException, MslCryptoException, MslException, IOException, MslEncoderException {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         final ICryptoContext cryptoContext = MESSAGE_HEADER.getCryptoContext();
         for (int i = 0; i < MAX_PAYLOAD_CHUNKS; ++i) {
             final byte[] data = new byte[random.nextInt(MAX_DATA_SIZE) + 1];
             random.nextBytes(data);
-            payloads.add(new PayloadChunk(SEQ_NO + i, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext));
+            payloads.add(new PayloadChunk(trustedNetCtx, SEQ_NO + i, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext));
             baos.write(data);
         }
         final byte[] appdata = baos.toByteArray();
         final InputStream is = generateInputStream(MESSAGE_HEADER, payloads);
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
 
         // Mark and reset to the beginning.
         final int beginningOffset = 0;
@@ -1166,18 +1178,18 @@ public class MessageInputStreamTest {
     }
     
     @Test
-    public void markResetShortMark() throws IOException, MslEncodingException, MslEntityAuthException, MslUserAuthException, MslException {
+    public void markResetShortMark() throws IOException, MslEncodingException, MslEntityAuthException, MslUserAuthException, MslException, MslEncoderException {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         final ICryptoContext cryptoContext = MESSAGE_HEADER.getCryptoContext();
         for (int i = 0; i < MAX_PAYLOAD_CHUNKS; ++i) {
             final byte[] data = new byte[random.nextInt(MAX_DATA_SIZE) + 1];
             random.nextBytes(data);
-            payloads.add(new PayloadChunk(SEQ_NO + i, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext));
+            payloads.add(new PayloadChunk(trustedNetCtx, SEQ_NO + i, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext));
             baos.write(data);
         }
         final byte[] appdata = baos.toByteArray();
         final InputStream is = generateInputStream(MESSAGE_HEADER, payloads);
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
 
         // Mark and reset to the beginning.
         final int beginningOffset = 0;
@@ -1220,15 +1232,15 @@ public class MessageInputStreamTest {
     }
     
     @Test
-    public void available() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslUserAuthException, MslException, IOException {
+    public void available() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslUserAuthException, MslException, IOException, MslEncoderException {
         final ICryptoContext cryptoContext = MESSAGE_HEADER.getCryptoContext();
         for (int i = 0; i < MAX_PAYLOAD_CHUNKS; ++i) {
             final byte[] data = new byte[random.nextInt(MAX_DATA_SIZE) + 1];
             random.nextBytes(data);
-            payloads.add(new PayloadChunk(SEQ_NO + i, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext));
+            payloads.add(new PayloadChunk(trustedNetCtx, SEQ_NO + i, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext));
         }
         final InputStream is = generateInputStream(MESSAGE_HEADER, payloads);
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
 
         // The remainder of a payload should be available, once the payload is
         // processed.
@@ -1254,18 +1266,18 @@ public class MessageInputStreamTest {
     }
     
     @Test
-    public void skipAvailable() throws MslCryptoException, MslEncodingException, MslException, IOException {
+    public void skipAvailable() throws MslCryptoException, MslEncodingException, MslException, IOException, MslEncoderException {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         final ICryptoContext cryptoContext = MESSAGE_HEADER.getCryptoContext();
         for (int i = 0; i < MAX_PAYLOAD_CHUNKS; ++i) {
             final byte[] data = new byte[random.nextInt(MAX_DATA_SIZE) + 1];
             random.nextBytes(data);
-            payloads.add(new PayloadChunk(SEQ_NO + i, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext));
+            payloads.add(new PayloadChunk(trustedNetCtx, SEQ_NO + i, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext));
             baos.write(data);
         }
         final byte[] appdata = baos.toByteArray();
         final InputStream is = generateInputStream(MESSAGE_HEADER, payloads);
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
 
         // Mark and then skip some data.
         mis.mark(appdata.length);
@@ -1322,13 +1334,13 @@ public class MessageInputStreamTest {
     }
     
     @Test
-    public void largePayload() throws MslEncodingException, MslException, IOException {
+    public void largePayload() throws MslEncodingException, MslException, IOException, MslEncoderException {
         final ICryptoContext cryptoContext = MESSAGE_HEADER.getCryptoContext();
         final byte[] data = new byte[10 * 1024 * 1024];
         random.nextBytes(data);
-        payloads.add(new PayloadChunk(SEQ_NO, MSG_ID, true, null, data, cryptoContext));
+        payloads.add(new PayloadChunk(trustedNetCtx, SEQ_NO, MSG_ID, true, null, data, cryptoContext));
         final InputStream is = generateInputStream(MESSAGE_HEADER, payloads);
-        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, MslConstants.DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
 
         final byte[] copy = new byte[data.length];
         assertEquals(copy.length, mis.read(copy));

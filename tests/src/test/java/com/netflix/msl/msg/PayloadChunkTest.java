@@ -33,8 +33,6 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -54,9 +52,14 @@ import com.netflix.msl.crypto.SymmetricCryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.io.LZWInputStream;
 import com.netflix.msl.io.LZWOutputStreamTest;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.test.ExpectedMslException;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslContext;
+import com.netflix.msl.util.MslTestUtils;
 
 /**
  * Payload chunk unit tests.
@@ -64,6 +67,9 @@ import com.netflix.msl.util.MslContext;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class PayloadChunkTest {
+	/** MSL encoder format. */
+	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
+
     /** RAW data file. */
     private static final String DATAFILE = "pg1112.txt";
     
@@ -101,11 +107,11 @@ public class PayloadChunkTest {
                     final GZIPInputStream gzis = new GZIPInputStream(bais);
                     final byte[] buffer = new byte[data.length];
                     final ByteArrayOutputStream baos = new ByteArrayOutputStream(data.length);
-                    do {
+                    while (buffer.length > 0) {
                         final int bytesRead = gzis.read(buffer);
                         if (bytesRead == -1) break;
                         baos.write(buffer, 0, bytesRead);
-                    } while (true);
+                    }
                     return baos.toByteArray();
                 }
                 case LZW:
@@ -115,11 +121,11 @@ public class PayloadChunkTest {
                     try {
                         final byte[] buffer = new byte[data.length];
                         final ByteArrayOutputStream baos = new ByteArrayOutputStream(data.length);
-                        do {
+                        while (buffer.length > 0) {
                             final int bytesRead = lzwis.read(buffer);
                             if (bytesRead == -1) break;
                             baos.write(buffer, 0, bytesRead);
-                        } while (true);
+                        }
                         return baos.toByteArray();
                     } finally {
                         lzwis.close();
@@ -139,6 +145,8 @@ public class PayloadChunkTest {
     
     /** MSL context. */
     private static MslContext ctx;
+    /** MSL encoder factory. */
+    private static MslEncoderFactory encoder;
     /** Random. */
     private static final Random random = new Random();
     
@@ -157,6 +165,7 @@ public class PayloadChunkTest {
     @BeforeClass
     public static void setup() throws MslEncodingException, MslCryptoException, IOException {
         ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
+        encoder = ctx.getMslEncoderFactory();
 
         final byte[] encryptionBytes = new byte[16];
         final byte[] hmacBytes = new byte[32];
@@ -186,172 +195,176 @@ public class PayloadChunkTest {
     @AfterClass
     public static void teardown() {
         CRYPTO_CONTEXT = null;
+        encoder = null;
         ctx = null;
     }
 
     @Test
-    public void ctors() throws MslEncodingException, MslCryptoException, MslException, JSONException {
-        final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT);
+    public void ctors() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
+        final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT);
         assertEquals(END_OF_MSG, chunk.isEndOfMessage());
         assertArrayEquals(DATA, chunk.getData());
         assertNull(chunk.getCompressionAlgo());
         assertEquals(MSG_ID, chunk.getMessageId());
         assertEquals(SEQ_NO, chunk.getSequenceNumber());
-        final String jsonString = chunk.toJSONString();
-        assertNotNull(jsonString);
+        final byte[] encode = chunk.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(encode);
 
-        final PayloadChunk joChunk = new PayloadChunk(new JSONObject(jsonString), CRYPTO_CONTEXT);
-        assertEquals(chunk.isEndOfMessage(), joChunk.isEndOfMessage());
-        assertArrayEquals(chunk.getData(), joChunk.getData());
-        assertEquals(chunk.getMessageId(), joChunk.getMessageId());
-        assertEquals(chunk.getSequenceNumber(), joChunk.getSequenceNumber());
-        final String joJsonString = joChunk.toJSONString();
-        assertNotNull(joJsonString);
-        assertEquals(jsonString, joJsonString);
+        final PayloadChunk moChunk = new PayloadChunk(ctx, encoder.parseObject(encode), CRYPTO_CONTEXT);
+        assertEquals(chunk.isEndOfMessage(), moChunk.isEndOfMessage());
+        assertArrayEquals(chunk.getData(), moChunk.getData());
+        assertEquals(chunk.getMessageId(), moChunk.getMessageId());
+        assertEquals(chunk.getSequenceNumber(), moChunk.getSequenceNumber());
+        final byte[] moEncode = moChunk.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
+        // The two payload chunk encodings will not be equal because the
+        // ciphertext and signature will be generated on-demand.
     }
     
     @Test(expected = MslInternalException.class)
     public void negativeSequenceNumberCtor() throws MslEncodingException, MslCryptoException, MslException {
         final long sequenceNumber = -1;
-        new PayloadChunk(sequenceNumber, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT);
+        new PayloadChunk(ctx, sequenceNumber, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT);
     }
     
     @Test(expected = MslInternalException.class)
     public void tooLargeSequenceNumberCtor() throws MslEncodingException, MslCryptoException, MslException {
         final long sequenceNumber = MslConstants.MAX_LONG_VALUE + 1;
-        new PayloadChunk(sequenceNumber, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT);
+        new PayloadChunk(ctx, sequenceNumber, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT);
     }
     
     @Test(expected = MslInternalException.class)
     public void negativeMessageIdCtor() throws MslEncodingException, MslCryptoException, MslException {
         final long messageId = -1;
-        new PayloadChunk(SEQ_NO, messageId, END_OF_MSG, null, DATA, CRYPTO_CONTEXT);
+        new PayloadChunk(ctx, SEQ_NO, messageId, END_OF_MSG, null, DATA, CRYPTO_CONTEXT);
     }
     
     @Test(expected = MslInternalException.class)
     public void tooLargeMessageIdCtor() throws MslEncodingException, MslCryptoException, MslException {
         final long messageId = MslConstants.MAX_LONG_VALUE + 1;
-        new PayloadChunk(SEQ_NO, messageId, END_OF_MSG, null, DATA, CRYPTO_CONTEXT);
+        new PayloadChunk(ctx, SEQ_NO, messageId, END_OF_MSG, null, DATA, CRYPTO_CONTEXT);
     }
     
     @Test
-    public void jsonString() throws MslEncodingException, MslException, JSONException {
-        final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT);
-        final String jsonString = chunk.toJSONString();
-        assertNotNull(jsonString);
+    public void mslObject() throws MslEncodingException, MslException, MslEncoderException {
+        final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT);
+        final byte[] encode = chunk.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(encode);
         
-        final JSONObject jo = new JSONObject(jsonString);
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_PAYLOAD));
-        final byte[] signature = DatatypeConverter.parseBase64Binary(jo.getString(KEY_SIGNATURE));
-        assertTrue(CRYPTO_CONTEXT.verify(ciphertext, signature));
-        final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext);
+        final MslObject mo = encoder.parseObject(encode);
+        final byte[] ciphertext = mo.getBytes(KEY_PAYLOAD);
+        final byte[] signature = mo.getBytes(KEY_SIGNATURE);
+        assertTrue(CRYPTO_CONTEXT.verify(ciphertext, signature, encoder));
+        final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext, encoder);
         
-        final JSONObject payloadJo = new JSONObject(new String(payload, MslConstants.DEFAULT_CHARSET));
+        final MslObject payloadJo = encoder.parseObject(payload);
         assertEquals(SEQ_NO, payloadJo.getLong(KEY_SEQUENCE_NUMBER));
         assertEquals(MSG_ID, payloadJo.getLong(KEY_MESSAGE_ID));
         assertEquals(END_OF_MSG, payloadJo.optBoolean(KEY_END_OF_MESSAGE));
         assertFalse(payloadJo.has(KEY_COMPRESSION_ALGORITHM));
-        assertArrayEquals(DATA, DatatypeConverter.parseBase64Binary(payloadJo.getString(KEY_DATA)));
+        assertArrayEquals(DATA, payloadJo.getBytes(KEY_DATA));
     }
     
     @Test
-    public void gzipCtors() throws MslEncodingException, MslCryptoException, MslException, JSONException {
-        final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
+    public void gzipCtors() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
+        final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
         assertEquals(END_OF_MSG, chunk.isEndOfMessage());
         assertArrayEquals(DATA, chunk.getData());
         assertEquals(CompressionAlgorithm.GZIP, chunk.getCompressionAlgo());
         assertEquals(MSG_ID, chunk.getMessageId());
         assertEquals(SEQ_NO, chunk.getSequenceNumber());
-        final String jsonString = chunk.toJSONString();
-        assertNotNull(jsonString);
+        final byte[] encode = chunk.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(encode);
 
-        final PayloadChunk joChunk = new PayloadChunk(new JSONObject(jsonString), CRYPTO_CONTEXT);
-        assertEquals(chunk.isEndOfMessage(), joChunk.isEndOfMessage());
-        assertArrayEquals(chunk.getData(), joChunk.getData());
-        assertEquals(chunk.getMessageId(), joChunk.getMessageId());
-        assertEquals(chunk.getSequenceNumber(), joChunk.getSequenceNumber());
-        final String joJsonString = joChunk.toJSONString();
-        assertNotNull(joJsonString);
-        assertEquals(jsonString, joJsonString);
+        final PayloadChunk moChunk = new PayloadChunk(ctx, encoder.parseObject(encode), CRYPTO_CONTEXT);
+        assertEquals(chunk.isEndOfMessage(), moChunk.isEndOfMessage());
+        assertArrayEquals(chunk.getData(), moChunk.getData());
+        assertEquals(chunk.getMessageId(), moChunk.getMessageId());
+        assertEquals(chunk.getSequenceNumber(), moChunk.getSequenceNumber());
+        final byte[] moEncode = moChunk.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
+        // The two payload chunk encodings will not be equal because the
+        // ciphertext and signature will be generated on-demand.
     }
     
     @Test
-    public void gzipJsonString() throws JSONException, MslEncodingException, MslCryptoException, MslException {
-        final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
-        final String jsonString = chunk.toJSONString();
-        assertNotNull(jsonString);
+    public void gzipMslObject() throws MslEncoderException, MslEncodingException, MslCryptoException, MslException {
+        final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
+        final byte[] encode = chunk.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(encode);
         
-        final JSONObject jo = new JSONObject(jsonString);
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_PAYLOAD));
-        final byte[] signature = DatatypeConverter.parseBase64Binary(jo.getString(KEY_SIGNATURE));
-        assertTrue(CRYPTO_CONTEXT.verify(ciphertext, signature));
-        final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext);
+        final MslObject mo = encoder.parseObject(encode);
+        final byte[] ciphertext = mo.getBytes(KEY_PAYLOAD);
+        final byte[] signature = mo.getBytes(KEY_SIGNATURE);
+        assertTrue(CRYPTO_CONTEXT.verify(ciphertext, signature, encoder));
+        final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext, encoder);
         
-        final JSONObject payloadJo = new JSONObject(new String(payload, MslConstants.DEFAULT_CHARSET));
+        final MslObject payloadJo = encoder.parseObject(payload);
         assertEquals(SEQ_NO, payloadJo.getLong(KEY_SEQUENCE_NUMBER));
         assertEquals(MSG_ID, payloadJo.getLong(KEY_MESSAGE_ID));
         assertEquals(END_OF_MSG, payloadJo.optBoolean(KEY_END_OF_MESSAGE));
         assertEquals(CompressionAlgorithm.GZIP.toString(), payloadJo.getString(KEY_COMPRESSION_ALGORITHM));
-        final byte[] gzipped = DatatypeConverter.parseBase64Binary(payloadJo.getString(KEY_DATA));
+        final byte[] gzipped = payloadJo.getBytes(KEY_DATA);
         final byte[] plaintext = uncompress(CompressionAlgorithm.GZIP, gzipped);
         assertArrayEquals(DATA, plaintext);
     }
     
     @Test
-    public void lzwCtors() throws MslEncodingException, MslCryptoException, MslException, JSONException {
-        final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.LZW, DATA, CRYPTO_CONTEXT);
+    public void lzwCtors() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
+        final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.LZW, DATA, CRYPTO_CONTEXT);
         assertEquals(END_OF_MSG, chunk.isEndOfMessage());
         assertArrayEquals(DATA, chunk.getData());
         assertEquals(CompressionAlgorithm.LZW, chunk.getCompressionAlgo());
         assertEquals(MSG_ID, chunk.getMessageId());
         assertEquals(SEQ_NO, chunk.getSequenceNumber());
-        final String jsonString = chunk.toJSONString();
-        assertNotNull(jsonString);
+        final byte[] encode = chunk.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(encode);
 
-        final PayloadChunk joChunk = new PayloadChunk(new JSONObject(jsonString), CRYPTO_CONTEXT);
-        assertEquals(chunk.isEndOfMessage(), joChunk.isEndOfMessage());
-        assertArrayEquals(chunk.getData(), joChunk.getData());
-        assertEquals(chunk.getMessageId(), joChunk.getMessageId());
-        assertEquals(chunk.getSequenceNumber(), joChunk.getSequenceNumber());
-        final String joJsonString = joChunk.toJSONString();
-        assertNotNull(joJsonString);
-        assertEquals(jsonString, joJsonString);
+        final PayloadChunk moChunk = new PayloadChunk(ctx, encoder.parseObject(encode), CRYPTO_CONTEXT);
+        assertEquals(chunk.isEndOfMessage(), moChunk.isEndOfMessage());
+        assertArrayEquals(chunk.getData(), moChunk.getData());
+        assertEquals(chunk.getMessageId(), moChunk.getMessageId());
+        assertEquals(chunk.getSequenceNumber(), moChunk.getSequenceNumber());
+        final byte[] moEncode = moChunk.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
+        // The two payload chunk encodings will not be equal because the
+        // ciphertext and signature will be generated on-demand.
     }
     
     @Test
-    public void lzwJsonString() throws JSONException, MslEncodingException, MslCryptoException, MslException {
-        final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.LZW, DATA, CRYPTO_CONTEXT);
-        final String jsonString = chunk.toJSONString();
-        assertNotNull(jsonString);
+    public void lzwMslObject() throws MslEncoderException, MslEncodingException, MslCryptoException, MslException {
+        final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.LZW, DATA, CRYPTO_CONTEXT);
+        final byte[] encode = chunk.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(encode);
         
-        final JSONObject jo = new JSONObject(jsonString);
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_PAYLOAD));
-        final byte[] signature = DatatypeConverter.parseBase64Binary(jo.getString(KEY_SIGNATURE));
-        assertTrue(CRYPTO_CONTEXT.verify(ciphertext, signature));
-        final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext);
+        final MslObject mo = encoder.parseObject(encode);
+        final byte[] ciphertext = mo.getBytes(KEY_PAYLOAD);
+        final byte[] signature = mo.getBytes(KEY_SIGNATURE);
+        assertTrue(CRYPTO_CONTEXT.verify(ciphertext, signature, encoder));
+        final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext, encoder);
         
-        final JSONObject payloadJo = new JSONObject(new String(payload, MslConstants.DEFAULT_CHARSET));
+        final MslObject payloadJo = encoder.parseObject(payload);
         assertEquals(SEQ_NO, payloadJo.getLong(KEY_SEQUENCE_NUMBER));
         assertEquals(MSG_ID, payloadJo.getLong(KEY_MESSAGE_ID));
         assertEquals(END_OF_MSG, payloadJo.optBoolean(KEY_END_OF_MESSAGE));
         assertEquals(CompressionAlgorithm.LZW.toString(), payloadJo.getString(KEY_COMPRESSION_ALGORITHM));
-        final byte[] gzipped = DatatypeConverter.parseBase64Binary(payloadJo.getString(KEY_DATA));
+        final byte[] gzipped = payloadJo.getBytes(KEY_DATA);
         final byte[] plaintext = uncompress(CompressionAlgorithm.LZW, gzipped);
         assertArrayEquals(DATA, plaintext);
     }
     
     @Test(expected = MslCryptoException.class)
-    public void mismatchedCryptoContextId() throws MslEncodingException, MslCryptoException, MslException, JSONException {
+    public void mismatchedCryptoContextId() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         final ICryptoContext cryptoContextA = new SymmetricCryptoContext(ctx, CRYPTO_CONTEXT_ID + "A", ENCRYPTION_KEY, HMAC_KEY, null);
         final ICryptoContext cryptoContextB = new SymmetricCryptoContext(ctx, CRYPTO_CONTEXT_ID + "B", ENCRYPTION_KEY, HMAC_KEY, null);
         
-        final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, cryptoContextA);
-        final JSONObject jo = new JSONObject(chunk.toJSONString());
-        new PayloadChunk(jo, cryptoContextB);
+        final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, cryptoContextA);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, chunk);
+        new PayloadChunk(ctx, mo, cryptoContextB);
     }
     
     @Test(expected = MslCryptoException.class)
-    public void mismatchedCryptoContextEncryptionKey() throws MslEncodingException, MslCryptoException, MslException, JSONException {
+    public void mismatchedCryptoContextEncryptionKey() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         final byte[] encryptionBytesA = new byte[16];
         final byte[] encryptionBytesB = new byte[16];
         random.nextBytes(encryptionBytesA);
@@ -362,19 +375,19 @@ public class PayloadChunkTest {
         final ICryptoContext cryptoContextB = new SymmetricCryptoContext(ctx, CRYPTO_CONTEXT_ID, encryptionKeyB, HMAC_KEY, null);
         
         // Mismatched encryption keys will just result in the wrong data.
-        final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, cryptoContextA);
-        final JSONObject jo = new JSONObject(chunk.toJSONString());
+        final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, cryptoContextA);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, chunk);
         // Sometimes decryption will succeed so check for a crypto exception
         // or encoding exception. Both are OK.
         try {
-            new PayloadChunk(jo, cryptoContextB);
+            new PayloadChunk(ctx, mo, cryptoContextB);
         } catch (final MslEncodingException e) {
             throw new MslCryptoException(MslError.DECRYPT_ERROR, e);
         }
     }
     
     @Test
-    public void mismatchedCryptoContextSignKey() throws MslEncodingException, MslCryptoException, MslException, JSONException {
+    public void mismatchedCryptoContextSignKey() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.PAYLOAD_VERIFICATION_FAILED);
 
@@ -387,408 +400,408 @@ public class PayloadChunkTest {
         final ICryptoContext cryptoContextA = new SymmetricCryptoContext(ctx, CRYPTO_CONTEXT_ID, ENCRYPTION_KEY, hmacKeyA, null);
         final ICryptoContext cryptoContextB = new SymmetricCryptoContext(ctx, CRYPTO_CONTEXT_ID, ENCRYPTION_KEY, hmacKeyB, null);
         
-        final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, cryptoContextA);
-        final JSONObject jo = new JSONObject(chunk.toJSONString());
-        new PayloadChunk(jo, cryptoContextB);
+        final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, cryptoContextA);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, chunk);
+        new PayloadChunk(ctx, mo, cryptoContextB);
     }
     
     @Test
-    public void incorrectSignature() throws MslEncodingException, MslCryptoException, MslException, JSONException {
+    public void incorrectSignature() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.PAYLOAD_VERIFICATION_FAILED);
 
-        final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
-        final JSONObject jo = new JSONObject(chunk.toJSONString());
+        final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, chunk);
         
         final byte[] signature = new byte[32];
         random.nextBytes(signature);
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        mo.put(KEY_SIGNATURE, signature);
         
-        new PayloadChunk(jo, CRYPTO_CONTEXT);
+        new PayloadChunk(ctx, mo, CRYPTO_CONTEXT);
     }
     
     @Test
-    public void missingPayload() throws MslEncodingException, MslCryptoException, MslException, JSONException {
+    public void missingPayload() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
-        final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
-        final JSONObject jo = new JSONObject(chunk.toJSONString());
+        final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, chunk);
         
-        assertNotNull(jo.remove(KEY_PAYLOAD));
+        assertNotNull(mo.remove(KEY_PAYLOAD));
         
-        new PayloadChunk(jo, CRYPTO_CONTEXT);
+        new PayloadChunk(ctx, mo, CRYPTO_CONTEXT);
     }
     
     @Test
-    public void invalidPayload() throws MslEncodingException, MslCryptoException, MslException, JSONException {
+    public void invalidPayload() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.PAYLOAD_VERIFICATION_FAILED);
 
-        final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
-        final JSONObject jo = new JSONObject(chunk.toJSONString());
+        final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, chunk);
 
-        jo.put(KEY_PAYLOAD, "x");
+        mo.put(KEY_PAYLOAD, "x");
 
-        new PayloadChunk(jo, CRYPTO_CONTEXT);
+        new PayloadChunk(ctx, mo, CRYPTO_CONTEXT);
     }
     
     @Test(expected = MslCryptoException.class)
-    public void corruptPayload() throws JSONException, MslEncodingException, MslCryptoException, MslException {
-        final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
-        final JSONObject jo = new JSONObject(chunk.toJSONString());
+    public void corruptPayload() throws MslEncoderException, MslEncodingException, MslCryptoException, MslException {
+        final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, chunk);
 
         final byte[] ciphertext = new byte[32];
         random.nextBytes(ciphertext);
-        jo.put(KEY_PAYLOAD, DatatypeConverter.printBase64Binary(ciphertext));
-        final byte[] signature = CRYPTO_CONTEXT.sign(ciphertext);
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        mo.put(KEY_PAYLOAD, ciphertext);
+        final byte[] signature = CRYPTO_CONTEXT.sign(ciphertext, encoder, ENCODER_FORMAT);
+        mo.put(KEY_SIGNATURE, signature);
 
-        new PayloadChunk(jo, CRYPTO_CONTEXT);
+        new PayloadChunk(ctx, mo, CRYPTO_CONTEXT);
     }
     
     @Test
-    public void emptyPayloadEndOfMessage() throws JSONException, MslEncodingException, MslCryptoException, MslException {
+    public void emptyPayloadEndOfMessage() throws MslEncoderException, MslEncodingException, MslCryptoException, MslException {
         final byte[] data = new byte[0];
-        final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, data, CRYPTO_CONTEXT);
-        final JSONObject jo = new JSONObject(chunk.toJSONString());
+        final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, data, CRYPTO_CONTEXT);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, chunk);
         
-        final PayloadChunk joChunk = new PayloadChunk(jo, CRYPTO_CONTEXT);
-        assertEquals(0, joChunk.getData().length);
+        final PayloadChunk moChunk = new PayloadChunk(ctx, mo, CRYPTO_CONTEXT);
+        assertEquals(0, moChunk.getData().length);
     }
     
     @Test
-    public void missingSequenceNumber() throws MslEncodingException, MslCryptoException, MslException, JSONException {
+    public void missingSequenceNumber() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
-        final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
-        final JSONObject jo = new JSONObject(chunk.toJSONString());
+        final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, chunk);
 
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_PAYLOAD));
-        final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext);
-        final JSONObject payloadJo = new JSONObject(new String(payload, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = mo.getBytes(KEY_PAYLOAD);
+        final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext, encoder);
+        final MslObject payloadJo = encoder.parseObject(payload);
         
         assertNotNull(payloadJo.remove(KEY_SEQUENCE_NUMBER));
 
         final byte[] plaintext = payloadJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext);
-        final byte[] signature = CRYPTO_CONTEXT.sign(newPayload);
-        jo.put(KEY_PAYLOAD, DatatypeConverter.printBase64Binary(newPayload));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT);
+        final byte[] signature = CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT);
+        mo.put(KEY_PAYLOAD, newPayload);
+        mo.put(KEY_SIGNATURE, signature);
         
-        new PayloadChunk(jo, CRYPTO_CONTEXT);
+        new PayloadChunk(ctx, mo, CRYPTO_CONTEXT);
     }
     
     @Test
-    public void invalidSequenceNumber() throws MslEncodingException, MslCryptoException, MslException, JSONException {
+    public void invalidSequenceNumber() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
-        final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
-        final JSONObject jo = new JSONObject(chunk.toJSONString());
+        final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, chunk);
 
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_PAYLOAD));
-        final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext);
-        final JSONObject payloadJo = new JSONObject(new String(payload, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = mo.getBytes(KEY_PAYLOAD);
+        final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext, encoder);
+        final MslObject payloadJo = encoder.parseObject(payload);
         
         payloadJo.put(KEY_SEQUENCE_NUMBER, "x");
         
         final byte[] plaintext = payloadJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext);
-        final byte[] signature = CRYPTO_CONTEXT.sign(newPayload);
-        jo.put(KEY_PAYLOAD, DatatypeConverter.printBase64Binary(newPayload));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT);
+        final byte[] signature = CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT);
+        mo.put(KEY_PAYLOAD, newPayload);
+        mo.put(KEY_SIGNATURE, signature);
         
-        new PayloadChunk(jo, CRYPTO_CONTEXT);
+        new PayloadChunk(ctx, mo, CRYPTO_CONTEXT);
     }
     
     @Test
-    public void negativeSequenceNumber() throws MslEncodingException, MslCryptoException, MslException, JSONException {
+    public void negativeSequenceNumber() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         thrown.expect(MslException.class);
         thrown.expectMslError(MslError.PAYLOAD_SEQUENCE_NUMBER_OUT_OF_RANGE);
 
-        final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
-        final JSONObject jo = new JSONObject(chunk.toJSONString());
+        final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, chunk);
 
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_PAYLOAD));
-        final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext);
-        final JSONObject payloadJo = new JSONObject(new String(payload, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = mo.getBytes(KEY_PAYLOAD);
+        final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext, encoder);
+        final MslObject payloadJo = encoder.parseObject(payload);
         
         payloadJo.put(KEY_SEQUENCE_NUMBER, -1);
         
         final byte[] plaintext = payloadJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext);
-        final byte[] signature = CRYPTO_CONTEXT.sign(newPayload);
-        jo.put(KEY_PAYLOAD, DatatypeConverter.printBase64Binary(newPayload));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT);
+        final byte[] signature = CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT);
+        mo.put(KEY_PAYLOAD, newPayload);
+        mo.put(KEY_SIGNATURE, signature);
         
-        new PayloadChunk(jo, CRYPTO_CONTEXT);
+        new PayloadChunk(ctx, mo, CRYPTO_CONTEXT);
     }
     
     @Test
-    public void tooLargeSequenceNumber() throws MslEncodingException, MslCryptoException, MslException, JSONException {
+    public void tooLargeSequenceNumber() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         thrown.expect(MslException.class);
         thrown.expectMslError(MslError.PAYLOAD_SEQUENCE_NUMBER_OUT_OF_RANGE);
 
-        final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
-        final JSONObject jo = new JSONObject(chunk.toJSONString());
+        final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, chunk);
 
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_PAYLOAD));
-        final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext);
-        final JSONObject payloadJo = new JSONObject(new String(payload, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = mo.getBytes(KEY_PAYLOAD);
+        final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext, encoder);
+        final MslObject payloadJo = encoder.parseObject(payload);
         
         payloadJo.put(KEY_SEQUENCE_NUMBER, MslConstants.MAX_LONG_VALUE + 1);
         
         final byte[] plaintext = payloadJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext);
-        final byte[] signature = CRYPTO_CONTEXT.sign(newPayload);
-        jo.put(KEY_PAYLOAD, DatatypeConverter.printBase64Binary(newPayload));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT);
+        final byte[] signature = CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT);
+        mo.put(KEY_PAYLOAD, newPayload);
+        mo.put(KEY_SIGNATURE, signature);
         
-        new PayloadChunk(jo, CRYPTO_CONTEXT);
+        new PayloadChunk(ctx, mo, CRYPTO_CONTEXT);
     }
     
     @Test
-    public void missingMessageId() throws MslEncodingException, MslCryptoException, MslException, JSONException {
+    public void missingMessageId() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
-        final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
-        final JSONObject jo = new JSONObject(chunk.toJSONString());
+        final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, chunk);
 
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_PAYLOAD));
-        final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext);
-        final JSONObject payloadJo = new JSONObject(new String(payload, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = mo.getBytes(KEY_PAYLOAD);
+        final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext, encoder);
+        final MslObject payloadJo = encoder.parseObject(payload);
         
         assertNotNull(payloadJo.remove(KEY_MESSAGE_ID));
 
         final byte[] plaintext = payloadJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext);
-        final byte[] signature = CRYPTO_CONTEXT.sign(newPayload);
-        jo.put(KEY_PAYLOAD, DatatypeConverter.printBase64Binary(newPayload));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT);
+        final byte[] signature = CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT);
+        mo.put(KEY_PAYLOAD, newPayload);
+        mo.put(KEY_SIGNATURE, signature);
         
-        new PayloadChunk(jo, CRYPTO_CONTEXT);
+        new PayloadChunk(ctx, mo, CRYPTO_CONTEXT);
     }
     
     @Test
-    public void invalidMessageId() throws JSONException, MslEncodingException, MslCryptoException, MslException {
+    public void invalidMessageId() throws MslEncoderException, MslEncodingException, MslCryptoException, MslException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
-        final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
-        final JSONObject jo = new JSONObject(chunk.toJSONString());
+        final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, chunk);
 
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_PAYLOAD));
-        final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext);
-        final JSONObject payloadJo = new JSONObject(new String(payload, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = mo.getBytes(KEY_PAYLOAD);
+        final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext, encoder);
+        final MslObject payloadJo = encoder.parseObject(payload);
         
         payloadJo.put(KEY_MESSAGE_ID, "x");
 
         final byte[] plaintext = payloadJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext);
-        final byte[] signature = CRYPTO_CONTEXT.sign(newPayload);
-        jo.put(KEY_PAYLOAD, DatatypeConverter.printBase64Binary(newPayload));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT);
+        final byte[] signature = CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT);
+        mo.put(KEY_PAYLOAD, newPayload);
+        mo.put(KEY_SIGNATURE, signature);
         
-        new PayloadChunk(jo, CRYPTO_CONTEXT);
+        new PayloadChunk(ctx, mo, CRYPTO_CONTEXT);
     }
     
     @Test
-    public void invalidEndOfMessage() throws JSONException, MslEncodingException, MslCryptoException, MslException {
+    public void invalidEndOfMessage() throws MslEncoderException, MslEncodingException, MslCryptoException, MslException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
-        final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
-        final JSONObject jo = new JSONObject(chunk.toJSONString());
+        final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, chunk);
 
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_PAYLOAD));
-        final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext);
-        final JSONObject payloadJo = new JSONObject(new String(payload, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = mo.getBytes(KEY_PAYLOAD);
+        final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext, encoder);
+        final MslObject payloadJo = encoder.parseObject(payload);
         
         payloadJo.put(KEY_END_OF_MESSAGE, "x");
 
         final byte[] plaintext = payloadJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext);
-        final byte[] signature = CRYPTO_CONTEXT.sign(newPayload);
-        jo.put(KEY_PAYLOAD, DatatypeConverter.printBase64Binary(newPayload));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT);
+        final byte[] signature = CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT);
+        mo.put(KEY_PAYLOAD, newPayload);
+        mo.put(KEY_SIGNATURE, signature);
         
-        new PayloadChunk(jo, CRYPTO_CONTEXT);
+        new PayloadChunk(ctx, mo, CRYPTO_CONTEXT);
     }
     
     @Test
-    public void invalidCompressionAlgorithm() throws MslEncodingException, MslCryptoException, MslException, JSONException {
+    public void invalidCompressionAlgorithm() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         thrown.expect(MslMessageException.class);
         thrown.expectMslError(MslError.UNIDENTIFIED_COMPRESSION);
 
-        final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
-        final JSONObject jo = new JSONObject(chunk.toJSONString());
+        final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, chunk);
 
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_PAYLOAD));
-        final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext);
-        final JSONObject payloadJo = new JSONObject(new String(payload, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = mo.getBytes(KEY_PAYLOAD);
+        final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext, encoder);
+        final MslObject payloadJo = encoder.parseObject(payload);
 
         payloadJo.put(KEY_COMPRESSION_ALGORITHM, "x");
 
         final byte[] plaintext = payloadJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext);
-        final byte[] signature = CRYPTO_CONTEXT.sign(newPayload);
-        jo.put(KEY_PAYLOAD, DatatypeConverter.printBase64Binary(newPayload));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT);
+        final byte[] signature = CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT);
+        mo.put(KEY_PAYLOAD, newPayload);
+        mo.put(KEY_SIGNATURE, signature);
         
-        new PayloadChunk(jo, CRYPTO_CONTEXT);
+        new PayloadChunk(ctx, mo, CRYPTO_CONTEXT);
     }
     
     @Test
-    public void missingData() throws JSONException, MslEncodingException, MslCryptoException, MslException {
+    public void missingData() throws MslEncoderException, MslEncodingException, MslCryptoException, MslException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
-        final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
-        final JSONObject jo = new JSONObject(chunk.toJSONString());
+        final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, chunk);
 
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_PAYLOAD));
-        final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext);
-        final JSONObject payloadJo = new JSONObject(new String(payload, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = mo.getBytes(KEY_PAYLOAD);
+        final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext, encoder);
+        final MslObject payloadJo = encoder.parseObject(payload);
         
         assertNotNull(payloadJo.remove(KEY_DATA));
 
         final byte[] plaintext = payloadJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext);
-        final byte[] signature = CRYPTO_CONTEXT.sign(newPayload);
-        jo.put(KEY_PAYLOAD, DatatypeConverter.printBase64Binary(newPayload));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT);
+        final byte[] signature = CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT);
+        mo.put(KEY_PAYLOAD, newPayload);
+        mo.put(KEY_SIGNATURE, signature);
         
-        new PayloadChunk(jo, CRYPTO_CONTEXT);
+        new PayloadChunk(ctx, mo, CRYPTO_CONTEXT);
     }
     
     @Test
-    public void emptyData() throws MslEncodingException, MslCryptoException, MslException, JSONException {
+    public void emptyData() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         thrown.expect(MslMessageException.class);
         thrown.expectMslError(MslError.PAYLOAD_DATA_MISSING);
 
-        final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
-        final JSONObject jo = new JSONObject(chunk.toJSONString());
+        final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, chunk);
 
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_PAYLOAD));
-        final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext);
-        final JSONObject payloadJo = new JSONObject(new String(payload, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = mo.getBytes(KEY_PAYLOAD);
+        final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext, encoder);
+        final MslObject payloadJo = encoder.parseObject(payload);
         
         payloadJo.put(KEY_DATA, "");
 
         final byte[] plaintext = payloadJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext);
-        final byte[] signature = CRYPTO_CONTEXT.sign(newPayload);
-        jo.put(KEY_PAYLOAD, DatatypeConverter.printBase64Binary(newPayload));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT);
+        final byte[] signature = CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT);
+        mo.put(KEY_PAYLOAD, newPayload);
+        mo.put(KEY_SIGNATURE, signature);
         
-        new PayloadChunk(jo, CRYPTO_CONTEXT);
+        new PayloadChunk(ctx, mo, CRYPTO_CONTEXT);
     }
 
     @Test
-    public void invalidDataEndOfMessage() throws MslEncodingException, MslCryptoException, MslException, JSONException {
-        thrown.expect(MslMessageException.class);
-        thrown.expectMslError(MslError.PAYLOAD_DATA_CORRUPT);
+    public void invalidDataEndOfMessage() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
+        thrown.expect(MslEncodingException.class);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
-        final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
-        final JSONObject jo = new JSONObject(chunk.toJSONString());
+        final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, chunk);
 
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_PAYLOAD));
-        final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext);
-        final JSONObject payloadJo = new JSONObject(new String(payload, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = mo.getBytes(KEY_PAYLOAD);
+        final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext, encoder);
+        final MslObject payloadJo = encoder.parseObject(payload);
         
-        payloadJo.put(KEY_DATA, "x");
+        payloadJo.put(KEY_DATA, false);
 
         final byte[] plaintext = payloadJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext);
-        final byte[] signature = CRYPTO_CONTEXT.sign(newPayload);
-        jo.put(KEY_PAYLOAD, DatatypeConverter.printBase64Binary(newPayload));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT);
+        final byte[] signature = CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT);
+        mo.put(KEY_PAYLOAD, newPayload);
+        mo.put(KEY_SIGNATURE, signature);
         
-        new PayloadChunk(jo, CRYPTO_CONTEXT);
+        new PayloadChunk(ctx, mo, CRYPTO_CONTEXT);
     }
     
     @Test
-    public void largeData() throws MslEncodingException, MslCryptoException, MslException, JSONException {
+    public void largeData() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         final byte[] data = new byte[10 * 1024 * 1024];
         random.nextBytes(data);
-        final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, true, null, data, CRYPTO_CONTEXT);
+        final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, true, null, data, CRYPTO_CONTEXT);
         assertArrayEquals(data, chunk.getData());
         
-        final JSONObject jo = new JSONObject(chunk.toJSONString());
-        final PayloadChunk joChunk = new PayloadChunk(jo, CRYPTO_CONTEXT);
-        assertArrayEquals(chunk.getData(), joChunk.getData());
+        final MslObject mo = MslTestUtils.toMslObject(encoder, chunk);
+        final PayloadChunk moChunk = new PayloadChunk(ctx, mo, CRYPTO_CONTEXT);
+        assertArrayEquals(chunk.getData(), moChunk.getData());
     }
     
     @Test
-    public void gzipLargeData() throws MslEncodingException, MslCryptoException, MslException, JSONException {
+    public void gzipLargeData() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         final byte[] data = new byte[10 * 1024 * 1024];
         random.nextBytes(data);
-        final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, data, CRYPTO_CONTEXT);
+        final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, data, CRYPTO_CONTEXT);
         assertArrayEquals(data, chunk.getData());
         
         // Random data will not compress.
         assertNull(chunk.getCompressionAlgo());
         
-        final JSONObject jo = new JSONObject(chunk.toJSONString());
-        final PayloadChunk joChunk = new PayloadChunk(jo, CRYPTO_CONTEXT);
-        assertArrayEquals(chunk.getData(), joChunk.getData());
-        assertEquals(chunk.getCompressionAlgo(), joChunk.getCompressionAlgo());
+        final MslObject mo = MslTestUtils.toMslObject(encoder, chunk);
+        final PayloadChunk moChunk = new PayloadChunk(ctx, mo, CRYPTO_CONTEXT);
+        assertArrayEquals(chunk.getData(), moChunk.getData());
+        assertEquals(chunk.getCompressionAlgo(), moChunk.getCompressionAlgo());
     }
     
     @Test
-    public void gzipVerona() throws MslEncodingException, MslCryptoException, MslMessageException, MslException, JSONException {
-        final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, rawdata, CRYPTO_CONTEXT);
+    public void gzipVerona() throws MslEncodingException, MslCryptoException, MslMessageException, MslException, MslEncoderException {
+        final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, rawdata, CRYPTO_CONTEXT);
         assertArrayEquals(rawdata, chunk.getData());
         
         // Romeo and Juliet will compress.
         assertEquals(CompressionAlgorithm.GZIP, chunk.getCompressionAlgo());
         
-        final JSONObject jo = new JSONObject(chunk.toJSONString());
-        final PayloadChunk joChunk = new PayloadChunk(jo, CRYPTO_CONTEXT);
-        assertArrayEquals(chunk.getData(), joChunk.getData());
-        assertEquals(chunk.getCompressionAlgo(), joChunk.getCompressionAlgo());
+        final MslObject mo = MslTestUtils.toMslObject(encoder, chunk);
+        final PayloadChunk moChunk = new PayloadChunk(ctx, mo, CRYPTO_CONTEXT);
+        assertArrayEquals(chunk.getData(), moChunk.getData());
+        assertEquals(chunk.getCompressionAlgo(), moChunk.getCompressionAlgo());
     }
     
     @Test
-    public void lzwRandomData() throws MslEncodingException, MslCryptoException, MslException, JSONException {
+    public void lzwRandomData() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         final byte[] data = new byte[10 * 1024 * 1024];
         random.nextBytes(data);
-        final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, true, CompressionAlgorithm.LZW, data, CRYPTO_CONTEXT);
+        final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.LZW, data, CRYPTO_CONTEXT);
         assertArrayEquals(data, chunk.getData());
         
         // Random data will not compress.
         assertNull(chunk.getCompressionAlgo());
         
-        final JSONObject jo = new JSONObject(chunk.toJSONString());
-        final PayloadChunk joChunk = new PayloadChunk(jo, CRYPTO_CONTEXT);
-        assertArrayEquals(chunk.getData(), joChunk.getData());
-        assertEquals(chunk.getCompressionAlgo(), joChunk.getCompressionAlgo());
+        final MslObject mo = MslTestUtils.toMslObject(encoder, chunk);
+        final PayloadChunk moChunk = new PayloadChunk(ctx, mo, CRYPTO_CONTEXT);
+        assertArrayEquals(chunk.getData(), moChunk.getData());
+        assertEquals(chunk.getCompressionAlgo(), moChunk.getCompressionAlgo());
     }
     
     @Test
-    public void lzwVerona() throws MslEncodingException, MslCryptoException, MslMessageException, MslException, JSONException {
-        final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, true, CompressionAlgorithm.LZW, rawdata, CRYPTO_CONTEXT);
+    public void lzwVerona() throws MslEncodingException, MslCryptoException, MslMessageException, MslException, MslEncoderException {
+        final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.LZW, rawdata, CRYPTO_CONTEXT);
         assertArrayEquals(rawdata, chunk.getData());
         
         // Romeo and Juliet will compress.
         assertEquals(CompressionAlgorithm.LZW, chunk.getCompressionAlgo());
         
-        final JSONObject jo = new JSONObject(chunk.toJSONString());
-        final PayloadChunk joChunk = new PayloadChunk(jo, CRYPTO_CONTEXT);
-        assertArrayEquals(chunk.getData(), joChunk.getData());
-        assertEquals(chunk.getCompressionAlgo(), joChunk.getCompressionAlgo());
+        final MslObject mo = MslTestUtils.toMslObject(encoder, chunk);
+        final PayloadChunk moChunk = new PayloadChunk(ctx, mo, CRYPTO_CONTEXT);
+        assertArrayEquals(chunk.getData(), moChunk.getData());
+        assertEquals(chunk.getCompressionAlgo(), moChunk.getCompressionAlgo());
     }
     
     @Test
-    public void equalsSequenceNumber() throws MslEncodingException, MslCryptoException, MslException, JSONException {
+    public void equalsSequenceNumber() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         final long seqNoA = 1;
         final long seqNoB = 2;
-        final PayloadChunk chunkA = new PayloadChunk(seqNoA, MSG_ID, false, null, DATA, CRYPTO_CONTEXT);
-        final PayloadChunk chunkB = new PayloadChunk(seqNoB, MSG_ID, false, null, DATA, CRYPTO_CONTEXT);
-        final PayloadChunk chunkA2 = new PayloadChunk(new JSONObject(chunkA.toJSONString()), CRYPTO_CONTEXT);
+        final PayloadChunk chunkA = new PayloadChunk(ctx, seqNoA, MSG_ID, false, null, DATA, CRYPTO_CONTEXT);
+        final PayloadChunk chunkB = new PayloadChunk(ctx, seqNoB, MSG_ID, false, null, DATA, CRYPTO_CONTEXT);
+        final PayloadChunk chunkA2 = new PayloadChunk(ctx, MslTestUtils.toMslObject(encoder, chunkA), CRYPTO_CONTEXT);
         
         assertTrue(chunkA.equals(chunkA));
         assertEquals(chunkA.hashCode(), chunkA.hashCode());
@@ -803,12 +816,12 @@ public class PayloadChunkTest {
     }
     
     @Test
-    public void equalsMessageId() throws MslEncodingException, MslCryptoException, MslException, JSONException {
+    public void equalsMessageId() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         final long msgIdA = 1;
         final long msgIdB = 2;
-        final PayloadChunk chunkA = new PayloadChunk(SEQ_NO, msgIdA, false, null, DATA, CRYPTO_CONTEXT);
-        final PayloadChunk chunkB = new PayloadChunk(SEQ_NO, msgIdB, false, null, DATA, CRYPTO_CONTEXT);
-        final PayloadChunk chunkA2 = new PayloadChunk(new JSONObject(chunkA.toJSONString()), CRYPTO_CONTEXT);
+        final PayloadChunk chunkA = new PayloadChunk(ctx, SEQ_NO, msgIdA, false, null, DATA, CRYPTO_CONTEXT);
+        final PayloadChunk chunkB = new PayloadChunk(ctx, SEQ_NO, msgIdB, false, null, DATA, CRYPTO_CONTEXT);
+        final PayloadChunk chunkA2 = new PayloadChunk(ctx, MslTestUtils.toMslObject(encoder, chunkA), CRYPTO_CONTEXT);
         
         assertTrue(chunkA.equals(chunkA));
         assertEquals(chunkA.hashCode(), chunkA.hashCode());
@@ -823,10 +836,10 @@ public class PayloadChunkTest {
     }
     
     @Test
-    public void equalsEndOfMessage() throws MslEncodingException, MslCryptoException, MslException, JSONException {
-        final PayloadChunk chunkA = new PayloadChunk(SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT);
-        final PayloadChunk chunkB = new PayloadChunk(SEQ_NO, MSG_ID, false, null, DATA, CRYPTO_CONTEXT);
-        final PayloadChunk chunkA2 = new PayloadChunk(new JSONObject(chunkA.toJSONString()), CRYPTO_CONTEXT);
+    public void equalsEndOfMessage() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
+        final PayloadChunk chunkA = new PayloadChunk(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT);
+        final PayloadChunk chunkB = new PayloadChunk(ctx, SEQ_NO, MSG_ID, false, null, DATA, CRYPTO_CONTEXT);
+        final PayloadChunk chunkA2 = new PayloadChunk(ctx, MslTestUtils.toMslObject(encoder, chunkA), CRYPTO_CONTEXT);
         
         assertTrue(chunkA.equals(chunkA));
         assertEquals(chunkA.hashCode(), chunkA.hashCode());
@@ -841,10 +854,10 @@ public class PayloadChunkTest {
     }
     
     @Test
-    public void equalsCompressionAlgorithm() throws MslEncodingException, MslCryptoException, MslException, JSONException {
-        final PayloadChunk chunkA = new PayloadChunk(SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
-        final PayloadChunk chunkB = new PayloadChunk(SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT);
-        final PayloadChunk chunkA2 = new PayloadChunk(new JSONObject(chunkA.toJSONString()), CRYPTO_CONTEXT);
+    public void equalsCompressionAlgorithm() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
+        final PayloadChunk chunkA = new PayloadChunk(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
+        final PayloadChunk chunkB = new PayloadChunk(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT);
+        final PayloadChunk chunkA2 = new PayloadChunk(ctx, MslTestUtils.toMslObject(encoder, chunkA), CRYPTO_CONTEXT);
         
         assertTrue(chunkA.equals(chunkA));
         assertEquals(chunkA.hashCode(), chunkA.hashCode());
@@ -859,16 +872,16 @@ public class PayloadChunkTest {
     }
     
     @Test
-    public void equalsData() throws MslEncodingException, MslCryptoException, MslException, JSONException {
+    public void equalsData() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         final byte[] dataA = new byte[32];
         random.nextBytes(dataA);
         final byte[] dataB = new byte[32];
         random.nextBytes(dataB);
         final byte[] dataC = new byte[0];
-        final PayloadChunk chunkA = new PayloadChunk(SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, dataA, CRYPTO_CONTEXT);
-        final PayloadChunk chunkB = new PayloadChunk(SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, dataB, CRYPTO_CONTEXT);
-        final PayloadChunk chunkC = new PayloadChunk(SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, dataC, CRYPTO_CONTEXT);
-        final PayloadChunk chunkA2 = new PayloadChunk(new JSONObject(chunkA.toJSONString()), CRYPTO_CONTEXT);
+        final PayloadChunk chunkA = new PayloadChunk(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, dataA, CRYPTO_CONTEXT);
+        final PayloadChunk chunkB = new PayloadChunk(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, dataB, CRYPTO_CONTEXT);
+        final PayloadChunk chunkC = new PayloadChunk(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, dataC, CRYPTO_CONTEXT);
+        final PayloadChunk chunkA2 = new PayloadChunk(ctx, MslTestUtils.toMslObject(encoder, chunkA), CRYPTO_CONTEXT);
         
         assertTrue(chunkA.equals(chunkA));
         assertEquals(chunkA.hashCode(), chunkA.hashCode());
@@ -888,7 +901,7 @@ public class PayloadChunkTest {
     
     @Test
     public void equalsObject() throws MslEncodingException, MslCryptoException, MslException {
-        final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
+        final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
         
         assertFalse(chunk.equals(null));
         assertFalse(chunk.equals(CRYPTO_CONTEXT_ID));

@@ -20,8 +20,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -33,9 +31,13 @@ import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslMasterTokenException;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslEncoderUtils;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.test.ExpectedMslException;
 import com.netflix.msl.tokens.MasterToken;
-import com.netflix.msl.util.JsonUtils;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslTestUtils;
@@ -46,6 +48,9 @@ import com.netflix.msl.util.MslTestUtils;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class MasterTokenProtectedAuthenticationDataTest {
+    /** MSL encoder format. */
+    private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
+    
     /** JSON key entity authentication scheme. */
     private static final String KEY_SCHEME = "scheme";
     /** JSON key entity authentication data. */
@@ -65,6 +70,8 @@ public class MasterTokenProtectedAuthenticationDataTest {
 
     /** MSL context. */
     private static MslContext ctx;
+    /** MSL encoder factory. */
+    private static MslEncoderFactory encoder;
     /** Master token. */
     private static MasterToken masterToken;
     /** Encapsulated entity authentication data. */
@@ -73,6 +80,7 @@ public class MasterTokenProtectedAuthenticationDataTest {
     @BeforeClass
     public static void setup() throws MslEncodingException, MslCryptoException {
         ctx = new MockMslContext(EntityAuthenticationScheme.X509, false);
+        encoder = ctx.getMslEncoderFactory();
         masterToken = MslTestUtils.getMasterToken(ctx, 1L, 1L);
         eAuthdata = new UnauthenticatedAuthenticationData(IDENTITY);
     }
@@ -81,173 +89,168 @@ public class MasterTokenProtectedAuthenticationDataTest {
     public static void teardown() {
         eAuthdata = null;
         masterToken = null;
+        encoder = null;
         ctx = null;
     }
     
     @Test
-    public void ctors() throws MslCryptoException, MslEntityAuthException, MslEncodingException {
+    public void ctors() throws MslCryptoException, MslEntityAuthException, MslEncodingException, MslEncoderException {
         final MasterTokenProtectedAuthenticationData data = new MasterTokenProtectedAuthenticationData(ctx, masterToken, eAuthdata);
         assertEquals(eAuthdata.getIdentity(), data.getIdentity());
         assertEquals(EntityAuthenticationScheme.MT_PROTECTED, data.getScheme());
         assertEquals(eAuthdata, data.getEncapsulatedAuthdata());
-        final JSONObject authdata = data.getAuthData();
+        final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
         assertNotNull(authdata);
-        final String jsonString = data.toJSONString();
-        assertNotNull(jsonString);
+        final byte[] encode = data.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(encode);
         
-        final MasterTokenProtectedAuthenticationData joData = new MasterTokenProtectedAuthenticationData(ctx, authdata);
-        assertEquals(data.getIdentity(), joData.getIdentity());
-        assertEquals(data.getScheme(), joData.getScheme());
-        assertEquals(data.getEncapsulatedAuthdata(), joData.getEncapsulatedAuthdata());
-        final JSONObject joAuthdata = joData.getAuthData();
-        assertNotNull(joAuthdata);
-        assertTrue(JsonUtils.equals(authdata, joAuthdata));
-        final String joJsonString = joData.toJSONString();
-        assertNotNull(joJsonString);
-        assertEquals(jsonString, joJsonString);
+        final MasterTokenProtectedAuthenticationData moData = new MasterTokenProtectedAuthenticationData(ctx, authdata);
+        assertEquals(data.getIdentity(), moData.getIdentity());
+        assertEquals(data.getScheme(), moData.getScheme());
+        assertEquals(data.getEncapsulatedAuthdata(), moData.getEncapsulatedAuthdata());
+        assertEquals(data, moData);
+        final MslObject moAuthdata = moData.getAuthData(encoder, ENCODER_FORMAT);
+        assertNotNull(moAuthdata);
+        // The authdata will not be equal as it is regenerated.
     }
     
     @Test
-    public void jsonString() throws MslMasterTokenException, MslCryptoException, MslEntityAuthException {
+    public void mslObject() throws MslMasterTokenException, MslCryptoException, MslEntityAuthException, MslEncoderException {
         final MasterTokenProtectedAuthenticationData data = new MasterTokenProtectedAuthenticationData(ctx, masterToken, eAuthdata);
-        final JSONObject jo = new JSONObject(data.toJSONString());
-        assertEquals(EntityAuthenticationScheme.MT_PROTECTED.toString(), jo.getString(KEY_SCHEME));
-        final JSONObject authdata = jo.getJSONObject(KEY_AUTHDATA);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, data);
+        assertEquals(EntityAuthenticationScheme.MT_PROTECTED.toString(), mo.getString(KEY_SCHEME));
+        final MslObject authdata = mo.getMslObject(KEY_AUTHDATA, encoder);
 
-        final String masterTokenStr = masterToken.toJSONString();
-        assertTrue(JsonUtils.equals(new JSONObject(masterTokenStr), authdata.getJSONObject(KEY_MASTER_TOKEN)));
+        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, masterToken), authdata.getMslObject(KEY_MASTER_TOKEN, encoder)));
         // Signature and ciphertext may not be predictable depending on the
         // master token encryption and signature algorithms.
     }
     
     @Test
-    public void create() throws MslCryptoException, MslEntityAuthException, MslEncodingException {
+    public void create() throws MslCryptoException, MslEntityAuthException, MslEncodingException, MslEncoderException {
         final MasterTokenProtectedAuthenticationData data = new MasterTokenProtectedAuthenticationData(ctx, masterToken, eAuthdata);
-        final String jsonString = data.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
-        final EntityAuthenticationData entitydata = EntityAuthenticationData.create(ctx, jo);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, data);
+        final EntityAuthenticationData entitydata = EntityAuthenticationData.create(ctx, mo);
         assertNotNull(entitydata);
         assertTrue(entitydata instanceof MasterTokenProtectedAuthenticationData);
         
-        final MasterTokenProtectedAuthenticationData joData = (MasterTokenProtectedAuthenticationData)entitydata;
-        assertEquals(data.getIdentity(), joData.getIdentity());
-        assertEquals(data.getScheme(), joData.getScheme());
-        assertEquals(data.getEncapsulatedAuthdata(), joData.getEncapsulatedAuthdata());
-        final JSONObject joAuthdata = joData.getAuthData();
-        assertNotNull(joAuthdata);
-        assertTrue(JsonUtils.equals(data.getAuthData(), joAuthdata));
-        final String joJsonString = joData.toJSONString();
-        assertNotNull(joJsonString);
-        assertEquals(jsonString, joJsonString);
+        final MasterTokenProtectedAuthenticationData moData = (MasterTokenProtectedAuthenticationData)entitydata;
+        assertEquals(data.getIdentity(), moData.getIdentity());
+        assertEquals(data.getScheme(), moData.getScheme());
+        assertEquals(data.getEncapsulatedAuthdata(), moData.getEncapsulatedAuthdata());
+        assertEquals(data, moData);
+        final MslObject moAuthdata = moData.getAuthData(encoder, ENCODER_FORMAT);
+        assertNotNull(moAuthdata);
+        // The authdata will not be equal as it is regenerated.
     }
     
     @Test
-    public void missingMasterToken() throws MslEncodingException, MslCryptoException, MslEntityAuthException {
+    public void missingMasterToken() throws MslEncodingException, MslCryptoException, MslEntityAuthException, MslEncoderException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
         
         final MasterTokenProtectedAuthenticationData data = new MasterTokenProtectedAuthenticationData(ctx, masterToken, eAuthdata);
-        final JSONObject authdata = data.getAuthData();
+        final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
         authdata.remove(KEY_MASTER_TOKEN);
         new MasterTokenProtectedAuthenticationData(ctx, authdata);
     }
     
     @Test
-    public void invalidMasterToken() throws MslEncodingException, MslCryptoException, MslEntityAuthException {
+    public void invalidMasterToken() throws MslEncodingException, MslCryptoException, MslEntityAuthException, MslEncoderException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
         
         final MasterTokenProtectedAuthenticationData data = new MasterTokenProtectedAuthenticationData(ctx, masterToken, eAuthdata);
-        final JSONObject authdata = data.getAuthData();
+        final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
         authdata.put(KEY_MASTER_TOKEN, "x");
         new MasterTokenProtectedAuthenticationData(ctx, authdata);
     }
     
     @Test
-    public void corruptMasterToken() throws MslEncodingException, MslCryptoException, MslEntityAuthException {
+    public void corruptMasterToken() throws MslEncodingException, MslCryptoException, MslEntityAuthException, MslEncoderException {
         thrown.expect(MslEntityAuthException.class);
         thrown.expectMslError(MslError.ENTITYAUTH_MASTERTOKEN_INVALID);
         
         final MasterTokenProtectedAuthenticationData data = new MasterTokenProtectedAuthenticationData(ctx, masterToken, eAuthdata);
-        final JSONObject authdata = data.getAuthData();
-        authdata.put(KEY_MASTER_TOKEN, new JSONObject());
+        final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
+        authdata.put(KEY_MASTER_TOKEN, new MslObject());
         new MasterTokenProtectedAuthenticationData(ctx, authdata);
     }
     
     @Test
-    public void missingAuthdata() throws MslEncodingException, MslCryptoException, MslEntityAuthException {
+    public void missingAuthdata() throws MslEncodingException, MslCryptoException, MslEntityAuthException, MslEncoderException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
         
         final MasterTokenProtectedAuthenticationData data = new MasterTokenProtectedAuthenticationData(ctx, masterToken, eAuthdata);
-        final JSONObject authdata = data.getAuthData();
+        final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
         authdata.remove(KEY_AUTHENTICATION_DATA);
         new MasterTokenProtectedAuthenticationData(ctx, authdata);
     }
     
     @Test
-    public void invalidAuthdata() throws MslEncodingException, MslCryptoException, MslEntityAuthException {
+    public void invalidAuthdata() throws MslEncodingException, MslCryptoException, MslEntityAuthException, MslEncoderException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
         
         final MasterTokenProtectedAuthenticationData data = new MasterTokenProtectedAuthenticationData(ctx, masterToken, eAuthdata);
-        final JSONObject authdata = data.getAuthData();
+        final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
         authdata.put(KEY_AUTHENTICATION_DATA, true);
         new MasterTokenProtectedAuthenticationData(ctx, authdata);
     }
     
     @Ignore
     @Test
-    public void corruptAuthdata() throws MslEncodingException, MslCryptoException, MslEntityAuthException {
+    public void corruptAuthdata() throws MslEncodingException, MslCryptoException, MslEntityAuthException, MslEncoderException {
         thrown.expect(MslEntityAuthException.class);
         thrown.expectMslError(MslError.ENTITYAUTH_CIPHERTEXT_INVALID);
 
         final MasterTokenProtectedAuthenticationData data = new MasterTokenProtectedAuthenticationData(ctx, masterToken, eAuthdata);
-        final JSONObject authdata = data.getAuthData();
+        final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
         authdata.put(KEY_AUTHENTICATION_DATA, "x");
         new MasterTokenProtectedAuthenticationData(ctx, authdata);
     }
     
     @Test
-    public void missingSignature() throws MslEncodingException, MslCryptoException, MslEntityAuthException {
+    public void missingSignature() throws MslEncodingException, MslCryptoException, MslEntityAuthException, MslEncoderException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
         
         final MasterTokenProtectedAuthenticationData data = new MasterTokenProtectedAuthenticationData(ctx, masterToken, eAuthdata);
-        final JSONObject authdata = data.getAuthData();
+        final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
         authdata.remove(KEY_SIGNATURE);
         new MasterTokenProtectedAuthenticationData(ctx, authdata);
     }
     
     @Test
-    public void invalidSignature() throws MslEncodingException, MslCryptoException, MslEntityAuthException {
+    public void invalidSignature() throws MslEncodingException, MslCryptoException, MslEntityAuthException, MslEncoderException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
         
         final MasterTokenProtectedAuthenticationData data = new MasterTokenProtectedAuthenticationData(ctx, masterToken, eAuthdata);
-        final JSONObject authdata = data.getAuthData();
+        final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
         authdata.put(KEY_SIGNATURE, true);
         new MasterTokenProtectedAuthenticationData(ctx, authdata);
     }
     
     @Ignore
     @Test
-    public void corruptSignature() throws MslEncodingException, MslCryptoException, MslEntityAuthException {
+    public void corruptSignature() throws MslEncodingException, MslCryptoException, MslEntityAuthException, MslEncoderException {
         thrown.expect(MslEntityAuthException.class);
         thrown.expectMslError(MslError.ENTITYAUTH_SIGNATURE_INVALID);
         
         final MasterTokenProtectedAuthenticationData data = new MasterTokenProtectedAuthenticationData(ctx, masterToken, eAuthdata);
-        final JSONObject authdata = data.getAuthData();
+        final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
         authdata.put(KEY_SIGNATURE, "x");
         new MasterTokenProtectedAuthenticationData(ctx, authdata);
     }
     
     @Test
-    public void equalsMasterToken() throws MslEntityAuthException, MslEncodingException, MslCryptoException, JSONException {
+    public void equalsMasterToken() throws MslEntityAuthException, MslEncodingException, MslCryptoException, MslEncoderException {
         final MasterToken masterTokenB = MslTestUtils.getMasterToken(ctx, 2L, 2L);
         final MasterTokenProtectedAuthenticationData dataA = new MasterTokenProtectedAuthenticationData(ctx, masterToken, eAuthdata);
         final MasterTokenProtectedAuthenticationData dataB = new MasterTokenProtectedAuthenticationData(ctx, masterTokenB, eAuthdata);
-        final EntityAuthenticationData dataA2 = EntityAuthenticationData.create(ctx, new JSONObject(dataA.toJSONString()));
+        final EntityAuthenticationData dataA2 = EntityAuthenticationData.create(ctx, MslTestUtils.toMslObject(encoder, dataA));
         
         assertTrue(dataA.equals(dataA));
         assertEquals(dataA.hashCode(), dataA.hashCode());
@@ -262,11 +265,11 @@ public class MasterTokenProtectedAuthenticationDataTest {
     }
     
     @Test
-    public void equalsAuthdata() throws MslEntityAuthException, MslEncodingException, MslCryptoException, JSONException {
+    public void equalsAuthdata() throws MslEntityAuthException, MslEncodingException, MslCryptoException, MslEncoderException {
         final EntityAuthenticationData eAuthdataB = new UnauthenticatedAuthenticationData(IDENTITY + "B");
         final MasterTokenProtectedAuthenticationData dataA = new MasterTokenProtectedAuthenticationData(ctx, masterToken, eAuthdata);
         final MasterTokenProtectedAuthenticationData dataB = new MasterTokenProtectedAuthenticationData(ctx, masterToken, eAuthdataB);
-        final EntityAuthenticationData dataA2 = EntityAuthenticationData.create(ctx, new JSONObject(dataA.toJSONString()));
+        final EntityAuthenticationData dataA2 = EntityAuthenticationData.create(ctx, MslTestUtils.toMslObject(encoder, dataA));
         
         assertTrue(dataA.equals(dataA));
         assertEquals(dataA.hashCode(), dataA.hashCode());

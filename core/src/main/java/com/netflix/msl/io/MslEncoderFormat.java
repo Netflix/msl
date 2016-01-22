@@ -20,29 +20,29 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * <p>MSL encoding formats.</p>
+ * <p>MSL encoder formats.</p>
  * 
- * <p>The format name is used to uniquely identify encoding formats.</p>
+ * <p>The format name is used to uniquely identify encoder formats.</p>
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-public class MslEncodingFormat {
+public class MslEncoderFormat {
     /** Map of names onto formats. */
-    private static Map<String,MslEncodingFormat> formatsByName = new HashMap<String,MslEncodingFormat>();
+    private static Map<String,MslEncoderFormat> formatsByName = new HashMap<String,MslEncoderFormat>();
     /** Map of identifiers onto formats. */
-    private static Map<Byte,MslEncodingFormat> formatsById = new HashMap<Byte,MslEncodingFormat>();
+    private static Map<Byte,MslEncoderFormat> formatsById = new HashMap<Byte,MslEncoderFormat>();
     
-    /** JSON. */
-    public static final MslEncodingFormat JSON = new MslEncodingFormat("JSON", (byte)'{');
+    /** UTF-8 JSON. */
+    public static final MslEncoderFormat JSON = new MslEncoderFormat("JSON", (byte)'{');
     
     /**
-     * Define an encoding format with the specified name and byte stream
+     * Define an encoder format with the specified name and byte stream
      * identifier.
      * 
-     * @param name the encoding format name.
+     * @param name the encoder format name.
      * @param identifier the byte stream identifier.
      */
-    protected MslEncodingFormat(final String name, final byte identifier) {
+    protected MslEncoderFormat(final String name, final byte identifier) {
         this.name = name;
         this.identifier = identifier;
         
@@ -56,27 +56,27 @@ public class MslEncodingFormat {
     }
     
     /**
-     * @param name the encoding format name.
-     * @return the encoding format identified by the specified name or
+     * @param name the encoder format name.
+     * @return the encoder format identified by the specified name or
      *         {@code null} if there is none.
      */
-    public static MslEncodingFormat getFormat(final String name) {
+    public static MslEncoderFormat getFormat(final String name) {
         return formatsByName.get(name);
     }
     
     /**
-     * @param name the encoding format identifier.
-     * @return the encoding format identified by the specified identifier or
+     * @param name the encoder format identifier.
+     * @return the encoder format identified by the specified identifier or
      *         {@code null} if there is none.
      */
-    public static MslEncodingFormat getFormat(final byte identifier) {
+    public static MslEncoderFormat getFormat(final byte identifier) {
         return formatsById.get(Byte.valueOf(identifier));
     }
     
     /**
-     * @return all known encoding formats.
+     * @return all known encoder formats.
      */
-    public static Collection<MslEncodingFormat> values() {
+    public static Collection<MslEncoderFormat> values() {
         return formatsByName.values();
     }
     
@@ -116,8 +116,8 @@ public class MslEncodingFormat {
     @Override
     public boolean equals(final Object obj) {
         if (obj == this) return true;
-        if (!(obj instanceof MslEncodingFormat)) return false;
-        final MslEncodingFormat that = (MslEncodingFormat)obj;
+        if (!(obj instanceof MslEncoderFormat)) return false;
+        final MslEncoderFormat that = (MslEncoderFormat)obj;
         return this.name.equals(that.name) && this.identifier == that.identifier;
     }
     

@@ -27,7 +27,6 @@ import java.security.spec.X509EncodedKeySpec;
 import javax.xml.bind.DatatypeConverter;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.json.JSONObject;
 
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
@@ -37,6 +36,7 @@ import com.netflix.msl.MslInternalException;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.crypto.RsaCryptoContext;
 import com.netflix.msl.crypto.RsaCryptoContext.Mode;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -76,7 +76,7 @@ public class MockRsaAuthenticationFactory extends EntityAuthenticationFactory {
             final byte[] privKeyEncoded = DatatypeConverter.parseBase64Binary(RSA_PRIVKEY_B64);
             final X509EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(pubKeyEncoded);
             final PKCS8EncodedKeySpec privKeySpec = new PKCS8EncodedKeySpec(privKeyEncoded);
-            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+            final KeyFactory keyFactory = KeyFactory.getInstance("RSA");
             RSA_PUBKEY = keyFactory.generatePublic(pubKeySpec);
             RSA_PRIVKEY = keyFactory.generatePrivate(privKeySpec);
         } catch (final InvalidKeySpecException e) {
@@ -96,11 +96,11 @@ public class MockRsaAuthenticationFactory extends EntityAuthenticationFactory {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.entityauth.EntityAuthenticationFactory#createData(com.netflix.msl.util.MslContext, org.json.JSONObject)
+     * @see com.netflix.msl.entityauth.EntityAuthenticationFactory#createData(com.netflix.msl.util.MslContext, com.netflix.msl.io.MslObject)
      */
     @Override
-    public EntityAuthenticationData createData(final MslContext ctx, final JSONObject entityAuthJO) throws MslEncodingException, MslCryptoException {
-        return new RsaAuthenticationData(entityAuthJO);
+    public EntityAuthenticationData createData(final MslContext ctx, final MslObject entityAuthMo) throws MslEncodingException, MslCryptoException {
+        return new RsaAuthenticationData(entityAuthMo);
     }
 
     /* (non-Javadoc)

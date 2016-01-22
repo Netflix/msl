@@ -36,47 +36,48 @@ import java.util.Set;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.json.JSONString;
-
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslInternalException;
-import com.netflix.msl.util.JsonUtils;
+import com.netflix.msl.io.MslArray;
+import com.netflix.msl.io.MslEncodable;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslEncoderUtils;
+import com.netflix.msl.io.MslObject;
 
 /**
  * This class implements the JSON web key structure as defined in
- * <a href="http://tools.ietf.org/html/draft-ietf-jose-json-web-key-08">JSON Web Key</a>.
+ * <a href="http://tools.ietf.org/html/draft-ietf-mose-json-web-key-08">JSON Web Key</a>.
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-public class JsonWebKey implements JSONString {
-    /** JSON key key type. */
+public class JsonWebKey implements MslEncodable {
+    /** Key key type. */
     private static final String KEY_TYPE = "kty";
-    /** JSON key usage. */
+    /** Key usage. */
     private static final String KEY_USAGE = "use";
-    /** JSON key key operations. */
+    /** Key key operations. */
     private static final String KEY_KEY_OPS = "key_ops";
-    /** JSON key algorithm. */
+    /** Key algorithm. */
     private static final String KEY_ALGORITHM = "alg";
-    /** JSON key extractable. */
+    /** Key extractable. */
     private static final String KEY_EXTRACTABLE = "extractable";
-    /** JSON key key ID. */
+    /** Key key ID. */
     private static final String KEY_KEY_ID = "kid";
     
     // RSA keys.
-    /** JSON key modulus. */
+    /** Key modulus. */
     private static final String KEY_MODULUS = "n";
-    /** JSON key public exponent. */
+    /** Key public exponent. */
     private static final String KEY_PUBLIC_EXPONENT = "e";
-    /** JSON key private exponent. */
+    /** Key private exponent. */
     private static final String KEY_PRIVATE_EXPONENT = "d";
     
     // Symmetric keys.
-    /** JSON key key. */
+    /** Key key. */
     private static final String KEY_KEY = "k";
     
     /** Supported key types. */
@@ -331,32 +332,32 @@ public class JsonWebKey implements JSONString {
     }
     
     /**
-     * Create a new JSON web key from the provided JSON.
+     * Create a new JSON web key from the provided MSL object.
      * 
-     * @param jsonObj JSON web key JSON object.
+     * @param jsonMo JSON web key MSL object.
      * @throws MslCryptoException if the key type is unknown.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @throws MslEncodingException if there is an error parsing the data.
      */
-    public JsonWebKey(final JSONObject jsonObj) throws MslCryptoException, MslEncodingException {
+    public JsonWebKey(final MslObject jsonMo) throws MslCryptoException, MslEncodingException {
         // Parse JSON object.
         final String typeName, usageName, algoName;
         final Set<String> keyOpsNames;
         try {
-            typeName = jsonObj.getString(KEY_TYPE);
-            usageName = jsonObj.has(KEY_USAGE) ? jsonObj.getString(KEY_USAGE) : null;
-            if (jsonObj.has(KEY_KEY_OPS)) {
+            typeName = jsonMo.getString(KEY_TYPE);
+            usageName = jsonMo.has(KEY_USAGE) ? jsonMo.getString(KEY_USAGE) : null;
+            if (jsonMo.has(KEY_KEY_OPS)) {
                 keyOpsNames = new HashSet<String>();
-                final JSONArray ja = jsonObj.getJSONArray(KEY_KEY_OPS);
-                for (int i = 0; i < ja.length(); ++i)
-                    keyOpsNames.add(ja.getString(i));
+                final MslArray ma = jsonMo.getMslArray(KEY_KEY_OPS);
+                for (int i = 0; i < ma.size(); ++i)
+                    keyOpsNames.add(ma.getString(i));
             } else {
                 keyOpsNames = null;
             }
-            algoName = jsonObj.has(KEY_ALGORITHM) ? jsonObj.getString(KEY_ALGORITHM) : null;
-            extractable = jsonObj.has(KEY_EXTRACTABLE) ? jsonObj.getBoolean(KEY_EXTRACTABLE) : false;
-            id = jsonObj.has(KEY_KEY_ID) ? jsonObj.getString(KEY_KEY_ID) : null;
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "jwk " + jsonObj.toString(), e);
+            algoName = jsonMo.has(KEY_ALGORITHM) ? jsonMo.getString(KEY_ALGORITHM) : null;
+            extractable = jsonMo.has(KEY_EXTRACTABLE) ? jsonMo.getBoolean(KEY_EXTRACTABLE) : false;
+            id = jsonMo.has(KEY_KEY_ID) ? jsonMo.getString(KEY_KEY_ID) : null;
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "jwk " + jsonMo, e);
         }
         
         // Set values.
@@ -393,7 +394,7 @@ public class JsonWebKey implements JSONString {
         try {
             // Handle symmetric keys.
             if (type == Type.oct) {
-                key = JsonUtils.b64urlDecode(jsonObj.getString(KEY_KEY));
+                key = MslEncoderUtils.b64urlDecode(jsonMo.getString(KEY_KEY));
                 if (key == null || key.length == 0)
                     throw new MslCryptoException(MslError.INVALID_JWK_KEYDATA, "symmetric key is empty");
                 secretKey = (algo != null) ? new SecretKeySpec(key, algo.getJcaAlgorithmName()) : null;
@@ -406,15 +407,15 @@ public class JsonWebKey implements JSONString {
                 final KeyFactory factory = CryptoCache.getKeyFactory("RSA");
                 
                 // Grab the modulus.
-                final byte[] n = JsonUtils.b64urlDecode(jsonObj.getString(KEY_MODULUS));
+                final byte[] n = MslEncoderUtils.b64urlDecode(jsonMo.getString(KEY_MODULUS));
                 if (n == null || n.length == 0)
                     throw new MslCryptoException(MslError.INVALID_JWK_KEYDATA, "modulus is empty");
                 final BigInteger modulus = new BigInteger(1, n);
                 
                 // Reconstruct the public key if it exists.
                 final PublicKey publicKey;
-                if (jsonObj.has(KEY_PUBLIC_EXPONENT)) {
-                    final byte[] e = JsonUtils.b64urlDecode(jsonObj.getString(KEY_PUBLIC_EXPONENT));
+                if (jsonMo.has(KEY_PUBLIC_EXPONENT)) {
+                    final byte[] e = MslEncoderUtils.b64urlDecode(jsonMo.getString(KEY_PUBLIC_EXPONENT));
                     if (e == null || e.length == 0)
                         throw new MslCryptoException(MslError.INVALID_JWK_KEYDATA, "public exponent is empty");
                     final BigInteger exponent = new BigInteger(1, e);
@@ -426,8 +427,8 @@ public class JsonWebKey implements JSONString {
                 
                 // Reconstruct the private key if it exists.
                 final PrivateKey privateKey;
-                if (jsonObj.has(KEY_PRIVATE_EXPONENT)) {
-                    final byte[] d = JsonUtils.b64urlDecode(jsonObj.getString(KEY_PRIVATE_EXPONENT));
+                if (jsonMo.has(KEY_PRIVATE_EXPONENT)) {
+                    final byte[] d = MslEncoderUtils.b64urlDecode(jsonMo.getString(KEY_PRIVATE_EXPONENT));
                     if (d == null || d.length == 0)
                         throw new MslCryptoException(MslError.INVALID_JWK_KEYDATA, "private exponent is empty");
                     final BigInteger exponent = new BigInteger(1, d);
@@ -439,13 +440,13 @@ public class JsonWebKey implements JSONString {
                 
                 // Make sure there is at least one key.
                 if (publicKey == null && privateKey == null)
-                    throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "no public or private key");
+                    throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "no public or private key");
                 
                 keyPair = new KeyPair(publicKey, privateKey);
                 secretKey = null;
             }
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, e);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, e);
         } catch (final NoSuchAlgorithmException e) {
             throw new MslCryptoException(MslError.UNSUPPORTED_JWK_ALGORITHM, e);
         } catch (final InvalidKeySpecException e) {
@@ -548,29 +549,29 @@ public class JsonWebKey implements JSONString {
     }
     
     /* (non-Javadoc)
-     * @see org.json.JSONString#toJSONString()
+     * @see com.netflix.msl.io.MslEncodable#toMslEncoding(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public String toJSONString() {
+    public byte[] toMslEncoding(final MslEncoderFactory encoder, final MslEncoderFormat format) {
         try {
-            final JSONObject jsonObj = new JSONObject();
+            final MslObject mo = encoder.createObject();
             
             // Encode key attributes.
-            jsonObj.put(KEY_TYPE, type.name());
-            if (usage != null) jsonObj.put(KEY_USAGE, usage.name());
+            mo.put(KEY_TYPE, type.name());
+            if (usage != null) mo.put(KEY_USAGE, usage.name());
             if (keyOps != null) {
-                final JSONArray keyOpsJa = new JSONArray();
+                final MslArray keyOpsMa = encoder.createArray();
                 for (final KeyOp op : keyOps)
-                    keyOpsJa.put(op.name());
-                jsonObj.put(KEY_KEY_OPS, keyOpsJa);
+                    keyOpsMa.put(-1, op.name());
+                mo.put(KEY_KEY_OPS, keyOpsMa);
             }
-            if (algo != null) jsonObj.put(KEY_ALGORITHM, algo.toString());
-            jsonObj.put(KEY_EXTRACTABLE, extractable);
-            if (id != null) jsonObj.put(KEY_KEY_ID, id);
+            if (algo != null) mo.put(KEY_ALGORITHM, algo.toString());
+            mo.put(KEY_EXTRACTABLE, extractable);
+            if (id != null) mo.put(KEY_KEY_ID, id);
             
             // Encode symmetric keys.
             if (type == Type.oct) {
-                jsonObj.put(KEY_KEY, JsonUtils.b64urlEncode(key));
+                mo.put(KEY_KEY, MslEncoderUtils.b64urlEncode(key));
             }
             
             // Encode public/private keys (RSA only).
@@ -581,27 +582,29 @@ public class JsonWebKey implements JSONString {
                 // Encode modulus.
                 final BigInteger modulus = (publicKey != null) ? publicKey.getModulus() : privateKey.getModulus();
                 final byte[] n = bi2bytes(modulus);
-                jsonObj.put(KEY_MODULUS, JsonUtils.b64urlEncode(n));
+                mo.put(KEY_MODULUS, MslEncoderUtils.b64urlEncode(n));
                 
                 // Encode public key.
                 if (publicKey != null) {
                     final BigInteger exponent = publicKey.getPublicExponent();
                     final byte[] e = bi2bytes(exponent);
-                    jsonObj.put(KEY_PUBLIC_EXPONENT, JsonUtils.b64urlEncode(e));
+                    mo.put(KEY_PUBLIC_EXPONENT, MslEncoderUtils.b64urlEncode(e));
                 }
                 
                 // Encode private key.
                 if (privateKey != null) {
                     final BigInteger exponent = privateKey.getPrivateExponent();
                     final byte[] d = bi2bytes(exponent);
-                    jsonObj.put(KEY_PRIVATE_EXPONENT, JsonUtils.b64urlEncode(d));
+                    mo.put(KEY_PRIVATE_EXPONENT, MslEncoderUtils.b64urlEncode(d));
                 }
             }
             
             // Return the result.
-            return jsonObj.toString();
-        } catch (final JSONException e) {
-            throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);
+            //
+            // We will always encode as JSON.
+            return encoder.encodeObject(mo, MslEncoderFormat.JSON);
+        } catch (final MslEncoderException e) {
+            throw new MslInternalException("Error encoding " + this.getClass().getName() + ".", e);
         }
     }
 

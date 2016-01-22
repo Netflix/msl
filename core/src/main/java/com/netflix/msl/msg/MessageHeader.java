@@ -17,15 +17,12 @@ package com.netflix.msl.msg;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import javax.xml.bind.DatatypeConverter;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
@@ -43,6 +40,12 @@ import com.netflix.msl.crypto.SessionCryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.io.MslArray;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslEncoderUtils;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.keyx.KeyRequestData;
 import com.netflix.msl.keyx.KeyResponseData;
 import com.netflix.msl.tokens.MasterToken;
@@ -52,7 +55,6 @@ import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.userauth.UserAuthenticationData;
 import com.netflix.msl.userauth.UserAuthenticationFactory;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
-import com.netflix.msl.util.JsonUtils;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -118,41 +120,41 @@ public class MessageHeader extends Header {
     private static final long MILLISECONDS_PER_SECOND = 1000;
     
     // Message header data.
-    /** JSON key sender. */
+    /** Key sender. */
     private static final String KEY_SENDER = "sender";
-    /** JSON key recipient. */
+    /** Key recipient. */
     private static final String KEY_RECIPIENT = "recipient";
-    /** JSON key timestamp. */
+    /** Key timestamp. */
     private static final String KEY_TIMESTAMP = "timestamp";
-    /** JSON key message ID. */
+    /** Key message ID. */
     private static final String KEY_MESSAGE_ID = "messageid";
-    /** JSON key non-replayable ID. */
+    /** Key non-replayable ID. */
     private static final String KEY_NON_REPLAYABLE_ID = "nonreplayableid";
-    /** JSON key non-replayable flag. */
+    /** Key non-replayable flag. */
     private static final String KEY_NON_REPLAYABLE = "nonreplayable";
-    /** JSON key renewable flag. */
+    /** Key renewable flag. */
     private static final String KEY_RENEWABLE = "renewable";
-    /** JSON key handshake flag */
+    /** Key handshake flag */
     private static final String KEY_HANDSHAKE = "handshake";
-    /** JSON key capabilities. */
+    /** Key capabilities. */
     private static final String KEY_CAPABILITIES = "capabilities";
-    /** JSON key key exchange request. */
+    /** Key key exchange request. */
     private static final String KEY_KEY_REQUEST_DATA = "keyrequestdata";
-    /** JSON key key exchange response. */
+    /** Key key exchange response. */
     private static final String KEY_KEY_RESPONSE_DATA = "keyresponsedata";
-    /** JSON key user authentication data. */
+    /** Key user authentication data. */
     private static final String KEY_USER_AUTHENTICATION_DATA = "userauthdata";
-    /** JSON key user ID token. */
+    /** Key user ID token. */
     private static final String KEY_USER_ID_TOKEN = "useridtoken";
-    /** JSON key service tokens. */
+    /** Key service tokens. */
     private static final String KEY_SERVICE_TOKENS = "servicetokens";
     
     // Message header peer data.
-    /** JSON key peer master token. */
+    /** Key peer master token. */
     private static final String KEY_PEER_MASTER_TOKEN = "peermastertoken";
-    /** JSON key peer user ID token. */
+    /** Key peer user ID token. */
     private static final String KEY_PEER_USER_ID_TOKEN = "peeruseridtoken";
-    /** JSON key peer service tokens. */
+    /** Key peer service tokens. */
     private static final String KEY_PEER_SERVICE_TOKENS = "peerservicetokens";
     
     /**
@@ -341,28 +343,29 @@ public class MessageHeader extends Header {
                 throw new MslInternalException("User ID token bound peer service tokens must be bound to the provided peer user ID token.");
         }
         
-        // Construct the JSON.
-        final JSONObject headerJO = new JSONObject();
+        // Construct the header data.
         try {
-            if (this.sender != null) headerJO.put(KEY_SENDER, this.sender);
-            if (this.recipient != null) headerJO.put(KEY_RECIPIENT, this.recipient);
-            headerJO.put(KEY_TIMESTAMP, this.timestamp);
-            headerJO.put(KEY_MESSAGE_ID, this.messageId);
-            headerJO.put(KEY_NON_REPLAYABLE, this.nonReplayableId != null);
-            if (this.nonReplayableId != null) headerJO.put(KEY_NON_REPLAYABLE_ID, this.nonReplayableId);
-            headerJO.put(KEY_RENEWABLE, this.renewable);
-            headerJO.put(KEY_HANDSHAKE, this.handshake);
-            headerJO.put(KEY_CAPABILITIES, this.capabilities);
-            if (this.keyRequestData.size() > 0) headerJO.put(KEY_KEY_REQUEST_DATA, JsonUtils.createArray(this.keyRequestData));
-            if (this.keyResponseData != null) headerJO.put(KEY_KEY_RESPONSE_DATA, this.keyResponseData);
-            if (this.userAuthData != null) headerJO.put(KEY_USER_AUTHENTICATION_DATA, this.userAuthData);
-            if (this.userIdToken != null) headerJO.put(KEY_USER_ID_TOKEN, this.userIdToken);
-            if (this.serviceTokens.size() > 0) headerJO.put(KEY_SERVICE_TOKENS, JsonUtils.createArray(this.serviceTokens));
-            if (this.peerMasterToken != null) headerJO.put(KEY_PEER_MASTER_TOKEN, this.peerMasterToken);
-            if (this.peerUserIdToken != null) headerJO.put(KEY_PEER_USER_ID_TOKEN, this.peerUserIdToken);
-            if (this.peerServiceTokens.size() > 0) headerJO.put(KEY_PEER_SERVICE_TOKENS, JsonUtils.createArray(this.peerServiceTokens));
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, "headerdata", e)
+            final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+            headerdata = encoder.createObject();
+            if (this.sender != null) headerdata.put(KEY_SENDER, this.sender);
+            if (this.recipient != null) headerdata.put(KEY_RECIPIENT, this.recipient);
+            headerdata.put(KEY_TIMESTAMP, this.timestamp);
+            headerdata.put(KEY_MESSAGE_ID, this.messageId);
+            headerdata.put(KEY_NON_REPLAYABLE, this.nonReplayableId != null);
+            if (this.nonReplayableId != null) headerdata.put(KEY_NON_REPLAYABLE_ID, this.nonReplayableId);
+            headerdata.put(KEY_RENEWABLE, this.renewable);
+            headerdata.put(KEY_HANDSHAKE, this.handshake);
+            if (this.capabilities != null) headerdata.put(KEY_CAPABILITIES, this.capabilities);
+            if (this.keyRequestData.size() > 0) headerdata.put(KEY_KEY_REQUEST_DATA, MslEncoderUtils.createArray(ctx, this.keyRequestData));
+            if (this.keyResponseData != null) headerdata.put(KEY_KEY_RESPONSE_DATA, this.keyResponseData);
+            if (this.userAuthData != null) headerdata.put(KEY_USER_AUTHENTICATION_DATA, this.userAuthData);
+            if (this.userIdToken != null) headerdata.put(KEY_USER_ID_TOKEN, this.userIdToken);
+            if (this.serviceTokens.size() > 0) headerdata.put(KEY_SERVICE_TOKENS, MslEncoderUtils.createArray(ctx, this.serviceTokens));
+            if (this.peerMasterToken != null) headerdata.put(KEY_PEER_MASTER_TOKEN, this.peerMasterToken);
+            if (this.peerUserIdToken != null) headerdata.put(KEY_PEER_USER_ID_TOKEN, this.peerUserIdToken);
+            if (this.peerServiceTokens.size() > 0) headerdata.put(KEY_PEER_SERVICE_TOKENS, MslEncoderUtils.createArray(ctx, this.peerServiceTokens));
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_ENCODE_ERROR, "headerdata", e)
                 .setEntity(this.masterToken)
                 .setEntity(this.entityAuthData)
                 .setUser(this.peerUserIdToken)
@@ -406,21 +409,6 @@ public class MessageHeader extends Header {
                 throw e;
             }
         }
-        
-        // Encrypt and sign the header data.
-        try {
-            this.plaintext = headerJO.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-            this.headerdata = this.messageCryptoContext.encrypt(plaintext);
-            this.signature = this.messageCryptoContext.sign(this.headerdata);
-            this.verified = true;
-        } catch (final MslCryptoException e) {
-            e.setEntity(this.masterToken);
-            e.setEntity(this.entityAuthData);
-            e.setUser(this.userIdToken);
-            e.setUser(this.userAuthData);
-            e.setMessageId(this.messageId);
-            throw e;
-        }
     }
 
     /**
@@ -442,7 +430,7 @@ public class MessageHeader extends Header {
      * will be used.</p>
      * 
      * @param ctx MSL context.
-     * @param headerdata header data JSON representation.
+     * @param headerdata encoded header data.
      * @param entityAuthData the entity authentication data. May be null if a
      *        master token is provided.
      * @param masterToken the master token. May be null if entity
@@ -467,11 +455,13 @@ public class MessageHeader extends Header {
      *         missing or invalid, or the message ID is negative.
      * @throws MslException if a token is improperly bound to another token.
      */
-    protected MessageHeader(final MslContext ctx, final String headerdata, final EntityAuthenticationData entityAuthData, final MasterToken masterToken, final byte[] signature, final Map<String,ICryptoContext> cryptoContexts) throws MslEncodingException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslMasterTokenException, MslMessageException, MslEntityAuthException, MslException {
+    protected MessageHeader(final MslContext ctx, final byte[] headerdataBytes, final EntityAuthenticationData entityAuthData, final MasterToken masterToken, final byte[] signature, final Map<String,ICryptoContext> cryptoContexts) throws MslEncodingException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslMasterTokenException, MslMessageException, MslEntityAuthException, MslException {
+        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+        
+        final byte[] plaintext;
         try {
             this.entityAuthData = (masterToken == null) ? entityAuthData : null;
             this.masterToken = masterToken;
-            this.signature = signature;
             if (entityAuthData == null && masterToken == null)
                 throw new MslMessageException(MslError.MESSAGE_ENTITY_NOT_FOUND);
             
@@ -507,15 +497,16 @@ public class MessageHeader extends Header {
             }
             
             // Verify and decrypt the header data.
-            try {
-                this.headerdata = DatatypeConverter.parseBase64Binary(headerdata);
-            } catch (final IllegalArgumentException e) {
-                throw new MslMessageException(MslError.HEADER_DATA_INVALID, headerdata, e).setEntity(masterToken).setEntity(entityAuthData);
+            //
+            // Throw different errors depending on whether or not a master
+            // token was used.
+            if (!this.messageCryptoContext.verify(headerdataBytes, signature, encoder)) {
+                if (masterToken != null)
+                    throw new MslCryptoException(MslError.MESSAGE_MASTERTOKENBASED_VERIFICATION_FAILED);
+                else
+                    throw new MslCryptoException(MslError.MESSAGE_ENTITYDATABASED_VERIFICATION_FAILED);
             }
-            if (this.headerdata == null || this.headerdata.length == 0)
-                throw new MslMessageException(MslError.HEADER_DATA_MISSING, headerdata).setEntity(masterToken).setEntity(entityAuthData);
-            this.verified = this.messageCryptoContext.verify(this.headerdata, this.signature);
-            this.plaintext = (this.verified) ? this.messageCryptoContext.decrypt(this.headerdata) : null;
+            plaintext = this.messageCryptoContext.decrypt(headerdataBytes, encoder);
         } catch (final MslCryptoException e) {
             e.setEntity(masterToken);
             e.setEntity(entityAuthData);
@@ -526,52 +517,28 @@ public class MessageHeader extends Header {
             throw e;
         }
         
-        // If verification failed we cannot parse the plaintext.
-        if (this.plaintext == null) {
-            this.messageId = 1;
-            this.sender = null;
-            this.recipient = null;
-            this.timestamp = null;
-            this.keyResponseData = null;
-            this.userIdToken = null;
-            this.userAuthData = null;
-            this.user = null;
-            this.serviceTokens = Collections.emptySet();
-            this.nonReplayableId = null;
-            this.renewable = false;
-            this.handshake = false;
-            this.capabilities = null;
-            this.keyRequestData = Collections.emptySet();
-            this.peerMasterToken = null;
-            this.peerUserIdToken = null;
-            this.peerServiceTokens = Collections.emptySet();
-            return;
-        }
-        
-        final String headerdataJson = new String(plaintext, MslConstants.DEFAULT_CHARSET);
-        final JSONObject headerdataJO;
         try {
-            headerdataJO = new JSONObject(headerdataJson);
+            headerdata = encoder.parseObject(plaintext);
             
             // Pull the message ID first because any error responses need to
             // use it.
-            this.messageId = headerdataJO.getLong(KEY_MESSAGE_ID);
+            this.messageId = headerdata.getLong(KEY_MESSAGE_ID);
             if (this.messageId < 0 || this.messageId > MslConstants.MAX_LONG_VALUE)
-                throw new MslMessageException(MslError.MESSAGE_ID_OUT_OF_RANGE, "headerdata " + headerdataJson).setEntity(masterToken).setEntity(entityAuthData);
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson, e).setEntity(masterToken).setEntity(entityAuthData);
+                throw new MslMessageException(MslError.MESSAGE_ID_OUT_OF_RANGE, "headerdata " + headerdata).setEntity(masterToken).setEntity(entityAuthData);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + DatatypeConverter.printBase64Binary(plaintext), e).setEntity(masterToken).setEntity(entityAuthData);
         }
         
         try {
             // If the message was sent with a master token pull the sender.
-            this.sender = (this.masterToken != null) ? headerdataJO.getString(KEY_SENDER) : null;
-            this.recipient = (headerdataJO.has(KEY_RECIPIENT)) ? headerdataJO.getString(KEY_RECIPIENT) : null;
-            this.timestamp = (headerdataJO.has(KEY_TIMESTAMP)) ? headerdataJO.getLong(KEY_TIMESTAMP) : null;
+            this.sender = (this.masterToken != null) ? headerdata.getString(KEY_SENDER) : null;
+            this.recipient = (headerdata.has(KEY_RECIPIENT)) ? headerdata.getString(KEY_RECIPIENT) : null;
+            this.timestamp = (headerdata.has(KEY_TIMESTAMP)) ? headerdata.getLong(KEY_TIMESTAMP) : null;
             
             // Pull key response data.
             final MasterToken tokenVerificationMasterToken;
-            if (headerdataJO.has(KEY_KEY_RESPONSE_DATA)) {
-                this.keyResponseData = KeyResponseData.create(ctx, headerdataJO.getJSONObject(KEY_KEY_RESPONSE_DATA));
+            if (headerdata.has(KEY_KEY_RESPONSE_DATA)) {
+                this.keyResponseData = KeyResponseData.create(ctx, headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder));
                 
                 // The key response data master token is used for token
                 // verification in a trusted services network. Otherwise it
@@ -586,12 +553,12 @@ public class MessageHeader extends Header {
             }
 
             // User ID tokens are always authenticated by a master token.
-            this.userIdToken = (headerdataJO.has(KEY_USER_ID_TOKEN))
-                ? new UserIdToken(ctx, headerdataJO.getJSONObject(KEY_USER_ID_TOKEN), tokenVerificationMasterToken)
+            this.userIdToken = (headerdata.has(KEY_USER_ID_TOKEN))
+                ? new UserIdToken(ctx, headerdata.getMslObject(KEY_USER_ID_TOKEN, encoder), tokenVerificationMasterToken)
                 : null;
             // Pull user authentication data.
-            this.userAuthData = (headerdataJO.has(KEY_USER_AUTHENTICATION_DATA))
-                ? UserAuthenticationData.create(ctx, tokenVerificationMasterToken, headerdataJO.getJSONObject(KEY_USER_AUTHENTICATION_DATA))
+            this.userAuthData = (headerdata.has(KEY_USER_AUTHENTICATION_DATA))
+                ? UserAuthenticationData.create(ctx, tokenVerificationMasterToken, headerdata.getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder))
                 : null;
 
             // Verify the user authentication data.
@@ -611,11 +578,11 @@ public class MessageHeader extends Header {
             // Service tokens are authenticated by the master token if it
             // exists or by the application crypto context.
             final Set<ServiceToken> serviceTokens = new HashSet<ServiceToken>();
-            if (headerdataJO.has(KEY_SERVICE_TOKENS)) {
-                final JSONArray tokens = headerdataJO.getJSONArray(KEY_SERVICE_TOKENS);
-                for (int i = 0; i < tokens.length(); ++i) {
+            if (headerdata.has(KEY_SERVICE_TOKENS)) {
+                final MslArray tokens = headerdata.getMslArray(KEY_SERVICE_TOKENS);
+                for (int i = 0; i < tokens.size(); ++i) {
                     try {
-                        serviceTokens.add(new ServiceToken(ctx, tokens.getJSONObject(i), tokenVerificationMasterToken, this.userIdToken, cryptoContexts));
+                        serviceTokens.add(new ServiceToken(ctx, tokens.getMslObject(i), tokenVerificationMasterToken, this.userIdToken, cryptoContexts));
                     } catch (final MslException e) {
                         e.setEntity(tokenVerificationMasterToken).setUser(this.userIdToken).setUser(userAuthData);
                         throw e;
@@ -623,8 +590,8 @@ public class MessageHeader extends Header {
                 }
             }
             this.serviceTokens = Collections.unmodifiableSet(serviceTokens);
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson, e).setEntity(masterToken).setEntity(entityAuthData).setMessageId(this.messageId);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + headerdata, e).setEntity(masterToken).setEntity(entityAuthData).setMessageId(this.messageId);
         } catch (final MslException e) {
             e.setEntity(masterToken);
             e.setEntity(entityAuthData);
@@ -633,18 +600,18 @@ public class MessageHeader extends Header {
         }
         
         try {
-            this.nonReplayableId = (headerdataJO.has(KEY_NON_REPLAYABLE_ID)) ? headerdataJO.getLong(KEY_NON_REPLAYABLE_ID) : null;
-            this.renewable = headerdataJO.getBoolean(KEY_RENEWABLE);
+            this.nonReplayableId = (headerdata.has(KEY_NON_REPLAYABLE_ID)) ? headerdata.getLong(KEY_NON_REPLAYABLE_ID) : null;
+            this.renewable = headerdata.getBoolean(KEY_RENEWABLE);
             // FIXME: Make handshake required once all MSL stacks are updated.
-            this.handshake = (headerdataJO.has(KEY_HANDSHAKE)) ? headerdataJO.getBoolean(KEY_HANDSHAKE) : false;
+            this.handshake = (headerdata.has(KEY_HANDSHAKE)) ? headerdata.getBoolean(KEY_HANDSHAKE) : false;
             
             // Verify values.
             if (nonReplayableId != null && (nonReplayableId < 0 || nonReplayableId > MslConstants.MAX_LONG_VALUE))
-                throw new MslMessageException(MslError.NONREPLAYABLE_ID_OUT_OF_RANGE, "headerdata " + headerdataJson);
+                throw new MslMessageException(MslError.NONREPLAYABLE_ID_OUT_OF_RANGE, "headerdata " + headerdata);
             
             // Pull message capabilities.
-            if (headerdataJO.has(KEY_CAPABILITIES)) {
-                final JSONObject capabilitiesJO = headerdataJO.getJSONObject(KEY_CAPABILITIES);
+            if (headerdata.has(KEY_CAPABILITIES)) {
+                final MslObject capabilitiesJO = headerdata.getMslObject(KEY_CAPABILITIES, encoder);
                 this.capabilities = new MessageCapabilities(capabilitiesJO);
             } else {
                 this.capabilities = null;
@@ -652,10 +619,10 @@ public class MessageHeader extends Header {
             
             // Pull key request data containers.
             final Set<KeyRequestData> keyRequestData = new HashSet<KeyRequestData>();
-            if (headerdataJO.has(KEY_KEY_REQUEST_DATA)) {
-                final JSONArray keyRequests = headerdataJO.getJSONArray(KEY_KEY_REQUEST_DATA);
-                for (int i = 0; i < keyRequests.length(); ++i) {
-                    keyRequestData.add(KeyRequestData.create(ctx, keyRequests.getJSONObject(i)));
+            if (headerdata.has(KEY_KEY_REQUEST_DATA)) {
+                final MslArray keyRequests = headerdata.getMslArray(KEY_KEY_REQUEST_DATA);
+                for (int i = 0; i < keyRequests.size(); ++i) {
+                    keyRequestData.add(KeyRequestData.create(ctx, keyRequests.getMslObject(i)));
                 }
             }
             this.keyRequestData = Collections.unmodifiableSet(keyRequestData);
@@ -663,8 +630,8 @@ public class MessageHeader extends Header {
             // Only process peer-to-peer tokens if in peer-to-peer mode.
             if (ctx.isPeerToPeer()) {
                 // Pull peer master token.
-                this.peerMasterToken = (headerdataJO.has(KEY_PEER_MASTER_TOKEN))
-                    ? new MasterToken(ctx, headerdataJO.getJSONObject(KEY_PEER_MASTER_TOKEN))
+                this.peerMasterToken = (headerdata.has(KEY_PEER_MASTER_TOKEN))
+                    ? new MasterToken(ctx, headerdata.getMslObject(KEY_PEER_MASTER_TOKEN, encoder))
                     : null;
                 // The key response data master token is used for peer token
                 // verification if in peer-to-peer mode.
@@ -677,8 +644,8 @@ public class MessageHeader extends Header {
                 // Pull peer user ID token. User ID tokens are always
                 // authenticated by a master token.
                 try {
-                    this.peerUserIdToken = (headerdataJO.has(KEY_PEER_USER_ID_TOKEN))
-                        ? new UserIdToken(ctx, headerdataJO.getJSONObject(KEY_PEER_USER_ID_TOKEN), peerVerificationMasterToken)
+                    this.peerUserIdToken = (headerdata.has(KEY_PEER_USER_ID_TOKEN))
+                        ? new UserIdToken(ctx, headerdata.getMslObject(KEY_PEER_USER_ID_TOKEN, encoder), peerVerificationMasterToken)
                         : null;
                 } catch (final MslException e) {
                     e.setEntity(peerVerificationMasterToken);
@@ -688,11 +655,11 @@ public class MessageHeader extends Header {
                 // Peer service tokens are authenticated by the peer master
                 // token if it exists or by the application crypto context.
                 final Set<ServiceToken> peerServiceTokens = new HashSet<ServiceToken>();
-                if (headerdataJO.has(KEY_PEER_SERVICE_TOKENS)) {
-                    final JSONArray tokens = headerdataJO.getJSONArray(KEY_PEER_SERVICE_TOKENS);
-                    for (int i = 0; i < tokens.length(); ++i) {
+                if (headerdata.has(KEY_PEER_SERVICE_TOKENS)) {
+                    final MslArray tokens = headerdata.getMslArray(KEY_PEER_SERVICE_TOKENS);
+                    for (int i = 0; i < tokens.size(); ++i) {
                         try {
-                            peerServiceTokens.add(new ServiceToken(ctx, tokens.getJSONObject(i), peerVerificationMasterToken, this.peerUserIdToken, cryptoContexts));
+                            peerServiceTokens.add(new ServiceToken(ctx, tokens.getMslObject(i), peerVerificationMasterToken, this.peerUserIdToken, cryptoContexts));
                         } catch (final MslException e) {
                             e.setEntity(peerVerificationMasterToken).setUser(this.peerUserIdToken);
                             throw e;
@@ -705,8 +672,8 @@ public class MessageHeader extends Header {
                 this.peerUserIdToken = null;
                 this.peerServiceTokens = Collections.emptySet();
             }
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJO.toString(), e)
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + headerdata.toString(), e)
                 .setEntity(masterToken)
                 .setEntity(entityAuthData)
                 .setUser(this.userIdToken)
@@ -720,25 +687,6 @@ public class MessageHeader extends Header {
             e.setMessageId(this.messageId);
             throw e;
         }
-    }
-
-    /**
-     * <p>Returns true if the header data has been decrypted and parsed. If
-     * this method returns false then the other methods that return the header
-     * data will return {@code null}, {@code false}, or empty collections
-     * instead of the actual header data.</p>
-     * 
-     * @return true if the decrypted content is available. (Implies verified.)
-     */
-    public boolean isDecrypted() {
-        return plaintext != null;
-    }
-
-    /**
-     * @return true if the token has been verified.
-     */
-    public boolean isVerified() {
-        return verified;
     }
     
     /**
@@ -934,22 +882,42 @@ public class MessageHeader extends Header {
     }
     
     /* (non-Javadoc)
-     * @see org.json.JSONString#toJSONString()
+     * @see com.netflix.msl.io.MslEncodable#toMslEncoding(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public String toJSONString() {
+    public byte[] toMslEncoding(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException {
+        // Return any cached encoding.
+        if (encodings.containsKey(format))
+            return encodings.get(format);
+        
+        // Encrypt and sign the header data.
+        final byte[] plaintext = encoder.encodeObject(headerdata, format);
+        final byte[] ciphertext;
         try {
-            final JSONObject jsonObj = new JSONObject();
-            if (masterToken != null)
-                jsonObj.put(KEY_MASTER_TOKEN, masterToken);
-            else
-                jsonObj.put(KEY_ENTITY_AUTHENTICATION_DATA, entityAuthData);
-            jsonObj.put(KEY_HEADERDATA, DatatypeConverter.printBase64Binary(headerdata));
-            jsonObj.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
-            return jsonObj.toString();
-        } catch (final JSONException e) {
-            throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);
+            ciphertext = this.messageCryptoContext.encrypt(plaintext, encoder, format);
+        } catch (final MslCryptoException e) {
+            throw new MslEncoderException("Error encrypting the header data.", e);
         }
+        final byte[] signature;
+        try {
+            signature = this.messageCryptoContext.sign(ciphertext, encoder, format);
+        } catch (final MslCryptoException e) {
+            throw new MslEncoderException("Error signging the header data.", e);
+        }
+        
+        // Create the encoding.
+        final MslObject header = encoder.createObject();
+        if (masterToken != null)
+            header.put(KEY_MASTER_TOKEN, masterToken);
+        else
+            header.put(KEY_ENTITY_AUTHENTICATION_DATA, entityAuthData);
+        header.put(KEY_HEADERDATA, ciphertext);
+        header.put(KEY_SIGNATURE, signature);
+        final byte[] encoding = encoder.encodeObject(header, format);
+        
+        // Cache and return the encoding.
+        encodings.put(format, encoding);
+        return encoding;
     }
     
     /* (non-Javadoc)
@@ -1018,12 +986,8 @@ public class MessageHeader extends Header {
     private final EntityAuthenticationData entityAuthData;
     /** Master token. */
     private final MasterToken masterToken;
-    /** Header data (ciphertext). */
-    private final byte[] headerdata;
-    /** Header data (plaintext) */
-    private final byte[] plaintext;
-    /** Signature. */
-    private final byte[] signature;
+    /** Header data. */
+    private final MslObject headerdata;
     
     /** Sender. */
     private final String sender;
@@ -1064,7 +1028,7 @@ public class MessageHeader extends Header {
     
     /** Message crypto context. */
     private final ICryptoContext messageCryptoContext;
-    
-    /** Message header is verified. */
-    private final boolean verified;
+
+    /** Cached encodings. */
+    private final Map<MslEncoderFormat,byte[]> encodings = new HashMap<MslEncoderFormat,byte[]>();
 }

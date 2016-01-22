@@ -15,6 +15,10 @@
  */
 package com.netflix.msl.tokens;
 
+import java.sql.Date;
+
+import javax.crypto.SecretKey;
+
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
@@ -23,13 +27,8 @@ import com.netflix.msl.MslException;
 import com.netflix.msl.MslMasterTokenException;
 import com.netflix.msl.MslUserIdTokenException;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.util.MslContext;
-
-import org.json.JSONObject;
-
-import javax.crypto.SecretKey;
-
-import java.sql.Date;
 
 /**
  * Token factory for unit tests.
@@ -140,7 +139,7 @@ public class MockTokenFactory implements TokenFactory {
         do {
             serialNumber = ctx.getRandom().nextLong();
         } while (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE);
-        final JSONObject issuerData = null;
+        final MslObject issuerData = null;
         final String identity = entityAuthData.getIdentity();
         return new MasterToken(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey);
     }
@@ -165,7 +164,7 @@ public class MockTokenFactory implements TokenFactory {
         if (!masterToken.isDecrypted())
             throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, masterToken);
         
-        final JSONObject issuerData = null;
+        final MslObject issuerData = null;
         final Date renewalWindow = new Date(ctx.getTime() + RENEWAL_OFFSET);
         final Date expiration = new Date(ctx.getTime() + EXPIRATION_OFFSET);
         final long oldSequenceNumber = masterToken.getSequenceNumber();
@@ -209,7 +208,7 @@ public class MockTokenFactory implements TokenFactory {
      */
     @Override
     public UserIdToken createUserIdToken(final MslContext ctx, final MslUser user, final MasterToken masterToken) throws MslEncodingException, MslCryptoException {
-        final JSONObject issuerData = null;
+        final MslObject issuerData = null;
         final Date renewalWindow = new Date(ctx.getTime() + RENEWAL_OFFSET);
         final Date expiration = new Date(ctx.getTime() + EXPIRATION_OFFSET);
         long serialNumber = -1;
@@ -227,7 +226,7 @@ public class MockTokenFactory implements TokenFactory {
         if (!userIdToken.isDecrypted())
             throw new MslUserIdTokenException(MslError.USERIDTOKEN_NOT_DECRYPTED, userIdToken).setEntity(masterToken);
 
-        final JSONObject issuerData = null;
+        final MslObject issuerData = null;
         final Date renewalWindow = new Date(ctx.getTime() + RENEWAL_OFFSET);
         final Date expiration = new Date(ctx.getTime() + EXPIRATION_OFFSET);
         final long serialNumber = userIdToken.getSerialNumber();

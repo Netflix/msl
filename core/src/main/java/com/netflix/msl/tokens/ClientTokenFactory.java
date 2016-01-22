@@ -24,7 +24,7 @@ import com.netflix.msl.util.MslContext;
 
 /**
  * This class should be used by trusted network clients for the token factory.
- * Since trusted network clients do not issue tokens the majority of these
+ * Since trusted network clients do not issue tokens the mamority of these
  * methods either return under the assumption everything should be accepted or
  * trusted, or throw exceptions if the operation should never occur.
  * 

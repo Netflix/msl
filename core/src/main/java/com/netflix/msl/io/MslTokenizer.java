@@ -41,7 +41,7 @@ public abstract class MslTokenizer {
      * <p>Returns true if more objects can be read from the data source. This
      * method determines that by actually trying to read the next object.</p>
      * 
-     * @param timeout read timeout in milliseconds.
+     * @param timeout read timeout in milliseconds or -1 for no timeout.
      * @return true if more objects are available from the data source, false
      *         if the tokenizer has been aborted.
      * @throws MslEncoderException if the next object cannot be read or the
@@ -65,7 +65,7 @@ public abstract class MslTokenizer {
      * used to search for the next object, and how the position should be set
      * to do so, is up to the implementer and may depend upon the encoding.</p>
      * 
-     * @param timeout read timeout in milliseconds.
+     * @param timeout read timeout in milliseconds or -1 for no timeout.
      * @return the next object or {@code null} if there are no more.
      * @throws MslEncoderException if the next object cannot be read or the
      *         source data at the current position is invalid.
@@ -75,7 +75,7 @@ public abstract class MslTokenizer {
     /**
      * <p>Return the next object.</p>
      * 
-     * @param timeout read timeout in milliseconds.
+     * @param timeout read timeout in milliseconds or -1 for no timeout.
      * @return the next object or {@code null} if there are no more or the
      *         tokenizer has been aborted.
      * @throws MslEncoderException if the next object cannot be read or the

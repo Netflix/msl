@@ -15,8 +15,6 @@
  */
 package com.netflix.msl.keyx;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -28,6 +26,9 @@ import com.netflix.msl.MslError;
 import com.netflix.msl.MslException;
 import com.netflix.msl.MslKeyExchangeException;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.test.ExpectedMslException;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.util.MockMslContext;
@@ -38,7 +39,7 @@ import com.netflix.msl.util.MslTestUtils;
  * Key response data unit tests.
  * 
  * Successful calls to
- * {@link KeyResponseData#create(com.netflix.msl.util.MslContext, org.json.JSONObject)}
+ * {@link KeyResponseData#create(com.netflix.msl.util.MslContext, org.json.MslObject)}
  * covered in the individual key response data unit tests.
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
@@ -59,89 +60,93 @@ public class KeyResponseDataTest {
     @BeforeClass
     public static void setup() throws MslEncodingException, MslCryptoException {
         ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
+        encoder = ctx.getMslEncoderFactory();
         MASTER_TOKEN = MslTestUtils.getMasterToken(ctx, 1, 1);
     }
     
     @AfterClass
     public static void teardown() {
         MASTER_TOKEN = null;
+        encoder = null;
         ctx = null;
     }
     
     @Test
-    public void noMasterToken() throws JSONException, MslEncodingException, MslCryptoException, MslKeyExchangeException, MslException {
+    public void noMasterToken() throws MslException, MslEncodingException, MslCryptoException, MslKeyExchangeException, MslException, MslEncoderException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
-        final JSONObject jo = new JSONObject();
-        jo.put(KEY_MASTER_TOKEN + "x", new JSONObject(MASTER_TOKEN.toJSONString()));
-        jo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED);
-        jo.put(KEY_KEYDATA, new JSONObject());
-        KeyResponseData.create(ctx, jo);
+        final MslObject mo = encoder.createObject();
+        mo.put(KEY_MASTER_TOKEN + "x", MslTestUtils.toMslObject(encoder, MASTER_TOKEN));
+        mo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED.name());
+        mo.put(KEY_KEYDATA, encoder.createObject());
+        KeyResponseData.create(ctx, mo);
     }
     
     @Test
-    public void noScheme() throws JSONException, MslException {
+    public void noScheme() throws MslException, MslException, MslEncoderException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
-        final JSONObject jo = new JSONObject();
-        jo.put(KEY_MASTER_TOKEN, new JSONObject(MASTER_TOKEN.toJSONString()));
-        jo.put(KEY_SCHEME + "x", KeyExchangeScheme.ASYMMETRIC_WRAPPED);
-        jo.put(KEY_KEYDATA, new JSONObject());
-        KeyResponseData.create(ctx, jo);
+        final MslObject mo = encoder.createObject();
+        mo.put(KEY_MASTER_TOKEN, MslTestUtils.toMslObject(encoder, MASTER_TOKEN));
+        mo.put(KEY_SCHEME + "x", KeyExchangeScheme.ASYMMETRIC_WRAPPED.name());
+        mo.put(KEY_KEYDATA, encoder.createObject());
+        KeyResponseData.create(ctx, mo);
     }
     
     @Test
-    public void noKeydata() throws JSONException, MslException {
+    public void noKeydata() throws MslException, MslException, MslEncoderException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
-        final JSONObject jo = new JSONObject();
-        jo.put(KEY_MASTER_TOKEN, new JSONObject(MASTER_TOKEN.toJSONString()));
-        jo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED);
-        jo.put(KEY_KEYDATA + "x", new JSONObject());
-        KeyResponseData.create(ctx, jo);
+        final MslObject mo = encoder.createObject();
+        mo.put(KEY_MASTER_TOKEN, MslTestUtils.toMslObject(encoder, MASTER_TOKEN));
+        mo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED.name());
+        mo.put(KEY_KEYDATA + "x", encoder.createObject());
+        KeyResponseData.create(ctx, mo);
     }
     
     @Test
-    public void invalidMasterToken() throws JSONException, MslEncodingException, MslCryptoException, MslKeyExchangeException, MslException {
+    public void invalidMasterToken() throws MslException, MslEncodingException, MslCryptoException, MslKeyExchangeException, MslException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
-        final JSONObject jo = new JSONObject();
-        jo.put(KEY_MASTER_TOKEN + "x", new JSONObject());
-        jo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED);
-        jo.put(KEY_KEYDATA, new JSONObject());
-        KeyResponseData.create(ctx, jo);
+        final MslObject mo = encoder.createObject();
+        mo.put(KEY_MASTER_TOKEN + "x", encoder.createObject());
+        mo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED.name());
+        mo.put(KEY_KEYDATA, encoder.createObject());
+        KeyResponseData.create(ctx, mo);
     }
     
     @Test
-    public void unidentifiedScheme() throws JSONException, MslException {
+    public void unidentifiedScheme() throws MslException, MslException, MslEncoderException {
         thrown.expect(MslKeyExchangeException.class);
         thrown.expectMslError(MslError.UNIDENTIFIED_KEYX_SCHEME);
 
-        final JSONObject jo = new JSONObject();
-        jo.put(KEY_MASTER_TOKEN, new JSONObject(MASTER_TOKEN.toJSONString()));
-        jo.put(KEY_SCHEME, "x");
-        jo.put(KEY_KEYDATA, new JSONObject());
-        KeyResponseData.create(ctx, jo);
+        final MslObject mo = encoder.createObject();
+        mo.put(KEY_MASTER_TOKEN, MslTestUtils.toMslObject(encoder, MASTER_TOKEN));
+        mo.put(KEY_SCHEME, "x");
+        mo.put(KEY_KEYDATA, encoder.createObject());
+        KeyResponseData.create(ctx, mo);
     }
     
     @Test
-    public void keyxFactoryNotFound() throws JSONException, MslException {
+    public void keyxFactoryNotFound() throws MslException, MslException, MslEncoderException {
         thrown.expect(MslKeyExchangeException.class);
         thrown.expectMslError(MslError.KEYX_FACTORY_NOT_FOUND);
 
         final MockMslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
         ctx.removeKeyExchangeFactories(KeyExchangeScheme.ASYMMETRIC_WRAPPED);
-        final JSONObject jo = new JSONObject();
-        jo.put(KEY_MASTER_TOKEN, new JSONObject(MASTER_TOKEN.toJSONString()));
-        jo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED.name());
-        jo.put(KEY_KEYDATA, new JSONObject());
-        KeyResponseData.create(ctx, jo);
+        final MslObject mo = encoder.createObject();
+        mo.put(KEY_MASTER_TOKEN, MslTestUtils.toMslObject(encoder, MASTER_TOKEN));
+        mo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED.name());
+        mo.put(KEY_KEYDATA, encoder.createObject());
+        KeyResponseData.create(ctx, mo);
     }
     
     /** MSL context. */
     private static MslContext ctx;
+    /** MSL encoder factory. */
+    private static MslEncoderFactory encoder;
 }

@@ -40,6 +40,8 @@ import com.netflix.msl.MslUserAuthException;
 import com.netflix.msl.crypto.NullCryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeFactory.KeyExchangeData;
 import com.netflix.msl.keyx.KeyRequestData;
@@ -98,6 +100,7 @@ public class MessageBuilder {
      * master token.
      * 
      * @param ctx MSL context.
+     * @param format MSL encoder format.
      * @param keyRequestData available key request data.
      * @param masterToken master token to renew. Null if the identity is
      *        provided.
@@ -110,14 +113,12 @@ public class MessageBuilder {
      *         request data or the key response data cannot be created or none
      *         of the key exchange schemes are supported.
      * @throws MslMasterTokenException if the master token is not trusted.
-     * @throws MslEncodingException if there is an error parsing or encoding
-     *         the JSON.
      * @throws MslEntityAuthException if there is a problem with the master
      *         token identity or entity identity.
      * @throws MslException if there is an error creating or renewing the
      *         master token.
      */
-    private static KeyExchangeData issueMasterToken(final MslContext ctx, final Set<KeyRequestData> keyRequestData, final MasterToken masterToken, final EntityAuthenticationData entityAuthData) throws MslKeyExchangeException, MslCryptoException, MslMasterTokenException, MslEncodingException, MslEntityAuthException, MslException {
+    private static KeyExchangeData issueMasterToken(final MslContext ctx, final MslEncoderFormat format, final Set<KeyRequestData> keyRequestData, final MasterToken masterToken, final EntityAuthenticationData entityAuthData) throws MslKeyExchangeException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException {
         // Attempt key exchange in the preferred order.
         MslException keyxException = null;
         final Iterator<KeyExchangeFactory> factories = ctx.getKeyExchangeFactories().iterator();
@@ -131,9 +132,9 @@ public class MessageBuilder {
                 // combination before giving up.
                 try {
                     if (masterToken != null)
-                        return factory.generateResponse(ctx, request, masterToken);
+                        return factory.generateResponse(ctx, format, request, masterToken);
                     else
-                        return factory.generateResponse(ctx, request, entityAuthData);
+                        return factory.generateResponse(ctx, format, request, entityAuthData);
                 } catch (final MslCryptoException e) {
                     if (!factories.hasNext()) throw e;
                     keyxException = e;
@@ -248,6 +249,15 @@ public class MessageBuilder {
         final long requestMessageId = requestHeader.getMessageId();
         final long messageId = incrementMessageId(requestMessageId);
         
+        // Compute the intersection of the request and response message
+        // capabilities.
+        final MessageCapabilities capabilities = MessageCapabilities.intersection(requestHeader.getMessageCapabilities(), ctx.getMessageCapabilities());
+        
+        // Identify the response format.
+        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+        final Set<MslEncoderFormat> formats = (capabilities != null) ? capabilities.getEncoderFormats() : null;
+        final MslEncoderFormat format = encoder.getPreferredFormat(formats);
+        
         try {
             // If the message contains key request data and is renewable...
             final KeyExchangeData keyExchangeData;
@@ -259,7 +269,7 @@ public class MessageBuilder {
                     // newest master token, then renew the master token.
                     final TokenFactory factory = ctx.getTokenFactory();
                     if (masterToken.isRenewable(null) || masterToken.isExpired(null) || !factory.isNewestMasterToken(ctx, masterToken))
-                        keyExchangeData = issueMasterToken(ctx, keyRequestData, masterToken, null);
+                        keyExchangeData = issueMasterToken(ctx, format, keyRequestData, masterToken, null);
                     // Otherwise we don't need to do anything special.
                     else
                         keyExchangeData = null;
@@ -271,7 +281,7 @@ public class MessageBuilder {
                     // The message header is already authenticated via the
                     // entity authentication data's crypto context so we can
                     // simply proceed with the master token issuance.
-                    keyExchangeData = issueMasterToken(ctx, keyRequestData, null, entityAuthData);
+                    keyExchangeData = issueMasterToken(ctx, format, keyRequestData, null, entityAuthData);
                 }
             }
 
@@ -329,10 +339,6 @@ public class MessageBuilder {
                 userIdToken = tokenFactory.createUserIdToken(ctx, user, userAuthMasterToken);
             }
             
-            // Compute the intersection of the request and response message
-            // capabilities.
-            final MessageCapabilities capabilities = MessageCapabilities.intersection(requestHeader.getMessageCapabilities(), ctx.getMessageCapabilities());
-            
             // Create the message builder.
             //
             // Peer-to-peer responses swap the tokens.
@@ -368,8 +374,6 @@ public class MessageBuilder {
      * @param error the MSL error.
      * @param userMessage localized user-consumable error message. May be null.
      * @return the error header.
-     * @throws MslEncodingException if there is an error encoding the JSON
-     *         data.
      * @throws MslCryptoException if there is an error encrypting or signing
      *         the message.
      * @throws MslEntityAuthException if there is an error with the entity
@@ -377,7 +381,7 @@ public class MessageBuilder {
      * @throws MslMessageException if no entity authentication data was
      *         returned by the MSL context.
      */
-    public static ErrorHeader createErrorResponse(final MslContext ctx, final String recipient, final Long requestMessageId, final MslError error, final String userMessage) throws MslEncodingException, MslCryptoException, MslEntityAuthException, MslMessageException {
+    public static ErrorHeader createErrorResponse(final MslContext ctx, final String recipient, final Long requestMessageId, final MslError error, final String userMessage) throws MslCryptoException, MslEntityAuthException, MslMessageException {
         final EntityAuthenticationData entityAuthData = ctx.getEntityAuthenticationData(null);
         // If we have the request message ID then the error response message ID
         // must be equal to the request message ID + 1.
@@ -553,8 +557,6 @@ public class MessageBuilder {
      * Construct the message header from the current message builder state.
      * 
      * @return the message header.
-     * @throws MslEncodingException if there is an error encoding the JSON
-     *         data.
      * @throws MslCryptoException if there is an error encrypting or signing
      *         the message.
      * @throws MslMasterTokenException if the header master token is not
@@ -565,7 +567,7 @@ public class MessageBuilder {
      *         not include a master token.
      * @throws MslException should not happen.
      */
-    public MessageHeader getHeader() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslException {
+    public MessageHeader getHeader() throws MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslException {
         final KeyResponseData response = (keyExchangeData != null) ? keyExchangeData.keyResponseData : null;
         final Set<ServiceToken> tokens = new HashSet<ServiceToken>(serviceTokens.values());
         final Long nonReplayableId;
@@ -739,13 +741,11 @@ public class MessageBuilder {
      * against.</p>
      * 
      * @param user remote user.
-     * @throws MslEncodingException if there is an error encoding the JSON
-     *         data.
      * @throws MslCryptoException if there is an error encrypting or signing
      *         the token data.
      * @throws MslException if there is an error creating the user ID token.
      */
-    public void setUser(final MslUser user) throws MslEncodingException, MslCryptoException, MslException {
+    public void setUser(final MslUser user) throws MslCryptoException, MslException {
         // Make sure the assumptions hold. Otherwise a bad message could be
         // built.
         if (!ctx.isPeerToPeer() && userIdToken != null ||

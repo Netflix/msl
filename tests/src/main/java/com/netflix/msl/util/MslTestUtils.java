@@ -26,10 +26,6 @@ import java.util.Set;
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import javax.xml.bind.DatatypeConverter;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
@@ -40,6 +36,11 @@ import com.netflix.msl.crypto.JcaAlgorithm;
 import com.netflix.msl.crypto.NullCryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.MockPresharedAuthenticationFactory;
+import com.netflix.msl.io.MslEncodable;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.tokens.ServiceToken;
@@ -71,6 +72,21 @@ public class MslTestUtils {
     /** Wrapping key length in bytes. */
     private static final int WRAPPING_KEY_LENGTH = 128 / Byte.SIZE;
 
+    
+    /**
+     * Parse a new {@link MslObject} from the {@link MslEncodable}.
+     * 
+     * @param encoder the {@link MslEncoderFactory}.
+     * @param encode a {@link MslEncodable}.
+     * @return the {@link MslObject}
+     * @throws MslEncoderException if there is an error encoding and converting
+     *         the  object cannot be encoded and converted
+     */
+    public static MslObject toMslObject(final MslEncoderFactory encoder, final MslEncodable encode) throws MslEncoderException {
+        final byte[] encoding = encode.toMslEncoding(encoder, MslEncoderFormat.JSON);
+        return encoder.parseObject(encoding);
+    }
+
     /**
      * Returns a master token with the identity of the MSL context entity
      * authentication data that is not renewable or expired.
@@ -100,14 +116,13 @@ public class MslTestUtils {
      * 
      * @param ctx MSL context.
      * @return a new untrusted master token.
-     * @throws MslEncodingException if there is an error encoding the JSON
-     *         data.
+     * @throws MslEncodingException if there is an error encoding the data.
      * @throws MslCryptoException if there is an error encrypting or signing
      *         the token data.
      * @throws MslException if the master token is constructed incorrectly.
-     * @throws JSONException if there is an error editing the JSON data.
+     * @throws MslEncoderException if there is an error editing the data.
      */
-    public static MasterToken getUntrustedMasterToken(final MslContext ctx) throws MslEncodingException, MslCryptoException, JSONException, MslException {
+    public static MasterToken getUntrustedMasterToken(final MslContext ctx) throws MslEncodingException, MslCryptoException, MslEncoderException, MslException {
         final Date renewalWindow = new Date(System.currentTimeMillis() + 10000);
         final Date expiration = new Date(System.currentTimeMillis() + 20000);
         final EntityAuthenticationData entityAuthData = ctx.getEntityAuthenticationData(null);
@@ -115,12 +130,12 @@ public class MslTestUtils {
         final SecretKey encryptionKey = MockPresharedAuthenticationFactory.KPE;
         final SecretKey hmacKey = MockPresharedAuthenticationFactory.KPH;
         final MasterToken masterToken = new MasterToken(ctx, renewalWindow, expiration, 1L, 1L, null, identity, encryptionKey, hmacKey);
-        final String json = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(json);
-        final byte[] signature = DatatypeConverter.parseBase64Binary(jo.getString("signature"));
+        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+        final MslObject mo = toMslObject(encoder, masterToken);
+        final byte[] signature = mo.getBytes("signature");
         ++signature[1];
-        jo.put("signature", DatatypeConverter.printBase64Binary(signature));
-        return new MasterToken(ctx, jo);
+        mo.put("signature", signature);
+        return new MasterToken(ctx, mo);
     }
     
     /**
@@ -152,23 +167,22 @@ public class MslTestUtils {
      * @param serialNumber user ID token serial number to use.
      * @param user MSL user to use.
      * @return a new untrusted user ID token.
-     * @throws MslEncodingException if there is an error encoding the JSON
-     *         data.
+     * @throws MslEncodingException if there is an error encoding the data.
      * @throws MslCryptoException if there is an error encrypting or signing
      *         the token data.
-     * @throws JSONException if there is an error editing the JSON data.
+     * @throws MslEncoderException if there is an error editing the data.
      * @throws MslException if the user ID token serial number is out of range.
      */
-    public static UserIdToken getUntrustedUserIdToken(final MslContext ctx, final MasterToken masterToken, final long serialNumber, final MslUser user) throws MslEncodingException, MslCryptoException, JSONException, MslException {
+    public static UserIdToken getUntrustedUserIdToken(final MslContext ctx, final MasterToken masterToken, final long serialNumber, final MslUser user) throws MslEncodingException, MslCryptoException, MslEncoderException, MslException {
         final Date renewalWindow = new Date(System.currentTimeMillis() + 10000);
         final Date expiration = new Date(System.currentTimeMillis() + 20000);
         final UserIdToken userIdToken = new UserIdToken(ctx, renewalWindow, expiration, masterToken, serialNumber, null, user);
-        final String json = userIdToken.toJSONString();
-        final JSONObject jo = new JSONObject(json);
-        final byte[] signature = DatatypeConverter.parseBase64Binary(jo.getString("signature"));
+        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+        final MslObject mo = toMslObject(encoder, userIdToken);
+        final byte[] signature = mo.getBytes("signature");
         ++signature[1];
-        jo.put("signature", DatatypeConverter.printBase64Binary(signature));
-        return new UserIdToken(ctx, jo, masterToken);
+        mo.put("signature", signature);
+        return new UserIdToken(ctx, mo, masterToken);
     }
     
     /**

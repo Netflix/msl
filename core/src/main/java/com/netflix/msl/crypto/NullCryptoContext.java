@@ -16,6 +16,8 @@
 package com.netflix.msl.crypto;
 
 import com.netflix.msl.MslCryptoException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
 
 /**
  * A crypto context where encryption/decryption are no-ops, signatures are
@@ -25,50 +27,50 @@ import com.netflix.msl.MslCryptoException;
  */
 public class NullCryptoContext implements ICryptoContext {
     /* (non-Javadoc)
-     * @see com.netflix.msl.crypto.ICryptoContext#encrypt(byte[])
+     * @see com.netflix.msl.crypto.ICryptoContext#encrypt(byte[], com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public byte[] encrypt(final byte[] data) throws MslCryptoException {
+    public byte[] encrypt(final byte[] data, final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslCryptoException {
         return data;
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.crypto.ICryptoContext#decrypt(byte[])
+     * @see com.netflix.msl.crypto.ICryptoContext#decrypt(byte[], com.netflix.msl.io.MslEncoderFactory)
      */
     @Override
-    public byte[] decrypt(final byte[] data) throws MslCryptoException {
+    public byte[] decrypt(final byte[] data, final MslEncoderFactory encoder) throws MslCryptoException {
         return data;
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.crypto.ICryptoContext#wrap(byte[])
+     * @see com.netflix.msl.crypto.ICryptoContext#wrap(byte[], com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public byte[] wrap(byte[] data) throws MslCryptoException {
+    public byte[] wrap(final byte[] data, final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslCryptoException {
         return data;
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.crypto.ICryptoContext#unwrap(byte[])
+     * @see com.netflix.msl.crypto.ICryptoContext#unwrap(byte[], com.netflix.msl.io.MslEncoderFactory)
      */
     @Override
-    public byte[] unwrap(byte[] data) throws MslCryptoException {
+    public byte[] unwrap(final byte[] data, final MslEncoderFactory encoder) throws MslCryptoException {
         return data;
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.crypto.ICryptoContext#sign(byte[])
+     * @see com.netflix.msl.crypto.ICryptoContext#sign(byte[], com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public byte[] sign(final byte[] data) throws MslCryptoException {
+    public byte[] sign(final byte[] data, final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslCryptoException {
         return new byte[0];
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.crypto.ICryptoContext#verify(byte[], byte[])
+     * @see com.netflix.msl.crypto.ICryptoContext#verify(byte[], byte[], com.netflix.msl.io.MslEncoderFactory)
      */
     @Override
-    public boolean verify(final byte[] data, final byte[] signature) throws MslCryptoException {
+    public boolean verify(final byte[] data, final byte[] signature, final MslEncoderFactory encoder) throws MslCryptoException {
         return true;
     }
 }

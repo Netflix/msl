@@ -15,12 +15,9 @@
  */
 package com.netflix.msl.entityauth;
 
-import javax.xml.bind.DatatypeConverter;
+import java.util.HashMap;
+import java.util.Map;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
@@ -29,6 +26,10 @@ import com.netflix.msl.MslException;
 import com.netflix.msl.MslMasterTokenException;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.crypto.SessionCryptoContext;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.util.MslContext;
 
@@ -51,11 +52,11 @@ import com.netflix.msl.util.MslContext;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class MasterTokenProtectedAuthenticationData extends EntityAuthenticationData {
-    /** JSON key master token. */
+    /** Key master token. */
     protected static final String KEY_MASTER_TOKEN = "mastertoken";
-    /** JSON key authentication data. */
+    /** Key authentication data. */
     protected static final String KEY_AUTHENTICATION_DATA = "authdata";
-    /** JSON key signature. */
+    /** Key signature. */
     protected static final String KEY_SIGNATURE = "signature";
     
     /**
@@ -73,35 +74,18 @@ public class MasterTokenProtectedAuthenticationData extends EntityAuthentication
      */
     public MasterTokenProtectedAuthenticationData(final MslContext ctx, final MasterToken masterToken, final EntityAuthenticationData authdata) throws MslCryptoException, MslEntityAuthException {
         super(EntityAuthenticationScheme.MT_PROTECTED);
-        
+        this.ctx = ctx;
         this.masterToken = masterToken;
         this.authdata = authdata;
-        
-        // Grab master token crypto context.
-        final ICryptoContext cryptoContext;
-        try {
-            final ICryptoContext cachedCryptoContext = ctx.getMslStore().getCryptoContext(masterToken);
-            if (cachedCryptoContext != null)
-                cryptoContext = cachedCryptoContext;
-            else
-                cryptoContext = new SessionCryptoContext(ctx, masterToken);
-        } catch (final MslMasterTokenException e) {
-            throw new MslEntityAuthException(MslError.ENTITYAUTH_MASTERTOKEN_NOT_DECRYPTED, e);
-        }
-        
-        // Encrypt and sign the authentication data.
-        final byte[] plaintext = authdata.toJSONString().getBytes(MslConstants.DEFAULT_CHARSET);
-        this.ciphertext = cryptoContext.encrypt(plaintext);
-        this.signature = cryptoContext.sign(this.ciphertext);
     }
     
     /**
      * <p>Construct a new master token protected entity authentication data
-     * instance from the provided JSON object.</p>
+     * instance from the provided MSL object.</p>
      * 
      * @param ctx MSL context.
-     * @param authdataJO the authentication data JSON object.
-     * @throws MslEncodingException if there is an error parsing the JSON
+     * @param authdataMo the authentication data MSL object.
+     * @throws MslEncodingException if there is an error parsing the MSL
      *         representation.
      * @throws MslCryptoException if there is an error decrypting or verifying
      *         the encapsulated authentication data.
@@ -110,28 +94,23 @@ public class MasterTokenProtectedAuthenticationData extends EntityAuthentication
      *         the master token crypto context cannot be found in the MSL store
      *         and cannot be created.
      */
-    public MasterTokenProtectedAuthenticationData(final MslContext ctx, final JSONObject authdataJO) throws MslEncodingException, MslCryptoException, MslEntityAuthException {
+    MasterTokenProtectedAuthenticationData(final MslContext ctx, final MslObject authdataMo) throws MslEncodingException, MslCryptoException, MslEntityAuthException {
         super(EntityAuthenticationScheme.MT_PROTECTED);
+        this.ctx = ctx;
         
         // Extract authentication data fields.
+        final byte[] ciphertext, signature;
         try {
+            final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
             try {
-                this.masterToken = new MasterToken(ctx, authdataJO.getJSONObject(KEY_MASTER_TOKEN));
+                this.masterToken = new MasterToken(ctx, authdataMo.getMslObject(KEY_MASTER_TOKEN, encoder));
             } catch (final MslException e) {
-                throw new MslEntityAuthException(MslError.ENTITYAUTH_MASTERTOKEN_INVALID, "master token protected authdata " + authdataJO.toString(), e);
+                throw new MslEntityAuthException(MslError.ENTITYAUTH_MASTERTOKEN_INVALID, "master token protected authdata " + authdataMo, e);
             }
-            try {
-                this.ciphertext = DatatypeConverter.parseBase64Binary(authdataJO.getString(KEY_AUTHENTICATION_DATA));
-            } catch (final IllegalArgumentException e) {
-                throw new MslEntityAuthException(MslError.ENTITYAUTH_CIPHERTEXT_INVALID, "master token protected authdata " + authdataJO.toString(), e);
-            }
-            try {
-                this.signature = DatatypeConverter.parseBase64Binary(authdataJO.getString(KEY_SIGNATURE));
-            } catch (final IllegalArgumentException e) {
-                throw new MslEntityAuthException(MslError.ENTITYAUTH_SIGNATURE_INVALID, "master token protected authdata " + authdataJO.toString(), e);
-            }
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "master token protected authdata " + authdataJO.toString(), e);
+            ciphertext = authdataMo.getBytes(KEY_AUTHENTICATION_DATA);
+            signature = authdataMo.getBytes(KEY_SIGNATURE);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "master token protected authdata " + authdataMo, e);
         }
         
         // Grab master token crypto context.
@@ -148,13 +127,14 @@ public class MasterTokenProtectedAuthenticationData extends EntityAuthentication
         
         // Verify and decrypt the authentication data.
         try {
-            if (!cryptoContext.verify(this.ciphertext, this.signature))
-                throw new MslEntityAuthException(MslError.ENTITYAUTH_VERIFICATION_FAILED, "master token protected authdata " + authdataJO.toString());
-            final byte[] plaintext = cryptoContext.decrypt(this.ciphertext);
-            final JSONObject internalAuthdataJO = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
-            this.authdata = EntityAuthenticationData.create(ctx, internalAuthdataJO);
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "master token protected authdata " + authdataJO.toString(), e);
+            final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+            if (!cryptoContext.verify(ciphertext, signature, encoder))
+                throw new MslEntityAuthException(MslError.ENTITYAUTH_VERIFICATION_FAILED, "master token protected authdata " + authdataMo);
+            final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+            final MslObject internalAuthdataMo = encoder.parseObject(plaintext);
+            this.authdata = EntityAuthenticationData.create(ctx, internalAuthdataMo);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "master token protected authdata " + authdataMo, e);
         }
     }
 
@@ -176,19 +156,47 @@ public class MasterTokenProtectedAuthenticationData extends EntityAuthentication
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.entityauth.EntityAuthenticationData#getAuthData()
+     * @see com.netflix.msl.entityauth.EntityAuthenticationData#getAuthData(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public JSONObject getAuthData() throws MslEncodingException {
+    public MslObject getAuthData(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException {
+        // Return any cached object.
+        if (encodings.containsKey(format))
+            return encodings.get(format);
+        
+        // Grab master token crypto context.
+        final ICryptoContext cryptoContext;
         try {
-            final JSONObject jsonObj = new JSONObject();
-            jsonObj.put(KEY_MASTER_TOKEN, masterToken);
-            jsonObj.put(KEY_AUTHENTICATION_DATA, DatatypeConverter.printBase64Binary(ciphertext));
-            jsonObj.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
-            return new JSONObject(jsonObj.toString());
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, "master token protected authdata", e);
+            final ICryptoContext cachedCryptoContext = ctx.getMslStore().getCryptoContext(masterToken);
+            if (cachedCryptoContext != null)
+                cryptoContext = cachedCryptoContext;
+            else
+                cryptoContext = new SessionCryptoContext(ctx, masterToken);
+        } catch (final MslMasterTokenException e) {
+            throw new MslEncoderException("Master token is not trusted; cannot create session crypto context.", e);
         }
+        
+        // Encrypt and sign the authentication data.
+        final byte[] plaintext = authdata.toMslEncoding(encoder, format);
+        final byte[] ciphertext, signature;
+        try {
+            ciphertext = cryptoContext.encrypt(plaintext, encoder, format);
+            signature = cryptoContext.sign(ciphertext, encoder, format);
+        } catch (final MslCryptoException e) {
+            throw new MslEncoderException("Error encrypting and signing the authentication data.", e);
+        }
+        
+        // Return the authentication data.
+        final MslObject mo = encoder.createObject();
+        mo.put(KEY_MASTER_TOKEN, masterToken);
+        mo.put(KEY_AUTHENTICATION_DATA, ciphertext);
+        mo.put(KEY_SIGNATURE, signature);
+        
+        // Cache and return the object.
+        final byte[] encoded = encoder.encodeObject(mo, format);
+        final MslObject decoded = encoder.parseObject(encoded);
+        encodings.put(format, decoded);
+        return decoded;
     }
 
     /* (non-Javadoc)
@@ -213,13 +221,15 @@ public class MasterTokenProtectedAuthenticationData extends EntityAuthentication
             masterToken.hashCode() ^
             authdata.hashCode();
     }
+    
+    /** MSL context. */
+    private final MslContext ctx;
 
     /** Master token. */
     private final MasterToken masterToken;
     /** Entity authentication data. */
     private final EntityAuthenticationData authdata;
-    /** Encrypted entity authentication data. */
-    private final byte[] ciphertext;
-    /** Ciphertext signature. */
-    private final byte[] signature;
+    
+    /** Cached encodings. */
+    private final Map<MslEncoderFormat,MslObject> encodings = new HashMap<MslEncoderFormat,MslObject>();
 }

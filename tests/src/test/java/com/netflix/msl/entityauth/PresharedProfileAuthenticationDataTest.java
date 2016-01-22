@@ -15,12 +15,14 @@
  */
 package com.netflix.msl.entityauth;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -30,10 +32,15 @@ import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
 import com.netflix.msl.MslError;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslEncoderUtils;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.test.ExpectedMslException;
-import com.netflix.msl.util.JsonUtils;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslContext;
+import com.netflix.msl.util.MslTestUtils;
 
 /**
  * Preshared keys profile entity authentication data unit tests.
@@ -41,6 +48,9 @@ import com.netflix.msl.util.MslContext;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class PresharedProfileAuthenticationDataTest {
+    /** MSL encoder format. */
+    private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
+    
     /** JSON key entity authentication scheme. */
     private static final String KEY_SCHEME = "scheme";
     /** JSON key entity authentication data. */
@@ -59,77 +69,79 @@ public class PresharedProfileAuthenticationDataTest {
     @BeforeClass
     public static void setup() throws IOException, MslEncodingException, MslCryptoException {
         ctx = new MockMslContext(EntityAuthenticationScheme.X509, false);
+        encoder = ctx.getMslEncoderFactory();
     }
     
     @AfterClass
     public static void teardown() {
+        encoder = null;
         ctx = null;
     }
     
     @Test
-    public void ctors() throws MslEncodingException, JSONException {
+    public void ctors() throws MslEncodingException, MslEncoderException {
         final PresharedProfileAuthenticationData data = new PresharedProfileAuthenticationData(MockPresharedProfileAuthenticationFactory.PSK_ESN, MockPresharedProfileAuthenticationFactory.PROFILE);
         assertEquals(MockPresharedProfileAuthenticationFactory.PSK_ESN + CONCAT_CHAR + MockPresharedProfileAuthenticationFactory.PROFILE, data.getIdentity());
         assertEquals(MockPresharedProfileAuthenticationFactory.PSK_ESN, data.getPresharedKeysId());
         assertEquals(MockPresharedProfileAuthenticationFactory.PROFILE, data.getProfile());
         assertEquals(EntityAuthenticationScheme.PSK_PROFILE, data.getScheme());
-        final JSONObject authdata = data.getAuthData();
+        final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
         assertNotNull(authdata);
-        final String jsonString = data.toJSONString();
-        assertNotNull(jsonString);
+        final byte[] encode = data.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(encode);
         
-        final PresharedProfileAuthenticationData joData = new PresharedProfileAuthenticationData(authdata);
-        assertEquals(data.getIdentity(), joData.getIdentity());
-        assertEquals(data.getPresharedKeysId(), joData.getPresharedKeysId());
-        assertEquals(data.getProfile(), joData.getProfile());
-        assertEquals(data.getScheme(), joData.getScheme());
-        final JSONObject joAuthdata = joData.getAuthData();
-        assertNotNull(joAuthdata);
-        assertTrue(JsonUtils.equals(authdata, joAuthdata));
-        final String joJsonString = joData.toJSONString();
-        assertNotNull(joJsonString);
-        assertEquals(jsonString, joJsonString);
+        final PresharedProfileAuthenticationData moData = new PresharedProfileAuthenticationData(authdata);
+        assertEquals(data.getIdentity(), moData.getIdentity());
+        assertEquals(data.getPresharedKeysId(), moData.getPresharedKeysId());
+        assertEquals(data.getProfile(), moData.getProfile());
+        assertEquals(data.getScheme(), moData.getScheme());
+        final MslObject moAuthdata = moData.getAuthData(encoder, ENCODER_FORMAT);
+        assertNotNull(moAuthdata);
+        assertTrue(MslEncoderUtils.equals(authdata, moAuthdata));
+        final byte[] moEncode = moData.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
+        assertArrayEquals(encode, moEncode);
     }
     
     @Test
-    public void jsonString() throws JSONException {
+    public void encode() throws MslEncoderException {
         final PresharedProfileAuthenticationData data = new PresharedProfileAuthenticationData(MockPresharedProfileAuthenticationFactory.PSK_ESN, MockPresharedProfileAuthenticationFactory.PROFILE);
-        final JSONObject jo = new JSONObject(data.toJSONString());
-        assertEquals(EntityAuthenticationScheme.PSK_PROFILE.toString(), jo.getString(KEY_SCHEME));
-        final JSONObject authdata = jo.getJSONObject(KEY_AUTHDATA);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, data);
+        assertEquals(EntityAuthenticationScheme.PSK_PROFILE.toString(), mo.getString(KEY_SCHEME));
+        final MslObject authdata = mo.getMslObject(KEY_AUTHDATA, encoder);
         assertEquals(MockPresharedProfileAuthenticationFactory.PSK_ESN, authdata.getString(KEY_PSKID));
         assertEquals(MockPresharedProfileAuthenticationFactory.PROFILE, authdata.getString(KEY_PROFILE));
     }
     
     @Test
-    public void create() throws JSONException, MslEntityAuthException, MslEncodingException, MslCryptoException {
+    public void create() throws MslEncoderException, MslEntityAuthException, MslEncodingException, MslCryptoException {
         final PresharedProfileAuthenticationData data = new PresharedProfileAuthenticationData(MockPresharedProfileAuthenticationFactory.PSK_ESN, MockPresharedProfileAuthenticationFactory.PROFILE);
-        final String jsonString = data.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
-        final EntityAuthenticationData entitydata = EntityAuthenticationData.create(ctx, jo);
+        final byte[] encode = data.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, data);
+        final EntityAuthenticationData entitydata = EntityAuthenticationData.create(ctx, mo);
         assertNotNull(entitydata);
         assertTrue(entitydata instanceof PresharedProfileAuthenticationData);
         
-        final PresharedProfileAuthenticationData joData = (PresharedProfileAuthenticationData)entitydata;
-        assertEquals(data.getIdentity(), joData.getIdentity());
-        assertEquals(data.getPresharedKeysId(), joData.getPresharedKeysId());
-        assertEquals(data.getProfile(), joData.getProfile());
-        assertEquals(data.getScheme(), joData.getScheme());
-        final JSONObject joAuthdata = joData.getAuthData();
-        assertNotNull(joAuthdata);
-        assertTrue(JsonUtils.equals(data.getAuthData(), joAuthdata));
-        final String joJsonString = joData.toJSONString();
-        assertNotNull(joJsonString);
-        assertEquals(jsonString, joJsonString);
+        final PresharedProfileAuthenticationData moData = (PresharedProfileAuthenticationData)entitydata;
+        assertEquals(data.getIdentity(), moData.getIdentity());
+        assertEquals(data.getPresharedKeysId(), moData.getPresharedKeysId());
+        assertEquals(data.getProfile(), moData.getProfile());
+        assertEquals(data.getScheme(), moData.getScheme());
+        final MslObject moAuthdata = moData.getAuthData(encoder, ENCODER_FORMAT);
+        assertNotNull(moAuthdata);
+        assertTrue(MslEncoderUtils.equals(data.getAuthData(encoder, ENCODER_FORMAT), moAuthdata));
+        final byte[] moEncode = moData.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
+        assertArrayEquals(encode, moEncode);
     }
     
     @Test
     public void missingPskId() throws MslEncodingException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final PresharedProfileAuthenticationData data = new PresharedProfileAuthenticationData(MockPresharedProfileAuthenticationFactory.PSK_ESN, MockPresharedProfileAuthenticationFactory.PROFILE);
-        final JSONObject authdata = data.getAuthData();
+        final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
         authdata.remove(KEY_PSKID);
         new PresharedProfileAuthenticationData(authdata);
     }
@@ -137,21 +149,21 @@ public class PresharedProfileAuthenticationDataTest {
     @Test
     public void missingProfile() throws MslEncodingException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final PresharedProfileAuthenticationData data = new PresharedProfileAuthenticationData(MockPresharedProfileAuthenticationFactory.PSK_ESN, MockPresharedProfileAuthenticationFactory.PROFILE);
-        final JSONObject authdata = data.getAuthData();
+        final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
         authdata.remove(KEY_PROFILE);
         new PresharedProfileAuthenticationData(authdata);
     }
     
     @Test
-    public void equalsPskId() throws MslEncodingException, JSONException, MslEntityAuthException, MslCryptoException {
+    public void equalsPskId() throws MslEncodingException, MslEncoderException, MslEntityAuthException, MslCryptoException {
         final String pskIdA = MockPresharedProfileAuthenticationFactory.PSK_ESN + "A";
         final String pskIdB = MockPresharedProfileAuthenticationFactory.PSK_ESN + "B";
         final PresharedProfileAuthenticationData dataA = new PresharedProfileAuthenticationData(pskIdA, MockPresharedProfileAuthenticationFactory.PROFILE);
         final PresharedProfileAuthenticationData dataB = new PresharedProfileAuthenticationData(pskIdB, MockPresharedProfileAuthenticationFactory.PROFILE);
-        final EntityAuthenticationData dataA2 = EntityAuthenticationData.create(ctx, new JSONObject(dataA.toJSONString()));
+        final EntityAuthenticationData dataA2 = EntityAuthenticationData.create(ctx, MslTestUtils.toMslObject(encoder, dataA));
         
         assertTrue(dataA.equals(dataA));
         assertEquals(dataA.hashCode(), dataA.hashCode());
@@ -166,12 +178,12 @@ public class PresharedProfileAuthenticationDataTest {
     }
     
     @Test
-    public void equalsProfile() throws MslEncodingException, JSONException, MslEntityAuthException, MslCryptoException {
+    public void equalsProfile() throws MslEncodingException, MslEncoderException, MslEntityAuthException, MslCryptoException {
         final String profileA = MockPresharedProfileAuthenticationFactory.PROFILE + "A";
         final String profileB = MockPresharedProfileAuthenticationFactory.PROFILE + "B";
         final PresharedProfileAuthenticationData dataA = new PresharedProfileAuthenticationData(MockPresharedProfileAuthenticationFactory.PSK_ESN, profileA);
         final PresharedProfileAuthenticationData dataB = new PresharedProfileAuthenticationData(MockPresharedProfileAuthenticationFactory.PSK_ESN, profileB);
-        final EntityAuthenticationData dataA2 = EntityAuthenticationData.create(ctx, new JSONObject(dataA.toJSONString()));
+        final EntityAuthenticationData dataA2 = EntityAuthenticationData.create(ctx, MslTestUtils.toMslObject(encoder, dataA));
         
         assertTrue(dataA.equals(dataA));
         assertEquals(dataA.hashCode(), dataA.hashCode());
@@ -196,4 +208,6 @@ public class PresharedProfileAuthenticationDataTest {
 
     /** MSL context. */
     private static MslContext ctx;
+    /** MSL encoder factory. */
+    private static MslEncoderFactory encoder;
 }

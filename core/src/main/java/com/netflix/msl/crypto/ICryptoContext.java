@@ -16,6 +16,8 @@
 package com.netflix.msl.crypto;
 
 import com.netflix.msl.MslCryptoException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
 
 /**
  * A generic cryptographic context suitable for encryption/decryption,
@@ -28,47 +30,55 @@ public interface ICryptoContext {
      * Encrypts some data.
      * 
      * @param data the plaintext.
+     * @param encoder MSL encoder factory.
+     * @param format MSL encoder format.
      * @return the ciphertext.
      * @throws MslCryptoException if there is an error encrypting the data.
      */
-    public byte[] encrypt(final byte[] data) throws MslCryptoException;
+    public byte[] encrypt(final byte[] data, final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslCryptoException;
     
     /**
      * Decrypts some data.
      * 
      * @param data the ciphertext.
+     * @param encoder MSL encoder factory.
      * @return the plaintext.
      * @throws MslCryptoException if there is an error decrypting the data.
      */
-    public byte[] decrypt(final byte[] data) throws MslCryptoException;
+    public byte[] decrypt(final byte[] data, final MslEncoderFactory encoder) throws MslCryptoException;
     
     /**
      * Wraps some data.
      * 
      * @param data the plaintext.
+     * @param encoder MSL encoder factory.
+     * @param format MSL encoder format.
      * @return the wrapped data.
      * @throws MslCryptoException if there is an error wrapping the data.
      */
-    public byte[] wrap(final byte[] data) throws MslCryptoException;
+    public byte[] wrap(final byte[] data, final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslCryptoException;
     
     /**
      * Unwraps some data.
      *
      * @param data the wrapped data.
+     * @param encoder MSL encoder factory.
      * @return the plaintext.
      * @throws MslCryptoException if there is an error unwrapping the data.
      */
-    public byte[] unwrap(final byte[] data) throws MslCryptoException;
+    public byte[] unwrap(final byte[] data, final MslEncoderFactory encoder) throws MslCryptoException;
     
     /**
      * Computes the signature for some data. The signature may not be a
      * signature proper, but the name suits the concept.
      * 
      * @param data the data.
+     * @param encoder MSL encoder factory.
+     * @param format MSL encoder format.
      * @return the signature.
      * @throws MslCryptoException if there is an error computing the signature.
      */
-    public byte[] sign(final byte[] data) throws MslCryptoException;
+    public byte[] sign(final byte[] data, final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslCryptoException;
     
     /**
      * Verifies the signature for some data. The signature may not be a
@@ -76,8 +86,9 @@ public interface ICryptoContext {
      * 
      * @param data the data.
      * @param signature the signature.
+     * @param encoder MSL encoder factory.
      * @return true if the data is verified, false if validation fails.
      * @throws MslCryptoException if there is an error verifying the signature.
      */
-    public boolean verify(final byte[] data, final byte[] signature) throws MslCryptoException;
+    public boolean verify(final byte[] data, final byte[] signature, final MslEncoderFactory encoder) throws MslCryptoException;
 }

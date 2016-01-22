@@ -15,8 +15,6 @@
  */
 package com.netflix.msl.keyx;
 
-import org.json.JSONObject;
-
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
@@ -25,6 +23,8 @@ import com.netflix.msl.MslKeyExchangeException;
 import com.netflix.msl.MslMasterTokenException;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.util.MslContext;
 
@@ -75,30 +75,30 @@ public abstract class KeyExchangeFactory {
     }
     
     /**
-     * Construct a new key request data instance from the provided JSON.
+     * Construct a new key request data instance from the provided MSL object.
      * 
      * @param ctx MSL context.
-     * @param keyRequestJO the JSON object.
+     * @param keyRequestJO the MSL object.
      * @return the key request data.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslKeyExchangeException if there is an error creating the key
      *         request data.
      * @throws MslCryptoException if the keying material cannot be created.
      */
-    protected abstract KeyRequestData createRequestData(final MslContext ctx, final JSONObject keyRequestJO) throws MslEncodingException, MslKeyExchangeException, MslCryptoException;
+    protected abstract KeyRequestData createRequestData(final MslContext ctx, final MslObject keyRequestMo) throws MslEncodingException, MslKeyExchangeException, MslCryptoException;
     
     /**
-     * Construct a new key response data instance from the provided JSON.
+     * Construct a new key response data instance from the provided MSL object.
      * 
      * @param ctx MSL context.
      * @param masterToken the master token for the new key response data.
-     * @param keyDataJO the JSON object.
+     * @param keyDataJO the MSL object.
      * @return the key response data.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslKeyExchangeException if there is an error creating the key
      *         response data.
      */
-    protected abstract KeyResponseData createResponseData(final MslContext ctx, final MasterToken masterToken, final JSONObject keyDataJO) throws MslEncodingException, MslKeyExchangeException;
+    protected abstract KeyResponseData createResponseData(final MslContext ctx, final MasterToken masterToken, final MslObject keyDataMo) throws MslEncodingException, MslKeyExchangeException;
     
     /**
      * <p>Generate a new key response data instance and crypto context in
@@ -110,6 +110,7 @@ public abstract class KeyExchangeFactory {
      * context's token factory.</p>
      * 
      * @param ctx MSL context.
+     * @param format MSL encoder format.
      * @param keyRequestData the key request data.
      * @param masterToken the master token to renew.
      * @return the key response data and crypto context or {@code null} if the
@@ -118,14 +119,14 @@ public abstract class KeyExchangeFactory {
      *         request data or the key response data cannot be created.
      * @throws MslCryptoException if the crypto context cannot be created.
      * @throws MslEncodingException if there is an error parsing or encoding
-     *         the JSON.
+     *         the data.
      * @throws MslMasterTokenException if the master token is not trusted and
      *         needs to be.
      * @throws MslEntityAuthException if there is a problem with the master
      *         token identity.
      * @throws MslException if there is an error renewing the master token.
      */
-    public abstract KeyExchangeData generateResponse(final MslContext ctx, final KeyRequestData keyRequestData, final MasterToken masterToken) throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslMasterTokenException, MslEntityAuthException, MslException;
+    public abstract KeyExchangeData generateResponse(final MslContext ctx, final MslEncoderFormat format, final KeyRequestData keyRequestData, final MasterToken masterToken) throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslMasterTokenException, MslEntityAuthException, MslException;
     
     /**
      * <p>Generate a new key response data instance and crypto context in
@@ -133,6 +134,7 @@ public abstract class KeyExchangeFactory {
      * data. The key request data will be from the the remote entity.</p>
      * 
      * @param ctx MSL context.
+     * @param format MSL encoder format.
      * @param keyRequestData the key request data.
      * @param entityAuthData the entity authentication data.
      * @return the key response data and crypto context or {@code null} if the
@@ -141,12 +143,12 @@ public abstract class KeyExchangeFactory {
      *         request data or the key response data cannot be created.
      * @throws MslCryptoException if the crypto context cannot be created.
      * @throws MslEncodingException if there is an error parsing or encoding
-     *         the JSON.
+     *         the data.
      * @throws MslEntityAuthException if there is a problem with the entity
      *         identity.
      * @throws MslException if there is an error creating the master token.
      */
-    public abstract KeyExchangeData generateResponse(final MslContext ctx, final KeyRequestData keyRequestData, final EntityAuthenticationData entityAuthData) throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslEntityAuthException, MslException;
+    public abstract KeyExchangeData generateResponse(final MslContext ctx, final MslEncoderFormat format, final KeyRequestData keyRequestData, final EntityAuthenticationData entityAuthData) throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslEntityAuthException, MslException;
     
     /**
      * Create a crypto context from the provided key request data and key
@@ -162,7 +164,7 @@ public abstract class KeyExchangeFactory {
      * @throws MslKeyExchangeException if there is an error with the key
      *         request data or key response data.
      * @throws MslCryptoException if the crypto context cannot be created.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslMasterTokenException if the master token is not trusted and
      *         needs to be.
      * @throws MslEntityAuthException if there is a problem with the master

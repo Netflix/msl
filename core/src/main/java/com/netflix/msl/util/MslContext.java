@@ -25,6 +25,7 @@ import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.msg.MessageCapabilities;
@@ -253,6 +254,13 @@ public abstract class MslContext {
      * @return the MSL store.
      */
     public abstract MslStore getMslStore();
+    
+    /**
+     * Returns the MSL encoder factory specific to this MSL context.
+     * 
+     * @return the MSL encoder factory.
+     */
+    public abstract MslEncoderFactory getMslEncoderFactory();
 
     /**
      * <p>Update the remote entity time.</p>

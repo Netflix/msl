@@ -15,19 +15,23 @@
  */
 package com.netflix.msl.io;
 
+
 /**
  * <p>This interface allows a class to override the default behavior when being
  * encoded into a {@link MslObject} or {@link MslArray}.</p>
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-public interface MslEncode {
+public interface MslEncodable {
     /**
-     * Returns a MSL encoding of the implementing class.
+     * Returns the requested encoding of a MSL object representing the
+     * implementing class.
      * 
-     * @param format the encoding format.
-     * @return a MSL encoding.
-     * @throws MslEncoderException if the encoding format is not supported.
+     * @param encoder the encoder factory.
+     * @param format the encoder format.
+     * @return a MSL encoding of the MSL object.
+     * @throws MslEncoderException if the encoder format is not supported or
+     *         there is an error encoding the data.
      */
-    public byte[] toMslEncode(final MslEncodingFormat format) throws MslEncoderException;
+    public byte[] toMslEncoding(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException;
 }

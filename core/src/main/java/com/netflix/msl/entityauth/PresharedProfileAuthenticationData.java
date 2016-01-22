@@ -15,11 +15,12 @@
  */
 package com.netflix.msl.entityauth;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 
 /**
  * <p>Preshared keys profile entity authentication data.</p>
@@ -38,9 +39,9 @@ import com.netflix.msl.MslError;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class PresharedProfileAuthenticationData extends EntityAuthenticationData {
-    /** JSON key entity preshared keys identity. */
+    /** Key entity preshared keys identity. */
     private static final String KEY_PSKID = "pskid";
-    /** JSON key entity profile. */
+    /** Key entity profile. */
     private static final String KEY_PROFILE = "profile";
     
     /** Identity concatenation character. */
@@ -61,25 +62,25 @@ public class PresharedProfileAuthenticationData extends EntityAuthenticationData
 
     /**
      * Construct a new preshared keys profile authentication data instance from
-     * the provided JSON object.
+     * the provided MSL object.
      * 
-     * @param authJo the authentication data JSON object.
+     * @param authMo the authentication data MSL object.
      * @throws MslEncodingException if there is an error parsing the entity
      *         authentication data.
      */
-    public PresharedProfileAuthenticationData(final JSONObject authJo) throws MslEncodingException {
+    public PresharedProfileAuthenticationData(final MslObject authMo) throws MslEncodingException {
         super(EntityAuthenticationScheme.PSK_PROFILE);
         try {
-            pskid = authJo.getString(KEY_PSKID);
-            profile = authJo.getString(KEY_PROFILE);
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "psk profile authdata " + authJo.toString(), e);
+            pskid = authMo.getString(KEY_PSKID);
+            profile = authMo.getString(KEY_PROFILE);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "psk profile authdata " + authMo.toString(), e);
         }
     }
 
     /**
      * <p>Returns the entity identity. This is equal to the preshared keys
-     * identity and profile strings joined with a hyphen, e.g.
+     * identity and profile strings moined with a hyphen, e.g.
      * {@code pskid-profile}.</p>
      * 
      * @return the entity identity.
@@ -104,18 +105,14 @@ public class PresharedProfileAuthenticationData extends EntityAuthenticationData
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.entityauth.EntityAuthenticationData#getAuthData()
+     * @see com.netflix.msl.entityauth.EntityAuthenticationData#getAuthData(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public JSONObject getAuthData() throws MslEncodingException {
-        try {
-            final JSONObject jsonObj = new JSONObject();
-            jsonObj.put(KEY_PSKID, pskid);
-            jsonObj.put(KEY_PROFILE, profile);
-            return jsonObj;
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, "psk profile authdata", e);
-        }
+    public MslObject getAuthData(final MslEncoderFactory encoder, final MslEncoderFormat format) {
+        final MslObject mo = encoder.createObject();
+        mo.put(KEY_PSKID, pskid);
+        mo.put(KEY_PROFILE, profile);
+        return mo;
     }
 
     /* (non-Javadoc)

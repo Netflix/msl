@@ -39,8 +39,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -54,8 +53,17 @@ import com.netflix.msl.crypto.JsonWebKey.Algorithm;
 import com.netflix.msl.crypto.JsonWebKey.KeyOp;
 import com.netflix.msl.crypto.JsonWebKey.Type;
 import com.netflix.msl.crypto.JsonWebKey.Usage;
+import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.io.MslArray;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslEncoderUtils;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.test.ExpectedMslException;
-import com.netflix.msl.util.JsonUtils;
+import com.netflix.msl.util.MockMslContext;
+import com.netflix.msl.util.MslContext;
+import com.netflix.msl.util.MslTestUtils;
 
 /**
  * JSON web key unit tests.
@@ -96,13 +104,13 @@ public class JsonWebKeyTest {
     /** Sign/verify key operations. */
     private static final Set<KeyOp> SIGN_VERIFY = new HashSet<KeyOp>(Arrays.asList(KeyOp.sign, KeyOp.verify));
     
-    // Expected key operations JSON arrays.
+    // Expected key operations MSL arrays.
     /** Sign/verify. */
-    private static final JSONArray JA_SIGN_VERIFY = new JSONArray(Arrays.asList(KeyOp.sign.name(), KeyOp.verify.name()).toArray());
+    private static final MslArray MA_SIGN_VERIFY = new MslArray(Arrays.asList(KeyOp.sign.name(), KeyOp.verify.name()).toArray());
     /** Encrypt/decrypt. */
-    private static final JSONArray JA_ENCRYPT_DECRYPT = new JSONArray(Arrays.asList(KeyOp.encrypt.name(), KeyOp.verify.name()).toArray());
+    private static final MslArray MA_ENCRYPT_DECRYPT = new MslArray(Arrays.asList(KeyOp.encrypt.name(), KeyOp.verify.name()).toArray());
     /** Wrap/unwrap. */
-    private static final JSONArray JA_WRAP_UNWRAP = new JSONArray(Arrays.asList(KeyOp.wrapKey.name(), KeyOp.unwrapKey.name()).toArray());
+    private static final MslArray MA_WRAP_UNWRAP = new MslArray(Arrays.asList(KeyOp.wrapKey.name(), KeyOp.unwrapKey.name()).toArray());
     
     /** Null usage. */
     private static final Usage NULL_USAGE = null;
@@ -130,12 +138,20 @@ public class JsonWebKeyTest {
     
     private static final Random random = new Random();
     
+    /** MSL encoder factory. */
+    private static MslEncoderFactory encoder;
+    /** Encoder format. */
+    private static MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
+    
     @Rule
     public ExpectedMslException thrown = ExpectedMslException.none();
     
     @BeforeClass
-    public static void setup() throws NoSuchAlgorithmException {
+    public static void setup() throws NoSuchAlgorithmException, MslEncodingException, MslCryptoException {
         Security.addProvider(new BouncyCastleProvider());
+        
+        final MslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
+        encoder = ctx.getMslEncoderFactory();
         
         final KeyPairGenerator keypairGenerator = KeyPairGenerator.getInstance("RSA");
         keypairGenerator.initialize(512);
@@ -148,8 +164,13 @@ public class JsonWebKeyTest {
         SECRET_KEY = new SecretKeySpec(keydata, JcaAlgorithm.AES);
     }
     
+    @AfterClass
+    public static void teardown() {
+        encoder = null;
+    }
+    
     @Test
-    public void rsaUsageCtor() throws MslCryptoException, MslEncodingException, JSONException {
+    public void rsaUsageCtor() throws MslCryptoException, MslEncodingException, MslEncoderException {
         final JsonWebKey jwk = new JsonWebKey(Usage.sig, Algorithm.RSA1_5, EXTRACTABLE, KEY_ID, PUBLIC_KEY, PRIVATE_KEY);
         assertEquals(EXTRACTABLE, jwk.isExtractable());
         assertEquals(Algorithm.RSA1_5, jwk.getAlgorithm());
@@ -166,32 +187,32 @@ public class JsonWebKeyTest {
         assertEquals(Type.rsa, jwk.getType());
         assertEquals(Usage.sig, jwk.getUsage());
         assertNull(jwk.getKeyOps());
-        final String json = jwk.toJSONString();
-        assertNotNull(json);
+        final byte[] encode = jwk.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(encode);
         
-        final JsonWebKey joJwk = new JsonWebKey(new JSONObject(json));
-        assertEquals(jwk.isExtractable(), joJwk.isExtractable());
-        assertEquals(jwk.getAlgorithm(), joJwk.getAlgorithm());
-        assertEquals(jwk.getId(), joJwk.getId());
-        final KeyPair joKeypair = joJwk.getRsaKeyPair();
-        assertNotNull(joKeypair);
-        final RSAPublicKey joPubkey = (RSAPublicKey)joKeypair.getPublic();
-        assertEquals(pubkey.getModulus(), joPubkey.getModulus());
-        assertEquals(pubkey.getPublicExponent(), joPubkey.getPublicExponent());
-        final RSAPrivateKey joPrivkey = (RSAPrivateKey)joKeypair.getPrivate();
-        assertEquals(privkey.getModulus(), joPrivkey.getModulus());
-        assertEquals(privkey.getPrivateExponent(), joPrivkey.getPrivateExponent());
-        assertNull(joJwk.getSecretKey());
-        assertEquals(jwk.getType(), joJwk.getType());
-        assertEquals(jwk.getUsage(), joJwk.getUsage());
-        assertEquals(jwk.getKeyOps(), joJwk.getKeyOps());
-        final String joJson = joJwk.toJSONString();
-        assertNotNull(joJson);
-        assertEquals(json, joJson);
+        final JsonWebKey moJwk = new JsonWebKey(encoder.parseObject(encode));
+        assertEquals(jwk.isExtractable(), moJwk.isExtractable());
+        assertEquals(jwk.getAlgorithm(), moJwk.getAlgorithm());
+        assertEquals(jwk.getId(), moJwk.getId());
+        final KeyPair moKeypair = moJwk.getRsaKeyPair();
+        assertNotNull(moKeypair);
+        final RSAPublicKey moPubkey = (RSAPublicKey)moKeypair.getPublic();
+        assertEquals(pubkey.getModulus(), moPubkey.getModulus());
+        assertEquals(pubkey.getPublicExponent(), moPubkey.getPublicExponent());
+        final RSAPrivateKey moPrivkey = (RSAPrivateKey)moKeypair.getPrivate();
+        assertEquals(privkey.getModulus(), moPrivkey.getModulus());
+        assertEquals(privkey.getPrivateExponent(), moPrivkey.getPrivateExponent());
+        assertNull(moJwk.getSecretKey());
+        assertEquals(jwk.getType(), moJwk.getType());
+        assertEquals(jwk.getUsage(), moJwk.getUsage());
+        assertEquals(jwk.getKeyOps(), moJwk.getKeyOps());
+        final byte[] moEncode = moJwk.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
+        assertArrayEquals(encode, moEncode);
     }
     
     @Test
-    public void rsaKeyOpsCtor() throws MslCryptoException, MslEncodingException, JSONException {
+    public void rsaKeyOpsCtor() throws MslCryptoException, MslEncodingException, MslEncoderException {
         final JsonWebKey jwk = new JsonWebKey(SIGN_VERIFY, Algorithm.RSA1_5, EXTRACTABLE, KEY_ID, PUBLIC_KEY, PRIVATE_KEY);
         assertEquals(EXTRACTABLE, jwk.isExtractable());
         assertEquals(Algorithm.RSA1_5, jwk.getAlgorithm());
@@ -208,80 +229,80 @@ public class JsonWebKeyTest {
         assertEquals(Type.rsa, jwk.getType());
         assertNull(jwk.getUsage());
         assertEquals(SIGN_VERIFY, jwk.getKeyOps());
-        final String json = jwk.toJSONString();
-        assertNotNull(json);
+        final byte[] encode = jwk.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(encode);
         
-        final JsonWebKey joJwk = new JsonWebKey(new JSONObject(json));
-        assertEquals(jwk.isExtractable(), joJwk.isExtractable());
-        assertEquals(jwk.getAlgorithm(), joJwk.getAlgorithm());
-        assertEquals(jwk.getId(), joJwk.getId());
-        final KeyPair joKeypair = joJwk.getRsaKeyPair();
-        assertNotNull(joKeypair);
-        final RSAPublicKey joPubkey = (RSAPublicKey)joKeypair.getPublic();
-        assertEquals(pubkey.getModulus(), joPubkey.getModulus());
-        assertEquals(pubkey.getPublicExponent(), joPubkey.getPublicExponent());
-        final RSAPrivateKey joPrivkey = (RSAPrivateKey)joKeypair.getPrivate();
-        assertEquals(privkey.getModulus(), joPrivkey.getModulus());
-        assertEquals(privkey.getPrivateExponent(), joPrivkey.getPrivateExponent());
-        assertNull(joJwk.getSecretKey());
-        assertEquals(jwk.getType(), joJwk.getType());
-        assertEquals(jwk.getUsage(), joJwk.getUsage());
-        assertEquals(jwk.getKeyOps(), joJwk.getKeyOps());
-        final String joJson = joJwk.toJSONString();
-        assertNotNull(joJson);
+        final JsonWebKey moJwk = new JsonWebKey(encoder.parseObject(encode));
+        assertEquals(jwk.isExtractable(), moJwk.isExtractable());
+        assertEquals(jwk.getAlgorithm(), moJwk.getAlgorithm());
+        assertEquals(jwk.getId(), moJwk.getId());
+        final KeyPair moKeypair = moJwk.getRsaKeyPair();
+        assertNotNull(moKeypair);
+        final RSAPublicKey moPubkey = (RSAPublicKey)moKeypair.getPublic();
+        assertEquals(pubkey.getModulus(), moPubkey.getModulus());
+        assertEquals(pubkey.getPublicExponent(), moPubkey.getPublicExponent());
+        final RSAPrivateKey moPrivkey = (RSAPrivateKey)moKeypair.getPrivate();
+        assertEquals(privkey.getModulus(), moPrivkey.getModulus());
+        assertEquals(privkey.getPrivateExponent(), moPrivkey.getPrivateExponent());
+        assertNull(moJwk.getSecretKey());
+        assertEquals(jwk.getType(), moJwk.getType());
+        assertEquals(jwk.getUsage(), moJwk.getUsage());
+        assertEquals(jwk.getKeyOps(), moJwk.getKeyOps());
+        final byte[] moEncode = moJwk.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
         // This test will not always pass since the key operations are
         // unordered.
-        //assertEquals(json, joJson);
+        //assertArrayEquals(encode, moEncode);
     }
     
     @Test
-    public void rsaUsageJson() throws JSONException {
+    public void rsaUsageJson() throws MslEncoderException {
         final JsonWebKey jwk = new JsonWebKey(Usage.sig, Algorithm.RSA1_5, EXTRACTABLE, KEY_ID, PUBLIC_KEY, PRIVATE_KEY);
-        final JSONObject jo = new JSONObject(jwk.toJSONString());
+        final MslObject mo = MslTestUtils.toMslObject(encoder, jwk);
         
-        assertEquals(EXTRACTABLE, jo.optBoolean(KEY_EXTRACTABLE));
-        assertEquals(Algorithm.RSA1_5.name(), jo.getString(KEY_ALGORITHM));
-        assertEquals(KEY_ID, jo.getString(KEY_KEY_ID));
-        assertEquals(Type.rsa.name(), jo.getString(KEY_TYPE));
-        assertEquals(Usage.sig.name(), jo.getString(KEY_USAGE));
-        assertFalse(jo.has(KEY_KEY_OPS));
+        assertEquals(EXTRACTABLE, mo.optBoolean(KEY_EXTRACTABLE));
+        assertEquals(Algorithm.RSA1_5.name(), mo.getString(KEY_ALGORITHM));
+        assertEquals(KEY_ID, mo.getString(KEY_KEY_ID));
+        assertEquals(Type.rsa.name(), mo.getString(KEY_TYPE));
+        assertEquals(Usage.sig.name(), mo.getString(KEY_USAGE));
+        assertFalse(mo.has(KEY_KEY_OPS));
         
-        final String modulus = JsonUtils.b64urlEncode(bi2bytes(PUBLIC_KEY.getModulus()));
-        final String pubexp = JsonUtils.b64urlEncode(bi2bytes(PUBLIC_KEY.getPublicExponent()));
-        final String privexp = JsonUtils.b64urlEncode(bi2bytes(PRIVATE_KEY.getPrivateExponent()));
+        final String modulus = MslEncoderUtils.b64urlEncode(bi2bytes(PUBLIC_KEY.getModulus()));
+        final String pubexp = MslEncoderUtils.b64urlEncode(bi2bytes(PUBLIC_KEY.getPublicExponent()));
+        final String privexp = MslEncoderUtils.b64urlEncode(bi2bytes(PRIVATE_KEY.getPrivateExponent()));
         
-        assertEquals(modulus, jo.getString(KEY_MODULUS));
-        assertEquals(pubexp, jo.getString(KEY_PUBLIC_EXPONENT));
-        assertEquals(privexp, jo.getString(KEY_PRIVATE_EXPONENT));
+        assertEquals(modulus, mo.getString(KEY_MODULUS));
+        assertEquals(pubexp, mo.getString(KEY_PUBLIC_EXPONENT));
+        assertEquals(privexp, mo.getString(KEY_PRIVATE_EXPONENT));
         
-        assertFalse(jo.has(KEY_KEY));
+        assertFalse(mo.has(KEY_KEY));
     }
     
     @Test
-    public void rsaKeyOpsJson() throws JSONException {
+    public void rsaKeyOpsJson() throws MslEncoderException {
         final JsonWebKey jwk = new JsonWebKey(SIGN_VERIFY, Algorithm.RSA1_5, EXTRACTABLE, KEY_ID, PUBLIC_KEY, PRIVATE_KEY);
-        final JSONObject jo = new JSONObject(jwk.toJSONString());
+        final MslObject mo = MslTestUtils.toMslObject(encoder, jwk);
         
-        assertEquals(EXTRACTABLE, jo.optBoolean(KEY_EXTRACTABLE));
-        assertEquals(Algorithm.RSA1_5.name(), jo.getString(KEY_ALGORITHM));
-        assertEquals(KEY_ID, jo.getString(KEY_KEY_ID));
-        assertEquals(Type.rsa.name(), jo.getString(KEY_TYPE));
-        assertFalse(jo.has(KEY_USAGE));
-        assertTrue(JsonUtils.equalSets(JA_SIGN_VERIFY, jo.getJSONArray(KEY_KEY_OPS)));
+        assertEquals(EXTRACTABLE, mo.optBoolean(KEY_EXTRACTABLE));
+        assertEquals(Algorithm.RSA1_5.name(), mo.getString(KEY_ALGORITHM));
+        assertEquals(KEY_ID, mo.getString(KEY_KEY_ID));
+        assertEquals(Type.rsa.name(), mo.getString(KEY_TYPE));
+        assertFalse(mo.has(KEY_USAGE));
+        assertTrue(MslEncoderUtils.equalSets(MA_SIGN_VERIFY, mo.getMslArray(KEY_KEY_OPS)));
         
-        final String modulus = JsonUtils.b64urlEncode(bi2bytes(PUBLIC_KEY.getModulus()));
-        final String pubexp = JsonUtils.b64urlEncode(bi2bytes(PUBLIC_KEY.getPublicExponent()));
-        final String privexp = JsonUtils.b64urlEncode(bi2bytes(PRIVATE_KEY.getPrivateExponent()));
+        final String modulus = MslEncoderUtils.b64urlEncode(bi2bytes(PUBLIC_KEY.getModulus()));
+        final String pubexp = MslEncoderUtils.b64urlEncode(bi2bytes(PUBLIC_KEY.getPublicExponent()));
+        final String privexp = MslEncoderUtils.b64urlEncode(bi2bytes(PRIVATE_KEY.getPrivateExponent()));
         
-        assertEquals(modulus, jo.getString(KEY_MODULUS));
-        assertEquals(pubexp, jo.getString(KEY_PUBLIC_EXPONENT));
-        assertEquals(privexp, jo.getString(KEY_PRIVATE_EXPONENT));
+        assertEquals(modulus, mo.getString(KEY_MODULUS));
+        assertEquals(pubexp, mo.getString(KEY_PUBLIC_EXPONENT));
+        assertEquals(privexp, mo.getString(KEY_PRIVATE_EXPONENT));
         
-        assertFalse(jo.has(KEY_KEY));
+        assertFalse(mo.has(KEY_KEY));
     }
     
     @Test
-    public void rsaNullCtorPublic() throws MslCryptoException, MslEncodingException, JSONException {
+    public void rsaNullCtorPublic() throws MslCryptoException, MslEncodingException, MslEncoderException {
         final JsonWebKey jwk = new JsonWebKey(NULL_USAGE, null, false, null, PUBLIC_KEY, null);
         assertFalse(jwk.isExtractable());
         assertNull(jwk.getAlgorithm());
@@ -297,31 +318,31 @@ public class JsonWebKeyTest {
         assertEquals(Type.rsa, jwk.getType());
         assertNull(jwk.getUsage());
         assertNull(jwk.getKeyOps());
-        final String json = jwk.toJSONString();
-        assertNotNull(json);
+        final byte[] encode = jwk.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(encode);
         
-        final JsonWebKey joJwk = new JsonWebKey(new JSONObject(json));
-        assertEquals(jwk.isExtractable(), joJwk.isExtractable());
-        assertEquals(jwk.getAlgorithm(), joJwk.getAlgorithm());
-        assertEquals(jwk.getId(), joJwk.getId());
-        final KeyPair joKeypair = joJwk.getRsaKeyPair();
-        assertNotNull(joKeypair);
-        final RSAPublicKey joPubkey = (RSAPublicKey)joKeypair.getPublic();
-        assertEquals(pubkey.getModulus(), joPubkey.getModulus());
-        assertEquals(pubkey.getPublicExponent(), joPubkey.getPublicExponent());
-        final RSAPrivateKey joPrivkey = (RSAPrivateKey)joKeypair.getPrivate();
-        assertNull(joPrivkey);
-        assertNull(joJwk.getSecretKey());
-        assertEquals(jwk.getType(), joJwk.getType());
-        assertEquals(jwk.getUsage(), joJwk.getUsage());
-        assertEquals(jwk.getKeyOps(), joJwk.getKeyOps());
-        final String joJson = joJwk.toJSONString();
-        assertNotNull(joJson);
-        assertEquals(json, joJson);
+        final JsonWebKey moJwk = new JsonWebKey(encoder.parseObject(encode));
+        assertEquals(jwk.isExtractable(), moJwk.isExtractable());
+        assertEquals(jwk.getAlgorithm(), moJwk.getAlgorithm());
+        assertEquals(jwk.getId(), moJwk.getId());
+        final KeyPair moKeypair = moJwk.getRsaKeyPair();
+        assertNotNull(moKeypair);
+        final RSAPublicKey moPubkey = (RSAPublicKey)moKeypair.getPublic();
+        assertEquals(pubkey.getModulus(), moPubkey.getModulus());
+        assertEquals(pubkey.getPublicExponent(), moPubkey.getPublicExponent());
+        final RSAPrivateKey moPrivkey = (RSAPrivateKey)moKeypair.getPrivate();
+        assertNull(moPrivkey);
+        assertNull(moJwk.getSecretKey());
+        assertEquals(jwk.getType(), moJwk.getType());
+        assertEquals(jwk.getUsage(), moJwk.getUsage());
+        assertEquals(jwk.getKeyOps(), moJwk.getKeyOps());
+        final byte[] moEncode = moJwk.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
+        assertArrayEquals(encode, moEncode);
     }
     
     @Test
-    public void rsaNullCtorPrivate() throws MslCryptoException, MslEncodingException, JSONException {
+    public void rsaNullCtorPrivate() throws MslCryptoException, MslEncodingException, MslEncoderException {
         final JsonWebKey jwk = new JsonWebKey(NULL_USAGE, null, false, null, null, PRIVATE_KEY);
         assertFalse(jwk.isExtractable());
         assertNull(jwk.getAlgorithm());
@@ -337,72 +358,72 @@ public class JsonWebKeyTest {
         assertEquals(Type.rsa, jwk.getType());
         assertNull(jwk.getUsage());
         assertNull(jwk.getKeyOps());
-        final String json = jwk.toJSONString();
-        assertNotNull(json);
+        final byte[] encode = jwk.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(encode);
         
-        final JsonWebKey joJwk = new JsonWebKey(new JSONObject(json));
-        assertEquals(jwk.isExtractable(), joJwk.isExtractable());
-        assertEquals(jwk.getAlgorithm(), joJwk.getAlgorithm());
-        assertEquals(jwk.getId(), joJwk.getId());
-        final KeyPair joKeypair = joJwk.getRsaKeyPair();
-        assertNotNull(joKeypair);
-        final RSAPublicKey joPubkey = (RSAPublicKey)joKeypair.getPublic();
-        assertNull(joPubkey);
-        final RSAPrivateKey joPrivkey = (RSAPrivateKey)joKeypair.getPrivate();
-        assertEquals(privkey.getModulus(), joPrivkey.getModulus());
-        assertEquals(privkey.getPrivateExponent(), joPrivkey.getPrivateExponent());
-        assertNull(joJwk.getSecretKey());
-        assertEquals(jwk.getType(), joJwk.getType());
-        assertEquals(jwk.getUsage(), joJwk.getUsage());
-        assertEquals(jwk.getKeyOps(), joJwk.getKeyOps());
-        final String joJson = joJwk.toJSONString();
-        assertNotNull(joJson);
-        assertEquals(json, joJson);
+        final JsonWebKey moJwk = new JsonWebKey(encoder.parseObject(encode));
+        assertEquals(jwk.isExtractable(), moJwk.isExtractable());
+        assertEquals(jwk.getAlgorithm(), moJwk.getAlgorithm());
+        assertEquals(jwk.getId(), moJwk.getId());
+        final KeyPair moKeypair = moJwk.getRsaKeyPair();
+        assertNotNull(moKeypair);
+        final RSAPublicKey moPubkey = (RSAPublicKey)moKeypair.getPublic();
+        assertNull(moPubkey);
+        final RSAPrivateKey moPrivkey = (RSAPrivateKey)moKeypair.getPrivate();
+        assertEquals(privkey.getModulus(), moPrivkey.getModulus());
+        assertEquals(privkey.getPrivateExponent(), moPrivkey.getPrivateExponent());
+        assertNull(moJwk.getSecretKey());
+        assertEquals(jwk.getType(), moJwk.getType());
+        assertEquals(jwk.getUsage(), moJwk.getUsage());
+        assertEquals(jwk.getKeyOps(), moJwk.getKeyOps());
+        final byte[] moEncode = moJwk.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
+        assertArrayEquals(encode, moEncode);
     }
     
     @Test
-    public void rsaNullJsonPublic() throws JSONException {
+    public void rsaNullJsonPublic() throws MslEncoderException {
         final JsonWebKey jwk = new JsonWebKey(NULL_USAGE, null, false, null, PUBLIC_KEY, null);
-        final String json = jwk.toJSONString();
-        final JSONObject jo = new JSONObject(json);
+        final byte[] encode = jwk.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
-        assertFalse(jo.getBoolean(KEY_EXTRACTABLE));
-        assertFalse(jo.has(KEY_ALGORITHM));
-        assertFalse(jo.has(KEY_KEY_ID));
-        assertEquals(Type.rsa.name(), jo.getString(KEY_TYPE));
-        assertFalse(jo.has(KEY_USAGE));
-        assertFalse(jo.has(KEY_KEY_OPS));
+        assertFalse(mo.getBoolean(KEY_EXTRACTABLE));
+        assertFalse(mo.has(KEY_ALGORITHM));
+        assertFalse(mo.has(KEY_KEY_ID));
+        assertEquals(Type.rsa.name(), mo.getString(KEY_TYPE));
+        assertFalse(mo.has(KEY_USAGE));
+        assertFalse(mo.has(KEY_KEY_OPS));
         
-        final String modulus = JsonUtils.b64urlEncode(bi2bytes(PUBLIC_KEY.getModulus()));
-        final String pubexp = JsonUtils.b64urlEncode(bi2bytes(PUBLIC_KEY.getPublicExponent()));
+        final String modulus = MslEncoderUtils.b64urlEncode(bi2bytes(PUBLIC_KEY.getModulus()));
+        final String pubexp = MslEncoderUtils.b64urlEncode(bi2bytes(PUBLIC_KEY.getPublicExponent()));
         
-        assertEquals(modulus, jo.getString(KEY_MODULUS));
-        assertEquals(pubexp, jo.getString(KEY_PUBLIC_EXPONENT));
-        assertFalse(jo.has(KEY_PRIVATE_EXPONENT));
+        assertEquals(modulus, mo.getString(KEY_MODULUS));
+        assertEquals(pubexp, mo.getString(KEY_PUBLIC_EXPONENT));
+        assertFalse(mo.has(KEY_PRIVATE_EXPONENT));
 
-        assertFalse(jo.has(KEY_KEY));
+        assertFalse(mo.has(KEY_KEY));
     }
     
     @Test
-    public void rsaNullJsonPrivate() throws JSONException {
+    public void rsaNullJsonPrivate() throws MslEncoderException {
         final JsonWebKey jwk = new JsonWebKey(NULL_USAGE, null, false, null, null, PRIVATE_KEY);
-        final JSONObject jo = new JSONObject(jwk.toJSONString());
+        final MslObject mo = MslTestUtils.toMslObject(encoder, jwk);
         
-        assertFalse(jo.getBoolean(KEY_EXTRACTABLE));
-        assertFalse(jo.has(KEY_ALGORITHM));
-        assertFalse(jo.has(KEY_KEY_ID));
-        assertEquals(Type.rsa.name(), jo.getString(KEY_TYPE));
-        assertFalse(jo.has(KEY_USAGE));
-        assertFalse(jo.has(KEY_KEY_OPS));
+        assertFalse(mo.getBoolean(KEY_EXTRACTABLE));
+        assertFalse(mo.has(KEY_ALGORITHM));
+        assertFalse(mo.has(KEY_KEY_ID));
+        assertEquals(Type.rsa.name(), mo.getString(KEY_TYPE));
+        assertFalse(mo.has(KEY_USAGE));
+        assertFalse(mo.has(KEY_KEY_OPS));
         
-        final String modulus = JsonUtils.b64urlEncode(bi2bytes(PUBLIC_KEY.getModulus()));
-        final String privexp = JsonUtils.b64urlEncode(bi2bytes(PRIVATE_KEY.getPrivateExponent()));
+        final String modulus = MslEncoderUtils.b64urlEncode(bi2bytes(PUBLIC_KEY.getModulus()));
+        final String privexp = MslEncoderUtils.b64urlEncode(bi2bytes(PRIVATE_KEY.getPrivateExponent()));
         
-        assertEquals(modulus, jo.getString(KEY_MODULUS));
-        assertFalse(jo.has(KEY_PUBLIC_EXPONENT));
-        assertEquals(privexp, jo.getString(KEY_PRIVATE_EXPONENT));
+        assertEquals(modulus, mo.getString(KEY_MODULUS));
+        assertFalse(mo.has(KEY_PUBLIC_EXPONENT));
+        assertEquals(privexp, mo.getString(KEY_PRIVATE_EXPONENT));
 
-        assertFalse(jo.has(KEY_KEY));
+        assertFalse(mo.has(KEY_KEY));
     }
     
     @Test(expected = MslInternalException.class)
@@ -416,7 +437,7 @@ public class JsonWebKeyTest {
     }
     
     @Test
-    public void octUsageCtor() throws MslCryptoException, MslEncodingException, JSONException {
+    public void octUsageCtor() throws MslCryptoException, MslEncodingException, MslEncoderException {
         final JsonWebKey jwk = new JsonWebKey(Usage.enc, Algorithm.A128CBC, EXTRACTABLE, KEY_ID, SECRET_KEY);
         assertEquals(EXTRACTABLE, jwk.isExtractable());
         assertEquals(Algorithm.A128CBC, jwk.getAlgorithm());
@@ -426,25 +447,25 @@ public class JsonWebKeyTest {
         assertEquals(Type.oct, jwk.getType());
         assertEquals(Usage.enc, jwk.getUsage());
         assertNull(jwk.getKeyOps());
-        final String json = jwk.toJSONString();
-        assertNotNull(json);
+        final byte[] encode = jwk.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(encode);
         
-        final JsonWebKey joJwk = new JsonWebKey(new JSONObject(json));
-        assertEquals(jwk.isExtractable(), joJwk.isExtractable());
-        assertEquals(jwk.getAlgorithm(), joJwk.getAlgorithm());
-        assertEquals(jwk.getId(), joJwk.getId());
-        assertNull(joJwk.getRsaKeyPair());
-        assertArrayEquals(jwk.getSecretKey().getEncoded(), joJwk.getSecretKey().getEncoded());
-        assertEquals(jwk.getType(), joJwk.getType());
-        assertEquals(jwk.getUsage(), joJwk.getUsage());
-        assertEquals(jwk.getKeyOps(), joJwk.getKeyOps());
-        final String joJson = joJwk.toJSONString();
-        assertNotNull(joJson);
-        assertEquals(json, joJson);
+        final JsonWebKey moJwk = new JsonWebKey(encoder.parseObject(encode));
+        assertEquals(jwk.isExtractable(), moJwk.isExtractable());
+        assertEquals(jwk.getAlgorithm(), moJwk.getAlgorithm());
+        assertEquals(jwk.getId(), moJwk.getId());
+        assertNull(moJwk.getRsaKeyPair());
+        assertArrayEquals(jwk.getSecretKey().getEncoded(), moJwk.getSecretKey().getEncoded());
+        assertEquals(jwk.getType(), moJwk.getType());
+        assertEquals(jwk.getUsage(), moJwk.getUsage());
+        assertEquals(jwk.getKeyOps(), moJwk.getKeyOps());
+        final byte[] moEncode = moJwk.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
+        assertArrayEquals(encode, moEncode);
     }
     
     @Test
-    public void octKeyOpsCtor() throws MslCryptoException, MslEncodingException, JSONException {
+    public void octKeyOpsCtor() throws MslCryptoException, MslEncodingException, MslEncoderException {
         final JsonWebKey jwk = new JsonWebKey(ENCRYPT_DECRYPT, Algorithm.A128CBC, EXTRACTABLE, KEY_ID, SECRET_KEY);
         assertEquals(EXTRACTABLE, jwk.isExtractable());
         assertEquals(Algorithm.A128CBC, jwk.getAlgorithm());
@@ -454,69 +475,69 @@ public class JsonWebKeyTest {
         assertEquals(Type.oct, jwk.getType());
         assertNull(jwk.getUsage());
         assertEquals(ENCRYPT_DECRYPT, jwk.getKeyOps());
-        final String json = jwk.toJSONString();
-        assertNotNull(json);
+        final byte[] encode = jwk.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(encode);
         
-        final JsonWebKey joJwk = new JsonWebKey(new JSONObject(json));
-        assertEquals(jwk.isExtractable(), joJwk.isExtractable());
-        assertEquals(jwk.getAlgorithm(), joJwk.getAlgorithm());
-        assertEquals(jwk.getId(), joJwk.getId());
-        assertNull(joJwk.getRsaKeyPair());
-        assertArrayEquals(jwk.getSecretKey().getEncoded(), joJwk.getSecretKey().getEncoded());
-        assertEquals(jwk.getType(), joJwk.getType());
-        assertEquals(jwk.getUsage(), joJwk.getUsage());
-        assertEquals(jwk.getKeyOps(), joJwk.getKeyOps());
-        final String joJson = joJwk.toJSONString();
-        assertNotNull(joJson);
+        final JsonWebKey moJwk = new JsonWebKey(encoder.parseObject(encode));
+        assertEquals(jwk.isExtractable(), moJwk.isExtractable());
+        assertEquals(jwk.getAlgorithm(), moJwk.getAlgorithm());
+        assertEquals(jwk.getId(), moJwk.getId());
+        assertNull(moJwk.getRsaKeyPair());
+        assertArrayEquals(jwk.getSecretKey().getEncoded(), moJwk.getSecretKey().getEncoded());
+        assertEquals(jwk.getType(), moJwk.getType());
+        assertEquals(jwk.getUsage(), moJwk.getUsage());
+        assertEquals(jwk.getKeyOps(), moJwk.getKeyOps());
+        final byte[] moEncode = moJwk.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
         // This test will not always pass since the key operations are
         // unordered.
-        //assertEquals(json, joJson);
+        //assertArrayEquals(encode, moEncode);
     }
     
     @Test
-    public void octUsageJson() throws JSONException {
+    public void octUsageJson() throws MslEncoderException {
         final JsonWebKey jwk = new JsonWebKey(Usage.wrap, Algorithm.A128KW, EXTRACTABLE, KEY_ID, SECRET_KEY);
-        final JSONObject jo = new JSONObject(jwk.toJSONString());
+        final MslObject mo = MslTestUtils.toMslObject(encoder, jwk);
         
-        assertEquals(EXTRACTABLE, jo.optBoolean(KEY_EXTRACTABLE));
-        assertEquals(Algorithm.A128KW.name(), jo.getString(KEY_ALGORITHM));
-        assertEquals(KEY_ID, jo.getString(KEY_KEY_ID));
-        assertEquals(Type.oct.name(), jo.getString(KEY_TYPE));
-        assertEquals(Usage.wrap.name(), jo.getString(KEY_USAGE));
-        assertFalse(jo.has(KEY_KEY_OPS));
+        assertEquals(EXTRACTABLE, mo.optBoolean(KEY_EXTRACTABLE));
+        assertEquals(Algorithm.A128KW.name(), mo.getString(KEY_ALGORITHM));
+        assertEquals(KEY_ID, mo.getString(KEY_KEY_ID));
+        assertEquals(Type.oct.name(), mo.getString(KEY_TYPE));
+        assertEquals(Usage.wrap.name(), mo.getString(KEY_USAGE));
+        assertFalse(mo.has(KEY_KEY_OPS));
         
-        assertFalse(jo.has(KEY_MODULUS));
-        assertFalse(jo.has(KEY_PUBLIC_EXPONENT));
-        assertFalse(jo.has(KEY_PRIVATE_EXPONENT));
+        assertFalse(mo.has(KEY_MODULUS));
+        assertFalse(mo.has(KEY_PUBLIC_EXPONENT));
+        assertFalse(mo.has(KEY_PRIVATE_EXPONENT));
         
-        final String key = JsonUtils.b64urlEncode(SECRET_KEY.getEncoded());
+        final String key = MslEncoderUtils.b64urlEncode(SECRET_KEY.getEncoded());
         
-        assertEquals(key, jo.getString(KEY_KEY));
+        assertEquals(key, mo.getString(KEY_KEY));
     }
     
     @Test
-    public void octKeyOpsJson() throws JSONException {
+    public void octKeyOpsJson() throws MslEncoderException {
         final JsonWebKey jwk = new JsonWebKey(WRAP_UNWRAP, Algorithm.A128KW, EXTRACTABLE, KEY_ID, SECRET_KEY);
-        final JSONObject jo = new JSONObject(jwk.toJSONString());
+        final MslObject mo = MslTestUtils.toMslObject(encoder, jwk);
         
-        assertEquals(EXTRACTABLE, jo.optBoolean(KEY_EXTRACTABLE));
-        assertEquals(Algorithm.A128KW.name(), jo.getString(KEY_ALGORITHM));
-        assertEquals(KEY_ID, jo.getString(KEY_KEY_ID));
-        assertEquals(Type.oct.name(), jo.getString(KEY_TYPE));
-        assertFalse(jo.has(KEY_USAGE));
-        assertTrue(JsonUtils.equalSets(JA_WRAP_UNWRAP, jo.getJSONArray(KEY_KEY_OPS)));
+        assertEquals(EXTRACTABLE, mo.optBoolean(KEY_EXTRACTABLE));
+        assertEquals(Algorithm.A128KW.name(), mo.getString(KEY_ALGORITHM));
+        assertEquals(KEY_ID, mo.getString(KEY_KEY_ID));
+        assertEquals(Type.oct.name(), mo.getString(KEY_TYPE));
+        assertFalse(mo.has(KEY_USAGE));
+        assertTrue(MslEncoderUtils.equalSets(MA_WRAP_UNWRAP, mo.getMslArray(KEY_KEY_OPS)));
         
-        assertFalse(jo.has(KEY_MODULUS));
-        assertFalse(jo.has(KEY_PUBLIC_EXPONENT));
-        assertFalse(jo.has(KEY_PRIVATE_EXPONENT));
+        assertFalse(mo.has(KEY_MODULUS));
+        assertFalse(mo.has(KEY_PUBLIC_EXPONENT));
+        assertFalse(mo.has(KEY_PRIVATE_EXPONENT));
         
-        final String key = JsonUtils.b64urlEncode(SECRET_KEY.getEncoded());
+        final String key = MslEncoderUtils.b64urlEncode(SECRET_KEY.getEncoded());
         
-        assertEquals(key, jo.getString(KEY_KEY));
+        assertEquals(key, mo.getString(KEY_KEY));
     }
     
     @Test
-    public void octNullCtor() throws MslCryptoException, MslEncodingException, JSONException {
+    public void octNullCtor() throws MslCryptoException, MslEncodingException, MslEncoderException {
         final JsonWebKey jwk = new JsonWebKey(NULL_USAGE, null, false, null, SECRET_KEY);
         assertFalse(jwk.isExtractable());
         assertNull(jwk.getAlgorithm());
@@ -526,64 +547,64 @@ public class JsonWebKeyTest {
         assertEquals(Type.oct, jwk.getType());
         assertNull(jwk.getUsage());
         assertNull(jwk.getKeyOps());
-        final String json = jwk.toJSONString();
-        assertNotNull(json);
+        final byte[] encode = jwk.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(encode);
         
-        final JsonWebKey joJwk = new JsonWebKey(new JSONObject(json));
-        assertEquals(jwk.isExtractable(), joJwk.isExtractable());
-        assertEquals(jwk.getAlgorithm(), joJwk.getAlgorithm());
-        assertEquals(jwk.getId(), joJwk.getId());
-        assertNull(joJwk.getRsaKeyPair());
-        assertArrayEquals(jwk.getSecretKey(SECRET_KEY.getAlgorithm()).getEncoded(), joJwk.getSecretKey(SECRET_KEY.getAlgorithm()).getEncoded());
-        assertEquals(jwk.getType(), joJwk.getType());
-        assertEquals(jwk.getUsage(), joJwk.getUsage());
-        assertEquals(jwk.getKeyOps(), joJwk.getKeyOps());
-        final String joJson = joJwk.toJSONString();
-        assertNotNull(joJson);
-        assertEquals(json, joJson);
+        final JsonWebKey moJwk = new JsonWebKey(encoder.parseObject(encode));
+        assertEquals(jwk.isExtractable(), moJwk.isExtractable());
+        assertEquals(jwk.getAlgorithm(), moJwk.getAlgorithm());
+        assertEquals(jwk.getId(), moJwk.getId());
+        assertNull(moJwk.getRsaKeyPair());
+        assertArrayEquals(jwk.getSecretKey(SECRET_KEY.getAlgorithm()).getEncoded(), moJwk.getSecretKey(SECRET_KEY.getAlgorithm()).getEncoded());
+        assertEquals(jwk.getType(), moJwk.getType());
+        assertEquals(jwk.getUsage(), moJwk.getUsage());
+        assertEquals(jwk.getKeyOps(), moJwk.getKeyOps());
+        final byte[] moEncode = moJwk.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
+        assertArrayEquals(encode, moEncode);
     }
     
     @Test
-    public void octNullJson() throws JSONException {
+    public void octNullJson() throws MslEncoderException {
         final JsonWebKey jwk = new JsonWebKey(NULL_USAGE, null, false, null, SECRET_KEY);
-        final JSONObject jo = new JSONObject(jwk.toJSONString());
+        final MslObject mo = MslTestUtils.toMslObject(encoder, jwk);
         
-        assertFalse(jo.getBoolean(KEY_EXTRACTABLE));
-        assertFalse(jo.has(KEY_ALGORITHM));
-        assertFalse(jo.has(KEY_KEY_ID));
-        assertEquals(Type.oct.name(), jo.getString(KEY_TYPE));
-        assertFalse(jo.has(KEY_USAGE));
-        assertFalse(jo.has(KEY_KEY_OPS));
+        assertFalse(mo.getBoolean(KEY_EXTRACTABLE));
+        assertFalse(mo.has(KEY_ALGORITHM));
+        assertFalse(mo.has(KEY_KEY_ID));
+        assertEquals(Type.oct.name(), mo.getString(KEY_TYPE));
+        assertFalse(mo.has(KEY_USAGE));
+        assertFalse(mo.has(KEY_KEY_OPS));
         
-        assertFalse(jo.has(KEY_MODULUS));
-        assertFalse(jo.has(KEY_PUBLIC_EXPONENT));
-        assertFalse(jo.has(KEY_PRIVATE_EXPONENT));
+        assertFalse(mo.has(KEY_MODULUS));
+        assertFalse(mo.has(KEY_PUBLIC_EXPONENT));
+        assertFalse(mo.has(KEY_PRIVATE_EXPONENT));
         
-        final String key = JsonUtils.b64urlEncode(SECRET_KEY.getEncoded());
+        final String key = MslEncoderUtils.b64urlEncode(SECRET_KEY.getEncoded());
         
-        assertEquals(key, jo.getString(KEY_KEY));
+        assertEquals(key, mo.getString(KEY_KEY));
     }
     
-    public void usageOnly() throws JSONException, MslCryptoException, MslEncodingException {
+    public void usageOnly() throws MslEncoderException, MslCryptoException, MslEncodingException {
         final JsonWebKey jwk = new JsonWebKey(NULL_USAGE, null, false, null, SECRET_KEY);
-        final JSONObject jo = new JSONObject(jwk.toJSONString());
+        final MslObject mo = MslTestUtils.toMslObject(encoder, jwk);
         
-        jo.put(KEY_USAGE, Usage.enc.name());
+        mo.put(KEY_USAGE, Usage.enc.name());
         
-        final JsonWebKey joJwk = new JsonWebKey(jo);
-        assertEquals(Usage.enc, joJwk.getUsage());
-        assertNull(joJwk.getKeyOps());
+        final JsonWebKey moJwk = new JsonWebKey(mo);
+        assertEquals(Usage.enc, moJwk.getUsage());
+        assertNull(moJwk.getKeyOps());
     }
     
-    public void keyOpsOnly() throws JSONException, MslCryptoException, MslEncodingException {
+    public void keyOpsOnly() throws MslEncoderException, MslCryptoException, MslEncodingException {
         final JsonWebKey jwk = new JsonWebKey(NULL_KEYOPS, null, false, null, SECRET_KEY);
-        final JSONObject jo = new JSONObject(jwk.toJSONString());
+        final MslObject mo = MslTestUtils.toMslObject(encoder, jwk);
         
-        jo.put(KEY_KEY_OPS, JA_ENCRYPT_DECRYPT);
+        mo.put(KEY_KEY_OPS, MA_ENCRYPT_DECRYPT);
         
-        final JsonWebKey joJwk = new JsonWebKey(jo);
-        assertNull(joJwk.getUsage());
-        assertEquals(new HashSet<KeyOp>(Arrays.asList(KeyOp.encrypt, KeyOp.decrypt)), joJwk.getKeyOps());
+        final JsonWebKey moJwk = new JsonWebKey(mo);
+        assertNull(moJwk.getUsage());
+        assertEquals(new HashSet<KeyOp>(Arrays.asList(KeyOp.encrypt, KeyOp.decrypt)), moJwk.getKeyOps());
     }
     
     @Test(expected = MslInternalException.class)
@@ -592,181 +613,181 @@ public class JsonWebKeyTest {
     }
     
     @Test
-    public void missingType() throws JSONException, MslCryptoException, MslEncodingException {
+    public void missingType() throws MslEncoderException, MslCryptoException, MslEncodingException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final JsonWebKey jwk = new JsonWebKey(NULL_USAGE, null, false, null, SECRET_KEY);
-        final JSONObject jo = new JSONObject(jwk.toJSONString());
+        final MslObject mo = MslTestUtils.toMslObject(encoder, jwk);
         
-        jo.remove(KEY_TYPE);
+        mo.remove(KEY_TYPE);
         
-        new JsonWebKey(jo);
+        new JsonWebKey(mo);
     }
     
     @Test
-    public void invalidType() throws MslCryptoException, MslEncodingException, JSONException {
+    public void invalidType() throws MslCryptoException, MslEncodingException, MslEncoderException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.UNIDENTIFIED_JWK_TYPE);
 
         final JsonWebKey jwk = new JsonWebKey(NULL_USAGE, null, false, null, SECRET_KEY);
-        final JSONObject jo = new JSONObject(jwk.toJSONString());
+        final MslObject mo = MslTestUtils.toMslObject(encoder, jwk);
         
-        jo.put(KEY_TYPE, "x");
+        mo.put(KEY_TYPE, "x");
         
-        new JsonWebKey(jo);
+        new JsonWebKey(mo);
     }
     
     @Test
-    public void invalidUsage() throws MslCryptoException, MslEncodingException, JSONException {
+    public void invalidUsage() throws MslCryptoException, MslEncodingException, MslEncoderException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.UNIDENTIFIED_JWK_USAGE);
 
         final JsonWebKey jwk = new JsonWebKey(NULL_USAGE, null, false, null, SECRET_KEY);
-        final JSONObject jo = new JSONObject(jwk.toJSONString());
+        final MslObject mo = MslTestUtils.toMslObject(encoder, jwk);
         
-        jo.put(KEY_USAGE, "x");
+        mo.put(KEY_USAGE, "x");
         
-        new JsonWebKey(jo);
+        new JsonWebKey(mo);
     }
     
     @Test
-    public void invalidKeyOp() throws JSONException, MslCryptoException, MslEncodingException {
+    public void invalidKeyOp() throws MslEncoderException, MslCryptoException, MslEncodingException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.UNIDENTIFIED_JWK_KEYOP);
 
         final JsonWebKey jwk = new JsonWebKey(NULL_KEYOPS, null, false, null, SECRET_KEY);
-        final JSONObject jo = new JSONObject(jwk.toJSONString());
+        final MslObject mo = MslTestUtils.toMslObject(encoder, jwk);
         
-        jo.put(KEY_KEY_OPS, new JSONArray(Arrays.asList(KeyOp.encrypt.name(), "x", KeyOp.decrypt.name()).toArray()));
+        mo.put(KEY_KEY_OPS, new JSONArray(Arrays.asList(KeyOp.encrypt.name(), "x", KeyOp.decrypt.name()).toArray()));
         
-        new JsonWebKey(jo);
+        new JsonWebKey(mo);
     }
     
     @Test
-    public void invalidAlgorithm() throws MslCryptoException, MslEncodingException, JSONException {
+    public void invalidAlgorithm() throws MslCryptoException, MslEncodingException, MslEncoderException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.UNIDENTIFIED_JWK_ALGORITHM);
 
         final JsonWebKey jwk = new JsonWebKey(NULL_USAGE, null, false, null, SECRET_KEY);
-        final JSONObject jo = new JSONObject(jwk.toJSONString());
+        final MslObject mo = MslTestUtils.toMslObject(encoder, jwk);
         
-        jo.put(KEY_ALGORITHM, "x");
+        mo.put(KEY_ALGORITHM, "x");
         
-        new JsonWebKey(jo);
+        new JsonWebKey(mo);
     }
     
     @Test
-    public void missingExtractable() throws JSONException, MslCryptoException, MslEncodingException {
+    public void missingExtractable() throws MslEncoderException, MslCryptoException, MslEncodingException {
         final JsonWebKey jwk = new JsonWebKey(NULL_USAGE, null, false, null, SECRET_KEY);
-        final String json = jwk.toJSONString();
-        final JSONObject jo = new JSONObject(json);
+        final byte[] encode = jwk.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
-        assertNotNull(jo.remove(KEY_EXTRACTABLE));
+        assertNotNull(mo.remove(KEY_EXTRACTABLE));
         
-        final JsonWebKey joJwk = new JsonWebKey(jo);
-        assertEquals(jwk.isExtractable(), joJwk.isExtractable());
-        assertEquals(jwk.getAlgorithm(), joJwk.getAlgorithm());
-        assertEquals(jwk.getId(), joJwk.getId());
-        assertNull(joJwk.getRsaKeyPair());
-        assertArrayEquals(jwk.getSecretKey(SECRET_KEY.getAlgorithm()).getEncoded(), joJwk.getSecretKey(SECRET_KEY.getAlgorithm()).getEncoded());
-        assertEquals(jwk.getType(), joJwk.getType());
-        assertEquals(jwk.getUsage(), joJwk.getUsage());
-        final String joJson = joJwk.toJSONString();
-        assertNotNull(joJson);
-        assertEquals(json, joJson);
+        final JsonWebKey moJwk = new JsonWebKey(mo);
+        assertEquals(jwk.isExtractable(), moJwk.isExtractable());
+        assertEquals(jwk.getAlgorithm(), moJwk.getAlgorithm());
+        assertEquals(jwk.getId(), moJwk.getId());
+        assertNull(moJwk.getRsaKeyPair());
+        assertArrayEquals(jwk.getSecretKey(SECRET_KEY.getAlgorithm()).getEncoded(), moJwk.getSecretKey(SECRET_KEY.getAlgorithm()).getEncoded());
+        assertEquals(jwk.getType(), moJwk.getType());
+        assertEquals(jwk.getUsage(), moJwk.getUsage());
+        final byte[] moEncode = moJwk.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
+        assertArrayEquals(encode, moEncode);
     }
         
     @Test
-    public void invalidExtractable() throws MslEncodingException, JSONException, MslCryptoException {
+    public void invalidExtractable() throws MslEncodingException, MslEncoderException, MslCryptoException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final JsonWebKey jwk = new JsonWebKey(NULL_USAGE, null, false, null, SECRET_KEY);
-        final JSONObject jo = new JSONObject(jwk.toJSONString());
+        final MslObject mo = MslTestUtils.toMslObject(encoder, jwk);
         
-        jo.put(KEY_EXTRACTABLE, "x");
+        mo.put(KEY_EXTRACTABLE, "x");
         
-        new JsonWebKey(jo);
+        new JsonWebKey(mo);
     }
     
     @Test
-    public void missingKey() throws MslCryptoException, MslEncodingException, JSONException {
+    public void missingKey() throws MslCryptoException, MslEncodingException, MslEncoderException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final JsonWebKey jwk = new JsonWebKey(NULL_USAGE, null, false, null, SECRET_KEY);
-        final JSONObject jo = new JSONObject(jwk.toJSONString());
+        final MslObject mo = MslTestUtils.toMslObject(encoder, jwk);
         
-        jo.remove(KEY_KEY);
+        mo.remove(KEY_KEY);
         
-        new JsonWebKey(jo);
+        new JsonWebKey(mo);
     }
     
     @Test
-    public void emptyKey() throws MslCryptoException, MslEncodingException, JSONException {
+    public void emptyKey() throws MslCryptoException, MslEncodingException, MslEncoderException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.INVALID_JWK_KEYDATA);
 
         final JsonWebKey jwk = new JsonWebKey(NULL_USAGE, null, false, null, SECRET_KEY);
-        final JSONObject jo = new JSONObject(jwk.toJSONString());
+        final MslObject mo = MslTestUtils.toMslObject(encoder, jwk);
         
-        jo.put(KEY_KEY, "");
+        mo.put(KEY_KEY, "");
         
-        new JsonWebKey(jo);
+        new JsonWebKey(mo);
     }
     
     @Test
-    public void missingModulus() throws MslCryptoException, MslEncodingException, JSONException {
+    public void missingModulus() throws MslCryptoException, MslEncodingException, MslEncoderException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final JsonWebKey jwk = new JsonWebKey(NULL_USAGE, null, false, null, PUBLIC_KEY, PRIVATE_KEY);
-        final JSONObject jo = new JSONObject(jwk.toJSONString());
+        final MslObject mo = MslTestUtils.toMslObject(encoder, jwk);
         
-        jo.remove(KEY_MODULUS);
+        mo.remove(KEY_MODULUS);
         
-        new JsonWebKey(jo);
+        new JsonWebKey(mo);
     }
     
     @Test
-    public void emptyModulus() throws MslCryptoException, MslEncodingException, JSONException {
+    public void emptyModulus() throws MslCryptoException, MslEncodingException, MslEncoderException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.INVALID_JWK_KEYDATA);
 
         final JsonWebKey jwk = new JsonWebKey(NULL_USAGE, null, false, null, PUBLIC_KEY, PRIVATE_KEY);
-        final JSONObject jo = new JSONObject(jwk.toJSONString());
+        final MslObject mo = MslTestUtils.toMslObject(encoder, jwk);
         
-        jo.put(KEY_MODULUS, "");
+        mo.put(KEY_MODULUS, "");
         
-        new JsonWebKey(jo);
+        new JsonWebKey(mo);
     }
     
     @Test
-    public void missingExponents() throws MslCryptoException, MslEncodingException, JSONException {
+    public void missingExponents() throws MslCryptoException, MslEncodingException, MslEncoderException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final JsonWebKey jwk = new JsonWebKey(NULL_USAGE, null, false, null, PUBLIC_KEY, PRIVATE_KEY);
-        final JSONObject jo = new JSONObject(jwk.toJSONString());
+        final MslObject mo = MslTestUtils.toMslObject(encoder, jwk);
         
-        jo.remove(KEY_PUBLIC_EXPONENT);
-        jo.remove(KEY_PRIVATE_EXPONENT);
+        mo.remove(KEY_PUBLIC_EXPONENT);
+        mo.remove(KEY_PRIVATE_EXPONENT);
         
-        new JsonWebKey(jo);
+        new JsonWebKey(mo);
     }
     
     @Test
-    public void emptyPublicExponent() throws MslCryptoException, MslEncodingException, JSONException {
+    public void emptyPublicExponent() throws MslCryptoException, MslEncodingException, MslEncoderException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.INVALID_JWK_KEYDATA);
 
         final JsonWebKey jwk = new JsonWebKey(NULL_USAGE, null, false, null, PUBLIC_KEY, PRIVATE_KEY);
-        final JSONObject jo = new JSONObject(jwk.toJSONString());
+        final MslObject mo = MslTestUtils.toMslObject(encoder, jwk);
         
-        jo.put(KEY_PUBLIC_EXPONENT, "");
+        mo.put(KEY_PUBLIC_EXPONENT, "");
         
-        new JsonWebKey(jo);
+        new JsonWebKey(mo);
     }
 
     // This unit test no longer passes because
@@ -774,29 +795,29 @@ public class JsonWebKeyTest {
     // Base64 encoded data.
     @Ignore
     @Test
-    public void invalidPublicExpontent() throws MslCryptoException, MslEncodingException, JSONException {
+    public void invalidPublicExpontent() throws MslCryptoException, MslEncodingException, MslEncoderException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.INVALID_JWK_KEYDATA);
 
         final JsonWebKey jwk = new JsonWebKey(NULL_USAGE, null, false, null, PUBLIC_KEY, PRIVATE_KEY);
-        final JSONObject jo = new JSONObject(jwk.toJSONString());
+        final MslObject mo = MslTestUtils.toMslObject(encoder, jwk);
         
-        jo.put(KEY_PUBLIC_EXPONENT, "x");
+        mo.put(KEY_PUBLIC_EXPONENT, "x");
         
-        new JsonWebKey(jo);
+        new JsonWebKey(mo);
     }
     
     @Test
-    public void emptyPrivateExponent() throws MslCryptoException, MslEncodingException, JSONException {
+    public void emptyPrivateExponent() throws MslCryptoException, MslEncodingException, MslEncoderException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.INVALID_JWK_KEYDATA);
 
         final JsonWebKey jwk = new JsonWebKey(NULL_USAGE, null, false, null, PUBLIC_KEY, PRIVATE_KEY);
-        final JSONObject jo = new JSONObject(jwk.toJSONString());
+        final MslObject mo = MslTestUtils.toMslObject(encoder, jwk);
         
-        jo.put(KEY_PRIVATE_EXPONENT, "");
+        mo.put(KEY_PRIVATE_EXPONENT, "");
         
-        new JsonWebKey(jo);
+        new JsonWebKey(mo);
     }
     
     // This unit test no longer passes because
@@ -804,15 +825,15 @@ public class JsonWebKeyTest {
     // Base64 encoded data.
     @Ignore
     @Test
-    public void invalidPrivateExponent() throws MslCryptoException, MslEncodingException, JSONException {
+    public void invalidPrivateExponent() throws MslCryptoException, MslEncodingException, MslEncoderException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.INVALID_JWK_KEYDATA);
 
         final JsonWebKey jwk = new JsonWebKey(NULL_USAGE, null, false, null, PUBLIC_KEY, PRIVATE_KEY);
-        final JSONObject jo = new JSONObject(jwk.toJSONString());
+        final MslObject mo = MslTestUtils.toMslObject(encoder, jwk);
         
-        jo.put(KEY_PRIVATE_EXPONENT, "x");
+        mo.put(KEY_PRIVATE_EXPONENT, "x");
         
-        new JsonWebKey(jo);
+        new JsonWebKey(mo);
     }
 }

@@ -15,12 +15,11 @@
  */
 package com.netflix.msl.userauth;
 
-import org.json.JSONObject;
-
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslUserAuthException;
 import com.netflix.msl.MslUserIdTokenException;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.tokens.UserIdToken;
@@ -51,22 +50,22 @@ public abstract class UserAuthenticationFactory {
     
     /**
      * <p>Construct a new user authentication data instance from the provided
-     * JSON.</p>
+     * MSL object.</p>
      * 
      * <p>A master token may be required for certain user authentication
      * schemes.</p>
      * 
      * @param ctx MSL context.
      * @param masterToken the entity master token. May be {@code null}.
-     * @param userAuthJO the JSON object.
+     * @param userAuthMo the MSL object.
      * @return the user authentication data.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslUserAuthException if there is an error creating the user
      *         authentication data.
      * @throws MslCryptoException if there is an error with the user
      *         authentication data cryptography.
      */
-    public abstract UserAuthenticationData createData(final MslContext ctx, final MasterToken masterToken, final JSONObject userAuthJO) throws MslEncodingException, MslUserAuthException, MslCryptoException;
+    public abstract UserAuthenticationData createData(final MslContext ctx, final MasterToken masterToken, final MslObject userAuthMo) throws MslEncodingException, MslUserAuthException, MslCryptoException;
 
     /**
      * <p>Authenticate the user using the provided authentication data.</p>

@@ -15,6 +15,7 @@
  */
 package com.netflix.msl.tokens;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -23,10 +24,6 @@ import static org.junit.Assert.assertTrue;
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
 
-import javax.xml.bind.DatatypeConverter;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -40,9 +37,13 @@ import com.netflix.msl.MslException;
 import com.netflix.msl.MslInternalException;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslEncoderUtils;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.test.ExpectedMslException;
 import com.netflix.msl.userauth.MockEmailPasswordAuthenticationFactory;
-import com.netflix.msl.util.JsonUtils;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslTestUtils;
@@ -53,6 +54,9 @@ import com.netflix.msl.util.MslTestUtils;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class UserIdTokenTest {
+	/** MSL encoder format. */
+	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
+
     /** Milliseconds per second. */
     private static final long MILLISECONDS_PER_SECOND = 1000;
     
@@ -83,17 +87,18 @@ public class UserIdTokenTest {
     private static final Date EXPIRATION = new Date(System.currentTimeMillis() + 120000);
     private static MasterToken MASTER_TOKEN;
     private static final long SERIAL_NUMBER = 42;
-    private static JSONObject ISSUER_DATA;
+    private static MslObject ISSUER_DATA;
     private static MslUser USER;
 
     @Rule
     public ExpectedMslException thrown = ExpectedMslException.none();
     
     @BeforeClass
-    public static void setup() throws MslEncodingException, MslCryptoException, JSONException {
+    public static void setup() throws MslEncodingException, MslCryptoException, MslEncoderException {
         ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
+        encoder = ctx.getMslEncoderFactory();
         MASTER_TOKEN = MslTestUtils.getMasterToken(ctx, 1, 1);
-        ISSUER_DATA = new JSONObject("{ 'issuerid' : 17 }");
+        ISSUER_DATA = encoder.parseObject("{ 'issuerid' : 17 }".getBytes());
         USER = MockEmailPasswordAuthenticationFactory.USER;
     }
     
@@ -101,42 +106,43 @@ public class UserIdTokenTest {
     public static void teardown() {
         USER = null;
         MASTER_TOKEN = null;
+        encoder = null;
         ctx = null;
     }
     
     @Test
-    public void ctors() throws JSONException, MslException {
+    public void ctors() throws MslEncoderException, MslException {
         final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
         assertTrue(userIdToken.isDecrypted());
         assertTrue(userIdToken.isVerified());
         assertFalse(userIdToken.isRenewable(null));
         assertFalse(userIdToken.isExpired(null));
         assertTrue(userIdToken.isBoundTo(MASTER_TOKEN));
-        assertTrue(JsonUtils.equals(ISSUER_DATA, userIdToken.getIssuerData()));
+        assertTrue(MslEncoderUtils.equals(ISSUER_DATA, userIdToken.getIssuerData()));
         assertEquals(USER, userIdToken.getUser());
         assertEquals(EXPIRATION.getTime() / MILLISECONDS_PER_SECOND, userIdToken.getExpiration().getTime() / MILLISECONDS_PER_SECOND);
         assertEquals(MASTER_TOKEN.getSerialNumber(), userIdToken.getMasterTokenSerialNumber());
         assertEquals(RENEWAL_WINDOW.getTime() / MILLISECONDS_PER_SECOND, userIdToken.getRenewalWindow().getTime() / MILLISECONDS_PER_SECOND);
         assertEquals(SERIAL_NUMBER, userIdToken.getSerialNumber());
-        final String jsonString = userIdToken.toJSONString();
-        assertNotNull(jsonString);
+        final byte[] encode = userIdToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(encode);
         
-        final JSONObject jo = new JSONObject(jsonString);
-        final UserIdToken joUserIdToken = new UserIdToken(ctx, jo, MASTER_TOKEN);
-        assertEquals(userIdToken.isDecrypted(), joUserIdToken.isDecrypted());
-        assertEquals(userIdToken.isVerified(), joUserIdToken.isVerified());
-        assertEquals(userIdToken.isRenewable(null), joUserIdToken.isRenewable(null));
-        assertEquals(userIdToken.isExpired(null), joUserIdToken.isExpired(null));
-        assertTrue(joUserIdToken.isBoundTo(MASTER_TOKEN));
-        assertTrue(JsonUtils.equals(userIdToken.getIssuerData(), joUserIdToken.getIssuerData()));
-        assertEquals(userIdToken.getUser(), joUserIdToken.getUser());
-        assertEquals(userIdToken.getExpiration().getTime() / MILLISECONDS_PER_SECOND, joUserIdToken.getExpiration().getTime() / MILLISECONDS_PER_SECOND);
-        assertEquals(userIdToken.getMasterTokenSerialNumber(), joUserIdToken.getMasterTokenSerialNumber());
-        assertEquals(userIdToken.getRenewalWindow().getTime() / MILLISECONDS_PER_SECOND, joUserIdToken.getRenewalWindow().getTime() / MILLISECONDS_PER_SECOND);
-        assertEquals(userIdToken.getSerialNumber(), joUserIdToken.getSerialNumber());
-        final String joJsonString = joUserIdToken.toJSONString();
-        assertNotNull(joJsonString);
-        assertEquals(jsonString, joJsonString);
+        final MslObject mo = encoder.parseObject(encode);
+        final UserIdToken moUserIdToken = new UserIdToken(ctx, mo, MASTER_TOKEN);
+        assertEquals(userIdToken.isDecrypted(), moUserIdToken.isDecrypted());
+        assertEquals(userIdToken.isVerified(), moUserIdToken.isVerified());
+        assertEquals(userIdToken.isRenewable(null), moUserIdToken.isRenewable(null));
+        assertEquals(userIdToken.isExpired(null), moUserIdToken.isExpired(null));
+        assertTrue(moUserIdToken.isBoundTo(MASTER_TOKEN));
+        assertTrue(MslEncoderUtils.equals(userIdToken.getIssuerData(), moUserIdToken.getIssuerData()));
+        assertEquals(userIdToken.getUser(), moUserIdToken.getUser());
+        assertEquals(userIdToken.getExpiration().getTime() / MILLISECONDS_PER_SECOND, moUserIdToken.getExpiration().getTime() / MILLISECONDS_PER_SECOND);
+        assertEquals(userIdToken.getMasterTokenSerialNumber(), moUserIdToken.getMasterTokenSerialNumber());
+        assertEquals(userIdToken.getRenewalWindow().getTime() / MILLISECONDS_PER_SECOND, moUserIdToken.getRenewalWindow().getTime() / MILLISECONDS_PER_SECOND);
+        assertEquals(userIdToken.getSerialNumber(), moUserIdToken.getSerialNumber());
+        final byte[] moEncode = moUserIdToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
+        assertArrayEquals(encode, moEncode);
     }
     
     @Test(expected = MslInternalException.class)
@@ -157,26 +163,26 @@ public class UserIdTokenTest {
     }
     
     @Test
-    public void masterTokenMismatch() throws MslException, JSONException {
+    public void masterTokenMismatch() throws MslException, MslEncoderException {
         thrown.expect(MslException.class);
         thrown.expectMslError(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH);
 
         final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, 1, 1);
         final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, masterToken, SERIAL_NUMBER, ISSUER_DATA, USER);
         
-        final MasterToken joMasterToken = MslTestUtils.getMasterToken(ctx, 1, 2);
-        new UserIdToken(ctx, new JSONObject(userIdToken.toJSONString()), joMasterToken);
+        final MasterToken moMasterToken = MslTestUtils.getMasterToken(ctx, 1, 2);
+        new UserIdToken(ctx, MslTestUtils.toMslObject(encoder, userIdToken), moMasterToken);
     }
     
     @Test
-    public void masterTokenNull() throws MslException, JSONException {
+    public void masterTokenNull() throws MslException, MslEncoderException {
         thrown.expect(MslException.class);
         thrown.expectMslError(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH);
 
         final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, 1, 1);
         final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, masterToken, SERIAL_NUMBER, ISSUER_DATA, USER);
         
-        new UserIdToken(ctx, new JSONObject(userIdToken.toJSONString()), null);
+        new UserIdToken(ctx, MslTestUtils.toMslObject(encoder, userIdToken), null);
     }
     
     @Test(expected = MslInternalException.class)
@@ -188,508 +194,508 @@ public class UserIdTokenTest {
     }
     
     @Test
-    public void inconsistentExpirationJson() throws JSONException, MslException, UnsupportedEncodingException {
+    public void inconsistentExpirationJson() throws MslEncoderException, MslException, UnsupportedEncodingException {
         thrown.expect(MslException.class);
         thrown.expectMslError(MslError.USERIDTOKEN_EXPIRES_BEFORE_RENEWAL);
 
         final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
-        final String jsonString = userIdToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = userIdToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_EXPIRATION, System.currentTimeMillis() / MILLISECONDS_PER_SECOND - 1);
-        tokendataJo.put(KEY_RENEWAL_WINDOW, System.currentTimeMillis() / MILLISECONDS_PER_SECOND);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        tokendataMo.put(KEY_EXPIRATION, System.currentTimeMillis() / MILLISECONDS_PER_SECOND - 1);
+        tokendataMo.put(KEY_RENEWAL_WINDOW, System.currentTimeMillis() / MILLISECONDS_PER_SECOND);
+        mo.put(KEY_TOKENDATA, tokendataMo.toString().getBytes());
         
-        new UserIdToken(ctx, jo, MASTER_TOKEN);
+        new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
     
     @Test
-    public void missingTokendata() throws MslException, JSONException {
+    public void missingTokendata() throws MslException, MslEncoderException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
-        final String jsonString = userIdToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = userIdToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
-        assertNotNull(jo.remove(KEY_TOKENDATA));
+        assertNotNull(mo.remove(KEY_TOKENDATA));
         
-        new UserIdToken(ctx, jo, MASTER_TOKEN);
+        new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
     
     @Test(expected = MslEncodingException.class)
-    public void invalidTokendata() throws MslEncodingException, MslCryptoException, MslException, JSONException {
+    public void invalidTokendata() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
-        final String jsonString = userIdToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = userIdToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
         ++tokendata[0];
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendata));
+        mo.put(KEY_TOKENDATA, tokendata);
         
-        new UserIdToken(ctx, jo, MASTER_TOKEN);
+        new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
     
     @Test
-    public void missingSignature() throws MslEncodingException, MslCryptoException, MslException, JSONException {
+    public void missingSignature() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
-        final String jsonString = userIdToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = userIdToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
-        assertNotNull(jo.remove(KEY_SIGNATURE));
+        assertNotNull(mo.remove(KEY_SIGNATURE));
         
-        new UserIdToken(ctx, jo, MASTER_TOKEN);
+        new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
     
     @Test
-    public void missingRenewalWindow() throws JSONException, MslException, UnsupportedEncodingException {
-        thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR);
-
-        final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
-        final String jsonString = userIdToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
-
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        assertNotNull(tokendataJo.remove(KEY_RENEWAL_WINDOW));
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
-        
-        new UserIdToken(ctx, jo, MASTER_TOKEN);
-    }
-    
-    @Test
-    public void invalidRenewalWindow() throws JSONException, MslException, UnsupportedEncodingException {
+    public void missingRenewalWindow() throws MslEncoderException, MslException, UnsupportedEncodingException {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR);
 
         final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
-        final String jsonString = userIdToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = userIdToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
 
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_RENEWAL_WINDOW, "x");
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        assertNotNull(tokendataMo.remove(KEY_RENEWAL_WINDOW));
+        mo.put(KEY_TOKENDATA, tokendataMo.toString().getBytes());
         
-        new UserIdToken(ctx, jo, MASTER_TOKEN);
+        new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
     
     @Test
-    public void missingExpiration() throws JSONException, MslException, UnsupportedEncodingException {
+    public void invalidRenewalWindow() throws MslEncoderException, MslException, UnsupportedEncodingException {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR);
 
         final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
-        final String jsonString = userIdToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = userIdToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
 
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        assertNotNull(tokendataJo.remove(KEY_EXPIRATION));
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        tokendataMo.put(KEY_RENEWAL_WINDOW, "x");
+        mo.put(KEY_TOKENDATA, tokendataMo.toString().getBytes());
         
-        new UserIdToken(ctx, jo, MASTER_TOKEN);
+        new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
     
     @Test
-    public void invalidExpiration() throws JSONException, MslException, UnsupportedEncodingException {
+    public void missingExpiration() throws MslEncoderException, MslException, UnsupportedEncodingException {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR);
 
         final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
-        final String jsonString = userIdToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = userIdToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
 
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_EXPIRATION, "x");
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        assertNotNull(tokendataMo.remove(KEY_EXPIRATION));
+        mo.put(KEY_TOKENDATA, tokendataMo.toString().getBytes());
         
-        new UserIdToken(ctx, jo, MASTER_TOKEN);
+        new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
     
     @Test
-    public void missingSerialNumber() throws JSONException, MslException, UnsupportedEncodingException {
+    public void invalidExpiration() throws MslEncoderException, MslException, UnsupportedEncodingException {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR);
 
         final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
-        final String jsonString = userIdToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = userIdToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
 
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        assertNotNull(tokendataJo.remove(KEY_SERIAL_NUMBER));
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        tokendataMo.put(KEY_EXPIRATION, "x");
+        mo.put(KEY_TOKENDATA, tokendataMo.toString().getBytes());
         
-        new UserIdToken(ctx, jo, MASTER_TOKEN);
+        new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
     
     @Test
-    public void invalidSerialNumber() throws JSONException, MslException, UnsupportedEncodingException {
+    public void missingSerialNumber() throws MslEncoderException, MslException, UnsupportedEncodingException {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR);
 
         final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
-        final String jsonString = userIdToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = userIdToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
 
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SERIAL_NUMBER, "x");
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        assertNotNull(tokendataMo.remove(KEY_SERIAL_NUMBER));
+        mo.put(KEY_TOKENDATA, tokendataMo.toString().getBytes());
         
-        new UserIdToken(ctx, jo, MASTER_TOKEN);
+        new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
     
     @Test
-    public void negativeSerialNumber() throws MslEncodingException, MslCryptoException, JSONException, MslException {
+    public void invalidSerialNumber() throws MslEncoderException, MslException, UnsupportedEncodingException {
+        thrown.expect(MslEncodingException.class);
+        thrown.expectMslError(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR);
+
+        final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
+        final byte[] encode = userIdToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
+
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        tokendataMo.put(KEY_SERIAL_NUMBER, "x");
+        mo.put(KEY_TOKENDATA, tokendataMo.toString().getBytes());
+        
+        new UserIdToken(ctx, mo, MASTER_TOKEN);
+    }
+    
+    @Test
+    public void negativeSerialNumber() throws MslEncodingException, MslCryptoException, MslEncoderException, MslException {
         thrown.expect(MslException.class);
         thrown.expectMslError(MslError.USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE);
 
         final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
-        final String jsonString = userIdToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = userIdToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
 
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SERIAL_NUMBER, -1);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        tokendataMo.put(KEY_SERIAL_NUMBER, -1);
+        mo.put(KEY_TOKENDATA, tokendataMo.toString().getBytes());
         
-        new UserIdToken(ctx, jo, MASTER_TOKEN);
+        new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
     
     @Test
-    public void tooLargeSerialNumber() throws MslEncodingException, MslCryptoException, JSONException, MslException {
+    public void tooLargeSerialNumber() throws MslEncodingException, MslCryptoException, MslEncoderException, MslException {
         thrown.expect(MslException.class);
         thrown.expectMslError(MslError.USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE);
 
         final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
-        final String jsonString = userIdToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = userIdToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
 
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SERIAL_NUMBER, MslConstants.MAX_LONG_VALUE + 1);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        tokendataMo.put(KEY_SERIAL_NUMBER, MslConstants.MAX_LONG_VALUE + 1);
+        mo.put(KEY_TOKENDATA, tokendataMo.toString().getBytes());
         
-        new UserIdToken(ctx, jo, MASTER_TOKEN);
+        new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
     
     @Test
-    public void missingMasterTokenSerialNumber() throws JSONException, MslException, UnsupportedEncodingException {
+    public void missingMasterTokenSerialNumber() throws MslEncoderException, MslException, UnsupportedEncodingException {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR);
 
         final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
-        final String jsonString = userIdToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = userIdToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
 
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        assertNotNull(tokendataJo.remove(KEY_MASTER_TOKEN_SERIAL_NUMBER));
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        assertNotNull(tokendataMo.remove(KEY_MASTER_TOKEN_SERIAL_NUMBER));
+        mo.put(KEY_TOKENDATA, tokendataMo.toString().getBytes());
         
-        new UserIdToken(ctx, jo, MASTER_TOKEN);
+        new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
     
     @Test
-    public void invalidMasterTokenSerialNumber() throws JSONException, MslException, UnsupportedEncodingException {
+    public void invalidMasterTokenSerialNumber() throws MslEncoderException, MslException, UnsupportedEncodingException {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR);
 
         final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
-        final String jsonString = userIdToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = userIdToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
 
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, "x");
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        tokendataMo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, "x");
+        mo.put(KEY_TOKENDATA, tokendataMo.toString().getBytes());
         
-        new UserIdToken(ctx, jo, MASTER_TOKEN);
+        new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
     
     @Test
-    public void negativeMasterTokenSerialNumber() throws MslEncodingException, MslCryptoException, JSONException, MslException {
+    public void negativeMasterTokenSerialNumber() throws MslEncodingException, MslCryptoException, MslEncoderException, MslException {
         thrown.expect(MslException.class);
         thrown.expectMslError(MslError.USERIDTOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE);
 
         final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
-        final String jsonString = userIdToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = userIdToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
 
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, -1);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        tokendataMo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, -1);
+        mo.put(KEY_TOKENDATA, tokendataMo.toString().getBytes());
         
-        new UserIdToken(ctx, jo, MASTER_TOKEN);
+        new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
     
     @Test
-    public void tooLargeMasterTokenSerialNumber() throws MslEncodingException, MslCryptoException, JSONException, MslException {
+    public void tooLargeMasterTokenSerialNumber() throws MslEncodingException, MslCryptoException, MslEncoderException, MslException {
         thrown.expect(MslException.class);
         thrown.expectMslError(MslError.USERIDTOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE);
 
         final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
-        final String jsonString = userIdToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = userIdToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
 
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, MslConstants.MAX_LONG_VALUE + 1);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        tokendataMo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, MslConstants.MAX_LONG_VALUE + 1);
+        mo.put(KEY_TOKENDATA, tokendataMo.toString().getBytes());
         
-        new UserIdToken(ctx, jo, MASTER_TOKEN);
+        new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
     
     @Test
-    public void missingUserdata() throws JSONException, MslException, UnsupportedEncodingException {
+    public void missingUserdata() throws MslEncoderException, MslException, UnsupportedEncodingException {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR);
 
         final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
-        final String jsonString = userIdToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = userIdToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
 
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        assertNotNull(tokendataJo.remove(KEY_USERDATA));
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        assertNotNull(tokendataMo.remove(KEY_USERDATA));
+        mo.put(KEY_TOKENDATA, tokendataMo.toString().getBytes());
         
-        new UserIdToken(ctx, jo, MASTER_TOKEN);
+        new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
     
     @Test
-    public void invalidUserdata() throws MslEncodingException, MslCryptoException, MslException, UnsupportedEncodingException, JSONException {
+    public void invalidUserdata() throws MslEncodingException, MslCryptoException, MslException, UnsupportedEncodingException, MslEncoderException {
         thrown.expect(MslException.class);
         thrown.expectMslError(MslError.USERIDTOKEN_USERDATA_MISSING);
 
         final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
-        final String jsonString = userIdToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = userIdToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
 
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_USERDATA, "x");
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        tokendataMo.put(KEY_USERDATA, "x");
         
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
-        final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
+        mo.put(KEY_TOKENDATA, modifiedTokendata);
+        mo.put(KEY_SIGNATURE, signature);
         
-        new UserIdToken(ctx, jo, MASTER_TOKEN);
+        new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
     
     @Test
-    public void emptyUserdata() throws MslEncodingException, MslCryptoException, MslException, UnsupportedEncodingException, JSONException {
+    public void emptyUserdata() throws MslEncodingException, MslCryptoException, MslException, UnsupportedEncodingException, MslEncoderException {
         thrown.expect(MslException.class);
         thrown.expectMslError(MslError.USERIDTOKEN_USERDATA_MISSING);
 
         final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
-        final String jsonString = userIdToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = userIdToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
 
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
 
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
         final byte[] ciphertext = new byte[0];
-        tokendataJo.put(KEY_USERDATA, DatatypeConverter.printBase64Binary(ciphertext));
-        final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        tokendataMo.put(KEY_USERDATA, ciphertext);
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
+        mo.put(KEY_TOKENDATA, modifiedTokendata);
+        mo.put(KEY_SIGNATURE, signature);
         
-        new UserIdToken(ctx, jo, MASTER_TOKEN);
+        new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
     
     @Test(expected = MslCryptoException.class)
-    public void corruptUserdata() throws JSONException, MslException, UnsupportedEncodingException {
+    public void corruptUserdata() throws MslEncoderException, MslException, UnsupportedEncodingException {
         final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
-        final String jsonString = userIdToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = userIdToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
 
         // This is testing user data that is verified but corrupt.
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] userdata = DatatypeConverter.parseBase64Binary(tokendataJo.getString(KEY_USERDATA));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        final byte[] userdata = tokendataMo.getBytes(KEY_USERDATA);
         ++userdata[userdata.length-1];
-        tokendataJo.put(KEY_USERDATA, DatatypeConverter.printBase64Binary(userdata));
+        tokendataMo.put(KEY_USERDATA, userdata);
         
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
-        final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
+        mo.put(KEY_TOKENDATA, modifiedTokendata);
+        mo.put(KEY_SIGNATURE, signature);
         
-        new UserIdToken(ctx, jo, MASTER_TOKEN);
+        new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
     
     @Test
-    public void invalidUser() throws JSONException, MslException {
+    public void invalidUser() throws MslEncoderException, MslException {
         thrown.expect(MslException.class);
         thrown.expectMslError(MslError.USERIDTOKEN_IDENTITY_INVALID);
 
         final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
-        final String jsonString = userIdToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = userIdToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
 
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
 
         // Before modifying the user data we need to decrypt it.
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(tokendataJo.getString(KEY_USERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject userdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        final byte[] ciphertext = tokendataMo.getBytes(KEY_USERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject userdataMo = encoder.parseObject(plaintext);
         
         // After modifying the user data we need to encrypt it.
-        userdataJo.put(KEY_IDENTITY, "x");
-        final byte[] userdata = cryptoContext.encrypt(userdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_USERDATA, DatatypeConverter.printBase64Binary(userdata));
+        userdataMo.put(KEY_IDENTITY, "x");
+        final byte[] userdata = cryptoContext.encrypt(encoder.encodeObject(userdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        tokendataMo.put(KEY_USERDATA, userdata);
 
         // The tokendata must be signed otherwise the user data will not be
         // processed.
-        final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
+        mo.put(KEY_TOKENDATA, modifiedTokendata);
+        mo.put(KEY_SIGNATURE, signature);
         
-        new UserIdToken(ctx, jo, MASTER_TOKEN);
+        new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
     
     @Test
-    public void emptyUser() throws JSONException, MslException {
+    public void emptyUser() throws MslEncoderException, MslException {
         thrown.expect(MslException.class);
         thrown.expectMslError(MslError.USERIDTOKEN_IDENTITY_INVALID);
 
         final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
-        final String jsonString = userIdToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = userIdToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
 
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
 
         // Before modifying the user data we need to decrypt it.
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(tokendataJo.getString(KEY_USERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject userdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        final byte[] ciphertext = tokendataMo.getBytes(KEY_USERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject userdataMo = encoder.parseObject(plaintext);
         
         // After modifying the user data we need to encrypt it.
-        userdataJo.put(KEY_IDENTITY, "");
-        final byte[] userdata = cryptoContext.encrypt(userdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_USERDATA, DatatypeConverter.printBase64Binary(userdata));
+        userdataMo.put(KEY_IDENTITY, "");
+        final byte[] userdata = cryptoContext.encrypt(encoder.encodeObject(userdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        tokendataMo.put(KEY_USERDATA, userdata);
 
         // The tokendata must be signed otherwise the user data will not be
         // processed.
-        final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
+        mo.put(KEY_TOKENDATA, modifiedTokendata);
+        mo.put(KEY_SIGNATURE, signature);
         
-        new UserIdToken(ctx, jo, MASTER_TOKEN);
+        new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
     
     @Test
-    public void missingUser() throws JSONException, MslException {
+    public void missingUser() throws MslEncoderException, MslException {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR);
 
         final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
-        final String jsonString = userIdToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = userIdToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
 
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
 
         // Before modifying the user data we need to decrypt it.
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(tokendataJo.getString(KEY_USERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject userdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        final byte[] ciphertext = tokendataMo.getBytes(KEY_USERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject userdataMo = encoder.parseObject(plaintext);
         
         // After modifying the user data we need to encrypt it.
-        userdataJo.remove(KEY_IDENTITY);
-        final byte[] userdata = cryptoContext.encrypt(userdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_USERDATA, DatatypeConverter.printBase64Binary(userdata));
+        userdataMo.remove(KEY_IDENTITY);
+        final byte[] userdata = cryptoContext.encrypt(encoder.encodeObject(userdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        tokendataMo.put(KEY_USERDATA, userdata);
 
         // The tokendata must be signed otherwise the user data will not be
         // processed.
-        final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
+        mo.put(KEY_TOKENDATA, modifiedTokendata);
+        mo.put(KEY_SIGNATURE, signature);
         
-        new UserIdToken(ctx, jo, MASTER_TOKEN);
+        new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
     
     @Test
-    public void invalidIssuerData() throws MslEncodingException, MslCryptoException, JSONException, MslException {
+    public void invalidIssuerData() throws MslEncodingException, MslCryptoException, MslEncoderException, MslException {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR);
 
         final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
-        final String jsonString = userIdToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = userIdToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
 
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
 
         // Before modifying the user data we need to decrypt it.
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(tokendataJo.getString(KEY_USERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject userdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        final byte[] ciphertext = tokendataMo.getBytes(KEY_USERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject userdataMo = encoder.parseObject(plaintext);
         
         // After modifying the user data we need to encrypt it.
-        userdataJo.put(KEY_ISSUER_DATA, "x");
-        final byte[] userdata = cryptoContext.encrypt(userdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_USERDATA, DatatypeConverter.printBase64Binary(userdata));
+        userdataMo.put(KEY_ISSUER_DATA, "x");
+        final byte[] userdata = cryptoContext.encrypt(encoder.encodeObject(userdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        tokendataMo.put(KEY_USERDATA, userdata);
 
         // The tokendata must be signed otherwise the user data will not be
         // processed.
-        final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
+        mo.put(KEY_TOKENDATA, modifiedTokendata);
+        mo.put(KEY_SIGNATURE, signature);
         
-        new UserIdToken(ctx, jo, MASTER_TOKEN);
+        new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
     
     @Test
-    public void notVerified() throws JSONException, MslException {
+    public void notVerified() throws MslEncoderException, MslException {
         final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
-        final String jsonString = userIdToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = userIdToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
 
-        final byte[] signature = DatatypeConverter.parseBase64Binary(jo.getString(KEY_SIGNATURE));
+        final byte[] signature = mo.getBytes(KEY_SIGNATURE);
         ++signature[0];
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        mo.put(KEY_SIGNATURE, signature);
         
-        final UserIdToken joUserIdToken = new UserIdToken(ctx, jo, MASTER_TOKEN);
-        assertFalse(joUserIdToken.isDecrypted());
-        assertFalse(joUserIdToken.isVerified());
-        assertTrue(joUserIdToken.isRenewable(null));
-        assertFalse(joUserIdToken.isExpired(null));
-        assertEquals(userIdToken.isBoundTo(MASTER_TOKEN), joUserIdToken.isBoundTo(MASTER_TOKEN));
-        assertEquals(null, joUserIdToken.getUser());
-        assertEquals(userIdToken.getExpiration().getTime() / MILLISECONDS_PER_SECOND, joUserIdToken.getExpiration().getTime() / MILLISECONDS_PER_SECOND);
-        assertEquals(userIdToken.getMasterTokenSerialNumber(), joUserIdToken.getMasterTokenSerialNumber());
-        assertEquals(userIdToken.getRenewalWindow().getTime() / MILLISECONDS_PER_SECOND, joUserIdToken.getRenewalWindow().getTime() / MILLISECONDS_PER_SECOND);
-        assertEquals(userIdToken.getSerialNumber(), joUserIdToken.getSerialNumber());
-        final String joJsonString = joUserIdToken.toJSONString();
-        assertNotNull(joJsonString);
-        assertFalse(jsonString.equals(joJsonString));
+        final UserIdToken moUserIdToken = new UserIdToken(ctx, mo, MASTER_TOKEN);
+        assertFalse(moUserIdToken.isDecrypted());
+        assertFalse(moUserIdToken.isVerified());
+        assertTrue(moUserIdToken.isRenewable(null));
+        assertFalse(moUserIdToken.isExpired(null));
+        assertEquals(userIdToken.isBoundTo(MASTER_TOKEN), moUserIdToken.isBoundTo(MASTER_TOKEN));
+        assertEquals(null, moUserIdToken.getUser());
+        assertEquals(userIdToken.getExpiration().getTime() / MILLISECONDS_PER_SECOND, moUserIdToken.getExpiration().getTime() / MILLISECONDS_PER_SECOND);
+        assertEquals(userIdToken.getMasterTokenSerialNumber(), moUserIdToken.getMasterTokenSerialNumber());
+        assertEquals(userIdToken.getRenewalWindow().getTime() / MILLISECONDS_PER_SECOND, moUserIdToken.getRenewalWindow().getTime() / MILLISECONDS_PER_SECOND);
+        assertEquals(userIdToken.getSerialNumber(), moUserIdToken.getSerialNumber());
+        final byte[] moEncode = moUserIdToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
+        assertFalse(encode.equals(moEncode));
     }
     
     @Test
@@ -771,12 +777,12 @@ public class UserIdTokenTest {
     }
     
     @Test
-    public void equalsSerialNumber() throws MslException, JSONException {
+    public void equalsSerialNumber() throws MslException, MslEncoderException {
         final long serialNumberA = 1;
         final long serialNumberB = 2;
         final UserIdToken userIdTokenA = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, serialNumberA, ISSUER_DATA, USER);
         final UserIdToken userIdTokenB = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, serialNumberB, ISSUER_DATA, USER);
-        final UserIdToken userIdTokenA2 = new UserIdToken(ctx, new JSONObject(userIdTokenA.toJSONString()), MASTER_TOKEN);
+        final UserIdToken userIdTokenA2 = new UserIdToken(ctx, MslTestUtils.toMslObject(encoder, userIdTokenA), MASTER_TOKEN);
         
         assertTrue(userIdTokenA.equals(userIdTokenA));
         assertEquals(userIdTokenA.hashCode(), userIdTokenA.hashCode());
@@ -791,12 +797,12 @@ public class UserIdTokenTest {
     }
     
     @Test
-    public void equalsMasterTokenSerialNumber() throws MslException, JSONException {
+    public void equalsMasterTokenSerialNumber() throws MslException, MslEncoderException {
         final MasterToken masterTokenA = MslTestUtils.getMasterToken(ctx, 1, 1);
         final MasterToken masterTokenB = MslTestUtils.getMasterToken(ctx, 1, 2);
         final UserIdToken userIdTokenA = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, masterTokenA, SERIAL_NUMBER, ISSUER_DATA, USER);
         final UserIdToken userIdTokenB = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, masterTokenB, SERIAL_NUMBER, ISSUER_DATA, USER);
-        final UserIdToken userIdTokenA2 = new UserIdToken(ctx, new JSONObject(userIdTokenA.toJSONString()), masterTokenA);
+        final UserIdToken userIdTokenA2 = new UserIdToken(ctx, MslTestUtils.toMslObject(encoder, userIdTokenA), masterTokenA);
         
         assertTrue(userIdTokenA.equals(userIdTokenA));
         assertEquals(userIdTokenA.hashCode(), userIdTokenA.hashCode());
@@ -820,4 +826,6 @@ public class UserIdTokenTest {
     
     /** MSL context. */
     private static MslContext ctx;
+    /** MSL encoder factory. */
+    private static MslEncoderFactory encoder;
 }

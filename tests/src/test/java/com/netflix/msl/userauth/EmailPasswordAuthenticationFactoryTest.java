@@ -19,8 +19,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -33,11 +31,15 @@ import com.netflix.msl.MslError;
 import com.netflix.msl.MslUserAuthException;
 import com.netflix.msl.MslUserIdTokenException;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslEncoderUtils;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.test.ExpectedMslException;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.tokens.UserIdToken;
-import com.netflix.msl.util.JsonUtils;
 import com.netflix.msl.util.MockAuthenticationUtils;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslTestUtils;
@@ -48,6 +50,9 @@ import com.netflix.msl.util.MslTestUtils;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class EmailPasswordAuthenticationFactoryTest {
+	/** MSL encoder format. */
+	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
+
     /** JSON email key. */
     private static final String KEY_EMAIL = "email";
     
@@ -60,6 +65,7 @@ public class EmailPasswordAuthenticationFactoryTest {
     @BeforeClass
     public static void setup() throws MslEncodingException, MslCryptoException {
         ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
+        encoder = ctx.getMslEncoderFactory();
         final MockEmailPasswordStore store = new MockEmailPasswordStore();
         store.addUser(MockEmailPasswordAuthenticationFactory.EMAIL, MockEmailPasswordAuthenticationFactory.PASSWORD, MockEmailPasswordAuthenticationFactory.USER);
         authutils = new MockAuthenticationUtils();
@@ -71,6 +77,7 @@ public class EmailPasswordAuthenticationFactoryTest {
     public static void teardown() {
         factory = null;
         authutils = null;
+        encoder = null;
         ctx = null;
     }
     
@@ -80,26 +87,26 @@ public class EmailPasswordAuthenticationFactoryTest {
     }
     
     @Test
-    public void createData() throws MslEncodingException, MslUserAuthException, JSONException, MslCryptoException {
+    public void createData() throws MslEncodingException, MslUserAuthException, MslEncoderException, MslCryptoException {
         final EmailPasswordAuthenticationData data = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL, MockEmailPasswordAuthenticationFactory.PASSWORD);
-        final JSONObject userAuthJO = data.getAuthData();
+        final MslObject userAuthJO = data.getAuthData(encoder, ENCODER_FORMAT);
         
         final UserAuthenticationData authdata = factory.createData(ctx, null, userAuthJO);
         assertNotNull(authdata);
         assertTrue(authdata instanceof EmailPasswordAuthenticationData);
         
-        final JSONObject dataJo = new JSONObject(data.toJSONString());
-        final JSONObject authdataJo = new JSONObject(authdata.toJSONString());
-        assertTrue(JsonUtils.equals(dataJo, authdataJo));
+        final MslObject dataJo = MslTestUtils.toMslObject(encoder, data);
+        final MslObject authdataJo = MslTestUtils.toMslObject(encoder, authdata);
+        assertTrue(MslEncoderUtils.equals(dataJo, authdataJo));
     }
     
     @Test
     public void encodeException() throws MslEncodingException, MslUserAuthException, MslCryptoException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final EmailPasswordAuthenticationData data = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL, MockEmailPasswordAuthenticationFactory.PASSWORD);
-        final JSONObject userAuthJO = data.getAuthData();
+        final MslObject userAuthJO = data.getAuthData(encoder, ENCODER_FORMAT);
         userAuthJO.remove(KEY_EMAIL);
         factory.createData(ctx, null, userAuthJO);
     }
@@ -163,6 +170,8 @@ public class EmailPasswordAuthenticationFactoryTest {
     
     /** MSL context. */
     private static MockMslContext ctx;
+    /** MSL encoder factory. */
+    private static MslEncoderFactory encoder;
     /** Authentication utilities. */
     private static MockAuthenticationUtils authutils;
     /** User authentication factory. */

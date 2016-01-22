@@ -34,9 +34,17 @@ import com.netflix.msl.MslConstants;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class JsonMslTokenizer extends MslTokenizer {
-    public JsonMslTokenizer(final InputStream source) {
+    /**
+     * <p>Create a new JSON MSL tokenzier that will read data off the provided
+     * input stream.</p>
+     * 
+     * @param encoder MSL encoder factory.
+     * @param source JSON input stream.
+     */
+    public JsonMslTokenizer(final MslEncoderFactory encoder, final InputStream source) {
+        this.encoder = encoder;
         final Reader reader = new InputStreamReader(source, MslConstants.DEFAULT_CHARSET);
-        tokenizer = new JSONTokener(reader);
+        this.tokenizer = new JSONTokener(reader);
     }
     
     /* (non-Javadoc)
@@ -45,15 +53,19 @@ public class JsonMslTokenizer extends MslTokenizer {
     @Override
     protected MslObject next(final int timeout) throws MslEncoderException {
         try {
+            if (!tokenizer.more())
+                return null;
             final Object o = tokenizer.nextValue();
             if (o instanceof JSONObject)
-                return new JsonMslObject((JSONObject)o);
+                return new JsonMslObject(encoder, (JSONObject)o);
             throw new MslEncoderException("JSON value is not a JSON object.");
         } catch (final JSONException e) {
             throw new MslEncoderException("JSON syntax error.", e);
         }
     }
 
+    /** MSL encoder factory. */
+    private final MslEncoderFactory encoder;
     /** JSON tokenizer. */
     private final JSONTokener tokenizer;
 }

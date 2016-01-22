@@ -15,11 +15,12 @@
  */
 package com.netflix.msl.userauth;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 
 /**
  * <p>Email/password-based user authentication data.</p>
@@ -38,9 +39,9 @@ import com.netflix.msl.MslError;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class EmailPasswordAuthenticationData extends UserAuthenticationData {
-    /** JSON email key. */
+    /** Key email. */
     private static final String KEY_EMAIL = "email";
-    /** JSON password key. */
+    /** Key password. */
     private static final String KEY_PASSWORD = "password";
     
     /**
@@ -58,18 +59,18 @@ public class EmailPasswordAuthenticationData extends UserAuthenticationData {
 
     /**
      * Construct a new email/password authentication data instance from the
-     * provided JSON representation.
+     * provided MSL object.
      * 
-     * @param emailPasswordAuthJO the JSON object.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @param emailPasswordAuthMo the MSL object.
+     * @throws MslEncodingException if there is an error parsing the data.
      */
-    public EmailPasswordAuthenticationData(final JSONObject emailPasswordAuthJO) throws MslEncodingException {
+    public EmailPasswordAuthenticationData(final MslObject emailPasswordAuthMo) throws MslEncodingException {
         super(UserAuthenticationScheme.EMAIL_PASSWORD);
         try {
-            email = emailPasswordAuthJO.getString(KEY_EMAIL);
-            password = emailPasswordAuthJO.getString(KEY_PASSWORD);
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "email/password authdata " + emailPasswordAuthJO.toString(), e);
+            email = emailPasswordAuthMo.getString(KEY_EMAIL);
+            password = emailPasswordAuthMo.getString(KEY_PASSWORD);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "email/password authdata " + emailPasswordAuthMo.toString(), e);
         }
     }
     
@@ -87,19 +88,12 @@ public class EmailPasswordAuthenticationData extends UserAuthenticationData {
         return password;
     }
 
-    /* (non-Javadoc)
-     * @see com.netflix.msl.userauth.UserAuthenticationData#getCredentials()
-     */
     @Override
-    public JSONObject getAuthData() throws MslEncodingException {
-        try {
-            final JSONObject jsonObj = new JSONObject();
-            jsonObj.put(KEY_EMAIL, email);
-            jsonObj.put(KEY_PASSWORD, password);
-            return jsonObj;
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, "email/password authdata", e);
-        }
+    public MslObject getAuthData(final MslEncoderFactory encoder, final MslEncoderFormat format) {
+        final MslObject mo = encoder.createObject();
+        mo.put(KEY_EMAIL, email);
+        mo.put(KEY_PASSWORD, password);
+        return mo;
     }
 
     /* (non-Javadoc)

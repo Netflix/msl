@@ -27,15 +27,22 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.netflix.msl.MslConstants.CompressionAlgorithm;
+import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
+import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.io.MslArray;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
+import com.netflix.msl.util.MockMslContext;
+import com.netflix.msl.util.MslContext;
+import com.netflix.msl.util.MslTestUtils;
 
 /**
  * Message capabilities unit tests.
@@ -43,109 +50,161 @@ import com.netflix.msl.MslEncodingException;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class MessageCapabilitiesTest {
-    /** JSON key compression algorithms. */
+	/** MSL encoder format. */
+	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
+
+    /** Key compression algorithms. */
     private static final String KEY_COMPRESSION_ALGOS = "compressionalgos";
+    /** Key encoder formats. */
+    private static final String KEY_ENCODER_FORMATS = "encoderformats";
     
     private static final Set<CompressionAlgorithm> ALGOS = new HashSet<CompressionAlgorithm>();
     private static final List<String> LANGUAGES = Arrays.asList(new String[] { "en-US", "es" });
+    private static final Set<MslEncoderFormat> FORMATS = new HashSet<MslEncoderFormat>();
+    
+    /** MSL encoder factory. */
+    private static MslEncoderFactory encoder;
     
     @BeforeClass
-    public static void setup() {
+    public static void setup() throws MslEncodingException, MslCryptoException {
+        final MslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
+        encoder = ctx.getMslEncoderFactory();
         ALGOS.add(CompressionAlgorithm.GZIP);
         ALGOS.add(CompressionAlgorithm.LZW);
+        FORMATS.add(MslEncoderFormat.JSON);
     }
     
     @AfterClass
     public static void teardown() {
+        FORMATS.clear();
         ALGOS.clear();
+        encoder = null;
     }
 
     @Test
-    public void ctors() throws MslEncodingException, JSONException {
-        final MessageCapabilities caps = new MessageCapabilities(ALGOS, LANGUAGES);
+    public void ctors() throws MslEncodingException, MslEncoderException {
+        final MessageCapabilities caps = new MessageCapabilities(ALGOS, LANGUAGES, FORMATS);
         assertEquals(ALGOS, caps.getCompressionAlgorithms());
         assertEquals(LANGUAGES, caps.getLanguages());
-        final String jsonString = caps.toJSONString();
-        assertNotNull(jsonString);
+        assertEquals(FORMATS, caps.getEncoderFormats());
+        final byte[] encode = caps.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(encode);
         
-        final MessageCapabilities joCaps = new MessageCapabilities(new JSONObject(jsonString));
-        assertEquals(caps.getCompressionAlgorithms(), joCaps.getCompressionAlgorithms());
-        assertEquals(caps.getLanguages(), joCaps.getLanguages());
-        final String joJsonString = joCaps.toJSONString();
-        assertNotNull(joJsonString);
-        // This test will not always pass since the compression algorithms are
-        // unordered.
-        //assertTrue(JsonUtils.objectEquals(jsonString, joJsonString));
-        final MessageCapabilities jo2Caps = new MessageCapabilities(new JSONObject(joJsonString));
-        assertEquals(joCaps, jo2Caps);
+        final MessageCapabilities moCaps = new MessageCapabilities(encoder.parseObject(encode));
+        assertEquals(caps.getCompressionAlgorithms(), moCaps.getCompressionAlgorithms());
+        assertEquals(caps.getLanguages(), moCaps.getLanguages());
+        assertEquals(caps.getEncoderFormats(), moCaps.getEncoderFormats());
+        final byte[] moEncode = moCaps.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
+        // This test will not always pass since set data is unordered.
+        //assertTrue(MslEncoderUtils.objectEquals(jsonString, moJsonString));
+        final MessageCapabilities mo2Caps = new MessageCapabilities(encoder.parseObject(moEncode));
+        assertEquals(moCaps, mo2Caps);
     }
     
     @Test
-    public void nullAlgos() throws MslEncodingException, JSONException {
-        final MessageCapabilities caps = new MessageCapabilities((Set<CompressionAlgorithm>)null, LANGUAGES);
+    public void nullAlgos() throws MslEncodingException, MslEncoderException {
+        final MessageCapabilities caps = new MessageCapabilities(null, LANGUAGES, FORMATS);
         final Set<CompressionAlgorithm> algos = caps.getCompressionAlgorithms();
         assertNotNull(algos);
         assertEquals(0, algos.size());
         assertEquals(LANGUAGES, caps.getLanguages());
-        final String jsonString = caps.toJSONString();
-        assertNotNull(jsonString);
-        
-        final MessageCapabilities joCaps = new MessageCapabilities(new JSONObject(jsonString));
-        assertEquals(caps.getCompressionAlgorithms(), joCaps.getCompressionAlgorithms());
-        assertEquals(caps.getLanguages(), joCaps.getLanguages());
-        final String joJsonString = joCaps.toJSONString();
-        assertNotNull(joJsonString);
-        // This test will not always pass since the compression algorithms are
-        // unordered.
-        //assertTrue(JsonUtils.objectEquals(jsonString, joJsonString));
-        final MessageCapabilities jo2Caps = new MessageCapabilities(new JSONObject(joJsonString));
-        assertEquals(joCaps, jo2Caps);
+        assertEquals(FORMATS, caps.getEncoderFormats());
+        final byte[] encode = caps.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(encode);
+
+        final MessageCapabilities moCaps = new MessageCapabilities(encoder.parseObject(encode));
+        assertEquals(caps.getCompressionAlgorithms(), moCaps.getCompressionAlgorithms());
+        assertEquals(caps.getLanguages(), moCaps.getLanguages());
+        assertEquals(caps.getEncoderFormats(), moCaps.getEncoderFormats());
+        final byte[] moEncode = moCaps.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
+        // This test will not always pass since set data is unordered.
+        //assertTrue(MslEncoderUtils.objectEquals(jsonString, moJsonString));
+        final MessageCapabilities mo2Caps = new MessageCapabilities(encoder.parseObject(moEncode));
+        assertEquals(moCaps, mo2Caps);
     }
     
     @Test
-    public void unknownCompressionAlgo() throws JSONException, MslEncodingException {
-        final MessageCapabilities caps = new MessageCapabilities(ALGOS, LANGUAGES);
-        final String jsonString = caps.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+    public void unknownCompressionAlgo() throws MslEncoderException, MslEncodingException {
+        final MessageCapabilities caps = new MessageCapabilities(ALGOS, LANGUAGES, FORMATS);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, caps);
         
-        final JSONArray ja = jo.getJSONArray(KEY_COMPRESSION_ALGOS);
-        ja.put("CATZ");
-        jo.put(KEY_COMPRESSION_ALGOS, ja);
+        final MslArray ma = mo.getMslArray(KEY_COMPRESSION_ALGOS);
+        ma.put(-1, "CATZ");
+        mo.put(KEY_COMPRESSION_ALGOS, ma);
         
-        final MessageCapabilities joCaps = new MessageCapabilities(jo);
-        assertEquals(caps.getCompressionAlgorithms(), joCaps.getCompressionAlgorithms());
+        final MessageCapabilities moCaps = new MessageCapabilities(mo);
+        assertEquals(caps.getCompressionAlgorithms(), moCaps.getCompressionAlgorithms());
     }
     
     @Test
-    public void nullLanguages() throws MslEncodingException, JSONException {
-        final MessageCapabilities caps = new MessageCapabilities(ALGOS, null);
+    public void nullLanguages() throws MslEncodingException, MslEncoderException {
+        final MessageCapabilities caps = new MessageCapabilities(ALGOS, null, FORMATS);
         assertEquals(ALGOS, caps.getCompressionAlgorithms());
         final List<String> languages = caps.getLanguages();
         assertNotNull(languages);
         assertEquals(0, languages.size());
-        final String jsonString = caps.toJSONString();
-        assertNotNull(jsonString);
+        assertEquals(FORMATS, caps.getEncoderFormats());
+        final byte[] encode = caps.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(encode);
         
-        final MessageCapabilities joCaps = new MessageCapabilities(new JSONObject(jsonString));
-        assertEquals(caps.getCompressionAlgorithms(), joCaps.getCompressionAlgorithms());
-        assertEquals(caps.getLanguages(), joCaps.getLanguages());
-        final String joJsonString = joCaps.toJSONString();
-        assertNotNull(joJsonString);
-        // This test will not always pass since the compression algorithms are
-        // unordered.
-        //assertTrue(JsonUtils.objectEquals(jsonString, joJsonString));
-        final MessageCapabilities jo2Caps = new MessageCapabilities(new JSONObject(joJsonString));
-        assertEquals(joCaps, jo2Caps);
+        final MessageCapabilities moCaps = new MessageCapabilities(encoder.parseObject(encode));
+        assertEquals(caps.getCompressionAlgorithms(), moCaps.getCompressionAlgorithms());
+        assertEquals(caps.getLanguages(), moCaps.getLanguages());
+        assertEquals(caps.getEncoderFormats(), moCaps.getEncoderFormats());
+        final byte[] moEncode = moCaps.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
+        // This test will not always pass since set data is unordered.
+        //assertTrue(MslEncoderUtils.objectEquals(jsonString, moJsonString));
+        final MessageCapabilities mo2Caps = new MessageCapabilities(encoder.parseObject(moEncode));
+        assertEquals(moCaps, mo2Caps);
     }
     
     @Test
-    public void equalsCompressionAlgos() throws MslEncodingException, JSONException {
+    public void nullEncoderFormats() throws MslEncodingException, MslEncoderException {
+        final MessageCapabilities caps = new MessageCapabilities(ALGOS, LANGUAGES, null);
+        assertEquals(ALGOS, caps.getCompressionAlgorithms());
+        assertEquals(LANGUAGES, caps.getLanguages());
+        final Set<MslEncoderFormat> formats = caps.getEncoderFormats();
+        assertNotNull(formats);
+        assertEquals(0, formats.size());
+        final byte[] encode = caps.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(encode);
+
+        final MessageCapabilities moCaps = new MessageCapabilities(encoder.parseObject(encode));
+        assertEquals(caps.getCompressionAlgorithms(), moCaps.getCompressionAlgorithms());
+        assertEquals(caps.getLanguages(), moCaps.getLanguages());
+        assertEquals(caps.getEncoderFormats(), moCaps.getEncoderFormats());
+        final byte[] moEncode = moCaps.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
+        // This test will not always pass since set data is unordered.
+        //assertTrue(MslEncoderUtils.objectEquals(jsonString, moJsonString));
+        final MessageCapabilities mo2Caps = new MessageCapabilities(encoder.parseObject(moEncode));
+        assertEquals(moCaps, mo2Caps);
+    }
+    
+    @Test
+    public void unknownEncoderFormat() throws MslEncoderException, MslEncodingException {
+        final MessageCapabilities caps = new MessageCapabilities(ALGOS, LANGUAGES, FORMATS);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, caps);
+        
+        final MslArray ma = mo.getMslArray(KEY_ENCODER_FORMATS);
+        ma.put(-1, "CATZ");
+        mo.put(KEY_ENCODER_FORMATS, ma);
+        
+        final MessageCapabilities moCaps = new MessageCapabilities(mo);
+        assertEquals(caps.getEncoderFormats(), moCaps.getEncoderFormats());
+    }
+    
+    @Test
+    public void equalsCompressionAlgos() throws MslEncodingException, MslEncoderException {
         final Set<CompressionAlgorithm> algosA = new HashSet<CompressionAlgorithm>(ALGOS);
         final Set<CompressionAlgorithm> algosB = new HashSet<CompressionAlgorithm>();
         
-        final MessageCapabilities capsA = new MessageCapabilities(algosA, LANGUAGES);
-        final MessageCapabilities capsB = new MessageCapabilities(algosB, LANGUAGES);
-        final MessageCapabilities capsA2 = new MessageCapabilities(new JSONObject(capsA.toJSONString()));
+        final MessageCapabilities capsA = new MessageCapabilities(algosA, LANGUAGES, FORMATS);
+        final MessageCapabilities capsB = new MessageCapabilities(algosB, LANGUAGES, FORMATS);
+        final MessageCapabilities capsA2 = new MessageCapabilities(MslTestUtils.toMslObject(encoder, capsA));
         
         assertTrue(capsA.equals(capsA));
         assertEquals(capsA.hashCode(), capsA.hashCode());
@@ -160,13 +219,34 @@ public class MessageCapabilitiesTest {
     }
     
     @Test
-    public void equalsLanguages() throws MslEncodingException, JSONException {
+    public void equalsLanguages() throws MslEncodingException, MslEncoderException {
         final List<String> langsA = Arrays.asList(new String[] { "en-US" });
         final List<String> langsB = Arrays.asList(new String[] { "es" });
         
-        final MessageCapabilities capsA = new MessageCapabilities(ALGOS, langsA);
-        final MessageCapabilities capsB = new MessageCapabilities(ALGOS, langsB);
-        final MessageCapabilities capsA2 = new MessageCapabilities(new JSONObject(capsA.toJSONString()));
+        final MessageCapabilities capsA = new MessageCapabilities(ALGOS, langsA, FORMATS);
+        final MessageCapabilities capsB = new MessageCapabilities(ALGOS, langsB, FORMATS);
+        final MessageCapabilities capsA2 = new MessageCapabilities(MslTestUtils.toMslObject(encoder, capsA));
+        
+        assertTrue(capsA.equals(capsA));
+        assertEquals(capsA.hashCode(), capsA.hashCode());
+        
+        assertFalse(capsA.equals(capsB));
+        assertFalse(capsB.equals(capsA));
+        assertTrue(capsA.hashCode() != capsB.hashCode());
+        
+        assertTrue(capsA.equals(capsA2));
+        assertTrue(capsA2.equals(capsA));
+        assertEquals(capsA.hashCode(), capsA2.hashCode());
+    }
+    
+    @Test
+    public void equalsEncoderFormats() throws MslEncodingException, MslEncoderException {
+        final Set<MslEncoderFormat> formatsA = new HashSet<MslEncoderFormat>(FORMATS);
+        final Set<MslEncoderFormat> formatsB = new HashSet<MslEncoderFormat>();
+        
+        final MessageCapabilities capsA = new MessageCapabilities(ALGOS, LANGUAGES, formatsA);
+        final MessageCapabilities capsB = new MessageCapabilities(ALGOS, LANGUAGES, formatsB);
+        final MessageCapabilities capsA2 = new MessageCapabilities(MslTestUtils.toMslObject(encoder, capsA));
         
         assertTrue(capsA.equals(capsA));
         assertEquals(capsA.hashCode(), capsA.hashCode());
@@ -182,8 +262,8 @@ public class MessageCapabilitiesTest {
     
     @Test
     public void selfIntersection() {
-        final MessageCapabilities capsA = new MessageCapabilities(ALGOS, LANGUAGES);
-        final MessageCapabilities capsB = new MessageCapabilities(ALGOS, LANGUAGES);
+        final MessageCapabilities capsA = new MessageCapabilities(ALGOS, LANGUAGES, FORMATS);
+        final MessageCapabilities capsB = new MessageCapabilities(ALGOS, LANGUAGES, FORMATS);
         final MessageCapabilities intersection = MessageCapabilities.intersection(capsA, capsB);
         
         assertTrue(intersection.equals(capsA));
@@ -196,20 +276,37 @@ public class MessageCapabilitiesTest {
         gzipOnly.add(CompressionAlgorithm.GZIP);
         final List<String> oneLanguage = new ArrayList<String>();
         oneLanguage.add(LANGUAGES.get(0));
+        final Set<MslEncoderFormat> noFormats = new HashSet<MslEncoderFormat>();
         
-        final MessageCapabilities capsA = new MessageCapabilities(ALGOS, oneLanguage);
-        final MessageCapabilities capsB = new MessageCapabilities(gzipOnly, LANGUAGES);
+        final MessageCapabilities capsA = new MessageCapabilities(ALGOS, oneLanguage, FORMATS);
+        final MessageCapabilities capsB = new MessageCapabilities(gzipOnly, LANGUAGES, FORMATS);
+        final MessageCapabilities capsC = new MessageCapabilities(ALGOS, LANGUAGES, noFormats);
         final MessageCapabilities intersectionAB = MessageCapabilities.intersection(capsA, capsB);
         final MessageCapabilities intersectionBA = MessageCapabilities.intersection(capsB, capsA);
+        final MessageCapabilities intersectionAC = MessageCapabilities.intersection(capsA, capsC);
+        final MessageCapabilities intersectionCA = MessageCapabilities.intersection(capsC, capsA);
+        final MessageCapabilities intersectionBC = MessageCapabilities.intersection(capsB, capsC);
+        final MessageCapabilities intersectionCB = MessageCapabilities.intersection(capsC, capsB);
         
         assertTrue(intersectionAB.equals(intersectionBA));
         assertEquals(gzipOnly, intersectionAB.getCompressionAlgorithms());
         assertTrue(oneLanguage.containsAll(intersectionAB.getLanguages()));
+        assertEquals(FORMATS, intersectionAB.getEncoderFormats());
+        
+        assertTrue(intersectionAC.equals(intersectionCA));
+        assertEquals(ALGOS, intersectionAC.getCompressionAlgorithms());
+        assertTrue(oneLanguage.containsAll(intersectionAC.getLanguages()));
+        assertEquals(noFormats, intersectionAC.getEncoderFormats());
+        
+        assertTrue(intersectionBC.equals(intersectionCB));
+        assertEquals(gzipOnly, intersectionBC.getCompressionAlgorithms());
+        assertTrue(LANGUAGES.containsAll(intersectionBC.getLanguages()));
+        assertEquals(noFormats, intersectionBC.getEncoderFormats());
     }
     
     @Test
     public void nullIntersection() {
-        final MessageCapabilities caps = new MessageCapabilities(ALGOS, LANGUAGES);
+        final MessageCapabilities caps = new MessageCapabilities(ALGOS, LANGUAGES, FORMATS);
         final MessageCapabilities intersectionA = MessageCapabilities.intersection(null, caps);
         final MessageCapabilities intersectionB = MessageCapabilities.intersection(caps, null);
         

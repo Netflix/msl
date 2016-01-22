@@ -20,7 +20,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -31,12 +30,16 @@ import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslUserAuthException;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslEncoderUtils;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.test.ExpectedMslException;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.MockMslUser;
 import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.tokens.UserIdToken;
-import com.netflix.msl.util.JsonUtils;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslTestUtils;
@@ -47,6 +50,9 @@ import com.netflix.msl.util.MslTestUtils;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class UserIdTokenAuthenticationDataTest {
+	/** MSL encoder format. */
+	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
+
     /** JSON key user authentication scheme. */
     private static final String KEY_SCHEME = "scheme";
     /** JSON key user authentication data. */
@@ -66,10 +72,13 @@ public class UserIdTokenAuthenticationDataTest {
     
     /** MSL context. */
     private static MslContext ctx;
+    /** MSL encoder factory. */
+    private static MslEncoderFactory encoder;
     
     @BeforeClass
     public static void setup() throws MslEncodingException, MslCryptoException {
         ctx = new MockMslContext(EntityAuthenticationScheme.X509, false);
+        encoder = ctx.getMslEncoderFactory();
         MASTER_TOKEN = MslTestUtils.getMasterToken(ctx, 1L, 1L);
         final MslUser user = new MockMslUser(1);
         USER_ID_TOKEN = MslTestUtils.getUserIdToken(ctx, MASTER_TOKEN, 1L, user);
@@ -79,129 +88,127 @@ public class UserIdTokenAuthenticationDataTest {
     public static void teardown() {
         USER_ID_TOKEN = null;
         MASTER_TOKEN = null;
+        encoder = null;
         ctx = null;
     }
     
     @Test
-    public void ctors() throws MslEncodingException, MslUserAuthException {
+    public void ctors() throws MslEncodingException, MslUserAuthException, MslEncoderException {
         final UserIdTokenAuthenticationData data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
         assertEquals(UserAuthenticationScheme.USER_ID_TOKEN, data.getScheme());
         assertEquals(MASTER_TOKEN, data.getMasterToken());
         assertEquals(USER_ID_TOKEN, data.getUserIdToken());
-        final JSONObject authdata = data.getAuthData();
+        final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
         assertNotNull(authdata);
-        final String jsonString = data.toJSONString();
+        final byte[] encode = data.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(encode);
         
-        final UserIdTokenAuthenticationData joData = new UserIdTokenAuthenticationData(ctx, authdata);
-        assertEquals(data.getScheme(), joData.getScheme());
-        assertEquals(data.getMasterToken(), joData.getMasterToken());
-        assertEquals(data.getUserIdToken(), joData.getUserIdToken());
-        final JSONObject joAuthdata = joData.getAuthData();
-        assertNotNull(joAuthdata);
-        assertTrue(JsonUtils.equals(authdata, joAuthdata));
-        final String joJsonString = joData.toJSONString();
-        assertNotNull(joJsonString);
-        assertEquals(jsonString, joJsonString);
+        final UserIdTokenAuthenticationData moData = new UserIdTokenAuthenticationData(ctx, authdata);
+        assertEquals(data.getScheme(), moData.getScheme());
+        assertEquals(data.getMasterToken(), moData.getMasterToken());
+        assertEquals(data.getUserIdToken(), moData.getUserIdToken());
+        final MslObject moAuthdata = moData.getAuthData(encoder, ENCODER_FORMAT);
+        assertNotNull(moAuthdata);
+        final byte[] moEncode = moData.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
     }
     
     @Test
-    public void jsonString() {
+    public void mslObject() throws MslEncoderException {
         final UserIdTokenAuthenticationData data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
-        final JSONObject jo = new JSONObject(data.toJSONString());
-        assertEquals(UserAuthenticationScheme.USER_ID_TOKEN.name(), jo.getString(KEY_SCHEME));
-        final JSONObject authdata = jo.getJSONObject(KEY_AUTHDATA);
-        final JSONObject masterTokenJo = authdata.getJSONObject(KEY_MASTER_TOKEN);
-        assertTrue(JsonUtils.equals(new JSONObject(MASTER_TOKEN.toJSONString()), masterTokenJo));
-        final JSONObject userIdTokenJo = authdata.getJSONObject(KEY_USER_ID_TOKEN);
-        assertTrue(JsonUtils.equals(new JSONObject(USER_ID_TOKEN.toJSONString()), userIdTokenJo));
+        final MslObject mo = MslTestUtils.toMslObject(encoder, data);
+        assertEquals(UserAuthenticationScheme.USER_ID_TOKEN.name(), mo.getString(KEY_SCHEME));
+        final MslObject authdata = mo.getMslObject(KEY_AUTHDATA, encoder);
+        final MslObject masterTokenJo = authdata.getMslObject(KEY_MASTER_TOKEN, encoder);
+        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, MASTER_TOKEN), masterTokenJo));
+        final MslObject userIdTokenJo = authdata.getMslObject(KEY_USER_ID_TOKEN, encoder);
+        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, USER_ID_TOKEN), userIdTokenJo));
     }
     
     @Test
-    public void create() throws MslUserAuthException, MslEncodingException, MslCryptoException {
+    public void create() throws MslUserAuthException, MslEncodingException, MslCryptoException, MslEncoderException {
         final UserIdTokenAuthenticationData data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
-        final String jsonString = data.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
-        final UserAuthenticationData userdata = UserAuthenticationData.create(ctx, null, jo);
+        final byte[] encode = data.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
+        final UserAuthenticationData userdata = UserAuthenticationData.create(ctx, null, mo);
         assertNotNull(userdata);
         assertTrue(userdata instanceof UserIdTokenAuthenticationData);
         
-        final UserIdTokenAuthenticationData joData = (UserIdTokenAuthenticationData)userdata;
-        assertEquals(data.getScheme(), joData.getScheme());
-        assertEquals(data.getMasterToken(), joData.getMasterToken());
-        assertEquals(data.getUserIdToken(), joData.getUserIdToken());
-        final JSONObject joAuthdata = joData.getAuthData();
-        assertNotNull(joAuthdata);
-        assertTrue(JsonUtils.equals(data.getAuthData(), joAuthdata));
-        final String joJsonString = joData.toJSONString();
-        assertNotNull(joJsonString);
-        assertEquals(jsonString, joJsonString);
+        final UserIdTokenAuthenticationData moData = (UserIdTokenAuthenticationData)userdata;
+        assertEquals(data.getScheme(), moData.getScheme());
+        assertEquals(data.getMasterToken(), moData.getMasterToken());
+        assertEquals(data.getUserIdToken(), moData.getUserIdToken());
+        final MslObject moAuthdata = moData.getAuthData(encoder, ENCODER_FORMAT);
+        assertNotNull(moAuthdata);
+        final byte[] moEncode = moData.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
         
     }
     
     @Test
-    public void missingMasterToken() throws MslEncodingException, MslUserAuthException {
+    public void missingMasterToken() throws MslEncodingException, MslUserAuthException, MslEncoderException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
         
         final UserIdTokenAuthenticationData data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
-        final JSONObject authdata = data.getAuthData();
+        final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
         authdata.remove(KEY_MASTER_TOKEN);
         new UserIdTokenAuthenticationData(ctx, authdata);
     }
     
     @Test
-    public void invalidMasterToken() throws MslEncodingException, MslUserAuthException {
+    public void invalidMasterToken() throws MslEncodingException, MslUserAuthException, MslEncoderException {
         thrown.expect(MslUserAuthException.class);
         thrown.expectMslError(MslError.USERAUTH_MASTERTOKEN_INVALID);
         
         final UserIdTokenAuthenticationData data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
-        final JSONObject authdata = data.getAuthData();
-        authdata.put(KEY_MASTER_TOKEN, new JSONObject());
+        final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
+        authdata.put(KEY_MASTER_TOKEN, new MslObject());
         new UserIdTokenAuthenticationData(ctx, authdata);
     }
     
     @Test
-    public void missingUserIdToken() throws MslEncodingException, MslUserAuthException {
+    public void missingUserIdToken() throws MslEncodingException, MslUserAuthException, MslEncoderException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
         
         final UserIdTokenAuthenticationData data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
-        final JSONObject authdata = data.getAuthData();
+        final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
         authdata.remove(KEY_USER_ID_TOKEN);
         new UserIdTokenAuthenticationData(ctx, authdata);
     }
     
     @Test
-    public void invalidUserIdToken() throws MslEncodingException, MslUserAuthException {
+    public void invalidUserIdToken() throws MslEncodingException, MslUserAuthException, MslEncoderException {
         thrown.expect(MslUserAuthException.class);
         thrown.expectMslError(MslError.USERAUTH_USERIDTOKEN_INVALID);
         
         final UserIdTokenAuthenticationData data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
-        final JSONObject authdata = data.getAuthData();
-        authdata.put(KEY_USER_ID_TOKEN, new JSONObject());
+        final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
+        authdata.put(KEY_USER_ID_TOKEN, new MslObject());
         new UserIdTokenAuthenticationData(ctx, authdata);
     }
     
     @Test
-    public void mismatchedTokens() throws MslEncodingException, MslCryptoException, MslUserAuthException {
+    public void mismatchedTokens() throws MslEncodingException, MslCryptoException, MslUserAuthException, MslEncoderException {
         thrown.expect(MslUserAuthException.class);
         thrown.expectMslError(MslError.USERAUTH_USERIDTOKEN_INVALID);
         
         final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, MASTER_TOKEN.getSequenceNumber(), MASTER_TOKEN.getSerialNumber() + 1);
         
         final UserIdTokenAuthenticationData data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
-        final JSONObject authdata = data.getAuthData();
-        authdata.put(KEY_MASTER_TOKEN, new JSONObject(masterToken.toJSONString()));
+        final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
+        authdata.put(KEY_MASTER_TOKEN, MslTestUtils.toMslObject(encoder, masterToken));
         new UserIdTokenAuthenticationData(ctx, authdata);
     }
     
     @Test
-    public void equalsMasterToken() throws MslEncodingException, MslCryptoException, MslUserAuthException {
+    public void equalsMasterToken() throws MslEncodingException, MslCryptoException, MslUserAuthException, MslEncoderException {
         final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, MASTER_TOKEN.getSequenceNumber() + 1, MASTER_TOKEN.getSerialNumber());
         
         final UserIdTokenAuthenticationData dataA = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
         final UserIdTokenAuthenticationData dataB = new UserIdTokenAuthenticationData(masterToken, USER_ID_TOKEN);
-        final UserIdTokenAuthenticationData dataA2 = new UserIdTokenAuthenticationData(ctx, dataA.getAuthData());
+        final UserIdTokenAuthenticationData dataA2 = new UserIdTokenAuthenticationData(ctx, dataA.getAuthData(encoder, ENCODER_FORMAT));
         
         assertTrue(dataA.equals(dataA));
         assertEquals(dataA.hashCode(), dataA.hashCode());
@@ -216,12 +223,12 @@ public class UserIdTokenAuthenticationDataTest {
     }
     
     @Test
-    public void equalsUserIdToken() throws MslEncodingException, MslCryptoException, MslUserAuthException {
+    public void equalsUserIdToken() throws MslEncodingException, MslCryptoException, MslUserAuthException, MslEncoderException {
         final UserIdToken userIdToken = MslTestUtils.getUserIdToken(ctx, MASTER_TOKEN, USER_ID_TOKEN.getSerialNumber() + 1, USER_ID_TOKEN.getUser());
         
         final UserIdTokenAuthenticationData dataA = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
         final UserIdTokenAuthenticationData dataB = new UserIdTokenAuthenticationData(MASTER_TOKEN, userIdToken);
-        final UserIdTokenAuthenticationData dataA2 = new UserIdTokenAuthenticationData(ctx, dataA.getAuthData());
+        final UserIdTokenAuthenticationData dataA2 = new UserIdTokenAuthenticationData(ctx, dataA.getAuthData(encoder, ENCODER_FORMAT));
         
         assertTrue(dataA.equals(dataA));
         assertEquals(dataA.hashCode(), dataA.hashCode());

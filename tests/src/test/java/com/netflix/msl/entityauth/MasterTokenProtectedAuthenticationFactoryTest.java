@@ -15,10 +15,10 @@
  */
 package com.netflix.msl.entityauth;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import org.json.JSONObject;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -30,9 +30,12 @@ import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.crypto.ICryptoContext;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.test.ExpectedMslException;
 import com.netflix.msl.tokens.MasterToken;
-import com.netflix.msl.util.JsonUtils;
 import com.netflix.msl.util.MockAuthenticationUtils;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslTestUtils;
@@ -43,6 +46,9 @@ import com.netflix.msl.util.MslTestUtils;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class MasterTokenProtectedAuthenticationFactoryTest {
+    /** MSL encoder format. */
+    private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
+    
     /** JSON key master token. */
     protected static final String KEY_MASTER_TOKEN = "mastertoken";
     
@@ -53,6 +59,8 @@ public class MasterTokenProtectedAuthenticationFactoryTest {
     
     /** MSL context. */
     private static MockMslContext ctx;
+    /** MSL encoder factory. */
+    private static MslEncoderFactory encoder;
     /** Authentication utilities. */
     private static MockAuthenticationUtils authutils;
     /** Entity authentication factory. */
@@ -66,6 +74,7 @@ public class MasterTokenProtectedAuthenticationFactoryTest {
     @BeforeClass
     public static void setup() throws MslEncodingException, MslCryptoException {
         ctx = new MockMslContext(EntityAuthenticationScheme.NONE, false);
+        encoder = ctx.getMslEncoderFactory();
         authutils = new MockAuthenticationUtils();
         factory = new MasterTokenProtectedAuthenticationFactory(authutils);
         ctx.addEntityAuthenticationFactory(factory);
@@ -81,6 +90,7 @@ public class MasterTokenProtectedAuthenticationFactoryTest {
         
         factory = null;
         authutils = null;
+        encoder = null;
         ctx = null;
     }
     
@@ -90,26 +100,26 @@ public class MasterTokenProtectedAuthenticationFactoryTest {
     }
     
     @Test
-    public void createData() throws MslCryptoException, MslEntityAuthException, MslEncodingException {
+    public void createData() throws MslCryptoException, MslEntityAuthException, MslEncodingException, MslEncoderException {
         final MasterTokenProtectedAuthenticationData data = new MasterTokenProtectedAuthenticationData(ctx, masterToken, eAuthdata);
-        final JSONObject entityAuthJO = data.getAuthData();
+        final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
         
-        final EntityAuthenticationData authdata = factory.createData(ctx, entityAuthJO);
-        assertNotNull(authdata);
-        assertTrue(authdata instanceof MasterTokenProtectedAuthenticationData);
-        
-        final JSONObject dataJo = new JSONObject(data.toJSONString());
-        final JSONObject authdataJo = new JSONObject(authdata.toJSONString());
-        assertTrue(JsonUtils.equals(dataJo, authdataJo));
+        final EntityAuthenticationData moAuthdata = factory.createData(ctx, authdata);
+        assertNotNull(moAuthdata);
+        assertTrue(moAuthdata instanceof MasterTokenProtectedAuthenticationData);
+        final MasterTokenProtectedAuthenticationData moData = (MasterTokenProtectedAuthenticationData)moAuthdata;
+        assertEquals(data.getIdentity(), moData.getIdentity());
+        assertEquals(data.getScheme(), moData.getScheme());
+        assertEquals(data.getEncapsulatedAuthdata(), moData.getEncapsulatedAuthdata());
     }
     
     @Test
-    public void encodeException() throws MslCryptoException, MslEntityAuthException, MslEncodingException {
+    public void encodeException() throws MslCryptoException, MslEntityAuthException, MslEncodingException, MslEncoderException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final MasterTokenProtectedAuthenticationData data = new MasterTokenProtectedAuthenticationData(ctx, masterToken, eAuthdata);
-        final JSONObject entityAuthJO = data.getAuthData();
+        final MslObject entityAuthJO = data.getAuthData(encoder, ENCODER_FORMAT);
         entityAuthJO.remove(KEY_MASTER_TOKEN);
         factory.createData(ctx, entityAuthJO);
     }

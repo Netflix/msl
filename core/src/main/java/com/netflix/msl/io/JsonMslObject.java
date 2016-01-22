@@ -15,9 +15,8 @@
  */
 package com.netflix.msl.io;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.nio.charset.Charset;
+import java.util.Set;
 
 import javax.xml.bind.DatatypeConverter;
 
@@ -26,395 +25,188 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONString;
 
-import com.netflix.msl.MslConstants;
+import com.netflix.msl.MslInternalException;
 
 /**
- * <p>A {@code MslObject} that encodes its data as JSON.</p>
+ * <p>A {@code MslObject} that encodes its data as UTF-8 JSON.</p>
  * 
  * <p>This implementation is backed by {@code org.json}.</p>
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-public class JsonMslObject implements MslObject, JSONString {
+public class JsonMslObject extends MslObject implements JSONString {
+    /** UTF-8 charset. */
+    private static final Charset UTF_8 = Charset.forName("UTF-8");
+    
     /**
-     * Create a new empty {@code MslObject}. 
+     * Returns a JSON MSL encoding of provided MSL object.
+     * 
+     * @param encoder the encoder factory.
+     * @param object the MSL object.
+     * @return the encoded data.
+     * @throws MslEncoderException if there is an error encoding the data.
      */
-    public JsonMslObject() {
-        this.jo = new JSONObject();
+    public static byte[] getEncoded(final MslEncoderFactory encoder, final MslObject object) throws MslEncoderException {
+        if (object instanceof JsonMslObject)
+            return ((JsonMslObject)object).toJSONString().getBytes(UTF_8);
+        
+        final JsonMslObject jsonObject = new JsonMslObject(encoder, object);
+        return jsonObject.toJSONString().getBytes(UTF_8);
     }
     
     /**
-     * Create a new {@code MslObject} from the given map.
+     * Create a new {@code JsonMslObject} from the given {@code MslObject}.
      * 
-     * @param map the map of name/value pairs.
+     * @param encoder the encoder factory.
+     * @param o the {@code MslObject}.
+     * @throws MslEncoderException if the MSL object contains an unsupported
+     *         type.
      */
-    public JsonMslObject(final Map<String,Object> map) {
-        this.jo = new JSONObject(map);
-    }
-    
-    /**
-     * Create a new {@code MslObject} from its encoded representation.
-     * 
-     * @param encoding the encoded data.
-     * @throws MslEncoderException if the data is malformed or invalid.
-     * @see #getEncoded()
-     */
-    public JsonMslObject(final byte[] encoding) throws MslEncoderException {
+    public JsonMslObject(final MslEncoderFactory encoder, final MslObject o) throws MslEncoderException {
+        this.encoder = encoder;
         try {
-            final String json = new String(encoding, MslConstants.DEFAULT_CHARSET);
-            this.jo = new JSONObject(json);
+            for (final String key : o.getKeys()) {
+                put(key, o.get(key));
+            }
+        } catch (final IllegalArgumentException e) {
+            throw new MslEncoderException("Invalid MSL array encoding.", e);
+        }
+    }
+    
+    /**
+     * Create a new {@code JsonMslObject} from the given {@code JSONObject}.
+     * 
+     * @param encoder the encoder factory.
+     * @param o the {@code JSONObject}.
+     * @throws MslEncoderException if the JSON object contains an unsupported
+     *         type.
+     */
+    public JsonMslObject(final MslEncoderFactory encoder, final JSONObject jo) throws MslEncoderException {
+        this.encoder = encoder;
+        try {
+            for (final Object key : jo.keySet()) {
+                if (!(key instanceof String))
+                    throw new MslEncoderException("Invalid JSON object encoding.");
+                put((String)key, jo.get((String)key));
+            }
         } catch (final JSONException e) {
             throw new MslEncoderException("Invalid JSON object encoding.", e);
+        } catch (final IllegalArgumentException e) {
+            throw new MslEncoderException("Invalid MSL array encoding.", e);
         }
     }
     
     /**
-     * Create a new {@code MslObject} from the given {@code JSONObject}.
+     * Create a new {@code JsonMslObject} from its encoded representation.
      * 
-     * @param o the {@code JSONObject}.
+     * @param encoder the encoder factory.
+     * @param encoding the encoded data.
+     * @throws MslEncoderException if the data is malformed or invalid.
      */
-    protected JsonMslObject(final JSONObject o) {
-        final Map<String,Object> map = new HashMap<String,Object>();
-        for (final Object ko : o.keySet()) {
-            final String key = (String)ko;
-            map.put(key, o.opt(key));
-        }
-        this.jo = new JSONObject(map);
-    }
-    
-    @Override
-    public Object get(final String key) throws MslEncoderException {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
+    public JsonMslObject(final MslEncoderFactory encoder, final byte[] encoding) throws MslEncoderException {
+        this.encoder = encoder;
         try {
-            final Object o = jo.get(key);
-            if (o instanceof JSONObject)
-                return new JsonMslObject((JSONObject)o);
-            if (o instanceof JSONArray)
-                return new JsonMslArray((JSONArray)o);
-            return o;
+            final String json = new String(encoding, UTF_8);
+            final JSONObject jo = new JSONObject(json);
+            for (final Object key : jo.keySet()) {
+                if (!(key instanceof String))
+                    throw new MslEncoderException("Invalid JSON object encoding.");
+                put((String)key, jo.get((String)key));
+            }
         } catch (final JSONException e) {
-            throw new MslEncoderException("MslObject[" + JSONObject.quote(key) + "] not found.", e);
-        }
-    }
-
-    @Override
-    public boolean getBoolean(final String key) throws MslEncoderException {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        try {
-            return jo.getBoolean(key);
-        } catch (final JSONException e) {
-            throw new MslEncoderException("MslObject[" + JSONObject.quote(key) + "] is not a boolean.", e);
-        }
-    }
-    
-    @Override
-    public byte[] getBytes(final String key) throws MslEncoderException {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        try {
-            final String b64 = jo.getString(key);
-            return DatatypeConverter.parseBase64Binary(b64);
-        } catch (final JSONException | IllegalArgumentException e) {
-            throw new MslEncoderException("MslObject[" + JSONObject.quote(key) + "] is not binary data.", e);
-        }
-    }
-
-    @Override
-    public double getDouble(final String key) throws MslEncoderException {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        try {
-            return jo.getDouble(key);
-        } catch (final JSONException e) {
-            throw new MslEncoderException("MslObject[" + JSONObject.quote(key) + "] is not a number.", e);
-        }
-    }
-
-    @Override
-    public int getInt(final String key) throws MslEncoderException {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        try {
-            return jo.getInt(key);
-        } catch (final JSONException e) {
-            throw new MslEncoderException("MslObject[" + JSONObject.quote(key) + "] is not a number.", e);
-        }
-    }
-
-    @Override
-    public MslArray getMslArray(final String key) throws MslEncoderException {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        try {
-            final JSONArray a = jo.getJSONArray(key);
-            return new JsonMslArray(a);
-        } catch (final JSONException e) {
-            throw new MslEncoderException("MslObject[" + JSONObject.quote(key) + "] is not a MslArray.", e);
-        }
-    }
-
-    @Override
-    public MslObject getMslObject(final String key) throws MslEncoderException {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        try {
-            final JSONObject o = jo.getJSONObject(key);
-            return new JsonMslObject(o);
-        } catch (final JSONException e) {
-            throw new MslEncoderException("MslObject[" + JSONObject.quote(key) + "] is not a MslObject.", e);
-        }
-    }
-
-    @Override
-    public long getLong(final String key) throws MslEncoderException {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        try {
-            return jo.getLong(key);
-        } catch (final JSONException e) {
-            throw new MslEncoderException("MslObject[" + JSONObject.quote(key) + "] is not a number.", e);
-        }
-    }
-
-    @Override
-    public String getString(final String key) throws MslEncoderException {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        try {
-            return jo.getString(key);
-        } catch (final JSONException e) {
-            throw new MslEncoderException("MslObject[" + JSONObject.quote(key) + "] is not a string.", e);
-        }
-    }
-
-    @Override
-    public boolean has(final String key) {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        return jo.has(key);
-    }
-
-    @Override
-    public Object opt(final String key) {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        final Object o = jo.opt(key);
-        if (o instanceof JSONObject)
-            return new JsonMslObject((JSONObject)o);
-        if (o instanceof JSONArray)
-            return new JsonMslArray((JSONArray)o);
-        return o;
-    }
-
-    @Override
-    public boolean optBoolean(final String key) {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        return jo.optBoolean(key);
-    }
-
-    @Override
-    public boolean optBoolean(final String key, final boolean defaultValue) {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        return jo.optBoolean(key, defaultValue);
-    }
-    
-    @Override
-    public byte[] optBytes(final String key) {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        final String b64 = jo.optString(key);
-        try {
-            return DatatypeConverter.parseBase64Binary(b64);
+            throw new MslEncoderException("Invalid JSON object encoding.", e);
         } catch (final IllegalArgumentException e) {
-            return new byte[0];
+            throw new MslEncoderException("Invalid MSL array encoding.", e);
         }
     }
     
-    @Override
-    public byte[] optBytes(final String key, final byte[] defaultValue) {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        final Object o = jo.opt(key);
-        if (!(o instanceof String))
-            return defaultValue;
-        final String b64 = (String)o;
-        try {
-            return DatatypeConverter.parseBase64Binary(b64);
-        } catch (final IllegalArgumentException e) {
-            return defaultValue;
-        }
-    }
-
-    @Override
-    public double optDouble(final String key) {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        return jo.optDouble(key);
-    }
-
-    @Override
-    public double optDouble(final String key, final double defaultValue) {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        return jo.optDouble(key, defaultValue);
-    }
-
-    @Override
-    public int optInt(final String key) {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        return jo.optInt(key);
-    }
-
-    @Override
-    public int optInt(final String key, final int defaultValue) {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        return jo.optInt(key, defaultValue);
-    }
-
-    @Override
-    public MslArray optMslArray(final String key) {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        final JSONArray a = jo.optJSONArray(key);
-        return (a != null) ? new JsonMslArray(a) : null;
-    }
-
-    @Override
-    public MslObject optMslObject(final String key) {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        final JSONObject o = jo.optJSONObject(key);
-        return (o != null) ? new JsonMslObject(o) : null;
-    }
-
-    @Override
-    public long optLong(final String key) {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        return jo.optLong(key);
-    }
-
-    @Override
-    public long optLong(final String key, final long defaultValue) {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        return jo.optLong(key, defaultValue);
-    }
-
-    @Override
-    public String optString(final String key) {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        return jo.optString(key);
-    }
-
-    @Override
-    public String optString(final String key, final String defaultValue) {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        return jo.optString(key, defaultValue);
-    }
-
+    /* (non-Javadoc)
+     * @see com.netflix.msl.io.MslObject#put(java.lang.String, java.lang.Object)
+     */
     @Override
     public MslObject put(final String key, final Object value) {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        put(key, value);
-        return this;
-    }
-
-    @Override
-    public MslObject putBoolean(final String key, final boolean value) {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        jo.put(key, value);
-        return this;
-    }
-    
-    @Override
-    public MslObject putBytes(final String key, final byte[] value) {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        final String b64 = (value != null) ? DatatypeConverter.printBase64Binary(value) : null;
-        jo.put(key, b64);
-        return this;
-    }
-
-    @Override
-    public MslObject putCollection(final String key, final Collection<Object> value) {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        jo.put(key, value);
-        return this;
-    }
-
-    @Override
-    public MslObject putDouble(final String key, final double value) {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        jo.put(key, value);
-        return this;
-    }
-
-    @Override
-    public MslObject putInt(final String key, final int value) {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        jo.put(key, value);
-        return this;
-    }
-
-    @Override
-    public MslObject putLong(final String key, final long value) {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        jo.put(key, value);
-        return this;
-    }
-
-    @Override
-    public MslObject putMap(final String key, final Map<String, Object> value) {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        jo.put(key, value);
-        return this;
-    }
-
-    @Override
-    public Object remove(final String key) {
-        if (key == null)
-            throw new IllegalArgumentException("Null key.");
-        final Object o = opt(key);
-        jo.remove(key);
-        return o;
-    }
-
-    @Override
-    public Map<String,Object> getMap() {
-        final Map<String,Object> map = new HashMap<String,Object>();
-        for (final Object ko : jo.keySet()) {
-            final String key = (String)ko;
-            map.put(key, jo.get(key));
+        final Object o;
+        try {
+            // Convert JSONObject to MslObject.
+            if (value instanceof JSONObject)
+                o = new JsonMslObject(encoder, (JSONObject)value);
+            // Convert JSONarray to a MslArray.
+            else if (value instanceof JSONArray)
+                o = new JsonMslArray(encoder, (JSONArray)value);
+            // All other types are OK as-is.
+            else
+                o = value;
+        } catch (final MslEncoderException e) {
+            throw new IllegalArgumentException("Unsupported JSON object or array representation.", e);
         }
-        return map;
+        return super.put(key, o);
     }
 
+    /* (non-Javadoc)
+     * @see com.netflix.msl.io.MslObject#getBytes(java.lang.String)
+     */
     @Override
-    public byte[] getEncoded() {
-        return jo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
+    public byte[] getBytes(final String key) throws MslEncoderException {
+        // When a JsonMslObject is decoded, there's no way for us to know if a
+        // value is supposed to be a String to byte[]. Therefore interpret
+        // Strings as Base64-encoded data consistent with the toJSONString()
+        // and getEncoded().
+        final Object value = get(key);
+        if (value instanceof byte[])
+            return (byte[])value;
+        if (value instanceof String)
+            return DatatypeConverter.parseBase64Binary((String)value);
+        throw new MslEncoderException("MslObject[" + MslEncoderFactory.quote(key) + "] is not binary data.");
     }
-    
+
+    /* (non-Javadoc)
+     * @see org.json.JSONString#toJSONString()
+     */
     @Override
     public String toJSONString() {
-        return jo.toString();
+        try {
+            final MslObject mo = encoder.createObject();
+            final Set<String> keys = getKeys();
+            for (final String key : keys) {
+                final Object value = get(key);
+                if (value instanceof byte[]) {
+                    mo.put(key, DatatypeConverter.printBase64Binary((byte[])value));
+                } else if (value instanceof JsonMslObject || value instanceof JsonMslArray) {
+                    mo.put(key, value);
+                } else if (value instanceof MslObject) {
+                    final JsonMslObject jsonValue = new JsonMslObject(encoder, (MslObject)value);
+                    mo.put(key, jsonValue);
+                } else if (value instanceof MslArray) {
+                    final JsonMslArray jsonValue = new JsonMslArray(encoder, (MslArray)value);
+                    mo.put(key, jsonValue);
+                } else if (value instanceof MslEncodable) {
+                    final byte[] json = ((MslEncodable)value).toMslEncoding(encoder, MslEncoderFormat.JSON);
+                    final JsonMslObject jsonValue = new JsonMslObject(encoder, json);
+                    mo.put(key, jsonValue);
+                } else {
+                    mo.put(key, value);
+                }
+            }
+            return mo.toString();
+        } catch (final IllegalArgumentException e) {
+            throw new MslInternalException("Error encoding MSL object as JSON.", e);
+        } catch (final MslEncoderException e) {
+            throw new MslInternalException("Error encoding MSL object as JSON.", e);
+        } catch (final JSONException e) { 
+            throw new MslInternalException("Error encoding MSL object as JSON.", e);
+        }
     }
     
-    /** JSON object. */
-    private final JSONObject jo;
+    /* (non-Javadoc)
+     * @see com.netflix.msl.io.MslObject#toString()
+     */
+    @Override
+    public String toString() {
+        return toJSONString();
+    }
+
+
+
+    /** MSL encoder factory. */
+    private final MslEncoderFactory encoder;
 }

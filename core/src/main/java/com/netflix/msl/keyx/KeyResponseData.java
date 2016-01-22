@@ -15,17 +15,16 @@
  */
 package com.netflix.msl.keyx;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.json.JSONString;
-import org.json.JSONStringer;
-
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslException;
-import com.netflix.msl.MslInternalException;
 import com.netflix.msl.MslKeyExchangeException;
+import com.netflix.msl.io.MslEncodable;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.util.MslContext;
 
@@ -52,12 +51,12 @@ import com.netflix.msl.util.MslContext;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-public abstract class KeyResponseData implements JSONString {
-    /** JSON key master token. */
+public abstract class KeyResponseData implements MslEncodable {
+    /** Key master token. */
     private static final String KEY_MASTER_TOKEN = "mastertoken";
-    /** JSON key key exchange scheme. */
+    /** Key key exchange scheme. */
     private static final String KEY_SCHEME = "scheme";
-    /** JSON key key data. */
+    /** Key key data. */
     private static final String KEY_KEYDATA = "keydata";
     
     /**
@@ -74,12 +73,12 @@ public abstract class KeyResponseData implements JSONString {
     
     /**
      * Construct a new key response data instance of the correct type from the
-     * provided JSON object.
+     * provided MSL object.
      * 
      * @param ctx MSL context.
-     * @param keyResponseDataJO the JSON object.
+     * @param keyResponseDataMo the MSL object.
      * @return the key response data concrete instance.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslKeyExchangeException if unable to create the key response
      *         data.
      * @throws MslCryptoException if there is an error verifying the they key
@@ -87,23 +86,25 @@ public abstract class KeyResponseData implements JSONString {
      * @throws MslException if the key response master token expiration
      *         timestamp occurs before the renewal window.
      */
-    public static KeyResponseData create(final MslContext ctx, final JSONObject keyResponseDataJO) throws MslEncodingException, MslCryptoException, MslKeyExchangeException, MslException {
+    public static KeyResponseData create(final MslContext ctx, final MslObject keyResponseDataMo) throws MslEncodingException, MslCryptoException, MslKeyExchangeException, MslException {
+        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+        
         try {
             // Pull the key data.
-            final MasterToken masterToken = new MasterToken(ctx, keyResponseDataJO.getJSONObject(KEY_MASTER_TOKEN));
-            final String schemeName = keyResponseDataJO.getString(KEY_SCHEME);
+            final MasterToken masterToken = new MasterToken(ctx, keyResponseDataMo.getMslObject(KEY_MASTER_TOKEN, encoder));
+            final String schemeName = keyResponseDataMo.getString(KEY_SCHEME);
             final KeyExchangeScheme scheme = ctx.getKeyExchangeScheme(schemeName);
             if (scheme == null)
                 throw new MslKeyExchangeException(MslError.UNIDENTIFIED_KEYX_SCHEME, schemeName);
-            final JSONObject keyData = keyResponseDataJO.getJSONObject(KEY_KEYDATA);
+            final MslObject keyData = keyResponseDataMo.getMslObject(KEY_KEYDATA, encoder);
             
             // Construct an instance of the concrete subclass.
             final KeyExchangeFactory factory = ctx.getKeyExchangeFactory(scheme);
             if (factory == null)
                 throw new MslKeyExchangeException(MslError.KEYX_FACTORY_NOT_FOUND, scheme.name());
             return factory.createResponseData(ctx, masterToken, keyData);
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keyresponsedata " + keyResponseDataJO.toString(), e);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "keyresponsedata " + keyResponseDataMo, e);
         }
     }
     
@@ -122,11 +123,10 @@ public abstract class KeyResponseData implements JSONString {
     }
     
     /**
-     * @return the key data JSON representation.
-     * @throws JSONException if there was an error constructing the JSON
-     *         representation.
+     * @return the key data MSL representation.
+     * @throws MslEncoderException if there was an error constructing the data.
      */
-    protected abstract JSONObject getKeydata() throws JSONException;
+    protected abstract MslObject getKeydata(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException;
     
     /** Master token. */
     private final MasterToken masterToken;
@@ -134,29 +134,15 @@ public abstract class KeyResponseData implements JSONString {
     private final KeyExchangeScheme scheme;
     
     /* (non-Javadoc)
-     * @see org.json.JSONString#toJSONString()
+     * @see com.netflix.msl.io.MslEncodable#toMslEncoding(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public final String toJSONString() {
-        try {
-            return new JSONStringer()
-                .object()
-                    .key(KEY_MASTER_TOKEN).value(masterToken)
-                    .key(KEY_SCHEME).value(scheme.name())
-                    .key(KEY_KEYDATA).value(getKeydata())
-                .endObject()
-                .toString();
-        } catch (final JSONException e) {
-            throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);
-        }
-    }
-    
-    /* (non-Javadoc)
-     * @see java.lang.Object#toString()
-     */
-    @Override
-    public String toString() {
-        return toJSONString();
+    public byte[] toMslEncoding(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException {
+        final MslObject mo = encoder.createObject();
+        mo.put(KEY_MASTER_TOKEN, masterToken);
+        mo.put(KEY_SCHEME, scheme.name());
+        mo.put(KEY_KEYDATA, getKeydata(encoder, format));
+        return encoder.encodeObject(mo, format);
     }
 
     /* (non-Javadoc)
