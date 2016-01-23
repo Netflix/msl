@@ -17,6 +17,7 @@ package com.netflix.msl.entityauth;
 
 import javax.xml.bind.DatatypeConverter;
 
+import lombok.EqualsAndHashCode;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -50,14 +51,29 @@ import com.netflix.msl.util.MslContext;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+@EqualsAndHashCode(of={"masterToken", "authdata"}, callSuper = true, doNotUseGetters = true)
 public class MasterTokenProtectedAuthenticationData extends EntityAuthenticationData {
     /** JSON key master token. */
     protected static final String KEY_MASTER_TOKEN = "mastertoken";
+
     /** JSON key authentication data. */
     protected static final String KEY_AUTHENTICATION_DATA = "authdata";
+
     /** JSON key signature. */
     protected static final String KEY_SIGNATURE = "signature";
-    
+
+    /** Master token. */
+    private final MasterToken masterToken;
+
+    /** Entity authentication data. */
+    private final EntityAuthenticationData authdata;
+
+    /** Encrypted entity authentication data. */
+    private final byte[] ciphertext;
+
+    /** Ciphertext signature. */
+    private final byte[] signature;
+
     /**
      * <p>Construct a new master token protected entity authentication data
      * instance using the provided master token and actual entity
@@ -191,35 +207,4 @@ public class MasterTokenProtectedAuthenticationData extends EntityAuthentication
         }
     }
 
-    /* (non-Javadoc)
-     * @see com.netflix.msl.entityauth.EntityAuthenticationData#equals(java.lang.Object)
-     */
-    @Override
-    public boolean equals(final Object obj) {
-        if (obj == this) return true;
-        if (!(obj instanceof MasterTokenProtectedAuthenticationData)) return false;
-        final MasterTokenProtectedAuthenticationData that = (MasterTokenProtectedAuthenticationData)obj;
-        return super.equals(obj) &&
-            this.masterToken.equals(that.masterToken) &&
-            this.authdata.equals(that.authdata);
-    }
-
-    /* (non-Javadoc)
-     * @see com.netflix.msl.entityauth.EntityAuthenticationData#hashCode()
-     */
-    @Override
-    public int hashCode() {
-        return super.hashCode() ^
-            masterToken.hashCode() ^
-            authdata.hashCode();
-    }
-
-    /** Master token. */
-    private final MasterToken masterToken;
-    /** Entity authentication data. */
-    private final EntityAuthenticationData authdata;
-    /** Encrypted entity authentication data. */
-    private final byte[] ciphertext;
-    /** Ciphertext signature. */
-    private final byte[] signature;
 }

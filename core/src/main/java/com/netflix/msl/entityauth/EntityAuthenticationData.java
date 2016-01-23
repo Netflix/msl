@@ -15,6 +15,8 @@
  */
 package com.netflix.msl.entityauth;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONString;
@@ -47,12 +49,17 @@ import com.netflix.msl.util.MslContext;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+@EqualsAndHashCode(of="scheme")
 public abstract class EntityAuthenticationData implements JSONString {
     /** JSON key entity authentication scheme. */
     private static final String KEY_SCHEME = "scheme";
     /** JSON key entity authentication data. */
     private static final String KEY_AUTHDATA = "authdata";
-    
+
+    /** Entity authentication scheme. */
+    @Getter
+    private final EntityAuthenticationScheme scheme;
+
     /**
      * Create a new entity authentication data object with the specified entity
      * authentication scheme.
@@ -97,13 +104,6 @@ public abstract class EntityAuthenticationData implements JSONString {
     }
     
     /**
-     * @return the entity authentication scheme.
-     */
-    public EntityAuthenticationScheme getScheme() {
-        return scheme;
-    }
-    
-    /**
      * @return the entity identity.
      * @throws MslCryptoException if there is a crypto error accessing the
      *         entity identity.
@@ -116,9 +116,6 @@ public abstract class EntityAuthenticationData implements JSONString {
      *         JSON representation.
      */
     public abstract JSONObject getAuthData() throws MslEncodingException;
-    
-    /** Entity authentication scheme. */
-    private final EntityAuthenticationScheme scheme;
     
     /* (non-Javadoc)
      * @see org.json.JSONString#toJSONString()
@@ -139,22 +136,4 @@ public abstract class EntityAuthenticationData implements JSONString {
         }
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
-    @Override
-    public boolean equals(final Object obj) {
-        if (obj == this) return true;
-        if (!(obj instanceof EntityAuthenticationData)) return false;
-        final EntityAuthenticationData that = (EntityAuthenticationData)obj;
-        return this.scheme.equals(that.scheme);
-    }
-
-    /* (non-Javadoc)
-     * @see java.lang.Object#hashCode()
-     */
-    @Override
-    public int hashCode() {
-        return scheme.hashCode();
-    }
 }

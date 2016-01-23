@@ -21,6 +21,8 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -68,10 +70,15 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
      * <li>{@code keyid} identifies the key that should be used to wrap the session keys</li>
      * </ul></p>
      */
+    @EqualsAndHashCode(callSuper = true)
+    @Getter
     public static class RequestData extends KeyRequestData {
         /** JSON key symmetric key ID. */
         private static final String KEY_KEY_ID = "keyid";
-        
+
+        /** Symmetric key ID. */
+        private final KeyId keyId;
+
         /**
          * Create a new symmetric key wrapped key request data instance with
          * the specified key ID.
@@ -104,13 +111,6 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
                 throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + keyDataJO.toString(), e);
             }
         }
-        
-        /**
-         * @return the wrapping key ID.
-         */
-        public KeyId getKeyId() {
-            return keyId;
-        }
 
         /* (non-Javadoc)
          * @see com.netflix.msl.keyx.KeyRequestData#getRequestData()
@@ -121,28 +121,6 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
             jsonObj.put(KEY_KEY_ID, keyId.name());
             return jsonObj;
         }
-        
-        /* (non-Javadoc)
-         * @see java.lang.Object#equals(java.lang.Object)
-         */
-        @Override
-        public boolean equals(final Object obj) {
-            if (obj == this) return true;
-            if (!(obj instanceof RequestData)) return false;
-            final RequestData that = (RequestData)obj;
-            return super.equals(obj) && keyId.equals(that.keyId);
-        }
-
-        /* (non-Javadoc)
-         * @see java.lang.Object#hashCode()
-         */
-        @Override
-        public int hashCode() {
-            return super.hashCode() ^ keyId.hashCode();
-        }
-
-        /** Symmetric key ID. */
-        private final KeyId keyId;
     }
     
     /**
@@ -161,6 +139,8 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
      * <li>{@code hmackey} the Base64-encoded wrapped session HMAC key</li>
      * </ul></p>
      */
+    @EqualsAndHashCode(callSuper = true)
+    @Getter
     public static class ResponseData extends KeyResponseData {
         /** JSON key symmetric key ID. */
         private static final String KEY_KEY_ID = "keyid";
@@ -168,7 +148,16 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
         private static final String KEY_ENCRYPTION_KEY = "encryptionkey";
         /** JSON key wrapped HMAC key. */
         private static final String KEY_HMAC_KEY = "hmackey";
-        
+
+        /** Symmetric key ID. */
+        private final KeyId keyId;
+
+        /** Wrapped encryption key. */
+        private final byte[] encryptionKey;
+
+        /** Wrapped HMAC key. */
+        private final byte[] hmacKey;
+
         /**
          * Create a new symmetric key wrapped key response data instance with
          * the provided master token, specified key ID and wrapped encryption
@@ -219,28 +208,7 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
                 throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + keyDataJO.toString(), e);
             }
         }
-        
-        /**
-         * @return the wrapping key ID.
-         */
-        public KeyId getKeyId() {
-            return keyId;
-        }
-        
-        /**
-         * @return the wrapped encryption key.
-         */
-        public byte[] getEncryptionKey() {
-            return encryptionKey;
-        }
-        
-        /**
-         * @return the wrapped HMAC key.
-         */
-        public byte[] getHmacKey() {
-            return hmacKey;
-        }
-        
+
         /* (non-Javadoc)
          * @see com.netflix.msl.keyx.KeyResponseData#getKeydata()
          */
@@ -252,38 +220,7 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
             jsonObj.put(KEY_HMAC_KEY, DatatypeConverter.printBase64Binary(hmacKey));
             return jsonObj;
         }
-        
-        /* (non-Javadoc)
-         * @see java.lang.Object#equals(java.lang.Object)
-         */
-        @Override
-        public boolean equals(final Object obj) {
-            if (obj == this) return true;
-            if (!(obj instanceof ResponseData)) return false;
-            final ResponseData that = (ResponseData)obj;
-            return super.equals(obj) &&
-                keyId.equals(that.keyId) &&
-                Arrays.equals(encryptionKey, that.encryptionKey) &&
-                Arrays.equals(hmacKey, that.hmacKey);
-        }
 
-        /* (non-Javadoc)
-         * @see java.lang.Object#hashCode()
-         */
-        @Override
-        public int hashCode() {
-            return super.hashCode() ^
-                keyId.hashCode() ^
-                Arrays.hashCode(encryptionKey) ^
-                Arrays.hashCode(hmacKey);
-        }
-
-        /** Symmetric key ID. */
-        private final KeyId keyId;
-        /** Wrapped encryption key. */
-        private final byte[] encryptionKey;
-        /** Wrapped HMAC key. */
-        private final byte[] hmacKey;
     }
 
     /**

@@ -22,6 +22,8 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -98,12 +100,20 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
      * <li>{@code wrapdata} the Base64-encoded wrapping data for the previous wrapping key</li>
      * </ul></p>
      */
+    @EqualsAndHashCode(callSuper = true)
+    @Getter
     public static class RequestData extends KeyRequestData {
         /** JSON key wrap key wrapping mechanism. */
         private static final String KEY_MECHANISM = "mechanism";
         /** JSON key wrap data. */
         private static final String KEY_WRAPDATA = "wrapdata";
-        
+
+        /** Wrap key wrapping mechanism. */
+        private final Mechanism mechanism;
+
+        /** Wrap data. */
+        private final byte[] wrapdata;
+
         /**
          * <p>Create a new JSON Web Encryption ladder key request data instance
          * with the specified mechanism and wrapping key data.</p>
@@ -185,20 +195,6 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
             }
         }
 
-        /**
-         * @return the wrap key wrapping mechanism.
-         */
-        public Mechanism getMechanism() {
-            return mechanism;
-        }
-        
-        /**
-         * @return the previous wrapping key data or null if not applicable.
-         */
-        public byte[] getWrapdata() {
-            return wrapdata;
-        }
-        
         /* (non-Javadoc)
          * @see com.netflix.msl.keyx.KeyRequestData#getKeydata()
          */
@@ -209,36 +205,7 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
             if (wrapdata != null) jsonObj.put(KEY_WRAPDATA, DatatypeConverter.printBase64Binary(wrapdata));
             return jsonObj;
         }
-        
-        /* (non-Javadoc)
-         * @see com.netflix.msl.keyx.KeyRequestData#equals(java.lang.Object)
-         */
-        @Override
-        public boolean equals(final Object obj) {
-            if (obj == this) return true;
-            if (!(obj instanceof RequestData)) return false;
-            final RequestData that = (RequestData)obj;
-            final boolean wrapdataEqual = Arrays.equals(wrapdata, that.wrapdata);
-            return super.equals(obj) &&
-                mechanism.equals(that.mechanism) &&
-                wrapdataEqual;
-        }
-        
-        /* (non-Javadoc)
-         * @see com.netflix.msl.keyx.KeyRequestData#hashCode()
-         */
-        @Override
-        public int hashCode() {
-            final int wrapdataHashCode = (wrapdata != null) ? Arrays.hashCode(wrapdata) : 0;
-            return super.hashCode() ^
-                mechanism.hashCode() ^
-                wrapdataHashCode;
-        }
-        
-        /** Wrap key wrapping mechanism. */
-        private final Mechanism mechanism;
-        /** Wrap data. */
-        private final byte[] wrapdata;
+
     }
     
     /**
@@ -259,16 +226,33 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
      * <li>{@code hmackey} the Base64-encoded session HMAC key in JWE format, wrapped with the new wrapping key</li>
      * </ul></p>
      */
+    @EqualsAndHashCode(callSuper = true)
+    @Getter
     public static class ResponseData extends KeyResponseData {
         /** JSON key wrapping key. */
         private static final String KEY_WRAP_KEY = "wrapkey";
+
         /** JSON key wrapping key data. */
         private static final String KEY_WRAPDATA = "wrapdata";
+
         /** JSON key encrypted encryption key. */
         private static final String KEY_ENCRYPTION_KEY = "encryptionkey";
+
         /** JSON key encrypted HMAC key. */
         private static final String KEY_HMAC_KEY = "hmackey";
-        
+
+        /** Wrapped wrap key. */
+        private final byte[] wrapKey;
+
+        /** Wrap data. */
+        private final byte[] wrapdata;
+
+        /** Wrapped encryption key. */
+        private final byte[] encryptionKey;
+
+        /** Wrapped Session HMAC key. */
+        private final byte[] hmacKey;
+
         /**
          * Create a new JSON Web Encryption ladder key response data instance
          * with the provided master token and wrapped keys.
@@ -324,34 +308,6 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
                 throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + keyDataJO.toString(), e);
             }
         }
-        
-        /**
-         * @return the session key wrapping key.
-         */
-        public byte[] getWrapKey() {
-            return wrapKey;
-        }
-        
-        /**
-         * @return the session key wrapping key data.
-         */
-        public byte[] getWrapdata() {
-            return wrapdata;
-        }
-
-        /**
-         * @return the wrapped session encryption key.
-         */
-        public byte[] getEncryptionKey() {
-            return encryptionKey;
-        }
-
-        /**
-         * @return the wrapped session HMAC key.
-         */
-        public byte[] getHmacKey() {
-            return hmacKey;
-        }
 
         /* (non-Javadoc)
          * @see com.netflix.msl.keyx.KeyResponseData#getKeydata()
@@ -365,42 +321,7 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
             jsonObj.put(KEY_HMAC_KEY, DatatypeConverter.printBase64Binary(hmacKey));
             return jsonObj;
         }
-        
-        /* (non-Javadoc)
-         * @see com.netflix.msl.keyx.KeyResponseData#equals(java.lang.Object)
-         */
-        @Override
-        public boolean equals(final Object obj) {
-            if (obj == this) return true;
-            if (!(obj instanceof ResponseData)) return false;
-            final ResponseData that = (ResponseData)obj;
-            return super.equals(obj) &&
-                Arrays.equals(wrapKey, that.wrapKey) &&
-                Arrays.equals(wrapdata, that.wrapdata) &&
-                Arrays.equals(encryptionKey, that.encryptionKey) &&
-                Arrays.equals(hmacKey, that.hmacKey);
-        }
-        
-        /* (non-Javadoc)
-         * @see com.netflix.msl.keyx.KeyResponseData#hashCode()
-         */
-        @Override
-        public int hashCode() {
-            return super.hashCode() ^
-                Arrays.hashCode(wrapKey) ^
-                Arrays.hashCode(wrapdata) ^
-                Arrays.hashCode(encryptionKey) ^
-                Arrays.hashCode(hmacKey);
-        }
-        
-        /** Wrapped wrap key. */
-        private final byte[] wrapKey;
-        /** Wrap data. */
-        private final byte[] wrapdata;
-        /** Wrapped encryption key. */
-        private final byte[] encryptionKey;
-        /** Wrapped HMAC key. */
-        private final byte[] hmacKey;
+
     }
     
     /**

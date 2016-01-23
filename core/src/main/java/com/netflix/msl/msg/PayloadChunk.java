@@ -15,10 +15,10 @@
  */
 package com.netflix.msl.msg;
 
-import java.util.Arrays;
-
 import javax.xml.bind.DatatypeConverter;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONString;
@@ -77,24 +77,56 @@ import com.netflix.msl.util.MslUtils;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+@EqualsAndHashCode(exclude={"payload", "signature"})
 public class PayloadChunk implements JSONString {
     /** JSON key payload. */
     private static final String KEY_PAYLOAD = "payload";
+
     /** JSON key signature. */
     private static final String KEY_SIGNATURE = "signature";
     
     // payload
     /** JSON key sequence number. */
     private static final String KEY_SEQUENCE_NUMBER = "sequencenumber";
+
     /** JSON key message ID. */
     private static final String KEY_MESSAGE_ID = "messageid";
+
     /** JSON key end of message. */
     private static final String KEY_END_OF_MESSAGE = "endofmsg";
+
     /** JSON key compression algorithm. */
     private static final String KEY_COMPRESSION_ALGORITHM = "compressionalgo";
+
     /** JSON key encrypted data. */
     private static final String KEY_DATA = "data";
-    
+
+    /** Payload (ciphertext). */
+    private final byte[] payload;
+
+    /** Payload data signature. */
+    private final byte[] signature;
+
+    /** Sequence number. */
+    @Getter
+    private final long sequenceNumber;
+
+    /** Message ID. */
+    @Getter
+    private final long messageId;
+
+    /** End of message flag, i.e. last payload chunk of the message */
+    @Getter
+    private final boolean endOfMessage;
+
+    /** Compression algorithm. May be {@code null} if not not compressed.*/
+    @Getter
+    private final CompressionAlgorithm compressionAlgorithm;
+
+    /** The application data, if we were able to decrypt it. May be empty (zero-length). */
+    @Getter
+    private final byte[] data;
+
     /**
      * Construct a new payload chunk with the given message ID, data and
      * provided crypto context. If requested, the data will be compressed
@@ -102,8 +134,8 @@ public class PayloadChunk implements JSONString {
      * 
      * @param sequenceNumber sequence number.
      * @param messageId the message ID.
-     * @param endofmsg true if this is the last payload chunk of the message.
-     * @param compressionAlgo the compression algorithm. May be {@code null}
+     * @param endOfMessage true if this is the last payload chunk of the message.
+     * @param compressionAlgorithm the compression algorithm. May be {@code null}
      *        for no compression.
      * @param data the payload chunk application data.
      * @param cryptoContext the crypto context.
@@ -113,7 +145,7 @@ public class PayloadChunk implements JSONString {
      *         the payload chunk.
      * @throws MslException if there is an error compressing the data.
      */
-    public PayloadChunk(final long sequenceNumber, final long messageId, final boolean endofmsg, final CompressionAlgorithm compressionAlgo, final byte[] data, final ICryptoContext cryptoContext) throws MslEncodingException, MslCryptoException, MslException {
+    public PayloadChunk(final long sequenceNumber, final long messageId, final boolean endOfMessage, final CompressionAlgorithm compressionAlgorithm, final byte[] data, final ICryptoContext cryptoContext) throws MslEncodingException, MslCryptoException, MslException {
         // Verify sequence number and message ID.
         if (sequenceNumber < 0 || sequenceNumber > MslConstants.MAX_LONG_VALUE)
             throw new MslInternalException("Sequence number " + sequenceNumber + " is outside the valid range.");
@@ -122,26 +154,26 @@ public class PayloadChunk implements JSONString {
         
         // Optionally compress the application data.
         final byte[] payloadData;
-        if (compressionAlgo != null) {
-            final byte[] compressed = MslUtils.compress(compressionAlgo, data);
+        if (compressionAlgorithm != null) {
+            final byte[] compressed = MslUtils.compress(compressionAlgorithm, data);
             
             // Only use compression if the compressed data is smaller than the
             // uncompressed data.
             if (compressed.length < data.length) {
-                this.compressionAlgo = compressionAlgo;
+                this.compressionAlgorithm = compressionAlgorithm;
                 payloadData = compressed;
             } else {
-                this.compressionAlgo = null;
+                this.compressionAlgorithm = null;
                 payloadData = data;
             }
         } else {
-            this.compressionAlgo = null;
+            this.compressionAlgorithm = null;
             payloadData = data;
         }
         
         this.sequenceNumber = sequenceNumber;
         this.messageId = messageId;
-        this.endofmsg = endofmsg;
+        this.endOfMessage = endOfMessage;
         this.data = data;
         
         // Construct the payload.
@@ -149,8 +181,8 @@ public class PayloadChunk implements JSONString {
             final JSONObject payloadJO = new JSONObject();
             payloadJO.put(KEY_SEQUENCE_NUMBER, this.sequenceNumber);
             payloadJO.put(KEY_MESSAGE_ID, this.messageId);
-            if (this.endofmsg) payloadJO.put(KEY_END_OF_MESSAGE, this.endofmsg);
-            if (this.compressionAlgo != null) payloadJO.put(KEY_COMPRESSION_ALGORITHM, this.compressionAlgo.name());
+            if (this.endOfMessage) payloadJO.put(KEY_END_OF_MESSAGE, this.endOfMessage);
+            if (this.compressionAlgorithm != null) payloadJO.put(KEY_COMPRESSION_ALGORITHM, this.compressionAlgorithm.name());
             payloadJO.put(KEY_DATA, DatatypeConverter.printBase64Binary(payloadData));
             final byte[] plaintext = payloadJO.toString().getBytes(MslConstants.DEFAULT_CHARSET);
             this.payload = cryptoContext.encrypt(plaintext);
@@ -207,16 +239,16 @@ public class PayloadChunk implements JSONString {
             messageId = payloadJO.getLong(KEY_MESSAGE_ID);
             if (messageId < 0 || messageId > MslConstants.MAX_LONG_VALUE)
                 throw new MslException(MslError.PAYLOAD_MESSAGE_ID_OUT_OF_RANGE, "payload chunk payload " + payloadJson);
-            endofmsg = (payloadJO.has(KEY_END_OF_MESSAGE)) ? payloadJO.getBoolean(KEY_END_OF_MESSAGE) : false;
+            endOfMessage = (payloadJO.has(KEY_END_OF_MESSAGE)) ? payloadJO.getBoolean(KEY_END_OF_MESSAGE) : false;
             if (payloadJO.has(KEY_COMPRESSION_ALGORITHM)) {
                 final String algoName = payloadJO.getString(KEY_COMPRESSION_ALGORITHM);
                 try {
-                    compressionAlgo = CompressionAlgorithm.valueOf(algoName);
+                    compressionAlgorithm = CompressionAlgorithm.valueOf(algoName);
                 } catch (final IllegalArgumentException e) {
                     throw new MslMessageException(MslError.UNIDENTIFIED_COMPRESSION, algoName, e);
                 }
             } else {
-                compressionAlgo = null;
+                compressionAlgorithm = null;
             }
             final String payloadData = payloadJO.getString(KEY_DATA);
             byte[] compressedData;
@@ -229,58 +261,20 @@ public class PayloadChunk implements JSONString {
             if (compressedData == null || compressedData.length == 0) {
                 if (payloadData.length() > 0)
                     throw new MslMessageException(MslError.PAYLOAD_DATA_CORRUPT, payloadData);
-                else if (!endofmsg)
+                else if (!endOfMessage)
                     throw new MslMessageException(MslError.PAYLOAD_DATA_MISSING, payloadData);
                 else
                     data = new byte[0];
             } else {
-                if (compressionAlgo == null) {
+                if (compressionAlgorithm == null) {
                     data = compressedData;
                 } else {
-                    data = MslUtils.uncompress(compressionAlgo, compressedData);
+                    data = MslUtils.uncompress(compressionAlgorithm, compressedData);
                 }
             }
         } catch (final JSONException e) {
             throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "payload chunk payload " + payloadJson, e);
         }
-    }
-    
-    /**
-     * @return the sequence number.
-     */
-    public long getSequenceNumber() {
-        return sequenceNumber;
-    }
-    
-    /**
-     * @return the message ID.
-     */
-    public long getMessageId() {
-        return messageId;
-    }
-    
-    /**
-     * @return true if this is the last payload chunk of the message.
-     */
-    public boolean isEndOfMessage() {
-        return endofmsg;
-    }
-    
-    /**
-     * @return the compression algorithm. May be {@code null} if not
-     *         not compressed.
-     */
-    public CompressionAlgorithm getCompressionAlgo() {
-        return compressionAlgo;
-    }
-    
-    /**
-     * Returns the application data if we were able to decrypt it.
-     * 
-     * @return the chunk application data. May be empty (zero-length).
-     */
-    public byte[] getData() {
-        return data;
     }
 
     /* (non-Javadoc)
@@ -297,47 +291,5 @@ public class PayloadChunk implements JSONString {
             throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);
         }
     }
-    
-    /* (non-Javadoc)
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
-    @Override
-    public boolean equals(final Object obj) {
-        if (obj == this) return true;
-        if (!(obj instanceof PayloadChunk)) return false;
-        final PayloadChunk that = (PayloadChunk)obj;
-        return sequenceNumber == that.sequenceNumber &&
-            messageId == that.messageId &&
-            endofmsg == that.endofmsg &&
-            compressionAlgo == that.compressionAlgo &&
-            Arrays.equals(data, that.data);
-    }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#hashCode()
-     */
-    @Override
-    public int hashCode() {
-        return Long.valueOf(sequenceNumber).hashCode() ^
-            Long.valueOf(messageId).hashCode() ^
-            Boolean.valueOf(endofmsg).hashCode() ^
-            ((compressionAlgo != null) ? compressionAlgo.hashCode() : 0) ^
-            Arrays.hashCode(data);
-    }
-
-    /** Payload (ciphertext). */
-    private final byte[] payload;
-    /** Payload data signature. */
-    private final byte[] signature;
-    
-    /** Sequence number. */
-    private final long sequenceNumber;
-    /** Message ID. */
-    private final long messageId;
-    /** End of message flag. */
-    private final boolean endofmsg;
-    /** Compression algorithm. */
-    private final CompressionAlgorithm compressionAlgo;
-    /** The application data. */
-    private final byte[] data;
 }

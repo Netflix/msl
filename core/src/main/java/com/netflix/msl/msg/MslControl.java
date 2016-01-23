@@ -50,6 +50,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import org.json.JSONObject;
 
 import com.netflix.msl.MslConstants;
@@ -186,7 +188,7 @@ public class MslControl {
     /**
      * Application level errors that may translate into MSL level errors.
      */
-    public static enum ApplicationError {
+    public enum ApplicationError {
         /** The entity identity is no longer accepted by the application. */
         ENTITY_REJECTED,
         /** The user identity is no longer accepted by the application. */
@@ -219,37 +221,9 @@ public class MslControl {
     /**
      * A map key based off a MSL context and master token pair.
      */
+    @EqualsAndHashCode
+    @AllArgsConstructor
     private static class MslContextMasterTokenKey {
-        /**
-         * Create a new MSL context and master token map key.
-         * 
-         * @param ctx MSL context.
-         * @param masterToken master token.
-         */
-        public MslContextMasterTokenKey(final MslContext ctx, final MasterToken masterToken) {
-            this.ctx = ctx;
-            this.masterToken = masterToken;
-        }
-
-        /* (non-Javadoc)
-         * @see java.lang.Object#hashCode()
-         */
-        @Override
-        public int hashCode() {
-            return this.ctx.hashCode() ^ this.masterToken.hashCode();
-        }
-
-        /* (non-Javadoc)
-         * @see java.lang.Object#equals(java.lang.Object)
-         */
-        @Override
-        public boolean equals(final Object obj) {
-            if (obj == this) return true;
-            if (!(obj instanceof MslContextMasterTokenKey)) return false;
-            final MslContextMasterTokenKey that = (MslContextMasterTokenKey)obj;
-            return this.ctx.equals(that.ctx) && this.masterToken.equals(that.masterToken);
-        }
-        
         /** MSL context. */
         private final MslContext ctx;
         /** Master token. */
@@ -621,7 +595,7 @@ public class MslControl {
             
             // Rewrite the payloads one-by-one.
             for (final PayloadChunk chunk : payloads) {
-                output.setCompressionAlgorithm(chunk.getCompressionAlgo());
+                output.setCompressionAlgorithm(chunk.getCompressionAlgorithm());
                 output.write(chunk.getData());
                 if (chunk.isEndOfMessage())
                     output.close();

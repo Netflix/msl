@@ -194,7 +194,7 @@ public class PayloadChunkTest {
         final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT);
         assertEquals(END_OF_MSG, chunk.isEndOfMessage());
         assertArrayEquals(DATA, chunk.getData());
-        assertNull(chunk.getCompressionAlgo());
+        assertNull(chunk.getCompressionAlgorithm());
         assertEquals(MSG_ID, chunk.getMessageId());
         assertEquals(SEQ_NO, chunk.getSequenceNumber());
         final String jsonString = chunk.toJSONString();
@@ -259,7 +259,7 @@ public class PayloadChunkTest {
         final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
         assertEquals(END_OF_MSG, chunk.isEndOfMessage());
         assertArrayEquals(DATA, chunk.getData());
-        assertEquals(CompressionAlgorithm.GZIP, chunk.getCompressionAlgo());
+        assertEquals(CompressionAlgorithm.GZIP, chunk.getCompressionAlgorithm());
         assertEquals(MSG_ID, chunk.getMessageId());
         assertEquals(SEQ_NO, chunk.getSequenceNumber());
         final String jsonString = chunk.toJSONString();
@@ -302,7 +302,7 @@ public class PayloadChunkTest {
         final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.LZW, DATA, CRYPTO_CONTEXT);
         assertEquals(END_OF_MSG, chunk.isEndOfMessage());
         assertArrayEquals(DATA, chunk.getData());
-        assertEquals(CompressionAlgorithm.LZW, chunk.getCompressionAlgo());
+        assertEquals(CompressionAlgorithm.LZW, chunk.getCompressionAlgorithm());
         assertEquals(MSG_ID, chunk.getMessageId());
         assertEquals(SEQ_NO, chunk.getSequenceNumber());
         final String jsonString = chunk.toJSONString();
@@ -730,12 +730,12 @@ public class PayloadChunkTest {
         assertArrayEquals(data, chunk.getData());
         
         // Random data will not compress.
-        assertNull(chunk.getCompressionAlgo());
+        assertNull(chunk.getCompressionAlgorithm());
         
         final JSONObject jo = new JSONObject(chunk.toJSONString());
         final PayloadChunk joChunk = new PayloadChunk(jo, CRYPTO_CONTEXT);
         assertArrayEquals(chunk.getData(), joChunk.getData());
-        assertEquals(chunk.getCompressionAlgo(), joChunk.getCompressionAlgo());
+        assertEquals(chunk.getCompressionAlgorithm(), joChunk.getCompressionAlgorithm());
     }
     
     @Test
@@ -744,12 +744,12 @@ public class PayloadChunkTest {
         assertArrayEquals(rawdata, chunk.getData());
         
         // Romeo and Juliet will compress.
-        assertEquals(CompressionAlgorithm.GZIP, chunk.getCompressionAlgo());
+        assertEquals(CompressionAlgorithm.GZIP, chunk.getCompressionAlgorithm());
         
         final JSONObject jo = new JSONObject(chunk.toJSONString());
         final PayloadChunk joChunk = new PayloadChunk(jo, CRYPTO_CONTEXT);
         assertArrayEquals(chunk.getData(), joChunk.getData());
-        assertEquals(chunk.getCompressionAlgo(), joChunk.getCompressionAlgo());
+        assertEquals(chunk.getCompressionAlgorithm(), joChunk.getCompressionAlgorithm());
     }
     
     @Test
@@ -760,12 +760,12 @@ public class PayloadChunkTest {
         assertArrayEquals(data, chunk.getData());
         
         // Random data will not compress.
-        assertNull(chunk.getCompressionAlgo());
+        assertNull(chunk.getCompressionAlgorithm());
         
         final JSONObject jo = new JSONObject(chunk.toJSONString());
         final PayloadChunk joChunk = new PayloadChunk(jo, CRYPTO_CONTEXT);
         assertArrayEquals(chunk.getData(), joChunk.getData());
-        assertEquals(chunk.getCompressionAlgo(), joChunk.getCompressionAlgo());
+        assertEquals(chunk.getCompressionAlgorithm(), joChunk.getCompressionAlgorithm());
     }
     
     @Test
@@ -774,12 +774,12 @@ public class PayloadChunkTest {
         assertArrayEquals(rawdata, chunk.getData());
         
         // Romeo and Juliet will compress.
-        assertEquals(CompressionAlgorithm.LZW, chunk.getCompressionAlgo());
+        assertEquals(CompressionAlgorithm.LZW, chunk.getCompressionAlgorithm());
         
         final JSONObject jo = new JSONObject(chunk.toJSONString());
         final PayloadChunk joChunk = new PayloadChunk(jo, CRYPTO_CONTEXT);
         assertArrayEquals(chunk.getData(), joChunk.getData());
-        assertEquals(chunk.getCompressionAlgo(), joChunk.getCompressionAlgo());
+        assertEquals(chunk.getCompressionAlgorithm(), joChunk.getCompressionAlgorithm());
     }
     
     @Test

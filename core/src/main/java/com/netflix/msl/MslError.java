@@ -19,6 +19,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.netflix.msl.MslConstants.ResponseCode;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
 /**
  * <p>Message Security Layer error codes and descriptions.</p>
@@ -30,10 +32,21 @@ import com.netflix.msl.MslConstants.ResponseCode;
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+@EqualsAndHashCode
+@Getter
 public class MslError {
     /** Internal error code set. */
     private static final Set<Integer> internalCodes = new HashSet<Integer>();
-    
+
+    /** Internal error code. */
+    private final int internalCode;
+
+    /** Response error code. */
+    private final ResponseCode responseCode;
+
+    /** Error message. */
+    private final String message;
+
     // 0 Message Security Layer
     public static final MslError JSON_PARSE_ERROR = new MslError(0, ResponseCode.FAIL, "Error parsing JSON.");
     public static final MslError JSON_ENCODE_ERROR = new MslError(1, ResponseCode.FAIL, "Error encoding JSON.");
@@ -272,9 +285,9 @@ public class MslError {
      *
      * @param internalCode internal error code.
      * @param responseCode response error code.
-     * @param msg developer-consumable error message.
+     * @param message developer-consumable error message.
      */
-    protected MslError(final int internalCode, final ResponseCode responseCode, final String msg) {
+    protected MslError(final int internalCode, final ResponseCode responseCode, final String message) {
         // Check for duplicates.
         synchronized (internalCodes) {
             if (internalCodes.contains(internalCode))
@@ -284,56 +297,7 @@ public class MslError {
         
         this.internalCode = MslError.BASE + internalCode;
         this.responseCode = responseCode;
-        this.msg = msg;
+        this.message = message;
     }
 
-    /**
-     * @return the internal error code.
-     */
-    public int getInternalCode() {
-        return internalCode;
-    }
-
-    /**
-     * @return the response error code.
-     */
-    public ResponseCode getResponseCode() {
-        return responseCode;
-    }
-
-    /**
-     * @return the error message.
-     */
-    public String getMessage() {
-        return msg;
-    }
-    
-    /**
-     * @param o the reference object with which to compare.
-     * @return true if the internal code and response code are equal.
-     * @see #hashCode()
-     */
-    @Override
-    public boolean equals(final Object o) {
-        if (o == this) return true;
-        if (!(o instanceof MslError)) return false;
-        final MslError that = (MslError)o;
-        return this.internalCode == that.internalCode &&
-            this.responseCode == that.responseCode;
-    }
-    
-    /* (non-Javadoc)
-     * @see java.lang.Object#hashCode()
-     */
-    @Override
-    public int hashCode() {
-        return Integer.valueOf(internalCode).hashCode() ^ responseCode.hashCode();
-    }
-
-    /** Internal error code. */
-    private final int internalCode;
-    /** Response error code. */
-    private final ResponseCode responseCode;
-    /** Error message. */
-    private final String msg;
 }

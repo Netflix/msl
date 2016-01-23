@@ -15,6 +15,8 @@
  */
 package com.netflix.msl.keyx;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONString;
@@ -52,24 +54,34 @@ import com.netflix.msl.util.MslContext;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+@EqualsAndHashCode
+@Getter
 public abstract class KeyResponseData implements JSONString {
     /** JSON key master token. */
     private static final String KEY_MASTER_TOKEN = "mastertoken";
+
     /** JSON key key exchange scheme. */
     private static final String KEY_SCHEME = "scheme";
+
     /** JSON key key data. */
     private static final String KEY_KEYDATA = "keydata";
-    
+
+    /** Master token. */
+    private final MasterToken masterToken;
+
+    /** Key exchange scheme. */
+    private final KeyExchangeScheme keyExchangeScheme;
+
     /**
      * Create a new key response data object with the specified key exchange
      * scheme and associated master token.
      * 
      * @param masterToken the master token.
-     * @param scheme the key exchange scheme.
+     * @param keyExchangeScheme the key exchange scheme.
      */
-    protected KeyResponseData(final MasterToken masterToken, final KeyExchangeScheme scheme) {
+    protected KeyResponseData(final MasterToken masterToken, final KeyExchangeScheme keyExchangeScheme) {
         this.masterToken = masterToken;
-        this.scheme = scheme;
+        this.keyExchangeScheme = keyExchangeScheme;
     }
     
     /**
@@ -106,33 +118,14 @@ public abstract class KeyResponseData implements JSONString {
             throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keyresponsedata " + keyResponseDataJO.toString(), e);
         }
     }
-    
-    /**
-     * @return the master token.
-     */
-    public MasterToken getMasterToken() {
-        return masterToken;
-    }
-    
-    /**
-     * @return the key exchange scheme.
-     */
-    public KeyExchangeScheme getKeyExchangeScheme() {
-        return scheme;
-    }
-    
+
     /**
      * @return the key data JSON representation.
      * @throws JSONException if there was an error constructing the JSON
      *         representation.
      */
     protected abstract JSONObject getKeydata() throws JSONException;
-    
-    /** Master token. */
-    private final MasterToken masterToken;
-    /** Key exchange scheme. */
-    private final KeyExchangeScheme scheme;
-    
+
     /* (non-Javadoc)
      * @see org.json.JSONString#toJSONString()
      */
@@ -142,7 +135,7 @@ public abstract class KeyResponseData implements JSONString {
             return new JSONStringer()
                 .object()
                     .key(KEY_MASTER_TOKEN).value(masterToken)
-                    .key(KEY_SCHEME).value(scheme.name())
+                    .key(KEY_SCHEME).value(keyExchangeScheme.name())
                     .key(KEY_KEYDATA).value(getKeydata())
                 .endObject()
                 .toString();
@@ -159,22 +152,4 @@ public abstract class KeyResponseData implements JSONString {
         return toJSONString();
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
-    @Override
-    public boolean equals(final Object obj) {
-        if (obj == this) return true;
-        if (!(obj instanceof KeyResponseData)) return false;
-        final KeyResponseData that = (KeyResponseData)obj;
-        return masterToken.equals(that.masterToken) && scheme.equals(that.scheme);
-    }
-
-    /* (non-Javadoc)
-     * @see java.lang.Object#hashCode()
-     */
-    @Override
-    public int hashCode() {
-        return masterToken.hashCode() ^ scheme.hashCode();
-    }
 }

@@ -15,6 +15,8 @@
  */
 package com.netflix.msl.userauth;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -43,12 +45,20 @@ import com.netflix.msl.util.MslContext;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+@EqualsAndHashCode(callSuper = true)
+@Getter
 public class UserIdTokenAuthenticationData extends UserAuthenticationData {
     /** JSON master token key. */
     private static final String KEY_MASTER_TOKEN = "mastertoken";
     /** JSON user ID token key. */
     private static final String KEY_USER_ID_TOKEN = "useridtoken";
-    
+
+    /** Master token. */
+    private final MasterToken masterToken;
+
+    /** User ID token. */
+    private final UserIdToken userIdToken;
+
     /**
      * Construct a new user ID token authentication data instance from the
      * provided master token and user ID token.
@@ -94,20 +104,6 @@ public class UserIdTokenAuthenticationData extends UserAuthenticationData {
             throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "user ID token authdata " + userIdTokenAuthJO.toString(), e);
         }
     }
-    
-    /**
-     * @return the master token.
-     */
-    public MasterToken getMasterToken() {
-        return masterToken;
-    }
-    
-    /**
-     * @return the user ID token.
-     */
-    public UserIdToken getUserIdToken() {
-        return userIdToken;
-    }
 
     /* (non-Javadoc)
      * @see com.netflix.msl.userauth.UserAuthenticationData#getAuthData()
@@ -124,27 +120,4 @@ public class UserIdTokenAuthenticationData extends UserAuthenticationData {
         }
     }
 
-    /* (non-Javadoc)
-     * @see com.netflix.msl.userauth.UserAuthenticationData#equals(java.lang.Object)
-     */
-    @Override
-    public boolean equals(final Object obj) {
-        if (obj == this) return true;
-        if (!(obj instanceof UserIdTokenAuthenticationData)) return false;
-        final UserIdTokenAuthenticationData that = (UserIdTokenAuthenticationData)obj;
-        return super.equals(obj) && masterToken.equals(that.masterToken) && userIdToken.equals(that.userIdToken);
-    }
-
-    /* (non-Javadoc)
-     * @see com.netflix.msl.userauth.UserAuthenticationData#hashCode()
-     */
-    @Override
-    public int hashCode() {
-        return super.hashCode() ^ masterToken.hashCode() ^ userIdToken.hashCode();
-    }
-
-    /** Master token. */
-    private final MasterToken masterToken;
-    /** User ID token. */
-    private final UserIdToken userIdToken;
 }

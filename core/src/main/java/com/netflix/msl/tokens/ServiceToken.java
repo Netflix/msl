@@ -19,6 +19,8 @@ import java.util.Map;
 
 import javax.xml.bind.DatatypeConverter;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONString;
@@ -87,13 +89,13 @@ import com.netflix.msl.util.MslUtils;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+@EqualsAndHashCode(of = {"name", "masterTokenSerialNumber", "userIdTokenSerialNumber"})
 public class ServiceToken implements JSONString {
     /** JSON key token data. */
     private static final String KEY_TOKENDATA = "tokendata";
     /** JSON key signature. */
     private static final String KEY_SIGNATURE = "signature";
-    
-    // tokendata
+
     /** JSON key token name. */
     private static final String KEY_NAME = "name";
     /** JSON key master token serial number. */
@@ -106,7 +108,50 @@ public class ServiceToken implements JSONString {
     private static final String KEY_COMPRESSION_ALGORITHM = "compressionalgo";
     /** JSON key service data. */
     private static final String KEY_SERVICEDATA = "servicedata";
-    
+
+    /** Token data. */
+    private final byte[] tokendata;
+
+    /** Token data signature. */
+    private final byte[] signature;
+
+    /** The application token name. */
+    @Getter
+    private final String name;
+
+    /**
+     * Serial number of the master token this service token is bound to or -1 if unbound.
+     */
+    @Getter
+    private final long masterTokenSerialNumber;
+
+    /**
+     * Serial number of the user ID token this service token is bound to or -1 if unbound.
+     */
+    @Getter
+    private final long userIdTokenSerialNumber;
+
+    /** Service token data is encrypted. */
+    @Getter
+    private final boolean encrypted;
+
+    /** Compression algorithm.  May be {@code null} if not compressed.*/
+    @Getter
+    private final CompressionAlgorithm compressionAlgo;
+
+    /**
+     * The service token data, if the token data was not encrypted or we were
+     * unable to decrypt it. Zero-length data indicates this token should be deleted.
+     * Null if we don't have it.
+     * @see #isDeleted()
+     */
+    @Getter
+    private final byte[] data;
+
+    /** Token has been verified. */
+    @Getter
+    private final boolean verified;
+
     /**
      * <p>Select the appropriate crypto context for the service token
      * represented by the provided JSON object.</p>
@@ -194,9 +239,9 @@ public class ServiceToken implements JSONString {
         }
         
         this.name = name;
-        this.mtSerialNumber = (masterToken != null) ? masterToken.getSerialNumber() : -1;
-        this.uitSerialNumber = (userIdToken != null) ? userIdToken.getSerialNumber() : -1;
-        this.servicedata = data;
+        this.masterTokenSerialNumber = (masterToken != null) ? masterToken.getSerialNumber() : -1;
+        this.userIdTokenSerialNumber = (userIdToken != null) ? userIdToken.getSerialNumber() : -1;
+        this.data = data;
         this.encrypted = encrypted;
         
         try {
@@ -208,8 +253,8 @@ public class ServiceToken implements JSONString {
             try {
                 final JSONObject tokenDataJO = new JSONObject();
                 tokenDataJO.put(KEY_NAME, this.name);
-                if (this.mtSerialNumber != -1) tokenDataJO.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, this.mtSerialNumber);
-                if (this.uitSerialNumber != -1) tokenDataJO.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, this.uitSerialNumber);
+                if (this.masterTokenSerialNumber != -1) tokenDataJO.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, this.masterTokenSerialNumber);
+                if (this.userIdTokenSerialNumber != -1) tokenDataJO.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, this.userIdTokenSerialNumber);
                 tokenDataJO.put(KEY_ENCRYPTED, this.encrypted);
                 if (this.compressionAlgo != null) tokenDataJO.put(KEY_COMPRESSION_ALGORITHM, this.compressionAlgo.name());
                 tokenDataJO.put(KEY_SERVICEDATA, DatatypeConverter.printBase64Binary(ciphertext));
@@ -322,18 +367,18 @@ public class ServiceToken implements JSONString {
             final JSONObject tokenDataJO = new JSONObject(tokenDataJson);
             name = tokenDataJO.getString(KEY_NAME);
             if (tokenDataJO.has(KEY_MASTER_TOKEN_SERIAL_NUMBER)) {
-                mtSerialNumber = tokenDataJO.getLong(KEY_MASTER_TOKEN_SERIAL_NUMBER);
-                if (mtSerialNumber < 0 || mtSerialNumber > MslConstants.MAX_LONG_VALUE)
+                masterTokenSerialNumber = tokenDataJO.getLong(KEY_MASTER_TOKEN_SERIAL_NUMBER);
+                if (masterTokenSerialNumber < 0 || masterTokenSerialNumber > MslConstants.MAX_LONG_VALUE)
                     throw new MslException(MslError.SERVICETOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "servicetokendata " + tokenDataJson).setEntity(masterToken).setUser(userIdToken);
             } else {
-                mtSerialNumber = -1;
+                masterTokenSerialNumber = -1;
             }
             if (tokenDataJO.has(KEY_USER_ID_TOKEN_SERIAL_NUMBER)) {
-                uitSerialNumber = tokenDataJO.getLong(KEY_USER_ID_TOKEN_SERIAL_NUMBER);
-                if (uitSerialNumber < 0 || uitSerialNumber > MslConstants.MAX_LONG_VALUE)
+                userIdTokenSerialNumber = tokenDataJO.getLong(KEY_USER_ID_TOKEN_SERIAL_NUMBER);
+                if (userIdTokenSerialNumber < 0 || userIdTokenSerialNumber > MslConstants.MAX_LONG_VALUE)
                     throw new MslException(MslError.SERVICETOKEN_USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "servicetokendata " + tokenDataJson).setEntity(masterToken).setUser(userIdToken);
             } else {
-                uitSerialNumber = -1;
+                userIdTokenSerialNumber = -1;
             }
             // There has to be a master token serial number if there is a
             // user ID token serial number.
@@ -366,11 +411,11 @@ public class ServiceToken implements JSONString {
                 final byte[] compressedData = (encrypted && ciphertext.length > 0)
                     ? cryptoContext.decrypt(ciphertext)
                     : ciphertext;
-                servicedata = (compressionAlgo != null)
+                this.data = (compressionAlgo != null)
                     ? MslUtils.uncompress(compressionAlgo, compressedData)
                     : compressedData;
             } else {
-                servicedata = (data.isEmpty()) ? new byte[0] : null;
+                this.data = (data.isEmpty()) ? new byte[0] : null;
             }
         } catch (final JSONException e) {
             throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "servicetokendata " + tokenDataJson, e).setEntity(masterToken).setUser(userIdToken);
@@ -381,38 +426,17 @@ public class ServiceToken implements JSONString {
         }
         
         // Verify serial numbers.
-        if (mtSerialNumber != -1 && (masterToken == null || mtSerialNumber != masterToken.getSerialNumber()))
-            throw new MslException(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH, "st mtserialnumber " + mtSerialNumber + "; mt " + masterToken).setEntity(masterToken).setUser(userIdToken);
-        if (uitSerialNumber != -1 && (userIdToken == null || uitSerialNumber != userIdToken.getSerialNumber()))
-            throw new MslException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH, "st uitserialnumber " + uitSerialNumber + "; uit " + userIdToken).setEntity(masterToken).setUser(userIdToken);
+        if (masterTokenSerialNumber != -1 && (masterToken == null || masterTokenSerialNumber != masterToken.getSerialNumber()))
+            throw new MslException(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH, "st mtserialnumber " + masterTokenSerialNumber + "; mt " + masterToken).setEntity(masterToken).setUser(userIdToken);
+        if (userIdTokenSerialNumber != -1 && (userIdToken == null || userIdTokenSerialNumber != userIdToken.getSerialNumber()))
+            throw new MslException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH, "st uitserialnumber " + userIdTokenSerialNumber + "; uit " + userIdToken).setEntity(masterToken).setUser(userIdToken);
     }
-    
-    /**
-     * @return true if the content is encrypted.
-     */
-    public boolean isEncrypted() {
-        return encrypted;
-    }
-    
+
     /**
      * @return true if the decrypted content is available. (Implies verified.)
      */
     public boolean isDecrypted() {
-        return servicedata != null;
-    }
-    
-    /**
-     * @return true if the token has been verified.
-     */
-    public boolean isVerified() {
-        return verified;
-    }
-    
-    /**
-     * @return the application token name.
-     */
-    public String getName() {
-        return name;
+        return data != null;
     }
     
     /**
@@ -420,45 +444,14 @@ public class ServiceToken implements JSONString {
      * @see #getData()
      */
     public boolean isDeleted() {
-        return servicedata != null && servicedata.length == 0;
-    }
-    
-    /**
-     * @return the compression algorithm. May be {@code null} if not
-     *         compressed.
-     */
-    public CompressionAlgorithm getCompressionAlgo() {
-        return compressionAlgo;
-    }
-    
-    /**
-     * Returns the service data if the token data was not encrypted or we were
-     * able to decrypt it.
-     * 
-     * Zero-length data indicates this token should be deleted.
-     * 
-     * @return the service data or null if we don't have it.
-     * @see #isDeleted()
-     */
-    public byte[] getData() {
-        return servicedata;
-    }
-    
-    /**
-     * Returns the serial number of the master token this service token is
-     * bound to.
-     * 
-     * @return the master token serial number or -1 if unbound.
-     */
-    public long getMasterTokenSerialNumber() {
-        return mtSerialNumber;
+        return data != null && data.length == 0;
     }
     
     /**
      * @return true if this token is bound to a master token.
      */
     public boolean isMasterTokenBound() {
-        return mtSerialNumber != -1;
+        return masterTokenSerialNumber != -1;
     }
     
     /**
@@ -466,17 +459,7 @@ public class ServiceToken implements JSONString {
      * @return true if this token is bound to the provided master token.
      */
     public boolean isBoundTo(final MasterToken masterToken) {
-        return masterToken != null && masterToken.getSerialNumber() == mtSerialNumber;
-    }
-    
-    /**
-     * Returns the serial number of the user ID token this service token is
-     * bound to.
-     * 
-     * @return the user ID token serial number or -1 if unbound.
-     */
-    public long getUserIdTokenSerialNumber() {
-        return uitSerialNumber;
+        return masterToken != null && masterToken.getSerialNumber() == masterTokenSerialNumber;
     }
     
     /**
@@ -486,7 +469,7 @@ public class ServiceToken implements JSONString {
      * @return true if this token is bound to a user ID token.
      */
     public boolean isUserIdTokenBound() {
-        return uitSerialNumber != -1;
+        return userIdTokenSerialNumber != -1;
     }
     
     /**
@@ -494,7 +477,7 @@ public class ServiceToken implements JSONString {
      * @return true if this token is bound to the provided user ID token.
      */
     public boolean isBoundTo(final UserIdToken userIdToken) {
-        return userIdToken != null && userIdToken.getSerialNumber() == uitSerialNumber;
+        return userIdToken != null && userIdToken.getSerialNumber() == userIdTokenSerialNumber;
     }
     
     /**
@@ -502,29 +485,8 @@ public class ServiceToken implements JSONString {
      *         token.
      */
     public boolean isUnbound() {
-        return mtSerialNumber == -1 && uitSerialNumber == -1;
+        return masterTokenSerialNumber == -1 && userIdTokenSerialNumber == -1;
     }
-    
-    /** Token data. */
-    private final byte[] tokendata;
-    /** Token data signature. */
-    private final byte[] signature;
-    
-    /** The service token name. */
-    private final String name;
-    /** The service token master token serial number. */
-    private final long mtSerialNumber;
-    /** The service token user ID token serial number. */
-    private final long uitSerialNumber;
-    /** Service token data is encrypted. */
-    private final boolean encrypted;
-    /** Compression algorithm. */
-    private final CompressionAlgorithm compressionAlgo;
-    /** The service token data. */
-    private final byte[] servicedata;
-    
-    /** Token is verified. */
-    private final boolean verified;
 
     /* (non-Javadoc)
      * @see org.json.JSONString#toJSONString()
@@ -549,9 +511,9 @@ public class ServiceToken implements JSONString {
         try {
             final JSONObject tokendataJO = new JSONObject();
             tokendataJO.put(KEY_NAME, name);
-            tokendataJO.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, mtSerialNumber);
-            tokendataJO.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, uitSerialNumber);
-            tokendataJO.put(KEY_SERVICEDATA, DatatypeConverter.printBase64Binary(servicedata));
+            tokendataJO.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, masterTokenSerialNumber);
+            tokendataJO.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, userIdTokenSerialNumber);
+            tokendataJO.put(KEY_SERVICEDATA, DatatypeConverter.printBase64Binary(data));
             
             final JSONObject jsonObj = new JSONObject();
             jsonObj.put(KEY_TOKENDATA, tokendataJO);
@@ -562,29 +524,4 @@ public class ServiceToken implements JSONString {
         }
     }
 
-    /**
-     * @param obj the reference object with which to compare.
-     * @return true if the other object is a service token with the same name
-     *         and bound to the same tokens.
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) return true;
-        if (obj instanceof ServiceToken) {
-            final ServiceToken that = (ServiceToken)obj;
-            return this.name.equals(that.name) &&
-                this.mtSerialNumber == that.mtSerialNumber &&
-                this.uitSerialNumber == that.uitSerialNumber;
-        }
-        return false;
-    }
-
-    /* (non-Javadoc)
-     * @see java.lang.Object#hashCode()
-     */
-    @Override
-    public int hashCode() {
-        return (this.name + ":" + String.valueOf(mtSerialNumber) + ":" + String.valueOf(uitSerialNumber)).hashCode();
-    }
 }

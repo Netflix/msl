@@ -15,6 +15,8 @@
  */
 package com.netflix.msl.entityauth;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -48,15 +50,24 @@ import com.netflix.msl.MslError;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+@EqualsAndHashCode(callSuper = true)
+@Getter
 public class UnauthenticatedSuffixedAuthenticationData extends EntityAuthenticationData {
     /** JSON key entity root. */
     private static final String KEY_ROOT = "root";
+
     /** JSON key entity suffix. */
     private static final String KEY_SUFFIX = "suffix";
-    
+
     /** Identity concatenation character. */
     private static final String CONCAT_CHAR = ".";
-    
+
+    /** Entity identity root. */
+    private final String root;
+
+    /** Entity identity suffix. */
+    private final String suffix;
+
     /**
      * Construct a new unauthenticated suffixed entity authentication data
      * instance from the specified entity identity root and suffix.
@@ -99,20 +110,6 @@ public class UnauthenticatedSuffixedAuthenticationData extends EntityAuthenticat
         return root + CONCAT_CHAR + suffix;
     }
 
-    /**
-     * @return the entity identity root.
-     */
-    public String getRoot() {
-       return root; 
-    }
-    
-    /**
-     * @return the entity identity suffix.
-     */
-    public String getSuffix() {
-        return suffix;
-    }
-
     /* (non-Javadoc)
      * @see com.netflix.msl.entityauth.EntityAuthenticationData#getAuthData()
      */
@@ -128,27 +125,4 @@ public class UnauthenticatedSuffixedAuthenticationData extends EntityAuthenticat
         }
     }
 
-    /* (non-Javadoc)
-     * @see com.netflix.msl.entityauth.EntityAuthenticationData#equals(java.lang.Object)
-     */
-    @Override
-    public boolean equals(final Object obj) {
-        if (obj == this) return true;
-        if (!(obj instanceof UnauthenticatedSuffixedAuthenticationData)) return false;
-        final UnauthenticatedSuffixedAuthenticationData that = (UnauthenticatedSuffixedAuthenticationData)obj;
-        return super.equals(obj) && this.root.equals(that.root) && this.suffix.equals(that.suffix);
-    }
-
-    /* (non-Javadoc)
-     * @see com.netflix.msl.entityauth.EntityAuthenticationData#hashCode()
-     */
-    @Override
-    public int hashCode() {
-        return super.hashCode() ^ root.hashCode() ^ suffix.hashCode();
-    }
-
-    /** Entity identity root. */
-    private final String root;
-    /** Entity identity suffix. */
-    private final String suffix;
 }

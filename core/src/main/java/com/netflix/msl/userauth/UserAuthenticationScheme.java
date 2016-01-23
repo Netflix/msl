@@ -15,6 +15,8 @@
  */
 package com.netflix.msl.userauth;
 
+import lombok.EqualsAndHashCode;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,15 +29,21 @@ import java.util.Map;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+@EqualsAndHashCode
 public class UserAuthenticationScheme {
+
     /** Map of names onto schemes. */
-    private static Map<String,UserAuthenticationScheme> schemes = new HashMap<String,UserAuthenticationScheme>();
-    
+    private static final Map<String,UserAuthenticationScheme> schemes = new HashMap<String,UserAuthenticationScheme>();
+
     /** Email/password. */
     public static final UserAuthenticationScheme EMAIL_PASSWORD = new UserAuthenticationScheme("EMAIL_PASSWORD");
+
     /** User ID token. */
     public static final UserAuthenticationScheme USER_ID_TOKEN = new UserAuthenticationScheme("USER_ID_TOKEN");
-    
+
+    /** Scheme name. */
+    private final String name;
+
     /**
      * Define a user authentication scheme with the specified name.
      * 
@@ -81,25 +89,4 @@ public class UserAuthenticationScheme {
         return name();
     }
     
-    /* (non-Javadoc)
-     * @see java.lang.Object#hashCode()
-     */
-    @Override
-    public int hashCode() {
-        return name.hashCode();
-    }
-
-    /* (non-Javadoc)
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
-    @Override
-    public boolean equals(final Object obj) {
-        if (obj == this) return true;
-        if (!(obj instanceof UserAuthenticationScheme)) return false;
-        final UserAuthenticationScheme that = (UserAuthenticationScheme)obj;
-        return this.name.equals(that.name);
-    }
-    
-    /** Scheme name. */
-    private final String name;
 }
