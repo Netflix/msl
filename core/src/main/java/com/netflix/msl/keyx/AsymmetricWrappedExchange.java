@@ -83,7 +83,7 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
      */
     private static class JwkRsaCryptoContext extends AsymmetricCryptoContext {
         /** JWK RSA crypto context mode. */
-        public static enum Mode {
+        public enum Mode {
             /** RSA-OAEP wrap/unwrap */
             WRAP_UNWRAP_OAEP,
             /** RSA PKCS#1 wrap/unwrap */

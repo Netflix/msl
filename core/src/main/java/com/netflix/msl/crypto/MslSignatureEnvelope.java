@@ -42,7 +42,7 @@ public class MslSignatureEnvelope {
     private final static String KEY_SIGNATURE = "signature";
     
     /** Versions. */
-    public static enum Version {
+    public enum Version {
         /**
          * <p>Version 1.</p>
          * 

@@ -39,7 +39,7 @@ public abstract class MslConstants {
     public static final int MAX_MESSAGES = 12;
     
     /** Compression algorithm. */
-    public static enum CompressionAlgorithm {
+    public enum CompressionAlgorithm {
         // In order of most preferred to least preferred.
         /** GZIP */
         GZIP,
@@ -68,7 +68,7 @@ public abstract class MslConstants {
     }
     
     /** Encryption algorithms. */
-    public static enum EncryptionAlgo {
+    public enum EncryptionAlgo {
         /** AES */
         AES,
         ;
@@ -97,7 +97,7 @@ public abstract class MslConstants {
     }
     
     /** Cipher specifications. */
-    public static enum CipherSpec {
+    public enum CipherSpec {
         /** AES/CBC/PKCS5Padding */
         AES_CBC_PKCS5Padding,
         /** AESWrap */
@@ -146,7 +146,7 @@ public abstract class MslConstants {
     }
     
     /** Signature algorithms. */
-    public static enum SignatureAlgo {
+    public enum SignatureAlgo {
         /** HmacSHA256 */
         HmacSHA256,
         /** SHA256withRSA */
@@ -179,7 +179,7 @@ public abstract class MslConstants {
     }
     
     /** Error response codes. */
-    public static enum ResponseCode {
+    public enum ResponseCode {
         /** The message is erroneous and will continue to fail if retried. */
         FAIL(1),
         /** The message is expected to succeed if retried after a delay. */

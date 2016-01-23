@@ -43,7 +43,7 @@ import com.netflix.msl.userauth.UserAuthenticationData;
  */
 public interface MessageContext {
     /** Re-authentication reason codes. */
-    public static enum ReauthCode {
+    enum ReauthCode {
         /** The user authentication data did not identify a user. */
         USERDATA_REAUTH(ResponseCode.USERDATA_REAUTH),
         /** The single-sign-on token was rejected as bad, invalid, or expired. */

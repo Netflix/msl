@@ -29,7 +29,7 @@ public class Message {
     /**
      * Message type strings.
      */
-    public static enum Type {
+    public enum Type {
         /** Acknowledgement message identifier. */
         ACK("ACK", false, false),
         /** Ping message identifier. */

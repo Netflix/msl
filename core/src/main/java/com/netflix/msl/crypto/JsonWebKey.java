@@ -80,7 +80,7 @@ public class JsonWebKey implements JSONString {
     private static final String KEY_KEY = "k";
     
     /** Supported key types. */
-    public static enum Type {
+    public enum Type {
         /** RSA */
         rsa,
         /** Octet Sequence */
@@ -88,7 +88,7 @@ public class JsonWebKey implements JSONString {
     }
     
     /** Supported key usages. */
-    public static enum Usage {
+    public enum Usage {
         /** Sign/verify. */
         sig,
         /** Encrypt/decrypt. */
@@ -98,7 +98,7 @@ public class JsonWebKey implements JSONString {
     }
     
     /** Supported key operations. */
-    public static enum KeyOp {
+    public enum KeyOp {
         sign,
         verify,
         encrypt,
@@ -110,7 +110,7 @@ public class JsonWebKey implements JSONString {
     }
     
     /** Supported key algorithms. */
-    public static enum Algorithm {
+    public enum Algorithm {
         /** HMAC-SHA256 */
         HS256("HS256"),
         /** RSA PKCS#1 v1.5 */

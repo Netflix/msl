@@ -22,7 +22,7 @@ package kancolle.entityauth;
  */
 public interface NavalPortDatabase {
     /** Kanmusu status. */
-    public static enum Status {
+    enum Status {
         /** Active. */
         ACTIVE,
         /** Inactive. */

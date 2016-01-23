@@ -29,7 +29,7 @@ public interface MslUser {
      * 
      * @return the MSL user encoding.
      */
-    public String getEncoded();
+    String getEncoded();
     
     /**
      * <p>Compares this object against the provided object. This method must
@@ -42,11 +42,11 @@ public interface MslUser {
      * @see #hashCode()
      */
     @Override
-    public boolean equals(final Object obj);
+    boolean equals(final Object obj);
     
     /* (non-Javadoc)
      * @see java.lang.Object#hashCode()
      */
     @Override
-    public int hashCode();
+    int hashCode();
 }

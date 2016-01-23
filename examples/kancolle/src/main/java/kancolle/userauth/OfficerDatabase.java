@@ -22,7 +22,7 @@ package kancolle.userauth;
  */
 public interface OfficerDatabase {
     /** Officer status. */
-    public static enum Status {
+    enum Status {
         /** Active. */
         ACTIVE,
         /** Honorably discharged. */

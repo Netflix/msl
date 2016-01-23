@@ -14,7 +14,7 @@ import java.security.PublicKey;
  */
 public class EccCryptoContext extends AsymmetricCryptoContext {
     /** ECC crypto context mode. .*/
-    public static enum Mode {
+    public enum Mode {
         ENCRYPT_DECRYPT,
         SIGN_VERIFY
     };
