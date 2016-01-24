@@ -19,6 +19,8 @@ import java.util.Date;
 
 import javax.xml.bind.DatatypeConverter;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONString;
@@ -89,6 +91,7 @@ import com.netflix.msl.util.MslContext;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+@EqualsAndHashCode(of = {"serialNumber", "masterTokenSerialNumber"})
 public class UserIdToken implements JSONString {
     /** Milliseconds per second. */
     private static final long MILLISECONDS_PER_SECOND = 1000;
@@ -115,6 +118,50 @@ public class UserIdToken implements JSONString {
     private static final String KEY_ISSUER_DATA = "issuerdata";
     /** JSON key identity. */
     private static final String KEY_IDENTITY = "identity";
+
+    /** MSL context. */
+    private final MslContext ctx;
+
+    /** Token data. */
+    private final byte[] tokendata;
+    /** Encrypted token data signature. */
+
+    private final byte[] signature;
+
+    /** User ID token renewal window in seconds since the epoch. */
+    private final long renewalWindow;
+
+    /** User ID token expiration in seconds since the epoch. */
+    private final long expiration;
+
+    /**
+     * Serial number of the master token this user ID token is bound to.
+     */
+    @Getter
+    private final long masterTokenSerialNumber;
+
+    /** User ID Serial number. */
+    @Getter
+    private final long serialNumber;
+
+    /** User data. */
+    private final byte[] userdata;
+
+    /**
+     * Issuer data or null if there is none or it is unknown (user data could not be decrypted).
+     */
+    @Getter
+    private final JSONObject issuerData;
+
+    /**
+     * MSL user or null if unknown (user data could not be decrypted).
+     */
+    @Getter
+    private final MslUser user;
+
+    /** Token has been verified. */
+    @Getter
+    private final boolean verified;
 
     /**
      * Create a new user ID token with the specified user.
@@ -145,7 +192,7 @@ public class UserIdToken implements JSONString {
         this.ctx = ctx;
         this.renewalWindow = renewalWindow.getTime() / MILLISECONDS_PER_SECOND;
         this.expiration = expiration.getTime() / MILLISECONDS_PER_SECOND;
-        this.mtSerialNumber = masterToken.getSerialNumber();
+        this.masterTokenSerialNumber = masterToken.getSerialNumber();
         this.serialNumber = serialNumber;
         this.issuerData = issuerData;
         this.user = user;
@@ -171,7 +218,7 @@ public class UserIdToken implements JSONString {
                 final JSONObject tokenDataJO = new JSONObject();
                 tokenDataJO.put(KEY_RENEWAL_WINDOW, this.renewalWindow);
                 tokenDataJO.put(KEY_EXPIRATION, this.expiration);
-                tokenDataJO.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, this.mtSerialNumber);
+                tokenDataJO.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, this.masterTokenSerialNumber);
                 tokenDataJO.put(KEY_SERIAL_NUMBER, this.serialNumber);
                 tokenDataJO.put(KEY_USERDATA, DatatypeConverter.printBase64Binary(ciphertext));
                 this.tokendata = tokenDataJO.toString().getBytes(MslConstants.DEFAULT_CHARSET);
@@ -239,8 +286,8 @@ public class UserIdToken implements JSONString {
             expiration = tokenDataJO.getLong(KEY_EXPIRATION);
             if (expiration < renewalWindow)
                 throw new MslException(MslError.USERIDTOKEN_EXPIRES_BEFORE_RENEWAL, "usertokendata " + tokenDataJson).setEntity(masterToken);
-            mtSerialNumber = tokenDataJO.getLong(KEY_MASTER_TOKEN_SERIAL_NUMBER);
-            if (mtSerialNumber < 0 || mtSerialNumber > MslConstants.MAX_LONG_VALUE)
+            masterTokenSerialNumber = tokenDataJO.getLong(KEY_MASTER_TOKEN_SERIAL_NUMBER);
+            if (masterTokenSerialNumber < 0 || masterTokenSerialNumber > MslConstants.MAX_LONG_VALUE)
                 throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokenDataJson).setEntity(masterToken);
             serialNumber = tokenDataJO.getLong(KEY_SERIAL_NUMBER);
             if (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE)
@@ -283,8 +330,8 @@ public class UserIdToken implements JSONString {
         }
         
         // Verify serial numbers.
-        if (masterToken == null || this.mtSerialNumber != masterToken.getSerialNumber())
-            throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH, "uit mtserialnumber " + this.mtSerialNumber + "; mt " + masterToken).setEntity(masterToken);
+        if (masterToken == null || this.masterTokenSerialNumber != masterToken.getSerialNumber())
+            throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH, "uit mtserialnumber " + this.masterTokenSerialNumber + "; mt " + masterToken).setEntity(masterToken);
     }
     
     /**
@@ -293,14 +340,7 @@ public class UserIdToken implements JSONString {
     public boolean isDecrypted() {
         return user != null;
     }
-    
-    /**
-     * @return true if the token has been verified.
-     */
-    public boolean isVerified() {
-        return verified;
-    }
-    
+
     /**
      * @return the start of the renewal window.
      */
@@ -326,10 +366,12 @@ public class UserIdToken implements JSONString {
      * @return true if the renewal window has been entered.
      */
     public boolean isRenewable(final Date now) {
-        if (now != null)
+        if (now != null) {
             return renewalWindow * MILLISECONDS_PER_SECOND <= now.getTime();
-        if (isVerified())
+        }
+        if (isVerified()) {
             return renewalWindow * MILLISECONDS_PER_SECOND <= ctx.getTime();
+        }
         return true;
     }
     
@@ -358,81 +400,23 @@ public class UserIdToken implements JSONString {
      * @return true if expired.
      */
     public boolean isExpired(final Date now) {
-        if (now != null)
+        if (now != null) {
             return expiration * MILLISECONDS_PER_SECOND <= now.getTime();
-        if (isVerified())
+        }
+        if (isVerified()) {
             return expiration * MILLISECONDS_PER_SECOND <= ctx.getTime();
+        }
         return false;
     }
-    
-    /**
-     * @return the user ID token issuer data or null if there is none or it is
-     *         unknown (user data could not be decrypted).
-     */
-    public JSONObject getIssuerData() {
-        return issuerData;
-    }
 
-    /**
-     * @return the MSL user, or null if unknown (user data could not be
-     *         decrypted).
-     */
-    public MslUser getUser() {
-        return user;
-    }
-    
-    /**
-     * @return the user ID token serial number.
-     */
-    public long getSerialNumber() {
-        return serialNumber;
-    }
-    
-    /**
-     * Return the serial number of the master token this user ID token is bound
-     * to.
-     * 
-     * @return the master token serial number.
-     */
-    public long getMasterTokenSerialNumber() {
-        return mtSerialNumber;
-    }
-    
     /**
      * @param masterToken master token. May be null.
      * @return true if this token is bound to the provided master token.
      */
     public boolean isBoundTo(final MasterToken masterToken) {
-        return masterToken != null && masterToken.getSerialNumber() == mtSerialNumber;
+        return masterToken != null && masterToken.getSerialNumber() == masterTokenSerialNumber;
     }
     
-    /** MSL context. */
-    private final MslContext ctx;
-
-    /** Token data. */
-    private final byte[] tokendata;
-    /** Encrypted token data signature. */
-    private final byte[] signature;
-
-    /** User ID token renewal window in seconds since the epoch. */
-    private final long renewalWindow;
-    /** User ID token expiration in seconds since the epoch. */
-    private final long expiration;
-    /** Master token serial number. */
-    private final long mtSerialNumber;
-    /** Serial number. */
-    private final long serialNumber;
-    /** User data. */
-    private final byte[] userdata;
-
-    /** Issuer data. */
-    private final JSONObject issuerData;
-    /** MSL user. */
-    private final MslUser user;
-    
-    /** Token is verified. */
-    private final boolean verified;
-
     /* (non-Javadoc)
      * @see org.json.JSONString#toJSONString()
      */
@@ -467,7 +451,7 @@ public class UserIdToken implements JSONString {
             final JSONObject tokendataJO = new JSONObject();
             tokendataJO.put(KEY_RENEWAL_WINDOW, renewalWindow);
             tokendataJO.put(KEY_EXPIRATION, expiration);
-            tokendataJO.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, mtSerialNumber);
+            tokendataJO.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, masterTokenSerialNumber);
             tokendataJO.put(KEY_SERIAL_NUMBER, serialNumber);
             tokendataJO.put(KEY_USERDATA, userdataJO);
             
@@ -478,30 +462,5 @@ public class UserIdToken implements JSONString {
         } catch (final JSONException e) {
             throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);
         }
-    }
-
-    /**
-     * @param obj the reference object with which to compare.
-     * @return true if the other object is a user ID token with the same serial
-     *         number bound to the same master token.
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) return true;
-        if (obj instanceof UserIdToken) {
-            final UserIdToken that = (UserIdToken)obj;
-            return this.serialNumber == that.serialNumber &&
-                this.mtSerialNumber == that.mtSerialNumber;
-        }
-        return false;
-    }
-
-    /* (non-Javadoc)
-     * @see java.lang.Object#hashCode()
-     */
-    @Override
-    public int hashCode() {
-        return (String.valueOf(serialNumber) + ":" + String.valueOf(mtSerialNumber)).hashCode();
     }
 }

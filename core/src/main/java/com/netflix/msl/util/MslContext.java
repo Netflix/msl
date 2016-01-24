@@ -48,7 +48,7 @@ public abstract class MslContext {
     private static final long MILLISECONDS_PER_SECOND = 1000;
     
     /** Re-authentication reason codes. */
-    public static enum ReauthCode {
+    public enum ReauthCode {
         /** The master token was rejected as bad or invalid. */
         ENTITY_REAUTH(ResponseCode.ENTITY_REAUTH),
         /** The entity authentication data failed to authenticate the entity. */

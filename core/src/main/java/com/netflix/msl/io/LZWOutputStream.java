@@ -15,6 +15,9 @@
  */
 package com.netflix.msl.io;
 
+import lombok.EqualsAndHashCode;
+import lombok.Value;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -32,9 +35,37 @@ import java.util.Map;
 public class LZWOutputStream extends OutputStream {
     /** Maximum number of codes to buffer before flushing. */
     private static final int MAX_BUFFER_SIZE = 100;
-    
+
+    /** Output stream. */
+    private final OutputStream out;
+
+    /** The dictionary of codes keyed off bytes. */
+    private final Map<Key,Integer> dictionary = new HashMap<Key,Integer>(INITIAL_DICTIONARY);
+
+    /** Working symbols. */
+    private final ByteArrayOutputStream symbols = new ByteArrayOutputStream();
+
+    /** Current bit length. */
+    private int bits = Byte.SIZE;
+
+    /** Buffered codes pending write. */
+    private final LinkedList<Code> buffer = new LinkedList<Code>();
+
+    /** Finish called. */
+    private boolean finish = false;
+
+    /** Stream closed. */
+    private boolean closed = false;
+
     /** A byte array for use as map keys. */
+    @EqualsAndHashCode(of="bytes")
     private static class Key {
+        /** The byte array value. */
+        private final byte[] bytes;
+
+        /** Memoization of the hash code value. */
+        private final int hashCode;
+
         /**
          * Create a new key with the following byte array value. This does not
          * make a copy of the byte array.
@@ -44,16 +75,6 @@ public class LZWOutputStream extends OutputStream {
         public Key(final byte[] bytes) {
             this.bytes = bytes;
             this.hashCode = Arrays.hashCode(bytes);
-        }
-        
-        /* (non-Javadoc)
-         * @see java.lang.Object#equals(java.lang.Object)
-         */
-        @Override
-        public boolean equals(final Object o) {
-            if (o == this) return true;
-            if (!(o instanceof Key)) return false;
-            return Arrays.equals(bytes, ((Key)o).bytes);
         }
 
         /* (non-Javadoc)
@@ -65,48 +86,38 @@ public class LZWOutputStream extends OutputStream {
         }
 
         /* (non-Javadoc)
-         * @see java.lang.Object#toString()
+         * @see java.lang.Object#equals(java.lang.Object)
          */
+        @Override
+        public boolean equals(final Object o) {
+            if (o == this) return true;
+            if (!(o instanceof Key)) return false;
+            return Arrays.equals(bytes, ((Key)o).bytes);
+        }
+
+        /* (non-Javadoc)
+                 * @see java.lang.Object#toString()
+                 */
         @Override
         public String toString() {
             return Arrays.toString(bytes);
         }
 
-        /** The byte array value. */
-        private final byte[] bytes;
-        /** The hash code value. */
-        private final int hashCode;
     }
     
     /** A code is a numeric value represented by a specific number of bits. */
+    @Value
     private static class Code {
-        /**
-         * Create a new code with the specified value and bit length.
-         * 
-         * @param value the value.
-         * @param bits the number of bits used to encode the value.
-         */
-        public Code(int value, int bits) {
-            this.value = value;
-            this.bits = bits;
-        }
-        
-        /* (non-Javadoc)
-         * @see java.lang.Object#toString()
-         */
-        @Override
-        public String toString() {
-            return Integer.toHexString(value) + " (" + bits + "b)";
-        }
-
         /** Numeric value. */
         public final int value;
+
         /** Bit length. */
         public final int bits;
     }
     
     /** Maximum number of values represented by a byte. */
     private static final int BYTE_RANGE = 256;
+
     /** The initial dictionary. */
     private static final Map<Key,Integer> INITIAL_DICTIONARY = new HashMap<Key,Integer>(BYTE_RANGE);
     static {
@@ -259,12 +270,13 @@ public class LZWOutputStream extends OutputStream {
         }
         
         // If the stream is closed then output the remaining codes.
-        if (finish)
+        if (finish) {
             out.write(codesToBytes(codes));
-        
+        }
         // Otherwise stick them back onto the code buffer for next time.
-        else
+        else {
             buffer.addAll(codes);
+        }
     }
     
     /**
@@ -335,20 +347,4 @@ public class LZWOutputStream extends OutputStream {
         return bytes.toByteArray();
     }
     
-    /** Output stream. */
-    private final OutputStream out;
-    /** The dictionary of codes keyed off bytes. */
-    private final Map<Key,Integer> dictionary = new HashMap<Key,Integer>(INITIAL_DICTIONARY);
-
-    /** Working symbols. */
-    private final ByteArrayOutputStream symbols = new ByteArrayOutputStream();
-    /** Current bit length. */
-    private int bits = Byte.SIZE;
-    /** Buffered codes pending write. */
-    private final LinkedList<Code> buffer = new LinkedList<Code>();
-    
-    /** Finish called. */
-    private boolean finish = false;
-    /** Stream closed. */
-    private boolean closed = false;
 }

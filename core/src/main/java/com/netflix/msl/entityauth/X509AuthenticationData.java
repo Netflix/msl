@@ -23,6 +23,8 @@ import java.security.cert.X509Certificate;
 
 import javax.xml.bind.DatatypeConverter;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -50,22 +52,30 @@ import com.netflix.msl.MslInternalException;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+@EqualsAndHashCode(callSuper = true)
+@Getter
 public class X509AuthenticationData extends EntityAuthenticationData {
     /** JSON key entity X.509 certificate. */
     private static final String KEY_X509_CERT = "x509certificate";
-    
+
+    /** Entity X.509 certificate. */
+    private final X509Certificate x509Cert;
+    /** Entity identity. */
+
+    private final String identity;
+
     /**
      * Construct a new X.509 asymmetric keys authentication data instance from
      * the provided X.509 certificate.
      * 
-     * @param x509cert entity X.509 certificate.
+     * @param x509Cert entity X.509 certificate.
      * @throws MslCryptoException if the X.509 certificate data cannot be
      *         parsed.
      */
-    public X509AuthenticationData(final X509Certificate x509cert) throws MslCryptoException {
+    public X509AuthenticationData(final X509Certificate x509Cert) throws MslCryptoException {
         super(EntityAuthenticationScheme.X509);
-        this.x509cert = x509cert;
-        this.identity = x509cert.getSubjectX500Principal().getName();
+        this.x509Cert = x509Cert;
+        this.identity = x509Cert.getSubjectX500Principal().getName();
     }
     
     /**
@@ -105,26 +115,11 @@ public class X509AuthenticationData extends EntityAuthenticationData {
         }
         try {
             final ByteArrayInputStream bais = new ByteArrayInputStream(x509bytes);
-            x509cert = (X509Certificate)factory.generateCertificate(bais);
-            identity = x509cert.getSubjectX500Principal().getName();
+            x509Cert = (X509Certificate)factory.generateCertificate(bais);
+            identity = x509Cert.getSubjectX500Principal().getName();
         } catch (final CertificateException e) {
             throw new MslCryptoException(MslError.X509CERT_PARSE_ERROR, x509, e);
         }
-    }
-    
-    /**
-     * @return the X.509 certificate.
-     */
-    public X509Certificate getX509Cert() {
-        return x509cert;
-    }
-
-    /* (non-Javadoc)
-     * @see com.netflix.msl.entityauth.EntityAuthenticationData#getIdentity()
-     */
-    @Override
-    public String getIdentity() {
-        return identity;
     }
     
     /* (non-Javadoc)
@@ -134,7 +129,7 @@ public class X509AuthenticationData extends EntityAuthenticationData {
     public JSONObject getAuthData() throws MslEncodingException {
         final JSONObject jsonObj = new JSONObject();
         try {
-            jsonObj.put(KEY_X509_CERT, DatatypeConverter.printBase64Binary(x509cert.getEncoded()));
+            jsonObj.put(KEY_X509_CERT, DatatypeConverter.printBase64Binary(x509Cert.getEncoded()));
         } catch (final JSONException e) {
             throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, "X.509 authdata", e);
         } catch (final CertificateEncodingException e) {
@@ -142,28 +137,5 @@ public class X509AuthenticationData extends EntityAuthenticationData {
         }
         return jsonObj;
     }
-    
-    /* (non-Javadoc)
-     * @see com.netflix.msl.entityauth.EntityAuthenticationData#equals(java.lang.Object)
-     */
-    @Override
-    public boolean equals(final Object obj) {
-        if (obj == this) return true;
-        if (!(obj instanceof X509AuthenticationData)) return false;
-        final X509AuthenticationData that = (X509AuthenticationData)obj;
-        return super.equals(obj) && this.identity.equals(that.identity);
-    }
 
-    /* (non-Javadoc)
-     * @see com.netflix.msl.entityauth.EntityAuthenticationData#hashCode()
-     */
-    @Override
-    public int hashCode() {
-        return super.hashCode() ^ identity.hashCode();
-    }
-
-    /** Entity X.509 certificate. */
-    private final X509Certificate x509cert;
-    /** Entity identity. */
-    private final String identity;
 }

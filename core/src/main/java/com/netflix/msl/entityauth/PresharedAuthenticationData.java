@@ -15,6 +15,8 @@
  */
 package com.netflix.msl.entityauth;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -35,10 +37,15 @@ import com.netflix.msl.MslError;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+@EqualsAndHashCode(callSuper = true)
+@Getter
 public class PresharedAuthenticationData extends EntityAuthenticationData {
     /** JSON key entity identity. */
     private static final String KEY_IDENTITY = "identity";
-    
+
+    /** Entity identity. */
+    private final String identity;
+
     /**
      * Construct a new preshared keys authentication data instance from the
      * specified entity identity.
@@ -66,14 +73,6 @@ public class PresharedAuthenticationData extends EntityAuthenticationData {
             throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "psk authdata " + presharedAuthJO.toString(), e);
         }
     }
-    
-    /**
-     * @return the entity identity.
-     */
-    @Override
-    public String getIdentity() {
-        return identity;
-    }
 
     /* (non-Javadoc)
      * @see com.netflix.msl.entityauth.EntityAuthenticationData#getAuthData()
@@ -89,25 +88,4 @@ public class PresharedAuthenticationData extends EntityAuthenticationData {
         }
     }
 
-    /** Entity identity. */
-    private final String identity;
-
-    /* (non-Javadoc)
-     * @see com.netflix.msl.entityauth.EntityAuthenticationData#equals(java.lang.Object)
-     */
-    @Override
-    public boolean equals(final Object obj) {
-        if (obj == this) return true;
-        if (!(obj instanceof PresharedAuthenticationData)) return false;
-        final PresharedAuthenticationData that = (PresharedAuthenticationData)obj;
-        return super.equals(obj) && this.identity.equals(that.identity);
-    }
-
-    /* (non-Javadoc)
-     * @see com.netflix.msl.entityauth.EntityAuthenticationData#hashCode()
-     */
-    @Override
-    public int hashCode() {
-        return super.hashCode() ^ identity.hashCode();
-    }
 }

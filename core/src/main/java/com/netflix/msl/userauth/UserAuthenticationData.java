@@ -15,6 +15,8 @@
  */
 package com.netflix.msl.userauth;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONString;
@@ -47,12 +49,17 @@ import com.netflix.msl.util.MslContext;
  * <li>{@code authdata} is the scheme-specific authentication data</li>
  * </ul></p>
  */
+@EqualsAndHashCode
+@Getter
 public abstract class UserAuthenticationData implements JSONString {
     /** JSON key user authentication scheme. */
     private static final String KEY_SCHEME = "scheme";
     /** JSON key user authentication data. */
     private static final String KEY_AUTHDATA = "authdata";
-    
+
+    /** User authentication scheme. */
+    private final UserAuthenticationScheme scheme;
+
     /**
      * Create a new user authentication data object with the specified user
      * authentication scheme.
@@ -98,14 +105,7 @@ public abstract class UserAuthenticationData implements JSONString {
             throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "userauthdata " + userAuthJO.toString(), e);
         }
     }
-    
-    /**
-     * @return the user authentication scheme.
-     */
-    public UserAuthenticationScheme getScheme() {
-        return scheme;
-    }
-    
+
     /**
      * Returns the scheme-specific user authentication data. This method is
      * expected to succeed unless there is an internal error.
@@ -116,9 +116,6 @@ public abstract class UserAuthenticationData implements JSONString {
      */
     public abstract JSONObject getAuthData() throws MslEncodingException;
     
-    /** User authentication scheme. */
-    private final UserAuthenticationScheme scheme;
-
     /* (non-Javadoc)
      * @see org.json.JSONString#toJSONString()
      */
@@ -137,24 +134,4 @@ public abstract class UserAuthenticationData implements JSONString {
             throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);
         }
     }
-
-    /* (non-Javadoc)
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
-    @Override
-    public boolean equals(final Object obj) {
-        if (obj == this) return true;
-        if (!(obj instanceof UserAuthenticationData)) return false;
-        final UserAuthenticationData that = (UserAuthenticationData)obj;
-        return scheme.equals(that.scheme);
-    }
-
-    /* (non-Javadoc)
-     * @see java.lang.Object#hashCode()
-     */
-    @Override
-    public int hashCode() {
-        return scheme.hashCode();
-    }
-    
 }

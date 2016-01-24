@@ -34,7 +34,7 @@ import com.netflix.msl.util.MslContext;
  */
 public class RsaCryptoContext extends AsymmetricCryptoContext {
     /** RSA crypto context algorithm. .*/
-    public static enum Mode {
+    public enum Mode {
         /** RSA-OAEP encrypt/decrypt */
         ENCRYPT_DECRYPT_OAEP,
         /** RSA PKCS#1 encrypt/decrypt */

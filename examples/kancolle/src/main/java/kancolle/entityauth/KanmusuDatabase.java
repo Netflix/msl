@@ -22,7 +22,7 @@ package kancolle.entityauth;
  */
 public interface KanmusuDatabase {
     /** Kanmusu status. */
-    public static enum Status {
+    enum Status {
         /** Active. */
         ACTIVE,
         /** Presumed captured. */

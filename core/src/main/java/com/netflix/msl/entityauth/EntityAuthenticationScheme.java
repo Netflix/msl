@@ -15,6 +15,8 @@
  */
 package com.netflix.msl.entityauth;
 
+import lombok.EqualsAndHashCode;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,25 +29,41 @@ import java.util.Map;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+@EqualsAndHashCode(of="name")
 public class EntityAuthenticationScheme {
     /** Map of names onto schemes. */
     private static Map<String,EntityAuthenticationScheme> schemes = new HashMap<String,EntityAuthenticationScheme>();
     
     /** Pre-shared keys. */
     public static final EntityAuthenticationScheme PSK = new EntityAuthenticationScheme("PSK", true, true);
+
     /** Pre-shared keys with entity profiles. */
     public static final EntityAuthenticationScheme PSK_PROFILE = new EntityAuthenticationScheme("PSK_PROFILE", true, true);
+
     /** X.509 public/private key pair. */
     public static final EntityAuthenticationScheme X509 = new EntityAuthenticationScheme("X509", false, true);
+
     /** RSA public/private key pair. */
     public static final EntityAuthenticationScheme RSA = new EntityAuthenticationScheme("RSA", false, true);
+
     /** Unauthenticated. */
     public static final EntityAuthenticationScheme NONE = new EntityAuthenticationScheme("NONE", false, false);
+
     /** Unauthenticated suffixed. */
     public static final EntityAuthenticationScheme NONE_SUFFIXED = new EntityAuthenticationScheme("NONE_SUFFIXED", false, false);
+
     /** Master token protected. */
     public static final EntityAuthenticationScheme MT_PROTECTED = new EntityAuthenticationScheme("MT_PROTECTED", false, false);
-    
+
+    /** Scheme name. */
+    private final String name;
+
+    /** Encrypts message data. */
+    private final boolean encrypts;
+
+    /** Protects message integrity. */
+    private final boolean protects;
+
     /**
      * Define an entity authentication scheme with the specified name and
      * cryptographic properties.
@@ -104,35 +122,11 @@ public class EntityAuthenticationScheme {
     
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
+     * Tests assume that this method only returns the name.
      */
     @Override
     public String toString() {
         return name();
     }
-    
-    /* (non-Javadoc)
-     * @see java.lang.Object#hashCode()
-     */
-    @Override
-    public int hashCode() {
-        return name.hashCode();
-    }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
-    @Override
-    public boolean equals(final Object obj) {
-        if (obj == this) return true;
-        if (!(obj instanceof EntityAuthenticationScheme)) return false;
-        final EntityAuthenticationScheme that = (EntityAuthenticationScheme)obj;
-        return this.name.equals(that.name);
-    }
-
-    /** Scheme name. */
-    private final String name;
-    /** Encrypts message data. */
-    private final boolean encrypts;
-    /** Protects message integrity. */
-    private final boolean protects;
 }

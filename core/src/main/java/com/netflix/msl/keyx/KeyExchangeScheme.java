@@ -15,6 +15,9 @@
  */
 package com.netflix.msl.keyx;
 
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,6 +29,7 @@ import java.util.Map;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+@EqualsAndHashCode
 public class KeyExchangeScheme {
     /** Map of names onto schemes. */
     private static Map<String,KeyExchangeScheme> schemes = new HashMap<String,KeyExchangeScheme>();
@@ -40,7 +44,10 @@ public class KeyExchangeScheme {
     public static final KeyExchangeScheme JWK_LADDER = new KeyExchangeScheme("JWK_LADDER");
     /** Symmetric key wrapped. */
     public static final KeyExchangeScheme SYMMETRIC_WRAPPED = new KeyExchangeScheme("SYMMETRIC_WRAPPED");
-    
+
+    /** Scheme name. */
+    private final String name;
+
     /**
      * Define a key exchange scheme with the specified name.
      * 
@@ -85,26 +92,5 @@ public class KeyExchangeScheme {
     public String toString() {
         return name();
     }
-    
-    /* (non-Javadoc)
-     * @see java.lang.Object#hashCode()
-     */
-    @Override
-    public int hashCode() {
-        return name.hashCode();
-    }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
-    @Override
-    public boolean equals(final Object obj) {
-        if (obj == this) return true;
-        if (!(obj instanceof KeyExchangeScheme)) return false;
-        final KeyExchangeScheme that = (KeyExchangeScheme)obj;
-        return this.name.equals(that.name);
-    }
-    
-    /** Scheme name. */
-    private final String name;
 }

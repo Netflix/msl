@@ -21,6 +21,8 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -49,12 +51,19 @@ import com.netflix.msl.util.JsonUtils;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+@EqualsAndHashCode
+@Getter
 public class MessageCapabilities implements JSONString {
     /** JSON key compression algorithms. */
     private static final String KEY_COMPRESSION_ALGOS = "compressionalgos";
     /** JSON key languages. */
     private static final String KEY_LANGUAGES = "languages";
-    
+
+    /** Supported payload compression algorithms. */
+    private final Set<CompressionAlgorithm> compressionAlgorithms;
+    /** Preferred languages as BCP-47 codes in descending order. */
+    private final List<String> languages;
+
     /**
      * Computes and returns the intersection of two message capabilities.
      * 
@@ -69,8 +78,8 @@ public class MessageCapabilities implements JSONString {
         
         // Compute the intersection of compression algorithms.
         final Set<CompressionAlgorithm> compressionAlgos = EnumSet.noneOf(CompressionAlgorithm.class);
-        compressionAlgos.addAll(mc1.compressionAlgos);
-        compressionAlgos.retainAll(mc2.compressionAlgos);
+        compressionAlgos.addAll(mc1.compressionAlgorithms);
+        compressionAlgos.retainAll(mc2.compressionAlgorithms);
         
         // Compute the intersection of languages. This may not respect order.
         final List<String> languages = new ArrayList<String>(mc1.languages);
@@ -83,13 +92,13 @@ public class MessageCapabilities implements JSONString {
      * Create a new message capabilities object with the specified supported
      * features.
      * 
-     * @param compressionAlgos supported payload compression algorithms. May be
+     * @param compressionAlgorithms supported payload compression algorithms. May be
      *        {@code null}.
      * @param languages preferred languages as BCP-47 codes in descending
      *        order. May be {@code null}.
      */
-    public MessageCapabilities(final Set<CompressionAlgorithm> compressionAlgos, final List<String> languages) {
-        this.compressionAlgos = Collections.unmodifiableSet(compressionAlgos != null ? compressionAlgos : EnumSet.noneOf(CompressionAlgorithm.class));
+    public MessageCapabilities(final Set<CompressionAlgorithm> compressionAlgorithms, final List<String> languages) {
+        this.compressionAlgorithms = Collections.unmodifiableSet(compressionAlgorithms != null ? compressionAlgorithms : EnumSet.noneOf(CompressionAlgorithm.class));
         this.languages = Collections.unmodifiableList(languages != null ? languages : new ArrayList<String>());
     }
     
@@ -112,7 +121,7 @@ public class MessageCapabilities implements JSONString {
                     compressionAlgos.add(CompressionAlgorithm.valueOf(algo));
                 } catch (final IllegalArgumentException e) {}
             }
-            this.compressionAlgos = Collections.unmodifiableSet(compressionAlgos);
+            this.compressionAlgorithms = Collections.unmodifiableSet(compressionAlgos);
             
             // Extract languages.
             final List<String> languages = new ArrayList<String>();
@@ -125,20 +134,6 @@ public class MessageCapabilities implements JSONString {
         }
     }
     
-    /**
-     * @return the supported compression algorithms.
-     */
-    public Set<CompressionAlgorithm> getCompressionAlgorithms() {
-        return this.compressionAlgos;
-    }
-    
-    /**
-     * @return the preferred languages as BCP-47 codes in descending order.
-     */
-    public List<String> getLanguages() {
-        return this.languages;
-    }
-
     /* (non-Javadoc)
      * @see org.json.JSONString#toJSONString()
      */
@@ -146,7 +141,7 @@ public class MessageCapabilities implements JSONString {
     public String toJSONString() {
         try {
             final JSONObject jo = new JSONObject();
-            jo.put(KEY_COMPRESSION_ALGOS, JsonUtils.createArray(compressionAlgos));
+            jo.put(KEY_COMPRESSION_ALGOS, JsonUtils.createArray(compressionAlgorithms));
             jo.put(KEY_LANGUAGES, languages);
             return jo.toString();
         } catch (final JSONException e) {
@@ -162,28 +157,4 @@ public class MessageCapabilities implements JSONString {
         return toJSONString();
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) return true;
-        if (!(obj instanceof MessageCapabilities)) return false;
-        final MessageCapabilities that = (MessageCapabilities)obj;
-        return this.compressionAlgos.equals(that.compressionAlgos) &&
-            this.languages.equals(that.languages);
-    }
-
-    /* (non-Javadoc)
-     * @see java.lang.Object#hashCode()
-     */
-    @Override
-    public int hashCode() {
-        return this.compressionAlgos.hashCode() ^ this.languages.hashCode();
-    }
-
-    /** Supported payload compression algorithms. */
-    private final Set<CompressionAlgorithm> compressionAlgos;
-    /** Preferred languages as BCP-47 codes in descending order. */
-    private final List<String> languages;
 }

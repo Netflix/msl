@@ -15,6 +15,8 @@
  */
 package com.netflix.msl.userauth;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -37,12 +39,19 @@ import com.netflix.msl.MslError;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+@EqualsAndHashCode(callSuper = true)
+@Getter
 public class EmailPasswordAuthenticationData extends UserAuthenticationData {
     /** JSON email key. */
     private static final String KEY_EMAIL = "email";
     /** JSON password key. */
     private static final String KEY_PASSWORD = "password";
-    
+
+    /** Email. */
+    private final String email;
+    /** Password. */
+    private final String password;
+
     /**
      * Construct a new email/password authentication data instance from the
      * specified email and password.
@@ -72,20 +81,6 @@ public class EmailPasswordAuthenticationData extends UserAuthenticationData {
             throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "email/password authdata " + emailPasswordAuthJO.toString(), e);
         }
     }
-    
-    /**
-     * @return the email address.
-     */
-    public String getEmail() {
-        return email;
-    }
-    
-    /**
-     * @return the password.
-     */
-    public String getPassword() {
-        return password;
-    }
 
     /* (non-Javadoc)
      * @see com.netflix.msl.userauth.UserAuthenticationData#getCredentials()
@@ -102,27 +97,4 @@ public class EmailPasswordAuthenticationData extends UserAuthenticationData {
         }
     }
 
-    /* (non-Javadoc)
-     * @see com.netflix.msl.userauth.UserAuthenticationData#equals(java.lang.Object)
-     */
-    @Override
-    public boolean equals(final Object obj) {
-        if (obj == this) return true;
-        if (!(obj instanceof EmailPasswordAuthenticationData)) return false;
-        final EmailPasswordAuthenticationData that = (EmailPasswordAuthenticationData)obj;
-        return super.equals(obj) && email.equals(that.email) && password.equals(that.password);
-    }
-
-    /* (non-Javadoc)
-     * @see com.netflix.msl.userauth.UserAuthenticationData#hashCode()
-     */
-    @Override
-    public int hashCode() {
-        return super.hashCode() ^ email.hashCode() ^ password.hashCode();
-    }
-
-    /** Email. */
-    private final String email;
-    /** Password. */
-    private final String password;
 }

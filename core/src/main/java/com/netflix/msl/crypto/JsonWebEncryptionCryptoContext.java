@@ -94,7 +94,7 @@ public class JsonWebEncryptionCryptoContext implements ICryptoContext {
     private static final int A256_GCM_IV_LENGTH = 12;
     
     /** Supported content encryption key encryption algorithms. */
-    private static enum Algorithm {
+    private enum Algorithm {
         /** RSAES-OAEP */
         RSA_OAEP("RSA-OAEP"),
         /** AES-128 Key Wrap */
@@ -400,7 +400,7 @@ public class JsonWebEncryptionCryptoContext implements ICryptoContext {
     }
     
     /** Supported plaintext encryption algorithms. */
-    public static enum Encryption {
+    public enum Encryption {
         /** AES-128 GCM */
         A128GCM,
         /** AES-256 GCM */
@@ -408,7 +408,7 @@ public class JsonWebEncryptionCryptoContext implements ICryptoContext {
     }
     
     /** Support serialization formats. */
-    public static enum Format {
+    public enum Format {
         /**
          * <a href="http://tools.ietf.org/html/draft-jones-jose-jwe-json-serialization-04">JSON Web Encryption JSON Serialization (JWE-JS)</a>
          */

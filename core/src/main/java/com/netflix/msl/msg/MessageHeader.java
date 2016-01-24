@@ -23,6 +23,8 @@ import java.util.Set;
 
 import javax.xml.bind.DatatypeConverter;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -113,6 +115,7 @@ import com.netflix.msl.util.MslContext;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+@EqualsAndHashCode(callSuper = false, exclude={"headerdata", "plaintext", "signature", "user", "cryptoContext"})
 public class MessageHeader extends Header {
     /** Milliseconds per second. */
     private static final long MILLISECONDS_PER_SECOND = 1000;
@@ -154,7 +157,134 @@ public class MessageHeader extends Header {
     private static final String KEY_PEER_USER_ID_TOKEN = "peeruseridtoken";
     /** JSON key peer service tokens. */
     private static final String KEY_PEER_SERVICE_TOKENS = "peerservicetokens";
-    
+
+    /**
+     * Entity authentication data. May be null if the entity has
+     * already been authenticated and is using a master token instead.
+     */
+    @Getter
+    private final EntityAuthenticationData entityAuthenticationData;
+
+    /**
+     * Master token, identifying the entity and containing
+     * the session keys. May be null if the entity has not been authenticated.
+     */
+    @Getter
+    private final MasterToken masterToken;
+
+    /** Header data (ciphertext). */
+    private final byte[] headerdata;
+
+    /** Header data (plaintext) */
+    private final byte[] plaintext;
+
+    /** Signature. */
+    private final byte[] signature;
+
+    /**
+     * Sender  entity identity. Will be {@code null} if the message is using entity
+     * authentication data.
+     */
+    @Getter
+    private final String sender;
+
+    /** Recipient entity identity. Will be {@code null} if there is no specified recipient. */
+    @Getter
+    private final String recipient;
+
+    /** Timestamp in seconds since the epoch. */
+    private final Long timestamp;
+
+    /** Message ID. */
+    @Getter
+    private final long messageId;
+
+    /** Non-replayable ID. May be null. */
+    @Getter
+    private final Long nonReplayableId;
+
+    /** Renewable flag. */
+    @Getter
+    private final boolean renewable;
+
+    /** Handshake flag. */
+    @Getter
+    private final boolean handshake;
+
+    /** Message capabilities. May be null. */
+    @Getter
+    private final MessageCapabilities messageCapabilities;
+
+    /** Key request data. May be empty. */
+    @Getter
+    private final Set<KeyRequestData> keyRequestData;
+
+    /** Key response data. May be null.*/
+    @Getter
+    private final KeyResponseData keyResponseData;
+
+    /**
+     * User authentication data. May be null if the user has
+     * already been authenticated and is using a user ID token or if there is
+     * no user authentication requested.
+     */
+    @Getter
+    private final UserAuthenticationData userAuthenticationData;
+
+    /**
+     * User ID token, identifying the user. May be null if the user has not been authenticated.
+     */
+    @Getter
+    private final UserIdToken userIdToken;
+
+    /**
+     * Service tokens (immutable).May be empty if no there are no service
+     * tokens.
+     */
+    @Getter
+    private final Set<ServiceToken> serviceTokens;
+
+    /** Peer master token,that should be used by an entity responding to
+     * this message. Will be null if the responding entity should use its own
+     * entity authentication data or the primary master token. May be null.
+     */
+    @Getter
+    private final MasterToken peerMasterToken;
+
+    /** Peer user ID tokenmthat must be used by an entity responding to
+     * this message if an peer master token is provided. May be null if peer
+     * user authentication has not occurred. Will be null if there is no peer
+     * master token.
+     */
+    @Getter
+    private final UserIdToken peerUserIdToken;
+
+    /** Peer service tokens (immutable) that must be used by an entity responding
+     * to this message. May be null if the responding entity should use the
+     * primary service tokens. May be empty if no there are no peer service tokens.</p>
+     *
+     * <p>The returned list is immutable.</p>
+     */
+    @Getter
+    private final Set<ServiceToken> peerServiceTokens;
+
+    /** User (if authenticated or has a user ID token) May be null. */
+    @Getter
+    private final MslUser user;
+
+    /** Message crypto context,that was used to process the header data.
+     * This crypto context should also be used to process the payload data if
+     * no key response data is included in the message.
+     *
+     * @see #isEncrypting()
+     */
+    @Getter
+    private final ICryptoContext cryptoContext;
+
+    /** Message header is verified. */
+    @Getter
+    private final boolean verified;
+
     /**
      * Container struct for message header data.
      */
@@ -245,7 +375,7 @@ public class MessageHeader extends Header {
      * <p>Peer tokens are only processed if operating in peer-to-peer mode.</p>
      * 
      * @param ctx MSL context.
-     * @param entityAuthData the entity authentication data. May be null if a
+     * @param entityAuthenticationData the entity authentication data. May be null if a
      *        master token is provided.
      * @param masterToken the master token. May be null if entity
      *        authentication data is provided.
@@ -262,20 +392,20 @@ public class MessageHeader extends Header {
      * @throws MslMessageException if no entity authentication data or master
      *         token is provided.
      */
-    public MessageHeader(final MslContext ctx, final EntityAuthenticationData entityAuthData, final MasterToken masterToken, final HeaderData headerData, final HeaderPeerData peerData) throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException {
-        this.entityAuthData = (masterToken == null) ? entityAuthData : null;
+    public MessageHeader(final MslContext ctx, final EntityAuthenticationData entityAuthenticationData, final MasterToken masterToken, final HeaderData headerData, final HeaderPeerData peerData) throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException {
+        this.entityAuthenticationData = (masterToken == null) ? entityAuthenticationData : null;
         this.masterToken = masterToken;
         this.nonReplayableId = headerData.nonReplayableId;
         this.renewable = headerData.renewable;
         this.handshake = headerData.handshake;
-        this.capabilities = headerData.capabilities;
+        this.messageCapabilities = headerData.capabilities;
         this.sender = (this.masterToken != null) ? ctx.getEntityAuthenticationData(null).getIdentity() : null;
         this.recipient = headerData.recipient;
         this.timestamp = ctx.getTime() / MILLISECONDS_PER_SECOND;
         this.messageId = headerData.messageId;
         this.keyRequestData = Collections.unmodifiableSet((headerData.keyRequestData != null) ? headerData.keyRequestData : new HashSet<KeyRequestData>());
         this.keyResponseData = headerData.keyResponseData;
-        this.userAuthData = headerData.userAuthData;
+        this.userAuthenticationData = headerData.userAuthData;
         this.userIdToken = headerData.userIdToken;
         this.serviceTokens = Collections.unmodifiableSet((headerData.serviceTokens != null) ? headerData.serviceTokens : new HashSet<ServiceToken>());
         if (ctx.isPeerToPeer()) {
@@ -293,7 +423,7 @@ public class MessageHeader extends Header {
             throw new MslInternalException("Message ID " + this.messageId + " is out of range.");
         
         // Message entity must be provided.
-        if (this.entityAuthData == null && this.masterToken == null)
+        if (this.entityAuthenticationData == null && this.masterToken == null)
             throw new MslInternalException("Message entity authentication data or master token must be provided.");
         
         // Grab token verification master tokens.
@@ -352,10 +482,10 @@ public class MessageHeader extends Header {
             if (this.nonReplayableId != null) headerJO.put(KEY_NON_REPLAYABLE_ID, this.nonReplayableId);
             headerJO.put(KEY_RENEWABLE, this.renewable);
             headerJO.put(KEY_HANDSHAKE, this.handshake);
-            headerJO.put(KEY_CAPABILITIES, this.capabilities);
+            headerJO.put(KEY_CAPABILITIES, this.messageCapabilities);
             if (this.keyRequestData.size() > 0) headerJO.put(KEY_KEY_REQUEST_DATA, JsonUtils.createArray(this.keyRequestData));
             if (this.keyResponseData != null) headerJO.put(KEY_KEY_RESPONSE_DATA, this.keyResponseData);
-            if (this.userAuthData != null) headerJO.put(KEY_USER_AUTHENTICATION_DATA, this.userAuthData);
+            if (this.userAuthenticationData != null) headerJO.put(KEY_USER_AUTHENTICATION_DATA, this.userAuthenticationData);
             if (this.userIdToken != null) headerJO.put(KEY_USER_ID_TOKEN, this.userIdToken);
             if (this.serviceTokens.size() > 0) headerJO.put(KEY_SERVICE_TOKENS, JsonUtils.createArray(this.serviceTokens));
             if (this.peerMasterToken != null) headerJO.put(KEY_PEER_MASTER_TOKEN, this.peerMasterToken);
@@ -364,9 +494,9 @@ public class MessageHeader extends Header {
         } catch (final JSONException e) {
             throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, "headerdata", e)
                 .setEntity(this.masterToken)
-                .setEntity(this.entityAuthData)
+                .setEntity(this.entityAuthenticationData)
                 .setUser(this.peerUserIdToken)
-                .setUser(this.userAuthData)
+                .setUser(this.userAuthenticationData)
                 .setMessageId(this.messageId);
         }
 
@@ -380,28 +510,28 @@ public class MessageHeader extends Header {
             // master token.
             if (cachedCryptoContext == null) {
                 if (!this.masterToken.isVerified() || !this.masterToken.isDecrypted())
-                    throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, this.masterToken).setUser(this.userIdToken).setUser(this.userAuthData).setMessageId(this.messageId);
-                this.messageCryptoContext = new SessionCryptoContext(ctx, this.masterToken);
+                    throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, this.masterToken).setUser(this.userIdToken).setUser(this.userAuthenticationData).setMessageId(this.messageId);
+                this.cryptoContext = new SessionCryptoContext(ctx, this.masterToken);
             } else {
-                this.messageCryptoContext = cachedCryptoContext;
+                this.cryptoContext = cachedCryptoContext;
             }
         } else {
             try {
-                final EntityAuthenticationScheme scheme = this.entityAuthData.getScheme();
+                final EntityAuthenticationScheme scheme = this.entityAuthenticationData.getScheme();
                 final EntityAuthenticationFactory factory = ctx.getEntityAuthenticationFactory(scheme);
                 if (factory == null)
                     throw new MslEntityAuthException(MslError.ENTITYAUTH_FACTORY_NOT_FOUND, scheme.name());
-                this.messageCryptoContext = factory.getCryptoContext(ctx, this.entityAuthData);
+                this.cryptoContext = factory.getCryptoContext(ctx, this.entityAuthenticationData);
             } catch (final MslCryptoException e) {
-                e.setEntity(this.entityAuthData);
+                e.setEntity(this.entityAuthenticationData);
                 e.setUser(this.userIdToken);
-                e.setUser(this.userAuthData);
+                e.setUser(this.userAuthenticationData);
                 e.setMessageId(this.messageId);
                 throw e;
             } catch (final MslEntityAuthException e) {
-                e.setEntity(this.entityAuthData);
+                e.setEntity(this.entityAuthenticationData);
                 e.setUser(this.userIdToken);
-                e.setUser(this.userAuthData);
+                e.setUser(this.userAuthenticationData);
                 e.setMessageId(this.messageId);
                 throw e;
             }
@@ -410,14 +540,14 @@ public class MessageHeader extends Header {
         // Encrypt and sign the header data.
         try {
             this.plaintext = headerJO.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-            this.headerdata = this.messageCryptoContext.encrypt(plaintext);
-            this.signature = this.messageCryptoContext.sign(this.headerdata);
+            this.headerdata = this.cryptoContext.encrypt(plaintext);
+            this.signature = this.cryptoContext.sign(this.headerdata);
             this.verified = true;
         } catch (final MslCryptoException e) {
             e.setEntity(this.masterToken);
-            e.setEntity(this.entityAuthData);
+            e.setEntity(this.entityAuthenticationData);
             e.setUser(this.userIdToken);
-            e.setUser(this.userAuthData);
+            e.setUser(this.userAuthenticationData);
             e.setMessageId(this.messageId);
             throw e;
         }
@@ -443,7 +573,7 @@ public class MessageHeader extends Header {
      * 
      * @param ctx MSL context.
      * @param headerdata header data JSON representation.
-     * @param entityAuthData the entity authentication data. May be null if a
+     * @param entityAuthenticationData the entity authentication data. May be null if a
      *        master token is provided.
      * @param masterToken the master token. May be null if entity
      *        authentication data is provided.
@@ -467,12 +597,12 @@ public class MessageHeader extends Header {
      *         missing or invalid, or the message ID is negative.
      * @throws MslException if a token is improperly bound to another token.
      */
-    protected MessageHeader(final MslContext ctx, final String headerdata, final EntityAuthenticationData entityAuthData, final MasterToken masterToken, final byte[] signature, final Map<String,ICryptoContext> cryptoContexts) throws MslEncodingException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslMasterTokenException, MslMessageException, MslEntityAuthException, MslException {
+    protected MessageHeader(final MslContext ctx, final String headerdata, final EntityAuthenticationData entityAuthenticationData, final MasterToken masterToken, final byte[] signature, final Map<String,ICryptoContext> cryptoContexts) throws MslEncodingException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslMasterTokenException, MslMessageException, MslEntityAuthException, MslException {
         try {
-            this.entityAuthData = (masterToken == null) ? entityAuthData : null;
+            this.entityAuthenticationData = (masterToken == null) ? entityAuthenticationData : null;
             this.masterToken = masterToken;
             this.signature = signature;
-            if (entityAuthData == null && masterToken == null)
+            if (entityAuthenticationData == null && masterToken == null)
                 throw new MslMessageException(MslError.MESSAGE_ENTITY_NOT_FOUND);
             
             // Create the correct crypto context.
@@ -486,22 +616,22 @@ public class MessageHeader extends Header {
                 if (cachedCryptoContext == null) {
                     if (!masterToken.isVerified() || !masterToken.isDecrypted())
                         throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, masterToken);
-                    this.messageCryptoContext = new SessionCryptoContext(ctx, masterToken);
+                    this.cryptoContext = new SessionCryptoContext(ctx, masterToken);
                 } else {
-                    this.messageCryptoContext = cachedCryptoContext;
+                    this.cryptoContext = cachedCryptoContext;
                 }
             } else {
                 try {
-                    final EntityAuthenticationScheme scheme = entityAuthData.getScheme();
+                    final EntityAuthenticationScheme scheme = entityAuthenticationData.getScheme();
                     final EntityAuthenticationFactory factory = ctx.getEntityAuthenticationFactory(scheme);
                     if (factory == null)
                         throw new MslEntityAuthException(MslError.ENTITYAUTH_FACTORY_NOT_FOUND, scheme.name());
-                    this.messageCryptoContext = factory.getCryptoContext(ctx, entityAuthData);
+                    this.cryptoContext = factory.getCryptoContext(ctx, entityAuthenticationData);
                 } catch (final MslCryptoException e) {
-                    e.setEntity(entityAuthData);
+                    e.setEntity(entityAuthenticationData);
                     throw e;
                 } catch (final MslEntityAuthException e) {
-                    e.setEntity(entityAuthData);
+                    e.setEntity(entityAuthenticationData);
                     throw e;
                 }
             }
@@ -510,19 +640,19 @@ public class MessageHeader extends Header {
             try {
                 this.headerdata = DatatypeConverter.parseBase64Binary(headerdata);
             } catch (final IllegalArgumentException e) {
-                throw new MslMessageException(MslError.HEADER_DATA_INVALID, headerdata, e).setEntity(masterToken).setEntity(entityAuthData);
+                throw new MslMessageException(MslError.HEADER_DATA_INVALID, headerdata, e).setEntity(masterToken).setEntity(entityAuthenticationData);
             }
             if (this.headerdata == null || this.headerdata.length == 0)
-                throw new MslMessageException(MslError.HEADER_DATA_MISSING, headerdata).setEntity(masterToken).setEntity(entityAuthData);
-            this.verified = this.messageCryptoContext.verify(this.headerdata, this.signature);
-            this.plaintext = (this.verified) ? this.messageCryptoContext.decrypt(this.headerdata) : null;
+                throw new MslMessageException(MslError.HEADER_DATA_MISSING, headerdata).setEntity(masterToken).setEntity(entityAuthenticationData);
+            this.verified = this.cryptoContext.verify(this.headerdata, this.signature);
+            this.plaintext = (this.verified) ? this.cryptoContext.decrypt(this.headerdata) : null;
         } catch (final MslCryptoException e) {
             e.setEntity(masterToken);
-            e.setEntity(entityAuthData);
+            e.setEntity(entityAuthenticationData);
             throw e;
         } catch (final MslEntityAuthException e) {
             e.setEntity(masterToken);
-            e.setEntity(entityAuthData);
+            e.setEntity(entityAuthenticationData);
             throw e;
         }
         
@@ -534,13 +664,13 @@ public class MessageHeader extends Header {
             this.timestamp = null;
             this.keyResponseData = null;
             this.userIdToken = null;
-            this.userAuthData = null;
+            this.userAuthenticationData = null;
             this.user = null;
             this.serviceTokens = Collections.emptySet();
             this.nonReplayableId = null;
             this.renewable = false;
             this.handshake = false;
-            this.capabilities = null;
+            this.messageCapabilities = null;
             this.keyRequestData = Collections.emptySet();
             this.peerMasterToken = null;
             this.peerUserIdToken = null;
@@ -557,9 +687,9 @@ public class MessageHeader extends Header {
             // use it.
             this.messageId = headerdataJO.getLong(KEY_MESSAGE_ID);
             if (this.messageId < 0 || this.messageId > MslConstants.MAX_LONG_VALUE)
-                throw new MslMessageException(MslError.MESSAGE_ID_OUT_OF_RANGE, "headerdata " + headerdataJson).setEntity(masterToken).setEntity(entityAuthData);
+                throw new MslMessageException(MslError.MESSAGE_ID_OUT_OF_RANGE, "headerdata " + headerdataJson).setEntity(masterToken).setEntity(entityAuthenticationData);
         } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson, e).setEntity(masterToken).setEntity(entityAuthData);
+            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson, e).setEntity(masterToken).setEntity(entityAuthenticationData);
         }
         
         try {
@@ -590,18 +720,18 @@ public class MessageHeader extends Header {
                 ? new UserIdToken(ctx, headerdataJO.getJSONObject(KEY_USER_ID_TOKEN), tokenVerificationMasterToken)
                 : null;
             // Pull user authentication data.
-            this.userAuthData = (headerdataJO.has(KEY_USER_AUTHENTICATION_DATA))
+            this.userAuthenticationData = (headerdataJO.has(KEY_USER_AUTHENTICATION_DATA))
                 ? UserAuthenticationData.create(ctx, tokenVerificationMasterToken, headerdataJO.getJSONObject(KEY_USER_AUTHENTICATION_DATA))
                 : null;
 
             // Verify the user authentication data.
-            if (this.userAuthData != null) {
-                final UserAuthenticationScheme scheme = this.userAuthData.getScheme();
+            if (this.userAuthenticationData != null) {
+                final UserAuthenticationScheme scheme = this.userAuthenticationData.getScheme();
                 final UserAuthenticationFactory factory = ctx.getUserAuthenticationFactory(scheme);
                 if (factory == null)
-                    throw new MslUserAuthException(MslError.USERAUTH_FACTORY_NOT_FOUND, scheme.name()).setUser(userIdToken).setUser(userAuthData);
-                final String identity = (this.masterToken != null) ? this.masterToken.getIdentity() : this.entityAuthData.getIdentity();
-                this.user = factory.authenticate(ctx, identity, this.userAuthData, this.userIdToken);
+                    throw new MslUserAuthException(MslError.USERAUTH_FACTORY_NOT_FOUND, scheme.name()).setUser(userIdToken).setUser(userAuthenticationData);
+                final String identity = (this.masterToken != null) ? this.masterToken.getIdentity() : this.entityAuthenticationData.getIdentity();
+                this.user = factory.authenticate(ctx, identity, this.userAuthenticationData, this.userIdToken);
             } else if (this.userIdToken != null) {
                 this.user = this.userIdToken.getUser();
             } else {
@@ -617,17 +747,17 @@ public class MessageHeader extends Header {
                     try {
                         serviceTokens.add(new ServiceToken(ctx, tokens.getJSONObject(i), tokenVerificationMasterToken, this.userIdToken, cryptoContexts));
                     } catch (final MslException e) {
-                        e.setEntity(tokenVerificationMasterToken).setUser(this.userIdToken).setUser(userAuthData);
+                        e.setEntity(tokenVerificationMasterToken).setUser(this.userIdToken).setUser(userAuthenticationData);
                         throw e;
                     }
                 }
             }
             this.serviceTokens = Collections.unmodifiableSet(serviceTokens);
         } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson, e).setEntity(masterToken).setEntity(entityAuthData).setMessageId(this.messageId);
+            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson, e).setEntity(masterToken).setEntity(entityAuthenticationData).setMessageId(this.messageId);
         } catch (final MslException e) {
             e.setEntity(masterToken);
-            e.setEntity(entityAuthData);
+            e.setEntity(entityAuthenticationData);
             e.setMessageId(this.messageId);
             throw e;
         }
@@ -645,9 +775,9 @@ public class MessageHeader extends Header {
             // Pull message capabilities.
             if (headerdataJO.has(KEY_CAPABILITIES)) {
                 final JSONObject capabilitiesJO = headerdataJO.getJSONObject(KEY_CAPABILITIES);
-                this.capabilities = new MessageCapabilities(capabilitiesJO);
+                this.messageCapabilities = new MessageCapabilities(capabilitiesJO);
             } else {
-                this.capabilities = null;
+                this.messageCapabilities = null;
             }
             
             // Pull key request data containers.
@@ -708,15 +838,15 @@ public class MessageHeader extends Header {
         } catch (final JSONException e) {
             throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJO.toString(), e)
                 .setEntity(masterToken)
-                .setEntity(entityAuthData)
+                .setEntity(entityAuthenticationData)
                 .setUser(this.userIdToken)
-                .setUser(this.userAuthData)
+                .setUser(this.userAuthenticationData)
                 .setMessageId(this.messageId);
         } catch (final MslException e) {
             e.setEntity(masterToken);
-            e.setEntity(entityAuthData);
+            e.setEntity(entityAuthenticationData);
             e.setUser(this.userIdToken);
-            e.setUser(this.userAuthData);
+            e.setUser(this.userAuthenticationData);
             e.setMessageId(this.messageId);
             throw e;
         }
@@ -735,204 +865,20 @@ public class MessageHeader extends Header {
     }
 
     /**
-     * @return true if the token has been verified.
-     */
-    public boolean isVerified() {
-        return verified;
-    }
-    
-    /**
      * @return true if the message header crypto context provides encryption.
      * @see #getCryptoContext()
      */
     public boolean isEncrypting() {
-        return masterToken != null || entityAuthData.getScheme().encrypts();
+        return masterToken != null || entityAuthenticationData.getScheme().encrypts();
     }
 
-    /**
-     * Returns the crypto context that was used to process the header data.
-     * This crypto context should also be used to process the payload data if
-     * no key response data is included in the message.
-     *
-     * @return the header data crypto context.
-     * @see #isEncrypting()
-     */
-    public ICryptoContext getCryptoContext() {
-        return messageCryptoContext;
-    }
-    
-    /**
-     * Returns the user if the user has been authenticated or a user ID token
-     * was provided.
-     * 
-     * @return the user. May be null.
-     */
-    public MslUser getUser() {
-        return user;
-    }
-    
-    /**
-     * Returns the entity authentication data. May be null if the entity has
-     * already been authenticated and is using a master token instead.
-     * 
-     * @return the entity authentication data.
-     */
-    public EntityAuthenticationData getEntityAuthenticationData() {
-        return entityAuthData;
-    }
-    
-    /**
-     * Returns the primary master token identifying the entity and containing
-     * the session keys. May be null if the entity has not been authenticated.
-     * 
-     * @return the master token. May be null.
-     */
-    public MasterToken getMasterToken() {
-        return masterToken;
-    }
-    
-    /**
-     * @return the sender entity identity. Will be {@code null} if the message
-     *         is using entity authentication data.
-     */
-    public String getSender() {
-        return sender;
-    }
-    
-    /**
-     * @return the recipient entity identity. Will be {@code null} if there is
-     *         no specified recipient.
-     */
-    public String getRecipient() {
-        return recipient;
-    }
-    
     /**
      * @return the timestamp. May be null.
      */
     public Date getTimestamp() {
         return (timestamp != null) ? new Date(timestamp * MILLISECONDS_PER_SECOND) : null;
     }
-    
-    /**
-     * @return the message ID.
-     */
-    public long getMessageId() {
-        return messageId;
-    }
-    
-    /**
-     * @return the non-replayable ID. May be null.
-     */
-    public Long getNonReplayableId() {
-        return nonReplayableId;
-    }
-    
-    /**
-     * @return true if the message renewable flag is set.
-     */
-    public boolean isRenewable() {
-        return renewable;
-    }
-    
-    /**
-     * @return true if the message handshake flag is set.
-     */
-    public boolean isHandshake() {
-        return handshake;
-    }
-    
-    /**
-     * @return the message capabilities. May be null.
-     */
-    public MessageCapabilities getMessageCapabilities() {
-        return capabilities;
-    }
-    
-    /**
-     * @return key request data. May be empty.
-     */
-    public Set<KeyRequestData> getKeyRequestData() {
-        return keyRequestData;
-    }
-    
-    /**
-     * @return key response data. May be null.
-     */
-    public KeyResponseData getKeyResponseData() {
-        return keyResponseData;
-    }
-    
-    /**
-     * Returns the user authentication data. May be null if the user has
-     * already been authenticated and is using a user ID token or if there is
-     * no user authentication requested.
-     * 
-     * @return the user authentication data. May be null.
-     */
-    public UserAuthenticationData getUserAuthenticationData() {
-        return userAuthData;
-    }
-    
-    /**
-     * Returns the primary user ID token identifying the user. May be null if
-     * the user has not been authenticated.
-     * 
-     * @return the user ID token. May be null.
-     */
-    public UserIdToken getUserIdToken() {
-        return userIdToken;
-    }
-    
-    /**
-     * Returns the primary service tokens included in this message.
-     * 
-     * The returned list is immutable.
-     * 
-     * @return the service tokens. May be empty if no there are no service
-     *         tokens. 
-     */
-    public Set<ServiceToken> getServiceTokens() {
-        return serviceTokens;
-    }
-    
-    /**
-     * Returns the master token that should be used by an entity responding to
-     * this message. Will be null if the responding entity should use its own
-     * entity authentication data or the primary master token.
-     * 
-     * @return the peer master token. May be null.
-     */
-    public MasterToken getPeerMasterToken() {
-        return peerMasterToken;
-    }
-    
-    /**
-     * Returns the user ID token that must be used by an entity responding to
-     * this message if an peer master token is provided. May be null if peer
-     * user authentication has not occurred. Will be null if there is no peer
-     * master token.
-     * 
-     * @return the peer user ID token. May be null.
-     */
-    public UserIdToken getPeerUserIdToken() {
-        return peerUserIdToken;
-    }
-    
-    /**
-     * <p>Returns the service tokens that must be used by an entity responding
-     * to this message. May be null if the responding entity should use the
-     * primary service tokens.</p>
-     * 
-     * <p>The returned list is immutable.</p>
-     * 
-     * @return the peer service tokens. May be empty if no there are no peer
-     *         service tokens.
-     */
-    public Set<ServiceToken> getPeerServiceTokens() {
-        return peerServiceTokens;
-    }
-    
+
     /* (non-Javadoc)
      * @see org.json.JSONString#toJSONString()
      */
@@ -943,7 +889,7 @@ public class MessageHeader extends Header {
             if (masterToken != null)
                 jsonObj.put(KEY_MASTER_TOKEN, masterToken);
             else
-                jsonObj.put(KEY_ENTITY_AUTHENTICATION_DATA, entityAuthData);
+                jsonObj.put(KEY_ENTITY_AUTHENTICATION_DATA, entityAuthenticationData);
             jsonObj.put(KEY_HEADERDATA, DatatypeConverter.printBase64Binary(headerdata));
             jsonObj.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
             return jsonObj.toString();
@@ -951,120 +897,5 @@ public class MessageHeader extends Header {
             throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);
         }
     }
-    
-    /* (non-Javadoc)
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
-    @Override
-    public boolean equals(final Object obj) {
-        if (obj == this) return true;
-        if (!(obj instanceof MessageHeader)) return false;
-        final MessageHeader that = (MessageHeader)obj;
-        return (masterToken != null && masterToken.equals(that.masterToken) ||
-                entityAuthData != null && entityAuthData.equals(that.entityAuthData)) &&
-               (sender != null && sender.equals(that.sender) ||
-                sender == that.sender) &&
-               (recipient != null && recipient.equals(that.recipient) ||
-                recipient == that.recipient) &&
-               (timestamp != null && timestamp.equals(that.timestamp) ||
-                timestamp == null && that.timestamp == null) &&
-               messageId == that.messageId &&
-               (nonReplayableId != null && nonReplayableId.equals(that.nonReplayableId) ||
-                nonReplayableId == null && that.nonReplayableId == null) &&
-               renewable == that.renewable &&
-               handshake == that.handshake &&
-               (capabilities != null && capabilities.equals(that.capabilities) ||
-                capabilities == that.capabilities) &&
-               keyRequestData.equals(that.keyRequestData) &&
-               (keyResponseData != null && keyResponseData.equals(that.keyResponseData) ||
-                keyResponseData == that.keyResponseData) &&
-               (userAuthData != null && userAuthData.equals(that.userAuthData) ||
-                userAuthData == that.userAuthData) &&
-               (userIdToken != null && userIdToken.equals(that.userIdToken) ||
-                userIdToken == that.userIdToken) &&
-               serviceTokens.equals(that.serviceTokens) &&
-               (peerMasterToken != null && peerMasterToken.equals(that.peerMasterToken) ||
-                peerMasterToken == that.peerMasterToken) &&
-               (peerUserIdToken != null && peerUserIdToken.equals(that.peerUserIdToken) ||
-                peerUserIdToken == that.peerUserIdToken) &&
-               peerServiceTokens.equals(that.peerServiceTokens);
-    }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#hashCode()
-     */
-    @Override
-    public int hashCode() {
-        return ((masterToken != null) ? masterToken.hashCode() : entityAuthData.hashCode()) ^
-            ((sender != null) ? sender.hashCode() : 0) ^
-            ((recipient != null) ? recipient.hashCode() : 0) ^
-            ((timestamp != null) ? timestamp.hashCode() : 0) ^
-            Long.valueOf(messageId).hashCode() ^
-            ((nonReplayableId != null) ? nonReplayableId.hashCode() : 0) ^
-            Boolean.valueOf(renewable).hashCode() ^
-            Boolean.valueOf(handshake).hashCode() ^
-            ((capabilities != null) ? capabilities.hashCode() : 0) ^
-            keyRequestData.hashCode() ^
-            ((keyResponseData != null) ? keyResponseData.hashCode() : 0) ^
-            ((userAuthData != null) ? userAuthData.hashCode() : 0) ^
-            ((userIdToken != null) ? userIdToken.hashCode() : 0) ^
-            serviceTokens.hashCode() ^
-            ((peerMasterToken != null) ? peerMasterToken.hashCode() : 0) ^
-            ((peerUserIdToken != null) ? peerUserIdToken.hashCode() : 0) ^
-            peerServiceTokens.hashCode();
-    }
-
-    /** Entity authentication data. */
-    private final EntityAuthenticationData entityAuthData;
-    /** Master token. */
-    private final MasterToken masterToken;
-    /** Header data (ciphertext). */
-    private final byte[] headerdata;
-    /** Header data (plaintext) */
-    private final byte[] plaintext;
-    /** Signature. */
-    private final byte[] signature;
-    
-    /** Sender. */
-    private final String sender;
-    /** Recipient. */
-    private final String recipient;
-    /** Timestamp in seconds since the epoch. */
-    private final Long timestamp;
-    /** Message ID. */
-    private final long messageId;
-    /** Non-replayable ID. */
-    private final Long nonReplayableId;
-    /** Renewable. */
-    private final boolean renewable;
-    /** Handshake message. */
-    private final boolean handshake;
-    /** Message capabilities. */
-    private final MessageCapabilities capabilities;
-    /** Key request data. */
-    private final Set<KeyRequestData> keyRequestData;
-    /** Key response data. */
-    private final KeyResponseData keyResponseData;
-    /** User authentication data. */
-    private final UserAuthenticationData userAuthData;
-    /** User ID token. */
-    private final UserIdToken userIdToken;
-    /** Service tokens (immutable). */
-    private final Set<ServiceToken> serviceTokens;
-    
-    /** Peer master token. */
-    private final MasterToken peerMasterToken;
-    /** Peer user ID token. */
-    private final UserIdToken peerUserIdToken;
-    /** Peer service tokens (immutable). */
-    private final Set<ServiceToken> peerServiceTokens;
-    
-    /** User (if authenticated). */
-    private final MslUser user;
-    
-    /** Message crypto context. */
-    private final ICryptoContext messageCryptoContext;
-    
-    /** Message header is verified. */
-    private final boolean verified;
 }

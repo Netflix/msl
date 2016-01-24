@@ -26,7 +26,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
-import java.util.Arrays;
 
 import javax.crypto.KeyAgreement;
 import javax.crypto.SecretKey;
@@ -37,6 +36,9 @@ import javax.crypto.spec.DHPublicKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Value;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -65,9 +67,16 @@ import com.netflix.msl.util.MslContext;
 public class DiffieHellmanExchange extends KeyExchangeFactory {
     /** JSON key Diffie-Hellman parameters ID. */
     private static final String KEY_PARAMETERS_ID = "parametersid";
+
     /** JSON key Diffie-Hellman public key. */
     private static final String KEY_PUBLIC_KEY = "publickey";
-    
+
+    /** Diffie-Hellman parameters. */
+    private final DiffieHellmanParameters params;
+
+    /** Authentication utilities. */
+    private final AuthenticationUtils authutils;
+
     /**
      * If the provided byte array begins with one and only one null byte this
      * function simply returns the original array. Otherwise a new array is
@@ -80,8 +89,8 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
     private static byte[] correctNullBytes(final byte[] b) {
         // Count the number of leading nulls.
         int leadingNulls = 0;
-        for (int i = 0; i < b.length; ++i) {
-            if (b[i] != 0x00)
+        for (byte aB : b) {
+            if (aB != 0x00)
                 break;
             ++leadingNulls;
         }
@@ -114,7 +123,19 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
      * </ul>
      * </p>
      */
+    @EqualsAndHashCode(callSuper = true)
+    @Getter
     public static class RequestData extends KeyRequestData {
+
+        /** Diffie-Hellman parameters ID. */
+        private final String parametersId;
+
+        /** Diffie-Hellman public key Y-value. */
+        private final BigInteger publicKey;
+
+        /** Diffie-Hellman private key. */
+        private final DHPrivateKey privateKey;
+
         /**
          * Create a new Diffie-Hellman request data repository with the
          * specified parameters ID and public key. The private key is also
@@ -166,67 +187,6 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
             return jsonObj;
         }
 
-        /**
-         * @return the parameters ID.
-         */
-        public String getParametersId() {
-            return parametersId;
-        }
-
-        /**
-         * @return the public key Y-value.
-         */
-        public BigInteger getPublicKey() {
-            return publicKey;
-        }
-
-        /**
-         * @return the private key or null if unknown (reconstructed from a
-         *         JSON object).
-         */
-        public DHPrivateKey getPrivateKey() {
-            return privateKey;
-        }
-
-        /*
-         * (non-Javadoc)
-         * 
-         * @see java.lang.Object#equals(java.lang.Object)
-         */
-        @Override
-        public boolean equals(final Object obj) {
-            if (obj == this)
-                return true;
-            if (!(obj instanceof RequestData))
-                return false;
-            final RequestData that = (RequestData)obj;
-            final boolean privateKeysEqual =
-                privateKey == that.privateKey ||
-                (privateKey != null && that.privateKey != null && Arrays.equals(privateKey.getEncoded(), that.privateKey.getEncoded()));
-            return super.equals(obj) &&
-                parametersId.equals(that.parametersId) &&
-                publicKey.equals(that.publicKey) && privateKeysEqual;
-        }
-
-        /*
-         * (non-Javadoc)
-         * 
-         * @see java.lang.Object#hashCode()
-         */
-        @Override
-        public int hashCode() {
-            // Private keys are optional but must be considered.
-            final int privateKeyHashCode = (privateKey != null) ? Arrays.hashCode(privateKey.getEncoded()) : 0;
-            return super.hashCode() ^ parametersId.hashCode() ^
-                publicKey.hashCode() ^ privateKeyHashCode;
-        }
-
-        /** Diffie-Hellman parameters ID. */
-        private final String parametersId;
-        /** Diffie-Hellman public key Y-value. */
-        private final BigInteger publicKey;
-        /** Diffie-Hellman private key. */
-        private final DHPrivateKey privateKey;
     }
 
     /**
@@ -244,7 +204,15 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
      * </ul>
      * </p>
      */
+    @EqualsAndHashCode(callSuper = true)
+    @Getter
     public static class ResponseData extends KeyResponseData {
+        /** Diffie-Hellman parameters ID. */
+        private final String parametersId;
+
+        /** Diffie-Hellman public key. */
+        private final BigInteger publicKey;
+
         /**
          * Create a new Diffie-Hellman response data repository with the
          * provided master token, specified parameters ID and public key.
@@ -285,20 +253,6 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
             }
         }
 
-        /**
-         * @return the parameters ID.
-         */
-        public String getParametersId() {
-            return parametersId;
-        }
-
-        /**
-         * @return the public key Y-value.
-         */
-        public BigInteger getPublicKey() {
-            return publicKey;
-        }
-
         @Override
         protected JSONObject getKeydata() throws JSONException {
             final JSONObject jsonObj = new JSONObject();
@@ -308,54 +262,16 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
             return jsonObj;
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see java.lang.Object#equals(java.lang.Object)
-         */
-        @Override
-        public boolean equals(final Object obj) {
-            if (obj == this)
-                return true;
-            if (!(obj instanceof ResponseData))
-                return false;
-            final ResponseData that = (ResponseData) obj;
-            return super.equals(obj) &&
-                parametersId.equals(that.parametersId) &&
-                publicKey.equals(that.publicKey);
-        }
-
-        /*
-         * (non-Javadoc)
-         * 
-         * @see java.lang.Object#hashCode()
-         */
-        @Override
-        public int hashCode() {
-            return super.hashCode() ^ parametersId.hashCode() ^ publicKey.hashCode();
-        }
-
-        /** Diffie-Hellman parameters ID. */
-        private final String parametersId;
-        /** Diffie-Hellman public key. */
-        private final BigInteger publicKey;
     }
 
     /**
      * Container struct for session keys.
      */
+    @Value
     private static class SessionKeys {
-        /**
-         * @param encryptionKey the encryption key.
-         * @param hmacKey the HMAC key.
-         */
-        public SessionKeys(final SecretKey encryptionKey, final SecretKey hmacKey) {
-            this.encryptionKey = encryptionKey;
-            this.hmacKey = hmacKey;
-        }
-
         /** Encryption key. */
         public final SecretKey encryptionKey;
+
         /** HMAC key. */
         public final SecretKey hmacKey;
     }
@@ -609,9 +525,4 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
         final MasterToken responseMasterToken = response.getMasterToken();
         return new SessionCryptoContext(ctx, responseMasterToken, identity, sessionKeys.encryptionKey, sessionKeys.hmacKey);
     }
-
-    /** Diffie-Hellman parameters. */
-    private final DiffieHellmanParameters params;
-    /** Authentication utilities. */
-    private final AuthenticationUtils authutils;
 }

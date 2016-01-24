@@ -625,7 +625,7 @@ public class MessageOutputStreamTest {
         
         final List<PayloadChunk> payloads = mos.getPayloads();
         assertEquals(1, payloads.size());
-        assertNull(payloads.get(0).getCompressionAlgo());
+        assertNull(payloads.get(0).getCompressionAlgorithm());
     }
     
     @Test
@@ -642,7 +642,7 @@ public class MessageOutputStreamTest {
         
         final List<PayloadChunk> payloads = mos.getPayloads();
         assertEquals(1, payloads.size());
-        assertNull(payloads.get(0).getCompressionAlgo());
+        assertNull(payloads.get(0).getCompressionAlgorithm());
     }
     
     @Test
@@ -657,7 +657,7 @@ public class MessageOutputStreamTest {
         final MessageCapabilities capabilities = ctx.getMessageCapabilities();
         final Set<CompressionAlgorithm> algos = capabilities.getCompressionAlgorithms();
         final CompressionAlgorithm bestAlgo = CompressionAlgorithm.getPreferredAlgorithm(algos);
-        assertEquals(bestAlgo, payloads.get(0).getCompressionAlgo());
+        assertEquals(bestAlgo, payloads.get(0).getCompressionAlgorithm());
     }
     
     @Test
@@ -671,8 +671,8 @@ public class MessageOutputStreamTest {
         
         final List<PayloadChunk> payloads = mos.getPayloads();
         assertEquals(2, payloads.size());
-        assertEquals(CompressionAlgorithm.GZIP, payloads.get(0).getCompressionAlgo());
-        assertEquals(CompressionAlgorithm.LZW, payloads.get(1).getCompressionAlgo());
+        assertEquals(CompressionAlgorithm.GZIP, payloads.get(0).getCompressionAlgorithm());
+        assertEquals(CompressionAlgorithm.LZW, payloads.get(1).getCompressionAlgorithm());
     }
     
     @Test
@@ -692,6 +692,6 @@ public class MessageOutputStreamTest {
 
         final List<PayloadChunk> payloads = mos.getPayloads();
         assertEquals(1, payloads.size());
-        assertEquals(CompressionAlgorithm.GZIP, payloads.get(0).getCompressionAlgo());
+        assertEquals(CompressionAlgorithm.GZIP, payloads.get(0).getCompressionAlgorithm());
     }
 }

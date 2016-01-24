@@ -15,6 +15,8 @@
  */
 package com.netflix.msl.entityauth;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -37,25 +39,34 @@ import com.netflix.msl.MslError;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+@EqualsAndHashCode(callSuper = true)
+@Getter
 public class PresharedProfileAuthenticationData extends EntityAuthenticationData {
     /** JSON key entity preshared keys identity. */
     private static final String KEY_PSKID = "pskid";
+
     /** JSON key entity profile. */
     private static final String KEY_PROFILE = "profile";
     
     /** Identity concatenation character. */
     private static final String CONCAT_CHAR = "-";
 
+    /** Entity preshared keys identity. */
+    private final String presharedKeysId;
+
+    /** Entity profile. */
+    private final String profile;
+
     /**
      * Construct a new preshared keys authentication data instance from the
      * specified entity preshared keys identity and profile.
      * 
-     * @param pskid the entity preshared keys identity.
+     * @param presharedKeysId the entity preshared keys identity.
      * @param profile the entity profile.
      */
-    public PresharedProfileAuthenticationData(final String pskid, final String profile) {
+    public PresharedProfileAuthenticationData(final String presharedKeysId, final String profile) {
         super(EntityAuthenticationScheme.PSK_PROFILE);
-        this.pskid = pskid;
+        this.presharedKeysId = presharedKeysId;
         this.profile = profile;
     }
 
@@ -70,7 +81,7 @@ public class PresharedProfileAuthenticationData extends EntityAuthenticationData
     public PresharedProfileAuthenticationData(final JSONObject authJo) throws MslEncodingException {
         super(EntityAuthenticationScheme.PSK_PROFILE);
         try {
-            pskid = authJo.getString(KEY_PSKID);
+            presharedKeysId = authJo.getString(KEY_PSKID);
             profile = authJo.getString(KEY_PROFILE);
         } catch (final JSONException e) {
             throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "psk profile authdata " + authJo.toString(), e);
@@ -86,21 +97,7 @@ public class PresharedProfileAuthenticationData extends EntityAuthenticationData
      */
     @Override
     public String getIdentity() {
-        return pskid + CONCAT_CHAR + profile;
-    }
-    
-    /**
-     * @return the entity preshared keys identity.
-     */
-    public String getPresharedKeysId() {
-        return pskid;
-    }
-    
-    /**
-     * @return the entity profile.
-     */
-    public String getProfile() {
-        return profile;
+        return presharedKeysId + CONCAT_CHAR + profile;
     }
 
     /* (non-Javadoc)
@@ -110,7 +107,7 @@ public class PresharedProfileAuthenticationData extends EntityAuthenticationData
     public JSONObject getAuthData() throws MslEncodingException {
         try {
             final JSONObject jsonObj = new JSONObject();
-            jsonObj.put(KEY_PSKID, pskid);
+            jsonObj.put(KEY_PSKID, presharedKeysId);
             jsonObj.put(KEY_PROFILE, profile);
             return jsonObj;
         } catch (final JSONException e) {
@@ -118,27 +115,4 @@ public class PresharedProfileAuthenticationData extends EntityAuthenticationData
         }
     }
 
-    /* (non-Javadoc)
-     * @see com.netflix.msl.entityauth.EntityAuthenticationData#equals(java.lang.Object)
-     */
-    @Override
-    public boolean equals(final Object obj) {
-        if (obj == this) return true;
-        if (!(obj instanceof PresharedProfileAuthenticationData)) return false;
-        final PresharedProfileAuthenticationData that = (PresharedProfileAuthenticationData)obj;
-        return super.equals(obj) && this.pskid.equals(that.pskid) && this.profile.equals(that.profile);
-    }
-
-    /* (non-Javadoc)
-     * @see com.netflix.msl.entityauth.EntityAuthenticationData#hashCode()
-     */
-    @Override
-    public int hashCode() {
-        return super.hashCode() ^ pskid.hashCode() ^ profile.hashCode();
-    }
-
-    /** Entity preshared keys identity. */
-    private final String pskid;
-    /** Entity profile. */
-    private final String profile;
 }

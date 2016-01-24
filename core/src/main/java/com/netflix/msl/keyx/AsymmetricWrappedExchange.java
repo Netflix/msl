@@ -37,6 +37,8 @@ import javax.crypto.spec.OAEPParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -73,9 +75,13 @@ import com.netflix.msl.util.MslContext;
 public class AsymmetricWrappedExchange extends KeyExchangeFactory {
     /** Encrypt/decrypt key operations. */
     private static final Set<KeyOp> ENCRYPT_DECRYPT = new HashSet<KeyOp>(Arrays.asList(KeyOp.encrypt, KeyOp.decrypt));
+
     /** Sign/verify key operations. */
     private static final Set<KeyOp> SIGN_VERIFY = new HashSet<KeyOp>(Arrays.asList(KeyOp.sign, KeyOp.verify));
-    
+
+    /** Authentication utilities. */
+    private final AuthenticationUtils authutils;
+
     /**
      * <p>A JWK RSA crypto context is unique in that it treats its wrap/unwrap
      * operations as encrypt/decrypt respectively. This is for compatibility
@@ -83,13 +89,19 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
      */
     private static class JwkRsaCryptoContext extends AsymmetricCryptoContext {
         /** JWK RSA crypto context mode. */
-        public static enum Mode {
+        public enum Mode {
             /** RSA-OAEP wrap/unwrap */
             WRAP_UNWRAP_OAEP,
             /** RSA PKCS#1 wrap/unwrap */
             WRAP_UNWRAP_PKCS1,
         }
-        
+
+        /** Wrap/unwrap transform. */
+        private final String wrapTransform;
+
+        /** Wrap/unwrap algorithm parameters. */
+        private final AlgorithmParameterSpec wrapParams;
+
         /**
          * <p>Create a new JWK RSA crypto context for the specified mode using
          * the provided public and private keys. The mode identifies the
@@ -203,11 +215,6 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
                     CryptoCache.resetCipher(wrapTransform);
             }
         }
-        
-        /** Wrap/unwrap transform. */
-        private final String wrapTransform;
-        /** Wrap/unwrap algorithm parameters. */
-        private final AlgorithmParameterSpec wrapParams;
     }
     
     /**
@@ -226,6 +233,8 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
      * <li>{@code publickey} the Base64-encoded public key used to wrap the session keys</li>
      * </ul></p>
      */
+    @EqualsAndHashCode(callSuper = true)
+    @Getter
     public static class RequestData extends KeyRequestData {
         public enum Mechanism {
             RSA,
@@ -238,11 +247,25 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
         
         /** JSON key key pair ID. */
         private static final String KEY_KEY_PAIR_ID = "keypairid";
+
         /** JSON key mechanism. */
         private static final String KEY_MECHANISM = "mechanism";
+
         /** JSON key public key. */
         private static final String KEY_PUBLIC_KEY = "publickey";
-        
+
+        /** Public/private key pair ID. */
+        private final String keyPairId;
+
+        /** Key mechanism. */
+        private final Mechanism mechanism;
+
+        /** Public key. */
+        private final PublicKey publicKey;
+
+        /** Private key. */
+        private final PrivateKey privateKey;
+
         /**
          * Create a new asymmetric key wrapped key request data instance with
          * the specified key pair ID and public key. The private key is also
@@ -328,34 +351,6 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
             }
             privateKey = null;
         }
-        
-        /**
-         * @return the key pair ID.
-         */
-        public String getKeyPairId() {
-            return keyPairId;
-        }
-        
-        /**
-         * @return the key mechanism.
-         */
-        public Mechanism getMechanism() {
-            return mechanism;
-        }
-        
-        /**
-         * @return the public key.
-         */
-        public PublicKey getPublicKey() {
-            return publicKey;
-        }
-        
-        /**
-         * @return the private key.
-         */
-        public PrivateKey getPrivateKey() {
-            return privateKey;
-        }
 
         /* (non-Javadoc)
          * @see com.netflix.msl.keyx.KeyRequestData#getKeydata()
@@ -369,49 +364,6 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
             return jsonObj;
         }
 
-        /* (non-Javadoc)
-         * @see java.lang.Object#equals(java.lang.Object)
-         */
-        @Override
-        public boolean equals(final Object obj) {
-            if (obj == this) return true;
-            if (!(obj instanceof RequestData)) return false;
-            final RequestData that = (RequestData)obj;
-            // Private keys are optional but must be considered.
-            final boolean privateKeysEqual =
-                privateKey == that.privateKey ||
-                (privateKey != null && that.privateKey != null &&
-                    Arrays.equals(privateKey.getEncoded(), that.privateKey.getEncoded()));
-            return super.equals(obj) &&
-                keyPairId.equals(that.keyPairId) &&
-                mechanism.equals(that.mechanism) &&
-                Arrays.equals(publicKey.getEncoded(), that.publicKey.getEncoded()) &&
-                privateKeysEqual;
-        }
-
-        /* (non-Javadoc)
-         * @see java.lang.Object#hashCode()
-         */
-        @Override
-        public int hashCode() {
-            // Private keys are optional but must be considered.
-            final int privateKeyHashCode = (privateKey != null)
-                ? Arrays.hashCode(privateKey.getEncoded()) : 0;
-            return super.hashCode() ^
-                keyPairId.hashCode() ^
-                mechanism.hashCode() ^
-                Arrays.hashCode(publicKey.getEncoded()) ^
-                privateKeyHashCode;
-        }
-
-        /** Public/private key pair ID. */
-        private final String keyPairId;
-        /** Key mechanism. */
-        private final Mechanism mechanism;
-        /** Public key. */
-        private final PublicKey publicKey;
-        /** Private key. */
-        private final PrivateKey privateKey;
     }
     
     /**
@@ -430,14 +382,27 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
      * <li>{@code hmackey} the Base64-encoded wrapped session HMAC key</li>
      * </ul></p>
      */
+    @EqualsAndHashCode(callSuper = true)
+    @Getter
     public static class ResponseData extends KeyResponseData {
         /** JSON key key pair ID. */
         private static final String KEY_KEY_PAIR_ID = "keypairid";
+
         /** JSON key encrypted encryption key. */
         private static final String KEY_ENCRYPTION_KEY = "encryptionkey";
+
         /** JSON key encrypted HMAC key. */
         private static final String KEY_HMAC_KEY = "hmackey";
-        
+
+        /** Public/private key pair ID. */
+        private final String keyPairId;
+
+        /** Public key-encrypted encryption key. */
+        private final byte[] encryptionKey;
+
+        /** Public key-encrypted HMAC key. */
+        private final byte[] hmacKey;
+
         /**
          * Create a new asymmetric key wrapped key response data instance with
          * the provided master token, specified key pair ID, and public
@@ -482,28 +447,7 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
                 throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + keyDataJO.toString(), e);
             }
         }
-        
-        /**
-         * @return the key pair ID.
-         */
-        public String getKeyPairId() {
-            return keyPairId;
-        }
-        
-        /**
-         * @return the public key-encrypted encryption key.
-         */
-        public byte[] getEncryptionKey() {
-            return encryptionKey;
-        }
-        
-        /**
-         * @return the public key-encrypted HMAC key.
-         */
-        public byte[] getHmacKey() {
-            return hmacKey;
-        }
-        
+
         @Override
         protected JSONObject getKeydata() throws JSONException {
             final JSONObject jsonObj = new JSONObject();
@@ -512,35 +456,7 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
             jsonObj.put(KEY_HMAC_KEY, DatatypeConverter.printBase64Binary(hmacKey));
             return jsonObj;
         }
-        
-        /* (non-Javadoc)
-         * @see java.lang.Object#equals(java.lang.Object)
-         */
-        @Override
-        public boolean equals(final Object obj) {
-            if (obj == this) return true;
-            if (!(obj instanceof ResponseData)) return false;
-            final ResponseData that = (ResponseData)obj;
-            return super.equals(obj) &&
-                keyPairId.equals(that.keyPairId) &&
-                Arrays.equals(encryptionKey, that.encryptionKey)&&
-                Arrays.equals(hmacKey, that.hmacKey);
-        }
 
-        /* (non-Javadoc)
-         * @see java.lang.Object#hashCode()
-         */
-        @Override
-        public int hashCode() {
-            return super.hashCode() ^ keyPairId.hashCode() ^ Arrays.hashCode(encryptionKey) ^ Arrays.hashCode(hmacKey);
-        }
-
-        /** Public/private key pair ID. */
-        private final String keyPairId;
-        /** Public key-encrypted encryption key. */
-        private final byte[] encryptionKey;
-        /** Public key-encrypted HMAC key. */
-        private final byte[] hmacKey;
     }
 
     /**
@@ -814,6 +730,4 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
         return new SessionCryptoContext(ctx, responseMasterToken, identity, encryptionKey, hmacKey);
     }
     
-    /** Authentication utilities. */
-    private final AuthenticationUtils authutils;
 }

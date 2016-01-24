@@ -21,6 +21,8 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONString;
@@ -127,6 +129,7 @@ import com.netflix.msl.util.MslContext;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+@EqualsAndHashCode(of={"serialNumber", "sequenceNumber", "expiration"})
 public class MasterToken implements JSONString {
     /** Milliseconds per second. */
     private static final long MILLISECONDS_PER_SECOND = 1000;
@@ -163,7 +166,58 @@ public class MasterToken implements JSONString {
     private static final String KEY_SIGNATURE_KEY = "signaturekey";
     /** JSON key signature algorithm. */
     private static final String KEY_SIGNATURE_ALGORITHM = "signaturealgorithm";
-        
+
+    /** MSL context. */
+    private final MslContext ctx;
+
+    /** Token data. */
+    private final byte[] tokendata;
+    /** Master token signature. */
+
+    private final byte[] signature;
+
+    /** Master token renewal window in seconds since the epoch. */
+    private final long renewalWindow;
+
+    /** Master token expiration in seconds since the epoch. */
+    private final long expiration;
+
+    /** Sequence number. */
+    @Getter
+    private final long sequenceNumber;
+
+    /** Serial number. */
+    @Getter
+    private final long serialNumber;
+
+    /** Session data. */
+    private final byte[] sessiondata;
+
+    /**
+     *  Master Token Issuer data or null if there is none or it is
+     * unknown (session data could not be decrypted).
+     */
+    @Getter
+    private final JSONObject issuerData;
+
+    /** Entity identity of the authenticated peer. Or null if unknown (session data could
+     * not be decrypted).
+     */
+    @Getter
+    private final String identity;
+
+    /** Encryption key, or null if unknown (session data could not be decrypted). */
+    @Getter
+    private final SecretKey encryptionKey;
+
+    /** Signature (HMAC) key, or null if unknown (session data could not be decrypted). */
+    @Getter
+    private final SecretKey signatureKey;
+
+    /** Token has been verified. */
+    @Getter
+    private final boolean verified;
+
     /**
      * Create a new master token with the specified expiration, identity,
      * serial number, and encryption and signature keys.
@@ -365,14 +419,7 @@ public class MasterToken implements JSONString {
     public boolean isDecrypted() {
         return sessiondata != null;
     }
-    
-    /**
-     * @return true if the token has been verified.
-     */
-    public boolean isVerified() {
-        return verified;
-    }
-    
+
     /**
      * @return the start of the renewal window.
      */
@@ -436,21 +483,7 @@ public class MasterToken implements JSONString {
             return expiration * MILLISECONDS_PER_SECOND <= ctx.getTime();
         return false;
     }
-    
-    /**
-     * @return the sequence number.
-     */
-    public long getSequenceNumber() {
-        return sequenceNumber;
-    }
 
-    /**
-     * @return the serial number.
-     */
-    public long getSerialNumber() {
-        return serialNumber;
-    }
-    
     /**
      * <p>A master token is considered newer if its sequence number is greater
      * than another master token. If both the sequence numbers are equal, then
@@ -482,73 +515,6 @@ public class MasterToken implements JSONString {
         final long cutoff = that.sequenceNumber - MslConstants.MAX_LONG_VALUE + 127;
         return this.sequenceNumber < cutoff;
     }
-    
-    /**
-     * Returns the issuer data.
-     * 
-     * @return the master token issuer data or null if there is none or it is
-     *         unknown (session data could not be decrypted).
-     */
-    public JSONObject getIssuerData() {
-        return issuerData;
-    }
-
-    /**
-     * Returns the identifier of the authenticated peer.
-     * 
-     * @return the Netflix peer identity or null if unknown (session data could
-     *         not be decrypted).
-     */
-    public String getIdentity() {
-        return identity;
-    }
-    
-    /**
-     * @return the encryption key or null if unknown (session data could not be
-     *         decrypted).
-     */
-    public SecretKey getEncryptionKey() {
-        return encryptionKey;
-    }
-
-    /**
-     * @return the signature key or null if unknown (session data could not be
-     *         decrypted).
-     */
-    public SecretKey getSignatureKey() {
-        return signatureKey;
-    }
-    
-    /** MSL context. */
-    private final MslContext ctx;
-
-    /** Token data. */
-    private final byte[] tokendata;
-    /** Master token signature. */
-    private final byte[] signature;
-    
-    /** Master token renewal window in seconds since the epoch. */
-    private final long renewalWindow;
-    /** Master token expiration in seconds since the epoch. */
-    private final long expiration;
-    /** Sequence number. */
-    private final long sequenceNumber;
-    /** Serial number. */
-    private final long serialNumber;
-    /** Session data. */
-    private final byte[] sessiondata;
-    
-    /** Issuer data. */
-    private final JSONObject issuerData;
-    /** Entity identity. */
-    private final String identity;
-    /** Encryption key. */
-    private final SecretKey encryptionKey;
-    /** Signature (HMAC) key. */
-    private final SecretKey signatureKey;
-    
-    /** Token is verified. */
-    private final boolean verified;
 
     /* (non-Javadoc)
      * @see org.json.JSONString#toJSONString()
@@ -602,29 +568,4 @@ public class MasterToken implements JSONString {
         }
     }
 
-    /**
-     * @param obj the reference object with which to compare.
-     * @return true if the other object is a master token with the same
-     *         serial number and sequence number.
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) return true;
-        if (obj instanceof MasterToken) {
-            final MasterToken that = (MasterToken)obj;
-            return this.serialNumber == that.serialNumber &&
-                this.sequenceNumber == that.sequenceNumber &&
-                this.expiration == that.expiration;
-        }
-        return false;
-    }
-
-    /* (non-Javadoc)
-     * @see java.lang.Object#hashCode()
-     */
-    @Override
-    public int hashCode() {
-        return (String.valueOf(serialNumber) + ":" + String.valueOf(sequenceNumber) + ":" + String.valueOf(expiration)).hashCode();
-    }
 }
