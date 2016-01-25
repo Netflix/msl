@@ -106,42 +106,6 @@ public class MslEncoderUtils {
     }
     
     /**
-     * Create a JSON array from a collection of objects that are either one of
-     * the accepted types: <code>Boolean</code>, <code>Byte[]</code>,
-     * <code>JSONArray</code>, <code>MslObject</code>, <code>Number</code>,
-     * <code>String</code>, or the <code>MslObject.NULL object</code> or turn
-     * any <code>JSONString</code> into a <code>MslObject</code>.
-     * 
-     * @param c a collection of JSON-compatible objects.
-     * @throws JSONException if a <code>JSONString</code> cannot be encoded
-     *         properly or an unsupported object is encountered.
-     */
-//    @SuppressWarnings("rawtypes")
-//    public static JSONArray createArray(final Collection<?> c) throws JSONException {
-//        final JSONArray array = new JSONArray();
-//        for (final Object o : c) {
-//            if (o instanceof Boolean ||
-//                o instanceof JSONArray ||
-//                o instanceof MslObject ||
-//                o instanceof Number ||
-//                o instanceof String ||
-//                o == MslObject.NULL)
-//            {
-//                array.put(o);
-//            } else if (o instanceof JSONString) {
-//                final JSONString js = (JSONString)o;
-//                final MslObject mo = encoder.toObject(js);
-//                array.put(mo);
-//            } else if (o instanceof Enum) {
-//                array.put(((Enum)o).name());
-//            } else {
-//                throw new JSONException("Class " + o.getClass().getName() + " is not JSON-compatible.");
-//            }
-//        }
-//        return array;
-//    }
-    
-    /**
      * Create a MSL array from a collection of objects that are either one of
      * the accepted types: <code>Boolean</code>, <code>Byte[]</code>,
      * <code>MslArray</code>, <code>MslObject</code>, <code>Number</code>,
@@ -180,21 +144,6 @@ public class MslEncoderUtils {
     }
     
     /**
-     * Performs a deep comparison of two JSON objects.
-     * 
-     * @param js1 first JSON object string representation.
-     * @param js2 second JSON object string representation.
-     * @return true if the strings are equivalent JSON objects or arrays.
-     * @throws JSONException if there is an error parsing the JSON.
-     * @see JsonUtils#equals(MslObject, MslObject)
-     */
-//    public static boolean objectEquals(final String js1, final String js2) throws JSONException {
-//        final MslObject o1 = new MslObject(js1);
-//        final MslObject o2 = new MslObject(js2);
-//        return JsonUtils.equals(o1, o2);
-//    }
-    
-    /**
      * Performs a deep comparison of two MSL objects.
      * 
      * @param ctx MSL context.
@@ -210,70 +159,6 @@ public class MslEncoderUtils {
         final MslObject o2 = encoder.parseObject(me2);
         return MslEncoderUtils.equals(o1, o2);
     }
-    
-    /**
-     * Performs a deep comparison of two JSON objects for equivalence. JSON
-     * objects are equivalent if they have the same name/value pairs. Also, two
-     * JSON object references are considered equal if both are null.
-     * 
-     * @param mo1 first JSON object.
-     * @param mo2 second JSON object.
-     * @return true if the JSON objects are equivalent.
-     * @throws JSONException if there is an error parsing the JSON.
-     */
-//    public static boolean equals(final MslObject mo1, final MslObject mo2) throws JSONException {
-//        // Equal if both null or the same object.
-//        if (mo1 == mo2)
-//            return true;
-//        // Not equal if only one of them is null.
-//        if (mo1 == null || mo2 == null)
-//            return false;
-//        
-//        // Check the children names. If there are no names, the JSON object is
-//        // empty.
-//        final String[] names1 = MslObject.getNames(mo1);
-//        final String[] names2 = MslObject.getNames(mo2);
-//        // Equal if both null or the same object.
-//        if (names1 == names2)
-//            return true;
-//        // Not equal if only one of them is null or of different length.
-//        if (names1 == null || names2 == null || names1.length != names2.length)
-//            return false;
-//        
-//        // Duplicate names are not allowed since that isn't valid JSON.
-//        final Set<String> namesSet1 = new HashSet<String>(Arrays.asList(names1));
-//        final Set<String> namesSet2 = new HashSet<String>(Arrays.asList(names2));
-//        if (namesSet1.size() != names1.length || namesSet1.size() != names2.length)
-//            return false;
-//        if (!namesSet1.equals(namesSet2))
-//            return false;
-//        
-//        // Bail on the first child element whose values are not equal.
-//        for (final String name : names1) {
-//            final Object o1 = mo1.get(name);
-//            final Object o2 = mo2.get(name);
-//            // Equal if both null or the same object.
-//            if (o1 == o2) continue;
-//            // Not equal if only one of them is null.
-//            if (o1 == null || o2 == null)
-//                return false;
-//            if (o1.getClass() != o2.getClass())
-//                return false;
-//            if (o1 instanceof MslObject) {
-//                if (!JsonUtils.equals((MslObject)o1, (MslObject)o2))
-//                    return false;
-//            } else if (o1 instanceof JSONArray) {
-//                if (!JsonUtils.equals((JSONArray)o1, (JSONArray)o2))
-//                    return false;
-//            } else {
-//                if (!o1.equals(o2))
-//                    return false;
-//            }
-//        }
-//        
-//        // All name/value pairs are equal.
-//        return true;
-//    }
     
     /**
      * Performs a deep comparison of two MSL objects for equivalence. MSL
@@ -342,54 +227,6 @@ public class MslEncoderUtils {
     }
     
     /**
-     * Performs a deep comparison of two JSON arrays for equality. Two JSON
-     * arrays are considered equal if both arrays contain the same number of
-     * elements, and all corresponding pairs of elements in the two arrays are
-     * equal. In other words, two JSON arrays are equal if they contain the
-     * same elements in the same order. Also, two JSON array references are
-     * considered equal if both are null.
-     * 
-     * @param ja1 first JSON array. May be null.
-     * @param ja2 second JSON array. May be null.
-     * @return true if the JSON arrays are equal.
-     * @throws MslEncoderException if there is an error parsing the data.
-     */
-//    public static boolean equals(final JSONArray ja1, final JSONArray ja2) throws JSONException {
-//        // Equal if both null or the same object.
-//        if (ja1 == ja2)
-//            return true;
-//        // Not equal if only one of them is null or of different length.
-//        if (ja1 == null || ja2 == null || ja1.length() != ja2.length())
-//            return false;
-//        
-//        // Bail on the first elements whose values are not equal.
-//        for (int i = 0; i < ja1.length(); ++i) {
-//            final Object o1 = ja1.get(i);
-//            final Object o2 = ja2.get(i);
-//            // Equal if both null or the same object.
-//            if (o1 == o2) continue;
-//            // Not equal if only one of them is null.
-//            if (o1 == null || o2 == null)
-//                return false;
-//            if (o1.getClass() != o2.getClass())
-//                return false;
-//            if (o1 instanceof MslObject) {
-//                if (!JsonUtils.equals((MslObject)o1, (MslObject)o2))
-//                    return false;
-//            } else if (o1 instanceof JSONArray) {
-//                if (!JsonUtils.equals((JSONArray)o1, (JSONArray)o2))
-//                    return false;
-//            } else {
-//                if (!o1.equals(o2))
-//                    return false;
-//            }
-//        }
-//        
-//        // All values are equal.
-//        return true;
-//    }
-    
-    /**
      * Performs a deep comparison of two MSL arrays for equality. Two MSL
      * arrays are considered equal if both arrays contain the same number of
      * elements, and all corresponding pairs of elements in the two arrays are
@@ -443,37 +280,6 @@ public class MslEncoderUtils {
         // All values are equal.
         return true;
     }
-
-    /**
-     * Performs a shallow comparison of two JSON arrays for set equality. Two
-     * JSON arrays are considered set-equal if both arrays contain the same
-     * number of elements and all elements found in one array are also found in
-     * the other. In other words, two JSON arrays are set-equal if they contain
-     * the same elements in the any order. Also, two JSON array references are
-     * considered set-equal if both are null.
-     * 
-     * @param ja1 first JSON array. May be null.
-     * @param ja2 second JSON array. May be null.
-     * @return true if the JSON arrays are set-equal.
-     * @throws JSONException if there is an error parsing the JSON.
-     */
-//    public static boolean equalSets(final JSONArray ja1, final JSONArray ja2) throws JSONException {
-//        // Equal if both null or the same object.
-//        if (ja1 == ja2)
-//            return true;
-//        // Not equal if only one of them is null or of different length.
-//        if (ja1 == null || ja2 == null || ja1.length() != ja2.length())
-//            return false;
-//        
-//        // Compare as sets.
-//        final Set<Object> s1 = new HashSet<Object>();
-//        final Set<Object> s2 = new HashSet<Object>();
-//        for (int i = 0; i < ja1.length(); ++i) {
-//            s1.add(ja1.get(i));
-//            s2.add(ja2.get(i));
-//        }
-//        return s1.equals(s2);
-//    }
     
     /**
      * Performs a shallow comparison of two MSL arrays for set equality. Two
