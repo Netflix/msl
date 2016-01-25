@@ -15,6 +15,15 @@
  */
 package burp;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Set;
+
+import javax.xml.bind.DatatypeConverter;
+
 import burp.msl.WiretapException;
 import burp.msl.WiretapModule;
 import burp.msl.msg.CaptureMessageDebugContext;
@@ -31,25 +40,16 @@ import com.netflix.msl.MslKeyExchangeException;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderUtils;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.msg.ErrorHeader;
 import com.netflix.msl.msg.MessageHeader;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.userauth.UserAuthenticationFactory;
-import com.netflix.msl.util.JsonUtils;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import javax.xml.bind.DatatypeConverter;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.charset.Charset;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Set;
+import com.netflix.msl.util.MslTestUtils;
 
 /**
  * User: skommidi
@@ -63,7 +63,6 @@ public class MSLHttpListener implements IHttpListener {
     private static final String KEY_SIGNATURE = "signature";
     private static final String KEY_SENDER = "sender";
     private static final String KEY_MESSAGE_ID = "messageid";
-    private static final String KEY_NON_REPLAYABLE = "nonreplayable";
     private static final String KEY_RENEWABLE = "renewable";
     private static final String KEY_CAPABILITIES = "capabilities";
     private static final String KEY_KEY_REQUEST_DATA = "keyrequestdata";
@@ -94,7 +93,7 @@ public class MSLHttpListener implements IHttpListener {
         this(null, null);
     }
 
-    public MSLHttpListener(IBurpExtenderCallbacks callbacks, IExtensionHelpers helpers) {
+    public MSLHttpListener(final IBurpExtenderCallbacks callbacks, final IExtensionHelpers helpers) {
         this.callbacks = callbacks;
         this.helpers = helpers;
 
@@ -107,7 +106,7 @@ public class MSLHttpListener implements IHttpListener {
 
         try {
             initializeMsl();
-        } catch (MslCryptoException e) {
+        } catch (final MslCryptoException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
@@ -121,24 +120,24 @@ public class MSLHttpListener implements IHttpListener {
         // Change the entity auth data to your usecase
         ctx.setEntityAuthenticationData(EntityAuthenticationScheme.PSK);
 
-        CaptureMessageDebugContext dbgCtx = new CaptureMessageDebugContext(true, true);
+        final CaptureMessageDebugContext dbgCtx = new CaptureMessageDebugContext(true, true);
         try {
             msgCtx = new WiretapMessageContext(dbgCtx);
-        } catch (MslKeyExchangeException e) {
+        } catch (final MslKeyExchangeException e) {
             throw new RuntimeException(e.getMessage());
-        } catch (NoSuchAlgorithmException e) {
+        } catch (final NoSuchAlgorithmException e) {
             throw new RuntimeException(e.getMessage());
-        } catch (InvalidAlgorithmParameterException e) {
+        } catch (final InvalidAlgorithmParameterException e) {
             throw new RuntimeException(e.getMessage());
         }
     }
 
     @Override
-    public void processHttpMessage(int toolFlag, boolean messageIsRequest, IHttpRequestResponse messageInfo) throws WiretapException {
+    public void processHttpMessage(final int toolFlag, final boolean messageIsRequest, final IHttpRequestResponse messageInfo) throws WiretapException {
 
         if(messageIsRequest) {
             // Get MSL Message
-            String body = getBody(messageIsRequest, messageInfo);
+            final String body = getBody(messageIsRequest, messageInfo);
             if(body == null)
                 return;
 
@@ -151,7 +150,7 @@ public class MSLHttpListener implements IHttpListener {
 
         } else {
             // Get MSL Message
-            String body = getBody(messageIsRequest, messageInfo);
+            final String body = getBody(messageIsRequest, messageInfo);
             if(body == null)
                 return;
 
@@ -166,11 +165,11 @@ public class MSLHttpListener implements IHttpListener {
 
     }
 
-    protected String getBody(boolean messageIsRequest, IHttpRequestResponse messageInfo) {
+    protected String getBody(final boolean messageIsRequest, final IHttpRequestResponse messageInfo) {
 
         String body = null;
         if(messageIsRequest) {
-            IRequestInfo requestInfo = this.helpers.analyzeRequest(messageInfo);
+            final IRequestInfo requestInfo = this.helpers.analyzeRequest(messageInfo);
 
             // Ignore HTTP Get Requests.
             if(requestInfo.getMethod().equalsIgnoreCase("GET")) {
@@ -181,7 +180,7 @@ public class MSLHttpListener implements IHttpListener {
             ignoreNextResponse = false;
 
             // Extracting body part of request message, this is actual MSL message.
-            String request = new String(messageInfo.getRequest());
+            final String request = new String(messageInfo.getRequest());
             body = request.substring(requestInfo.getBodyOffset());
 
         } else {
@@ -189,38 +188,38 @@ public class MSLHttpListener implements IHttpListener {
                 return body;
             }
 
-            IResponseInfo responseInfo = this.helpers.analyzeResponse(messageInfo.getResponse());
+            final IResponseInfo responseInfo = this.helpers.analyzeResponse(messageInfo.getResponse());
 
             // Extracting body part of request message, this is actual MSL message.
-            String response = new String(messageInfo.getResponse());
+            final String response = new String(messageInfo.getResponse());
             body = response.substring(responseInfo.getBodyOffset());
         }
 
         return body;
     }
 
-    protected String getBody(byte[] message) {
+    protected String getBody(final byte[] message) {
 
         String body = null;
 
-        IRequestInfo requestInfo = this.helpers.analyzeRequest(null, message);
+        final IRequestInfo requestInfo = this.helpers.analyzeRequest(null, message);
 
         // Extracting body part of request message, this is actual MSL message.
-        String request = new String(message);
+        final String request = new String(message);
         body = request.substring(requestInfo.getBodyOffset());
 
         return body;
     }
 
-    protected String processMslMessage(String body) throws WiretapException {
-
-        StringBuilder retData = new StringBuilder("");
+    protected String processMslMessage(final String body) throws WiretapException {
+        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+        final StringBuilder retData = new StringBuilder("");
 
         WiretapMessageInputStream mis;
         try {
-            ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(body.getBytes());
-            mis = new WiretapMessageInputStream(this.ctx, byteArrayInputStream, Charset.defaultCharset(), this.msgCtx.getKeyRequestData(), this.msgCtx.getCryptoContexts());
-        } catch (MslException e) {
+            final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(body.getBytes());
+            mis = new WiretapMessageInputStream(this.ctx, byteArrayInputStream, this.msgCtx.getKeyRequestData(), this.msgCtx.getCryptoContexts());
+        } catch (final MslException e) {
             throw new WiretapException(e.getMessage(), e);
         }
 
@@ -228,32 +227,32 @@ public class MSLHttpListener implements IHttpListener {
         final ErrorHeader errorHeader = mis.getErrorHeader();
         try {
             if (errorHeader != null) {
-                // Create error headerdata JSON Object
-                JSONObject errHeaderJO = new JSONObject();
+                // Create error headerdata MSL Object
+                final MslObject errHeaderMo = encoder.createObject();
     
                 // if entity auth data is present add that to the JSON object
                 if(errorHeader.getEntityAuthenticationData() != null) {
                     try {
-                        errHeaderJO.put(KEY_ENTITY_AUTHENTICATION_DATA, errorHeader.getEntityAuthenticationData());
-                    } catch (JSONException e) {
+                        errHeaderMo.put(KEY_ENTITY_AUTHENTICATION_DATA, errorHeader.getEntityAuthenticationData());
+                    } catch (final IllegalArgumentException e) {
                         throw new WiretapException(e.getMessage(), e);
                     }
                 }
     
-                final JSONObject errordataJO = new JSONObject();
+                final MslObject errordataMo = encoder.createObject();
                 try {
-                    errordataJO.put(KEY_RECIPIENT, errorHeader.getRecipient());
-                    errordataJO.put(KEY_MESSAGE_ID, errorHeader.getMessageId());
-                    errordataJO.put(KEY_ERROR_CODE, errorHeader.getErrorCode().intValue());
-                    errordataJO.put(KEY_INTERNAL_CODE, errorHeader.getInternalCode());
-                    errordataJO.put(KEY_ERROR_MESSAGE, errorHeader.getErrorMessage());
-                    errordataJO.put(KEY_USER_MESSAGE, errorHeader.getUserMessage());
+                    errordataMo.put(KEY_RECIPIENT, errorHeader.getRecipient());
+                    errordataMo.put(KEY_MESSAGE_ID, errorHeader.getMessageId());
+                    errordataMo.put(KEY_ERROR_CODE, errorHeader.getErrorCode().intValue());
+                    errordataMo.put(KEY_INTERNAL_CODE, errorHeader.getInternalCode());
+                    errordataMo.put(KEY_ERROR_MESSAGE, errorHeader.getErrorMessage());
+                    errordataMo.put(KEY_USER_MESSAGE, errorHeader.getUserMessage());
     
                     // Add headerdata in clear
-                    errHeaderJO.put(KEY_ERRORDATA, errordataJO);
-                    stdout.println(errHeaderJO); retData.append(errHeaderJO.toString() + "\n");
+                    errHeaderMo.put(KEY_ERRORDATA, errordataMo);
+                    stdout.println(errHeaderMo); retData.append(errHeaderMo.toString() + "\n");
                     stdout.println(); retData.append("\n");
-                } catch (JSONException e) {
+                } catch (final IllegalArgumentException e) {
                     throw new WiretapException(e.getMessage(), e);
                 }
     
@@ -264,16 +263,16 @@ public class MSLHttpListener implements IHttpListener {
         }
         
         try {
-            MessageHeader messageHeader = mis.getMessageHeader();
+            final MessageHeader messageHeader = mis.getMessageHeader();
 
-            // Create message headerdata JSON object
-            JSONObject msgHeaderJO = new JSONObject();
+            // Create message headerdata MSL object
+            final MslObject msgHeaderMo = encoder.createObject();
 
-            // if entity auth data is present add that to the JSON object
+            // if entity auth data is present add that to the MSL object
             if(messageHeader.getEntityAuthenticationData() != null) {
                 try {
-                    msgHeaderJO.put(KEY_ENTITY_AUTHENTICATION_DATA, messageHeader.getEntityAuthenticationData());
-                } catch (JSONException e) {
+                    msgHeaderMo.put(KEY_ENTITY_AUTHENTICATION_DATA, messageHeader.getEntityAuthenticationData());
+                } catch (final IllegalArgumentException e) {
                     throw new WiretapException(e.getMessage(), e);
                 }
             }
@@ -284,66 +283,66 @@ public class MSLHttpListener implements IHttpListener {
             if(messageHeader.getMasterToken() != null) {
                 masterToken = messageHeader.getMasterToken();
                 try {
-                    JSONObject parsedMasterTokenJO = parseMasterToken(masterToken);
-                    msgHeaderJO.put(KEY_MASTER_TOKEN, parsedMasterTokenJO);
-                } catch (JSONException e) {
+                    final MslObject parsedMasterTokenMo = parseMasterToken(masterToken);
+                    msgHeaderMo.put(KEY_MASTER_TOKEN, parsedMasterTokenMo);
+                } catch (final IllegalArgumentException e) {
                     throw new WiretapException(e.getMessage(), e);
-                } catch (MslException e) {
+                } catch (final MslException e) {
                     throw new WiretapException(e.getMessage(), e);
                 }
             }
 
-            final JSONObject headerdataJO = new JSONObject();
+            final MslObject headerdataMo = encoder.createObject();
             try {
-                headerdataJO.put(KEY_SENDER, messageHeader.getSender());
-                headerdataJO.put(KEY_RECIPIENT, messageHeader.getRecipient());
-                headerdataJO.put(KEY_MESSAGE_ID, messageHeader.getMessageId());
-                headerdataJO.put(KEY_NON_REPLAYABLE_ID, messageHeader.getNonReplayableId());
-                headerdataJO.put(KEY_RENEWABLE, messageHeader.isRenewable());
-                headerdataJO.put(KEY_HANDSHAKE, messageHeader.isHandshake());
-                headerdataJO.put(KEY_CAPABILITIES, messageHeader.getMessageCapabilities());
+                headerdataMo.put(KEY_SENDER, messageHeader.getSender());
+                headerdataMo.put(KEY_RECIPIENT, messageHeader.getRecipient());
+                headerdataMo.put(KEY_MESSAGE_ID, messageHeader.getMessageId());
+                headerdataMo.put(KEY_NON_REPLAYABLE_ID, messageHeader.getNonReplayableId());
+                headerdataMo.put(KEY_RENEWABLE, messageHeader.isRenewable());
+                headerdataMo.put(KEY_HANDSHAKE, messageHeader.isHandshake());
+                headerdataMo.put(KEY_CAPABILITIES, messageHeader.getMessageCapabilities());
                 if(!messageHeader.getKeyRequestData().isEmpty())
-                    headerdataJO.put(KEY_KEY_REQUEST_DATA, JsonUtils.createArray(messageHeader.getKeyRequestData()));
+                    headerdataMo.put(KEY_KEY_REQUEST_DATA, MslEncoderUtils.createArray(ctx, messageHeader.getKeyRequestData()));
                 if(messageHeader.getKeyResponseData() != null) {
-                    JSONObject keyResponseDataJO = new JSONObject(messageHeader.getKeyResponseData().toJSONString());
+                    final MslObject keyResponseDataJO = MslTestUtils.toMslObject(encoder, messageHeader.getKeyResponseData());
                     if(messageHeader.getKeyResponseData().getMasterToken() != null) {
                         masterToken = messageHeader.getKeyResponseData().getMasterToken();
                         keyResponseDataJO.remove(KEY_MASTER_TOKEN);
-                        JSONObject parsedMasterTokenJO = parseMasterToken(messageHeader.getKeyResponseData().getMasterToken());
-                        keyResponseDataJO.put(KEY_MASTER_TOKEN, parsedMasterTokenJO);
+                        final MslObject parsedMasterTokenMo = parseMasterToken(messageHeader.getKeyResponseData().getMasterToken());
+                        keyResponseDataJO.put(KEY_MASTER_TOKEN, parsedMasterTokenMo);
                     }
-                    headerdataJO.put(KEY_KEY_RESPONSE_DATA, keyResponseDataJO);
+                    headerdataMo.put(KEY_KEY_RESPONSE_DATA, keyResponseDataJO);
                 }
                 if(messageHeader.getUserAuthenticationData() != null)
-                    headerdataJO.put(KEY_USER_AUTHENTICATION_DATA, messageHeader.getUserAuthenticationData());
+                    headerdataMo.put(KEY_USER_AUTHENTICATION_DATA, messageHeader.getUserAuthenticationData());
                 if(messageHeader.getUserIdToken() != null) {
-                    headerdataJO.put(KEY_USER_ID_TOKEN, parseUserIdToken(messageHeader.getUserIdToken(), masterToken));
+                    headerdataMo.put(KEY_USER_ID_TOKEN, parseUserIdToken(messageHeader.getUserIdToken(), masterToken));
                 }
                 if(!messageHeader.getServiceTokens().isEmpty())
-                    headerdataJO.put(KEY_SERVICE_TOKENS, JsonUtils.createArray(messageHeader.getServiceTokens()));
+                    headerdataMo.put(KEY_SERVICE_TOKENS, MslEncoderUtils.createArray(ctx, messageHeader.getServiceTokens()));
 
                 // Add headerdata in clear
-                msgHeaderJO.put(KEY_HEADERDATA, headerdataJO);
-                stdout.println(msgHeaderJO); retData.append(msgHeaderJO.toString() + "\n");
-            } catch (JSONException e) {
+                msgHeaderMo.put(KEY_HEADERDATA, headerdataMo);
+                stdout.println(msgHeaderMo); retData.append(msgHeaderMo.toString() + "\n");
+            } catch (final MslEncoderException e) {
                 throw new WiretapException(e.getMessage(), e);
-            } catch (MslException e) {
+            } catch (final MslException e) {
                 throw new WiretapException(e.getMessage(), e);
             }
 
             try {
-                JSONObject payloadTokenJO;
-                while((payloadTokenJO = mis.nextPayload()) != null) {
-                    String data = new String(DatatypeConverter.parseBase64Binary(payloadTokenJO.getString(KEY_DATA)));
-                    payloadTokenJO.remove(KEY_DATA);
-                    payloadTokenJO.put(KEY_DATA, data);
+                MslObject payloadTokenMo;
+                while((payloadTokenMo = mis.nextPayload()) != null) {
+                    final String data = DatatypeConverter.printBase64Binary(payloadTokenMo.getBytes(KEY_DATA));
+                    payloadTokenMo.remove(KEY_DATA);
+                    payloadTokenMo.put(KEY_DATA, data);
     
-                    JSONObject payloadJO = new JSONObject();
-                    payloadJO.put(KEY_PAYLOAD, payloadTokenJO);
-                    stdout.println(payloadJO); retData.append(payloadJO.toString() + "\n");
+                    final MslObject payloadMo = encoder.createObject();
+                    payloadMo.put(KEY_PAYLOAD, payloadTokenMo);
+                    stdout.println(payloadMo); retData.append(payloadMo.toString() + "\n");
                 }
                 stdout.println(); retData.append("\n");
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw new WiretapException(e.getMessage(), e);
             }
             stdout.flush();
@@ -354,62 +353,47 @@ public class MSLHttpListener implements IHttpListener {
         return retData.toString();
     }
 
-    private JSONObject parseUserIdToken(UserIdToken userIdToken, MasterToken masterToken) throws JSONException, MslException {
-
-        JSONObject userIdTokenJO = new JSONObject(userIdToken.toJSONString());
+    private MslObject parseUserIdToken(final UserIdToken userIdToken, final MasterToken masterToken) throws MslException {
+        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
 
         byte[] tokendata;
         // Verify the JSON representation.
         boolean verified = false;
         try {
-            try {
-                tokendata = DatatypeConverter.parseBase64Binary(userIdTokenJO.getString(KEY_TOKENDATA));
-            } catch (final IllegalArgumentException e) {
-                throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_INVALID, "useridtoken " + userIdTokenJO.toString(), e).setEntity(masterToken);
-            }
-            if (tokendata == null || tokendata.length == 0)
-                throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_MISSING, "useridtoken " + userIdTokenJO.toString()).setEntity(masterToken);
-            byte[] signature;
-            try {
-                signature = DatatypeConverter.parseBase64Binary(userIdTokenJO.getString(KEY_SIGNATURE));
-            } catch (final IllegalArgumentException e) {
-                throw new MslEncodingException(MslError.USERIDTOKEN_SIGNATURE_INVALID, "useridtoken " + userIdTokenJO.toString(), e).setEntity(masterToken);
-            }
-            verified = cryptoContext.verify(tokendata, signature);
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "useridtoken " + userIdTokenJO.toString(), e).setEntity(masterToken);
+            final MslObject userIdTokenMo = MslTestUtils.toMslObject(encoder, userIdToken);
+            tokendata = userIdTokenMo.getBytes(KEY_TOKENDATA);
+            if (tokendata.length == 0)
+                throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_MISSING, "useridtoken " + userIdTokenMo.toString()).setEntity(masterToken);
+            final byte[] signature = userIdTokenMo.getBytes(KEY_SIGNATURE);
+            verified = cryptoContext.verify(tokendata, signature, encoder);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "useridtoken " + userIdToken, e).setEntity(masterToken);
         }
 
         // Pull the token data.
-        final String tokenDataJson = new String(tokendata, MslConstants.DEFAULT_CHARSET);
-        final JSONObject tokenDataJO;
+        final MslObject tokenDataMo;
         byte[] userdata;
         long mtSerialNumber;
         try {
-            tokenDataJO = new JSONObject(tokenDataJson);
-            long renewalWindow = tokenDataJO.getLong(KEY_RENEWAL_WINDOW);
-            long expiration = tokenDataJO.getLong(KEY_EXPIRATION);
+            tokenDataMo = encoder.parseObject(tokendata);
+            final long renewalWindow = tokenDataMo.getLong(KEY_RENEWAL_WINDOW);
+            final long expiration = tokenDataMo.getLong(KEY_EXPIRATION);
             if (expiration < renewalWindow)
-                throw new MslException(MslError.USERIDTOKEN_EXPIRES_BEFORE_RENEWAL, "usertokendata " + tokenDataJson).setEntity(masterToken);
-            mtSerialNumber = tokenDataJO.getLong(KEY_MASTER_TOKEN_SERIAL_NUMBER);
+                throw new MslException(MslError.USERIDTOKEN_EXPIRES_BEFORE_RENEWAL, "usertokendata " + DatatypeConverter.printBase64Binary(tokendata)).setEntity(masterToken);
+            mtSerialNumber = tokenDataMo.getLong(KEY_MASTER_TOKEN_SERIAL_NUMBER);
             if (mtSerialNumber < 0 || mtSerialNumber > MslConstants.MAX_LONG_VALUE)
-                throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokenDataJson).setEntity(masterToken);
-            long serialNumber = tokenDataJO.getLong(KEY_SERIAL_NUMBER);
+                throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + DatatypeConverter.printBase64Binary(tokendata)).setEntity(masterToken);
+            final long serialNumber = tokenDataMo.getLong(KEY_SERIAL_NUMBER);
             if (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE)
-                throw new MslException(MslError.USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokenDataJson).setEntity(masterToken);
-            final byte[] ciphertext;
-            try {
-                ciphertext = DatatypeConverter.parseBase64Binary(tokenDataJO.getString(KEY_USERDATA));
-            } catch (final IllegalArgumentException e) {
-                throw new MslException(MslError.USERIDTOKEN_USERDATA_INVALID, tokenDataJO.getString(KEY_USERDATA)).setEntity(masterToken);
-            }
-            if (ciphertext == null || ciphertext.length == 0)
-                throw new MslException(MslError.USERIDTOKEN_USERDATA_MISSING, tokenDataJO.getString(KEY_USERDATA)).setEntity(masterToken);
-            userdata = (verified) ? cryptoContext.decrypt(ciphertext) : null;
-            tokenDataJO.remove(KEY_USERDATA);
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR, "usertokendata " + tokenDataJson, e).setEntity(masterToken);
+                throw new MslException(MslError.USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + DatatypeConverter.printBase64Binary(tokendata)).setEntity(masterToken);
+            final byte[] ciphertext = tokenDataMo.getBytes(KEY_USERDATA);
+            if (ciphertext.length == 0)
+                throw new MslException(MslError.USERIDTOKEN_USERDATA_MISSING, tokenDataMo.getString(KEY_USERDATA)).setEntity(masterToken);
+            userdata = (verified) ? cryptoContext.decrypt(ciphertext, encoder) : null;
+            tokenDataMo.remove(KEY_USERDATA);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR, "usertokendata " + DatatypeConverter.printBase64Binary(tokendata), e).setEntity(masterToken);
         } catch (final MslCryptoException e) {
             e.setEntity(masterToken);
             throw e;
@@ -417,12 +401,11 @@ public class MSLHttpListener implements IHttpListener {
 
         // Pull the user data.
         if (userdata != null) {
-            final String userDataJson = new String(userdata, MslConstants.DEFAULT_CHARSET);
             try {
-                final JSONObject userDataJO = new JSONObject(userDataJson);
-                tokenDataJO.put(KEY_USERDATA, userDataJO);
-            } catch (final JSONException e) {
-                throw new MslEncodingException(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR, "userdata " + userDataJson, e).setEntity(masterToken);
+                final MslObject userDataMo = encoder.parseObject(userdata);
+                tokenDataMo.put(KEY_USERDATA, userDataMo);
+            } catch (final MslEncoderException e) {
+                throw new MslEncodingException(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR, "userdata " + DatatypeConverter.printBase64Binary(userdata), e).setEntity(masterToken);
             }
         }
 
@@ -430,79 +413,67 @@ public class MSLHttpListener implements IHttpListener {
         if (masterToken == null || mtSerialNumber != masterToken.getSerialNumber())
             throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH, "uit mtserialnumber " + mtSerialNumber + "; mt " + masterToken).setEntity(masterToken);
 
-        return tokenDataJO;
+        return tokenDataMo;
     }
 
-    private JSONObject parseMasterToken(MasterToken masterToken) throws JSONException, MslException {
-
-        JSONObject masterTokenJO = new JSONObject(masterToken.toJSONString());
+    private MslObject parseMasterToken(final MasterToken masterToken) throws MslException {
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
+        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
 
         byte[] tokendata;
         // Verify the JSON representation.
         boolean verified = false;
         try {
-            try {
-                tokendata = DatatypeConverter.parseBase64Binary(masterTokenJO.getString(KEY_TOKENDATA));
-            } catch (final IllegalArgumentException e) {
-                throw new MslEncodingException(MslError.MASTERTOKEN_TOKENDATA_INVALID, "mastertoken " + masterTokenJO.toString(), e);
-            }
-            if (tokendata == null || tokendata.length == 0)
-                throw new MslEncodingException(MslError.MASTERTOKEN_TOKENDATA_MISSING, "mastertoken " + masterTokenJO.toString());
-            byte[] signature;
-            try {
-                signature = DatatypeConverter.parseBase64Binary(masterTokenJO.getString(KEY_SIGNATURE));
-            } catch (final IllegalArgumentException e) {
-                throw new MslEncodingException(MslError.MASTERTOKEN_SIGNATURE_INVALID, "mastertoken " + masterTokenJO.toString(), e);
-            }
-            verified = cryptoContext.verify(tokendata, signature);
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "mastertoken " + masterTokenJO.toString(), e);
+            final MslObject masterTokenMo = MslTestUtils.toMslObject(encoder, masterToken);
+            tokendata = masterTokenMo.getBytes(KEY_TOKENDATA);
+            if (tokendata.length == 0)
+                throw new MslEncodingException(MslError.MASTERTOKEN_TOKENDATA_MISSING, "mastertoken " + masterTokenMo.toString());
+            final byte[] signature = masterTokenMo.getBytes(KEY_SIGNATURE);
+            verified = cryptoContext.verify(tokendata, signature, encoder);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "mastertoken " + masterToken, e);
         }
 
         // Pull the token data.
-        final String tokenDataJson = new String(tokendata, MslConstants.DEFAULT_CHARSET);
-        final JSONObject tokenDataJO;
+        final MslObject tokenDataMo;
         byte[] sessiondata;
         try {
-            tokenDataJO = new JSONObject(tokenDataJson);
-            long renewalWindow = tokenDataJO.getLong(KEY_RENEWAL_WINDOW);
-            long expiration = tokenDataJO.getLong(KEY_EXPIRATION);
+            tokenDataMo = encoder.parseObject(tokendata);
+            final long renewalWindow = tokenDataMo.getLong(KEY_RENEWAL_WINDOW);
+            final long expiration = tokenDataMo.getLong(KEY_EXPIRATION);
             if (expiration < renewalWindow)
-                throw new MslException(MslError.MASTERTOKEN_EXPIRES_BEFORE_RENEWAL, "mastertokendata " + tokenDataJson);
-            long sequenceNumber = tokenDataJO.getLong(KEY_SEQUENCE_NUMBER);
+                throw new MslException(MslError.MASTERTOKEN_EXPIRES_BEFORE_RENEWAL, "mastertokendata " + DatatypeConverter.printBase64Binary(tokendata));
+            final long sequenceNumber = tokenDataMo.getLong(KEY_SEQUENCE_NUMBER);
             if (sequenceNumber < 0 || sequenceNumber > MslConstants.MAX_LONG_VALUE)
-                throw new MslException(MslError.MASTERTOKEN_SEQUENCE_NUMBER_OUT_OF_RANGE, "mastertokendata " + tokenDataJson);
-            long serialNumber = tokenDataJO.getLong(KEY_SERIAL_NUMBER);
+                throw new MslException(MslError.MASTERTOKEN_SEQUENCE_NUMBER_OUT_OF_RANGE, "mastertokendata " + DatatypeConverter.printBase64Binary(tokendata));
+            final long serialNumber = tokenDataMo.getLong(KEY_SERIAL_NUMBER);
             if (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE)
-                throw new MslException(MslError.MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "mastertokendata " + tokenDataJson);
+                throw new MslException(MslError.MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "mastertokendata " + DatatypeConverter.printBase64Binary(tokendata));
             final byte[] ciphertext;
             try {
-                ciphertext = DatatypeConverter.parseBase64Binary(tokenDataJO.getString(KEY_SESSIONDATA));
+                ciphertext = DatatypeConverter.parseBase64Binary(tokenDataMo.getString(KEY_SESSIONDATA));
             } catch (final IllegalArgumentException e) {
-                throw new MslEncodingException(MslError.MASTERTOKEN_SESSIONDATA_INVALID, tokenDataJO.getString(KEY_SESSIONDATA));
+                throw new MslEncodingException(MslError.MASTERTOKEN_SESSIONDATA_INVALID, tokenDataMo.getString(KEY_SESSIONDATA));
             }
             if (ciphertext == null || ciphertext.length == 0)
-                throw new MslEncodingException(MslError.MASTERTOKEN_SESSIONDATA_MISSING, tokenDataJO.getString(KEY_SESSIONDATA));
-            sessiondata = (verified) ? cryptoContext.decrypt(ciphertext) : null;
-            tokenDataJO.remove(KEY_SESSIONDATA);
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.MASTERTOKEN_TOKENDATA_PARSE_ERROR, "mastertokendata " + tokenDataJson, e);
+                throw new MslEncodingException(MslError.MASTERTOKEN_SESSIONDATA_MISSING, tokenDataMo.getString(KEY_SESSIONDATA));
+            sessiondata = (verified) ? cryptoContext.decrypt(ciphertext, encoder) : null;
+            tokenDataMo.remove(KEY_SESSIONDATA);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MASTERTOKEN_TOKENDATA_PARSE_ERROR, "mastertokendata " + DatatypeConverter.printBase64Binary(tokendata), e);
         }
 
         // Pull the session data.
         if (sessiondata != null) {
-            // Parse JSON.
-            final String sessionDataJson = new String(sessiondata, MslConstants.DEFAULT_CHARSET);
             try {
-                final JSONObject sessionDataJO = new JSONObject(sessionDataJson);
-                tokenDataJO.put(KEY_SESSIONDATA, sessionDataJO);
-            } catch (final JSONException e) {
-                throw new MslEncodingException(MslError.MASTERTOKEN_SESSIONDATA_PARSE_ERROR, "sessiondata " + sessionDataJson, e);
+                final MslObject sessionDataMo = encoder.parseObject(sessiondata);
+                tokenDataMo.put(KEY_SESSIONDATA, sessionDataMo);
+            } catch (final MslEncoderException e) {
+                throw new MslEncodingException(MslError.MASTERTOKEN_SESSIONDATA_PARSE_ERROR, "sessiondata " + DatatypeConverter.printBase64Binary(sessiondata), e);
             }
         }
 
-        return tokenDataJO;
+        return tokenDataMo;
     }
 
     private final PrintWriter stdout;

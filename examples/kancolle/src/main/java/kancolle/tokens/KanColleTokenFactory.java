@@ -24,8 +24,6 @@ import javax.crypto.SecretKey;
 import kancolle.userauth.Officer;
 import kancolle.util.KanColleAuthenticationUtils;
 
-import org.json.JSONObject;
-
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
@@ -35,6 +33,7 @@ import com.netflix.msl.MslInternalException;
 import com.netflix.msl.MslMasterTokenException;
 import com.netflix.msl.MslUserIdTokenException;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.tokens.TokenFactory;
@@ -181,7 +180,7 @@ public class KanColleTokenFactory implements TokenFactory {
         do {
             serialNumber = ctx.getRandom().nextLong();
         } while (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE);
-        final JSONObject issuerData = null;
+        final MslObject issuerData = null;
         final String identity = entityAuthData.getIdentity();
         return new MasterToken(ctx, renewal, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey);
     }
@@ -227,7 +226,7 @@ public class KanColleTokenFactory implements TokenFactory {
         final Date renewal = new Date(ctx.getTime() + mtRenewalOffset);
         final Date expiration = new Date(ctx.getTime() + mtExpirationOffset);
         final long serialNumber = masterToken.getSerialNumber();
-        final JSONObject issuerData = null;
+        final MslObject issuerData = null;
         return new MasterToken(ctx, renewal, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey);
     }
 
@@ -262,7 +261,7 @@ public class KanColleTokenFactory implements TokenFactory {
         do {
             serialNumber = ctx.getRandom().nextLong();
         } while (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE);
-        final JSONObject issuerData = null;
+        final MslObject issuerData = null;
         return new UserIdToken(ctx, renewal, expiration, masterToken, serialNumber, issuerData, user);
     }
 
@@ -279,7 +278,7 @@ public class KanColleTokenFactory implements TokenFactory {
         final Date renewal = new Date(now + uitRenewalOffset);
         final Date expiration = new Date(now + uitExpirationOffset);
         final long serialNumber = userIdToken.getSerialNumber();
-        final JSONObject issuerData = null;
+        final MslObject issuerData = null;
         final MslUser user = userIdToken.getUser();
         return new UserIdToken(ctx, renewal, expiration, masterToken, serialNumber, issuerData, user);
     }

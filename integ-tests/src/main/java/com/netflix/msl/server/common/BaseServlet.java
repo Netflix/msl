@@ -15,25 +15,6 @@
  */
 package com.netflix.msl.server.common;
 
-import com.netflix.msl.MslConstants;
-import com.netflix.msl.MslCryptoException;
-import com.netflix.msl.MslEncodingException;
-import com.netflix.msl.MslKeyExchangeException;
-import com.netflix.msl.entityauth.EntityAuthenticationScheme;
-import com.netflix.msl.keyx.KeyExchangeScheme;
-import com.netflix.msl.msg.ConsoleFilterStreamFactory;
-import com.netflix.msl.msg.MessageInputStream;
-import com.netflix.msl.msg.MslControl;
-import com.netflix.msl.server.configuration.msg.ServerMessageContext;
-import com.netflix.msl.server.configuration.tokens.TokenFactoryType;
-import com.netflix.msl.server.configuration.util.ServerMslContext;
-import com.netflix.msl.userauth.UserAuthenticationScheme;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,6 +29,25 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Future;
 
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import com.netflix.msl.MslConstants;
+import com.netflix.msl.MslCryptoException;
+import com.netflix.msl.MslEncodingException;
+import com.netflix.msl.MslKeyExchangeException;
+import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.keyx.KeyExchangeScheme;
+import com.netflix.msl.msg.ConsoleFilterStreamFactory;
+import com.netflix.msl.msg.MessageInputStream;
+import com.netflix.msl.msg.MslControl;
+import com.netflix.msl.server.configuration.msg.ServerMessageContext;
+import com.netflix.msl.server.configuration.tokens.TokenFactoryType;
+import com.netflix.msl.server.configuration.util.ServerMslContext;
+import com.netflix.msl.userauth.UserAuthenticationScheme;
+
 /**
  * User: skommidi
  * Date: 7/21/14
@@ -55,6 +55,7 @@ import java.util.concurrent.Future;
 public class BaseServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
+    private static final boolean debug = false;
     protected static final String payload = "Hello";
     protected static final String error = "Error";
     private static final int TIMEOUT = 25000;
@@ -111,7 +112,7 @@ public class BaseServlet extends HttpServlet {
     }
 
     @Override
-    protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void service(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
         response.setHeader("Access-Control-Allow-Origin", "*");
         response.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
@@ -119,25 +120,28 @@ public class BaseServlet extends HttpServlet {
     }
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        PrintWriter out = response.getWriter();
+    protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
+        final PrintWriter out = response.getWriter();
 
         @SuppressWarnings("unchecked")
+        final
         Map<String, String[]> params = request.getParameterMap();
-        for (Entry<String,String[]> entry : params.entrySet()) {
+        for (final Entry<String,String[]> entry : params.entrySet()) {
             try {
-                String key = entry.getKey();
-                String[] value = entry.getValue();
+                final String key = entry.getKey();
+                final String[] value = entry.getValue();
                 setPrivateVariable(out, key, value);
-            } catch (Exception e) {
-                e.printStackTrace();
+            } catch (final Exception e) {
+                if (debug)
+                    e.printStackTrace();
                 out.println(e.getMessage());
             }
         }
         try {
             configure();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (final Exception e) {
+            if (debug)
+                e.printStackTrace();
             out.println(e.getMessage());
         }
         out.println(request.getServletPath());
@@ -145,16 +149,16 @@ public class BaseServlet extends HttpServlet {
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    protected void doPost(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
         final InputStream inStream = request.getInputStream();
         final OutputStream outStream = response.getOutputStream();
         InputStream mslInputStream = null;
 
 
-        byte[] buffer = new byte[5];
+        final byte[] buffer = new byte[5];
 
         try {
-            Future<MessageInputStream> msgInputStream = mslCtrl.receive(mslCtx, msgCtx, inStream, outStream, TIMEOUT);
+            final Future<MessageInputStream> msgInputStream = mslCtrl.receive(mslCtx, msgCtx, inStream, outStream, TIMEOUT);
 
             mslInputStream = msgInputStream.get();
             if (mslInputStream == null) return;
@@ -173,8 +177,9 @@ public class BaseServlet extends HttpServlet {
             msgCtx.setBuffer(buffer);
             mslCtrl.respond(mslCtx, msgCtx, inStream, outStream, msgInputStream.get(), TIMEOUT);
 
-        } catch (Exception ex) {
-            ex.printStackTrace(System.out);
+        } catch (final Exception ex) {
+            if (debug)
+                ex.printStackTrace(System.out);
         } finally {
             if (mslInputStream != null) {
                 mslInputStream.close();
@@ -182,7 +187,7 @@ public class BaseServlet extends HttpServlet {
         }
     }
 
-    private void setPrivateVariable(PrintWriter out, String key, String[] values) throws Exception {
+    private void setPrivateVariable(final PrintWriter out, final String key, final String[] values) throws Exception {
         if (key.equals("numthreads")) {
             this.numThreads = Integer.parseInt(values[0]);
             out.println(key + ": " + values[0]);
@@ -209,19 +214,19 @@ public class BaseServlet extends HttpServlet {
             out.println(key + ":" + values[0]);
         } else if (key.equals("unsupentityauthfact")) {
             this.unSupportedEntityAuthFactories.clear();
-            for (String entityAuth : values) {
+            for (final String entityAuth : values) {
                 this.unSupportedEntityAuthFactories.add(EntityAuthenticationScheme.getScheme(entityAuth));
                 out.println(key + ": " + entityAuth);
             }
         } else if (key.equals("unsupuserauthfact")) {
             this.unSupportedUserAuthFactories.clear();
-            for (String userAuth : values) {
+            for (final String userAuth : values) {
                 this.unSupportedUserAuthFactories.add(UserAuthenticationScheme.getScheme(userAuth));
                 out.println(key + ": " + userAuth);
             }
         } else if (key.equals("unsupkeyexfact")) {
             this.unSupportedKeyxFactories.clear();
-            for (String keyEx : values) {
+            for (final String keyEx : values) {
                 this.unSupportedKeyxFactories.add(KeyExchangeScheme.getScheme(keyEx));
                 out.println(key + ": " + keyEx);
             }
@@ -231,18 +236,18 @@ public class BaseServlet extends HttpServlet {
     }
 
 
-    protected String getBody(HttpServletRequest request) throws IOException {
+    protected String getBody(final HttpServletRequest request) throws IOException {
 
         String body = null;
-        StringBuilder stringBuilder = new StringBuilder();
+        final StringBuilder stringBuilder = new StringBuilder();
         BufferedReader bufferedReader = null;
 
         try {
-            InputStream inputStream = request.getInputStream();
+            final InputStream inputStream = request.getInputStream();
             if (inputStream != null) {
                 bufferedReader = new BufferedReader(new InputStreamReader(inputStream, MslConstants.DEFAULT_CHARSET));
                 bufferedReader.mark(100000);
-                char[] charBuffer = new char[128];
+                final char[] charBuffer = new char[128];
                 int bytesRead = -1;
                 while ((bytesRead = bufferedReader.read(charBuffer)) > 0) {
                     stringBuilder.append(charBuffer, 0, bytesRead);
@@ -251,13 +256,13 @@ public class BaseServlet extends HttpServlet {
             } else {
                 stringBuilder.append("");
             }
-        } catch (IOException ex) {
+        } catch (final IOException ex) {
             throw ex;
         } finally {
             if (bufferedReader != null) {
                 try {
                     bufferedReader.close();
-                } catch (IOException ex) {
+                } catch (final IOException ex) {
                     throw ex;
                 }
             }

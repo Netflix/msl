@@ -17,13 +17,14 @@ package kancolle.entityauth;
 
 import kancolle.KanColleMslError;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslException;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 
 /**
  * <p>Each naval port is identified by a callsign. The callsign may not contain
@@ -52,11 +53,11 @@ public class NavalPortAuthenticationData extends EntityAuthenticationData {
     /** Colon character. */
     private static final String CHAR_COLON = ":";
     
-    /** JSON key callsign. */
+    /** Key callsign. */
     private static final String KEY_CALLSIGN = "callsign";
-    /** JSON key page number. */
+    /** Key page number. */
     private static final String KEY_PAGE = "page";
-    /** JSON key word number. */
+    /** Key word number. */
     private static final String KEY_WORD = "word";
     
     /**
@@ -81,26 +82,26 @@ public class NavalPortAuthenticationData extends EntityAuthenticationData {
 
     /**
      * Construct a new naval port authentication data instance from the
-     * provided JSON object.
+     * provided MSL object.
      * 
-     * @param navalPortJo the authentication data JSON object.
+     * @param navalPortMo the authentication data MSL object.
      * @throws MslEncodingException if there is an error parsing the entity
      *         authentication data.
      * @throws MslException if the callsign contains a colon.
      */
-    public NavalPortAuthenticationData(final JSONObject navalPortJo) throws MslEncodingException, MslException {
+    public NavalPortAuthenticationData(final MslObject navalPortMo) throws MslEncodingException, MslException {
         super(KanColleEntityAuthenticationScheme.NAVAL_PORT);
         try {
-            callsign = navalPortJo.getString(KEY_CALLSIGN);
-            page = navalPortJo.getInt(KEY_PAGE);
-            word = navalPortJo.getInt(KEY_WORD);
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "naval port authdata " + navalPortJo.toString(), e);
+            callsign = navalPortMo.getString(KEY_CALLSIGN);
+            page = navalPortMo.getInt(KEY_PAGE);
+            word = navalPortMo.getInt(KEY_WORD);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "naval port authdata " + navalPortMo.toString(), e);
         }
         
         // Colons are not permitted in the callsign.
         if (callsign.contains(CHAR_COLON))
-            throw new MslException(KanColleMslError.NAVALPORT_ILLEGAL_IDENTITY, "naval port authdata " + navalPortJo.toString());
+            throw new MslException(KanColleMslError.NAVALPORT_ILLEGAL_IDENTITY, "naval port authdata " + navalPortMo.toString());
     }
     
     /* (non-Javadoc)
@@ -126,19 +127,15 @@ public class NavalPortAuthenticationData extends EntityAuthenticationData {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.entityauth.EntityAuthenticationData#getAuthData()
+     * @see com.netflix.msl.entityauth.EntityAuthenticationData#getAuthData(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public JSONObject getAuthData() throws MslEncodingException {
-        try {
-            final JSONObject jo = new JSONObject();
-            jo.put(KEY_CALLSIGN, callsign);
-            jo.put(KEY_PAGE, page);
-            jo.put(KEY_WORD, word);
-            return jo;
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, this.getClass().getName(), e);
-        }
+    public MslObject getAuthData(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException {
+        final MslObject mo = encoder.createObject();
+        mo.put(KEY_CALLSIGN, callsign);
+        mo.put(KEY_PAGE, page);
+        mo.put(KEY_WORD, word);
+        return mo;
     }
 
     /** Port callsign. */

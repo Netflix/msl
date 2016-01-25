@@ -15,23 +15,7 @@
  */
 package com.netflix.msl.client.tests;
 
-import com.netflix.msl.MslConstants;
-import com.netflix.msl.MslCryptoException;
-import com.netflix.msl.MslEncodingException;
-import com.netflix.msl.MslException;
-import com.netflix.msl.MslKeyExchangeException;
-import com.netflix.msl.client.common.BaseTestClass;
-import com.netflix.msl.client.configuration.ClientConfiguration;
-import com.netflix.msl.client.configuration.ServerConfiguration;
-import com.netflix.msl.entityauth.EntityAuthenticationScheme;
-import com.netflix.msl.keyx.KeyExchangeScheme;
-import com.netflix.msl.msg.MessageInputStream;
-import com.netflix.msl.tokens.MasterToken;
-import com.netflix.msl.userauth.UserAuthenticationScheme;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import static org.testng.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -42,7 +26,25 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.concurrent.ExecutionException;
 
-import static org.testng.Assert.assertTrue;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import com.netflix.msl.MslConstants;
+import com.netflix.msl.MslCryptoException;
+import com.netflix.msl.MslEncodingException;
+import com.netflix.msl.MslException;
+import com.netflix.msl.MslKeyExchangeException;
+import com.netflix.msl.client.common.BaseTestClass;
+import com.netflix.msl.client.configuration.ClientConfiguration;
+import com.netflix.msl.client.configuration.ServerConfiguration;
+import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.keyx.KeyExchangeScheme;
+import com.netflix.msl.msg.MessageInputStream;
+import com.netflix.msl.tokens.MasterToken;
+import com.netflix.msl.userauth.UserAuthenticationScheme;
 
 /**
  * User: skommidi
@@ -105,44 +107,44 @@ public class MasterTokenTests extends BaseTestClass {
 
 
     @Test(testName = "mastertoken happy case")
-    public void validMasterToken() throws InterruptedException, ExecutionException, MslException, IOException {
-        Date renewalWindow = new Date(System.currentTimeMillis() + 10000);
-        Date expiration = new Date(System.currentTimeMillis() + 20000);
+    public void validMasterToken() throws InterruptedException, ExecutionException, MslException, IOException, MslEncoderException {
+        final Date renewalWindow = new Date(System.currentTimeMillis() + 10000);
+        final Date expiration = new Date(System.currentTimeMillis() + 20000);
         final MasterToken masterToken = getMasterToken(renewalWindow, expiration, TIME_OUT, 0 /*sequenceNumberOffset*/);
 
-        MessageInputStream message = sendReceive(out, in, masterToken, null, null, true /*isRenewable*/, false /*addKeyRequestData*/);
+        final MessageInputStream message = sendReceive(out, in, masterToken, null, null, true /*isRenewable*/, false /*addKeyRequestData*/);
 
         thenThe(message)
                 .shouldHave().validBuffer();
 
-        MasterToken newMasterToken = message.getMessageHeader().getMasterToken();
+        final MasterToken newMasterToken = message.getMessageHeader().getMasterToken();
 
         validateMasterTokenEquals(masterToken, newMasterToken);
     }
 
     @Test(testName = "expired master token, with renewable set true, expect renewed master token")
-    public void expiredMasterTokenRenewable() throws InterruptedException, ExecutionException, MslException, IOException {
-        Date renewalWindow = new Date(System.currentTimeMillis() - 20000);
-        Date expiration = new Date(System.currentTimeMillis() - 10000);
+    public void expiredMasterTokenRenewable() throws InterruptedException, ExecutionException, MslException, IOException, MslEncoderException {
+        final Date renewalWindow = new Date(System.currentTimeMillis() - 20000);
+        final Date expiration = new Date(System.currentTimeMillis() - 10000);
         final MasterToken masterToken = getMasterToken(renewalWindow, expiration, TIME_OUT, 0 /*sequenceNumberOffset*/);
 
-        MessageInputStream message = sendReceive(out, in, masterToken, null, null, true /*isRenewable*/, true /*addKeyRequestData*/);
+        final MessageInputStream message = sendReceive(out, in, masterToken, null, null, true /*isRenewable*/, true /*addKeyRequestData*/);
 
         thenThe(message)
                 .shouldHave().validBuffer();
 
-        MasterToken newMasterToken = message.getMessageHeader().getKeyResponseData().getMasterToken();
+        final MasterToken newMasterToken = message.getMessageHeader().getKeyResponseData().getMasterToken();
 
         validateMasterTokenNotEquals(masterToken, newMasterToken);
     }
 
     @Test(testName = "expired master token, with renewable flag set false")
-    public void expiredMasterTokenNonRenewable() throws InterruptedException, ExecutionException, MslException, IOException {
-        Date renewalWindow = new Date(System.currentTimeMillis() - 20000);
-        Date expiration = new Date(System.currentTimeMillis() - 10000);
+    public void expiredMasterTokenNonRenewable() throws InterruptedException, ExecutionException, MslException, IOException, MslEncoderException {
+        final Date renewalWindow = new Date(System.currentTimeMillis() - 20000);
+        final Date expiration = new Date(System.currentTimeMillis() - 10000);
         final MasterToken masterToken = getMasterToken(renewalWindow, expiration, TIME_OUT, 0 /*sequenceNumberOffset*/);
 
-        MessageInputStream message = sendReceive(out, in, masterToken, null, null, false /*isRenewable*/, true /*addKeyRequestData*/);
+        final MessageInputStream message = sendReceive(out, in, masterToken, null, null, false /*isRenewable*/, true /*addKeyRequestData*/);
 
         thenTheErr(message)
                 .shouldBe().validateHdr()
@@ -150,12 +152,12 @@ public class MasterTokenTests extends BaseTestClass {
     }
 
     @Test(testName = "renewable master token, with sequence number out of range")
-    public void renewableMasterTokenSequenceNumOutOfRangeError() throws InterruptedException, ExecutionException, MslException, IOException {
-        Date renewalWindow = new Date(System.currentTimeMillis() - 10000);
-        Date expiration = new Date(System.currentTimeMillis() + 10000);
+    public void renewableMasterTokenSequenceNumOutOfRangeError() throws InterruptedException, ExecutionException, MslException, IOException, MslEncoderException {
+        final Date renewalWindow = new Date(System.currentTimeMillis() - 10000);
+        final Date expiration = new Date(System.currentTimeMillis() + 10000);
         final MasterToken masterToken = getMasterToken(renewalWindow, expiration, TIME_OUT, 33 /*sequenceNumberOffset*/);
 
-        MessageInputStream message = sendReceive(out, in, masterToken, null, null, true /*isRenewable*/, true /*addKeyRequestData*/);
+        final MessageInputStream message = sendReceive(out, in, masterToken, null, null, true /*isRenewable*/, true /*addKeyRequestData*/);
 
         thenTheErr(message)
                 .shouldBe().validateHdr()
@@ -163,47 +165,47 @@ public class MasterTokenTests extends BaseTestClass {
     }
 
     @Test(testName = "renewable master token")
-    public void renewableMasterTokenWithRenewableTrue() throws InterruptedException, ExecutionException, MslException, IOException {
-        Date renewalWindow = new Date(System.currentTimeMillis() - 10000);
-        Date expiration = new Date(System.currentTimeMillis() + 10000);
+    public void renewableMasterTokenWithRenewableTrue() throws InterruptedException, ExecutionException, MslException, IOException, MslEncoderException {
+        final Date renewalWindow = new Date(System.currentTimeMillis() - 10000);
+        final Date expiration = new Date(System.currentTimeMillis() + 10000);
         final MasterToken masterToken = getMasterToken(renewalWindow, expiration, TIME_OUT, 0 /*sequenceNumberOffset*/);
 
-        MessageInputStream message = sendReceive(out, in, masterToken, null, null, true /*isRenewable*/, true /*addKeyRequestData*/);
+        final MessageInputStream message = sendReceive(out, in, masterToken, null, null, true /*isRenewable*/, true /*addKeyRequestData*/);
 
         thenThe(message)
                 .shouldHave().validBuffer();
 
-        MasterToken newMasterToken = message.getMessageHeader().getKeyResponseData().getMasterToken();
+        final MasterToken newMasterToken = message.getMessageHeader().getKeyResponseData().getMasterToken();
 
         validateMasterTokenNotEquals(masterToken, newMasterToken);
     }
 
     @Test(testName = "renewable master token")
-    public void renewableMasterTokenWithRenewableFalse() throws InterruptedException, ExecutionException, MslException, IOException {
-        Date renewalWindow = new Date(System.currentTimeMillis() - 10000);
-        Date expiration = new Date(System.currentTimeMillis() + 10000);
+    public void renewableMasterTokenWithRenewableFalse() throws InterruptedException, ExecutionException, MslException, IOException, MslEncoderException {
+        final Date renewalWindow = new Date(System.currentTimeMillis() - 10000);
+        final Date expiration = new Date(System.currentTimeMillis() + 10000);
         final MasterToken masterToken = getMasterToken(renewalWindow, expiration, TIME_OUT, 0 /*sequenceNumberOffset*/);
 
-        MessageInputStream message = sendReceive(out, in, masterToken, null, null, false /*isRenewable*/, true /*addKeyRequestData*/);
+        final MessageInputStream message = sendReceive(out, in, masterToken, null, null, false /*isRenewable*/, true /*addKeyRequestData*/);
 
         thenThe(message)
                 .shouldHave().validBuffer();
 
-        MasterToken newMasterToken = message.getMessageHeader().getMasterToken();
+        final MasterToken newMasterToken = message.getMessageHeader().getMasterToken();
 
         validateMasterTokenEquals(masterToken, newMasterToken);
     }
 
     //@Test(testName = "replayed master token")
-    public void testReplayedMasterTokenWithoutKeyRequestData() throws InterruptedException, ExecutionException, MslException, NoSuchAlgorithmException, IOException, InvalidAlgorithmParameterException, URISyntaxException {
+    public void testReplayedMasterTokenWithoutKeyRequestData() throws InterruptedException, ExecutionException, MslException, NoSuchAlgorithmException, IOException, InvalidAlgorithmParameterException, URISyntaxException, MslEncoderException {
         clientConfig.setMessageNonReplayable(true)
                 .commitConfiguration();
 
-        Date renewalWindow = new Date(System.currentTimeMillis() + 10000);   // Renewable in the past
-        Date expiration = new Date(System.currentTimeMillis() + 20000);   // Expiration in the past
+        final Date renewalWindow = new Date(System.currentTimeMillis() + 10000);   // Renewable in the past
+        final Date expiration = new Date(System.currentTimeMillis() + 20000);   // Expiration in the past
         final MasterToken masterToken = getMasterToken(renewalWindow, expiration, TIME_OUT, 0 /*sequenceNumberOffset*/);
 
-        MessageInputStream message = sendReceive(out, in, masterToken, null, null, true /*isRenewable*/, false /*addKeyRequestData*/);
+        final MessageInputStream message = sendReceive(out, in, masterToken, null, null, true /*isRenewable*/, false /*addKeyRequestData*/);
 
         thenTheErr(message)
                 .shouldBe().validateHdr()
@@ -212,7 +214,7 @@ public class MasterTokenTests extends BaseTestClass {
     }
 
 
-    private void validateMasterTokenNotEquals(MasterToken masterToken, MasterToken newMasterToken) {
+    private void validateMasterTokenNotEquals(final MasterToken masterToken, final MasterToken newMasterToken) {
         assertTrue(newMasterToken.isNewerThan(masterToken), "New masterToken is not newer than old masterToken.");
         assertTrue(newMasterToken.getSequenceNumber() > masterToken.getSequenceNumber(), "New sequence number is not greater than old sequence number.");
         assertTrue(newMasterToken.getRenewalWindow().after(new Date(System.currentTimeMillis())), "New renewal window timestamp is not after current timestamp");
@@ -221,14 +223,14 @@ public class MasterTokenTests extends BaseTestClass {
     }
 
 
-    private void validateMasterTokenEquals(MasterToken masterToken, MasterToken newMasterToken) {
+    private void validateMasterTokenEquals(final MasterToken masterToken, final MasterToken newMasterToken) {
         assertTrue(newMasterToken.getSequenceNumber() == masterToken.getSequenceNumber(), "New sequence number is expected to be equal to old sequence number.");
         assertTrue(newMasterToken.getRenewalWindow().equals(masterToken.getRenewalWindow()), "New renewal window timestamp is expected to be equal to old renewal window timestamp");
         assertTrue(newMasterToken.getExpiration().equals(masterToken.getExpiration()), "New expiration timestamp is expected to be equal to old expiration timestamp");
         assertTrue(newMasterToken.getExpiration().after(newMasterToken.getRenewalWindow()), "New expiration timestamp is not after new renewal window timestamp");
     }
 
-    private int numThreads = 0;
+    private final int numThreads = 0;
     private ServerConfiguration serverConfig;
     private OutputStream out;
     private DelayedInputStream in;

@@ -43,6 +43,8 @@ import kancolle.userauth.OfficerDatabase;
 import com.netflix.msl.MslConstants.CompressionAlgorithm;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.keyx.AsymmetricWrappedExchange;
 import com.netflix.msl.keyx.DiffieHellmanExchange;
 import com.netflix.msl.keyx.DiffieHellmanParameters;
@@ -74,7 +76,9 @@ public abstract class KanColleMslContext extends MslContext {
         final Set<CompressionAlgorithm> compressionAlgos = new HashSet<CompressionAlgorithm>();
         compressionAlgos.add(CompressionAlgorithm.GZIP);
         final List<String> languages = Arrays.asList(KanColleConstants.en_US, KanColleConstants.ja_JP);
-        this.messageCaps = new MessageCapabilities(compressionAlgos, languages);
+        final Set<MslEncoderFormat> encoderFormats = new HashSet<MslEncoderFormat>();
+        encoderFormats.add(MslEncoderFormat.JSON);
+        this.messageCaps = new MessageCapabilities(compressionAlgos, languages, encoderFormats);
         
         // Auxiliary authentication classes.
         final DiffieHellmanParameters params = new KanColleDiffieHellmanParameters();
@@ -203,6 +207,14 @@ public abstract class KanColleMslContext extends MslContext {
         return store;
     }
     
+    /* (non-Javadoc)
+     * @see com.netflix.msl.util.MslContext#getMslEncoderFactory()
+     */
+    @Override
+    public MslEncoderFactory getMslEncoderFactory() {
+        return encoderFactory;
+    }
+
     /** Message capabilities. */
     private final MessageCapabilities messageCaps;
     /** Entity authentication factories by scheme. */
@@ -215,4 +227,6 @@ public abstract class KanColleMslContext extends MslContext {
     private final TokenFactory tokenFactory;
     /** MSL store. */
     private final MslStore store = new SimpleMslStore();
+    /** MSL encoder factory. */
+    private final MslEncoderFactory encoderFactory = new MslEncoderFactory();
 }

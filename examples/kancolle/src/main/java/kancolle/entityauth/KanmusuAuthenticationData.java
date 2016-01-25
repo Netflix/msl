@@ -17,13 +17,14 @@ package kancolle.entityauth;
 
 import kancolle.KanColleMslError;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 
 /**
  * <p>Each Kanmusu ship is identified by a type and name. The unique identity
@@ -44,9 +45,9 @@ import com.netflix.msl.entityauth.EntityAuthenticationData;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class KanmusuAuthenticationData extends EntityAuthenticationData {
-    /** JSON key ship type. */
+    /** Key ship type. */
     private static final String KEY_TYPE = "type";
-    /** JSON key ship name. */
+    /** Key ship name. */
     private static final String KEY_NAME = "name";
     
     /** Colon character. */
@@ -92,25 +93,25 @@ public class KanmusuAuthenticationData extends EntityAuthenticationData {
 
     /**
      * Construct a new Kanmusu authentication data instance from the provided
-     * JSON object.
+     * MSL object.
      * 
-     * @param kanmusuJo the authentication data JSON object.
+     * @param kanmusuMo the authentication data MSL object.
      * @throws MslEncodingException if there is an error parsing the entity
      *         authentication data.
      * @throws MslEntityAuthException if the type or name includes a colon.
      */
-    public KanmusuAuthenticationData(final JSONObject kanmusuJo) throws MslEncodingException, MslEntityAuthException {
+    public KanmusuAuthenticationData(final MslObject kanmusuMo) throws MslEncodingException, MslEntityAuthException {
         super(KanColleEntityAuthenticationScheme.KANMUSU);
         try {
-            type = kanmusuJo.getString(KEY_TYPE);
-            name = kanmusuJo.getString(KEY_NAME);
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "kanmusu authdata " + kanmusuJo.toString(), e);
+            type = kanmusuMo.getString(KEY_TYPE);
+            name = kanmusuMo.getString(KEY_NAME);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "kanmusu authdata " + kanmusuMo.toString(), e);
         }
         
         // Colons are not permitted in the type or name.
         if (type.contains(CHAR_COLON) || name.contains(CHAR_COLON))
-            throw new MslEntityAuthException(KanColleMslError.KANMUSU_ILLEGAL_IDENTITY, "kanmusu authdata " + kanmusuJo.toString());
+            throw new MslEntityAuthException(KanColleMslError.KANMUSU_ILLEGAL_IDENTITY, "kanmusu authdata " + kanmusuMo.toString());
     }
 
     /* (non-Javadoc)
@@ -136,18 +137,14 @@ public class KanmusuAuthenticationData extends EntityAuthenticationData {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.entityauth.EntityAuthenticationData#getAuthData()
+     * @see com.netflix.msl.entityauth.EntityAuthenticationData#getAuthData(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public JSONObject getAuthData() throws MslEncodingException {
-        try {
-            final JSONObject jo = new JSONObject();
-            jo.put(KEY_TYPE, type);
-            jo.put(KEY_NAME, name);
-            return jo;
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, this.getClass().getName(), e);
-        }
+    public MslObject getAuthData(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException {
+        final MslObject mo = encoder.createObject();
+        mo.put(KEY_TYPE, type);
+        mo.put(KEY_NAME, name);
+        return mo;
     }
 
     /** Ship type. */

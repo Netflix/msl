@@ -30,13 +30,7 @@ import java.util.concurrent.Future;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.json.JSONObject;
-
-import com.netflix.msl.MslConstants;
-import com.netflix.msl.MslCryptoException;
-import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslException;
-import com.netflix.msl.MslMasterTokenException;
 import com.netflix.msl.client.assertable.ErrorHdrAssertable;
 import com.netflix.msl.client.assertable.MsgAssertable;
 import com.netflix.msl.client.configuration.ClientConfiguration;
@@ -47,6 +41,9 @@ import com.netflix.msl.crypto.NullCryptoContext;
 import com.netflix.msl.crypto.SessionCryptoContext;
 import com.netflix.msl.crypto.SymmetricCryptoContext;
 import com.netflix.msl.entityauth.MockPresharedAuthenticationFactory;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.keyx.KeyRequestData;
 import com.netflix.msl.msg.MessageBuilder;
 import com.netflix.msl.msg.MessageHeader;
@@ -58,6 +55,7 @@ import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.tokens.ServiceToken;
 import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.userauth.MockEmailPasswordAuthenticationFactory;
+import com.netflix.msl.util.MslTestUtils;
 
 /**
  * User: skommidi
@@ -68,7 +66,7 @@ public class BaseTestClass {
     private static final long SERIAL_NUMBER = 42;
     private static final String SERVICE_TOKEN_NAME = "serviceTokenName";
     private static final ICryptoContext NULL_CRYPTO_CONTEXT = new NullCryptoContext();
-    private static JSONObject ISSUER_DATA;
+    private static MslObject ISSUER_DATA;
     protected static final String IDENTITY = MockPresharedAuthenticationFactory.PSK_ESN;
     protected static final SecretKey ENCRYPTION_KEY = MockPresharedAuthenticationFactory.KPE;
     protected static final SecretKey HMAC_KEY = MockPresharedAuthenticationFactory.KPH;
@@ -104,11 +102,11 @@ public class BaseTestClass {
     }
 
     public void loadProperties() throws IOException {
-        Properties prop = new Properties();
+        final Properties prop = new Properties();
         prop.load(BaseTestClass.class.getClassLoader().getResourceAsStream("test.properties"));
 
-        String grettyHttpPort = System.getProperty("gretty.httpPort");
-        String grettyContextPath = System.getProperty("gretty.contextPath");
+        final String grettyHttpPort = System.getProperty("gretty.httpPort");
+        final String grettyContextPath = System.getProperty("gretty.contextPath");
         if (grettyHttpPort != null && grettyContextPath != null) {
             // By definition, Gretty is localhost
             setRemoteEntityUrl("localhost:" + grettyHttpPort + grettyContextPath);
@@ -122,21 +120,21 @@ public class BaseTestClass {
         return remoteEntityUrl;
     }
 
-    private void setRemoteEntityUrl(String remoteEntityUrl) {
+    private void setRemoteEntityUrl(final String remoteEntityUrl) {
         this.remoteEntityUrl = remoteEntityUrl;
     }
 
-    public static MsgAssertable thenThe(MessageInputStream msg) {
+    public static MsgAssertable thenThe(final MessageInputStream msg) {
         return new MsgAssertable(msg);
     }
 
-    public static ErrorHdrAssertable thenTheErr(MessageInputStream msg) {
+    public static ErrorHdrAssertable thenTheErr(final MessageInputStream msg) {
         return new ErrorHdrAssertable(msg);
     }
 
     protected MasterToken getInitialMasterToken(final int timeOut) throws ExecutionException, InterruptedException {
-        MessageInputStream message = sendReceive(timeOut);
-        MasterToken initialMasterToken = message.getMessageHeader().getKeyResponseData().getMasterToken();
+        final MessageInputStream message = sendReceive(timeOut);
+        final MasterToken initialMasterToken = message.getMessageHeader().getKeyResponseData().getMasterToken();
 
         return initialMasterToken;
     }
@@ -144,10 +142,10 @@ public class BaseTestClass {
     /**
      * get master token with given renewal window and expiration.
      */
-    protected MasterToken getMasterToken(final Date renewalWindow, final Date expiration, final int timeOut, final int sequenceNumberOffset) throws ExecutionException, InterruptedException, MslCryptoException, MslEncodingException, MslMasterTokenException {
-        MasterToken initialMasterToken = getInitialMasterToken(timeOut);
+    protected MasterToken getMasterToken(final Date renewalWindow, final Date expiration, final int timeOut, final int sequenceNumberOffset) throws ExecutionException, InterruptedException, MslEncoderException, MslException {
+        final MasterToken initialMasterToken = getInitialMasterToken(timeOut);
 
-        ClientMslContext mslContext = clientConfig.getMslContext();
+        final ClientMslContext mslContext = clientConfig.getMslContext();
 
         // Temporarily switch to server crypto context to create master token
         mslContext.setMslCryptoContext(serverMslCryptoContext);
@@ -155,39 +153,51 @@ public class BaseTestClass {
         // create master token with server crypto context; mocking server
         final MasterToken masterToken = new MasterToken(mslContext, renewalWindow, expiration,
                 initialMasterToken.getSequenceNumber() + sequenceNumberOffset, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, HMAC_KEY);
+        
+        // Encode and parse the master token, to force it to use the server
+        // crypto context.
+        final MslEncoderFactory encoder = mslContext.getMslEncoderFactory();
+        final MslObject masterTokenMo = MslTestUtils.toMslObject(encoder, masterToken);
+        final MasterToken parsedMasterToken = new MasterToken(mslContext, masterTokenMo);
 
         // Store corresponding session crypto context of the mastertoken
-        final ICryptoContext sessionCryptoContext = new SessionCryptoContext(mslContext, masterToken);
-        mslContext.getMslStore().setCryptoContext(masterToken, sessionCryptoContext);
+        final ICryptoContext sessionCryptoContext = new SessionCryptoContext(mslContext, parsedMasterToken);
+        mslContext.getMslStore().setCryptoContext(parsedMasterToken, sessionCryptoContext);
 
         // switch back to client crypto context after creating master token
         mslContext.setClientCryptoContext();
 
-        return masterToken;
+        return parsedMasterToken;
     }
 
     /**
      * get user id token with given renewal window and expiration.
      */
-    protected UserIdToken getUserIdToken(final MasterToken initialMasterToken, final Date renewalWindow, final Date expiration, final int timeOut) throws ExecutionException, InterruptedException, MslCryptoException, MslEncodingException {
+    protected UserIdToken getUserIdToken(final MasterToken initialMasterToken, final Date renewalWindow, final Date expiration, final int timeOut) throws ExecutionException, InterruptedException, MslEncoderException, MslException {
 
-        ClientMslContext mslContext = clientConfig.getMslContext();
+        final ClientMslContext mslContext = clientConfig.getMslContext();
 
         // Temporarily switch to server crypto context to create master token
         mslContext.setMslCryptoContext(serverMslCryptoContext);
 
         final UserIdToken userIdToken = new UserIdToken(mslContext, renewalWindow, expiration, initialMasterToken, SERIAL_NUMBER, ISSUER_DATA, USER);
+        
+        // Encode and parse the master token, to force it to use the server
+        // crypto context.
+        final MslEncoderFactory encoder = mslContext.getMslEncoderFactory();
+        final MslObject userIdTokenMo = MslTestUtils.toMslObject(encoder, userIdToken);
+        final UserIdToken parsedUserIdToken = new UserIdToken(mslContext, userIdTokenMo, initialMasterToken);
 
         // switch back to client crypto context after creating master token
         mslContext.setClientCryptoContext();
 
-        return userIdToken;
+        return parsedUserIdToken;
     }
 
     /**
      * get service token bound to given master token and user id token
      */
-    protected Set<ServiceToken> getServiceToken(MasterToken masterToken, UserIdToken userIdToken, ServiceTokenType serviceTokenType, boolean withData) throws MslException {
+    protected Set<ServiceToken> getServiceToken(final MasterToken masterToken, final UserIdToken userIdToken, final ServiceTokenType serviceTokenType, final boolean withData) throws MslException {
         final Random random = new Random();
         final Set<ServiceToken> serviceTokens = new HashSet<ServiceToken>();
         final byte[] data;
@@ -199,7 +209,7 @@ public class BaseTestClass {
             data = new byte[0];
         }
 
-        ClientMslContext ctx = clientConfig.getMslContext();
+        final ClientMslContext ctx = clientConfig.getMslContext();
         switch(serviceTokenType) {
             case BOTH:
                 serviceTokens.add(new ServiceToken(ctx, SERVICE_TOKEN_NAME + "Both", data, masterToken, userIdToken, false, null, NULL_CRYPTO_CONTEXT));
@@ -217,14 +227,14 @@ public class BaseTestClass {
         return serviceTokens;
     }
 
-    public MessageInputStream sendReceive(int timeOut) throws ExecutionException, InterruptedException {
-        Future<MslControl.MslChannel> mslChannelFuture = clientConfig.getMslControl().request(clientConfig.getMslContext(),
+    public MessageInputStream sendReceive(final int timeOut) throws ExecutionException, InterruptedException {
+        final Future<MslControl.MslChannel> mslChannelFuture = clientConfig.getMslControl().request(clientConfig.getMslContext(),
                 clientConfig.getMessageContext(),
                 clientConfig.getRemoteEntity(),
                 timeOut);
 
         if(mslChannelFuture.isDone()) {
-            MslControl.MslChannel mslChannel = mslChannelFuture.get();
+            final MslControl.MslChannel mslChannel = mslChannelFuture.get();
             return mslChannel.input;
         }
 
@@ -239,24 +249,24 @@ public class BaseTestClass {
         builder.setNonReplayable(clientConfig.getMessageContext().isNonReplayable());
 
         if(addKeyRequestData) {
-            Set<KeyRequestData> keyRequestDataSet = clientConfig.getMessageContext().getKeyRequestData();
-            for(KeyRequestData keyRequestData : keyRequestDataSet) {
+            final Set<KeyRequestData> keyRequestDataSet = clientConfig.getMessageContext().getKeyRequestData();
+            for(final KeyRequestData keyRequestData : keyRequestDataSet) {
                 builder.addKeyRequestData(keyRequestData);
             }
         }
 
         if(serviceTokens != null) {
-            for(ServiceToken serviceToken : serviceTokens) {
+            for(final ServiceToken serviceToken : serviceTokens) {
                 builder.addServiceToken(serviceToken);
             }
         }
 
         final MessageHeader requestHeader = builder.getHeader();
 
-        final MessageOutputStream request = new MessageOutputStream(clientConfig.getMslContext(), out, MslConstants.DEFAULT_CHARSET, requestHeader, requestHeader.getCryptoContext());
+        final MessageOutputStream request = new MessageOutputStream(clientConfig.getMslContext(), out, requestHeader, requestHeader.getCryptoContext());
         clientConfig.getMessageContext().write(request);
 
-        final MessageInputStream response = new MessageInputStream(clientConfig.getMslContext(), in, MslConstants.DEFAULT_CHARSET,
+        final MessageInputStream response = new MessageInputStream(clientConfig.getMslContext(), in,
                 clientConfig.getMessageContext().getKeyRequestData(), clientConfig.getMessageContext().getCryptoContexts());
 
         return response;
@@ -303,7 +313,7 @@ public class BaseTestClass {
         }
 
         @Override
-        public synchronized void mark(int readlimit) {
+        public synchronized void mark(final int readlimit) {
         }
 
         @Override
@@ -319,14 +329,14 @@ public class BaseTestClass {
         }
 
         @Override
-        public int read(byte[] b, int off, int len) throws IOException {
+        public int read(final byte[] b, final int off, final int len) throws IOException {
             if (in == null)
                 in = conn.getInputStream();
             return super.read(b, off, len);
         }
 
         @Override
-        public int read(byte[] b) throws IOException {
+        public int read(final byte[] b) throws IOException {
             if (in == null)
                 in = conn.getInputStream();
             return super.read(b);
@@ -340,7 +350,7 @@ public class BaseTestClass {
         }
 
         @Override
-        public long skip(long n) throws IOException {
+        public long skip(final long n) throws IOException {
             if (in == null)
                 in = conn.getInputStream();
             return super.skip(n);

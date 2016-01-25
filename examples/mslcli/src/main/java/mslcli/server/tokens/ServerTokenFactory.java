@@ -23,7 +23,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.crypto.SecretKey;
 
-import org.json.JSONObject;
+import mslcli.common.tokens.SimpleUser;
+import mslcli.common.util.AppContext;
+import mslcli.common.util.ConfigurationException;
+import mslcli.common.util.SharedUtil;
 
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
@@ -33,16 +36,12 @@ import com.netflix.msl.MslException;
 import com.netflix.msl.MslMasterTokenException;
 import com.netflix.msl.MslUserIdTokenException;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.util.MslContext;
-
-import mslcli.common.tokens.SimpleUser;
-import mslcli.common.util.AppContext;
-import mslcli.common.util.ConfigurationException;
-import mslcli.common.util.SharedUtil;
 
 /**
  * <p>A server-side memory-backed token factory.</p>
@@ -181,7 +180,7 @@ public class ServerTokenFactory implements TokenFactory {
         final Date expiration = new Date(ctx.getTime() + expirationOffset);
         final long sequenceNumber = 0;
         final long serialNumber = generateSerialNumber(ctx.getRandom());
-        final JSONObject issuerData = null;
+        final MslObject issuerData = null;
         final MasterToken masterToken = new MasterToken(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey);
         
         // Remember the sequence number.
@@ -214,7 +213,7 @@ public class ServerTokenFactory implements TokenFactory {
             throw new MslMasterTokenException(MslError.MASTERTOKEN_SEQUENCE_NUMBER_OUT_OF_SYNC, masterToken);
         
         // Renew master token.
-        final JSONObject issuerData = null;
+        final MslObject issuerData = null;
         final Date renewalWindow = new Date(ctx.getTime() + renewalOffset);
         final Date expiration = new Date(ctx.getTime() + expirationOffset);
         final String identity = masterToken.getIdentity();
@@ -249,7 +248,7 @@ public class ServerTokenFactory implements TokenFactory {
     @Override
     public UserIdToken createUserIdToken(final MslContext ctx, final MslUser user, final MasterToken masterToken) throws MslEncodingException, MslCryptoException {
         appCtx.info(String.format("%s: Creating UserIdToken for user %s", this, ((user != null) ? user.getEncoded() : null)));
-        final JSONObject issuerData = null;
+        final MslObject issuerData = null;
         final Date renewalWindow = new Date(ctx.getTime() + uitRenewalOffset);
         final Date expiration = new Date(ctx.getTime() + uitExpirationOffset);
         final long serialNumber = generateSerialNumber(ctx.getRandom());
@@ -265,7 +264,7 @@ public class ServerTokenFactory implements TokenFactory {
         if (!userIdToken.isDecrypted())
             throw new MslUserIdTokenException(MslError.USERIDTOKEN_NOT_DECRYPTED, userIdToken).setEntity(masterToken);
 
-        final JSONObject issuerData = null;
+        final MslObject issuerData = null;
         final Date renewalWindow = new Date(ctx.getTime() + uitRenewalOffset);
         final Date expiration = new Date(ctx.getTime() + uitExpirationOffset);
         final long serialNumber = userIdToken.getSerialNumber();
@@ -313,9 +312,9 @@ public class ServerTokenFactory implements TokenFactory {
      */
     private static final class SeqNumPair {
         /** old sequence number */
-        private Long oldSeqNum;
+        private final Long oldSeqNum;
         /** new sequence number */
-        private Long newSeqNum;
+        private final Long newSeqNum;
         /**
          * @param oldSeqNum old sequence number
          * @param newSeqNum cwnewold sequence number

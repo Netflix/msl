@@ -16,10 +16,7 @@
 
 package mslcli.common;
 
-import java.io.Console;
-import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -31,28 +28,6 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import com.netflix.msl.MslEncodingException;
-import com.netflix.msl.MslException;
-import com.netflix.msl.MslKeyExchangeException;
-import com.netflix.msl.crypto.ICryptoContext;
-import com.netflix.msl.entityauth.EntityAuthenticationData;
-import com.netflix.msl.entityauth.EntityAuthenticationFactory;
-import com.netflix.msl.keyx.KeyExchangeFactory;
-import com.netflix.msl.keyx.KeyExchangeScheme;
-import com.netflix.msl.keyx.KeyRequestData;
-import com.netflix.msl.keyx.WrapCryptoContextRepository;
-import com.netflix.msl.tokens.MasterToken;
-import com.netflix.msl.tokens.UserIdToken;
-import com.netflix.msl.tokens.ServiceToken;
-import com.netflix.msl.userauth.EmailPasswordAuthenticationFactory;
-import com.netflix.msl.userauth.UserAuthenticationData;
-import com.netflix.msl.userauth.UserAuthenticationFactory;
-import com.netflix.msl.util.AuthenticationUtils;
-import com.netflix.msl.util.MslStore;
-import com.netflix.msl.util.SimpleMslStore;
-
-import mslcli.common.CmdArguments;
-import mslcli.common.IllegalCmdArgumentException;
 import mslcli.common.entityauth.EntityAuthenticationHandle;
 import mslcli.common.keyx.KeyExchangeHandle;
 import mslcli.common.msg.MessageConfig;
@@ -61,7 +36,24 @@ import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
 import mslcli.common.util.MslStoreWrapper;
 import mslcli.common.util.SharedUtil;
-import mslcli.common.util.WrapCryptoContextRepositoryHandle;
+
+import com.netflix.msl.MslEncodingException;
+import com.netflix.msl.MslException;
+import com.netflix.msl.MslKeyExchangeException;
+import com.netflix.msl.crypto.ICryptoContext;
+import com.netflix.msl.entityauth.EntityAuthenticationData;
+import com.netflix.msl.entityauth.EntityAuthenticationFactory;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.keyx.KeyExchangeFactory;
+import com.netflix.msl.keyx.KeyExchangeScheme;
+import com.netflix.msl.keyx.KeyRequestData;
+import com.netflix.msl.tokens.MasterToken;
+import com.netflix.msl.tokens.UserIdToken;
+import com.netflix.msl.userauth.UserAuthenticationData;
+import com.netflix.msl.userauth.UserAuthenticationFactory;
+import com.netflix.msl.util.AuthenticationUtils;
+import com.netflix.msl.util.MslStore;
+import com.netflix.msl.util.SimpleMslStore;
 
 /**
  * <p>
@@ -340,7 +332,7 @@ public abstract class MslConfig {
         throws ConfigurationException, IllegalCmdArgumentException
     {
         // key exchange handles
-        List<KeyExchangeFactory> keyxFactoriesList = new ArrayList<KeyExchangeFactory>();
+        final List<KeyExchangeFactory> keyxFactoriesList = new ArrayList<KeyExchangeFactory>();
         final List<KeyExchangeHandle> keyxHandles = appCtx.getKeyExchangeHandles();
         for (final KeyExchangeHandle kxh : keyxHandles) {
             keyxFactoriesList.add(kxh.getKeyExchangeFactory(appCtx, args, authutils));
@@ -386,9 +378,9 @@ public abstract class MslConfig {
          * Create a new key exchange factory comparator.
          * @param factories factories in order of their preference
          */
-        public KeyExchangeFactoryComparator(List<KeyExchangeFactory> factories) {
+        public KeyExchangeFactoryComparator(final List<KeyExchangeFactory> factories) {
             int priority = 0;
-            for (KeyExchangeFactory f : factories) {
+            for (final KeyExchangeFactory f : factories) {
                 schemePriorities.put(f.getScheme(), priority++);
             }
         }
@@ -397,7 +389,7 @@ public abstract class MslConfig {
          * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
          */
         @Override
-        public int compare(KeyExchangeFactory a, KeyExchangeFactory b) {
+        public int compare(final KeyExchangeFactory a, final KeyExchangeFactory b) {
             final KeyExchangeScheme schemeA = a.getScheme();
             final KeyExchangeScheme schemeB = b.getScheme();
             final Integer priorityA = schemePriorities.get(schemeA);
@@ -428,7 +420,9 @@ public abstract class MslConfig {
         synchronized (mslStoreWrapper) {
             try {
                 SharedUtil.saveToFile(mslStorePath, SharedUtil.marshalMslStore((SimpleMslStore)mslStoreWrapper.getMslStore()), true /*overwrite*/);
-            } catch (MslEncodingException e) {
+            } catch (final MslEncodingException e) {
+                throw new IOException("Error Saving MslStore file " + mslStorePath, e);
+            } catch (final MslEncoderException e) {
                 throw new IOException("Error Saving MslStore file " + mslStorePath, e);
             }
             appCtx.info(String.format("%s: MSL Store %s Updated", this, mslStorePath));
@@ -453,7 +447,7 @@ public abstract class MslConfig {
             appCtx.info("Loading Existing MSL Store " + mslStorePath);
             try {
                 return (SimpleMslStore)SharedUtil.unmarshalMslStore(SharedUtil.readFromFile(mslStorePath));
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw new ConfigurationException("Error Loading MSL Store " + mslStorePath, e);
             }
         } else if (SharedUtil.isValidNewFile(mslStorePath)) {

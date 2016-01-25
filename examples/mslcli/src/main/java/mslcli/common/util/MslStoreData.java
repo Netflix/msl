@@ -16,8 +16,6 @@
 
 package mslcli.common.util;
 
-import org.json.JSONObject;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -30,6 +28,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
 import javax.crypto.SecretKey;
 
 import com.netflix.msl.MslCryptoException;
@@ -37,10 +36,13 @@ import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslException;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.crypto.SessionCryptoContext;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.tokens.MasterToken;
-import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.tokens.ServiceToken;
-
+import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.SimpleMslStore;
 
@@ -76,23 +78,25 @@ public class MslStoreData implements Serializable {
 
     /**
      * Create serializable MslStoreData from non-serializable SimpleMslStore
+     * @param ctx       MSL context
      * @param mslStore  SimpleMslStore instance
+     * @throws MslEncoderException 
      */
     @SuppressWarnings("unchecked")
-    private MslStoreData(final SimpleMslStore mslStore) {
+    private MslStoreData(final MslContext ctx, final SimpleMslStore mslStore) throws MslEncoderException {
         if (mslStore == null)
             throw new IllegalArgumentException("NULL MslStore");
 
         // extract all master tokens with crypto contexts
         final Map<MasterToken,ICryptoContext> cryptoContexts = (Map<MasterToken,ICryptoContext>)getFieldValue(mslStore, MS_CRYPTO_CONTEXT_FIELD);
-        for (Map.Entry<MasterToken,ICryptoContext> e : cryptoContexts.entrySet()) {
-            this.cryptoContextData.put(new MasterTokenData(e.getKey()), new CryptoContextData(e.getValue()));
+        for (final Map.Entry<MasterToken,ICryptoContext> e : cryptoContexts.entrySet()) {
+            this.cryptoContextData.put(new MasterTokenData(ctx, e.getKey()), new CryptoContextData(e.getValue()));
         }
 
         // extract all user id tokens
         final Map<String,UserIdToken> userIdTokens = new HashMap<String,UserIdToken>((Map<String,UserIdToken>)getFieldValue(mslStore, MS_UID_TOKENS_FIELD));
-        for (Map.Entry<String,UserIdToken> e : userIdTokens.entrySet()) {
-            this.userIdTokenData.put(e.getKey(), new UserIdTokenData(e.getValue()));
+        for (final Map.Entry<String,UserIdToken> e : userIdTokens.entrySet()) {
+            this.userIdTokenData.put(e.getKey(), new UserIdTokenData(ctx, e.getValue()));
         }
 
         // extract all service tokens
@@ -102,17 +106,17 @@ public class MslStoreData implements Serializable {
             serviceTokens.addAll(unboundServiceTokens);
 
             final Map<Long,Set<ServiceToken>> mtServiceTokens = (Map<Long,Set<ServiceToken>>)getFieldValue(mslStore, MS_MT_SVC_TOKENS_FIELD);
-            for (Set<ServiceToken> sts : mtServiceTokens.values()) {
+            for (final Set<ServiceToken> sts : mtServiceTokens.values()) {
                 serviceTokens.addAll(sts);
             }
 
             final Map<Long,Set<ServiceToken>> uitServiceTokens = (Map<Long,Set<ServiceToken>>)getFieldValue(mslStore, MS_UIT_SVC_TOKENS_FIELD);
-            for (Set<ServiceToken> sts : uitServiceTokens.values()) {
+            for (final Set<ServiceToken> sts : uitServiceTokens.values()) {
                 serviceTokens.addAll(sts);
             }
         }
-        for (ServiceToken st : serviceTokens) {
-            this.serviceTokenData.add(new ServiceTokenData(st));
+        for (final ServiceToken st : serviceTokens) {
+            this.serviceTokenData.add(new ServiceTokenData(ctx, st));
         }
 
         // extract non-replayable id's
@@ -125,9 +129,10 @@ public class MslStoreData implements Serializable {
      * @param ms SimpleMslStore instance
      * @return blob serialized SimpleMslStore instance
      * @throws IOException
+     * @throws MslEncoderException 
      */
-    public static byte[] serialize(final SimpleMslStore ms) throws IOException {
-        final MslStoreData msd = new MslStoreData(ms);
+    public static byte[] serialize(final SimpleMslStore ms, final MslContext ctx) throws IOException, MslEncoderException {
+        final MslStoreData msd = new MslStoreData(ctx, ms);
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         ObjectOutputStream oos = null;
         try {
@@ -135,7 +140,7 @@ public class MslStoreData implements Serializable {
             oos.writeObject(msd);
             return out.toByteArray();
         } finally {
-            if (oos != null) try { oos.close(); } catch (Exception ignore) { }
+            if (oos != null) try { oos.close(); } catch (final Exception ignore) { }
         }
     }
 
@@ -148,9 +153,10 @@ public class MslStoreData implements Serializable {
      * @throws IOException
      * @throws MslEncodingException
      * @throws MslException
+     * @throws MslEncoderException 
      */
     public static SimpleMslStore deserialize(final byte[] blob, final MslContext mslCtx)
-        throws IOException, MslEncodingException, MslException
+        throws IOException, MslEncodingException, MslException, MslEncoderException
     {
         final MslStoreData msd;
         final ByteArrayInputStream in = new ByteArrayInputStream(blob);
@@ -158,23 +164,23 @@ public class MslStoreData implements Serializable {
         try {
             ois = new ObjectInputStream(in);
             msd = (MslStoreData)ois.readObject();
-        } catch (ClassNotFoundException e) {
+        } catch (final ClassNotFoundException e) {
             throw new IOException("SimpleMslStore unmarshalling error", e);
         } finally {
-            if (ois != null) try { ois.close(); } catch (Exception ignore) { }
+            if (ois != null) try { ois.close(); } catch (final Exception ignore) { }
         }
 
         final SimpleMslStore mslStore = new SimpleMslStore();
 
         final Map<Long,MasterToken> mtokens = new HashMap<Long,MasterToken>();
-        for (Map.Entry<MasterTokenData,CryptoContextData> e : msd.cryptoContextData.entrySet()) {
+        for (final Map.Entry<MasterTokenData,CryptoContextData> e : msd.cryptoContextData.entrySet()) {
             final MasterToken mt = e.getKey().get(mslCtx);
             mslStore.setCryptoContext(mt, e.getValue().get(mslCtx, mt));
             mtokens.put(mt.getSerialNumber(), mt);
         }
 
         final Map<Long,UserIdToken> uitokens = new HashMap<Long,UserIdToken>();
-        for (Map.Entry<String,UserIdTokenData> e : msd.userIdTokenData.entrySet()) {
+        for (final Map.Entry<String,UserIdTokenData> e : msd.userIdTokenData.entrySet()) {
             final UserIdTokenData uitd = e.getValue();
             final UserIdToken uit = uitd.get(mslCtx, mtokens.get(uitd.mtSerialNumber));
             mslStore.addUserIdToken(e.getKey(), uit);
@@ -182,7 +188,7 @@ public class MslStoreData implements Serializable {
         }
 
         final Set<ServiceToken> stokens = new HashSet<ServiceToken>();
-        for (ServiceTokenData std : msd.serviceTokenData) {
+        for (final ServiceTokenData std : msd.serviceTokenData) {
             stokens.add(std.get(mslCtx, mtokens.get(std.mtSerialNumber), uitokens.get(std.uitSerialNumber)));
         }
         mslStore.addServiceTokens(stokens);
@@ -208,10 +214,13 @@ public class MslStoreData implements Serializable {
         /** for proper serialization */
         private static final long serialVersionUID = -4900828984126453948L;
         /**
+         * @param ctx MslContext
          * @param mt master token
+         * @throws MslEncoderException 
          */
-        MasterTokenData(final MasterToken mt) {
-            this.s = mt.toJSONString();
+        MasterTokenData(final MslContext ctx, final MasterToken mt) throws MslEncoderException {
+            final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+            this.s = mt.toMslEncoding(encoder, MslEncoderFormat.JSON);
         }
         /**
          * @param ctx MslContext
@@ -219,12 +228,15 @@ public class MslStoreData implements Serializable {
          * @throws MslEncodingException
          * @throws MslException
          * @throws MslCryptoException
+         * @throws MslEncoderException 
          */
-        MasterToken get(final MslContext ctx) throws MslEncodingException, MslException, MslCryptoException {
-            return new MasterToken(ctx, new JSONObject(s));
+        MasterToken get(final MslContext ctx) throws MslEncodingException, MslException, MslCryptoException, MslEncoderException {
+            final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+            final MslObject mo = encoder.parseObject(s);
+            return new MasterToken(ctx, mo);
         }
-        /** JSON-serialized master token */
-        private final String s;
+        /** serialized master token */
+        private final byte[] s;
     }
 
     /**
@@ -234,10 +246,13 @@ public class MslStoreData implements Serializable {
         /** for proper serialization */
         private static final long serialVersionUID = -5191856143592904675L;
         /**
+         * @param ctx MslContext
          * @param uit user id token
+         * @throws MslEncoderException 
          */
-        UserIdTokenData(final UserIdToken uit) {
-            this.s = uit.toJSONString();
+        UserIdTokenData(final MslContext ctx, final UserIdToken uit) throws MslEncoderException {
+            final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+            this.s = uit.toMslEncoding(encoder, MslEncoderFormat.JSON);
             this.mtSerialNumber = uit.getMasterTokenSerialNumber();
         }
         /**
@@ -247,12 +262,15 @@ public class MslStoreData implements Serializable {
          * @throws MslEncodingException
          * @throws MslException
          * @throws MslCryptoException
+         * @throws MslEncoderException 
          */
-        UserIdToken get(final MslContext ctx, final MasterToken mt) throws MslEncodingException, MslException, MslCryptoException {
-            return new UserIdToken(ctx, new JSONObject(s), mt);
+        UserIdToken get(final MslContext ctx, final MasterToken mt) throws MslEncodingException, MslException, MslCryptoException, MslEncoderException {
+            final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+            final MslObject mo = encoder.parseObject(s);
+            return new UserIdToken(ctx, mo, mt);
         }
-        /** JSON-serialized user id token */
-        private final String s;
+        /** serialized user id token */
+        private final byte[] s;
         /** master token serial number */
         private final long mtSerialNumber;
     }
@@ -264,10 +282,13 @@ public class MslStoreData implements Serializable {
         /** for proper serialization */
         private static final long serialVersionUID = -2854005430616613106L;
         /**
+         * @param ctx MslContext
          * @param st service token
+         * @throws MslEncoderException 
          */
-        ServiceTokenData(final ServiceToken st) {
-            this.s = st.toJSONString();
+        ServiceTokenData(final MslContext ctx, final ServiceToken st) throws MslEncoderException {
+            final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+            this.s = st.toMslEncoding(encoder, MslEncoderFormat.JSON);
             this.mtSerialNumber = st.getMasterTokenSerialNumber();
             this.uitSerialNumber = st.getUserIdTokenSerialNumber();
         }
@@ -279,14 +300,17 @@ public class MslStoreData implements Serializable {
          * @throws MslEncodingException
          * @throws MslException
          * @throws MslCryptoException
+         * @throws MslEncoderException 
          */
         ServiceToken get(final MslContext ctx, final MasterToken mt, final UserIdToken uit)
-            throws MslEncodingException, MslException, MslCryptoException
+            throws MslEncodingException, MslException, MslCryptoException, MslEncoderException
         {
-            return new ServiceToken(ctx, new JSONObject(s), mt, uit, (ICryptoContext)null);
+            final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+            final MslObject mo = encoder.parseObject(s);
+            return new ServiceToken(ctx, mo, mt, uit, (ICryptoContext)null);
         }
-        /** JSON-serialized service token */
-        private final String s;
+        /** serialized service token */
+        private final byte[] s;
         /** master token serial number */
         private final long mtSerialNumber;
         /** user id token serial number */
@@ -365,7 +389,7 @@ public class MslStoreData implements Serializable {
         final Field f = getField(o, name);
         try {
             return f.get(o);
-        } catch (IllegalAccessException e) {
+        } catch (final IllegalAccessException e) {
             throw new IllegalArgumentException(String.format("Class %s field %s - cannot get value", o.getClass().getName(), name), e);
         }
     }
@@ -387,7 +411,7 @@ public class MslStoreData implements Serializable {
         final Field f = getField(o, name);
         try {
             f.set(o, value);
-        } catch (IllegalAccessException e) {
+        } catch (final IllegalAccessException e) {
             throw new IllegalArgumentException(String.format("Class %s field %s - cannot set value", o.getClass().getName(), name), e);
         }
     }

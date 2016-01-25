@@ -449,7 +449,7 @@ public class MslControl {
          */
         @Override
         public MslEncoderFactory getMslEncoderFactory() {
-            return null;
+            return new MslEncoderFactory();
         }
     }
     
