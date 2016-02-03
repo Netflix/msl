@@ -8,7 +8,7 @@ apply plugin: 'eclipse-wtp'
 
 apply plugin: 'org.akhikhl.gretty'
 gretty {
-    integrationTestTask = 'test'
+    contextPath = "/msl-example-server"
 }
 
 dependencies {
