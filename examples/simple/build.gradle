@@ -16,4 +16,8 @@ dependencies {
     compile project(':msl-core')
 }
 
-war.baseName "msl-example-server"
+afterEvaluate { project ->
+    tasks.appRun.doFirst {
+        println "\nOpen file://${file('src/main/javascript/client/SimpleClient.html').absolutePath} in the browser\n"
+    }
+}
