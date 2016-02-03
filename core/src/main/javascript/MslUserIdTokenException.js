@@ -26,11 +26,12 @@ var MslUserIdTokenException = MslException.extend({
      * user ID token.
      *
      * @param {MslError} error the error.
-     * @param {UserIdToken} userIdToken the user ID token. May be null or undefined.
-     * @param {string} details the details text. May be null or undefined.
+     * @param {UserIdToken} userIdToken the user ID token. May not be null.
+     * @param {?string=} details the details text. May be null or undefined.
+     * @param {?Error=} cause the cause. May be null or undefined.
      */
-    init: function init(error, userIdToken, details) {
-        init.base.call(this, error, details);
+    init: function init(error, userIdToken, details, cause) {
+        init.base.call(this, error, details, cause);
 
         // The properties.
         var props = {
