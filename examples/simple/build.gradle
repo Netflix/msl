@@ -1,5 +1,15 @@
+buildscript {
+    repositories { jcenter() }
+    dependencies { classpath 'org.akhikhl.gretty:gretty:latest.release' }
+}
+
 apply plugin: 'war'
 apply plugin: 'eclipse-wtp'
+
+apply plugin: 'org.akhikhl.gretty'
+gretty {
+    integrationTestTask = 'test'
+}
 
 dependencies {
     compile 'javax.servlet:servlet-api:2.5'
