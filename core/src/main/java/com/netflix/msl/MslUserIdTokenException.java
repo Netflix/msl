@@ -52,6 +52,20 @@ public class MslUserIdTokenException extends MslException {
         super(error, details);
         setUser(userIdToken);
     }
+    
+    /**
+     * Construct a new MSL user ID token exception with the specified error,
+     * user ID token, details, and cause.
+     * 
+     * @param error the error.
+     * @param userIdToken the user ID token. May not be null.
+     * @param details the details text.
+     * @param cause the cause.
+     */
+    public MslUserIdTokenException(final MslError error, final UserIdToken userIdToken, final String details, final Throwable cause) {
+        super(error, details, cause);
+        setUser(userIdToken);
+    }
 
     /* (non-Javadoc)
      * @see com.netflix.msl.MslException#setEntity(com.netflix.msl.tokens.MasterToken)
