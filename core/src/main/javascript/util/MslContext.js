@@ -270,8 +270,8 @@ var MslContext;
         updateRemoteTime: function updateRemoteTime(time) {
             var localSeconds = this.getTime() / MILLISECONDS_PER_SECOND;
             var remoteSeconds = time.getTime() / MILLISECONDS_PER_SECOND;
-            this.offset = remoteSeconds - localSeconds;
-            this.synced = true;
+            this._offset = remoteSeconds - localSeconds;
+            this._synced = true;
         },
 
         /**
@@ -284,9 +284,9 @@ var MslContext;
          * @return {Date} the expected remote entity time or {@code null} if not known.
          */
         getRemoteTime: function getRemoteTime() {
-            if (!this.synced) return null;
+            if (!this._synced) return null;
             var localSeconds = this.getTime() / MILLISECONDS_PER_SECOND;
-            var remoteSeconds = localSeconds + offset;
+            var remoteSeconds = localSeconds + this._offset;
             return new Date(remoteSeconds * MILLISECONDS_PER_SECOND);
         },
 
