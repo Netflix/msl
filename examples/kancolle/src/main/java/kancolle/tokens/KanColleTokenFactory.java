@@ -79,23 +79,6 @@ public class KanColleTokenFactory implements TokenFactory {
     public KanColleTokenFactory(final KanColleAuthenticationUtils utils) {
         this.utils = utils;
     }
-    
-    /* (non-Javadoc)
-     * @see com.netflix.msl.tokens.TokenFactory#isNewestMasterToken(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken)
-     */
-    @Override
-    public boolean isNewestMasterToken(final MslContext ctx, final MasterToken masterToken) throws MslMasterTokenException {
-        // Fail if the master token is not decrypted.
-        if (!masterToken.isDecrypted())
-            throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, masterToken);
-        
-        // Return true if we have no state for the entity or if the master
-        // token sequence number equals the newest sequence number.
-        final String identity = masterToken.getIdentity();
-        final long mtSeqNo = masterToken.getSequenceNumber();
-        final Long newestSeqNo = sequenceNumbers.get(identity);
-        return (newestSeqNo == null || newestSeqNo.longValue() == mtSeqNo);
-    }
 
     /* (non-Javadoc)
      * @see com.netflix.msl.tokens.TokenFactory#isMasterTokenRevoked(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken)

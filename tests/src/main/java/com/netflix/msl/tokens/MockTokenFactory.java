@@ -52,19 +52,6 @@ public class MockTokenFactory implements TokenFactory {
         this.sequenceNumber = sequenceNumber;
     }
     
-    /* (non-Javadoc)
-     * @see com.netflix.msl.tokens.TokenFactory#isNewestMasterToken(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken)
-     */
-    @Override
-    public boolean isNewestMasterToken(final MslContext ctx, final MasterToken masterToken) throws MslMasterTokenException, MslException {
-        if (!masterToken.isVerified())
-            throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, masterToken);
-        
-        if (sequenceNumber == -1)
-            return true;
-        return masterToken.getSequenceNumber() == sequenceNumber;
-    }
-    
     /**
      * @param masterToken the master token to consider revoked or {@code null}
      *        to unset.

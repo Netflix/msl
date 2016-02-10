@@ -58,19 +58,6 @@ var MockTokenFactory;
             this._sequenceNumber = sequenceNumber;
         },
 
-        /** @inheritDoc */
-        isNewestMasterToken: function(ctx, masterToken, callback) {
-            AsyncExecutor(callback, function() {
-                if (!masterToken.isVerified())
-                    throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, masterToken);
-
-                // We have no way of checking.
-                if (this._sequenceNumber == -1)
-                    return true;
-                return masterToken.sequenceNumber == this._sequenceNumber;
-            }, this);
-        },
-
         /**
          * @param {MasterToken} masterToken the master token to consider revoked or {@code null}
          *        to unset.

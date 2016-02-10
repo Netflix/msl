@@ -23,6 +23,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.crypto.SecretKey;
 
+import mslcli.common.tokens.SimpleUser;
+import mslcli.common.util.AppContext;
+import mslcli.common.util.ConfigurationException;
+import mslcli.common.util.SharedUtil;
+
 import org.json.JSONObject;
 
 import com.netflix.msl.MslConstants;
@@ -38,11 +43,6 @@ import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.util.MslContext;
-
-import mslcli.common.tokens.SimpleUser;
-import mslcli.common.util.AppContext;
-import mslcli.common.util.ConfigurationException;
-import mslcli.common.util.SharedUtil;
 
 /**
  * <p>A server-side memory-backed token factory.</p>
@@ -87,11 +87,15 @@ public class ServerTokenFactory implements TokenFactory {
         this.uitExpirationOffset = appCtx.getProperties().getUserIdTokenExpirationOffset();
     }
 
-    /* (non-Javadoc)
-     * @see com.netflix.msl.tokens.TokenFactory#isNewestMasterToken(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken)
+    /**
+     * Returns true if the master token sequence number is within the
+     * acceptable range for master token renewal.
+     * 
+     * @param masterToken the master token.
+     * @return true if the master token sequence number is acceptable.
+     * @throws MslMasterTokenException if the master token is not decrypted.
      */
-    @Override
-    public boolean isNewestMasterToken(final MslContext ctx, final MasterToken masterToken) throws MslMasterTokenException {
+    private boolean isMasterTokenAcceptable(final MasterToken masterToken) throws MslMasterTokenException {
         if (!masterToken.isDecrypted())
             throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, masterToken);
         
@@ -199,7 +203,7 @@ public class ServerTokenFactory implements TokenFactory {
      */
     @Override
     public MslError isMasterTokenRenewable(final MslContext ctx, final MasterToken masterToken) throws MslMasterTokenException {
-        if (!isNewestMasterToken(ctx, masterToken))
+        if (!isMasterTokenAcceptable(masterToken))
             return MslError.MASTERTOKEN_SEQUENCE_NUMBER_OUT_OF_SYNC;
         return null;
     }
@@ -210,7 +214,7 @@ public class ServerTokenFactory implements TokenFactory {
     @Override
     public MasterToken renewMasterToken(final MslContext ctx, final MasterToken masterToken, final SecretKey encryptionKey, final SecretKey hmacKey) throws MslEncodingException, MslCryptoException, MslMasterTokenException {
         appCtx.info(String.format("%s: Renewing %s", this, SharedUtil.getMasterTokenInfo(masterToken)));
-        if (!isNewestMasterToken(ctx, masterToken))
+        if (!isMasterTokenAcceptable(masterToken))
             throw new MslMasterTokenException(MslError.MASTERTOKEN_SEQUENCE_NUMBER_OUT_OF_SYNC, masterToken);
         
         // Renew master token.
@@ -313,9 +317,9 @@ public class ServerTokenFactory implements TokenFactory {
      */
     private static final class SeqNumPair {
         /** old sequence number */
-        private Long oldSeqNum;
+        private final Long oldSeqNum;
         /** new sequence number */
-        private Long newSeqNum;
+        private final Long newSeqNum;
         /**
          * @param oldSeqNum old sequence number
          * @param newSeqNum cwnewold sequence number

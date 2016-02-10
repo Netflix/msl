@@ -49,11 +49,15 @@ public class SimpleTokenFactory implements TokenFactory {
     /** Non-replayable ID acceptance window. */
     private static final long NON_REPLAYABLE_ID_WINDOW = 65536;
     
-    /* (non-Javadoc)
-     * @see com.netflix.msl.tokens.TokenFactory#isNewestMasterToken(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken)
+    /**
+     * Return true if the provided master token is the newest master token
+     * as far as we know.
+     * 
+     * @param masterToken the master token.
+     * @return true if this is the newest master token.
+     * @throws MslMasterTokenException if the master token is not decrypted.
      */
-    @Override
-    public boolean isNewestMasterToken(final MslContext ctx, final MasterToken masterToken) throws MslMasterTokenException {
+    private boolean isNewestMasterToken(final MasterToken masterToken) throws MslMasterTokenException {
         if (!masterToken.isDecrypted())
             throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, masterToken);
         
@@ -151,7 +155,7 @@ public class SimpleTokenFactory implements TokenFactory {
      */
     @Override
     public MslError isMasterTokenRenewable(final MslContext ctx, final MasterToken masterToken) throws MslMasterTokenException {
-        if (!isNewestMasterToken(ctx, masterToken))
+        if (!isNewestMasterToken(masterToken))
             return MslError.MASTERTOKEN_SEQUENCE_NUMBER_OUT_OF_SYNC;
         return null;
     }
@@ -161,7 +165,7 @@ public class SimpleTokenFactory implements TokenFactory {
      */
     @Override
     public MasterToken renewMasterToken(final MslContext ctx, final MasterToken masterToken, final SecretKey encryptionKey, final SecretKey hmacKey) throws MslEncodingException, MslCryptoException, MslMasterTokenException {
-        if (!isNewestMasterToken(ctx, masterToken))
+        if (!isNewestMasterToken(masterToken))
             throw new MslMasterTokenException(MslError.MASTERTOKEN_SEQUENCE_NUMBER_OUT_OF_SYNC, masterToken);
         
         // Renew master token.

@@ -22,20 +22,6 @@
  */
 var TokenFactory = util.Class.create({
     /**
-     * Check if the master token sequence number is up-to-date.
-     *
-     * @param {MslContext} ctx MSL context.
-     * @param {MasterToken} masterToken the master token to check.
-     * @param {{result: function(boolean), error: function(Error)}} callback the
-     *        callback will receive true if the master token sequence number is
-     *        up-to-date and false if it is not, or any thrown exceptions.
-     * @throws MslMasterTokenException if the master token is not trusted.
-     * @throws MslException if there is an error checking the master token
-     *         sequence number.
-     */
-    isNewestMasterToken: function(ctx, masterToken, callback) {},
-
-    /**
      * <p>Return false if the master token has been revoked.</p>
      * 
      * <p>A master token may be revoked at any time after creation and before
