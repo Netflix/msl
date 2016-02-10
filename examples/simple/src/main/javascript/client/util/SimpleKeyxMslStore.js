@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2014 Netflix, Inc.  All rights reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,33 +17,33 @@ var SimpleKeyxMslStore;
 
 (function() {
     "use strict";
-    
+
     /**
      * <p>An in-memory MSL store that manages state and is integrated with the
      * key exchange manager to trigger key exchange request data generation
      * upon successful receipt of key response data.</p>
-     * 
+     *
      * @author Wesley Miaw <wmiaw@netflix.com>
      */
     SimpleKeyxMslStore = SimpleMslStore.extend({
         /**
          * <p>Create a new key exchange-aware MSL store.</p>
-         * 
+         *
          * @param {SimpleKeyxManager} keyxMgr key exchange manager.
          * @param {function(string|Error)} errorCallback key manager generation error
          *        callback.
          */
         init: function init(keyxMgr, errorCallback) {
             init.base.call(this);
-            
+
             // Set properties.
             var props = {
                 _keyxMgr: { value: keyxMgr, writable: false, enumerable: false, configurable: false },
-                _errorCallback: { value: errorCallback, writable: false, enumerable: false, configurable: false },
+                _errorCallback: { value: errorCallback, writable: false, enumerable: false, configurable: false }
             };
             Object.defineProperties(this, props);
         },
-        
+
         /** @inheritDoc */
         setCryptoContext: function setCryptoContext(masterToken, cryptoContext) {
             setCryptoContext.base.call(this, masterToken, cryptoContext);
@@ -55,7 +55,7 @@ var SimpleKeyxMslStore;
                     if (!success)
                         this._errorCallback("Failed to regenerate key exchange data.");
                 },
-                error: errorCallback,
+                error: this._errorCallback
             });
         }
     });

@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2014 Netflix, Inc.  All rights reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,10 +17,10 @@ var SimpleMslContext;
 
 (function() {
     "use strict";
-    
+
     /**
      * <p>The example client MSL context.</p>
-     * 
+     *
      * @author Wesley Miaw <wmiaw@netflix.com>
      */
     SimpleMslContext = MslContext.extend({
@@ -38,22 +38,22 @@ var SimpleMslContext;
             var compressionAlgos = [ MslConstants$CompressionAlgorithm.LZW ];
             var languages = [ "US_en" ];
             var msgCaps = new MessageCapabilities(compressionAlgos, languages);
-            
+
             // Entity authentication data.
             var entityAuthData = new UnauthenticatedAuthenticationData(clientId);
-            
+
             // Entity authentication factories.
             var entityAuthFactories = {};
             entityAuthFactories[EntityAuthenticationScheme.RSA] = new RsaAuthenticationFactory(null, rsaStore);
             entityAuthFactories[EntityAuthenticationScheme.NONE] = new UnauthenticatedAuthenticationFactory();
-            
+
             // Key exchange factories.
             var keyxFactories = {};
             keyxFactories[KeyExchangeScheme.ASYMMETRIC_WRAPPED] = new AsymmetricWrappedExchange();
-            
+
             // MSL store.
             var store = new SimpleKeyxMslStore(keyxMgr, errorCallback);
-            
+
             // Set properties.
             var props = {
                 _random: { value: new Random(), writable: false, enumerable: false, configurable: false },
@@ -67,76 +67,76 @@ var SimpleMslContext;
             };
             Object.defineProperties(this, props);
         },
-        
+
         /** @inheritDoc */
         getTime: function getTime() {
             return new Date().getTime();
         },
-    
+
         /** @inheritDoc */
         getRandom: function getRandom() {
             return this._random;
         },
-    
+
         /** @inheritDoc */
         isPeerToPeer: function isPeerToPeer() {
             return false;
         },
-    
+
         /** @inheritDoc */
         getMessageCapabilities: function getMessageCapabilities() {
             return this._msgCaps;
         },
-    
+
         /** @inheritDoc */
         getEntityAuthenticationData: function getEntityAuthenticationData(reauthCode, callback) {
             callback.result(this._entityAuthData);
         },
-    
+
         /** @inheritDoc */
         getMslCryptoContext: function getMslCryptoContext() {
             return this._mslCryptoContext;
         },
-        
+
         /** @inheritDoc */
         getEntityAuthenticationScheme: function getEntityAuthenticationScheme(name) {
             return EntityAuthenticationScheme$getScheme(name);
         },
-    
+
         /** @inheritDoc */
         getEntityAuthenticationFactory: function getEntityAuthenticationFactory(scheme) {
             if (this._entityAuthFactories[scheme])
                 return this._entityAuthFactories[scheme];
             return null;
         },
-        
+
         /** @inheritDoc */
         getUserAuthenticationScheme: function getUserAuthenticationScheme(name) {
             return UserAuthenticationScheme$getScheme(name);
         },
-    
+
         /** @inheritDoc */
         getUserAuthenticationFactory: function getUserAuthenticationFactory(scheme) {
             return null;
         },
-    
+
         /** @inheritDoc */
         getTokenFactory: function getTokenFactory() {
-            return _tokenFactory;
+            return this._tokenFactory;
         },
-        
+
         /** @inheritDoc */
         getKeyExchangeScheme: function getKeyExchangeScheme(name) {
             return KeyExchangeScheme$getScheme(name);
         },
-    
+
         /** @inheritDoc */
         getKeyExchangeFactory: function getKeyExchangeFactory(scheme) {
             if (this._keyxFactories[scheme])
                 return this._keyxFactories[scheme];
             return null;
         },
-    
+
         /** @inheritDoc */
         getKeyExchangeFactories: function getKeyExchangeFactories() {
             var factories = [];
@@ -144,7 +144,7 @@ var SimpleMslContext;
                 factories.push(this._keyxFactories[scheme]);
             return factories;
         },
-    
+
         /** @inheritDoc */
         getMslStore: function getMslStore() {
             return this._store;
