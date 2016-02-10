@@ -1,0 +1,82 @@
+div#error {
+    position: absolute;
+    width: 780px;
+    background-color: yellow;
+    border: 2px solid black;
+    padding: 0.5em;
+    margin-bottom: 1em;
+    visibility: hidden;
+}
+
+div#errortext {
+    margin-bottom: 0.25em;
+}
+
+table#rsa-key-form {
+    width: 800px;
+    border: 4px solid grey;
+    border-spacing: 4px;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+    background-color: lightblue;
+}
+
+table.container {
+    width: 800px;
+    border: 4px solid grey;
+    border-spacing: 4px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+table.debug {
+    border: 2px solid lightgrey;
+}
+
+tr {
+    vertical-align: top;
+}
+
+td.title {
+    border-bottom: 1px dotted grey;
+}
+
+ul.tabs {
+    padding: 0;
+    margin: 0;
+}
+
+ul.tabs li {
+    display: inline;
+    padding-left: 0.25em;
+    padding-right: 1em;
+    background-color: white;
+    border: 1px solid black;
+}
+
+ul.tabs li.selected {
+    background-color: lightgrey;
+}
+
+div.request {
+    height: 15.5em;
+    padding: 0.5em;
+    border: 1px solid black;
+}
+
+input#import-rsa {
+    position: absolute;
+    top: 1em;
+    left: 660px;
+}
+
+input#reset {
+    float: right;
+}
+
+input#clear {
+    float: right;
+}

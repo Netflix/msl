@@ -1,6 +1,6 @@
 <!--
  * Copyright (c) 2014 Netflix, Inc.  All rights reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -153,7 +153,7 @@ function getQueryParam(key, defaultValue) {
 function errorCallback(msgOrError) {
     var error = document.getElementById('error');
     var errortext = document.getElementById('errortext');
-    
+
     var msg;
     if (typeof msgOrError === 'string') {
         console.log(msgOrError);
@@ -175,14 +175,14 @@ var dbgCtx;
 function onload() {
     // Enable selected tab.
     setRequestType('echo');
-    
+
     // Grab sent and received text areas.
     var sentText = document.getElementById('sent');
     var receivedText = document.getElementById('received');
-    
+
     // Create message debug context.
     dbgCtx = new SimpleMessageDebugContext(sentText, receivedText);
-    
+
     // Create client.
     var identityField = document.getElementById('identity');
     var identity = identityField.value;
@@ -203,14 +203,14 @@ function displayRsaKeyForm() {
 
 function addRsaKey() {
     var keyform = document.getElementById('rsa-key-form');
-    
+
     // Grab key identity and data.
     var identity = document.getElementById('rsa-key-id').value;
     var keyB64 = document.getElementById('rsa-pubkey').value;
-    
+
     // Remove whitespace from the key data.
     keyB64 = keyB64.replace(/\s+/g, '');
-    
+
     // Import the public key.
     PublicKey$import(keyB64, WebCryptoAlgorithm.RSASSA_SHA256, WebCryptoUsage.VERIFY, {
         result: function (pubkey) {
@@ -266,11 +266,11 @@ function setRequestType(type) {
     var tabs = document.getElementsByClassName('tab');
     for (var i = 0; i < tabs.length; ++i)
         tabs[i].className = "";
-    
+
     // Select the request tab.
     var tab = document.getElementById(type);
     tab.className = "tab selected";
-    
+
     // Disable all fields.
     var fieldElements = document.getElementsByClassName('field');
     for (var i = 0; i < fieldElements.length; ++i) {
@@ -278,7 +278,7 @@ function setRequestType(type) {
         field.style.visibility = 'hidden';
         field.style.position = 'absolute';
     };
-    
+
     // Enable the selected field.
     var enabledElements = document.getElementsByClassName(type);
     for (var i = 0; i < enabledElements.length; ++i) {
@@ -286,7 +286,7 @@ function setRequestType(type) {
         field.style.position = 'relative';
         field.style.visibility = 'visible';
     };
-    
+
     // Set the request type.
     var typeField = document.getElementById('type');
     typeField.value = type;
@@ -306,11 +306,11 @@ function sendRequest() {
     var severity = document.getElementById('severity').value;
     var word = document.getElementById('word').value;
     var url = document.getElementById('url').value;
-    
+
     // Null username and password if empty.
     if (username.trim().length == 0) username = null;
     if (password.trim().length == 0) password = null;
-    
+
     // Create the request.
     var request;
     switch (type) {
@@ -344,11 +344,11 @@ function sendRequest() {
             errorCallback("Request type [" + type + "] is not recognized.");
             return;
     }
-    
+
     // Clear the response field.
     var responseText = document.getElementById('response');
     responseText.innerHTML = '';
-    
+
     // Send the request.
     var performButton = document.getElementById('perform');
     var originalValue = performButton.value;
@@ -357,11 +357,11 @@ function sendRequest() {
         result: function(channel) {
             performButton.value = originalValue;
             performButton.onclick = originalClick;
-            
+
             // Check if cancelled or interrupted.
             if (!channel)
                 return;
-            
+
             // Handle errors.
             var mis = channel.input;
             var errorHeader = mis.getErrorHeader();
@@ -372,10 +372,10 @@ function sendRequest() {
                 errorCallback(errorMsg);
                 return;
             }
-            
+
             // Otherwise display the response.
             showResponse(mis);
-            
+
             // Check the username in case we logged in.
             checkUsername();
         },
@@ -405,11 +405,11 @@ function showResponse(mis) {
             // Stop on end-of-stream.
             if (!bytes)
                 return;
-            
+
             // Convert the bytes to text and update the response field.
             var s = textEncoding$getString(bytes, MslConstants$DEFAULT_CHARSET);
             responseText.innerHTML += s;
-            
+
             // Continue reading.
             showResponse(mis);
         },
@@ -417,7 +417,7 @@ function showResponse(mis) {
             // Convert the bytes to text and update the response field.
             var s = textEncoding$getString(bytes, MslConstants$DEFAULT_CHARSET);
             responseText.innerHTML += s;
-            
+
             // Notify of timeout.
             errorCallback("Timed out reading the response.");
         },
@@ -426,90 +426,7 @@ function showResponse(mis) {
 }
 </script>
 
-<style type="text/css">
-div#error {
-    position: absolute;
-    width: 780px;
-    background-color: yellow;
-    border: 2px solid black;
-    padding: 0.5em;
-    margin-bottom: 1em;
-    visibility: hidden;
-}
-
-div#errortext {
-    margin-bottom: 0.25em;
-}
-
-table#rsa-key-form {
-    width: 800px;
-    border: 4px solid grey;
-    border-spacing: 4px;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    margin: auto;
-    background-color: lightblue;
-}
-
-table.container {
-    width: 800px;
-    border: 4px solid grey;
-    border-spacing: 4px;
-    margin-top: 20px;
-    margin-bottom: 20px;
-}
-
-table.debug {
-    border: 2px solid lightgrey;
-}
-
-tr {
-    vertical-align: top;
-}
-
-td.title {
-    border-bottom: 1px dotted grey;
-}
-
-ul.tabs {
-    padding: 0;
-    margin: 0;
-}
-
-ul.tabs li {
-    display: inline;
-    padding-left: 0.25em;
-    padding-right: 1em;
-    background-color: white;
-    border: 1px solid black;
-}
-
-ul.tabs li.selected {
-    background-color: lightgrey;
-}
-
-div.request {
-    height: 15.5em;
-    padding: 0.5em;
-    border: 1px solid black;
-}
-
-input#import-rsa {
-    position: absolute;
-    top: 1em;
-    left: 660px;
-}
-
-input#reset {
-    float: right;
-}
-
-input#clear {
-    float: right;
-}
-</style>
+<link href="./style.css" rel="stylesheet" type="text/css"></link>
 </head>
 <body onload="onload();">
 
