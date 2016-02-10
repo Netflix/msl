@@ -18,14 +18,6 @@ import com.netflix.msl.util.MslContext;
  */
 public class ProxyTokenFactory implements TokenFactory {
     /* (non-Javadoc)
-     * @see com.netflix.msl.tokens.TokenFactory#isNewestMasterToken(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken)
-     */
-    @Override
-    public boolean isNewestMasterToken(final MslContext ctx, final MasterToken masterToken) {
-        return true;
-    }
-
-    /* (non-Javadoc)
      * @see com.netflix.msl.tokens.TokenFactory#isMasterTokenRevoked(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken)
      */
     @Override

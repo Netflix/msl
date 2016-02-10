@@ -255,10 +255,9 @@ public class MessageBuilder {
             if (requestHeader.isRenewable() && !keyRequestData.isEmpty()) {
                 // If the message contains a master token...
                 if (masterToken != null) {
-                    // If the master token is renewable/expired or not the
-                    // newest master token, then renew the master token.
-                    final TokenFactory factory = ctx.getTokenFactory();
-                    if (masterToken.isRenewable(null) || masterToken.isExpired(null) || !factory.isNewestMasterToken(ctx, masterToken))
+                    // If the master token is renewable or expired then renew
+                    // the master token.
+                    if (masterToken.isRenewable(null) || masterToken.isExpired(null))
                         keyExchangeData = issueMasterToken(ctx, keyRequestData, masterToken, null);
                     // Otherwise we don't need to do anything special.
                     else
