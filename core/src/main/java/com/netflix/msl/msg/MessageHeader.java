@@ -958,12 +958,10 @@ public class MessageHeader extends Header {
      */
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (!(obj instanceof MessageHeader)) {
-            return false;
-        }
+        if (this == obj) return true;
+
+        if (!(obj instanceof MessageHeader)) return false;
+
         final MessageHeader that = (MessageHeader) obj;
         return (Objects.equals(this.entityAuthData, that.entityAuthData)
                 || Objects.equals(this.masterToken, that.masterToken))

@@ -332,12 +332,10 @@ public class ErrorHeader extends Header {
      */
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (!(obj instanceof ErrorHeader)) {
-            return false;
-        }
+        if (this == obj) return true;
+
+        if (!(obj instanceof ErrorHeader)) return false;
+
         final ErrorHeader that = (ErrorHeader) obj;
         return Objects.equals(this.entityAuthData, that.entityAuthData)
                 && Objects.equals(this.recipient, that.recipient)
