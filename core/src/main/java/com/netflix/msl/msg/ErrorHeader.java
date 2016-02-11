@@ -338,15 +338,15 @@ public class ErrorHeader extends Header {
         if (!(obj instanceof ErrorHeader)) {
             return false;
         }
-        final ErrorHeader other = (ErrorHeader) obj;
-        return Objects.equals(this.entityAuthData, other.entityAuthData)
-                && Objects.equals(this.recipient, other.recipient)
-                && Objects.equals(this.timestamp, other.timestamp)
-                && Objects.equals(this.messageId, other.messageId)
-                && Objects.equals(this.errorCode, other.errorCode)
-                && Objects.equals(this.internalCode, other.internalCode)
-                && Objects.equals(this.errorMsg, other.errorMsg)
-                && Objects.equals(this.userMsg, other.userMsg);
+        final ErrorHeader that = (ErrorHeader) obj;
+        return Objects.equals(this.entityAuthData, that.entityAuthData)
+                && Objects.equals(this.recipient, that.recipient)
+                && Objects.equals(this.timestamp, that.timestamp)
+                && Objects.equals(this.messageId, that.messageId)
+                && Objects.equals(this.errorCode, that.errorCode)
+                && Objects.equals(this.internalCode, that.internalCode)
+                && Objects.equals(this.errorMsg, that.errorMsg)
+                && Objects.equals(this.userMsg, that.userMsg);
     }
 
     /* (non-Javadoc)

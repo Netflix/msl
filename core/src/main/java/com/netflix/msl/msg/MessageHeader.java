@@ -964,25 +964,25 @@ public class MessageHeader extends Header {
         if (!(obj instanceof MessageHeader)) {
             return false;
         }
-        final MessageHeader other = (MessageHeader) obj;
-        return (Objects.equals(this.entityAuthData, other.entityAuthData)
-                || Objects.equals(this.masterToken, other.masterToken))
-                && Objects.equals(this.sender, other.sender)
-                && Objects.equals(this.recipient, other.recipient)
-                && Objects.equals(this.timestamp, other.timestamp)
-                && Objects.equals(this.messageId, other.messageId)
-                && Objects.equals(this.nonReplayableId, other.nonReplayableId)
-                && Objects.equals(this.renewable, other.renewable)
-                && Objects.equals(this.handshake, other.handshake)
-                && Objects.equals(this.capabilities, other.capabilities)
-                && Objects.equals(this.keyRequestData, other.keyRequestData)
-                && Objects.equals(this.keyResponseData, other.keyResponseData)
-                && Objects.equals(this.userAuthData, other.userAuthData)
-                && Objects.equals(this.userIdToken, other.userIdToken)
-                && Objects.equals(this.serviceTokens, other.serviceTokens)
-                && Objects.equals(this.peerMasterToken, other.peerMasterToken)
-                && Objects.equals(this.peerUserIdToken, other.peerUserIdToken)
-                && Objects.equals(this.peerServiceTokens, other.peerServiceTokens);
+        final MessageHeader that = (MessageHeader) obj;
+        return (Objects.equals(this.entityAuthData, that.entityAuthData)
+                || Objects.equals(this.masterToken, that.masterToken))
+                && Objects.equals(this.sender, that.sender)
+                && Objects.equals(this.recipient, that.recipient)
+                && Objects.equals(this.timestamp, that.timestamp)
+                && Objects.equals(this.messageId, that.messageId)
+                && Objects.equals(this.nonReplayableId, that.nonReplayableId)
+                && Objects.equals(this.renewable, that.renewable)
+                && Objects.equals(this.handshake, that.handshake)
+                && Objects.equals(this.capabilities, that.capabilities)
+                && Objects.equals(this.keyRequestData, that.keyRequestData)
+                && Objects.equals(this.keyResponseData, that.keyResponseData)
+                && Objects.equals(this.userAuthData, that.userAuthData)
+                && Objects.equals(this.userIdToken, that.userIdToken)
+                && Objects.equals(this.serviceTokens, that.serviceTokens)
+                && Objects.equals(this.peerMasterToken, that.peerMasterToken)
+                && Objects.equals(this.peerUserIdToken, that.peerUserIdToken)
+                && Objects.equals(this.peerServiceTokens, that.peerServiceTokens);
     }
 
     /* (non-Javadoc)
