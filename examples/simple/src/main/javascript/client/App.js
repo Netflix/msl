@@ -28,7 +28,7 @@ function errorCallback(msgOrError) {
 
 var client;
 var dbgCtx;
-function onload() {
+function main() {
     var exampleUrl = 'http://localhost:' + SimpleConstants.SERVER_PORT + '/msl-example-server/';
     var targetUrl = getQueryParam('url', exampleUrl);
     document.querySelector("#url").setAttribute("value", targetUrl);
@@ -317,6 +317,25 @@ function showResponse(mis) {
             // Notify of timeout.
             errorCallback("Timed out reading the response.");
         },
-        error: errorCallback,
+        error: errorCallback
     });
 }
+
+function createClickHandler(type) {
+    return function () {
+        setRequestType(type);
+    };
+}
+
+// set up event handlers
+window.onload = main;
+document.querySelector("#username").onchange = checkUsername;
+document.querySelector("#identity").onchange = setIdentity;
+document.querySelector("#echo").onclick = createClickHandler("echo");
+document.querySelector("#log").onclick = createClickHandler("log");
+document.querySelector("#profile").onclick = createClickHandler("profile");
+document.querySelector("#query").onclick = createClickHandler("query");
+document.querySelector("#quit").onclick = createClickHandler("quit");
+document.querySelector("#advanced").onclick = createClickHandler("advanced");
+
+

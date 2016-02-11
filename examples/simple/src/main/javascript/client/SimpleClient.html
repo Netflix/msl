@@ -140,12 +140,9 @@
 <script type="text/javascript" src="util/SimpleMslContext.js"></script>
 <script type="text/javascript" src="SimpleClient.js"></script>
 
-<!-- Page Script -->
-<script type="text/javascript" src="./App.js"></script>
-
 <link href="./style.css" rel="stylesheet" type="text/css"></link>
 </head>
-<body onload="onload();">
+<body>
 
 <h1>Example JavaScript Client</h1>
 
@@ -191,17 +188,17 @@
             </table>
         </td>
     </tr>
-    <tr><td><b>Username:</b></td><td><input type="text" id="username" name="username" width="10" onchange="javascript:checkUsername();"/></td></tr>
+    <tr><td><b>Username:</b></td><td><input type="text" id="username" name="username" width="10"/></td></tr>
     <tr><td><b>Password:</b></td><td><input type="text" id="password" name="password" width="10"/><input type="submit" id="logout" value="Logout" onclick="logoutUser();" disabled="disabled"></td></tr>
     <tr><td colspan="3">
         <input type="hidden" id="type" name="type" value=""/>
         <ul class="tabs">
-            <li id="echo" class="tab" onclick="javascript:setRequestType('echo')">Echo Text</li>
-            <li id="log" class="tab" onclick="javascript:setRequestType('log')">Log Message</li>
-            <li id="profile" class="tab" onclick="javascript:setRequestType('profile')">Get Profile</li>
-            <li id="query" class="tab" onclick="javascript:setRequestType('query')">Lookup Word</li>
-            <li id="quit" class="tab" onclick="javascript:setRequestType('quit')">Terminate Server</li>
-            <li id="advanced" class="tab" onclick="javascript:setRequestType('advanced')">Advanced</li>
+            <li id="echo" class="tab">Echo Text</li>
+            <li id="log" class="tab">Log Message</li>
+            <li id="profile" class="tab">Get Profile</li>
+            <li id="query" class="tab">Lookup Word</li>
+            <li id="quit" class="tab">Terminate Server</li>
+            <li id="advanced" class="tab">Advanced</li>
         </ul>
         <div class="request">
             <table>
@@ -236,7 +233,7 @@
 			            <tr>
 					        <td><b>Entity Identity:</b></td>
 					        <td>
-                                                    <input id='identity' type='text' size='40' onchange='javascript:setIdentity()'/>
+                                                    <input id='identity' type='text' size='40'/>
 					        </td>
 					    </tr>
 					    <tr>
@@ -289,5 +286,6 @@
 
 </form>
 
+<script type="text/javascript" src="./App.js"></script>
 </body>
 </html>
