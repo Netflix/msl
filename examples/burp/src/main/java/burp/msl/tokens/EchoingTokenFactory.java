@@ -15,6 +15,10 @@
  */
 package burp.msl.tokens;
 
+import java.util.Date;
+
+import javax.crypto.SecretKey;
+
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
@@ -27,10 +31,6 @@ import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.util.MslContext;
 
-import javax.crypto.SecretKey;
-
-import java.util.Date;
-
 /**
  * <p>This token factory accepts all tokens, creates dummy tokens, and echoes
  * back tokens for renewal. We must return dummy tokens even though they won't
@@ -42,18 +42,10 @@ import java.util.Date;
  */
 public class EchoingTokenFactory implements TokenFactory {
     /* (non-Javadoc)
-     * @see com.netflix.msl.tokens.TokenFactory#isNewestMasterToken(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken)
-     */
-    @Override
-    public boolean isNewestMasterToken(final MslContext ctx, final MasterToken masterToken) {
-        return true;
-    }
-
-    /* (non-Javadoc)
      * @see com.netflix.msl.tokens.TokenFactory#isMasterTokenRevoked(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken)
      */
     @Override
-    public MslError isMasterTokenRevoked(MslContext ctx, MasterToken masterToken) {
+    public MslError isMasterTokenRevoked(final MslContext ctx, final MasterToken masterToken) {
         return null;
     }
 

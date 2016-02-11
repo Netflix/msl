@@ -86,11 +86,15 @@ public class ServerTokenFactory implements TokenFactory {
         this.uitExpirationOffset = appCtx.getProperties().getUserIdTokenExpirationOffset();
     }
 
-    /* (non-Javadoc)
-     * @see com.netflix.msl.tokens.TokenFactory#isNewestMasterToken(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken)
+    /**
+     * Returns true if the master token sequence number is within the
+     * acceptable range for master token renewal.
+     * 
+     * @param masterToken the master token.
+     * @return true if the master token sequence number is acceptable.
+     * @throws MslMasterTokenException if the master token is not decrypted.
      */
-    @Override
-    public boolean isNewestMasterToken(final MslContext ctx, final MasterToken masterToken) throws MslMasterTokenException {
+    private boolean isMasterTokenAcceptable(final MasterToken masterToken) throws MslMasterTokenException {
         if (!masterToken.isDecrypted())
             throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, masterToken);
         
@@ -198,7 +202,7 @@ public class ServerTokenFactory implements TokenFactory {
      */
     @Override
     public MslError isMasterTokenRenewable(final MslContext ctx, final MasterToken masterToken) throws MslMasterTokenException {
-        if (!isNewestMasterToken(ctx, masterToken))
+        if (!isMasterTokenAcceptable(masterToken))
             return MslError.MASTERTOKEN_SEQUENCE_NUMBER_OUT_OF_SYNC;
         return null;
     }
@@ -209,7 +213,7 @@ public class ServerTokenFactory implements TokenFactory {
     @Override
     public MasterToken renewMasterToken(final MslContext ctx, final MasterToken masterToken, final SecretKey encryptionKey, final SecretKey hmacKey) throws MslEncodingException, MslCryptoException, MslMasterTokenException {
         appCtx.info(String.format("%s: Renewing %s", this, SharedUtil.getMasterTokenInfo(masterToken)));
-        if (!isNewestMasterToken(ctx, masterToken))
+        if (!isMasterTokenAcceptable(masterToken))
             throw new MslMasterTokenException(MslError.MASTERTOKEN_SEQUENCE_NUMBER_OUT_OF_SYNC, masterToken);
         
         // Renew master token.

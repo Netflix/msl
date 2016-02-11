@@ -169,7 +169,7 @@ var MslControl$MslChannel;
         equals: function equals(that) {
             if (this === that) return true;
             if (!(that instanceof MslContextMasterTokenKey)) return false;
-            return this.ctx === that.ctx && this.masterToken.equals(that.masterToken);
+            return this._ctx === that._ctx && this._masterToken.equals(that._masterToken);
         },
 
         /**
@@ -178,7 +178,7 @@ var MslControl$MslChannel;
          * @see #equals(that)
          */
         uniqueKey: function uniqueKey() {
-            return this.ctx.uniqueKey() + ':' + this.masterToken.uniqueKey();
+            return this._ctx.uniqueKey() + ':' + this._masterToken.uniqueKey();
         },
     });
 

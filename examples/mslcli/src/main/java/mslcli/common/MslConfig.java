@@ -219,7 +219,8 @@ public abstract class MslConfig {
     {
         final UserAuthenticationHandle uah = getUserAuthenticationHandle();
         final UserAuthenticationData uad = uah.getUserAuthenticationData(appCtx, args, getMslStore());
-        appCtx.info(String.format("%s: Generated %s", this, SharedUtil.toString(uad, uad.getScheme())));
+        if (uad != null)
+            appCtx.info(String.format("%s: Generated %s", this, SharedUtil.toString(uad, uad.getScheme())));
         return uad;
     }
 

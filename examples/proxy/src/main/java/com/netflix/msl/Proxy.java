@@ -16,6 +16,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import com.netflix.msl.msg.MessageStreamFactory;
 import rx.Observable;
 import rx.Observable.OnSubscribe;
 import rx.Subscriber;
@@ -43,22 +44,22 @@ import com.netflix.msl.util.ProxyMslContext;
  * attempts to accept and respond if unable to communicate with the external
  * processor.</p>
  * 
- * <p>The {@link #receive(ICryptoContext, InputStream, OutputStream, int, MessageDebugContext)}
+ * <p>The {@link #receive(ICryptoContext, ByteBuffer, ByteBuffer, int, MessageDebugContext)}
  * method is used to process an incoming MSL message. If the message is
  * processed successfully, the resulting {@link MessageInputStream} will be
  * returned. If unsuccessful, any data written into the output stream must be
  * delivered to the remote entity.</p>
  * 
- * <p>The {@link #respond(ICryptoContext, Response, OutputStream, MessageInputStream, int, MessageDebugContext)
+ * <p>The {@link #respond(ICryptoContext, Response, ByteBuffer, MessageInputStream, int, MessageDebugContext)}
  * method is used to create a response to a previous MSL message. If the
  * response is generated successfully and the application data will be sent,
- * {@link Boolean.TRUE} is returned. If the application data will not be sent
+ * {@link Boolean#TRUE} is returned. If the application data will not be sent
  * due to an inability to satisfy the application's security and message
- * requirements, {@link Boolean.FALSE} is returned. In all cases any data
+ * requirements, {@link Boolean#FALSE} is returned. In all cases any data
  * written into the output stream must be delivered to the remote entity.</p>
  * 
- * <p>The methods {@link #receiveExternally(InputStream, OutputStream)} and
- * {@link #respondExternally(MessageInputStream, Response, OutputStream)} must
+ * <p>The methods {@link #receiveExternally(ByteBuffer, ByteBuffer)}
+ * {@link #respondExternally(MessageInputStream, Response, ByteBuffer)}
  * be implemented to perform any external message processing. These methods
  * will be called when the proxy is unable to process a message locally.</p>
  * 
@@ -239,8 +240,8 @@ public abstract class Proxy {
      * @param entityAuthFactory local entity authentication factory.
      * @param mslCryptoContext MSL token crypto context.
      */
-    public Proxy(final ErrorMessageRegistry registry, final EntityAuthenticationData entityAuthData, final EntityAuthenticationFactory entityAuthFactory, final ICryptoContext mslCryptoContext) {
-        mslCtrl = new MslControl(0, registry);
+    public Proxy(final MessageStreamFactory messageStreamFactory, final ErrorMessageRegistry registry, final EntityAuthenticationData entityAuthData, final EntityAuthenticationFactory entityAuthFactory, final ICryptoContext mslCryptoContext) {
+        mslCtrl = new MslControl(0, messageStreamFactory, registry);
         proxyMslCtx = new ProxyMslContext(entityAuthData, entityAuthFactory, mslCryptoContext);
         failoverMslCtx = new FailoverMslContext(entityAuthData, entityAuthFactory, mslCryptoContext);
     }
@@ -832,11 +833,11 @@ public abstract class Proxy {
         /**
          * <p>Send a response over the provided byte buffer.</p>
          * 
-         * <p>If {@link Boolean.TRUE} was returned then the response was
+         * <p>If {@link Boolean#TRUE} was returned then the response was
          * successfully created and written into the provided output stream and
          * must be delivered to the remote entity.</p>
          * 
-         * <p>If {@link Boolean.FALSE} was returned then the provided response
+         * <p>If {@link Boolean#FALSE} was returned then the provided response
          * data could not be sent and a MSL error response will have been
          * written into the provided output stream and must be delivered to the
          * remote entity. Reasons for an error response include:
@@ -994,11 +995,11 @@ public abstract class Proxy {
          * <p>Locally send a response over the provided output stream. The
          * provided response data will be used to generate the response.</p>
          * 
-         * <p>If {@link Boolean.TRUE} is returned the response was successfully
+         * <p>If {@link Boolean#TRUE} is returned the response was successfully
          * created and written into the provided output stream. The data in the
          * output stream must be delivered to the remote entity.</p>
          * 
-         * <p>If {@link Boolean.FALSE} is returned then the provided response
+         * <p>If {@link Boolean#FALSE} is returned then the provided response
          * data could not be sent and a MSL error response will have been
          * written into the provided output stream and must be delivered to the
          * remote entity. Reasons for an error response include:
@@ -1114,11 +1115,11 @@ public abstract class Proxy {
          * failover mode. The provided response data will be used to generate
          * the response.</p>
          * 
-         * <p>If {@link Boolean.TRUE} is returned the response was successfully
+         * <p>If {@link Boolean#TRUE} is returned the response was successfully
          * created and written into the provided output stream. The data in the
          * output stream must be delivered to the remote entity.</p>
          * 
-         * <p>If {@link Boolean.FALSE} is returned then the provided response
+         * <p>If {@link Boolean#FALSE} is returned then the provided response
          * data could not be sent and a MSL error response will have been
          * written into the provided output stream and must be delivered to the
          * remote entity. Reasons for an error response include:
@@ -1196,12 +1197,12 @@ public abstract class Proxy {
      * <p>Send a response over the provided output stream. The provided
      * response data will be used to generate the response.</p>
      * 
-     * <p>The returned {@link Observable} will return {@link Boolean.TRUE} the
+     * <p>The returned {@link Observable} will return {@link Boolean#TRUE} the
      * response was successfully created and written into the provided output
      * stream. The data in the output stream must be delivered to the remote
      * entity.</p>
      * 
-     * <p>If the {@link Observable} returns {@link Boolean.FALSE} then the
+     * <p>If the {@link Observable} returns {@link Boolean#FALSE} then the
      * provided response data could not be sent and a MSL error response will
      * have been written into the provided output stream and must be delivered
      * to the remote entity. Reasons for an error response include:
@@ -1231,7 +1232,6 @@ public abstract class Proxy {
      * 
      * @param tokenCryptoContext service token crypto context.
      * @param responseData application response data.
-     * @param in remote entity input stream.
      * @param out remote entity output stream.
      * @param request original request to respond to.
      * @param timeout MSL renewal lock acquisition timeout in milliseconds.
@@ -1246,12 +1246,12 @@ public abstract class Proxy {
      * <p>Locally send a response over the provided output stream. The provided
      * response data will be used to generate the response.</p>
      * 
-     * <p>The returned {@link Observable} will return {@link Boolean.TRUE} the
+     * <p>The returned {@link Observable} will return {@link Boolean#TRUE} the
      * response was successfully created and written into the provided output
      * stream. The data in the output stream must be delivered to the remote
      * entity.</p>
      * 
-     * <p>If the {@link Observable} returns {@link Boolean.FALSE} then the
+     * <p>If the {@link Observable} returns {@link Boolean#FALSE} then the
      * provided response data could not be sent and a MSL error response will
      * have been written into the provided output stream and must be delivered
      * to the remote entity. Reasons for an error response include:
@@ -1283,7 +1283,6 @@ public abstract class Proxy {
      * 
      * @param tokenCryptoContext service token crypto context.
      * @param responseData application response data.
-     * @param in remote entity input stream.
      * @param out remote entity output stream.
      * @param request original request to respond to.
      * @param timeout MSL renewal lock acquisition timeout in milliseconds.
@@ -1298,12 +1297,12 @@ public abstract class Proxy {
      * <p>Externally send a response over the provided input stream. The
      * provided response data will be used to generate the response.</p>
      * 
-     * <p>The returned {@link Observable} will return {@link Boolean.TRUE} the
+     * <p>The returned {@link Observable} will return {@link Boolean#TRUE} the
      * response was successfully created and written into the provided output
      * stream. The data in the output stream must be delivered to the remote
      * entity.</p>
      * 
-     * <p>If the {@link Observable} returns {@link Boolean.FALSE} then the
+     * <p>If the {@link Observable} returns {@link Boolean#FALSE} then the
      * provided response data could not be sent and a MSL error response will
      * have been written into the provided output stream and must be delivered
      * to the remote entity. Reasons for an error response include:
@@ -1348,12 +1347,12 @@ public abstract class Proxy {
      * mode. The provided response data will be used to generate the
      * response.</p>
      * 
-     * <p>The returned {@link Observable} will return {@link Boolean.TRUE} the
+     * <p>The returned {@link Observable} will return {@link Boolean#TRUE} the
      * response was successfully created and written into the provided output
      * stream. The data in the output stream must be delivered to the remote
      * entity.</p>
      * 
-     * <p>If the {@link Observable} returns {@link Boolean.FALSE} then the
+     * <p>If the {@link Observable} returns {@link Boolean#FALSE} then the
      * provided response data could not be sent and a MSL error response will
      * have been written into the provided output stream and must be delivered
      * to the remote entity. Reasons for an error response include:
@@ -1383,7 +1382,6 @@ public abstract class Proxy {
      * 
      * @param tokenCryptoContext service token crypto context.
      * @param responseData application response data.
-     * @param in remote entity input stream.
      * @param out remote entity output stream.
      * @param request original request to respond to.
      * @param timeout MSL renewal lock acquisition timeout in milliseconds.

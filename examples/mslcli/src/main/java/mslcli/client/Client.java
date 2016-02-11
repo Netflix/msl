@@ -18,32 +18,24 @@ package mslcli.client;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-
-import com.netflix.msl.MslException;
-import com.netflix.msl.MslKeyExchangeException;
-import com.netflix.msl.keyx.KeyRequestData;
-import com.netflix.msl.msg.ErrorHeader;
-import com.netflix.msl.msg.MessageContext;
-import com.netflix.msl.msg.MslControl;
-import com.netflix.msl.msg.MslControl.MslChannel;
-import com.netflix.msl.userauth.UserAuthenticationData;
-import com.netflix.msl.util.MslContext;
-import com.netflix.msl.util.MslStore;
 
 import mslcli.client.msg.ClientRequestMessageContext;
 import mslcli.client.util.ClientMslContext;
 import mslcli.common.CmdArguments;
 import mslcli.common.IllegalCmdArgumentException;
-import mslcli.common.IllegalCmdArgumentRuntimeException;
 import mslcli.common.util.AppContext;
 import mslcli.common.util.ConfigurationException;
-import mslcli.common.util.ConfigurationRuntimeException;
 import mslcli.common.util.SharedUtil;
+
+import com.netflix.msl.MslException;
+import com.netflix.msl.msg.ErrorHeader;
+import com.netflix.msl.msg.MessageContext;
+import com.netflix.msl.msg.MslControl;
+import com.netflix.msl.msg.MslControl.MslChannel;
+import com.netflix.msl.util.MslContext;
+import com.netflix.msl.util.MslStore;
 
 /**
  * <p>
@@ -116,9 +108,6 @@ public final class Client {
         this.mslCfg = new ClientMslConfig(appCtx, this.args);
         this.mslCfg.validate();
 
-        // Init up the MSL context
-        this.mslCtx = new ClientMslContext(appCtx, mslCfg);
-
         // Set up the MSL Control
         this.mslCtrl = appCtx.getMslControl();
 
@@ -177,6 +166,7 @@ public final class Client {
         // set remote URL
         final URL remoteUrl = args.getUrl();
 
+        final MslContext mslCtx = new ClientMslContext(appCtx, mslCfg);
         final MessageContext msgCtx = new ClientRequestMessageContext(mslCfg, request);
 
         final Future<MslChannel> f = mslCtrl.request(mslCtx, msgCtx, remoteUrl, TIMEOUT_MS);
@@ -225,9 +215,6 @@ public final class Client {
 
     /** Args */
     private final CmdArguments args;
-
-    /** MSL context */
-    private final MslContext mslCtx;
 
     /** MSL config */
     private final ClientMslConfig mslCfg;

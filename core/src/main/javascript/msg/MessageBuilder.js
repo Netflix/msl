@@ -181,23 +181,12 @@ var MessageBuilder$createErrorResponse;
             if (requestHeader.isRenewable() && keyRequestData.length > 0) {
                 // If the message contains a master token...
                 if (masterToken) {
-                    // If the master token is renewable/expired or not the
-                    // newest master token, then renew the master token.
+                    // If the master token is renewable or expired then renew
+                    // the master token.
                     if (masterToken.isRenewable(null) || masterToken.isExpired(null)) {
                         issueMasterToken(ctx, keyRequestData, masterToken, null, callback);
                     } else {
-                        var factory = ctx.getTokenFactory();
-                        factory.isNewestMasterToken(ctx, masterToken, {
-                            result: function(newest) {
-                                AsyncExecutor(callback, function() {
-                                    if (!newest)
-                                        issueMasterToken(ctx, keyRequestData, masterToken, null, callback);
-                                    else
-                                        return null;
-                                });
-                            },
-                            error: callback.error,
-                        });
+                        return null;
                     }
                 }
 

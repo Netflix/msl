@@ -19,7 +19,7 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-MasterTokenProtectedAuthenticationFactory = EntityAuthenticationFactory.extend({
+var MasterTokenProtectedAuthenticationFactory = EntityAuthenticationFactory.extend({
     /**
      * <p>Construct a new master token protected entity authentication factory
      * instance.</p>

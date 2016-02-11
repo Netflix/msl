@@ -34,18 +34,6 @@ import com.netflix.msl.util.MslContext;
  */
 public interface TokenFactory {
     /**
-     * Check if the master token sequence number is up-to-date.
-     *
-     * @param ctx MSL context.
-     * @param masterToken the master token to check.
-     * @return true if the master token sequence number is correct.
-     * @throws MslMasterTokenException if the master token is not trusted.
-     * @throws MslException if there is an error checking the master token
-     *         sequence number.
-     */
-    public boolean isNewestMasterToken(final MslContext ctx, final MasterToken masterToken) throws MslMasterTokenException, MslException;
-    
-    /**
      * <p>Return false if the master token has been revoked.</p>
      * 
      * <p>A master token may be revoked at any time after creation and before

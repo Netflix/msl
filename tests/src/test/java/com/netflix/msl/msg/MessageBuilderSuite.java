@@ -89,7 +89,6 @@ import com.netflix.msl.msg.MessageHeader.HeaderData;
 import com.netflix.msl.msg.MessageHeader.HeaderPeerData;
 import com.netflix.msl.test.ExpectedMslException;
 import com.netflix.msl.tokens.MasterToken;
-import com.netflix.msl.tokens.MockTokenFactory;
 import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.tokens.ServiceToken;
 import com.netflix.msl.tokens.UserIdToken;
@@ -1898,39 +1897,6 @@ public class MessageBuilderSuite {
             assertEquals(requestMasterToken.getSerialNumber(), responseMasterToken.getSerialNumber());
             final KeyResponseData keyResponseData = response.getKeyResponseData();
             assertNull(keyResponseData);
-        }
-        
-        @Test
-        public void renewMasterTokenOldSequenceNumber() throws MslException {
-            final long oldSequenceNumber = 1L;
-            final long currentSequenceNumber = 3L;
-            
-            final MockMslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
-            final MockTokenFactory factory = new MockTokenFactory();
-            factory.setNewestMasterToken(currentSequenceNumber);
-            ctx.setTokenFactory(factory);
-            
-            final Date renewalWindow = new Date(System.currentTimeMillis() + 10000);
-            final Date expirationWindow = new Date(System.currentTimeMillis() + 20000);
-            final MasterToken requestMasterToken = new MasterToken(ctx, renewalWindow, expirationWindow, oldSequenceNumber, 1L, null, MockPresharedAuthenticationFactory.PSK_ESN, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH);
-            final MessageBuilder requestBuilder = MessageBuilder.createRequest(ctx, requestMasterToken, null, null);
-            requestBuilder.setRenewable(true);
-            for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
-                requestBuilder.addKeyRequestData(keyRequestData);
-            final MessageHeader request = requestBuilder.getHeader();
-            
-            final MessageBuilder responseBuilder = MessageBuilder.createResponse(ctx, request);
-            final MessageHeader response = responseBuilder.getHeader();
-            final MasterToken responseMasterToken = response.getMasterToken();
-            assertEquals(requestMasterToken.getIdentity(), responseMasterToken.getIdentity());
-            assertEquals(requestMasterToken.getSequenceNumber(), responseMasterToken.getSequenceNumber());
-            assertEquals(requestMasterToken.getSerialNumber(), responseMasterToken.getSerialNumber());
-            final KeyResponseData keyResponseData = response.getKeyResponseData();
-            assertNotNull(keyResponseData);
-            final MasterToken keyxMasterToken = keyResponseData.getMasterToken();
-            assertEquals(requestMasterToken.getIdentity(), keyxMasterToken.getIdentity());
-            assertEquals(incrementLong(currentSequenceNumber), keyxMasterToken.getSequenceNumber());
-            assertEquals(requestMasterToken.getSerialNumber(), keyxMasterToken.getSerialNumber());
         }
         
         @Test

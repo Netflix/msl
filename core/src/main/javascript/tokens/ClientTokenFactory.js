@@ -24,11 +24,6 @@
  */
 var ClientTokenFactory = TokenFactory.extend({
     /** @inheritDoc */
-    isNewestMasterToken: function isNewestMasterToken(ctx, masterToken, callback) {
-        callback.result(true);
-    },
-
-    /** @inheritDoc */
     isMasterTokenRevoked: function isMasterTokenRevoked(ctx, masterToken, callback) {
         callback.result(null);
     },
