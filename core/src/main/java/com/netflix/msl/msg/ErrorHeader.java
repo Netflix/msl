@@ -335,7 +335,7 @@ public class ErrorHeader extends Header {
         if (this == obj) {
             return true;
         }
-        if (obj == null || getClass() != obj.getClass()) {
+        if (!(obj instanceof ErrorHeader)) {
             return false;
         }
         final ErrorHeader other = (ErrorHeader) obj;

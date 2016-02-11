@@ -961,7 +961,7 @@ public class MessageHeader extends Header {
         if (this == obj) {
             return true;
         }
-        if (obj == null || getClass() != obj.getClass()) {
+        if (!(obj instanceof MessageHeader)) {
             return false;
         }
         final MessageHeader other = (MessageHeader) obj;
