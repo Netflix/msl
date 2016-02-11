@@ -25,7 +25,6 @@ import java.util.Set;
 import java.util.SortedSet;
 
 import mslcli.common.IllegalCmdArgumentException;
-import mslcli.common.IllegalCmdArgumentRuntimeException;
 import mslcli.common.MslConfig;
 
 import com.netflix.msl.MslConstants.CompressionAlgorithm;
@@ -68,6 +67,9 @@ public abstract class CommonMslContext extends MslContext {
 
         // Initialize MSL config.
         this.mslCfg = mslCfg;
+        
+        // Entity authentication data.
+        this.entityAuthData = mslCfg.getEntityAuthenticationData();
 
         // Message capabilities.
         final Set<CompressionAlgorithm> compressionAlgos = new HashSet<CompressionAlgorithm>(Arrays.asList(CompressionAlgorithm.GZIP, CompressionAlgorithm.LZW));
@@ -121,13 +123,7 @@ public abstract class CommonMslContext extends MslContext {
      */
     @Override
     public final EntityAuthenticationData getEntityAuthenticationData(final ReauthCode reauthCode) {
-        try {
-            return mslCfg.getEntityAuthenticationData();
-        } catch (final ConfigurationException e) {
-            throw new ConfigurationRuntimeException(e);
-        } catch (final IllegalCmdArgumentException e) {
-            throw new IllegalCmdArgumentRuntimeException(e);
-        }
+        return entityAuthData;
     }
 
     /* (non-Javadoc)
@@ -225,6 +221,8 @@ public abstract class CommonMslContext extends MslContext {
 
     /** MSL config */
     private final MslConfig mslCfg;
+    /** Entity authentication data. */
+    private final EntityAuthenticationData entityAuthData;
     /** message capabilities */
     private final MessageCapabilities messageCaps;
     /** entity authentication factories */
