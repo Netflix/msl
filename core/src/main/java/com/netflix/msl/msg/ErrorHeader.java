@@ -16,6 +16,7 @@
 package com.netflix.msl.msg;
 
 import java.util.Date;
+import java.util.Objects;
 
 import javax.xml.bind.DatatypeConverter;
 
@@ -330,19 +331,22 @@ public class ErrorHeader extends Header {
      * @see java.lang.Object#equals(java.lang.Object)
      */
     @Override
-    public boolean equals(final Object obj) {
-        if (obj == this) return true;
-        if (!(obj instanceof ErrorHeader)) return false;
-        final ErrorHeader that = (ErrorHeader)obj;
-        return entityAuthData.equals(that.entityAuthData) &&
-            (recipient == that.recipient || (recipient != null && recipient.equals(that.recipient))) &&
-            (timestamp != null && timestamp.equals(that.timestamp) ||
-             timestamp == null && that.timestamp == null) &&
-            messageId == that.messageId &&
-            errorCode == that.errorCode &&
-            internalCode == that.internalCode &&
-            (errorMsg == that.errorMsg || (errorMsg != null && errorMsg.equals(that.errorMsg))) &&
-            (userMsg == that.userMsg || (userMsg != null && userMsg.equals(that.userMsg)));
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        final ErrorHeader other = (ErrorHeader) obj;
+        return Objects.equals(this.entityAuthData, other.entityAuthData)
+                && Objects.equals(this.recipient, other.recipient)
+                && Objects.equals(this.timestamp, other.timestamp)
+                && Objects.equals(this.messageId, other.messageId)
+                && Objects.equals(this.errorCode, other.errorCode)
+                && Objects.equals(this.internalCode, other.internalCode)
+                && Objects.equals(this.errorMsg, other.errorMsg)
+                && Objects.equals(this.userMsg, other.userMsg);
     }
 
     /* (non-Javadoc)
@@ -350,14 +354,7 @@ public class ErrorHeader extends Header {
      */
     @Override
     public int hashCode() {
-        return entityAuthData.hashCode() ^
-            ((recipient != null) ? recipient.hashCode() : 0) ^
-            ((timestamp != null) ? timestamp.hashCode() : 0) ^
-            Long.valueOf(messageId).hashCode() ^
-            errorCode.hashCode() ^
-            Integer.valueOf(internalCode).hashCode() ^
-            ((errorMsg != null) ? errorMsg.hashCode() : 0) ^
-            ((userMsg != null) ? userMsg.hashCode() : 0);
+        return Objects.hash(entityAuthData, recipient, timestamp, messageId, errorCode, internalCode, errorMsg, userMsg);
     }
 
     /** Entity authentication data. */

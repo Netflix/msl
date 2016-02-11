@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.xml.bind.DatatypeConverter;
@@ -956,38 +957,32 @@ public class MessageHeader extends Header {
      * @see java.lang.Object#equals(java.lang.Object)
      */
     @Override
-    public boolean equals(final Object obj) {
-        if (obj == this) return true;
-        if (!(obj instanceof MessageHeader)) return false;
-        final MessageHeader that = (MessageHeader)obj;
-        return (masterToken != null && masterToken.equals(that.masterToken) ||
-                entityAuthData != null && entityAuthData.equals(that.entityAuthData)) &&
-               (sender != null && sender.equals(that.sender) ||
-                sender == that.sender) &&
-               (recipient != null && recipient.equals(that.recipient) ||
-                recipient == that.recipient) &&
-               (timestamp != null && timestamp.equals(that.timestamp) ||
-                timestamp == null && that.timestamp == null) &&
-               messageId == that.messageId &&
-               (nonReplayableId != null && nonReplayableId.equals(that.nonReplayableId) ||
-                nonReplayableId == null && that.nonReplayableId == null) &&
-               renewable == that.renewable &&
-               handshake == that.handshake &&
-               (capabilities != null && capabilities.equals(that.capabilities) ||
-                capabilities == that.capabilities) &&
-               keyRequestData.equals(that.keyRequestData) &&
-               (keyResponseData != null && keyResponseData.equals(that.keyResponseData) ||
-                keyResponseData == that.keyResponseData) &&
-               (userAuthData != null && userAuthData.equals(that.userAuthData) ||
-                userAuthData == that.userAuthData) &&
-               (userIdToken != null && userIdToken.equals(that.userIdToken) ||
-                userIdToken == that.userIdToken) &&
-               serviceTokens.equals(that.serviceTokens) &&
-               (peerMasterToken != null && peerMasterToken.equals(that.peerMasterToken) ||
-                peerMasterToken == that.peerMasterToken) &&
-               (peerUserIdToken != null && peerUserIdToken.equals(that.peerUserIdToken) ||
-                peerUserIdToken == that.peerUserIdToken) &&
-               peerServiceTokens.equals(that.peerServiceTokens);
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        final MessageHeader other = (MessageHeader) obj;
+        return (Objects.equals(this.entityAuthData, other.entityAuthData)
+                || Objects.equals(this.masterToken, other.masterToken))
+                && Objects.equals(this.sender, other.sender)
+                && Objects.equals(this.recipient, other.recipient)
+                && Objects.equals(this.timestamp, other.timestamp)
+                && Objects.equals(this.messageId, other.messageId)
+                && Objects.equals(this.nonReplayableId, other.nonReplayableId)
+                && Objects.equals(this.renewable, other.renewable)
+                && Objects.equals(this.handshake, other.handshake)
+                && Objects.equals(this.capabilities, other.capabilities)
+                && Objects.equals(this.keyRequestData, other.keyRequestData)
+                && Objects.equals(this.keyResponseData, other.keyResponseData)
+                && Objects.equals(this.userAuthData, other.userAuthData)
+                && Objects.equals(this.userIdToken, other.userIdToken)
+                && Objects.equals(this.serviceTokens, other.serviceTokens)
+                && Objects.equals(this.peerMasterToken, other.peerMasterToken)
+                && Objects.equals(this.peerUserIdToken, other.peerUserIdToken)
+                && Objects.equals(this.peerServiceTokens, other.peerServiceTokens);
     }
 
     /* (non-Javadoc)
@@ -995,23 +990,24 @@ public class MessageHeader extends Header {
      */
     @Override
     public int hashCode() {
-        return ((masterToken != null) ? masterToken.hashCode() : entityAuthData.hashCode()) ^
-            ((sender != null) ? sender.hashCode() : 0) ^
-            ((recipient != null) ? recipient.hashCode() : 0) ^
-            ((timestamp != null) ? timestamp.hashCode() : 0) ^
-            Long.valueOf(messageId).hashCode() ^
-            ((nonReplayableId != null) ? nonReplayableId.hashCode() : 0) ^
-            Boolean.valueOf(renewable).hashCode() ^
-            Boolean.valueOf(handshake).hashCode() ^
-            ((capabilities != null) ? capabilities.hashCode() : 0) ^
-            keyRequestData.hashCode() ^
-            ((keyResponseData != null) ? keyResponseData.hashCode() : 0) ^
-            ((userAuthData != null) ? userAuthData.hashCode() : 0) ^
-            ((userIdToken != null) ? userIdToken.hashCode() : 0) ^
-            serviceTokens.hashCode() ^
-            ((peerMasterToken != null) ? peerMasterToken.hashCode() : 0) ^
-            ((peerUserIdToken != null) ? peerUserIdToken.hashCode() : 0) ^
-            peerServiceTokens.hashCode();
+        Object target = (masterToken != null) ? masterToken : entityAuthData;
+        return Objects.hash(target,
+                sender,
+                recipient,
+                timestamp,
+                messageId,
+                nonReplayableId,
+                renewable,
+                handshake,
+                capabilities,
+                keyRequestData,
+                keyResponseData,
+                userAuthData,
+                userIdToken,
+                serviceTokens,
+                peerMasterToken,
+                peerUserIdToken,
+                peerServiceTokens);
     }
 
     /** Entity authentication data. */
