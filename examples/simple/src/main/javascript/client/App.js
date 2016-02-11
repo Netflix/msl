@@ -327,6 +327,12 @@ function createClickHandler(type) {
     };
 }
 
+function handleError() {
+    var error = document.getElementById('error');
+    error.style.visibility = 'hidden';
+    error.style.position = 'absolute';
+}
+
 // set up event handlers
 window.onload = main;
 document.querySelector("#username").onchange = checkUsername;
@@ -337,5 +343,13 @@ document.querySelector("#profile").onclick = createClickHandler("profile");
 document.querySelector("#query").onclick = createClickHandler("query");
 document.querySelector("#quit").onclick = createClickHandler("quit");
 document.querySelector("#advanced").onclick = createClickHandler("advanced");
+
+document.querySelector("#errorinput").onclick = handleError;
+document.querySelector("#import-rsa").onclick = displayRsaKeyForm;
+document.querySelector("#rsa-input").onclick = addRsaKey;
+document.querySelector("#reset").onclick = resetState;
+document.querySelector("#logout").onclick = logoutUser;
+document.querySelector("#perform").onclick = sendRequest;
+document.querySelector("#clear").onclick = clearSentReceived;
 
 
