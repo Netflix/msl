@@ -3,6 +3,11 @@
  */
 package com.netflix.msl.keyx;
 
+import com.netflix.msl.MslCryptoException;
+import com.netflix.msl.MslEncodingException;
+import com.netflix.msl.MslEntityAuthException;
+import com.netflix.msl.MslException;
+import com.netflix.msl.entityauth.EntityAuthenticationData;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -95,10 +100,10 @@ public class FailingKeyExchange extends KeyExchangeFactory {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.keyx.KeyExchangeFactory#generateResponse(com.netflix.msl.util.MslContext, com.netflix.msl.keyx.KeyRequestData, java.lang.String)
+     * @see com.netflix.msl.keyx.KeyExchangeFactory#generateResponse(com.netflix.msl.util.MslContext, com.netflix.msl.keyx.KeyRequestData, com.netflix.msl.entityauth.EntityAuthenticationData)
      */
     @Override
-    public KeyExchangeData generateResponse(final MslContext ctx, final KeyRequestData keyRequestData, final String identity) throws MslKeyExchangeException {
+    public KeyExchangeData generateResponse(final MslContext ctx, final KeyRequestData keyRequestData, final EntityAuthenticationData entityAuthData) throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslEntityAuthException, MslException {
         // This method is called if key exchange needs to be performed.
         // Throw an exception if an error was specified.
         if (error != null)

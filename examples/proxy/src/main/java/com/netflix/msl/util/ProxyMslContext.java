@@ -42,7 +42,7 @@ import com.netflix.msl.userauth.UserAuthenticationScheme;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-public class ProxyMslContext implements MslContext {
+public class ProxyMslContext extends MslContext {
     /**
      * <p>Proxy entity authentication factory.</p>
      * 
