@@ -53,11 +53,6 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 var Header$parseHeader;
-var Header$KEY_ENTITY_AUTHENTICATION_DATA;
-var Header$KEY_MASTER_TOKEN;
-var Header$KEY_HEADERDATA;
-var Header$KEY_ERRORDATA;
-var Header$KEY_SIGNATURE;
 
 (function() {
     /**
@@ -65,31 +60,31 @@ var Header$KEY_SIGNATURE;
      * @const
      * @type {string}
      */
-    var KEY_ENTITY_AUTHENTICATION_DATA = Header$KEY_ENTITY_AUTHENTICATION_DATA = "entityauthdata";
+    var KEY_ENTITY_AUTHENTICATION_DATA = Header$KEY_ENTITY_AUTHENTICATION_DATA;
     /**
      * JSON key master token.
      * @const
      * @type {string}
      */
-    var KEY_MASTER_TOKEN = Header$KEY_MASTER_TOKEN = "mastertoken";
+    var KEY_MASTER_TOKEN = Header$KEY_MASTER_TOKEN;
     /**
      * JSON key header data.
      * @const
      * @type {string}
      */
-    var KEY_HEADERDATA = Header$KEY_HEADERDATA = "headerdata";
+    var KEY_HEADERDATA = Header$KEY_HEADERDATA;
     /**
      * JSON key error data.
      * @const
      * @type {string}
      */
-    var KEY_ERRORDATA = Header$KEY_ERRORDATA = "errordata";
+    var KEY_ERRORDATA = Header$KEY_ERRORDATA;
     /**
      * JSON key signature.
      * @const
      * @type {string}
      */
-    var KEY_SIGNATURE = Header$KEY_SIGNATURE = "signature";
+    var KEY_SIGNATURE = Header$KEY_SIGNATURE;
 
     /**
      * <p>Construct a new header from the provided JSON object.</p>
