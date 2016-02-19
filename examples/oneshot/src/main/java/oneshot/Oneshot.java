@@ -192,7 +192,6 @@ public class Oneshot {
 	    } catch (final Throwable t) {
 	        // Print the exception message and stack trace for normal errors.
 	        if (!(t instanceof OneshotErrorResponse)) {
-	            System.err.println(t.getLocalizedMessage());
 	            t.printStackTrace(System.err);
 	            return;
 	        }
