@@ -23,8 +23,8 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import com.netflix.msl.MslCryptoException;
+import com.netflix.msl.crypto.ClientMslCryptoContext;
 import com.netflix.msl.crypto.ICryptoContext;
-import com.netflix.msl.crypto.NullCryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
@@ -59,7 +59,7 @@ public class OneshotMslContext extends MslContext {
 	/** Random. */
 	private static final Random random = new SecureRandom();
 	/** MSL crypto context. */
-	private static final ICryptoContext mslCryptoContext = new NullCryptoContext();
+	private static final ICryptoContext mslCryptoContext = new ClientMslCryptoContext();
 	/** Token factory. */
 	private static final TokenFactory tokenFactory = new ClientTokenFactory();
 	
