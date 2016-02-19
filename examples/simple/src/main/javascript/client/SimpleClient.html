@@ -148,12 +148,12 @@
 
 <div id="error">
     <div id="errortext"></div>
-    <form><input type="button" value="OK" onclick="var error = document.getElementById('error'); error.style.visibility = 'hidden'; error.style.position = 'absolute';"/></form>
+    <form><input id="errorinput" type="button" value="OK"/></form>
 </div>
 
 <form onsubmit="return false;">
 
-<input id="import-rsa" type="button" value="Import RSA Public Key" onclick="displayRsaKeyForm()"/>
+<input id="import-rsa" type="button" value="Import RSA Public Key"/>
 <table id="rsa-key-form" style="position: absolute; visibility: hidden">
     <tr>
         <td><b>RSA Key Pair ID:</b></td>
@@ -164,14 +164,14 @@
         <td><textarea id="rsa-pubkey" cols="82" rows="10"></textarea></td>
     </tr>
     <tr>
-        <td colspan="2"><input type="button" value="Import Key" onclick="addRsaKey();"/></td>
+        <td colspan="2"><input id="rsa-input" type="button" value="Import Key"/></td>
     </tr>
 </table>
 
 <table class="container">
     <tr><td colspan="3" class="title">
         <b>Application Request</b>
-        <input id="reset" type="button" value="Reset State" onclick="resetState();"/>
+        <input id="reset" type="button" value="Reset State""/>
     </td></tr>
     <tr>
         <td colspan="2">
@@ -189,7 +189,7 @@
         </td>
     </tr>
     <tr><td><b>Username:</b></td><td><input type="text" id="username" name="username" width="10"/></td></tr>
-    <tr><td><b>Password:</b></td><td><input type="text" id="password" name="password" width="10"/><input type="submit" id="logout" value="Logout" onclick="logoutUser();" disabled="disabled"></td></tr>
+    <tr><td><b>Password:</b></td><td><input type="text" id="password" name="password" width="10"/><input type="submit" id="logout" value="Logout" disabled="disabled"></td></tr>
     <tr><td colspan="3">
         <input type="hidden" id="type" name="type" value=""/>
         <ul class="tabs">
@@ -260,7 +260,7 @@
         </div>
     </td></tr>
     <tr>
-        <td><input type="button" id="perform" value="Send Request To:" onclick="sendRequest();" disabled="disabled"/></td>
+        <td><input type="button" id="perform" value="Send Request To:" disabled="disabled"/></td>
         <td>
             <input type="text" id="url" size="40"/>
         </td>
@@ -275,7 +275,7 @@
 
 <table cellspacing="4" class="container debug">
     <tr><td colspan="2" class="title">
-        <b>MSL Messages</b><input id="clear" type="button" value="Clear" onclick="clearSentReceived();"/><br/>
+        <b>MSL Messages</b><input id="clear" type="button" value="Clear"/><br/>
         The raw MSL messages as seen over the wire.
     </td></tr>
     <tr>
