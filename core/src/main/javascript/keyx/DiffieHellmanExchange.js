@@ -413,7 +413,7 @@ var DiffieHellmanExchange$ResponseData$parse;
                             // Create the master token.
                             var tokenFactory = ctx.getTokenFactory();
                             if (entityToken instanceof MasterToken) {
-                                tokenFactory.renewMasterToken(ctx, entityToken, sessionKeys.encryptionKey, sessionKeys.hmacKey, {
+                                tokenFactory.renewMasterToken(ctx, entityToken, sessionKeys.encryptionKey, sessionKeys.hmacKey, null, {
                                     result: function(masterToken) {
                                         AsyncExecutor(callback, function() {
                                             // Create crypto context.
@@ -433,7 +433,7 @@ var DiffieHellmanExchange$ResponseData$parse;
                                     }
                                 });
                             } else {
-                                tokenFactory.createMasterToken(ctx, entityToken, sessionKeys.encryptionKey, sessionKeys.hmacKey, {
+                                tokenFactory.createMasterToken(ctx, entityToken, sessionKeys.encryptionKey, sessionKeys.hmacKey, null, {
                                     result: function(masterToken) {
                                         AsyncExecutor(callback, function() {
                                             // Create crypto context.

@@ -34,7 +34,7 @@ var ClientTokenFactory = TokenFactory.extend({
     },
     
     /** @inheritDoc */
-    createMasterToken: function createMasterToken(ctx, entityToken, encryptionKey, hmacKey, callback) {
+    createMasterToken: function createMasterToken(ctx, entityToken, encryptionKey, hmacKey, issuerData, callback) {
         callback.error(new MslInternalException("Creating master tokens is unsupported by the token factory."));
     },
 
@@ -44,7 +44,7 @@ var ClientTokenFactory = TokenFactory.extend({
     },
     
     /** @inheritDoc */
-    renewMasterToken: function renewMasterToken(ctx, masterToken, encryptionKey, hmacKey, callback) {
+    renewMasterToken: function renewMasterToken(ctx, masterToken, encryptionKey, hmacKey, issuerData, callback) {
         callback.error(new MslInternalException("Renewing master tokens is unsupported by the token factory."));
     },
 

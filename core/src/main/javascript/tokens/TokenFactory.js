@@ -86,7 +86,7 @@ var TokenFactory = util.Class.create({
      * @throws MslMasterTokenException if the master token is not trusted.
      * @throws MslException if there is an error comparing or updating the non-
      *         replayable ID associated with this master token.
-     * @see #createMasterToken(MslContext, EntityAuthenticationData, SecretKey, SecretKey)
+     * @see #createMasterToken(MslContext, EntityAuthenticationData, SecretKey, SecretKey, JSONObject)
      * @see MslError.MESSAGE_REPLAYED
      * @see MslError.MESSAGE_REPLAYED_UNRECOVERABLE
      */
@@ -105,6 +105,8 @@ var TokenFactory = util.Class.create({
      * @param {EntityAuthenticationData} entityAuthData the entity authentication data.
      * @param {CipherKey} encryptionKey the session encryption key.
      * @param {CipherKey} hmacKey the session HMAC key.
+     * @param {Object} issuerData optional master token issuer data that should be
+     *        included in the master token.
      * @param {{result: function(MasterToken), error: function(Error)}}
      *        callback the callback functions that will receive the new master
      *        token or any thrown exceptions.
@@ -115,7 +117,7 @@ var TokenFactory = util.Class.create({
      * @throws MslException if there is an error creating the master token.
      * @see #acceptNonReplayableId(MslContext, MasterToken, long)
      */
-    createMasterToken: function(ctx, entityAuthData, encryptionKey, hmacKey, callback) {},
+    createMasterToken: function(ctx, entityAuthData, encryptionKey, hmacKey, issuerData, callback) {},
 
     /**
      * <p>Check if the master token would be renewed by a call to
@@ -133,7 +135,7 @@ var TokenFactory = util.Class.create({
      * @throws MslMasterTokenException if the master token is not trusted.
      * @throws MslException if there is an error checking the master token
      *         renewability.
-     * @see #renewMasterToken(MslContext, MasterToken, SecretKey, SecretKey)
+     * @see #renewMasterToken(MslContext, MasterToken, SecretKey, SecretKey, JSONObject)
      */
     isMasterTokenRenewable: function(ctx, masterToken, callback) {},
     
@@ -147,6 +149,8 @@ var TokenFactory = util.Class.create({
      * @param {MasterToken} masterToken the master token to renew.
      * @param {CipherKey} encryptionKey the session encryption key.
      * @param {CipherKey} hmacKey the session HMAC key.
+     * @param {Object} issuerData optional master token issuer data that should be
+     *        merged into or overwrite any existing issuer data.
      * @param {{result: function(MasterToken), error: function(Error)}}
      *        callback the callback functions that will receive the new master
      *        token or any thrown exceptions.
@@ -159,7 +163,7 @@ var TokenFactory = util.Class.create({
      * @throws MslException if there is an error renewing the master token.
      * @see #isMasterTokenRenewable(MslContext, MasterToken)
      */
-    renewMasterToken: function(ctx, masterToken, encryptionKey, hmacKey, callback) {},
+    renewMasterToken: function(ctx, masterToken, encryptionKey, hmacKey, issuerData, callback) {},
 
     /**
      * <p>Return false if the user ID token has been revoked.</p>
