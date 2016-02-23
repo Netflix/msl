@@ -29,6 +29,7 @@ import com.netflix.msl.MslException;
 import com.netflix.msl.MslMasterTokenException;
 import com.netflix.msl.MslUserIdTokenException;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
+import com.netflix.msl.util.JsonUtils;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -151,13 +152,6 @@ public class MockTokenFactory implements TokenFactory {
         if (!masterToken.isDecrypted())
             throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, masterToken);
         
-        // Merge issuer data.
-        final JSONObject mergedIssuerData = masterToken.getIssuerData();
-        for (final Object key : issuerData.keySet()) {
-            final String k = (String)key;
-            mergedIssuerData.put(k, issuerData.get(k));
-        }
-        
         final Date renewalWindow = new Date(ctx.getTime() + RENEWAL_OFFSET);
         final Date expiration = new Date(ctx.getTime() + EXPIRATION_OFFSET);
         final long oldSequenceNumber = masterToken.getSequenceNumber();
@@ -169,6 +163,7 @@ public class MockTokenFactory implements TokenFactory {
             sequenceNumber = this.sequenceNumber;
         }
         final long serialNumber = masterToken.getSerialNumber();
+        final JSONObject mergedIssuerData = JsonUtils.merge(masterToken.getIssuerData(), issuerData);
         final String identity = masterToken.getIdentity();
         return new MasterToken(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, mergedIssuerData, identity, encryptionKey, hmacKey);
     }

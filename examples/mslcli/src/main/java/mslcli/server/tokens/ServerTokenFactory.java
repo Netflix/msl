@@ -42,6 +42,7 @@ import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.tokens.UserIdToken;
+import com.netflix.msl.util.JsonUtils;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -220,6 +221,7 @@ public class ServerTokenFactory implements TokenFactory {
             throw new MslMasterTokenException(MslError.MASTERTOKEN_SEQUENCE_NUMBER_OUT_OF_SYNC, masterToken);
         
         // Renew master token.
+        final JSONObject mergedIssuerData = JsonUtils.merge(masterToken.getIssuerData(), issuerData);
         final Date renewalWindow = new Date(ctx.getTime() + renewalOffset);
         final Date expiration = new Date(ctx.getTime() + expirationOffset);
         final String identity = masterToken.getIdentity();
@@ -227,15 +229,6 @@ public class ServerTokenFactory implements TokenFactory {
         final long lastSequenceNumber = seqNumPair.newSeqNum;
         final long nextSequenceNumber = (lastSequenceNumber == MslConstants.MAX_LONG_VALUE) ? 0 : lastSequenceNumber + 1;
         final long serialNumber = masterToken.getSerialNumber();
-        
-        // Merge issuer data.
-        final JSONObject mergedIssuerData = masterToken.getIssuerData();
-        for (final Object key : issuerData.keySet()) {
-            final String k = (String)key;
-            mergedIssuerData.put(k, issuerData.get(k));
-        }
-        
-        // Create the new master token.
         final MasterToken newMasterToken = new MasterToken(ctx, renewalWindow, expiration, nextSequenceNumber, serialNumber, mergedIssuerData, identity, encryptionKey, hmacKey);
         
         // Remember the sequence number.

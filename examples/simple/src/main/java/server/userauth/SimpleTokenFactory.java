@@ -34,6 +34,7 @@ import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.tokens.UserIdToken;
+import com.netflix.msl.util.JsonUtils;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -168,21 +169,13 @@ public class SimpleTokenFactory implements TokenFactory {
             throw new MslMasterTokenException(MslError.MASTERTOKEN_SEQUENCE_NUMBER_OUT_OF_SYNC, masterToken);
         
         // Renew master token.
+        final JSONObject mergedIssuerData = JsonUtils.merge(masterToken.getIssuerData(), issuerData);
         final Date renewalWindow = new Date(ctx.getTime() + RENEWAL_OFFSET);
         final Date expiration = new Date(ctx.getTime() + EXPIRATION_OFFSET);
         final long oldSequenceNumber = masterToken.getSequenceNumber();
         final long sequenceNumber = (oldSequenceNumber == MslConstants.MAX_LONG_VALUE) ? 0 : oldSequenceNumber + 1;
         final long serialNumber = masterToken.getSerialNumber();
         final String identity = masterToken.getIdentity();
-
-        // Merge issuer data.
-        final JSONObject mergedIssuerData = masterToken.getIssuerData();
-        for (final Object key : issuerData.keySet()) {
-            final String k = (String)key;
-            mergedIssuerData.put(k, issuerData.get(k));
-        }
-        
-        // Create the new master token.
         final MasterToken newMasterToken = new MasterToken(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, mergedIssuerData, identity, encryptionKey, hmacKey);
         
         // Remember the sequence number.

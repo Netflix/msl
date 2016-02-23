@@ -299,4 +299,32 @@ public class JsonUtils {
         }
         return s1.equals(s2);
     }
+    
+    /**
+     * Merge two JSON objects into a single JSON object. If the same key is
+     * found in both objects, the second object's value is used. The values are
+     * copied by reference so this is a shallow copy.
+     * 
+     * @param jo1 first JSON object. May be null.
+     * @param jo2 second JSON object. May be null.
+     * @return the merged JSON object or null if both arguments are null.
+     */
+    public static JSONObject merge(final JSONObject jo1, final JSONObject jo2) {
+        // Return null if both objects are null.
+        if (jo1 == null && jo2 == null);
+        
+        // Make a copy of the first object, or create an empty object.
+        final JSONObject jo = (jo1 != null)
+            ? new JSONObject(jo1, JSONObject.getNames(jo1))
+            : new JSONObject();
+        
+        // If the second object is null, we're done and just return the copy.
+        if (jo2 == null)
+            return jo;
+        
+        // Copy the contents of the second object into the final object.
+        for (final String key : JSONObject.getNames(jo2))
+            jo.put(key, jo2.get(key));
+        return jo;
+    }
 }

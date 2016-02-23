@@ -29,6 +29,38 @@ var MockTokenFactory;
     var EXPIRATION_OFFSET = 120000;
     /** Non-replayable ID acceptance window. */
     var NON_REPLAYABLE_ID_WINDOW = 65536;
+    
+    /**
+     * Merge two JSON objects into a single JSON object. If the same key is
+     * found in both objects, the second object's value is used. The values are
+     * copied by reference so this is a shallow copy.
+     * 
+     * @param {Object} jo1 first JSON object. May be null.
+     * @param {Object} jo2 second JSON object. May be null.
+     * @return {Object} the merged JSON object or null if both arguments are null.
+     */
+    function merge(jo1, jo2) {
+        // Return null if both objects are null.
+        if (!jo1 && !jo2);
+        
+        // Create the final object.
+        var jo = {};
+        
+        // Copy the contents of the first object into the final object.
+        if (jo1) {
+            for (var key in jo1)
+                jo[key] = jo1[key];
+        }
+        
+        // Copy the contents of the second object into the final object.
+        if (jo2) {
+            for (var key in jo2)
+                jo[key] = jo2[key];
+        }
+        
+        // Return the final object.
+        return jo;
+    }
 
     MockTokenFactory = TokenFactory.extend({
         /**
@@ -143,12 +175,7 @@ var MockTokenFactory;
                 if (!masterToken.isDecrypted())
                     throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, masterToken);
                 
-                // Merge issuer data.
-                var mergedIssuerData = masterToken.issuerData;
-                for (var key in issuerData) {
-                    mergedIssuerData[key] = issuerData[key];
-                }
-
+                var mergedIssuerData = merge(masterToken.issuerData, issuerData);
                 var renewalWindow = new Date(ctx.getTime() + RENEWAL_OFFSET);
                 var expiration = new Date(ctx.getTime() + EXPIRATION_OFFSET);
                 var oldSequenceNumber = masterToken.sequenceNumber;

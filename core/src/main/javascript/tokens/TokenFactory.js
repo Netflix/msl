@@ -106,7 +106,7 @@ var TokenFactory = util.Class.create({
      * @param {CipherKey} encryptionKey the session encryption key.
      * @param {CipherKey} hmacKey the session HMAC key.
      * @param {Object} issuerData optional master token issuer data that should be
-     *        included in the master token.
+     *        included in the master token. May be {@code null}.
      * @param {{result: function(MasterToken), error: function(Error)}}
      *        callback the callback functions that will receive the new master
      *        token or any thrown exceptions.
@@ -150,7 +150,8 @@ var TokenFactory = util.Class.create({
      * @param {CipherKey} encryptionKey the session encryption key.
      * @param {CipherKey} hmacKey the session HMAC key.
      * @param {Object} issuerData optional master token issuer data that should be
-     *        merged into or overwrite any existing issuer data.
+     *        merged into or overwrite any existing issuer data. May be
+     *        {@code null}.
      * @param {{result: function(MasterToken), error: function(Error)}}
      *        callback the callback functions that will receive the new master
      *        token or any thrown exceptions.

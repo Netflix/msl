@@ -39,6 +39,7 @@ import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.tokens.UserIdToken;
+import com.netflix.msl.util.JsonUtils;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -205,17 +206,11 @@ public class KanColleTokenFactory implements TokenFactory {
             throw new MslMasterTokenException(MslError.MASTERTOKEN_SEQUENCE_NUMBER_OUT_OF_SYNC, masterToken);
         final long sequenceNumber = (oldSequenceNumber == MslConstants.MAX_LONG_VALUE) ? 0 : oldSequenceNumber + 1;
         
-        // Merge issuer data.
-        final JSONObject mergedIssuerData = masterToken.getIssuerData();
-        for (final Object key : issuerData.keySet()) {
-            final String k = (String)key;
-            mergedIssuerData.put(k, issuerData.get(k));
-        }
-        
         // Renew master token.
         final Date renewal = new Date(ctx.getTime() + mtRenewalOffset);
         final Date expiration = new Date(ctx.getTime() + mtExpirationOffset);
         final long serialNumber = masterToken.getSerialNumber();
+        final JSONObject mergedIssuerData = JsonUtils.merge(masterToken.getIssuerData(), issuerData);
         return new MasterToken(ctx, renewal, expiration, sequenceNumber, serialNumber, mergedIssuerData, identity, encryptionKey, hmacKey);
     }
 

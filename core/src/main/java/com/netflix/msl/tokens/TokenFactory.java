@@ -117,7 +117,7 @@ public interface TokenFactory {
      * @param encryptionKey the session encryption key.
      * @param hmacKey the session HMAC key.
      * @param issuerData optional master token issuer data that should be
-     *        included in the master token.
+     *        included in the master token. May be {@code null}.
      * @return the new master token.
      * @throws MslEncodingException if there is an error encoding the JSON
      *         data.
@@ -157,7 +157,8 @@ public interface TokenFactory {
      * @param encryptionKey the session encryption key.
      * @param hmacKey the session HMAC key.
      * @param issuerData optional master token issuer data that should be
-     *        merged into or overwrite any existing issuer data.
+     *        merged into or overwrite any existing issuer data. May be
+     *        {@code null}.
      * @return the new master token.
      * @throws MslEncodingException if there is an error encoding the JSON
      *         data.
