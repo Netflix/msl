@@ -311,7 +311,8 @@ public class JsonUtils {
      */
     public static JSONObject merge(final JSONObject jo1, final JSONObject jo2) {
         // Return null if both objects are null.
-        if (jo1 == null && jo2 == null);
+        if (jo1 == null && jo2 == null)
+            return null;
         
         // Make a copy of the first object, or create an empty object.
         final JSONObject jo = (jo1 != null)
