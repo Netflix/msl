@@ -406,7 +406,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
                     // Create the master token.
                     var tokenFactory = ctx.getTokenFactory();
                     if (entityToken instanceof MasterToken) {
-                        tokenFactory.renewMasterToken(ctx, entityToken, encryptionKey, hmacKey, {
+                        tokenFactory.renewMasterToken(ctx, entityToken, encryptionKey, hmacKey, null, {
                             result: function(masterToken) {
                                 AsyncExecutor(callback, function() {
                                     // Create crypto context.
@@ -435,7 +435,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
                             }
                         });
                     } else {
-                        tokenFactory.createMasterToken(ctx, entityToken, encryptionKey, hmacKey, {
+                        tokenFactory.createMasterToken(ctx, entityToken, encryptionKey, hmacKey, null, {
                             result: function(masterToken) {
                                 AsyncExecutor(callback, function() {
                                     // Create crypto context.

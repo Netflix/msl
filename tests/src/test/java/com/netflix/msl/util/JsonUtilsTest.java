@@ -15,7 +15,11 @@
  */
 package com.netflix.msl.util;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.nio.charset.Charset;
 import java.util.Random;
@@ -65,6 +69,7 @@ public class JsonUtilsTest {
      */
     private static final String randomString(final Random random) {
         final byte[] raw = new byte[random.nextInt(MAX_STRING_CHARS) + 1];
+        random.nextBytes(raw);
         return DatatypeConverter.printBase64Binary(raw);
     }
     
@@ -121,7 +126,7 @@ public class JsonUtilsTest {
                     jo.put(KEY_OBJECT + i, (depth > 1) ? createDeepJSONObject(random, depth - 1) : createFlatJSONObject(random));
                     break;
                 case 5:
-                    jo.put(KEY_ARRAY + i, (depth > 1) ? createDeepJSONObject(random, depth - 1) : createFlatJSONArray(random));
+                    jo.put(KEY_ARRAY + i, (depth > 1) ? createDeepJSONArray(random, depth - 1) : createFlatJSONArray(random));
                     break;
             }
         }
@@ -153,7 +158,6 @@ public class JsonUtilsTest {
         }
         return ja;
     }
-
     
     /**
      * @param random random source.
@@ -165,7 +169,7 @@ public class JsonUtilsTest {
     private static JSONArray createDeepJSONArray(final Random random, final int depth) throws JSONException {
         final JSONArray ja = new JSONArray();
         for (int i = random.nextInt(MAX_ELEMENTS); i > 0; --i) {
-            switch (random.nextInt(4)) {
+            switch (random.nextInt(6)) {
                 case 0:
                     ja.put(random.nextBoolean());
                     break;
@@ -182,7 +186,7 @@ public class JsonUtilsTest {
                     ja.put((depth > 1) ? createDeepJSONObject(random, depth - 1) : createFlatJSONObject(random));
                     break;
                 case 5:
-                    ja.put((depth > 1) ? createDeepJSONObject(random, depth - 1) : createFlatJSONArray(random));
+                    ja.put((depth > 1) ? createDeepJSONArray(random, depth - 1) : createFlatJSONArray(random));
                     break;
             }
         }
@@ -247,7 +251,7 @@ public class JsonUtilsTest {
     
     @BeforeClass
     public static void setup() throws JSONException {
-        final Random random = new Random();
+        random = new Random();
         flatJo = createFlatJSONObject(random);
         deepJo = createDeepJSONObject(random, MAX_DEPTH);
         nullJo = null;
@@ -262,6 +266,7 @@ public class JsonUtilsTest {
         deepJo = null;
         flatJa = null;
         deepJa = null;
+        random = null;
     }
     
     @Test
@@ -393,6 +398,56 @@ public class JsonUtilsTest {
         }
     }
     
+    @Test
+    public void mergeNulls() {
+        final JSONObject jo1 = null;
+        final JSONObject jo2 = null;
+        final JSONObject merged = JsonUtils.merge(jo1, jo2);
+        assertNull(merged);
+    }
+    
+    @Test
+    public void mergeFirstNull() {
+        final JSONObject jo1 = null;
+        final JSONObject jo2 = deepJo;
+        final JSONObject merged = JsonUtils.merge(jo1, jo2);
+        assertTrue(JsonUtils.equals(merged, jo2));
+    }
+    
+    @Test
+    public void mergeSecondNull() {
+        final JSONObject jo1 = deepJo;
+        final JSONObject jo2 = null;
+        final JSONObject merged = JsonUtils.merge(jo1, jo2);
+        assertTrue(JsonUtils.equals(merged, jo1));
+    }
+    
+    @Test
+    public void mergeOverwriting() {
+        final JSONObject jo1 = createFlatJSONObject(random);
+        final JSONObject jo2 = createFlatJSONObject(random);
+        
+        // Insert some shared keys.
+        jo1.put("key1", true);
+        jo2.put("key1", "value1");
+        jo1.put("key2", 17);
+        jo2.put("key2", 34);
+        
+        // Ensure second overwrites first.
+        final JSONObject merged = JsonUtils.merge(jo1, jo2);
+        for (final String key : JSONObject.getNames(merged)) {
+            final Object value = merged.get(key);
+            if (key.equals("key1") || key.equals("key2")) {
+                assertEquals(jo2.get(key), value);
+            } else if (jo2.has(key)) {
+                assertEquals(jo2.get(key), value);
+            } else {
+                assertEquals(jo1.get(key), value);
+            }
+        }
+    }
+    
+    private static Random random;
     private static JSONObject flatJo, deepJo, nullJo;
     private static JSONArray flatJa, deepJa, nullJa;
 }

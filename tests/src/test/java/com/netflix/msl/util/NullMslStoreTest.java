@@ -15,7 +15,8 @@
  */
 package com.netflix.msl.util;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -82,7 +83,7 @@ public class NullMslStoreTest {
     
     @Test
     public void cryptoContexts() throws MslException {
-        final MasterToken masterToken = factory.createMasterToken(ctx, entityAuthData, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH);
+        final MasterToken masterToken = factory.createMasterToken(ctx, entityAuthData, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH, null);
         assertNull(store.getCryptoContext(masterToken));
         
         final ICryptoContext cryptoContext = new NullCryptoContext();
@@ -93,7 +94,7 @@ public class NullMslStoreTest {
     
     @Test
     public void nonReplayableId() throws MslEncodingException, MslCryptoException, MslException {
-        final MasterToken masterToken = factory.createMasterToken(ctx, entityAuthData, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH);
+        final MasterToken masterToken = factory.createMasterToken(ctx, entityAuthData, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH, null);
         for (int i = 0; i < 10; ++i)
             assertEquals(1, store.getNonReplayableId(masterToken));
     }

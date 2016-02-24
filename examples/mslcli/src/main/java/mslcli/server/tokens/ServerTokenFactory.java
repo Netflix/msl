@@ -42,6 +42,7 @@ import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.tokens.UserIdToken;
+import com.netflix.msl.util.JsonUtils;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -177,15 +178,17 @@ public class ServerTokenFactory implements TokenFactory {
         } // synchronized (nonReplayableIdsLock)
     }
 
+    /* (non-Javadoc)
+     * @see com.netflix.msl.tokens.TokenFactory#createMasterToken(com.netflix.msl.util.MslContext, com.netflix.msl.entityauth.EntityAuthenticationData, javax.crypto.SecretKey, javax.crypto.SecretKey, org.json.JSONObject)
+     */
     @Override
-    public MasterToken createMasterToken(final MslContext ctx, final EntityAuthenticationData entityAuthData, final SecretKey encryptionKey, final SecretKey hmacKey) throws MslEncodingException, MslCryptoException {
+    public MasterToken createMasterToken(final MslContext ctx, final EntityAuthenticationData entityAuthData, final SecretKey encryptionKey, final SecretKey hmacKey, final JSONObject issuerData) throws MslEncodingException, MslCryptoException {
         final String identity = entityAuthData.getIdentity();
         appCtx.info(String.format("%s: Creating MasterToken for %s", this, identity));
         final Date renewalWindow = new Date(ctx.getTime() + renewalOffset);
         final Date expiration = new Date(ctx.getTime() + expirationOffset);
         final long sequenceNumber = 0;
         final long serialNumber = generateSerialNumber(ctx.getRandom());
-        final JSONObject issuerData = null;
         final MasterToken masterToken = new MasterToken(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey);
         
         // Remember the sequence number.
@@ -209,16 +212,16 @@ public class ServerTokenFactory implements TokenFactory {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.tokens.TokenFactory#renewMasterToken(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, javax.crypto.SecretKey, javax.crypto.SecretKey)
+     * @see com.netflix.msl.tokens.TokenFactory#renewMasterToken(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, javax.crypto.SecretKey, javax.crypto.SecretKey, org.json.JSONObject)
      */
     @Override
-    public MasterToken renewMasterToken(final MslContext ctx, final MasterToken masterToken, final SecretKey encryptionKey, final SecretKey hmacKey) throws MslEncodingException, MslCryptoException, MslMasterTokenException {
+    public MasterToken renewMasterToken(final MslContext ctx, final MasterToken masterToken, final SecretKey encryptionKey, final SecretKey hmacKey, final JSONObject issuerData) throws MslEncodingException, MslCryptoException, MslMasterTokenException {
         appCtx.info(String.format("%s: Renewing %s", this, SharedUtil.getMasterTokenInfo(masterToken)));
         if (!isMasterTokenAcceptable(masterToken))
             throw new MslMasterTokenException(MslError.MASTERTOKEN_SEQUENCE_NUMBER_OUT_OF_SYNC, masterToken);
         
         // Renew master token.
-        final JSONObject issuerData = null;
+        final JSONObject mergedIssuerData = JsonUtils.merge(masterToken.getIssuerData(), issuerData);
         final Date renewalWindow = new Date(ctx.getTime() + renewalOffset);
         final Date expiration = new Date(ctx.getTime() + expirationOffset);
         final String identity = masterToken.getIdentity();
@@ -226,7 +229,7 @@ public class ServerTokenFactory implements TokenFactory {
         final long lastSequenceNumber = seqNumPair.newSeqNum;
         final long nextSequenceNumber = (lastSequenceNumber == MslConstants.MAX_LONG_VALUE) ? 0 : lastSequenceNumber + 1;
         final long serialNumber = masterToken.getSerialNumber();
-        final MasterToken newMasterToken = new MasterToken(ctx, renewalWindow, expiration, nextSequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey);
+        final MasterToken newMasterToken = new MasterToken(ctx, renewalWindow, expiration, nextSequenceNumber, serialNumber, mergedIssuerData, identity, encryptionKey, hmacKey);
         
         // Remember the sequence number.
         //
