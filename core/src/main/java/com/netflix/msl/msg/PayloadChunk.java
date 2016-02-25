@@ -104,6 +104,7 @@ public class PayloadChunk implements MslEncodable {
      * provided crypto context. If requested, the data will be compressed
      * before encrypting.
      * 
+     * @param ctx the MSL context.
      * @param sequenceNumber sequence number.
      * @param messageId the message ID.
      * @param endofmsg true if this is the last payload chunk of the message.
@@ -183,7 +184,7 @@ public class PayloadChunk implements MslEncodable {
         // Save the crypto context.
         this.cryptoContext = cryptoContext;
         
-        // Verify the JSON representation.
+        // Verify the data.
         final byte[] ciphertext;
         try {
             ciphertext = payloadChunkMo.getBytes(KEY_PAYLOAD);

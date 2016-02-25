@@ -38,7 +38,7 @@ var UnauthenticatedAuthenticationData$parse;
     "use strict";
     
     /**
-     * JSON key entity identity.
+     * Key entity identity.
      * @const
      * @type {string}
      */
@@ -66,10 +66,12 @@ var UnauthenticatedAuthenticationData$parse;
         },
 
         /** @inheritDoc */
-        getAuthData: function getAuthData() {
-            var result = {};
-            result[KEY_IDENTITY] = this.identity;
-            return result;
+        getAuthData: function getAuthData(encoder, format, callback) {
+            AsyncExecutor(callback, function() {
+                var mo = encoder.createObject();
+                mo.put(KEY_IDENTITY, this.identity);
+                return mo;
+            }, this);
         },
 
         /** @inheritDoc */
@@ -82,16 +84,20 @@ var UnauthenticatedAuthenticationData$parse;
 
     /**
      * Construct a new Unauthenticated asymmetric keys authentication data instance from the
-     * provided JSON object.
+     * provided MSL object.
      *
-     * @param {object} unauthenticatedAuthJO the authentication data JSON object.
+     * @param {MslObject} unauthenticatedAuthMo the authentication data MSL object.
      * @throws MslEncodingException if there is an error parsing the entity
      *         authentication data.
      */
-    UnauthenticatedAuthenticationData$parse = function UnauthenticatedAuthenticationData$parse(unauthenticatedAuthJO) {
-        var identity = unauthenticatedAuthJO[KEY_IDENTITY];
-        if (typeof identity !== 'string')
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "Unauthenticated authdata" + JSON.stringify(unauthenticatedAuthJO));
-        return new UnauthenticatedAuthenticationData(identity);
+    UnauthenticatedAuthenticationData$parse = function UnauthenticatedAuthenticationData$parse(unauthenticatedAuthMo) {
+        try {
+            var identity = unauthenticatedAuthMo.getString(KEY_IDENTITY);
+            return new UnauthenticatedAuthenticationData(identity);
+        } catch (e) {
+            if (e instanceof MslEncoderException)
+                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "Unauthenticated authdata" + unauthenticatedAuthMo);
+            throw e;
+        }
     };
 })();

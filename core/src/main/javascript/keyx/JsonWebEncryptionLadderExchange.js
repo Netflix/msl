@@ -56,31 +56,31 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
     };
 
     /**
-     * JSON key wrap key wrapping mechanism.
+     * Key wrap key wrapping mechanism.
      * @const
      * @type {string}
      */
     var KEY_MECHANISM = "mechanism";
     /**
-     * JSON key wrap data.
+     * Key wrap data.
      * @const
      * @type {string}
      */
     var KEY_WRAPDATA = "wrapdata";
     /**
-     * JSON key wrapping key.
+     * Key wrapping key.
      * @const
      * @type {string}
      */
     var KEY_WRAP_KEY = "wrapkey";
     /**
-     * JSON key encrypted encryption key.
+     * Key encrypted encryption key.
      * @const
      * @type {string}
      */
     var KEY_ENCRYPTION_KEY = "encryptionkey";
     /**
-     * JSON key encrypted HMAC key.
+     * Key encrypted HMAC key.
      * @const
      * @type {string}
      */
@@ -137,11 +137,13 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
         },
 
         /** @inheritDoc */
-        getKeydata: function getKeydata() {
-            var keydata = {};
-            keydata[KEY_MECHANISM] = this.mechanism;
-            if (this.wrapdata) keydata[KEY_WRAPDATA] = base64$encode(this.wrapdata);
-            return keydata;
+        getKeydata: function getKeydata(encoder, format, callback) {
+            AsyncExecutor(callback, function() {
+                var mo = encoder.createObject();
+                mo.put(KEY_MECHANISM, this.mechanism);
+                if (this.wrapdata) mo.put(KEY_WRAPDATA, this.wrapdata);
+                return mo;
+            }, this);
         },
 
         /** @inheritDoc */
@@ -164,47 +166,51 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
 
     /**
      * Create a new JSON Web Encryption ladder key request data instance
-     * from the provided JSON object.
+     * from the provided MSL object.
      *
-     * @param {object} keyRequestJO the JSON object.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @param {MslObject} keyRequestMo the MSL object.
+     * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslCryptoException the wrapped key data cannot be verified
      *         or decrypted, or the specified mechanism is not supported.
      * @throws MslKeyExchangeException if the specified mechanism is not
      *         recognized.
      */
-    var RequestData$parse = JsonWebEncryptionLadderExchange$RequestData$parse = function RequestData$parse(keyRequestJO) {
-        // Pull key request data.
-        var mechanism = keyRequestJO[KEY_MECHANISM];
-        var wrapdataB64 = keyRequestJO[KEY_WRAPDATA];
-
-        // Verify key request data.
-        if (!mechanism ||
-            (mechanism == Mechanism.WRAP && (!wrapdataB64 || typeof wrapdataB64 !== 'string')))
-        {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + JSON.stringify(keyRequestJO));
+    var RequestData$parse = JsonWebEncryptionLadderExchange$RequestData$parse = function RequestData$parse(keyRequestMo) {
+        var mechanism;
+        try {
+            mechanism = keyRequestMo.getString(KEY_MECHANISM);
+            if (!Mechanism[mechanism])
+                throw new MslKeyExchangeException(MslError.UNIDENTIFIED_KEYX_MECHANISM, mechanism);
+        } catch (e) {
+            if (e instanceof MslEncoderException)
+                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "keydata " + keyRequestMo, e);
+            throw e;
         }
-
-        // Verify mechanism.
-        if (!Mechanism[mechanism])
-            throw new MslKeyExchangeException(MslError.UNIDENTIFIED_KEYX_MECHANISM, mechanism);
-
-        // Create the request data.
+        
         var wrapdata;
-        switch (mechanism) {
-            case Mechanism.WRAP:
-                try {
-                    wrapdata = base64$decode(wrapdataB64);
-                } catch (e) {
-                    throw new MslKeyExchangeException(MslError.KEYX_WRAPPING_KEY_MISSING, "keydata " + keyRequestJO.toString());
+        try {
+            switch (mechanism) {
+                case Mechanism.PSK:
+                {
+                    wrapdata = null;
+                    break;
                 }
-                if (wrapdata == null || wrapdata.length == 0)
-                    throw new MslKeyExchangeException(MslError.KEYX_WRAPPING_KEY_MISSING, "keydata " + keyRequestJO.toString());
-                break;
-            default:
-                wrapdata = null;
-                break;
+                case Mechanism.WRAP:
+                {
+                    wrapdata = keyRequestMo.getBytes(KEY_WRAPDATA);
+                    if (wrapdata.length == 0)
+                        throw new MslKeyExchangeException(MslError.KEYX_WRAPPING_KEY_MISSING, "keydata " + keyRequestMo);
+                    break;
+                }
+                default:
+                    throw new MslCryptoException(MslError.UNSUPPORTED_KEYX_MECHANISM, mechanism);
+            }
+        } catch (e) {
+            if (e instanceof MslEncoderException)
+                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "keydata " + keyRequestMo, e);
+            throw e;
         }
+
         return new RequestData(mechanism, wrapdata);
     };
 
@@ -251,13 +257,15 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
         },
 
         /** @inheritDoc */
-        getKeydata: function getKeydata() {
-            var keydata = {};
-            keydata[KEY_WRAP_KEY] = base64$encode(this.wrapKey);
-            keydata[KEY_WRAPDATA] = base64$encode(this.wrapdata);
-            keydata[KEY_ENCRYPTION_KEY] = base64$encode(this.encryptionKey);
-            keydata[KEY_HMAC_KEY] = base64$encode(this.hmacKey);
-            return keydata;
+        getKeydata: function getKeydata(encoder, format, callback) {
+            AsyncExecutor(callback, function() {
+                var mo = encoder.createObject();
+                mo.put(KEY_WRAP_KEY, this.wrapKey);
+                mo.put(KEY_WRAPDATA, this.wrapdata);
+                mo.put(KEY_ENCRYPTION_KEY, this.encryptionKey);
+                mo.put(KEY_HMAC_KEY, this.hmacKey);
+                return mo;
+            }, this);
         },
 
         /** @inheritDoc */
@@ -284,50 +292,25 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
 
     /**
      * Create a new JSON Web Encryption ladder key response data instance
-     * with the provided master token from the provided JSON object.
+     * with the provided master token from the provided MSL object.
      *
      * @param {MasterToken} masterToken the master token.
      * @param {object} keyDataJO the JSON object.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslKeyExchangeException if the mechanism is not recognized.
      */
-    var ResponseData$parse = JsonWebEncryptionLadderExchange$ResponseData$parse = function JsonWebEncryptionLadderExchange$ResponseData$parse(masterToken, keyDataJO) {
-        // Pull key response data.
-        var wrapKeyB64 = keyDataJO[KEY_WRAP_KEY];
-        var wrapdataB64 = keyDataJO[KEY_WRAPDATA];
-        var encryptionKeyB64 = keyDataJO[KEY_ENCRYPTION_KEY];
-        var hmacKeyB64 = keyDataJO[KEY_HMAC_KEY];
-
-        // Verify key response data.
-        if (!wrapKeyB64 || typeof wrapKeyB64 !== 'string' ||
-            !wrapdataB64 || typeof wrapdataB64 !== 'string' ||
-            !encryptionKeyB64 || typeof encryptionKeyB64 !== 'string' ||
-            !hmacKeyB64 || typeof hmacKeyB64 !== 'string')
-        {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + JSON.stringify(keyDataJO));
-        }
-
-        // Decode keys.
-        var wrapKey, wrapdata, encryptionKey, hmacKey;
+    var ResponseData$parse = JsonWebEncryptionLadderExchange$ResponseData$parse = function JsonWebEncryptionLadderExchange$ResponseData$parse(masterToken, keyDataMo) {
         try {
-            wrapKey = base64$decode(wrapKeyB64);
-            wrapdata = base64$decode(wrapdataB64);
+            var wrapKey = keyDataMo.getBytes(KEY_WRAP_KEY);
+            var wrapdata = keyDataMo.getBytes(KEY_WRAPDATA);
+            var encryptionKey = keyDataMo.getBytes(KEY_ENCRYPTION_KEY);
+            var hmacKey = keyDataMo.getBytes(KEY_HMAC_KEY);
+            return new ResponseData(masterToken, wrapKey, wrapdata, encryptionKey, hmacKey);
         } catch (e) {
-            throw new MslCryptoException(MslError.INVALID_SYMMETRIC_KEY, "keydata " + JSON.stringify(keyDataJO), e);
+            if (e instanceof MslEncoderException)
+                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "keydata " + keyDataMo, e);
+            throw e;
         }
-        try {
-            encryptionKey = base64$decode(encryptionKeyB64);
-        } catch (e) {
-            throw new MslCryptoException(MslError.INVALID_ENCRYPTION_KEY, "keydata " + JSON.stringify(keyDataJO), e);
-        }
-        try {
-            hmacKey = base64$decode(hmacKeyB64);
-        } catch (e) {
-            throw new MslCryptoException(MslError.INVALID_HMAC_KEY, "keydata " + JSON.stringify(keyDataJO), e);
-        }
-
-        // Return the response data.
-        return new ResponseData(masterToken, wrapKey, wrapdata, encryptionKey, hmacKey);
     };
 
     /**
@@ -365,7 +348,8 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                 case Mechanism.WRAP:
                 {
                     var cryptoContext = ctx.getMslCryptoContext();
-                    cryptoContext.unwrap(wrapdata, WebCryptoAlgorithm.A128KW, WebCryptoAlgorithm.WRAP_UNWRAP, {
+                    var encoder = ctx.getMslEncoderFactory();
+                    cryptoContext.unwrap(wrapdata, WebCryptoAlgorithm.A128KW, WebCryptoAlgorithm.WRAP_UNWRAP, encoder, {
                         result: function(wrapKey) {
                             AsyncExecutor(callback, function() {
                                 return new JsonWebEncryptionCryptoContext(ctx, JsonWebEncryptionCryptoContext$Algorithm.A128KW, JsonWebEncryptionCryptoContext$Encryption.A128GCM, wrapKey);
@@ -410,12 +394,12 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
         },
 
         /** @inheritDoc */
-        generateResponse: function generateResponse(ctx, keyRequestData, entityToken, callback) {
+        generateResponse: function generateResponse(ctx, format, keyRequestData, entityToken, callback) {
             var self = this;
 
             AsyncExecutor(callback, function() {
                 if (!(keyRequestData instanceof RequestData))
-                    throw new MslInternalException("Key request data " + JSON.stringify(keyRequestData) + " was not created by this factory.");
+                    throw new MslInternalException("Key request data " + keyRequestData + " was not created by this factory.");
 
                 // If the master token was not issued by the local entity then we
                 // should not be generating a key response for it.
@@ -435,7 +419,8 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                     result: function(wrapKey) {
                         AsyncExecutor(callback, function() {
                             var mslCryptoContext = ctx.getMslCryptoContext();
-                            mslCryptoContext.wrap(wrapKey, {
+                            var encoder = ctx.getMslEncoderFactory();
+                            mslCryptoContext.wrap(wrapKey, encoder, format, {
                                 result: function(wrapdata) {
                                     createSessionKeys(identity, wrapKey, wrapdata);
                                 },
@@ -485,9 +470,10 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                     var prevWrapdata = request.wrapdata;
 
                     // Wrap wrapping key using specified wrapping key.
+                    var encoder = ctx.getMslEncoderFactory();
                     createCryptoContext(ctx, mechanism, prevWrapdata, identity, {
                         result: function (wrapKeyCryptoContext) {
-                            wrapKeyCryptoContext.wrap(wrapKey, {
+                            wrapKeyCryptoContext.wrap(wrapKey, encoder, format, {
                                 result: function(wrappedWrapJwk) {
                                     wrapSessionKeys(wrapKey, wrapdata, encryptionKey, hmacKey, wrappedWrapJwk);
                                 },
@@ -514,9 +500,10 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
             function wrapSessionKeys(wrapKey, wrapdata, encryptionKey, hmacKey, wrappedWrapJwk) {
                 AsyncExecutor(callback, function() {
                     var wrapCryptoContext = new JsonWebEncryptionCryptoContext(ctx, JsonWebEncryptionCryptoContext$Algorithm.A128KW, JsonWebEncryptionCryptoContext$Encryption.A128GCM, wrapKey);
-                    wrapCryptoContext.wrap(encryptionKey, {
+                    var encoder = ctx.getMslEncoderFactory();
+                    wrapCryptoContext.wrap(encryptionKey, encoder, format, {
                         result: function(wrappedEncryptionJwk) {
-                            wrapCryptoContext.wrap(hmacKey, {
+                            wrapCryptoContext.wrap(hmacKey, encoder, format, {
                                 result: function(wrappedHmacJwk) {
                                     createMasterToken(wrapdata, wrappedWrapJwk, encryptionKey, wrappedEncryptionJwk, hmacKey, wrappedHmacJwk);
                                 },
@@ -545,7 +532,7 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                     // Create the master token.
                     var tokenFactory = ctx.getTokenFactory();
                     if (entityToken instanceof MasterToken) {
-                        tokenFactory.renewMasterToken(ctx, entityToken, encryptionKey, hmacKey, {
+                        tokenFactory.renewMasterToken(ctx, entityToken, encryptionKey, hmacKey, null, {
                             result: function(masterToken) {
                                 AsyncExecutor(callback, function() {
                                     // Create session crypto context.
@@ -565,7 +552,7 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                             }
                         });
                     } else {
-                        tokenFactory.createMasterToken(ctx, entityToken, encryptionKey, hmacKey, {
+                        tokenFactory.createMasterToken(ctx, entityToken, encryptionKey, hmacKey, null, {
                             result: function(masterToken) {
                                 AsyncExecutor(callback, function() {
                                     // Create session crypto context.
@@ -595,10 +582,10 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
 
             AsyncExecutor(callback, function() {
                 if (!(keyRequestData instanceof RequestData))
-                    throw new MslInternalException("Key request data " + JSON.stringify(keyRequestData) + " was not created by this factory.");
+                    throw new MslInternalException("Key request data " + keyRequestData + " was not created by this factory.");
                 var request = keyRequestData;
                 if (!(keyResponseData instanceof ResponseData))
-                    throw new MslInternalException("Key response data " + JSON.stringify(keyResponseData) + " was not created by this factory.");
+                    throw new MslInternalException("Key response data " + keyResponseData + " was not created by this factory.");
                 var response = keyResponseData;
 
                 // Unwrap new wrapping key.
@@ -634,7 +621,8 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                             }
 
                             // Unwrap wrapping key.
-                            wrapKeyCryptoContext.unwrap(response.wrapKey, WebCryptoAlgorithm.A128KW, WebCryptoAlgorithm.WRAP_UNWRAP, {
+                            var encoder = ctx.getMslEncoderFactory();
+                            wrapKeyCryptoContext.unwrap(response.wrapKey, WebCryptoAlgorithm.A128KW, WebCryptoAlgorithm.WRAP_UNWRAP, encoder, {
                                 result: function(wrapKey) {
                                     unwrapSessionKeys(entityAuthData, response, requestWrapdata, identity, wrapKey);
                                 },
@@ -655,9 +643,10 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
             function unwrapSessionKeys(entityAuthData, response, requestWrapdata, identity, wrapKey) {
                 AsyncExecutor(callback, function() {
                     var unwrapCryptoContext = new JsonWebEncryptionCryptoContext(ctx, JsonWebEncryptionCryptoContext$Algorithm.A128KW, JsonWebEncryptionCryptoContext$Encryption.A128GCM, wrapKey);
-                    unwrapCryptoContext.unwrap(response.encryptionKey, WebCryptoAlgorithm.AES_CBC, WebCryptoAlgorithm.ENCRYPT_DECRYPT, {
+                    var encoder = ctx.getMslEncoderFactory();
+                    unwrapCryptoContext.unwrap(response.encryptionKey, WebCryptoAlgorithm.AES_CBC, WebCryptoAlgorithm.ENCRYPT_DECRYPT, encoder, {
                         result: function(encryptionKey) {
-                            unwrapCryptoContext.unwrap(response.hmacKey, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoAlgorithm.SIGN_VERIFY, {
+                            unwrapCryptoContext.unwrap(response.hmacKey, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoAlgorithm.SIGN_VERIFY, encoder, {
                                 result: function(hmacKey) {
                                     AsyncExecutor(callback, function() {
                                         // Deliver wrap data to wrap key repository.

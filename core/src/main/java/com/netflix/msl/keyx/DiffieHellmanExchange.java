@@ -492,7 +492,7 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
 
         // Create the master token.
         final TokenFactory tokenFactory = ctx.getTokenFactory();
-        final MasterToken newMasterToken = tokenFactory.renewMasterToken(ctx, masterToken, sessionKeys.encryptionKey, sessionKeys.hmacKey);
+        final MasterToken newMasterToken = tokenFactory.renewMasterToken(ctx, masterToken, sessionKeys.encryptionKey, sessionKeys.hmacKey, null);
 
         // Create crypto context.
         final ICryptoContext cryptoContext = new SessionCryptoContext(ctx, newMasterToken);
@@ -555,7 +555,7 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
 
         // Create the master token.
         final TokenFactory tokenFactory = ctx.getTokenFactory();
-        final MasterToken masterToken = tokenFactory.createMasterToken(ctx, entityAuthData, sessionKeys.encryptionKey, sessionKeys.hmacKey);
+        final MasterToken masterToken = tokenFactory.createMasterToken(ctx, entityAuthData, sessionKeys.encryptionKey, sessionKeys.hmacKey, null);
 
         // Create crypto context.
         final ICryptoContext cryptoContext;

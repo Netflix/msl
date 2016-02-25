@@ -72,15 +72,17 @@ var X509AuthenticationData$parse;
         },
 
         /** @inheritDoc */
-        getAuthData: function getAuthData() {
-            // Base64 encode the X.509 certificate.
-            var certHex = this.x509cert.hex;
-            var certB64 = hex2b64(certHex);
+        getAuthData: function getAuthData(encoder, format, callback) {
+            AsyncExecutor(callback, function() {
+                // Base64 encode the X.509 certificate.
+                var certHex = this.x509cert.hex;
+                var certB64 = hex2b64(certHex);
 
-            // Return the authentication data.
-            var result = {};
-            result[KEY_X509_CERT] = certB64;
-            return result;
+                // Return the authentication data.
+                var mo = encoder.createObject();
+                mo.put(KEY_X509_CERT, certB64);
+                return mo;
+            }, this);
         },
 
         /** @inheritDoc */
@@ -93,22 +95,25 @@ var X509AuthenticationData$parse;
 
     /**
      * Construct a new RSA asymmetric keys authentication data instance from the
-     * provided JSON object.
+     * provided MSL object.
      *
-     * @param x509AuthJO the authentication data JSON object.
+     * @param {MslObject} x509AuthMo the authentication data MSL object.
      * @throws MslEncodingException if there is an error parsing the entity
      *         authentication data.
      */
-    X509AuthenticationData$parse = function X509AuthenticationData$parse(x509AuthJO) {
-        var certB64 = x509AuthJO[KEY_X509_CERT];
-
-        if (typeof certB64 !== 'string')
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "X.509 authdata" + JSON.stringify(x509AuthJO));
+    X509AuthenticationData$parse = function X509AuthenticationData$parse(x509AuthMo) {
+        var certB64;
+        try {
+            certB64 = x509AuthMo.getString(KEY_X509_CERT);
+        } catch (e) {
+            if (e instanceof MslEncoderException)
+                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "X.509 authdata" + x509AuthMo);
+            throw e;
+        }
 
         // Convert to X.509 certificate.
         var x509 = new X509();
         try {
-            x509 = new X509();
             x509.readCertPEM(certB64);
         } catch (e) {
             throw new MslCryptoException(MslError.X509CERT_PARSE_ERROR, certB64, e);

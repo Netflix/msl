@@ -26,34 +26,39 @@ var ICryptoContext = util.Class.create({
      * Encrypts some data.
      *
      * @param {Uint8Array} data the plaintext.
+     * @param {MslEncoderFactory} encoder MSL encoder factory.
+     * @param {MslEncoderFormat} format MSL encoder format.
      * @param {{result: function(Uint8Array), error: function(Error)}}
      *        callback the callback functions that will receive the ciphertext
      *        or any thrown exceptions.
      * @throws MslCryptoException if there is an error encrypting the data.
      */
-    encrypt: function(data, callback) {},
+    encrypt: function(data, encoder, format, callback) {},
 
     /**
      * Decrypts some data.
      *
      * @param {Uint8Array} data the ciphertext.
+     * @param {MslEncoderFactory} encoder MSL encoder factory.
      * @param {{result: function(Uint8Array), error: function(Error)}}
      *        callback the callback functions that will receive the plaintext
      *        or any thrown exceptions.
      * @throws MslCryptoException if there is an error decrypting the data.
      */
-    decrypt: function(data, callback) {},
+    decrypt: function(data, encoder, callback) {},
 
     /**
      * Wraps a key.
      *
      * @param {CipherKey|PublicKey|PrivateKey} key the key to wrap.
+     * @param {MslEncoderFactory} encoder MSL encoder factory.
+     * @param {MslEncoderFormat} format MSL encoder format.
      * @return {result: function(Uint8Array), error: function(Error)}
      *         callback the callback functions that will receive the wrapped
      *         data or any thrown exceptions.
      * @throws MslCryptoException if there is an error wrapping the key.
      */
-    wrap: function(key, callback) {},
+    wrap: function(key, encoder, format, callback) {},
 
     /**
      * Unwraps a key.
@@ -61,24 +66,27 @@ var ICryptoContext = util.Class.create({
      * @param {Uint8Array} data the wrapped data.
      * @param {WebCryptoAlgorithm} algo for the wrapped key.
      * @param {WebCryptoUsage} usages the key usages for the wrapped key.
+     * @param {MslEncoderFactory} encoder MSL encoder factory.
      * @return {result: function({CipherKey|PublicKey|PrivateKey}), error: function(Error)}
      *         callback the callback functions that will receive the unwrapped
      *         key or any thrown exceptions.
      * @throws MslCryptoException if there is an error unwrapping the key.
      */
-    unwrap: function(data, algo, usages, callback) {},
+    unwrap: function(data, algo, usages, encoder, callback) {},
 
     /**
      * Computes the signature for some data. The signature may not be a
      * signature proper, but the name suits the concept.
      *
      * @param {Uint8Array} data the data.
+     * @param {MslEncoderFactory} encoder MSL encoder factory.
+     * @param {MslEncoderFormat} format MSL encoder format.
      * @param {{result: function(Uint8Array), error: function(Error)}}
      *        callback the callback functions that will receive the signature
      *        or any thrown exceptions.
      * @throws MslCryptoException if there is an error computing the signature.
      */
-    sign: function(data, callback) {},
+    sign: function(data, encoder, format, callback) {},
 
     /**
      * Verifies the signature for some data. The signature may not be a
@@ -86,11 +94,12 @@ var ICryptoContext = util.Class.create({
      *
      * @param {Uint8Array} data the data.
      * @param {Uint8Array} signature the signature.
+     * @param {MslEncoderFactory} encoder MSL encoder factory.
      * @param {{result: function(boolean), error: function(Error)}}
      *        callback the callback functions that will receive true if the
      *        data is verified, false if validation fails, or any thrown
      *        exceptions.
      * @throws MslCryptoException if there is an error verifying the signature.
      */
-    verify: function(data, signature, callback) {},
+    verify: function(data, signature, encoder, callback) {},
 });

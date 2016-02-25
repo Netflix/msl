@@ -327,7 +327,7 @@ public class MslEncoderFactorySuite {
         if (MslArray.class.equals(type))
             return ma.getMslArray(index);
         if (MslObject.class.equals(type))
-            return ma.getMslObject(index);
+            return ma.getMslObject(index, encoder);
         if (Long.class.equals(type))
             return ma.getLong(index);
         if (String.class.equals(type))
@@ -358,7 +358,7 @@ public class MslEncoderFactorySuite {
         if (MslArray.class.equals(type))
             return ma.optMslArray(index);
         if (MslObject.class.equals(type))
-            return ma.optMslObject(index);
+            return ma.optMslObject(index, encoder);
         if (Long.class.equals(type))
             return ma.optLong(index);
         if (String.class.equals(type))
@@ -389,7 +389,7 @@ public class MslEncoderFactorySuite {
         if (MslArray.class.equals(type))
             return ma.optMslArray(index);
         if (MslObject.class.equals(type))
-            return ma.optMslObject(index);
+            return ma.optMslObject(index, encoder);
         if (Long.class.equals(type))
             return ma.optLong(index, 0);
         if (String.class.equals(type))
@@ -824,7 +824,7 @@ public class MslEncoderFactorySuite {
             final Integer i = random.nextInt();
             assertEquals(i, Integer.valueOf(ma.optInt(0, i)));
             assertNull(ma.optMslArray(0));
-            assertNull(ma.optMslObject(0));
+            assertNull(ma.optMslObject(0, encoder));
             final Long l = random.nextLong();
             assertEquals(l, Long.valueOf(ma.optLong(0, l)));
             final String s = new String(b);

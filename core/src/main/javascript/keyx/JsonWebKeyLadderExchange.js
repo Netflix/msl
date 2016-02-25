@@ -57,31 +57,31 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
     };
 
     /**
-     * JSON key wrap key wrapping mechanism.
+     * Key wrap key wrapping mechanism.
      * @const
      * @type {string}
      */
     var KEY_MECHANISM = "mechanism";
     /**
-     * JSON key wrap data.
+     * Key wrap data.
      * @const
      * @type {string}
      */
     var KEY_WRAPDATA = "wrapdata";
     /**
-     * JSON key wrapping key.
+     * Key wrapping key.
      * @const
      * @type {string}
      */
     var KEY_WRAP_KEY = "wrapkey";
     /**
-     * JSON key encrypted encryption key.
+     * Key encrypted encryption key.
      * @const
      * @type {string}
      */
     var KEY_ENCRYPTION_KEY = "encryptionkey";
     /**
-     * JSON key encrypted HMAC key.
+     * Key encrypted HMAC key.
      * @const
      * @type {string}
      */
@@ -138,11 +138,13 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
         },
 
         /** @inheritDoc */
-        getKeydata: function getKeydata() {
-            var keydata = {};
-            keydata[KEY_MECHANISM] = this.mechanism;
-            if (this.wrapdata) keydata[KEY_WRAPDATA] = base64$encode(this.wrapdata);
-            return keydata;
+        getKeydata: function getKeydata(encoder, format, callback) {
+            AsyncExecutor(callback, function() {
+                var mo = encoder.createObject();
+                mo.put(KEY_MECHANISM, this.mechanism);
+                if (this.wrapdata) mo.put(KEY_WRAPDATA, this.wrapdata);
+                return mo;
+            }, this);
         },
 
         /** @inheritDoc */
@@ -165,47 +167,49 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
 
     /**
      * Create a new JSON Web Key ladder key request data instance
-     * from the provided JSON object.
+     * from the provided MSL object.
      *
-     * @param {object} keyRequestJO the JSON object.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @param {MslObject} keyRequestMo the MSL object.
+     * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslCryptoException the wrapped key data cannot be verified
      *         or decrypted, or the specified mechanism is not supported.
      * @throws MslKeyExchangeException if the specified mechanism is not
      *         recognized.
      */
-    var RequestData$parse = JsonWebKeyLadderExchange$RequestData$parse = function RequestData$parse(keyRequestJO) {
-        // Pull key request data.
-        var mechanism = keyRequestJO[KEY_MECHANISM];
-        var wrapdataB64 = keyRequestJO[KEY_WRAPDATA];
-
-        // Verify key request data.
-        if (!mechanism ||
-            (mechanism == Mechanism.WRAP && (!wrapdataB64 || typeof wrapdataB64 !== 'string')))
-        {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + JSON.stringify(keyRequestJO));
+    var RequestData$parse = JsonWebKeyLadderExchange$RequestData$parse = function RequestData$parse(keyRequestMo) {
+        var mechanism;
+        try {
+            mechanism = keyRequestMo.getString(KEY_MECHANISM);
+            if (!Mechanism[mechanism])
+                throw new MslKeyExchangeException(MslError.UNIDENTIFIED_KEYX_MECHANISM, mechanism);
+        } catch (e) {
+            if (e instanceof MslEncoderException)
+                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "keydata " + keyRequestMo, e);
+            throw e;
         }
 
-        // Verify mechanism.
-        if (!Mechanism[mechanism])
-            throw new MslKeyExchangeException(MslError.UNIDENTIFIED_KEYX_MECHANISM, mechanism);
-
-        // Create the request data.
         var wrapdata;
         switch (mechanism) {
-            case Mechanism.WRAP:
-                try {
-                    wrapdata = base64$decode(wrapdataB64);
-                } catch (e) {
-                    throw new MslKeyExchangeException(MslError.KEYX_WRAPPING_KEY_MISSING, "keydata " + keyRequestJO.toString());
-                }
-                if (wrapdata == null || wrapdata.length == 0)
-                    throw new MslKeyExchangeException(MslError.KEYX_WRAPPING_KEY_MISSING, "keydata " + keyRequestJO.toString());
-                break;
-            default:
+            case PSK:
+            {
                 wrapdata = null;
                 break;
+            }
+            case Mechanism.WRAP:
+            {
+                wrapdata = keyRequestMo.getBytes(KEY_WRAPDATA);
+                if (wrapdata.length == 0)
+                    throw new MslKeyExchangeException(MslError.KEYX_WRAPPING_KEY_MISSING, "keydata " + keyRequestMo);
+                break;
+            }
+            default:
+                throw new MslCryptoException(MslError.UNSUPPORTED_KEYX_MECHANISM, mechanism);
+        } catch (e) {
+            if (e instanceof MslEncoderException)
+                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "keydata " + keyRequestMo, e);
+            throw e;
         }
+        
         return new RequestData(mechanism, wrapdata);
     };
 
@@ -635,7 +639,7 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
                     // Create the master token.
                     var tokenFactory = ctx.getTokenFactory();
                     if (entityToken instanceof MasterToken) {
-                        tokenFactory.renewMasterToken(ctx, entityToken, encryptionKey, hmacKey, {
+                        tokenFactory.renewMasterToken(ctx, entityToken, encryptionKey, hmacKey, null, {
                             result: function(masterToken) {
                                 AsyncExecutor(callback, function() {
                                     // Create session crypto context.
@@ -655,7 +659,7 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
                             }
                         });
                     } else {
-                        tokenFactory.createMasterToken(ctx, entityToken, encryptionKey, hmacKey, {
+                        tokenFactory.createMasterToken(ctx, entityToken, encryptionKey, hmacKey, null, {
                             result: function(masterToken) {
                                 AsyncExecutor(callback, function() {
                                     // Create session crypto context.

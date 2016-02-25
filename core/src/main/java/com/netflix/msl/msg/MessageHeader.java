@@ -20,7 +20,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.xml.bind.DatatypeConverter;
@@ -431,7 +430,7 @@ public class MessageHeader extends Header {
      * will be used.</p>
      * 
      * @param ctx MSL context.
-     * @param headerdata encoded header data.
+     * @param headerdataBytes encoded header data.
      * @param entityAuthData the entity authentication data. May be null if a
      *        master token is provided.
      * @param masterToken the master token. May be null if entity
@@ -583,7 +582,7 @@ public class MessageHeader extends Header {
                 final MslArray tokens = headerdata.getMslArray(KEY_SERVICE_TOKENS);
                 for (int i = 0; i < tokens.size(); ++i) {
                     try {
-                        serviceTokens.add(new ServiceToken(ctx, tokens.getMslObject(i), tokenVerificationMasterToken, this.userIdToken, cryptoContexts));
+                        serviceTokens.add(new ServiceToken(ctx, tokens.getMslObject(i, encoder), tokenVerificationMasterToken, this.userIdToken, cryptoContexts));
                     } catch (final MslException e) {
                         e.setEntity(tokenVerificationMasterToken).setUser(this.userIdToken).setUser(userAuthData);
                         throw e;
@@ -612,8 +611,8 @@ public class MessageHeader extends Header {
             
             // Pull message capabilities.
             if (headerdata.has(KEY_CAPABILITIES)) {
-                final MslObject capabilitiesJO = headerdata.getMslObject(KEY_CAPABILITIES, encoder);
-                this.capabilities = new MessageCapabilities(capabilitiesJO);
+                final MslObject capabilitiesMo = headerdata.getMslObject(KEY_CAPABILITIES, encoder);
+                this.capabilities = new MessageCapabilities(capabilitiesMo);
             } else {
                 this.capabilities = null;
             }
@@ -623,7 +622,7 @@ public class MessageHeader extends Header {
             if (headerdata.has(KEY_KEY_REQUEST_DATA)) {
                 final MslArray keyRequests = headerdata.getMslArray(KEY_KEY_REQUEST_DATA);
                 for (int i = 0; i < keyRequests.size(); ++i) {
-                    keyRequestData.add(KeyRequestData.create(ctx, keyRequests.getMslObject(i)));
+                    keyRequestData.add(KeyRequestData.create(ctx, keyRequests.getMslObject(i, encoder)));
                 }
             }
             this.keyRequestData = Collections.unmodifiableSet(keyRequestData);
@@ -660,7 +659,7 @@ public class MessageHeader extends Header {
                     final MslArray tokens = headerdata.getMslArray(KEY_PEER_SERVICE_TOKENS);
                     for (int i = 0; i < tokens.size(); ++i) {
                         try {
-                            peerServiceTokens.add(new ServiceToken(ctx, tokens.getMslObject(i), peerVerificationMasterToken, this.peerUserIdToken, cryptoContexts));
+                            peerServiceTokens.add(new ServiceToken(ctx, tokens.getMslObject(i, encoder), peerVerificationMasterToken, this.peerUserIdToken, cryptoContexts));
                         } catch (final MslException e) {
                             e.setEntity(peerVerificationMasterToken).setUser(this.peerUserIdToken);
                             throw e;
@@ -925,55 +924,62 @@ public class MessageHeader extends Header {
      * @see java.lang.Object#equals(java.lang.Object)
      */
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(final Object obj) {
         if (this == obj) return true;
-
         if (!(obj instanceof MessageHeader)) return false;
-
         final MessageHeader that = (MessageHeader) obj;
-        return (Objects.equals(this.entityAuthData, that.entityAuthData)
-                || Objects.equals(this.masterToken, that.masterToken))
-                && Objects.equals(this.sender, that.sender)
-                && Objects.equals(this.recipient, that.recipient)
-                && Objects.equals(this.timestamp, that.timestamp)
-                && Objects.equals(this.messageId, that.messageId)
-                && Objects.equals(this.nonReplayableId, that.nonReplayableId)
-                && Objects.equals(this.renewable, that.renewable)
-                && Objects.equals(this.handshake, that.handshake)
-                && Objects.equals(this.capabilities, that.capabilities)
-                && Objects.equals(this.keyRequestData, that.keyRequestData)
-                && Objects.equals(this.keyResponseData, that.keyResponseData)
-                && Objects.equals(this.userAuthData, that.userAuthData)
-                && Objects.equals(this.userIdToken, that.userIdToken)
-                && Objects.equals(this.serviceTokens, that.serviceTokens)
-                && Objects.equals(this.peerMasterToken, that.peerMasterToken)
-                && Objects.equals(this.peerUserIdToken, that.peerUserIdToken)
-                && Objects.equals(this.peerServiceTokens, that.peerServiceTokens);
+        return (masterToken != null && masterToken.equals(that.masterToken) ||
+            entityAuthData != null && entityAuthData.equals(that.entityAuthData)) &&
+            (sender != null && sender.equals(that.sender) ||
+             sender == that.sender) &&
+            (recipient != null && recipient.equals(that.recipient) ||
+             recipient == that.recipient) &&
+            (timestamp != null && timestamp.equals(that.timestamp) ||
+             timestamp == null && that.timestamp == null) &&
+            messageId == that.messageId &&
+            (nonReplayableId != null && nonReplayableId.equals(that.nonReplayableId) ||
+             nonReplayableId == null && that.nonReplayableId == null) &&
+            renewable == that.renewable &&
+            handshake == that.handshake &&
+            (capabilities != null && capabilities.equals(that.capabilities) ||
+             capabilities == that.capabilities) &&
+            keyRequestData.equals(that.keyRequestData) &&
+            (keyResponseData != null && keyResponseData.equals(that.keyResponseData) ||
+             keyResponseData == that.keyResponseData) &&
+            (userAuthData != null && userAuthData.equals(that.userAuthData) ||
+             userAuthData == that.userAuthData) &&
+            (userIdToken != null && userIdToken.equals(that.userIdToken) ||
+             userIdToken == that.userIdToken) &&
+            serviceTokens.equals(that.serviceTokens) &&
+            (peerMasterToken != null && peerMasterToken.equals(that.peerMasterToken) ||
+             peerMasterToken == that.peerMasterToken) &&
+            (peerUserIdToken != null && peerUserIdToken.equals(that.peerUserIdToken) ||
+             peerUserIdToken == that.peerUserIdToken) &&
+            peerServiceTokens.equals(that.peerServiceTokens);
     }
-
+    
     /* (non-Javadoc)
      * @see java.lang.Object#hashCode()
      */
     @Override
     public int hashCode() {
-        Object target = (masterToken != null) ? masterToken : entityAuthData;
-        return Objects.hash(target,
-                sender,
-                recipient,
-                timestamp,
-                messageId,
-                nonReplayableId,
-                renewable,
-                handshake,
-                capabilities,
-                keyRequestData,
-                keyResponseData,
-                userAuthData,
-                userIdToken,
-                serviceTokens,
-                peerMasterToken,
-                peerUserIdToken,
-                peerServiceTokens);
+        return ((masterToken != null) ? masterToken.hashCode() : entityAuthData.hashCode()) ^
+            ((sender != null) ? sender.hashCode() : 0) ^
+            ((recipient != null) ? recipient.hashCode() : 0) ^
+            ((timestamp != null) ? timestamp.hashCode() : 0) ^
+            Long.valueOf(messageId).hashCode() ^
+            ((nonReplayableId != null) ? nonReplayableId.hashCode() : 0) ^
+            Boolean.valueOf(renewable).hashCode() ^
+            Boolean.valueOf(handshake).hashCode() ^
+            ((capabilities != null) ? capabilities.hashCode() : 0) ^
+            keyRequestData.hashCode() ^
+            ((keyResponseData != null) ? keyResponseData.hashCode() : 0) ^
+            ((userAuthData != null) ? userAuthData.hashCode() : 0) ^
+            ((userIdToken != null) ? userIdToken.hashCode() : 0) ^
+            serviceTokens.hashCode() ^
+            ((peerMasterToken != null) ? peerMasterToken.hashCode() : 0) ^
+            ((peerUserIdToken != null) ? peerUserIdToken.hashCode() : 0) ^
+            peerServiceTokens.hashCode();
     }
 
     /** Entity authentication data. */

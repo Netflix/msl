@@ -163,9 +163,9 @@ public class X509AuthenticationDataTest {
 
         final X509AuthenticationData data = new X509AuthenticationData(MockX509AuthenticationFactory.X509_CERT);
         final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
-        final byte[] x509raw = authdata.getBytes(KEY_X509_CERT);
+        final byte[] x509raw = DatatypeConverter.parseBase64Binary(authdata.getString(KEY_X509_CERT));
         ++x509raw[0];
-        authdata.put(KEY_X509_CERT, x509raw);
+        authdata.put(KEY_X509_CERT, DatatypeConverter.printBase64Binary(x509raw));
         new X509AuthenticationData(authdata);
     }
     

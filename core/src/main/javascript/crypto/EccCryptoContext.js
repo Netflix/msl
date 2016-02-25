@@ -44,41 +44,46 @@ var EccCryptoContext;
         },
 
         /** @inheritDoc */
-        encrypt: function encrypt(data, callback) {
+        encrypt: function encrypt(data, encoder, format, callback) {
             AsyncExecutor(callback, function() {
                 return data;
             }, this);
         },
 
         /** @inheritDoc */
-        decrypt: function decrypt(data, callback) {
+        decrypt: function decrypt(data, encoder, callback) {
             AsyncExecutor(callback, function() {
                 return data;
             }, this);
         },
 
         /** @inheritDoc */
-        wrap: function wrap(key, callback) {
+        wrap: function wrap(key, encoder, format, callback) {
             AsyncExecutor(callback, function() {
                 throw new MslCryptoException(MslError.WRAP_NOT_SUPPORTED, "ECC does not wrap");
             }, this);
         },
 
         /** @inheritDoc */
-        unwrap: function unwrap(data, algo, usages, callback) {
+        unwrap: function unwrap(data, algo, usages, encoder, callback) {
             AsyncExecutor(callback, function() {
                 throw new MslCryptoException(MslError.UNWRAP_NOT_SUPPORTED, "ECC does not unwrap");
             }, this);
         },
 
         /** @inheritDoc */
-        sign: function sign(data, callback) {
+        sign: function sign(data, encoder, format, callback) {
             AsyncExecutor(callback, function() {
                 var oncomplete = function(hash) {
                     // Return the signature envelope byte representation.
                     MslSignatureEnvelope$create(new Uint8Array(hash), {
                         result: function(envelope) {
-                            callback.result(envelope.bytes);
+                            envelope.getBytes(encoder, format, {
+                                result: function(bytes) {
+                                    callback.result(bytes);
+                                },
+                                error: callback.error,
+                            });
                         },
                         error: callback.error
                     });
@@ -92,7 +97,7 @@ var EccCryptoContext;
         },
 
         /** @inheritDoc */
-        verify: function verify(data, signature, callback) {
+        verify: function verify(data, signature, encoder, callback) {
             AsyncExecutor(callback, function() {
                 throw new MslCryptoException(MslError.VERIFY_NOT_SUPPORTED, "ECC does not verify");
             }, this);

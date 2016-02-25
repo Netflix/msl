@@ -50,7 +50,7 @@ var MessageInputStream$create;
      *         request data or key response data or the key exchange scheme is
      *         not supported.
      * @throws MslCryptoException if the crypto context cannot be created.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslMasterTokenException if the master token is not trusted and
      *         needs to be.
      * @throws MslEntityAuthException if there is a problem with the master
@@ -94,7 +94,7 @@ var MessageInputStream$create;
 
                         // If we didn't find any then we're unable to perform key
                         // exchange.
-                        throw new MslKeyExchangeException(MslError.KEYX_RESPONSE_REQUEST_MISMATCH, JSON.stringify(keyRequestData));
+                        throw new MslKeyExchangeException(MslError.KEYX_RESPONSE_REQUEST_MISMATCH, keyRequestData);
                     }
 
                     // Grab this iteration's request.
@@ -147,7 +147,6 @@ var MessageInputStream$create;
          *
          * @param {MslContext} ctx MSL context.
          * @param {InputStream} source MSL input stream.
-         * @param {string} charset input stream character set encoding.
          * @param {Array.<KeyRequestData>} keyRequestData key request data to use when processing key
          *        response data.
          * @param {Object.<string,ICryptoContext>} cryptoContexts the map of service token names onto crypto
@@ -177,15 +176,16 @@ var MessageInputStream$create;
          *         authentication data or a master token, or a token is improperly
          *         bound to another token.
          */
-        init: function init(ctx, source, charset, keyRequestData, cryptoContexts, timeout, callback) {
+        init: function init(ctx, source, keyRequestData, cryptoContexts, timeout, callback) {
             var self = this;
             InterruptibleExecutor(callback, function() {
+                var tokenizer = ctx.getMslEncoderFactory().createTokenizer(source);
+                
                 // Set properties.
                 var props = {
+                    _ctx: { value: ctx, writable: false, enumerable: false, configurable: false },
                     _source: { value: source, writable: false, enumerable: false, configurable: false },
-                    _parser: { value: undefined, writable: true, enumerable: false, configurable: false },
-                    _charset: { value: charset, writable: false, enumerable: false, configurable: false },
-                    _remainingData: { value: '', writable: true, enumerable: false, configurable: false },
+                    _tokenizer: { value: tokenzier, writable: false, enumerable: false, configurable: false },
                     _header: { value: undefined, writable: true, enumerable: false, configurable: false },
                     _cryptoContext: { value: undefined, writable: true, enumerable: false, configurable: false },
                     _keyxCryptoContext: { value: undefined, writable: true, enumerable: false, configurable: false },
@@ -214,112 +214,73 @@ var MessageInputStream$create;
                     _errored: { value: null, writable: true, enumerable: false, configurable: false },
                 };
                 Object.defineProperties(this, props);
-
-                function ready() {
-                    self._ready = true;
-                    self._readyQueue.add(true);
-                }
-
-                inputStreamToJSON(self._source, timeout, {
-                    result: function (json) {
-                        self._json = json;
-                        self._jsonIndex = 0;
-
-                        if (self._json === null) {
+                
+                this._tokenizer.more(-1, {
+                    result: function(available) {
+                        if (!available) {
                             self._errored = new MslEncodingException(MslError.MESSAGE_DATA_MISSING);
                             ready();
                             return;
                         }
+                        parseHeader();
+                    },
+                    error: function(e) {
+                        if (e instanceof MslEncoderException)
+                            e = new MslEncodingException(MslError.MSL_PARSE_ERROR, "header", e);
+                        self._errored = e;
+                        ready();
+                    }
+                });
+                
+                // Return this immediately instead of after reading the header
+                // so the read can be aborted.
+                return this;
+            }, self);
 
-                        Header$parseHeader(ctx, self._json[self._jsonIndex++], cryptoContexts, {
-                            result: function(header) {
-                                self._header = header;
-
-                                // For error messages there are no key exchange or payload crypto
-                                // contexts.
-                                if (self._header instanceof ErrorHeader) {
-                                    self._keyxCryptoContext = null;
-                                    self._cryptoContext = null;
-                                    ready();
-                                    return;
-                                }
-
-                                // Grab the key exchange crypto context, if any.
-                                var messageHeader = self._header;
-                                getKeyxCryptoContext(ctx, messageHeader, keyRequestData, {
-                                    result: function(keyxCryptoContext) {
-                                        setCryptoContexts(ctx, messageHeader, keyxCryptoContext);
-                                    },
-                                    error: function(e) {
-                                        if (e instanceof MslException) {
-                                            e.setEntity(messageHeader.masterToken);
-                                            e.setEntity(messageHeader.entityAuthenticationData);
-                                            e.setUser(messageHeader.userIdToken);
-                                            e.setUser(messageHeader.userAuthenticationData);
-                                            e.setMessageId(messageHeader.messageId);
-                                        }
-                                        self._errored = e;
-                                        ready();
-                                    }
-                                });
-                            },
+            function ready() {
+                self._ready = true;
+                self._readyQueue.add(true);
+            }
+            
+            function parseHeader() {
+                self._tokenizer.nextObject(-1, {
+                    result: function(mo) {
+                        Header$parseHeader(ctx, mo, cryptoContexts, {
+                            result: processHeader,
                             error: function(e) {
                                 self._errored = e;
                                 ready();
                             }
                         });
                     },
-                    timeout: function () {
-                        self._timedout = true;
-                        ready();
-                    },
-                    error: function (e) {
+                    error: function(e) {
+                        if (e instanceof MslEncoderException)
+                            e = new MslEncodingException(MslError.MSL_PARSE_ERROR, "header", e);
                         self._errored = e;
                         ready();
                     }
                 });
-
-                function setCryptoContexts(ctx, messageHeader, keyxCryptoContext) {
-                    try {
-                        self._keyxCryptoContext = keyxCryptoContext;
-
-                        // In peer-to-peer mode or in trusted network mode with no key
-                        // exchange the payload crypto context equals the header crypto
-                        // context.
-                        if (ctx.isPeerToPeer() || !self._keyxCryptoContext)
-                            self._cryptoContext = messageHeader.cryptoContext;
-
-                        // Otherwise the payload crypto context equals the key exchange
-                        // crypto context.
-                        else
-                            self._cryptoContext = self._keyxCryptoContext;
-
-                        checkHandshakeProperties(ctx, messageHeader);
-                    } catch (e) {
-                        if (e instanceof MslException) {
-                            e.setEntity(messageHeader.masterToken);
-                            e.setEntity(messageHeader.entityAuthenticationData);
-                            e.setUser(messageHeader.userIdToken);
-                            e.setUser(messageHeader.userAuthenticationData);
-                            e.setMessageId(messageHeader.messageId);
-                        }
-                        self._errored = e;
-                        ready();
-                    }
-                }
+            }
                 
-                function checkHandshakeProperties(ctx, messageHeader) {
-                    try {
-                        // If this is a handshake message but it is not renewable or does
-                        // not contain key request data then reject the message.
-                        if (messageHeader.isHandshake() &&
-                            (!messageHeader.isRenewable() || messageHeader.keyRequestData.length == 0))
-                        {
-                            throw new MslMessageException(MslError.HANDSHAKE_DATA_MISSING, JSON.stringify(messageHeader));
-                        }
-                        
-                        checkMasterToken(ctx, messageHeader);
-                    } catch (e) {
+            function processHeader(header) {
+                self._header = header;
+
+                // For error messages there are no key exchange or payload crypto
+                // contexts.
+                if (self._header instanceof ErrorHeader) {
+                    self._keyxCryptoContext = null;
+                    self._cryptoContext = null;
+                    ready();
+                    return;
+                }
+
+                // Grab the key exchange crypto context, if any.
+                var messageHeader = self._header;
+                getKeyxCryptoContext(ctx, messageHeader, keyRequestData, {
+                    result: function(keyxCryptoContext) {
+                        setCryptoContexts(ctx, messageHeader, keyxCryptoContext);
+                    },
+                    error: function(e) {
                         if (e instanceof MslException) {
                             e.setEntity(messageHeader.masterToken);
                             e.setEntity(messageHeader.entityAuthenticationData);
@@ -330,47 +291,145 @@ var MessageInputStream$create;
                         self._errored = e;
                         ready();
                     }
-                }
+                });
+            }
 
-                function checkMasterToken(ctx, messageHeader) {
-                    try {
-                        // If I am in peer-to-peer mode or the master token is verified
-                        // (i.e. issued by the local entity which is therefore a trusted
-                        // network server) then perform the master token checks.
-                        var masterToken = messageHeader.masterToken;
-                        if (masterToken && (ctx.isPeerToPeer() || masterToken.isVerified())) {
-                            checkMasterTokenRevoked(ctx, messageHeader);
-                        } else {
-                            checkNonReplayableId(ctx, messageHeader);
-                        }
-                    } catch (e) {
-                        if (e instanceof MslException) {
-                            e.setEntity(messageHeader.masterToken);
-                            e.setUser(messageHeader.userIdToken);
-                            e.setUser(messageHeader.userAuthenticationData);
-                            e.setMessageId(messageHeader.messageId);
-                        }
-                        self._errored = e;
-                        ready();
+            function setCryptoContexts(ctx, messageHeader, keyxCryptoContext) {
+                try {
+                    self._keyxCryptoContext = keyxCryptoContext;
+
+                    // In peer-to-peer mode or in trusted network mode with no key
+                    // exchange the payload crypto context equals the header crypto
+                    // context.
+                    if (ctx.isPeerToPeer() || !self._keyxCryptoContext)
+                        self._cryptoContext = messageHeader.cryptoContext;
+
+                    // Otherwise the payload crypto context equals the key exchange
+                    // crypto context.
+                    else
+                        self._cryptoContext = self._keyxCryptoContext;
+
+                    checkHandshakeProperties(ctx, messageHeader);
+                } catch (e) {
+                    if (e instanceof MslException) {
+                        e.setEntity(messageHeader.masterToken);
+                        e.setEntity(messageHeader.entityAuthenticationData);
+                        e.setUser(messageHeader.userIdToken);
+                        e.setUser(messageHeader.userAuthenticationData);
+                        e.setMessageId(messageHeader.messageId);
                     }
+                    self._errored = e;
+                    ready();
                 }
+            }
 
-                function checkMasterTokenRevoked(ctx, messageHeader) {
-                    try {
-                        // If the master token has been revoked then reject the
-                        // message.
-                        var masterToken = messageHeader.masterToken;
+            function checkHandshakeProperties(ctx, messageHeader) {
+                try {
+                    // If this is a handshake message but it is not renewable or does
+                    // not contain key request data then reject the message.
+                    if (messageHeader.isHandshake() &&
+                        (!messageHeader.isRenewable() || messageHeader.keyRequestData.length == 0))
+                    {
+                        throw new MslMessageException(MslError.HANDSHAKE_DATA_MISSING, messageHeader);
+                    }
+
+                    checkMasterToken(ctx, messageHeader);
+                } catch (e) {
+                    if (e instanceof MslException) {
+                        e.setEntity(messageHeader.masterToken);
+                        e.setEntity(messageHeader.entityAuthenticationData);
+                        e.setUser(messageHeader.userIdToken);
+                        e.setUser(messageHeader.userAuthenticationData);
+                        e.setMessageId(messageHeader.messageId);
+                    }
+                    self._errored = e;
+                    ready();
+                }
+            }
+
+            function checkMasterToken(ctx, messageHeader) {
+                try {
+                    // If I am in peer-to-peer mode or the master token is verified
+                    // (i.e. issued by the local entity which is therefore a trusted
+                    // network server) then perform the master token checks.
+                    var masterToken = messageHeader.masterToken;
+                    if (masterToken && (ctx.isPeerToPeer() || masterToken.isVerified())) {
+                        checkMasterTokenRevoked(ctx, messageHeader);
+                    } else {
+                        checkNonReplayableId(ctx, messageHeader);
+                    }
+                } catch (e) {
+                    if (e instanceof MslException) {
+                        e.setEntity(messageHeader.masterToken);
+                        e.setUser(messageHeader.userIdToken);
+                        e.setUser(messageHeader.userAuthenticationData);
+                        e.setMessageId(messageHeader.messageId);
+                    }
+                    self._errored = e;
+                    ready();
+                }
+            }
+
+            function checkMasterTokenRevoked(ctx, messageHeader) {
+                try {
+                    // If the master token has been revoked then reject the
+                    // message.
+                    var masterToken = messageHeader.masterToken;
+                    var factory = ctx.getTokenFactory();
+                    factory.isMasterTokenRevoked(ctx, masterToken, {
+                        result: function(revoked) {
+                            if (revoked) {
+                                self._errored = new MslMasterTokenException(revoked, masterToken)
+                                .setUser(messageHeader.userIdToken)
+                                .setUser(messageHeader.userAuthenticationData)
+                                .setMessageId(messageHeader.messageId);
+                                ready();
+                            } else {
+                                checkUserIdTokenRevoked(ctx, messageHeader);
+                            }
+                        },
+                        error: function(e) {
+                            if (e instanceof MslException) {
+                                e.setEntity(messageHeader.masterToken);
+                                e.setUser(messageHeader.userIdToken);
+                                e.setUser(messageHeader.userAuthenticationData);
+                                e.setMessageId(messageHeader.messageId);
+                            }
+                            self._errored = e;
+                            ready();
+                        }
+                    });
+                } catch (e) {
+                    if (e instanceof MslException) {
+                        e.setEntity(messageHeader.masterToken);
+                        e.setUser(messageHeader.userIdToken);
+                        e.setUser(messageHeader.userAuthenticationData);
+                        e.setMessageId(messageHeader.messageId);
+                    }
+                    self._errored = e;
+                    ready();
+                }
+            }
+
+            function checkUserIdTokenRevoked(ctx, messageHeader) {
+                try {
+                    // If the user ID token has been revoked then reject the
+                    // message. We know the master token is not null and that it is
+                    // verified so we assume the user ID token is as well.
+                    var masterToken = messageHeader.masterToken;
+                    var userIdToken = messageHeader.userIdToken;
+                    if (userIdToken) {
                         var factory = ctx.getTokenFactory();
-                        factory.isMasterTokenRevoked(ctx, masterToken, {
+                        factory.isUserIdTokenRevoked(ctx, masterToken, userIdToken, {
                             result: function(revoked) {
                                 if (revoked) {
-                                    self._errored = new MslMasterTokenException(revoked, masterToken)
-                                    .setUser(messageHeader.userIdToken)
-                                    .setUser(messageHeader.userAuthenticationData)
+                                    self._errored = new MslUserIdTokenException(revoked, userIdToken)
+                                    .setEntity(masterToken)
+                                    .setUser(userIdToken)
                                     .setMessageId(messageHeader.messageId);
                                     ready();
                                 } else {
-                                    checkUserIdTokenRevoked(ctx, messageHeader);
+                                    checkMasterTokenExpired(ctx, messageHeader);
                                 }
                             },
                             error: function(e) {
@@ -384,206 +443,157 @@ var MessageInputStream$create;
                                 ready();
                             }
                         });
-                    } catch (e) {
-                        if (e instanceof MslException) {
-                            e.setEntity(messageHeader.masterToken);
-                            e.setUser(messageHeader.userIdToken);
-                            e.setUser(messageHeader.userAuthenticationData);
-                            e.setMessageId(messageHeader.messageId);
-                        }
-                        self._errored = e;
-                        ready();
+                    } else {
+                        checkMasterTokenExpired(ctx, messageHeader);
                     }
-                }
-
-                function checkUserIdTokenRevoked(ctx, messageHeader) {
-                    try {
-                        // If the user ID token has been revoked then reject the
-                        // message. We know the master token is not null and that it is
-                        // verified so we assume the user ID token is as well.
-                        var masterToken = messageHeader.masterToken;
-                        var userIdToken = messageHeader.userIdToken;
-                        if (userIdToken) {
-                            var factory = ctx.getTokenFactory();
-                            factory.isUserIdTokenRevoked(ctx, masterToken, userIdToken, {
-                                result: function(revoked) {
-                                    if (revoked) {
-                                        self._errored = new MslUserIdTokenException(revoked, userIdToken)
-                                        .setEntity(masterToken)
-                                        .setUser(userIdToken)
-                                        .setMessageId(messageHeader.messageId);
-                                        ready();
-                                    } else {
-                                        checkMasterTokenExpired(ctx, messageHeader);
-                                    }
-                                },
-                                error: function(e) {
-                                    if (e instanceof MslException) {
-                                        e.setEntity(messageHeader.masterToken);
-                                        e.setUser(messageHeader.userIdToken);
-                                        e.setUser(messageHeader.userAuthenticationData);
-                                        e.setMessageId(messageHeader.messageId);
-                                    }
-                                    self._errored = e;
-                                    ready();
-                                }
-                            });
-                        } else {
-                            checkMasterTokenExpired(ctx, messageHeader);
-                        }
-                    } catch (e) {
-                        if (e instanceof MslException) {
-                            e.setEntity(messageHeader.masterToken);
-                            e.setUser(messageHeader.userIdToken);
-                            e.setUser(messageHeader.userAuthenticationData);
-                            e.setMessageId(messageHeader.messageId);
-                        }
-                        self._errored = e;
-                        ready();
+                } catch (e) {
+                    if (e instanceof MslException) {
+                        e.setEntity(messageHeader.masterToken);
+                        e.setUser(messageHeader.userIdToken);
+                        e.setUser(messageHeader.userAuthenticationData);
+                        e.setMessageId(messageHeader.messageId);
                     }
+                    self._errored = e;
+                    ready();
                 }
+            }
 
-                function checkMasterTokenExpired(ctx, messageHeader) {
-                    try {
-                        // If the master token is expired...
-                        var masterToken = messageHeader.masterToken;
-                        if (masterToken.isExpired(null)) {
-                            // If the message is not renewable or does not contain key
-                            // request data then reject the message.
-                            if (!messageHeader.isRenewable() || messageHeader.keyRequestData.length == 0) {
-                                self._errored = new MslMessageException(MslError.MESSAGE_EXPIRED, JSON.stringify(messageHeader))
-                                .setEntity(masterToken)
-                                .setUser(messageHeader.userIdToken)
-                                .setUser(messageHeader.userAuthenticationData)
-                                .setMessageId(messageHeader.messageId);
-                                ready();
-                                return;
-                            }
-
-                            // If the master token will not be renewed by the token
-                            // factory then reject the message.
-                            //
-                            // This throws an exception if the master token is not
-                            // renewable.
-                            var factory = ctx.getTokenFactory();
-                            factory.isMasterTokenRenewable(ctx, masterToken, {
-                                result: function(notRenewable) {
-                                    if (notRenewable) {
-                                        self._errored = new MslMessageException(notRenewable, "Master token is expired and not renewable.")
-                                        .setEntity(masterToken)
-                                        .setUser(messageHeader.userIdToken)
-                                        .setUser(messageHeader.userAuthenticationData)
-                                        .setMessageId(messageHeader.messageId);;
-                                        ready();
-                                    } else {
-                                        checkNonReplayableId(ctx, messageHeader);
-                                    }
-                                },
-                                error: function(e) {
-                                    if (e instanceof MslException) {
-                                        e.setEntity(messageHeader.masterToken);
-                                        e.setUser(messageHeader.userIdToken);
-                                        e.setUser(messageHeader.userAuthenticationData);
-                                        e.setMessageId(messageHeader.messageId);
-                                    }
-                                    self._errored = e;
-                                    ready();
-                                },
-                            });
-                        } else {
-                            checkNonReplayableId(ctx, messageHeader);
-                        }
-                    } catch (e) {
-                        if (e instanceof MslException) {
-                            e.setEntity(messageHeader.masterToken);
-                            e.setUser(messageHeader.userIdToken);
-                            e.setUser(messageHeader.userAuthenticationData);
-                            e.setMessageId(messageHeader.messageId);
-                        }
-                        self._errored = e;
-                        ready();
-                    }
-                }
-
-                function checkNonReplayableId(ctx, messageHeader) {
-                    try {
-                        // If the message is non-replayable (it is not from a trusted
-                        // network server).
-                        var masterToken = messageHeader.masterToken;
-                        var nonReplayableId = messageHeader.nonReplayableId;
-                        if (typeof nonReplayableId === 'number') {
-                            // ...and does not include a master token then reject the
-                            // message.
-                            if (!masterToken) {
-                                self._errored = new MslMessageException(MslError.INCOMPLETE_NONREPLAYABLE_MESSAGE, JSON.stringify(messageHeader))
-                                .setEntity(messageHeader.entityAuthenticationData)
-                                .setUser(messageHeader.userIdToken)
-                                .setUser(messageHeader.userAuthenticationData)
-                                .setMessageId(messageHeader.messageId);
-                                ready();
-                                return;
-                            }
-
-                            // If the non-replayable ID is not accepted then notify the
-                            // sender.
-                            var factory = ctx.getTokenFactory();
-                            factory.acceptNonReplayableId(ctx, masterToken, nonReplayableId, {
-                                result: function(replayed) {
-                                    if (replayed) {
-                                        self._errored = new MslMessageException(replayed, JSON.stringify(messageHeader))
-                                        .setEntity(masterToken)
-                                        .setUser(messageHeader.userIdToken)
-                                        .setUser(messageHeader.userAuthenticationData)
-                                        .setMessageId(messageHeader.messageId);
-                                    }
-
-                                    // Notify all that it is ready.
-                                    ready();
-                                },
-                                error: function(e) {
-                                    if (e instanceof MslException) {
-                                        e.setEntity(masterToken);
-                                        e.setUser(messageHeader.userIdToken);
-                                        e.setUser(messageHeader.userAuthenticationData);
-                                        e.setMessageId(messageHeader.messageId);
-                                    }
-                                    self._errored = e;
-                                    ready();
-                                }
-                            });
-                        }
-
-                        // Notify all that it is ready.
-                        else {
+            function checkMasterTokenExpired(ctx, messageHeader) {
+                try {
+                    // If the master token is expired...
+                    var masterToken = messageHeader.masterToken;
+                    if (masterToken.isExpired(null)) {
+                        // If the message is not renewable or does not contain key
+                        // request data then reject the message.
+                        if (!messageHeader.isRenewable() || messageHeader.keyRequestData.length == 0) {
+                            self._errored = new MslMessageException(MslError.MESSAGE_EXPIRED, messageHeader)
+                            .setEntity(masterToken)
+                            .setUser(messageHeader.userIdToken)
+                            .setUser(messageHeader.userAuthenticationData)
+                            .setMessageId(messageHeader.messageId);
                             ready();
+                            return;
                         }
-                    } catch (e) {
-                        if (e instanceof MslException) {
-                            e.setEntity(messageHeader.masterToken);
-                            e.setEntity(messageHeader.entityAuthenticationData);
-                            e.setUser(messageHeader.userIdToken);
-                            e.setUser(messageHeader.userAuthenticationData);
-                            e.setMessageId(messageHeader.messageId);
+
+                        // If the master token will not be renewed by the token
+                        // factory then reject the message.
+                        //
+                        // This throws an exception if the master token is not
+                        // renewable.
+                        var factory = ctx.getTokenFactory();
+                        factory.isMasterTokenRenewable(ctx, masterToken, {
+                            result: function(notRenewable) {
+                                if (notRenewable) {
+                                    self._errored = new MslMessageException(notRenewable, "Master token is expired and not renewable.")
+                                    .setEntity(masterToken)
+                                    .setUser(messageHeader.userIdToken)
+                                    .setUser(messageHeader.userAuthenticationData)
+                                    .setMessageId(messageHeader.messageId);;
+                                    ready();
+                                } else {
+                                    checkNonReplayableId(ctx, messageHeader);
+                                }
+                            },
+                            error: function(e) {
+                                if (e instanceof MslException) {
+                                    e.setEntity(messageHeader.masterToken);
+                                    e.setUser(messageHeader.userIdToken);
+                                    e.setUser(messageHeader.userAuthenticationData);
+                                    e.setMessageId(messageHeader.messageId);
+                                }
+                                self._errored = e;
+                                ready();
+                            },
+                        });
+                    } else {
+                        checkNonReplayableId(ctx, messageHeader);
+                    }
+                } catch (e) {
+                    if (e instanceof MslException) {
+                        e.setEntity(messageHeader.masterToken);
+                        e.setUser(messageHeader.userIdToken);
+                        e.setUser(messageHeader.userAuthenticationData);
+                        e.setMessageId(messageHeader.messageId);
+                    }
+                    self._errored = e;
+                    ready();
+                }
+            }
+
+            function checkNonReplayableId(ctx, messageHeader) {
+                try {
+                    // If the message is non-replayable (it is not from a trusted
+                    // network server).
+                    var masterToken = messageHeader.masterToken;
+                    var nonReplayableId = messageHeader.nonReplayableId;
+                    if (typeof nonReplayableId === 'number') {
+                        // ...and does not include a master token then reject the
+                        // message.
+                        if (!masterToken) {
+                            self._errored = new MslMessageException(MslError.INCOMPLETE_NONREPLAYABLE_MESSAGE, messageHeader)
+                            .setEntity(messageHeader.entityAuthenticationData)
+                            .setUser(messageHeader.userIdToken)
+                            .setUser(messageHeader.userAuthenticationData)
+                            .setMessageId(messageHeader.messageId);
+                            ready();
+                            return;
                         }
-                        self._errored = e;
+
+                        // If the non-replayable ID is not accepted then notify the
+                        // sender.
+                        var factory = ctx.getTokenFactory();
+                        factory.acceptNonReplayableId(ctx, masterToken, nonReplayableId, {
+                            result: function(replayed) {
+                                if (replayed) {
+                                    self._errored = new MslMessageException(replayed, messageHeader)
+                                    .setEntity(masterToken)
+                                    .setUser(messageHeader.userIdToken)
+                                    .setUser(messageHeader.userAuthenticationData)
+                                    .setMessageId(messageHeader.messageId);
+                                }
+
+                                // Notify all that it is ready.
+                                ready();
+                            },
+                            error: function(e) {
+                                if (e instanceof MslException) {
+                                    e.setEntity(masterToken);
+                                    e.setUser(messageHeader.userIdToken);
+                                    e.setUser(messageHeader.userAuthenticationData);
+                                    e.setMessageId(messageHeader.messageId);
+                                }
+                                self._errored = e;
+                                ready();
+                            }
+                        });
+                    }
+
+                    // Notify all that it is ready.
+                    else {
                         ready();
                     }
+                } catch (e) {
+                    if (e instanceof MslException) {
+                        e.setEntity(messageHeader.masterToken);
+                        e.setEntity(messageHeader.entityAuthenticationData);
+                        e.setUser(messageHeader.userIdToken);
+                        e.setUser(messageHeader.userAuthenticationData);
+                        e.setMessageId(messageHeader.messageId);
+                    }
+                    self._errored = e;
+                    ready();
                 }
-
-                // Return this immediately instead of after reading the header
-                // so the read can be aborted.
-                return this;
-            }, self);
+            }
         },
 
         /**
-         * Retrieve the next JSON object.
+         * Retrieve the next MSL object.
          * 
          * @param {number} timeout read timeout in milliseconds.
-         * @return {object} the next JSON object or null if none remaining.
-         * @throws MslEncodingException if there is a problem parsing the JSON.
+         * @return {MslObject} the next MSL object or null if none remaining.
+         * @throws MslEncodingException if there is a problem parsing the data.
          */
-        nextJsonObject: function nextJsonObject(timeout, callback) {
+        nextMslObject: function nextMslObject(timeout, callback) {
             var self = this;
             InterruptibleExecutor(callback, function() {
                 // Make sure this message is allowed to have payload chunks.
@@ -596,51 +606,34 @@ var MessageInputStream$create;
                 if (this._eom)
                     return null;
                 
-                // Otherwise read the next JSON object.
-                function nextObject(callback) {
-                    InterruptibleExecutor(callback, function() {
-                        var payloadJo;
-                        //var payloadJo = this._parser.nextValue();
-                        if (this._jsonIndex < this._json.length) {
-                            payloadJo = this._json[this._jsonIndex++];
-                            return payloadJo;
-                        } else {
-                            // in this case there's been a request for
-                            // another payload, but we don't actually have
-                            // the object parsed yet. So we need to parse
-                            // the source again
-                            inputStreamToJSON(this._source, timeout, {
-                                result: function (json) {
-                                    if (json && json.length && json.length > 0) {
-                                        json.forEach(function (elt) {
-                                            this._json.push(elt);
-                                        });
-                                        nextObject(callback);
-                                    } else {
-                                        // we've reached the end of the stream
-                                        this._eom = true;
-                                        callback.result(null);
-                                    }
-                                },
-                                timeout: callback.timeout,
-                                error: callback.error,
-                            });
-                        }
-                    }, self);
-                }
-                nextObject({
-                    result: function(payloadJo) {
+                // Otherwise read the next MSL object.
+                this._tokenizer.more(-1, {
+                    result: function(available) {
                         InterruptibleExecutor(callback, function() {
-                            if (!payloadJo)
+                            if (!available) {
+                                this._eom = true;
                                 return null;
-                            if (typeof payloadJo !== 'object')
-                                throw new MslEncodingException(MslError.MESSAGE_FORMAT_ERROR);
-                            return payloadJo;
+                            }
+                            this._tokenizer.nextObject(-1, {
+                                result: callback.result,
+                                error: function(e) {
+                                    InterruptibleExecutor(callback, function() {
+                                        if (e instanceof MslEncoderException)
+                                            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "payloadchunk", e);
+                                        throw e;
+                                    }, self);
+                                }
+                            });
                         }, self);
                     },
-                    timeout: callback.timeout,
-                    error: callback.error,
-                }); 
+                    error: function(e) {
+                        InterruptibleExecutor(callback, function() {
+                            if (e instanceof MslEncoderException)
+                                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "payloadchunk", e);
+                            throw e;
+                        }, self);
+                    }
+                });
             }, self);
         },
 
@@ -653,7 +646,7 @@ var MessageInputStream$create;
          *        null if none remaining, or any thrown exceptions.
          * @throws MslCryptoException if there is a problem decrypting or verifying
          *         the payload chunk.
-         * @throws MslEncodingException if there is a problem parsing the JSON.
+         * @throws MslEncodingException if there is a problem parsing the data.
          * @throws MslMessageException if the payload verification failed.
          * @throws MslInternalException if attempting to access payloads of an
          *         error message.
@@ -677,11 +670,11 @@ var MessageInputStream$create;
                     return null;
 
                 // Otherwise read the next payload.
-                this.nextJsonObject(timeout, {
-                    result: function(payloadJo) {
+                this.nextMslObject(timeout, {
+                    result: function(payloadMo) {
                         InterruptibleExecutor(callback, function() {
-                            if (!payloadJo) return null;
-                            PayloadChunk$parse(payloadJo, this._cryptoContext, {
+                            if (!payloadMo) return null;
+                            PayloadChunk$parse(payloadMo, this._cryptoContext, {
                                 result: function(payload) {
                                     InterruptibleExecutor(callback, function() {
                                         // Make sure the payload belongs to this message and is the one
@@ -727,11 +720,7 @@ var MessageInputStream$create;
                                         return data;
                                     }, self);
                                 },
-                                error: function(e) {
-                                    if (e instanceof SyntaxError)
-                                        e = new MslEncodingException(MslError.JSON_PARSE_ERROR, "payloadchunk", e);
-                                    callback.error(e);
-                                }
+                                error: callback.error,
                             });
                         }, self);
                     },
@@ -808,7 +797,7 @@ var MessageInputStream$create;
          *         undefined if aborted.
          * @throws MslCryptoException if there is a problem decrypting or verifying
          *         the payload chunk.
-         * @throws MslEncodingException if there is a problem parsing the JSON.
+         * @throws MslEncodingException if there is a problem parsing the data.
          * @throws MslMessageException if the payload verification failed.
          * @throws MslInternalException if attempting to access payloads of an
          *         error message.
@@ -1252,7 +1241,6 @@ var MessageInputStream$create;
      *
      * @param {MslContext} ctx MSL context.
      * @param {InputStream} source MSL input stream.
-     * @param {string} charset input stream character set encoding.
      * @param {Array.<KeyRequestData>} keyRequestData key request data to use when processing key
      *        response data.
      * @param {Object.<string,ICryptoContext>} cryptoContexts the map of service token names onto crypto
@@ -1281,7 +1269,7 @@ var MessageInputStream$create;
      *         authentication data or a master token, or a token is improperly
      *         bound to another token.
      */
-    MessageInputStream$create = function MessageInputStream$create(ctx, source, charset, keyRequestData, cryptoContexts, timeout, callback) {
-        new MessageInputStream(ctx, source, charset, keyRequestData, cryptoContexts, timeout, callback);
+    MessageInputStream$create = function MessageInputStream$create(ctx, source, keyRequestData, cryptoContexts, timeout, callback) {
+        new MessageInputStream(ctx, source, keyRequestData, cryptoContexts, timeout, callback);
     };
 })();

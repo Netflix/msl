@@ -41,15 +41,52 @@ var MslArray;
      */
     MslArray = util.Class.create({
         /**
+         * Create a new {@code MslArray} from the given optional object array.
+         * 
+         * @param {?Array<*>=} array the array of values. May be {@code null}.
+         * @throws TypeError if one of the values is of an
+         *         unsupported type.
+         */
+        init: function init(array) {
+            // The properties.
+            var props = {
+                /**
+                 * Object list.
+                 * @type {Array.<*>}
+                 */
+                list: { value: [], writable: false, enumerable: false, configurable: false },
+            };
+            Object.defineProperties(this, props);
+            
+            // Populate array.
+            if (array) {
+                for (var value in array)
+                    this.put(-1, value);
+            }
+        },
+        
+        /**
          * Return the value associated with an index.
          * 
          * @param {number} index the index.
          * @return {?} the value.
          * @throws RangeError if the index is negative or
          *         exceeds the number of elements in the array.
-         * @throws MslEncoderException if the value is {@code null}.
+         * @throws MslEncoderException if the value is {@code null} or of the wrong
+         *         type.
          */
-        get: function(index) {},
+        get: function get(index) {
+            if (index < 0 || index >= this.list.length)
+                throw new RangeError("MslArray[" + index + "] is negative or exceeds array length.");
+            var o = this.list[index];
+            if (!o)
+                throw new MslEncoderException("MslArray[" + index + "] is null.");
+            if (o instanceof Object && o.constructor === Object)
+                return new MslObject(o);
+            if (o instanceof Array)
+                return new MslArray(o);
+            return o;
+        },
     
         /**
          * Return the value associated with an index.
@@ -58,9 +95,17 @@ var MslArray;
          * @return {boolean} the value.
          * @throws RangeError if the index is negative or
          *         exceeds the number of elements in the array.
-         * @throws MslEncoderException if the value is {@code null}.
+         * @throws MslEncoderException if the value is {@code null} or of the wrong
+         *         type.
          */
-        getBoolean: function(index) {},
+        getBoolean: function getBoolean(index) {
+            var o = this.get(index);
+            if (o instanceof Boolean)
+                return o.valueOf();
+            if (typeof o === 'boolean')
+                return p;
+            throw new MslEncoderException("MslArray[" + index + "] is not a boolean.");
+        },
     
         /**
          * Return the value associated with an index.
@@ -69,9 +114,15 @@ var MslArray;
          * @return {Uint8Array} the value.
          * @throws RangeError if the index is negative or
          *         exceeds the number of elements in the array.
-         * @throws MslEncoderException if the value is {@code null}.
+         * @throws MslEncoderException if the value is {@code null} or of the wrong
+         *         type.
          */
-        getBytes: function(index) {},
+        getBytes: function getBytes(index) {
+            var o = this.get(index);
+            if (o instanceof Uint8Array)
+                return o;
+            throw new MslEncoderException("MslArray[" + index + "] is not binary data.");
+        },
     
         /**
          * Return the value associated with an index.
@@ -80,9 +131,17 @@ var MslArray;
          * @return {number} the value.
          * @throws RangeError if the index is negative or
          *         exceeds the number of elements in the array.
-         * @throws MslEncoderException if the value is {@code null}.
+         * @throws MslEncoderException if the value is {@code null} or of the wrong
+         *         type.
          */
-        getDouble: function(index) {},
+        getDouble: function getDouble(index) {
+            var o = this.get(index);
+            if (o instanceof Number)
+                return o.valueOf();
+            if (typeof o === 'number')
+                return o;
+            throw new MslEncoderException("MslArray[" + index + "] is not a number.");
+        },
     
         /**
          * Return the value associated with an index.
@@ -91,9 +150,18 @@ var MslArray;
          * @return {number} the value.
          * @throws RangeError if the index is negative or
          *         exceeds the number of elements in the array.
-         * @throws MslEncoderException if the value is {@code null}.
+         * @throws MslEncoderException if the value is {@code null} or of the wrong
+         *         type.
          */
-        getInt: function(index) {},
+        getInt: function getInt(index) {
+            var o = this.get(index);
+            // The << 0 operation converts to a signed 32-bit integer.
+            if (o instanceof Number)
+                return o.valueOf() << 0;
+            if (typeof o === 'number')
+                return o << 0;
+            throw new MslEncoderException("MslArray[" + index + "] is not a number.");
+        },
     
         /**
          * Return the value associated with an index.
@@ -102,20 +170,50 @@ var MslArray;
          * @return {MslArray} the value.
          * @throws RangeError if the index is negative or
          *         exceeds the number of elements in the array.
-         * @throws MslEncoderException if the value is {@code null}.
+         * @throws MslEncoderException if the value is {@code null} or of the wrong
+         *         type.
          */
-        getMslArray: function(index) {},
+        getMslArray: function getMslArray(index) {
+            var o = this.get(index);
+            if (o instanceof MslArray)
+                return o;
+            if (o instanceof Array)
+                return new MslArray(o);
+            throw new MslEncoderException("MslArray[" + index + "] is not a MslArray.");
+        },
     
         /**
          * Return the value associated with an index.
          * 
          * @param {number} index the index.
+         * @param {MslEncoderFactory} encoder the MSL encoder factory.
          * @return {MslObject} the value.
          * @throws RangeError if the index is negative or
          *         exceeds the number of elements in the array.
-         * @throws MslEncoderException if the value is {@code null}.
+         * @throws MslEncoderException if the value is {@code null} or of the wrong
+         *         type.
          */
-        getMslObject: function(index) {},
+        getMslObject: function getMslObject(index, encoder) {
+            var o = this.get(index);
+            if (o instanceof MslObject)
+                return o;
+            /* FIXME: How should we handle MslEncodable?
+            if (o instanceof MslEncodable)
+                return ((MslEncodable)o.toMslObject(encoder);
+            */
+            if (o instanceof Object && o.constructor === Object)
+                return new MslObject(o);
+            if (o instanceof Uint8Array) {
+                try {
+                    return encoder.parseObject(o);
+                } catch (e) {
+                    if (e instanceof MslEncoderException)
+                        throw new MslEncoderException("MslObject[" + index + "] is not a MslObject.", e);
+                    throw e;
+                }
+            }
+            throw new MslEncoderException("MslArray[" + index + "] is not a MslObject.");
+        },
     
         /**
          * Return the value associated with an index.
@@ -124,9 +222,18 @@ var MslArray;
          * @return {number} the value.
          * @throws RangeError if the index is negative or
          *         exceeds the number of elements in the array.
-         * @throws MslEncoderException if the value is {@code null}.
+         * @throws MslEncoderException if the value is {@code null} or of the wrong
+         *         type.
          */
-        getLong: function(index) {},
+        getLong: function getLong(index) {
+            var o = this.get(index);
+            // The ~~ operator truncates to the integer value.
+            if (o instanceof Number)
+                return ~~o.valueOf();
+            if (typeof o === 'number')
+                return ~~o;
+            throw new MslEncoderException("MslArray[" + index + "] is not a number.");
+        },
     
         /**
          * Return the value associated with an index.
@@ -135,9 +242,17 @@ var MslArray;
          * @return {string} the value.
          * @throws RangeError if the index is negative or
          *         exceeds the number of elements in the array.
-         * @throws MslEncoderException if the value is {@code null}.
+         * @throws MslEncoderException if the value is {@code null} or of the wrong
+         *         type.
          */
-        getString: function(index) {},
+        getString: function getString(index) {
+            var o = this.get(index);
+            if (o instanceof String)
+                return o.valueOf();
+            if (typeof o === 'string')
+                return o;
+            throw new MslEncoderException("MslArray[" + index + "] is not a string.");
+        },
     
         /**
          * Return true if the value at the index is {@code null}.
@@ -147,7 +262,12 @@ var MslArray;
          * @throws RangeError if the index is negative or
          *         exceeds the number of elements in the array.
          */
-        isNull: function(index) {},
+        isNull: function isNull(index) {
+            if (index < 0 || index >= this.list.length)
+                throw new RangeError("MslArray[" + index + "] is negative or exceeds array length.");
+            return this.list[index] == null;
+            
+        },
         
         /**
          * Return the number of elements in the array, including {@code null}
@@ -155,7 +275,9 @@ var MslArray;
          * 
          * @return {number} the array size.
          */
-        length() {},
+        length: function length() {
+            return this.list.length;
+        },
         
         /**
          * Return the value at the index.
@@ -165,7 +287,21 @@ var MslArray;
          * @throws RangeError if the index is negative or
          *         exceeds the number of elements in the array.
          */
-        opt: function(index) {},
+        opt: function opt(index) {
+            if (index < 0 || index >= this.list.length)
+                throw new RangeError("MslArray[" + index + "] is negative or exceeds array length.");
+            var o = this.list[index];
+            try {
+                if (o instanceof Object && o.constructor === Object)
+                    return new MslObject(o);
+                if (o instanceof Array)
+                    return new MslArray(o);
+            } catch (e) {
+                if (e instanceof TypeError)
+                    return null;
+            }
+            return o;
+        },
         
         /**
          * Return the value at the index, or {@code false} or the default value if
@@ -177,7 +313,18 @@ var MslArray;
          * @throws RangeError if the index is negative or
          *         exceeds the number of elements in the array.
          */
-        optBoolean: function(index, defaultValue) {},
+        optBoolean: function optBoolean(index, defaultValue) {
+            var o = this.opt(index);
+            if (o instanceof Boolean)
+                return o.valueOf();
+            if (typeof o === 'boolean')
+                return o;
+            if (defaultValue instanceof Boolean)
+                return defaultValue.valueOf();
+            if (typeof defaultValue === 'boolean')
+                return defaultValue;
+            return false;
+        },
     
         /**
          * Return the value at the index, or an empty byte array or the default
@@ -189,7 +336,14 @@ var MslArray;
          * @throws RangeError if the index is negative or
          *         exceeds the number of elements in the array.
          */
-        optBytes(index, defaultValue) {},
+        optBytes: function optBytes(index, defaultValue) {
+            var o = this.opt(index);
+            if (o instanceof Uint8Array)
+                return o;
+            if (defaultValue instanceof Uint8Array)
+                return defaultValue;
+            return new Uint8Array();
+        },
         
         /**
          * Return the value at the index, or {@code NaN} or the default value if
@@ -201,7 +355,18 @@ var MslArray;
          * @throws RangeError if the index is negative or
          *         exceeds the number of elements in the array.
          */
-        optDouble: function(index, defaultValue) {},
+        optDouble: function optDouble(index, defaultValue) {
+            var o = this.opt(index);
+            if (o instanceof Number)
+                return o.valueOf();
+            if (typeof o === 'number')
+                return o;
+            if (defaultValue instanceof Number)
+                return defaultValue;
+            if (typeof defaultValue === 'number')
+                return defaultValue;
+            return NaN;
+        },
         
         /**
          * Return the value at the index, or zero or the default value if the value
@@ -213,7 +378,19 @@ var MslArray;
          * @throws RangeError if the index is negative or
          *         exceeds the number of elements in the array.
          */
-        optInt: function(index, defaultValue) {},
+        optInt: function optInt(index, defaultValue) {
+            var o = this.opt(index);
+            // The << 0 operation converts to a signed 32-bit integer.
+            if (o instanceof Number)
+                return o.valueOf() << 0;
+            if (typeof o === 'number')
+                return o << 0;
+            if (defaultValue instanceof Number)
+                return defaultValue.valueOf() << 0;
+            if (typeof defaultValue === 'number')
+                return defaultValue << 0;
+            return 0;
+        },
     
         /**
          * Return the {@code MslArray} at the index or {@code null} if the value
@@ -224,7 +401,14 @@ var MslArray;
          * @throws RangeError if the index is negative or
          *         exceeds the number of elements in the array.
          */
-        optMslArray: function(index) {},
+        optMslArray: function optMslArray(index) {
+            var o = this.opt(index);
+            if (o instanceof MslArray)
+                return o;
+            if (o instanceof Array)
+                return new MslArray(o);
+            return null;
+        },
     
         /**
          * Return the {@code MslObject} at the index or {@code null} if the value
@@ -235,7 +419,38 @@ var MslArray;
          * @throws RangeError if the index is negative or
          *         exceeds the number of elements in the array.
          */
-        optMslObject: function(index) {},
+        optMslObject: function optMslObject(index) {
+            var o = this.opt(index);
+            if (o instanceof MslObject)
+                return o;
+            /* FIXME: How should we handle MslEncodable?
+            if (o instanceof MslEncodable) {
+                try {
+                    return ((MslEncodable)o).toMslObject(encoder);
+                } catch (final MslEncoderException e) {
+                    // Drop through.
+                }
+            }
+            */
+            try {
+                if (o instanceof Object && o.constructor === Object)
+                    return new MslObject(o);
+            } catch (e) {
+                if (e instanceof TypeError)
+                    return null;
+                throw e;
+            }
+            if (o instanceof Uint8Array) {
+                try {
+                    return encoder.parseObject(o);
+                } catch (e) {
+                    if (e instanceof MslEncoderException)
+                        return null;
+                    throw e;
+                }
+            }
+            return null;
+        },
         
         /**
          * Return the value at the index, or zero or the default value if the value
@@ -247,7 +462,19 @@ var MslArray;
          * @throws RangeError if the index is negative or
          *         exceeds the number of elements in the array.
          */
-        optLong: function(index, defaultValue) {},
+        optLong: function optLong(index, defaultValue) {
+            var o = this.opt(index);
+            // The ~~ operator truncates to the integer value.
+            if (o instanceof Number)
+                return ~~o.valueOf();
+            if (typeof o === 'number')
+                return ~~o;
+            if (defaultValue instanceof Number)
+                return ~~defaultValue.valueOf();
+            if (typeof defaultValue === 'number')
+                return ~~defaultValue;
+            return 0;
+        },
         
         /**
          * Return the value at the index, or the empty string or the default value
@@ -259,7 +486,18 @@ var MslArray;
          * @throws RangeError if the index is negative or
          *         exceeds the number of elements in the array.
          */
-        optString: function(index, defaultValue) {},
+        optString: function optString(index, defaultValue) {
+            var o = this.opt(index);
+            if (o instanceof String)
+                return o.valueOf();
+            if (typeof o === 'string')
+                return o;
+            if (defaultValue instanceof String)
+                return defaultValue.valueOf();
+            if (typeof defaultValue === 'string')
+                return defaultValue;
+            return '';
+        },
         
         /**
          * Put or replace a value in the {@code MslArray} at the index. If the
@@ -269,87 +507,204 @@ var MslArray;
          * @param {?} value the value. May be {@code null}.
          * @return {MslArray} this.
          * @throws RangeError if the index is less than -1.
+         * @throws TypeError if the value is of an unsupported type.
          */
-        put: function(index, value) {},
+        put: function put(index, value) {
+            if (index < -1)
+                throw new RangeError("MslArray[" + index + "] is negative.");
+            
+            // Convert appropriate values to MSL objects or MSL arrays.
+            var element;
+            if (value instanceof Boolean ||
+                typeof value === 'boolean' ||
+                value instanceof Uint8Array ||
+                value instanceof Number ||
+                typeof value === 'number' ||
+                value instanceof MslObject ||
+                value instanceof MslArray ||
+                value instanceof String ||
+                typeof value === 'string')
+            {
+                element = value;
+            }
+            else if (value instanceof Object && value.constructor === Object) {
+                element = new MslObject(value);
+            } else if (value instanceof Array) {
+                element = new MslArray(value);
+            } else if (value === null) {
+                element = null;
+            } else {
+                throw new TypeError("Value [" + typeof value + "] is an unsupported type.");
+            }
+            
+            // Fill with null elements as necessary.
+            for (var i = this.list.length; i < index; ++i)
+                this.list[] = null;
+            
+            // Append if requested.
+            if (index == -1 || index == this.list.length) {
+                this.list[] = element;
+                return this;
+            }
+            
+            // Otherwise replace.
+            this.list[index] = element;
+            return this;
+        },
         
         /**
-         * Put or replace a value in the {@code MslArray} at the index. If the
-         * index exceeds the length, null elements will be added as necessary.
+         * <p>Put or replace a value in the {@code MslArray} at the index. If the
+         * index exceeds the length, null elements will be added as necessary.</p>
+         * 
+         * <p>This method will call {@link #put(int, Object)}.</p>
          * 
          * @param {number} index the index. -1 for the end of the array.
          * @param {boolean} value the value.
          * @return {MslArray} this.
          * @throws RangeError if the index is less than -1.
+         * @throws TypeError if the value is of the incorrect type.
          */
-        putBoolean: function(index, value) {},
+        putBoolean: function putBoolean(index, value) {
+            if (!(value instanceof Boolean) && typeof value !== 'boolean')
+                throw new TypeError("Value [" + typeof value + "] is not a boolean.");
+            return this.put(index, value);
+        },
         
         /**
-         * Put or replace a value in the {@code MslArray} at the index. If the
-         * index exceeds the length, null elements will be added as necessary.
+         * <p>Put or replace a value in the {@code MslArray} at the index. If the
+         * index exceeds the length, null elements will be added as necessary.</p>
+         * 
+         * <p>This method will call {@link #put(int, Object)}.</p>
          * 
          * @param {number} index the index. -1 for the end of the array.
          * @param {Uint8Array} value the value.
          * @return {MslArray} this.
          * @throws RangeError if the index is less than -1.
+         * @throws TypeError if the value is of the incorrect type.
          */
-        putBytes: function(index, value) {},
+        putBytes: function putBytes(index, value) {
+            if (!(value instanceof Uint8Array))
+                throw new TypeError("Value [" + typeof value + "] is not binary data.");
+            return this.put(index, value);
+        },
         
         /**
-         * Put or replace a value in the {@code MslArray} at the index. The
-         * collection of elements will be transformed into a {@code MslArray}. If
-         * the index exceeds the length, null elements will be added as necessary.
+         * <p>Put or replace a value in the {@code MslArray} at the index. The
+         * collection of elements will be transformed into a {@code MslArray}.
+         * If the index exceeds the length, null elements will be added as
+         * necessary.</p>
+         * 
+         * <p>This method will call {@link #put(int, Object)}.</p>
          * 
          * @param {number} index the index. -1 for the end of the array.
-         * @param {Array.<?>} value the value. May be {@code null}.
+         * @param {Array<?>} value the value. May be {@code null}.
          * @return {MslArray} this.
          * @throws RangeError if the index is less than -1.
+         * @throws TypeError if the value is of the incorrect type.
          */
-        putCollection: function(index, value) {},
+        putCollection: function putCollection(index, value) {
+            if (!(value instanceof Array))
+                throw new TypeError("Value [" + typeof value + "] is not a collection.");
+            return this.put(index, value);
+        },
         
         /**
-         * Put or replace a value in the {@code MslArray} at the index. If the
-         * index exceeds the length, null elements will be added as necessary.
+         * <p>Put or replace a value in the {@code MslArray} at the index. If the
+         * index exceeds the length, null elements will be added as necessary.</p>
          * 
-         * @param {number} index the index. -1 for the end of the array.
-         * @param {number} value the value.
-         * @return {MslArray} this.
-         * @throws RangeError if the index is less than -1.
-         */
-        putDouble: function(index, value) {},
-        
-        /**
-         * Put or replace a value in the {@code MslArray} at the index. If the
-         * index exceeds the length, null elements will be added as necessary.
-         * 
-         * @param {number} index the index. -1 for the end of the array.
-         * @param {number} value the value.
-         * @return {MslArray} this.
-         * @throws RangeError if the index is less than -1.
-         */
-        putInt: function(index, value) {},
-        
-        /**
-         * Put or replace a value in the {@code MslArray} at the index. If the
-         * index exceeds the length, null elements will be added as necessary.
+         * <p>This method will call {@link #put(int, Object)}.</p>
          * 
          * @param {number} index the index. -1 for the end of the array.
          * @param {number} value the value.
          * @return {MslArray} this.
          * @throws RangeError if the index is less than -1.
+         * @throws TypeError if the value is of the incorrect type.
          */
-        putLong: function(index, value) {},
+        putDouble: function putDouble(index, value) {
+            if (!(value instanceof Number) && typeof value !== 'number')
+                throw new TypeError("Value [" + typeof value + "] is not a number.");
+            return this.put(index, value);
+        },
         
         /**
-         * Put or replace a value in the {@code MslArray} at the index. The map of
-         * strings onto objects will be transformed into a {@code MslObject}. If
-         * the index exceeds the length, null elements will be added as necessary.
+         * <p>Put or replace a value in the {@code MslArray} at the index. If the
+         * index exceeds the length, null elements will be added as necessary.</p>
+         * 
+         * <p>This method will call {@link #put(int, Object)}.</p>
+         * 
+         * @param {number} index the index. -1 for the end of the array.
+         * @param {number} value the value.
+         * @return {MslArray} this.
+         * @throws RangeError if the index is less than -1.
+         * @throws TypeError if the value is of the incorrect type.
+         */
+        putInt: function putInt(index, value) {
+            // The << 0 operation converts to a signed 32-bit integer.
+            if (value instanceof Number)
+                return this.put(index, value.valueOf() << 0);
+            if (typeof value === 'number')
+                return this.put(index, value << 0);
+            throw new TypeError("Value [" + typeof value + "] is not a number.");
+        },
+        
+        /**
+         * <p>Put or replace a value in the {@code MslArray} at the index. If the
+         * index exceeds the length, null elements will be added as necessary.</p>
+         * 
+         * <p>This method will call {@link #put(int, Object)}.</p>
+         * 
+         * @param {number} index the index. -1 for the end of the array.
+         * @param {number} value the value.
+         * @return {MslArray} this.
+         * @throws RangeError if the index is less than -1.
+         * @throws TypeError if the value is of the incorrect type.
+         */
+        putLong: function putLong(index, value) {
+            // The ~~ operator truncates to the integer value.
+            if (value instanceof Number)
+                return this.put(index, ~~value.valueOf());
+            if (typeof value === 'number')
+                return this.put(index, ~~value);
+            throw new TypeError("Value [" + typeof value + "] is not a number.");
+        },
+        
+        /**
+         * <p>Put or replace a value in the {@code MslArray} at the index. The
+         * map of strings onto objects will be transformed into a
+         * {@code MslObject}. If the index exceeds the length, null elements
+         * will be added as necessary.</p>
+         * 
+         * <p>This method will call {@link #put(int, Object)}.</p>
          * 
          * @param {number} index the index. -1 for the end of the array.
          * @param {Object.<String,?>} value the value. May be {@code null}.
          * @return {MslArray} this.
          * @throws RangeError if the index is less than -1.
+         * @throws TypeError if the value is of the incorrect type.
          */
-        putMap: function(index, value) {},
+        putMap: function putMap(index, value) {
+            if (!(value instanceof Object && value.constructor === Object))
+                throw new TypeError("Value [" + typeof value + "] is not a map.");
+            return this.put(index, value);
+        },
+
+        /**
+         * <p>Put or replace a value in the {@code MslArray} at the index. If the
+         * index exceeds the length, null elements will be added as necessary.</p>
+         * 
+         * <p>This method will call {@link #put(int, Object)}.</p>
+         * 
+         * @param {number} index the index. -1 for the end of the array.
+         * @param {string} value the value.
+         * @return {MslArray} this.
+         * @throws RangeError if the index is less than -1.
+         * @throws TypeError if the value is of the incorrect type.
+         */
+        putString: function putString(index, value) {
+            if (!(value instanceof String) && typeof value !== 'string')
+                throw new TypeError("Value [" + typeof value + "] is not a string.");
+            return this.put(index, value);
+        },
         
         /**
          * Remove an element at the index. This decreases the length by one.
@@ -359,21 +714,27 @@ var MslArray;
          * @throws RangeError if the index is negative or
          *         exceeds the number of elements in the array.
          */
-        remove: function(index) {},
+        remove: function remove(index) {
+            if (index < -1 || index >= this.list.length)
+                throw new RangeError("MslArray[" + index + "] is negative or exceeds array length.");
+            var i = (index == -1) ? this.list.length - 1 : index;
+            var o = this.opt(i);
+            this.list.splice(index, 1);
+            return o;
+        },
     
         /**
          * Return a collection of the {@code MslArray} contents.
          * 
          * @return {Array.<?>} the collection of {@code MslArray} contents.
          */
-        getCollection: function() {},
+        getCollection: function getCollection() {
+            return this.list.slice();
+        },
         
-        /**
-         * Encode the {@code MslArray} into its binary form.
-         * 
-         * @return {Uint8Array} the encoded form of the {@code MslArray}.
-         * @throws MslEncoderException if there is an error generating the encoding.
-         */
-        getEncoded: function() {},
+        /** @inheritDoc */
+        toString: function toString() {
+            return JSON.stringify(this.list);
+        },
     });
 })();

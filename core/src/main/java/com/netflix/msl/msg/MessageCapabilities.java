@@ -117,7 +117,7 @@ public class MessageCapabilities implements MslEncodable {
         try {
             // Extract compression algorithms.
             final Set<CompressionAlgorithm> compressionAlgos = EnumSet.noneOf(CompressionAlgorithm.class);
-            final MslArray algos = capabilitiesMo.getMslArray(KEY_COMPRESSION_ALGOS);
+            final MslArray algos = capabilitiesMo.optMslArray(KEY_COMPRESSION_ALGOS);
             for (int i = 0; algos != null && i < algos.size(); ++i) {
                 final String algo = algos.getString(i);
                 // Ignore unsupported algorithms.
@@ -129,14 +129,14 @@ public class MessageCapabilities implements MslEncodable {
             
             // Extract languages.
             final List<String> languages = new ArrayList<String>();
-            final MslArray langs = capabilitiesMo.getMslArray(KEY_LANGUAGES);
+            final MslArray langs = capabilitiesMo.optMslArray(KEY_LANGUAGES);
             for (int i = 0; langs != null && i < langs.size(); ++i)
                 languages.add(langs.getString(i));
             this.languages = Collections.unmodifiableList(languages);
             
             // Extract encoder formats.
             final Set<MslEncoderFormat> encoderFormats = new HashSet<MslEncoderFormat>();
-            final MslArray formats = capabilitiesMo.getMslArray(KEY_ENCODER_FORMATS);
+            final MslArray formats = capabilitiesMo.optMslArray(KEY_ENCODER_FORMATS);
             for (int i = 0; formats != null && i < formats.size(); ++i) {
                 final String format = formats.getString(i);
                 final MslEncoderFormat encoderFormat = MslEncoderFormat.getFormat(format);

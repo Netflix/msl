@@ -184,6 +184,7 @@ public class MslObject {
      * Return the value associated with the specified key.
      * 
      * @param key the key.
+     * @param encoder the MSL encoder factory.
      * @return the value.
      * @throws IllegalArgumentException if the key is {@code null}.
      * @throws MslEncoderException if there is no associated value of the
@@ -201,7 +202,7 @@ public class MslObject {
             return new MslObject((Map<?,?>)o);
         if (o instanceof byte[]) {
             try {
-                encoder.parseObject((byte[])o);
+                return encoder.parseObject((byte[])o);
             } catch (final MslEncoderException e) {
                 throw new MslEncoderException("MslObject[" + MslEncoderFactory.quote(key) + "] is not a MslObject.");
             }
@@ -421,6 +422,7 @@ public class MslObject {
      * {@code null} if the key unknown or the value is not of the correct type.
      * 
      * @param key the key.
+     * @param encoder the MSL encoder factory.
      * @return the {@code MslObject} or {@code null}.
      * @throws IllegalArgumentException if the key is {@code null}.
      */
@@ -446,9 +448,9 @@ public class MslObject {
         }
         if (o instanceof byte[]) {
             try {
-                encoder.parseObject((byte[])o);
+                return encoder.parseObject((byte[])o);
             } catch (final MslEncoderException e) {
-                // Drop through.
+                return null;
             }
         }
         return null;
@@ -561,8 +563,6 @@ public class MslObject {
      * <p><p>Put a key/value pair into the {@code MslObject}. If the value is
      * {@code null} the key will be removed.</p>
      * 
-     * <p>This method will call {@link #put(String, Object)}.</p></p>
-     * 
      * <p>This method will call {@link #put(String, Object)}.</p>
      * 
      * @param key the key.
@@ -650,9 +650,11 @@ public class MslObject {
     }
 
     /**
-     * Put a key/value pair into the {@code MslObject}. The map of strings onto
-     * objects will be transformed into a {@code MslObject}. If the value is
-     * {@code null} the key will be removed.
+     * <p>Put a key/value pair into the {@code MslObject}. The map of strings
+     * onto objects will be transformed into a {@code MslObject}. If the value
+     * is {@code null} the key will be removed.</p>
+     * 
+     * <p>This method will call {@link #put(String, Object)}.</p>
      * 
      * @param key the key.
      * @param value the value. May be {@code null}.
@@ -689,7 +691,9 @@ public class MslObject {
     public Object remove(final String key) {
         if (key == null)
             throw new IllegalArgumentException("Null key.");
-        return map.remove(key);
+        final Object value = opt(key);
+        map.remove(key);
+        return value;
     }
     
     /**

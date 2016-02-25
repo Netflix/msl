@@ -123,7 +123,7 @@ var MockTokenFactory;
         },
 
         /** @inheritDoc */
-        createMasterToken: function(ctx, entityAuthData, encryptionKey, hmacKey, callback) {
+        createMasterToken: function(ctx, entityAuthData, encryptionKey, hmacKey, issuerData, callback) {
             AsyncExecutor(callback, function() {
                 var renewalWindow = new Date(ctx.getTime() + RENEWAL_OFFSET);
                 var expiration = new Date(ctx.getTime() + EXPIRATION_OFFSET);
@@ -132,19 +132,26 @@ var MockTokenFactory;
                 do {
                     serialNumber = ctx.getRandom().nextLong();
                 } while (serialNumber < 0 || serialNumber > MslConstants$MAX_LONG_VALUE);
-                var issuerData = null;
                 var identity = entityAuthData.getIdentity();
                 MasterToken$create(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey, callback);
             }, this);
         },
 
         /** @inheritDoc */
-        renewMasterToken: function(ctx, masterToken, encryptionKey, hmacKey, callback) {
+        renewMasterToken: function(ctx, masterToken, encryptionKey, hmacKey, issuerData, callback) {
             AsyncExecutor(callback, function() {
                 if (!masterToken.isDecrypted())
                     throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, masterToken);
-
-                var issuerData = null;
+                
+                var mtIssuerData = masterToken.issuerData;
+                var mergedIssuerData;
+                try {
+                    mergedIssuerData = JsonUtils$merge(masterToken.issuerData, issuerData);
+                } catch (e) {
+                    if (e instanceof MslEncoderException)
+                        throw new MslEncodingException(MslError.MASTERTOKEN_ISSUERDATA_ENCODE_ERROR, "mt issuerdata " + mtIssuerData + "; issuerdata " + issuerData, e);
+                    throw e;
+                }
                 var renewalWindow = new Date(ctx.getTime() + RENEWAL_OFFSET);
                 var expiration = new Date(ctx.getTime() + EXPIRATION_OFFSET);
                 var oldSequenceNumber = masterToken.sequenceNumber;
@@ -157,7 +164,7 @@ var MockTokenFactory;
                 }
                 var serialNumber = masterToken.serialNumber;
                 var identity = masterToken.identity;
-                MasterToken$create(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey, callback);
+                MasterToken$create(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, mergedIssuerData, identity, encryptionKey, hmacKey, callback);
             }, this);
         },
 

@@ -84,85 +84,85 @@ var MessageHeader$HeaderPeerData;
     
     // Message header data.
     /**
-     * JSON key sender.
+     * Key sender.
      * @const
      * @type {string}
      */
     var KEY_SENDER = "sender";
     /**
-     * JSON key recipient.
+     * Key recipient.
      * @const
      * @type {string}
      */
     var KEY_RECIPIENT = "recipient";
     /**
-     * JSON key timestamp.
+     * Key timestamp.
      * @const
      * @type {number}
      */
     var KEY_TIMESTAMP = "timestamp";
     /**
-     * JSON key message ID.
+     * Key message ID.
      * @const
      * @type {string}
      */
     var KEY_MESSAGE_ID = "messageid";
     /**
-     * JSON key non-replayable ID.
+     * Key non-replayable ID.
      * @const
      * @type {string}
      */
     var KEY_NON_REPLAYABLE_ID = "nonreplayableid";
     /**
-     * JSON key non-replayable flag.
+     * Key non-replayable flag.
      * @const
      * @type {string}
      */
     var KEY_NON_REPLAYABLE = "nonreplayable";
     /**
-     * JSON key renewable flag.
+     * Key renewable flag.
      * @const
      * @type {string}
      */
     var KEY_RENEWABLE = "renewable";
     /**
-     * JSON key handshake flag.
+     * Key handshake flag.
      * @const
      * @type {string}
      */
     var KEY_HANDSHAKE = "handshake";
     /**
-     * JSON key capabilities.
+     * Key capabilities.
      * @const
      * @type {string}
      */
     var KEY_CAPABILITIES = "capabilities";
     /**
-     * JSON key key exchange request.
+     * Key key exchange request.
      * @const
      * @type {string}
      */
     var KEY_KEY_REQUEST_DATA = "keyrequestdata";
     /**
-     * JSON key key exchange response.
+     * Key key exchange response.
      * @const
      * @type {string}
      */
     var KEY_KEY_RESPONSE_DATA = "keyresponsedata";
     /**
-     * JSON key user authentication data.
+     * Key user authentication data.
      * @const
      * @type {string}
      */
     var KEY_USER_AUTHENTICATION_DATA = "userauthdata";
     /**
-     * JSON key user ID token.
+     * Key user ID token.
      * @const
      * @type {string}
      */
     var KEY_USER_ID_TOKEN = "useridtoken";
     /**
-     * JSON key service tokens.
+     * Key service tokens.
      * @const
      * @type {string}
      */
@@ -170,19 +170,19 @@ var MessageHeader$HeaderPeerData;
 
     // Message header peer data.
     /**
-     * JSON key peer master token.
+     * Key peer master token.
      * @const
      * @type {string}
      */
     var KEY_PEER_MASTER_TOKEN = "peermastertoken";
     /**
-     * JSON key peer user ID token.
+     * Key peer user ID token.
      * @const
      * @type {string}
      */
     var KEY_PEER_USER_ID_TOKEN = "peeruseridtoken";
     /**
-     * JSON key peer service tokens.
+     * Key peer service tokens.
      * @const
      * @type {string}
      */
@@ -246,9 +246,7 @@ var MessageHeader$HeaderPeerData;
          *        no user authentication for the peer.
          * @param {Array.<ServiceToken>} peerServiceTokens peer service tokens. May be empty.
          */
-        init: function init(peerMasterToken, peerUserIdToken,
-            peerServiceTokens)
-        {
+        init: function init(peerMasterToken, peerUserIdToken, peerServiceTokens) {
             // The properties.
             var props = {
                 peerMasterToken: { value: peerMasterToken, writable: false, configurable: false },
@@ -266,10 +264,7 @@ var MessageHeader$HeaderPeerData;
      * @param {string} sender message sender.
      * @param {number} timestampSeconds message timestamp in seconds since the epoch.
      * @param {ICryptoContext} messageCryptoContext message crypto context.
-     * @param {Uint8Array} headerdata raw header data.
-     * @param {Uint8Array} plaintext decrypted header data.
-     * @param {Uint8Array} signature raw signature.
-     * @param {boolean} verified true if the headerdata was verified.
+     * @param {MslObject} headerdata header data.
      * @constructor
      */
     function CreationData(user, sender, timestampSeconds, messageCryptoContext, headerdata, plaintext, signature, verified) {
@@ -278,97 +273,146 @@ var MessageHeader$HeaderPeerData;
         this.timestampSeconds = timestampSeconds;
         this.messageCryptoContext = messageCryptoContext;
         this.headerdata = headerdata;
-        this.plaintext = plaintext;
-        this.signature = signature;
-        this.verified = verified;
     };
 
     /**
      * Return a properties configuration for the provided property values.
      *
      * @param {MslContext} ctx
-     * @param {ICryptoContext} messageCryptoContext
-     * @param {MslUser} user
+     * 
      * @param {EntityAuthenticationData} entityAuthData
      * @param {MasterToken} masterToken
+     * @param {MslObject} headerdata
+     * 
      * @param {string} sender
      * @param {string} recipient
-     * @param {Date} timestampSeconds
+     * @param {number} timestampSeconds
      * @param {number} messageId
+     * @param {number} nonReplayableId
+     * @param {boolean} renewable
+     * @param {boolean} handshake
+     * @param {MessageCapabilities} capabilities
      * @param {Array.<KeyRequestData>} keyRequestData
      * @param {KeyResponseData} keyResponseData
      * @param {UserAuthenticationData} userAuthData
      * @param {UserIdToken} userIdToken
      * @param {Array.<ServiceToken>} serviceTokens
+     * 
      * @param {MasterToken} peerMasterToken
      * @param {UserIdToken} peerUserIdToken
      * @param {Array.<ServiceToken>} peerServiceTokens
-     * @param {number} nonReplayableId
-     * @param {boolean} renewable
-     * @param {MessageCapabilities} capabilities
-     * @param {Uint8Array} headerdata
-     * @param {Uint8Array} plaintext
-     * @param {Uint8Array} signature
-     * @param {boolean} verified
+     * 
+     * @param {MslUser} user
+     * 
+     * @param {ICryptoContext} messageCryptoContext
+     * 
      * @return {object} the properties configuration.
      */
-    function buildProperties(ctx, messageCryptoContext, user,
-            entityAuthData, masterToken, sender, recipient, timestampSeconds, messageId,
-            keyRequestData, keyResponseData,
-            userAuthData, userIdToken, serviceTokens,
-            peerMasterToken, peerUserIdToken, peerServiceTokens,
-            nonReplayableId, renewable, handshake, capabilities,
-            headerdata, plaintext, signature, verified)
+    function buildProperties(ctx, entityAuthData, masterToken, headerdata,
+        sender, recipient, timestampSeconds, messageId, nonReplayableId,
+        renewable, handshake,
+        capabilities, keyRequestData, keyResponseData,
+        userAuthData, userIdToken,
+        serviceTokens,
+        peerMasterToken, peerUserIdToken, peerServiceTokens,
+        user, messageCryptoContext)
     {
         // The properties.
         return {
             /**
-             * Returns the crypto context that was used to process the header data.
-             * This crypto context should also be used to process the payload data if
-             * no key response data is included in the message.
-             *
-             * @return the header data crypto context.
-             * @see #isEncrypting()
-             */
-            cryptoContext: { value: messageCryptoContext, writable: false, configurable: false },
-            /**
-             * Returns the user if the user has been authenticated or a user ID
-             * token was provided.
-             */
-            user: { value: user, writable: false, configurable: false },
-            /**
              * Returns the entity authentication data. May be null if the entity has
              * already been authenticated and is using a master token instead.
+             * @type {?EntityAuthenticationData}
              */
             entityAuthenticationData: { value: entityAuthData, writable: false, configurable: false },
             /**
              * Returns the primary master token identifying the entity and containing
              * the session keys. May be null if the entity has not been authenticated.
+             * @type {?MasterToken}
              */
             masterToken: { value: masterToken, writable: false, configurable: false },
+            /**
+             * Header data.
+             * @type {MslObject}
+             */
+            headerdata: { value: headerdata, writable: false, enumerable: false, configurable: false },
+            /**
+             * Sender.
+             * @return the sender entity identity. Will be {@code null} if the message
+             *         is using entity authentication data.
+             * @type {?string}
+             */
             sender: { value: sender, writable: false, configurable: false },
+            /**
+             * Recipient
+             * @return the recipient entity identity. Will be {@code null} if there is
+             *         no specified recipient.
+             * @type {?string}
+             */
             recipient: { value: recipient, writable: false, configurable: false },
+            /**
+             * Timestamp in seconds since the epoch.
+             * @type {?number}
+             */
             timestampSeconds: { value: timestampSeconds, writable: false, enumerable: false, configurable: false },
+            /**
+             * Message ID.
+             * @type {number}
+             */
             messageId: { value: messageId, writable: false, configurable: false },
+            /**
+             * Non-replayable ID.
+             * @type {?number}
+             */
             nonReplayableId: { value: nonReplayableId, writable: false, configurable: false },
+            /**
+             * Renewable.
+             * @type {boolean}
+             */
+            renewable: { value: renewable, writable: false, enumerable: false, configurable: false },
+            /**
+             * Handshake message.
+             * @type {boolean}
+             */
+            handshake: { value: handshake, writable: false, enumerable: false, configurable: false },
+            /**
+             * Message capabilities.
+             * @type {?MessageCapabilities}
+             */
+            messageCapabilities: { value: capabilities, writable: false, configurable: false },
+            /**
+             * Key request data.
+             * @type {Array.<KeyRequestData>}
+             */
             keyRequestData: { value: keyRequestData, writable: false, configurable: false },
+            /**
+             * Key response data.
+             * @type {?KeyResponseData}
+             */
             keyResponseData: { value: keyResponseData, writable: false, configurable: false },
             /**
              * Returns the user authentication data. May be null if the user has
              * already been authenticated and is using a user ID token or if there is
              * no user authentication requested.
+             * @type {?UserAuthenticationData}
              */
             userAuthenticationData: { value: userAuthData, writable: false, configurable: false },
             /**
              * Returns the primary user ID token identifying the user. May be null if
              * the user has not been authenticated.
+             * @type {?UserIdToken}
              */
             userIdToken: { value: userIdToken, writable: false, configurable: false },
+            /**
+             * Service tokens (immutable).
+             * @type {Array.<ServiceToken>}
+             */
             serviceTokens: { value: serviceTokens, writable: false, configurable: false },
             /**
              * Returns the master token that should be used by an entity responding to
              * this message. Will be null if the responding entity should use its own
              * entity authentication data or the primary master token.
+             * @type {?MasterToken}
              */
             peerMasterToken: { value: peerMasterToken, writable: false, configurable: false },
             /**
@@ -376,23 +420,39 @@ var MessageHeader$HeaderPeerData;
              * this message if an peer master token is provided. May be null if peer
              * user authentication has not occurred. Will be null if there is no peer
              * master token.
+             * @type {?UserIdToken}
              */
             peerUserIdToken: { value: peerUserIdToken, writable: false, configurable: false },
             /**
              * Returns the service tokens that must be used by an entity responding to
              * this message. May be null if the responding entity should use the
              * primary service tokens.
+             * @type {?Array.<ServiceToken>}
              */
             peerServiceTokens: { value: peerServiceTokens, writable: false, configurable: false },
-            /** Message capabilities. */
-            messageCapabilities: { value: capabilities, writable: false, configurable: false },
-            // Private properties.
-            renewable: { value: renewable, writable: false, enumerable: false, configurable: false },
-            handshake: { value: handshake, writable: false, enumerable: false, configurable: false },
-            headerdata: { value: headerdata, writable: false, enumerable: false, configurable: false },
-            plaintext: { value: plaintext, writable: false, enumerable: false, configurable: false },
-            signature: { value: signature, writable: false, enumerable: false, configurable: false },
-            verified: { value: verified, writable: false, enumerable: false, configurable: false },
+            /**
+             * Returns the user if the user has been authenticated or a user ID
+             * token was provided.
+             * 
+             * @return the user. May be null.
+             * @type {?MslUser}
+             */
+            user: { value: user, writable: false, configurable: false },
+            /**
+             * Returns the crypto context that was used to process the header data.
+             * This crypto context should also be used to process the payload data if
+             * no key response data is included in the message.
+             *
+             * @return the header data crypto context.
+             * @see #isEncrypting()
+             * @type {ICryptoContext}
+             */
+            cryptoContext: { value: messageCryptoContext, writable: false, configurable: false },
+            /**
+             * Cached encodings.
+             * @type {Object<MslEncoderFormat,Uint8Array>}
+             */
+            encodings: { value: {}, writable: false, enumerable: false, configurable: false },
         };
     }
 
@@ -434,7 +494,7 @@ var MessageHeader$HeaderPeerData;
         }
     }
 
-    MessageHeader = util.Class.create({
+    MessageHeader = MslEncodable.extend({
         /**
          * <p>Construct a new message header with the provided message data.</p>
          *
@@ -476,8 +536,10 @@ var MessageHeader$HeaderPeerData;
                     if (masterToken) {
                         ctx.getEntityAuthenticationData(null, {
                             result: function(ead) {
-                                var sender = ead.getIdentity();
-                                construct(sender);
+                                AsyncExecutor(callback, function() {
+                                    var sender = ead.getIdentity();
+                                    construct(sender);
+                                }, self);
                             },
                             error: callback.error,
                         });
@@ -560,35 +622,48 @@ var MessageHeader$HeaderPeerData;
                     }, this);
 
                     // Create the header data.
+                    var user, timestampSeconds, headerdata, messageCryptoContext;
                     if (!creationData) {
                         // Grab the user.
-                        var user = (userIdToken) ? userIdToken.user : null;
+                        user = (userIdToken) ? userIdToken.user : null;
                         
                         // Set the creation timestamp.
-                        var timestampSeconds = ctx.getTime() / MILLISECONDS_PER_SECOND;
+                        timestampSeconds = ctx.getTime() / MILLISECONDS_PER_SECOND;
 
-                        // Construct the JSON.
-                        var headerJO = {};
-                        if (sender) headerJO[KEY_SENDER] = sender;
-                        if (recipient) headerJO[KEY_RECIPIENT] = recipient;
-                        headerJO[KEY_TIMESTAMP] = timestampSeconds;
-                        headerJO[KEY_MESSAGE_ID] = messageId;
-                        headerJO[KEY_NON_REPLAYABLE] = (typeof nonReplayableId === 'number');
-                        if (typeof nonReplayableId === 'number') headerJO[KEY_NON_REPLAYABLE_ID] = nonReplayableId;
-                        headerJO[KEY_RENEWABLE] = renewable;
-                        headerJO[KEY_HANDSHAKE] = handshake;
-                        if (capabilities) headerJO[KEY_CAPABILITIES] = capabilities;
-                        if (keyRequestData.length > 0) headerJO[KEY_KEY_REQUEST_DATA] = keyRequestData;
-                        if (keyResponseData) headerJO[KEY_KEY_RESPONSE_DATA] = keyResponseData;
-                        if (userAuthData) headerJO[KEY_USER_AUTHENTICATION_DATA] = userAuthData;
-                        if (userIdToken) headerJO[KEY_USER_ID_TOKEN] = userIdToken;
-                        if (serviceTokens.length > 0) headerJO[KEY_SERVICE_TOKENS] = serviceTokens;
-                        if (peerMasterToken) headerJO[KEY_PEER_MASTER_TOKEN] = peerMasterToken;
-                        if (peerUserIdToken) headerJO[KEY_PEER_USER_ID_TOKEN] = peerUserIdToken;
-                        if (peerServiceTokens.length > 0) headerJO[KEY_PEER_SERVICE_TOKENS] = peerServiceTokens;
+                        // Construct the header data.
+                        try {
+                            var encoder = ctx.getMslEncoderFactory();
+                            headerdata = encoder.createObject();
+                            if (sender) headerdata.put(KEY_SENDER, sender);
+                            if (recipient) headerdata.put(KEY_RECIPIENT, recipient);
+                            headerdata.put(KEY_TIMESTAMP, timestampSeconds);
+                            headerdata.put(KEY_MESSAGE_ID, messageId);
+                            headerdata.put(KEY_NON_REPLAYABLE, (typeof nonReplayableId === 'number'));
+                            if (typeof nonReplayableId === 'number') headerdata.put(KEY_NON_REPLAYABLE_ID, nonReplayableId);
+                            headerdata.put(KEY_RENEWABLE, renewable);
+                            headerdata.put(KEY_HANDSHAKE, handshake);
+                            if (capabilities) headerdata.put(KEY_CAPABILITIES, capabilities);
+                            if (keyRequestData.length > 0) headerdata.put(KEY_KEY_REQUEST_DATA, keyRequestData);
+                            if (keyResponseData) headerdata.put(KEY_KEY_RESPONSE_DATA, keyResponseData);
+                            if (userAuthData) headerdata.put(KEY_USER_AUTHENTICATION_DATA, userAuthData);
+                            if (userIdToken) headerdata.put(KEY_USER_ID_TOKEN, userIdToken);
+                            if (serviceTokens.length > 0) headerdata.put(KEY_SERVICE_TOKENS, serviceTokens);
+                            if (peerMasterToken) headerdata.put(KEY_PEER_MASTER_TOKEN, peerMasterToken);
+                            if (peerUserIdToken) headerdata.put(KEY_PEER_USER_ID_TOKEN, peerUserIdToken);
+                            if (peerServiceTokens.length > 0) headerdata.put(KEY_PEER_SERVICE_TOKENS, peerServiceTokens);
+                        } catch (e) {
+                            if (e instanceof MslEncoderException) {
+                                throw new MslEncodingException(MslError.MSL_ENCODE_ERROR, "headerdata", e)
+                                    .setEntity(masterToken)
+                                    .setEntity(entityAuthData)
+                                    .setUser(peerUserIdToken)
+                                    .setUser(userAuthData)
+                                    .setMessageId(messageId);
+                            }
+                            throw e;
+                        }
 
                         // Get the correct crypto context.
-                        var messageCryptoContext;
                         try {
                             messageCryptoContext = getMessageCryptoContext(ctx, entityAuthData, masterToken);
                         } catch (e) {
@@ -601,73 +676,23 @@ var MessageHeader$HeaderPeerData;
                             }
                             throw e;
                         }
-
-                        // Encrypt and sign the header data.
-                        var plaintext = textEncoding$getBytes(JSON.stringify(headerJO), MslConstants$DEFAULT_CHARSET);
-                        messageCryptoContext.encrypt(plaintext, {
-                            result: function(headerdata) {
-                                AsyncExecutor(callback, function() {
-                                    messageCryptoContext.sign(headerdata, {
-                                        result: function(signature) {
-                                            AsyncExecutor(callback, function() {
-                                                var props = buildProperties(ctx, messageCryptoContext, user, entityAuthData,
-                                                    masterToken, sender, recipient, timestampSeconds, messageId,
-                                                    keyRequestData, keyResponseData,
-                                                    userAuthData, userIdToken, serviceTokens,
-                                                    peerMasterToken, peerUserIdToken, peerServiceTokens,
-                                                    nonReplayableId, renewable, handshake, capabilities,
-                                                    headerdata, plaintext, signature, true);
-                                                Object.defineProperties(this, props);
-                                                return this;
-                                            }, self);
-                                        },
-                                        error: function(e) {
-                                            AsyncExecutor(callback, function() {
-                                                if (e instanceof MslException) {
-                                                    e.setEntity(masterToken);
-                                                    e.setEntity(entityAuthData);
-                                                    e.setUser(userIdToken);
-                                                    e.setUser(userAuthData);
-                                                    e.setMessageId(messageId);
-                                                }
-                                                throw e;
-                                            }, self);
-                                        }
-                                    });
-                                }, self);
-                            },
-                            error: function(e) {
-                                AsyncExecutor(callback, function() {
-                                    if (e instanceof MslException) {
-                                        e.setEntity(masterToken);
-                                        e.setEntity(entityAuthData);
-                                        e.setUser(userIdToken);
-                                        e.setUser(userAuthData);
-                                        e.setMessageId(messageId);
-                                    }
-                                    throw e;
-                                }, self);
-                            }
-                        });
                     } else {
-                        var user = creationData.user;
-                        var timestampSeconds = creationData.timestampSeconds;
-                        var messageCryptoContext = creationData.messageCryptoContext;
-                        var headerdata = creationData.headerdata;
-                        var plaintext = creationData.plaintext;
-                        var signature = creationData.signature;
-                        var verified = creationData.verified;
-                        
-                        var props = buildProperties(ctx, messageCryptoContext, user, entityAuthData,
-                            masterToken, sender, recipient, timestampSeconds, messageId,
-                            keyRequestData, keyResponseData,
-                            userAuthData, userIdToken, serviceTokens,
-                            peerMasterToken, peerUserIdToken, peerServiceTokens,
-                            nonReplayableId, renewable, handshake, capabilities,
-                            headerdata, plaintext, signature, verified);
-                        Object.defineProperties(this, props);
-                        return this;
+                        user = creationData.user;
+                        timestampSeconds = creationData.timestampSeconds;
+                        headerdata = creationData.headerdata;
+                        messageCryptoContext = creationData.messageCryptoContext;
                     }
+                    
+                    // The properties.
+                    var props = buildProperties(ctx, entityAuthData, masterToken, headerdata,
+                        sender, recipient, timestampSeconds, messageId, nonReplayableId,
+                        renewable, handshake,
+                        capabilities, keyRequestData, keyResponseData,
+                        userAuthData, userIdToken,
+                        serviceTokens,
+                        peerMasterToken, peerUserIdToken, peerServiceTokens,
+                        user, messageCryptoContext)
+                    Object.defineProperties(this, props);
                 }, self);
             }
         },
@@ -677,25 +702,6 @@ var MessageHeader$HeaderPeerData;
         */
         get timestamp() {
             return new Date(this.timestampSeconds * MILLISECONDS_PER_SECOND);
-        },
-
-        /**
-         * <p>Returns true if the header data has been decrypted and parsed. If
-         * this method returns false then the other methods that return the header
-         * data will return {@code null}, {@code false}, or empty collections
-         * instead of the actual header data.</p>
-         * 
-         * @return {boolean} true if the decrypted content is available. (Implies verified.)
-         */
-        isDecrypted: function isDecrypted() {
-            return (this.plaintext) ? true : false;
-        },
-
-        /**
-         * @return {boolean} true if the token has been verified.
-         */
-        isVerified: function isVerified() {
-            return this.verified;
         },
 
         /**
@@ -719,17 +725,53 @@ var MessageHeader$HeaderPeerData;
         isHandshake: function isHandshake() {
             return this.handshake;
         },
-
+        
         /** @inheritDoc */
-        toJSON: function toJSON() {
-            var jsonObj = {};
-            if (this.masterToken)
-                jsonObj[Header$KEY_MASTER_TOKEN] = this.masterToken;
-            else
-                jsonObj[Header$KEY_ENTITY_AUTHENTICATION_DATA] = this.entityAuthenticationData;
-            jsonObj[Header$KEY_HEADERDATA] = base64$encode(this.headerdata);
-            jsonObj[Header$KEY_SIGNATURE] = base64$encode(this.signature);
-            return jsonObj;
+        toMslEncoding: function toMslEncoding(encoder, format, callback) {
+            var self = this;
+            AsyncExecutor(callback, function() {
+                // Return any cached encoding.
+                if (this.encodings[format])
+                    return this.encodings[format];
+                
+                // Encrypt and sign the headerdata.
+                var plaintext = encoder.encodeObject(headerdata, format);
+                this.messageCryptoContext.encrypt(plaintext, encoder, format, {
+                    result: function(ciphertext) {
+                        AsyncExecutor(callback, function() {
+                            this.messageCryptoContext.sign(ciphertext, encoder, format, {
+                                result: function(signature) {
+                                    AsyncExecutor(callback, function() {
+                                        // Create the encoding.
+                                        var header = encoder.createObject();
+                                        if (masterToken)
+                                            header.put(KEY_MASTER_TOKEN, masterToken);
+                                        else
+                                            header.put(KEY_ENTITY_AUTHENTICATION_DATA, entityAuthData);
+                                        header.put(KEY_HEADERDATA, ciphertext);
+                                        header.put(KEY_SIGNATURE, signature);
+                                        var encoding = encoder.encodeObject(header, format);
+                                        
+                                        // Cache and return the encoding.
+                                        this.encodings[format] = encoding;
+                                        return encoding;
+                                    }, self);
+                                },
+                                error: function(e) {
+                                    if (e instanceof MslCryptoException)
+                                        e = new MslEncoderException("Error signing the header data.", e);
+                                    callback.error(e);
+                                },
+                            });
+                        }, self);
+                    },
+                    error: function(e) {
+                        if (e instanceof MslCryptoException)
+                            e = new MslEncoderException("Error encrypting the header data.", e);
+                        callback.error(e);
+                    },
+                });
+            }, self);
         },
     });
 
@@ -770,15 +812,15 @@ var MessageHeader$HeaderPeerData;
 
     /**
      * @param {MslContext} ctx MSL context.
-     * @param {?object} keyResponseDataJo key response data JSON object.
+     * @param {?MslObject} keyResponseDataMo key response data MSL object.
      * @param {{result: function(?KeyResponseData), error: function(Error)}}
      *        callback the callback that will receive the key response data or
      *        any thrown exceptions.
      */
-    function getKeyResponseData(ctx, keyResponseDataJo, callback) {
+    function getKeyResponseData(ctx, keyResponseDataMo, callback) {
         AsyncExecutor(callback, function() {
-            if (keyResponseDataJo) {
-                KeyResponseData$parse(ctx, keyResponseDataJo, callback);
+            if (keyResponseDataMo) {
+                KeyResponseData$parse(ctx, keyResponseDataMo, callback);
             } else {
                 return null;
             }
@@ -787,16 +829,16 @@ var MessageHeader$HeaderPeerData;
 
     /**
      * @param {MslContext} ctx MSL context.
-     * @param {?object} userIdTokenJo user ID token JSON object.
+     * @param {?MslObject} userIdTokenMo user ID token MSL object.
      * @param {MasterToken} masterToken master token.
      * @param {{result: function(?UserIdToken), error: function(Error)}} callback
      *        the callback that will receive the user ID token or any thrown
      *        exceptions.
      */
-    function getUserIdToken(ctx, userIdTokenJo, masterToken, callback) {
+    function getUserIdToken(ctx, userIdTokenMo, masterToken, callback) {
         AsyncExecutor(callback, function() {
-            if (userIdTokenJo) {
-                UserIdToken$parse(ctx, userIdTokenJo, masterToken, callback);
+            if (userIdTokenMo) {
+                UserIdToken$parse(ctx, userIdTokenMo, masterToken, callback);
             } else {
                 return null;
             }
@@ -806,15 +848,15 @@ var MessageHeader$HeaderPeerData;
     /**
      * @param {MslContext} ctx MSL context.
      * @param {MasterToken} masterToken master token.
-     * @param {?object} userAuthDataJo user authentication data JSON object.
+     * @param {?MslObject} userAuthDataMo user authentication data MSL object.
      * @param {{result: function(?UserAuthenticationData), error: function(Error)}}
      *        callback the callback that will receive the user authentication
      *        data or any thrown exceptions.
      */
-    function getUserAuthData(ctx, masterToken, userAuthDataJo, callback) {
+    function getUserAuthData(ctx, masterToken, userAuthDataMo, callback) {
         AsyncExecutor(callback, function() {
-            if (userAuthDataJo) {
-                UserAuthenticationData$parse(ctx, masterToken, userAuthDataJo, callback);
+            if (userAuthDataMo) {
+                UserAuthenticationData$parse(ctx, masterToken, userAuthDataMo, callback);
             } else {
                 return null;
             }
@@ -823,48 +865,54 @@ var MessageHeader$HeaderPeerData;
 
     /**
      * @param {MslContext} ctx MSL context.
-     * @param {Array.<Object>} tokensJA JSON array of service token JSON objects.
+     * @param {MslArray} tokensMa MSL array of service token MSL objects.
      * @param {?MasterToken} masterToken master token.
      * @param {?UserIdToken} userIdToken user ID token.
      * @param {Object.<string,ICryptoContext>} cryptoContexts service token
      *        crypto contexts.
-     * @param {string} headerdataJson header data JSON string.
+     * @param {MslObject} headerdata header data.
      * @param {{result: function(Array.<ServiceToken>), error: function(Error)}}
      *        callback the callback that will receive the service tokens or any
      *        thrown exceptions.
      * @throws MslEncodingException if there is an error parsing the JSON
      *         array or objects.
      */
-    function getServiceTokens(ctx, tokensJA, masterToken, userIdToken, cryptoContexts, headerdataJson, callback) {
+    function getServiceTokens(ctx, tokensMa, masterToken, userIdToken, cryptoContexts, headerdata, callback) {
         var serviceTokensMap = {};
-        function addServiceToken(tokensJA, index, callback) {
-            if (index >= tokensJA.length) {
-                var serviceTokens = new Array();
-                for (var key in serviceTokensMap)
-                    serviceTokens.push(serviceTokensMap[key]);
-                callback.result(serviceTokens);
-                return;
-            }
+        
+        function addServiceToken(tokensMa, index, callback) {
+            AsyncExecutor(callback, function() {
+                if (index >= tokensMa.length()) {
+                    var serviceTokens = new Array();
+                    for (var key in serviceTokensMap)
+                        serviceTokens.push(serviceTokensMap[key]);
+                    return serviceTokens;
+                }
 
-            var tokenJO = tokensJA[index];
-            if (typeof tokenJO !== 'object')
-                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson);
-            ServiceToken$parse(ctx, tokenJO, masterToken, userIdToken, cryptoContexts, {
-                result: function(serviceToken) {
-                    AsyncExecutor(callback, function() {
-                        serviceTokensMap[serviceToken.uniqueKey()] = serviceToken;
-                        addServiceToken(tokensJA, index + 1, callback);
-                    });
-                },
-                error: function(e) { callback.error(e); }
+                var tokenMo;
+                try {
+                    var encoder = ctx.getMslEncoderFactory();
+                    tokenMo = tokensMa.getMslObject(index, encoder);
+                } catch (e) {
+                    if (e instanceof MslEncoderException)
+                        throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + base64$encode(plaintext), e);
+                    throw e;
+                }
+                ServiceToken$parse(ctx, tokenMo, masterToken, userIdToken, cryptoContexts, {
+                    result: function(serviceToken) {
+                        AsyncExecutor(callback, function() {
+                            serviceTokensMap[serviceToken.uniqueKey()] = serviceToken;
+                            addServiceToken(tokensMa, index + 1, callback);
+                        });
+                    },
+                    error: callback.error,
+                });
             });
         }
 
         AsyncExecutor(callback, function() {
-            if (tokensJA) {
-                if (!(tokensJA instanceof Array))
-                    throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson);
-                addServiceToken(tokensJA, 0, callback);
+            if (tokensMa) {
+                addServiceToken(tokensMa, 0, callback);
             } else {
                 return new Array();
             }
@@ -873,37 +921,46 @@ var MessageHeader$HeaderPeerData;
 
     /**
      * @param {MslContext} ctx MSL context.
-     * @param {Object} headerdataJO header data JSON object.
+     * @param {MslObject} headerdataMo header data MSL object.
      * @param {?KeyResponseData} keyResponseData key response data.
      * @param {Object.<string,ICryptoContext>} cryptoContexts service token
      *        crypto contexts.
-     * @param {string} headerdataJson header data JSON string.
      * @param {{result: function({peerMasterToken: MasterToken, peerUserIdToken: UserIdToken, peerServiceTokens: Array.<ServiceToken>}), error: function(Error)}}
      *        callback the callback to receive the peer tokens or any thrown
      *        exceptions.
      * @throws MslEncodingException if there is an error parsing the JSON
      *         object.
      */
-    function getPeerToPeerTokens(ctx, headerdataJO, keyResponseData, cryptoContexts, headerdataJson, callback) {
-        function getPeerMasterToken(ctx, headerdataJO, callback) {
+    function getPeerToPeerTokens(ctx, headerdataMo, keyResponseData, cryptoContexts, callback) {
+        function getPeerMasterToken(ctx, headerdataMo, callback) {
             AsyncExecutor(callback, function() {
-                var peerMasterTokenJO = headerdataJO[KEY_PEER_MASTER_TOKEN];
-                if (peerMasterTokenJO && typeof peerMasterTokenJO !== 'object')
-                    throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson);
-                if (!peerMasterTokenJO)
-                    return null;
-                MasterToken$parse(ctx, peerMasterTokenJO, callback);
+                try {
+                    if (!headerdataMo.has(KEY_PEER_MASTER_TOKEN))
+                        return null;
+                    var encoder = ctx.getMslEncoderFactory();
+                    var peerMasterTokenMo = headerdataMo.getMslObject(KEY_PEER_MASTER_TOKEN, encoder);
+                    MasterToken$parse(ctx, peerMasterTokenMo, callback);
+                } catch (e) {
+                    if (e instanceof MslEncoderException)
+                        throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + headerdata, e);
+                    throw e;
+                }
             });
         }
 
         function getPeerUserIdToken(ctx, headerdataJO, masterToken, callback) {
             AsyncExecutor(callback, function() {
-                var peerUserIdTokenJO = headerdataJO[KEY_PEER_USER_ID_TOKEN];
-                if (peerUserIdTokenJO && typeof peerUserIdTokenJO !== 'object')
-                    throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson);
-                if (!peerUserIdTokenJO)
-                    return null;
-                UserIdToken$parse(ctx, peerUserIdTokenJO, masterToken, callback);
+                try {
+                    if (!headerdataMo.has(KEY_PEER_USER_ID_TOKEN))
+                        return null;
+                    var encoder = ctx.getMslEncoderFactory();
+                    var peerUserIdTokenMo = headerdataMo.getMslObject(KEY_PEER_USER_ID_TOKEN, encoder)
+                    UserIdToken$parse(ctx, peerUserIdTokenMo, masterToken, callback);
+                } catch (e) {
+                    if (e instanceof MslEncoderException)
+                        throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + headerdata, e);
+                    throw e;
+                }
             });
         }
 
@@ -917,7 +974,7 @@ var MessageHeader$HeaderPeerData;
             }
 
             // Pull peer master token.
-            getPeerMasterToken(ctx, headerdataJO, {
+            getPeerMasterToken(ctx, headerdataMo, {
                 result: function(peerMasterToken) {
                     AsyncExecutor(callback, function() {
                         // The key response data master token is used for peer token
@@ -928,13 +985,13 @@ var MessageHeader$HeaderPeerData;
 
                         // Pull peer user ID token. User ID tokens are always
                         // authenticated by a master token.
-                        getPeerUserIdToken(ctx, headerdataJO, peerVerificationMasterToken, {
+                        getPeerUserIdToken(ctx, headerdataMo, peerVerificationMasterToken, {
                             result: function(peerUserIdToken) {
                                 AsyncExecutor(callback, function() {
                                     // Peer service tokens are authenticated by the peer master
                                     // token if it exists or by the application crypto context.
-                                    var peerServiceTokensJA = headerdataJO[KEY_PEER_SERVICE_TOKENS];
-                                    getServiceTokens(ctx, peerServiceTokensJA, peerVerificationMasterToken, peerUserIdToken, cryptoContexts, headerdataJson, {
+                                    var peerServiceTokensMa = headerdataMo.getMslArray(KEY_PEER_SERVICE_TOKENS);
+                                    getServiceTokens(ctx, peerServiceTokensJA, peerVerificationMasterToken, peerUserIdToken, cryptoContexts, headerdata, {
                                         result: function(peerServiceTokens) {
                                             AsyncExecutor(callback, function() {
                                                 return {
@@ -973,41 +1030,45 @@ var MessageHeader$HeaderPeerData;
 
     /**
      * @param {MslContext} ctx MSL context.
-     * @param {Object} headerdataJO header data JSON object.
+     * @param {MslObject} headerdataMo header data MSL object.
      * @param {string} headerdataJson header data JSON string.
      * @param {{result: function(Array.<KeyRequestData>}, error: function(Error)}}
      *        callback the callback to receive the key request data or any
      *        thrown exceptions.
      */
-    function getKeyRequestData(ctx, headerdataJO, headerdataJson, callback) {
+    function getKeyRequestData(ctx, headerdataMo, callback) {
         var keyRequestData = [];
 
-        function addKeyRequestData(keyRequestDataJA, index) {
+        function addKeyRequestData(keyRequestDataMa, index) {
             AsyncExecutor(callback, function() {
-                if (index >= keyRequestDataJA.length)
+                if (index >= keyRequestDataMa.length())
                     return keyRequestData;
-                var keyRequestDataJO = keyRequestDataJA[index];
-                KeyRequestData$parse(ctx, keyRequestDataJO, {
+                
+                var encoder = ctx.getMslEncoderFactory();
+                var keyRequestDataMo = keyRequestDataMa.getMslObject(index, encoder);
+                KeyRequestData$parse(ctx, keyRequestDataMo, {
                     result: function(data) {
                         AsyncExecutor(callback, function() {
                             keyRequestData.push(data);
-                            addKeyRequestData(keyRequestDataJA, index + 1);
+                            addKeyRequestData(keyRequestDataMa, index + 1);
                         });
                     },
-                    error: function(e) {
-                        callback.error(e);
-                    }
+                    error: callback.error,
                 });
             });
         }
 
         AsyncExecutor(callback, function() {
-            var keyRequestDataJA = headerdataJO[KEY_KEY_REQUEST_DATA];
-            if (!keyRequestDataJA)
-                return keyRequestData;
-            if (!(keyRequestDataJA instanceof Array))
-                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson);
-            addKeyRequestData(keyRequestDataJA, 0);
+            try {
+                if (!headerdata.has(KEY_KEY_REQUEST_DATA))
+                    return [];
+                var keyRequestDataMa = headerdata.getMslArray(KEY_KEY_REQUEST_DATA);
+                addKeyRequestData(keyRequestDataMa, 0);
+            } catch (e) {
+                if (e instanceof MslEncoderException)
+                    throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + headerdataMo, e);
+                throw e;
+            }
         });
     }
 
@@ -1030,7 +1091,7 @@ var MessageHeader$HeaderPeerData;
      * will be used.</p>
      *
      * @param {MslContext} ctx MSL context.
-     * @param {string} headerdata header data JSON representation.
+     * @param {Uint8Array} headerdataBytes encoded header data.
      * @param {EntityAuthenticationData} entityAuthData the entity authentication data. May be null if a
      *        master token is provided.
      * @param {MasterToken} masterToken the master token. May be null if entity
@@ -1058,21 +1119,13 @@ var MessageHeader$HeaderPeerData;
      *         missing or the message ID is negative.
      * @throws MslException if a token is improperly bound to another token.
      */
-    MessageHeader$parse = function MessageHeader$parse(ctx, headerdata, entityAuthData, masterToken, signature, cryptoContexts, callback) {
+    MessageHeader$parse = function MessageHeader$parse(ctx, headerdataBytes, entityAuthData, masterToken, signature, cryptoContexts, callback) {
         AsyncExecutor(callback, function() {
+            var encoder = ctx.getMslEncoderFactory();
+            
             entityAuthData = (!masterToken) ? entityAuthData : null;
             if (!entityAuthData && !masterToken)
                 throw new MslMessageException(MslError.MESSAGE_ENTITY_NOT_FOUND);
-
-            // Reconstruct the headerdata.
-            var headerdataString = headerdata;
-            try {
-                headerdata = base64$decode(headerdataString);
-            } catch (e) {
-                throw new MslMessageException(MslError.HEADER_DATA_INVALID, headerdataString, e);
-            }
-            if (!headerdata || headerdata.length == 0)
-                throw new MslMessageException(MslError.HEADER_DATA_MISSING, headerdataString);
 
             // Create the correct message crypto context.
             var messageCryptoContext;
@@ -1087,92 +1140,114 @@ var MessageHeader$HeaderPeerData;
             }
             
             // Verify and decrypt the header data.
-            messageCryptoContext.verify(headerdata, signature, {
+            messageCryptoContext.verify(headerdataBytes, signature, encoder, {
                 result: function(verified) {
                     AsyncExecutor(callback, function() {
-                        if (verified) {
-                            messageCryptoContext.decrypt(headerdata, {
-                                result: function(plaintext) {
-                                    AsyncExecutor(callback, function() {
-                                        var headerdataJson = textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET);
-                                        reconstructHeader(messageCryptoContext, headerdata, plaintext, signature, verified, headerdataJson);
-                                    });
-                                },
-                                error: callback.error,
-                            });
-                        } else {
-                            reconstructHeader(messageCryptoContext, null, null, signature, verified, null);
+                        if (!verified) {
+                            if (masterToken)
+                                throw new MslCryptoException(MslError.MESSAGE_MASTERTOKENBASED_VERIFICATION_FAILED);
+                            else
+                                throw new MslCryptoException(MslError.MESSAGE_ENTITYDATABASED_VERIFICATION_FAILED);
                         }
+                        messageCryptoContext.decrypt(headerdataBytes, encoder, {
+                            result: function(plaintext) {
+                                reconstructHeader(messageCryptoContext, plaintext);
+                            },
+                            error: function(e) {
+                                AsyncExecutor(callback, function() {
+                                    if (e instanceof MslCryptoException || e instanceof MslEntityAuthException) {
+                                        e.setEntity(masterToken);
+                                        e.setEntity(entityAuthData);
+                                    }
+                                    throw e;
+                                });
+                            },
+                        });
                     });
                 },
-                error: callback.error,
+                error: function(e) {
+                    AsyncExecutor(callback, function() {
+                        if (e instanceof MslCryptoException || e instanceof MslEntityAuthException) {
+                            e.setEntity(masterToken);
+                            e.setEntity(entityAuthData);
+                        }
+                        throw e;
+                    });
+                },
             });
         });
 
-        function reconstructHeader(messageCryptoContext, headerdata, plaintext, signature, verified, headerdataJson) {
+        function reconstructHeader(messageCryptoContext, plaintext) {
             AsyncExecutor(callback, function() {
-                // If verification failed we cannot parse the plaintext.
-                if (!plaintext) {
-                    var headerData = new HeaderData(null, 1, null, false, false, null, [], null, null, null, []);
-                    var headerPeerData = new HeaderPeerData(null, null, []);
-                    var creationData = new CreationData(null, null, null, messageCryptoContext, headerdata, plaintext, signature, verified, false);
-                    new MessageHeader(ctx, entityAuthData, masterToken, headerData, headerPeerData, creationData, callback);
-                    return;
-                }
+                var encoder = ctx.getMslEncoderFactory();
                 
-                // Reconstruct header JSON object.
-                var headerdataJO;
+                var headerdata, messageId;
                 try {
-                    headerdataJO = JSON.parse(headerdataJson);
+                    headerdata = encoder.parseObject(plaintext);
+    
+                    // Pull the message ID first because any error responses need to
+                    // use it.
+                    messageId = headerdata.getLong(KEY_MESSAGE_ID);
+                    if (messageId < 0 || messageId > MslConstants$MAX_LONG_VALUE)
+                        throw new MslMessageException(MslError.MESSAGE_ID_OUT_OF_RANGE, "headerdata " + headerdata).setEntity(masterToken).setEntity(entityAuthData);
                 } catch (e) {
-                    if (e instanceof SyntaxError)
-                        throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson, e).setEntity(masterToken).setEntity(entityAuthData);
+                    if (e instanceof MslEncoderException)
+                        throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + base64$encode(plaintext), e).setEntity(masterToken).setEntity(entityAuthData);
                     throw e;
                 }
 
-                // Pull the message ID first because any error responses need to
-                // use it.
-                var messageId = parseInt(headerdataJO[KEY_MESSAGE_ID]);
-
-                // Verify message ID.
-                if (!messageId || messageId != messageId)
-                    throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson).setEntity(masterToken).setEntity(entityAuthData);
-                if (messageId < 0 || messageId > MslConstants$MAX_LONG_VALUE)
-                    throw new MslMessageException(MslError.MESSAGE_ID_OUT_OF_RANGE, "headerdata " + headerdataJson).setEntity(masterToken).setEntity(entityAuthData);
-
-                // If the message was sent with a master token pull the sender.
-                var sender = (masterToken) ? headerdataJO[KEY_SENDER] : null;
-                if (masterToken && (!sender || typeof sender !== 'string'))
-                    throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson).setEntity(masterToken).setEntity(entityAuthData).setMessageId(messageId);
-                var recipient = (headerdataJO[KEY_RECIPIENT] !== 'undefined') ? headerdataJO[KEY_RECIPIENT] : null;
-                if (recipient && typeof recipient !== 'string')
-                    throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson).setEntity(masterToken).setEntity(entityAuthData).setMessageId(messageId);
-                var timestampSeconds = (headerdataJO[KEY_TIMESTAMP] !== 'undefined') ? headerdataJO[KEY_TIMESTAMP] : null;
-                if (timestampSeconds && typeof timestampSeconds !== 'number')
-                    throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson).setEntity(masterToken).setEntity(entityAuthData).setMessageId(messageId);
+                var sender, recipient, timestamp;
+                var keyResponseDataMo, userIdTokenMo, userAuthDataMo, tokensMa;
+                try {
+                    // If the message was sent with a master token pull the sender.
+                    sender = (masterToken) ? headerdata.getString(KEY_SENDER) : null;
+                    recipient = (headerdata.has(KEY_RECIPIENT)) ? headerdata.getString(KEY_RECIPIENT) : null;
+                    timestamp = (headerdata.has(KEY_TIMESTAMP)) ? headerdata.getLong(KEY_TIMESTAMP) : null;
                 
-                // Pull and verify key response data.
-                var keyResponseDataJo = headerdataJO[KEY_KEY_RESPONSE_DATA];
-                if (keyResponseDataJo && typeof keyResponseDataJo !== 'object')
-                    throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson).setEntity(masterToken).setEntity(entityAuthData).setMessageId(messageId);
+                    // Pull headerdata MSL objects.
+                    keyResponseDataMo = (headerdata.has(KEY_KEY_RESPONSE_DATA)) 
+                        ? headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder)
+                        : null;
+                    userIdTokenMo = (headerdata.has(KEY_USER_ID_TOKEN]))
+                        ? headerdata.getMslObject(KEY_USE_ID_TOKEN, encoder)
+                        : null;
+                    userAuthDataMo = (headerdata.has(KEY_USER_AUTHENTICATION_DATA))
+                        ? headerdata.getMslObject(KEY_USER_AUTHENTICATION_DATA)
+                        : null;
+                    tokensMa = (headerdata.has(KEY_SERVICE_TOKENS))
+                        ? headerdata.getMslArray(KEY_SERVICE_TOKENS)
+                        : null;
+                } catch (e) {
+                    if (e instanceof MslEncoderException)
+                        throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + headerdata, e).setEntity(masterToken).setEntity(entityAuthData).setMessageId(messageId);
+                    throw e;
+                }
 
                 // Change the callback so we can add the message Id to
                 // any thrown exceptions.
                 var originalCallback = callback;
                 callback = {
-                        result: function(ret) { originalCallback.result(ret); },
-                        error: function(e) {
-                            if (e instanceof MslException) {
-                                e.setEntity(masterToken);
-                                e.setEntity(entityAuthData);
-                                e.setMessageId(messageId);
-                            }
-                            originalCallback.error(e);
+                    result: originalCallback.result,
+                    error: function(e) {
+                        if (e instanceof MslException) {
+                            e.setEntity(masterToken);
+                            e.setEntity(entityAuthData);
+                            e.setMessageId(messageId);
                         }
+                        originalCallback.error(e);
+                    }
                 };
-
+                
+                reconstructObjects(headerdata, messageId, sender, recipient, timestamp, keyResponseDataMo, userIdTokenMo, userAuthDataMo, tokensMa, callback);
+            });
+        }
+        
+        function reconstructObjects(headerdata, messageId, sender, recipient, timestamp, keyResponseDataMo, userIdTokenMo, userAuthDataMo, tokensMa, callback) {
+            AsyncExecutor(callback, function() {
+                var encoder = ctx.getMslEncoderFactory();
+                
                 // Grab primary token verification master token.
-                getKeyResponseData(ctx, keyResponseDataJo, {
+                getKeyResponseData(ctx, keyResponseDataMo, {
                     result: function(keyResponseData) {
                         AsyncExecutor(callback, function() {
                             // The key response data master token is used for token
@@ -1180,21 +1255,15 @@ var MessageHeader$HeaderPeerData;
                             // will be used for peer token verification, which is handled
                             // below.
                             var tokenVerificationMasterToken = (!ctx.isPeerToPeer() && keyResponseData)
-                            ? keyResponseData.masterToken
-                                    : masterToken;
+                                ? keyResponseData.masterToken
+                                : masterToken;
 
                             // User ID tokens are always authenticated by a master token.
-                            var userIdTokenJo = headerdataJO[KEY_USER_ID_TOKEN];
-                            if (userIdTokenJo && typeof userIdTokenJo !== 'object')
-                                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson);
-                            getUserIdToken(ctx, userIdTokenJo, tokenVerificationMasterToken, {
+                            getUserIdToken(ctx, userIdTokenMo, tokenVerificationMasterToken, {
                                 result: function(userIdToken) {
                                     AsyncExecutor(callback, function() {
                                         // Pull user authentication data.
-                                        var userAuthDataJo = headerdataJO[KEY_USER_AUTHENTICATION_DATA];
-                                        if (userAuthDataJo && typeof userAuthDataJo !== 'object')
-                                            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson);
-                                        getUserAuthData(ctx, tokenVerificationMasterToken, userAuthDataJo, {
+                                        getUserAuthData(ctx, tokenVerificationMasterToken, userAuthDataMo, {
                                             result: function(userAuthData) {
                                                 AsyncExecutor(callback, function() {
                                                     // Verify the user authentication data.
@@ -1214,78 +1283,11 @@ var MessageHeader$HeaderPeerData;
 
                                                     // Service tokens are authenticated by the master token if it
                                                     // exists or by the application crypto context.
-                                                    var tokensJA = headerdataJO[KEY_SERVICE_TOKENS];
-                                                    getServiceTokens(ctx, tokensJA, tokenVerificationMasterToken, userIdToken, cryptoContexts, headerdataJson, {
+                                                    getServiceTokens(ctx, tokensMa, tokenVerificationMasterToken, userIdToken, cryptoContexts, headerdata, {
                                                         result: function(serviceTokens) {
-                                                            AsyncExecutor(callback, function() {
-                                                                var nonReplayableId = (headerdataJO[KEY_NON_REPLAYABLE_ID] !== undefined) ? parseInt(headerdataJO[KEY_NON_REPLAYABLE_ID]) : null;
-                                                                var renewable = headerdataJO[KEY_RENEWABLE];
-                                                                var handshake = (headerdataJO[KEY_HANDSHAKE] !== undefined) ? headerdataJO[KEY_HANDSHAKE] : false;
-
-                                                                // Verify values.
-                                                                if (nonReplayableId != nonReplayableId ||
-                                                                    typeof renewable !== 'boolean' ||
-                                                                    typeof handshake !== 'boolean')
-                                                                {
-                                                                    throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson);
-                                                                }
-                                                                if (nonReplayableId < 0 || nonReplayableId > MslConstants$MAX_LONG_VALUE)
-                                                                    throw new MslMessageException(MslError.NONREPLAYABLE_ID_OUT_OF_RANGE, "headerdata " + headerdataJson);
-
-                                                                // Pull message capabilities.
-                                                                var capabilities = null;
-                                                                var capabilitiesJO = headerdataJO[KEY_CAPABILITIES];
-                                                                if (capabilitiesJO) {
-                                                                    if (typeof capabilitiesJO !== 'object')
-                                                                        throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson);
-                                                                    capabilities = MessageCapabilities$parse(capabilitiesJO);
-                                                                }
-
-                                                                // Pull key request data containers.
-                                                                getKeyRequestData(ctx, headerdataJO, headerdataJson, {
-                                                                    result: function(keyRequestData) {
-                                                                        // Get peer-to-peer tokens.
-                                                                        getPeerToPeerTokens(ctx, headerdataJO, keyResponseData, cryptoContexts, headerdataJson, {
-                                                                            result: function(result) {
-                                                                                AsyncExecutor(callback, function() {
-                                                                                    var peerMasterToken = result.peerMasterToken;
-                                                                                    var peerUserIdToken = result.peerUserIdToken;
-                                                                                    var peerServiceTokens = result.peerServiceTokens;
-
-                                                                                    // Return new message header.
-                                                                                    var headerData = new HeaderData(recipient, messageId, nonReplayableId, renewable, handshake, capabilities,
-                                                                                            keyRequestData, keyResponseData, userAuthData, userIdToken,
-                                                                                            serviceTokens);
-                                                                                    var headerPeerData = new HeaderPeerData(peerMasterToken, peerUserIdToken, peerServiceTokens);
-                                                                                    var creationData = new CreationData(user, sender, timestampSeconds, messageCryptoContext, headerdata, plaintext, signature, verified);
-                                                                                    new MessageHeader(ctx, entityAuthData, masterToken, headerData, headerPeerData, creationData, callback);
-                                                                                });
-                                                                            },
-                                                                            error: callback.error,
-                                                                        });
-                                                                    },
-                                                                    error: function(e) {
-                                                                        AsyncExecutor(callback, function() {
-                                                                            if (e instanceof MslException) {
-                                                                                e.setUser(userIdToken);
-                                                                                e.setUser(userAuthData);
-                                                                            }
-                                                                            throw e;
-                                                                        });
-                                                                    }
-                                                                });
-                                                            });
+                                                            buildHeader(headerdata, messageId, sender, recipient, timestamp, keyResponseData, userIdToken, userAuthData, serviceTokens, callback);
                                                         },
-                                                        error: function(e) {
-                                                            AsyncExecutor(callback, function() {
-                                                                if (e instanceof MslException) {
-                                                                    e.setEntity(tokenVerificationMasterToken);
-                                                                    e.setUser(userIdToken);
-                                                                    e.setUser(userAuthData);
-                                                                }
-                                                                throw e;
-                                                            });
-                                                        }
+                                                        error: callback.error,
                                                     });
                                                 });
                                             },
@@ -1301,5 +1303,74 @@ var MessageHeader$HeaderPeerData;
                 });
             });
         }
-    };
+        
+        function buildHeader(headerdata, messageId, sender, recipient, timestamp, keyResponseData, userIdToken, userAuthData, serviceTokens, callback) {
+            AsyncExecutor(callback, function() {
+                var encoder = ctx.getMslEncoderFactory();
+                
+                var nonReplayableId, renewable, handshake, capabilities;
+                try {
+                    nonReplayableId = (headerdata.has(KEY_NON_REPLAYABLE_ID)) ? headerdata.getLong(KEY_NON_REPLAYABLE_ID) : null;
+                    renewable = headerdata.getBoolean(KEY_RENEWABLE);
+                    // FIXME: Make handshake required once all MSL stacks are updated.
+                    handshake = (headerdata.has(KEY_HANDSHAKE)) ? headerdata.getBoolean(KEY_HANDSHAKE) : false;
+
+                    // Verify values.
+                    if (nonReplayableId < 0 || nonReplayableId > MslConstants$MAX_LONG_VALUE)
+                        throw new MslMessageException(MslError.NONREPLAYABLE_ID_OUT_OF_RANGE, "headerdata " + headerdataJson);
+
+                    // Pull message capabilities.
+                    capabilities = null;
+                    if (headerdata.has(KEY_CAPABILITIES)) {
+                        var capabilitiesMo = headerdata.getMslObject(KEY_CAPABILITIES, encoder);
+                        capabilities = MessageCapabilities$parse(capabilitiesMo);
+                    }
+                } catch (e) {
+                    if (e instanceof MslEncoderException) {
+                        throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + headerdata.toString(), e)
+                        .setEntity(masterToken)
+                        .setEntity(entityAuthData)
+                        .setUser(userIdToken)
+                        .setUser(userAuthData)
+                        .setMessageId(messageId);
+                    }
+                    throw e;
+                }
+
+                // Pull key request data containers.
+                getKeyRequestData(ctx, headerdata, {
+                    result: function(keyRequestData) {
+                        // Get peer-to-peer tokens.
+                        getPeerToPeerTokens(ctx, headerdataJO, keyResponseData, cryptoContexts, headerdataJson, {
+                            result: function(result) {
+                                AsyncExecutor(callback, function() {
+                                    var peerMasterToken = result.peerMasterToken;
+                                    var peerUserIdToken = result.peerUserIdToken;
+                                    var peerServiceTokens = result.peerServiceTokens;
+
+                                    // Return new message header.
+                                    var headerData = new HeaderData(recipient, messageId, nonReplayableId, renewable, handshake, capabilities,
+                                            keyRequestData, keyResponseData, userAuthData, userIdToken,
+                                            serviceTokens);
+                                    var headerPeerData = new HeaderPeerData(peerMasterToken, peerUserIdToken, peerServiceTokens);
+                                    var creationData = new CreationData(user, sender, timestampSeconds, messageCryptoContext, headerdata);
+                                    new MessageHeader(ctx, entityAuthData, masterToken, headerData, headerPeerData, creationData, callback);
+                                });
+                            },
+                            error: callback.error,
+                        });
+                    },
+                    error: function(e) {
+                        AsyncExecutor(callback, function() {
+                            if (e instanceof MslException) {
+                                e.setUser(userIdToken);
+                                e.setUser(userAuthData);
+                            }
+                            throw e;
+                        });
+                    },
+                });
+            });
+        }
+    };          
 })();

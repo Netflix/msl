@@ -311,4 +311,35 @@ public class MslEncoderUtils {
         }
         return s1.equals(s2);
     }
+    
+    /**
+     * Merge two MSL objects into a single MSL object. If the same key is
+     * found in both objects, the second object's value is used. The values are
+     * copied by reference so this is a shallow copy.
+     * 
+     * @param mo1 first MSL object. May be null.
+     * @param mo2 second MSL object. May be null.
+     * @return the merged MSL object or null if both arguments are null.
+     * @throws MslEncoderException if a value in one of the arguments is
+     *         invalid—this should not happen.
+     */
+    public static MslObject merge(final MslObject mo1, final MslObject mo2) throws MslEncoderException {
+        // Return null if both objects are null.
+        if (mo1 == null && mo2 == null)
+            return null;
+        
+        // Make a copy of the first object, or create an empty object.
+        final MslObject mo = (mo1 != null)
+            ? new MslObject(mo1.getMap())
+            : new MslObject();
+        
+        // If the second object is null, we're done and just return the copy.
+        if (mo2 == null)
+            return mo;
+        
+        // Copy the contents of the second object into the final object.
+        for (final String key : mo2.getKeys())
+            mo.put(key, mo2.get(key));
+        return mo;
+    }
 }

@@ -194,7 +194,7 @@ public class MslSignatureEnvelope {
         // Attempt to convert this to a MSL object.
         MslObject envelopeMo;
         try {
-            // If this is a MSL object, we expect the byte representation to
+            // If this is a MSL object, we expect the byte representation to be
             // decodable.
             envelopeMo = encoder.parseObject(envelope);
         } catch (final MslEncoderException e) {
@@ -226,19 +226,10 @@ public class MslSignatureEnvelope {
             case V1:
                 return new MslSignatureEnvelope(envelope);
             case V2:
-                final SignatureAlgo algorithm;
-                final byte[] signature;
                 try {
-                    algorithm = SignatureAlgo.fromString(envelopeMo.getString(KEY_ALGORITHM));
-                    signature = envelopeMo.getBytes(KEY_SIGNATURE);
-                    
-                    // If the signature fails to decode then it is extremely
-                    // unlikely but possible that this is a version 1 envelope.
-                    //
-                    // A zero-length signature is OK and does not indicate an
-                    // error.
-                    if (signature == null)
-                        return new MslSignatureEnvelope(envelope);
+                    final SignatureAlgo algorithm = SignatureAlgo.fromString(envelopeMo.getString(KEY_ALGORITHM));
+                    final byte[] signature = envelopeMo.getBytes(KEY_SIGNATURE);
+                    return new MslSignatureEnvelope(algorithm, signature);
                 } catch (final MslEncoderException e) {
                     // It is extremely unlikely but possible that this is a
                     // version 1 envelope.
@@ -248,7 +239,6 @@ public class MslSignatureEnvelope {
                     // version 1 envelope.
                     return new MslSignatureEnvelope(envelope);
                 }
-                return new MslSignatureEnvelope(algorithm, signature);
             default:
                 throw new MslCryptoException(MslError.UNSUPPORTED_SIGNATURE_ENVELOPE, "signature envelope " + DatatypeConverter.printBase64Binary(envelope));
         }

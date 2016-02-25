@@ -95,6 +95,13 @@ var CipherKey$import;
         },
 
         /**
+         * @return {Uint8Array} the raw key bytes.
+         */
+        getEncoded: function getEncoded() {
+            return this.keyData;
+        },
+
+        /**
          * @return {string} the key Base64 encoded.
          */
         toBase64: function toBase64() {

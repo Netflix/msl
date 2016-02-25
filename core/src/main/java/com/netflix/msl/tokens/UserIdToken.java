@@ -185,7 +185,7 @@ public class UserIdToken implements MslEncodable {
     public UserIdToken(final MslContext ctx, final MslObject userIdTokenMo, final MasterToken masterToken) throws MslEncodingException, MslCryptoException, MslException {
         this.ctx = ctx;
         
-        // Grab the crypto context.
+        // Grab the crypto context and encoder.
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
         final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
         
@@ -193,7 +193,7 @@ public class UserIdToken implements MslEncodable {
         try {
             tokendataBytes = userIdTokenMo.getBytes(KEY_TOKENDATA);
             if (tokendataBytes.length == 0)
-                throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_MISSING, "useridtoken " + userIdTokenMo.toString()).setEntity(masterToken);
+                throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_MISSING, "useridtoken " + userIdTokenMo).setEntity(masterToken);
             signatureBytes = userIdTokenMo.getBytes(KEY_SIGNATURE);
             verified = cryptoContext.verify(tokendataBytes, signatureBytes, encoder);
         } catch (final MslEncoderException e) {
@@ -413,10 +413,14 @@ public class UserIdToken implements MslEncodable {
         // we should not re-encrypt or re-sign as there is no guarantee out MSL
         // crypto context is capable of encrypting and signing with the same
         // keys, even if it is capable of decrypting and verifying.
+        final byte[] data, signature;
+        if (tokendataBytes != null || signatureBytes != null) {
+            data = tokendataBytes;
+            signature = signatureBytes;
+        }
         //
         // Otherwise create the token data and signature.
-        final byte[] data, signature;
-        if (tokendataBytes == null && signatureBytes == null) {
+        else {
             // Grab the MSL token crypto context.
             final ICryptoContext cryptoContext;
             try {
@@ -449,9 +453,6 @@ public class UserIdToken implements MslEncodable {
             } catch (final MslCryptoException e) {
                 throw new MslEncoderException("Error signing the token data.", e);
             }
-        } else {
-            data = tokendataBytes;
-            signature = signatureBytes;
         }
         
         // Encode the token.

@@ -77,23 +77,28 @@ public class UserIdTokenAuthenticationData extends UserAuthenticationData {
      */
     public UserIdTokenAuthenticationData(final MslContext ctx, final MslObject userIdTokenAuthMo) throws MslEncodingException, MslUserAuthException {
         super(UserAuthenticationScheme.USER_ID_TOKEN);
+
+        // Extract master token and user ID token representations.
+        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+        final MslObject masterTokenMo, userIdTokenMo;
+        try {
+            masterTokenMo = userIdTokenAuthMo.getMslObject(KEY_MASTER_TOKEN, encoder);
+            userIdTokenMo = userIdTokenAuthMo.getMslObject(KEY_USER_ID_TOKEN, encoder);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "user ID token authdata " + userIdTokenAuthMo, e);
+        }
         
         // Convert any MslExceptions into MslUserAuthException because we don't
         // want to trigger entity or user re-authentication incorrectly.
-        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
         try {
-            masterToken = new MasterToken(ctx, userIdTokenAuthMo.getMslObject(KEY_MASTER_TOKEN, encoder));
+            masterToken = new MasterToken(ctx, masterTokenMo);
         } catch (final MslException e) {
-            throw new MslUserAuthException(MslError.USERAUTH_MASTERTOKEN_INVALID, "user ID token authdata " + userIdTokenAuthMo.toString(), e);
-        } catch (final MslEncoderException e) {
-            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "user ID token authdata " + userIdTokenAuthMo.toString(), e);
+            throw new MslUserAuthException(MslError.USERAUTH_MASTERTOKEN_INVALID, "user ID token authdata " + userIdTokenAuthMo, e);
         }
         try {
-            userIdToken = new UserIdToken(ctx, userIdTokenAuthMo.getMslObject(KEY_USER_ID_TOKEN, encoder), masterToken);
+            userIdToken = new UserIdToken(ctx, userIdTokenMo, masterToken);
         } catch (final MslException e) {
-            throw new MslUserAuthException(MslError.USERAUTH_USERIDTOKEN_INVALID, "user ID token authdata " + userIdTokenAuthMo.toString(), e);
-        } catch (final MslEncoderException e) {
-            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "user ID token authdata " + userIdTokenAuthMo.toString(), e);
+            throw new MslUserAuthException(MslError.USERAUTH_USERIDTOKEN_INVALID, "user ID token authdata " + userIdTokenAuthMo, e);
         }
     }
     

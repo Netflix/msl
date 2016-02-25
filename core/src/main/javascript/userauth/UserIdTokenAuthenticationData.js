@@ -36,9 +36,17 @@ var UserIdTokenAuthenticationData$parse;
 (function() {
     "use strict";
     
-    /** JSON master token key. */
+    /**
+     * Key master token key.
+     * @const
+     * @type {string}
+     */
     var KEY_MASTER_TOKEN = "mastertoken";
-    /** JSON user ID token key. */
+    /**
+     * Key user ID token key.
+     * @const
+     * @type {string}
+     */
     var KEY_USER_ID_TOKEN = "useridtoken";
     
     UserIdTokenAuthenticationData = UserAuthenticationData.extend({
@@ -63,11 +71,13 @@ var UserIdTokenAuthenticationData$parse;
         },
 
         /** @inheritDoc */
-        getAuthData: function getAuthData() {
-            var result = {};
-            result[KEY_MASTER_TOKEN] = JSON.parse(JSON.stringify(this.masterToken));
-            result[KEY_USER_ID_TOKEN] = JSON.parse(JSON.stringify(this.userIdToken));
-            return result;
+        getAuthData: function getAuthData(encoder, format, callback) {
+            AsyncExecutor(callback, function() {
+                var authdata = encoder.createObject();
+                authdata.put(KEY_MASTER_TOKEN, this.masterToken);
+                authdata.put(KEY_USER_ID_TOKEN, this.userIdToken);
+                return authdata;
+            }, this);
         },
 
         /** @inheritDoc */
@@ -85,29 +95,33 @@ var UserIdTokenAuthenticationData$parse;
      * provided JSON representation.
      * 
      * @param {MslContext} ctx MSl context.
-     * @param {Object} userIdTokenAuthJO the JSON object.
+     * @param {MslObject} userIdTokenAuthMo the MSL object.
      * @param {{result: function(UserIdTokenAuthenticationData), error: function(Error)}}
      *        callback the callback that will receive the user ID token
      *        authentication data or any thrown exceptions.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslUserAuthException if the token data is invalid or the user ID
      *         token is not bound to the master token.
      */
-    UserIdTokenAuthenticationData$parse = function UserIdTokenAuthenticationData$parse(ctx, userIdTokenAuthJO, callback) {
+    UserIdTokenAuthenticationData$parse = function UserIdTokenAuthenticationData$parse(ctx, userIdTokenAuthMo, callback) {
         AsyncExecutor(callback, function() {
-            var masterTokenJo = userIdTokenAuthJO[KEY_MASTER_TOKEN];
-            var userIdTokenJo = userIdTokenAuthJO[KEY_USER_ID_TOKEN];
-            if (typeof masterTokenJo !== 'object' ||
-                typeof userIdTokenJo !== 'object')
-            {
-                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "user ID token authdata " + JSON.stringify(userIdTokenAuthJO));
+            // Extract master token and user ID token representations.
+            var encoder = ctx.getMslEncoderFactory();
+            var masterTokenJo, userIdTokenMo;
+            try {
+                masterTokenMo = userIdTokenAuthMo.getMslObject(KEY_MASTER_TOKEN, encoder);
+                userIdTokenMo = userIdTokenAuthMo.getMslObject(KEY_USER_ID_TOKEN, encoder);
+            } catch (e) {
+                if (e instanceof MslEncoderException)
+                    throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "user ID token authdata " + userIdTokenAuthMo, e);
+                throw e;
             }
             
             // Convert any MslExceptions into MslUserAuthException because we don't
             // want to trigger entity or user re-authentication incorrectly.
-            MasterToken$parse(ctx, masterTokenJo, {
+            MasterToken$parse(ctx, masterTokenMo, {
                 result: function(masterToken) {
-                    UserIdToken$parse(ctx, userIdTokenJo, masterToken, {
+                    UserIdToken$parse(ctx, userIdTokenMo, masterToken, {
                         result: function(userIdToken) {
                             AsyncExecutor(callback, function() {
                                 return new UserIdTokenAuthenticationData(masterToken, userIdToken);

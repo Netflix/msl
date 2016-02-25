@@ -20,367 +20,117 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 var JsonMslObject;
+var JsonMslObject$getEncoded;
 
 (function() {
     "use strict";
     
     /**
-     * Escape a string to be output as a single line of text.
-     * 
-     * @param s the string.
-     * @returns the escaped string.
+     * UTF-8 charset.
+     * @const
+     * @type {string}
      */
-    function quote(s) {
-        var json = JSON.stringify(s);
-        return json
-            .replace(/[\"]/g, '\\"')
-            .replace(/[\\]/g, '\\\\')
-            .replace(/[\/]/g, '\\/')
-            .replace(/[\b]/g, '\\b')
-            .replace(/[\f]/g, '\\f')
-            .replace(/[\n]/g, '\\n')
-            .replace(/[\r]/g, '\\r')
-            .replace(/[\t]/g, '\\t');
-    }
+    var UTF_8 = 'utf-8';
     
     /**
-     * Return a shallow copy of an object. This identifies properties to clone
-     * using {@code hasOwnProperty}.
+     * Returns a JSON MSL encoding of provided MSL object.
      * 
-     * @param {Object} o the object to clone.
-     * @returns {Object} the cloned object.
+     * @param {MslEncoderFactory} encoder the encoder factory.
+     * @param {MslObject} object the MSL object.
+     * @return {Uint8Array} the encoded data.
+     * @throws MslEncoderException if there is an error encoding the data.
      */
-    function cloneObject(o) {
-        var co = {};
-        for (var prop in o) {
-            if (o.hasOwnProperty(prop)) {
-                co[prop] = o[prop];
-            }
-        }
-        return co;
-    }
+    JsonMslObject$getEncoded = function JsonMslObject$getEncoded(encoder, object) {
+        if (object instanceof JsonMslObject)
+            return textEncoding$getBytes(object.toJSON(), UTF_8);
+        
+        var jsonObject = new JsonMslObject(encoder, object);
+        return textEncoding$getBytes(jsonObject.toJSON(), UTF_8);
+    };
     
     JsonMslObject = MslObject.extend({
         /**
-         * <p>Create a new empty {@code MslObject}.</p>
+         * <p>Create a new {@code JsonMslObject} from the given
+         * {@code MslObject}, object map, or its encoded representation.</p>
          * 
          * <p>If a source object map or an encoded representation is provided
          * then the object will be populated accordingly.</p>
          * 
-         * @param {{Object.<String,*>|Uint8Array}=} source optional object map
-         *        or encoded data.
+         * @param {MslEncoderFactory} encoder the encoder factory.
+         * @param {{MslObject|Object<String,*>|Uint8Array}=} source the
+         *        {@MslObject}, object map, or encoded data.
          * @throws MslEncoderException if the data is malformed or invalid.
-         * @see #getEncoded(
          */
-        init: function init(source) {
-            var jo = {};
-            if (source instanceof Object) {
-                jo = cloneObject(source);
-            } else if (source instanceof Uint8Array) {
-                var json = textEncoding$getString(source, MslConstants$DEFAULT_CHARSET);
-                var decoded = JSON.parse(json);
-                if (!(decoded instanceof Object))
-                    throw new MslEncoderException("Invalid JSON object encoding.");
-                jo = decoded;
-            } catch (e) {
-                throw new MslEncoderException("Invalid JSON object encoding.", e);
-            }
+        init: function init(encoder, source) {
+            init.base.call(this);
             
-            // The properties.
-            var props = 
-                jo: { value: jo, writable: false, enumerable: false, configurable: false },
+            // Set properties.
+            var props = {
+                encoder: { value: encoder, writable: false, enumerable: false, configurable: false },
             };
             Object.defineProperties(this, props);
-        },
-        
-        /** @inheritDoc */
-        get: function get(key) {
-            if (!key)
-                throw new TypeError("Null key.");
-            if (this.jo[key] === undefined)
-                throw new MslEncoderException("MslObject[" + quote(key) + "] not found.");
-            var o = this.jo[key];
-            if (o instanceof Object)
-                return new JsonMslObject(o);
-            if (o instanceof Array)
-                return new JsonMslArray(o);
-            return o;
-        },
-    
-        /** @inheritDoc */
-        getBoolean: function getBoolean(key) {
-            if (!key)
-                throw new TypeError("Null key.");
-            var b = this.jo[key];
-            if (typeof b === 'boolean') return b;
-            throw new MslEncoderException("MslObject[" + quote(key) + "] is not a boolean.");
+            
+            try {
+                // MslObject
+                if (source instanceof MslObject) {
+                    for (var key in o.getKeys())
+                        this.put(key, o.get(key));
+                }
+
+                // Object
+                else if (source instanceof Object && o.constructor === Object) {
+                    for (var key in source) {
+                        if (!(key instanceof String) && typeof key !== 'string')
+                            throw new MslEncoderException("Invalid JSON object encoding.");
+                        this.put(key, source[key]);
+                    }
+                }
+
+                // Uint8Array
+                else if (source instanceof Uint8Array) {
+                    var json = textEncoding$getString(source, UTF_8);
+                    var jo = JSON.parse(json);
+                    if (!(decoded instanceof Object) || typeof decoded.constructor !== Object)
+                        throw new MslEncoderException("Invalid JSON object encoding.");
+                    for (var key in source) {
+                        if (!(key instanceof String) && typeof key !== 'string')
+                            throw new MslEncoderException("Invalid JSON object encoding.");
+                        this.put(key, source[key]);
+                    }
+                }
+            } catch (e) {
+                if (e instanceof SyntaxError)
+                    throw new MslEncoderException("Invalid JSON object encoding.", e);
+                if (e instanceof TypeError)
+                    throw new MslEncoderException("Invalid MSL object encoding.", e);
+                throw e;
+            }
         },
         
         /** @inheritDoc */
         getBytes: function getBytes(key) {
-            if (!key)
-                throw new TypeError("Null key.");
-            var b64 = this.jo[key];
-            if (typeof b64 === 'string') {
-                try {
-                    return base64$decode(b64);
-                } catch (e) {
-                    throw new MslEncoderException("MslObject[" + quote(key) + "] is not binary data.", e);
-                }
-            }
-            throw new MslEncoderException("MslObject[" + quote(key) + "] is not binary data.");
-        },
-    
-        /** @inheritDoc */
-        getDouble: function getDouble(key) {
-            if (!key)
-                throw new TypeError("Null key.");
-            var x = this.jo[key];
-            if (typeof x === 'number')
-                return x;
-            throw new MslEncoderException("MslObject[" + quote(key) + "] is not a number.");
-        }
-    
-        /** @inheritDoc */
-        getInt: function getInt(key) {
-            if (!key)
-                throw new TypeError("Null key.");
-            var x = this.jo[key];
-            if (typeof x === 'number')
-                return Math.floor(x) & 0xFFFFFFFF;
-            throw new MslEncoderException("MslObject[" + quote(key) + "] is not a number.");
-        },
-    
-        /** @inheritDoc */
-        getMslArray: function getMslArray(key) {
-            if (!key)
-                throw new TypeError("Null key.");
-            var a = this.jo[key];
-            if (a instanceof Array)
-                return new JsonMslArray(a);
-            throw new MslEncoderException("MslObject[" + quote(key) + "] is not a MslArray.");
-        }
-    
-        /** @inheritDoc */
-        getMslObject: function getMslObject(key) {
-            if (!key)
-                throw new TypeError("Null key.");
-            var o = this.jo[key];
-            if (o instanceof Object)
-                return new JsonMslObject(o);
-            throw new MslEncoderException("MslObject[" + quote(key) + "] is not a MslObject.");
-        }
-    
-        /** @inheritDoc */
-        getLong: function getLong(key) {
-            if (!key)
-                throw new TypeError("Null key.");
-            var x = this.jo[key];
-            if (typeof x === 'number')
-                return Math.floor(x);
-            throw new MslEncoderException("MslObject[" + quote(key) + "] is not a number.");
-        },
-    
-        /** @inheritDoc */
-        getString: function getString(key) {
-            if (!key)
-                throw new TypeError("Null key.");
-            var s = this.jo[key];
-            if (typeof s === 'string')
-                return s;
-            throw new MslEncoderException("MslObject[" + quote(key) + "] is not a string.");
-        },
-    
-        /** @inheritDoc */
-        has: function has(key) {
-            if (!key)
-                throw new TypeError("Null key.");
-            return this.jo[key] !== undefined;
-        },
-    
-        /** @inheritDoc */
-        opt: function opt(key) {
-            if (!key)
-                throw new TypeError("Null key.");
-            var o = this.jo[key];
-            if (o instanceof Object)
-                return new JsonMslObject(o);
-            if (o instanceof Array)
-                return new JsonMslArray(o);
-            return o;
-        },
-    
-        /** @inheritDoc */
-        optBoolean: function optBoolean(key, defaultValue) {
-            if (!key)
-                throw new TypeError("Null key.");
-            var b = this.jo[key];
-            if (typeof b === 'boolean') return b;
-            if (typeof defaultValue === 'boolean') return defaultValue;
-            return false;
-        },
-        
-        /** @inheritDoc */
-        optBytes: function optBytes(key, defaultValue) {
-            if (!key)
-                throw new TypeError("Null key.");
-            var b64 = this.jo[key];
-            if (typeof b64 === 'string') {
-                try {
-                    return base64$decode(b64);
-                } catch (e) {
-                    // Fall through.
-                }
-            }
-            if (defaultValue instanceof Uint8Array) return defaultValue;
-            return new Uint8Array(0);
-        },
-    
-        /** @inheritDoc */
-        optDouble: function optDouble(key, defaultValue) {
-            if (!key)
-                throw new TypeError("Null key.");
-            var x = this.jo[key];
-            if (typeof x === 'number') return x;
-            return (typeof defaultValue === 'number') ? defaultValue : Number.NaN;
-        },
-    
-        /** @inheritDoc */
-        optInt: function optInt(key, defaultValue) {
-            if (!key)
-                throw new TypeError("Null key.");
-            var x = this.jo[key];
-            if (typeof x === 'number') return Math.floor(x) & 0xFFFFFFFF;
-            return (typeof defaultValue === 'number') ? defaultValue : 0;
-        },
-    
-        /** @inheritDoc */
-        optMslArray: function optMslArray(key) {
-            if (!key)
-                throw new TypeError("Null key.");
-            var a = this.jo[key];
-            return (a instanceof Array) ? new JsonMslArray(a) : null;
-        },
-    
-        /** @inheritDoc */
-        optMslObject: function optMslObject(key) {
-            if (!key)
-                throw new TypeError("Null key.");
-            var o = this.jo[key];
-            return (o instanceof Object) ? new JsonMslObject(o) : null;
-        },
-    
-        /** @inheritDoc */
-        optLong: function optLong(key, defaultValue) {
-            if (!key)
-                throw new TypeError("Null key.");
-            var x = this.jo[key];
-            if (typeof x === 'number') return Math.floor(x);
-            return (typeof defaultValue === 'number') ? defaultValue : 0;
-        },
-    
-        /** @inheritDoc */
-        optString: function optString(key, defaultValue) {
-            if (!key)
-                throw new TypeError("Null key.");
-            var s = this.jo[key];
-            if (typeof s === 'string') return s;
-            return (typeof defaultValue === 'string') ? defaultValue : "";
-        },
-    
-        /** @inheritDoc */
-        put: function put(key, value) {
-            if (!key)
-                throw new TypeError("Null key.");
-            this.jo[key] = value;
-            return this;
-        },
-    
-        /** @inheritDoc */
-        putBoolean: function putBoolean(key, value) {
-            if (!key)
-                throw new TypeError("Null key.");
-            if (typeof value !== 'boolean') value = false;
-            this.jo[key] = value;
-            return this;
-        },
-        
-        /** @inheritDoc */
-        putBytes: function putBytes(key, value) {
-            if (!key)
-                throw new TypeError("Null key.");
-            var b64 = (value instanceof Uint8Array) ? base64$encode(value) : null;
-            this.jo[key] = b64;
-            return this;
-        },
-    
-        /** @inheritDoc */
-        putCollection: function putCollection(key, value) {
-            if (!key)
-                throw new TypeError("Null key.");
-            var a = (value instanceof Array) ? new JsonMslArray(value) : null;
-            this.jo[key] = a;
-            return this;
-        },
-    
-        /** @inheritDoc */
-        putDouble: function putDouble(key, value) {
-            if (!key)
-                throw new TypeError("Null key.");
-            if (typeof value !== 'number') value = Number.NaN;
-            this.jo[key] = value;
-            return this;
-        },
-    
-        /** @inheritDoc */
-        putInt: function putInt(key, value) {
-            if (!key)
-                throw new TypeError("Null key.");
-            if (typeof value !== 'number') value = 0;
-            this.jo[key] = Math.floor(value) & 0xFFFFFFFF;
-            return this;
-        },
-    
-        /** @inheritDoc */
-        putLong: function putLong(key, value) {
-            if (!key)
-                throw new TypeError("Null key.");
-            if (typeof value !== 'number') value = 0;
-            this.jo[key] = Math.floor(value);
-            return this;
-        },
-    
-        /** @inheritDoc */
-        putMap: function putMap(key, value) {
-            if (!key)
-                throw new TypeError("Null key.");
-            var o = (value instanceof Object) ? new JsonMslObject(value) : null;
-            this.jo[key] = o;
-            return this;
-        },
-    
-        /** @inheritDoc */
-        remove: function remove(key) {
-            if (!key)
-                throw new TypeError("Null key.");
-            var o = this.opt(key);
-            delete this.jo[key];
-            return o;
-        },
-    
-        /** @inheritDoc */
-        getMap: function getMap() {
-            return cloneObject(this.jo);
-        },
-    
-        /** @inheritDoc */
-        getEncoded: function getEncoded() {
-            return textEncoding$getBytes(JSON.stringify(this.jo), MslConstants$DEFAULT_CHARSET);
+            // When a JsonMslObject is decoded, there's no way for us to know if a
+            // value is supposed to be a String to byte[]. Therefore interpret
+            // Strings as Base64-encoded data consistent with the toJSONString()
+            // and getEncoded().
+            final Object value = this.get(key);
+            if (value instanceof Uint8Array)
+                return value;
+            if (value instanceof String)
+                return textEncoding$getBytes(value.valueOf(), UTF_8);
+            if (typeof value === 'string')
+                return textEncoding$getBytes(value, UTF_8);
+            throw new MslEncoderException("MslObject[" + MslEncoderFactory$quote(key) + "] is not binary data.");
         },
         
         /** @inheritDoc */
         toJSON: function toJSON() {
-            return this.jo;
+            return JSON.stringify(this.map);
         },
+        
+        /** @inheritDoc */
+        toString: function toString() {
+            return this.toJSON();
+        }
     });
 })();

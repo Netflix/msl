@@ -70,7 +70,7 @@ public class EmailPasswordAuthenticationData extends UserAuthenticationData {
             email = emailPasswordAuthMo.getString(KEY_EMAIL);
             password = emailPasswordAuthMo.getString(KEY_PASSWORD);
         } catch (final MslEncoderException e) {
-            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "email/password authdata " + emailPasswordAuthMo.toString(), e);
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "email/password authdata " + emailPasswordAuthMo, e);
         }
     }
     

@@ -38,22 +38,6 @@ public class JsonMslArray extends MslArray implements JSONString {
     private static final Charset UTF_8 = Charset.forName("UTF-8");
     
     /**
-     * Returns a JSON MSL encoding of provided MSL array.
-     * 
-     * @param encoder the encoder factory.
-     * @param object the MSL array.
-     * @return the encoded data.
-     * @throws MslEncoderException if there is an error encoding the data.
-     */
-    public static byte[] getEncoded(final MslEncoderFactory encoder, final MslArray array) throws MslEncoderException {
-        if (array instanceof JsonMslArray)
-            return ((JsonMslArray)array).toJSONString().getBytes(UTF_8);
-        
-        final JsonMslArray jsonArray = new JsonMslArray(encoder, array);
-        return jsonArray.toJSONString().getBytes(UTF_8);
-    }
-    
-    /**
      * Create a new {@code JsonMslArray} from the given {@code MslArray}.
      * 
      * @param encoder the encoder factory.

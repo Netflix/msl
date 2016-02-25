@@ -586,7 +586,7 @@ public class JsonWebEncryptionCryptoContext implements ICryptoContext {
                 final MslArray recipients = serializationMo.getMslArray(KEY_RECIPIENTS);
                 if (recipients.size() < 1)
                     throw new MslCryptoException(MslError.JWE_PARSE_ERROR, serialization);
-                final MslObject recipient = recipients.getMslObject(0);
+                final MslObject recipient = recipients.getMslObject(0, encoder);
                 headerB64 = recipient.getString(KEY_HEADER);
                 ecekB64 = recipient.getString(KEY_ENCRYPTED_KEY);
                 at = MslEncoderUtils.b64urlDecode(recipient.getString(KEY_INTEGRITY_VALUE));

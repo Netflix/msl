@@ -84,9 +84,9 @@ public class X509AuthenticationData extends EntityAuthenticationData {
         super(EntityAuthenticationScheme.X509);
         
         // Extract X.509 certificate representation.
-        final byte[] x509bytes;
+        final String x509;
         try {
-            x509bytes = x509AuthMo.getBytes(KEY_X509_CERT);
+            x509 = x509AuthMo.getString(KEY_X509_CERT);
         } catch (final MslEncoderException e) {
             throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "X.509 authdata " + x509AuthMo, e);
         }
@@ -100,6 +100,12 @@ public class X509AuthenticationData extends EntityAuthenticationData {
         }
         
         // Create X.509 cert.
+        final byte[] x509bytes;
+        try {
+            x509bytes = DatatypeConverter.parseBase64Binary(x509);
+        } catch (final IllegalArgumentException e) {
+            throw new MslCryptoException(MslError.X509CERT_INVALID, x509, e);
+        }
         try {
             final ByteArrayInputStream bais = new ByteArrayInputStream(x509bytes);
             x509cert = (X509Certificate)factory.generateCertificate(bais);
@@ -128,8 +134,8 @@ public class X509AuthenticationData extends EntityAuthenticationData {
     public MslObject getAuthData(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException {
         final MslObject mo = encoder.createObject();
         try {
-            mo.put(KEY_X509_CERT, x509cert.getEncoded());
-        } catch (final CertificateEncodingException e) {
+            mo.put(KEY_X509_CERT, DatatypeConverter.printBase64Binary(x509cert.getEncoded()));
+        } catch (final CertificateEncodingException | IllegalArgumentException e) {
             throw new MslEncoderException("Error encoding X.509 authdata", e);
         }
         return mo;

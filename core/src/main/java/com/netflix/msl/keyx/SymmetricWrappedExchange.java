@@ -381,14 +381,14 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
         
         // Wrap session keys with identified key...
         final KeyId keyId = request.getKeyId();
-        final ICryptoContext wrapCryptoContext = createCryptoContext(ctx, keyId, masterToken, masterToken.getIdentity());
         final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+        final ICryptoContext wrapCryptoContext = createCryptoContext(ctx, keyId, masterToken, masterToken.getIdentity());
         final byte[] wrappedEncryptionKey = wrapCryptoContext.wrap(encryptionBytes, encoder, format);
         final byte[] wrappedHmacKey = wrapCryptoContext.wrap(hmacBytes, encoder, format);
         
         // Create the master token.
         final TokenFactory tokenFactory = ctx.getTokenFactory();
-        final MasterToken newMasterToken = tokenFactory.renewMasterToken(ctx, masterToken, encryptionKey, hmacKey);
+        final MasterToken newMasterToken = tokenFactory.renewMasterToken(ctx, masterToken, encryptionKey, hmacKey, null);
         
         // Create crypto context.
         final ICryptoContext cryptoContext = new SessionCryptoContext(ctx, newMasterToken);
@@ -422,19 +422,19 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
         
         // Wrap session keys with identified key.
         final KeyId keyId = request.getKeyId();
+        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
         final ICryptoContext wrapCryptoContext;
         try {
             wrapCryptoContext = createCryptoContext(ctx, keyId, null, identity);
         } catch (final MslMasterTokenException e) {
             throw new MslInternalException("Master token exception thrown when the master token is null.", e);
         }
-        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
         final byte[] wrappedEncryptionKey = wrapCryptoContext.wrap(encryptionBytes, encoder, format);
         final byte[] wrappedHmacKey = wrapCryptoContext.wrap(hmacBytes, encoder, format);
         
         // Create the master token.
         final TokenFactory tokenFactory = ctx.getTokenFactory();
-        final MasterToken masterToken = tokenFactory.createMasterToken(ctx, entityAuthData, encryptionKey, hmacKey);
+        final MasterToken masterToken = tokenFactory.createMasterToken(ctx, entityAuthData, encryptionKey, hmacKey, null);
         
         // Create crypto context.
         final ICryptoContext cryptoContext;
@@ -470,8 +470,8 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
         // Unwrap session keys with identified key.
         final EntityAuthenticationData entityAuthData = ctx.getEntityAuthenticationData(null);
         final String identity = entityAuthData.getIdentity();
-        final ICryptoContext unwrapCryptoContext = createCryptoContext(ctx, responseKeyId, masterToken, identity);
         final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+        final ICryptoContext unwrapCryptoContext = createCryptoContext(ctx, responseKeyId, masterToken, identity);
         final byte[] unwrappedEncryptionKey = unwrapCryptoContext.unwrap(response.getEncryptionKey(), encoder);
         final byte[] unwrappedHmacKey = unwrapCryptoContext.unwrap(response.getHmacKey(), encoder);
         

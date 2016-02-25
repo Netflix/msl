@@ -22,6 +22,8 @@ import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.entityauth.FailingEntityAuthenticationFactory;
 import com.netflix.msl.entityauth.ProxyEntityAuthenticationFactory;
 import com.netflix.msl.entityauth.ProxyEntityAuthenticationScheme;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.keyx.FailingKeyExchange;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeScheme;
@@ -77,7 +79,8 @@ public class ProxyMslContext extends MslContext {
     public ProxyMslContext(final EntityAuthenticationData entityAuthData, final EntityAuthenticationFactory entityAuthFactory, final ICryptoContext cryptoContext) {
         // Message capabilities.
         final Set<CompressionAlgorithm> compressionAlgos = new HashSet<CompressionAlgorithm>(Arrays.asList(CompressionAlgorithm.values()));
-        this.messageCapabilities = new MessageCapabilities(compressionAlgos, null);
+        final Set<MslEncoderFormat> encoderFormats = new HashSet<MslEncoderFormat>(MslEncoderFormat.values());
+        this.messageCapabilities = new MessageCapabilities(compressionAlgos, null, encoderFormats);
         
         // Entity authentication.
         this.entityAuthData = entityAuthData;
@@ -229,6 +232,14 @@ public class ProxyMslContext extends MslContext {
     public MslStore getMslStore() {
         return store;
     }
+    
+    /* (non-Javadoc)
+     * @see com.netflix.msl.util.MslContext#getMslEncoderFactory()
+     */
+    @Override
+    public MslEncoderFactory getMslEncoderFactory() {
+        return encoderFactory;
+    }
 
     /** Message capabilities. */
     private final MessageCapabilities messageCapabilities;
@@ -244,4 +255,6 @@ public class ProxyMslContext extends MslContext {
     private final SortedSet<KeyExchangeFactory> keyxFactories = new TreeSet<KeyExchangeFactory>(Arrays.asList(proxyKeyxFactory));
     /** MSL store. */
     private final MslStore store = new NullMslStore();
+    /** MSL encoder factory. */
+    private final MslEncoderFactory encoderFactory = new MslEncoderFactory();
 }

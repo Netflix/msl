@@ -123,8 +123,11 @@ public abstract class KeyResponseData implements MslEncodable {
     }
     
     /**
+     * @param encoder MSL encoder factory.
+     * @param format MSL encoder format.
      * @return the key data MSL representation.
-     * @throws MslEncoderException if there was an error constructing the data.
+     * @throws MslEncoderException if there was an error constructing the MSL
+     *         representation.
      */
     protected abstract MslObject getKeydata(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException;
     

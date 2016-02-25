@@ -3,13 +3,12 @@
  */
 package com.netflix.msl.entityauth;
 
-import org.json.JSONObject;
-
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.crypto.ICryptoContext;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -40,11 +39,11 @@ public class ProxyEntityAuthenticationFactory extends EntityAuthenticationFactor
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.entityauth.EntityAuthenticationFactory#createData(com.netflix.msl.util.MslContext, org.json.JSONObject)
+     * @see com.netflix.msl.entityauth.EntityAuthenticationFactory#createData(com.netflix.msl.util.MslContext, com.netflix.msl.io.MslObject)
      */
     @Override
-    public EntityAuthenticationData createData(final MslContext ctx, final JSONObject entityAuthJO) throws MslEncodingException, MslCryptoException, MslEntityAuthException {
-        return proxyFactory.createData(ctx, entityAuthJO);
+    public EntityAuthenticationData createData(final MslContext ctx, final MslObject entityAuthMo) throws MslEncodingException, MslCryptoException, MslEntityAuthException {
+        return proxyFactory.createData(ctx, entityAuthMo);
     }
 
     /* (non-Javadoc)

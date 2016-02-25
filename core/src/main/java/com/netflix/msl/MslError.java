@@ -114,6 +114,7 @@ public class MslError {
     public static final MslError MASTERTOKEN_SESSIONDATA_PARSE_ERROR = new MslError(1012, ResponseCode.ENTITY_REAUTH, "Error parsing master token session data.");
     public static final MslError MASTERTOKEN_IDENTITY_REVOKED = new MslError(1013, ResponseCode.ENTITY_REAUTH, "Master token entity identity is revoked.");
     public static final MslError MASTERTOKEN_REJECTED_BY_APP = new MslError(1014, ResponseCode.ENTITY_REAUTH, "Master token is rejected by the application.");
+    public static final MslError MASTERTOKEN_ISSUERDATA_ENCODE_ERROR = new MslError(1015, ResponseCode.FAIL, "Master token issuer data encoding error.");
 
     // 2 User ID Token
     public static final MslError USERIDTOKEN_MASTERTOKEN_MISMATCH = new MslError(2000, ResponseCode.USER_REAUTH, "User ID token master token serial number does not match master token serial number.");

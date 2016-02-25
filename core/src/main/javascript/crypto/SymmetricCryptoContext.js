@@ -61,7 +61,7 @@ var SymmetricCryptoContext;
         },
 
         /** @inheritDoc */
-        encrypt: function encrypt(data, callback) {
+        encrypt: function encrypt(data, encoder, format, callback) {
             var self = this;
 
             AsyncExecutor(callback, function() {
@@ -78,12 +78,14 @@ var SymmetricCryptoContext;
                     // Return ciphertext envelope byte representation.
                     MslCiphertextEnvelope$create(self.id, iv, new Uint8Array(ciphertext), {
                         result: function(envelope) {
-                            try {
-                                var envelopeJson = JSON.stringify(envelope);
-                                callback.result(textEncoding$getBytes(envelopeJson, MslConstants$DEFAULT_CHARSET));
-                            } catch (e) {
-                                callback.error(new MslCryptoException(MslError.ENCRYPT_ERROR, null, e));
-                            }
+                            envelope.toMslEncoding(encoder, format, {
+                                result: callback.result,
+                                error: function(e) {
+                                    if (e instanceof MslEncoderException)
+                                        e = new MslCryptoException(MslError.CIPHERTEXT_ENVELOPE_ENCODE_ERROR, e);
+                                    callback.error(e);
+                                },
+                            });
                         },
                         error: function(e) {
                             if (!(e instanceof MslException))
@@ -101,7 +103,7 @@ var SymmetricCryptoContext;
         },
 
         /** @inheritDoc */
-        decrypt: function decrypt(data, callback) {
+        decrypt: function decrypt(data, encoder, callback) {
             var self = this;
 
             AsyncExecutor(callback, function() {
@@ -111,17 +113,16 @@ var SymmetricCryptoContext;
                     return data;
 
                 // Reconstitute ciphertext envelope.
-                var jo;
+                var encryptionEnvelopeMo;
                 try {
-                    var json = textEncoding$getString(data, MslConstants$DEFAULT_CHARSET);
-                    jo = JSON.parse(json);
+                    encryptionEnvelopeMo = encoder.parseObject(data);
                 } catch (e) {
-                    if (e instanceof SyntaxError)
+                    if (e instanceof MslEncoderException)
                         throw new MslCryptoException(MslError.CIPHERTEXT_ENVELOPE_PARSE_ERROR, null, e);
                     throw new MslCryptoException(MslError.DECRYPT_ERROR, null, e);
                 }
 
-                MslCiphertextEnvelope$parse(jo, MslCiphertextEnvelope$Version.V1, {
+                MslCiphertextEnvelope$parse(encryptionEnvelopeMo, MslCiphertextEnvelope$Version.V1, encoder, {
                     result: function(envelope) {
                         try {
                             // Verify key ID.
@@ -156,7 +157,7 @@ var SymmetricCryptoContext;
         },
 
         /** @inheritDoc */
-        wrap: function wrap(key, callback) {
+        wrap: function wrap(key, encoder, format, callback) {
             AsyncExecutor(callback, function() {
                 if (!this.wrapKey)
                     throw new MslCryptoException(MslError.WRAP_NOT_SUPPORTED, "no wrap/unwrap key");
@@ -173,7 +174,7 @@ var SymmetricCryptoContext;
         },
 
         /** @inheritDoc */
-        unwrap: function unwrap(data, algo, usages, callback) {
+        unwrap: function unwrap(data, algo, usages, encoder, callback) {
             AsyncExecutor(callback, function() {
                 if (!this.wrapKey)
                     throw new MslCryptoException(MslError.UNWRAP_NOT_SUPPORTED, "no wrap/unwrap key");
@@ -207,7 +208,7 @@ var SymmetricCryptoContext;
         },
 
         /** @inheritDoc */
-        sign: function sign(data, callback) {
+        sign: function sign(data, encoder, format, callback) {
             var self = this;
             AsyncExecutor(callback, function() {
                 if (!this.signatureKey)
@@ -219,7 +220,13 @@ var SymmetricCryptoContext;
                         // Return the signature envelope byte representation.
                         MslSignatureEnvelope$create(new Uint8Array(hash), {
                             result: function(envelope) {
-                                callback.result(envelope.bytes);
+                                try {
+                                    callback.result(envelope.getBytes(encoder, format));
+                                } catch (e) {
+                                    if (e instanceof MslEncoderException)
+                                        e = new MslCryptoException(MslError.SIGNATURE_ENVELOPE_ENCODE_ERROR, e);
+                                    callback.error(e);
+                                }
                             },
                             error: callback.error,
                         });
@@ -234,14 +241,14 @@ var SymmetricCryptoContext;
         },
 
         /** inheritDoc */
-        verify: function verify(data, signature, callback) {
+        verify: function verify(data, signature, encoder, callback) {
             var self = this;
             AsyncExecutor(callback, function() {
                 if (!this.signatureKey)
                     throw new MslCryptoException(MslError.VERIFY_NOT_SUPPORTED, "no signature key.");
 
                 // Reconstitute the signature envelope.
-                MslSignatureEnvelope$parse(signature, MslSignatureEnvelope$Version.V1, {
+                MslSignatureEnvelope$parse(signature, MslSignatureEnvelope$Version.V1, encoder, {
                     result: function(envelope) {
                         AsyncExecutor(callback, function() {
                             // Verify the hash.

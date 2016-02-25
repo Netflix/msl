@@ -101,14 +101,14 @@ public class MasterTokenProtectedAuthenticationData extends EntityAuthentication
         // Extract authentication data fields.
         final byte[] ciphertext, signature;
         try {
+            ciphertext = authdataMo.getBytes(KEY_AUTHENTICATION_DATA);
+            signature = authdataMo.getBytes(KEY_SIGNATURE);
             final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
             try {
                 this.masterToken = new MasterToken(ctx, authdataMo.getMslObject(KEY_MASTER_TOKEN, encoder));
             } catch (final MslException e) {
                 throw new MslEntityAuthException(MslError.ENTITYAUTH_MASTERTOKEN_INVALID, "master token protected authdata " + authdataMo, e);
             }
-            ciphertext = authdataMo.getBytes(KEY_AUTHENTICATION_DATA);
-            signature = authdataMo.getBytes(KEY_SIGNATURE);
         } catch (final MslEncoderException e) {
             throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "master token protected authdata " + authdataMo, e);
         }

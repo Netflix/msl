@@ -23,10 +23,12 @@
  * capabilities = {
  *   "compressionalgos" : [ enum(GZIP|LZW) ],
  *   "languages" : [ "string" ],
+ *   "encoderformats" : [ "string" ],
  * }} where:
  * <ul>
  * <li>{@code compressionalgos} is the set of supported compression algorithms</li>
  * <li>{@code languages} is the preferred list of BCP-47 languages in descending order</li>
+ * <li>{@code encoderformats} is the preferred list of MSL encoder formats in descending order</li>
  * </ul></p>
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
@@ -37,17 +39,23 @@ var MessageCapabilities$intersection;
 
 (function() {
     /**
-     * JSON key compression algorithms.
+     * Key compression algorithms.
      * @const
      * @type {string}
      */
     var KEY_COMPRESSION_ALGOS = "compressionalgos";
     /**
-     * JSON key languages.
+     * Key languages.
      * @const
      * @type {string}
      */
     var KEY_LANGUAGES = "languages";
+    /**
+     * Key encoder formats.
+     * @const
+     * @type {string}
+     */
+    var KEY_ENCODER_FORMATS = "encoderformats";
     
     /**
      * Computes and returns the intersection of two arrays.
@@ -84,10 +92,14 @@ var MessageCapabilities$intersection;
         // Compute the intersection of languages. This may not respect order.
         var languages = computeIntersection(mc1.languages, mc2.languages);
         
-        return new MessageCapabilities(compressionAlgos, languages);
+        // Compute the intersection of encoder formats. This may not respect
+        // order.
+        var encoderFormats = computerIntersection(mc1.encoderFormats, mc2.encoderFormats);
+        
+        return new MessageCapabilities(compressionAlgos, languages, encoderFormats);
     };
 
-    MessageCapabilities = util.Class.create({
+    MessageCapabilities = MslEncodable.extend({
         /**
          * Create a new message capabilities object with the specified supported
          * features.
@@ -95,12 +107,15 @@ var MessageCapabilities$intersection;
          * @param {Array.<MslConstants$CompressionAlgorithm>} compressionAlgos supported payload compression algorithms.
          * @param {Array.<String>} languages preferred languages as BCP-47 codes in descending
          *        order. May be {@code null}.
+         * @param {Array.<MslEncoderFormat>} encoderFormats supported encoder formats. May be {@code null}.
          */
-        init: function init(compressionAlgos, languages) {
+        init: function init(compressionAlgos, languages, encoderFormats) {
             if (!compressionAlgos)
                 compressionAlgos = [];
             if (!languages)
                 languages = [];
+            if (!encoderFormats)
+                encoderFormats = [];
             compressionAlgos.sort();
 
             // The properties.
@@ -109,61 +124,83 @@ var MessageCapabilities$intersection;
                 compressionAlgorithms: { value: compressionAlgos, writable: false, enumerable: true, configurable: false },
                 /** @type {Array.<String>} */
                 languages: { value: languages, writable: false, enumerable: true, configurable: false },
+                /** @type {Array.<MslEncoderFormat>} */
+                encoderFormats: { value: encoderFormats, writable: false, enumerable: true, configurable: false },
             };
             Object.defineProperties(this, props);
         },
 
         /** @inheritDoc */
-        toJSON: function toJSON() {
-            var result = {};
-            result[KEY_COMPRESSION_ALGOS] = this.compressionAlgorithms;
-            result[KEY_LANGUAGES] = this.languages;
-            return result;
-        },
+        toMslEncoding: function toMslEncoding(encoder, format, callback) {
+            try {
+                var mo = encoder.createObject();
+                mo.put(KEY_COMPRESSION_ALGOS, encoder.createArray(this.compressionAlgorithms));
+                mo.put(KEY_LANGUAGES, this.languages);
+                mo.put(KEY_ENCODER_FORMATS, encoder.createArray(this.encoderFormats));
+                return encoder.encodeObject(mo, format);
+            } catch (e) {
+                if (e instanceof MslEncoderFormat)
+                    throw new MslInternalException("Error encoding MessageCapabilities.", e);
+                throw e;
+            }
+        }
 
         /** @inheritDoc */
         equals: function equals(that) {
             if (this === that) return true;
             if (!(that instanceof MessageCapabilities)) return false;
             return Arrays$containEachOther(this.compressionAlgorithms, that.compressionAlgorithms) &&
-                   Arrays$containEachOther(this.languages, that.languages);
+                   Arrays$containEachOther(this.languages, that.languages) &&
+                   Arrays$containEachOther(this.encoderFormats, that.encoderFormats);
         },
 
         /** @inheritDoc */
         uniqueKey: function uniqueKey() {
-            return this.compressionAlgorithms.join(':') + '|' + this.languages.join(':');
+            return this.compressionAlgorithms.join(':') + '|' + this.languages.join(':') + '|' + this.encoderFormats.join(':');
         },
     });
 
     /**
-     * Construct a new message capabilities object from the provided JSON
+     * Construct a new message capabilities object from the provided MSL
      * object.
      *
-     * @param {Object} capabilitiesJO the JSON object.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @param {Object} capabilitiesMo the MSL object.
+     * @throws MslEncodingException if there is an error parsing the data.
      */
-    MessageCapabilities$parse = function MessageCapabilities$parse(capabilitiesJO) {
-        // Pull the capabilities.
-        var algos = capabilitiesJO[KEY_COMPRESSION_ALGOS];
-        var langs = capabilitiesJO[KEY_LANGUAGES];
-
-        // Verify compression algorithms.
-        if ((algos && !(algos instanceof Array)) ||
-            (langs && !(langs instanceof Array)))
-        {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "capabilities " + JSON.stringify(capabilitiesJO));
+    MessageCapabilities$parse = function MessageCapabilities$parse(capabilitiesMo) {
+        try {
+            // Extract compression algorithms.
+            var compressionAlgos = [];
+            var algos = capabilitiesMo.optMslArray(KEY_COMPRESSION_ALGOS);
+            for (var i = 0; algos && i < algos.length; ++i) {
+                var algo = algos[i];
+                // Ignore unsupported algorithms.
+                if (MslConstants$CompressionAlgorithm[algo])
+                    compressionAlgos.push(algo);
+            }
+            
+            // Extract languages.
+            var languages = [];
+            var langs = capabilitiesMo.optMslArray(KEY_LANGUAGES);
+            for (var i = 0; langs && i < langs.length; ++i)
+                languages.push(langs.getString(i));
+            
+            // Extract encoder formats.
+            var encoderFormats = [];
+            var formats = capabilitiesMo.optMslArray(KEY_ENCODER_FORMATS);
+            for (var i = 0; formats && i < formats.length; ++i) {
+                var format = formats.getString(i);
+                var encoderFormat = MslEncoderFormat.getFormat(format);
+                // Ignore unsupported formats.
+                if (encoderFormat)
+                    encoderFormats.push(encoderFormat);
+            }
+            
+            return new MessageCapabilities(compressionAlgos, languages, encoderFormats);
+        } catch (e) {
+            if (e instanceof MslEncoderException)
+                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "capabilities " + capabilitiesMo, e);
+            throw e;
         }
-
-        // Extract compression algorithms.
-        var compressionAlgos = [];
-        for (var i = 0; algos && i < algos.length; ++i) {
-            var algo = algos[i];
-            // Ignore unsupported algorithms.
-            if (MslConstants$CompressionAlgorithm[algo])
-                compressionAlgos.push(algo);
-        }
-
-        // Return the capabilities.
-        return new MessageCapabilities(compressionAlgos, langs);
     };
 })();

@@ -65,11 +65,10 @@ public class JsonMslObject extends MslObject implements JSONString {
     public JsonMslObject(final MslEncoderFactory encoder, final MslObject o) throws MslEncoderException {
         this.encoder = encoder;
         try {
-            for (final String key : o.getKeys()) {
+            for (final String key : o.getKeys())
                 put(key, o.get(key));
-            }
         } catch (final IllegalArgumentException e) {
-            throw new MslEncoderException("Invalid MSL array encoding.", e);
+            throw new MslEncoderException("Invalid MSL object encoding.", e);
         }
     }
     
@@ -92,7 +91,7 @@ public class JsonMslObject extends MslObject implements JSONString {
         } catch (final JSONException e) {
             throw new MslEncoderException("Invalid JSON object encoding.", e);
         } catch (final IllegalArgumentException e) {
-            throw new MslEncoderException("Invalid MSL array encoding.", e);
+            throw new MslEncoderException("Invalid MSL object encoding.", e);
         }
     }
     
@@ -116,7 +115,7 @@ public class JsonMslObject extends MslObject implements JSONString {
         } catch (final JSONException e) {
             throw new MslEncoderException("Invalid JSON object encoding.", e);
         } catch (final IllegalArgumentException e) {
-            throw new MslEncoderException("Invalid MSL array encoding.", e);
+            throw new MslEncoderException("Invalid MSL object encoding.", e);
         }
     }
     
@@ -130,7 +129,7 @@ public class JsonMslObject extends MslObject implements JSONString {
             // Convert JSONObject to MslObject.
             if (value instanceof JSONObject)
                 o = new JsonMslObject(encoder, (JSONObject)value);
-            // Convert JSONarray to a MslArray.
+            // Convert JSONArray to a MslArray.
             else if (value instanceof JSONArray)
                 o = new JsonMslArray(encoder, (JSONArray)value);
             // All other types are OK as-is.
@@ -204,8 +203,6 @@ public class JsonMslObject extends MslObject implements JSONString {
     public String toString() {
         return toJSONString();
     }
-
-
 
     /** MSL encoder factory. */
     private final MslEncoderFactory encoder;

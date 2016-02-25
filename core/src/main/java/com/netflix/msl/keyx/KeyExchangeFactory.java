@@ -78,7 +78,7 @@ public abstract class KeyExchangeFactory {
      * Construct a new key request data instance from the provided MSL object.
      * 
      * @param ctx MSL context.
-     * @param keyRequestJO the MSL object.
+     * @param keyRequestMo the MSL object.
      * @return the key request data.
      * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslKeyExchangeException if there is an error creating the key
@@ -92,7 +92,7 @@ public abstract class KeyExchangeFactory {
      * 
      * @param ctx MSL context.
      * @param masterToken the master token for the new key response data.
-     * @param keyDataJO the MSL object.
+     * @param keyDataMo the MSL object.
      * @return the key response data.
      * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslKeyExchangeException if there is an error creating the key

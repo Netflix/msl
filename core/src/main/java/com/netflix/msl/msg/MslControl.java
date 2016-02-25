@@ -1640,7 +1640,7 @@ public class MslControl {
             keyRequestData.addAll(request.getKeyRequestData());
         final Map<String,ICryptoContext> cryptoContexts = msgCtx.getCryptoContexts();
         final InputStream is = (filterFactory != null) ? filterFactory.getInputStream(in) : in;
-        final MessageInputStream response = new MessageInputStream(ctx, is, keyRequestData, cryptoContexts);
+        final MessageInputStream response = streamFactory.createInputStream(ctx, is, keyRequestData, cryptoContexts);
 
         // Deliver the received header to the debug context.
         final MessageHeader responseHeader = response.getMessageHeader();

@@ -37,13 +37,13 @@ var PresharedProfileAuthenticationData$parse;
     "use strict";
     
     /**
-     * JSON key entity preshared keys identity.
+     * Key entity preshared keys identity.
      * @const
      * @type {string}
      */
     var KEY_PSKID = "pskid";
     /**
-     * JSON key entity profile.
+     * Key entity profile.
      * @const
      * @type {string}
      */
@@ -87,11 +87,13 @@ var PresharedProfileAuthenticationData$parse;
         },
     
         /** @inheritDoc */
-        getAuthData: function getAuthData() {
-            var result = {};
-            result[KEY_PSKID] = this.presharedKeysId;
-            result[KEY_PROFILE] = this.profile;
-            return result;
+        getAuthData: function getAuthData(encoder, format, callback) {
+            AsyncExecutor(callback, function() {
+                var mo = encoder.createObject();
+                mo.put(KEY_PSKID, this.presharedKeysId);
+                mo.put(KEY_PROFILE, this.profile);
+                return mo;
+            }, this);
         },
     
         /** @inheritDoc */
@@ -104,17 +106,21 @@ var PresharedProfileAuthenticationData$parse;
 
     /**
      * Construct a new preshared keys profile authentication data instance from
-     * the provided JSON object.
+     * the provided MSL object.
      * 
-     * @param {object} authJo the authentication data JSON object.
+     * @param {MslObject} authMo the authentication data MSL object.
      * @throws MslEncodingException if there is an error parsing the entity
      *         authentication data.
      */
-    PresharedProfileAuthenticationData$parse = function PresharedProfileAuthenticationData$parse(authJo) {
-        var pskid = authJo[KEY_PSKID];
-        var profile = authJo[KEY_PROFILE];
-        if (typeof pskid !== 'string' || typeof profile !== 'string')
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "psk profile authdata " + JSON.stringify(authJo));
-        return new PresharedProfileAuthenticationData(pskid, profile);
+    PresharedProfileAuthenticationData$parse = function PresharedProfileAuthenticationData$parse(authMo) {
+        try {
+            var pskid = authMo.getString(KEY_PSKID);
+            var profile = authMo.getString(KEY_PROFILE);
+            return new PresharedProfileAuthenticationData(pskid, profile);
+        } catch (e) {
+            if (e instanceof MslEncoderException)
+                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "psk profile authdata " + authMo);
+            throw e;
+        }
     };
 })();

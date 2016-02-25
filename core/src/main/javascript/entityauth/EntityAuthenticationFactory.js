@@ -38,10 +38,10 @@ var EntityAuthenticationFactory = util.Class.create({
 
     /**
      * Construct a new entity authentication data instance from the provided
-     * JSON.
+     * MSL object.
      *
      * @param {MslContext} ctx MSL context.
-     * @param {Object} entityAuthJO the JSON object.
+     * @param {MslObject} entityAuthMo the MSL object.
      * @param {{result: function(EntityAuthenticationData), error: function(Error)}}
      *        callback the callback that will receive the entity authentication
      *        data or any thrown exceptions.

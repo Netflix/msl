@@ -60,8 +60,8 @@ util.Class.mixin(MslError,
 /** @lends {MslError} */
 ({
     // 0 Message Security Layer
-    JSON_PARSE_ERROR : new MslError(0, MslConstants$ResponseCode.FAIL, "Error parsing JSON."),
-    JSON_ENCODE_ERROR : new MslError(1, MslConstants$ResponseCode.FAIL, "Error encoding JSON."),
+    MSL_PARSE_ERROR : new MslError(0, MslConstants$ResponseCode.FAIL, "Error parsing MSL encodable."),
+    MSL_ENCODE_ERROR : new MslError(1, MslConstants$ResponseCode.FAIL, "Error encoding MSL encodable."),
     ENVELOPE_HASH_MISMATCH : new MslError(2, MslConstants$ResponseCode.FAIL, "Computed hash does not match envelope hash."),
     INVALID_PUBLIC_KEY : new MslError(3, MslConstants$ResponseCode.FAIL, "Invalid public key provided."),
     INVALID_PRIVATE_KEY : new MslError(4, MslConstants$ResponseCode.FAIL, "Invalid private key provided."),
@@ -139,6 +139,7 @@ util.Class.mixin(MslError,
     MASTERTOKEN_SESSIONDATA_PARSE_ERROR : new MslError(1012, MslConstants$ResponseCode.ENTITY_REAUTH, "Error parsing master token session data."),
     MASTERTOKEN_IDENTITY_REVOKED : new MslError(1013, MslConstants$ResponseCode.ENTITY_REAUTH, "Master token entity identity is revoked."),
     MASTERTOKEN_REJECTED_BY_APP : new MslError(1014, MslConstants$ResponseCode.ENTITY_REAUTH, "Master token is rejected by the application."),
+    MASTERTOKEN_ISSUERDATA_ENCODE_ERROR : new MslError(1015, MslConstants$ResponseCode.FAIL, "Master token issuer data encoding error."),
 
     // 2 User ID Token
     USERIDTOKEN_MASTERTOKEN_MISMATCH : new MslError(2000, MslConstants$ResponseCode.USER_REAUTH, "User ID token master token serial number does not match master token serial number."),

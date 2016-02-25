@@ -35,7 +35,6 @@ var MessageStreamFactory = util.Class.create({
      *
      * @param {MslContext} ctx MSL context.
      * @param {InputStream} source MSL input stream.
-     * @param {string} charset input stream character set encoding.
      * @param {Array.<KeyRequestData>} keyRequestData key request data to use when processing key
      *        response data.
      * @param {Object.<string,ICryptoContext>} cryptoContexts the map of service token names onto crypto
@@ -64,8 +63,8 @@ var MessageStreamFactory = util.Class.create({
      *         authentication data or a master token, or a token is improperly
      *         bound to another token.
      */
-    createInputStream: function createInputStream(ctx, source, charset, keyRequestData, cryptoContexts, timeout, callback) {
-        MessageInputStream$create(ctx, source, charset, keyRequestData, cryptoContexts, timeout, callback);
+    createInputStream: function createInputStream(ctx, source, keyRequestData, cryptoContexts, timeout, callback) {
+        MessageInputStream$create(ctx, source, keyRequestData, cryptoContexts, timeout, callback);
     },
 
     /**
@@ -76,17 +75,18 @@ var MessageStreamFactory = util.Class.create({
      *
      * @param {MslContext} ctx the MSL context.
      * @param {OutputStream} destination MSL output stream.
-     * @param {string} charset output stream character set encoding.
      * @param {MessageHeader|ErrorHeader} header message or error header.
      * @param {?ICryptoContext} cryptoContext payload data crypto context.
      *        Required if a message header is provided.
+     * @param {?MslEncoderFormat} format MSL encoder format. Required if an
+     *        error header is provided.
      * @param {number} timeout write timeout in milliseconds.
      * @param {{result: function(MessageOutputStream), timeout: function(), error: function(Error)}}
      *        callback the callback that will receive the message output
      *        stream, or any thrown exceptions.
      * @throws IOException if there is an error writing the header.
      */
-    createOutputStream: function createOutputStream(ctx, destination, charset, header, cryptoContext, timeout, callback) {
-        MessageOutputStream$create(ctx, destination, charset, header, cryptoContext, timeout, callback);
+    createOutputStream: function createOutputStream(ctx, destination, header, cryptoContext, format, timeout, callback) {
+        MessageOutputStream$create(ctx, destination, header, cryptoContext, format, timeout, callback);
     },
 });

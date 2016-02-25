@@ -38,12 +38,12 @@ var EntityAuthenticationData;
 var EntityAuthenticationData$parse;
 
 (function() {
-    /** JSON key entity authentication scheme. */
+    /** Key entity authentication scheme. */
     var KEY_SCHEME = "scheme";
-    /** JSON key entity authentication data. */
+    /** Key entity authentication data. */
     var KEY_AUTHDATA = "authdata";
 
-    EntityAuthenticationData = util.Class.create({
+    EntityAuthenticationData = MslEncodable.extend({
         /**
          * <p>Create a new entity authentication data object with the specified
          * entity authentication scheme.</p>
@@ -57,6 +57,11 @@ var EntityAuthenticationData$parse;
             // The properties.
             var props = {
                 scheme: { value: scheme, writable: false, configurable: false },
+                /**
+                 * Cached encodings.
+                 * @type {Object.<MslEncoderFormat,Uint8Array>}
+                 */
+                encodings: { value: {}, writable: false, enumerable: false, configurable: false },
             };
             Object.defineProperties(this, props);
         },
@@ -69,11 +74,15 @@ var EntityAuthenticationData$parse;
         getIdentity: function() {},
 
         /**
-         * @return {Object} the authentication data JSON representation.
-         * @throws MslEncodingException if there was an error constructing the
-         *         JSON representation.
+         * @param {MslEncoderFactory} encoder MSL encoder factory.
+         * @param {MslEncoderFormat} format MSL encoder format.
+         * @param {{result: function(MslObject), error: function(Error)}}
+         *        callback the callback that will receive the authentication
+         *        data MSL representation or any thrown exceptions.
+         * @throws MslEncoderException if there was an error constructing the
+         *         MSL object.
          */
-        getAuthData: function() {},
+        getAuthData: function(encoder, format, callback) {},
 
         /**
          * @param {Object} that the object with which to compare.
@@ -86,20 +95,39 @@ var EntityAuthenticationData$parse;
         },
 
         /** @inheritDoc */
-        toJSON: function toJSON() {
-            var result = {};
-            result[KEY_SCHEME] = this.scheme.name;
-            result[KEY_AUTHDATA] = this.getAuthData();
-            return result;
+        toMslEncoding: function toMslEncoding(encoder, format, callback) {
+            AsyncExecutor(callback, function() {
+                // Return any cached encoding.
+                if (this.encodings[format])
+                    return this.encodings[format];
+                
+                // Get the authentication data.
+                this.getAuthData(encoder, format, {
+                    result: function(authdata) {
+                        AsyncExecutor(callback, function() {
+                            // Encode the entity authentication data.
+                            var mo = encoder.createObject();
+                            mo.put(KEY_SCHEME, this.scheme.name);
+                            mo.put(KEY_AUTHDATA, authdata);
+                            var encoding = encoder.encodeObject(mo, format);
+                
+                            // Cache and return the encoding.
+                            this.encodings[format] = encoding;
+                            return encoding;
+                        }, this);
+                    },
+                    error: callback.error,
+                });
+            }, this);
         },
     });
 
     /**
      * Construct a new entity authentication data instance of the correct type
-     * from the provided JSON object.
+     * from the provided MSL object.
      *
-     * @param ctx {MslContext} MSL context.
-     * @param entityAuthJO {Object} the JSON object.
+     * @param {MslContext} ctx MSL context.
+     * @param {MslObject} entityAuthMo the MSL object.
      * @param {{result: function(EntityAuthenticationData), error: function(Error)}}
      *        callback the callback that will receive the entity authentication
      *        data or any thrown exceptions.
@@ -110,28 +138,28 @@ var EntityAuthenticationData$parse;
      * @throws MslCryptoException if there is an error creating the entity
      *         authentication data crypto.
      */
-    EntityAuthenticationData$parse = function EntityAuthenticationData$parse(ctx, entityAuthJO, callback) {
+    EntityAuthenticationData$parse = function EntityAuthenticationData$parse(ctx, entityAuthMo, callback) {
         AsyncExecutor(callback, function() {
-            var schemeName = entityAuthJO[KEY_SCHEME];
-            var authdata = entityAuthJO[KEY_AUTHDATA];
-    
-            // Verify entity authentication data.
-            if (typeof schemeName !== 'string' ||
-                typeof authdata !== 'object')
-            {
-                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "entityauthdata " + JSON.stringify(entityAuthJO));
+            try {
+                var schemeName = entityAuthMo.getString(KEY_SCHEME);
+                var encoder = ctx.getMslEncoderFactory();
+                var authdata = entityAuthMo.getMslObject(KEY_AUTHDATA, encoder);
+        
+                // Verify entity authentication scheme.
+                var scheme = ctx.getEntityAuthenticationScheme(schemeName);
+                if (!scheme)
+                    throw new MslEntityAuthException(MslError.UNIDENTIFIED_ENTITYAUTH_SCHEME, schemeName);
+        
+                // Construct an instance of the concrete subclass.
+                var factory = ctx.getEntityAuthenticationFactory(scheme);
+                if (!factory)
+                    throw new MslEntityAuthException(MslError.ENTITYAUTH_FACTORY_NOT_FOUND, scheme.name);
+                factory.createData(ctx, authdata, callback);
+            } catch (e) {
+                if (e instanceof MslEncoderException)
+                    throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "entityauthdata " + entityAuthMo, e);
+                throw e;
             }
-    
-            // Verify entity authentication scheme.
-            var scheme = ctx.getEntityAuthenticationScheme(schemeName);
-            if (!scheme)
-                throw new MslEntityAuthException(MslError.UNIDENTIFIED_ENTITYAUTH_SCHEME, schemeName);
-    
-            // Construct an instance of the concrete subclass.
-            var factory = ctx.getEntityAuthenticationFactory(scheme);
-            if (!factory)
-                throw new MslEntityAuthException(MslError.ENTITYAUTH_FACTORY_NOT_FOUND, scheme.name);
-            factory.createData(ctx, authdata, callback);
         });
     };
 })();

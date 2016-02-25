@@ -33,7 +33,7 @@ var PresharedAuthenticationData$parse;
 
 (function() {
     /**
-     * JSON key entity identity.
+     * Key entity identity.
      * @const
      * @type {string}
      */
@@ -62,10 +62,12 @@ var PresharedAuthenticationData$parse;
         },
 
         /** @inheritDoc */
-        getAuthData: function getAuthData() {
-            var result = {};
-            result[KEY_IDENTITY] = this.identity;
-            return result;
+        getAuthData: function getAuthData(encoder, format, callback) {
+            AsyncExecutor(callback, function() {
+                var mo = encoder.createObject();
+                mo.put(KEY_IDENTITY, this.identity);
+                return mo;
+            }, this);
         },
 
         /** @inheritDoc */
@@ -78,16 +80,20 @@ var PresharedAuthenticationData$parse;
 
     /**
      * Construct a new preshared keys authentication data instance from the
-     * provided JSON object.
+     * provided MSL object.
      *
-     * @param presharedAuthJO the authentication data JSON object.
-     * @throws MslEncodingException if there is an error parsing the JSON
+     * @param {MslObject} presharedAuthMo the authentication data MSL object.
+     * @throws MslEncodingException if there is an error parsing the MSL
      *         representation.
      */
-    PresharedAuthenticationData$parse = function PresharedAuthenticationData$parse(presharedAuthJO) {
-        var identity = presharedAuthJO[KEY_IDENTITY];
-        if (typeof identity !== 'string')
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "psk authdata" + JSON.stringify(presharedAuthJO));
-        return new PresharedAuthenticationData(identity);
+    PresharedAuthenticationData$parse = function PresharedAuthenticationData$parse(presharedAuthMo) {
+        try {
+            var identity = presharedAuthMo.getString(KEY_IDENTITY);
+            return new PresharedAuthenticationData(identity);
+        } catch (e) {
+            if (e instanceof MslEncoderException)
+                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "psk authdata" + presharedAuthMo);
+            throw e;
+        }
     };
 })();

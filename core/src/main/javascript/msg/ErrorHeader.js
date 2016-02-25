@@ -51,43 +51,43 @@ var ErrorHeader$parse;
 
     // Message error data.
     /**
-     * JSON key recipient.
+     * Key recipient.
      * @const
      * @type {string}
      */
     var KEY_RECIPIENT = "recipient";
     /**
-     * JSON key timestamp.
+     * Key timestamp.
      * @const
      * @type {string}
      */
     var KEY_TIMESTAMP = "timestamp";
     /**
-     * JSON key message ID.
+     * Key message ID.
      * @const
      * @type {string}
      */
     var KEY_MESSAGE_ID = "messageid";
     /**
-     * JSON key error code.
+     * Key error code.
      * @const
      * @type {string}
      */
     var KEY_ERROR_CODE = "errorcode";
     /**
-     * JSON key internal code.
+     * Key internal code.
      * @const
      * @type {string}
      */
     var KEY_INTERNAL_CODE = "internalcode";
     /**
-     * JSON key error message.
+     * Key error message.
      * @const
      * @type {string}
      */
     var KEY_ERROR_MESSAGE = "errormsg";
     /**
-     * JSON key user message.
+     * Key user message.
      * @const
      * @type {string}
      */
@@ -97,22 +97,17 @@ var ErrorHeader$parse;
      * Create a new error data container object.
      *
      * @param {Uint8Array} errordata raw error data.
-     * @param {Uint8Array} signature raw signature.
      * @param {number} timestampSeconds creation timestamp in seconds since the epoch.
      * @constructor
      */
-    function CreationData(errordata, signature, timestampSeconds) {
+    function CreationData(errordata, timestampSeconds) {
         this.errordata = errordata;
-        this.signature = signature;
         this.timestampSeconds = timestampSeconds;
     }
 
     ErrorHeader = util.Class.create({
         /**
          * <p>Construct a new error header with the provided error data.</p>
-         * 
-         * <p>Headers are encrypted and signed using the crypto context appropriate
-         * for the entity authentication scheme.</p>
          *
          * @param {MslContext} ctx MSL context.
          * @param {EntityAuthenticationData} entityAuthData the entity authentication data.
@@ -123,9 +118,6 @@ var ErrorHeader$parse;
          * @param {?string} errorMsg the error message. May be null.
          * @param {?string} userMsg the user message. May be null.
          * @param {?CreationData} creationData optional creation data.
-         * @param {{result: function(ErrorHeader), error: function(Error)}}
-         *        callback the callback functions that will receive the error
-         *        header or any thrown exceptions.
          * @throws MslEncodingException if there is an error encoding the JSON
          *         data.
          * @throws MslCryptoException if there is an error encrypting or signing
@@ -135,140 +127,169 @@ var ErrorHeader$parse;
          * @throws MslMessageException if no entity authentication data is
          *         provided.
          */
-        init: function init(ctx, entityAuthData, recipient, messageId, errorCode, internalCode, errorMsg, userMsg, creationData, callback) {
-            var self = this;
-            AsyncExecutor(callback, function() {
-                if (internalCode < 0)
-                    internalCode = -1;
+        init: function init(ctx, entityAuthData, recipient, messageId, errorCode, internalCode, errorMsg, userMsg, creationData) {
+            if (internalCode < 0)
+                internalCode = -1;
 
-                // Message ID must be within range.
-                if (messageId < 0 || messageId > MslConstants$MAX_LONG_VALUE)
-                    throw new MslInternalException("Message ID " + messageId + " is out of range.");
+            // Message ID must be within range.
+            if (messageId < 0 || messageId > MslConstants$MAX_LONG_VALUE)
+                throw new MslInternalException("Message ID " + messageId + " is out of range.");
 
-                // Message entity must be provided.
-                if (!entityAuthData)
-                    throw new MslMessageException(MslError.MESSAGE_ENTITY_NOT_FOUND);
+            // Message entity must be provided.
+            if (!entityAuthData)
+                throw new MslMessageException(MslError.MESSAGE_ENTITY_NOT_FOUND);
+
+            // Construct the error data.
+            var timestampSeconds, errordata;
+            if (!creationData) {
+                var timestampSeconds = ctx.getTime() / MILLISECONDS_PER_SECOND;
 
                 // Construct the error data.
-                if (!creationData) {
-                    var timestampSeconds = ctx.getTime() / MILLISECONDS_PER_SECOND;
-                    
-                    // Construct the JSON.
-                    var errorJO = {};
-                    if (recipient) errorJO[KEY_RECIPIENT] = recipient;
-                    errorJO[KEY_TIMESTAMP] = timestampSeconds;
-                    errorJO[KEY_MESSAGE_ID] = messageId;
-                    errorJO[KEY_ERROR_CODE] = errorCode;
-                    if (internalCode > 0) errorJO[KEY_INTERNAL_CODE] = internalCode;
-                    if (errorMsg) errorJO[KEY_ERROR_MESSAGE] = errorMsg;
-                    if (userMsg) errorJO[KEY_USER_MESSAGE] = userMsg;
+                var encoder = ctx.getMslEncoderFactory();
+                var errordata = encoder.createObject();
+                if (recipient) errordata.put(KEY_RECIPIENT, this.recipient);
+                errordata.put(KEY_TIMESTAMP, timestampSeconds);
+                errordata.put(KEY_MESSAGE_ID, messageId);
+                errordata.put(KEY_ERROR_CODE, errorCode);
+                if (internalCode > 0) errordata.put(KEY_INTERNAL_CODE, internalCode);
+                if (errorMsg) errordata.put(KEY_ERROR_MESSAGE, errorMsg);
+                if (userMsg) errordata.put(KEY_USER_MESSAGE, userMsg);
+            } else {
+                timestampSeconds = creationData.timestampSeconds;
+                errordata = creationData.errordata;
+            }
 
-                    // Create the crypto context.
-                    var cryptoContext;
-                    try {
-                        var factory = ctx.getEntityAuthenticationFactory(entityAuthData.scheme);
-                        cryptoContext = factory.getCryptoContext(ctx, entityAuthData);
-                    } catch (e) {
-                        if (e instanceof MslException) {
-                            e.setEntity(entityAuthData);
-                            e.setMessageId(messageId);
-                        }
-                        throw e;
-                    }
-
-                    // Encrypt and sign the error data.
-                    var plaintext = textEncoding$getBytes(JSON.stringify(errorJO), MslConstants$DEFAULT_CHARSET);
-                    cryptoContext.encrypt(plaintext, {
-                        result: function(errordata) {
-                            AsyncExecutor(callback, function() {
-                                cryptoContext.sign(errordata, {
-                                    result: function(signature) {
-                                        AsyncExecutor(callback, function() {
-                                            // The properties.
-                                            var props = {
-                                                entityAuthenticationData: { value: entityAuthData, writable: false, configurable: false },
-                                                recipient: { value: recipient, writable: false, configurable: false },
-                                                timestampSeconds: { value: timestampSeconds, writable: false, enumerable: false, configurable: false },
-                                                messageId: { value: messageId, writable: false, configurable: false },
-                                                errorCode: { value: errorCode, writable: false, configurable: false },
-                                                internalCode: { value: internalCode, writable: false, configurable: false },
-                                                errorMessage: { value: errorMsg, writable: false, configurable: false },
-                                                userMessage: { value: userMsg, writable: false, configurable: false },
-                                                errordata: { value: errordata, writable: false, enumerable: false, configurable: false },
-                                                signature: { value: signature, writable: false, enumerable: false, configurable: false }
-                                            };
-                                            Object.defineProperties(this, props);
-                                            return this;
-                                        }, self);
-                                    },
-                                    error: function(e) {
-                                        AsyncExecutor(callback, function() {
-                                            if (e instanceof MslException) {
-                                                e.setEntity(entityAuthData);
-                                                e.setMessageId(messageId);
-                                            }
-                                            throw e;
-                                        }, self);
-                                    }
-                                });
-                            }, self);
-                        },
-                        error: function(e) {
-                            AsyncExecutor(callback, function() {
-                                if (e instanceof MslException) {
-                                    e.setEntity(entityAuthData);
-                                    e.setMessageId(messageId);
-                                }
-                                throw e;
-                            }, self);
-                        }
-                    });
-                } else {
-                    var timestampSeconds = creationData.timestampSeconds;
-                    var errordata = creationData.errordata;
-                    var signature = creationData.signature;
-
-                    // The properties.
-                    var props = {
-                        entityAuthenticationData: { value: entityAuthData, writable: false, configurable: false },
-                        recipient: { value: recipient, writable: false, configurable: false },
-                        timestampSeconds: { value: timestampSeconds, writable: false, enumerable: false, configurable: false },
-                        messageId: { value: messageId, writable: false, configurable: false },
-                        errorCode: { value: errorCode, writable: false, configurable: false },
-                        internalCode: { value: internalCode, writable: false, configurable: false },
-                        errorMessage: { value: errorMsg, writable: false, configurable: false },
-                        userMessage: { value: userMsg, writable: false, configurable: false },
-                        errordata: { value: errordata, writable: false, enumerable: false, configurable: false },
-                        signature: { value: signature, writable: false, enumerable: false, configurable: false }
-                    };
-                    Object.defineProperties(this, props);
-                    return this;
-                };
-            }, self);
+            // The properties.
+            var props = {
+                /**
+                 * MSL context.
+                 * @type {MslContext}
+                 */
+                ctx: { value: ctx, writable: false, enumerable: false, configurable: false },
+                /**
+                 * Entity authentication data.
+                 * @type {EntityAuthenticationData}
+                 */
+                entityAuthenticationData: { value: entityAuthData, writable: false, configurable: false },
+                /**
+                 * Recipient.
+                 * @type {?string}
+                 */
+                recipient: { value: recipient, writable: false, configurable: false },
+                /**
+                 * Timestamp in seconds since the epoch.
+                 * @type {?number}
+                 */
+                timestampSeconds: { value: timestampSeconds, writable: false, enumerable: false, configurable: false },
+                /**
+                 * Message ID.
+                 * @type {number}
+                 */
+                messageId: { value: messageId, writable: false, configurable: false },
+                /**
+                 * Error code.
+                 * @type {MslConstants$ResponseCode}
+                 */
+                errorCode: { value: errorCode, writable: false, configurable: false },
+                /**
+                 * Internal code.
+                 * @type {number}
+                 */
+                internalCode: { value: internalCode, writable: false, configurable: false },
+                /**
+                 * Error message.
+                 * @type {?string}
+                 */
+                errorMessage: { value: errorMsg, writable: false, configurable: false },
+                /**
+                 * User message.
+                 * @type {?string}
+                 */
+                userMessage: { value: userMsg, writable: false, configurable: false },
+                /**
+                 * Error data.
+                 * @type {MslObject}
+                 */
+                errordata: { value: errordata, writable: false, enumerable: false, configurable: false },
+                /**
+                 * Cached encodings.
+                 * @type {Object<MslEncoderFormat,Uint8Array>}
+                 */
+                encodings: { value: {}, writable: false, enumerable: false, configurable: false },
+            };
+            Object.defineProperties(this, props);
         },
 
         /**
-        * @return {Date} gets the timestamp.
+        * @return {Date} gets the timestamp. May be null.
         */
         get timestamp() {
-            return new Date(this.timestampSeconds * MILLISECONDS_PER_SECOND);
+            if (this.timestampSeconds !== null)
+                return new Date(this.timestampSeconds * MILLISECONDS_PER_SECOND);
+            return null;
         },
-
+        
         /** @inheritDoc */
-        toJSON: function toJSON() {
-            var jsonObj = {};
-            jsonObj[Header$KEY_ENTITY_AUTHENTICATION_DATA] = this.entityAuthenticationData;
-            jsonObj[Header$KEY_ERRORDATA] = base64$encode(this.errordata);
-            jsonObj[Header$KEY_SIGNATURE] = base64$encode(this.signature);
-            return jsonObj;
+        toMslEncoding: function toMslEncoding(encoder, format, callback) {
+            var self = this;
+            
+            AsyncExecutor(callback, function() {
+                // Return any cached encoding.
+                if (this.encodings[format])
+                    return this.encodings[format];
+                
+                // Create the crypto context.
+                var scheme = this.entityAuthenticationData.scheme;
+                var factory = this.ctx.getEntityAuthenticationFactory(scheme);
+                if (!factory)
+                    throw new MslEncoderException("No entity authentication factory found for entity.");
+                var cryptoContext;
+                try {
+                    cryptoContext = factory.getCryptoContext(ctx, entityAuthData);
+                } catch (e) {
+                    if (e instanceof MslEntityAuthException || e instanceof MslCryptoException)
+                        throw new MslEncoderException("Error creating the entity crypto context.", e);
+                    throw e;
+                }
+                
+                // Encrypt and sign the error data.
+                var plaintext = encoder.encodeObject(this.errordata, format);
+                cryptoContext.encrypt(plaintext, encoder, format, {
+                    result: function(errordata) {
+                        cryptoContext.sign(errordata, {
+                            result: function(signature) {
+                                AsyncExecutor(callback, function() {
+                                    // Create the encoding.
+                                    var header = encoder.createObject();
+                                    header.put(KEY_ENTITY_AUTHENTICATION_DATA, this.entityAuthData);
+                                    header.put(KEY_ERRORDATA, ciphertext);
+                                    header.put(KEY_SIGNATURE, signature);
+                                    var encoding = encoder.encodeObject(header, format);
+                                    
+                                    // Cache and return the encoding.
+                                    this.encodings[format] = encoding;
+                                    return encoding;
+                                }, self);
+                            },
+                            error: function(e) {
+                                if (e instanceof MslCryptoException)
+                                    e = new MslEncoderException("Error signing the error data.", e);
+                                callback.error(e);
+                            }
+                        });
+                    },
+                    error: function(e) {
+                        if (e instanceof MslCryptoException)
+                            e = new MslEncoderException("Error signing the error data.", e);
+                        callback.error(e);
+                    }
+                });
+            }, this);
         },
     });
 
     /**
-     * <p>Construct a new error header from the provided JSON object.</p>
-     * 
-     * <p>Headers are encrypted and signed using the crypto context appropriate
-     * for the entity authentication scheme.</p>
+     * <p>Construct a new error header with the provided error data.</p>
      *
      * @param {MslContext} ctx MSL context.
      * @param {EntityAuthenticationData} entityAuthData the entity authentication data.
@@ -289,17 +310,16 @@ var ErrorHeader$parse;
      *         authentication data.
      */
     ErrorHeader$create = function ErrorHeader$create(ctx, entityAuthData, recipient, messageId, errorCode, internalCode, errorMsg, userMsg, callback) {
-        new ErrorHeader(ctx, entityAuthData, recipient, messageId, errorCode, internalCode, errorMsg, userMsg, null, callback);
+        AsyncExecutor(callback, function() {
+            return new ErrorHeader(ctx, entityAuthData, recipient, messageId, errorCode, internalCode, errorMsg, userMsg, null);
+        });
     };
 
     /**
-     * Construct a new error header from the provided JSON object.
-     *
-     * Headers are encrypted and signed using the crypto context appropriate
-     * for the entity authentication scheme.
+     * <p>Construct a new error header from the provided MSL object.</p>
      *
      * @param {MslContext} ctx MSL context.
-     * @param {string} errordata error data JSON representation.
+     * @param {Uint8Array} errordataBytes error data MSL encoding.
      * @param {EntityAuthenticationData} entityAuthData the entity authentication data.
      * @param {Uint8Array} signature the header signature.
      * @param {{result: function(ErrorHeader), error: function(Error)}}
@@ -314,11 +334,15 @@ var ErrorHeader$parse;
      *         (null) or the error data is missing or the message ID is
      *         negative or the internal code is negative.
      */
-    ErrorHeader$parse = function ErrorHeader$parse(ctx, errordata, entityAuthData, signature, callback) {
+    ErrorHeader$parse = function ErrorHeader$parse(ctx, errordataBytes, entityAuthData, signature, callback) {
         AsyncExecutor(callback, function() {
+            var encoder = ctx.getMslEncoderFactory();
+            
+            // Validate the entity authentication data.
             if (!entityAuthData)
                 throw new MslMessageException(MslError.MESSAGE_ENTITY_NOT_FOUND);
 
+            // Grab the entity crypto context.
             var cryptoContext;
             try {
                 var scheme = entityAuthData.scheme;
@@ -331,16 +355,9 @@ var ErrorHeader$parse;
                     e.setEntity(entityAuthData);
                 throw e;
             }
-
+            
             // Verify and decrypt the error data.
-            try {
-                errordata = base64$decode(errordata);
-            } catch (e) {
-                throw new MslMessageException(MslError.HEADER_DATA_INVALID, errordata, e).setEntity(entityAuthData);
-            }
-            if (!errordata || errordata.length == 0)
-                throw new MslMessageException(MslError.HEADER_DATA_MISSING, errordata).setEntity(entityAuthData);
-            cryptoContext.verify(errordata, signature, {
+            cryptoContext.verify(errordataBytes, signature, encoder, {
                 result: function(verified) {
                     AsyncExecutor(callback, function() {
                         if (!verified)
@@ -348,64 +365,53 @@ var ErrorHeader$parse;
                         cryptoContext.decrypt(errordata, {
                             result: function(plaintext) {
                                 AsyncExecutor(callback, function() {
-                                    // Reconstruct error data.
-                                    var errordataJson = textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET);
-                                    var errordataJO;
+                                    var errordata, messageId;
                                     try {
-                                        errordataJO = JSON.parse(errordataJson);
+                                        errordata = encoder.parseObject(plaintext);
+                                        messageId = errordata.getLong(KEY_MESSAGE_ID);
+                                        if (messageId < 0 || messageId > MslConstants$MAX_LONG_VALUE)
+                                            throw new MslMessageException(MslError.MESSAGE_ID_OUT_OF_RANGE, "errordata " + errordata).setEntity(entityAuthData);
                                     } catch (e) {
-                                        if (e instanceof SyntaxError)
-                                            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "errordata " + errordataJson, e).setEntity(entityAuthData);
+                                        if (e instanceof MslEncoderException)
+                                            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "errordata " + base64$encode(plaintext), e).setEntity(entityAuthData);
+                                        throw e;
+                                    }
+                                    
+                                    var recipient, timestamp, errorCode, internalCode, errorMsg, userMsg;
+                                    try {
+                                        recipient = (errordata.has(KEY_RECIPIENT)) ? errordata.getString(KEY_RECIPIENT) : null;
+                                        timestamp = (errordata.has(KEY_TIMESTAMP)) ? errordata.getLong(KEY_TIMESTAMP) : null;
+                                        
+                                        // If we do not recognize the error code then default to fail.
+                                        errorCode = errordata.getInt(KEY_ERROR_CODE);
+                                        var recognized = false;
+                                        for (var code in MslConstants$ResponseCode) {
+                                            if (MslConstants$ResponseCode[code] == errorCode) {
+                                                recognized = true;
+                                                break;
+                                            }
+                                        }
+                                        if (!recognized)
+                                            errorCode = MslConstants$ResponseCode.FAIL;
+                                        
+                                        if (errordata.has(KEY_INTERNAL_CODE)) {
+                                            internalCode = errordata.getInt(KEY_INTERNAL_CODE);
+                                            if (internalCode < 0)
+                                                throw new MslMessageException(MslError.INTERNAL_CODE_NEGATIVE, "errordata " + errordata).setEntity(entityAuthData).setMessageId(messageId);
+                                        } else {
+                                            internalCode = -1;
+                                        }
+                                        errorMsg = errordata.optString(KEY_ERROR_MESSAGE, null);
+                                        userMsg = errordata.optString(KEY_USER_MESSAGE, null);
+                                    } catch (e) {
+                                        if (e instanceof MslEncoderException)
+                                            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "errordata " + errordata, e).setEntity(entityAuthData).setMessageId(messageId);
                                         throw e;
                                     }
 
-                                    // Pull the error data.
-                                    var recipient = (errordataJO[KEY_RECIPIENT] !== undefined) ? errordataJO[KEY_RECIPIENT] : null;
-                                    var timestampSeconds = (errordataJO[KEY_TIMESTAMP] !== undefined) ? errordataJO[KEY_TIMESTAMP] : null;
-                                    var messageId = parseInt(errordataJO[KEY_MESSAGE_ID]);
-                                    var errorCode = parseInt(errordataJO[KEY_ERROR_CODE]);
-                                    var internalCode = parseInt(errordataJO[KEY_INTERNAL_CODE]);
-                                    var errorMsg = errordataJO[KEY_ERROR_MESSAGE];
-                                    var userMsg = errordataJO[KEY_USER_MESSAGE];
-
-                                    // Verify the error data.
-                                    if ((recipient && typeof recipient !== 'string') ||
-                                        (timestampSeconds && typeof timestampSeconds !== 'number') ||
-                                        !messageId || messageId != messageId ||
-                                        !errorCode || errorCode != errorCode ||
-                                        (errordataJO[KEY_INTERNAL_CODE] && internalCode != internalCode) ||
-                                        (errorMsg && typeof errorMsg !== 'string') ||
-                                        (userMsg && typeof userMsg !== 'string'))
-                                    {
-                                        throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "errordata " + errordataJson).setEntity(entityAuthData);
-                                    }
-
-                                    // The message ID must be within range.
-                                    if (messageId < 0 || messageId > MslConstants$MAX_LONG_VALUE)
-                                        throw new MslMessageException(MslError.MESSAGE_ID_OUT_OF_RANGE, "errordata " + errordataJson).setEntity(entityAuthData);
-
-                                    // If we do not recognize the error code then default to fail.
-                                    var recognized = false;
-                                    for (var code in MslConstants$ResponseCode) {
-                                        if (MslConstants$ResponseCode[code] == errorCode) {
-                                            recognized = true;
-                                            break;
-                                        }
-                                    }
-                                    if (!recognized)
-                                        errorCode = MslConstants$ResponseCode.FAIL;
-
-                                    // The parsed internal code cannot be negative.
-                                    if (internalCode) {
-                                        if (internalCode < 0)
-                                            throw new MslMessageException(MslError.INTERNAL_CODE_NEGATIVE, "errordata " + errordataJson).setEntity(entityAuthData).setMessageId(messageId);
-                                    } else {
-                                        internalCode = -1;
-                                    }
-
                                     // Return the error header.
-                                    var creationData = new CreationData(errordata, signature, timestampSeconds);
-                                    new ErrorHeader(ctx, entityAuthData, recipient, messageId, errorCode, internalCode, errorMsg, userMsg, creationData, callback);
+                                    var creationData = new CreationData(errordata, timestampSeconds);
+                                    return new ErrorHeader(ctx, entityAuthData, recipient, messageId, errorCode, internalCode, errorMsg, userMsg, creationData);
                                 });
                             },
                             error: function(e) {

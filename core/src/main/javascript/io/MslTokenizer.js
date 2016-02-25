@@ -72,7 +72,7 @@ var MslTokenizer;
                     result: function(o) {
                         InterruptibleExecutor(callback, function() {
                             this._next = o;
-                            return (this._next);
+                            return (this._next != null);
                         }, self);
                     },
                     timeout: callback.timeout,

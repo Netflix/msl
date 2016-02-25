@@ -37,15 +37,15 @@ var MasterTokenProtectedAuthenticationFactory = EntityAuthenticationFactory.exte
     },
 
     /** @inheritDoc */
-    createData: function createData(ctx, entityAuthJO, callback) {
-        MasterTokenProtectedAuthenticationData$parse(ctx, entityAuthJO, callback);
+    createData: function createData(ctx, entityAuthMo, callback) {
+        MasterTokenProtectedAuthenticationData$parse(ctx, entityAuthMo, callback);
     },
 
     /** @inheritDoc */
     getCryptoContext: function getCryptoContext(ctx, authdata) {
         // Make sure we have the right kind of entity authentication data.
         if (!(authdata instanceof MasterTokenProtectedAuthenticationData))
-            throw new MslInternalException("Incorrect authentication data type " + JSON.stringify(authdata) + ".");
+            throw new MslInternalException("Incorrect authentication data type " + authdata + ".");
         var mtpad = authdata;
 
         // Check for revocation.

@@ -17,26 +17,26 @@
  */
 
 /**
- * <p>MSL encoding formats.</p>
+ * <p>MSL encoder formats.</p>
  * 
- * <p>The format name is used to uniquely identify encoding formats.</p>
+ * <p>The format name is used to uniquely identify encoder formats.</p>
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MslEncodingFormat;
-var MslEncodingFormat$getFormat;
+var MslEncoderFormat;
+var MslEncoderFormat$getFormat;
 
 (function() {
     "use strict";
     
     /**
      * Map of names onto formats.
-     * @type {Object.<string,MslEncodingFormat>}
+     * @type {Object<string,MslEncodingFormat>}
      */
     var formatsByName = {};
     /**
      * Map of identifiers onto formats.
-     * @type {Object.<Uint8Array,MslEncodingFormat>}
+     * @type {Object<Uint8Array,MslEncodingFormat>}
      */
     var formatsById = {};
     
@@ -52,10 +52,10 @@ var MslEncodingFormat$getFormat;
      * Define an encoding format with the specified name and byte stream
      * identifier.
      * 
-     * @param {string} name the encoding format name.
+     * @param {string} name the encoder format name.
      * @param {Uint8Array} identifier the byte stream identifier.
      */
-    MslEncodingFormat = function MslEncodingFormat(name, identifier) {
+    MslEncoderFormat = function MslEncoderFormat(name, identifier) {
         // The properties.
         var props = {
             name: { value: name, writable: false, configurable: false },
@@ -68,8 +68,8 @@ var MslEncodingFormat$getFormat;
         formatsById[identifier] = this;
     };
     
-    util.Class.mixin(MslEncodingFormat,
-    /** @lends {MslEncodingFormat} */
+    util.Class.mixin(MslEncoderFormat,
+    /** @lends {MslEncoderFormat} */
     ({
         /** JSON. */
         JSON : new MslEncodingFormat("JSON", JSON_IDENTIFIER),
@@ -78,10 +78,10 @@ var MslEncodingFormat$getFormat;
     
     /**
      * @param {string|Uint8Array} f the encoding format name or identifier.
-     * @return the encoding format identified by the specified name or
+     * @return {MslEncoderFormat} the encoding format identified by the specified name or
      *         identifier, or {@code null} if there is none.
      */
-    MslEncodingFormat$getFormat = function MslEncodingFormat$getFormat(f) {
+    MslEncoderFormat$getFormat = function MslEncoderFormat$getFormat(f) {
         if (typeof f === 'string' && formatsByName[f])
             return formatsByName[f];
         if (formatsById[f])

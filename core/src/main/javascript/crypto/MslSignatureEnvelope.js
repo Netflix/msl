@@ -27,19 +27,19 @@ var MslSignatureEnvelope$Version;
 
 (function() {
     /**
-     * JSON key version.
+     * Key version.
      * @const
      * @type {string}
      */
     var KEY_VERSION = "version";
     /**
-     * JSON key algorithm.
+     * Key algorithm.
      * @const
      * @type {string}
      */
     var KEY_ALGORITHM = "algorithm";
     /**
-     * JSON key signature.
+     * Key signature.
      * @const
      * @type {string}
      */
@@ -90,32 +90,43 @@ var MslSignatureEnvelope$Version;
          * @param {Uint8Array} signature the signature.
          */
         init: function init(version, algorithm, signature) {
-            // Create the byte representation.
-            var bytes;
-            switch (version) {
-                case Version.V1:
-                    bytes = signature;
-                    break;
-                case Version.V2:
-                    var jsonObj = {};
-                    jsonObj[KEY_VERSION] = version;
-                    jsonObj[KEY_ALGORITHM] = algorithm;
-                    jsonObj[KEY_SIGNATURE] = base64$encode(signature);
-                    bytes = textEncoding$getBytes(JSON.stringify(jsonObj), MslConstants$DEFAULT_CHARSET);
-                    break;
-                default:
-                    throw new MslInternalException("Signature envelope version " + version + " encoding unsupported.");
-            }
-
             // The properties.
             var props = {
                 version: { value: version, writable: false, enumerable: false, configurable: false },
                 algorithm: { value: algorithm, writable: false, configurable: false },
                 signature: { value: signature, writable: false, configurable: false },
-                bytes: { value: bytes, writable: false, configurable: false },
             };
             Object.defineProperties(this, props);
-        }
+        },
+        
+        /**
+         * Returns the signature envelope in byte form.
+         * 
+         * @param {MslEncoderFactory} encoder MSL encoder factory.
+         * @param {MslEncoderFormat} format MSL encoder format.
+         * @param {{result: function(Uint8Array), error: function(Error)}}
+         *        callback the callback functions that will receive the byte
+         *        representation of the signature envelope or any thrown
+         *        exceptions.
+         * @throws MslEncoderException if there is an error encoding the envelope.
+         * @throws MslInternalException if the envelope version is not supported.
+         */
+        getBytes: function getBytes(encoder, format, callback) {
+            AsyncExecutor(callback, function() {
+                switch (this.version) {
+                    case Version.V1:
+                        return this.signature;
+                    case Version.V2:
+                        var mo = encoder.createObject();
+                        mo.put(KEY_VERSION, this.version);
+                        mo.put(KEY_ALGORITHM, this.algorithm.name()),
+                        mo.put(KEY_SIGNATURE, this.signature);
+                        return encoder.encodeObject(mo, format);
+                    default:
+                        throw new MslInternalException("Signature envelope version " + version + " encoding unsupported.");
+                }
+            }, this);
+        },
     });
 
     /**
@@ -168,20 +179,21 @@ var MslSignatureEnvelope$Version;
 
     /**
      * Create a new signature envelope from the provided envelope bytes. If a
-     * signature version is provided then the JSON object is parsed accordingly.
+     * signature version is provided then the MSL object is parsed accordingly.
      *
      * @param {Uint8Array} envelope the raw envelope bytes.
      * @param {?MslSignatureEnvelope$Version} version the envelope version.
      *        May be null.
+     * @param {MslEncoderFactory} MSL encoder factory.
      * @param {{result: function(MslSignatureEnvelope), error: function(Error)}}
      *        callback the callback functions that will receive the envelope
      *        or any thrown exceptions.
      * @throws MslCryptoException if there is an error processing the signature
      *         envelope.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @throws MslEncodingException if there is an error parsing the envelope.
      * @see #getBytes()
      */
-    MslSignatureEnvelope$parse = function MslSignatureEnvelope$parse(envelope, version, callback) {
+    MslSignatureEnvelope$parse = function MslSignatureEnvelope$parse(envelope, version, encoder, callback) {
         AsyncExecutor(callback, function() {
             if (version) {
                 switch (version) {
@@ -189,40 +201,27 @@ var MslSignatureEnvelope$Version;
                         return new MslSignatureEnvelope(Version.V1, null, envelope);
                     case Version.V2:
                         try {
-                            // We expect the byte representation to be a JSON string.
-                            var json = textEncoding$getString(envelope, MslConstants$DEFAULT_CHARSET);
-                            var envelopeJo = JSON.parse(json);
-
-                            // Extract values.
-                            var v             = parseInt(envelopeJo[KEY_VERSION]),
-                                algorithmName = envelopeJo[KEY_ALGORITHM],
-                                signatureB64  = envelopeJo[KEY_SIGNATURE];
-                            if (!v || typeof v !== 'number' || v != v ||
-                                typeof algorithmName !== 'string' ||
-                                typeof signatureB64 !== 'string')
-                            {
-                                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "signature envelope " + base64$encode(envelope));
-                            }
+                            // We expect the byte representation to be a MSL object.
+                            var envelopeMo = encoder.parseObject(envelope);
 
                             // Verify version.
+                            var v = envelopeMo.getInt(KEY_VERSION);
                             if (Version.V2 != v)
-                                throw new MslCryptoException(MslError.UNSUPPORTED_SIGNATURE_ENVELOPE, "signature envelope " + base64$encode(envelope));
+                                throw new MslCryptoException(MslError.UNSUPPORTED_SIGNATURE_ENVELOPE, "signature envelope " + envelope);
 
                             // Grab algorithm.
-                            var algorithm = MslConstants$SignatureAlgo$fromString(algorithmName);
+                            var algorithm = MslConstants$SignatureAlgo$fromString(envelopeMo.getString(KEY_ALGORITHM));
                             if (!algorithm)
-                                throw new MslCryptoException(MslError.UNIDENTIFIED_ALGORITHM, "signature envelope " + base64$encode(envelope));
+                                throw new MslCryptoException(MslError.UNIDENTIFIED_ALGORITHM, "signature envelope " + envelope);
 
                             // Grab signature.
-                            var signature = base64$decode(signatureB64);
-                            if (!signature)
-                                throw new MslCryptoException(MslError.INVALID_SIGNATURE, "signature envelope " + base64$encode(envelope));
+                            var signature = envelopeMo.getBytes(KEY_SIGNATURE);
 
                             // Return the envelope.
                             return new MslSignatureEnvelope(Version.V2, algorithm, signature);
                         } catch (e) {
-                            if (e instanceof SyntaxError)
-                                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "signature envelope " + base64$encode(envelope), e);
+                            if (e instanceof MslEncoderException)
+                                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "signature envelope " + envelope, e);
                             throw e;
                         }
                     default:
@@ -230,30 +229,39 @@ var MslSignatureEnvelope$Version;
                 }
             }
 
-            // Attempt to convert this to a JSON object.
-            var envelopeJo;
+            // Attempt to convert this to a MSL object.
+            var envelopeMo;
             try {
-                // If this is a JSON object, we expect the byte representation to
-                // be a Base64-encoding of the JSON string.
-                var json = textEncoding$getString(envelope, MslConstants$DEFAULT_CHARSET);
-                envelopeJo = JSON.parse(json);
+                // If this is a MSL object, we expect the byte representation to be
+                // decodable.
+                envelopeMo = encoder.parseObject(envelope);
             } catch (e) {
-                envelopeJo = null;
+                if (e instanceof MslEncoderException)
+                    envelopeMo = null;
+                else
+                    throw e;
             }
 
             // Determine the envelope version.
             //
-            // If there is no JSON object, or there is no version field (as the
-            // binary signature may coincidentally parse into JSON), then this is a
-            // version 1 envelope.
+            // If there is no MSL object, or there is no version field (as the
+            // binary signature may coincidentally parse into a MSL object), then
+            // this is a version 1 envelope.
             var envelopeVersion;
-            if (!envelopeJo || !envelopeJo[KEY_VERSION]) {
+            if (!envelopeMo || !envelopeMo.has(KEY_VERSION)) {
                 envelopeVersion = Version.V1;
             } else {
-                envelopeVersion = envelopeJo[KEY_VERSION];
-                if (typeof envelopeVersion !== 'number' || envelopeVersion !== envelopeVersion) {
-                    // There is a possibility that this is a version 1 envelope.
-                    envelopeVersion = Version.V1;
+                try {
+                    envelopeVersion = envelopeMo.getInt(KEY_VERSION);
+                    if (envelopeVersion !== envelopeVersion) {
+                        // There is a possibility that this is a version 1 envelope.
+                        envelopeVersion = Version.V1;
+                    }
+                } catch (e) {
+                    if (e instanceof MslEncoderException) {
+                        // There is a possibility that this is a version 1 envelope.
+                        envelopeVersion = Version.V1;
+                    }
                 }
             }
 
@@ -262,40 +270,25 @@ var MslSignatureEnvelope$Version;
                 case Version.V1:
                     return new MslSignatureEnvelope(envelopeVersion, null, envelope);
                 case Version.V2:
-                    // Extract envelope data.
-                    var algorithm = envelopeJo[KEY_ALGORITHM];
-                    var signatureB64 = envelopeJo[KEY_SIGNATURE];
-
-                    // Verify data.
-                    if (typeof algorithm !== 'string' ||
-                            typeof signatureB64 !== 'string')
-                    {
-                        // It is extremely unlikely but possible that this is a
-                        // version 1 envelope.
-                        return new MslSignatureEnvelope(Version.V1, null, envelope);
-                    }
-
-                    // Verify algorithm.
-                    algorithm = MslConstants$SignatureAlgo$fromString(algorithm);
-                    if (!algorithm) {
-                        // It is extremely unlikely but possible that this is a
-                        // version 1 envelope.
-                        return new MslSignatureEnvelope(Version.V1, null, envelope);
-                    }
-
-                    // If the signature fails to decode then it is extremely
-                    // unlikely but possible that this is a version 1 envelope.
-                    //
-                    // A zero-length signature is OK and does not indicate an
-                    // error.
                     try {
-                        signature = base64$decode(signatureB64);
-                    } catch (e) {
-                        return new MslSignatureEnvelope(Version.V1, null, envelope);
-                    }
+                        var algorithm = MslConstants$SignatureAlgo$fromString(envelopeMo.getString(KEY_ALGORITHM));
+                        var signature = envelopeMo.getBytes(KEY_SIGNATURE);
 
-                    // Return the version 2 envelope.
-                    return new MslSignatureEnvelope(envelopeVersion, algorithm, signature);
+                        // Verify algorithm.
+                        if (!algorithm) {
+                            // It is extremely unlikely but possible that this is a
+                            // version 1 envelope.
+                            return new MslSignatureEnvelope(Version.V1, null, envelope);
+                        }
+                        return new MslSignatureEnvelope(envelopeVersion, algorithm, signature);
+                    } catch (e) {
+                        if (e instanceof MslEncoderException) {
+                            // It is extremely unlikely but possible that this is a
+                            // version 1 envelope.
+                            return new MslSignatureEnvelope(Version.V1, null, envelope);
+                        }
+                        throw e;
+                    }
                 default:
                     throw new MslCryptoException(MslError.UNSUPPORTED_SIGNATURE_ENVELOPE, "signature envelope " + envelope);
             }

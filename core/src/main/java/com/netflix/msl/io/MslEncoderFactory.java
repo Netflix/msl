@@ -196,6 +196,8 @@ public class MslEncoderFactory {
      * @param map the map of name/value pairs. This must be a map of
      *        {@code String}s onto {@code Object}s. May be {@code null}.
      * @return the {@link MslObject}.
+     * @throws IllegalArgumentException if one of the values is of an
+     *         unsupported type.
      */
     public MslObject createObject(final Map<String,Object> map) {
         return new MslObject(map);
@@ -278,6 +280,8 @@ public class MslEncoderFactory {
      * 
      * @param collection the collection of values. May be {@code null}.
      * @return the {@link MslArray}.
+     * @throws IllegalArgumentException if one of the values is of an
+     *         unsupported type.
      */
     public MslArray createArray(final Collection<?> collection) {
         return new MslArray(collection);

@@ -61,38 +61,38 @@ var Header$KEY_SIGNATURE;
 
 (function() {
     /**
-     * JSON key entity authentication data.
+     * Key entity authentication data.
      * @const
      * @type {string}
      */
     var KEY_ENTITY_AUTHENTICATION_DATA = Header$KEY_ENTITY_AUTHENTICATION_DATA = "entityauthdata";
     /**
-     * JSON key master token.
+     * Key master token.
      * @const
      * @type {string}
      */
     var KEY_MASTER_TOKEN = Header$KEY_MASTER_TOKEN = "mastertoken";
     /**
-     * JSON key header data.
+     * Key header data.
      * @const
      * @type {string}
      */
     var KEY_HEADERDATA = Header$KEY_HEADERDATA = "headerdata";
     /**
-     * JSON key error data.
+     * Key error data.
      * @const
      * @type {string}
      */
     var KEY_ERRORDATA = Header$KEY_ERRORDATA = "errordata";
     /**
-     * JSON key signature.
+     * Key signature.
      * @const
      * @type {string}
      */
     var KEY_SIGNATURE = Header$KEY_SIGNATURE = "signature";
 
     /**
-     * <p>Construct a new header from the provided JSON object.</p>
+     * <p>Construct a new header from the provided MSL object.</p>
      * 
      * <p>Headers are encrypted and signed. If a master token is found, it will
      * be used for this purpose. Otherwise the crypto context appropriate for
@@ -109,7 +109,7 @@ var Header$KEY_SIGNATURE;
      * will be used.</p>
      *
      * @param {MslContext} ctx MSL context.
-     * @param {Object} headerJO header JSON object.
+     * @param {MslObject} headerMo header MSL object.
      * @param {Object.<string,ICryptoContext>} cryptoContexts the map of service token names onto crypto
      *        contexts used to decrypt and verify service tokens.
      * @param {{result: function(MessageHeader|ErrorHeader), error: function(Error)}}
@@ -131,97 +131,78 @@ var Header$KEY_SIGNATURE;
      */
     Header$parseHeader = function Header$parseHeader(ctx, headerJO, cryptoContexts, callback) {
         AsyncExecutor(callback, function() {
-            // Pull message data.
-            var entityAuthDataJo = headerJO[KEY_ENTITY_AUTHENTICATION_DATA];
-            var masterTokenJo = headerJO[KEY_MASTER_TOKEN];
-            var signatureB64 = headerJO[KEY_SIGNATURE];
-
-            // Verify message data.
-            if ((entityAuthDataJo && typeof entityAuthDataJo !== 'object') ||
-                (masterTokenJo && typeof masterTokenJo !== 'object') ||
-                typeof signatureB64 !== 'string')
-            {
-                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "header/errormsg " + JSON.stringify(headerJO));
-            }
-            // Reconstruct signature.
+            // Pull authentication data.
+            var entityAuthDataMo;
+            var masterTokenMo;
             var signature;
             try {
-                signature = base64$decode(signatureB64);
+                // Pull message data.
+                var encoder = ctx.getMslEncoderFactory();
+                entityAuthDataMo = (headerMo.has(KEY_ENTITY_AUTHENTICATION_DATA))
+                    ? headerMo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder)
+                    : null;
+                masterToken = (headerMo.has(KEY_MASTER_TOKEN))
+                    ? headerMo.getMslObject(KEY_MASTER_TOKEN, encoder)
+                    : null;
+                signature = headerMo.getBytes(KEY_SIGNATURE);
             } catch (e) {
-                throw new MslMessageException(MslError.HEADER_SIGNATURE_INVALID, "header/errormsg " + JSON.stringify(headerJO), e);
+                if (e instanceof MslEncoderException)
+                    throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "header/errormsg " + headerMo, e);
+                throw e;
             }
-
+            
             // Reconstruct entity authentication data.
-            if (entityAuthDataJo) {
-                EntityAuthenticationData$parse(ctx, entityAuthDataJo, {
+            if (entityAuthDataMo) {
+                EntityAuthenticationData$parse(ctx, entityAuthDataMo, {
                     result: function(entityAuthData) {
-                        processHeaders(masterTokenJo, signature, entityAuthData);
+                        reconstructMasterToken(entityAuthData, masterTokenMo, signature);
                     },
                     error: callback.error,
                 });
             } else {
-                processHeaders(masterTokenJo, signature, null);
+                reconstructMasterToken(null, masterTokenMo, signature);
             }
         });
         
-        function processHeaders(masterTokenJo, signature, entityAuthData) {
+        function reconstructMasterToken(entityAuthData, masterTokenMo, signature) {
+            if (masterTokenMo) {
+                MasterToken$parse(ctx, masterTokenMo, {
+                    result: function(masterToken) {
+                        processHeaders(entityAuthData, masterToken, signature);
+                    },
+                    error: callback.error,
+                });
+            } else {
+                processHeaders(entityAuthData, null, signature);
+            }
+        }
+        
+        function processHeaders(entityAuthData, masterToken, signature) {
             AsyncExecutor(callback, function() {
-                // Process message headers.
-                var headerdata = headerJO[KEY_HEADERDATA];
-                if (headerdata != undefined && headerdata != null) {
-                    if (typeof headerdata !== 'string')
-                        throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "header/errormsg " + JSON.stringify(headerJO));
-    
-                    // Reconstruct master token.
-                    if (masterTokenJo) {
-                        MasterToken$parse(ctx, masterTokenJo, {
-                            result: function(masterToken) {
-                                MessageHeader$parse(ctx, headerdata, entityAuthData, masterToken, signature, cryptoContexts, {
-                                    result: function(messageHeader) {
-                                        AsyncExecutor(callback, function() {
-                                            // Make sure the header was verified and decrypted.
-                                            if (!messageHeader.isDecrypted())
-                                                throw new MslCryptoException(MslError.MESSAGE_MASTERTOKENBASED_VERIFICATION_FAILED).setEntity(masterToken);
-                                            
-                                            // Return the header.
-                                            return messageHeader;
-                                        });
-                                    },
-                                    error: callback.error,
-                                });
-                            },
-                            error: callback.error,
-                        });
-                        return;
-                    } else {
-                        MessageHeader$parse(ctx, headerdata, entityAuthData, null, signature, cryptoContexts, {
-                            result: function(messageHeader) {
-                                AsyncExecutor(callback, function() {
-                                    // Make sure the header was verified and decrypted.
-                                    if (!messageHeader.isDecrypted())
-                                        throw new MslCryptoException(MslError.MESSAGE_ENTITYDATABASED_VERIFICATION_FAILED).setEntity(entityAuthData);
-                                    
-                                    // Return the header.
-                                    return messageHeader;
-                                });
-                            },
-                            error: callback.error,
-                        });
-                        return;
+                try {
+                    // Process message headers.
+                    if (headerMo.has(KEY_HEADERDATA)) {
+                        var headerdata = headerMo.getBytes(KEY_HEADERDATA);
+                        if (headerdata.length == 0)
+                            throw new MslMessageException(MslError.HEADER_DATA_MISSING, base64$encode(headerdata)).setEntity(masterToken).setEntity(entityAuthData);
+                        MessageHeader$parse(ctx, headerdata, entityAuthData, masterToken, signature, cryptoContexts, callback);
                     }
+                    
+                    // Process error headers.
+                    else if (headerMo.has(KEY_ERRORDATA)) {
+                        var errordata = headerMo.getBytes(KEY_ERRORDATA);
+                        if (errordata.length == 0)
+                            throw new MslMessageException(MslError.HEADER_DATA_MISSING, base64$encode(errordata)).setEntity(masterToken).setEntity(entityAuthData);
+                        ErrorHeader$parse(ctx, errordata, entityAuthData, signature, callback);
+                    }
+                    
+                    // Unknown header.
+                    throw new MslEncodingException(MslError.MSL_PARSE_ERROR, headerMo);
+                } catch (e) {
+                    if (e instanceof MslEncoderException)
+                        throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "header/errormsg " + headerMo, e);
+                    throw e;
                 }
-    
-                // Process error headers.
-                var errordata = headerJO[KEY_ERRORDATA];
-                if (errordata != undefined && errordata != null) {
-                    if (typeof errordata !== 'string')
-                        throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "header/errormsg " + JSON.stringify(headerJO));
-                    ErrorHeader$parse(ctx, errordata, entityAuthData, signature, callback);
-                    return;
-                }
-    
-                // Unknown header.
-                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, JSON.stringify(headerJO));
             });
         }
     };

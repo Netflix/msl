@@ -171,14 +171,14 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
                     {
                         wrapdata = keyRequestMo.getBytes(KEY_WRAPDATA);
                         if (wrapdata.length == 0)
-                            throw new MslKeyExchangeException(MslError.KEYX_WRAPPING_KEY_MISSING, "keydata " + keyRequestMo.toString());
+                            throw new MslKeyExchangeException(MslError.KEYX_WRAPPING_KEY_MISSING, "keydata " + keyRequestMo);
                         break;
                     }
                     default:
                         throw new MslCryptoException(MslError.UNSUPPORTED_KEYX_MECHANISM, mechanism.name());
                 }
             } catch (final MslEncoderException e) {
-                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "keydata " + keyRequestMo.toString(), e);
+                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "keydata " + keyRequestMo, e);
             }
         }
 
@@ -513,7 +513,7 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
         
         // Create the master token.
         final TokenFactory tokenFactory = ctx.getTokenFactory();
-        final MasterToken newMasterToken = tokenFactory.renewMasterToken(ctx, masterToken, encryptionKey, hmacKey);
+        final MasterToken newMasterToken = tokenFactory.renewMasterToken(ctx, masterToken, encryptionKey, hmacKey, null);
         
         // Create session crypto context.
         final ICryptoContext cryptoContext = new SessionCryptoContext(ctx, newMasterToken);
@@ -578,7 +578,7 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
         
         // Create the master token.
         final TokenFactory tokenFactory = ctx.getTokenFactory();
-        final MasterToken newMasterToken = tokenFactory.createMasterToken(ctx, entityAuthData, encryptionKey, hmacKey);
+        final MasterToken newMasterToken = tokenFactory.createMasterToken(ctx, entityAuthData, encryptionKey, hmacKey, null);
         
         // Create session crypto context.
         final ICryptoContext cryptoContext = new SessionCryptoContext(ctx, newMasterToken);

@@ -661,7 +661,7 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
         
         // Create the master token.
         final TokenFactory tokenFactory = ctx.getTokenFactory();
-        final MasterToken newMasterToken = tokenFactory.renewMasterToken(ctx, masterToken, encryptionKey, hmacKey);
+        final MasterToken newMasterToken = tokenFactory.renewMasterToken(ctx, masterToken, encryptionKey, hmacKey, null);
         
         // Create crypto context.
         final ICryptoContext cryptoContext = new SessionCryptoContext(ctx, newMasterToken);
@@ -734,7 +734,7 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
         
         // Create the master token.
         final TokenFactory tokenFactory = ctx.getTokenFactory();
-        final MasterToken masterToken = tokenFactory.createMasterToken(ctx, entityAuthData, encryptionKey, hmacKey);
+        final MasterToken masterToken = tokenFactory.createMasterToken(ctx, entityAuthData, encryptionKey, hmacKey, null);
         
         // Create crypto context.
         final ICryptoContext cryptoContext;

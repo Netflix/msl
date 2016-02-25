@@ -24,34 +24,34 @@
  */
 var ClientMslCryptoContext = ICryptoContext.extend({
     /** @inheritDoc */
-    encrypt: function encrypt(data, callback) {
+    encrypt: function encrypt(data, encoder, format, callback) {
         callback.result(data);
     },
 
     /** @inheritDoc */
-    decrypt: function decrypt(data, callback) {
+    decrypt: function decrypt(data, encoder, callback) {
         callback.result(data);
     },
 
     /** @inheritDoc */
-    wrap: function wrap(key, callback) {
+    wrap: function wrap(key, encoder, format, callback) {
         // This should never be called.
         callback.error(new MslInternalException("Wrap is unsupported by the MSL token crypto context."));
     },
 
     /** @inheritDoc */
-    unwrap: function wrap(data, algo, usages, callback) {
+    unwrap: function wrap(data, algo, usages, encoder, callback) {
         // This should never be called.
         callback.error(new MslInternalException("Unwrap is unsupported by the MSL token crypto context."));
     },
 
     /** @inheritDoc */
-    sign: function sign(data, callback) {
+    sign: function sign(data, encoder, format, callback) {
         callback.result(new Uint8Array(0));
     },
 
     /** inheritDoc */
-    verify: function verify(data, signature, callback) {
+    verify: function verify(data, signature, encoder, callback) {
         callback.result(false);
     },
 });

@@ -140,7 +140,7 @@ public class OneshotMessageContext extends SecretMessageContext {
         final PublicKey publicKey = keypair.getPublic();
         
         // Return key request data.
-        final KeyRequestData keyxRequest = new AsymmetricWrappedExchange.RequestData(KEY_PAIR_ID, AsymmetricWrappedExchange.RequestData.Mechanism.RSA, publicKey, privateKey);
+        final KeyRequestData keyxRequest = new AsymmetricWrappedExchange.RequestData(KEY_PAIR_ID, AsymmetricWrappedExchange.RequestData.Mechanism.JWK_RSA, publicKey, privateKey);
         return new HashSet<KeyRequestData>(Arrays.asList(keyxRequest));
     }
 

@@ -48,36 +48,51 @@ var MessageOutputStream$create;
          *
          * @param {MslContext} ctx the MSL context.
          * @param {OutputStream} destination MSL output stream.
-         * @param {string} charset output stream character set encoding.
          * @param {MessageHeader|ErrorHeader} header message or error header.
          * @param {?ICryptoContext} cryptoContext payload data crypto context.
          *        Required if a message header is provided.
+         * @param {?MslEncoderFormat} format MSL encoder format. Required if an
+         *        error header is provided.
          * @param {number} timeout write timeout in milliseconds.
          * @param {{result: function(MessageOutputStream), timeout: function(), error: function(Error)}}
          *        callback the callback that will receive the message output
          *        stream, or any thrown exceptions.
          * @throws IOException if there is an error writing the header.
          */
-        init: function init(ctx, destination, charset, header, cryptoContext, timeout, callback) {
+        init: function init(ctx, destination, header, cryptoContext, format, timeout, callback) {
             var self = this;
             InterruptibleExecutor(callback, function() {
                 // The supported compression algorithms is the intersection of what the
                 // local entity supports and what the remote entity supports.
-                var capabilities = MessageCapabilities$intersection(ctx.getMessageCapabilities(), header.messageCapabilities);
-                var compressionAlgo = null;
-                if (capabilities) {
-                    var compressionAlgos = capabilities.compressionAlgorithms;
-                    compressionAlgo = MslConstants$CompressionAlgorithm$getPreferredAlgorithm(compressionAlgos);
+                var capabilities;
+                var compressionAlgo;
+                var encoderFormat;
+                if (header instanceof MessageHeader) {
+                    capabilities = MessageCapabilities$intersection(ctx.getMessageCapabilities(), header.messageCapabilities);
+                    if (capabilities) {
+                        var compressionAlgos = capabilities.compressionAlgorithms;
+                        compressionAlgo = MslConstants$CompressionAlgorithm$getPreferredAlgorithm(compressionAlgos);
+                        var encoderFormats = capabilities.encoderFormats;
+                        encoderFormat = encoder.getPreferredFormat(encoderFormats);
+                    } else {
+                        compressionAlgo = null;
+                        encoderFormat = encoder.getPreferredFormat(null);
+                    }
+                } else {
+                    capabilities = ctx.getMessageCapabilities();
+                    compressionAlgo = null;
+                    encoderFormat = format;
                 }
                 
                 // Set properties.
                 var props = {
+                    _ctx: { value: ctx, writable: false, enumerable: false, configurable: false },
                     _destination: { value: destination, writable: false, enumerable: false, configurable: false },
-                    _charset: { value: charset, writable: false, enumerable: false, configurable: false },
+                    _encoderFormat: { value: encoderFormat, writable: false, enumerable: false, configurable: false },
                     _capabilities : { value: capabilities, writable: false, enumerable: false, configurable: false },
                     _header: { value: header, writable: false, enumerable: false, configurable: false },
-                    _compressionAlgo: { value: compressionAlgo, writable: true, enumerable: false, configurable: false },
                     _cryptoContext: { value: cryptoContext, writable: false, enumerable: false, configurable: false },
+                    _compressionAlgo: { value: compressionAlgo, writable: true, enumerable: false, configurable: false },
                     _payloadSequenceNumber: { value: 1, writable: true, enumerable: false, configurable: false },
                     /** @type {Array.<Uint8Array>} */
                     _currentPayload: { value: new Array(), writable: true, enumerable: false, configurable: false },
@@ -108,9 +123,18 @@ var MessageOutputStream$create;
                     self._ready = true;
                     self._readyQueue.add(true);
                 }
+                
+                // Encode the header.
+                var encoding;
+                try {
+                    encoding = header.toMslEncoding(encoder, encoderFormat);
+                } catch (e) {
+                    if (e instanceof MslEncoderException)
+                        throw new MslIoException("Error encoding the message header.", e);
+                    throw e;
+                }
 
-                var headerBytes = textEncoding$getBytes(JSON.stringify(header), charset);
-                destination.write(headerBytes, 0, headerBytes.length, timeout, {
+                destination.write(encoding, 0, encoding.length, timeout, {
                     result: function(numWritten) {
                         try {
                             // If aborted do nothing.
@@ -401,12 +425,20 @@ var MessageOutputStream$create;
                     }
 
                     // Write the payload chunk.
-                    PayloadChunk$create(this._payloadSequenceNumber, messageHeader.messageId, this._closed, this._compressionAlgo, data, this._cryptoContext, {
+                    PayloadChunk$create(this._ctx, this._payloadSequenceNumber, messageHeader.messageId, this._closed, this._compressionAlgo, data, this._cryptoContext, {
                         result: function(chunk) {
                             InterruptibleExecutor(callback, function() {
                                 if (this._caching) this._payloads.push(chunk);
-                                var payloadBytes = textEncoding$getBytes(JSON.stringify(chunk), this._charset);
-                                this._destination.write(payloadBytes, 0, payloadBytes.length, timeout, {
+                                var encoder = this._ctx.getMslEncoderFactory();
+                                var encoding;
+                                try {
+                                    encoding = chunk.toMslEncoding(encoder, this._encoderFormat);
+                                } catch (e) {
+                                    if (e instanceof MslEncoderException)
+                                        throw new MslIoException("Error encoding payload chunk [sequence number " + self._payloadSequenceNumber + "].", e);
+                                    throw e;
+                                }
+                                this._destination.write(encoding, 0, encoding.length, timeout, {
                                     result: function(numWritten) {
                                         InterruptibleExecutor(callback, function() {
                                             // If we were aborted then return false.
@@ -527,13 +559,15 @@ var MessageOutputStream$create;
      * @param {MessageHeader|ErrorHeader} header message or error header.
      * @param {?ICryptoContext} cryptoContext payload data crypto context.
      *        Required if a message header is provided.
+     * @param {?MslEncoderFormat} format MSL encoder format. Required if an
+     *        error header is provided.
      * @param {number} timeout write timeout in milliseconds.
      * @param {{result: function(MessageOutputStream), timeout: function(), error: function(Error)}}
      *        callback the callback that will receive the message output
      *        stream, or any thrown exceptions.
      * @throws IOException if there is an error writing the header.
      */
-    MessageOutputStream$create = function MessageOutputStream$create(ctx, destination, charset, header, cryptoContext, timeout, callback) {
-        new MessageOutputStream(ctx, destination, charset, header, cryptoContext, timeout, callback);
+    MessageOutputStream$create = function MessageOutputStream$create(ctx, destination, header, cryptoContext, format, timeout, callback) {
+        new MessageOutputStream(ctx, destination, header, cryptoContext, format, timeout, callback);
     };
 })();

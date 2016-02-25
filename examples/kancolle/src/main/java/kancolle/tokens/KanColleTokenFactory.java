@@ -33,6 +33,8 @@ import com.netflix.msl.MslInternalException;
 import com.netflix.msl.MslMasterTokenException;
 import com.netflix.msl.MslUserIdTokenException;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderUtils;
 import com.netflix.msl.io.MslObject;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.MslUser;
@@ -152,10 +154,10 @@ public class KanColleTokenFactory implements TokenFactory {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.tokens.TokenFactory#createMasterToken(com.netflix.msl.util.MslContext, com.netflix.msl.entityauth.EntityAuthenticationData, javax.crypto.SecretKey, javax.crypto.SecretKey)
+     * @see com.netflix.msl.tokens.TokenFactory#createMasterToken(com.netflix.msl.util.MslContext, com.netflix.msl.entityauth.EntityAuthenticationData, javax.crypto.SecretKey, javax.crypto.SecretKey, com.netflix.msl.io.MslObject)
      */
     @Override
-    public MasterToken createMasterToken(final MslContext ctx, final EntityAuthenticationData entityAuthData, final SecretKey encryptionKey, final SecretKey hmacKey) throws MslEncodingException, MslCryptoException {
+    public MasterToken createMasterToken(final MslContext ctx, final EntityAuthenticationData entityAuthData, final SecretKey encryptionKey, final SecretKey hmacKey, final MslObject issuerData) throws MslEncodingException, MslCryptoException {
         final Date renewal = new Date(ctx.getTime() + mtRenewalOffset);
         final Date expiration = new Date(ctx.getTime() + mtExpirationOffset);
         final long sequenceNumber = 0;
@@ -163,7 +165,6 @@ public class KanColleTokenFactory implements TokenFactory {
         do {
             serialNumber = ctx.getRandom().nextLong();
         } while (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE);
-        final MslObject issuerData = null;
         final String identity = entityAuthData.getIdentity();
         return new MasterToken(ctx, renewal, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey);
     }
@@ -189,10 +190,10 @@ public class KanColleTokenFactory implements TokenFactory {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.tokens.TokenFactory#renewMasterToken(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, javax.crypto.SecretKey, javax.crypto.SecretKey)
+     * @see com.netflix.msl.tokens.TokenFactory#renewMasterToken(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, javax.crypto.SecretKey, javax.crypto.SecretKey, com.netflix.msl.io.MslObject)
      */
     @Override
-    public MasterToken renewMasterToken(final MslContext ctx, final MasterToken masterToken, final SecretKey encryptionKey, final SecretKey hmacKey) throws MslMasterTokenException, MslEncodingException, MslCryptoException {
+    public MasterToken renewMasterToken(final MslContext ctx, final MasterToken masterToken, final SecretKey encryptionKey, final SecretKey hmacKey, final MslObject issuerData) throws MslMasterTokenException, MslEncodingException, MslCryptoException {
         // Fail if the master token is not decrypted.
         if (!masterToken.isDecrypted())
             throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, masterToken);
@@ -209,8 +210,14 @@ public class KanColleTokenFactory implements TokenFactory {
         final Date renewal = new Date(ctx.getTime() + mtRenewalOffset);
         final Date expiration = new Date(ctx.getTime() + mtExpirationOffset);
         final long serialNumber = masterToken.getSerialNumber();
-        final MslObject issuerData = null;
-        return new MasterToken(ctx, renewal, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey);
+        final MslObject mtIssuerData = masterToken.getIssuerData();
+        final MslObject mergedIssuerData;
+        try {
+            mergedIssuerData = MslEncoderUtils.merge(mtIssuerData, issuerData);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MASTERTOKEN_ISSUERDATA_ENCODE_ERROR, "mt issuerdata " + mtIssuerData + "; issuerdata " + issuerData, e);
+        }
+        return new MasterToken(ctx, renewal, expiration, sequenceNumber, serialNumber, mergedIssuerData, identity, encryptionKey, hmacKey);
     }
 
     /* (non-Javadoc)

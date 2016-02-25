@@ -23,32 +23,32 @@
  */
 var NullCryptoContext = ICryptoContext.extend({
     /** @inheritDoc */
-    encrypt: function encrypt(data, callback) {
+    encrypt: function encrypt(data, encoder, format, callback) {
         callback.result(data);
     },
 
     /** @inheritDoc */
-    decrypt: function decrypt(data, callback) {
+    decrypt: function decrypt(data, encoder, callback) {
         callback.result(data);
     },
 
     /** @inheritDoc */
-    wrap: function wrap(key, callback) {
+    wrap: function wrap(key, encoder, format, callback) {
         callback.result(key);
     },
 
     /** @inheritDoc */
-    unwrap: function unwrap(data, algo, usages, callback) {
+    unwrap: function unwrap(data, algo, usages, encoder, callback) {
         callback.result(data);
     },
 
     /** @inheritDoc */
-    sign: function sign(data, callback) {
+    sign: function sign(data, encoder, format, callback) {
         callback.result(new Uint8Array(0));
     },
 
     /** @inheritDoc */
-    verify: function verify(data, signature, callback) {
+    verify: function verify(data, signature, encoder, callback) {
         callback.result(true);
     },
 });

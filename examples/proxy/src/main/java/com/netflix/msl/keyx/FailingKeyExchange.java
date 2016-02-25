@@ -6,15 +6,15 @@ package com.netflix.msl.keyx;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
-import com.netflix.msl.MslException;
-import com.netflix.msl.entityauth.EntityAuthenticationData;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import com.netflix.msl.MslError;
+import com.netflix.msl.MslException;
 import com.netflix.msl.MslInternalException;
 import com.netflix.msl.MslKeyExchangeException;
 import com.netflix.msl.crypto.ICryptoContext;
+import com.netflix.msl.entityauth.EntityAuthenticationData;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.util.MslContext;
 
@@ -38,18 +38,18 @@ public class FailingKeyExchange extends KeyExchangeFactory {
          * 
          * @param keydata the unprocessed key request data.
          */
-        public KeyRequest(final JSONObject keydata) {
+        public KeyRequest(final MslObject keydata) {
             super(ProxyKeyExchangeScheme.PROXY);
             this.keydata = keydata;
         }
 
         @Override
-        protected JSONObject getKeydata() throws JSONException {
+        protected MslObject getKeydata(final MslEncoderFactory encoder, final MslEncoderFormat format) {
             return keydata;
         }
         
         /** The original key data. */
-        private final JSONObject keydata;
+        private final MslObject keydata;
     }
 
     /**
@@ -65,31 +65,31 @@ public class FailingKeyExchange extends KeyExchangeFactory {
     }
     
     /* (non-Javadoc)
-     * @see com.netflix.msl.keyx.KeyExchangeFactory#createRequestData(com.netflix.msl.util.MslContext, org.json.JSONObject)
+     * @see com.netflix.msl.keyx.KeyExchangeFactory#createRequestData(com.netflix.msl.util.MslContext, com.netflix.msl.io.MslObject)
      */
     @Override
-    protected KeyRequestData createRequestData(final MslContext ctx, final JSONObject keyRequestJO) {
+    protected KeyRequestData createRequestData(final MslContext ctx, final MslObject keyRequestMo) {
         // This method will be called if key request data exists. We do not
         // want to trigger external processing if we are not going to do
         // key exchange, so simply return a dummy key request data object.
-        return new KeyRequest(keyRequestJO);
+        return new KeyRequest(keyRequestMo);
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.keyx.KeyExchangeFactory#createResponseData(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, org.json.JSONObject)
+     * @see com.netflix.msl.keyx.KeyExchangeFactory#createResponseData(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, com.netflix.msl.io.MslObject)
      */
     @Override
-    protected KeyResponseData createResponseData(final MslContext ctx, final MasterToken masterToken, final JSONObject keyDataJO) {
+    protected KeyResponseData createResponseData(final MslContext ctx, final MasterToken masterToken, final MslObject keyDataMo) {
         // This method should never be called; we should never receive key
         // response data.
         throw new MslInternalException("Unexpected call to create key response data.");
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.keyx.KeyExchangeFactory#generateResponse(com.netflix.msl.util.MslContext, com.netflix.msl.keyx.KeyRequestData, com.netflix.msl.tokens.MasterToken)
+     * @see com.netflix.msl.keyx.KeyExchangeFactory#generateResponse(com.netflix.msl.util.MslContext, com.netflix.msl.io.MslEncoderFormat, com.netflix.msl.keyx.KeyRequestData, com.netflix.msl.tokens.MasterToken)
      */
     @Override
-    public KeyExchangeData generateResponse(final MslContext ctx, final KeyRequestData keyRequestData, final MasterToken masterToken) throws MslKeyExchangeException {
+    public KeyExchangeData generateResponse(final MslContext ctx, final MslEncoderFormat format, final KeyRequestData keyRequestData, final MasterToken masterToken) throws MslKeyExchangeException {
         // This method is called if key exchange needs to be performed.
         // Throw an exception if an error was specified.
         if (error != null)
@@ -100,10 +100,10 @@ public class FailingKeyExchange extends KeyExchangeFactory {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.keyx.KeyExchangeFactory#generateResponse(com.netflix.msl.util.MslContext, com.netflix.msl.keyx.KeyRequestData, com.netflix.msl.entityauth.EntityAuthenticationData)
+     * @see com.netflix.msl.keyx.KeyExchangeFactory#generateResponse(com.netflix.msl.util.MslContext, com.netflix.msl.io.MslEncoderFormat, com.netflix.msl.keyx.KeyRequestData, com.netflix.msl.entityauth.EntityAuthenticationData)
      */
     @Override
-    public KeyExchangeData generateResponse(final MslContext ctx, final KeyRequestData keyRequestData, final EntityAuthenticationData entityAuthData) throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslEntityAuthException, MslException {
+    public KeyExchangeData generateResponse(final MslContext ctx, final MslEncoderFormat format, final KeyRequestData keyRequestData, final EntityAuthenticationData entityAuthData) throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslEntityAuthException, MslException {
         // This method is called if key exchange needs to be performed.
         // Throw an exception if an error was specified.
         if (error != null)

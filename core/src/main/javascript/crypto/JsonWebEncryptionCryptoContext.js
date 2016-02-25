@@ -98,17 +98,17 @@ var JsonWebEncryptionCryptoContext$Encryption;
         },
 
         /** @inheritDoc */
-        encrypt: function encrypt(data, callback) {
+        encrypt: function encrypt(data, encoder, format, callback) {
             callback.error(new MslCryptoException(MslError.ENCRYPT_NOT_SUPPORTED));
         },
 
         /** @inheritDoc */
-        decrypt: function decrypt(data, callback) {
+        decrypt: function decrypt(data, encoder, callback) {
             callback.error(new MslCryptoException(MslError.DECRYPT_NOT_SUPPORTED));
         },
 
         /** @inheritDoc */
-        wrap: function wrap(key, callback) {
+        wrap: function wrap(key, encoder, format, callback) {
             AsyncExecutor(callback, function() {
                 var oncomplete = function(result) {
                     callback.result(new Uint8Array(result));
@@ -124,7 +124,7 @@ var JsonWebEncryptionCryptoContext$Encryption;
         },
 
         /** @inheritDoc */
-        unwrap: function unwrap(data, algo, usages, callback) {
+        unwrap: function unwrap(data, algo, usages, encoder, callback) {
             AsyncExecutor(callback, function() {
                 var oncomplete = function(result) {
                     constructKey(result);
@@ -158,12 +158,12 @@ var JsonWebEncryptionCryptoContext$Encryption;
         },
 
         /** @inheritDoc */
-        sign: function sign(data, callback) {
+        sign: function sign(data, encoder, format, callback) {
             callback.error(new MslCryptoException(MslError.SIGN_NOT_SUPPORTED));
         },
 
         /** @inheritDoc */
-        verify: function verify(data, signature, callback) {
+        verify: function verify(data, signature, encoder, callback) {
             callback.error(new MslCryptoException(MslError.VERIFY_NOT_SUPPORTED));
         },
     });

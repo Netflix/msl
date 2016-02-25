@@ -35,13 +35,13 @@ var RsaAuthenticationData$parse;
 
 (function() {
     /**
-     * JSON key entity identity.
+     * Key entity identity.
      * @const
      * @type {string}
      */
     var KEY_IDENTITY = "identity";
     /**
-     * JSON key public key ID.
+     * Key public key ID.
      * @const
      * @type {string}
      */
@@ -72,11 +72,13 @@ var RsaAuthenticationData$parse;
         },
 
         /** @inheritDoc */
-        getAuthData: function getAuthData() {
-            var authdata = {};
-            authdata[KEY_IDENTITY] = this.identity;
-            authdata[KEY_PUBKEY_ID] = this.publicKeyId;
-            return authdata;
+        getAuthData: function getAuthData(encoder, format, callback) {
+            AsyncExecutor(callback, function() {
+                var mo = encoder.createObject();
+                mo.put(KEY_IDENTITY, this.identity);
+                mo.put(KEY_PUBKEY_ID, this.publicKeyId);
+                return mo;
+            }, this);
         },
 
         /** @inheritDoc */
@@ -89,19 +91,22 @@ var RsaAuthenticationData$parse;
 
     /**
      * Construct a new RSA asymmetric keys authentication data instance from the
-     * provided JSON object.
+     * provided MSL object.
      *
-     * @param {Object} rsaAuthJO the authentication data JSON object.
+     * @param {MslObject} rsaAuthMo the authentication data MSL object.
      * @return the authentication data.
      * @throws MslEncodingException if there is an error parsing the entity
      *         authentication data.
      */
-    RsaAuthenticationData$parse = function RsaAuthenticationData$parse(rsaAuthJO) {
-        var identity = rsaAuthJO[KEY_IDENTITY];
-        var pubkeyid = rsaAuthJO[KEY_PUBKEY_ID];
-        if (typeof identity !== 'string' || typeof pubkeyid !== 'string') {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "RSA authdata" + JSON.stringify(rsaAuthJO));
+    RsaAuthenticationData$parse = function RsaAuthenticationData$parse(rsaAuthMo) {
+        try {
+            var identity = rsaAuthMo.getString(KEY_IDENTITY);
+            var pubkeyid = rsaAuthMo.getString(KEY_PUBKEY_ID);
+            return new RsaAuthenticationData(identity, pubkeyid);
+        } catch (e) {
+            if (e instanceof MslEncoderException)
+                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "RSA authdata" + rsaAuthMo);
+            throw e;
         }
-        return new RsaAuthenticationData(identity, pubkeyid);
     };
 })();

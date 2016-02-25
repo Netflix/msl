@@ -80,7 +80,7 @@ public class PresharedProfileAuthenticationData extends EntityAuthenticationData
 
     /**
      * <p>Returns the entity identity. This is equal to the preshared keys
-     * identity and profile strings moined with a hyphen, e.g.
+     * identity and profile strings joined with a hyphen, e.g.
      * {@code pskid-profile}.</p>
      * 
      * @return the entity identity.

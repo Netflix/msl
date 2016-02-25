@@ -517,10 +517,14 @@ public class ServiceToken implements MslEncodable {
         // we should not re-encrypt or re-sign as there is no guarantee out MSL
         // crypto context is capable of encrypting and signing with the same
         // keys, even if it is capable of decrypting and verifying.
+        final byte[] data, signature;
+        if (tokendataBytes != null || signatureBytes != null) {
+            data = tokendataBytes;
+            signature = signatureBytes;
+        }
         //
         // Otherwise create the token data and signature.
-        final byte[] data, signature;
-        if (tokendataBytes == null && signatureBytes == null) {
+        else {
             // Encrypt the service data if the length is > 0. Otherwise encode
             // as empty data to indicate this token should be deleted.
             final byte[] ciphertext;
@@ -548,9 +552,6 @@ public class ServiceToken implements MslEncodable {
             } catch (final MslCryptoException e) {
                 throw new MslEncoderException("Error signing the token data.", e);
             }
-        } else {
-            data = tokendataBytes;
-            signature = signatureBytes;
         }
 
         // Encode the token.

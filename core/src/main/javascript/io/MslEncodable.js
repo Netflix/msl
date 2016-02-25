@@ -30,12 +30,17 @@ var MslEncode;
      */
     MslEncode = util.Class.create({
         /**
-         * Returns a MSL encoding of the implementing class.
+         * Returns the requested encoding of a MSL object representing the
+         * implementing class.
          * 
-         * @param {MslEncodingFormat} format the encoding format.
-         * @return {Uint8Array} a MSL encoding.
-         * @throws MslEncoderException if the encoding format is not supported.
+         * @param {MslEncoderFactory} encoder the encoder factory.
+         * @param {MslEncoderFormat} format the encoder format.
+         * @param {{result: function(Uint8Array), error: function(Error)}}
+         *        callback the callback that will receive the MSL encoding of
+         *        the MSL object or any thrown exceptions.
+         * @throws MslEncoderException if the encoder format is not supported or
+         *         there is an error encoding the data.
          */
-        toMslEncode: function(final MslEncodingFormat format) {},
+        toMslEncoding: function(encoder, format) {},
     });
 })();

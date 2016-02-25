@@ -251,13 +251,13 @@ public class MasterToken implements MslEncodable {
         
         // Grab the crypto context.
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
-        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
         
         // Verify the encoding.
+        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
         try {
             tokendataBytes = masterTokenMo.getBytes(KEY_TOKENDATA);
             if (tokendataBytes.length == 0)
-                throw new MslEncodingException(MslError.MASTERTOKEN_TOKENDATA_MISSING, "mastertoken " + masterTokenMo.toString());
+                throw new MslEncodingException(MslError.MASTERTOKEN_TOKENDATA_MISSING, "mastertoken " + masterTokenMo);
             signatureBytes = masterTokenMo.getBytes(KEY_SIGNATURE);
             verified = cryptoContext.verify(tokendataBytes, signatureBytes, encoder);
         } catch (final MslEncoderException e) {
@@ -509,7 +509,7 @@ public class MasterToken implements MslEncodable {
     private final String identity;
     /** Encryption key. */
     private final SecretKey encryptionKey;
-    /** Signature (HMAC) key. */
+    /** Signature key. */
     private final SecretKey signatureKey;
 
     /** Token data bytes. */
@@ -536,10 +536,14 @@ public class MasterToken implements MslEncodable {
         // we should not re-encrypt or re-sign as there is no guarantee out MSL
         // crypto context is capable of encrypting and signing with the same
         // keys, even if it is capable of decrypting and verifying.
+        final byte[] data, signature;
+        if (tokendataBytes != null || signatureBytes != null) {
+            data = tokendataBytes;
+            signature = signatureBytes;
+        }
         //
         // Otherwise create the token data and signature.
-        final byte[] data, signature;
-        if (tokendataBytes == null && signatureBytes == null) {
+        else {
             // Grab the MSL token crypto context.
             final ICryptoContext cryptoContext;
             try {
@@ -572,9 +576,6 @@ public class MasterToken implements MslEncodable {
             } catch (final MslCryptoException e) {
                 throw new MslEncoderException("Error signing the token data.", e);
             }
-        } else {
-            data = tokendataBytes;
-            signature = signatureBytes;
         }
 
         // Encode the token.

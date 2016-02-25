@@ -25,7 +25,6 @@ import java.util.Set;
 
 import com.netflix.msl.MslConstants.CompressionAlgorithm;
 import com.netflix.msl.MslCryptoException;
-import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslException;
 import com.netflix.msl.MslInternalException;
 import com.netflix.msl.crypto.ICryptoContext;
@@ -292,8 +291,6 @@ public class MessageOutputStream extends OutputStream {
             else
                 currentPayload.reset();
         } catch (final MslEncoderException e) {
-            throw new IOException("Error encoding payload chunk [sequence number " + payloadSequenceNumber + "].", e);
-        } catch (final MslEncodingException e) {
             throw new IOException("Error encoding payload chunk [sequence number " + payloadSequenceNumber + "].", e);
         } catch (final MslCryptoException e) {
             throw new IOException("Error encrypting payload chunk [sequence number " + payloadSequenceNumber + "].", e);

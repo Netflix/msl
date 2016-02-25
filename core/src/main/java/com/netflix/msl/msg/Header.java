@@ -159,11 +159,11 @@ public abstract class Header implements MslEncodable {
                     throw new MslMessageException(MslError.HEADER_DATA_MISSING, DatatypeConverter.printBase64Binary(errordata)).setEntity(masterToken).setEntity(entityAuthData);
                 return new ErrorHeader(ctx, errordata, entityAuthData, signature);
             }
+            
+            // Unknown header.
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, headerMo.toString());
         } catch (final MslEncoderException e) {
             throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "header/errormsg " + headerMo, e);
         }
-        
-        // Unknown header.
-        throw new MslEncodingException(MslError.MSL_PARSE_ERROR, headerMo.toString());
     }
 }

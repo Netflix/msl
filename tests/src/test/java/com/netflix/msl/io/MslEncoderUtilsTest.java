@@ -18,6 +18,7 @@ package com.netflix.msl.io;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.nio.charset.Charset;
@@ -37,7 +38,7 @@ import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslContext;
 
 /**
- * JSON utilities unit tests.
+ * MSL utilities unit tests.
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
@@ -77,8 +78,8 @@ public class MslEncoderUtilsTest {
     
     /**
      * @param random random source.
-     * @return a JSON object containing no JSON objects or JSON arrays.
-     * @throws MslEncoderException if there is an error building the JSON object.
+     * @return a MSL object containing no MSL objects or MSL arrays.
+     * @throws MslEncoderException if there is an error building the MSL object.
      */
     private static MslObject createFlatMslObject(final Random random) throws MslEncoderException {
         final MslObject mo = new MslObject();
@@ -105,8 +106,8 @@ public class MslEncoderUtilsTest {
      * @param random random source.
      * @param depth maximum depth. A depth of 1 indicates no children may have
      *        more children.
-     * @return a JSON object that may contain JSON objects or JSON arrays.
-     * @throws MslEncoderException if there is an error building the JSON object.
+     * @return a MSL object that may contain MSL objects or MSL arrays.
+     * @throws MslEncoderException if there is an error building the MSL object.
      */
     private static MslObject createDeepMslObject(final Random random, final int depth) throws MslEncoderException {
         final MslObject mo = new MslObject();
@@ -137,8 +138,8 @@ public class MslEncoderUtilsTest {
     
     /**
      * @param random random source.
-     * @return a JSON array containing no JSON objects or JSON arrays.
-     * @throws MslEncoderException if there is an error building the JSON array.
+     * @return a MSL array containing no MSL objects or MSL arrays.
+     * @throws MslEncoderException if there is an error building the MSL array.
      */
     private static MslArray createFlatMslArray(final Random random) throws MslEncoderException {
         final MslArray ma = new MslArray();
@@ -166,8 +167,8 @@ public class MslEncoderUtilsTest {
      * @param random random source.
      * @param depth maximum depth. A depth of 1 indicates no children may have
      *        more children.
-     * @return a JSON array that may contain JSON objects or JSON arrays.
-     * @throws MslEncoderException if there is an error building the JSON array.
+     * @return a MSL array that may contain MSL objects or MSL arrays.
+     * @throws MslEncoderException if there is an error building the MSL array.
      */
     private static MslArray createDeepMslArray(final Random random, final int depth) throws MslEncoderException {
         final MslArray ma = new MslArray();
@@ -200,7 +201,7 @@ public class MslEncoderUtilsTest {
      * @param o the object to change.
      * @return a new object with a changed value.
      * @throws MslEncoderException if the object type is unknown or there is an error
-     *         parsing/building the JSON objects or arrays.
+     *         parsing/building the MSL objects or arrays.
      */
     private static Object changeValue(final Object o) throws MslEncoderException {
         final Random random = new Random();
@@ -231,12 +232,12 @@ public class MslEncoderUtilsTest {
     }
     
     /**
-     * @param mo JSON object to create a changed version of.
+     * @param mo MSL object to create a changed version of.
      * @param name name of value to change.
-     * @return a new JSON object with the value associated with the given name
+     * @return a new MSL object with the value associated with the given name
      *         randomly changed.
      * @throws MslEncoderException if the name does not exist or there is an error
-     *         parsing/building the JSON objects.
+     *         parsing/building the MSL objects.
      */
     private static MslObject changeValue(final MslObject mo, final String name) throws MslEncoderException {
         final MslObject newMo = encoder.createObject(mo.getMap());
@@ -257,7 +258,7 @@ public class MslEncoderUtilsTest {
         final MslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
         encoder = ctx.getMslEncoderFactory();
         
-        final Random random = new Random();
+        random = new Random();
         flatMo = createFlatMslObject(random);
         deepMo = createDeepMslObject(random, MAX_DEPTH);
         nullMo = null;
@@ -272,6 +273,7 @@ public class MslEncoderUtilsTest {
         deepMo = null;
         flatMa = null;
         deepMa = null;
+        random = null;
         
         encoder = null;
     }
@@ -395,9 +397,59 @@ public class MslEncoderUtilsTest {
         }
     }
     
+    @Test
+    public void mergeNulls() throws MslEncoderException {
+        final MslObject jo1 = null;
+        final MslObject jo2 = null;
+        final MslObject merged = MslEncoderUtils.merge(jo1, jo2);
+        assertNull(merged);
+    }
+    
+    @Test
+    public void mergeFirstNull() throws MslEncoderException {
+        final MslObject jo1 = null;
+        final MslObject jo2 = deepMo;
+        final MslObject merged = MslEncoderUtils.merge(jo1, jo2);
+        assertTrue(MslEncoderUtils.equals(merged, jo2));
+    }
+    
+    @Test
+    public void mergeSecondNull() throws MslEncoderException {
+        final MslObject jo1 = deepMo;
+        final MslObject jo2 = null;
+        final MslObject merged = MslEncoderUtils.merge(jo1, jo2);
+        assertTrue(MslEncoderUtils.equals(merged, jo1));
+    }
+    
+    @Test
+    public void mergeOverwriting() throws MslEncoderException {
+        final MslObject jo1 = createFlatMslObject(random);
+        final MslObject jo2 = createFlatMslObject(random);
+        
+        // Insert some shared keys.
+        jo1.put("key1", true);
+        jo2.put("key1", "value1");
+        jo1.put("key2", 17);
+        jo2.put("key2", 34);
+        
+        // Ensure second overwrites first.
+        final MslObject merged = MslEncoderUtils.merge(jo1, jo2);
+        for (final String key : merged.getKeys()) {
+            final Object value = merged.get(key);
+            if (key.equals("key1") || key.equals("key2")) {
+                assertEquals(jo2.get(key), value);
+            } else if (jo2.has(key)) {
+                assertEquals(jo2.get(key), value);
+            } else {
+                assertEquals(jo1.get(key), value);
+            }
+        }
+    }
+    
     /** MSL encoder factory. */
     private static MslEncoderFactory encoder;
     
+    private static Random random;
     private static MslObject flatMo, deepMo, nullMo;
     private static MslArray flatMa, deepMa, nullMa;
 }

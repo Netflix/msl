@@ -198,18 +198,30 @@ public class MslArray {
      * Return the value associated with an index.
      * 
      * @param index the index.
+     * @param encoder the MSL encoder factory.
      * @return the value.
      * @throws ArrayIndexOutOfBoundsException if the index is negative or
      *         exceeds the number of elements in the array.
      * @throws MslEncoderException if the value is {@code null} or of the wrong
      *         type.
      */
-    public MslObject getMslObject(final int index) throws MslEncoderException {
+    public MslObject getMslObject(final int index, final MslEncoderFactory encoder) throws MslEncoderException {
         final Object o = get(index);
         if (o instanceof MslObject)
             return (MslObject)o;
+        /* FIXME: How should we handle MslEncodable?
+        if (o instanceof MslEncodable)
+            return ((MslEncodable)o).toMslObject(encoder);
+        */
         if (o instanceof Map)
             return new MslObject((Map<?,?>)o);
+        if (o instanceof byte[]) {
+            try {
+                return encoder.parseObject((byte[])o);
+            } catch (final MslEncoderException e) {
+                throw new MslEncoderException("MslObject[" + index + "] is not a MslObject.", e);
+            }
+        }
         throw new MslEncoderException("MslArray[" + index + "] is not a MslObject.");
     }
 
@@ -445,19 +457,36 @@ public class MslArray {
      * is not of the correct type.
      * 
      * @param index the index.
+     * @param encoder the MSL encoder factory.
      * @return the {@code MslObject} or {@code null}.
      * @throws ArrayIndexOutOfBoundsException if the index is negative or
      *         exceeds the number of elements in the array.
      */
-    public MslObject optMslObject(final int index) {
+    public MslObject optMslObject(final int index, final MslEncoderFactory encoder) {
         final Object o = opt(index);
         if (o instanceof MslObject)
             return (MslObject)o;
+        /* FIXME: How should we handle MslEncodable?
+        if (o instanceof MslEncodable) {
+            try {
+                return ((MslEncodable)o).toMslObject(encoder);
+            } catch (final MslEncoderException e) {
+                // Drop through.
+            }
+        }
+        */
         try {
             if (o instanceof Map)
                 return new MslObject((Map<?,?>)o);
         } catch (final IllegalArgumentException e) {
             return null;
+        }
+        if (o instanceof byte[]) {
+            try {
+                return encoder.parseObject((byte[])o);
+            } catch (final MslEncoderException e) {
+                return null;
+            }
         }
         return null;
     }
@@ -580,10 +609,8 @@ public class MslArray {
     }
     
     /**
-     * <p><p>Put or replace a value in the {@code MslArray} at the index. If the
+     * <p>Put or replace a value in the {@code MslArray} at the index. If the
      * index exceeds the length, null elements will be added as necessary.</p>
-     * 
-     * <p>This method will call {@link #put(int, Object)}.</p></p>
      * 
      * <p>This method will call {@link #put(int, Object)}.</p>
      * 
@@ -712,9 +739,12 @@ public class MslArray {
      *         exceeds the number of elements in the array.
      */
     public Object remove(final int index) {
-        if (index < 0 || index >= list.size())
+        if (index < -1 || index >= list.size())
             throw new ArrayIndexOutOfBoundsException("MslArray[" + index + "] is negative or exceeds array length.");
-        return list.remove((index == -1) ? list.size() - 1 : index);
+        final int i = (index == -1) ? list.size() - 1 : index;
+        final Object value = opt(i);
+        list.remove(i);
+        return value;
     }
 
     /**
