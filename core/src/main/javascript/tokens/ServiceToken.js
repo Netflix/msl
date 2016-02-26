@@ -295,7 +295,7 @@ var ServiceToken$parse;
                                         error: function(e) {
                                             AsyncExecutor(callback, function() {
                                                 if (e instanceof MslException) {
-                                                    e.setEntity(masterToken);
+                                                    e.setMasterToken(masterToken);
                                                     e.setUserIdTokenIdToken(userIdToken);
                                                 }
                                                 throw e;
@@ -307,7 +307,7 @@ var ServiceToken$parse;
                             error: function(e) {
                                 AsyncExecutor(callback, function() {
                                     if (e instanceof MslException) {
-                                        e.setEntity(masterToken);
+                                        e.setMasterToken(masterToken);
                                         e.setUserIdToken(userIdToken);
                                     }
                                     throw e;
@@ -347,7 +347,7 @@ var ServiceToken$parse;
                             error: function(e) {
                                 AsyncExecutor(callback, function() {
                                     if (e instanceof MslException) {
-                                        e.setEntity(masterToken);
+                                        e.setMasterToken(masterToken);
                                         e.setUserIdToken(userIdToken);
                                     }
                                     throw e;
@@ -560,19 +560,19 @@ var ServiceToken$parse;
             var tokendataB64 = serviceTokenJO[KEY_TOKENDATA];
             var signatureB64 = serviceTokenJO[KEY_SIGNATURE];
             if (typeof tokendataB64 !== 'string' || typeof signatureB64 !== 'string')
-                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "servicetoken " + JSON.stringify(serviceTokenJO)).setEntity(masterToken).setEntity(userIdToken);
+                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "servicetoken " + JSON.stringify(serviceTokenJO)).setMasterToken(masterToken).setUserIdToken(userIdToken);
             var tokendata, signature;
             try {
                 tokendata = base64$decode(tokendataB64);
             } catch (e) {
-                throw new MslException(MslError.SERVICETOKEN_TOKENDATA_INVALID, "servicetoken " + JSON.stringify(serviceTokenJO), e).setEntity(masterToken).setEntity(userIdToken);
+                throw new MslException(MslError.SERVICETOKEN_TOKENDATA_INVALID, "servicetoken " + JSON.stringify(serviceTokenJO), e).setMasterToken(masterToken).setUserIdToken(userIdToken);
             }
             if (!tokendata || tokendata.length == 0)
-                throw new MslEncodingException(MslError.SERVICETOKEN_TOKENDATA_MISSING, "servicetoken " + JSON.stringify(serviceTokenJO)).setEntity(masterToken).setEntity(userIdToken);
+                throw new MslEncodingException(MslError.SERVICETOKEN_TOKENDATA_MISSING, "servicetoken " + JSON.stringify(serviceTokenJO)).setMasterToken(masterToken).setUserIdToken(userIdToken);
             try {
                 signature = base64$decode(signatureB64);
             } catch (e) {
-                throw new MslException(MslError.SERVICETOKEN_SIGNATURE_INVALID, "servicetoken " + JSON.stringify(serviceTokenJO), e).setEntity(masterToken).setEntity(userIdToken);
+                throw new MslException(MslError.SERVICETOKEN_SIGNATURE_INVALID, "servicetoken " + JSON.stringify(serviceTokenJO), e).setMasterToken(masterToken).setUserIdToken(userIdToken);
             }
 
             // Pull the token data.
@@ -594,7 +594,7 @@ var ServiceToken$parse;
                 ciphertextB64 = tokenDataJO[KEY_SERVICEDATA];
             } catch (e) {
                 if (e instanceof SyntaxError)
-                    throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "servicetokendata " + tokenDataJson, e).setEntity(masterToken).setEntity(userIdToken);
+                    throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "servicetokendata " + tokenDataJson, e).setMasterToken(masterToken).setUserIdToken(userIdToken);
                 throw e;
             }
 
@@ -606,26 +606,26 @@ var ServiceToken$parse;
                 (algoName && typeof algoName !== 'string') ||
                 typeof ciphertextB64 !== 'string')
             {
-                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "servicetokendata " + tokenDataJson).setEntity(masterToken).setEntity(userIdToken);
+                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "servicetokendata " + tokenDataJson).setMasterToken(masterToken).setUserIdToken(userIdToken);
             }
 
             // Verify serial number values.
             if (tokenDataJO[KEY_MASTER_TOKEN_SERIAL_NUMBER] &&
                 mtSerialNumber < 0 || mtSerialNumber > MslConstants$MAX_LONG_VALUE)
             {
-                throw new MslException(MslError.SERVICETOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "servicetokendata " + tokenDataJson).setEntity(masterToken).setEntity(userIdToken);
+                throw new MslException(MslError.SERVICETOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "servicetokendata " + tokenDataJson).setMasterToken(masterToken).setUserIdToken(userIdToken);
             }
             if (tokenDataJO[KEY_USER_ID_TOKEN_SERIAL_NUMBER] &&
                 uitSerialNumber < 0 || uitSerialNumber > MslConstants$MAX_LONG_VALUE)
             {
-                throw new MslException(MslError.SERVICETOKEN_USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "servicetokendata " + tokenDataJson).setEntity(masterToken).setEntity(userIdToken);
+                throw new MslException(MslError.SERVICETOKEN_USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "servicetokendata " + tokenDataJson).setMasterToken(masterToken).setUserIdToken(userIdToken);
             }
 
             // Verify serial numbers match.
             if (mtSerialNumber != -1 && (!masterToken || mtSerialNumber != masterToken.serialNumber))
-                throw new MslException(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH, "st mtserialnumber " + mtSerialNumber + "; mt " + masterToken).setEntity(masterToken).setEntity(userIdToken);
+                throw new MslException(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH, "st mtserialnumber " + mtSerialNumber + "; mt " + masterToken).setMasterToken(masterToken).setUserIdToken(userIdToken);
             if (uitSerialNumber != -1 && (!userIdToken || uitSerialNumber != userIdToken.serialNumber))
-                throw new MslException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH, "st uitserialnumber " + uitSerialNumber + "; uit " + userIdToken).setEntity(masterToken).setEntity(userIdToken);
+                throw new MslException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH, "st uitserialnumber " + uitSerialNumber + "; uit " + userIdToken).setMasterToken(masterToken).setUserIdToken(userIdToken);
 
             // Convert encrypted to the correct type.
             encrypted = (encrypted === true);
@@ -652,10 +652,10 @@ var ServiceToken$parse;
                                 try {
                                     ciphertext = base64$decode(ciphertextB64);
                                 } catch (e) {
-                                    throw new MslException(MslError.SERVICETOKEN_SERVICEDATA_INVALID, "servicetokendata " + tokenDataJson, e).setEntity(masterToken).setEntity(userIdToken);
+                                    throw new MslException(MslError.SERVICETOKEN_SERVICEDATA_INVALID, "servicetokendata " + tokenDataJson, e).setMasterToken(masterToken).setUserIdToken(userIdToken);
                                 }
                                 if (!ciphertext || (ciphertextB64.length != 0 && ciphertext.length == 0))
-                                    throw new MslException(MslError.SERVICETOKEN_SERVICEDATA_INVALID, "servicetokendata " + tokenDataJson).setEntity(masterToken).setEntity(userIdToken);
+                                    throw new MslException(MslError.SERVICETOKEN_SERVICEDATA_INVALID, "servicetokendata " + tokenDataJson).setMasterToken(masterToken).setUserIdToken(userIdToken);
                                 if (encrypted && ciphertext.length > 0) {
                                     cryptoContext.decrypt(ciphertext, {
                                         result: function(compressedData) {
@@ -672,7 +672,7 @@ var ServiceToken$parse;
                                         error: function(e) {
                                             AsyncExecutor(callback, function() {
                                                 if (e instanceof MslException) {
-                                                    e.setEntity(masterToken);
+                                                    e.setMasterToken(masterToken);
                                                     e.setUserIdToken(userIdToken);
                                                 }
                                                 throw e;
@@ -701,7 +701,7 @@ var ServiceToken$parse;
                     error: function(e) {
                         AsyncExecutor(callback, function() {
                             if (e instanceof MslException) {
-                                e.setEntity(masterToken);
+                                e.setMasterToken(masterToken);
                                 e.setUserIdToken(userIdToken);
                             }
                             throw e;

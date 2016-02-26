@@ -252,8 +252,8 @@ var MessageInputStream$create;
                                     },
                                     error: function(e) {
                                         if (e instanceof MslException) {
-                                            e.setEntity(messageHeader.masterToken);
-                                            e.setEntity(messageHeader.entityAuthenticationData);
+                                            e.setMasterToken(messageHeader.masterToken);
+                                            e.setEntityAuthenticationData(messageHeader.entityAuthenticationData);
                                             e.setUserIdToken(messageHeader.userIdToken);
                                             e.setUserAuthenticationData(messageHeader.userAuthenticationData);
                                             e.setMessageId(messageHeader.messageId);
@@ -297,8 +297,8 @@ var MessageInputStream$create;
                         checkHandshakeProperties(ctx, messageHeader);
                     } catch (e) {
                         if (e instanceof MslException) {
-                            e.setEntity(messageHeader.masterToken);
-                            e.setEntity(messageHeader.entityAuthenticationData);
+                            e.setMasterToken(messageHeader.masterToken);
+                            e.setEntityAuthenticationData(messageHeader.entityAuthenticationData);
                             e.setUserIdToken(messageHeader.userIdToken);
                             e.setUserAuthenticationData(messageHeader.userAuthenticationData);
                             e.setMessageId(messageHeader.messageId);
@@ -321,8 +321,8 @@ var MessageInputStream$create;
                         checkMasterToken(ctx, messageHeader);
                     } catch (e) {
                         if (e instanceof MslException) {
-                            e.setEntity(messageHeader.masterToken);
-                            e.setEntity(messageHeader.entityAuthenticationData);
+                            e.setMasterToken(messageHeader.masterToken);
+                            e.setEntityAuthenticationData(messageHeader.entityAuthenticationData);
                             e.setUserIdToken(messageHeader.userIdToken);
                             e.setUserAuthenticationData(messageHeader.userAuthenticationData);
                             e.setMessageId(messageHeader.messageId);
@@ -345,7 +345,7 @@ var MessageInputStream$create;
                         }
                     } catch (e) {
                         if (e instanceof MslException) {
-                            e.setEntity(messageHeader.masterToken);
+                            e.setMasterToken(messageHeader.masterToken);
                             e.setUserIdToken(messageHeader.userIdToken);
                             e.setUserAuthenticationData(messageHeader.userAuthenticationData);
                             e.setMessageId(messageHeader.messageId);
@@ -375,7 +375,7 @@ var MessageInputStream$create;
                             },
                             error: function(e) {
                                 if (e instanceof MslException) {
-                                    e.setEntity(messageHeader.masterToken);
+                                    e.setMasterToken(messageHeader.masterToken);
                                     e.setUserIdToken(messageHeader.userIdToken);
                                     e.setUserAuthenticationData(messageHeader.userAuthenticationData);
                                     e.setMessageId(messageHeader.messageId);
@@ -386,7 +386,7 @@ var MessageInputStream$create;
                         });
                     } catch (e) {
                         if (e instanceof MslException) {
-                            e.setEntity(messageHeader.masterToken);
+                            e.setMasterToken(messageHeader.masterToken);
                             e.setUserIdToken(messageHeader.userIdToken);
                             e.setUserAuthenticationData(messageHeader.userAuthenticationData);
                             e.setMessageId(messageHeader.messageId);
@@ -409,7 +409,7 @@ var MessageInputStream$create;
                                 result: function(revoked) {
                                     if (revoked) {
                                         self._errored = new MslUserIdTokenException(revoked, userIdToken)
-                                        .setEntity(masterToken)
+                                        .setMasterToken(masterToken)
                                         .setUserIdToken(userIdToken)
                                         .setMessageId(messageHeader.messageId);
                                         ready();
@@ -419,7 +419,7 @@ var MessageInputStream$create;
                                 },
                                 error: function(e) {
                                     if (e instanceof MslException) {
-                                        e.setEntity(messageHeader.masterToken);
+                                        e.setMasterToken(messageHeader.masterToken);
                                         e.setUserIdToken(messageHeader.userIdToken);
                                         e.setUserAuthenticationData(messageHeader.userAuthenticationData);
                                         e.setMessageId(messageHeader.messageId);
@@ -433,7 +433,7 @@ var MessageInputStream$create;
                         }
                     } catch (e) {
                         if (e instanceof MslException) {
-                            e.setEntity(messageHeader.masterToken);
+                            e.setMasterToken(messageHeader.masterToken);
                             e.setUserIdToken(messageHeader.userIdToken);
                             e.setUserAuthenticationData(messageHeader.userAuthenticationData);
                             e.setMessageId(messageHeader.messageId);
@@ -452,7 +452,7 @@ var MessageInputStream$create;
                             // request data then reject the message.
                             if (!messageHeader.isRenewable() || messageHeader.keyRequestData.length == 0) {
                                 self._errored = new MslMessageException(MslError.MESSAGE_EXPIRED, JSON.stringify(messageHeader))
-                                .setEntity(masterToken)
+                                .setMasterToken(masterToken)
                                 .setUserIdToken(messageHeader.userIdToken)
                                 .setUserAuthenticationData(messageHeader.userAuthenticationData)
                                 .setMessageId(messageHeader.messageId);
@@ -470,7 +470,7 @@ var MessageInputStream$create;
                                 result: function(notRenewable) {
                                     if (notRenewable) {
                                         self._errored = new MslMessageException(notRenewable, "Master token is expired and not renewable.")
-                                        .setEntity(masterToken)
+                                        .setMasterToken(masterToken)
                                         .setUserIdToken(messageHeader.userIdToken)
                                         .setUserAuthenticationData(messageHeader.userAuthenticationData)
                                         .setMessageId(messageHeader.messageId);;
@@ -481,7 +481,7 @@ var MessageInputStream$create;
                                 },
                                 error: function(e) {
                                     if (e instanceof MslException) {
-                                        e.setEntity(messageHeader.masterToken);
+                                        e.setMasterToken(messageHeader.masterToken);
                                         e.setUserIdToken(messageHeader.userIdToken);
                                         e.setUserAuthenticationData(messageHeader.userAuthenticationData);
                                         e.setMessageId(messageHeader.messageId);
@@ -495,7 +495,7 @@ var MessageInputStream$create;
                         }
                     } catch (e) {
                         if (e instanceof MslException) {
-                            e.setEntity(messageHeader.masterToken);
+                            e.setMasterToken(messageHeader.masterToken);
                             e.setUserIdToken(messageHeader.userIdToken);
                             e.setUserAuthenticationData(messageHeader.userAuthenticationData);
                             e.setMessageId(messageHeader.messageId);
@@ -516,7 +516,7 @@ var MessageInputStream$create;
                             // message.
                             if (!masterToken) {
                                 self._errored = new MslMessageException(MslError.INCOMPLETE_NONREPLAYABLE_MESSAGE, JSON.stringify(messageHeader))
-                                .setEntity(messageHeader.entityAuthenticationData)
+                                .setEntityAuthenticationData(messageHeader.entityAuthenticationData)
                                 .setUserIdToken(messageHeader.userIdToken)
                                 .setUserAuthenticationData(messageHeader.userAuthenticationData)
                                 .setMessageId(messageHeader.messageId);
@@ -531,7 +531,7 @@ var MessageInputStream$create;
                                 result: function(replayed) {
                                     if (replayed) {
                                         self._errored = new MslMessageException(replayed, JSON.stringify(messageHeader))
-                                        .setEntity(masterToken)
+                                        .setMasterToken(masterToken)
                                         .setUserIdToken(messageHeader.userIdToken)
                                         .setUserAuthenticationData(messageHeader.userAuthenticationData)
                                         .setMessageId(messageHeader.messageId);
@@ -542,7 +542,7 @@ var MessageInputStream$create;
                                 },
                                 error: function(e) {
                                     if (e instanceof MslException) {
-                                        e.setEntity(masterToken);
+                                        e.setMasterToken(masterToken);
                                         e.setUserIdToken(messageHeader.userIdToken);
                                         e.setUserAuthenticationData(messageHeader.userAuthenticationData);
                                         e.setMessageId(messageHeader.messageId);
@@ -559,8 +559,8 @@ var MessageInputStream$create;
                         }
                     } catch (e) {
                         if (e instanceof MslException) {
-                            e.setEntity(messageHeader.masterToken);
-                            e.setEntity(messageHeader.entityAuthenticationData);
+                            e.setMasterToken(messageHeader.masterToken);
+                            e.setEntityAuthenticationData(messageHeader.entityAuthenticationData);
                             e.setUserIdToken(messageHeader.userIdToken);
                             e.setUserAuthenticationData(messageHeader.userAuthenticationData);
                             e.setMessageId(messageHeader.messageId);
@@ -692,15 +692,15 @@ var MessageInputStream$create;
                                         var userAuthData = messageHeader.getUserAuthenticationData;
                                         if (payload.messageId != messageHeader.messageId) {
                                             throw new MslMessageException(MslError.PAYLOAD_MESSAGE_ID_MISMATCH, "payload mid " + payload.messageId + " header mid " + messageHeader.messageId)
-                                            .setEntity(masterToken)
-                                            .setEntity(entityAuthData)
+                                            .setMasterToken(masterToken)
+                                            .setEntityAuthenticationData(entityAuthData)
                                             .setUserIdToken(userIdToken)
                                             .setUserAuthenticationData(userAuthData);
                                         }
                                         if (payload.sequenceNumber != this._payloadSequenceNumber) {
                                             throw new MslMessageException(MslError.PAYLOAD_SEQUENCE_NUMBER_MISMATCH, "payload seqno " + payload.sequenceNumber + " expected seqno " + this._payloadSequenceNumber)
-                                            .setEntity(masterToken)
-                                            .setEntity(entityAuthData)
+                                            .setMasterToken(masterToken)
+                                            .setEntityAuthenticationData(entityAuthData)
                                             .setUserIdToken(userIdToken)
                                             .setUserAuthenticationData(userAuthData);
                                         }

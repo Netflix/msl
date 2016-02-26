@@ -59,12 +59,12 @@ var X509AuthenticationFactory = EntityAuthenticationFactory.extend({
         // Verify entity certificate.
         try {
             if (!this.store.verify(cert))
-                throw new MslEntityAuthException(MslError.X509CERT_VERIFICATION_FAILED, cert.hex).setEntity(authdata);
+                throw new MslEntityAuthException(MslError.X509CERT_VERIFICATION_FAILED, cert.hex).setEntityAuthenticationData(authdata);
         } catch (e) {
             if (!(e instanceof MslException))
-                throw new MslEntityAuthException(MslError.X509CERT_PARSE_ERROR, cert.hex, e).setEntity(authdata);
+                throw new MslEntityAuthException(MslError.X509CERT_PARSE_ERROR, cert.hex, e).setEntityAuthenticationData(authdata);
             else
-                e.setEntity(authdata);
+                e.setEntityAuthenticationData(authdata);
             throw e;
         }
 

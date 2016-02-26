@@ -245,7 +245,7 @@ var UserIdToken$parse;
                                     error: function(e) {
                                         AsyncExecutor(callback, function() {
                                             if (e instanceof MslException)
-                                                e.setEntity(masterToken);
+                                                e.setMasterToken(masterToken);
                                             throw e;
                                         }, self);
                                     },
@@ -255,7 +255,7 @@ var UserIdToken$parse;
                         error: function(e) {
                             AsyncExecutor(callback, function() {
                                 if (e instanceof MslException)
-                                    e.setEntity(masterToken);
+                                    e.setMasterToken(masterToken);
                                 throw e;
                             }, self);
                         },
@@ -449,19 +449,19 @@ var UserIdToken$parse;
             var tokendataB64 = userIdTokenJO[KEY_TOKENDATA];
             var signatureB64 = userIdTokenJO[KEY_SIGNATURE];
             if (typeof tokendataB64 !== 'string' || typeof signatureB64 !== 'string')
-                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "useridtoken " + JSON.stringify(userIdTokenJO)).setEntity(masterToken);
+                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "useridtoken " + JSON.stringify(userIdTokenJO)).setMasterToken(masterToken);
             var tokendata, signature;
             try {
                 tokendata = base64$decode(tokendataB64);
             } catch (e) {
-                throw new MslException(MslError.USERIDTOKEN_TOKENDATA_INVALID, "useridtoken " + JSON.stringify(userIdTokenJO), e).setEntity(masterToken);
+                throw new MslException(MslError.USERIDTOKEN_TOKENDATA_INVALID, "useridtoken " + JSON.stringify(userIdTokenJO), e).setMasterToken(masterToken);
             }
             if (!tokendata || tokendata.length == 0)
-                throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_MISSING, "useridtoken " + JSON.stringify(userIdTokenJO)).setEntity(masterToken);
+                throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_MISSING, "useridtoken " + JSON.stringify(userIdTokenJO)).setMasterToken(masterToken);
             try {
                 signature = base64$decode(signatureB64);
             } catch (e) {
-                throw new MslException(MslError.USERIDTOKEN_TOKENDATA_INVALID, "useridtoken " + JSON.stringify(userIdTokenJO), e).setEntity(masterToken);
+                throw new MslException(MslError.USERIDTOKEN_TOKENDATA_INVALID, "useridtoken " + JSON.stringify(userIdTokenJO), e).setMasterToken(masterToken);
             }
             cryptoContext.verify(tokendata, signature, {
                 result: function(verified) {
@@ -478,7 +478,7 @@ var UserIdToken$parse;
                             ciphertextB64 = tokenDataJO[KEY_USERDATA];
                         } catch (e) {
                             if (e instanceof SyntaxError)
-                                throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR, "usertokendata " + tokenDataJson, e).setEntity(masterToken);
+                                throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR, "usertokendata " + tokenDataJson, e).setMasterToken(masterToken);
                             throw e;
                         }
 
@@ -489,16 +489,16 @@ var UserIdToken$parse;
                             typeof serialNumber !== 'number' || serialNumber != serialNumber ||
                             typeof ciphertextB64 !== 'string')
                         {
-                            throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR, "usertokendata " + tokenDataJson).setEntity(masterToken);
+                            throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR, "usertokendata " + tokenDataJson).setMasterToken(masterToken);
                         }
                         if (expirationSeconds < renewalWindowSeconds)
-                            throw new MslException(MslError.USERIDTOKEN_EXPIRES_BEFORE_RENEWAL, "mastertokendata " + tokenDataJson).setEntity(masterToken);
+                            throw new MslException(MslError.USERIDTOKEN_EXPIRES_BEFORE_RENEWAL, "mastertokendata " + tokenDataJson).setMasterToken(masterToken);
 
                         // Verify serial number values.
                         if (mtSerialNumber < 0 || mtSerialNumber > MslConstants$MAX_LONG_VALUE)
-                            throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokenDataJson).setEntity(masterToken);
+                            throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokenDataJson).setMasterToken(masterToken);
                         if (serialNumber < 0 || serialNumber > MslConstants$MAX_LONG_VALUE)
-                            throw new MslException(MslError.USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokenDataJson).setEntity(masterToken);
+                            throw new MslException(MslError.USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokenDataJson).setMasterToken(masterToken);
 
                         // Convert dates.
                         var renewalWindow = new Date(renewalWindowSeconds * MILLISECONDS_PER_SECOND);
@@ -506,17 +506,17 @@ var UserIdToken$parse;
 
                         // Verify serial numbers.
                         if (!masterToken || mtSerialNumber != masterToken.serialNumber)
-                            throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH, "uit mtserialnumber " + mtSerialNumber + "; mt " + JSON.stringify(masterToken)).setEntity(masterToken);
+                            throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH, "uit mtserialnumber " + mtSerialNumber + "; mt " + JSON.stringify(masterToken)).setMasterToken(masterToken);
 
                         // Construct user data.
                         var ciphertext;
                         try {
                             ciphertext = base64$decode(ciphertextB64);
                         } catch (e) {
-                            throw new MslException(MslError.USERIDTOKEN_USERDATA_INVALID, ciphertextB64, e).setEntity(masterToken);
+                            throw new MslException(MslError.USERIDTOKEN_USERDATA_INVALID, ciphertextB64, e).setMasterToken(masterToken);
                         }
                         if (!ciphertext || ciphertext.length == 0)
-                            throw new MslException(MslError.USERIDTOKEN_USERDATA_MISSING, ciphertextB64).setEntity(masterToken);
+                            throw new MslException(MslError.USERIDTOKEN_USERDATA_MISSING, ciphertextB64).setMasterToken(masterToken);
                         if (verified) {
                             cryptoContext.decrypt(ciphertext, {
                                 result: function(userdata) {
@@ -530,7 +530,7 @@ var UserIdToken$parse;
                                             identity = userdataJO[KEY_IDENTITY];
                                         } catch (e) {
                                             if (e instanceof SyntaxError)
-                                                throw new MslEncodingException(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR, "userdata " + userdataJson).setEntity(masterToken);
+                                                throw new MslEncodingException(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR, "userdata " + userdataJson).setMasterToken(masterToken);
                                             throw e;
                                         }
 
@@ -538,10 +538,10 @@ var UserIdToken$parse;
                                         if (issuerData && typeof issuerData !== 'object' ||
                                             typeof identity !== 'string')
                                         {
-                                            throw new MslEncodingException(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR, "userdata " + userdataJson).setEntity(masterToken);
+                                            throw new MslEncodingException(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR, "userdata " + userdataJson).setMasterToken(masterToken);
                                         }
                                         if (!identity || identity.length == 0)
-                                            throw new MslException(MslError.USERIDTOKEN_IDENTITY_INVALID, "userdata " + userdataJson).setEntity(masterToken);
+                                            throw new MslException(MslError.USERIDTOKEN_IDENTITY_INVALID, "userdata " + userdataJson).setMasterToken(masterToken);
                                         
                                         // Reconstruct the user.
                                         var factory = ctx.getTokenFactory();
@@ -559,7 +559,7 @@ var UserIdToken$parse;
                                             error: function(e) {
                                                 AsyncExecutor(callback, function() {
                                                     if (e instanceof MslException)
-                                                        e.setEntity(masterToken);
+                                                        e.setMasterToken(masterToken);
                                                     throw e;
                                                 });
                                             },
@@ -569,7 +569,7 @@ var UserIdToken$parse;
                                 error: function(e) {
                                     AsyncExecutor(callback, function() {
                                         if (e instanceof MslException)
-                                            e.setEntity(masterToken);
+                                            e.setMasterToken(masterToken);
                                         throw e;
                                     });
                                 },
@@ -587,7 +587,7 @@ var UserIdToken$parse;
                 error: function(e) {
                     AsyncExecutor(callback, function() {
                         if (e instanceof MslException)
-                            e.setEntity(masterToken);
+                            e.setMasterToken(masterToken);
                         throw e;
                     });
                 },
