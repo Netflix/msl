@@ -139,20 +139,20 @@ var MslControl$MslChannel;
         Object.defineProperties(this, props);
         return this;
     };
-    
+
     /**
      * A map key based off a MSL context and master token pair.
      */
     var MslContextMasterTokenKey = util.Class.create({
         /**
          * Create a new MSL context and master token map key.
-         * 
+         *
          * @param {MslContext} ctx MSL context.
          * @param {MasterToken} masterToken master token.
          */
         init: function init(ctx, masterToken) {
             // The properties.
-            var props = { 
+            var props = {
                 _ctx: { value: ctx, writable: false, enumerable: false, configurable: false },
                 _masterToken: { value: masterToken, writable: false, enumerable: false, configurable: false },
             };
@@ -662,7 +662,7 @@ var MslControl$MslChannel;
                             // If aborted throw an exception.
                             if (ticket === undefined)
                                 throw new MslInterruptedException('getNewestMasterToken aborted.');
-                            
+
                             // Now we have to be tricky and make sure the master token we just
                             // acquired is still the newest master token. This is necessary
                             // just in case the master token was deleted between grabbing it
@@ -670,7 +670,7 @@ var MslControl$MslChannel;
                             var newestMasterToken = store.getMasterToken();
                             if (masterToken.equals(newestMasterToken))
                                 return new TokenTicket(masterToken, ticket);
-                            
+
                             // If the master tokens are not the same then release the read
                             // lock, acquire the write lock, and then delete the master token
                             // lock (it may already be deleted). Then try again.
@@ -681,7 +681,7 @@ var MslControl$MslChannel;
                                         // If aborted throw an exception.
                                         if (writeTicket === undefined)
                                             throw new MslInterruptedException('getNewestMasterToken aborted.');
-                                        
+
                                         delete this._masterTokenLocks[key];
                                         rwlock.unlock(writeTicket);
                                         return this.getNewestMasterToken(service, ctx, timeout, callback);
@@ -764,7 +764,7 @@ var MslControl$MslChannel;
                 var masterToken = tokenTicket.masterToken;
                 var key = new MslContextMasterTokenKey(ctx, masterToken).uniqueKey();
                 var rwlock = this._masterTokenLocks[key];
-                
+
                 // The lock may be null if the master token was deleted.
                 if (rwlock)
                     rwlock.unlock(tokenTicket.ticket);
@@ -1229,7 +1229,7 @@ var MslControl$MslChannel;
                                     } else {
                                         userIdToken = null;
                                     }
-                                    
+
                                     // Resend the request.
                                     var messageId = MessageBuilder$incrementMessageId(errorHeader.messageId);
                                     var resendMsgCtx = new ResendMessageContext(payloads, msgCtx);
@@ -1290,7 +1290,7 @@ var MslControl$MslChannel;
                                     } else {
                                         userIdToken = null;
                                     }
-                                    
+
                                     // Resend the request.
                                     var messageId = MessageBuilder$incrementMessageId(errorHeader.messageId);
                                     var resendMsgCtx = new ResendMessageContext(payloads, msgCtx);
@@ -1303,7 +1303,7 @@ var MslControl$MslChannel;
                                                     var peerUserIdToken = requestHeader.peerUserIdToken;
                                                     requestBuilder.setPeerAuthTokens(peerMasterToken, peerUserIdToken);
                                                 }
-                                                
+
                                                 // Mark the message as replayable or not as dictated by the
                                                 // message context.
                                                 requestBuilder.setNonReplayable(resendMsgCtx.isNonReplayable());
@@ -1736,8 +1736,8 @@ var MslControl$MslChannel;
                                                 throw new MslMessageException(MslError.UNEXPECTED_RESPONSE_MESSAGE_ID, "expected " + expectedMessageId + "; received " + responseMessageId)
                                                     .setEntity(masterToken)
                                                     .setEntity(entityAuthData)
-                                                    .setUser(userIdToken)
-                                                    .setUser(userAuthData);
+                                                    .setUserIdToken(userIdToken)
+                                                    .setUserAuthenticationData(userAuthData);
                                             }
                                         }
                                     }
@@ -1803,7 +1803,7 @@ var MslControl$MslChannel;
                                                         if (localIdentity == sender)
                                                             throw new MslMessageException(MslError.UNEXPECTED_MESSAGE_SENDER, sender);
                                                     }
-                                                    
+
                                                     // Update the synchronized clock if we are a trusted network client
                                                     // (there is a request) or peer-to-peer entity.
                                                     var timestamp = (responseHeader) ? responseHeader.timestamp : errorHeader.timestamp;
@@ -1813,8 +1813,8 @@ var MslControl$MslChannel;
                                                     if (e instanceof MslException) {
                                                         e.setEntity(masterToken);
                                                         e.setEntity(entityAuthData);
-                                                        e.setUser(userIdToken);
-                                                        e.setUser(userAuthData);
+                                                        e.setUserIdToken(userIdToken);
+                                                        e.setUserAuthenticationData(userAuthData);
                                                     }
                                                     throw e;
                                                 }
@@ -1898,7 +1898,7 @@ var MslControl$MslChannel;
          */
         sendReceive: function sendReceive(service, ctx, msgCtx, input, output, builderTokenTicket, receive, closeStreams, timeout, callback) {
             var self = this;
-            
+
             // Attempt to acquire the renewal lock.
             InterruptibleExecutor(callback, function() {
                 // acquireRenewalLock() may change the master token, and in
@@ -1937,7 +1937,7 @@ var MslControl$MslChannel;
                 InterruptibleExecutor(callback, function sendrecv_send() {
                     var builder = builderTokenTicket.builder;
                     var tokenTicket = builderTokenTicket.tokenTicket;
-                    
+
                     // Send the request.
                     builder.setRenewable(renewing);
                     this.send(service, ctx, msgCtx, output, builder, closeStreams, timeout, {
@@ -1958,11 +1958,11 @@ var MslControl$MslChannel;
                                                 var errorHeader = response.getErrorHeader();
                                                 if (errorHeader)
                                                     this.cleanupContext(ctx, requestHeader, errorHeader);
-                                                
+
                                                 // Release the renewal lock.
                                                 if (renewing)
                                                     this.releaseRenewalLock(ctx, renewalQueue, response);
-                                                
+
                                                 // Release the master token lock.
                                                 this.releaseMasterToken(ctx, tokenTicket);
 
@@ -1976,10 +1976,10 @@ var MslControl$MslChannel;
                                                 // Release the renewal lock.
                                                 if (renewing)
                                                     this.releaseRenewalLock(ctx, renewalQueue, null);
-                                                
+
                                                 // Release the master token lock.
                                                 this.releaseMasterToken(ctx, tokenTicket);
-                                                
+
                                                 callback.timeout();
                                             }, self);
                                         },
@@ -1988,10 +1988,10 @@ var MslControl$MslChannel;
                                                 // Release the renewal lock.
                                                 if (renewing)
                                                     this.releaseRenewalLock(ctx, renewalQueue, null);
-                                                
+
                                                 // Release the master token lock.
                                                 this.releaseMasterToken(ctx, tokenTicket);
-                                                
+
                                                 callback.error(e);
                                             }, self);
                                         }
@@ -1999,11 +1999,11 @@ var MslControl$MslChannel;
                                 } else {
                                     InterruptibleExecutor(callback, function() {
                                         var response = null;
-                                        
+
                                         // Release the renewal lock.
                                         if (renewing)
                                             this.releaseRenewalLock(ctx, renewalQueue, response);
-                                        
+
                                         // Release the master token lock.
                                         this.releaseMasterToken(ctx, tokenTicket);
 
@@ -2018,24 +2018,24 @@ var MslControl$MslChannel;
                                 // Release the renewal lock.
                                 if (renewing)
                                     this.releaseRenewalLock(ctx, renewalQueue, null);
-                                
+
                                 // Release the master token lock.
                                 this.releaseMasterToken(ctx, tokenTicket);
-                                
+
                                 callback.timeout();
                             }, self);
                         },
                         error: function(e) {
                             InterruptibleExecutor(callback, function() {
                                 var response = null;
-                                
+
                                 // Release the renewal lock.
                                 if (renewing)
                                     this.releaseRenewalLock(ctx, renewalQueue, response);
-                                
+
                                 // Release the master token lock.
                                 this.releaseMasterToken(ctx, tokenTicket);
-                                
+
                                 callback.error(e);
                             }, self);
                         }
@@ -2106,7 +2106,7 @@ var MslControl$MslChannel;
             InterruptibleExecutor(callback, function() {
                 var builder = builderTokenTicket.builder;
                 var tokenTicket = builderTokenTicket.tokenTicket;
-                
+
                 var masterToken = builder.getMasterToken();
                 var userIdToken = builder.getUserIdToken();
                 var userId = msgCtx.getUserId();
@@ -2178,14 +2178,14 @@ var MslControl$MslChannel;
                                 // Put the same master token back on the renewing queue so
                                 // anyone else waiting can also proceed.
                                 ctxRenewingQueue.add(newMasterToken);
-                                
+
                                 // If the renewing request did not acquire a master token then
                                 // try again to acquire renewal ownership.
                                 if (newMasterToken === NULL_MASTER_TOKEN) {
                                     blockingAcquisition(masterToken, userIdToken, userId, builder, tokenTicket);
                                     return;
                                 }
-                                
+
                                 // If the new master token is not equal to the previous master
                                 // token then release the previous master token and get the
                                 // newest master token.
@@ -2202,7 +2202,7 @@ var MslControl$MslChannel;
                                                 // right token ticket, now that we have potentially
                                                 // swapped master tokens.
                                                 builderTokenTicket.tokenTicket = tokenTicket;
-                                                
+
                                                 // If there is no newest master token (it could have been
                                                 // deleted despite just being delivered to us) then try
                                                 // again to acquire renewal ownership.
@@ -2211,7 +2211,7 @@ var MslControl$MslChannel;
                                                     blockingAcquisition(masterToken, userIdToken, userId, builder, tokenTicket);
                                                     return;
                                                 }
-                                                
+
                                                 // Otherwise continue with renewal lock acquisition.
                                                 continueAcquisition(previousMasterToken, masterToken, userIdToken, userId, builder, tokenTicket);
                                             }, self);
@@ -2238,7 +2238,7 @@ var MslControl$MslChannel;
                     });
                 }, self);
             }
-                        
+
             function continueAcquisition(previousMasterToken, masterToken, userIdToken, userId, builder, tokenTicket) {
                 InterruptibleExecutor(callback, function() {
                     // The renewing request may have acquired a new user ID token.
@@ -2258,7 +2258,7 @@ var MslControl$MslChannel;
 
                     // Update the message's master token and user ID token.
                     builder.setAuthTokens(masterToken, userIdToken);
-                    
+
                     // If the new master token is still expired then try again to
                     // acquire renewal ownership.
                     var updateTime = ctx.getRemoteTime();
@@ -3191,15 +3191,15 @@ var MslControl$MslChannel;
                 try {
                     var builder = builderTokenTicket.builder;
                     var tokenTicket = builderTokenTicket.tokenTicket;
-                    
+
                     // Do nothing if we cannot send one more message.
                     if (msgCount + 1 > MslConstants$MAX_MESSAGES) {
                         // Release the master token lock.
                         this._ctrl.releaseMasterToken(this._ctx, tokenTicket);
-                        
+
                         return null;
                     }
-    
+
                     // If the response must be encrypted or integrity protected but
                     // cannot then send an error requesting it. The client must re-
                     // initiate the transaction.
@@ -3221,18 +3221,18 @@ var MslControl$MslChannel;
                                 InterruptibleExecutor(callback, function() {
                                     // If we were cancelled then return null.
                                     if (cancelled(re)) return null;
-    
+
                                     throw new MslErrorResponseException("Response requires encryption or integrity protection but cannot be protected: " + securityRequired, re, null);
                                 }, self);
                             }
                         });
-                        
+
                         // Release the master token lock.
                         this._ctrl.releaseMasterToken(this._ctx, tokenTicket);
-                        
+
                         return;
                     }
-    
+
                     // If the response wishes to attach a user ID token but there is no
                     // master token then send an error requesting the master token. The
                     // client must re-initiate the transaction.
@@ -3247,7 +3247,7 @@ var MslControl$MslChannel;
                                 InterruptibleExecutor(callback, function() {
                                     // If we were cancelled then return null.
                                     if (cancelled(re)) return null;
-    
+
                                     throw new MslErrorResponseException("Response wishes to attach a user ID token but there is no master token.", re, null);
                                 }, self);
                             }
@@ -3255,10 +3255,10 @@ var MslControl$MslChannel;
 
                         // Release the master token lock.
                         this._ctrl.releaseMasterToken(this._ctx, tokenTicket);
-                        
+
                         return;
                     }
-    
+
                     // Otherwise simply send the response.
                     builder.setRenewable(false);
                     this._ctrl.send(this._ctx, this._msgCtx, this._output, builder, false, this._timeout, {
@@ -3266,7 +3266,7 @@ var MslControl$MslChannel;
                             InterruptibleExecutor(callback, function() {
                                 // Release the master token lock.
                                 this._ctrl.releaseMasterToken(this._ctx, tokenTicket);
-                                
+
                                 return new MslChannel(this._request, result.request);
                             }, self);
                         },
@@ -3274,7 +3274,7 @@ var MslControl$MslChannel;
                             InterruptibleExecutor(callback, function() {
                                 // Release the master token lock.
                                 this._ctrl.releaseMasterToken(this._ctx, tokenTicket);
-                                
+
                                 callback.timeout();
                             }, self);
                         },
@@ -3282,7 +3282,7 @@ var MslControl$MslChannel;
                             InterruptibleExecutor(callback, function() {
                                 // Release the master token lock.
                                 this._ctrl.releaseMasterToken(this._ctx, tokenTicket);
-                                
+
                                 callback.error(e);
                             }, self);
                         }
@@ -3290,7 +3290,7 @@ var MslControl$MslChannel;
                 } catch (e) {
                     // Release the master token lock.
                     this._ctrl.releaseMasterToken(this._ctx, tokenTicket);
-                    
+
                     throw e;
                 }
             }, self);
@@ -3324,7 +3324,7 @@ var MslControl$MslChannel;
             InterruptibleExecutor(callback, function() {
                 var builder = builderTokenTicket.builder;
                 var tokenTicket = builderTokenTicket.tokenTicket;
-                
+
                 // Do nothing if we cannot send and receive two more messages.
                 //
                 // Make sure to release the master token lock.
@@ -4108,7 +4108,7 @@ var MslControl$MslChannel;
                         // response then return the original error response.
                         if (this._maxMessagesHit || (newChannel && !newChannel.input))
                             return new MslChannel(result.response, null);
-                        
+
                         // Return the new channel, which may contain an error or be
                         // null if cancelled or interrupted.
                         return newChannel;

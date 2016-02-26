@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2012-2015 Netflix, Inc.  All rights reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -126,7 +126,7 @@ var ServiceToken$parse;
     /**
      * <p>Select the appropriate crypto context for the service token
      * represented by the provided JSON object.</p>
-     * 
+     *
      * <p>If the service token name exists as a key in the map of crypto
      * contexts, the mapped crypto context will be returned. Otherwise the
      * default crypto context mapped from the empty string key will be
@@ -153,7 +153,7 @@ var ServiceToken$parse;
         }
         if (!tokendata || tokendata.length == 0)
             throw new MslEncodingException(MslError.SERVICETOKEN_TOKENDATA_MISSING, "servicetoken " + JSON.stringify(serviceTokenJO));
-        
+
         // Extract the service token name.
         var name;
         try {
@@ -193,7 +193,7 @@ var ServiceToken$parse;
          * master token is provided, the service token is bound to the master
          * token's serial number. If a user ID token is provided, the service token
          * is bound to the user ID token's serial number.</p>
-         * 
+         *
          * <p>For encrypted tokens, the token data is encrypted using the provided
          * crypto context. For verified tokens, the token data is signed using the
          * provided crypto context.</p>
@@ -234,7 +234,7 @@ var ServiceToken$parse;
                     var plaintext;
                     if (compressionAlgo) {
                         var compressed = MslUtils$compress(compressionAlgo, data);
-                        
+
                         // Only use compression if the compressed data is smaller than the
                         // uncompressed data.
                         if (compressed.length < data.length) {
@@ -247,7 +247,7 @@ var ServiceToken$parse;
                         compressionAlgo = null;
                         plaintext = data;
                     }
-                    
+
                     // Start constructing the token data.
                     var tokenDataJO = {};
                     tokenDataJO[KEY_NAME] = name;
@@ -296,7 +296,7 @@ var ServiceToken$parse;
                                             AsyncExecutor(callback, function() {
                                                 if (e instanceof MslException) {
                                                     e.setEntity(masterToken);
-                                                    e.setUser(userIdToken);
+                                                    e.setUserIdTokenIdToken(userIdToken);
                                                 }
                                                 throw e;
                                             });
@@ -308,7 +308,7 @@ var ServiceToken$parse;
                                 AsyncExecutor(callback, function() {
                                     if (e instanceof MslException) {
                                         e.setEntity(masterToken);
-                                        e.setUser(userIdToken);
+                                        e.setUserIdToken(userIdToken);
                                     }
                                     throw e;
                                 });
@@ -348,7 +348,7 @@ var ServiceToken$parse;
                                 AsyncExecutor(callback, function() {
                                     if (e instanceof MslException) {
                                         e.setEntity(masterToken);
-                                        e.setUser(userIdToken);
+                                        e.setUserIdToken(userIdToken);
                                     }
                                     throw e;
                                 });
@@ -481,7 +481,7 @@ var ServiceToken$parse;
      * master token is provided, the service token is bound to the master
      * token's serial number. If a user ID token is provided, the service token
      * is bound to the user ID token's serial number.</p>
-     * 
+     *
      * <p>For encrypted tokens, the token data is encrypted using the provided
      * crypto context. For verified tokens, the token data is signed using the
      * provided crypto context.</p>
@@ -629,7 +629,7 @@ var ServiceToken$parse;
 
             // Convert encrypted to the correct type.
             encrypted = (encrypted === true);
-            
+
             // Verify compression algorithm.
             var compressionAlgo;
             if (algoName) {
@@ -663,7 +663,7 @@ var ServiceToken$parse;
                                                 var servicedata = (compressionAlgo)
                                                     ? MslUtils$uncompress(compressionAlgo, compressedData)
                                                     : compressedData;
-                                                
+
                                                 // Return the new service token.
                                                 var creationData = new CreationData(tokendata, signature, verified);
                                                 new ServiceToken(ctx, name, servicedata, (mtSerialNumber != -1) ? masterToken : null, (uitSerialNumber != -1) ? userIdToken : null, encrypted, compressionAlgo, cryptoContext, creationData, callback);
@@ -673,7 +673,7 @@ var ServiceToken$parse;
                                             AsyncExecutor(callback, function() {
                                                 if (e instanceof MslException) {
                                                     e.setEntity(masterToken);
-                                                    e.setUser(userIdToken);
+                                                    e.setUserIdToken(userIdToken);
                                                 }
                                                 throw e;
                                             });
@@ -702,7 +702,7 @@ var ServiceToken$parse;
                         AsyncExecutor(callback, function() {
                             if (e instanceof MslException) {
                                 e.setEntity(masterToken);
-                                e.setUser(userIdToken);
+                                e.setUserIdToken(userIdToken);
                             }
                             throw e;
                         });

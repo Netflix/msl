@@ -595,8 +595,8 @@ var MessageHeader$HeaderPeerData;
                             if (e instanceof MslException) {
                                 e.setEntity(masterToken);
                                 e.setEntity(entityAuthData);
-                                e.setUser(userIdToken);
-                                e.setUser(userAuthData);
+                                e.setUserIdToken(userIdToken);
+                                e.setUserAuthenticationData(userAuthData);
                                 e.setMessageId(messageId);
                             }
                             throw e;
@@ -626,8 +626,8 @@ var MessageHeader$HeaderPeerData;
                                                 if (e instanceof MslException) {
                                                     e.setEntity(masterToken);
                                                     e.setEntity(entityAuthData);
-                                                    e.setUser(userIdToken);
-                                                    e.setUser(userAuthData);
+                                                    e.setUserIdToken(userIdToken);
+                                                    e.setUserAuthenticationData(userAuthData);
                                                     e.setMessageId(messageId);
                                                 }
                                                 throw e;
@@ -641,8 +641,8 @@ var MessageHeader$HeaderPeerData;
                                     if (e instanceof MslException) {
                                         e.setEntity(masterToken);
                                         e.setEntity(entityAuthData);
-                                        e.setUser(userIdToken);
-                                        e.setUser(userAuthData);
+                                        e.setUserIdToken(userIdToken);
+                                        e.setUserAuthenticationData(userAuthData);
                                         e.setMessageId(messageId);
                                     }
                                     throw e;
@@ -948,7 +948,7 @@ var MessageHeader$HeaderPeerData;
                                             AsyncExecutor(callback, function() {
                                                 if (e instanceof MslException) {
                                                     e.setEntity(peerVerificationMasterToken);
-                                                    e.setUser(peerUserIdToken);
+                                                    e.setUserIdToken(peerUserIdToken);
                                                 }
                                                 throw e;
                                             });
@@ -1203,7 +1203,7 @@ var MessageHeader$HeaderPeerData;
                                                         var scheme = userAuthData.scheme;
                                                         var factory = ctx.getUserAuthenticationFactory(scheme);
                                                         if (!factory)
-                                                            throw new MslUserAuthException(MslError.USERAUTH_FACTORY_NOT_FOUND, scheme).setUser(userIdToken).setUser(userAuthData);
+                                                            throw new MslUserAuthException(MslError.USERAUTH_FACTORY_NOT_FOUND, scheme).setUserIdToken(userIdToken).setUserAuthenticationData(userAuthData);
                                                         var identity = (masterToken) ? masterToken.identity : entityAuthData.getIdentity();
                                                         user = factory.authenticate(ctx, identity, userAuthData, userIdToken);
                                                     } else if (userIdToken) {
@@ -1267,8 +1267,8 @@ var MessageHeader$HeaderPeerData;
                                                                     error: function(e) {
                                                                         AsyncExecutor(callback, function() {
                                                                             if (e instanceof MslException) {
-                                                                                e.setUser(userIdToken);
-                                                                                e.setUser(userAuthData);
+                                                                                e.setUserIdToken(userIdToken);
+                                                                                e.setUserAuthenticationData(userAuthData);
                                                                             }
                                                                             throw e;
                                                                         });
@@ -1280,8 +1280,8 @@ var MessageHeader$HeaderPeerData;
                                                             AsyncExecutor(callback, function() {
                                                                 if (e instanceof MslException) {
                                                                     e.setEntity(tokenVerificationMasterToken);
-                                                                    e.setUser(userIdToken);
-                                                                    e.setUser(userAuthData);
+                                                                    e.setUserIdToken(userIdToken);
+                                                                    e.setUserAuthenticationData(userAuthData);
                                                                 }
                                                                 throw e;
                                                             });
