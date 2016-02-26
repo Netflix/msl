@@ -176,7 +176,7 @@ var Header$parseHeader;
                                         AsyncExecutor(callback, function() {
                                             // Make sure the header was verified and decrypted.
                                             if (!messageHeader.isDecrypted())
-                                                throw new MslCryptoException(MslError.MESSAGE_MASTERTOKENBASED_VERIFICATION_FAILED).setEntity(masterToken);
+                                                throw new MslCryptoException(MslError.MESSAGE_MASTERTOKENBASED_VERIFICATION_FAILED).setMasterToken(masterToken);
                                             
                                             // Return the header.
                                             return messageHeader;
@@ -194,7 +194,7 @@ var Header$parseHeader;
                                 AsyncExecutor(callback, function() {
                                     // Make sure the header was verified and decrypted.
                                     if (!messageHeader.isDecrypted())
-                                        throw new MslCryptoException(MslError.MESSAGE_ENTITYDATABASED_VERIFICATION_FAILED).setEntity(entityAuthData);
+                                        throw new MslCryptoException(MslError.MESSAGE_ENTITYDATABASED_VERIFICATION_FAILED).setEntityAuthenticationData(entityAuthData);
                                     
                                     // Return the header.
                                     return messageHeader;

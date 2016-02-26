@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2012-2014 Netflix, Inc.  All rights reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -53,7 +53,7 @@ var MockPresharedAuthenticationFactory$create;
      * @type {Uint8Array}
      */
     var PSK_KPH2 = "WhxNUK7bYIcCV4wLE2YK90do1X3XqhPeMwwllmNh8Jw=";
-    
+
     /**
      * Kpe/Kph/Kpw #1.
      * @type {CipherKey}
@@ -68,25 +68,25 @@ var MockPresharedAuthenticationFactory$create;
 
     /**
      * Test pre-shared keys authentication factory.
-     * 
+     *
      * @author Wesley Miaw <wmiaw@netflix.com>
      */
     MockPresharedAuthenticationFactory = PresharedAuthenticationFactory.extend({
 	    /**
 	     * Create a new test pre-shared keys authentication factory.
-	     * 
+	     *
          * @param {result: function(MockPresharedAuthenticationFactory), error: function(Error)}
          *        callback the callback functions that will receive the factory
          *        or any thrown exceptions.
 	     */
 		init: function init(callback) {
             init.base.call(this);
-            
+
             var self = this;
             AsyncExecutor(callback, function() {
                 // We have to block until keys exist.
                 if (KPE && KPH && KPW && KPE2 && KPH2 && KPW2) return this;
-                
+
                 function retry() {
                     keysDefined.wait(-1, {
                         result: function() {
@@ -106,14 +106,14 @@ var MockPresharedAuthenticationFactory$create;
                 retry();
             }, this);
 		},
-		
+
 		/** @inheritDoc */
 		getCryptoContext: function getCryptoContext(ctx, authdata) {
 	        // Make sure we have the right kind of entity authentication data.
 	        if (!(authdata instanceof PresharedAuthenticationData))
 	            throw new MslInternalException("Incorrect authentication data type " + JSON.stringify(authdata) + ".");
 	        var pad = authdata;
-	        
+
 	        // Try to return the test crypto context.
 	        var identity = pad.getIdentity();
 	        if (PSK_ESN == identity)
@@ -122,13 +122,13 @@ var MockPresharedAuthenticationFactory$create;
 	            return new SymmetricCryptoContext(ctx, identity, KPE2, KPH2, KPW2);
 
 	        // Entity not found.
-	        throw new MslEntityAuthException(MslError.ENTITY_NOT_FOUND, "psk " + identity).setEntity(pad);
+	        throw new MslEntityAuthException(MslError.ENTITY_NOT_FOUND, "psk " + identity).setEntityAuthenticationData(pad);
 	    },
     });
-    
+
     /**
      * Create a new test pre-shared keys authentication factory.
-     * 
+     *
      * @param {result: function(MockPresharedAuthenticationFactory), error: function(Error)}
      *        callback the callback functions that will receive the factory
      *        or any thrown exceptions.
@@ -136,7 +136,7 @@ var MockPresharedAuthenticationFactory$create;
     MockPresharedAuthenticationFactory$create = function MockPresharedAuthenticationFactory$create(callback) {
         new MockPresharedAuthenticationFactory(callback);
     };
-    
+
     // Expose public static properties.
     MockPresharedAuthenticationFactory.PSK_ESN = PSK_ESN;
     CipherKey$import(PSK_KPE, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {

@@ -55,16 +55,16 @@ PresharedAuthenticationFactory = EntityAuthenticationFactory.extend({
         // Check for revocation.
         var identity = pad.getIdentity();
         if (this.authutils.isEntityRevoked(identity))
-            throw new MslEntityAuthException(MslError.ENTITY_REVOKED, "psk " + identity).setEntity(pad);
+            throw new MslEntityAuthException(MslError.ENTITY_REVOKED, "psk " + identity).setEntityAuthenticationData(pad);
         
         // Verify the scheme is permitted.
         if (!this.authutils.isSchemePermitted(identity, this.scheme))
-            throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication scheme for entity " + identity + " not supported:" + this.scheme).setEntity(pad);
+            throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication scheme for entity " + identity + " not supported:" + this.scheme).setEntityAuthenticationData(pad);
         
         // Load preshared keys authentication data.
         var keys = this.store.getKeys(identity);
         if (!keys)
-            throw new MslEntityAuthException(MslError.ENTITY_NOT_FOUND, "psk " + identity).setEntity(pad);
+            throw new MslEntityAuthException(MslError.ENTITY_NOT_FOUND, "psk " + identity).setEntityAuthenticationData(pad);
         
         // Return the crypto context.
         return new SymmetricCryptoContext(ctx, identity, keys.encryptionKey, keys.hmacKey, keys.wrappingKey);

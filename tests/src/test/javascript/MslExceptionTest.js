@@ -135,10 +135,12 @@ describe("MslException", function() {
         waitsFor(function() { return entityAuthData; }, "entityAuthData", 100);
 
         runs(function() {
-            e.setEntity(masterToken);
-            e.setEntity(entityAuthData);
+            e.setMasterToken(masterToken);
+            e.setEntityAuthenticationData(entityAuthData);
             expect(e.masterToken).toEqual(masterToken);
-            expect(e.entityAuthenticationData).toBeNull();
+            // XXX: this 'expect' should fail since the master token
+            //      and the entity auth data are set separately
+            // expect(e.entityAuthenticationData).toBeNull();
         });
     });
 
@@ -157,7 +159,7 @@ describe("MslException", function() {
         waitsFor(function() { return entityAuthData; }, "entityAuthData", 100);
 
         runs(function() {
-            e.setEntity(entityAuthData);
+            e.setEntityAuthenticationData(entityAuthData);
             expect(e.masterToken).toBeNull();
             expect(e.entityAuthenticationData).toEqual(entityAuthData);
         });

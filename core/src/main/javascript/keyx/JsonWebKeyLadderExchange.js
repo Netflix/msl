@@ -532,7 +532,7 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
                                 error: function(e) {
                                     AsyncExecutor(callback, function() {
                                         if (e instanceof MslException)
-                                            e.setEntity(entityToken);
+                                            e.setMasterToken(entityToken);
                                         throw e;
                                     }, self);
                                 }
@@ -541,7 +541,7 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
                     },
                     error: function(e) {
                         AsyncExecutor(callback, function() {
-                            throw new MslCryptoException(MslError.WRAP_KEY_CREATION_FAILURE, null, e).setEntity(entityToken);
+                            throw new MslCryptoException(MslError.WRAP_KEY_CREATION_FAILURE, null, e).setMasterToken(entityToken);
                         }, self);
                     }
                 });
@@ -559,7 +559,7 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
                     error: function(e) {
                         AsyncExecutor(callback, function() {
                             if (e instanceof MslException)
-                                e.setEntity(entityToken);
+                                e.setMasterToken(entityToken);
                             throw e;
                         });
                     }
@@ -584,7 +584,7 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
                                 error: function(e) {
                                     AsyncExecutor(callback, function() {
                                         if (e instanceof MslException)
-                                            e.setEntity(entityToken);
+                                            e.setMasterToken(entityToken);
                                         throw e;
                                     });
                                 }
@@ -593,7 +593,7 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
                         error: function(e) {
                             AsyncExecutor(callback, function() {
                                 if (e instanceof MslException)
-                                    e.setEntity(entityToken);
+                                    e.setMasterToken(entityToken);
                                 throw e;
                             });
                         }
@@ -613,7 +613,7 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
                                 error: function(e) {
                                     AsyncExecutor(callback, function() {
                                         if (e instanceof MslException)
-                                            e.setEntity(entityToken);
+                                            e.setMasterToken(entityToken);
                                         throw e;
                                     });
                                 }
@@ -622,7 +622,7 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
                         error: function(e) {
                             AsyncExecutor(callback, function() {
                                 if (e instanceof MslException)
-                                    e.setEntity(entityToken);
+                                    e.setMasterToken(entityToken);
                                 throw e;
                             });
                         }
@@ -649,7 +649,7 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
                             error: function(e) {
                                 AsyncExecutor(callback, function() {
                                     if (e instanceof MslException)
-                                        e.setEntity(entityToken);
+                                        e.setMasterToken(entityToken);
                                     throw e;
                                 });
                             }
@@ -669,7 +669,7 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
                             error: function(e) {
                                 AsyncExecutor(callback, function() {
                                     if (e instanceof MslException)
-                                        e.setEntity(entityToken);
+                                        e.setMasterToken(entityToken);
                                     throw e;
                                 });
                             }
@@ -705,7 +705,7 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
                                     var authdata = new PresharedAuthenticationData(identity);
                                     var factory = ctx.getEntityAuthenticationFactory(EntityAuthenticationScheme.PSK);
                                     if (!factory)
-                                        throw new MslKeyExchangeException(MslError.UNSUPPORTED_KEYX_MECHANISM, mechanism).setEntity(entityAuthData);
+                                        throw new MslKeyExchangeException(MslError.UNSUPPORTED_KEYX_MECHANISM, mechanism).setEntityAuthenticationData(entityAuthData);
                                     var cryptoContext = factory.getCryptoContext(ctx, authdata);
                                     // FIXME: Get a handle to KPW.
                                     var kpw = undefined;
@@ -716,11 +716,11 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
                                 {
                                     wrapKeyCryptoContext = this.repository.getCryptoContext(requestWrapdata);
                                     if (!wrapKeyCryptoContext)
-                                        throw new MslKeyExchangeException(MslError.KEYX_WRAPPING_KEY_MISSING, base64$encode(requestWrapdata)).setEntity(entityAuthData);
+                                        throw new MslKeyExchangeException(MslError.KEYX_WRAPPING_KEY_MISSING, base64$encode(requestWrapdata)).setEntityAuthenticationData(entityAuthData);
                                     break;
                                 }
                                 default:
-                                    throw new MslKeyExchangeException(MslError.UNSUPPORTED_KEYX_MECHANISM, mechanism).setEntity(entityAuthData);
+                                    throw new MslKeyExchangeException(MslError.UNSUPPORTED_KEYX_MECHANISM, mechanism).setEntityAuthenticationData(entityAuthData);
                             }
 
                             // Unwrap wrapping key.
@@ -731,7 +731,7 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
                                 error: function(e) {
                                     AsyncExecutor(callback, function() {
                                         if (e instanceof MslException)
-                                            e.setEntity(entityAuthData);
+                                            e.setEntityAuthenticationData(entityAuthData);
                                         throw e;
                                     });
                                 }
@@ -763,7 +763,7 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
                                 error: function(e) {
                                     AsyncExecutor(callback, function() {
                                         if (e instanceof MslException)
-                                            e.setEntity(entityAuthData);
+                                            e.setEntityAuthenticationData(entityAuthData);
                                         throw e;
                                     });
                                 }
@@ -772,7 +772,7 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
                         error: function(e) {
                             AsyncExecutor(callback, function() {
                                 if (e instanceof MslException)
-                                    e.setEntity(entityAuthData);
+                                    e.setEntityAuthenticationData(entityAuthData);
                                 throw e;
                             });
                         }

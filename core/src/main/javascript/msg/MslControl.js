@@ -1734,8 +1734,8 @@ var MslControl$MslChannel;
                                             var expectedMessageId = MessageBuilder$incrementMessageId(request.messageId);
                                             if (responseMessageId != expectedMessageId) {
                                                 throw new MslMessageException(MslError.UNEXPECTED_RESPONSE_MESSAGE_ID, "expected " + expectedMessageId + "; received " + responseMessageId)
-                                                    .setEntity(masterToken)
-                                                    .setEntity(entityAuthData)
+                                                    .setMasterToken(masterToken)
+                                                    .setEntityAuthenticationData(entityAuthData)
                                                     .setUserIdToken(userIdToken)
                                                     .setUserAuthenticationData(userAuthData);
                                             }
@@ -1811,8 +1811,8 @@ var MslControl$MslChannel;
                                                         ctx.updateRemoteTime(timestamp);
                                                 } catch (e) {
                                                     if (e instanceof MslException) {
-                                                        e.setEntity(masterToken);
-                                                        e.setEntity(entityAuthData);
+                                                        e.setMasterToken(masterToken);
+                                                        e.setEntityAuthenticationData(entityAuthData);
                                                         e.setUserIdToken(userIdToken);
                                                         e.setUserAuthenticationData(userAuthData);
                                                     }

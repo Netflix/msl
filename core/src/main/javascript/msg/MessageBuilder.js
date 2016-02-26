@@ -302,7 +302,7 @@ var MessageBuilder$createErrorResponse;
                     var factory = ctx.getUserAuthenticationFactory(scheme);
                     if (!factory) {
                         throw new MslUserAuthException(MslError.USERAUTH_FACTORY_NOT_FOUND, scheme)
-                        .setEntity(masterToken)
+                        .setMasterToken(masterToken)
                         .setUserAuthenticationData(userAuthData)
                         .setMessageId(requestMessageId);
                     }
@@ -407,8 +407,8 @@ var MessageBuilder$createErrorResponse;
             function handleError(e) {
                 AsyncExecutor(callback, function() {
                     if (e instanceof MslException) {
-                        e.setEntity(masterToken);
-                        e.setEntity(entityAuthData);
+                        e.setMasterToken(masterToken);
+                        e.setEntityAuthenticationData(entityAuthData);
                         e.setUserIdToken(userIdToken);
                         e.setUserAuthenticationData(userAuthData);
                         e.setMessageId(requestMessageId);
@@ -987,9 +987,9 @@ var MessageBuilder$createErrorResponse;
 
             // Make sure the service token is properly bound.
             if (serviceToken.isMasterTokenBound() && !serviceToken.isBoundTo(serviceMasterToken))
-                throw new MslMessageException(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH, "st " + JSON.stringify(serviceToken) + "; mt " + JSON.stringify(serviceMasterToken)).setEntity(serviceMasterToken);
+                throw new MslMessageException(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH, "st " + JSON.stringify(serviceToken) + "; mt " + JSON.stringify(serviceMasterToken)).setMasterToken(serviceMasterToken);
             if (serviceToken.isUserIdTokenBound() && !serviceToken.isBoundTo(this._userIdToken))
-                throw new MslMessageException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH, "st " + JSON.stringify(serviceToken) + "; uit " + JSON.stringify(this._userIdToken)).setEntity(serviceMasterToken).setUserIdToken(this._userIdToken);
+                throw new MslMessageException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH, "st " + JSON.stringify(serviceToken) + "; uit " + JSON.stringify(this._userIdToken)).setMasterToken(serviceMasterToken).setUserIdToken(this._userIdToken);
 
             // Add the service token.
             this._serviceTokens[serviceToken.name] = serviceToken;
@@ -1113,7 +1113,7 @@ var MessageBuilder$createErrorResponse;
             if (userIdToken && !masterToken)
                 throw new MslInternalException("Peer master token cannot be null when setting peer user ID token.");
             if (userIdToken && !userIdToken.isBoundTo(masterToken))
-                throw new MslMessageException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH, "uit " + userIdToken + "; mt " + masterToken).setEntity(masterToken).setUserIdToken(userIdToken);
+                throw new MslMessageException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH, "uit " + userIdToken + "; mt " + masterToken).setMasterToken(masterToken).setUserIdToken(userIdToken);
 
             // Load the stored peer service tokens.
             var storedTokens;
@@ -1172,9 +1172,9 @@ var MessageBuilder$createErrorResponse;
             if (!this._ctx.isPeerToPeer())
                 throw new MslInternalException("Cannot set peer service tokens when not in peer-to-peer mode.");
             if (serviceToken.isMasterTokenBound() && !serviceToken.isBoundTo(this._peerMasterToken))
-                throw new MslMessageException(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH, "st " + JSON.stringify(serviceToken) + "; mt " + JSON.stringify(this._peerMasterToken)).setEntity(this._peerMasterToken);
+                throw new MslMessageException(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH, "st " + JSON.stringify(serviceToken) + "; mt " + JSON.stringify(this._peerMasterToken)).setMasterToken(this._peerMasterToken);
             if (serviceToken.isUserIdTokenBound() && !serviceToken.isBoundTo(this._peerUserIdToken))
-                throw new MslMessageException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH, "st " + JSON.stringify(serviceToken) + "; uit " + JSON.stringify(this._peerUserIdToken)).setEntity(this._peerMasterToken).setUserIdToken(this._peerUserIdToken);
+                throw new MslMessageException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH, "st " + JSON.stringify(serviceToken) + "; uit " + JSON.stringify(this._peerUserIdToken)).setMasterToken(this._peerMasterToken).setUserIdToken(this._peerUserIdToken);
 
             // Add the peer service token.
             this._peerServiceTokens[serviceToken.name] = serviceToken;

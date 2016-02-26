@@ -102,23 +102,6 @@ var MslException;
         },
 
         /**
-         * Set the entity associated with the exception. This does nothing if the
-         * entity is already set.
-         *
-         * @param {?MasterToken|?EntityAuthenticationData} entity entity associated with the error. May be null.
-         * @return {MslException} this.
-         */
-        setEntity: function setEntity(entity) {
-            if (entity && !this.masterToken && !this.entityAuthenticationData) {
-                if (entity instanceof MasterToken)
-                    this.masterToken = entity;
-                else if (entity instanceof EntityAuthenticationData)
-                    this.entityAuthenticationData = entity;
-            }
-            return this;
-        },
-
-        /**
          * Set the master token associated with the exception.
          *
          * @param {MasterToken} entity masterToken associated with the error. May be null.
