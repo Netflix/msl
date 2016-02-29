@@ -197,7 +197,7 @@ describe("JsonUtils", function() {
             var value = merged[key];
             if (key == "key1" || key == "key2") {
                 expect(value).toEqual(jo2[key]);
-            } else if (jo2[key]) {
+            } else if (jo2[key] !== undefined) {
                 expect(value).toEqual(jo2[key]);
             } else {
                 expect(value).toEqual(jo1[key]);

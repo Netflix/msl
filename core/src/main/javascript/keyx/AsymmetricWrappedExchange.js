@@ -34,11 +34,17 @@ var AsymmetricWrappedExchange$ResponseData$parse;
      * @enum {string}
      */
     var Mechanism = AsymmetricWrappedExchange$Mechanism = {
+        /** RSA-OAEP encrypt/decrypt */
         RSA: "RSA",
+        /** ECIES */
         ECC: "ECC",
+        /** JSON Web Encryption with RSA-OAEP */
         JWE_RSA: "JWE_RSA",
+        /** JSON Web Encryption JSON Serialization with RSA-OAEP */
         JWEJS_RSA: "JWEJS_RSA",
+        /** JSON Web Key with RSA-OAEP */
         JWK_RSA: "JWK_RSA",
+        /** JSON Web Key with RSA-PKCS v1.5 */
         JWK_RSAES: "JWK_RSAES",
     };
 
@@ -187,6 +193,7 @@ var AsymmetricWrappedExchange$ResponseData$parse;
             try {
                 var encodedKey = base64$decode(encodedKeyB64);
                 switch (mechanism) {
+                case Mechanism.RSA:
                 case Mechanism.JWE_RSA:
                 case Mechanism.JWEJS_RSA:
                 case Mechanism.JWK_RSA:
@@ -209,9 +216,6 @@ var AsymmetricWrappedExchange$ResponseData$parse;
                     });
                     break;
                 }
-                /* Unsupported
-                case Mechanism.RSA:
-                */
                 /* Does not currently work.
                 case Mechanism.ECC:
                  */
@@ -356,6 +360,7 @@ var AsymmetricWrappedExchange$ResponseData$parse;
             case Mechanism.JWE_RSA:
             case Mechanism.JWEJS_RSA:
                 return new JsonWebEncryptionCryptoContext(ctx, JsonWebEncryptionCryptoContext$Algorithm.RSA_OAEP, JsonWebEncryptionCryptoContext$Encryption.A128GCM, privateKey, publicKey);
+            case Mechanism.RSA:
             case Mechanism.JWK_RSA:
                 return new RsaCryptoContext(ctx, keyPairId, privateKey, publicKey, RsaCryptoContext$Mode.WRAP_UNWRAP_OAEP);
             case Mechanism.JWK_RSAES:
