@@ -114,7 +114,7 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
                     wrapParams = null;
                     break;
                 default:
-                    throw new MslInternalException("JWK RSA crypto context mode " + mode + " not supported.");
+                    throw new MslInternalException("RSA wrapping crypto context mode " + mode + " not supported.");
             }
         }
 
