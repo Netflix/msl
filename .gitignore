@@ -1,12 +1,24 @@
-/bin
-/.gradle
-/.settings
-/.project
-/.classpath
-/build
 /test-output
-*.iml
-/.idea/artifacts
-/.idea/copyright
-/.idea/libraries
 
+# Gradle Files
+.gradle
+.m2
+
+# Build output directies
+target/
+build/
+
+# IntelliJ specific files/directories
+out
+.idea
+*.ipr
+*.iws
+*.iml
+atlassian-ide-plugin.xml
+
+# Eclipse specific files/directories
+.classpath
+.project
+.settings
+.metadata
+/bin
