@@ -97,7 +97,7 @@ public class Oneshot {
 	 *         cancelled.
 	 * @throws MslException if there is an MSL error.
 	 * @throws ExecutionException if there is a problem making the request.
-	 * @throws InterruptionException if the request was interrupted.
+	 * @throws InterruptedException if the request was interrupted.
 	 * @throws OneshotErrorResponse if the remote entity returned a MSL error.
 	 * @throws IOException if there is an error reading the response.
 	 */
@@ -161,20 +161,22 @@ public class Oneshot {
 	 */
 	public static void main(final String[] args) {
 	    try {
-	        // Grab remote URL and data file.
 	        if (args.length != 2) {
 	            System.err.println("Usage: oneshot url file");
 	            System.err.println("  use '-' for file to read from STDIN");
-	            return;
+	            System.exit(1);
 	        }
-	        final URL url = new URL(args[0]);
+
+            // Grab remote URL and data file.
+            final URL url = new URL(args[0]);
 	        final String file = args[1];
 
 	        // Read request data.
 	        final byte[] request;
-	        final InputStream is = (file.equals('-'))
+	        final InputStream is = (file.equals("-"))
 	            ? System.in
 	                : new FileInputStream(file);
+
 	        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 	        final byte[] buffer = new byte[16384];
 	        do {
@@ -183,7 +185,8 @@ public class Oneshot {
 	                request = baos.toByteArray();
 	                break;
 	            }
-	        } while (true);
+                baos.write(buffer, 0, count);
+            } while (true);
 
 	        // Send request and print application response data.
 	        final Oneshot oneshot = new Oneshot(LOCAL_IDENTITY, REMOTE_IDENTITY, REMOTE_RSA_PUBKEY_B64, EMAIL, PASSWORD);
