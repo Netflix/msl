@@ -3347,7 +3347,14 @@ public class MslControl {
             // Return the established MSL channel to the caller.
             return new MslChannel(response, request);
         }
-        
+
+        private void closeStreamsIfWeOpenedThem() throws IOException {
+            if (openedStreams) {
+                out.close();
+                in.close();
+            }
+        }
+
         /**
          * @return the established MSL channel or {@code null} if cancelled or
          *         interrupted.
@@ -3378,7 +3385,7 @@ public class MslControl {
                     in = new DelayedInputStream(connection);
                     lockTimeout = timeout - (int)(System.currentTimeMillis() - start);
                     openedStreams = true;
-                } catch (final IOException e) {
+                } catch (IOException|RuntimeException e) {
                     // If a message builder was provided then release the
                     // master token read lock.
                     if (builder != null)
@@ -3387,44 +3394,22 @@ public class MslControl {
                     // Close any open streams.
                     if (out != null) out.close();
                     if (in != null) in.close();
-                    
+
                     // If we were cancelled then return null.
-                    if (cancelled(e)) return null;
-                    throw e;
-                } catch (final RuntimeException e) {
-                    // If a message builder was provided then release the
-                    // master token read lock.
-                    if (builder != null)
-                        releaseMasterToken(ctx, builder.getMasterToken());
-                    
-                    // Close any open streams.
-                    if (out != null) out.close();
-                    if (in != null) in.close();
-                    
+                    if (e instanceof IOException && cancelled(e)) return null;
                     throw e;
                 }
             } else {
                 lockTimeout = timeout;
             }
             
-            // If no builder was provided then build a new request. This will
-            // acquire the master token lock.
-            if (builder == null) {
-                try {
-                    builder = buildRequest(ctx, msgCtx);
-                } catch (final InterruptedException e) {
-                    // Close the streams if we opened them.
-                    if (openedStreams) {
-                        out.close();
-                        in.close();
-                    }
-                    
-                    // We were cancelled so return null.
-                    return null;
-                }
-            }
-            
             try {
+                // If no builder was provided then build a new request. This will
+                // acquire the master token lock.
+                if (builder == null) {
+                    builder = buildRequest(ctx, msgCtx);
+                }
+
                 // Execute. This will release the master token lock.
                 final MslChannel channel = execute(msgCtx, builder, lockTimeout, msgCount);
                 
@@ -3434,45 +3419,17 @@ public class MslControl {
                 
                 // Return the established channel.
                 return channel;
-            } catch (final MslException e) {
-                // Close the streams if we opened them.
-                if (openedStreams) {
-                    out.close();
-                    in.close();
-                }
-                
-                // If we were cancelled then return null.
-                if (cancelled(e)) return null;
-                throw e;
-            } catch (final IOException e) {
-                // Close the streams if we opened them.
-                if (openedStreams) {
-                    out.close();
-                    in.close();
-                }
-                
+            } catch (MslException|IOException|RuntimeException e) {
+                closeStreamsIfWeOpenedThem();
+
                 // If we were cancelled then return null.
                 if (cancelled(e)) return null;
                 throw e;
             } catch (final InterruptedException e) {
-                // Close the streams if we opened them.
-                if (openedStreams) {
-                    out.close();
-                    in.close();
-                }
+                closeStreamsIfWeOpenedThem();
                 
                 // We were cancelled so return null.
                 return null;
-            } catch (final RuntimeException e) {
-                // Close the streams if we opened them.
-                if (openedStreams) {
-                    out.close();
-                    in.close();
-                }
-                
-                // If we were cancelled then return null.
-                if (cancelled(e)) return null;
-                throw e;
             }
         }
     }
