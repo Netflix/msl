@@ -3493,9 +3493,9 @@ public class MslControl {
      * automatically sent (for example in response to a handshake request) or
      * if the operation was cancelled or interrupted. The returned message may
      * be an error message if the maximum number of messages is hit without
-     * successfully receiving the final message. It may throw a
-     * {@code MslException}, {@code MslErrorResponseException}, or
-     * {@code IOException}.</p>
+     * successfully receiving the final message. The {@code Future} may throw
+     * an {@code ExecutionException} whose cause is a {@code MslException},
+     * {@code MslErrorResponseException}, or {@code IOException}.</p>
      * 
      * <p>The remote entity input and output streams will not be closed in case
      * the caller wishes to reuse them.</p>
@@ -3547,8 +3547,9 @@ public class MslControl {
      * entity's next message can be received by another call to
      * {@link #receive(MslContext, MessageContext, InputStream, OutputStream, int)}.</p>
      * 
-     * <p>It may throw a {@code MslException},
-     * {@code MslErrorResponseException}, or {@code IOException}.</p>
+     * <p>The {@code Future} may throw an {@code ExecutionException} whose
+     * cause is a {@code MslException}, {@code MslErrorResponseException}, or
+     * {@code IOException}.</p>
      * 
      * <p>The remote entity input and output streams will not be closed in case
      * the caller wishes to reuse them.</p>
@@ -3582,7 +3583,8 @@ public class MslControl {
      * {@link #request(MslContext, MessageContext, URL, int)}.</p>
      * 
      * <p>The returned {@code Future} will return true on success or false if
-     * cancelled or interrupted. It may throw a {@code MslException} or
+     * cancelled or interrupted. The {@code Future} may throw an
+     * {@code ExecutionException} whose cause is a {@code MslException} or
      * {@code IOException}.</p>
      * 
      * <p>The remote entity input and output streams will not be closed in case
@@ -3624,7 +3626,8 @@ public class MslControl {
      * <p>The returned {@code Future} will return {@code null} if cancelled or
      * interrupted. The returned message may be an error message if the maximum
      * number of messages is hit without successfully sending the request and
-     * receiving the response. It may throw a {@code MslException} or
+     * receiving the response. The {@code Future} may throw an
+     * {@code ExecutionException} whose cause is a {@code MslException} or
      * {@code IOException}.</p>
      * 
      * <p>The caller must close the returned message input stream and message
@@ -3666,7 +3669,8 @@ public class MslControl {
      * <p>The returned {@code Future} will return {@code null} if cancelled or
      * interrupted. The returned message may be an error message if the maximum
      * number of messages is hit without successfully sending the request and
-     * receiving the response. It may throw a {@code MslException} or
+     * receiving the response. The {@code Future} may throw an
+     * {@code ExecutionException} whose cause is a {@code MslException} or
      * {@code IOException}.</p>
      * 
      * <p>The caller must close the returned message input stream and message
