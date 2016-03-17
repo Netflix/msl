@@ -59,7 +59,7 @@
  * <p>The decrypted user data is represented as
  * {@code
  * userdata = {
- *   "#mandatory" : [ "user" ],
+ *   "#mandatory" : [ "identity" ],
  *   "issuerdata" : object,
  *   "identity" : "string"
  * }}
