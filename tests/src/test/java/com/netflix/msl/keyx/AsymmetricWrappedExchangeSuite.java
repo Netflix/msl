@@ -187,6 +187,7 @@ public class AsymmetricWrappedExchangeSuite {
             public static Collection<Object[]> data() throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, MslEncodingException, MslCryptoException {
                 AsymmetricWrappedExchangeSuite.setup();
                 return Arrays.asList(new Object[][] {
+                    { Mechanism.RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY },
                     { Mechanism.JWE_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY },
                     { Mechanism.JWEJS_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY },
                     { Mechanism.JWK_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY },
@@ -703,6 +704,7 @@ public class AsymmetricWrappedExchangeSuite {
             public static Collection<Object[]> data() throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, MslEncodingException, MslCryptoException {
                 AsymmetricWrappedExchangeSuite.setup();
                 return Arrays.asList(new Object[][] {
+                    { Mechanism.RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY },
                     { Mechanism.JWE_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY },
                     { Mechanism.JWEJS_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY },
                     { Mechanism.JWK_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY },

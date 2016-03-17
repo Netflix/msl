@@ -162,12 +162,15 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             var params = [];
             var webCryptoVersion = MslCrypto$getWebCryptoVersion();
             if (webCryptoVersion == MslCrypto$WebCryptoVersion.LEGACY) {
+                params.push([ Mechanism.RSA ]);
                 params.push([ Mechanism.JWE_RSA ]);
                 params.push([ Mechanism.JWEJS_RSA ]);
             } else if (webCryptoVersion == MslCrypto$WebCryptoVersion.V2014_01) {
+                params.push([ Mechanism.RSA ]);
                 params.push([ Mechanism.JWK_RSA ]);
                 params.push([ Mechanism.JWK_RSAES ]);
             } else {
+                params.push([ Mechanism.RSA ]);
                 params.push([ Mechanism.JWK_RSA ]);
             }
             return params;
@@ -177,6 +180,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             var publicKey, privateKey;
             beforeEach(function() {
                 switch (mechanism) {
+                    case Mechanism.RSA:
                     case Mechanism.JWE_RSA:
                     case Mechanism.JWEJS_RSA:
                     case Mechanism.JWK_RSA:
@@ -793,12 +797,15 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             var params = [];
             var webCryptoVersion = MslCrypto$getWebCryptoVersion();
             if (webCryptoVersion == MslCrypto$WebCryptoVersion.LEGACY) {
+                params.push([ Mechanism.RSA ]);
                 params.push([ Mechanism.JWE_RSA ]);
                 params.push([ Mechanism.JWEJS_RSA ]);
             } else if (webCryptoVersion == MslCrypto$WebCryptoVersion.V2014_01) {
+                params.push([ Mechanism.RSA ]);
                 params.push([ Mechanism.JWK_RSA ]);
                 params.push([ Mechanism.JWK_RSAES ]);
             } else {
+                params.push([ Mechanism.RSA ]);
                 params.push([ Mechanism.JWK_RSA ]);
             }
             return params;
@@ -808,6 +815,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             var publicKey, privateKey;
             beforeEach(function() {
                 switch (mechanism) {
+                    case Mechanism.RSA:
                     case Mechanism.JWE_RSA:
                     case Mechanism.JWEJS_RSA:
                     case Mechanism.JWK_RSA:

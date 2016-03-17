@@ -197,7 +197,7 @@ describe("MslEncoderUtils", function() {
             var value = merged[key];
             if (key == "key1" || key == "key2") {
                 expect(value).toEqual(mo2[key]);
-            } else if (mo2[key]) {
+            } else if (mo2[key] !== undefined) {
                 expect(value).toEqual(mo2[key]);
             } else {
                 expect(value).toEqual(mo1[key]);

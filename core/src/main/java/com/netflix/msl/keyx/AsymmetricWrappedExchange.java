@@ -76,11 +76,11 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
     private static final Set<KeyOp> SIGN_VERIFY = new HashSet<KeyOp>(Arrays.asList(KeyOp.sign, KeyOp.verify));
     
     /**
-     * <p>A JWK RSA crypto context is unique in that it treats its wrap/unwrap
-     * operations as encrypt/decrypt respectively. This is for compatibility
+     * <p>An RSA wrapping crypto context is unique in that it treats its wrap/
+     * unwrap operations as encrypt/decrypt respectively. This is compatible
      * with the Web Crypto API.</p>
      */
-    private static class JwkRsaCryptoContext extends AsymmetricCryptoContext {
+    private static class RsaWrappingCryptoContext extends AsymmetricCryptoContext {
         /** JWK RSA crypto context mode. */
         public static enum Mode {
             /** RSA-OAEP wrap/unwrap */
@@ -90,8 +90,8 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
         }
         
         /**
-         * <p>Create a new JWK RSA crypto context for the specified mode using
-         * the provided public and private keys. The mode identifies the
+         * <p>Create a new RSA wrapping crypto context for the specified mode
+         * using the provided public and private keys. The mode identifies the
          * operations to enable. All other operations are no-ops and return the
          * data unmodified.</p>
          * 
@@ -101,7 +101,7 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
          * @param publicKey the public key. May be null.
          * @param mode crypto context mode.
          */
-        public JwkRsaCryptoContext(final MslContext ctx, final String id, final PrivateKey privateKey, final PublicKey publicKey, final Mode mode) {
+        public RsaWrappingCryptoContext(final MslContext ctx, final String id, final PrivateKey privateKey, final PublicKey publicKey, final Mode mode) {
             super(id, privateKey, publicKey, NULL_OP, null, NULL_OP);
             switch (mode) {
                 case WRAP_UNWRAP_OAEP:
@@ -113,7 +113,7 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
                     wrapParams = null;
                     break;
                 default:
-                    throw new MslInternalException("JWK RSA crypto context mode " + mode + " not supported.");
+                    throw new MslInternalException("RSA wrapping crypto context mode " + mode + " not supported.");
             }
         }
 
@@ -227,11 +227,17 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
      */
     public static class RequestData extends KeyRequestData {
         public enum Mechanism {
+            /** RSA-OAEP encrypt/decrypt */
             RSA,
+            /** ECIES */
             ECC,
+            /** JSON Web Encryption with RSA-OAEP */
             JWE_RSA,
+            /** JSON Web Encryption JSON Serialization with RSA-OAEP */
             JWEJS_RSA,
+            /** JSON Web Key with RSA-OAEP */
             JWK_RSA,
+            /** JSON Web Key with RSA-PKCS v1.5 */
             JWK_RSAES,
         }
         
@@ -289,6 +295,7 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
             
             try {
                 switch (mechanism) {
+                    case RSA:
                     case JWE_RSA:
                     case JWEJS_RSA:
                     case JWK_RSA:
@@ -299,9 +306,6 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
                         publicKey = factory.generatePublic(keySpec);
                         break;
                     }
-                    /* Unsupported
-                    case RSA:
-                    */
                     /* Does not currently work.
                     case ECC:
                     {
@@ -557,13 +561,14 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
                 final CekCryptoContext cryptoContext = new JsonWebEncryptionCryptoContext.RsaOaepCryptoContext(privateKey, publicKey);
                 return new JsonWebEncryptionCryptoContext(ctx, cryptoContext, JsonWebEncryptionCryptoContext.Encryption.A128GCM, Format.JWE_JS);
             }
+            case RSA:
             case JWK_RSA:
             {
-                return new JwkRsaCryptoContext(ctx, keyPairId, privateKey, publicKey, JwkRsaCryptoContext.Mode.WRAP_UNWRAP_OAEP);
+                return new RsaWrappingCryptoContext(ctx, keyPairId, privateKey, publicKey, RsaWrappingCryptoContext.Mode.WRAP_UNWRAP_OAEP);
             }
             case JWK_RSAES:
             {
-                return new JwkRsaCryptoContext(ctx, keyPairId, privateKey, publicKey, JwkRsaCryptoContext.Mode.WRAP_UNWRAP_PKCS1);
+                return new RsaWrappingCryptoContext(ctx, keyPairId, privateKey, publicKey, RsaWrappingCryptoContext.Mode.WRAP_UNWRAP_PKCS1);
             }
             default:
                 throw new MslCryptoException(MslError.UNSUPPORTED_KEYX_MECHANISM, mechanism.name());

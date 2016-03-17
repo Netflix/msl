@@ -1,5 +1,8 @@
 apply plugin: 'java'
+apply plugin: 'application'
 
 dependencies {
     compile project(':msl-core')
 }
+
+mainClassName = "oneshot.Oneshot"
