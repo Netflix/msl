@@ -138,9 +138,7 @@ describe("MslException", function() {
             e.setMasterToken(masterToken);
             e.setEntityAuthenticationData(entityAuthData);
             expect(e.masterToken).toEqual(masterToken);
-            // XXX: this 'expect' should fail since the master token
-            //      and the entity auth data are set separately
-            // expect(e.entityAuthenticationData).toBeNull();
+            expect(e.entityAuthenticationData).toBeNull();
         });
     });
 
