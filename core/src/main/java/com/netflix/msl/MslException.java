@@ -75,52 +75,52 @@ public class MslException extends Exception {
     }
     
     /**
-     * Set the entity associated with the exception. This does nothing if the
-     * entity is already set.
+     * Set the entity associated with the exception, using a master token. This
+     * does nothing if the entity is already set.
      * 
      * @param masterToken entity associated with the error. May be null.
      * @return this.
      */
-    public MslException setEntity(final MasterToken masterToken) {
+    public MslException setMasterToken(final MasterToken masterToken) {
         if (getMasterToken() == null && getEntityAuthenticationData() == null)
             this.masterToken = masterToken;
         return this;
     }
     
     /**
-     * Set the entity associated with the exception. This does nothing if the
-     * entity is already set.
+     * Set the entity associated with the exception, using entity
+     * authentication data. This does nothing if the entity is already set.
      * 
      * @param entityAuthData entity associated with the error. May be null.
      * @return this.
      */
-    public MslException setEntity(final EntityAuthenticationData entityAuthData) {
+    public MslException setEntityAuthenticationData(final EntityAuthenticationData entityAuthData) {
         if (getMasterToken() == null && getEntityAuthenticationData() == null)
             this.entityAuthData = entityAuthData;
         return this;
     }
     
     /**
-     * Set the user associated with the exception. This does nothing if the
-     * user is already set.
+     * Set the user associated with the exception, using a user ID token. This
+     * does nothing if the user is already set.
      * 
      * @param userIdToken user associated with the error. May be null.
      * @return this.
      */
-    public MslException setUser(final UserIdToken userIdToken) {
+    public MslException setUserIdToken(final UserIdToken userIdToken) {
         if (getUserIdToken() == null && getUserAuthenticationData() == null)
             this.userIdToken = userIdToken;
         return this;
     }
     
     /**
-     * Set the user associated with the exception. This does nothing if the
-     * user is already set.
+     * Set the user associated with the exception, using user authentication
+     * data. This does nothing if the user is already set.
      * 
      * @param userAuthData user associated with the error. May be null.
      * @return this.
      */
-    public MslException setUser(final UserAuthenticationData userAuthData) {
+    public MslException setUserAuthenticationData(final UserAuthenticationData userAuthData) {
         if (getUserIdToken() == null && getUserAuthenticationData() == null)
             this.userAuthData = userAuthData;
         return this;

@@ -76,12 +76,12 @@ public class NavalPortAuthenticationFactory extends EntityAuthenticationFactory 
         final String identity = npad.getIdentity();
         final Status status = database.getStatus(identity);
         if (status == null)
-            throw new MslEntityAuthException(MslError.ENTITY_NOT_FOUND, "naval port " + npad.getIdentity()).setEntity(npad);
+            throw new MslEntityAuthException(MslError.ENTITY_NOT_FOUND, "naval port " + npad.getIdentity()).setEntityAuthenticationData(npad);
         switch (status) {
             case INACTIVE:
                 throw new MslEntityAuthException(KanColleMslError.ENTITYAUTH_NAVALPORT_INACTIVE, "naval port " + npad.getIdentity());
             case DESTROYED:
-                throw new MslEntityAuthException(KanColleMslError.ENTITYAUTH_NAVALPORT_DESTROYED, "naval port " + npad.getIdentity()).setEntity(npad);
+                throw new MslEntityAuthException(KanColleMslError.ENTITYAUTH_NAVALPORT_DESTROYED, "naval port " + npad.getIdentity()).setEntityAuthenticationData(npad);
             // We do not reject authentication for the other states.
             default:
                 break;
@@ -93,7 +93,7 @@ public class NavalPortAuthenticationFactory extends EntityAuthenticationFactory 
         final CodeBook book = database.getCodeBook(identity);
         final String secret = book.getWord(page, word);
         if (secret == null)
-            throw new MslEntityAuthException(MslError.ENTITY_NOT_FOUND, "naval port " + npad.getIdentity()).setEntity(npad);
+            throw new MslEntityAuthException(MslError.ENTITY_NOT_FOUND, "naval port " + npad.getIdentity()).setEntityAuthenticationData(npad);
         return new KanColleCryptoContext(ctx, identity, secret);
     }
     

@@ -158,9 +158,9 @@ public abstract class Header implements JSONString {
                 // token was used.
                 if (!messageHeader.isDecrypted()) {
                     if (masterToken != null)
-                        throw new MslCryptoException(MslError.MESSAGE_MASTERTOKENBASED_VERIFICATION_FAILED).setEntity(masterToken);
+                        throw new MslCryptoException(MslError.MESSAGE_MASTERTOKENBASED_VERIFICATION_FAILED).setMasterToken(masterToken);
                     else
-                        throw new MslCryptoException(MslError.MESSAGE_ENTITYDATABASED_VERIFICATION_FAILED).setEntity(entityAuthData);
+                        throw new MslCryptoException(MslError.MESSAGE_ENTITYDATABASED_VERIFICATION_FAILED).setEntityAuthenticationData(entityAuthData);
                 }
                 
                 // Return the header.

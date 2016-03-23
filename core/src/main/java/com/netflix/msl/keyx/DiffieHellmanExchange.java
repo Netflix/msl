@@ -449,7 +449,7 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
 
         // Verify the scheme is permitted.
         if(!authutils.isSchemePermitted(identity, this.getScheme()))
-            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + this.getScheme()).setEntity(masterToken);
+            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + this.getScheme()).setMasterToken(masterToken);
 
         // Load matching Diffie-Hellman parameter specification.
         final String parametersId = request.getParametersId();
@@ -512,13 +512,13 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
         // Verify the scheme is permitted.
         final String identity = entityAuthData.getIdentity();
         if(!authutils.isSchemePermitted(identity, this.getScheme()))
-            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + this.getScheme()).setEntity(entityAuthData);
+            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + this.getScheme()).setEntityAuthenticationData(entityAuthData);
 
         // Load matching Diffie-Hellman parameter specification.
         final String parametersId = request.getParametersId();
         final DHParameterSpec paramSpec = params.getParameterSpec(parametersId);
         if (paramSpec == null)
-            throw new MslKeyExchangeException(MslError.UNKNOWN_KEYX_PARAMETERS_ID, parametersId).setEntity(entityAuthData);
+            throw new MslKeyExchangeException(MslError.UNKNOWN_KEYX_PARAMETERS_ID, parametersId).setEntityAuthenticationData(entityAuthData);
 
         // Reconstitute request public key.
         final PublicKey requestPublicKey;
@@ -584,12 +584,12 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
         final String requestParametersId = request.getParametersId();
         final String responseParametersId = response.getParametersId();
         if (!requestParametersId.equals(responseParametersId))
-            throw new MslKeyExchangeException(MslError.KEYX_RESPONSE_REQUEST_MISMATCH, "request " + requestParametersId + "; response " + responseParametersId).setEntity(masterToken);
+            throw new MslKeyExchangeException(MslError.KEYX_RESPONSE_REQUEST_MISMATCH, "request " + requestParametersId + "; response " + responseParametersId).setMasterToken(masterToken);
 
         // Reconstitute response public key.
         final DHPrivateKey privateKey = request.getPrivateKey();
         if (privateKey == null)
-            throw new MslKeyExchangeException(MslError.KEYX_PRIVATE_KEY_MISSING, "request Diffie-Hellman private key").setEntity(masterToken);
+            throw new MslKeyExchangeException(MslError.KEYX_PRIVATE_KEY_MISSING, "request Diffie-Hellman private key").setMasterToken(masterToken);
         final DHParameterSpec params = privateKey.getParams();
         final PublicKey publicKey;
         try {

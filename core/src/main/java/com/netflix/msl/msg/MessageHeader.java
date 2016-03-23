@@ -363,10 +363,10 @@ public class MessageHeader extends Header {
             if (this.peerServiceTokens.size() > 0) headerJO.put(KEY_PEER_SERVICE_TOKENS, JsonUtils.createArray(this.peerServiceTokens));
         } catch (final JSONException e) {
             throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, "headerdata", e)
-                .setEntity(this.masterToken)
-                .setEntity(this.entityAuthData)
-                .setUser(this.peerUserIdToken)
-                .setUser(this.userAuthData)
+                .setMasterToken(this.masterToken)
+                .setEntityAuthenticationData(this.entityAuthData)
+                .setUserIdToken(this.peerUserIdToken)
+                .setUserAuthenticationData(this.userAuthData)
                 .setMessageId(this.messageId);
         }
 
@@ -380,7 +380,7 @@ public class MessageHeader extends Header {
             // master token.
             if (cachedCryptoContext == null) {
                 if (!this.masterToken.isVerified() || !this.masterToken.isDecrypted())
-                    throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, this.masterToken).setUser(this.userIdToken).setUser(this.userAuthData).setMessageId(this.messageId);
+                    throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, this.masterToken).setUserIdToken(this.userIdToken).setUserAuthenticationData(this.userAuthData).setMessageId(this.messageId);
                 this.messageCryptoContext = new SessionCryptoContext(ctx, this.masterToken);
             } else {
                 this.messageCryptoContext = cachedCryptoContext;
@@ -393,15 +393,15 @@ public class MessageHeader extends Header {
                     throw new MslEntityAuthException(MslError.ENTITYAUTH_FACTORY_NOT_FOUND, scheme.name());
                 this.messageCryptoContext = factory.getCryptoContext(ctx, this.entityAuthData);
             } catch (final MslCryptoException e) {
-                e.setEntity(this.entityAuthData);
-                e.setUser(this.userIdToken);
-                e.setUser(this.userAuthData);
+                e.setEntityAuthenticationData(this.entityAuthData);
+                e.setUserIdToken(this.userIdToken);
+                e.setUserAuthenticationData(this.userAuthData);
                 e.setMessageId(this.messageId);
                 throw e;
             } catch (final MslEntityAuthException e) {
-                e.setEntity(this.entityAuthData);
-                e.setUser(this.userIdToken);
-                e.setUser(this.userAuthData);
+                e.setEntityAuthenticationData(this.entityAuthData);
+                e.setUserIdToken(this.userIdToken);
+                e.setUserAuthenticationData(this.userAuthData);
                 e.setMessageId(this.messageId);
                 throw e;
             }
@@ -414,10 +414,10 @@ public class MessageHeader extends Header {
             this.signature = this.messageCryptoContext.sign(this.headerdata);
             this.verified = true;
         } catch (final MslCryptoException e) {
-            e.setEntity(this.masterToken);
-            e.setEntity(this.entityAuthData);
-            e.setUser(this.userIdToken);
-            e.setUser(this.userAuthData);
+            e.setMasterToken(this.masterToken);
+            e.setEntityAuthenticationData(this.entityAuthData);
+            e.setUserIdToken(this.userIdToken);
+            e.setUserAuthenticationData(this.userAuthData);
             e.setMessageId(this.messageId);
             throw e;
         }
@@ -498,10 +498,10 @@ public class MessageHeader extends Header {
                         throw new MslEntityAuthException(MslError.ENTITYAUTH_FACTORY_NOT_FOUND, scheme.name());
                     this.messageCryptoContext = factory.getCryptoContext(ctx, entityAuthData);
                 } catch (final MslCryptoException e) {
-                    e.setEntity(entityAuthData);
+                    e.setEntityAuthenticationData(entityAuthData);
                     throw e;
                 } catch (final MslEntityAuthException e) {
-                    e.setEntity(entityAuthData);
+                    e.setEntityAuthenticationData(entityAuthData);
                     throw e;
                 }
             }
@@ -510,19 +510,19 @@ public class MessageHeader extends Header {
             try {
                 this.headerdata = DatatypeConverter.parseBase64Binary(headerdata);
             } catch (final IllegalArgumentException e) {
-                throw new MslMessageException(MslError.HEADER_DATA_INVALID, headerdata, e).setEntity(masterToken).setEntity(entityAuthData);
+                throw new MslMessageException(MslError.HEADER_DATA_INVALID, headerdata, e).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData);
             }
             if (this.headerdata == null || this.headerdata.length == 0)
-                throw new MslMessageException(MslError.HEADER_DATA_MISSING, headerdata).setEntity(masterToken).setEntity(entityAuthData);
+                throw new MslMessageException(MslError.HEADER_DATA_MISSING, headerdata).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData);
             this.verified = this.messageCryptoContext.verify(this.headerdata, this.signature);
             this.plaintext = (this.verified) ? this.messageCryptoContext.decrypt(this.headerdata) : null;
         } catch (final MslCryptoException e) {
-            e.setEntity(masterToken);
-            e.setEntity(entityAuthData);
+            e.setMasterToken(masterToken);
+            e.setEntityAuthenticationData(entityAuthData);
             throw e;
         } catch (final MslEntityAuthException e) {
-            e.setEntity(masterToken);
-            e.setEntity(entityAuthData);
+            e.setMasterToken(masterToken);
+            e.setEntityAuthenticationData(entityAuthData);
             throw e;
         }
         
@@ -557,9 +557,9 @@ public class MessageHeader extends Header {
             // use it.
             this.messageId = headerdataJO.getLong(KEY_MESSAGE_ID);
             if (this.messageId < 0 || this.messageId > MslConstants.MAX_LONG_VALUE)
-                throw new MslMessageException(MslError.MESSAGE_ID_OUT_OF_RANGE, "headerdata " + headerdataJson).setEntity(masterToken).setEntity(entityAuthData);
+                throw new MslMessageException(MslError.MESSAGE_ID_OUT_OF_RANGE, "headerdata " + headerdataJson).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData);
         } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson, e).setEntity(masterToken).setEntity(entityAuthData);
+            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson, e).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData);
         }
         
         try {
@@ -599,7 +599,7 @@ public class MessageHeader extends Header {
                 final UserAuthenticationScheme scheme = this.userAuthData.getScheme();
                 final UserAuthenticationFactory factory = ctx.getUserAuthenticationFactory(scheme);
                 if (factory == null)
-                    throw new MslUserAuthException(MslError.USERAUTH_FACTORY_NOT_FOUND, scheme.name()).setUser(userIdToken).setUser(userAuthData);
+                    throw new MslUserAuthException(MslError.USERAUTH_FACTORY_NOT_FOUND, scheme.name()).setUserIdToken(userIdToken).setUserAuthenticationData(userAuthData);
                 final String identity = (this.masterToken != null) ? this.masterToken.getIdentity() : this.entityAuthData.getIdentity();
                 this.user = factory.authenticate(ctx, identity, this.userAuthData, this.userIdToken);
             } else if (this.userIdToken != null) {
@@ -617,17 +617,17 @@ public class MessageHeader extends Header {
                     try {
                         serviceTokens.add(new ServiceToken(ctx, tokens.getJSONObject(i), tokenVerificationMasterToken, this.userIdToken, cryptoContexts));
                     } catch (final MslException e) {
-                        e.setEntity(tokenVerificationMasterToken).setUser(this.userIdToken).setUser(userAuthData);
+                        e.setMasterToken(tokenVerificationMasterToken).setUserIdToken(this.userIdToken).setUserAuthenticationData(userAuthData);
                         throw e;
                     }
                 }
             }
             this.serviceTokens = Collections.unmodifiableSet(serviceTokens);
         } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson, e).setEntity(masterToken).setEntity(entityAuthData).setMessageId(this.messageId);
+            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson, e).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData).setMessageId(this.messageId);
         } catch (final MslException e) {
-            e.setEntity(masterToken);
-            e.setEntity(entityAuthData);
+            e.setMasterToken(masterToken);
+            e.setEntityAuthenticationData(entityAuthData);
             e.setMessageId(this.messageId);
             throw e;
         }
@@ -681,7 +681,7 @@ public class MessageHeader extends Header {
                         ? new UserIdToken(ctx, headerdataJO.getJSONObject(KEY_PEER_USER_ID_TOKEN), peerVerificationMasterToken)
                         : null;
                 } catch (final MslException e) {
-                    e.setEntity(peerVerificationMasterToken);
+                    e.setMasterToken(peerVerificationMasterToken);
                     throw e;
                 }
     
@@ -694,7 +694,7 @@ public class MessageHeader extends Header {
                         try {
                             peerServiceTokens.add(new ServiceToken(ctx, tokens.getJSONObject(i), peerVerificationMasterToken, this.peerUserIdToken, cryptoContexts));
                         } catch (final MslException e) {
-                            e.setEntity(peerVerificationMasterToken).setUser(this.peerUserIdToken);
+                            e.setMasterToken(peerVerificationMasterToken).setUserIdToken(this.peerUserIdToken);
                             throw e;
                         }
                     }
@@ -707,16 +707,16 @@ public class MessageHeader extends Header {
             }
         } catch (final JSONException e) {
             throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJO.toString(), e)
-                .setEntity(masterToken)
-                .setEntity(entityAuthData)
-                .setUser(this.userIdToken)
-                .setUser(this.userAuthData)
+                .setMasterToken(masterToken)
+                .setEntityAuthenticationData(entityAuthData)
+                .setUserIdToken(this.userIdToken)
+                .setUserAuthenticationData(this.userAuthData)
                 .setMessageId(this.messageId);
         } catch (final MslException e) {
-            e.setEntity(masterToken);
-            e.setEntity(entityAuthData);
-            e.setUser(this.userIdToken);
-            e.setUser(this.userAuthData);
+            e.setMasterToken(masterToken);
+            e.setEntityAuthenticationData(entityAuthData);
+            e.setUserIdToken(this.userIdToken);
+            e.setUserAuthenticationData(this.userAuthData);
             e.setMessageId(this.messageId);
             throw e;
         }

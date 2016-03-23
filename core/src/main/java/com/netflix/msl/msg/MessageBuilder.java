@@ -318,8 +318,8 @@ public class MessageBuilder {
                     final UserAuthenticationFactory factory = ctx.getUserAuthenticationFactory(scheme);
                     if (factory == null) {
                         throw new MslUserAuthException(MslError.USERAUTH_FACTORY_NOT_FOUND, scheme.name())
-                        .setEntity(masterToken)
-                        .setUser(userAuthData)
+                        .setMasterToken(masterToken)
+                        .setUserAuthenticationData(userAuthData)
                         .setMessageId(requestMessageId);
                     }
                     user = factory.authenticate(ctx, userAuthMasterToken.getIdentity(), userAuthData, null);
@@ -347,10 +347,10 @@ public class MessageBuilder {
                 return new MessageBuilder(ctx, recipient, messageId, capabilities, localMasterToken, userIdToken, serviceTokens, null, null, null, keyExchangeData);
             }
         } catch (final MslException e) {
-            e.setEntity(masterToken);
-            e.setEntity(entityAuthData);
-            e.setUser(userIdToken);
-            e.setUser(userAuthData);
+            e.setMasterToken(masterToken);
+            e.setEntityAuthenticationData(entityAuthData);
+            e.setUserIdToken(userIdToken);
+            e.setUserAuthenticationData(userAuthData);
             e.setMessageId(requestMessageId);
             throw e;
         }
@@ -826,9 +826,9 @@ public class MessageBuilder {
         
         // Make sure the service token is properly bound.
         if (serviceToken.isMasterTokenBound() && !serviceToken.isBoundTo(serviceMasterToken))
-            throw new MslMessageException(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH, "st " + serviceToken + "; mt " + serviceMasterToken).setEntity(serviceMasterToken);
+            throw new MslMessageException(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH, "st " + serviceToken + "; mt " + serviceMasterToken).setMasterToken(serviceMasterToken);
         if (serviceToken.isUserIdTokenBound() && !serviceToken.isBoundTo(userIdToken))
-            throw new MslMessageException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH, "st " + serviceToken + "; uit " + userIdToken).setEntity(serviceMasterToken).setUser(userIdToken);
+            throw new MslMessageException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH, "st " + serviceToken + "; uit " + userIdToken).setMasterToken(serviceMasterToken).setUserIdToken(userIdToken);
         
         // Add the service token.
         serviceTokens.put(serviceToken.getName(), serviceToken);
@@ -937,7 +937,7 @@ public class MessageBuilder {
         if (userIdToken != null && masterToken == null)
             throw new MslInternalException("Peer master token cannot be null when setting peer user ID token.");
         if (userIdToken != null && !userIdToken.isBoundTo(masterToken))
-            throw new MslMessageException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH, "uit " + userIdToken + "; mt " + masterToken).setEntity(masterToken).setUser(userIdToken);
+            throw new MslMessageException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH, "uit " + userIdToken + "; mt " + masterToken).setMasterToken(masterToken).setUserIdToken(userIdToken);
         
         // Load the stored peer service tokens.
         final Set<ServiceToken> storedTokens;
@@ -991,9 +991,9 @@ public class MessageBuilder {
         if (!ctx.isPeerToPeer())
             throw new MslInternalException("Cannot set peer service tokens when not in peer-to-peer mode.");
         if (serviceToken.isMasterTokenBound() && !serviceToken.isBoundTo(peerMasterToken))
-            throw new MslMessageException(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH, "st " + serviceToken + "; mt " + peerMasterToken).setEntity(peerMasterToken);
+            throw new MslMessageException(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH, "st " + serviceToken + "; mt " + peerMasterToken).setMasterToken(peerMasterToken);
         if (serviceToken.isUserIdTokenBound() && !serviceToken.isBoundTo(peerUserIdToken))
-            throw new MslMessageException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH, "st " + serviceToken + "; uit " + peerUserIdToken).setEntity(peerMasterToken).setUser(peerUserIdToken);
+            throw new MslMessageException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH, "st " + serviceToken + "; uit " + peerUserIdToken).setMasterToken(peerMasterToken).setUserIdToken(peerUserIdToken);
         
         // Add the peer service token.
         peerServiceTokens.put(serviceToken.getName(), serviceToken);

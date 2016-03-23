@@ -94,8 +94,8 @@ public class MslExceptionTest {
         assertNull(e.getMasterToken());
         assertNull(e.getEntityAuthenticationData());
         final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, 1, 1);
-        e.setEntity(masterToken);
-        e.setEntity(ctx.getEntityAuthenticationData(null));
+        e.setMasterToken(masterToken);
+        e.setEntityAuthenticationData(ctx.getEntityAuthenticationData(null));
         assertEquals(masterToken, e.getMasterToken());
         assertNull(e.getEntityAuthenticationData());
     }
@@ -106,7 +106,7 @@ public class MslExceptionTest {
         assertNull(e.getMasterToken());
         assertNull(e.getEntityAuthenticationData());
         final EntityAuthenticationData entityAuthData = ctx.getEntityAuthenticationData(null);
-        e.setEntity(entityAuthData);
+        e.setEntityAuthenticationData(entityAuthData);
         assertNull(e.getMasterToken());
         assertEquals(entityAuthData, e.getEntityAuthenticationData());
     }
@@ -119,8 +119,8 @@ public class MslExceptionTest {
         final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, 1, 1);
         final UserIdToken userIdToken = MslTestUtils.getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER);
         final UserAuthenticationData userAuthData = getUserAuthenticationData();
-        e.setUser(userIdToken);
-        e.setUser(userAuthData);
+        e.setUserIdToken(userIdToken);
+        e.setUserAuthenticationData(userAuthData);
         assertEquals(userIdToken, e.getUserIdToken());
         assertNull(e.getUserAuthenticationData());
     }
@@ -131,7 +131,7 @@ public class MslExceptionTest {
         assertNull(e.getUserIdToken());
         assertNull(e.getUserAuthenticationData());
         final UserAuthenticationData userAuthData = getUserAuthenticationData();
-        e.setUser(userAuthData);
+        e.setUserAuthenticationData(userAuthData);
         assertNull(e.getUserIdToken());
         assertEquals(userAuthData, e.getUserAuthenticationData());
     }

@@ -73,38 +73,38 @@ public class MslKeyExchangeException extends MslException {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.MslException#setEntity(com.netflix.msl.tokens.MasterToken)
+     * @see com.netflix.msl.MslException#setMasterToken(com.netflix.msl.tokens.MasterToken)
      */
     @Override
-    public MslKeyExchangeException setEntity(final MasterToken masterToken) {
-        super.setEntity(masterToken);
+    public MslKeyExchangeException setMasterToken(final MasterToken masterToken) {
+        super.setMasterToken(masterToken);
         return this;
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.MslException#setEntity(com.netflix.msl.entityauth.EntityAuthenticationData)
+     * @see com.netflix.msl.MslException#setEntityAuthenticationData(com.netflix.msl.entityauth.EntityAuthenticationData)
      */
     @Override
-    public MslKeyExchangeException setEntity(final EntityAuthenticationData entityAuthData) {
-        super.setEntity(entityAuthData);
+    public MslKeyExchangeException setEntityAuthenticationData(final EntityAuthenticationData entityAuthData) {
+        super.setEntityAuthenticationData(entityAuthData);
         return this;
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.MslException#setUser(com.netflix.msl.tokens.UserIdToken)
+     * @see com.netflix.msl.MslException#setUserIdToken(com.netflix.msl.tokens.UserIdToken)
      */
     @Override
-    public MslKeyExchangeException setUser(final UserIdToken userIdToken) {
-        super.setUser(userIdToken);
+    public MslKeyExchangeException setUserIdToken(final UserIdToken userIdToken) {
+        super.setUserIdToken(userIdToken);
         return this;
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.MslException#setUser(com.netflix.msl.userauth.UserAuthenticationData)
+     * @see com.netflix.msl.MslException#setUserAuthenticationData(com.netflix.msl.userauth.UserAuthenticationData)
      */
     @Override
-    public MslKeyExchangeException setUser(final UserAuthenticationData userAuthData) {
-        super.setUser(userAuthData);
+    public MslKeyExchangeException setUserAuthenticationData(final UserAuthenticationData userAuthData) {
+        super.setUserAuthenticationData(userAuthData);
         return this;
     }
 }

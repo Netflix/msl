@@ -118,6 +118,6 @@ public class MockX509AuthenticationFactory extends EntityAuthenticationFactory {
             return new RsaCryptoContext(ctx, identity, X509_PRIVKEY, X509_CERT.getPublicKey(), Mode.SIGN_VERIFY);
 
         // Certificate verification failed.
-        throw new MslEntityAuthException(MslError.X509CERT_VERIFICATION_FAILED, xad.getX509Cert().toString()).setEntity(xad);
+        throw new MslEntityAuthException(MslError.X509CERT_VERIFICATION_FAILED, xad.getX509Cert().toString()).setEntityAuthenticationData(xad);
     }
 }

@@ -63,11 +63,11 @@ public class UnauthenticatedSuffixedAuthenticationFactory extends EntityAuthenti
         // Check for revocation.
         final String root = usad.getRoot();
         if (authutils.isEntityRevoked(root))
-            throw new MslEntityAuthException(MslError.ENTITY_REVOKED, "none suffixed " + root).setEntity(usad);
+            throw new MslEntityAuthException(MslError.ENTITY_REVOKED, "none suffixed " + root).setEntityAuthenticationData(usad);
         
         // Verify the scheme is permitted.
         if (!authutils.isSchemePermitted(root, getScheme()))
-            throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication Scheme for Device Type Not Supported " + root + ":" + getScheme()).setEntity(usad);
+            throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication Scheme for Device Type Not Supported " + root + ":" + getScheme()).setEntityAuthenticationData(usad);
         
         // Return the crypto context.
         return new NullCryptoContext();
