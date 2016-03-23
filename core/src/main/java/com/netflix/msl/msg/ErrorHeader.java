@@ -317,9 +317,9 @@ public class ErrorHeader extends Header {
     public String toJSONString() {
         try {
             final JSONObject jsonObj = new JSONObject();
-            jsonObj.put(KEY_ENTITY_AUTHENTICATION_DATA, entityAuthData);
-            jsonObj.put(KEY_ERRORDATA, DatatypeConverter.printBase64Binary(errordata));
-            jsonObj.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+            jsonObj.put(HeaderKeys.KEY_ENTITY_AUTHENTICATION_DATA, entityAuthData);
+            jsonObj.put(HeaderKeys.KEY_ERRORDATA, DatatypeConverter.printBase64Binary(errordata));
+            jsonObj.put(HeaderKeys.KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
             return jsonObj.toString();
         } catch (final JSONException e) {
             throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);

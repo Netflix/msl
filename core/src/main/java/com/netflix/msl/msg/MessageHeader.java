@@ -941,11 +941,11 @@ public class MessageHeader extends Header {
         try {
             final JSONObject jsonObj = new JSONObject();
             if (masterToken != null)
-                jsonObj.put(KEY_MASTER_TOKEN, masterToken);
+                jsonObj.put(HeaderKeys.KEY_MASTER_TOKEN, masterToken);
             else
-                jsonObj.put(KEY_ENTITY_AUTHENTICATION_DATA, entityAuthData);
-            jsonObj.put(KEY_HEADERDATA, DatatypeConverter.printBase64Binary(headerdata));
-            jsonObj.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+                jsonObj.put(HeaderKeys.KEY_ENTITY_AUTHENTICATION_DATA, entityAuthData);
+            jsonObj.put(HeaderKeys.KEY_HEADERDATA, DatatypeConverter.printBase64Binary(headerdata));
+            jsonObj.put(HeaderKeys.KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
             return jsonObj.toString();
         } catch (final JSONException e) {
             throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);

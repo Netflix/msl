@@ -75,17 +75,6 @@ import com.netflix.msl.util.MslContext;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public abstract class Header implements JSONString {
-    /** JSON key entity authentication data. */
-    protected static final String KEY_ENTITY_AUTHENTICATION_DATA = "entityauthdata";
-    /** JSON key master token. */
-    protected static final String KEY_MASTER_TOKEN = "mastertoken";
-    /** JSON key header data. */
-    protected static final String KEY_HEADERDATA = "headerdata";
-    /** JSON key error data. */
-    protected static final String KEY_ERRORDATA = "errordata";
-    /** JSON key signature. */
-    protected static final String KEY_SIGNATURE = "signature";
-    
     /**
      * <p>Construct a new header from the provided JSON object.</p>
      * 
@@ -129,14 +118,14 @@ public abstract class Header implements JSONString {
         final byte[] signature;
         try {
             // Pull message data.
-            entityAuthData = (headerJO.has(KEY_ENTITY_AUTHENTICATION_DATA))
-                ? EntityAuthenticationData.create(ctx, headerJO.getJSONObject(KEY_ENTITY_AUTHENTICATION_DATA))
+            entityAuthData = (headerJO.has(HeaderKeys.KEY_ENTITY_AUTHENTICATION_DATA))
+                ? EntityAuthenticationData.create(ctx, headerJO.getJSONObject(HeaderKeys.KEY_ENTITY_AUTHENTICATION_DATA))
                 : null;
-            masterToken = (headerJO.has(KEY_MASTER_TOKEN))
-                ? new MasterToken(ctx, headerJO.getJSONObject(KEY_MASTER_TOKEN))
+            masterToken = (headerJO.has(HeaderKeys.KEY_MASTER_TOKEN))
+                ? new MasterToken(ctx, headerJO.getJSONObject(HeaderKeys.KEY_MASTER_TOKEN))
                 : null;
             try {
-                signature = DatatypeConverter.parseBase64Binary(headerJO.getString(KEY_SIGNATURE));
+                signature = DatatypeConverter.parseBase64Binary(headerJO.getString(HeaderKeys.KEY_SIGNATURE));
             } catch (final IllegalArgumentException e) {
                 throw new MslMessageException(MslError.HEADER_SIGNATURE_INVALID, "header/errormsg " + headerJO.toString());
             }
@@ -148,8 +137,8 @@ public abstract class Header implements JSONString {
 
         try {
             // Process message headers.
-            if (headerJO.has(KEY_HEADERDATA)) {
-                final String headerdata = headerJO.getString(KEY_HEADERDATA);
+            if (headerJO.has(HeaderKeys.KEY_HEADERDATA)) {
+                final String headerdata = headerJO.getString(HeaderKeys.KEY_HEADERDATA);
                 final MessageHeader messageHeader = new MessageHeader(ctx, headerdata, entityAuthData, masterToken, signature, cryptoContexts);
                 
                 // Make sure the header was verified and decrypted.
@@ -168,8 +157,8 @@ public abstract class Header implements JSONString {
             }
             
             // Process error headers.
-            else if (headerJO.has(KEY_ERRORDATA)) {
-                final String errordata = headerJO.getString(KEY_ERRORDATA);
+            else if (headerJO.has(HeaderKeys.KEY_ERRORDATA)) {
+                final String errordata = headerJO.getString(HeaderKeys.KEY_ERRORDATA);
                 return new ErrorHeader(ctx, errordata, entityAuthData, signature);
             }
         } catch (final JSONException e) {
