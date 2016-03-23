@@ -102,46 +102,54 @@ var MslException;
         },
 
         /**
-         * Set the master token associated with the exception.
-         *
-         * @param {MasterToken} entity masterToken associated with the error. May be null.
+         * Set the entity associated with the exception, using a master token. This
+         * does nothing if the entity is already set.
+         * 
+         * @param {MasterToken} masterToken entity associated with the error. May be null.
          * @return {MslException} this.
          */
-        setMasterToken: function setMasterToken(entity) {
-            this.masterToken = entity;
+        setMasterToken: function setMasterToken(masterToken) {
+            if (masterToken && !this.masterToken && !this.entityAuthenticationData)
+                this.masterToken = masterToken;
             return this;
         },
 
         /**
-         * Set the entity associated with the exception.
+         * Set the entity associated with the exception, using entity
+         * authentication data. This does nothing if the entity is already set.
          *
-         * @param {EntityAuthenticationData} entity entity auth data associated with the error. May be null.
+         * @param {EntityAuthenticationData} entityAuthData entity associated with the error. May be null.
          * @return {MslException} this.
          */
-        setEntityAuthenticationData: function setEntityAuthenticationData(entity) {
-            this.entityAuthenticationData = entity;
+        setEntityAuthenticationData: function setEntityAuthenticationData(entityAuthData) {
+            if (entityAuthData && !this.masterToken && !this.entityAuthenticationData)
+                this.entityAuthenticationData = entityAuthData;
             return this;
         },
 
         /**
-         * Set the userAuthenticationData associated with the exception.
+         * Set the user associated with the exception, using a user ID token. This
+         * does nothing if the user is already set.
          *
-         * @param {UserAuthenticationData} user user associated with the error. May be null.
+         * @param {UserIdToken} userIdToken the user ID token associated with the error. May be null.
          * @return {MslException} this.
          */
-        setUserAuthenticationData: function setUserAuthenticationData(user) {
-            this.userAuthenticationData = user;
+        setUserIdToken: function setUserIdToken(userIdToken) {
+            if (userIdToken && !this.userIdToken && !this.userAuthenticationData)
+                this.userIdToken = userIdToken;
             return this;
         },
 
         /**
-         * Set the userIdToken associated with the exception.
+         * Set the user associated with the exception, using user authentication
+         * data. This does nothing if the user is already set.
          *
-         * @param {UserIdToken} user userIdToken associated with the error. May be null.
+         * @param {UserAuthenticationData} userAuthData the user authentication data associated with the error. May be null.
          * @return {MslException} this.
          */
-        setUserIdToken: function setUserIdToken(user) {
-            this.userIdToken = user;
+        setUserAuthenticationData: function setUserAuthenticationData(userAuthData) {
+            if (userAuthData && !this.userIdToken && !this.userAuthenticationData)
+                this.userAuthenticationData = userAuthData;
             return this;
         },
 
