@@ -14,8 +14,33 @@
  * limitations under the License.
  */
 
+/**
+ * JSON key entity authentication data.
+ * @const
+ * @type {string}
+ */
 var Header$KEY_ENTITY_AUTHENTICATION_DATA = "entityauthdata";
+/**
+ * JSON key master token.
+ * @const
+ * @type {string}
+ */
 var Header$KEY_MASTER_TOKEN = "mastertoken";
+/**
+ * JSON key header data.
+ * @const
+ * @type {string}
+ */
 var Header$KEY_HEADERDATA = "headerdata";
+/**
+ * JSON key error data.
+ * @const
+ * @type {string}
+ */
 var Header$KEY_ERRORDATA = "errordata";
+/**
+ * JSON key signature.
+ * @const
+ * @type {string}
+ */
 var Header$KEY_SIGNATURE = "signature";
