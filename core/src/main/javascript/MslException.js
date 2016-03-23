@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2012-2015 Netflix, Inc.  All rights reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -100,38 +100,48 @@ var MslException;
             };
             Object.defineProperties(this, props);
         },
-        
+
         /**
-         * Set the entity associated with the exception. This does nothing if the
-         * entity is already set.
-         * 
-         * @param {?MasterToken|?EntityAuthenticationData} entity entity associated with the error. May be null.
+         * Set the master token associated with the exception.
+         *
+         * @param {MasterToken} entity masterToken associated with the error. May be null.
          * @return {MslException} this.
          */
-        setEntity: function setEntity(entity) {
-            if (entity && !this.masterToken && !this.entityAuthenticationData) {
-                if (entity instanceof MasterToken)
-                    this.masterToken = entity;
-                else if (entity instanceof EntityAuthenticationData)
-                    this.entityAuthenticationData = entity;
-            }
+        setMasterToken: function setMasterToken(entity) {
+            this.masterToken = entity;
             return this;
         },
-        
+
         /**
-         * Set the user associated with the exception. This does nothing if the
-         * user is already set.
-         * 
-         * @param {?UserIdToken|?UserAuthenticationData} user user associated with the error. May be null.
+         * Set the entity associated with the exception.
+         *
+         * @param {EntityAuthenticationData} entity entity auth data associated with the error. May be null.
          * @return {MslException} this.
          */
-        setUser: function setUser(user) {
-            if (user && !this.userIdToken && !this.userAuthenticationData) {
-                if (user instanceof UserIdToken)
-                    this.userIdToken = user;
-                else if (user instanceof UserAuthenticationData)
-                    this.userAuthenticationData = user;
-            }
+        setEntityAuthenticationData: function setEntityAuthenticationData(entity) {
+            this.entityAuthenticationData = entity;
+            return this;
+        },
+
+        /**
+         * Set the userAuthenticationData associated with the exception.
+         *
+         * @param {UserAuthenticationData} user user associated with the error. May be null.
+         * @return {MslException} this.
+         */
+        setUserAuthenticationData: function setUserAuthenticationData(user) {
+            this.userAuthenticationData = user;
+            return this;
+        },
+
+        /**
+         * Set the userIdToken associated with the exception.
+         *
+         * @param {UserIdToken} user userIdToken associated with the error. May be null.
+         * @return {MslException} this.
+         */
+        setUserIdToken: function setUserIdToken(user) {
+            this.userIdToken = user;
             return this;
         },
 
