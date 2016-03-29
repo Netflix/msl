@@ -215,15 +215,15 @@ public class ServiceToken implements JSONString {
                 tokenDataJO.put(KEY_SERVICEDATA, DatatypeConverter.printBase64Binary(ciphertext));
                 this.tokendata = tokenDataJO.toString().getBytes(MslConstants.DEFAULT_CHARSET);
             } catch (final JSONException e) {
-                throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, "servicetoken", e).setEntity(masterToken).setUser(userIdToken);
+                throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, "servicetoken", e).setMasterToken(masterToken).setUserIdToken(userIdToken);
             }
             
             // Sign the token data.
             this.signature = cryptoContext.sign(this.tokendata);
             this.verified = true;
         } catch (final MslCryptoException e) {
-            e.setEntity(masterToken);
-            e.setUser(userIdToken);
+            e.setMasterToken(masterToken);
+            e.setUserIdToken(userIdToken);
             throw e;
         }
     }
@@ -299,20 +299,20 @@ public class ServiceToken implements JSONString {
             try {
                 tokendata = DatatypeConverter.parseBase64Binary(serviceTokenJO.getString(KEY_TOKENDATA));
             } catch (final IllegalArgumentException e) {
-                throw new MslEncodingException(MslError.SERVICETOKEN_TOKENDATA_INVALID, "servicetoken " + serviceTokenJO.toString(), e).setEntity(masterToken).setUser(userIdToken);
+                throw new MslEncodingException(MslError.SERVICETOKEN_TOKENDATA_INVALID, "servicetoken " + serviceTokenJO.toString(), e).setMasterToken(masterToken).setUserIdToken(userIdToken);
             }
             if (tokendata == null || tokendata.length == 0)
-                throw new MslEncodingException(MslError.SERVICETOKEN_TOKENDATA_MISSING, "servicetoken " + serviceTokenJO.toString()).setEntity(masterToken).setUser(userIdToken);
+                throw new MslEncodingException(MslError.SERVICETOKEN_TOKENDATA_MISSING, "servicetoken " + serviceTokenJO.toString()).setMasterToken(masterToken).setUserIdToken(userIdToken);
             try {
                 signature = DatatypeConverter.parseBase64Binary(serviceTokenJO.getString(KEY_SIGNATURE));
             } catch (final IllegalArgumentException e) {
-                throw new MslEncodingException(MslError.SERVICETOKEN_SIGNATURE_INVALID, "servicetoken " + serviceTokenJO.toString(), e).setEntity(masterToken).setUser(userIdToken);
+                throw new MslEncodingException(MslError.SERVICETOKEN_SIGNATURE_INVALID, "servicetoken " + serviceTokenJO.toString(), e).setMasterToken(masterToken).setUserIdToken(userIdToken);
             }
             verified = (cryptoContext != null) ? cryptoContext.verify(tokendata, signature) : false;
         } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "servicetoken " + serviceTokenJO.toString(), e).setEntity(masterToken).setUser(userIdToken);
+            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "servicetoken " + serviceTokenJO.toString(), e).setMasterToken(masterToken).setUserIdToken(userIdToken);
         } catch (final MslCryptoException e) {
-            e.setEntity(masterToken);
+            e.setMasterToken(masterToken);
             throw e;
         }
         
@@ -324,14 +324,14 @@ public class ServiceToken implements JSONString {
             if (tokenDataJO.has(KEY_MASTER_TOKEN_SERIAL_NUMBER)) {
                 mtSerialNumber = tokenDataJO.getLong(KEY_MASTER_TOKEN_SERIAL_NUMBER);
                 if (mtSerialNumber < 0 || mtSerialNumber > MslConstants.MAX_LONG_VALUE)
-                    throw new MslException(MslError.SERVICETOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "servicetokendata " + tokenDataJson).setEntity(masterToken).setUser(userIdToken);
+                    throw new MslException(MslError.SERVICETOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "servicetokendata " + tokenDataJson).setMasterToken(masterToken).setUserIdToken(userIdToken);
             } else {
                 mtSerialNumber = -1;
             }
             if (tokenDataJO.has(KEY_USER_ID_TOKEN_SERIAL_NUMBER)) {
                 uitSerialNumber = tokenDataJO.getLong(KEY_USER_ID_TOKEN_SERIAL_NUMBER);
                 if (uitSerialNumber < 0 || uitSerialNumber > MslConstants.MAX_LONG_VALUE)
-                    throw new MslException(MslError.SERVICETOKEN_USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "servicetokendata " + tokenDataJson).setEntity(masterToken).setUser(userIdToken);
+                    throw new MslException(MslError.SERVICETOKEN_USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "servicetokendata " + tokenDataJson).setMasterToken(masterToken).setUserIdToken(userIdToken);
             } else {
                 uitSerialNumber = -1;
             }
@@ -359,10 +359,10 @@ public class ServiceToken implements JSONString {
                 try {
                     ciphertext = DatatypeConverter.parseBase64Binary(data);
                 } catch (final IllegalArgumentException e) {
-                    throw new MslException(MslError.SERVICETOKEN_SERVICEDATA_INVALID, "servicetokendata " + tokenDataJson).setEntity(masterToken).setUser(userIdToken);
+                    throw new MslException(MslError.SERVICETOKEN_SERVICEDATA_INVALID, "servicetokendata " + tokenDataJson).setMasterToken(masterToken).setUserIdToken(userIdToken);
                 }
                 if (ciphertext == null)
-                    throw new MslException(MslError.SERVICETOKEN_SERVICEDATA_INVALID, "servicetokendata " + tokenDataJson).setEntity(masterToken).setUser(userIdToken);
+                    throw new MslException(MslError.SERVICETOKEN_SERVICEDATA_INVALID, "servicetokendata " + tokenDataJson).setMasterToken(masterToken).setUserIdToken(userIdToken);
                 final byte[] compressedData = (encrypted && ciphertext.length > 0)
                     ? cryptoContext.decrypt(ciphertext)
                     : ciphertext;
@@ -373,18 +373,18 @@ public class ServiceToken implements JSONString {
                 servicedata = (data.isEmpty()) ? new byte[0] : null;
             }
         } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "servicetokendata " + tokenDataJson, e).setEntity(masterToken).setUser(userIdToken);
+            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "servicetokendata " + tokenDataJson, e).setMasterToken(masterToken).setUserIdToken(userIdToken);
         } catch (final MslCryptoException e) {
-            e.setEntity(masterToken);
-            e.setUser(userIdToken);
+            e.setMasterToken(masterToken);
+            e.setUserIdToken(userIdToken);
             throw e;
         }
         
         // Verify serial numbers.
         if (mtSerialNumber != -1 && (masterToken == null || mtSerialNumber != masterToken.getSerialNumber()))
-            throw new MslException(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH, "st mtserialnumber " + mtSerialNumber + "; mt " + masterToken).setEntity(masterToken).setUser(userIdToken);
+            throw new MslException(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH, "st mtserialnumber " + mtSerialNumber + "; mt " + masterToken).setMasterToken(masterToken).setUserIdToken(userIdToken);
         if (uitSerialNumber != -1 && (userIdToken == null || uitSerialNumber != userIdToken.getSerialNumber()))
-            throw new MslException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH, "st uitserialnumber " + uitSerialNumber + "; uit " + userIdToken).setEntity(masterToken).setUser(userIdToken);
+            throw new MslException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH, "st uitserialnumber " + uitSerialNumber + "; uit " + userIdToken).setMasterToken(masterToken).setUserIdToken(userIdToken);
     }
     
     /**

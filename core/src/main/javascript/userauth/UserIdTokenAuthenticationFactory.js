@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2014 Netflix, Inc.  All rights reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,18 +16,18 @@
 
 /**
  * User ID token-based user authentication factory.
- * 
+ *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 var UserIdTokenAuthenticationFactory = UserAuthenticationFactory.extend({
     /**
      * Construct a new user ID token-based user authentication factory.
-     * 
+     *
      * @param {AuthenticationUtils} authutils authentication utilities.
      */
     init: function init(authutils) {
         init.base.call(this, UserAuthenticationScheme.USER_ID_TOKEN);
-        
+
         // The properties.
         var props = {
             _authutils: { value: authutils, writable: false, enumerable: false, configurable: false },
@@ -46,36 +46,36 @@ var UserIdTokenAuthenticationFactory = UserAuthenticationFactory.extend({
         if (!(data instanceof UserIdTokenAuthenticationData))
             throw new MslInternalException("Incorrect authentication data type " + data + ".");
         var uita = data;
-     
+
         // Verify the scheme is permitted.
         if(!this._authutils.isSchemePermitted(identity, this.scheme))
-            throw new MslUserAuthException(MslError.USERAUTH_ENTITY_INCORRECT_DATA, "Authentication scheme " + this.scheme + " not permitted for entity " + identity + ".").setUser(data);
-        
+            throw new MslUserAuthException(MslError.USERAUTH_ENTITY_INCORRECT_DATA, "Authentication scheme " + this.scheme + " not permitted for entity " + identity + ".").setUserIdToken(data);
+
         // Extract and check master token.
         var uitaMasterToken = uita.masterToken;
         var uitaIdentity = uitaMasterToken.identity;
         if (!uitaIdentity)
-            throw new MslUserAuthException(MslError.USERAUTH_MASTERTOKEN_NOT_DECRYPTED).setUser(uita);
+            throw new MslUserAuthException(MslError.USERAUTH_MASTERTOKEN_NOT_DECRYPTED).setUserIdToken(uita);
         if (identity != uitaIdentity)
-            throw new MslUserAuthException(MslError.USERAUTH_ENTITY_MISMATCH, "entity identity " + identity + "; uad identity " + uitaIdentity).setUser(uita);
-        
+            throw new MslUserAuthException(MslError.USERAUTH_ENTITY_MISMATCH, "entity identity " + identity + "; uad identity " + uitaIdentity).setUserIdToken(uita);
+
         // Authenticate the user.
         var uitaUserIdToken = uita.userIdToken;
         var user = uitaUserIdToken.user;
         if (!user)
-            throw new MslUserAuthException(MslError.USERAUTH_USERIDTOKEN_NOT_DECRYPTED).setUser(uita);
-        
+            throw new MslUserAuthException(MslError.USERAUTH_USERIDTOKEN_NOT_DECRYPTED).setUserIdToken(uita);
+
         // Verify the scheme is still permitted.
         if (!this._authutils.isSchemePermitted(identity, user, this.scheme))
-            throw new MslUserAuthException(MslError.USERAUTH_ENTITYUSER_INCORRECT_DATA, "Authentication scheme " + this.scheme + " not permitted for entity " + identity + ".").setUser(data);
-        
+            throw new MslUserAuthException(MslError.USERAUTH_ENTITYUSER_INCORRECT_DATA, "Authentication scheme " + this.scheme + " not permitted for entity " + identity + ".").setUserIdToken(data);
+
         // If a user ID token was provided validate the user identities.
         if (userIdToken) {
             var uitUser = userIdToken.user;
             if (!user.equals(uitUser))
                 throw new MslUserAuthException(MslError.USERIDTOKEN_USERAUTH_DATA_MISMATCH, "uad user " + user + "; uit user " + uitUser);
         }
-        
+
         // Return the user.
         return user;
     },

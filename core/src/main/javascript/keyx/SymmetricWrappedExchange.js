@@ -332,7 +332,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
                     error: function(e) {
                         AsyncExecutor(callback, function() {
                             if (e instanceof MslException)
-                                e.setEntity(entityToken);
+                                e.setMasterToken(entityToken);
                             throw e;
                         }, self);
                     }
@@ -373,7 +373,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
                                         error: function(e) {
                                             AsyncExecutor(callback, function() {
                                                 if (e instanceof MslException)
-                                                    e.setEntity(entityToken);
+                                                    e.setMasterToken(entityToken);
                                                 throw e;
                                             }, self);
                                         }
@@ -382,7 +382,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
                                 error: function(e) {
                                     AsyncExecutor(callback, function() {
                                         if (e instanceof MslException)
-                                            e.setEntity(entityToken);
+                                            e.setMasterToken(entityToken);
                                         throw e;
                                     }, self);
                                 }
@@ -391,7 +391,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
                         error: function(e) {
                             AsyncExecutor(callback, function() {
                                 if (e instanceof MslException)
-                                    e.setEntity(entityToken);
+                                    e.setMasterToken(entityToken);
                                 throw e;
                             }, self);
                         }
@@ -417,7 +417,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
                                         if (e instanceof MslMasterTokenException)
                                             throw new MslInternalException("Master token constructed by token factory is not trusted.", e);
                                         if (e instanceof MslException)
-                                            e.setEntity(entityToken);
+                                            e.setMasterToken(entityToken);
                                         throw e;
                                     }
 
@@ -429,7 +429,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
                             error: function(e) {
                                 AsyncExecutor(callback, function() {
                                     if (e instanceof MslException)
-                                        e.setEntity(entityToken);
+                                        e.setMasterToken(entityToken);
                                     throw e;
                                 }, self);
                             }
@@ -456,7 +456,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
                             error: function(e) {
                                 AsyncExecutor(callback, function() {
                                     if (e instanceof MslException)
-                                        e.setEntity(entityToken);
+                                        e.setMasterToken(entityToken);
                                     throw e;
                                 }, self);
                             }
@@ -483,7 +483,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
                 var requestKeyId = request.keyId;
                 var responseKeyId = response.keyId;
                 if (requestKeyId != responseKeyId)
-                    throw new MslKeyExchangeException(MslError.KEYX_RESPONSE_REQUEST_MISMATCH, "request " + requestKeyId + "; response " + responseKeyId).setEntity(masterToken);
+                    throw new MslKeyExchangeException(MslError.KEYX_RESPONSE_REQUEST_MISMATCH, "request " + requestKeyId + "; response " + responseKeyId).setMasterToken(masterToken);
 
                 // Unwrap session keys with identified key.
                 ctx.getEntityAuthenticationData(null, {
@@ -526,8 +526,8 @@ var SymmetricWrappedExchange$ResponseData$parse;
             function handleError(e) {
                 AsyncExecutor(callback, function() {
                     if (e instanceof MslException) {
-                        e.setEntity(masterToken);
-                        e.setEntity(entityAuthData);
+                        e.setMasterToken(masterToken);
+                        e.setEntityAuthenticationData(entityAuthData);
                     }
                     throw e;
                 }, self);

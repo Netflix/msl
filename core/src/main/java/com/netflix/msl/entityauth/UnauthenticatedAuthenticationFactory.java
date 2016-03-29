@@ -63,11 +63,11 @@ public class UnauthenticatedAuthenticationFactory extends EntityAuthenticationFa
         // Check for revocation.
         final String identity = uad.getIdentity();
         if (authutils.isEntityRevoked(identity))
-            throw new MslEntityAuthException(MslError.ENTITY_REVOKED, "none " + identity).setEntity(uad);
+            throw new MslEntityAuthException(MslError.ENTITY_REVOKED, "none " + identity).setEntityAuthenticationData(uad);
         
         // Verify the scheme is permitted.
         if (!authutils.isSchemePermitted(identity, getScheme()))
-            throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + getScheme()).setEntity(uad);
+            throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + getScheme()).setEntityAuthenticationData(uad);
         
         // Return the crypto context.
         return new NullCryptoContext();

@@ -37,7 +37,7 @@ public class MslUserIdTokenException extends MslException {
      */
     public MslUserIdTokenException(final MslError error, final UserIdToken userIdToken) {
         super(error);
-        setUser(userIdToken);
+        setUserIdToken(userIdToken);
     }
     
     /**
@@ -50,7 +50,7 @@ public class MslUserIdTokenException extends MslException {
      */
     public MslUserIdTokenException(final MslError error, final UserIdToken userIdToken, final String details) {
         super(error, details);
-        setUser(userIdToken);
+        setUserIdToken(userIdToken);
     }
     
     /**
@@ -64,24 +64,24 @@ public class MslUserIdTokenException extends MslException {
      */
     public MslUserIdTokenException(final MslError error, final UserIdToken userIdToken, final String details, final Throwable cause) {
         super(error, details, cause);
-        setUser(userIdToken);
+        setUserIdToken(userIdToken);
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.MslException#setEntity(com.netflix.msl.tokens.MasterToken)
+     * @see com.netflix.msl.MslException#setMasterToken(com.netflix.msl.tokens.MasterToken)
      */
     @Override
-    public MslUserIdTokenException setEntity(final MasterToken masterToken) {
-        super.setEntity(masterToken);
+    public MslUserIdTokenException setMasterToken(final MasterToken masterToken) {
+        super.setMasterToken(masterToken);
         return this;
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.MslException#setEntity(com.netflix.msl.entityauth.EntityAuthenticationData)
+     * @see com.netflix.msl.MslException#setEntityAuthenticationData(com.netflix.msl.entityauth.EntityAuthenticationData)
      */
     @Override
-    public MslUserIdTokenException setEntity(final EntityAuthenticationData entityAuthData) {
-        super.setEntity(entityAuthData);
+    public MslUserIdTokenException setEntityAuthenticationData(final EntityAuthenticationData entityAuthData) {
+        super.setEntityAuthenticationData(entityAuthData);
         return this;
     }
 

@@ -372,12 +372,12 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
         // Verify the scheme is permitted.
         final String identity = masterToken.getIdentity();
         if(!authutils.isSchemePermitted(identity, this.getScheme()))
-            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + this.getScheme()).setEntity(masterToken);
+            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + this.getScheme()).setMasterToken(masterToken);
 
         // If the master token was not issued by the local entity then we
         // should not be generating a key response for it.
         if (!masterToken.isVerified())
-            throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, masterToken).setEntity(masterToken);
+            throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, masterToken).setMasterToken(masterToken);
         
         // Create random AES-128 encryption and SHA-256 HMAC keys.
         final byte[] encryptionBytes = new byte[16];
@@ -471,7 +471,7 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
         final KeyId requestKeyId = request.getKeyId();
         final KeyId responseKeyId = response.getKeyId();
         if (!requestKeyId.equals(responseKeyId))
-            throw new MslKeyExchangeException(MslError.KEYX_RESPONSE_REQUEST_MISMATCH, "request " + requestKeyId + "; response " + responseKeyId).setEntity(masterToken);
+            throw new MslKeyExchangeException(MslError.KEYX_RESPONSE_REQUEST_MISMATCH, "request " + requestKeyId + "; response " + responseKeyId).setMasterToken(masterToken);
         
         // Unwrap session keys with identified key.
         final EntityAuthenticationData entityAuthData = ctx.getEntityAuthenticationData(null);

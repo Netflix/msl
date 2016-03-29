@@ -70,10 +70,10 @@ public class KanmusuAuthenticationFactory extends EntityAuthenticationFactory {
         final String name = kad.getName();
         final Status status = database.getStatus(type, name);
         if (status == null)
-            throw new MslEntityAuthException(MslError.ENTITY_NOT_FOUND, "kanmusu " + kad.getIdentity()).setEntity(kad);
+            throw new MslEntityAuthException(MslError.ENTITY_NOT_FOUND, "kanmusu " + kad.getIdentity()).setEntityAuthenticationData(kad);
         switch (status) {
             case DESTROYED:
-                throw new MslEntityAuthException(KanColleMslError.ENTITYAUTH_KANMUSU_DESTROYED, "kanmusu " + kad.getIdentity()).setEntity(kad);
+                throw new MslEntityAuthException(KanColleMslError.ENTITYAUTH_KANMUSU_DESTROYED, "kanmusu " + kad.getIdentity()).setEntityAuthenticationData(kad);
             // We do not reject authentication for the other states.
             default:
                 break;
@@ -82,7 +82,7 @@ public class KanmusuAuthenticationFactory extends EntityAuthenticationFactory {
         // Return the crypto context.
         final String passphrase = database.getPassphrase(kad.getType(), kad.getName());
         if (passphrase == null)
-            throw new MslEntityAuthException(MslError.ENTITY_NOT_FOUND, "kanmusu " + kad.getIdentity()).setEntity(kad);
+            throw new MslEntityAuthException(MslError.ENTITY_NOT_FOUND, "kanmusu " + kad.getIdentity()).setEntityAuthenticationData(kad);
         final String identity = kad.getIdentity();
         return new KanColleCryptoContext(ctx, identity, passphrase);
     }

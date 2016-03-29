@@ -72,20 +72,20 @@ public class MslUserAuthException extends MslException {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.MslException#setEntity(com.netflix.msl.tokens.MasterToken)
+     * @see com.netflix.msl.MslException#setMasterToken(com.netflix.msl.tokens.MasterToken)
      */
     @Override
-    public MslUserAuthException setEntity(final MasterToken masterToken) {
-        super.setEntity(masterToken);
+    public MslUserAuthException setMasterToken(final MasterToken masterToken) {
+        super.setMasterToken(masterToken);
         return this;
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.MslException#setUser(com.netflix.msl.userauth.UserAuthenticationData)
+     * @see com.netflix.msl.MslException#setUserAuthenticationData(com.netflix.msl.userauth.UserAuthenticationData)
      */
     @Override
-    public MslUserAuthException setUser(final UserAuthenticationData userAuthData) {
-        super.setUser(userAuthData);
+    public MslUserAuthException setUserAuthenticationData(final UserAuthenticationData userAuthData) {
+        super.setUserAuthenticationData(userAuthData);
         return this;
     }
 }

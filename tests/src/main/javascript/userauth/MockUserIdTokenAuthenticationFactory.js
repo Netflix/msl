@@ -65,28 +65,28 @@ var MockUserIdTokenAuthenticationFactory = UserAuthenticationFactory.extend({
         var uitadMasterToken = uitad.masterToken;
         var uitadIdentity = uitadMasterToken.identity;
         if (!uitadIdentity)
-            throw new MslUserAuthException(MslError.USERAUTH_MASTERTOKEN_NOT_DECRYPTED).setUser(uitad);
+            throw new MslUserAuthException(MslError.USERAUTH_MASTERTOKEN_NOT_DECRYPTED).setUserAuthenticationData(uitad);
         if (identity != uitadIdentity)
-            throw new MslUserAuthException(MslError.USERAUTH_ENTITY_MISMATCH, "entity identity " + identity + "; uad identity " + uitadIdentity).setUser(uitad);
+            throw new MslUserAuthException(MslError.USERAUTH_ENTITY_MISMATCH, "entity identity " + identity + "; uad identity " + uitadIdentity).setUserAuthenticationData(uitad);
         
         // Authenticate the user.
         var uitadUserIdToken = uitad.userIdToken;
         var user = uitadUserIdToken.user;
         if (!user)
-            throw new MslUserAuthException(MslError.USERAUTH_USERIDTOKEN_NOT_DECRYPTED).setUser(uitad);
+            throw new MslUserAuthException(MslError.USERAUTH_USERIDTOKEN_NOT_DECRYPTED).setUserAuthenticationData(uitad);
         
         // Verify the user.
         if (!uitadMasterToken.equals(masterToken) ||
             !uitadUserIdToken.equals(userIdToken))
         {
-            throw new MslUserAuthException(MslError.USERAUTH_ENTITYUSER_INCORRECT_DATA, "Authentication scheme " + this.scheme.name + " not permitted for entity " + identity + ".").setUser(data);
+            throw new MslUserAuthException(MslError.USERAUTH_ENTITYUSER_INCORRECT_DATA, "Authentication scheme " + this.scheme.name + " not permitted for entity " + identity + ".").setUserAuthenticationData(data);
         }
         
         // If a user ID token was provided validate the user identities.
         if (userIdToken) {
             var uitUser = userIdToken.user;
             if (!user.equals(uitUser))
-                throw new MslUserAuthException(MslError.USERIDTOKEN_USERAUTH_DATA_MISMATCH, "uad user " + user + "; uit user " + uitUser).setUser(uitad);
+                throw new MslUserAuthException(MslError.USERIDTOKEN_USERAUTH_DATA_MISMATCH, "uad user " + user + "; uit user " + uitUser).setUserAuthenticationData(uitad);
         }
         
         // Return the user.

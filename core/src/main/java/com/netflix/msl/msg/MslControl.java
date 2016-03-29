@@ -1738,10 +1738,10 @@ public class MslControl {
             if (timestamp != null && (request != null || ctx.isPeerToPeer()))
                 ctx.updateRemoteTime(timestamp);
         } catch (final MslException e) {
-            e.setEntity(masterToken);
-            e.setEntity(entityAuthData);
-            e.setUser(userIdToken);
-            e.setUser(userAuthData);
+            e.setMasterToken(masterToken);
+            e.setEntityAuthenticationData(entityAuthData);
+            e.setUserIdToken(userIdToken);
+            e.setUserAuthenticationData(userAuthData);
             throw e;
         }
         

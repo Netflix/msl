@@ -212,7 +212,7 @@ public class MockTokenFactory implements TokenFactory {
     @Override
     public UserIdToken renewUserIdToken(final MslContext ctx, final UserIdToken userIdToken, final MasterToken masterToken) throws MslEncodingException, MslCryptoException, MslUserIdTokenException {
         if (!userIdToken.isDecrypted())
-            throw new MslUserIdTokenException(MslError.USERIDTOKEN_NOT_DECRYPTED, userIdToken).setEntity(masterToken);
+            throw new MslUserIdTokenException(MslError.USERIDTOKEN_NOT_DECRYPTED, userIdToken).setMasterToken(masterToken);
 
         final JSONObject issuerData = null;
         final Date renewalWindow = new Date(ctx.getTime() + RENEWAL_OFFSET);

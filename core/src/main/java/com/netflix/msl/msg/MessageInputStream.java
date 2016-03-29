@@ -94,7 +94,7 @@ public class MessageInputStream extends InputStream {
      */
     private static ICryptoContext getKeyxCryptoContext(final MslContext ctx, final MessageHeader header, final Set<KeyRequestData> keyRequestData) throws MslCryptoException, MslKeyExchangeException, MslEncodingException, MslMasterTokenException, MslEntityAuthException {
         // Pull the header data.
-        final MessageHeader messageHeader = (MessageHeader)header;
+        final MessageHeader messageHeader = header;
         final MasterToken masterToken = messageHeader.getMasterToken();
         final KeyResponseData keyResponse = messageHeader.getKeyResponseData();
         
@@ -311,14 +311,14 @@ public class MessageInputStream extends InputStream {
         } catch (final MslException e) {
             if (this.header instanceof MessageHeader) {
                 final MessageHeader messageHeader = (MessageHeader)this.header;
-                e.setEntity(messageHeader.getMasterToken());
-                e.setEntity(messageHeader.getEntityAuthenticationData());
-                e.setUser(messageHeader.getUserIdToken());
-                e.setUser(messageHeader.getUserAuthenticationData());
+                e.setMasterToken(messageHeader.getMasterToken());
+                e.setEntityAuthenticationData(messageHeader.getEntityAuthenticationData());
+                e.setUserIdToken(messageHeader.getUserIdToken());
+                e.setUserAuthenticationData(messageHeader.getUserAuthenticationData());
                 e.setMessageId(messageHeader.getMessageId());
             } else {
                 final ErrorHeader errorHeader = (ErrorHeader)this.header;
-                e.setEntity(errorHeader.getEntityAuthenticationData());
+                e.setEntityAuthenticationData(errorHeader.getEntityAuthenticationData());
                 e.setMessageId(errorHeader.getMessageId());
             }
             throw e;
@@ -401,17 +401,17 @@ public class MessageInputStream extends InputStream {
         final UserAuthenticationData userAuthData = messageHeader.getUserAuthenticationData();
         if (payload.getMessageId() != messageHeader.getMessageId()) {
             throw new MslMessageException(MslError.PAYLOAD_MESSAGE_ID_MISMATCH, "payload mid " + payload.getMessageId() + " header mid " + messageHeader.getMessageId())
-                .setEntity(masterToken)
-                .setEntity(entityAuthData)
-                .setUser(userIdToken)
-                .setUser(userAuthData);
+                .setMasterToken(masterToken)
+                .setEntityAuthenticationData(entityAuthData)
+                .setUserIdToken(userIdToken)
+                .setUserAuthenticationData(userAuthData);
         }
         if (payload.getSequenceNumber() != payloadSequenceNumber) {
             throw new MslMessageException(MslError.PAYLOAD_SEQUENCE_NUMBER_MISMATCH, "payload seqno " + payload.getSequenceNumber() + " expected seqno " + payloadSequenceNumber)
-                .setEntity(masterToken)
-                .setEntity(entityAuthData)
-                .setUser(userIdToken)
-                .setUser(userAuthData);
+                .setMasterToken(masterToken)
+                .setEntityAuthenticationData(entityAuthData)
+                .setUserIdToken(userIdToken)
+                .setUserAuthenticationData(userAuthData);
         }
         ++payloadSequenceNumber;
         
@@ -685,7 +685,7 @@ public class MessageInputStream extends InputStream {
         // Read from payloads until we are done or cannot read anymore.
         int bytesRead = 0;
         while (bytesRead < len) {
-            int read = (currentPayload != null) ? currentPayload.read(cbuf, off + bytesRead, len - bytesRead) : -1;
+            final int read = (currentPayload != null) ? currentPayload.read(cbuf, off + bytesRead, len - bytesRead) : -1;
             
             // If we read some data continue.
             if (read != -1) {
@@ -754,7 +754,7 @@ public class MessageInputStream extends InputStream {
         // Skip from payloads until we are done or cannot skip anymore.
         int bytesSkipped = 0;
         while (bytesSkipped < n) {
-            long skipped = (currentPayload != null) ? currentPayload.skip(n - bytesSkipped) : 0;
+            final long skipped = (currentPayload != null) ? currentPayload.skip(n - bytesSkipped) : 0;
             
             // If we skipped some data continue.
             if (skipped != 0) {

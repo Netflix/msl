@@ -176,14 +176,14 @@ public class UserIdToken implements JSONString {
                 tokenDataJO.put(KEY_USERDATA, DatatypeConverter.printBase64Binary(ciphertext));
                 this.tokendata = tokenDataJO.toString().getBytes(MslConstants.DEFAULT_CHARSET);
             } catch (final JSONException e) {
-                throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, "usertokendata", e).setEntity(masterToken);
+                throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, "usertokendata", e).setMasterToken(masterToken);
             }
         
             // Sign the token data.
             this.signature = cryptoContext.sign(this.tokendata);
             this.verified = true;
         } catch (final MslCryptoException e) {
-            e.setEntity(masterToken);
+            e.setMasterToken(masterToken);
             throw e;
         }
     }
@@ -217,18 +217,18 @@ public class UserIdToken implements JSONString {
             try {
                 tokendata = DatatypeConverter.parseBase64Binary(userIdTokenJO.getString(KEY_TOKENDATA));
             } catch (final IllegalArgumentException e) {
-                throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_INVALID, "useridtoken " + userIdTokenJO.toString(), e).setEntity(masterToken);
+                throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_INVALID, "useridtoken " + userIdTokenJO.toString(), e).setMasterToken(masterToken);
             }
             if (tokendata == null || tokendata.length == 0)
-                throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_MISSING, "useridtoken " + userIdTokenJO.toString()).setEntity(masterToken);
+                throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_MISSING, "useridtoken " + userIdTokenJO.toString()).setMasterToken(masterToken);
             try {
                 signature = DatatypeConverter.parseBase64Binary(userIdTokenJO.getString(KEY_SIGNATURE));
             } catch (final IllegalArgumentException e) {
-                throw new MslEncodingException(MslError.USERIDTOKEN_SIGNATURE_INVALID, "useridtoken " + userIdTokenJO.toString(), e).setEntity(masterToken);
+                throw new MslEncodingException(MslError.USERIDTOKEN_SIGNATURE_INVALID, "useridtoken " + userIdTokenJO.toString(), e).setMasterToken(masterToken);
             }
             verified = cryptoContext.verify(tokendata, signature);
         } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "useridtoken " + userIdTokenJO.toString(), e).setEntity(masterToken);
+            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "useridtoken " + userIdTokenJO.toString(), e).setMasterToken(masterToken);
         }
         
         // Pull the token data.
@@ -238,26 +238,26 @@ public class UserIdToken implements JSONString {
             renewalWindow = tokenDataJO.getLong(KEY_RENEWAL_WINDOW);
             expiration = tokenDataJO.getLong(KEY_EXPIRATION);
             if (expiration < renewalWindow)
-                throw new MslException(MslError.USERIDTOKEN_EXPIRES_BEFORE_RENEWAL, "usertokendata " + tokenDataJson).setEntity(masterToken);
+                throw new MslException(MslError.USERIDTOKEN_EXPIRES_BEFORE_RENEWAL, "usertokendata " + tokenDataJson).setMasterToken(masterToken);
             mtSerialNumber = tokenDataJO.getLong(KEY_MASTER_TOKEN_SERIAL_NUMBER);
             if (mtSerialNumber < 0 || mtSerialNumber > MslConstants.MAX_LONG_VALUE)
-                throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokenDataJson).setEntity(masterToken);
+                throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokenDataJson).setMasterToken(masterToken);
             serialNumber = tokenDataJO.getLong(KEY_SERIAL_NUMBER);
             if (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE)
-                throw new MslException(MslError.USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokenDataJson).setEntity(masterToken);
+                throw new MslException(MslError.USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokenDataJson).setMasterToken(masterToken);
             final byte[] ciphertext;
             try {
                 ciphertext = DatatypeConverter.parseBase64Binary(tokenDataJO.getString(KEY_USERDATA));
             } catch (final IllegalArgumentException e) {
-                throw new MslException(MslError.USERIDTOKEN_USERDATA_INVALID, tokenDataJO.getString(KEY_USERDATA)).setEntity(masterToken);
+                throw new MslException(MslError.USERIDTOKEN_USERDATA_INVALID, tokenDataJO.getString(KEY_USERDATA)).setMasterToken(masterToken);
             }
             if (ciphertext == null || ciphertext.length == 0)
-                throw new MslException(MslError.USERIDTOKEN_USERDATA_MISSING, tokenDataJO.getString(KEY_USERDATA)).setEntity(masterToken);
+                throw new MslException(MslError.USERIDTOKEN_USERDATA_MISSING, tokenDataJO.getString(KEY_USERDATA)).setMasterToken(masterToken);
             userdata = (verified) ? cryptoContext.decrypt(ciphertext) : null;
         } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR, "usertokendata " + tokenDataJson, e).setEntity(masterToken);
+            throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR, "usertokendata " + tokenDataJson, e).setMasterToken(masterToken);
         } catch (final MslCryptoException e) {
-            e.setEntity(masterToken);
+            e.setMasterToken(masterToken);
             throw e;
         }
         
@@ -269,13 +269,13 @@ public class UserIdToken implements JSONString {
                 issuerData = (userDataJO.has(KEY_ISSUER_DATA)) ? userDataJO.getJSONObject(KEY_ISSUER_DATA) : null;
                 final String identity = userDataJO.getString(KEY_IDENTITY);
                 if (identity == null || identity.length() == 0)
-                    throw new MslException(MslError.USERIDTOKEN_IDENTITY_INVALID, "userdata " + userDataJson).setEntity(masterToken);
+                    throw new MslException(MslError.USERIDTOKEN_IDENTITY_INVALID, "userdata " + userDataJson).setMasterToken(masterToken);
                 final TokenFactory factory = ctx.getTokenFactory();
                 user = factory.createUser(ctx, identity);
                 if (user == null)
                     throw new MslInternalException("TokenFactory.createUser() returned null in violation of the interface contract.");
             } catch (final JSONException e) {
-                throw new MslEncodingException(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR, "userdata " + userDataJson, e).setEntity(masterToken);
+                throw new MslEncodingException(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR, "userdata " + userDataJson, e).setMasterToken(masterToken);
             }
         } else {
             issuerData = null;
@@ -284,7 +284,7 @@ public class UserIdToken implements JSONString {
         
         // Verify serial numbers.
         if (masterToken == null || this.mtSerialNumber != masterToken.getSerialNumber())
-            throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH, "uit mtserialnumber " + this.mtSerialNumber + "; mt " + masterToken).setEntity(masterToken);
+            throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH, "uit mtserialnumber " + this.mtSerialNumber + "; mt " + masterToken).setMasterToken(masterToken);
     }
     
     /**

@@ -76,20 +76,20 @@ public class X509AuthenticationFactory extends EntityAuthenticationFactory {
         
         // Check for revocation.
         if (authutils.isEntityRevoked(identity))
-            throw new MslEntityAuthException(MslError.ENTITY_REVOKED, cert.toString()).setEntity(x509ad);
+            throw new MslEntityAuthException(MslError.ENTITY_REVOKED, cert.toString()).setEntityAuthenticationData(x509ad);
         
         // Verify the scheme is permitted.
         if (!authutils.isSchemePermitted(identity, getScheme()))
-            throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + getScheme()).setEntity(x509ad);
+            throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + getScheme()).setEntityAuthenticationData(x509ad);
         
         // Verify entity certificate.
         try {
             if (!caStore.isAccepted(cert))
-                throw new MslEntityAuthException(MslError.X509CERT_VERIFICATION_FAILED, cert.toString()).setEntity(x509ad);
+                throw new MslEntityAuthException(MslError.X509CERT_VERIFICATION_FAILED, cert.toString()).setEntityAuthenticationData(x509ad);
         } catch (final CertificateExpiredException e) {
-            throw new MslEntityAuthException(MslError.X509CERT_EXPIRED, cert.toString(), e).setEntity(x509ad);
+            throw new MslEntityAuthException(MslError.X509CERT_EXPIRED, cert.toString(), e).setEntityAuthenticationData(x509ad);
         } catch (final CertificateNotYetValidException e) {
-            throw new MslEntityAuthException(MslError.X509CERT_NOT_YET_VALID, cert.toString(), e).setEntity(x509ad);
+            throw new MslEntityAuthException(MslError.X509CERT_NOT_YET_VALID, cert.toString(), e).setEntityAuthenticationData(x509ad);
         }
         
         // Return the crypto context.

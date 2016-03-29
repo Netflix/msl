@@ -69,20 +69,20 @@ public class MslCryptoException extends MslException {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.MslException#setEntity(com.netflix.msl.entityauth.EntityAuthenticationData)
+     * @see com.netflix.msl.MslException#setMasterToken(com.netflix.msl.tokens.MasterToken)
      */
     @Override
-    public MslCryptoException setEntity(EntityAuthenticationData entityAuthData) {
-        super.setEntity(entityAuthData);
+    public MslCryptoException setMasterToken(final MasterToken masterToken) {
+        super.setMasterToken(masterToken);
         return this;
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.MslException#setEntity(com.netflix.msl.tokens.MasterToken)
+     * @see com.netflix.msl.MslException#setEntityAuthenticationData(com.netflix.msl.entityauth.EntityAuthenticationData)
      */
     @Override
-    public MslCryptoException setEntity(MasterToken masterToken) {
-        super.setEntity(masterToken);
+    public MslCryptoException setEntityAuthenticationData(final EntityAuthenticationData entityAuthData) {
+        super.setEntityAuthenticationData(entityAuthData);
         return this;
     }
 }

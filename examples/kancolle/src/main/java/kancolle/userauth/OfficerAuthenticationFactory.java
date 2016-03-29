@@ -73,16 +73,16 @@ public class OfficerAuthenticationFactory extends UserAuthenticationFactory {
         final String name = oad.getName();
         final Status state = officers.getStatus(name);
         if (state == null)
-            throw new MslUserAuthException(KanColleMslError.OFFICER_NOT_FOUND).setUser(oad);
+            throw new MslUserAuthException(KanColleMslError.OFFICER_NOT_FOUND).setUserAuthenticationData(oad);
         switch (state) {
             case DISCHARGED:
-                throw new MslUserAuthException(KanColleMslError.USERAUTH_OFFICER_DISCHARGED).setUser(oad);
+                throw new MslUserAuthException(KanColleMslError.USERAUTH_OFFICER_DISCHARGED).setUserAuthenticationData(oad);
             case COURT_MARTIALED:
-                throw new MslUserAuthException(KanColleMslError.USERAUTH_OFFICER_COURT_MARTIALED).setUser(oad);
+                throw new MslUserAuthException(KanColleMslError.USERAUTH_OFFICER_COURT_MARTIALED).setUserAuthenticationData(oad);
             case KIA:
-                throw new MslUserAuthException(KanColleMslError.USERAUTH_OFFICER_KIA).setUser(oad);
+                throw new MslUserAuthException(KanColleMslError.USERAUTH_OFFICER_KIA).setUserAuthenticationData(oad);
             case DECEASED:
-                throw new MslUserAuthException(KanColleMslError.USERAUTH_OFFICER_DECEASED).setUser(oad);
+                throw new MslUserAuthException(KanColleMslError.USERAUTH_OFFICER_DECEASED).setUserAuthenticationData(oad);
             default:
                 break;
         }   
@@ -91,7 +91,7 @@ public class OfficerAuthenticationFactory extends UserAuthenticationFactory {
         final byte[] fingerprint = oad.getFingerprint();
         final byte[] expectedFingerprint = officers.getFingerprint(name);
         if (expectedFingerprint == null || !Arrays.equals(fingerprint, expectedFingerprint))
-            throw new MslUserAuthException(KanColleMslError.OFFICER_FINGERPRINT_INCORRECT).setUser(oad);
+            throw new MslUserAuthException(KanColleMslError.OFFICER_FINGERPRINT_INCORRECT).setUserAuthenticationData(oad);
         final MslUser user = new Officer(name);
         
         // If a user ID token was provided validate the user identities.

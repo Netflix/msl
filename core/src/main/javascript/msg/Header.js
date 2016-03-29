@@ -53,44 +53,8 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 var Header$parseHeader;
-var Header$KEY_ENTITY_AUTHENTICATION_DATA;
-var Header$KEY_MASTER_TOKEN;
-var Header$KEY_HEADERDATA;
-var Header$KEY_ERRORDATA;
-var Header$KEY_SIGNATURE;
 
 (function() {
-    /**
-     * JSON key entity authentication data.
-     * @const
-     * @type {string}
-     */
-    var KEY_ENTITY_AUTHENTICATION_DATA = Header$KEY_ENTITY_AUTHENTICATION_DATA = "entityauthdata";
-    /**
-     * JSON key master token.
-     * @const
-     * @type {string}
-     */
-    var KEY_MASTER_TOKEN = Header$KEY_MASTER_TOKEN = "mastertoken";
-    /**
-     * JSON key header data.
-     * @const
-     * @type {string}
-     */
-    var KEY_HEADERDATA = Header$KEY_HEADERDATA = "headerdata";
-    /**
-     * JSON key error data.
-     * @const
-     * @type {string}
-     */
-    var KEY_ERRORDATA = Header$KEY_ERRORDATA = "errordata";
-    /**
-     * JSON key signature.
-     * @const
-     * @type {string}
-     */
-    var KEY_SIGNATURE = Header$KEY_SIGNATURE = "signature";
-
     /**
      * <p>Construct a new header from the provided JSON object.</p>
      * 
@@ -132,9 +96,9 @@ var Header$KEY_SIGNATURE;
     Header$parseHeader = function Header$parseHeader(ctx, headerJO, cryptoContexts, callback) {
         AsyncExecutor(callback, function() {
             // Pull message data.
-            var entityAuthDataJo = headerJO[KEY_ENTITY_AUTHENTICATION_DATA];
-            var masterTokenJo = headerJO[KEY_MASTER_TOKEN];
-            var signatureB64 = headerJO[KEY_SIGNATURE];
+            var entityAuthDataJo = headerJO[Header$KEY_ENTITY_AUTHENTICATION_DATA];
+            var masterTokenJo = headerJO[Header$KEY_MASTER_TOKEN];
+            var signatureB64 = headerJO[Header$KEY_SIGNATURE];
 
             // Verify message data.
             if ((entityAuthDataJo && typeof entityAuthDataJo !== 'object') ||
@@ -167,7 +131,7 @@ var Header$KEY_SIGNATURE;
         function processHeaders(masterTokenJo, signature, entityAuthData) {
             AsyncExecutor(callback, function() {
                 // Process message headers.
-                var headerdata = headerJO[KEY_HEADERDATA];
+                var headerdata = headerJO[Header$KEY_HEADERDATA];
                 if (headerdata != undefined && headerdata != null) {
                     if (typeof headerdata !== 'string')
                         throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "header/errormsg " + JSON.stringify(headerJO));
@@ -181,7 +145,7 @@ var Header$KEY_SIGNATURE;
                                         AsyncExecutor(callback, function() {
                                             // Make sure the header was verified and decrypted.
                                             if (!messageHeader.isDecrypted())
-                                                throw new MslCryptoException(MslError.MESSAGE_MASTERTOKENBASED_VERIFICATION_FAILED).setEntity(masterToken);
+                                                throw new MslCryptoException(MslError.MESSAGE_MASTERTOKENBASED_VERIFICATION_FAILED).setMasterToken(masterToken);
                                             
                                             // Return the header.
                                             return messageHeader;
@@ -199,7 +163,7 @@ var Header$KEY_SIGNATURE;
                                 AsyncExecutor(callback, function() {
                                     // Make sure the header was verified and decrypted.
                                     if (!messageHeader.isDecrypted())
-                                        throw new MslCryptoException(MslError.MESSAGE_ENTITYDATABASED_VERIFICATION_FAILED).setEntity(entityAuthData);
+                                        throw new MslCryptoException(MslError.MESSAGE_ENTITYDATABASED_VERIFICATION_FAILED).setEntityAuthenticationData(entityAuthData);
                                     
                                     // Return the header.
                                     return messageHeader;
@@ -212,7 +176,7 @@ var Header$KEY_SIGNATURE;
                 }
     
                 // Process error headers.
-                var errordata = headerJO[KEY_ERRORDATA];
+                var errordata = headerJO[Header$KEY_ERRORDATA];
                 if (errordata != undefined && errordata != null) {
                     if (typeof errordata !== 'string')
                         throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "header/errormsg " + JSON.stringify(headerJO));

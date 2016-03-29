@@ -133,7 +133,7 @@ public class ErrorHeader extends Header {
             if (this.errorMsg != null) errorJO.put(KEY_ERROR_MESSAGE, this.errorMsg);
             if (this.userMsg != null) errorJO.put(KEY_USER_MESSAGE, this.userMsg);
         } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, "errordata", e).setEntity(entityAuthData).setMessageId(messageId);
+            throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, "errordata", e).setEntityAuthenticationData(entityAuthData).setMessageId(messageId);
         }
 
         try {
@@ -149,11 +149,11 @@ public class ErrorHeader extends Header {
             this.errordata = cryptoContext.encrypt(plaintext);
             this.signature = cryptoContext.sign(this.errordata);
         } catch (final MslCryptoException e) {
-            e.setEntity(entityAuthData);
+            e.setEntityAuthenticationData(entityAuthData);
             e.setMessageId(messageId);
             throw e;
         } catch (final MslEntityAuthException e) {
-            e.setEntity(entityAuthData);
+            e.setEntityAuthenticationData(entityAuthData);
             e.setMessageId(messageId);
             throw e;
         }
@@ -196,18 +196,18 @@ public class ErrorHeader extends Header {
             try {
                 this.errordata = DatatypeConverter.parseBase64Binary(errordata);
             } catch (final IllegalArgumentException e) {
-                throw new MslMessageException(MslError.HEADER_DATA_INVALID, errordata, e).setEntity(entityAuthData);
+                throw new MslMessageException(MslError.HEADER_DATA_INVALID, errordata, e).setEntityAuthenticationData(entityAuthData);
             }
             if (this.errordata == null || this.errordata.length == 0)
-                throw new MslMessageException(MslError.HEADER_DATA_MISSING, errordata).setEntity(entityAuthData);
+                throw new MslMessageException(MslError.HEADER_DATA_MISSING, errordata).setEntityAuthenticationData(entityAuthData);
             if (!cryptoContext.verify(this.errordata, this.signature))
-                throw new MslCryptoException(MslError.MESSAGE_VERIFICATION_FAILED).setEntity(entityAuthData);
+                throw new MslCryptoException(MslError.MESSAGE_VERIFICATION_FAILED).setEntityAuthenticationData(entityAuthData);
             plaintext = cryptoContext.decrypt(this.errordata);
         } catch (final MslCryptoException e) {
-            e.setEntity(entityAuthData);
+            e.setEntityAuthenticationData(entityAuthData);
             throw e;
         } catch (final MslEntityAuthException e) {
-            e.setEntity(entityAuthData);
+            e.setEntityAuthenticationData(entityAuthData);
             throw e;
         }
         
@@ -217,9 +217,9 @@ public class ErrorHeader extends Header {
             errordataJO = new JSONObject(errordataJson);
             messageId = errordataJO.getLong(KEY_MESSAGE_ID);
             if (this.messageId < 0 || this.messageId > MslConstants.MAX_LONG_VALUE)
-                throw new MslMessageException(MslError.MESSAGE_ID_OUT_OF_RANGE, "errordata " + errordataJson).setEntity(entityAuthData);
+                throw new MslMessageException(MslError.MESSAGE_ID_OUT_OF_RANGE, "errordata " + errordataJson).setEntityAuthenticationData(entityAuthData);
         } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "errordata " + errordataJson, e).setEntity(entityAuthData);
+            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "errordata " + errordataJson, e).setEntityAuthenticationData(entityAuthData);
         }
         
         try {
@@ -238,14 +238,14 @@ public class ErrorHeader extends Header {
             if (errordataJO.has(KEY_INTERNAL_CODE)) {
                 internalCode = errordataJO.getInt(KEY_INTERNAL_CODE);
                 if (this.internalCode < 0)
-                    throw new MslMessageException(MslError.INTERNAL_CODE_NEGATIVE, "errordata " + errordataJO.toString()).setEntity(entityAuthData).setMessageId(messageId);
+                    throw new MslMessageException(MslError.INTERNAL_CODE_NEGATIVE, "errordata " + errordataJO.toString()).setEntityAuthenticationData(entityAuthData).setMessageId(messageId);
             } else {
                 internalCode = -1;
             }
             errorMsg = errordataJO.optString(KEY_ERROR_MESSAGE, null);
             userMsg = errordataJO.optString(KEY_USER_MESSAGE, null);
         } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "errordata " + errordataJO.toString(), e).setEntity(entityAuthData).setMessageId(messageId);
+            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "errordata " + errordataJO.toString(), e).setEntityAuthenticationData(entityAuthData).setMessageId(messageId);
         }
     }
     
@@ -317,9 +317,9 @@ public class ErrorHeader extends Header {
     public String toJSONString() {
         try {
             final JSONObject jsonObj = new JSONObject();
-            jsonObj.put(KEY_ENTITY_AUTHENTICATION_DATA, entityAuthData);
-            jsonObj.put(KEY_ERRORDATA, DatatypeConverter.printBase64Binary(errordata));
-            jsonObj.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+            jsonObj.put(HeaderKeys.KEY_ENTITY_AUTHENTICATION_DATA, entityAuthData);
+            jsonObj.put(HeaderKeys.KEY_ERRORDATA, DatatypeConverter.printBase64Binary(errordata));
+            jsonObj.put(HeaderKeys.KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
             return jsonObj.toString();
         } catch (final JSONException e) {
             throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);

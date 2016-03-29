@@ -15,6 +15,19 @@
  */
 package burp;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.charset.Charset;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Set;
+
+import javax.xml.bind.DatatypeConverter;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import burp.msl.WiretapException;
 import burp.msl.WiretapModule;
 import burp.msl.msg.CaptureMessageDebugContext;
@@ -37,19 +50,6 @@ import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.userauth.UserAuthenticationFactory;
 import com.netflix.msl.util.JsonUtils;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import javax.xml.bind.DatatypeConverter;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.charset.Charset;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Set;
 
 /**
  * User: skommidi
@@ -94,7 +94,7 @@ public class MSLHttpListener implements IHttpListener {
         this(null, null);
     }
 
-    public MSLHttpListener(IBurpExtenderCallbacks callbacks, IExtensionHelpers helpers) {
+    public MSLHttpListener(final IBurpExtenderCallbacks callbacks, final IExtensionHelpers helpers) {
         this.callbacks = callbacks;
         this.helpers = helpers;
 
@@ -107,7 +107,7 @@ public class MSLHttpListener implements IHttpListener {
 
         try {
             initializeMsl();
-        } catch (MslCryptoException e) {
+        } catch (final MslCryptoException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
@@ -121,24 +121,24 @@ public class MSLHttpListener implements IHttpListener {
         // Change the entity auth data to your usecase
         ctx.setEntityAuthenticationData(EntityAuthenticationScheme.PSK);
 
-        CaptureMessageDebugContext dbgCtx = new CaptureMessageDebugContext(true, true);
+        final CaptureMessageDebugContext dbgCtx = new CaptureMessageDebugContext(true, true);
         try {
             msgCtx = new WiretapMessageContext(dbgCtx);
-        } catch (MslKeyExchangeException e) {
+        } catch (final MslKeyExchangeException e) {
             throw new RuntimeException(e.getMessage());
-        } catch (NoSuchAlgorithmException e) {
+        } catch (final NoSuchAlgorithmException e) {
             throw new RuntimeException(e.getMessage());
-        } catch (InvalidAlgorithmParameterException e) {
+        } catch (final InvalidAlgorithmParameterException e) {
             throw new RuntimeException(e.getMessage());
         }
     }
 
     @Override
-    public void processHttpMessage(int toolFlag, boolean messageIsRequest, IHttpRequestResponse messageInfo) throws WiretapException {
+    public void processHttpMessage(final int toolFlag, final boolean messageIsRequest, final IHttpRequestResponse messageInfo) throws WiretapException {
 
         if(messageIsRequest) {
             // Get MSL Message
-            String body = getBody(messageIsRequest, messageInfo);
+            final String body = getBody(messageIsRequest, messageInfo);
             if(body == null)
                 return;
 
@@ -151,7 +151,7 @@ public class MSLHttpListener implements IHttpListener {
 
         } else {
             // Get MSL Message
-            String body = getBody(messageIsRequest, messageInfo);
+            final String body = getBody(messageIsRequest, messageInfo);
             if(body == null)
                 return;
 
@@ -166,11 +166,11 @@ public class MSLHttpListener implements IHttpListener {
 
     }
 
-    protected String getBody(boolean messageIsRequest, IHttpRequestResponse messageInfo) {
+    protected String getBody(final boolean messageIsRequest, final IHttpRequestResponse messageInfo) {
 
         String body = null;
         if(messageIsRequest) {
-            IRequestInfo requestInfo = this.helpers.analyzeRequest(messageInfo);
+            final IRequestInfo requestInfo = this.helpers.analyzeRequest(messageInfo);
 
             // Ignore HTTP Get Requests.
             if(requestInfo.getMethod().equalsIgnoreCase("GET")) {
@@ -181,7 +181,7 @@ public class MSLHttpListener implements IHttpListener {
             ignoreNextResponse = false;
 
             // Extracting body part of request message, this is actual MSL message.
-            String request = new String(messageInfo.getRequest());
+            final String request = new String(messageInfo.getRequest());
             body = request.substring(requestInfo.getBodyOffset());
 
         } else {
@@ -189,38 +189,38 @@ public class MSLHttpListener implements IHttpListener {
                 return body;
             }
 
-            IResponseInfo responseInfo = this.helpers.analyzeResponse(messageInfo.getResponse());
+            final IResponseInfo responseInfo = this.helpers.analyzeResponse(messageInfo.getResponse());
 
             // Extracting body part of request message, this is actual MSL message.
-            String response = new String(messageInfo.getResponse());
+            final String response = new String(messageInfo.getResponse());
             body = response.substring(responseInfo.getBodyOffset());
         }
 
         return body;
     }
 
-    protected String getBody(byte[] message) {
+    protected String getBody(final byte[] message) {
 
         String body = null;
 
-        IRequestInfo requestInfo = this.helpers.analyzeRequest(null, message);
+        final IRequestInfo requestInfo = this.helpers.analyzeRequest(null, message);
 
         // Extracting body part of request message, this is actual MSL message.
-        String request = new String(message);
+        final String request = new String(message);
         body = request.substring(requestInfo.getBodyOffset());
 
         return body;
     }
 
-    protected String processMslMessage(String body) throws WiretapException {
+    protected String processMslMessage(final String body) throws WiretapException {
 
-        StringBuilder retData = new StringBuilder("");
+        final StringBuilder retData = new StringBuilder("");
 
         WiretapMessageInputStream mis;
         try {
-            ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(body.getBytes());
+            final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(body.getBytes());
             mis = new WiretapMessageInputStream(this.ctx, byteArrayInputStream, Charset.defaultCharset(), this.msgCtx.getKeyRequestData(), this.msgCtx.getCryptoContexts());
-        } catch (MslException e) {
+        } catch (final MslException e) {
             throw new WiretapException(e.getMessage(), e);
         }
 
@@ -229,13 +229,13 @@ public class MSLHttpListener implements IHttpListener {
         try {
             if (errorHeader != null) {
                 // Create error headerdata JSON Object
-                JSONObject errHeaderJO = new JSONObject();
+                final JSONObject errHeaderJO = new JSONObject();
     
                 // if entity auth data is present add that to the JSON object
                 if(errorHeader.getEntityAuthenticationData() != null) {
                     try {
                         errHeaderJO.put(KEY_ENTITY_AUTHENTICATION_DATA, errorHeader.getEntityAuthenticationData());
-                    } catch (JSONException e) {
+                    } catch (final JSONException e) {
                         throw new WiretapException(e.getMessage(), e);
                     }
                 }
@@ -253,7 +253,7 @@ public class MSLHttpListener implements IHttpListener {
                     errHeaderJO.put(KEY_ERRORDATA, errordataJO);
                     stdout.println(errHeaderJO); retData.append(errHeaderJO.toString() + "\n");
                     stdout.println(); retData.append("\n");
-                } catch (JSONException e) {
+                } catch (final JSONException e) {
                     throw new WiretapException(e.getMessage(), e);
                 }
     
@@ -264,16 +264,16 @@ public class MSLHttpListener implements IHttpListener {
         }
         
         try {
-            MessageHeader messageHeader = mis.getMessageHeader();
+            final MessageHeader messageHeader = mis.getMessageHeader();
 
             // Create message headerdata JSON object
-            JSONObject msgHeaderJO = new JSONObject();
+            final JSONObject msgHeaderJO = new JSONObject();
 
             // if entity auth data is present add that to the JSON object
             if(messageHeader.getEntityAuthenticationData() != null) {
                 try {
                     msgHeaderJO.put(KEY_ENTITY_AUTHENTICATION_DATA, messageHeader.getEntityAuthenticationData());
-                } catch (JSONException e) {
+                } catch (final JSONException e) {
                     throw new WiretapException(e.getMessage(), e);
                 }
             }
@@ -284,11 +284,11 @@ public class MSLHttpListener implements IHttpListener {
             if(messageHeader.getMasterToken() != null) {
                 masterToken = messageHeader.getMasterToken();
                 try {
-                    JSONObject parsedMasterTokenJO = parseMasterToken(masterToken);
+                    final JSONObject parsedMasterTokenJO = parseMasterToken(masterToken);
                     msgHeaderJO.put(KEY_MASTER_TOKEN, parsedMasterTokenJO);
-                } catch (JSONException e) {
+                } catch (final JSONException e) {
                     throw new WiretapException(e.getMessage(), e);
-                } catch (MslException e) {
+                } catch (final MslException e) {
                     throw new WiretapException(e.getMessage(), e);
                 }
             }
@@ -305,11 +305,11 @@ public class MSLHttpListener implements IHttpListener {
                 if(!messageHeader.getKeyRequestData().isEmpty())
                     headerdataJO.put(KEY_KEY_REQUEST_DATA, JsonUtils.createArray(messageHeader.getKeyRequestData()));
                 if(messageHeader.getKeyResponseData() != null) {
-                    JSONObject keyResponseDataJO = new JSONObject(messageHeader.getKeyResponseData().toJSONString());
+                    final JSONObject keyResponseDataJO = new JSONObject(messageHeader.getKeyResponseData().toJSONString());
                     if(messageHeader.getKeyResponseData().getMasterToken() != null) {
                         masterToken = messageHeader.getKeyResponseData().getMasterToken();
                         keyResponseDataJO.remove(KEY_MASTER_TOKEN);
-                        JSONObject parsedMasterTokenJO = parseMasterToken(messageHeader.getKeyResponseData().getMasterToken());
+                        final JSONObject parsedMasterTokenJO = parseMasterToken(messageHeader.getKeyResponseData().getMasterToken());
                         keyResponseDataJO.put(KEY_MASTER_TOKEN, parsedMasterTokenJO);
                     }
                     headerdataJO.put(KEY_KEY_RESPONSE_DATA, keyResponseDataJO);
@@ -325,25 +325,25 @@ public class MSLHttpListener implements IHttpListener {
                 // Add headerdata in clear
                 msgHeaderJO.put(KEY_HEADERDATA, headerdataJO);
                 stdout.println(msgHeaderJO); retData.append(msgHeaderJO.toString() + "\n");
-            } catch (JSONException e) {
+            } catch (final JSONException e) {
                 throw new WiretapException(e.getMessage(), e);
-            } catch (MslException e) {
+            } catch (final MslException e) {
                 throw new WiretapException(e.getMessage(), e);
             }
 
             try {
                 JSONObject payloadTokenJO;
                 while((payloadTokenJO = mis.nextPayload()) != null) {
-                    String data = new String(DatatypeConverter.parseBase64Binary(payloadTokenJO.getString(KEY_DATA)));
+                    final String data = new String(DatatypeConverter.parseBase64Binary(payloadTokenJO.getString(KEY_DATA)));
                     payloadTokenJO.remove(KEY_DATA);
                     payloadTokenJO.put(KEY_DATA, data);
     
-                    JSONObject payloadJO = new JSONObject();
+                    final JSONObject payloadJO = new JSONObject();
                     payloadJO.put(KEY_PAYLOAD, payloadTokenJO);
                     stdout.println(payloadJO); retData.append(payloadJO.toString() + "\n");
                 }
                 stdout.println(); retData.append("\n");
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw new WiretapException(e.getMessage(), e);
             }
             stdout.flush();
@@ -354,9 +354,9 @@ public class MSLHttpListener implements IHttpListener {
         return retData.toString();
     }
 
-    private JSONObject parseUserIdToken(UserIdToken userIdToken, MasterToken masterToken) throws JSONException, MslException {
+    private JSONObject parseUserIdToken(final UserIdToken userIdToken, final MasterToken masterToken) throws JSONException, MslException {
 
-        JSONObject userIdTokenJO = new JSONObject(userIdToken.toJSONString());
+        final JSONObject userIdTokenJO = new JSONObject(userIdToken.toJSONString());
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
 
         byte[] tokendata;
@@ -366,19 +366,19 @@ public class MSLHttpListener implements IHttpListener {
             try {
                 tokendata = DatatypeConverter.parseBase64Binary(userIdTokenJO.getString(KEY_TOKENDATA));
             } catch (final IllegalArgumentException e) {
-                throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_INVALID, "useridtoken " + userIdTokenJO.toString(), e).setEntity(masterToken);
+                throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_INVALID, "useridtoken " + userIdTokenJO.toString(), e).setMasterToken(masterToken);
             }
             if (tokendata == null || tokendata.length == 0)
-                throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_MISSING, "useridtoken " + userIdTokenJO.toString()).setEntity(masterToken);
+                throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_MISSING, "useridtoken " + userIdTokenJO.toString()).setMasterToken(masterToken);
             byte[] signature;
             try {
                 signature = DatatypeConverter.parseBase64Binary(userIdTokenJO.getString(KEY_SIGNATURE));
             } catch (final IllegalArgumentException e) {
-                throw new MslEncodingException(MslError.USERIDTOKEN_SIGNATURE_INVALID, "useridtoken " + userIdTokenJO.toString(), e).setEntity(masterToken);
+                throw new MslEncodingException(MslError.USERIDTOKEN_SIGNATURE_INVALID, "useridtoken " + userIdTokenJO.toString(), e).setMasterToken(masterToken);
             }
             verified = cryptoContext.verify(tokendata, signature);
         } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "useridtoken " + userIdTokenJO.toString(), e).setEntity(masterToken);
+            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "useridtoken " + userIdTokenJO.toString(), e).setMasterToken(masterToken);
         }
 
         // Pull the token data.
@@ -388,30 +388,30 @@ public class MSLHttpListener implements IHttpListener {
         long mtSerialNumber;
         try {
             tokenDataJO = new JSONObject(tokenDataJson);
-            long renewalWindow = tokenDataJO.getLong(KEY_RENEWAL_WINDOW);
-            long expiration = tokenDataJO.getLong(KEY_EXPIRATION);
+            final long renewalWindow = tokenDataJO.getLong(KEY_RENEWAL_WINDOW);
+            final long expiration = tokenDataJO.getLong(KEY_EXPIRATION);
             if (expiration < renewalWindow)
-                throw new MslException(MslError.USERIDTOKEN_EXPIRES_BEFORE_RENEWAL, "usertokendata " + tokenDataJson).setEntity(masterToken);
+                throw new MslException(MslError.USERIDTOKEN_EXPIRES_BEFORE_RENEWAL, "usertokendata " + tokenDataJson).setMasterToken(masterToken);
             mtSerialNumber = tokenDataJO.getLong(KEY_MASTER_TOKEN_SERIAL_NUMBER);
             if (mtSerialNumber < 0 || mtSerialNumber > MslConstants.MAX_LONG_VALUE)
-                throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokenDataJson).setEntity(masterToken);
-            long serialNumber = tokenDataJO.getLong(KEY_SERIAL_NUMBER);
+                throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokenDataJson).setMasterToken(masterToken);
+            final long serialNumber = tokenDataJO.getLong(KEY_SERIAL_NUMBER);
             if (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE)
-                throw new MslException(MslError.USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokenDataJson).setEntity(masterToken);
+                throw new MslException(MslError.USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokenDataJson).setMasterToken(masterToken);
             final byte[] ciphertext;
             try {
                 ciphertext = DatatypeConverter.parseBase64Binary(tokenDataJO.getString(KEY_USERDATA));
             } catch (final IllegalArgumentException e) {
-                throw new MslException(MslError.USERIDTOKEN_USERDATA_INVALID, tokenDataJO.getString(KEY_USERDATA)).setEntity(masterToken);
+                throw new MslException(MslError.USERIDTOKEN_USERDATA_INVALID, tokenDataJO.getString(KEY_USERDATA)).setMasterToken(masterToken);
             }
             if (ciphertext == null || ciphertext.length == 0)
-                throw new MslException(MslError.USERIDTOKEN_USERDATA_MISSING, tokenDataJO.getString(KEY_USERDATA)).setEntity(masterToken);
+                throw new MslException(MslError.USERIDTOKEN_USERDATA_MISSING, tokenDataJO.getString(KEY_USERDATA)).setMasterToken(masterToken);
             userdata = (verified) ? cryptoContext.decrypt(ciphertext) : null;
             tokenDataJO.remove(KEY_USERDATA);
         } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR, "usertokendata " + tokenDataJson, e).setEntity(masterToken);
+            throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR, "usertokendata " + tokenDataJson, e).setMasterToken(masterToken);
         } catch (final MslCryptoException e) {
-            e.setEntity(masterToken);
+            e.setMasterToken(masterToken);
             throw e;
         }
 
@@ -422,20 +422,20 @@ public class MSLHttpListener implements IHttpListener {
                 final JSONObject userDataJO = new JSONObject(userDataJson);
                 tokenDataJO.put(KEY_USERDATA, userDataJO);
             } catch (final JSONException e) {
-                throw new MslEncodingException(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR, "userdata " + userDataJson, e).setEntity(masterToken);
+                throw new MslEncodingException(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR, "userdata " + userDataJson, e).setMasterToken(masterToken);
             }
         }
 
         // Verify serial numbers.
         if (masterToken == null || mtSerialNumber != masterToken.getSerialNumber())
-            throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH, "uit mtserialnumber " + mtSerialNumber + "; mt " + masterToken).setEntity(masterToken);
+            throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH, "uit mtserialnumber " + mtSerialNumber + "; mt " + masterToken).setMasterToken(masterToken);
 
         return tokenDataJO;
     }
 
-    private JSONObject parseMasterToken(MasterToken masterToken) throws JSONException, MslException {
+    private JSONObject parseMasterToken(final MasterToken masterToken) throws JSONException, MslException {
 
-        JSONObject masterTokenJO = new JSONObject(masterToken.toJSONString());
+        final JSONObject masterTokenJO = new JSONObject(masterToken.toJSONString());
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
 
         byte[] tokendata;
@@ -466,14 +466,14 @@ public class MSLHttpListener implements IHttpListener {
         byte[] sessiondata;
         try {
             tokenDataJO = new JSONObject(tokenDataJson);
-            long renewalWindow = tokenDataJO.getLong(KEY_RENEWAL_WINDOW);
-            long expiration = tokenDataJO.getLong(KEY_EXPIRATION);
+            final long renewalWindow = tokenDataJO.getLong(KEY_RENEWAL_WINDOW);
+            final long expiration = tokenDataJO.getLong(KEY_EXPIRATION);
             if (expiration < renewalWindow)
                 throw new MslException(MslError.MASTERTOKEN_EXPIRES_BEFORE_RENEWAL, "mastertokendata " + tokenDataJson);
-            long sequenceNumber = tokenDataJO.getLong(KEY_SEQUENCE_NUMBER);
+            final long sequenceNumber = tokenDataJO.getLong(KEY_SEQUENCE_NUMBER);
             if (sequenceNumber < 0 || sequenceNumber > MslConstants.MAX_LONG_VALUE)
                 throw new MslException(MslError.MASTERTOKEN_SEQUENCE_NUMBER_OUT_OF_RANGE, "mastertokendata " + tokenDataJson);
-            long serialNumber = tokenDataJO.getLong(KEY_SERIAL_NUMBER);
+            final long serialNumber = tokenDataJO.getLong(KEY_SERIAL_NUMBER);
             if (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE)
                 throw new MslException(MslError.MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "mastertokendata " + tokenDataJson);
             final byte[] ciphertext;

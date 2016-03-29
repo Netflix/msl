@@ -256,7 +256,7 @@ public class KanColleTokenFactory implements TokenFactory {
     public UserIdToken renewUserIdToken(final MslContext ctx, final UserIdToken userIdToken, final MasterToken masterToken) throws MslUserIdTokenException, MslEncodingException, MslCryptoException {
         // Fail if the user ID token is not decrypted.
         if (!userIdToken.isDecrypted())
-            throw new MslUserIdTokenException(MslError.USERIDTOKEN_NOT_DECRYPTED, userIdToken).setEntity(masterToken);
+            throw new MslUserIdTokenException(MslError.USERIDTOKEN_NOT_DECRYPTED, userIdToken).setMasterToken(masterToken);
 
         final long now = ctx.getTime();
         final Date renewal = new Date(now + uitRenewalOffset);

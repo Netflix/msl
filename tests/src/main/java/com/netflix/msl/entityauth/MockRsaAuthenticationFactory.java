@@ -76,7 +76,7 @@ public class MockRsaAuthenticationFactory extends EntityAuthenticationFactory {
             final byte[] privKeyEncoded = DatatypeConverter.parseBase64Binary(RSA_PRIVKEY_B64);
             final X509EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(pubKeyEncoded);
             final PKCS8EncodedKeySpec privKeySpec = new PKCS8EncodedKeySpec(privKeyEncoded);
-            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+            final KeyFactory keyFactory = KeyFactory.getInstance("RSA");
             RSA_PUBKEY = keyFactory.generatePublic(pubKeySpec);
             RSA_PRIVKEY = keyFactory.generatePrivate(privKeySpec);
         } catch (final InvalidKeySpecException e) {
@@ -121,6 +121,6 @@ public class MockRsaAuthenticationFactory extends EntityAuthenticationFactory {
         }
         
         // Entity not found.
-        throw new MslEntityAuthException(MslError.RSA_PUBLICKEY_NOT_FOUND, pubkeyid).setEntity(rad);
+        throw new MslEntityAuthException(MslError.RSA_PUBLICKEY_NOT_FOUND, pubkeyid).setEntityAuthenticationData(rad);
     }
 }

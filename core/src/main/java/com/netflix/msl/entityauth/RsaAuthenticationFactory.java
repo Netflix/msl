@@ -86,11 +86,11 @@ public class RsaAuthenticationFactory extends EntityAuthenticationFactory {
         // Check for revocation.
         final String identity = rad.getIdentity();
         if (authutils.isEntityRevoked(identity))
-            throw new MslEntityAuthException(MslError.ENTITY_REVOKED, "rsa " + identity).setEntity(rad);
+            throw new MslEntityAuthException(MslError.ENTITY_REVOKED, "rsa " + identity).setEntityAuthenticationData(rad);
         
         // Verify the scheme is permitted.
         if (!authutils.isSchemePermitted(identity, getScheme()))
-            throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + getScheme()).setEntity(rad);
+            throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + getScheme()).setEntityAuthenticationData(rad);
         
         // Extract RSA authentication data.
         final String pubkeyid = rad.getPublicKeyId();
@@ -99,11 +99,11 @@ public class RsaAuthenticationFactory extends EntityAuthenticationFactory {
         
         // The local entity must have a private key.
         if (pubkeyid.equals(keyPairId) && privateKey == null)
-            throw new MslEntityAuthException(MslError.RSA_PRIVATEKEY_NOT_FOUND, pubkeyid).setEntity(rad);
+            throw new MslEntityAuthException(MslError.RSA_PRIVATEKEY_NOT_FOUND, pubkeyid).setEntityAuthenticationData(rad);
         
         // Remote entities must have a public key.
         else if (!pubkeyid.equals(keyPairId) && publicKey == null)
-            throw new MslEntityAuthException(MslError.RSA_PUBLICKEY_NOT_FOUND, pubkeyid).setEntity(rad);
+            throw new MslEntityAuthException(MslError.RSA_PUBLICKEY_NOT_FOUND, pubkeyid).setEntityAuthenticationData(rad);
         
         // Return the crypto context.
         return new RsaCryptoContext(ctx, identity, privateKey, publicKey, Mode.SIGN_VERIFY);
