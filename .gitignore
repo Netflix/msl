@@ -6,7 +6,5 @@
 /build
 /test-output
 *.iml
-/.idea/artifacts
-/.idea/copyright
-/.idea/libraries
+/.idea
 
