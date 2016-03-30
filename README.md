@@ -29,11 +29,15 @@ The application interface to the MSL stack is <code>MslControl</code>. The appli
 
 ### Java
 
-[IntelliJ IDEA](http://www.jetbrains.com/idea/) `.idea` project files are included and the project must be opened directly by selecting the top-level directory. You should perform a Gradle refresh after opening the project.
+[IntelliJ IDEA](http://www.jetbrains.com/idea/) users should import the Java MSL code as a Gradle project.
 
 [Eclipse](http://www.eclipse.org) users should use the Gradle IDE (available in the Eclipse Marketplace) and Web Tools Platform (included with the Eclipse IDE for Java EE developers) to import the Java MSL code as a Gradle project.
 
-An example server is provided under [src/examples/simple/src/main/java/server/](src/examples/simple/src/main/java/server/). The Eclipse project is a web project that can be deployed onto a Tomcat server. The example server is a J2EE servlet that will respond to requests from the example JavaScript client. The example server MSL configuration is specific to this server and should not be used to configure your application, but it can be used as the basis for doing so.
+An example server is provided under [examples/simple/src/main/java/server/](examples/simple/src/main/java/server/). The Eclipse Gradle plugin will import this project as a web project that can be deployed onto a Tomcat server. IntelliJ users must manually configure a run configuration to deploy the project artifact into `/msl-example-server`. The example server is a J2EE servlet that will respond to requests from the example JavaScript client. The example server MSL configuration is specific to this server and should not be used to configure your application, but it can be used as the basis for doing so.
+
+Integration tests are provided under [integ-tests/src/main/java/](integ-tests/src/main/java/). These tests can be run using the `integ-tests` Gradle target `test`. The Eclipse Gradle plugin will import this project as a web project that can be deployed onto a Tomcat server. IntelliJ users must manually configure a run configuration to deploy the project artifact into `/msl-test-server`.
+
+A command line client and server is provided under [examples/mslcli/src/main/java/](examples/mslcli/src/main/java/). The command line client can be configured to work with any MSL server. The command line server is an example MSL server that must be run from the command line. See [examples/mslcli/readme.txt](examples/mslcli/readme.txt) for more details.
 
 You may need to install the [Java Cryptography Extension (JCE) Unlimited Strength Jurisdiction Policy Files](http://www.oracle.com/technetwork/java/javase/downloads/) to use cryptographic keys above a certain size.
 
