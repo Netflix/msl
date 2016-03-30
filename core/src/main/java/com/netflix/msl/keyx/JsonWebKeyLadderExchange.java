@@ -779,7 +779,7 @@ public class JsonWebKeyLadderExchange extends KeyExchangeFactory {
                 final EntityAuthenticationData authdata = new PresharedAuthenticationData(identity);
                 final EntityAuthenticationFactory factory = ctx.getEntityAuthenticationFactory(EntityAuthenticationScheme.PSK);
                 if (factory == null)
-                    throw new MslKeyExchangeException(MslError.UNSUPPORTED_KEYX_MECHANISM, mechanism.name()).setEntity(entityAuthData);
+                    throw new MslKeyExchangeException(MslError.UNSUPPORTED_KEYX_MECHANISM, mechanism.name()).setEntityAuthenticationData(entityAuthData);
                 final ICryptoContext cryptoContext = factory.getCryptoContext(ctx, authdata);
                 wrapKeyCryptoContext = new AesKwJwkCryptoContext(cryptoContext);
                 break;
@@ -788,11 +788,11 @@ public class JsonWebKeyLadderExchange extends KeyExchangeFactory {
             {
                 wrapKeyCryptoContext = repository.getCryptoContext(requestWrapdata);
                 if (wrapKeyCryptoContext == null)
-                    throw new MslKeyExchangeException(MslError.KEYX_WRAPPING_KEY_MISSING, DatatypeConverter.printBase64Binary(requestWrapdata)).setEntity(entityAuthData);
+                    throw new MslKeyExchangeException(MslError.KEYX_WRAPPING_KEY_MISSING, DatatypeConverter.printBase64Binary(requestWrapdata)).setEntityAuthenticationData(entityAuthData);
                 break;
             }
             default:
-                throw new MslKeyExchangeException(MslError.UNSUPPORTED_KEYX_MECHANISM, mechanism.name()).setEntity(entityAuthData);
+                throw new MslKeyExchangeException(MslError.UNSUPPORTED_KEYX_MECHANISM, mechanism.name()).setEntityAuthenticationData(entityAuthData);
         }
         
         // Unwrap wrapping key.
@@ -803,7 +803,7 @@ public class JsonWebKeyLadderExchange extends KeyExchangeFactory {
             final MslObject wrapJwkMo = encoder.parseObject(unwrappedWrapJwk);
             wrapJwk = new JsonWebKey(wrapJwkMo);
         } catch (final MslEncoderException e) {
-            throw new MslKeyExchangeException(MslError.INVALID_JWK, new String(unwrappedWrapJwk, UTF_8), e).setEntity(entityAuthData);
+            throw new MslKeyExchangeException(MslError.INVALID_JWK, new String(unwrappedWrapJwk, UTF_8), e).setEntityAuthenticationData(entityAuthData);
         }
         final SecretKey wrapKey = wrapJwk.getSecretKey();
         
@@ -816,14 +816,14 @@ public class JsonWebKeyLadderExchange extends KeyExchangeFactory {
             final MslObject encryptionJwkMo = encoder.parseObject(unwrappedEncryptionJwk);
             encryptionJwk = new JsonWebKey(encryptionJwkMo);
         } catch (final MslEncoderException e) {
-            throw new MslKeyExchangeException(MslError.INVALID_JWK, new String(unwrappedEncryptionJwk, UTF_8), e).setEntity(entityAuthData);
+            throw new MslKeyExchangeException(MslError.INVALID_JWK, new String(unwrappedEncryptionJwk, UTF_8), e).setEntityAuthenticationData(entityAuthData);
         }
         final JsonWebKey hmacJwk;
         try {
             final MslObject hmacJwkMo = encoder.parseObject(unwrappedHmacJwk);
             hmacJwk = new JsonWebKey(hmacJwkMo);
         } catch (final MslEncoderException e) {
-            throw new MslKeyExchangeException(MslError.INVALID_JWK, new String(unwrappedHmacJwk, UTF_8), e).setEntity(entityAuthData);
+            throw new MslKeyExchangeException(MslError.INVALID_JWK, new String(unwrappedHmacJwk, UTF_8), e).setEntityAuthenticationData(entityAuthData);
         }
         
         // Deliver wrap data to wrap key repository.

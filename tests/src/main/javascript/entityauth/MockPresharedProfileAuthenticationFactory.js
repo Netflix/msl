@@ -133,7 +133,7 @@ var MockPresharedProfileAuthenticationFactory$create;
                 return new SymmetricCryptoContext(ctx, identity, KPE2, KPH2, KPW2);
 
             // Entity not found.
-            throw new MslEntityAuthException(MslError.ENTITY_NOT_FOUND, "psk profile " + identity).setEntity(ppad);
+            throw new MslEntityAuthException(MslError.ENTITY_NOT_FOUND, "psk profile " + identity).setEntityAuthenticationData(ppad);
         },
     });
     

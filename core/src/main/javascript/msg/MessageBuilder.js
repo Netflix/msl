@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2012-2015 Netflix, Inc.  All rights reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -304,8 +304,8 @@ var MessageBuilder$createErrorResponse;
                     var factory = ctx.getUserAuthenticationFactory(scheme);
                     if (!factory) {
                         throw new MslUserAuthException(MslError.USERAUTH_FACTORY_NOT_FOUND, scheme)
-                        .setEntity(masterToken)
-                        .setUser(userAuthData)
+                        .setMasterToken(masterToken)
+                        .setUserAuthenticationData(userAuthData)
                         .setMessageId(requestMessageId);
                     }
                     user = factory.authenticate(ctx, masterToken.identity, userAuthData, null);
@@ -347,7 +347,7 @@ var MessageBuilder$createErrorResponse;
             var entityAuthData = requestHeader.entityAuthenticationData;
             var userIdToken = requestHeader.userIdToken;
             var userAuthData = requestHeader.userAuthenticationData;
-            
+
             // The response recipient is the requesting entity.
             var recipient = (masterToken) ? masterToken.identity : entityAuthData.getIdentity();
 
@@ -410,14 +410,14 @@ var MessageBuilder$createErrorResponse;
                 },
                 error: handleError,
             });
-            
+
             function handleError(e) {
                 AsyncExecutor(callback, function() {
                     if (e instanceof MslException) {
-                        e.setEntity(masterToken);
-                        e.setEntity(entityAuthData);
-                        e.setUser(userIdToken);
-                        e.setUser(userAuthData);
+                        e.setMasterToken(masterToken);
+                        e.setEntityAuthenticationData(entityAuthData);
+                        e.setUserIdToken(userIdToken);
+                        e.setUserAuthenticationData(userAuthData);
                         e.setMessageId(requestMessageId);
                     }
                     throw e;
@@ -601,7 +601,7 @@ var MessageBuilder$createErrorResponse;
                 _nonReplayable: { value: _nonReplayable, writable: true, enumerable: false, configurable: false },
                 /** @type {boolean} */
                 _handshake: { value: _handshake, writable: true, enumerable: false, configurable: false },
-                
+
                 /** @type {boolean} */
                 _renewable: { value: _renewable, writable: true, enumerable: false, configurable: false },
                 /** @type {KeyRequestData} */
@@ -670,7 +670,7 @@ var MessageBuilder$createErrorResponse;
                     (!this._ctx.isPeerToPeer() && this._keyExchangeData) ||
                     this._entityAuthData.scheme.encrypts);
         },
-        
+
         /**
          * @return {boolean} true if the message builder will create a message capable of
          *         integrity protecting the header data.
@@ -678,7 +678,7 @@ var MessageBuilder$createErrorResponse;
         willIntegrityProtectHeader: function willIntegrityProtectHeader() {
             return (this._masterToken || this._entityAuthData.scheme.protectsIntegrity);
         },
-        
+
         /**
          * @return {boolean} true if the message builder will create a message capable of
          *         integrity protecting the payload data.
@@ -731,7 +731,7 @@ var MessageBuilder$createErrorResponse;
                 MessageHeader$create(this._ctx, this._entityAuthData, this._masterToken, headerData, peerData, callback);
             }, self);
         },
-        
+
         /**
          * @return {boolean} true if the message will be marked non-replayable.
          */
@@ -774,18 +774,18 @@ var MessageBuilder$createErrorResponse;
                 this._handshake = false;
             return this;
         },
-        
+
         /**
          * @return {boolean} true if the message will be marked as a handshake message.
          */
         isHandshake: function isHandshake() {
             return this._handshake;
         },
-        
+
         /**
          * Set the message handshake flag. If true this will also set the non-
          * replayable flag to false and the renewable flag to true.
-         * 
+         *
          * @param {boolean} handshake true if the message is a handshake message.
          * @return {MessageBuilder} this.
          * @see #setNonReplayable(boolean)
@@ -808,7 +808,7 @@ var MessageBuilder$createErrorResponse;
          * <p>Changing these tokens may result in invalidation of existing service
          * tokens. Those service tokens will be removed from the message being
          * built.</p>
-         * 
+         *
          * <p>This is a special method for the {@link MslControl} class that assumes
          * the builder does not have key response data in trusted network mode.</p>
          *
@@ -865,7 +865,7 @@ var MessageBuilder$createErrorResponse;
 
         /**
          * <p>Set the user authentication data of the message.</p>
-         * 
+         *
          * <p>This will overwrite any existing user authentication data.</p>
          *
          * @param {UserAuthenticationData} userAuthData user authentication data to set. May be null.
@@ -879,11 +879,11 @@ var MessageBuilder$createErrorResponse;
         /**
          * <p>Set the remote user of the message. This will create a user ID
          * token in trusted network mode or peer user ID token in peer-to-peer mode.</p>
-         * 
+         *
          * <p>Adding a new user ID token will not impact the service tokens; it is
          * assumed that no service tokens exist that are bound to the newly created
          * user ID token.</p>
-         * 
+         *
          * <p>This is a special method for the {@link MslControl} class that assumes
          * the builder does not already have a user ID token for the remote user
          * and does have a master token that the new user ID token can be bound
@@ -990,9 +990,9 @@ var MessageBuilder$createErrorResponse;
 
             // Make sure the service token is properly bound.
             if (serviceToken.isMasterTokenBound() && !serviceToken.isBoundTo(serviceMasterToken))
-                throw new MslMessageException(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH, "st " + JSON.stringify(serviceToken) + "; mt " + JSON.stringify(serviceMasterToken)).setEntity(serviceMasterToken);
+                throw new MslMessageException(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH, "st " + JSON.stringify(serviceToken) + "; mt " + JSON.stringify(serviceMasterToken)).setMasterToken(serviceMasterToken);
             if (serviceToken.isUserIdTokenBound() && !serviceToken.isBoundTo(this._userIdToken))
-                throw new MslMessageException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH, "st " + JSON.stringify(serviceToken) + "; uit " + JSON.stringify(this._userIdToken)).setEntity(serviceMasterToken).setUser(this._userIdToken);
+                throw new MslMessageException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH, "st " + JSON.stringify(serviceToken) + "; uit " + JSON.stringify(this._userIdToken)).setMasterToken(serviceMasterToken).setUserIdToken(this._userIdToken);
 
             // Add the service token.
             this._serviceTokens[serviceToken.name] = serviceToken;
@@ -1002,7 +1002,7 @@ var MessageBuilder$createErrorResponse;
         /**
          * <p>Add a service token to the message if a service token with the same
          * name does not already exist.</p>
-         * 
+         *
          * <p>Adding a service token with empty data indicates the recipient should
          * delete the service token.</p>
          *
@@ -1099,7 +1099,7 @@ var MessageBuilder$createErrorResponse;
         /**
          * <p>Set the peer master token and peer user ID token of the message. This
          * will overwrite any existing peer master token or peer user ID token.</p>
-         * 
+         *
          * <p>Changing these tokens may result in invalidation of existing peer
          * service tokens. Those peer service tokens will be removed from the
          * message being built.</p>
@@ -1116,7 +1116,7 @@ var MessageBuilder$createErrorResponse;
             if (userIdToken && !masterToken)
                 throw new MslInternalException("Peer master token cannot be null when setting peer user ID token.");
             if (userIdToken && !userIdToken.isBoundTo(masterToken))
-                throw new MslMessageException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH, "uit " + userIdToken + "; mt " + masterToken).setEntity(masterToken).setUser(userIdToken);
+                throw new MslMessageException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH, "uit " + userIdToken + "; mt " + masterToken).setMasterToken(masterToken).setUserIdToken(userIdToken);
 
             // Load the stored peer service tokens.
             var storedTokens;
@@ -1175,9 +1175,9 @@ var MessageBuilder$createErrorResponse;
             if (!this._ctx.isPeerToPeer())
                 throw new MslInternalException("Cannot set peer service tokens when not in peer-to-peer mode.");
             if (serviceToken.isMasterTokenBound() && !serviceToken.isBoundTo(this._peerMasterToken))
-                throw new MslMessageException(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH, "st " + JSON.stringify(serviceToken) + "; mt " + JSON.stringify(this._peerMasterToken)).setEntity(this._peerMasterToken);
+                throw new MslMessageException(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH, "st " + JSON.stringify(serviceToken) + "; mt " + JSON.stringify(this._peerMasterToken)).setMasterToken(this._peerMasterToken);
             if (serviceToken.isUserIdTokenBound() && !serviceToken.isBoundTo(this._peerUserIdToken))
-                throw new MslMessageException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH, "st " + JSON.stringify(serviceToken) + "; uit " + JSON.stringify(this._peerUserIdToken)).setEntity(this._peerMasterToken).setUser(this._peerUserIdToken);
+                throw new MslMessageException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH, "st " + JSON.stringify(serviceToken) + "; uit " + JSON.stringify(this._peerUserIdToken)).setMasterToken(this._peerMasterToken).setUserIdToken(this._peerUserIdToken);
 
             // Add the peer service token.
             this._peerServiceTokens[serviceToken.name] = serviceToken;
@@ -1187,7 +1187,7 @@ var MessageBuilder$createErrorResponse;
         /**
          * <p>Add a peer service token to the message if a peer service token with
          * the same name does not already exist.</p>
-         * 
+         *
          * <p>Adding a service token with empty data indicates the recipient should
          * delete the service token.</p>
          *

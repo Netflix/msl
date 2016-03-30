@@ -77,11 +77,11 @@ public class MockEmailPasswordAuthenticationFactory extends UserAuthenticationFa
         final String epadEmail = epad.getEmail();
         final String epadPassword = epad.getPassword();
         if (epadEmail == null || epadPassword == null)
-            throw new MslUserAuthException(MslError.EMAILPASSWORD_BLANK).setUser(epad);
+            throw new MslUserAuthException(MslError.EMAILPASSWORD_BLANK).setUserAuthenticationData(epad);
         final String email = epadEmail.trim();
         final String password = epadPassword.trim();
         if (email.isEmpty() || password.isEmpty())
-            throw new MslUserAuthException(MslError.EMAILPASSWORD_BLANK).setUser(epad);
+            throw new MslUserAuthException(MslError.EMAILPASSWORD_BLANK).setUserAuthenticationData(epad);
         
         // Identify the user.
         final MslUser user;
@@ -90,7 +90,7 @@ public class MockEmailPasswordAuthenticationFactory extends UserAuthenticationFa
         else if (EMAIL_2.equals(email) && PASSWORD_2.equals(password))
             user = USER_2;
         else
-            throw new MslUserAuthException(MslError.EMAILPASSWORD_INCORRECT).setUser(epad);
+            throw new MslUserAuthException(MslError.EMAILPASSWORD_INCORRECT).setUserAuthenticationData(epad);
 
         // If a user ID token was provided validate the user identities.
         if (userIdToken != null) {

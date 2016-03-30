@@ -57,9 +57,9 @@ public class SimpleHttpServer {
             final MslProperties prop = MslProperties.getInstance(SharedUtil.loadPropertiesFromFile(cmdArgs.getConfigFilePath()));
             final SimpleMslServer mslServer = new SimpleMslServer(prop, cmdArgs);
             final HttpServer server = HttpServer.create(new InetSocketAddress(prop.getServerPort()), 0);
-            server.createContext("/msl", new MyHandler(mslServer));
+            server.createContext("/mslcli-server", new MyHandler(mslServer));
             server.setExecutor(null); // creates a default executor
-            log(String.format("waiting for requests on http://localhost:%d/msl ...", prop.getServerPort()));
+            log(String.format("waiting for requests on http://localhost:%d/mslcli-server ...", prop.getServerPort()));
             server.start();
         } catch (ConfigurationException e) {
             log("Server Configuration Error: " + e.getMessage());

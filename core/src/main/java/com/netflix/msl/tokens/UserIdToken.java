@@ -80,7 +80,7 @@ import com.netflix.msl.util.MslContext;
  * <p>The decrypted user data is represented as
  * {@code
  * userdata = {
- *   "#mandatory" : [ "user" ],
+ *   "#mandatory" : [ "identity" ],
  *   "issuerdata" : object,
  *   "identity" : "string"
  * }}
@@ -193,11 +193,11 @@ public class UserIdToken implements MslEncodable {
         try {
             tokendataBytes = userIdTokenMo.getBytes(KEY_TOKENDATA);
             if (tokendataBytes.length == 0)
-                throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_MISSING, "useridtoken " + userIdTokenMo).setEntity(masterToken);
+                throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_MISSING, "useridtoken " + userIdTokenMo).setMasterToken(masterToken);
             signatureBytes = userIdTokenMo.getBytes(KEY_SIGNATURE);
             verified = cryptoContext.verify(tokendataBytes, signatureBytes, encoder);
         } catch (final MslEncoderException e) {
-            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "useridtoken " + userIdTokenMo, e).setEntity(masterToken);
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "useridtoken " + userIdTokenMo, e).setMasterToken(masterToken);
         }
         
         // Pull the token data.
@@ -207,21 +207,21 @@ public class UserIdToken implements MslEncodable {
             renewalWindow = tokendata.getLong(KEY_RENEWAL_WINDOW);
             expiration = tokendata.getLong(KEY_EXPIRATION);
             if (expiration < renewalWindow)
-                throw new MslException(MslError.USERIDTOKEN_EXPIRES_BEFORE_RENEWAL, "usertokendata " + tokendata).setEntity(masterToken);
+                throw new MslException(MslError.USERIDTOKEN_EXPIRES_BEFORE_RENEWAL, "usertokendata " + tokendata).setMasterToken(masterToken);
             mtSerialNumber = tokendata.getLong(KEY_MASTER_TOKEN_SERIAL_NUMBER);
             if (mtSerialNumber < 0 || mtSerialNumber > MslConstants.MAX_LONG_VALUE)
-                throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokendata).setEntity(masterToken);
+                throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokendata).setMasterToken(masterToken);
             serialNumber = tokendata.getLong(KEY_SERIAL_NUMBER);
             if (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE)
-                throw new MslException(MslError.USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokendata).setEntity(masterToken);
+                throw new MslException(MslError.USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokendata).setMasterToken(masterToken);
             final byte[] ciphertext = tokendata.getBytes(KEY_USERDATA);
             if (ciphertext.length == 0)
-                throw new MslException(MslError.USERIDTOKEN_USERDATA_MISSING, tokendata.getString(KEY_USERDATA)).setEntity(masterToken);
+                throw new MslException(MslError.USERIDTOKEN_USERDATA_MISSING, tokendata.getString(KEY_USERDATA)).setMasterToken(masterToken);
             plaintext = (verified) ? cryptoContext.decrypt(ciphertext, encoder) : null;
         } catch (final MslEncoderException e) {
-            throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR, "usertokendata " + DatatypeConverter.printBase64Binary(tokendataBytes), e).setEntity(masterToken);
+            throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR, "usertokendata " + DatatypeConverter.printBase64Binary(tokendataBytes), e).setMasterToken(masterToken);
         } catch (final MslCryptoException e) {
-            e.setEntity(masterToken);
+            e.setMasterToken(masterToken);
             throw e;
         }
         
@@ -232,13 +232,13 @@ public class UserIdToken implements MslEncodable {
                 issuerdata = (userdata.has(KEY_ISSUER_DATA)) ? userdata.getMslObject(KEY_ISSUER_DATA, encoder) : null;
                 final String identity = userdata.getString(KEY_IDENTITY);
                 if (identity == null || identity.length() == 0)
-                    throw new MslException(MslError.USERIDTOKEN_IDENTITY_INVALID, "userdata " + userdata).setEntity(masterToken);
+                    throw new MslException(MslError.USERIDTOKEN_IDENTITY_INVALID, "userdata " + userdata).setMasterToken(masterToken);
                 final TokenFactory factory = ctx.getTokenFactory();
                 user = factory.createUser(ctx, identity);
                 if (user == null)
                     throw new MslInternalException("TokenFactory.createUser() returned null in violation of the interface contract.");
             } catch (final MslEncoderException e) {
-                throw new MslEncodingException(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR, "userdata " + DatatypeConverter.printBase64Binary(plaintext), e).setEntity(masterToken);
+                throw new MslEncodingException(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR, "userdata " + DatatypeConverter.printBase64Binary(plaintext), e).setMasterToken(masterToken);
             }
         } else {
             userdata = null;
@@ -248,7 +248,7 @@ public class UserIdToken implements MslEncodable {
         
         // Verify serial numbers.
         if (masterToken == null || this.mtSerialNumber != masterToken.getSerialNumber())
-            throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH, "uit mtserialnumber " + this.mtSerialNumber + "; mt " + masterToken).setEntity(masterToken);
+            throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH, "uit mtserialnumber " + this.mtSerialNumber + "; mt " + masterToken).setMasterToken(masterToken);
     }
     
     /**

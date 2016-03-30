@@ -59,7 +59,7 @@
  * <p>The decrypted user data is represented as
  * {@code
  * userdata = {
- *   "#mandatory" : [ "user" ],
+ *   "#mandatory" : [ "identity" ],
  *   "issuerdata" : object,
  *   "identity" : "string"
  * }}
@@ -546,11 +546,11 @@ var UserIdToken$parse;
             try {
                 tokendataBytes = userIdTokenMo.getBytes(KEY_TOKENDATA);
                 if (tokendataBytes.length == 0)
-                    throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_MISSING, "useridtoken " + userIdTokenMo).setEntity(masterToken);
+                    throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_MISSING, "useridtoken " + userIdTokenMo).setMasterToken(masterToken);
                 signatureBytes = userIdTokenMo.getBytes(KEY_SIGNATURE);
             } catch (e) {
                 if (e instanceof MslEncoderException)
-                    throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "useridtoken " + userIdTokenMo, e).setEntity(masterToken);
+                    throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "useridtoken " + userIdTokenMo, e).setMasterToken(masterToken);
                 throw e;
             }
             cryptoContext.verify(tokendataBytes, signatureBytes, encoder, {
@@ -570,17 +570,17 @@ var UserIdToken$parse;
                     renewalWindowSeconds = tokendata.getLong(KEY_RENEWAL_WINDOW);
                     expirationSeconds = tokendata.getLong(KEY_EXPIRATION);
                     if (expirationSeconds < renewalWindowSeconds)
-                        throw new MslException(MslError.USERIDTOKEN_EXPIRES_BEFORE_RENEWAL, "usertokendata " + tokendata).setEntity(masterToken);
+                        throw new MslException(MslError.USERIDTOKEN_EXPIRES_BEFORE_RENEWAL, "usertokendata " + tokendata).setMasterToken(masterToken);
                     mtSerialNumber = tokendata.getLong(KEY_MASTER_TOKEN_SERIAL_NUMBER);
                     if (mtSerialNumber < 0 || mtSerialNumber > MslConstants$MAX_LONG_VALUE)
-                        throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokendata).setEntity(masterToken);
+                        throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokendata).setMasterToken(masterToken);
                     serialNumber = tokendata.getLong(KEY_SERIAL_NUMBER);
                     if (serialNumber < 0 || serialNumber > MslConstants$MAX_LONG_VALUE)
-                        throw new MslException(MslError.USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokendata).setEntity(masterToken);
+                        throw new MslException(MslError.USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokendata).setMasterToken(masterToken);
                     ciphertext = tokendata.getBytes(KEY_USERDATA);
                 } catch (e) {
                     if (e instanceof MslEncoderException)
-                        throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR, "usertokendata " + base64$encode(tokendataBytes), e).setEntity(masterToken);
+                        throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR, "usertokendata " + base64$encode(tokendataBytes), e).setMasterToken(masterToken);
                     throw e;
                 }
                 if (verified) {
@@ -593,7 +593,7 @@ var UserIdToken$parse;
                         error: function(e) {
                             AsyncExecutor(callback, function() {
                                 if (e instanceof MslCryptoException)
-                                    e.setEntity(masterToken);
+                                    e.setMasterToken(masterToken);
                                 throw e;
                             });
                         }
@@ -618,10 +618,10 @@ var UserIdToken$parse;
                     issuerdata = (userdata.has(KEY_ISSUER_DATA)) ? userdata.getMslObject(KEY_ISSUER_DATA, encoder) : null;
                     identity = userdata.getString(KEY_IDENTITY);
                     if (!identity || identity.length == 0)
-                        throw new MslException(MslError.USERIDTOKEN_IDENTITY_INVALID, "userdata " + userdata).setEntity(masterToken);
+                        throw new MslException(MslError.USERIDTOKEN_IDENTITY_INVALID, "userdata " + userdata).setMasterToken(masterToken);
                 } catch (e) {
                     if (e instanceof MslEncoderException)
-                        throw new MslEncodingException(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR, "userdata " + base64$encode(plaintext), e).setEntity(masterToken);
+                        throw new MslEncodingException(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR, "userdata " + base64$encode(plaintext), e).setMasterToken(masterToken);
                     throw e;
                 }
                 var factory = ctx.getTokenFactory();
@@ -651,7 +651,7 @@ var UserIdToken$parse;
                 
                 // Verify serial numbers.
                 if (!masterToken || mtSerialNumber != masterToken.serialNumber)
-                    throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH, "uit mtserialnumber " + mtSerialNumber + "; mt " + masterToken).setEntity(masterToken);
+                    throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH, "uit mtserialnumber " + mtSerialNumber + "; mt " + masterToken).setMasterToken(masterToken);
 
                 // Return the new user ID token.
                 var creationData = new CreationData(userdata, tokendataBytes, signatureBytes, verified);

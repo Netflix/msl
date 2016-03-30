@@ -64,7 +64,7 @@ var MockEmailPasswordAuthenticationFactory;
 	        if (!email || email.trim().length == 0 ||
 	            !password || password.trim().length == 0)
 	        {
-	            throw new MslUserAuthException(MslError.EMAILPASSWORD_BLANK).setUser(epad);
+	            throw new MslUserAuthException(MslError.EMAILPASSWORD_BLANK).setUserAuthenticationData(epad);
 	        }
 	        
 	        // Identify the user.
@@ -74,7 +74,7 @@ var MockEmailPasswordAuthenticationFactory;
 	        else if (EMAIL_2 == email && PASSWORD_2 == password)
 	            user = USER_2;
 	        else
-	            throw new MslUserAuthException(MslError.EMAILPASSWORD_INCORRECT).setUser(epad);
+	            throw new MslUserAuthException(MslError.EMAILPASSWORD_INCORRECT).setUserAuthenticationData(epad);
 	        
 	        // If a user ID token was provided validate the user identities.
 	        if (userIdToken) {

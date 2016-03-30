@@ -304,14 +304,14 @@ public class MSLHttpListener implements IHttpListener {
                 if(!messageHeader.getKeyRequestData().isEmpty())
                     headerdataMo.put(KEY_KEY_REQUEST_DATA, MslEncoderUtils.createArray(ctx, messageHeader.getKeyRequestData()));
                 if(messageHeader.getKeyResponseData() != null) {
-                    final MslObject keyResponseDataJO = MslTestUtils.toMslObject(encoder, messageHeader.getKeyResponseData());
+                    final MslObject keyResponseDataMo = MslTestUtils.toMslObject(encoder, messageHeader.getKeyResponseData());
                     if(messageHeader.getKeyResponseData().getMasterToken() != null) {
                         masterToken = messageHeader.getKeyResponseData().getMasterToken();
-                        keyResponseDataJO.remove(KEY_MASTER_TOKEN);
+                        keyResponseDataMo.remove(KEY_MASTER_TOKEN);
                         final MslObject parsedMasterTokenMo = parseMasterToken(messageHeader.getKeyResponseData().getMasterToken());
-                        keyResponseDataJO.put(KEY_MASTER_TOKEN, parsedMasterTokenMo);
+                        keyResponseDataMo.put(KEY_MASTER_TOKEN, parsedMasterTokenMo);
                     }
-                    headerdataMo.put(KEY_KEY_RESPONSE_DATA, keyResponseDataJO);
+                    headerdataMo.put(KEY_KEY_RESPONSE_DATA, keyResponseDataMo);
                 }
                 if(messageHeader.getUserAuthenticationData() != null)
                     headerdataMo.put(KEY_USER_AUTHENTICATION_DATA, messageHeader.getUserAuthenticationData());
@@ -364,11 +364,11 @@ public class MSLHttpListener implements IHttpListener {
             final MslObject userIdTokenMo = MslTestUtils.toMslObject(encoder, userIdToken);
             tokendata = userIdTokenMo.getBytes(KEY_TOKENDATA);
             if (tokendata.length == 0)
-                throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_MISSING, "useridtoken " + userIdTokenMo.toString()).setEntity(masterToken);
+                throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_MISSING, "useridtoken " + userIdTokenMo.toString()).setMasterToken(masterToken);
             final byte[] signature = userIdTokenMo.getBytes(KEY_SIGNATURE);
             verified = cryptoContext.verify(tokendata, signature, encoder);
         } catch (final MslEncoderException e) {
-            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "useridtoken " + userIdToken, e).setEntity(masterToken);
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "useridtoken " + userIdToken, e).setMasterToken(masterToken);
         }
 
         // Pull the token data.
@@ -380,22 +380,22 @@ public class MSLHttpListener implements IHttpListener {
             final long renewalWindow = tokenDataMo.getLong(KEY_RENEWAL_WINDOW);
             final long expiration = tokenDataMo.getLong(KEY_EXPIRATION);
             if (expiration < renewalWindow)
-                throw new MslException(MslError.USERIDTOKEN_EXPIRES_BEFORE_RENEWAL, "usertokendata " + DatatypeConverter.printBase64Binary(tokendata)).setEntity(masterToken);
+                throw new MslException(MslError.USERIDTOKEN_EXPIRES_BEFORE_RENEWAL, "usertokendata " + DatatypeConverter.printBase64Binary(tokendata)).setMasterToken(masterToken);
             mtSerialNumber = tokenDataMo.getLong(KEY_MASTER_TOKEN_SERIAL_NUMBER);
             if (mtSerialNumber < 0 || mtSerialNumber > MslConstants.MAX_LONG_VALUE)
-                throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + DatatypeConverter.printBase64Binary(tokendata)).setEntity(masterToken);
+                throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + DatatypeConverter.printBase64Binary(tokendata)).setMasterToken(masterToken);
             final long serialNumber = tokenDataMo.getLong(KEY_SERIAL_NUMBER);
             if (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE)
-                throw new MslException(MslError.USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + DatatypeConverter.printBase64Binary(tokendata)).setEntity(masterToken);
+                throw new MslException(MslError.USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + DatatypeConverter.printBase64Binary(tokendata)).setMasterToken(masterToken);
             final byte[] ciphertext = tokenDataMo.getBytes(KEY_USERDATA);
             if (ciphertext.length == 0)
-                throw new MslException(MslError.USERIDTOKEN_USERDATA_MISSING, tokenDataMo.getString(KEY_USERDATA)).setEntity(masterToken);
+                throw new MslException(MslError.USERIDTOKEN_USERDATA_MISSING, tokenDataMo.getString(KEY_USERDATA)).setMasterToken(masterToken);
             userdata = (verified) ? cryptoContext.decrypt(ciphertext, encoder) : null;
             tokenDataMo.remove(KEY_USERDATA);
         } catch (final MslEncoderException e) {
-            throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR, "usertokendata " + DatatypeConverter.printBase64Binary(tokendata), e).setEntity(masterToken);
+            throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR, "usertokendata " + DatatypeConverter.printBase64Binary(tokendata), e).setMasterToken(masterToken);
         } catch (final MslCryptoException e) {
-            e.setEntity(masterToken);
+            e.setMasterToken(masterToken);
             throw e;
         }
 
@@ -405,13 +405,13 @@ public class MSLHttpListener implements IHttpListener {
                 final MslObject userDataMo = encoder.parseObject(userdata);
                 tokenDataMo.put(KEY_USERDATA, userDataMo);
             } catch (final MslEncoderException e) {
-                throw new MslEncodingException(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR, "userdata " + DatatypeConverter.printBase64Binary(userdata), e).setEntity(masterToken);
+                throw new MslEncodingException(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR, "userdata " + DatatypeConverter.printBase64Binary(userdata), e).setMasterToken(masterToken);
             }
         }
 
         // Verify serial numbers.
         if (masterToken == null || mtSerialNumber != masterToken.getSerialNumber())
-            throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH, "uit mtserialnumber " + mtSerialNumber + "; mt " + masterToken).setEntity(masterToken);
+            throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH, "uit mtserialnumber " + mtSerialNumber + "; mt " + masterToken).setMasterToken(masterToken);
 
         return tokenDataMo;
     }
@@ -436,7 +436,7 @@ public class MSLHttpListener implements IHttpListener {
 
         // Pull the token data.
         final MslObject tokenDataMo;
-        byte[] sessiondata;
+        final byte[] sessiondata;
         try {
             tokenDataMo = encoder.parseObject(tokendata);
             final long renewalWindow = tokenDataMo.getLong(KEY_RENEWAL_WINDOW);

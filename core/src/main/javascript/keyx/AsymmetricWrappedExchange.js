@@ -396,7 +396,7 @@ var AsymmetricWrappedExchange$ResponseData$parse;
                     error: function(e) {
                         AsyncExecutor(callback, function() {
                             if (e instanceof MslException)
-                                e.setEntity(entityToken);
+                                e.setMasterToken(entityToken);
                             throw e;
                         }, self);
                     }
@@ -423,7 +423,7 @@ var AsymmetricWrappedExchange$ResponseData$parse;
                                     error: function(e) {
                                         AsyncExecutor(callback, function() {
                                             if (e instanceof MslException)
-                                                e.setEntity(entityToken);
+                                                e.setMasterToken(entityToken);
                                             throw e;
                                         }, self);
                                     }
@@ -433,7 +433,7 @@ var AsymmetricWrappedExchange$ResponseData$parse;
                         error: function(e) {
                             AsyncExecutor(callback, function() {
                                 if (e instanceof MslException)
-                                    e.setEntity(entityToken);
+                                    e.setMasterToken(entityToken);
                                 throw e;
                             }, self);
                         }
@@ -462,7 +462,7 @@ var AsymmetricWrappedExchange$ResponseData$parse;
                             error: function(e) {
                                 AsyncExecutor(callback, function() {
                                     if (e instanceof MslException)
-                                        e.setEntity(entityToken);
+                                        e.setMasterToken(entityToken);
                                     throw e;
                                 }, self);
                             }
@@ -482,7 +482,7 @@ var AsymmetricWrappedExchange$ResponseData$parse;
                             error: function(e) {
                                 AsyncExecutor(callback, function() {
                                     if (e instanceof MslException)
-                                        e.setEntity(entityToken);
+                                        e.setMasterToken(entityToken);
                                     throw e;
                                 }, self);
                             }
@@ -507,13 +507,13 @@ var AsymmetricWrappedExchange$ResponseData$parse;
                 var requestKeyPairId = request.keyPairId;
                 var responseKeyPairId = response.keyPairId;
                 if (requestKeyPairId != responseKeyPairId)
-                    throw new MslKeyExchangeException(MslError.KEYX_RESPONSE_REQUEST_MISMATCH, "request " + requestKeyPairId + "; response " + responseKeyPairId).setEntity(masterToken);
+                    throw new MslKeyExchangeException(MslError.KEYX_RESPONSE_REQUEST_MISMATCH, "request " + requestKeyPairId + "; response " + responseKeyPairId).setMasterToken(masterToken);
 
                 // Unwrap session keys with identified key.
                 var encoder = ctx.getMslEncoderFactory();
                 var privateKey = request.privateKey;
                 if (!privateKey)
-                    throw new MslKeyExchangeException(MslError.KEYX_PRIVATE_KEY_MISSING, "request Asymmetric private key").setEntity(masterToken);
+                    throw new MslKeyExchangeException(MslError.KEYX_PRIVATE_KEY_MISSING, "request Asymmetric private key").setMasterToken(masterToken);
                 var mechanism = request.mechanism;
                 var unwrapCryptoContext = createCryptoContext(ctx, requestKeyPairId, mechanism, privateKey, null);
                 unwrapCryptoContext.unwrap(response.encryptionKey, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, encoder, {
@@ -532,7 +532,7 @@ var AsymmetricWrappedExchange$ResponseData$parse;
                                     error: function(e) {
                                         AsyncExecutor(callback, function() {
                                             if (e instanceof MslException)
-                                                e.setEntity(masterToken);
+                                                e.setMasterToken(masterToken);
                                             throw e;
                                         }, self);
                                     }
@@ -541,7 +541,7 @@ var AsymmetricWrappedExchange$ResponseData$parse;
                             error: function(e) {
                                 AsyncExecutor(callback, function() {
                                     if (e instanceof MslException)
-                                        e.setEntity(masterToken);
+                                        e.setMasterToken(masterToken);
                                     throw e;
                                 }, self);
                             }
@@ -550,7 +550,7 @@ var AsymmetricWrappedExchange$ResponseData$parse;
                     error: function(e) {
                         AsyncExecutor(callback, function() {
                             if (e instanceof MslException)
-                                e.setEntity(masterToken);
+                                e.setMasterToken(masterToken);
                             throw e;
                         }, self);
                     }

@@ -276,7 +276,7 @@ public class ServerTokenFactory implements TokenFactory {
     public UserIdToken renewUserIdToken(final MslContext ctx, final UserIdToken userIdToken, final MasterToken masterToken) throws MslEncodingException, MslCryptoException, MslUserIdTokenException {
         appCtx.info(String.format("%s: Renewing %s", this, SharedUtil.getUserIdTokenInfo(userIdToken)));
         if (!userIdToken.isDecrypted())
-            throw new MslUserIdTokenException(MslError.USERIDTOKEN_NOT_DECRYPTED, userIdToken).setEntity(masterToken);
+            throw new MslUserIdTokenException(MslError.USERIDTOKEN_NOT_DECRYPTED, userIdToken).setMasterToken(masterToken);
 
         final MslObject issuerData = null;
         final Date renewalWindow = new Date(ctx.getTime() + uitRenewalOffset);

@@ -365,7 +365,7 @@ var DiffieHellmanExchange$ResponseData$parse;
                 var parametersId = request.parametersId;
                 var params = this.paramSpecs.getParameterSpec(parametersId);
                 if (!params)
-                    throw new MslKeyExchangeException(MslError.UNKNOWN_KEYX_PARAMETERS_ID, parametersId).setEntity(entityToken);
+                    throw new MslKeyExchangeException(MslError.UNKNOWN_KEYX_PARAMETERS_ID, parametersId).setMasterToken(entityToken);
                 
                 // Reconstitute request public key.
                 var requestPublicKey = request.publicKey;
@@ -375,7 +375,7 @@ var DiffieHellmanExchange$ResponseData$parse;
                     constructKeys(parametersId, params, requestPublicKey, keyPair.publicKey, keyPair.privateKey);
                 };
                 var onerror = function(e) {
-                    callback.error(new MslCryptoException(MslError.GENERATEKEY_ERROR, "Error generating Diffie-Hellman key pair.", e).setEntity(entityToken));
+                    callback.error(new MslCryptoException(MslError.GENERATEKEY_ERROR, "Error generating Diffie-Hellman key pair.", e).setMasterToken(entityToken));
                 };
                 mslCrypto['generateKey']({
                     'name': WebCryptoAlgorithm.DIFFIE_HELLMAN,
@@ -406,7 +406,7 @@ var DiffieHellmanExchange$ResponseData$parse;
                                     error: function(e) {
                                         AsyncExecutor(callback, function() {
                                             if (e instanceof MslException)
-                                                e.setEntity(entityToken);
+                                                e.setMasterToken(entityToken);
                                             throw e;
                                         }, self);
                                     }
@@ -426,7 +426,7 @@ var DiffieHellmanExchange$ResponseData$parse;
                                     error: function(e) {
                                         AsyncExecutor(callback, function() {
                                             if (e instanceof MslException)
-                                                e.setEntity(entityToken);
+                                                e.setMasterToken(entityToken);
                                             throw e;
                                         }, self);
                                     }
@@ -436,7 +436,7 @@ var DiffieHellmanExchange$ResponseData$parse;
                     },
                     error: function(e) {
                         AsyncExecutor(callback, function() {
-                            throw new MslCryptoException(MslError.SESSION_KEY_CREATION_FAILURE, e).setEntity(entityToken);
+                            throw new MslCryptoException(MslError.SESSION_KEY_CREATION_FAILURE, e).setMasterToken(entityToken);
                         }, self);
                     }
                 });
@@ -458,15 +458,15 @@ var DiffieHellmanExchange$ResponseData$parse;
                 var requestParametersId = request.parametersId;
                 var responseParametersId = response.parametersId;
                 if (requestParametersId != responseParametersId)
-                    throw new MslKeyExchangeException(MslError.KEYX_RESPONSE_REQUEST_MISMATCH, "request " + requestParametersId + "; response " + responseParametersId).setEntity(masterToken);
+                    throw new MslKeyExchangeException(MslError.KEYX_RESPONSE_REQUEST_MISMATCH, "request " + requestParametersId + "; response " + responseParametersId).setMasterToken(masterToken);
 
                 // Reconstitute response public key.
                 var privateKey = request.privateKey;
                 if (!privateKey)
-                    throw new MslKeyExchangeException(MslError.KEYX_PRIVATE_KEY_MISSING, "request Diffie-Hellman private key").setEntity(masterToken);
+                    throw new MslKeyExchangeException(MslError.KEYX_PRIVATE_KEY_MISSING, "request Diffie-Hellman private key").setMasterToken(masterToken);
                 var params = this.paramSpecs.getParameterSpec(requestParametersId);
                 if (!params)
-                     throw new MslKeyExchangeException(MslError.UNKNOWN_KEYX_PARAMETERS_ID, requestParametersId).setEntity(masterToken);
+                     throw new MslKeyExchangeException(MslError.UNKNOWN_KEYX_PARAMETERS_ID, requestParametersId).setMasterToken(masterToken);
                 var publicKey = response.publicKey;
 
                 // Create crypto context.
@@ -484,9 +484,9 @@ var DiffieHellmanExchange$ResponseData$parse;
                                 error: function(e) {
                                     AsyncExecutor(callback, function() {
                                         if (!(e instanceof MslException))
-                                            e = new MslCryptoException(MslError.SESSION_KEY_CREATION_FAILURE, null, e).setEntity(masterToken);
+                                            e = new MslCryptoException(MslError.SESSION_KEY_CREATION_FAILURE, null, e).setMasterToken(masterToken);
                                         else
-                                            e.setEntity(masterToken);
+                                            e.setMasterToken(masterToken);
                                         throw e;
                                     }, self);
                                 }
@@ -496,7 +496,7 @@ var DiffieHellmanExchange$ResponseData$parse;
                     error: function(e) {
                         AsyncExecutor(callback, function() {
                             if (e instanceof MslException)
-                                e.setEntity(masterToken);
+                                e.setMasterToken(masterToken);
                             throw e;
                         }, self);
                     }

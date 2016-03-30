@@ -51,18 +51,18 @@ var MasterTokenProtectedAuthenticationFactory = EntityAuthenticationFactory.exte
         // Check for revocation.
         var identity = mtpad.getIdentity();
         if (this.authutils.isEntityRevoked(identity))
-            throw new MslEntityAuthException(MslError.ENTITY_REVOKED, "mt protected " + identity).setEntity(mtpad);
+            throw new MslEntityAuthException(MslError.ENTITY_REVOKED, "mt protected " + identity).setEntityAuthenticationData(mtpad);
 
         // Verify the scheme is permitted.
         if (!this.authutils.isSchemePermitted(identity, this.scheme))
-            throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication scheme for entity " + identity + " not supported:" + this.scheme).setEntity(mtpad);
+            throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication scheme for entity " + identity + " not supported:" + this.scheme).setEntityAuthenticationData(mtpad);
         
         // Authenticate using the encapsulated authentication data.
         var ead = mtpad.encapsulatedAuthdata;
         var scheme = ead.scheme;
         var factory = ctx.getEntityAuthenticationFactory(scheme);
         if (!factory)
-            throw new MslEntityAuthException(MslError.ENTITYAUTH_FACTORY_NOT_FOUND, scheme.name).setEntity(mtpad);
+            throw new MslEntityAuthException(MslError.ENTITYAUTH_FACTORY_NOT_FOUND, scheme.name).setEntityAuthenticationData(mtpad);
         return factory.getCryptoContext(ctx, ead);
     },
 });

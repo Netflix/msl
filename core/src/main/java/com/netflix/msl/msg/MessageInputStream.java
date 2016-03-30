@@ -305,14 +305,14 @@ public class MessageInputStream extends InputStream {
         } catch (final MslException e) {
             if (this.header instanceof MessageHeader) {
                 final MessageHeader messageHeader = (MessageHeader)this.header;
-                e.setEntity(messageHeader.getMasterToken());
-                e.setEntity(messageHeader.getEntityAuthenticationData());
-                e.setUser(messageHeader.getUserIdToken());
-                e.setUser(messageHeader.getUserAuthenticationData());
+                e.setMasterToken(messageHeader.getMasterToken());
+                e.setEntityAuthenticationData(messageHeader.getEntityAuthenticationData());
+                e.setUserIdToken(messageHeader.getUserIdToken());
+                e.setUserAuthenticationData(messageHeader.getUserAuthenticationData());
                 e.setMessageId(messageHeader.getMessageId());
             } else {
                 final ErrorHeader errorHeader = (ErrorHeader)this.header;
-                e.setEntity(errorHeader.getEntityAuthenticationData());
+                e.setEntityAuthenticationData(errorHeader.getEntityAuthenticationData());
                 e.setMessageId(errorHeader.getMessageId());
             }
             throw e;
@@ -392,17 +392,17 @@ public class MessageInputStream extends InputStream {
         final UserAuthenticationData userAuthData = messageHeader.getUserAuthenticationData();
         if (payload.getMessageId() != messageHeader.getMessageId()) {
             throw new MslMessageException(MslError.PAYLOAD_MESSAGE_ID_MISMATCH, "payload mid " + payload.getMessageId() + " header mid " + messageHeader.getMessageId())
-                .setEntity(masterToken)
-                .setEntity(entityAuthData)
-                .setUser(userIdToken)
-                .setUser(userAuthData);
+                .setMasterToken(masterToken)
+                .setEntityAuthenticationData(entityAuthData)
+                .setUserIdToken(userIdToken)
+                .setUserAuthenticationData(userAuthData);
         }
         if (payload.getSequenceNumber() != payloadSequenceNumber) {
             throw new MslMessageException(MslError.PAYLOAD_SEQUENCE_NUMBER_MISMATCH, "payload seqno " + payload.getSequenceNumber() + " expected seqno " + payloadSequenceNumber)
-                .setEntity(masterToken)
-                .setEntity(entityAuthData)
-                .setUser(userIdToken)
-                .setUser(userAuthData);
+                .setMasterToken(masterToken)
+                .setEntityAuthenticationData(entityAuthData)
+                .setUserIdToken(userIdToken)
+                .setUserAuthenticationData(userAuthData);
         }
         ++payloadSequenceNumber;
         

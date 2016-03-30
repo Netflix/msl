@@ -654,10 +654,10 @@ var MessageHeader$HeaderPeerData;
                         } catch (e) {
                             if (e instanceof MslEncoderException) {
                                 throw new MslEncodingException(MslError.MSL_ENCODE_ERROR, "headerdata", e)
-                                    .setEntity(masterToken)
-                                    .setEntity(entityAuthData)
-                                    .setUser(peerUserIdToken)
-                                    .setUser(userAuthData)
+                                    .setMasterToken(masterToken)
+                                    .setEntityAuthenticationData(entityAuthData)
+                                    .setUserIdToken(peerUserIdToken)
+                                    .setUserAuthenticationData(userAuthData)
                                     .setMessageId(messageId);
                             }
                             throw e;
@@ -668,10 +668,10 @@ var MessageHeader$HeaderPeerData;
                             messageCryptoContext = getMessageCryptoContext(ctx, entityAuthData, masterToken);
                         } catch (e) {
                             if (e instanceof MslException) {
-                                e.setEntity(masterToken);
-                                e.setEntity(entityAuthData);
-                                e.setUser(userIdToken);
-                                e.setUser(userAuthData);
+                                e.setMasterToken(masterToken);
+                                e.setEntityAuthenticationData(entityAuthData);
+                                e.setUserIdToken(userIdToken);
+                                e.setUserAuthenticationData(userAuthData);
                                 e.setMessageId(messageId);
                             }
                             throw e;
@@ -1004,8 +1004,8 @@ var MessageHeader$HeaderPeerData;
                                         error: function(e) {
                                             AsyncExecutor(callback, function() {
                                                 if (e instanceof MslException) {
-                                                    e.setEntity(peerVerificationMasterToken);
-                                                    e.setUser(peerUserIdToken);
+                                                    e.setMasterToken(peerVerificationMasterToken);
+                                                    e.setUserIdToken(peerUserIdToken);
                                                 }
                                                 throw e;
                                             });
@@ -1016,7 +1016,7 @@ var MessageHeader$HeaderPeerData;
                             error: function(e) {
                                 AsyncExecutor(callback, function() {
                                     if (e instanceof MslException)
-                                        e.setEntity(peerVerificationMasterToken);
+                                        e.setMasterToken(peerVerificationMasterToken);
                                     throw e;
                                 });
                             }
@@ -1133,8 +1133,8 @@ var MessageHeader$HeaderPeerData;
                 messageCryptoContext = getMessageCryptoContext(ctx, entityAuthData, masterToken);
             } catch (e) {
                 if (e instanceof MslException) {
-                    e.setEntity(masterToken);
-                    e.setEntity(entityAuthData);
+                    e.setMasterToken(masterToken);
+                    e.setEntityAuthenticationData(entityAuthData);
                 }
                 throw e;
             }
@@ -1156,8 +1156,8 @@ var MessageHeader$HeaderPeerData;
                             error: function(e) {
                                 AsyncExecutor(callback, function() {
                                     if (e instanceof MslCryptoException || e instanceof MslEntityAuthException) {
-                                        e.setEntity(masterToken);
-                                        e.setEntity(entityAuthData);
+                                        e.setMasterToken(masterToken);
+                                        e.setEntityAuthenticationData(entityAuthData);
                                     }
                                     throw e;
                                 });
@@ -1168,8 +1168,8 @@ var MessageHeader$HeaderPeerData;
                 error: function(e) {
                     AsyncExecutor(callback, function() {
                         if (e instanceof MslCryptoException || e instanceof MslEntityAuthException) {
-                            e.setEntity(masterToken);
-                            e.setEntity(entityAuthData);
+                            e.setMasterToken(masterToken);
+                            e.setEntityAuthenticationData(entityAuthData);
                         }
                         throw e;
                     });
@@ -1189,10 +1189,10 @@ var MessageHeader$HeaderPeerData;
                     // use it.
                     messageId = headerdata.getLong(KEY_MESSAGE_ID);
                     if (messageId < 0 || messageId > MslConstants$MAX_LONG_VALUE)
-                        throw new MslMessageException(MslError.MESSAGE_ID_OUT_OF_RANGE, "headerdata " + headerdata).setEntity(masterToken).setEntity(entityAuthData);
+                        throw new MslMessageException(MslError.MESSAGE_ID_OUT_OF_RANGE, "headerdata " + headerdata).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData);
                 } catch (e) {
                     if (e instanceof MslEncoderException)
-                        throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + base64$encode(plaintext), e).setEntity(masterToken).setEntity(entityAuthData);
+                        throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + base64$encode(plaintext), e).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData);
                     throw e;
                 }
 
@@ -1219,7 +1219,7 @@ var MessageHeader$HeaderPeerData;
                         : null;
                 } catch (e) {
                     if (e instanceof MslEncoderException)
-                        throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + headerdata, e).setEntity(masterToken).setEntity(entityAuthData).setMessageId(messageId);
+                        throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + headerdata, e).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData).setMessageId(messageId);
                     throw e;
                 }
 
@@ -1230,8 +1230,8 @@ var MessageHeader$HeaderPeerData;
                     result: originalCallback.result,
                     error: function(e) {
                         if (e instanceof MslException) {
-                            e.setEntity(masterToken);
-                            e.setEntity(entityAuthData);
+                            e.setMasterToken(masterToken);
+                            e.setEntityAuthenticationData(entityAuthData);
                             e.setMessageId(messageId);
                         }
                         originalCallback.error(e);
@@ -1272,7 +1272,7 @@ var MessageHeader$HeaderPeerData;
                                                         var scheme = userAuthData.scheme;
                                                         var factory = ctx.getUserAuthenticationFactory(scheme);
                                                         if (!factory)
-                                                            throw new MslUserAuthException(MslError.USERAUTH_FACTORY_NOT_FOUND, scheme).setUser(userIdToken).setUser(userAuthData);
+                                                            throw new MslUserAuthException(MslError.USERAUTH_FACTORY_NOT_FOUND, scheme).setUserIdToken(userIdToken).setUserAuthenticationData(userAuthData);
                                                         var identity = (masterToken) ? masterToken.identity : entityAuthData.getIdentity();
                                                         user = factory.authenticate(ctx, identity, userAuthData, userIdToken);
                                                     } else if (userIdToken) {
@@ -1328,10 +1328,10 @@ var MessageHeader$HeaderPeerData;
                 } catch (e) {
                     if (e instanceof MslEncoderException) {
                         throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + headerdata.toString(), e)
-                        .setEntity(masterToken)
-                        .setEntity(entityAuthData)
-                        .setUser(userIdToken)
-                        .setUser(userAuthData)
+                        .setMasterToken(masterToken)
+                        .setEntityAuthenticationData(entityAuthData)
+                        .setUserIdToken(userIdToken)
+                        .setUserAuthenticationData(userAuthData)
                         .setMessageId(messageId);
                     }
                     throw e;
@@ -1363,8 +1363,8 @@ var MessageHeader$HeaderPeerData;
                     error: function(e) {
                         AsyncExecutor(callback, function() {
                             if (e instanceof MslException) {
-                                e.setUser(userIdToken);
-                                e.setUser(userAuthData);
+                                e.setUserIdToken(userIdToken);
+                                e.setUserAuthenticationData(userAuthData);
                             }
                             throw e;
                         });

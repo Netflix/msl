@@ -66,16 +66,16 @@ public class PresharedAuthenticationFactory extends EntityAuthenticationFactory 
         // Check for revocation.
         final String identity = pad.getIdentity();
         if (authutils.isEntityRevoked(identity))
-            throw new MslEntityAuthException(MslError.ENTITY_REVOKED, "psk " + identity).setEntity(pad);
+            throw new MslEntityAuthException(MslError.ENTITY_REVOKED, "psk " + identity).setEntityAuthenticationData(pad);
         
         // Verify the scheme is permitted.
         if (!authutils.isSchemePermitted(identity, getScheme()))
-            throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + getScheme()).setEntity(pad);
+            throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + getScheme()).setEntityAuthenticationData(pad);
         
         // Load preshared keys authentication data.
         final KeySet keys = store.getKeys(identity);
         if (keys == null)
-            throw new MslEntityAuthException(MslError.ENTITY_NOT_FOUND, "psk " + identity).setEntity(pad);
+            throw new MslEntityAuthException(MslError.ENTITY_NOT_FOUND, "psk " + identity).setEntityAuthenticationData(pad);
         
         // Return the crypto context.
         return new SymmetricCryptoContext(ctx, identity, keys.encryptionKey, keys.hmacKey, keys.wrappingKey);

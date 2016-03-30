@@ -1,7 +1,0 @@
-/bin
-/build
-.classpath
-.project
-.settings
-.idea
-*.iml

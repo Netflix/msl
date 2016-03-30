@@ -75,17 +75,6 @@ import com.netflix.msl.util.MslContext;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public abstract class Header implements MslEncodable {
-    /** Key entity authentication data. */
-    protected static final String KEY_ENTITY_AUTHENTICATION_DATA = "entityauthdata";
-    /** Key master token. */
-    protected static final String KEY_MASTER_TOKEN = "mastertoken";
-    /** Key header data. */
-    protected static final String KEY_HEADERDATA = "headerdata";
-    /** Key error data. */
-    protected static final String KEY_ERRORDATA = "errordata";
-    /** Key signature. */
-    protected static final String KEY_SIGNATURE = "signature";
-    
     /**
      * <p>Construct a new header from the provided MSL object.</p>
      * 
@@ -132,31 +121,31 @@ public abstract class Header implements MslEncodable {
         try {
             // Pull message data.
             final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
-            entityAuthData = (headerMo.has(KEY_ENTITY_AUTHENTICATION_DATA))
-                ? EntityAuthenticationData.create(ctx, headerMo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder))
+            entityAuthData = (headerMo.has(HeaderKeys.KEY_ENTITY_AUTHENTICATION_DATA))
+                ? EntityAuthenticationData.create(ctx, headerMo.getMslObject(HeaderKeys.KEY_ENTITY_AUTHENTICATION_DATA, encoder))
                 : null;
-            masterToken = (headerMo.has(KEY_MASTER_TOKEN))
-                ? new MasterToken(ctx, headerMo.getMslObject(KEY_MASTER_TOKEN, encoder))
+            masterToken = (headerMo.has(HeaderKeys.KEY_MASTER_TOKEN))
+                ? new MasterToken(ctx, headerMo.getMslObject(HeaderKeys.KEY_MASTER_TOKEN, encoder))
                 : null;
-            signature = headerMo.getBytes(KEY_SIGNATURE);
+            signature = headerMo.getBytes(HeaderKeys.KEY_SIGNATURE);
         } catch (final MslEncoderException e) {
             throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "header/errormsg " + headerMo, e);
         }
 
         try {
             // Process message headers.
-            if (headerMo.has(KEY_HEADERDATA)) {
-                final byte[] headerdata = headerMo.getBytes(KEY_HEADERDATA);
+            if (headerMo.has(HeaderKeys.KEY_HEADERDATA)) {
+                final byte[] headerdata = headerMo.getBytes(HeaderKeys.KEY_HEADERDATA);
                 if (headerdata.length == 0)
-                    throw new MslMessageException(MslError.HEADER_DATA_MISSING, DatatypeConverter.printBase64Binary(headerdata)).setEntity(masterToken).setEntity(entityAuthData);
+                    throw new MslMessageException(MslError.HEADER_DATA_MISSING, DatatypeConverter.printBase64Binary(headerdata)).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData);
                 return new MessageHeader(ctx, headerdata, entityAuthData, masterToken, signature, cryptoContexts);
             }
             
             // Process error headers.
-            else if (headerMo.has(KEY_ERRORDATA)) {
-                final byte[] errordata = headerMo.getBytes(KEY_ERRORDATA);
+            else if (headerMo.has(HeaderKeys.KEY_ERRORDATA)) {
+                final byte[] errordata = headerMo.getBytes(HeaderKeys.KEY_ERRORDATA);
                 if (errordata.length == 0)
-                    throw new MslMessageException(MslError.HEADER_DATA_MISSING, DatatypeConverter.printBase64Binary(errordata)).setEntity(masterToken).setEntity(entityAuthData);
+                    throw new MslMessageException(MslError.HEADER_DATA_MISSING, DatatypeConverter.printBase64Binary(errordata)).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData);
                 return new ErrorHeader(ctx, errordata, entityAuthData, signature);
             }
             

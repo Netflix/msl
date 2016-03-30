@@ -63,18 +63,18 @@ public class MasterTokenProtectedAuthenticationFactory extends EntityAuthenticat
         // Check for revocation.
         final String identity = mtpad.getIdentity();
         if (authutils.isEntityRevoked(identity))
-            throw new MslEntityAuthException(MslError.ENTITY_REVOKED, "none " + identity).setEntity(mtpad);
+            throw new MslEntityAuthException(MslError.ENTITY_REVOKED, "none " + identity).setEntityAuthenticationData(mtpad);
 
         // Verify the scheme is permitted.
         if (!authutils.isSchemePermitted(identity, getScheme()))
-            throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + getScheme()).setEntity(mtpad);
+            throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + getScheme()).setEntityAuthenticationData(mtpad);
         
         // Authenticate using the encapsulated authentication data.
         final EntityAuthenticationData ead = mtpad.getEncapsulatedAuthdata();
         final EntityAuthenticationScheme scheme = ead.getScheme();
         final EntityAuthenticationFactory factory = ctx.getEntityAuthenticationFactory(scheme);
         if (factory == null)
-            throw new MslEntityAuthException(MslError.ENTITYAUTH_FACTORY_NOT_FOUND, scheme.name()).setEntity(mtpad);
+            throw new MslEntityAuthException(MslError.ENTITYAUTH_FACTORY_NOT_FOUND, scheme.name()).setEntityAuthenticationData(mtpad);
         return factory.getCryptoContext(ctx, ead);
     }
     

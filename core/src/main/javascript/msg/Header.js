@@ -53,44 +53,8 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 var Header$parseHeader;
-var Header$KEY_ENTITY_AUTHENTICATION_DATA;
-var Header$KEY_MASTER_TOKEN;
-var Header$KEY_HEADERDATA;
-var Header$KEY_ERRORDATA;
-var Header$KEY_SIGNATURE;
 
 (function() {
-    /**
-     * Key entity authentication data.
-     * @const
-     * @type {string}
-     */
-    var KEY_ENTITY_AUTHENTICATION_DATA = Header$KEY_ENTITY_AUTHENTICATION_DATA = "entityauthdata";
-    /**
-     * Key master token.
-     * @const
-     * @type {string}
-     */
-    var KEY_MASTER_TOKEN = Header$KEY_MASTER_TOKEN = "mastertoken";
-    /**
-     * Key header data.
-     * @const
-     * @type {string}
-     */
-    var KEY_HEADERDATA = Header$KEY_HEADERDATA = "headerdata";
-    /**
-     * Key error data.
-     * @const
-     * @type {string}
-     */
-    var KEY_ERRORDATA = Header$KEY_ERRORDATA = "errordata";
-    /**
-     * Key signature.
-     * @const
-     * @type {string}
-     */
-    var KEY_SIGNATURE = Header$KEY_SIGNATURE = "signature";
-
     /**
      * <p>Construct a new header from the provided MSL object.</p>
      * 
@@ -184,7 +148,7 @@ var Header$KEY_SIGNATURE;
                     if (headerMo.has(KEY_HEADERDATA)) {
                         var headerdata = headerMo.getBytes(KEY_HEADERDATA);
                         if (headerdata.length == 0)
-                            throw new MslMessageException(MslError.HEADER_DATA_MISSING, base64$encode(headerdata)).setEntity(masterToken).setEntity(entityAuthData);
+                            throw new MslMessageException(MslError.HEADER_DATA_MISSING, base64$encode(headerdata)).setMasterToken(masterToken).setEntityAuthenicationData(entityAuthData);
                         MessageHeader$parse(ctx, headerdata, entityAuthData, masterToken, signature, cryptoContexts, callback);
                     }
                     
@@ -192,7 +156,7 @@ var Header$KEY_SIGNATURE;
                     else if (headerMo.has(KEY_ERRORDATA)) {
                         var errordata = headerMo.getBytes(KEY_ERRORDATA);
                         if (errordata.length == 0)
-                            throw new MslMessageException(MslError.HEADER_DATA_MISSING, base64$encode(errordata)).setEntity(masterToken).setEntity(entityAuthData);
+                            throw new MslMessageException(MslError.HEADER_DATA_MISSING, base64$encode(errordata)).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData);
                         ErrorHeader$parse(ctx, errordata, entityAuthData, signature, callback);
                     }
                     

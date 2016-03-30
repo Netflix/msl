@@ -37,7 +37,7 @@ public class MslMasterTokenException extends MslException {
      */
     public MslMasterTokenException(final MslError error, final MasterToken masterToken) {
         super(error);
-        setEntity(masterToken);
+        setMasterToken(masterToken);
     }
 
     /**
@@ -50,24 +50,24 @@ public class MslMasterTokenException extends MslException {
      */
     public MslMasterTokenException(final MslError error, final MasterToken masterToken, final Throwable cause) {
         super(error, cause);
-        setEntity(masterToken);
+        setMasterToken(masterToken);
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.MslException#setUser(com.netflix.msl.tokens.UserIdToken)
+     * @see com.netflix.msl.MslException#setUserIdToken(com.netflix.msl.tokens.UserIdToken)
      */
     @Override
-    public MslMasterTokenException setUser(final UserIdToken userIdToken) {
-        super.setUser(userIdToken);
+    public MslMasterTokenException setUserIdToken(final UserIdToken userIdToken) {
+        super.setUserIdToken(userIdToken);
         return this;
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.MslException#setUser(com.netflix.msl.userauth.UserAuthenticationData)
+     * @see com.netflix.msl.MslException#setUserAuthenticationData(com.netflix.msl.userauth.UserAuthenticationData)
      */
     @Override
-    public MslMasterTokenException setUser(final UserAuthenticationData userAuthData) {
-        super.setUser(userAuthData);
+    public MslMasterTokenException setUserAuthenticationData(final UserAuthenticationData userAuthData) {
+        super.setUserAuthenticationData(userAuthData);
         return this;
     }
 
@@ -75,7 +75,7 @@ public class MslMasterTokenException extends MslException {
      * @see com.netflix.msl.MslException#setMessageId(long)
      */
     @Override
-    public MslMasterTokenException setMessageId(long messageId) {
+    public MslMasterTokenException setMessageId(final long messageId) {
         super.setMessageId(messageId);
         return this;
     }

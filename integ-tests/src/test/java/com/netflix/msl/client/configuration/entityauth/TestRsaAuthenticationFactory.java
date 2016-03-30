@@ -53,6 +53,6 @@ public class TestRsaAuthenticationFactory extends MockRsaAuthenticationFactory {
         }
 
         // Entity not found.
-        throw new MslEntityAuthException(MslError.RSA_PUBLICKEY_NOT_FOUND, pubkeyid).setEntity(rad);
+        throw new MslEntityAuthException(MslError.RSA_PUBLICKEY_NOT_FOUND, pubkeyid).setEntityAuthenticationData(rad);
     }
 }

@@ -352,7 +352,7 @@ var ErrorHeader$parse;
                 cryptoContext = factory.getCryptoContext(ctx, entityAuthData);
             } catch (e) {
                 if (e instanceof MslException)
-                    e.setEntity(entityAuthData);
+                    e.setEntityAuthenticationData(entityAuthData);
                 throw e;
             }
             
@@ -361,7 +361,7 @@ var ErrorHeader$parse;
                 result: function(verified) {
                     AsyncExecutor(callback, function() {
                         if (!verified)
-                            throw new MslCryptoException(MslError.MESSAGE_VERIFICATION_FAILED).setEntity(entityAuthData);
+                            throw new MslCryptoException(MslError.MESSAGE_VERIFICATION_FAILED).setEntityAuthenticationData(entityAuthData);
                         cryptoContext.decrypt(errordata, {
                             result: function(plaintext) {
                                 AsyncExecutor(callback, function() {
@@ -370,10 +370,10 @@ var ErrorHeader$parse;
                                         errordata = encoder.parseObject(plaintext);
                                         messageId = errordata.getLong(KEY_MESSAGE_ID);
                                         if (messageId < 0 || messageId > MslConstants$MAX_LONG_VALUE)
-                                            throw new MslMessageException(MslError.MESSAGE_ID_OUT_OF_RANGE, "errordata " + errordata).setEntity(entityAuthData);
+                                            throw new MslMessageException(MslError.MESSAGE_ID_OUT_OF_RANGE, "errordata " + errordata).setEntityAuthenticationData(entityAuthData);
                                     } catch (e) {
                                         if (e instanceof MslEncoderException)
-                                            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "errordata " + base64$encode(plaintext), e).setEntity(entityAuthData);
+                                            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "errordata " + base64$encode(plaintext), e).setEntityAuthenticationData(entityAuthData);
                                         throw e;
                                     }
                                     
@@ -397,7 +397,7 @@ var ErrorHeader$parse;
                                         if (errordata.has(KEY_INTERNAL_CODE)) {
                                             internalCode = errordata.getInt(KEY_INTERNAL_CODE);
                                             if (internalCode < 0)
-                                                throw new MslMessageException(MslError.INTERNAL_CODE_NEGATIVE, "errordata " + errordata).setEntity(entityAuthData).setMessageId(messageId);
+                                                throw new MslMessageException(MslError.INTERNAL_CODE_NEGATIVE, "errordata " + errordata).setEntityAuthenticationData(entityAuthData).setMessageId(messageId);
                                         } else {
                                             internalCode = -1;
                                         }
@@ -405,7 +405,7 @@ var ErrorHeader$parse;
                                         userMsg = errordata.optString(KEY_USER_MESSAGE, null);
                                     } catch (e) {
                                         if (e instanceof MslEncoderException)
-                                            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "errordata " + errordata, e).setEntity(entityAuthData).setMessageId(messageId);
+                                            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "errordata " + errordata, e).setEntityAuthenticationData(entityAuthData).setMessageId(messageId);
                                         throw e;
                                     }
 
@@ -417,7 +417,7 @@ var ErrorHeader$parse;
                             error: function(e) {
                                 AsyncExecutor(callback, function() {
                                     if (e instanceof MslException)
-                                        e.setEntity(entityAuthData);
+                                        e.setEntityAuthenticationData(entityAuthData);
                                     throw e;
                                 });
                             }
@@ -427,7 +427,7 @@ var ErrorHeader$parse;
                 error: function(e) {
                     AsyncExecutor(callback, function() {
                         if (e instanceof MslException)
-                            e.setEntity(entityAuthData);
+                            e.setEntityAuthenticationData(entityAuthData);
                         throw e;
                     });
                 }

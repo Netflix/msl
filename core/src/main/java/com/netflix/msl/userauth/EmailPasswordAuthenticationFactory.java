@@ -64,26 +64,26 @@ public class EmailPasswordAuthenticationFactory extends UserAuthenticationFactor
 
         // Verify the scheme is permitted.
         if(!authutils.isSchemePermitted(identity, this.getScheme()))
-            throw new MslUserAuthException(MslError.USERAUTH_ENTITY_INCORRECT_DATA, "Authentication scheme " + this.getScheme() + " not permitted for entity " + identity + ".").setUser(data);
+            throw new MslUserAuthException(MslError.USERAUTH_ENTITY_INCORRECT_DATA, "Authentication scheme " + this.getScheme() + " not permitted for entity " + identity + ".").setUserAuthenticationData(data);
 
         // Extract and check email and password values.
         final String epadEmail = epad.getEmail();
         final String epadPassword = epad.getPassword();
         if (epadEmail == null || epadPassword == null)
-            throw new MslUserAuthException(MslError.EMAILPASSWORD_BLANK).setUser(epad);
+            throw new MslUserAuthException(MslError.EMAILPASSWORD_BLANK).setUserAuthenticationData(epad);
         final String email = epadEmail.trim();
         final String password = epadPassword.trim();
         if (email.isEmpty() || password.isEmpty())
-            throw new MslUserAuthException(MslError.EMAILPASSWORD_BLANK).setUser(epad);
+            throw new MslUserAuthException(MslError.EMAILPASSWORD_BLANK).setUserAuthenticationData(epad);
 
         // Authenticate the user.
         final MslUser user = store.isUser(email, password);
         if (user == null)
-            throw new MslUserAuthException(MslError.EMAILPASSWORD_INCORRECT).setUser(epad);
+            throw new MslUserAuthException(MslError.EMAILPASSWORD_INCORRECT).setUserAuthenticationData(epad);
         
         // Verify the scheme is still permitted.
         if (!authutils.isSchemePermitted(identity, user, this.getScheme()))
-            throw new MslUserAuthException(MslError.USERAUTH_ENTITYUSER_INCORRECT_DATA, "Authentication scheme " + this.getScheme() + " not permitted for entity " + identity + ".").setUser(data);
+            throw new MslUserAuthException(MslError.USERAUTH_ENTITYUSER_INCORRECT_DATA, "Authentication scheme " + this.getScheme() + " not permitted for entity " + identity + ".").setUserAuthenticationData(data);
         
         // If a user ID token was provided validate the user identities.
         if (userIdToken != null) {

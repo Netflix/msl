@@ -1,12 +1,12 @@
-/bin
-/.gradle
-/.settings
-/.project
-/.classpath
-/build
-/test-output
+bin
+.gradle/
+.settings/
+.project
+.classpath
+build/
+test-output/
 *.iml
-/.idea/artifacts
-/.idea/copyright
-/.idea/libraries
+*.ipr
+*.iws
+.idea/
 

@@ -171,13 +171,13 @@ public class ErrorHeader extends Header {
             
             // Verify and decrypt the error data.
             if (!cryptoContext.verify(errordataBytes, signature, encoder))
-                throw new MslCryptoException(MslError.MESSAGE_VERIFICATION_FAILED).setEntity(entityAuthData);
+                throw new MslCryptoException(MslError.MESSAGE_VERIFICATION_FAILED).setEntityAuthenticationData(entityAuthData);
             plaintext = cryptoContext.decrypt(errordataBytes, encoder);
         } catch (final MslCryptoException e) {
-            e.setEntity(entityAuthData);
+            e.setEntityAuthenticationData(entityAuthData);
             throw e;
         } catch (final MslEntityAuthException e) {
-            e.setEntity(entityAuthData);
+            e.setEntityAuthenticationData(entityAuthData);
             throw e;
         }
         
@@ -185,9 +185,9 @@ public class ErrorHeader extends Header {
             errordata = encoder.parseObject(plaintext);
             messageId = errordata.getLong(KEY_MESSAGE_ID);
             if (this.messageId < 0 || this.messageId > MslConstants.MAX_LONG_VALUE)
-                throw new MslMessageException(MslError.MESSAGE_ID_OUT_OF_RANGE, "errordata " + errordata).setEntity(entityAuthData);
+                throw new MslMessageException(MslError.MESSAGE_ID_OUT_OF_RANGE, "errordata " + errordata).setEntityAuthenticationData(entityAuthData);
         } catch (final MslEncoderException e) {
-            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "errordata " + DatatypeConverter.printBase64Binary(plaintext), e).setEntity(entityAuthData);
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "errordata " + DatatypeConverter.printBase64Binary(plaintext), e).setEntityAuthenticationData(entityAuthData);
         }
         
         try {
@@ -206,14 +206,14 @@ public class ErrorHeader extends Header {
             if (errordata.has(KEY_INTERNAL_CODE)) {
                 internalCode = errordata.getInt(KEY_INTERNAL_CODE);
                 if (this.internalCode < 0)
-                    throw new MslMessageException(MslError.INTERNAL_CODE_NEGATIVE, "errordata " + errordata).setEntity(entityAuthData).setMessageId(messageId);
+                    throw new MslMessageException(MslError.INTERNAL_CODE_NEGATIVE, "errordata " + errordata).setEntityAuthenticationData(entityAuthData).setMessageId(messageId);
             } else {
                 internalCode = -1;
             }
             errorMsg = errordata.optString(KEY_ERROR_MESSAGE, null);
             userMsg = errordata.optString(KEY_USER_MESSAGE, null);
         } catch (final MslEncoderException e) {
-            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "errordata " + errordata, e).setEntity(entityAuthData).setMessageId(messageId);
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "errordata " + errordata, e).setEntityAuthenticationData(entityAuthData).setMessageId(messageId);
         }
     }
     
@@ -318,9 +318,9 @@ public class ErrorHeader extends Header {
         
         // Create the encoding.
         final MslObject header = encoder.createObject();
-        header.put(KEY_ENTITY_AUTHENTICATION_DATA, entityAuthData);
-        header.put(KEY_ERRORDATA, ciphertext);
-        header.put(KEY_SIGNATURE, signature);
+        header.put(HeaderKeys.KEY_ENTITY_AUTHENTICATION_DATA, entityAuthData);
+        header.put(HeaderKeys.KEY_ERRORDATA, ciphertext);
+        header.put(HeaderKeys.KEY_SIGNATURE, signature);
         final byte[] encoding = encoder.encodeObject(header, format);
         
         // Cache and return the encoding.

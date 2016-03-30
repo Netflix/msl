@@ -65,16 +65,16 @@ public class PresharedProfileAuthenticationFactory extends EntityAuthenticationF
         // Check for revocation.
         final String pskId = ppad.getPresharedKeysId();
         if (authutils.isEntityRevoked(pskId))
-            throw new MslEntityAuthException(MslError.ENTITY_REVOKED, "psk profile " + pskId).setEntity(ppad);
+            throw new MslEntityAuthException(MslError.ENTITY_REVOKED, "psk profile " + pskId).setEntityAuthenticationData(ppad);
         
         // Verify the scheme is permitted.
         if (!authutils.isSchemePermitted(pskId, getScheme()))
-            throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication Scheme for Device Type Not Supported " + pskId + ":" + getScheme()).setEntity(ppad);
+            throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication Scheme for Device Type Not Supported " + pskId + ":" + getScheme()).setEntityAuthenticationData(ppad);
         
         // Load preshared keys authentication data.
         final KeySet keys = store.getKeys(pskId);
         if (keys == null)
-            throw new MslEntityAuthException(MslError.ENTITY_NOT_FOUND, "psk profile " + pskId).setEntity(ppad);
+            throw new MslEntityAuthException(MslError.ENTITY_NOT_FOUND, "psk profile " + pskId).setEntityAuthenticationData(ppad);
         
         // Return the crypto context.
         final String identity = ppad.getIdentity();

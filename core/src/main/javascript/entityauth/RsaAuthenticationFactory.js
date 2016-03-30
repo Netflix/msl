@@ -64,11 +64,11 @@ var RsaAuthenticationFactory = EntityAuthenticationFactory.extend({
         
         // The local entity must have a private key.
         if (pubkeyid == this.keyPairId && !privateKey)
-            throw new MslEntityAuthException(MslError.RSA_PRIVATEKEY_NOT_FOUND, pubkeyid).setEntity(authdata);
+            throw new MslEntityAuthException(MslError.RSA_PRIVATEKEY_NOT_FOUND, pubkeyid).setEntityAuthenticationData(authdata);
         
         // Remote entities must have a public key.
         else if (pubkeyid != this.keyPairId && !publicKey)
-            throw new MslEntityAuthException(MslError.RSA_PUBLICKEY_NOT_FOUND, pubkeyid).setEntity(authdata);
+            throw new MslEntityAuthException(MslError.RSA_PUBLICKEY_NOT_FOUND, pubkeyid).setEntityAuthenticationData(authdata);
 
         // Return the crypto context.
         return new RsaCryptoContext(ctx, identity, privateKey, publicKey, RsaCryptoContext$Mode.SIGN_VERIFY);

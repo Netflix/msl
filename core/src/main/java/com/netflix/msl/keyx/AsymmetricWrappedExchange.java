@@ -611,7 +611,7 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
         // Verify the scheme is permitted.
         final String identity = masterToken.getIdentity();
         if(!authutils.isSchemePermitted(identity, this.getScheme()))
-            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + this.getScheme()).setEntity(masterToken);
+            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + this.getScheme()).setMasterToken(masterToken);
 
         // Create random AES-128 encryption and SHA-256 HMAC keys.
         final byte[] encryptionBytes = new byte[16];
@@ -623,7 +623,7 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
             encryptionKey = new SecretKeySpec(encryptionBytes, JcaAlgorithm.AES);
             hmacKey = new SecretKeySpec(hmacBytes, JcaAlgorithm.HMAC_SHA256);
         } catch (final IllegalArgumentException e) {
-            throw new MslCryptoException(MslError.SESSION_KEY_CREATION_FAILURE, e).setEntity(masterToken);
+            throw new MslCryptoException(MslError.SESSION_KEY_CREATION_FAILURE, e).setMasterToken(masterToken);
         }
         
         // Wrap session keys with public key.
@@ -687,7 +687,7 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
         // Verify the scheme is permitted.
         final String identity = entityAuthData.getIdentity();
         if(!authutils.isSchemePermitted(identity, this.getScheme()))
-            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + this.getScheme()).setEntity(entityAuthData);
+            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + this.getScheme()).setEntityAuthenticationData(entityAuthData);
 
         final RequestData request = (RequestData)keyRequestData;
         
@@ -794,7 +794,7 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
                     encryptionJwkMo = encoder.parseObject(encryptionJwkBytes);
                     hmacJwkMo = encoder.parseObject(hmacJwkBytes);
                 } catch (final MslEncoderException e) {
-                    throw new MslCryptoException(MslError.SESSION_KEY_CREATION_FAILURE, e).setEntity(masterToken);
+                    throw new MslCryptoException(MslError.SESSION_KEY_CREATION_FAILURE, e).setMasterToken(masterToken);
                 }
                 encryptionKey = new JsonWebKey(encryptionJwkMo).getSecretKey();
                 hmacKey = new JsonWebKey(hmacJwkMo).getSecretKey();
@@ -808,7 +808,7 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
                     encryptionKey = new SecretKeySpec(unwrappedEncryptionKey, JcaAlgorithm.AES);
                     hmacKey = new SecretKeySpec(unwrappedHmacKey, JcaAlgorithm.HMAC_SHA256);
                 } catch (final IllegalArgumentException e) {
-                    throw new MslCryptoException(MslError.SESSION_KEY_CREATION_FAILURE, e).setEntity(masterToken);
+                    throw new MslCryptoException(MslError.SESSION_KEY_CREATION_FAILURE, e).setMasterToken(masterToken);
                 }
                 break;
             }
