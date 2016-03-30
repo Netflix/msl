@@ -1,9 +1,0 @@
-/bin
-/build
-/test-output
-.classpath
-.project
-.settings
-.idea
-*.iml
-/test-output
