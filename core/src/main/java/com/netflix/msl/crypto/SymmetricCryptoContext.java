@@ -417,13 +417,13 @@ public class SymmetricCryptoContext implements ICryptoContext {
     }
     
     /** MSL context. */
-    private final MslContext ctx;
+    protected final MslContext ctx;
     /** Key set identity. */
-    private final String id;
+    protected final String id;
     /** Encryption/decryption key. */
-    private final SecretKey encryptionKey;
+    protected final SecretKey encryptionKey;
     /** Signature key. */
-    private final SecretKey signatureKey;
+    protected final SecretKey signatureKey;
     /** Wrapping key. */
-    private final SecretKey wrappingKey;
+    protected final SecretKey wrappingKey;
 }
