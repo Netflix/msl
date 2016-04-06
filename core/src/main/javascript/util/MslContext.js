@@ -162,6 +162,22 @@ var MslContext;
          *        data or null or any thrown exceptions.
          */
         getEntityAuthenticationData: function(reauthCode, callback) {},
+        
+        /**
+         * <p>Called to provide the entity identity contained in the master token
+         * issued to this entity, and provided in key response data.</p>
+         * 
+         * <p>This method should not perform any action unless this entity requires
+         * its entity identity to be provided by the remote entity.</p>
+         * 
+         * <p>This method will be called multiple times, often with the same value.
+         * However in some cases the entity identity provided by the remote entity
+         * may change over time. If the entity identity changes, the MSL store
+         * should be cleared before this method returns.</p>
+         * 
+         * @param {string} identity the local entity identity.
+         */
+        setEntityIdentity: function(identity) {},
     
         /**
          * <p>Returns the primary crypto context used for MSL-level crypto

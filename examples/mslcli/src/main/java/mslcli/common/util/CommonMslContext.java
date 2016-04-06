@@ -24,9 +24,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.SortedSet;
 
-import mslcli.common.IllegalCmdArgumentException;
-import mslcli.common.MslConfig;
-
 import com.netflix.msl.MslConstants.CompressionAlgorithm;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.crypto.ICryptoContext;
@@ -41,6 +38,9 @@ import com.netflix.msl.userauth.UserAuthenticationFactory;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslStore;
+
+import mslcli.common.IllegalCmdArgumentException;
+import mslcli.common.MslConfig;
 
 /**
  * <p>ABstract class for MSL context specific to the given entity.</p>
@@ -124,6 +124,13 @@ public abstract class CommonMslContext extends MslContext {
     @Override
     public final EntityAuthenticationData getEntityAuthenticationData(final ReauthCode reauthCode) {
         return entityAuthData;
+    }
+    
+    /* (non-Javadoc)
+     * @see com.netflix.msl.util.MslContext#setEntityIdentity(java.lang.String)
+     */
+    @Override
+    public void setEntityIdentity(final String identity) {
     }
 
     /* (non-Javadoc)

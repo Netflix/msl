@@ -180,7 +180,7 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
 
         // Verify key request data.
         if (!mechanism ||
-            (mechanism == Mechanism.WRAP && (!wrapdataB64 || typeof wrapdataB64 !== 'string')))
+            (mechanism == Mechanism.WRAP && typeof wrapdataB64 !== 'string'))
         {
             throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + JSON.stringify(keyRequestJO));
         }
@@ -232,13 +232,15 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
          * with the provided master token and wrapped keys.
          *
          * @param {MasterToken} masterToken the master token.
+         * @param {?string} identity optional entity identity inside the master token.
+         *        May be {@code null}.
          * @param {Uint8Array} wrapKey the wrapped wrap key.
          * @param {Uint8Array} wrapdata the wrap data for reconstructing the wrap key.
          * @param {Uint8Array} encryptionKey the wrap key wrapped encryption key.
          * @param {Uint8Array} hmacKey the wrap key wrapped HMAC key.
          */
-        init: function init(masterToken, wrapKey, wrapdata, encryptionKey, hmacKey) {
-            init.base.call(this, masterToken, KeyExchangeScheme.JWE_LADDER);
+        init: function init(masterToken, identity, wrapKey, wrapdata, encryptionKey, hmacKey) {
+            init.base.call(this, masterToken, identity, KeyExchangeScheme.JWE_LADDER);
 
             // The properties.
             var props = {
@@ -287,11 +289,13 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
      * with the provided master token from the provided JSON object.
      *
      * @param {MasterToken} masterToken the master token.
+     * @param {?string} identity optional entity identity inside the master token.
+     *        May be {@code null}.
      * @param {object} keyDataJO the JSON object.
      * @throws MslEncodingException if there is an error parsing the JSON.
      * @throws MslKeyExchangeException if the mechanism is not recognized.
      */
-    var ResponseData$parse = JsonWebEncryptionLadderExchange$ResponseData$parse = function JsonWebEncryptionLadderExchange$ResponseData$parse(masterToken, keyDataJO) {
+    var ResponseData$parse = JsonWebEncryptionLadderExchange$ResponseData$parse = function JsonWebEncryptionLadderExchange$ResponseData$parse(masterToken, identity, keyDataJO) {
         // Pull key response data.
         var wrapKeyB64 = keyDataJO[KEY_WRAP_KEY];
         var wrapdataB64 = keyDataJO[KEY_WRAPDATA];
@@ -299,10 +303,10 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
         var hmacKeyB64 = keyDataJO[KEY_HMAC_KEY];
 
         // Verify key response data.
-        if (!wrapKeyB64 || typeof wrapKeyB64 !== 'string' ||
-            !wrapdataB64 || typeof wrapdataB64 !== 'string' ||
-            !encryptionKeyB64 || typeof encryptionKeyB64 !== 'string' ||
-            !hmacKeyB64 || typeof hmacKeyB64 !== 'string')
+        if (typeof wrapKeyB64 !== 'string' ||
+            typeof wrapdataB64 !== 'string' ||
+            typeof encryptionKeyB64 !== 'string' ||
+            typeof hmacKeyB64 !== 'string')
         {
             throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + JSON.stringify(keyDataJO));
         }
@@ -327,7 +331,7 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
         }
 
         // Return the response data.
-        return new ResponseData(masterToken, wrapKey, wrapdata, encryptionKey, hmacKey);
+        return new ResponseData(masterToken, identity, wrapKey, wrapdata, encryptionKey, hmacKey);
     };
 
     /**
@@ -386,13 +390,15 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
          * Create a new JSON Web Encryption ladder key exchange factory.
          *
          * @param {WrapCryptoContextRepository} repository the wrapping key crypto context repository.
+         * @param {AuthenticationUtils} authentication utilities.
          */
-        init: function init(repository) {
+        init: function init(repository, authutils) {
             init.base.call(this, KeyExchangeScheme.JWE_LADDER);
 
             // The properties.
             var props = {
-                repository: { value: repository, writable: false, enumerable: false, configurable: false }
+                repository: { value: repository, writable: false, enumerable: false, configurable: false },
+                authutils: { value: authutils, writable: false, enumerable: false, configurable: false },
             };
             Object.defineProperties(this, props);
         },
@@ -405,8 +411,8 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
         },
 
         /** @inheritDoc */
-        createResponseData: function createResponseData(ctx, masterToken, keyDataJO) {
-            return ResponseData$parse(masterToken, keyDataJO);
+        createResponseData: function createResponseData(ctx, masterToken, identity, keyDataJO) {
+            return ResponseData$parse(masterToken, identity, keyDataJO);
         },
 
         /** @inheritDoc */
@@ -417,15 +423,23 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                 if (!(keyRequestData instanceof RequestData))
                     throw new MslInternalException("Key request data " + JSON.stringify(keyRequestData) + " was not created by this factory.");
 
-                // If the master token was not issued by the local entity then we
-                // should not be generating a key response for it.
                 var identity;
                 if (entityToken instanceof MasterToken) {
+                    // If the master token was not issued by the local entity then we
+                    // should not be generating a key response for it.
                     if (!entityToken.isVerified())
                         throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, entityToken);
                     identity = entityToken.identity;
+                    
+                    // Verify the scheme is permitted.
+                    if (!this.authutils.isSchemePermitted(identity, this.scheme))
+                        throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication scheme for entity not permitted " + identity + ": " + this.scheme.name).setMasterToken(entityToken);
                 } else {
-                	identity = entityToken.getIdentity();
+                    identity = entityToken.getIdentity();
+                    
+                    // Verify the scheme is permitted.
+                    if (!this.authutils.isSchemePermitted(identity, this.scheme))
+                        throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication scheme for entity not permitted " + identity + ": " + this.scheme.name).setEntityAuthenticationData(entityToken);
                 }
 
                 // Create random AES-128 wrapping key.
@@ -489,7 +503,7 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                         result: function (wrapKeyCryptoContext) {
                             wrapKeyCryptoContext.wrap(wrapKey, {
                                 result: function(wrappedWrapJwk) {
-                                    wrapSessionKeys(wrapKey, wrapdata, encryptionKey, hmacKey, wrappedWrapJwk);
+                                    wrapSessionKeys(identity, wrapKey, wrapdata, encryptionKey, hmacKey, wrappedWrapJwk);
                                 },
                                 error: function(e) {
                                     AsyncExecutor(callback, function() {
@@ -511,14 +525,14 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                 }, self);
             }
 
-            function wrapSessionKeys(wrapKey, wrapdata, encryptionKey, hmacKey, wrappedWrapJwk) {
+            function wrapSessionKeys(identity, wrapKey, wrapdata, encryptionKey, hmacKey, wrappedWrapJwk) {
                 AsyncExecutor(callback, function() {
                     var wrapCryptoContext = new JsonWebEncryptionCryptoContext(ctx, JsonWebEncryptionCryptoContext$Algorithm.A128KW, JsonWebEncryptionCryptoContext$Encryption.A128GCM, wrapKey);
                     wrapCryptoContext.wrap(encryptionKey, {
                         result: function(wrappedEncryptionJwk) {
                             wrapCryptoContext.wrap(hmacKey, {
                                 result: function(wrappedHmacJwk) {
-                                    createMasterToken(wrapdata, wrappedWrapJwk, encryptionKey, wrappedEncryptionJwk, hmacKey, wrappedHmacJwk);
+                                    createMasterToken(identity, wrapdata, wrappedWrapJwk, encryptionKey, wrappedEncryptionJwk, hmacKey, wrappedHmacJwk);
                                 },
                                 error: function(e) {
                                     AsyncExecutor(callback, function() {
@@ -540,7 +554,7 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                 }, self);
             }
 
-            function createMasterToken(wrapdata, wrappedWrapJwk, encryptionKey, wrappedEncryptionJwk, hmacKey, wrappedHmacJwk) {
+            function createMasterToken(identity, wrapdata, wrappedWrapJwk, encryptionKey, wrappedEncryptionJwk, hmacKey, wrappedHmacJwk) {
                 AsyncExecutor(callback, function() {
                     // Create the master token.
                     var tokenFactory = ctx.getTokenFactory();
@@ -552,7 +566,7 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                                     var cryptoContext = new SessionCryptoContext(ctx, masterToken);
 
                                     // Return the key exchange data.
-                                    var keyResponseData = new ResponseData(masterToken, wrappedWrapJwk, wrapdata, wrappedEncryptionJwk, wrappedHmacJwk);
+                                    var keyResponseData = new ResponseData(masterToken, identity, wrappedWrapJwk, wrapdata, wrappedEncryptionJwk, wrappedHmacJwk);
                                     return new KeyExchangeFactory.KeyExchangeData(keyResponseData, cryptoContext, callback);
                                 }, self);
                             },
@@ -572,7 +586,7 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                                     var cryptoContext = new SessionCryptoContext(ctx, masterToken);
 
                                     // Return the key exchange data.
-                                    var keyResponseData = new ResponseData(masterToken, wrappedWrapJwk, wrapdata, wrappedEncryptionJwk, wrappedHmacJwk);
+                                    var keyResponseData = new ResponseData(masterToken, identity, wrappedWrapJwk, wrapdata, wrappedEncryptionJwk, wrappedHmacJwk);
                                     return new KeyExchangeFactory.KeyExchangeData(keyResponseData, cryptoContext, callback);
                                 }, self);
                             },

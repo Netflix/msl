@@ -118,7 +118,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
         var keyId = keyDataJO[KEY_KEY_ID];
 
         // Verify key data.
-        if (!keyId || typeof keyId !== 'string')
+        if (typeof keyId !== 'string')
             throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + JSON.stringify(keyDataJO));
 
         // Verify key ID.
@@ -152,12 +152,14 @@ var SymmetricWrappedExchange$ResponseData$parse;
          * and HMAC keys.
          *
          * @param {MasterToken} masterToken the master token.
+         * @param {?string} identity optional entity identity inside the master token.
+         *        May be {@code null}.
          * @param {KeyId} keyId the wrapping key ID.
          * @param {Uint8Array} encryptionKey the wrapped encryption key.
          * @param {Uint8Array} hmacKey the wrapped HMAC key.
          */
-        init: function init(masterToken, keyId, encryptionKey, hmacKey) {
-            init.base.call(this, masterToken, KeyExchangeScheme.SYMMETRIC_WRAPPED);
+        init: function init(masterToken, identity, keyId, encryptionKey, hmacKey) {
+            init.base.call(this, masterToken, identity, KeyExchangeScheme.SYMMETRIC_WRAPPED);
 
             // The properties.
             var props = {
@@ -199,22 +201,24 @@ var SymmetricWrappedExchange$ResponseData$parse;
      * the provided master token from the provided JSON object.
      *
      * @param {MasterToken} masterToken the master token.
+     * @param {?string} identity optional entity identity inside the master token.
+     *        May be {@code null}.
      * @param {Object} keyDataJO the JSON object.
      * @return {ResponseData} the response data.
      * @throws MslEncodingException if there is an error parsing the JSON.
      * @throws MslCryptoException if an encoded key is invalid.
      * @throws MslKeyExchangeException if the key ID is not recognized.
      */
-    var ResponseData$parse = SymmetricWrappedExchange$ResponseData$parse = function ResponseData$parse(masterToken, keyDataJO) {
+    var ResponseData$parse = SymmetricWrappedExchange$ResponseData$parse = function ResponseData$parse(masterToken, identity, keyDataJO) {
         // Pull key response data.
         var keyId = keyDataJO[KEY_KEY_ID];
         var encryptionKeyB64 = keyDataJO[KEY_ENCRYPTION_KEY];
         var hmacKeyB64 = keyDataJO[KEY_HMAC_KEY];
 
         // Verify key response data.
-        if (!keyId || typeof keyId !== 'string' ||
-            !encryptionKeyB64 || typeof encryptionKeyB64 !== 'string' ||
-            !hmacKeyB64 || typeof hmacKeyB64 !== 'string')
+        if (typeof keyId !== 'string' ||
+            typeof encryptionKeyB64 !== 'string' ||
+            typeof hmacKeyB64 !== 'string')
         {
             throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + JSON.stringify(keyDataJO));
         }
@@ -238,7 +242,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
         }
 
         // Return the response data.
-        return new ResponseData(masterToken, keyId, encryptionKey, hmacKey);
+        return new ResponseData(masterToken, identity, keyId, encryptionKey, hmacKey);
     };
 
     /**
@@ -297,9 +301,17 @@ var SymmetricWrappedExchange$ResponseData$parse;
     SymmetricWrappedExchange = KeyExchangeFactory.extend({
         /**
          * Create a new symmetric wrapped key exchange factory.
+         * 
+         * @param {AuthenticationUtils} authutils authentication utilities.
          */
-        init: function init() {
+        init: function init(authutils) {
             init.base.call(this, KeyExchangeScheme.SYMMETRIC_WRAPPED);
+            
+            // The properties.
+            var props = {
+                authutils: { value: authutils, writable: false, enumerable: false, configurable: false },
+            };
+            Object.defineProperties(this, props);
         },
 
         /** @inheritDoc */
@@ -310,8 +322,8 @@ var SymmetricWrappedExchange$ResponseData$parse;
         },
 
         /** @inheritDoc */
-        createResponseData: function createResponseData(ctx, masterToken, keyDataJO) {
-            return ResponseData$parse(masterToken, keyDataJO);
+        createResponseData: function createResponseData(ctx, masterToken, identity, keyDataJO) {
+            return ResponseData$parse(masterToken, identity, keyDataJO);
         },
 
         /** @inheritDoc */
@@ -322,12 +334,31 @@ var SymmetricWrappedExchange$ResponseData$parse;
                 if (!(keyRequestData instanceof RequestData))
                     throw new MslInternalException("Key request data " + JSON.stringify(keyRequestData) + " was not created by this factory.");
 
+                var identity;
+                if (entityToken instanceof MasterToken) {
+                    // If the master token was not issued by the local entity then we
+                    // should not be generating a key response for it.
+                    if (!entityToken.isVerified())
+                        throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, entityToken);
+                    identity = entityToken.identity;
+                    
+                    // Verify the scheme is permitted.
+                    if (!this.authutils.isSchemePermitted(identity, this.scheme))
+                        throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication scheme for entity not permitted " + identity + ": " + this.scheme.name).setMasterToken(entityToken);
+                } else {
+                    identity = entityToken.getIdentity();
+                    
+                    // Verify the scheme is permitted.
+                    if (!this.authutils.isSchemePermitted(identity, this.scheme))
+                        throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication scheme for entity not permitted " + identity + ": " + this.scheme.name).setEntityAuthenticationData(entityToken);
+                }
+
                 // Create random AES-128 encryption and SHA-256 HMAC keys.
                 this.generateSessionKeys(ctx, {
                     result: function(sessionkeys) {
                         var encryptionKey = sessionkeys.encryptionKey;
                         var hmacKey = sessionkeys.hmacKey;
-                        wrapKeys(encryptionKey, hmacKey);
+                        wrapKeys(identity, encryptionKey, hmacKey);
                     },
                     error: function(e) {
                         AsyncExecutor(callback, function() {
@@ -339,36 +370,20 @@ var SymmetricWrappedExchange$ResponseData$parse;
                 });
             }, self);
 
-            function wrapKeys(encryptionKey, hmacKey) {
+            function wrapKeys(identity, encryptionKey, hmacKey) {
                 AsyncExecutor(callback, function() {
                     var request = keyRequestData;
 
-                    // If we are renewing a master token then pull the identity
-                    // from the master token. Otherwise we were provided the
-                    // identity and will be issuing a new master token.
-                    var masterToken, identity;
-                    if (entityToken instanceof MasterToken) {
-                        // If the master token was not issued by the local entity then we
-                        // should not be generating a key response for it.
-                        if (!entityToken.isVerified())
-                            throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, entityToken);
-
-                        masterToken = entityToken;
-                        identity = masterToken.identity;
-                    } else {
-                        masterToken = null;
-                        identity = entityToken.getIdentity();
-                    }
-
                     // Wrap session keys with identified key.
                     var keyId = request.keyId;
+                    var masterToken = (entityToken instanceof MasterToken) ? entityToken : null;
                     createCryptoContext(ctx, keyId, masterToken, identity, {
                         result: function(wrapCryptoContext) {
                             wrapCryptoContext.wrap(encryptionKey, {
                                 result: function(wrappedEncryptionKey) {
                                     wrapCryptoContext.wrap(hmacKey, {
                                         result: function(wrappedHmacKey) {
-                                            createMasterToken(encryptionKey, wrappedEncryptionKey, hmacKey, wrappedHmacKey);
+                                            createMasterToken(identity, encryptionKey, wrappedEncryptionKey, hmacKey, wrappedHmacKey);
                                         },
                                         error: function(e) {
                                             AsyncExecutor(callback, function() {
@@ -399,7 +414,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
                 }, self);
             }
 
-            function createMasterToken(encryptionKey, wrappedEncryptionKey, hmacKey, wrappedHmacKey) {
+            function createMasterToken(identity, encryptionKey, wrappedEncryptionKey, hmacKey, wrappedHmacKey) {
                 AsyncExecutor(callback, function() {
                     var request = keyRequestData;
 
@@ -422,7 +437,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
                                     }
 
                                     // Return the key exchange data.
-                                    var keyResponseData = new ResponseData(masterToken, request.keyId, wrappedEncryptionKey, wrappedHmacKey);
+                                    var keyResponseData = new ResponseData(masterToken, identity, request.keyId, wrappedEncryptionKey, wrappedHmacKey);
                                     return new KeyExchangeFactory.KeyExchangeData(keyResponseData, cryptoContext);
                                 }, self);
                             },
@@ -449,7 +464,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
                                     }
 
                                     // Return the key exchange data.
-                                    var keyResponseData = new ResponseData(masterToken, request.keyId, wrappedEncryptionKey, wrappedHmacKey);
+                                    var keyResponseData = new ResponseData(masterToken, identity, request.keyId, wrappedEncryptionKey, wrappedHmacKey);
                                     return new KeyExchangeFactory.KeyExchangeData(keyResponseData, cryptoContext);
                                 }, self);
                             },

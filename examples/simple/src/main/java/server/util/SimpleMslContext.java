@@ -30,8 +30,6 @@ import java.util.TreeSet;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
-import server.userauth.SimpleTokenFactory;
-
 import com.netflix.msl.MslConstants.CompressionAlgorithm;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.crypto.ICryptoContext;
@@ -56,6 +54,8 @@ import com.netflix.msl.util.AuthenticationUtils;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslStore;
 import com.netflix.msl.util.NullMslStore;
+
+import server.userauth.SimpleTokenFactory;
 
 /**
  * <p>The example server MSL context.</p>
@@ -192,6 +192,13 @@ public class SimpleMslContext extends MslContext {
         return entityAuthData;
     }
 
+    /* (non-Javadoc)
+     * @see com.netflix.msl.util.MslContext#setEntityIdentity(java.lang.String)
+     */
+    @Override
+    public void setEntityIdentity(final String identity) {
+    }
+    
     /* (non-Javadoc)
      * @see com.netflix.msl.util.MslContext#getMslCryptoContext()
      */

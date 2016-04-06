@@ -45,7 +45,7 @@ var PrivateKey$import;
             var self = this;
 
             AsyncExecutor(callback, function () {
-                if (!rawKey || typeof rawKey != 'object' || rawKey.type != 'private')
+                if (typeof rawKey !== 'object' || rawKey.type != 'private')
                     throw new TypeError('Only original private crypto keys are supported.');
 
                 if (!encoded && rawKey['extractable']) {

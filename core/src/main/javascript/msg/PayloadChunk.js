@@ -290,7 +290,7 @@ var PayloadChunk$parse;
             // Pull the payload and signature.
             var payloadB64 = payloadChunkJO[KEY_PAYLOAD];
             var signatureB64 = payloadChunkJO[KEY_SIGNATURE];
-            if (!payloadB64 || typeof payloadB64 !== 'string' ||
+            if (typeof payloadB64 !== 'string' ||
                 typeof signatureB64 !== 'string')
             {
                 throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "payload chunk " + JSON.stringify(payloadChunkJO));

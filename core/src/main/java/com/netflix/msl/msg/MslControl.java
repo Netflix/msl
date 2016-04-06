@@ -364,6 +364,13 @@ public class MslControl {
         }
 
         /* (non-Javadoc)
+         * @see com.netflix.msl.util.MslContext#setEntityIdentity(java.lang.String)
+         */
+        @Override
+        public void setEntityIdentity(final String identity) {
+        }
+        
+        /* (non-Javadoc)
          * @see com.netflix.msl.util.MslContext#getMslCryptoContext()
          */
         @Override
@@ -936,7 +943,7 @@ public class MslControl {
      * @throws InterruptedException if the thread is interrupted while trying
      *         to delete an old master token.
      */
-    private void updateCryptoContexts(final MslContext ctx, final MessageHeader messageHeader, final KeyExchangeData keyExchangeData) throws InterruptedException {
+    private void updateOutgoingCryptoContexts(final MslContext ctx, final MessageHeader messageHeader, final KeyExchangeData keyExchangeData) throws InterruptedException {
         // In trusted network mode save the crypto context of the message's key
         // response data as an optimization.
         final MslStore store = ctx.getMslStore();
@@ -962,17 +969,22 @@ public class MslControl {
      * @throws InterruptedException if the thread is interrupted while trying
      *         to delete an old master token.
      */
-    private void updateCryptoContexts(final MslContext ctx, final MessageHeader request, final MessageInputStream response) throws InterruptedException {
+    private void updateIncomingCryptoContexts(final MslContext ctx, final MessageHeader request, final MessageInputStream response) throws InterruptedException {
         // Do nothing for error messages.
         final MessageHeader messageHeader = response.getMessageHeader();
         if (messageHeader == null)
             return;
         
         // Save the crypto context of the message's key response data.
-        final MslStore store = ctx.getMslStore();
         final KeyResponseData keyResponseData = messageHeader.getKeyResponseData();
         if (keyResponseData != null) {
+            // Set the local entity identity.
+            final String identity = keyResponseData.getIdentity();
+            if (identity != null)
+                ctx.setEntityIdentity(identity);
+            
             final MasterToken keyxMasterToken = keyResponseData.getMasterToken();
+            final MslStore store = ctx.getMslStore();
             store.setCryptoContext(keyxMasterToken, response.getKeyExchangeCryptoContext());
             
             // Delete the old master token. We won't use it anymore to build
@@ -1557,7 +1569,7 @@ public class MslControl {
         // message so we can receive new messages immediately after it is
         // sent.
         final KeyExchangeData keyExchangeData = builder.getKeyExchangeData();
-        updateCryptoContexts(ctx, requestHeader, keyExchangeData);
+        updateOutgoingCryptoContexts(ctx, requestHeader, keyExchangeData);
         
         // Update the stored service tokens.
         final MasterToken tokenVerificationMasterToken = (keyExchangeData != null) ? keyExchangeData.keyResponseData.getMasterToken() : masterToken;
@@ -1698,7 +1710,7 @@ public class MslControl {
 
                 // If there is a request update the stored crypto contexts.
                 if (request != null)
-                    updateCryptoContexts(ctx, request, response);
+                    updateIncomingCryptoContexts(ctx, request, response);
 
                 // In trusted network mode the local tokens are the primary tokens.
                 // In peer-to-peer mode they are the peer tokens. The master token

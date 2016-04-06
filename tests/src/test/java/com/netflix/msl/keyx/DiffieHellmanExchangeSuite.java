@@ -85,6 +85,8 @@ public class DiffieHellmanExchangeSuite {
     private static final String KEY_SCHEME = "scheme";
     /** JSON key key request data. */
     private static final String KEY_KEYDATA = "keydata";
+    /** JSON key identity. */
+    private static final String KEY_IDENTITY = "identity";
     
     /** JSON key Diffie-Hellman parameters ID. */
     private static final String KEY_PARAMETERS_ID = "parametersid";
@@ -110,6 +112,7 @@ public class DiffieHellmanExchangeSuite {
     }
     
     private static MasterToken MASTER_TOKEN;
+    private static String IDENTITY;
     private static final String PARAMETERS_ID = MockDiffieHellmanParameters.DEFAULT_ID;
     private static BigInteger REQUEST_PUBLIC_KEY;
     private static DHPrivateKey REQUEST_PRIVATE_KEY;
@@ -128,6 +131,7 @@ public class DiffieHellmanExchangeSuite {
             
             ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
             MASTER_TOKEN = MslTestUtils.getMasterToken(ctx, 1, 1);
+            IDENTITY = MASTER_TOKEN.getIdentity();
             
             final DiffieHellmanParameters params = MockDiffieHellmanParameters.getDefaultParameters();
             final DHParameterSpec paramSpec = params.getParameterSpec(PARAMETERS_ID);
@@ -320,16 +324,19 @@ public class DiffieHellmanExchangeSuite {
         
         @Test
         public void ctors() throws JSONException, MslEncodingException, MslKeyExchangeException {
-            final ResponseData resp = new ResponseData(MASTER_TOKEN, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
+            final ResponseData resp = new ResponseData(MASTER_TOKEN, IDENTITY, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
             assertEquals(KeyExchangeScheme.DIFFIE_HELLMAN, resp.getKeyExchangeScheme());
+            assertEquals(MASTER_TOKEN, resp.getMasterToken());
+            assertEquals(IDENTITY, resp.getIdentity());
             assertEquals(PARAMETERS_ID, resp.getParametersId());
             assertEquals(RESPONSE_PUBLIC_KEY, resp.getPublicKey());
             final JSONObject keydata = resp.getKeydata();
             assertNotNull(keydata);
             
-            final ResponseData joResp = new ResponseData(MASTER_TOKEN, keydata);
+            final ResponseData joResp = new ResponseData(MASTER_TOKEN, IDENTITY, keydata);
             assertEquals(resp.getKeyExchangeScheme(), joResp.getKeyExchangeScheme());
             assertEquals(resp.getMasterToken(), joResp.getMasterToken());
+            assertEquals(resp.getIdentity(), joResp.getIdentity());
             assertEquals(resp.getParametersId(), joResp.getParametersId());
             assertEquals(resp.getPublicKey(), joResp.getPublicKey());
             final JSONObject joKeydata = joResp.getKeydata();
@@ -339,11 +346,12 @@ public class DiffieHellmanExchangeSuite {
         
         @Test
         public void jsonString() throws JSONException, MslEncodingException, MslCryptoException, MslException {
-            final ResponseData resp = new ResponseData(MASTER_TOKEN, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
+            final ResponseData resp = new ResponseData(MASTER_TOKEN, IDENTITY, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
             final JSONObject jo = new JSONObject(resp.toJSONString());
             assertEquals(KeyExchangeScheme.DIFFIE_HELLMAN.toString(), jo.getString(KEY_SCHEME));
             final MasterToken masterToken = new MasterToken(ctx, jo.getJSONObject(KEY_MASTER_TOKEN));
             assertEquals(MASTER_TOKEN, masterToken);
+            assertEquals(IDENTITY, jo.getString(KEY_IDENTITY));
             final JSONObject keydata = jo.getJSONObject(KEY_KEYDATA);
             assertEquals(PARAMETERS_ID, keydata.getString(KEY_PARAMETERS_ID));
             assertArrayEquals(prependNullByte(RESPONSE_PUBLIC_KEY.toByteArray()), DatatypeConverter.parseBase64Binary(keydata.getString(KEY_PUBLIC_KEY)));
@@ -351,7 +359,7 @@ public class DiffieHellmanExchangeSuite {
         
         @Test
         public void create() throws JSONException, MslException {
-            final ResponseData data = new ResponseData(MASTER_TOKEN, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
+            final ResponseData data = new ResponseData(MASTER_TOKEN, IDENTITY, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
             final String jsonString = data.toJSONString();
             final JSONObject jo = new JSONObject(jsonString);
             final KeyResponseData keyResponseData = KeyResponseData.create(ctx, jo);
@@ -370,12 +378,12 @@ public class DiffieHellmanExchangeSuite {
             thrown.expect(MslEncodingException.class);
             thrown.expectMslError(MslError.JSON_PARSE_ERROR);
 
-            final ResponseData resp = new ResponseData(MASTER_TOKEN, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
+            final ResponseData resp = new ResponseData(MASTER_TOKEN, IDENTITY, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
             final JSONObject keydata = resp.getKeydata();
             
             assertNotNull(keydata.remove(KEY_PARAMETERS_ID));
             
-            new ResponseData(MASTER_TOKEN, keydata);
+            new ResponseData(MASTER_TOKEN, IDENTITY, keydata);
         }
         
         @Test
@@ -383,12 +391,12 @@ public class DiffieHellmanExchangeSuite {
             thrown.expect(MslEncodingException.class);
             thrown.expectMslError(MslError.JSON_PARSE_ERROR);
 
-            final ResponseData resp = new ResponseData(MASTER_TOKEN, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
+            final ResponseData resp = new ResponseData(MASTER_TOKEN, IDENTITY, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
             final JSONObject keydata = resp.getKeydata();
             
             assertNotNull(keydata.remove(KEY_PUBLIC_KEY));
             
-            new ResponseData(MASTER_TOKEN, keydata);
+            new ResponseData(MASTER_TOKEN, IDENTITY, keydata);
         }
 
         // This test will not fail because DatatypeConverter.parseBase64Binary()
@@ -399,21 +407,21 @@ public class DiffieHellmanExchangeSuite {
             thrown.expect(MslKeyExchangeException.class);
             thrown.expectMslError(MslError.KEYX_INVALID_PUBLIC_KEY);
 
-            final ResponseData resp = new ResponseData(MASTER_TOKEN, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
+            final ResponseData resp = new ResponseData(MASTER_TOKEN, IDENTITY, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
             final JSONObject keydata = resp.getKeydata();
             
             keydata.put(KEY_PUBLIC_KEY, "x");
             
-            new ResponseData(MASTER_TOKEN, keydata);
+            new ResponseData(MASTER_TOKEN, IDENTITY, keydata);
         }
         
         @Test
         public void equalsMasterToken() throws MslEncodingException, MslKeyExchangeException, JSONException, MslCryptoException {
             final MasterToken masterTokenA = MslTestUtils.getMasterToken(ctx, 1, 1);
             final MasterToken masterTokenB = MslTestUtils.getMasterToken(ctx, 1, 2);
-            final ResponseData dataA = new ResponseData(masterTokenA, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
-            final ResponseData dataB = new ResponseData(masterTokenB, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
-            final ResponseData dataA2 = new ResponseData(masterTokenA, dataA.getKeydata());
+            final ResponseData dataA = new ResponseData(masterTokenA, IDENTITY, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
+            final ResponseData dataB = new ResponseData(masterTokenB, IDENTITY, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
+            final ResponseData dataA2 = new ResponseData(masterTokenA, IDENTITY, dataA.getKeydata());
             
             assertTrue(dataA.equals(dataA));
             assertEquals(dataA.hashCode(), dataA.hashCode());
@@ -429,9 +437,9 @@ public class DiffieHellmanExchangeSuite {
         
         @Test
         public void equalsParametersId() throws MslEncodingException, MslKeyExchangeException, JSONException {
-            final ResponseData dataA = new ResponseData(MASTER_TOKEN, PARAMETERS_ID + "A", RESPONSE_PUBLIC_KEY);
-            final ResponseData dataB = new ResponseData(MASTER_TOKEN, PARAMETERS_ID + "B", RESPONSE_PUBLIC_KEY);
-            final ResponseData dataA2 = new ResponseData(MASTER_TOKEN, dataA.getKeydata());
+            final ResponseData dataA = new ResponseData(MASTER_TOKEN, IDENTITY, PARAMETERS_ID + "A", RESPONSE_PUBLIC_KEY);
+            final ResponseData dataB = new ResponseData(MASTER_TOKEN, IDENTITY, PARAMETERS_ID + "B", RESPONSE_PUBLIC_KEY);
+            final ResponseData dataA2 = new ResponseData(MASTER_TOKEN, IDENTITY, dataA.getKeydata());
             
             assertTrue(dataA.equals(dataA));
             assertEquals(dataA.hashCode(), dataA.hashCode());
@@ -447,9 +455,9 @@ public class DiffieHellmanExchangeSuite {
         
         @Test
         public void equalsPublicKey() throws MslEncodingException, MslKeyExchangeException, JSONException {
-            final ResponseData dataA = new ResponseData(MASTER_TOKEN, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
-            final ResponseData dataB = new ResponseData(MASTER_TOKEN, PARAMETERS_ID, REQUEST_PUBLIC_KEY);
-            final ResponseData dataA2 = new ResponseData(MASTER_TOKEN, dataA.getKeydata());
+            final ResponseData dataA = new ResponseData(MASTER_TOKEN, IDENTITY, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
+            final ResponseData dataB = new ResponseData(MASTER_TOKEN, IDENTITY, PARAMETERS_ID, REQUEST_PUBLIC_KEY);
+            final ResponseData dataA2 = new ResponseData(MASTER_TOKEN, IDENTITY, dataA.getKeydata());
             
             assertTrue(dataA.equals(dataA));
             assertEquals(dataA.hashCode(), dataA.hashCode());
@@ -465,7 +473,7 @@ public class DiffieHellmanExchangeSuite {
         
         @Test
         public void equalsObject() {
-            final ResponseData data = new ResponseData(MASTER_TOKEN, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
+            final ResponseData data = new ResponseData(MASTER_TOKEN, IDENTITY, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
             assertFalse(data.equals(null));
             assertFalse(data.equals(PARAMETERS_ID));
             assertTrue(data.hashCode() != PARAMETERS_ID.hashCode());
@@ -498,7 +506,7 @@ public class DiffieHellmanExchangeSuite {
         private static class FakeKeyResponseData extends KeyResponseData {
             /** Create a new fake key response data. */
             protected FakeKeyResponseData() {
-                super(MASTER_TOKEN, KeyExchangeScheme.DIFFIE_HELLMAN);
+                super(MASTER_TOKEN, IDENTITY, KeyExchangeScheme.DIFFIE_HELLMAN);
             }
 
             /* (non-Javadoc)
@@ -695,7 +703,7 @@ public class DiffieHellmanExchangeSuite {
             final KeyResponseData keyResponseData = keyxData.keyResponseData;
             final MasterToken masterToken = keyResponseData.getMasterToken();
             
-            final KeyResponseData mismatchedKeyResponseData = new ResponseData(masterToken, PARAMETERS_ID + "x", RESPONSE_PUBLIC_KEY);
+            final KeyResponseData mismatchedKeyResponseData = new ResponseData(masterToken, IDENTITY, PARAMETERS_ID + "x", RESPONSE_PUBLIC_KEY);
             
             factory.getCryptoContext(ctx, keyRequestData, mismatchedKeyResponseData, null);
         }

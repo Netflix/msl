@@ -27,6 +27,8 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
     var KEY_SCHEME = "scheme";
     /** JSON key key request data. */
     var KEY_KEYDATA = "keydata";
+    /** JSON key identity. */
+    var KEY_IDENTITY = "identity";
     
     // Shortcuts.
     var Mechanism = JsonWebKeyLadderExchange$Mechanism;
@@ -107,7 +109,8 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
                 });
                 
                 var repository = new MockCryptoContextRepository();
-                var keyxFactory = new JsonWebKeyLadderExchange(repository);
+                var authutils = new MockAuthenticationUtils();
+                var keyxFactory = new JsonWebKeyLadderExchange(repository, authutils);
                 pskCtx.addKeyExchangeFactory(keyxFactory);
 
                 MslTestUtils.getMasterToken(pskCtx, 1, 1, {
@@ -440,21 +443,23 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
         var KEY_HMAC_KEY = "hmackey";
         
         it("ctors", function() {
-            var resp = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
+            var resp = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
             expect(resp.encryptionKey).toEqual(PSK_ENCRYPTION_JWK);
             expect(resp.hmacKey).toEqual(PSK_HMAC_JWK);
             expect(resp.keyExchangeScheme).toEqual(KeyExchangeScheme.JWK_LADDER);
             expect(resp.masterToken).toEqual(PSK_MASTER_TOKEN);
+            expect(resp.identity).toEqual(PSK_IDENTITY);
             expect(resp.wrapdata).toEqual(WRAPDATA);
             expect(resp.wrapKey).toEqual(WRAP_JWK);
             var keydata = resp.getKeydata();
             expect(keydata).not.toBeNull();
             
-            var joResp = ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+            var joResp = ResponseData$parse(PSK_MASTER_TOKEN, PSK_IDENTITY, keydata);
             expect(joResp.encryptionKey).toEqual(resp.encryptionKey);
             expect(joResp.hmacKey).toEqual(resp.hmacKey);
             expect(joResp.keyExchangeScheme).toEqual(resp.keyExchangeScheme);
             expect(joResp.masterToken).toEqual(resp.masterToken);
+            expect(joResp.identity).toEqual(resp.identity);
             expect(joResp.wrapdata).toEqual(resp.wrapdata);
             expect(joResp.wrapKey).toEqual(resp.wrapKey);
             var joKeydata = joResp.getKeydata();
@@ -463,7 +468,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
         });
         
         it("json is correct", function() {
-            var resp = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
+            var resp = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
             var jo = JSON.parse(JSON.stringify(resp));
             expect(jo[KEY_SCHEME]).toEqual(KeyExchangeScheme.JWK_LADDER.name);
             
@@ -478,6 +483,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             
             runs(function() {
                 expect(masterToken).toEqual(PSK_MASTER_TOKEN);
+                expect(jo[KEY_IDENTITY]).toEqual(PSK_IDENTITY);
                 var keydata = jo[KEY_KEYDATA];
                 expect(base64$decode(keydata[KEY_ENCRYPTION_KEY])).toEqual(PSK_ENCRYPTION_JWK);
                 expect(base64$decode(keydata[KEY_HMAC_KEY])).toEqual(PSK_HMAC_JWK);
@@ -487,7 +493,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
         });
         
         it("create", function() {
-            var resp = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
+            var resp = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
             var jo = JSON.parse(JSON.stringify(resp));
             var keyResponseData;
             runs(function() {
@@ -507,6 +513,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
                 expect(joResp.hmacKey).toEqual(resp.hmacKey);
                 expect(joResp.keyExchangeScheme).toEqual(resp.keyExchangeScheme);
                 expect(joResp.masterToken).toEqual(resp.masterToken);
+                expect(joResp.identity).toEqual(resp.identity);
                 expect(joResp.wrapdata).toEqual(resp.wrapdata);
                 expect(joResp.wrapKey).toEqual(resp.wrapKey);
             });
@@ -514,52 +521,52 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
         
         it("missing wrap key", function() {
             var f = function() {
-                var resp = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
+                var resp = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
                 var keydata = resp.getKeydata();
 
                 expect(keydata[KEY_WRAP_KEY]).not.toBeNull();
                 delete keydata[KEY_WRAP_KEY];
 
-                ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+                ResponseData$parse(PSK_MASTER_TOKEN, PSK_IDENTITY, keydata);
             };
             expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
         });
         
         it("missing wrapdata", function() {
             var f = function() {
-                var resp = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
+                var resp = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
                 var keydata = resp.getKeydata();
 
                 expect(keydata[KEY_WRAPDATA]).not.toBeNull();
                 delete keydata[KEY_WRAPDATA];
 
-                ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+                ResponseData$parse(PSK_MASTER_TOKEN, PSK_IDENTITY, keydata);
             };
             expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
         });
         
         it("missing encryption key", function() {
             var f = function() {
-                var resp = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
+                var resp = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
                 var keydata = resp.getKeydata();
 
                 expect(keydata[KEY_ENCRYPTION_KEY]).not.toBeNull();
                 delete keydata[KEY_ENCRYPTION_KEY];
 
-                ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+                ResponseData$parse(PSK_MASTER_TOKEN, PSK_IDENTITY, keydata);
             };
             expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
         });
         
         it("missing HMAC key", function() {
             var f = function() {
-                var resp = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
+                var resp = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
                 var keydata = resp.getKeydata();
 
                 expect(keydata[KEY_HMAC_KEY]).not.toBeNull();
                 delete keydata[KEY_HMAC_KEY];
 
-                ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+                ResponseData$parse(PSK_MASTER_TOKEN, PSK_IDENTITY, keydata);
             };
             expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
         });
@@ -568,9 +575,9 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             var wrapKeyB = Arrays$copyOf(WRAP_JWK, 0, WRAP_JWK.length);
             ++wrapKeyB[0];
             
-            var dataA = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
-            var dataB = new ResponseData(PSK_MASTER_TOKEN, wrapKeyB, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
-            var dataA2 = ResponseData$parse(PSK_MASTER_TOKEN, dataA.getKeydata());
+            var dataA = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
+            var dataB = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, wrapKeyB, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
+            var dataA2 = ResponseData$parse(PSK_MASTER_TOKEN, PSK_IDENTITY, dataA.getKeydata());
             
             expect(dataA.equals(dataA)).toBeTruthy();
             expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
@@ -588,9 +595,9 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             var wrapdataB = Arrays$copyOf(WRAPDATA, 0, WRAPDATA.length);
             ++wrapdataB[0];
             
-            var dataA = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
-            var dataB = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, wrapdataB, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
-            var dataA2 = ResponseData$parse(PSK_MASTER_TOKEN, dataA.getKeydata());
+            var dataA = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
+            var dataB = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, WRAP_JWK, wrapdataB, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
+            var dataA2 = ResponseData$parse(PSK_MASTER_TOKEN, PSK_IDENTITY, dataA.getKeydata());
             
             expect(dataA.equals(dataA)).toBeTruthy();
             expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
@@ -608,9 +615,9 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             var encryptionKeyB = Arrays$copyOf(PSK_ENCRYPTION_JWK, 0, PSK_ENCRYPTION_JWK.length);
             ++encryptionKeyB[0];
             
-            var dataA = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
-            var dataB = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, encryptionKeyB, PSK_HMAC_JWK);
-            var dataA2 = ResponseData$parse(PSK_MASTER_TOKEN, dataA.getKeydata());
+            var dataA = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
+            var dataB = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, WRAP_JWK, WRAPDATA, encryptionKeyB, PSK_HMAC_JWK);
+            var dataA2 = ResponseData$parse(PSK_MASTER_TOKEN, PSK_IDENTITY, dataA.getKeydata());
 
             expect(dataA.equals(dataA)).toBeTruthy();
             expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
@@ -628,9 +635,9 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             var hmacKeyB = Arrays$copyOf(PSK_HMAC_JWK, 0, PSK_HMAC_JWK.length);
             ++hmacKeyB[0];
             
-            var dataA = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
-            var dataB = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, hmacKeyB);
-            var dataA2 = ResponseData$parse(PSK_MASTER_TOKEN, dataA.getKeydata());
+            var dataA = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
+            var dataB = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, hmacKeyB);
+            var dataA2 = ResponseData$parse(PSK_MASTER_TOKEN, PSK_IDENTITY, dataA.getKeydata());
             
             expect(dataA.equals(dataA)).toBeTruthy();
             expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
@@ -670,7 +677,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
         var FakeKeyResponseData = KeyResponseData.extend({
             /** Create a new fake key response data. */
             init: function init() {
-                init.base.call(this, PSK_MASTER_TOKEN, KeyExchangeScheme.JWK_LADDER);
+                init.base.call(this, PSK_MASTER_TOKEN, PSK_IDENTITY, KeyExchangeScheme.JWK_LADDER);
             },
 
             /** @inheritDoc */
@@ -706,12 +713,15 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
         var random = new Random();
         /** JWK key ladder crypto context repository. */
         var repository = new MockCryptoContextRepository();
+        /** Authentication utilities. */
+        var authutils = new MockAuthenticationUtils();
         /** Key exchange factory. */
-        var factory = new JsonWebKeyLadderExchange(repository);
+        var factory = new JsonWebKeyLadderExchange(repository, authutils);
         /** Entity authentication data. */
         var entityAuthData = new PresharedAuthenticationData(PSK_IDENTITY);
         
         beforeEach(function() {
+            authutils.reset();
             pskCtx.getMslStore().clearCryptoContexts();
             pskCtx.getMslStore().clearServiceTokens();
             repository.clear();
@@ -1520,7 +1530,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
                 random.nextBytes(wrapJwk);
                 
                 var req = new RequestData(Mechanism.WRAP, WRAPDATA);
-                var invalidResp = new ResponseData(PSK_MASTER_TOKEN, wrapJwk, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
+                var invalidResp = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, wrapJwk, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
 
                 repository.addCryptoContext(WRAPDATA, WRAP_CRYPTO_CONTEXT);
                 factory.getCryptoContext(pskCtx, req, invalidResp, null, {
@@ -1575,7 +1585,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
                 // Now make the invalid response.
                 var encryptionJwk = new Uint8Array(16);
                 random.nextBytes(encryptionJwk);
-                var invalidResp = new ResponseData(masterToken, wrapJwk, wrapdata, encryptionJwk, hmacJwk);
+                var invalidResp = new ResponseData(masterToken, PSK_IDENTITY, wrapJwk, wrapdata, encryptionJwk, hmacJwk);
                 
                 // Reinstall the previous wrap crypto context.
                 repository.addCryptoContext(WRAPDATA, WRAP_CRYPTO_CONTEXT);
@@ -1632,7 +1642,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
                 // Now make the invalid response.
                 var hmacJwk = new Uint8Array(16);
                 random.nextBytes(hmacJwk);
-                var invalidResp = new ResponseData(masterToken, wrapJwk, wrapdata, encryptionJwk, hmacJwk);
+                var invalidResp = new ResponseData(masterToken, PSK_IDENTITY, wrapJwk, wrapdata, encryptionJwk, hmacJwk);
                 
                 // Reinstall the previous wrap crypto context.
                 repository.addCryptoContext(WRAPDATA, WRAP_CRYPTO_CONTEXT);

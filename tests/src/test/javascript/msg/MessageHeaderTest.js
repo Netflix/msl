@@ -270,7 +270,7 @@ describe("MessageHeader", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return trustedNetCtx && p2pCtx; }, "trustedNetCtx and p2pCtx", 100);
+            waitsFor(function() { return trustedNetCtx && p2pCtx; }, "trustedNetCtx and p2pCtx", 900);
             
 			runs(function() {
 				MslTestUtils.getMasterToken(trustedNetCtx, 1, 1, {

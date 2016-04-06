@@ -41,8 +41,6 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
 
-import mslcli.common.Triplet;
-
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslConstants.ResponseCode;
 import com.netflix.msl.MslCryptoException;
@@ -67,6 +65,8 @@ import com.netflix.msl.userauth.UserAuthenticationScheme;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslStore;
 import com.netflix.msl.util.SimpleMslStore;
+
+import mslcli.common.Triplet;
 
 /**
  * <p>Collection of utilities.</p>
@@ -441,6 +441,9 @@ public final class SharedUtil {
         @Override
         public EntityAuthenticationData getEntityAuthenticationData(final ReauthCode reauthCode) {
             throw new UnsupportedOperationException();
+        }
+        @Override
+        public void setEntityIdentity(final String identity) {
         }
         @Override
         public ICryptoContext getMslCryptoContext() throws MslCryptoException {

@@ -41,12 +41,14 @@ import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.entityauth.MasterTokenProtectedAuthenticationFactory;
+import com.netflix.msl.entityauth.MockIdentityProvisioningService;
 import com.netflix.msl.entityauth.MockPresharedAuthenticationFactory;
 import com.netflix.msl.entityauth.MockPresharedProfileAuthenticationFactory;
 import com.netflix.msl.entityauth.MockRsaAuthenticationFactory;
 import com.netflix.msl.entityauth.MockX509AuthenticationFactory;
 import com.netflix.msl.entityauth.PresharedAuthenticationData;
 import com.netflix.msl.entityauth.PresharedProfileAuthenticationData;
+import com.netflix.msl.entityauth.ProvisionedAuthenticationFactory;
 import com.netflix.msl.entityauth.RsaAuthenticationData;
 import com.netflix.msl.entityauth.UnauthenticatedAuthenticationData;
 import com.netflix.msl.entityauth.UnauthenticatedAuthenticationFactory;
@@ -176,6 +178,7 @@ public class MockMslContext extends MslContext {
         entityAuthFactories.put(EntityAuthenticationScheme.X509, new MockX509AuthenticationFactory());
         entityAuthFactories.put(EntityAuthenticationScheme.NONE_SUFFIXED, new UnauthenticatedSuffixedAuthenticationFactory(authutils));
         entityAuthFactories.put(EntityAuthenticationScheme.MT_PROTECTED, new MasterTokenProtectedAuthenticationFactory(authutils));
+        entityAuthFactories.put(EntityAuthenticationScheme.PROVISIONED, new ProvisionedAuthenticationFactory(new MockIdentityProvisioningService(this)));
 
         userAuthFactories = new HashMap<UserAuthenticationScheme,UserAuthenticationFactory>();
         userAuthFactories.put(UserAuthenticationScheme.EMAIL_PASSWORD, new MockEmailPasswordAuthenticationFactory());
@@ -230,6 +233,10 @@ public class MockMslContext extends MslContext {
         return entityAuthData;
     }
 
+    @Override
+    public void setEntityIdentity(final String identity) {
+    }
+    
     /**
      * Set the MSL crypto context.
      *

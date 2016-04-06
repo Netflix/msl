@@ -24,6 +24,8 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
     var KEY_SCHEME = "scheme";
     /** JSON key key request data. */
     var KEY_KEYDATA = "keydata";
+    /** JSON key identity. */
+    var KEY_IDENTITY = "identity";
     
     /** JSON key Diffie-Hellman parameters ID. */
     var KEY_PARAMETERS_ID = "parametersid";
@@ -60,6 +62,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
     var REQUEST_PRIVATE_KEY, REQUEST_PUBLIC_KEY;
     var RESPONSE_PRIVATE_KEY, RESPONSE_PUBLIC_KEY;
     var MASTER_TOKEN;
+    var IDENTITY;
     
     var initialized = false;
     beforeEach(function() {
@@ -94,6 +97,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
 		    	MslTestUtils.getMasterToken(ctx, 1, 1, {
 		    		result: function(masterToken) {
 		    			MASTER_TOKEN = masterToken;
+		    			IDENTITY = masterToken.identity;
 		    		},
 		    		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    	});
@@ -308,16 +312,19 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         var KEY_MASTER_TOKEN = "mastertoken";
         
         it("ctors", function() {
-            var resp = new ResponseData(MASTER_TOKEN, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
+            var resp = new ResponseData(MASTER_TOKEN, IDENTITY, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
             expect(resp.keyExchangeScheme).toEqual(KeyExchangeScheme.DIFFIE_HELLMAN);
+            expect(resp.masterToken).toEqual(MASTER_TOKEN);
+            expect(resp.identity).toEqual(IDENTITY);
             expect(resp.parametersId).toEqual(PARAMETERS_ID);
             expect(resp.publicKey).toEqual(RESPONSE_PUBLIC_KEY);
             var keydata = resp.getKeydata();
             expect(keydata).not.toBeNull();
             
-            var joResp = ResponseData$parse(MASTER_TOKEN, keydata);
+            var joResp = ResponseData$parse(MASTER_TOKEN, IDENTITY, keydata);
             expect(joResp.keyExchangeScheme).toEqual(resp.keyExchangeScheme);
             expect(joResp.masterToken).toEqual(resp.masterToken);
+            expect(joResp.identity).toEqual(resp.identity);
             expect(joResp.parametersId).toEqual(resp.parametersId);
             expect(joResp.publicKey).toEqual(resp.publicKey);
             var joKeydata = joResp.getKeydata();
@@ -328,7 +335,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         it("json is correct", function() {
         	var masterToken = undefined, jo;
         	runs(function() {
-        		var resp = new ResponseData(MASTER_TOKEN, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
+        		var resp = new ResponseData(MASTER_TOKEN, IDENTITY, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
         		jo = JSON.parse(JSON.stringify(resp));
         		expect(jo[KEY_SCHEME]).toEqual(KeyExchangeScheme.DIFFIE_HELLMAN.name);
 
@@ -340,6 +347,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         	waitsFor(function() { return jo && masterToken; }, "json object and master token not received", 100);
         	runs(function() {
         		expect(masterToken).toEqual(MASTER_TOKEN);
+        		exepct(jo[KEY_IDENTITY]).toEqual(IDENTITY);
         		var keydata = jo[KEY_KEYDATA];
         		expect(keydata[KEY_PARAMETERS_ID]).toEqual(PARAMETERS_ID);
         		expect(prependNullByte(base64$decode(keydata[KEY_PUBLIC_KEY]))).toEqual(RESPONSE_PUBLIC_KEY.getEncoded());
@@ -347,7 +355,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         });
         
         it("create", function() {
-            var data = new ResponseData(MASTER_TOKEN, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
+            var data = new ResponseData(MASTER_TOKEN, IDENTITY, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
             
             var keyResponseData;
             runs(function() {
@@ -366,6 +374,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
 	            var joData = keyResponseData;
 	            expect(joData.keyExchangeScheme).toEqual(data.keyExchangeScheme);
 	            expect(joData.masterToken).toEqual(data.masterToken);
+	            expect(joData.identity).toEqual(data.identity);
 	            expect(joData.parametersId).toEqual(data.parametersId);
 	            expect(joData.publicKey).toEqual(data.publicKey);
             });
@@ -373,38 +382,38 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         
         it("missing parameters ID", function() {
             var f = function() {
-	            var resp = new ResponseData(MASTER_TOKEN, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
+	            var resp = new ResponseData(MASTER_TOKEN, IDENTITY, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
 	            var keydata = resp.getKeydata();
 	            
 	            expect(keydata[KEY_PARAMETERS_ID]).not.toBeNull();
 	            delete keydata[KEY_PARAMETERS_ID];
 	            
-	            ResponseData$parse(MASTER_TOKEN, keydata);
+	            ResponseData$parse(MASTER_TOKEN, IDENTITY, keydata);
             };
             expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
         });
         
         it("missing public key", function() {
             var f = function() {
-	            var resp = new ResponseData(MASTER_TOKEN, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
+	            var resp = new ResponseData(MASTER_TOKEN, IDENTITY, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
 	            var keydata = resp.getKeydata();
 	            
 	            expect(keydata[KEY_PUBLIC_KEY]).not.toBeNull();
 	            delete keydata[KEY_PUBLIC_KEY];
 	            
-	            ResponseData$parse(MASTER_TOKEN, keydata);
+	            ResponseData$parse(MASTER_TOKEN, IDENTITY, keydata);
             };
             expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
         });
         
         it("invalid public key", function() {
             var f = function() {
-	            var resp = new ResponseData(MASTER_TOKEN, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
+	            var resp = new ResponseData(MASTER_TOKEN, IDENTITY, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
 	            var keydata = resp.getKeydata();
 	            
 	            keydata[KEY_PUBLIC_KEY] = "x";
 	            
-	            ResponseData$parse(MASTER_TOKEN, keydata);
+	            ResponseData$parse(MASTER_TOKEN, IDENTITY, keydata);
             };
             expect(f).toThrow(new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY));
         });
@@ -424,9 +433,9 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens not received", 100);
             
             runs(function() {
-	            var dataA = new ResponseData(masterTokenA, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
-	            var dataB = new ResponseData(masterTokenB, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
-	            var dataA2 = ResponseData$parse(masterTokenA, dataA.getKeydata());
+	            var dataA = new ResponseData(masterTokenA, IDENTITY, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
+	            var dataB = new ResponseData(masterTokenB, IDENTITY, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
+	            var dataA2 = ResponseData$parse(masterTokenA, IDENTITY, dataA.getKeydata());
 	            
 	            expect(dataA.equals(dataA)).toBeTruthy();
 	            expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
@@ -442,9 +451,9 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         });
         
         it("equals parameter ID", function() {
-            var dataA = new ResponseData(MASTER_TOKEN, PARAMETERS_ID + "A", RESPONSE_PUBLIC_KEY);
-            var dataB = new ResponseData(MASTER_TOKEN, PARAMETERS_ID + "B", RESPONSE_PUBLIC_KEY);
-            var dataA2 = ResponseData$parse(MASTER_TOKEN, dataA.getKeydata());
+            var dataA = new ResponseData(MASTER_TOKEN, IDENTITY, PARAMETERS_ID + "A", RESPONSE_PUBLIC_KEY);
+            var dataB = new ResponseData(MASTER_TOKEN, IDENTITY, PARAMETERS_ID + "B", RESPONSE_PUBLIC_KEY);
+            var dataA2 = ResponseData$parse(MASTER_TOKEN, IDENTITY, dataA.getKeydata());
             
             expect(dataA.equals(dataA)).toBeTruthy();
             expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
@@ -459,9 +468,9 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         });
         
         it("equals public key", function() {
-            var dataA = new ResponseData(MASTER_TOKEN, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
-            var dataB = new ResponseData(MASTER_TOKEN, PARAMETERS_ID, REQUEST_PUBLIC_KEY);
-            var dataA2 = ResponseData$parse(MASTER_TOKEN, dataA.getKeydata());
+            var dataA = new ResponseData(MASTER_TOKEN, IDENTITY, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
+            var dataB = new ResponseData(MASTER_TOKEN, IDENTITY, PARAMETERS_ID, REQUEST_PUBLIC_KEY);
+            var dataA2 = ResponseData$parse(MASTER_TOKEN, IDENTITY, dataA.getKeydata());
             
             expect(dataA.equals(dataA)).toBeTruthy();
             expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
@@ -476,7 +485,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         });
         
         it("equals object", function() {
-            var data = new ResponseData(MASTER_TOKEN, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
+            var data = new ResponseData(MASTER_TOKEN, IDENTITY, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
             expect(data.equals(null)).toBeFalsy();
             expect(data.equals(PARAMETERS_ID)).toBeFalsy();
         });
@@ -505,7 +514,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         var FakeKeyResponseData = KeyResponseData.extend({
             /** Create a new fake key response data. */
             init: function init() {
-                init.base.call(this, MASTER_TOKEN, KeyExchangeScheme.DIFFIE_HELLMAN);
+                init.base.call(this, MASTER_TOKEN, IDENTITY, KeyExchangeScheme.DIFFIE_HELLMAN);
             },
 
             /** @inheritDoc */
@@ -867,7 +876,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
 	            var keyResponseData = keyxData.keyResponseData;
 	            var masterToken = keyResponseData.masterToken;
 	            
-	            var mismatchedKeyResponseData = new ResponseData(masterToken, PARAMETERS_ID + "x", RESPONSE_PUBLIC_KEY);
+	            var mismatchedKeyResponseData = new ResponseData(masterToken, IDENTITY, PARAMETERS_ID + "x", RESPONSE_PUBLIC_KEY);
 	            
 	            factory.getCryptoContext(ctx, keyRequestData, mismatchedKeyResponseData, null, {
 	        		result: function() {},

@@ -274,13 +274,15 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
          * with the provided master token and wrapped keys.
          * 
          * @param masterToken the master token.
+         * @param identity optional entity identity inside the master token.
+         *        May be {@code null}.
          * @param wrapKey the wrapped wrap key.
          * @param wrapdata the wrap data for reconstructing the wrap key.
          * @param encryptionKey the wrap key wrapped encryption key.
          * @param hmacKey the wrap key wrapped HMAC key.
          */
-        public ResponseData(final MasterToken masterToken, final byte[] wrapKey, final byte[] wrapdata, final byte[] encryptionKey, final byte[] hmacKey) {
-            super(masterToken, KeyExchangeScheme.JWE_LADDER);
+        public ResponseData(final MasterToken masterToken, final String identity, final byte[] wrapKey, final byte[] wrapdata, final byte[] encryptionKey, final byte[] hmacKey) {
+            super(masterToken, identity, KeyExchangeScheme.JWE_LADDER);
             this.wrapKey = wrapKey;
             this.wrapdata = wrapdata;
             this.encryptionKey = encryptionKey;
@@ -292,13 +294,15 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
          * with the provided master token from the provided JSON object.
          * 
          * @param masterToken the master token.
+         * @param identity optional entity identity inside the master token.
+         *        May be {@code null}.
          * @param keyDataJO the JSON object.
          * @throws MslEncodingException if there is an error parsing the JSON.
          * @throws MslKeyExchangeException if the mechanism is not recognized,
          *         any of the keys are invalid, or if the wrap data is invalid.
          */
-        public ResponseData(final MasterToken masterToken, final JSONObject keyDataJO) throws MslKeyExchangeException, MslEncodingException {
-            super(masterToken, KeyExchangeScheme.JWE_LADDER);
+        public ResponseData(final MasterToken masterToken, final String identity, final JSONObject keyDataJO) throws MslKeyExchangeException, MslEncodingException {
+            super(masterToken, identity, KeyExchangeScheme.JWE_LADDER);
             try {
                 try {
                     wrapKey = DatatypeConverter.parseBase64Binary(keyDataJO.getString(KEY_WRAP_KEY));
@@ -464,11 +468,11 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.keyx.KeyExchangeFactory#createResponseData(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, org.json.JSONObject)
+     * @see com.netflix.msl.keyx.KeyExchangeFactory#createResponseData(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, java.lang.String, org.json.JSONObject)
      */
     @Override
-    protected KeyResponseData createResponseData(final MslContext ctx, final MasterToken masterToken, final JSONObject keyDataJO) throws MslEncodingException, MslKeyExchangeException {
-        return new ResponseData(masterToken, keyDataJO);
+    protected KeyResponseData createResponseData(final MslContext ctx, final MasterToken masterToken, final String identity, final JSONObject keyDataJO) throws MslEncodingException, MslKeyExchangeException {
+        return new ResponseData(masterToken, identity, keyDataJO);
     }
 
     /* (non-Javadoc)
@@ -484,6 +488,11 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
         // should not be generating a key response for it.
         if (!masterToken.isVerified())
             throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, masterToken);
+        
+        // Verify the scheme is permitted.
+        final String identity = masterToken.getIdentity();
+        if (!authutils.isSchemePermitted(identity, this.getScheme()))
+            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication scheme for entity not permitted " + identity + ":" + this.getScheme()).setMasterToken(masterToken);
         
         // Create random AES-128 wrapping key with a random key ID.
         final String wrapKeyId = String.valueOf(ctx.getRandom().nextLong());
@@ -506,11 +515,6 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
         // Grab the request data.
         final Mechanism mechanism = request.getMechanism();
         final byte[] prevWrapdata = request.getWrapdata();
-        final String identity = masterToken.getIdentity();
-        
-        // Verify the scheme is permitted.
-        if(!authutils.isSchemePermitted(identity, this.getScheme()))
-            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + this.getScheme());
         
         // Wrap wrapping key using specified wrapping key.
         final JsonWebKey wrapJwk = new JsonWebKey(Usage.wrap, Algorithm.A128KW, false, wrapKeyId, wrapKey);
@@ -533,7 +537,7 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
         final ICryptoContext cryptoContext = new SessionCryptoContext(ctx, newMasterToken);
         
         // Return the key exchange data.
-        final KeyResponseData keyResponseData = new ResponseData(newMasterToken, wrappedWrapJwk, wrapdata, wrappedEncryptionJwk, wrappedHmacJwk);
+        final KeyResponseData keyResponseData = new ResponseData(newMasterToken, identity, wrappedWrapJwk, wrapdata, wrappedEncryptionJwk, wrappedHmacJwk);
         return new KeyExchangeData(keyResponseData, cryptoContext);
     }
 
@@ -548,8 +552,8 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
         
         // Verify the scheme is permitted.
         final String identity = entityAuthData.getIdentity();
-        if(!authutils.isSchemePermitted(identity, this.getScheme()))
-            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + this.getScheme());
+        if (!authutils.isSchemePermitted(identity, this.getScheme()))
+            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication Sscheme for entity not permitted " + identity + ":" + this.getScheme()).setEntityAuthenticationData(entityAuthData);
 
         // Create random AES-128 wrapping key with a random key ID.
         final String wrapKeyId = String.valueOf(ctx.getRandom().nextLong());
@@ -594,7 +598,7 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
         final ICryptoContext cryptoContext = new SessionCryptoContext(ctx, newMasterToken);
         
         // Return the key exchange data.
-        final KeyResponseData keyResponseData = new ResponseData(newMasterToken, wrappedWrapJwk, wrapdata, wrappedEncryptionJwk, wrappedHmacJwk);
+        final KeyResponseData keyResponseData = new ResponseData(newMasterToken, identity, wrappedWrapJwk, wrapdata, wrappedEncryptionJwk, wrappedHmacJwk);
         return new KeyExchangeData(keyResponseData, cryptoContext);
     }
 

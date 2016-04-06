@@ -126,8 +126,8 @@ var DiffieHellmanExchange$ResponseData$parse;
             var publicKeyB64 = keyDataJO[KEY_PUBLIC_KEY];
 
             // Verify key data.
-            if (!parametersId || typeof parametersId !== 'string' ||
-                !publicKeyB64 || typeof publicKeyB64 !== 'string')
+            if (typeof parametersId !== 'string' ||
+                typeof publicKeyB64 !== 'string')
             {
                 throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + JSON.stringify(keyDataJO));
             }
@@ -178,11 +178,13 @@ var DiffieHellmanExchange$ResponseData$parse;
          * master token, specified parameters ID and public key.
          *
          * @param {MasterToken} masterToken the master token.
+         * @param {?string} identity optional entity identity inside the master token.
+         *        May be {@code null}.
          * @param {string} parametersId the parameters ID.
          * @param {PublicKey} publicKey the public key Y-value.
          */
-        init: function init(masterToken, parametersId, publicKey) {
-            init.base.call(this, masterToken, KeyExchangeScheme.DIFFIE_HELLMAN);
+        init: function init(masterToken, identity, parametersId, publicKey) {
+            init.base.call(this, masterToken, identity, KeyExchangeScheme.DIFFIE_HELLMAN);
 
             // The properties.
             var props = {
@@ -220,19 +222,21 @@ var DiffieHellmanExchange$ResponseData$parse;
      * master token from the provided JSON object.
      *
      * @param {MasterToken} masterToken the master token.
+     * @param {?string} identity optional entity identity inside the master token.
+     *        May be {@code null}.
      * @param {Object} keyDataJO the JSON object.
      * @return {ResponseData} the response data.
      * @throws MslEncodingException if there is an error parsing the JSON.
      * @throws MslKeyExchangeException if the public key is invalid.
      */
-    var ResponseData$parse = DiffieHellmanExchange$ResponseData$parse = function ResponseData$parse(masterToken, keyDataJO) {
+    var ResponseData$parse = DiffieHellmanExchange$ResponseData$parse = function ResponseData$parse(masterToken, identity, keyDataJO) {
         // Pull key response data.
         var parametersId = keyDataJO[KEY_PARAMETERS_ID];
         var publicKeyB64 = keyDataJO[KEY_PUBLIC_KEY];
 
         // Verify key data.
-        if (!parametersId || typeof parametersId !== 'string' ||
-            !publicKeyB64 || typeof publicKeyB64 !== 'string')
+        if (typeof parametersId !== 'string' ||
+            typeof publicKeyB64 !== 'string')
         {
             throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + JSON.stringify(keyDataJO));
         }
@@ -255,7 +259,7 @@ var DiffieHellmanExchange$ResponseData$parse;
         }
 
         // Return the response data.
-        return new ResponseData(masterToken, parametersId, publicKey);
+        return new ResponseData(masterToken, identity, parametersId, publicKey);
     };
 
     /**
@@ -305,13 +309,15 @@ var DiffieHellmanExchange$ResponseData$parse;
          * Create a new Diffie-Hellman key exchange factory.
          *
          * @param {DiffieHellmanParameters} paramSpecs Diffie-Hellman parameters.
+         * @param {AuthenticationUtils} authutils authentication utilities.
          */
-        init: function init(paramSpecs) {
+        init: function init(paramSpecs, authutils) {
             init.base.call(this, KeyExchangeScheme.DIFFIE_HELLMAN);
 
             // The properties.
             var props = {
-                paramSpecs: { value: paramSpecs, writable: false, enumerable: false, configurable: false }
+                paramSpecs: { value: paramSpecs, writable: false, enumerable: false, configurable: false },
+                authutils: { value: authutils, writable: false, enumerable: false, configurable: false },
             };
             Object.defineProperties(this, props);
         },
@@ -322,8 +328,8 @@ var DiffieHellmanExchange$ResponseData$parse;
         },
 
         /** @inheritDoc */
-        createResponseData: function createResponseData(ctx, masterToken, keyDataJO) {
-            return ResponseData$parse(masterToken, keyDataJO);
+        createResponseData: function createResponseData(ctx, masterToken, identity, keyDataJO) {
+            return ResponseData$parse(masterToken, identity, keyDataJO);
         },
 
         /**
@@ -382,6 +388,25 @@ var DiffieHellmanExchange$ResponseData$parse;
                     throw new MslInternalException("Key request data " + JSON.stringify(keyRequestData) + " was not created by this factory.");
                 var request = keyRequestData;
 
+                var identity;
+                if (entityToken instanceof MasterToken) {
+                    // If the master token was not issued by the local entity then we
+                    // should not be generating a key response for it.
+                    if (!entityToken.isVerified())
+                        throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, entityToken);
+                    identity = entityToken.identity;
+                    
+                    // Verify the scheme is permitted.
+                    if (!this.authutils.isSchemePermitted(identity, this.scheme))
+                        throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication scheme for entity not permitted " + identity + ": " + this.scheme.name).setMasterToken(entityToken);
+                } else {
+                    identity = entityToken.getIdentity();
+                    
+                    // Verify the scheme is permitted.
+                    if (!this.authutils.isSchemePermitted(identity, this.scheme))
+                        throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication scheme for entity not permitted " + identity + ": " + this.scheme.name).setEntityAuthenticationData(entityToken);
+                }
+
                 // Load matching Diffie-Hellman parameter specification.
                 var parametersId = request.parametersId;
                 var params = this.paramSpecs.getParameterSpec(parametersId);
@@ -393,7 +418,7 @@ var DiffieHellmanExchange$ResponseData$parse;
 
                 // Generate public/private key pair.
                 var oncomplete = function(keyPair) {
-                    constructKeys(parametersId, params, requestPublicKey, keyPair.publicKey, keyPair.privateKey);
+                    constructKeys(identity, parametersId, params, requestPublicKey, keyPair.publicKey, keyPair.privateKey);
                 };
                 var onerror = function(e) {
                     callback.error(new MslCryptoException(MslError.GENERATEKEY_ERROR, "Error generating Diffie-Hellman key pair.", e).setMasterToken(entityToken));
@@ -406,7 +431,7 @@ var DiffieHellmanExchange$ResponseData$parse;
             }, self);
 
             // Construct encryption and HMAC keys.
-            function constructKeys(parametersId, params, requestPublicKey, responsePublicKey, responsePrivateKey) {
+            function constructKeys(identity, parametersId, params, requestPublicKey, responsePublicKey, responsePrivateKey) {
                 this.deriveSessionKeys(requestPublicKey, responsePrivateKey, params, {
                     result: function(sessionKeys) {
                         AsyncExecutor(callback, function() {
@@ -420,7 +445,7 @@ var DiffieHellmanExchange$ResponseData$parse;
                                             var cryptoContext = new SessionCryptoContext(ctx, masterToken);
 
                                             // Return the key exchange data.
-                                            var keyResponseData = new ResponseData(masterToken, parametersId, responsePublicKey);
+                                            var keyResponseData = new ResponseData(masterToken, identity, parametersId, responsePublicKey);
                                             return new KeyExchangeFactory.KeyExchangeData(keyResponseData, cryptoContext);
                                         }, self);
                                     },
@@ -440,7 +465,7 @@ var DiffieHellmanExchange$ResponseData$parse;
                                             var cryptoContext = new SessionCryptoContext(ctx, masterToken);
 
                                             // Return the key exchange data.
-                                            var keyResponseData = new ResponseData(masterToken, parametersId, responsePublicKey);
+                                            var keyResponseData = new ResponseData(masterToken, identity, parametersId, responsePublicKey);
                                             return new KeyExchangeFactory.KeyExchangeData(keyResponseData, cryptoContext);
                                         }, self);
                                     },

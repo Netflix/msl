@@ -108,6 +108,8 @@ public class AsymmetricWrappedExchangeSuite {
     private static final String KEY_SCHEME = "scheme";
     /** JSON key key request data. */
     private static final String KEY_KEYDATA = "keydata";
+    /** JSON key identity. */
+    private static final String KEY_IDENTITY = "identity";
     
     /** JSON key key pair ID. */
     private static final String KEY_KEY_PAIR_ID = "keypairid";
@@ -422,21 +424,23 @@ public class AsymmetricWrappedExchangeSuite {
         
         @Test
         public void ctors() throws MslEncodingException, JSONException, MslKeyExchangeException {
-            final ResponseData resp = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
+            final ResponseData resp = new ResponseData(MASTER_TOKEN, IDENTITY, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
             assertArrayEquals(ENCRYPTION_KEY, resp.getEncryptionKey());
             assertArrayEquals(HMAC_KEY, resp.getHmacKey());
             assertEquals(KeyExchangeScheme.ASYMMETRIC_WRAPPED, resp.getKeyExchangeScheme());
             assertEquals(KEYPAIR_ID, resp.getKeyPairId());
             assertEquals(MASTER_TOKEN, resp.getMasterToken());
+            assertEquals(IDENTITY, resp.getIdentity());
             final JSONObject keydata = resp.getKeydata();
             assertNotNull(keydata);
 
-            final ResponseData joResp = new ResponseData(MASTER_TOKEN, keydata);
+            final ResponseData joResp = new ResponseData(MASTER_TOKEN, IDENTITY, keydata);
             assertArrayEquals(resp.getEncryptionKey(), joResp.getEncryptionKey());
             assertArrayEquals(resp.getHmacKey(), joResp.getHmacKey());
             assertEquals(resp.getKeyExchangeScheme(), joResp.getKeyExchangeScheme());
             assertEquals(resp.getKeyPairId(), joResp.getKeyPairId());
             assertEquals(resp.getMasterToken(), joResp.getMasterToken());
+            assertEquals(resp.getIdentity(), joResp.getIdentity());
             final JSONObject joKeydata = joResp.getKeydata();
             assertNotNull(joKeydata);
             assertTrue(JsonUtils.equals(keydata, joKeydata));
@@ -444,11 +448,12 @@ public class AsymmetricWrappedExchangeSuite {
         
         @Test
         public void jsonString() throws JSONException, MslEncodingException, MslCryptoException, MslException {
-            final ResponseData resp = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
+            final ResponseData resp = new ResponseData(MASTER_TOKEN, IDENTITY, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
             final JSONObject jo = new JSONObject(resp.toJSONString());
             assertEquals(KeyExchangeScheme.ASYMMETRIC_WRAPPED.toString(), jo.getString(KEY_SCHEME));
             final MasterToken masterToken = new MasterToken(ctx, jo.getJSONObject(KEY_MASTER_TOKEN));
             assertEquals(MASTER_TOKEN, masterToken);
+            assertEquals(IDENTITY, jo.getString(KEY_IDENTITY));
             final JSONObject keydata = jo.getJSONObject(KEY_KEYDATA);
             assertEquals(KEYPAIR_ID, keydata.getString(KEY_KEY_PAIR_ID));
             assertArrayEquals(ENCRYPTION_KEY, DatatypeConverter.parseBase64Binary(keydata.getString(KEY_ENCRYPTION_KEY)));
@@ -457,7 +462,7 @@ public class AsymmetricWrappedExchangeSuite {
         
         @Test
         public void create() throws JSONException, MslException {
-            final ResponseData data = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
+            final ResponseData data = new ResponseData(MASTER_TOKEN, IDENTITY, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
             final String jsonString = data.toJSONString();
             final JSONObject jo = new JSONObject(jsonString);
             final KeyResponseData keyResponseData = KeyResponseData.create(ctx, jo);
@@ -470,6 +475,7 @@ public class AsymmetricWrappedExchangeSuite {
             assertEquals(data.getKeyExchangeScheme(), joData.getKeyExchangeScheme());
             assertEquals(data.getKeyPairId(), joData.getKeyPairId());
             assertEquals(data.getMasterToken(), joData.getMasterToken());
+            assertEquals(data.getIdentity(), joData.getIdentity());
         }
 
         @Test
@@ -477,12 +483,12 @@ public class AsymmetricWrappedExchangeSuite {
             thrown.expect(MslEncodingException.class);
             thrown.expectMslError(MslError.JSON_PARSE_ERROR);
 
-            final ResponseData resp = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
+            final ResponseData resp = new ResponseData(MASTER_TOKEN, IDENTITY, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
             final JSONObject keydata = resp.getKeydata();
 
             assertNotNull(keydata.remove(KEY_KEY_PAIR_ID));
 
-            new ResponseData(MASTER_TOKEN, keydata);
+            new ResponseData(MASTER_TOKEN, IDENTITY, keydata);
         }
 
         @Test
@@ -490,12 +496,12 @@ public class AsymmetricWrappedExchangeSuite {
             thrown.expect(MslEncodingException.class);
             thrown.expectMslError(MslError.JSON_PARSE_ERROR);
 
-            final ResponseData resp = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
+            final ResponseData resp = new ResponseData(MASTER_TOKEN, IDENTITY, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
             final JSONObject keydata = resp.getKeydata();
 
             assertNotNull(keydata.remove(KEY_ENCRYPTION_KEY));
 
-            new ResponseData(MASTER_TOKEN, keydata);
+            new ResponseData(MASTER_TOKEN, IDENTITY, keydata);
         }
 
         @Test
@@ -503,21 +509,21 @@ public class AsymmetricWrappedExchangeSuite {
             thrown.expect(MslEncodingException.class);
             thrown.expectMslError(MslError.JSON_PARSE_ERROR);
 
-            final ResponseData resp = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
+            final ResponseData resp = new ResponseData(MASTER_TOKEN, IDENTITY, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
             final JSONObject keydata = resp.getKeydata();
 
             assertNotNull(keydata.remove(KEY_HMAC_KEY));
 
-            new ResponseData(MASTER_TOKEN, keydata);
+            new ResponseData(MASTER_TOKEN, IDENTITY, keydata);
         }
         
         @Test
         public void equalsMasterToken() throws MslEncodingException, JSONException, MslCryptoException, MslKeyExchangeException {
             final MasterToken masterTokenA = MslTestUtils.getMasterToken(ctx, 1, 1);
             final MasterToken masterTokenB = MslTestUtils.getMasterToken(ctx, 1, 2);
-            final ResponseData dataA = new ResponseData(masterTokenA, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
-            final ResponseData dataB = new ResponseData(masterTokenB, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
-            final ResponseData dataA2 = new ResponseData(masterTokenA, dataA.getKeydata());
+            final ResponseData dataA = new ResponseData(masterTokenA, IDENTITY, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
+            final ResponseData dataB = new ResponseData(masterTokenB, IDENTITY, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
+            final ResponseData dataA2 = new ResponseData(masterTokenA, IDENTITY, dataA.getKeydata());
             
             assertTrue(dataA.equals(dataA));
             assertEquals(dataA.hashCode(), dataA.hashCode());
@@ -533,9 +539,9 @@ public class AsymmetricWrappedExchangeSuite {
         
         @Test
         public void equalsKeyPairId() throws MslEncodingException, JSONException, MslKeyExchangeException {
-            final ResponseData dataA = new ResponseData(MASTER_TOKEN, KEYPAIR_ID + "A", ENCRYPTION_KEY, HMAC_KEY);
-            final ResponseData dataB = new ResponseData(MASTER_TOKEN, KEYPAIR_ID + "B", ENCRYPTION_KEY, HMAC_KEY);
-            final ResponseData dataA2 = new ResponseData(MASTER_TOKEN, dataA.getKeydata());
+            final ResponseData dataA = new ResponseData(MASTER_TOKEN, IDENTITY, KEYPAIR_ID + "A", ENCRYPTION_KEY, HMAC_KEY);
+            final ResponseData dataB = new ResponseData(MASTER_TOKEN, IDENTITY, KEYPAIR_ID + "B", ENCRYPTION_KEY, HMAC_KEY);
+            final ResponseData dataA2 = new ResponseData(MASTER_TOKEN, IDENTITY, dataA.getKeydata());
             
             assertTrue(dataA.equals(dataA));
             assertEquals(dataA.hashCode(), dataA.hashCode());
@@ -554,9 +560,9 @@ public class AsymmetricWrappedExchangeSuite {
             final byte[] encryptionKeyA = Arrays.copyOf(ENCRYPTION_KEY, ENCRYPTION_KEY.length);
             final byte[] encryptionKeyB = Arrays.copyOf(ENCRYPTION_KEY, ENCRYPTION_KEY.length);
             ++encryptionKeyB[0];
-            final ResponseData dataA = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, encryptionKeyA, HMAC_KEY);
-            final ResponseData dataB = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, encryptionKeyB, HMAC_KEY);
-            final ResponseData dataA2 = new ResponseData(MASTER_TOKEN, dataA.getKeydata());
+            final ResponseData dataA = new ResponseData(MASTER_TOKEN, IDENTITY, KEYPAIR_ID, encryptionKeyA, HMAC_KEY);
+            final ResponseData dataB = new ResponseData(MASTER_TOKEN, IDENTITY, KEYPAIR_ID, encryptionKeyB, HMAC_KEY);
+            final ResponseData dataA2 = new ResponseData(MASTER_TOKEN, IDENTITY, dataA.getKeydata());
             
             assertTrue(dataA.equals(dataA));
             assertEquals(dataA.hashCode(), dataA.hashCode());
@@ -575,9 +581,9 @@ public class AsymmetricWrappedExchangeSuite {
             final byte[] hmacKeyA = Arrays.copyOf(HMAC_KEY, HMAC_KEY.length);
             final byte[] hmacKeyB = Arrays.copyOf(HMAC_KEY, HMAC_KEY.length);
             ++hmacKeyB[0];
-            final ResponseData dataA = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, hmacKeyA);
-            final ResponseData dataB = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, hmacKeyB);
-            final ResponseData dataA2 = new ResponseData(MASTER_TOKEN, dataA.getKeydata());
+            final ResponseData dataA = new ResponseData(MASTER_TOKEN, IDENTITY, KEYPAIR_ID, ENCRYPTION_KEY, hmacKeyA);
+            final ResponseData dataB = new ResponseData(MASTER_TOKEN, IDENTITY, KEYPAIR_ID, ENCRYPTION_KEY, hmacKeyB);
+            final ResponseData dataA2 = new ResponseData(MASTER_TOKEN, IDENTITY, dataA.getKeydata());
             
             assertTrue(dataA.equals(dataA));
             assertEquals(dataA.hashCode(), dataA.hashCode());
@@ -593,7 +599,7 @@ public class AsymmetricWrappedExchangeSuite {
         
         @Test
         public void equalsObject() {
-            final ResponseData data = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
+            final ResponseData data = new ResponseData(MASTER_TOKEN, IDENTITY, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
             assertFalse(data.equals(null));
             assertFalse(data.equals(IDENTITY));
             assertTrue(data.hashCode() != IDENTITY.hashCode());
@@ -628,7 +634,7 @@ public class AsymmetricWrappedExchangeSuite {
         private static class FakeKeyResponseData extends KeyResponseData {
             /** Create a new fake key response data. */
             protected FakeKeyResponseData() {
-                super(MASTER_TOKEN, KeyExchangeScheme.ASYMMETRIC_WRAPPED);
+                super(MASTER_TOKEN, IDENTITY, KeyExchangeScheme.ASYMMETRIC_WRAPPED);
             }
 
             /* (non-Javadoc)
@@ -826,7 +832,7 @@ public class AsymmetricWrappedExchangeSuite {
                 keydata.put(KEY_ENCRYPTION_KEY, DatatypeConverter.printBase64Binary(wrappedEncryptionKey));
                 final byte[] wrappedHmacKey = DatatypeConverter.parseBase64Binary(keydata.getString(KEY_HMAC_KEY));
 
-                final KeyResponseData invalidKeyResponseData = new ResponseData(masterToken, KEYPAIR_ID, wrappedEncryptionKey, wrappedHmacKey);
+                final KeyResponseData invalidKeyResponseData = new ResponseData(masterToken, IDENTITY, KEYPAIR_ID, wrappedEncryptionKey, wrappedHmacKey);
                 factory.getCryptoContext(ctx, keyRequestData, invalidKeyResponseData, null);
             }
 
@@ -846,7 +852,7 @@ public class AsymmetricWrappedExchangeSuite {
                 keydata.put(KEY_HMAC_KEY, DatatypeConverter.printBase64Binary(wrappedHmacKey));
                 final byte[] wrappedEncryptionKey = DatatypeConverter.parseBase64Binary(keydata.getString(KEY_ENCRYPTION_KEY));
 
-                final KeyResponseData invalidKeyResponseData = new ResponseData(masterToken, KEYPAIR_ID, wrappedEncryptionKey, wrappedHmacKey);
+                final KeyResponseData invalidKeyResponseData = new ResponseData(masterToken, IDENTITY, KEYPAIR_ID, wrappedEncryptionKey, wrappedHmacKey);
                 factory.getCryptoContext(ctx, keyRequestData, invalidKeyResponseData, null);
             }
         }
@@ -895,7 +901,7 @@ public class AsymmetricWrappedExchangeSuite {
             final KeyResponseData keyResponseData = keyxData.keyResponseData;
             final MasterToken masterToken = keyResponseData.getMasterToken();
             
-            final KeyResponseData mismatchedKeyResponseData = new ResponseData(masterToken, KEYPAIR_ID + "B", ENCRYPTION_KEY, HMAC_KEY);
+            final KeyResponseData mismatchedKeyResponseData = new ResponseData(masterToken, IDENTITY, KEYPAIR_ID + "B", ENCRYPTION_KEY, HMAC_KEY);
             
             factory.getCryptoContext(ctx, keyRequestData, mismatchedKeyResponseData, null);
         }

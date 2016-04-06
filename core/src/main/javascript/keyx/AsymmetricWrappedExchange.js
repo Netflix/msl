@@ -178,9 +178,9 @@ var AsymmetricWrappedExchange$ResponseData$parse;
             var encodedKeyB64 = keyRequestJO[KEY_PUBLIC_KEY];
 
             // Verify key request data.
-            if (!keyPairId || typeof keyPairId !== 'string' ||
+            if (typeof keyPairId !== 'string' ||
                 !mechanism ||
-                !encodedKeyB64 || typeof encodedKeyB64 !== 'string')
+                typeof encodedKeyB64 !== 'string')
             {
                 throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + JSON.stringify(keyRequestJO));
             }
@@ -259,12 +259,14 @@ var AsymmetricWrappedExchange$ResponseData$parse;
          * key-encrypted encryption and HMAC keys.
          *
          * @param {MasterToken} masterToken the master token.
+         * @param {?string} identity optional entity identity inside the master token.
+         *        May be {@code null}.
          * @param {string} keyPairId the public/private key pair ID.
          * @param {Uint8Array} encryptionKey the public key-encrypted encryption key.
          * @param {Uint8Array} hmacKey the public key-encrypted HMAC key.
          */
-        init: function init(masterToken, keyPairId, encryptionKey, hmacKey) {
-            init.base.call(this, masterToken, KeyExchangeScheme.ASYMMETRIC_WRAPPED);
+        init: function init(masterToken, identity, keyPairId, encryptionKey, hmacKey) {
+            init.base.call(this, masterToken, identity, KeyExchangeScheme.ASYMMETRIC_WRAPPED);
 
             // The properties.
             var props = {
@@ -307,20 +309,22 @@ var AsymmetricWrappedExchange$ResponseData$parse;
      * the provided master token from the provided JSON object.
      *
      * @param {MasterToken} masterToken the master token.
+     * @param {?string} identity optional entity identity inside the master token.
+     *        May be {@code null}.
      * @param {Object} keyDataJO the JSON object.
      * @throws MslEncodingException if there is an error parsing the JSON.
      * @throws MslCryptoException if an encoded key is invalid.
      */
-    var ResponseData$parse = AsymmetricWrappedExchange$ResponseData$parse = function ResponseData$parse(masterToken, keyDataJO) {
+    var ResponseData$parse = AsymmetricWrappedExchange$ResponseData$parse = function ResponseData$parse(masterToken, identity, keyDataJO) {
         // Pull key response data.
         var keyPairId = keyDataJO[KEY_KEY_PAIR_ID];
         var encryptionKeyB64 = keyDataJO[KEY_ENCRYPTION_KEY];
         var hmacKeyB64 = keyDataJO[KEY_HMAC_KEY];
 
         // Verify key response data.
-        if (!keyPairId || typeof keyPairId !== 'string' ||
-            !encryptionKeyB64 || typeof encryptionKeyB64 !== 'string' ||
-            !hmacKeyB64 || typeof hmacKeyB64 !== 'string')
+        if (typeof keyPairId !== 'string' ||
+            typeof encryptionKeyB64 !== 'string' ||
+            typeof hmacKeyB64 !== 'string')
         {
             throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + JSON.stringify(keyDataJO));
         }
@@ -340,7 +344,7 @@ var AsymmetricWrappedExchange$ResponseData$parse;
         }
 
         // Return the response data.
-        return new ResponseData(masterToken, keyPairId, encryptionKey, hmacKey);
+        return new ResponseData(masterToken, identity, keyPairId, encryptionKey, hmacKey);
     };
 
     /**
@@ -373,9 +377,17 @@ var AsymmetricWrappedExchange$ResponseData$parse;
     AsymmetricWrappedExchange = KeyExchangeFactory.extend({
         /**
          * Create a new asymmetric wrapped key exchange factory.
+         * 
+         * @param {AuthenticationUtils} authutils authentication utilities.
          */
-        init: function init() {
+        init: function init(authutils) {
             init.base.call(this, KeyExchangeScheme.ASYMMETRIC_WRAPPED);
+            
+            // The properties.
+            var props = {
+                authutils: { value: authutils, writable: false, enumerable: false, configurable: false },
+            };
+            Object.defineProperties(this, props);
         },
 
         /** @inheritDoc */
@@ -385,8 +397,8 @@ var AsymmetricWrappedExchange$ResponseData$parse;
 
 
         /** @inheritDoc */
-        createResponseData: function createResponseData(ctx, masterToken, keyDataJO) {
-            return ResponseData$parse(masterToken, keyDataJO);
+        createResponseData: function createResponseData(ctx, masterToken, identity, keyDataJO) {
+            return ResponseData$parse(masterToken, identity, keyDataJO);
         },
 
         /** @inheritDoc */
@@ -396,13 +408,32 @@ var AsymmetricWrappedExchange$ResponseData$parse;
             AsyncExecutor(callback, function() {
                 if (!(keyRequestData instanceof RequestData))
                     throw new MslInternalException("Key request data " + JSON.stringify(keyRequestData) + " was not created by this factory.");
+                
+                var identity;
+                if (entityToken instanceof MasterToken) {
+                    // If the master token was not issued by the local entity then we
+                    // should not be generating a key response for it.
+                    if (!entityToken.isVerified())
+                        throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, entityToken);
+                    identity = entityToken.identity;
+                    
+                    // Verify the scheme is permitted.
+                    if (!this.authutils.isSchemePermitted(identity, this.scheme))
+                        throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication scheme for entity not permitted " + identity + ": " + this.scheme.name).setMasterToken(entityToken);
+                } else {
+                    identity = entityToken.getIdentity();
+                    
+                    // Verify the scheme is permitted.
+                    if (!this.authutils.isSchemePermitted(identity, this.scheme))
+                        throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication scheme for entity not permitted " + identity + ": " + this.scheme.name).setEntityAuthenticationData(entityToken);
+                }
 
                 // Create random AES-128 encryption and SHA-256 HMAC keys.
                 this.generateSessionKeys(ctx, {
                     result: function(sessionKeys) {
                         var encryptionKey = sessionKeys.encryptionKey;
                         var hmacKey = sessionKeys.hmacKey;
-                        wrapKeys(encryptionKey, hmacKey);
+                        wrapKeys(identity, encryptionKey, hmacKey);
                     },
                     error: function(e) {
                         AsyncExecutor(callback, function() {
@@ -414,7 +445,7 @@ var AsymmetricWrappedExchange$ResponseData$parse;
                 });
             }, self);
 
-            function wrapKeys(encryptionKey, hmacKey) {
+            function wrapKeys(identity, encryptionKey, hmacKey) {
                 AsyncExecutor(callback, function() {
                     var request = keyRequestData;
 
@@ -428,7 +459,7 @@ var AsymmetricWrappedExchange$ResponseData$parse;
                             AsyncExecutor(callback, function() {
                                 wrapCryptoContext.wrap(hmacKey, {
                                     result: function(wrappedHmacKey) {
-                                        createMasterToken(encryptionKey, wrappedEncryptionKey, hmacKey, wrappedHmacKey);
+                                        createMasterToken(identity, encryptionKey, wrappedEncryptionKey, hmacKey, wrappedHmacKey);
                                     },
                                     error: function(e) {
                                         AsyncExecutor(callback, function() {
@@ -451,7 +482,7 @@ var AsymmetricWrappedExchange$ResponseData$parse;
                 }, self);
             }
 
-            function createMasterToken(encryptionKey, wrappedEncryptionKey, hmacKey, wrappedHmacKey) {
+            function createMasterToken(identity, encryptionKey, wrappedEncryptionKey, hmacKey, wrappedHmacKey) {
                 AsyncExecutor(callback, function() {
                     var request = keyRequestData;
 
@@ -465,7 +496,7 @@ var AsymmetricWrappedExchange$ResponseData$parse;
                                     var cryptoContext = new SessionCryptoContext(ctx, masterToken);
 
                                     // Return the key exchange data.
-                                    var keyResponseData = new ResponseData(masterToken, request.keyPairId, wrappedEncryptionKey, wrappedHmacKey);
+                                    var keyResponseData = new ResponseData(masterToken, identity, request.keyPairId, wrappedEncryptionKey, wrappedHmacKey);
                                     return new KeyExchangeFactory.KeyExchangeData(keyResponseData, cryptoContext, callback);
                                 }, self);
                             },
@@ -485,7 +516,7 @@ var AsymmetricWrappedExchange$ResponseData$parse;
                                     var cryptoContext = new SessionCryptoContext(ctx, masterToken);
 
                                     // Return the key exchange data.
-                                    var keyResponseData = new ResponseData(masterToken, request.keyPairId, wrappedEncryptionKey, wrappedHmacKey);
+                                    var keyResponseData = new ResponseData(masterToken, identity, request.keyPairId, wrappedEncryptionKey, wrappedHmacKey);
                                     return new KeyExchangeFactory.KeyExchangeData(keyResponseData, cryptoContext, callback);
                                 }, self);
                             },

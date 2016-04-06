@@ -24,6 +24,8 @@ describe("SymmetricWrappedExchangeSuite", function() {
     var KEY_SCHEME = "scheme";
     /** JSON key key request data. */
     var KEY_KEYDATA = "keydata";
+    /** JSON key identity. */
+    var KEY_IDENTITY = "identity";
     
     /** JSON key symmetric key ID. */
     var KEY_KEY_ID = "keyid";
@@ -45,6 +47,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
     random.nextBytes(HMAC_KEY);
     
     var PSK_MASTER_TOKEN;
+    var PSK_IDENTITY;
     
     var initialized = false;
     beforeEach(function() {
@@ -65,6 +68,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
 		    	MslTestUtils.getMasterToken(pskCtx, 1, 1, {
 		    		result: function(masterToken) {
 		    			PSK_MASTER_TOKEN = masterToken;
+		    			PSK_IDENTITY = masterToken.identity;
 		    		},
 		    		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    	});
@@ -199,21 +203,23 @@ describe("SymmetricWrappedExchangeSuite", function() {
         var KEY_MASTER_TOKEN = "mastertoken";
         
         it("ctors", function() {
-            var resp = new ResponseData(PSK_MASTER_TOKEN, KeyId.PSK, ENCRYPTION_KEY, HMAC_KEY);
+            var resp = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, KeyId.PSK, ENCRYPTION_KEY, HMAC_KEY);
             expect(resp.encryptionKey).toEqual(ENCRYPTION_KEY);
             expect(resp.hmacKey).toEqual(HMAC_KEY);
             expect(resp.keyExchangeScheme).toEqual(KeyExchangeScheme.SYMMETRIC_WRAPPED);
             expect(resp.keyId).toEqual(KeyId.PSK);
             expect(resp.masterToken).toEqual(PSK_MASTER_TOKEN);
+            expect(resp.identity).toEqual(PSK_IDENTITY);
             var keydata = resp.getKeydata();
             expect(keydata).not.toBeNull();
 
-            var joResp = ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+            var joResp = ResponseData$parse(PSK_MASTER_TOKEN, PSK_IDENTITY, keydata);
             expect(joResp.encryptionKey).toEqual(resp.encryptionKey);
             expect(joResp.hmacKey).toEqual(resp.hmacKey);
             expect(joResp.keyExchangeScheme).toEqual(resp.keyExchangeScheme);
             expect(joResp.keyId).toEqual(resp.keyId);
             expect(joResp.masterToken).toEqual(resp.masterToken);
+            expect(joResp.identity).toEqual(joResp.identity);
             var joKeydata = resp.getKeydata();
             expect(joKeydata).not.toBeNull();
             expect(joKeydata).toEqual(keydata);
@@ -222,7 +228,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         it("json is correct", function() {
         	var masterToken = undefined, jo;
         	runs(function() {
-        		var resp = new ResponseData(PSK_MASTER_TOKEN, KeyId.PSK, ENCRYPTION_KEY, HMAC_KEY);
+        		var resp = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, KeyId.PSK, ENCRYPTION_KEY, HMAC_KEY);
         		jo = JSON.parse(JSON.stringify(resp));
         		expect(jo[KEY_SCHEME]).toEqual(KeyExchangeScheme.SYMMETRIC_WRAPPED.name);
         		MasterToken$parse(pskCtx, jo[KEY_MASTER_TOKEN], {
@@ -233,6 +239,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         	waitsFor(function() { return jo && masterToken; }, "json object and master token not received", 100);
         	runs(function() {
 	            expect(PSK_MASTER_TOKEN.equals(masterToken)).toBeTruthy();
+	            expect(jo[KEY_IDENTITY]).toEqual(PSK_IDENTITY);
 	            var keydata = jo[KEY_KEYDATA];
 	            expect(keydata[KEY_KEY_ID]).toEqual(KeyId.PSK);
 	            expect(base64$decode(keydata[KEY_ENCRYPTION_KEY])).toEqual(ENCRYPTION_KEY);
@@ -241,7 +248,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         });
         
         it("create", function() {
-            var data = new ResponseData(PSK_MASTER_TOKEN, KeyId.PSK, ENCRYPTION_KEY, HMAC_KEY);
+            var data = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, KeyId.PSK, ENCRYPTION_KEY, HMAC_KEY);
 
             var keyResponseData;
             runs(function() {
@@ -263,44 +270,45 @@ describe("SymmetricWrappedExchangeSuite", function() {
             	expect(joData.keyExchangeScheme).toEqual(data.keyExchangeScheme);
             	expect(joData.keyId).toEqual(data.keyId);
             	expect(data.masterToken.equals(joData.masterToken)).toBeTruthy();
+            	expect(joData.identity).toEqual(data.identity);
             });
         });
 
         it("missing key ID", function() {
             var f = function() {
-	            var resp = new ResponseData(PSK_MASTER_TOKEN, KeyId.PSK, ENCRYPTION_KEY, HMAC_KEY);
+	            var resp = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, KeyId.PSK, ENCRYPTION_KEY, HMAC_KEY);
 	            var keydata = resp.getKeydata();
 	
 	            expect(keydata[KEY_KEY_ID]).not.toBeNull();
 	            delete keydata[KEY_KEY_ID];
 	
-	            ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+	            ResponseData$parse(PSK_MASTER_TOKEN, PSK_IDENTITY, keydata);
             };
             expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
         });
 
         it("missing encryption key", function() {
             var f = function() {
-	            var resp = new ResponseData(PSK_MASTER_TOKEN, KeyId.PSK, ENCRYPTION_KEY, HMAC_KEY);
+	            var resp = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, KeyId.PSK, ENCRYPTION_KEY, HMAC_KEY);
 	            var keydata = resp.getKeydata();
 	
 	            expect(keydata[KEY_ENCRYPTION_KEY]).not.toBeNull();
 	            delete keydata[KEY_ENCRYPTION_KEY];
 	
-	            ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+	            ResponseData$parse(PSK_MASTER_TOKEN, PSK_IDENTITY, keydata);
             };
             expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
         });
 
         it("missing HMAC key", function() {
             var f = function() {
-	            var resp = new ResponseData(PSK_MASTER_TOKEN, KeyId.PSK, ENCRYPTION_KEY, HMAC_KEY);
+	            var resp = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, KeyId.PSK, ENCRYPTION_KEY, HMAC_KEY);
 	            var keydata = resp.getKeydata();
 	
 	            expect(keydata[KEY_HMAC_KEY]).not.toBeNull();
 	            delete keydata[KEY_HMAC_KEY];
 	
-	            ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+	            ResponseData$parse(PSK_MASTER_TOKEN, PSK_IDENTITY, keydata);
             };
             expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
         });
@@ -320,9 +328,9 @@ describe("SymmetricWrappedExchangeSuite", function() {
             waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens not received", 100);
             
             runs(function() {
-	            var dataA = new ResponseData(masterTokenA, KeyId.PSK, ENCRYPTION_KEY, HMAC_KEY);
-	            var dataB = new ResponseData(masterTokenB, KeyId.PSK, ENCRYPTION_KEY, HMAC_KEY);
-	            var dataA2 = ResponseData$parse(masterTokenA, dataA.getKeydata());
+	            var dataA = new ResponseData(masterTokenA, PSK_IDENTITY, KeyId.PSK, ENCRYPTION_KEY, HMAC_KEY);
+	            var dataB = new ResponseData(masterTokenB, PSK_IDENTITY, KeyId.PSK, ENCRYPTION_KEY, HMAC_KEY);
+	            var dataA2 = ResponseData$parse(masterTokenA, PSK_IDENTITY, dataA.getKeydata());
 	            
 	            expect(dataA.equals(dataA)).toBeTruthy();
 	            expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
@@ -338,9 +346,9 @@ describe("SymmetricWrappedExchangeSuite", function() {
         });
         
         it("equals key ID", function() {
-            var dataA = new ResponseData(PSK_MASTER_TOKEN, KeyId.PSK, ENCRYPTION_KEY, HMAC_KEY);
-            var dataB = new ResponseData(PSK_MASTER_TOKEN, KeyId.SESSION, ENCRYPTION_KEY, HMAC_KEY);
-            var dataA2 = ResponseData$parse(PSK_MASTER_TOKEN, dataA.getKeydata());
+            var dataA = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, KeyId.PSK, ENCRYPTION_KEY, HMAC_KEY);
+            var dataB = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, KeyId.SESSION, ENCRYPTION_KEY, HMAC_KEY);
+            var dataA2 = ResponseData$parse(PSK_MASTER_TOKEN, PSK_IDENTITY, dataA.getKeydata());
             
             expect(dataA.equals(dataA)).toBeTruthy();
             expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
@@ -358,9 +366,9 @@ describe("SymmetricWrappedExchangeSuite", function() {
             var encryptionKeyA = Arrays$copyOf(ENCRYPTION_KEY);
             var encryptionKeyB = Arrays$copyOf(ENCRYPTION_KEY);
             ++encryptionKeyB[0];
-            var dataA = new ResponseData(PSK_MASTER_TOKEN, KeyId.PSK, encryptionKeyA, HMAC_KEY);
-            var dataB = new ResponseData(PSK_MASTER_TOKEN, KeyId.PSK, encryptionKeyB, HMAC_KEY);
-            var dataA2 = ResponseData$parse(PSK_MASTER_TOKEN, dataA.getKeydata());
+            var dataA = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, KeyId.PSK, encryptionKeyA, HMAC_KEY);
+            var dataB = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, KeyId.PSK, encryptionKeyB, HMAC_KEY);
+            var dataA2 = ResponseData$parse(PSK_MASTER_TOKEN, PSK_IDENTITY, dataA.getKeydata());
             
             expect(dataA.equals(dataA)).toBeTruthy();
             expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
@@ -378,9 +386,9 @@ describe("SymmetricWrappedExchangeSuite", function() {
             var hmacKeyA = Arrays$copyOf(HMAC_KEY);
             var hmacKeyB = Arrays$copyOf(HMAC_KEY);
             ++hmacKeyB[0];
-            var dataA = new ResponseData(PSK_MASTER_TOKEN, KeyId.PSK, ENCRYPTION_KEY, hmacKeyA);
-            var dataB = new ResponseData(PSK_MASTER_TOKEN, KeyId.PSK, ENCRYPTION_KEY, hmacKeyB);
-            var dataA2 = ResponseData$parse(PSK_MASTER_TOKEN, dataA.getKeydata());
+            var dataA = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, KeyId.PSK, ENCRYPTION_KEY, hmacKeyA);
+            var dataB = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, KeyId.PSK, ENCRYPTION_KEY, hmacKeyB);
+            var dataA2 = ResponseData$parse(PSK_MASTER_TOKEN, PSK_IDENTITY, dataA.getKeydata());
             
             expect(dataA.equals(dataA)).toBeTruthy();
             expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
@@ -426,7 +434,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         var FakeKeyResponseData = KeyResponseData.extend({
             /** Create a new fake key response data. */
             init: function init() {
-                init.base.call(this, PSK_MASTER_TOKEN, KeyExchangeScheme.SYMMETRIC_WRAPPED);
+                init.base.call(this, PSK_MASTER_TOKEN, PSK_IDENTITY, KeyExchangeScheme.SYMMETRIC_WRAPPED);
             },
 
             /** @inheritDoc */
@@ -467,13 +475,16 @@ describe("SymmetricWrappedExchangeSuite", function() {
 	            });
         	});
         }
-        
+
+        /** Authentication utilities. */
+        var authutils = new MockAuthenticationUtils();
         /** Key exchange factory. */
-        var factory = new SymmetricWrappedExchange();
+        var factory = new SymmetricWrappedExchange(authutils);
         /** Entity authentication data. */
         var entityAuthData = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN);
         
         beforeEach(function() {
+            authutils.reset();
             pskCtx.getMslStore().clearCryptoContexts();
             pskCtx.getMslStore().clearServiceTokens();
         });
@@ -982,7 +993,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
 	            var keyResponseData = keyxData.keyResponseData;
 	            var masterToken = keyResponseData.masterToken;
 	            
-	            var mismatchedKeyResponseData = new ResponseData(masterToken, KeyId.SESSION, ENCRYPTION_KEY, HMAC_KEY);
+	            var mismatchedKeyResponseData = new ResponseData(masterToken, PSK_IDENTITY, KeyId.SESSION, ENCRYPTION_KEY, HMAC_KEY);
 	            
 	            factory.getCryptoContext(pskCtx, keyRequestData, mismatchedKeyResponseData, null, {
         			result: function() {},
@@ -1018,7 +1029,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
 	            keydata[KEY_ENCRYPTION_KEY] = base64$encode(wrappedEncryptionKey);
 	            var wrappedHmacKey = base64$decode(keydata[KEY_HMAC_KEY]);
 	            
-	            var invalidKeyResponseData = new ResponseData(masterToken, KeyId.PSK, wrappedEncryptionKey, wrappedHmacKey);
+	            var invalidKeyResponseData = new ResponseData(masterToken, PSK_IDENTITY, KeyId.PSK, wrappedEncryptionKey, wrappedHmacKey);
 	            factory.getCryptoContext(pskCtx, keyRequestData, invalidKeyResponseData, null, {
         			result: function() {},
         			error: function(err) { exception = err; }
@@ -1053,7 +1064,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         		keydata[KEY_HMAC_KEY] = base64$encode(wrappedHmacKey);
         		var wrappedEncryptionKey = base64$decode(keydata[KEY_ENCRYPTION_KEY]);
 
-        		var invalidKeyResponseData = new ResponseData(masterToken, KeyId.PSK, wrappedEncryptionKey, wrappedHmacKey);
+        		var invalidKeyResponseData = new ResponseData(masterToken, PSK_IDENTITY, KeyId.PSK, wrappedEncryptionKey, wrappedHmacKey);
         		factory.getCryptoContext(pskCtx, keyRequestData, invalidKeyResponseData, null, {
         			result: function() {},
         			error: function(err) { exception = err; }

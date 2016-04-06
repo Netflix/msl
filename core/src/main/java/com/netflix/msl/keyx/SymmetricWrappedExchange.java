@@ -175,12 +175,14 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
          * and HMAC keys.
          * 
          * @param masterToken the master token.
+         * @param identity optional entity identity inside the master token.
+         *        May be {@code null}.
          * @param keyId the wrapping key ID.
          * @param encryptionKey the wrapped encryption key.
          * @param hmacKey the wrapped HMAC key.
          */
-        public ResponseData(final MasterToken masterToken, final KeyId keyId, final byte[] encryptionKey, final byte[] hmacKey) {
-            super(masterToken, KeyExchangeScheme.SYMMETRIC_WRAPPED);
+        public ResponseData(final MasterToken masterToken, final String identity, final KeyId keyId, final byte[] encryptionKey, final byte[] hmacKey) {
+            super(masterToken, identity, KeyExchangeScheme.SYMMETRIC_WRAPPED);
             this.keyId = keyId;
             this.encryptionKey = encryptionKey;
             this.hmacKey = hmacKey;
@@ -191,13 +193,15 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
          * the provided master token from the provided JSON object.
          * 
          * @param masterToken the master token.
+         * @param identity optional entity identity inside the master token.
+         *        May be {@code null}.
          * @param keyDataJO the JSON object.
          * @throws MslEncodingException if there is an error parsing the JSON.
          * @throws MslKeyExchangeException if the key ID is not recognized or
          *         a session key is invalid.
          */
-        public ResponseData(final MasterToken masterToken, final JSONObject keyDataJO) throws MslEncodingException, MslKeyExchangeException {
-            super(masterToken, KeyExchangeScheme.SYMMETRIC_WRAPPED);
+        public ResponseData(final MasterToken masterToken, final String identity, final JSONObject keyDataJO) throws MslEncodingException, MslKeyExchangeException {
+            super(masterToken, identity, KeyExchangeScheme.SYMMETRIC_WRAPPED);
             try {
                 final String keyIdName = keyDataJO.getString(KEY_KEY_ID);
                 try {
@@ -353,11 +357,11 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.keyx.KeyExchangeFactory#createResponseData(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, org.json.JSONObject)
+     * @see com.netflix.msl.keyx.KeyExchangeFactory#createResponseData(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, java.lang.String, org.json.JSONObject)
      */
     @Override
-    protected KeyResponseData createResponseData(final MslContext ctx, final MasterToken masterToken, final JSONObject keyDataJO) throws MslEncodingException, MslKeyExchangeException {
-        return new ResponseData(masterToken, keyDataJO);
+    protected KeyResponseData createResponseData(final MslContext ctx, final MasterToken masterToken, final String identity, final JSONObject keyDataJO) throws MslEncodingException, MslKeyExchangeException {
+        return new ResponseData(masterToken, identity, keyDataJO);
     }
 
     /* (non-Javadoc)
@@ -371,8 +375,8 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
 
         // Verify the scheme is permitted.
         final String identity = masterToken.getIdentity();
-        if(!authutils.isSchemePermitted(identity, this.getScheme()))
-            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + this.getScheme()).setMasterToken(masterToken);
+        if (!authutils.isSchemePermitted(identity, this.getScheme()))
+            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication scheme for entity not permitted " + identity + ":" + this.getScheme()).setMasterToken(masterToken);
 
         // If the master token was not issued by the local entity then we
         // should not be generating a key response for it.
@@ -401,7 +405,7 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
         final ICryptoContext cryptoContext = new SessionCryptoContext(ctx, newMasterToken);
         
         // Return the key exchange data.
-        final KeyResponseData keyResponseData = new ResponseData(newMasterToken, keyId, wrappedEncryptionKey, wrappedHmacKey);
+        final KeyResponseData keyResponseData = new ResponseData(newMasterToken, identity, keyId, wrappedEncryptionKey, wrappedHmacKey);
         return new KeyExchangeData(keyResponseData, cryptoContext);
     }
 
@@ -416,8 +420,8 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
 
         // Verify the scheme is permitted.
         final String identity = entityAuthData.getIdentity();
-        if(!authutils.isSchemePermitted(identity, this.getScheme()))
-            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + this.getScheme());
+        if (!authutils.isSchemePermitted(identity, this.getScheme()))
+            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication scheme for entity not permitted " + identity + ":" + this.getScheme()).setEntityAuthenticationData(entityAuthData);
 
         // Create random AES-128 encryption and SHA-256 HMAC keys.
         final byte[] encryptionBytes = new byte[16];
@@ -451,7 +455,7 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
         }
         
         // Return the key exchange data.
-        final KeyResponseData keyResponseData = new ResponseData(masterToken, keyId, wrappedEncryptionKey, wrappedHmacKey);
+        final KeyResponseData keyResponseData = new ResponseData(masterToken, identity, keyId, wrappedEncryptionKey, wrappedHmacKey);
         return new KeyExchangeData(keyResponseData, cryptoContext);
     }
 
