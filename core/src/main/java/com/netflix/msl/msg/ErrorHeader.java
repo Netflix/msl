@@ -95,32 +95,31 @@ public class ErrorHeader extends Header {
      * @param internalCode the internal code. Negative to indicate no code.
      * @param errorMsg the error message. May be null.
      * @param userMsg the user message. May be null.
-     * @throws MslCryptoException if there is an error encrypting or signing
-     *         the message.
-     * @throws MslEntityAuthException if there is an error with the entity
-     *         authentication data.
      * @throws MslMessageException if no entity authentication data is
      *         provided.
      */
-    public ErrorHeader(final MslContext ctx, final EntityAuthenticationData entityAuthData, final String recipient, final long messageId, final ResponseCode errorCode, final int internalCode, final String errorMsg, final String userMsg) throws MslCryptoException, MslEntityAuthException, MslMessageException {
-        this.ctx = ctx;
+    public ErrorHeader(final MslContext ctx, final EntityAuthenticationData entityAuthData, final String recipient, final long messageId, final ResponseCode errorCode, final int internalCode, final String errorMsg, final String userMsg) throws MslMessageException {
+        // Message ID must be within range.
+        if (messageId < 0 || messageId > MslConstants.MAX_LONG_VALUE)
+            throw new MslInternalException("Message ID " + messageId + " is out of range.");
         
+        // Message entity must be provided.
+        if (entityAuthData == null)
+            throw new MslMessageException(MslError.MESSAGE_ENTITY_NOT_FOUND);
+        
+        // Only include the recipient if the message will be encrypted.
+        final EntityAuthenticationScheme scheme = entityAuthData.getScheme();
+        final boolean encrypted = scheme.encrypts();
+        
+        this.ctx = ctx;
         this.entityAuthData = entityAuthData;
-        this.recipient = recipient;
+        this.recipient = (encrypted) ?  recipient : null;
         this.timestamp = ctx.getTime() / MILLISECONDS_PER_SECOND;
         this.messageId = messageId;
         this.errorCode = errorCode;
         this.internalCode = (internalCode >= 0) ? internalCode : -1;
         this.errorMsg = errorMsg;
         this.userMsg = userMsg;
-        
-        // Message ID must be within range.
-        if (this.messageId < 0 || this.messageId > MslConstants.MAX_LONG_VALUE)
-            throw new MslInternalException("Message ID " + this.messageId + " is out of range.");
-        
-        // Message entity must be provided.
-        if (entityAuthData == null)
-            throw new MslMessageException(MslError.MESSAGE_ENTITY_NOT_FOUND);
         
         // Construct the error data.
         final MslEncoderFactory encoder = ctx.getMslEncoderFactory();

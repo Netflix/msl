@@ -261,10 +261,25 @@ public class MessageHeader extends Header {
      *         trusted and needs to be to accept this message header.
      * @throws MslEntityAuthException if there is an error with the entity
      *         authentication data.
-     * @throws MslMessageException if no entity authentication data or master
-     *         token is provided.
      */
-    public MessageHeader(final MslContext ctx, final EntityAuthenticationData entityAuthData, final MasterToken masterToken, final HeaderData headerData, final HeaderPeerData peerData) throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException {
+    public MessageHeader(final MslContext ctx, final EntityAuthenticationData entityAuthData, final MasterToken masterToken, final HeaderData headerData, final HeaderPeerData peerData) throws MslCryptoException, MslEncodingException, MslMasterTokenException, MslEntityAuthException {
+        // Message ID must be within range.
+        if (headerData.messageId < 0 || headerData.messageId > MslConstants.MAX_LONG_VALUE)
+            throw new MslInternalException("Message ID " + headerData.messageId + " is out of range.");
+        
+        // Message entity must be provided.
+        if (entityAuthData == null && masterToken == null)
+            throw new MslInternalException("Message entity authentication data or master token must be provided.");
+        
+        // Only include the recipient if the message will be encrypted.
+        final boolean encrypted;
+        if (masterToken != null) {
+            encrypted = true;
+        } else {
+            final EntityAuthenticationScheme scheme = entityAuthData.getScheme();
+            encrypted = scheme.encrypts();
+        }
+            
         this.entityAuthData = (masterToken == null) ? entityAuthData : null;
         this.masterToken = masterToken;
         this.nonReplayableId = headerData.nonReplayableId;
@@ -272,7 +287,7 @@ public class MessageHeader extends Header {
         this.handshake = headerData.handshake;
         this.capabilities = headerData.capabilities;
         this.sender = (this.masterToken != null) ? ctx.getEntityAuthenticationData(null).getIdentity() : null;
-        this.recipient = headerData.recipient;
+        this.recipient = (encrypted) ? headerData.recipient : null;
         this.timestamp = ctx.getTime() / MILLISECONDS_PER_SECOND;
         this.messageId = headerData.messageId;
         this.keyRequestData = Collections.unmodifiableSet((headerData.keyRequestData != null) ? headerData.keyRequestData : new HashSet<KeyRequestData>());
@@ -289,14 +304,6 @@ public class MessageHeader extends Header {
             this.peerUserIdToken = null;
             this.peerServiceTokens = Collections.emptySet();
         }
-        
-        // Message ID must be within range.
-        if (this.messageId < 0 || this.messageId > MslConstants.MAX_LONG_VALUE)
-            throw new MslInternalException("Message ID " + this.messageId + " is out of range.");
-        
-        // Message entity must be provided.
-        if (this.entityAuthData == null && this.masterToken == null)
-            throw new MslInternalException("Message entity authentication data or master token must be provided.");
         
         // Grab token verification master tokens.
         final MasterToken tokenVerificationMasterToken, peerTokenVerificationMasterToken;
@@ -372,7 +379,7 @@ public class MessageHeader extends Header {
                 .setUserAuthenticationData(this.userAuthData)
                 .setMessageId(this.messageId);
         }
-
+        
         // Create the correct crypto context.
         if (this.masterToken != null) {
             // Use a stored master token crypto context if we have one.

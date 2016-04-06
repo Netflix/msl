@@ -139,6 +139,11 @@ var ErrorHeader$parse;
             if (!entityAuthData)
                 throw new MslMessageException(MslError.MESSAGE_ENTITY_NOT_FOUND);
 
+            // Only include the recipient if the message will be encrypted.
+            var scheme = entityAuthData.scheme;
+            var encrypted = scheme.encrypts;
+            if (!encrypted) recipient = null;
+
             // Construct the error data.
             var timestampSeconds, errordata;
             if (!creationData) {
