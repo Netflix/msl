@@ -105,22 +105,26 @@ public class ErrorHeader extends Header {
      *         provided.
      */
     public ErrorHeader(final MslContext ctx, final EntityAuthenticationData entityAuthData, final String recipient, final long messageId, final ResponseCode errorCode, final int internalCode, final String errorMsg, final String userMsg) throws MslEncodingException, MslCryptoException, MslEntityAuthException, MslMessageException {
+        // Message ID must be within range.
+        if (messageId < 0 || messageId > MslConstants.MAX_LONG_VALUE)
+            throw new MslInternalException("Message ID " + messageId + " is out of range.");
+        
+        // Message entity must be provided.
+        if (entityAuthData == null)
+            throw new MslMessageException(MslError.MESSAGE_ENTITY_NOT_FOUND);
+        
+        // Only include the recipient if the message will be encrypted.
+        final EntityAuthenticationScheme scheme = entityAuthData.getScheme();
+        final boolean encrypted = scheme.encrypts();
+        
         this.entityAuthData = entityAuthData;
-        this.recipient = recipient;
+        this.recipient = (encrypted) ?  recipient : null;
         this.timestamp = ctx.getTime() / MILLISECONDS_PER_SECOND;
         this.messageId = messageId;
         this.errorCode = errorCode;
         this.internalCode = (internalCode >= 0) ? internalCode : -1;
         this.errorMsg = errorMsg;
         this.userMsg = userMsg;
-        
-        // Message ID must be within range.
-        if (this.messageId < 0 || this.messageId > MslConstants.MAX_LONG_VALUE)
-            throw new MslInternalException("Message ID " + this.messageId + " is out of range.");
-        
-        // Message entity must be provided.
-        if (entityAuthData == null)
-            throw new MslMessageException(MslError.MESSAGE_ENTITY_NOT_FOUND);
         
         // Construct the JSON.
         final JSONObject errorJO = new JSONObject();
@@ -138,7 +142,6 @@ public class ErrorHeader extends Header {
 
         try {
             // Create the crypto context.
-            final EntityAuthenticationScheme scheme = entityAuthData.getScheme();
             final EntityAuthenticationFactory factory = ctx.getEntityAuthenticationFactory(scheme);
             if (factory == null)
                 throw new MslEntityAuthException(MslError.ENTITYAUTH_FACTORY_NOT_FOUND, scheme.name());

@@ -489,12 +489,30 @@ var MessageHeader$HeaderPeerData;
 
             function construct(sender) {
                 AsyncExecutor(callback, function() {
+                    // Message ID must be within range.
+                    if (headerData.messageId < 0 || headerData.messageId > MslConstants$MAX_LONG_VALUE)
+                        throw new MslInternalException("Message ID " + headerData.messageId + " is out of range.");
+
+                    // Message entity must be provided.
+                    if (!entityAuthData && !masterToken)
+                        throw new MslInternalException("Message entity authentication data or master token must be provided.");
+                    
+                    // Only include the sender and recipient if the message will be
+                    // encrypted.
+                    var encrypted;
+                    if (masterToken) {
+                        encrypted = true;
+                    } else {
+                        var scheme = entityAuthData.scheme;
+                        encrypted = scheme.encrypts;
+                    }
+                    
                     entityAuthData = (!masterToken) ? entityAuthData : null;
                     var nonReplayableId = headerData.nonReplayableId;
                     var renewable = headerData.renewable;
                     var handshake = headerData.handshake;
                     var capabilities = headerData.capabilities;
-                    var recipient = headerData.recipient;
+                    var recipient = (encrypted) ? headerData.recipient : null;
                     var messageId = headerData.messageId;
                     var keyRequestData = (headerData.keyRequestData) ? headerData.keyRequestData : new Array();
                     var keyResponseData = headerData.keyResponseData;
@@ -511,14 +529,6 @@ var MessageHeader$HeaderPeerData;
                         peerUserIdToken = null;
                         peerServiceTokens = new Array();
                     }
-
-                    // Message ID must be within range.
-                    if (messageId < 0 || messageId > MslConstants$MAX_LONG_VALUE)
-                        throw new MslInternalException("Message ID " + messageId + " is out of range.");
-
-                    // Message entity must be provided.
-                    if (!entityAuthData && !masterToken)
-                        throw new MslInternalException("Message entity authentication data or master token must be provided.");
 
                     // Grab token verification master tokens.
                     var tokenVerificationMasterToken, peerTokenVerificationMasterToken;
