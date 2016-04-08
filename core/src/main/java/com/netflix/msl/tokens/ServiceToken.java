@@ -17,8 +17,6 @@ package com.netflix.msl.tokens;
 
 import java.util.Map;
 
-import javax.xml.bind.DatatypeConverter;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONString;
@@ -31,6 +29,7 @@ import com.netflix.msl.MslError;
 import com.netflix.msl.MslException;
 import com.netflix.msl.MslInternalException;
 import com.netflix.msl.crypto.ICryptoContext;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslUtils;
 
@@ -127,7 +126,7 @@ public class ServiceToken implements JSONString {
         try {
             final byte[] tokendata;
             try {
-                tokendata = DatatypeConverter.parseBase64Binary(serviceTokenJO.getString(KEY_TOKENDATA));
+                tokendata = Base64.decode(serviceTokenJO.getString(KEY_TOKENDATA));
             } catch (final IllegalArgumentException e) {
                 throw new MslEncodingException(MslError.SERVICETOKEN_TOKENDATA_INVALID, "servicetoken " + serviceTokenJO.toString(), e);
             }
@@ -212,7 +211,7 @@ public class ServiceToken implements JSONString {
                 if (this.uitSerialNumber != -1) tokenDataJO.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, this.uitSerialNumber);
                 tokenDataJO.put(KEY_ENCRYPTED, this.encrypted);
                 if (this.compressionAlgo != null) tokenDataJO.put(KEY_COMPRESSION_ALGORITHM, this.compressionAlgo.name());
-                tokenDataJO.put(KEY_SERVICEDATA, DatatypeConverter.printBase64Binary(ciphertext));
+                tokenDataJO.put(KEY_SERVICEDATA, Base64.encode(ciphertext));
                 this.tokendata = tokenDataJO.toString().getBytes(MslConstants.DEFAULT_CHARSET);
             } catch (final JSONException e) {
                 throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, "servicetoken", e).setMasterToken(masterToken).setUserIdToken(userIdToken);
@@ -297,14 +296,14 @@ public class ServiceToken implements JSONString {
         // Verify the JSON representation.
         try {
             try {
-                tokendata = DatatypeConverter.parseBase64Binary(serviceTokenJO.getString(KEY_TOKENDATA));
+                tokendata = Base64.decode(serviceTokenJO.getString(KEY_TOKENDATA));
             } catch (final IllegalArgumentException e) {
                 throw new MslEncodingException(MslError.SERVICETOKEN_TOKENDATA_INVALID, "servicetoken " + serviceTokenJO.toString(), e).setMasterToken(masterToken).setUserIdToken(userIdToken);
             }
             if (tokendata == null || tokendata.length == 0)
                 throw new MslEncodingException(MslError.SERVICETOKEN_TOKENDATA_MISSING, "servicetoken " + serviceTokenJO.toString()).setMasterToken(masterToken).setUserIdToken(userIdToken);
             try {
-                signature = DatatypeConverter.parseBase64Binary(serviceTokenJO.getString(KEY_SIGNATURE));
+                signature = Base64.decode(serviceTokenJO.getString(KEY_SIGNATURE));
             } catch (final IllegalArgumentException e) {
                 throw new MslEncodingException(MslError.SERVICETOKEN_SIGNATURE_INVALID, "servicetoken " + serviceTokenJO.toString(), e).setMasterToken(masterToken).setUserIdToken(userIdToken);
             }
@@ -357,7 +356,7 @@ public class ServiceToken implements JSONString {
             if (verified) {
                 final byte[] ciphertext;
                 try {
-                    ciphertext = DatatypeConverter.parseBase64Binary(data);
+                    ciphertext = Base64.decode(data);
                 } catch (final IllegalArgumentException e) {
                     throw new MslException(MslError.SERVICETOKEN_SERVICEDATA_INVALID, "servicetokendata " + tokenDataJson).setMasterToken(masterToken).setUserIdToken(userIdToken);
                 }
@@ -533,8 +532,8 @@ public class ServiceToken implements JSONString {
     public String toJSONString() {
         try {
             final JSONObject jsonObj = new JSONObject();
-            jsonObj.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendata));
-            jsonObj.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+            jsonObj.put(KEY_TOKENDATA, Base64.encode(tokendata));
+            jsonObj.put(KEY_SIGNATURE, Base64.encode(signature));
             return jsonObj.toString();
         } catch (final JSONException e) {
             throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);
@@ -551,11 +550,11 @@ public class ServiceToken implements JSONString {
             tokendataJO.put(KEY_NAME, name);
             tokendataJO.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, mtSerialNumber);
             tokendataJO.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, uitSerialNumber);
-            tokendataJO.put(KEY_SERVICEDATA, DatatypeConverter.printBase64Binary(servicedata));
+            tokendataJO.put(KEY_SERVICEDATA, Base64.encode(servicedata));
             
             final JSONObject jsonObj = new JSONObject();
             jsonObj.put(KEY_TOKENDATA, tokendataJO);
-            jsonObj.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+            jsonObj.put(KEY_SIGNATURE, Base64.encode(signature));
             return jsonObj.toString();
         } catch (final JSONException e) {
             throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);

@@ -25,8 +25,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 
-import javax.xml.bind.DatatypeConverter;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.BeforeClass;
@@ -41,6 +39,7 @@ import com.netflix.msl.MslConstants.SignatureAlgo;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.crypto.MslSignatureEnvelope.Version;
+import com.netflix.msl.util.Base64;
 
 /**
  * MSL signature envelope unit tests.
@@ -136,7 +135,7 @@ public class MslSignatureEnvelopeTest {
             
             assertEquals(Version.V2.intValue(), jo.getInt(KEY_VERSION));
             assertEquals(algorithm.toString(), jo.getString(KEY_ALGORITHM));
-            assertArrayEquals(SIGNATURE, DatatypeConverter.parseBase64Binary(jo.getString(KEY_SIGNATURE)));
+            assertArrayEquals(SIGNATURE, Base64.decode(jo.getString(KEY_SIGNATURE)));
         }
         
         @Test

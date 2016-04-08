@@ -26,8 +26,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 
-import javax.xml.bind.DatatypeConverter;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.BeforeClass;
@@ -45,6 +43,7 @@ import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.crypto.MslCiphertextEnvelope.Version;
 import com.netflix.msl.test.ExpectedMslException;
+import com.netflix.msl.util.Base64;
 
 /**
  * MSL encryption envelope unit tests.
@@ -133,8 +132,8 @@ public class MslCiphertextEnvelopeTest {
             
             assertEquals(KEY_ID, jo.getString(KEY_KEY_ID));
             assertFalse(jo.has(KEY_CIPHERSPEC));
-            assertArrayEquals(IV, DatatypeConverter.parseBase64Binary(jo.getString(KEY_IV)));
-            assertArrayEquals(CIPHERTEXT, DatatypeConverter.parseBase64Binary(jo.getString(KEY_CIPHERTEXT)));
+            assertArrayEquals(IV, Base64.decode(jo.getString(KEY_IV)));
+            assertArrayEquals(CIPHERTEXT, Base64.decode(jo.getString(KEY_CIPHERTEXT)));
         }
 
         @Test
@@ -146,7 +145,7 @@ public class MslCiphertextEnvelopeTest {
             assertEquals(KEY_ID, jo.getString(KEY_KEY_ID));
             assertFalse(jo.has(KEY_CIPHERSPEC));
             assertFalse(jo.has(KEY_IV));
-            assertArrayEquals(CIPHERTEXT, DatatypeConverter.parseBase64Binary(jo.getString(KEY_CIPHERTEXT)));
+            assertArrayEquals(CIPHERTEXT, Base64.decode(jo.getString(KEY_CIPHERTEXT)));
         }
         
         @Test
@@ -197,10 +196,10 @@ public class MslCiphertextEnvelopeTest {
 
             final String json = envelope.toJSONString();
             final JSONObject jo = new JSONObject(json);
-            final byte[] hash = DatatypeConverter.parseBase64Binary(jo.getString(KEY_SHA256));
+            final byte[] hash = Base64.decode(jo.getString(KEY_SHA256));
             assertNotNull(hash);
             hash[0] += 1;
-            jo.put(KEY_SHA256, DatatypeConverter.printBase64Binary(hash));
+            jo.put(KEY_SHA256, Base64.encode(hash));
 
             final MslCiphertextEnvelope joEnvelope = new MslCiphertextEnvelope(jo);
             assertEquals(KEY_ID, joEnvelope.getKeyId());
@@ -285,8 +284,8 @@ public class MslCiphertextEnvelopeTest {
             assertEquals(Version.V2.intValue(), jo.getInt(KEY_VERSION));
             assertFalse(jo.has(KEY_KEY_ID));
             assertEquals(cipherSpec.toString(), jo.getString(KEY_CIPHERSPEC));
-            assertArrayEquals(IV, DatatypeConverter.parseBase64Binary(jo.getString(KEY_IV)));
-            assertArrayEquals(CIPHERTEXT, DatatypeConverter.parseBase64Binary(jo.getString(KEY_CIPHERTEXT)));
+            assertArrayEquals(IV, Base64.decode(jo.getString(KEY_IV)));
+            assertArrayEquals(CIPHERTEXT, Base64.decode(jo.getString(KEY_CIPHERTEXT)));
         }
 
         @Test
@@ -299,7 +298,7 @@ public class MslCiphertextEnvelopeTest {
             assertFalse(jo.has(KEY_KEY_ID));
             assertEquals(cipherSpec.toString(), jo.getString(KEY_CIPHERSPEC));
             assertFalse(jo.has(KEY_IV));
-            assertArrayEquals(CIPHERTEXT, DatatypeConverter.parseBase64Binary(jo.getString(KEY_CIPHERTEXT)));
+            assertArrayEquals(CIPHERTEXT, Base64.decode(jo.getString(KEY_CIPHERTEXT)));
         }
         
         @Test

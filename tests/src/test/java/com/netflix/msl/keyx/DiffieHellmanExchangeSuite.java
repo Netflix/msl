@@ -33,7 +33,6 @@ import java.util.Random;
 import javax.crypto.interfaces.DHPrivateKey;
 import javax.crypto.interfaces.DHPublicKey;
 import javax.crypto.spec.DHParameterSpec;
-import javax.xml.bind.DatatypeConverter;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -65,6 +64,7 @@ import com.netflix.msl.keyx.DiffieHellmanExchange.ResponseData;
 import com.netflix.msl.keyx.KeyExchangeFactory.KeyExchangeData;
 import com.netflix.msl.test.ExpectedMslException;
 import com.netflix.msl.tokens.MasterToken;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.JsonUtils;
 import com.netflix.msl.util.MockAuthenticationUtils;
 import com.netflix.msl.util.MockMslContext;
@@ -183,7 +183,7 @@ public class DiffieHellmanExchangeSuite {
             assertEquals(KeyExchangeScheme.DIFFIE_HELLMAN.toString(), jo.getString(KEY_SCHEME));
             final JSONObject keydata = jo.getJSONObject(KEY_KEYDATA);
             assertEquals(PARAMETERS_ID, keydata.getString(KEY_PARAMETERS_ID));
-            assertArrayEquals(prependNullByte(REQUEST_PUBLIC_KEY.toByteArray()), DatatypeConverter.parseBase64Binary(keydata.getString(KEY_PUBLIC_KEY)));
+            assertArrayEquals(prependNullByte(REQUEST_PUBLIC_KEY.toByteArray()), Base64.decode(keydata.getString(KEY_PUBLIC_KEY)));
         }
         
         @Test
@@ -228,7 +228,7 @@ public class DiffieHellmanExchangeSuite {
             new RequestData(keydata);
         }
         
-        // This test will not fail because DatatypeConverter.parseBase64Binary()
+        // This test will not fail because Base64.decode()
         // does not error when given invalid Base64-encoded data.
         @Ignore
         @Test
@@ -346,7 +346,7 @@ public class DiffieHellmanExchangeSuite {
             assertEquals(MASTER_TOKEN, masterToken);
             final JSONObject keydata = jo.getJSONObject(KEY_KEYDATA);
             assertEquals(PARAMETERS_ID, keydata.getString(KEY_PARAMETERS_ID));
-            assertArrayEquals(prependNullByte(RESPONSE_PUBLIC_KEY.toByteArray()), DatatypeConverter.parseBase64Binary(keydata.getString(KEY_PUBLIC_KEY)));
+            assertArrayEquals(prependNullByte(RESPONSE_PUBLIC_KEY.toByteArray()), Base64.decode(keydata.getString(KEY_PUBLIC_KEY)));
         }
         
         @Test
@@ -391,7 +391,7 @@ public class DiffieHellmanExchangeSuite {
             new ResponseData(MASTER_TOKEN, keydata);
         }
 
-        // This test will not fail because DatatypeConverter.parseBase64Binary()
+        // This test will not fail because Base64.decode()
         // does not error when given invalid Base64-encoded data.
         @Ignore
         @Test

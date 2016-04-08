@@ -384,7 +384,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
 
                 RequestData$parse(keydata);
             };
-            expect(f).toThrow(new MslKeyExchangeException(MslError.KEYX_WRAPPING_KEY_MISSING));
+            expect(f).toThrow(new MslKeyExchangeException(MslError.KEYX_INVALID_WRAPDATA));
         });
         
         it("equals mechanism", function() {

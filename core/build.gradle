@@ -26,6 +26,7 @@ task javadoc_public(type: Javadoc) {
     ]
     source = sourceSets.main.allJava
     includes = [
+        "**/Base64.java",
         "**/EntityAuthenticationData.java",
         "**/EntityAuthenticationFactory.java",
         "**/EntityAuthenticationScheme.java",

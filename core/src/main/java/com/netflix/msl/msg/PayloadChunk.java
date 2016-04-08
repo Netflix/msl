@@ -17,8 +17,6 @@ package com.netflix.msl.msg;
 
 import java.util.Arrays;
 
-import javax.xml.bind.DatatypeConverter;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONString;
@@ -32,6 +30,7 @@ import com.netflix.msl.MslException;
 import com.netflix.msl.MslInternalException;
 import com.netflix.msl.MslMessageException;
 import com.netflix.msl.crypto.ICryptoContext;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslUtils;
 
 /**
@@ -151,7 +150,7 @@ public class PayloadChunk implements JSONString {
             payloadJO.put(KEY_MESSAGE_ID, this.messageId);
             if (this.endofmsg) payloadJO.put(KEY_END_OF_MESSAGE, this.endofmsg);
             if (this.compressionAlgo != null) payloadJO.put(KEY_COMPRESSION_ALGORITHM, this.compressionAlgo.name());
-            payloadJO.put(KEY_DATA, DatatypeConverter.printBase64Binary(payloadData));
+            payloadJO.put(KEY_DATA, Base64.encode(payloadData));
             final byte[] plaintext = payloadJO.toString().getBytes(MslConstants.DEFAULT_CHARSET);
             this.payload = cryptoContext.encrypt(plaintext);
         } catch (final JSONException e) {
@@ -181,12 +180,12 @@ public class PayloadChunk implements JSONString {
         // Verify the JSON representation.
         try {
             try {
-                payload = DatatypeConverter.parseBase64Binary(payloadChunkJO.getString(KEY_PAYLOAD));
+                payload = Base64.decode(payloadChunkJO.getString(KEY_PAYLOAD));
             } catch (final IllegalArgumentException e) {
                 throw new MslMessageException(MslError.PAYLOAD_INVALID, "payload chunk " + payloadChunkJO.toString(), e);
             }
             try {
-                signature = DatatypeConverter.parseBase64Binary(payloadChunkJO.getString(KEY_SIGNATURE));
+                signature = Base64.decode(payloadChunkJO.getString(KEY_SIGNATURE));
             } catch (final IllegalArgumentException e) {
                 throw new MslMessageException(MslError.PAYLOAD_SIGNATURE_INVALID, "payload chunk " + payloadChunkJO.toString(), e);
             }
@@ -221,7 +220,7 @@ public class PayloadChunk implements JSONString {
             final String payloadData = payloadJO.getString(KEY_DATA);
             byte[] compressedData;
             try {
-                compressedData = DatatypeConverter.parseBase64Binary(payloadData);
+                compressedData = Base64.decode(payloadData);
             } catch (final IllegalArgumentException e) {
                 // Fall through to the error handling below.
                 compressedData = null;
@@ -290,8 +289,8 @@ public class PayloadChunk implements JSONString {
     public String toJSONString() {
         try {
             final JSONObject jsonObj = new JSONObject();
-            jsonObj.put(KEY_PAYLOAD, DatatypeConverter.printBase64Binary(payload));
-            jsonObj.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+            jsonObj.put(KEY_PAYLOAD, Base64.encode(payload));
+            jsonObj.put(KEY_SIGNATURE, Base64.encode(signature));
             return jsonObj.toString();
         } catch (final JSONException e) {
             throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);

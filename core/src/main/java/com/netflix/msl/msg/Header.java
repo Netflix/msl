@@ -17,8 +17,6 @@ package com.netflix.msl.msg;
 
 import java.util.Map;
 
-import javax.xml.bind.DatatypeConverter;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONString;
@@ -34,6 +32,7 @@ import com.netflix.msl.MslUserAuthException;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.tokens.MasterToken;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -125,7 +124,7 @@ public abstract class Header implements JSONString {
                 ? new MasterToken(ctx, headerJO.getJSONObject(HeaderKeys.KEY_MASTER_TOKEN))
                 : null;
             try {
-                signature = DatatypeConverter.parseBase64Binary(headerJO.getString(HeaderKeys.KEY_SIGNATURE));
+                signature = Base64.decode(headerJO.getString(HeaderKeys.KEY_SIGNATURE));
             } catch (final IllegalArgumentException e) {
                 throw new MslMessageException(MslError.HEADER_SIGNATURE_INVALID, "header/errormsg " + headerJO.toString());
             }

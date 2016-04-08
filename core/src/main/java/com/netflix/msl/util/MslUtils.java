@@ -66,7 +66,7 @@ public class MslUtils {
                     throw new MslException(MslError.UNSUPPORTED_COMPRESSION, compressionAlgo.name());
             }
         } catch (final IOException e) {
-            final String dataB64 = DatatypeConverter.printBase64Binary(data);
+            final String dataB64 = Base64.encode(data);
             throw new MslException(MslError.COMPRESSION_ERROR, "algo " + compressionAlgo.name() + " data " + dataB64, e);
         }
     }
@@ -116,7 +116,7 @@ public class MslUtils {
                     throw new MslException(MslError.UNSUPPORTED_COMPRESSION, compressionAlgo.name());
             }
         } catch (final IOException e) {
-            final String dataB64 = DatatypeConverter.printBase64Binary(data);
+            final String dataB64 = Base64.encode(data);
             throw new MslException(MslError.UNCOMPRESSION_ERROR, "algo " + compressionAlgo.name() + " data " + dataB64, e);
         }
     }

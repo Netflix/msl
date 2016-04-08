@@ -62,7 +62,7 @@ public class JsonUtils {
      */
     public static String b64urlEncode(final byte[] data) {
         // Perform a standard Base64 encode.
-        final String padded = DatatypeConverter.printBase64Binary(data);
+        final String padded = Base64.encode(data);
         
         // Replace standard characters with URL-safe characters.
         final String modified = padded.replace(CHAR_PLUS, CHAR_MINUS).replace(CHAR_SLASH, CHAR_UNDERSCORE);
@@ -86,11 +86,11 @@ public class JsonUtils {
         try {
             final int toPad = 4 - (modified.length() % 4);
             if (toPad == 0 || toPad == 4)
-                return DatatypeConverter.parseBase64Binary(modified);
+                return Base64.decode(modified);
             final StringBuilder padded = new StringBuilder(modified);
             for (int i = 0; i < toPad; ++i)
                 padded.append(CHAR_EQUALS);
-            return DatatypeConverter.parseBase64Binary(padded.toString());
+            return Base64.decode(padded.toString());
         } catch (final IllegalArgumentException e) {
             return null;
         }

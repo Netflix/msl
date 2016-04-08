@@ -19,7 +19,6 @@ import java.util.Date;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import javax.xml.bind.DatatypeConverter;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -27,14 +26,15 @@ import org.json.JSONString;
 
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslConstants.EncryptionAlgo;
+import com.netflix.msl.MslConstants.SignatureAlgo;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslException;
 import com.netflix.msl.MslInternalException;
-import com.netflix.msl.MslConstants.SignatureAlgo;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.crypto.JcaAlgorithm;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -206,9 +206,9 @@ public class MasterToken implements JSONString {
         final JSONObject sessionData = new JSONObject();
         try {
             // Encode session keys and algorithm names.
-            final String encryptionKeyB64 = DatatypeConverter.printBase64Binary(this.encryptionKey.getEncoded());
+            final String encryptionKeyB64 = Base64.encode(this.encryptionKey.getEncoded());
             final EncryptionAlgo encryptionAlgo = EncryptionAlgo.fromString(this.encryptionKey.getAlgorithm());
-            final String signatureKeyB64 = DatatypeConverter.printBase64Binary(this.signatureKey.getEncoded());
+            final String signatureKeyB64 = Base64.encode(this.signatureKey.getEncoded());
             final SignatureAlgo signatureAlgo = SignatureAlgo.fromString(this.signatureKey.getAlgorithm());
             
             // Create session data.
@@ -238,7 +238,7 @@ public class MasterToken implements JSONString {
             tokenDataJO.put(KEY_EXPIRATION, this.expiration);
             tokenDataJO.put(KEY_SEQUENCE_NUMBER, this.sequenceNumber);
             tokenDataJO.put(KEY_SERIAL_NUMBER, this.serialNumber);
-            tokenDataJO.put(KEY_SESSIONDATA, DatatypeConverter.printBase64Binary(ciphertext));
+            tokenDataJO.put(KEY_SESSIONDATA, Base64.encode(ciphertext));
             this.tokendata = tokenDataJO.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         } catch (final JSONException e) {
             throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, "mastertokendata", e);
@@ -272,14 +272,14 @@ public class MasterToken implements JSONString {
         // Verify the JSON representation.
         try {
             try {
-                tokendata = DatatypeConverter.parseBase64Binary(masterTokenJO.getString(KEY_TOKENDATA));
+                tokendata = Base64.decode(masterTokenJO.getString(KEY_TOKENDATA));
             } catch (final IllegalArgumentException e) {
                 throw new MslEncodingException(MslError.MASTERTOKEN_TOKENDATA_INVALID, "mastertoken " + masterTokenJO.toString(), e);
             }
             if (tokendata == null || tokendata.length == 0)
                 throw new MslEncodingException(MslError.MASTERTOKEN_TOKENDATA_MISSING, "mastertoken " + masterTokenJO.toString());
             try {
-                signature = DatatypeConverter.parseBase64Binary(masterTokenJO.getString(KEY_SIGNATURE));
+                signature = Base64.decode(masterTokenJO.getString(KEY_SIGNATURE));
             } catch (final IllegalArgumentException e) {
                 throw new MslEncodingException(MslError.MASTERTOKEN_SIGNATURE_INVALID, "mastertoken " + masterTokenJO.toString(), e);
             }
@@ -304,7 +304,7 @@ public class MasterToken implements JSONString {
                 throw new MslException(MslError.MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "mastertokendata " + tokenDataJson);
             final byte[] ciphertext;
             try {
-                ciphertext = DatatypeConverter.parseBase64Binary(tokenDataJO.getString(KEY_SESSIONDATA));
+                ciphertext = Base64.decode(tokenDataJO.getString(KEY_SESSIONDATA));
             } catch (final IllegalArgumentException e) {
                 throw new MslEncodingException(MslError.MASTERTOKEN_SESSIONDATA_INVALID, tokenDataJO.getString(KEY_SESSIONDATA));
             }
@@ -346,8 +346,8 @@ public class MasterToken implements JSONString {
             
             // Reconstruct keys.
             try {
-                encryptionKey = new SecretKeySpec(DatatypeConverter.parseBase64Binary(encryptionB64), jcaEncryptionAlgo);
-                signatureKey = new SecretKeySpec(DatatypeConverter.parseBase64Binary(signatureB64), jcaSignatureAlgo);
+                encryptionKey = new SecretKeySpec(Base64.decode(encryptionB64), jcaEncryptionAlgo);
+                signatureKey = new SecretKeySpec(Base64.decode(signatureB64), jcaSignatureAlgo);
             } catch (final IllegalArgumentException e) {
                 throw new MslCryptoException(MslError.MASTERTOKEN_KEY_CREATION_ERROR, e);
             }
@@ -557,8 +557,8 @@ public class MasterToken implements JSONString {
     public String toJSONString() {
         try {
             final JSONObject jsonObj = new JSONObject();
-            jsonObj.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendata));
-            jsonObj.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+            jsonObj.put(KEY_TOKENDATA, Base64.encode(tokendata));
+            jsonObj.put(KEY_SIGNATURE, Base64.encode(signature));
             return jsonObj.toString();
         } catch (final JSONException e) {
             throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);
@@ -595,7 +595,7 @@ public class MasterToken implements JSONString {
             
             final JSONObject jsonObj = new JSONObject();
             jsonObj.put(KEY_TOKENDATA, tokendataJO);
-            jsonObj.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+            jsonObj.put(KEY_SIGNATURE, Base64.encode(signature));
             return jsonObj.toString();
         } catch (final JSONException e) {
             throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);

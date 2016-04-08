@@ -70,7 +70,7 @@ public class JsonUtilsTest {
     private static final String randomString(final Random random) {
         final byte[] raw = new byte[random.nextInt(MAX_STRING_CHARS) + 1];
         random.nextBytes(raw);
-        return DatatypeConverter.printBase64Binary(raw);
+        return Base64.encode(raw);
     }
     
     /**

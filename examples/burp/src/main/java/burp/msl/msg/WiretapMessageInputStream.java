@@ -20,8 +20,6 @@ import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.Set;
 
-import javax.xml.bind.DatatypeConverter;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -39,6 +37,7 @@ import com.netflix.msl.MslUserIdTokenException;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.keyx.KeyRequestData;
 import com.netflix.msl.msg.MessageInputStream;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -92,7 +91,7 @@ public class WiretapMessageInputStream extends MessageInputStream {
      *         authentication data or a master token, or a token is improperly
      *         bound to another token.
      */
-    public WiretapMessageInputStream(MslContext ctx, InputStream source, Charset charset, Set<KeyRequestData> keyRequestData, Map<String, ICryptoContext> cryptoContexts) throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslUserAuthException, MslMessageException, MslKeyExchangeException, MslMasterTokenException, MslUserIdTokenException, MslMessageException, MslException {
+    public WiretapMessageInputStream(final MslContext ctx, final InputStream source, final Charset charset, final Set<KeyRequestData> keyRequestData, final Map<String, ICryptoContext> cryptoContexts) throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslUserAuthException, MslMessageException, MslKeyExchangeException, MslMasterTokenException, MslUserIdTokenException, MslMessageException, MslException {
         super(ctx, source, charset, keyRequestData, cryptoContexts);
     }
     
@@ -116,13 +115,13 @@ public class WiretapMessageInputStream extends MessageInputStream {
         byte[] payload;
         try {
             try {
-                payload = DatatypeConverter.parseBase64Binary(payloadChunk.getString(KEY_PAYLOAD));
+                payload = Base64.decode(payloadChunk.getString(KEY_PAYLOAD));
             } catch (final IllegalArgumentException e) {
                 throw new MslMessageException(MslError.PAYLOAD_INVALID, "payload chunk " + payloadChunk.toString(), e);
             }
             final byte[] signature;
             try {
-                signature = DatatypeConverter.parseBase64Binary(payloadChunk.getString(KEY_SIGNATURE));
+                signature = Base64.decode(payloadChunk.getString(KEY_SIGNATURE));
             } catch (final IllegalArgumentException e) {
                 throw new MslMessageException(MslError.PAYLOAD_SIGNATURE_INVALID, "payload chunk " + payloadChunk.toString(), e);
             }
@@ -140,7 +139,7 @@ public class WiretapMessageInputStream extends MessageInputStream {
         try {
             final JSONObject payloadJO = new JSONObject(payloadJson);
             return payloadJO;
-        } catch (JSONException e) {
+        } catch (final JSONException e) {
             throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "payload chunk payload " + payloadJson, e);
         }
     }

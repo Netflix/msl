@@ -17,8 +17,6 @@ package com.netflix.msl.tokens;
 
 import java.util.Date;
 
-import javax.xml.bind.DatatypeConverter;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONString;
@@ -30,6 +28,7 @@ import com.netflix.msl.MslError;
 import com.netflix.msl.MslException;
 import com.netflix.msl.MslInternalException;
 import com.netflix.msl.crypto.ICryptoContext;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -173,7 +172,7 @@ public class UserIdToken implements JSONString {
                 tokenDataJO.put(KEY_EXPIRATION, this.expiration);
                 tokenDataJO.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, this.mtSerialNumber);
                 tokenDataJO.put(KEY_SERIAL_NUMBER, this.serialNumber);
-                tokenDataJO.put(KEY_USERDATA, DatatypeConverter.printBase64Binary(ciphertext));
+                tokenDataJO.put(KEY_USERDATA, Base64.encode(ciphertext));
                 this.tokendata = tokenDataJO.toString().getBytes(MslConstants.DEFAULT_CHARSET);
             } catch (final JSONException e) {
                 throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, "usertokendata", e).setMasterToken(masterToken);
@@ -215,14 +214,14 @@ public class UserIdToken implements JSONString {
         // Verify the JSON representation.
         try {
             try {
-                tokendata = DatatypeConverter.parseBase64Binary(userIdTokenJO.getString(KEY_TOKENDATA));
+                tokendata = Base64.decode(userIdTokenJO.getString(KEY_TOKENDATA));
             } catch (final IllegalArgumentException e) {
                 throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_INVALID, "useridtoken " + userIdTokenJO.toString(), e).setMasterToken(masterToken);
             }
             if (tokendata == null || tokendata.length == 0)
                 throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_MISSING, "useridtoken " + userIdTokenJO.toString()).setMasterToken(masterToken);
             try {
-                signature = DatatypeConverter.parseBase64Binary(userIdTokenJO.getString(KEY_SIGNATURE));
+                signature = Base64.decode(userIdTokenJO.getString(KEY_SIGNATURE));
             } catch (final IllegalArgumentException e) {
                 throw new MslEncodingException(MslError.USERIDTOKEN_SIGNATURE_INVALID, "useridtoken " + userIdTokenJO.toString(), e).setMasterToken(masterToken);
             }
@@ -247,7 +246,7 @@ public class UserIdToken implements JSONString {
                 throw new MslException(MslError.USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokenDataJson).setMasterToken(masterToken);
             final byte[] ciphertext;
             try {
-                ciphertext = DatatypeConverter.parseBase64Binary(tokenDataJO.getString(KEY_USERDATA));
+                ciphertext = Base64.decode(tokenDataJO.getString(KEY_USERDATA));
             } catch (final IllegalArgumentException e) {
                 throw new MslException(MslError.USERIDTOKEN_USERDATA_INVALID, tokenDataJO.getString(KEY_USERDATA)).setMasterToken(masterToken);
             }
@@ -440,8 +439,8 @@ public class UserIdToken implements JSONString {
     public final String toJSONString() {
         try {
             final JSONObject jsonObj = new JSONObject();
-            jsonObj.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendata));
-            jsonObj.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+            jsonObj.put(KEY_TOKENDATA, Base64.encode(tokendata));
+            jsonObj.put(KEY_SIGNATURE, Base64.encode(signature));
             return jsonObj.toString();
         } catch (final JSONException e) {
             throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);
@@ -473,7 +472,7 @@ public class UserIdToken implements JSONString {
             
             final JSONObject jsonObj = new JSONObject();
             jsonObj.put(KEY_TOKENDATA, tokendataJO);
-            jsonObj.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+            jsonObj.put(KEY_SIGNATURE, Base64.encode(signature));
             return jsonObj.toString();
         } catch (final JSONException e) {
             throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);

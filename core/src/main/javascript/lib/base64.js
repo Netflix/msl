@@ -27,7 +27,7 @@ var base64$encode,
         charNumber3 = { '=': 0, '.': 0 },
         charNumber4 = { '=': 0, '.': 0 },
         prepRegex = /\s*/g,
-        checkRegex = new RegExp('^[' + map + '_-]*[' + padchar + ']{0,2}$');
+        checkRegex = new RegExp('^([A-Za-z0-9+/_-]{4})*([A-Za-z0-9+/_-]{4}|[A-Za-z0-9+/_-]{3}=|[A-Za-z0-9+/_-]{2}==)?$');
 
     var i = map.length;
     while (i--) {
@@ -112,7 +112,7 @@ var base64$encode,
      *        should be used (http://tools.ietf.org/html/rfc4648#section-5)
      * @return {Uint8Array} the decoded data.
      * @throws Error if the Base64 string is the wrong length or is not Base64
-     *         encoded data.
+     *         encoded data. The empty string is considered valid.
      */
     base64$decode = function (s, urlSafe) {
         s = s.replace(prepRegex, '');

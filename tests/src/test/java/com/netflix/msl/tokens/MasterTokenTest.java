@@ -26,7 +26,6 @@ import java.io.UnsupportedEncodingException;
 import java.util.Date;
 
 import javax.crypto.SecretKey;
-import javax.xml.bind.DatatypeConverter;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -46,6 +45,7 @@ import com.netflix.msl.crypto.JcaAlgorithm;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.entityauth.MockPresharedAuthenticationFactory;
 import com.netflix.msl.test.ExpectedMslException;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.JsonUtils;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslContext;
@@ -208,11 +208,11 @@ public class MasterTokenTest {
         final String jsonString = masterToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
         tokendataJo.put(KEY_EXPIRATION, System.currentTimeMillis() / MILLISECONDS_PER_SECOND - 1);
         tokendataJo.put(KEY_RENEWAL_WINDOW, System.currentTimeMillis() / MILLISECONDS_PER_SECOND);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
         
         new MasterToken(ctx, jo);
     }
@@ -249,9 +249,9 @@ public class MasterTokenTest {
         final String jsonString = masterToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         ++tokendata[0];
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendata));
+        jo.put(KEY_TOKENDATA, Base64.encode(tokendata));
         
         new MasterToken(ctx, jo);
     }
@@ -279,10 +279,10 @@ public class MasterTokenTest {
         final String jsonString = masterToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
         assertNotNull(tokendataJo.remove(KEY_RENEWAL_WINDOW));
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
         
         new MasterToken(ctx, jo);
     }
@@ -296,10 +296,10 @@ public class MasterTokenTest {
         final String jsonString = masterToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
         tokendataJo.put(KEY_RENEWAL_WINDOW, "x");
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
         
         new MasterToken(ctx, jo);
     }
@@ -313,10 +313,10 @@ public class MasterTokenTest {
         final String jsonString = masterToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
         assertNotNull(tokendataJo.remove(KEY_EXPIRATION));
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
         
         new MasterToken(ctx, jo);
     }
@@ -330,10 +330,10 @@ public class MasterTokenTest {
         final String jsonString = masterToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
         tokendataJo.put(KEY_EXPIRATION, "x");
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
         
         new MasterToken(ctx, jo);
     }
@@ -347,10 +347,10 @@ public class MasterTokenTest {
         final String jsonString = masterToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
         assertNotNull(tokendataJo.remove(KEY_SEQUENCE_NUMBER));
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
         
         new MasterToken(ctx, jo);
     }
@@ -364,10 +364,10 @@ public class MasterTokenTest {
         final String jsonString = masterToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
         tokendataJo.put(KEY_SEQUENCE_NUMBER, "x");
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
         
         new MasterToken(ctx, jo);
     }
@@ -381,10 +381,10 @@ public class MasterTokenTest {
         final String jsonString = masterToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
         tokendataJo.put(KEY_SEQUENCE_NUMBER, -1);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
         
         new MasterToken(ctx, jo);
     }
@@ -398,10 +398,10 @@ public class MasterTokenTest {
         final String jsonString = masterToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
         tokendataJo.put(KEY_SEQUENCE_NUMBER, MslConstants.MAX_LONG_VALUE + 1);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
         
         new MasterToken(ctx, jo);
     }
@@ -415,10 +415,10 @@ public class MasterTokenTest {
         final String jsonString = masterToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
         assertNotNull(tokendataJo.remove(KEY_SERIAL_NUMBER));
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
         
         new MasterToken(ctx, jo);
     }
@@ -432,10 +432,10 @@ public class MasterTokenTest {
         final String jsonString = masterToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
         tokendataJo.put(KEY_SERIAL_NUMBER, "x");
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
         
         new MasterToken(ctx, jo);
     }
@@ -449,10 +449,10 @@ public class MasterTokenTest {
         final String jsonString = masterToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
         tokendataJo.put(KEY_SERIAL_NUMBER, -1);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
         
         new MasterToken(ctx, jo);
     }
@@ -466,10 +466,10 @@ public class MasterTokenTest {
         final String jsonString = masterToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
         tokendataJo.put(KEY_SERIAL_NUMBER, MslConstants.MAX_LONG_VALUE + 1);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
         
         new MasterToken(ctx, jo);
     }
@@ -483,10 +483,10 @@ public class MasterTokenTest {
         final String jsonString = masterToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
         assertNotNull(tokendataJo.remove(KEY_SESSIONDATA));
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
         
         new MasterToken(ctx, jo);
     }
@@ -494,21 +494,21 @@ public class MasterTokenTest {
     @Test
     public void invalidSessiondata() throws UnsupportedEncodingException, JSONException, MslException {
         thrown.expect(MslException.class);
-        thrown.expectMslError(MslError.MASTERTOKEN_SESSIONDATA_MISSING);
+        thrown.expectMslError(MslError.MASTERTOKEN_SESSIONDATA_INVALID);
 
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
         final String jsonString = masterToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
         tokendataJo.put(KEY_SESSIONDATA, "x");
         
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
         final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         new MasterToken(ctx, jo);
     }
@@ -522,16 +522,16 @@ public class MasterTokenTest {
         final String jsonString = masterToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
         
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
         final byte[] ciphertext = new byte[0];
-        tokendataJo.put(KEY_SESSIONDATA, DatatypeConverter.printBase64Binary(ciphertext));
+        tokendataJo.put(KEY_SESSIONDATA, Base64.encode(ciphertext));
         final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         new MasterToken(ctx, jo);
     }
@@ -543,17 +543,17 @@ public class MasterTokenTest {
         final JSONObject jo = new JSONObject(jsonString);
         
         // This is testing session data that is verified but corrupt.
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] sessiondata = DatatypeConverter.parseBase64Binary(tokendataJo.getString(KEY_SESSIONDATA));
+        final byte[] sessiondata = Base64.decode(tokendataJo.getString(KEY_SESSIONDATA));
         ++sessiondata[sessiondata.length-1];
-        tokendataJo.put(KEY_SESSIONDATA, DatatypeConverter.printBase64Binary(sessiondata));
+        tokendataJo.put(KEY_SESSIONDATA, Base64.encode(sessiondata));
         
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
         final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         new MasterToken(ctx, jo);
     }
@@ -564,9 +564,9 @@ public class MasterTokenTest {
         final String jsonString = masterToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] signature = DatatypeConverter.parseBase64Binary(jo.getString(KEY_SIGNATURE));
+        final byte[] signature = Base64.decode(jo.getString(KEY_SIGNATURE));
         ++signature[0];
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         final MasterToken joMasterToken = new MasterToken(ctx, jo);
         assertFalse(joMasterToken.isDecrypted());
@@ -600,23 +600,23 @@ public class MasterTokenTest {
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
         
         // Before modifying the session data we need to decrypt it.
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(tokendataJo.getString(KEY_SESSIONDATA));
+        final byte[] ciphertext = Base64.decode(tokendataJo.getString(KEY_SESSIONDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext);
         final JSONObject sessiondataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
         
         // After modifying the session data we need to encrypt it.
         sessiondataJo.put(KEY_ISSUER_DATA, "x");
         final byte[] sessiondata = cryptoContext.encrypt(sessiondataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SESSIONDATA, DatatypeConverter.printBase64Binary(sessiondata));
+        tokendataJo.put(KEY_SESSIONDATA, Base64.encode(sessiondata));
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
         final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         new MasterToken(ctx, jo);
     }
@@ -633,23 +633,23 @@ public class MasterTokenTest {
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
         
         // Before modifying the session data we need to decrypt it.
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(tokendataJo.getString(KEY_SESSIONDATA));
+        final byte[] ciphertext = Base64.decode(tokendataJo.getString(KEY_SESSIONDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext);
         final JSONObject sessiondataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
         
         // After modifying the session data we need to encrypt it.
         assertNotNull(sessiondataJo.remove(KEY_IDENTITY));
         final byte[] sessiondata = cryptoContext.encrypt(sessiondataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SESSIONDATA, DatatypeConverter.printBase64Binary(sessiondata));
+        tokendataJo.put(KEY_SESSIONDATA, Base64.encode(sessiondata));
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
         final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         new MasterToken(ctx, jo);
     }
@@ -666,23 +666,23 @@ public class MasterTokenTest {
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
         
         // Before modifying the session data we need to decrypt it.
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(tokendataJo.getString(KEY_SESSIONDATA));
+        final byte[] ciphertext = Base64.decode(tokendataJo.getString(KEY_SESSIONDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext);
         final JSONObject sessiondataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
         
         // After modifying the session data we need to encrypt it.
         assertNotNull(sessiondataJo.remove(KEY_ENCRYPTION_KEY));
         final byte[] sessiondata = cryptoContext.encrypt(sessiondataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SESSIONDATA, DatatypeConverter.printBase64Binary(sessiondata));
+        tokendataJo.put(KEY_SESSIONDATA, Base64.encode(sessiondata));
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
         final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         new MasterToken(ctx, jo);
     }
@@ -699,23 +699,23 @@ public class MasterTokenTest {
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
         
         // Before modifying the session data we need to decrypt it.
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(tokendataJo.getString(KEY_SESSIONDATA));
+        final byte[] ciphertext = Base64.decode(tokendataJo.getString(KEY_SESSIONDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext);
         final JSONObject sessiondataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
         
         // After modifying the session data we need to encrypt it.
         sessiondataJo.put(KEY_ENCRYPTION_KEY, "");
         final byte[] sessiondata = cryptoContext.encrypt(sessiondataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SESSIONDATA, DatatypeConverter.printBase64Binary(sessiondata));
+        tokendataJo.put(KEY_SESSIONDATA, Base64.encode(sessiondata));
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
         final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         new MasterToken(ctx, jo);
     }
@@ -729,23 +729,23 @@ public class MasterTokenTest {
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
         
         // Before modifying the session data we need to decrypt it.
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(tokendataJo.getString(KEY_SESSIONDATA));
+        final byte[] ciphertext = Base64.decode(tokendataJo.getString(KEY_SESSIONDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext);
         final JSONObject sessiondataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
         
         // After modifying the session data we need to encrypt it.
         assertNotNull(sessiondataJo.remove(KEY_ENCRYPTION_ALGORITHM));
         final byte[] sessiondata = cryptoContext.encrypt(sessiondataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SESSIONDATA, DatatypeConverter.printBase64Binary(sessiondata));
+        tokendataJo.put(KEY_SESSIONDATA, Base64.encode(sessiondata));
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
         final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         // Confirm default algorithm.
         final MasterToken joMasterToken = new MasterToken(ctx, jo);
@@ -765,23 +765,23 @@ public class MasterTokenTest {
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
         
         // Before modifying the session data we need to decrypt it.
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(tokendataJo.getString(KEY_SESSIONDATA));
+        final byte[] ciphertext = Base64.decode(tokendataJo.getString(KEY_SESSIONDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext);
         final JSONObject sessiondataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
         
         // After modifying the session data we need to encrypt it.
         sessiondataJo.put(KEY_ENCRYPTION_ALGORITHM, "x");
         final byte[] sessiondata = cryptoContext.encrypt(sessiondataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SESSIONDATA, DatatypeConverter.printBase64Binary(sessiondata));
+        tokendataJo.put(KEY_SESSIONDATA, Base64.encode(sessiondata));
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
         final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         new MasterToken(ctx, jo);
     }
@@ -795,23 +795,23 @@ public class MasterTokenTest {
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
         
         // Before modifying the session data we need to decrypt it.
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(tokendataJo.getString(KEY_SESSIONDATA));
+        final byte[] ciphertext = Base64.decode(tokendataJo.getString(KEY_SESSIONDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext);
         final JSONObject sessiondataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
         
         // After modifying the session data we need to encrypt it.
         assertNotNull(sessiondataJo.remove(KEY_HMAC_KEY));
         final byte[] sessiondata = cryptoContext.encrypt(sessiondataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SESSIONDATA, DatatypeConverter.printBase64Binary(sessiondata));
+        tokendataJo.put(KEY_SESSIONDATA, Base64.encode(sessiondata));
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
         final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         // Confirm signature key.
         final MasterToken joMasterToken = new MasterToken(ctx, jo);
@@ -828,23 +828,23 @@ public class MasterTokenTest {
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
         
         // Before modifying the session data we need to decrypt it.
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(tokendataJo.getString(KEY_SESSIONDATA));
+        final byte[] ciphertext = Base64.decode(tokendataJo.getString(KEY_SESSIONDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext);
         final JSONObject sessiondataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
         
         // After modifying the session data we need to encrypt it.
         assertNotNull(sessiondataJo.remove(KEY_SIGNATURE_KEY));
         final byte[] sessiondata = cryptoContext.encrypt(sessiondataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SESSIONDATA, DatatypeConverter.printBase64Binary(sessiondata));
+        tokendataJo.put(KEY_SESSIONDATA, Base64.encode(sessiondata));
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
         final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         // Confirm signature key.
         final MasterToken joMasterToken = new MasterToken(ctx, jo);
@@ -861,23 +861,23 @@ public class MasterTokenTest {
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
         
         // Before modifying the session data we need to decrypt it.
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(tokendataJo.getString(KEY_SESSIONDATA));
+        final byte[] ciphertext = Base64.decode(tokendataJo.getString(KEY_SESSIONDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext);
         final JSONObject sessiondataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
         
         // After modifying the session data we need to encrypt it.
         assertNotNull(sessiondataJo.remove(KEY_SIGNATURE_ALGORITHM));
         final byte[] sessiondata = cryptoContext.encrypt(sessiondataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SESSIONDATA, DatatypeConverter.printBase64Binary(sessiondata));
+        tokendataJo.put(KEY_SESSIONDATA, Base64.encode(sessiondata));
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
         final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         // Confirm default algorithm.
         final MasterToken joMasterToken = new MasterToken(ctx, jo);
@@ -897,23 +897,23 @@ public class MasterTokenTest {
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
         
         // Before modifying the session data we need to decrypt it.
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(tokendataJo.getString(KEY_SESSIONDATA));
+        final byte[] ciphertext = Base64.decode(tokendataJo.getString(KEY_SESSIONDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext);
         final JSONObject sessiondataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
         
         // After modifying the session data we need to encrypt it.
         sessiondataJo.put(KEY_SIGNATURE_ALGORITHM, "x");
         final byte[] sessiondata = cryptoContext.encrypt(sessiondataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SESSIONDATA, DatatypeConverter.printBase64Binary(sessiondata));
+        tokendataJo.put(KEY_SESSIONDATA, Base64.encode(sessiondata));
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
         final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         new MasterToken(ctx, jo);
     }
@@ -930,9 +930,9 @@ public class MasterTokenTest {
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
         
         // Before modifying the session data we need to decrypt it.
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(tokendataJo.getString(KEY_SESSIONDATA));
+        final byte[] ciphertext = Base64.decode(tokendataJo.getString(KEY_SESSIONDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext);
         final JSONObject sessiondataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
         
@@ -940,14 +940,14 @@ public class MasterTokenTest {
         assertNotNull(sessiondataJo.remove(KEY_HMAC_KEY));
         assertNotNull(sessiondataJo.remove(KEY_SIGNATURE_KEY));
         final byte[] sessiondata = cryptoContext.encrypt(sessiondataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SESSIONDATA, DatatypeConverter.printBase64Binary(sessiondata));
+        tokendataJo.put(KEY_SESSIONDATA, Base64.encode(sessiondata));
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
         final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         new MasterToken(ctx, jo);
     }
@@ -964,9 +964,9 @@ public class MasterTokenTest {
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
         
         // Before modifying the session data we need to decrypt it.
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(tokendataJo.getString(KEY_SESSIONDATA));
+        final byte[] ciphertext = Base64.decode(tokendataJo.getString(KEY_SESSIONDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext);
         final JSONObject sessiondataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
         
@@ -974,14 +974,14 @@ public class MasterTokenTest {
         sessiondataJo.put(KEY_HMAC_KEY, "");
         sessiondataJo.put(KEY_SIGNATURE_KEY, "");
         final byte[] sessiondata = cryptoContext.encrypt(sessiondataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SESSIONDATA, DatatypeConverter.printBase64Binary(sessiondata));
+        tokendataJo.put(KEY_SESSIONDATA, Base64.encode(sessiondata));
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
         final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         new MasterToken(ctx, jo);
     }
@@ -1123,9 +1123,9 @@ public class MasterTokenTest {
         
         final String json = masterToken.toJSONString();
         final JSONObject jo = new JSONObject(json);
-        final byte[] signature = DatatypeConverter.parseBase64Binary(jo.getString("signature"));
+        final byte[] signature = Base64.decode(jo.getString("signature"));
         ++signature[1];
-        jo.put("signature", DatatypeConverter.printBase64Binary(signature));
+        jo.put("signature", Base64.encode(signature));
         final MasterToken untrustedMasterToken = new MasterToken(ctx, jo);
         
         assertTrue(masterToken.equals(untrustedMasterToken));

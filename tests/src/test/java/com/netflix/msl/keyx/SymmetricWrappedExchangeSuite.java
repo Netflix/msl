@@ -28,7 +28,6 @@ import java.util.Date;
 import java.util.Random;
 
 import javax.crypto.SecretKey;
-import javax.xml.bind.DatatypeConverter;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -61,6 +60,7 @@ import com.netflix.msl.keyx.SymmetricWrappedExchange.RequestData;
 import com.netflix.msl.keyx.SymmetricWrappedExchange.ResponseData;
 import com.netflix.msl.test.ExpectedMslException;
 import com.netflix.msl.tokens.MasterToken;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.JsonUtils;
 import com.netflix.msl.util.MockAuthenticationUtils;
 import com.netflix.msl.util.MockMslContext;
@@ -270,8 +270,8 @@ public class SymmetricWrappedExchangeSuite {
             assertEquals(PSK_MASTER_TOKEN, masterToken);
             final JSONObject keydata = jo.getJSONObject(KEY_KEYDATA);
             assertEquals(KeyId.PSK.toString(), keydata.getString(KEY_KEY_ID));
-            assertArrayEquals(ENCRYPTION_KEY, DatatypeConverter.parseBase64Binary(keydata.getString(KEY_ENCRYPTION_KEY)));
-            assertArrayEquals(HMAC_KEY, DatatypeConverter.parseBase64Binary(keydata.getString(KEY_HMAC_KEY)));
+            assertArrayEquals(ENCRYPTION_KEY, Base64.decode(keydata.getString(KEY_ENCRYPTION_KEY)));
+            assertArrayEquals(HMAC_KEY, Base64.decode(keydata.getString(KEY_HMAC_KEY)));
         }
         
         @Test
@@ -478,9 +478,9 @@ public class SymmetricWrappedExchangeSuite {
             final MasterToken masterToken = new MasterToken(ctx, renewalWindow, expiration, 1L, 1L, null, identity, encryptionKey, hmacKey);
             final String json = masterToken.toJSONString();
             final JSONObject jo = new JSONObject(json);
-            final byte[] signature = DatatypeConverter.parseBase64Binary(jo.getString("signature"));
+            final byte[] signature = Base64.decode(jo.getString("signature"));
             ++signature[1];
-            jo.put("signature", DatatypeConverter.printBase64Binary(signature));
+            jo.put("signature", Base64.encode(signature));
             final MasterToken untrustedMasterToken = new MasterToken(ctx, jo);
             return untrustedMasterToken;
         }
@@ -745,10 +745,10 @@ public class SymmetricWrappedExchangeSuite {
             final MasterToken masterToken = keyResponseData.getMasterToken();
             
             final JSONObject keydata = keyResponseData.getKeydata();
-            final byte[] wrappedEncryptionKey = DatatypeConverter.parseBase64Binary(keydata.getString(KEY_ENCRYPTION_KEY));
+            final byte[] wrappedEncryptionKey = Base64.decode(keydata.getString(KEY_ENCRYPTION_KEY));
             ++wrappedEncryptionKey[wrappedEncryptionKey.length-1];
-            keydata.put(KEY_ENCRYPTION_KEY, DatatypeConverter.printBase64Binary(wrappedEncryptionKey));
-            final byte[] wrappedHmacKey = DatatypeConverter.parseBase64Binary(keydata.getString(KEY_HMAC_KEY));
+            keydata.put(KEY_ENCRYPTION_KEY, Base64.encode(wrappedEncryptionKey));
+            final byte[] wrappedHmacKey = Base64.decode(keydata.getString(KEY_HMAC_KEY));
             
             final KeyResponseData invalidKeyResponseData = new ResponseData(masterToken, KeyId.PSK, wrappedEncryptionKey, wrappedHmacKey);
             factory.getCryptoContext(pskCtx, keyRequestData, invalidKeyResponseData, null);
@@ -762,10 +762,10 @@ public class SymmetricWrappedExchangeSuite {
             final MasterToken masterToken = keyResponseData.getMasterToken();
             
             final JSONObject keydata = keyResponseData.getKeydata();
-            final byte[] wrappedHmacKey = DatatypeConverter.parseBase64Binary(keydata.getString(KEY_HMAC_KEY));
+            final byte[] wrappedHmacKey = Base64.decode(keydata.getString(KEY_HMAC_KEY));
             ++wrappedHmacKey[wrappedHmacKey.length-1];
-            keydata.put(KEY_HMAC_KEY, DatatypeConverter.printBase64Binary(wrappedHmacKey));
-            final byte[] wrappedEncryptionKey = DatatypeConverter.parseBase64Binary(keydata.getString(KEY_ENCRYPTION_KEY));
+            keydata.put(KEY_HMAC_KEY, Base64.encode(wrappedHmacKey));
+            final byte[] wrappedEncryptionKey = Base64.decode(keydata.getString(KEY_ENCRYPTION_KEY));
             
             final KeyResponseData invalidKeyResponseData = new ResponseData(masterToken, KeyId.PSK, wrappedEncryptionKey, wrappedHmacKey);
             factory.getCryptoContext(pskCtx, keyRequestData, invalidKeyResponseData, null);

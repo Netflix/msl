@@ -91,7 +91,7 @@ describe("PayloadChunk", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 100);
+            waitsFor(function() { return ctx; }, "ctx", 900);
 
             runs(function () {
                 var encryptionBytes = new Uint8Array(16);
@@ -648,7 +648,7 @@ describe("PayloadChunk", function() {
         runs(function() {
 	        var jo = JSON.parse(JSON.stringify(chunk));
 	
-	        jo[KEY_PAYLOAD] = "AAA=";
+	        jo[KEY_PAYLOAD] = "x";
 	
 	        PayloadChunk$parse(jo, CRYPTO_CONTEXT, {
 	        	result: function() {},
@@ -658,7 +658,7 @@ describe("PayloadChunk", function() {
         waitsFor(function() { return exception; }, "exception not received", 100);
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslCryptoException(MslError.PAYLOAD_VERIFICATION_FAILED));
+            expect(f).toThrow(new MslMessageException(MslError.PAYLOAD_INVALID));
         });
     });
     

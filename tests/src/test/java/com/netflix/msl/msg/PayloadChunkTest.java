@@ -31,7 +31,6 @@ import java.util.zip.GZIPInputStream;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import javax.xml.bind.DatatypeConverter;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -55,6 +54,7 @@ import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.io.LZWInputStream;
 import com.netflix.msl.io.LZWOutputStreamTest;
 import com.netflix.msl.test.ExpectedMslException;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslContext;
 
@@ -129,7 +129,7 @@ public class PayloadChunkTest {
                     throw new MslException(MslError.UNSUPPORTED_COMPRESSION, compressionAlgo.name());
             }
         } catch (final IOException e) {
-            throw new MslException(MslError.UNCOMPRESSION_ERROR, "algo " + compressionAlgo.name() + " data " + DatatypeConverter.printBase64Binary(data), e);
+            throw new MslException(MslError.UNCOMPRESSION_ERROR, "algo " + compressionAlgo.name() + " data " + Base64.encode(data), e);
         }
     }
     
@@ -241,8 +241,8 @@ public class PayloadChunkTest {
         assertNotNull(jsonString);
         
         final JSONObject jo = new JSONObject(jsonString);
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_PAYLOAD));
-        final byte[] signature = DatatypeConverter.parseBase64Binary(jo.getString(KEY_SIGNATURE));
+        final byte[] ciphertext = Base64.decode(jo.getString(KEY_PAYLOAD));
+        final byte[] signature = Base64.decode(jo.getString(KEY_SIGNATURE));
         assertTrue(CRYPTO_CONTEXT.verify(ciphertext, signature));
         final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext);
         
@@ -251,7 +251,7 @@ public class PayloadChunkTest {
         assertEquals(MSG_ID, payloadJo.getLong(KEY_MESSAGE_ID));
         assertEquals(END_OF_MSG, payloadJo.optBoolean(KEY_END_OF_MESSAGE));
         assertFalse(payloadJo.has(KEY_COMPRESSION_ALGORITHM));
-        assertArrayEquals(DATA, DatatypeConverter.parseBase64Binary(payloadJo.getString(KEY_DATA)));
+        assertArrayEquals(DATA, Base64.decode(payloadJo.getString(KEY_DATA)));
     }
     
     @Test
@@ -282,8 +282,8 @@ public class PayloadChunkTest {
         assertNotNull(jsonString);
         
         final JSONObject jo = new JSONObject(jsonString);
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_PAYLOAD));
-        final byte[] signature = DatatypeConverter.parseBase64Binary(jo.getString(KEY_SIGNATURE));
+        final byte[] ciphertext = Base64.decode(jo.getString(KEY_PAYLOAD));
+        final byte[] signature = Base64.decode(jo.getString(KEY_SIGNATURE));
         assertTrue(CRYPTO_CONTEXT.verify(ciphertext, signature));
         final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext);
         
@@ -292,7 +292,7 @@ public class PayloadChunkTest {
         assertEquals(MSG_ID, payloadJo.getLong(KEY_MESSAGE_ID));
         assertEquals(END_OF_MSG, payloadJo.optBoolean(KEY_END_OF_MESSAGE));
         assertEquals(CompressionAlgorithm.GZIP.toString(), payloadJo.getString(KEY_COMPRESSION_ALGORITHM));
-        final byte[] gzipped = DatatypeConverter.parseBase64Binary(payloadJo.getString(KEY_DATA));
+        final byte[] gzipped = Base64.decode(payloadJo.getString(KEY_DATA));
         final byte[] plaintext = uncompress(CompressionAlgorithm.GZIP, gzipped);
         assertArrayEquals(DATA, plaintext);
     }
@@ -325,8 +325,8 @@ public class PayloadChunkTest {
         assertNotNull(jsonString);
         
         final JSONObject jo = new JSONObject(jsonString);
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_PAYLOAD));
-        final byte[] signature = DatatypeConverter.parseBase64Binary(jo.getString(KEY_SIGNATURE));
+        final byte[] ciphertext = Base64.decode(jo.getString(KEY_PAYLOAD));
+        final byte[] signature = Base64.decode(jo.getString(KEY_SIGNATURE));
         assertTrue(CRYPTO_CONTEXT.verify(ciphertext, signature));
         final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext);
         
@@ -335,7 +335,7 @@ public class PayloadChunkTest {
         assertEquals(MSG_ID, payloadJo.getLong(KEY_MESSAGE_ID));
         assertEquals(END_OF_MSG, payloadJo.optBoolean(KEY_END_OF_MESSAGE));
         assertEquals(CompressionAlgorithm.LZW.toString(), payloadJo.getString(KEY_COMPRESSION_ALGORITHM));
-        final byte[] gzipped = DatatypeConverter.parseBase64Binary(payloadJo.getString(KEY_DATA));
+        final byte[] gzipped = Base64.decode(payloadJo.getString(KEY_DATA));
         final byte[] plaintext = uncompress(CompressionAlgorithm.LZW, gzipped);
         assertArrayEquals(DATA, plaintext);
     }
@@ -402,7 +402,7 @@ public class PayloadChunkTest {
         
         final byte[] signature = new byte[32];
         random.nextBytes(signature);
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         new PayloadChunk(jo, CRYPTO_CONTEXT);
     }
@@ -422,8 +422,8 @@ public class PayloadChunkTest {
     
     @Test
     public void invalidPayload() throws MslEncodingException, MslCryptoException, MslException, JSONException {
-        thrown.expect(MslCryptoException.class);
-        thrown.expectMslError(MslError.PAYLOAD_VERIFICATION_FAILED);
+        thrown.expect(MslMessageException.class);
+        thrown.expectMslError(MslError.PAYLOAD_INVALID);
 
         final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
         final JSONObject jo = new JSONObject(chunk.toJSONString());
@@ -440,9 +440,9 @@ public class PayloadChunkTest {
 
         final byte[] ciphertext = new byte[32];
         random.nextBytes(ciphertext);
-        jo.put(KEY_PAYLOAD, DatatypeConverter.printBase64Binary(ciphertext));
+        jo.put(KEY_PAYLOAD, Base64.encode(ciphertext));
         final byte[] signature = CRYPTO_CONTEXT.sign(ciphertext);
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
 
         new PayloadChunk(jo, CRYPTO_CONTEXT);
     }
@@ -465,7 +465,7 @@ public class PayloadChunkTest {
         final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
         final JSONObject jo = new JSONObject(chunk.toJSONString());
 
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_PAYLOAD));
+        final byte[] ciphertext = Base64.decode(jo.getString(KEY_PAYLOAD));
         final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext);
         final JSONObject payloadJo = new JSONObject(new String(payload, MslConstants.DEFAULT_CHARSET));
         
@@ -474,8 +474,8 @@ public class PayloadChunkTest {
         final byte[] plaintext = payloadJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext);
         final byte[] signature = CRYPTO_CONTEXT.sign(newPayload);
-        jo.put(KEY_PAYLOAD, DatatypeConverter.printBase64Binary(newPayload));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_PAYLOAD, Base64.encode(newPayload));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         new PayloadChunk(jo, CRYPTO_CONTEXT);
     }
@@ -488,7 +488,7 @@ public class PayloadChunkTest {
         final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
         final JSONObject jo = new JSONObject(chunk.toJSONString());
 
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_PAYLOAD));
+        final byte[] ciphertext = Base64.decode(jo.getString(KEY_PAYLOAD));
         final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext);
         final JSONObject payloadJo = new JSONObject(new String(payload, MslConstants.DEFAULT_CHARSET));
         
@@ -497,8 +497,8 @@ public class PayloadChunkTest {
         final byte[] plaintext = payloadJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext);
         final byte[] signature = CRYPTO_CONTEXT.sign(newPayload);
-        jo.put(KEY_PAYLOAD, DatatypeConverter.printBase64Binary(newPayload));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_PAYLOAD, Base64.encode(newPayload));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         new PayloadChunk(jo, CRYPTO_CONTEXT);
     }
@@ -511,7 +511,7 @@ public class PayloadChunkTest {
         final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
         final JSONObject jo = new JSONObject(chunk.toJSONString());
 
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_PAYLOAD));
+        final byte[] ciphertext = Base64.decode(jo.getString(KEY_PAYLOAD));
         final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext);
         final JSONObject payloadJo = new JSONObject(new String(payload, MslConstants.DEFAULT_CHARSET));
         
@@ -520,8 +520,8 @@ public class PayloadChunkTest {
         final byte[] plaintext = payloadJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext);
         final byte[] signature = CRYPTO_CONTEXT.sign(newPayload);
-        jo.put(KEY_PAYLOAD, DatatypeConverter.printBase64Binary(newPayload));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_PAYLOAD, Base64.encode(newPayload));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         new PayloadChunk(jo, CRYPTO_CONTEXT);
     }
@@ -534,7 +534,7 @@ public class PayloadChunkTest {
         final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
         final JSONObject jo = new JSONObject(chunk.toJSONString());
 
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_PAYLOAD));
+        final byte[] ciphertext = Base64.decode(jo.getString(KEY_PAYLOAD));
         final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext);
         final JSONObject payloadJo = new JSONObject(new String(payload, MslConstants.DEFAULT_CHARSET));
         
@@ -543,8 +543,8 @@ public class PayloadChunkTest {
         final byte[] plaintext = payloadJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext);
         final byte[] signature = CRYPTO_CONTEXT.sign(newPayload);
-        jo.put(KEY_PAYLOAD, DatatypeConverter.printBase64Binary(newPayload));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_PAYLOAD, Base64.encode(newPayload));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         new PayloadChunk(jo, CRYPTO_CONTEXT);
     }
@@ -557,7 +557,7 @@ public class PayloadChunkTest {
         final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
         final JSONObject jo = new JSONObject(chunk.toJSONString());
 
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_PAYLOAD));
+        final byte[] ciphertext = Base64.decode(jo.getString(KEY_PAYLOAD));
         final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext);
         final JSONObject payloadJo = new JSONObject(new String(payload, MslConstants.DEFAULT_CHARSET));
         
@@ -566,8 +566,8 @@ public class PayloadChunkTest {
         final byte[] plaintext = payloadJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext);
         final byte[] signature = CRYPTO_CONTEXT.sign(newPayload);
-        jo.put(KEY_PAYLOAD, DatatypeConverter.printBase64Binary(newPayload));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_PAYLOAD, Base64.encode(newPayload));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         new PayloadChunk(jo, CRYPTO_CONTEXT);
     }
@@ -580,7 +580,7 @@ public class PayloadChunkTest {
         final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
         final JSONObject jo = new JSONObject(chunk.toJSONString());
 
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_PAYLOAD));
+        final byte[] ciphertext = Base64.decode(jo.getString(KEY_PAYLOAD));
         final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext);
         final JSONObject payloadJo = new JSONObject(new String(payload, MslConstants.DEFAULT_CHARSET));
         
@@ -589,8 +589,8 @@ public class PayloadChunkTest {
         final byte[] plaintext = payloadJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext);
         final byte[] signature = CRYPTO_CONTEXT.sign(newPayload);
-        jo.put(KEY_PAYLOAD, DatatypeConverter.printBase64Binary(newPayload));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_PAYLOAD, Base64.encode(newPayload));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         new PayloadChunk(jo, CRYPTO_CONTEXT);
     }
@@ -603,7 +603,7 @@ public class PayloadChunkTest {
         final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
         final JSONObject jo = new JSONObject(chunk.toJSONString());
 
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_PAYLOAD));
+        final byte[] ciphertext = Base64.decode(jo.getString(KEY_PAYLOAD));
         final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext);
         final JSONObject payloadJo = new JSONObject(new String(payload, MslConstants.DEFAULT_CHARSET));
         
@@ -612,8 +612,8 @@ public class PayloadChunkTest {
         final byte[] plaintext = payloadJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext);
         final byte[] signature = CRYPTO_CONTEXT.sign(newPayload);
-        jo.put(KEY_PAYLOAD, DatatypeConverter.printBase64Binary(newPayload));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_PAYLOAD, Base64.encode(newPayload));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         new PayloadChunk(jo, CRYPTO_CONTEXT);
     }
@@ -626,7 +626,7 @@ public class PayloadChunkTest {
         final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
         final JSONObject jo = new JSONObject(chunk.toJSONString());
 
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_PAYLOAD));
+        final byte[] ciphertext = Base64.decode(jo.getString(KEY_PAYLOAD));
         final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext);
         final JSONObject payloadJo = new JSONObject(new String(payload, MslConstants.DEFAULT_CHARSET));
 
@@ -635,8 +635,8 @@ public class PayloadChunkTest {
         final byte[] plaintext = payloadJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext);
         final byte[] signature = CRYPTO_CONTEXT.sign(newPayload);
-        jo.put(KEY_PAYLOAD, DatatypeConverter.printBase64Binary(newPayload));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_PAYLOAD, Base64.encode(newPayload));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         new PayloadChunk(jo, CRYPTO_CONTEXT);
     }
@@ -649,7 +649,7 @@ public class PayloadChunkTest {
         final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
         final JSONObject jo = new JSONObject(chunk.toJSONString());
 
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_PAYLOAD));
+        final byte[] ciphertext = Base64.decode(jo.getString(KEY_PAYLOAD));
         final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext);
         final JSONObject payloadJo = new JSONObject(new String(payload, MslConstants.DEFAULT_CHARSET));
         
@@ -658,8 +658,8 @@ public class PayloadChunkTest {
         final byte[] plaintext = payloadJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext);
         final byte[] signature = CRYPTO_CONTEXT.sign(newPayload);
-        jo.put(KEY_PAYLOAD, DatatypeConverter.printBase64Binary(newPayload));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_PAYLOAD, Base64.encode(newPayload));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         new PayloadChunk(jo, CRYPTO_CONTEXT);
     }
@@ -672,7 +672,7 @@ public class PayloadChunkTest {
         final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
         final JSONObject jo = new JSONObject(chunk.toJSONString());
 
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_PAYLOAD));
+        final byte[] ciphertext = Base64.decode(jo.getString(KEY_PAYLOAD));
         final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext);
         final JSONObject payloadJo = new JSONObject(new String(payload, MslConstants.DEFAULT_CHARSET));
         
@@ -681,8 +681,8 @@ public class PayloadChunkTest {
         final byte[] plaintext = payloadJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext);
         final byte[] signature = CRYPTO_CONTEXT.sign(newPayload);
-        jo.put(KEY_PAYLOAD, DatatypeConverter.printBase64Binary(newPayload));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_PAYLOAD, Base64.encode(newPayload));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         new PayloadChunk(jo, CRYPTO_CONTEXT);
     }
@@ -695,7 +695,7 @@ public class PayloadChunkTest {
         final PayloadChunk chunk = new PayloadChunk(SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
         final JSONObject jo = new JSONObject(chunk.toJSONString());
 
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_PAYLOAD));
+        final byte[] ciphertext = Base64.decode(jo.getString(KEY_PAYLOAD));
         final byte[] payload = CRYPTO_CONTEXT.decrypt(ciphertext);
         final JSONObject payloadJo = new JSONObject(new String(payload, MslConstants.DEFAULT_CHARSET));
         
@@ -704,8 +704,8 @@ public class PayloadChunkTest {
         final byte[] plaintext = payloadJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext);
         final byte[] signature = CRYPTO_CONTEXT.sign(newPayload);
-        jo.put(KEY_PAYLOAD, DatatypeConverter.printBase64Binary(newPayload));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_PAYLOAD, Base64.encode(newPayload));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         new PayloadChunk(jo, CRYPTO_CONTEXT);
     }

@@ -19,7 +19,6 @@ import java.util.Arrays;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import javax.xml.bind.DatatypeConverter;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -42,6 +41,7 @@ import com.netflix.msl.entityauth.PresharedAuthenticationData;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.util.AuthenticationUtils;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -203,12 +203,12 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
                 try {
                     keyId = KeyId.valueOf(keyIdName);
                     try {
-                        encryptionKey = DatatypeConverter.parseBase64Binary(keyDataJO.getString(KEY_ENCRYPTION_KEY));
+                        encryptionKey = Base64.decode(keyDataJO.getString(KEY_ENCRYPTION_KEY));
                     } catch (final IllegalArgumentException e) {
                         throw new MslKeyExchangeException(MslError.KEYX_INVALID_ENCRYPTION_KEY, "keydata " + keyDataJO.toString(), e);
                     }
                     try {
-                        hmacKey = DatatypeConverter.parseBase64Binary(keyDataJO.getString(KEY_HMAC_KEY));
+                        hmacKey = Base64.decode(keyDataJO.getString(KEY_HMAC_KEY));
                     } catch (final IllegalArgumentException e) {
                         throw new MslKeyExchangeException(MslError.KEYX_INVALID_HMAC_KEY, "keydata " + keyDataJO.toString(), e);
                     }
@@ -248,8 +248,8 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
         protected JSONObject getKeydata() throws JSONException {
             final JSONObject jsonObj = new JSONObject();
             jsonObj.put(KEY_KEY_ID, keyId.name());
-            jsonObj.put(KEY_ENCRYPTION_KEY, DatatypeConverter.printBase64Binary(encryptionKey));
-            jsonObj.put(KEY_HMAC_KEY, DatatypeConverter.printBase64Binary(hmacKey));
+            jsonObj.put(KEY_ENCRYPTION_KEY, Base64.encode(encryptionKey));
+            jsonObj.put(KEY_HMAC_KEY, Base64.encode(hmacKey));
             return jsonObj;
         }
         
