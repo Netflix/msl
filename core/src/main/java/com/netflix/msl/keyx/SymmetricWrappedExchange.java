@@ -202,11 +202,11 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
                 final String keyIdName = keyDataMo.getString(KEY_KEY_ID);
                 try {
                     keyId = KeyId.valueOf(keyIdName);
-                    encryptionKey = keyDataMo.getBytes(KEY_ENCRYPTION_KEY);
-                    hmacKey = keyDataMo.getBytes(KEY_HMAC_KEY);
                 } catch (final IllegalArgumentException e) {
                     throw new MslKeyExchangeException(MslError.UNIDENTIFIED_KEYX_KEY_ID, keyIdName, e);
                 }
+                encryptionKey = keyDataMo.getBytes(KEY_ENCRYPTION_KEY);
+                hmacKey = keyDataMo.getBytes(KEY_HMAC_KEY);
             } catch (final MslEncoderException e) {
                 throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "keydata " + keyDataMo, e);
             }

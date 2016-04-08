@@ -25,8 +25,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 
-import javax.xml.bind.DatatypeConverter;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -159,7 +157,7 @@ public class MslSignatureEnvelopeSuite {
             
             assertEquals(Version.V2.intValue(), mo.getInt(KEY_VERSION));
             assertEquals(algorithm.toString(), mo.getString(KEY_ALGORITHM));
-            assertArrayEquals(SIGNATURE, DatatypeConverter.parseBase64Binary(mo.getString(KEY_SIGNATURE)));
+            assertArrayEquals(SIGNATURE, mo.getBytes(KEY_SIGNATURE));
         }
         
         @Test

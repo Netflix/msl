@@ -21,8 +21,6 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
-import javax.xml.bind.DatatypeConverter;
-
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
@@ -31,6 +29,7 @@ import com.netflix.msl.io.MslEncoderException;
 import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.io.MslObject;
+import com.netflix.msl.util.Base64;
 
 /**
  * <p>X.509 asymmetric keys entity authentication data.</p>
@@ -102,7 +101,7 @@ public class X509AuthenticationData extends EntityAuthenticationData {
         // Create X.509 cert.
         final byte[] x509bytes;
         try {
-            x509bytes = DatatypeConverter.parseBase64Binary(x509);
+            x509bytes = Base64.decode(x509);
         } catch (final IllegalArgumentException e) {
             throw new MslCryptoException(MslError.X509CERT_INVALID, x509, e);
         }
@@ -111,7 +110,7 @@ public class X509AuthenticationData extends EntityAuthenticationData {
             x509cert = (X509Certificate)factory.generateCertificate(bais);
             identity = x509cert.getSubjectX500Principal().getName();
         } catch (final CertificateException e) {
-            throw new MslCryptoException(MslError.X509CERT_PARSE_ERROR, DatatypeConverter.printBase64Binary(x509bytes), e);
+            throw new MslCryptoException(MslError.X509CERT_PARSE_ERROR, Base64.encode(x509bytes), e);
         }
     }
     
@@ -134,7 +133,7 @@ public class X509AuthenticationData extends EntityAuthenticationData {
     public MslObject getAuthData(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException {
         final MslObject mo = encoder.createObject();
         try {
-            mo.put(KEY_X509_CERT, DatatypeConverter.printBase64Binary(x509cert.getEncoded()));
+            mo.put(KEY_X509_CERT, Base64.encode(x509cert.getEncoded()));
         } catch (final CertificateEncodingException | IllegalArgumentException e) {
             throw new MslEncoderException("Error encoding X.509 authdata", e);
         }

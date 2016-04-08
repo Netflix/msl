@@ -19,8 +19,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.xml.bind.DatatypeConverter;
-
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
@@ -33,6 +31,7 @@ import com.netflix.msl.io.MslEncoderException;
 import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.io.MslObject;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -219,7 +218,7 @@ public class UserIdToken implements MslEncodable {
                 throw new MslException(MslError.USERIDTOKEN_USERDATA_MISSING, tokendata.getString(KEY_USERDATA)).setMasterToken(masterToken);
             plaintext = (verified) ? cryptoContext.decrypt(ciphertext, encoder) : null;
         } catch (final MslEncoderException e) {
-            throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR, "usertokendata " + DatatypeConverter.printBase64Binary(tokendataBytes), e).setMasterToken(masterToken);
+            throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR, "usertokendata " + Base64.encode(tokendataBytes), e).setMasterToken(masterToken);
         } catch (final MslCryptoException e) {
             e.setMasterToken(masterToken);
             throw e;
@@ -238,7 +237,7 @@ public class UserIdToken implements MslEncodable {
                 if (user == null)
                     throw new MslInternalException("TokenFactory.createUser() returned null in violation of the interface contract.");
             } catch (final MslEncoderException e) {
-                throw new MslEncodingException(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR, "userdata " + DatatypeConverter.printBase64Binary(plaintext), e).setMasterToken(masterToken);
+                throw new MslEncodingException(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR, "userdata " + Base64.encode(plaintext), e).setMasterToken(masterToken);
             }
         } else {
             userdata = null;

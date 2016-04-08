@@ -270,7 +270,7 @@ describe("MessageHeader", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return trustedNetCtx && p2pCtx; }, "trustedNetCtx and p2pCtx", 100);
+            waitsFor(function() { return trustedNetCtx && p2pCtx; }, "trustedNetCtx and p2pCtx", 900);
             
 			runs(function() {
 				MslTestUtils.getMasterToken(trustedNetCtx, 1, 1, {
@@ -2970,7 +2970,7 @@ describe("MessageHeader", function() {
 		var exception;
 		runs(function() {
             var messageHeaderJo = JSON.parse(JSON.stringify(messageHeader));
-            messageHeaderJo[KEY_HEADERDATA] = "";
+            messageHeaderJo[KEY_HEADERDATA] = "x";
 			Header$parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS, {
 				result: function() {},
 				error: function(err) { exception = err; },
@@ -2979,7 +2979,7 @@ describe("MessageHeader", function() {
 		waitsFor(function() { return exception; }, "exception not received", 100);
 		runs(function() {
 			var f = function() { throw exception; };
-			expect(f).toThrow(new MslMessageException(MslError.HEADER_DATA_MISSING));
+			expect(f).toThrow(new MslMessageException(MslError.HEADER_DATA_INVALID));
 		});
 	});
 

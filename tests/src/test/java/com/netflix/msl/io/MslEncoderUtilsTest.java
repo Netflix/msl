@@ -25,8 +25,6 @@ import java.nio.charset.Charset;
 import java.util.Random;
 import java.util.Set;
 
-import javax.xml.bind.DatatypeConverter;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -34,6 +32,7 @@ import org.junit.Test;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslContext;
 
@@ -73,7 +72,7 @@ public class MslEncoderUtilsTest {
      */
     private static final String randomString(final Random random) {
         final byte[] raw = new byte[random.nextInt(MAX_STRING_CHARS) + 1];
-        return DatatypeConverter.printBase64Binary(raw);
+        return Base64.encode(raw);
     }
     
     /**

@@ -17,8 +17,6 @@ package com.netflix.msl.msg;
 
 import java.util.Map;
 
-import javax.xml.bind.DatatypeConverter;
-
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
@@ -34,6 +32,7 @@ import com.netflix.msl.io.MslEncoderException;
 import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.io.MslObject;
 import com.netflix.msl.tokens.MasterToken;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -137,7 +136,7 @@ public abstract class Header implements MslEncodable {
             if (headerMo.has(HeaderKeys.KEY_HEADERDATA)) {
                 final byte[] headerdata = headerMo.getBytes(HeaderKeys.KEY_HEADERDATA);
                 if (headerdata.length == 0)
-                    throw new MslMessageException(MslError.HEADER_DATA_MISSING, DatatypeConverter.printBase64Binary(headerdata)).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData);
+                    throw new MslMessageException(MslError.HEADER_DATA_MISSING, Base64.encode(headerdata)).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData);
                 return new MessageHeader(ctx, headerdata, entityAuthData, masterToken, signature, cryptoContexts);
             }
             
@@ -145,7 +144,7 @@ public abstract class Header implements MslEncodable {
             else if (headerMo.has(HeaderKeys.KEY_ERRORDATA)) {
                 final byte[] errordata = headerMo.getBytes(HeaderKeys.KEY_ERRORDATA);
                 if (errordata.length == 0)
-                    throw new MslMessageException(MslError.HEADER_DATA_MISSING, DatatypeConverter.printBase64Binary(errordata)).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData);
+                    throw new MslMessageException(MslError.HEADER_DATA_MISSING, Base64.encode(errordata)).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData);
                 return new ErrorHeader(ctx, errordata, entityAuthData, signature);
             }
             

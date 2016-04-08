@@ -501,7 +501,7 @@ public class MasterTokenTest {
     @Test
     public void invalidSessiondata() throws UnsupportedEncodingException, MslEncoderException, MslException {
         thrown.expect(MslException.class);
-        thrown.expectMslError(MslError.MASTERTOKEN_SESSIONDATA_MISSING);
+        thrown.expectMslError(MslError.MASTERTOKEN_SESSIONDATA_INVALID);
 
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
         final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
@@ -592,7 +592,7 @@ public class MasterTokenTest {
         assertEquals(masterToken.getSerialNumber(), moMasterToken.getSerialNumber());
         final byte[] moEncode = moMasterToken.toMslEncoding(encoder, ENCODER_FORMAT);
         assertNotNull(moEncode);
-        assertFalse(encode.equals(moEncode));   
+        assertFalse(encode.equals(moEncode));
     }
     
     @Test

@@ -22,8 +22,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import javax.xml.bind.DatatypeConverter;
-
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
@@ -55,6 +53,7 @@ import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.userauth.UserAuthenticationData;
 import com.netflix.msl.userauth.UserAuthenticationFactory;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -533,7 +532,7 @@ public class MessageHeader extends Header {
             if (this.messageId < 0 || this.messageId > MslConstants.MAX_LONG_VALUE)
                 throw new MslMessageException(MslError.MESSAGE_ID_OUT_OF_RANGE, "headerdata " + headerdata).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData);
         } catch (final MslEncoderException e) {
-            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + DatatypeConverter.printBase64Binary(plaintext), e).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData);
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + Base64.encode(plaintext), e).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData);
         }
         
         try {

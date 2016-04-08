@@ -24,8 +24,6 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 
-import javax.xml.bind.DatatypeConverter;
-
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import com.netflix.msl.MslCryptoException;
@@ -37,6 +35,7 @@ import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.crypto.RsaCryptoContext;
 import com.netflix.msl.crypto.RsaCryptoContext.Mode;
 import com.netflix.msl.io.MslObject;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -72,8 +71,8 @@ public class MockRsaAuthenticationFactory extends EntityAuthenticationFactory {
     static {
         Security.addProvider(new BouncyCastleProvider());
         try {
-            final byte[] pubKeyEncoded = DatatypeConverter.parseBase64Binary(RSA_PUBKEY_B64);
-            final byte[] privKeyEncoded = DatatypeConverter.parseBase64Binary(RSA_PRIVKEY_B64);
+            final byte[] pubKeyEncoded = Base64.decode(RSA_PUBKEY_B64);
+            final byte[] privKeyEncoded = Base64.decode(RSA_PRIVKEY_B64);
             final X509EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(pubKeyEncoded);
             final PKCS8EncodedKeySpec privKeySpec = new PKCS8EncodedKeySpec(privKeyEncoded);
             final KeyFactory keyFactory = KeyFactory.getInstance("RSA");

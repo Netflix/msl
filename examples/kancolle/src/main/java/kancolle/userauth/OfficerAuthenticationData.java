@@ -15,8 +15,6 @@
  */
 package kancolle.userauth;
 
-import javax.xml.bind.DatatypeConverter;
-
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.io.MslEncoderException;
@@ -24,6 +22,7 @@ import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.io.MslObject;
 import com.netflix.msl.userauth.UserAuthenticationData;
+import com.netflix.msl.util.Base64;
 
 /**
  * <p>Officers are identified by their name and fingerprint hash.</p>
@@ -72,7 +71,7 @@ public class OfficerAuthenticationData extends UserAuthenticationData {
         super(KanColleUserAuthenticationScheme.OFFICER);
         try {
             this.name = officerMo.getString(KEY_NAME);
-            this.fingerprint = DatatypeConverter.parseBase64Binary(officerMo.getString(KEY_FINGERPRINT));
+            this.fingerprint = Base64.decode(officerMo.getString(KEY_FINGERPRINT));
         } catch (final MslEncoderException e) {
             throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "officer authdata " + officerMo.toString(), e);
         }

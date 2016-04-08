@@ -19,8 +19,6 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.Set;
 
-import javax.xml.bind.DatatypeConverter;
-
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
@@ -37,6 +35,7 @@ import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.io.MslObject;
 import com.netflix.msl.keyx.KeyRequestData;
 import com.netflix.msl.msg.MessageInputStream;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -130,7 +129,7 @@ public class WiretapMessageInputStream extends MessageInputStream {
             final MslObject payloadMo = encoder.parseObject(plaintext);
             return payloadMo;
         } catch (final MslEncoderException e) {
-            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "payload chunk payload " + DatatypeConverter.printBase64Binary(plaintext), e);
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "payload chunk payload " + Base64.encode(plaintext), e);
         }
     }
 

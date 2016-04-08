@@ -163,7 +163,7 @@ var MslCiphertextEnvelope$Version;
                         mo.put(KEY_KEY_ID, this.keyId);
                         if (this.iv) mo.put(KEY_IV, this.iv);
                         mo.put(KEY_CIPHERTEXT, this.ciphertext);
-                        mo.put(KEY_SHA256, "AA==");
+                        mo.put(KEY_SHA256, base64$decode("AA=="));
                         break;
                     case Version.V2:
                         mo.put(KEY_VERSION, this.version);
@@ -246,7 +246,7 @@ var MslCiphertextEnvelope$Version;
                         keyIdOrSpec = mo.getString(KEY_KEY_ID);
                         iv = (mo.has(KEY_IV)) ? mo.getBytes(KEY_IV) : null;
                         ciphertext = mo.getBytes(KEY_CIPHERTEXT);
-                        mo.getString(KEY_SHA256);
+                        mo.getBytes(KEY_SHA256);
                     } catch (e) {
                         if (e instanceof MslEncoderException)
                             throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "ciphertext envelope " + mo, e);

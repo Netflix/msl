@@ -18,14 +18,13 @@ package com.netflix.msl.io;
 import java.nio.charset.Charset;
 import java.util.Set;
 
-import javax.xml.bind.DatatypeConverter;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONString;
 
 import com.netflix.msl.MslInternalException;
+import com.netflix.msl.util.Base64;
 
 /**
  * <p>A {@code MslObject} that encodes its data as UTF-8 JSON.</p>
@@ -154,7 +153,7 @@ public class JsonMslObject extends MslObject implements JSONString {
         if (value instanceof byte[])
             return (byte[])value;
         if (value instanceof String)
-            return DatatypeConverter.parseBase64Binary((String)value);
+            return Base64.decode((String)value);
         throw new MslEncoderException("MslObject[" + MslEncoderFactory.quote(key) + "] is not binary data.");
     }
 
@@ -169,7 +168,7 @@ public class JsonMslObject extends MslObject implements JSONString {
             for (final String key : keys) {
                 final Object value = get(key);
                 if (value instanceof byte[]) {
-                    mo.put(key, DatatypeConverter.printBase64Binary((byte[])value));
+                    mo.put(key, Base64.encode((byte[])value));
                 } else if (value instanceof JsonMslObject || value instanceof JsonMslArray) {
                     mo.put(key, value);
                 } else if (value instanceof MslObject) {

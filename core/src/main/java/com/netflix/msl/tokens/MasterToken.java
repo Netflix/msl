@@ -21,7 +21,6 @@ import java.util.Map;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import javax.xml.bind.DatatypeConverter;
 
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslConstants.EncryptionAlgo;
@@ -38,6 +37,7 @@ import com.netflix.msl.io.MslEncoderException;
 import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.io.MslObject;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -204,28 +204,29 @@ public class MasterToken implements MslEncodable {
         this.encryptionKey = encryptionKey;
         this.signatureKey = signatureKey;
         
-        // Construct the session data.
-        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+        // Encode session keys and algorithm names.
+        final byte[] encryptionKeyBytes = this.encryptionKey.getEncoded();
+        final byte[] signatureKeyBytes = this.signatureKey.getEncoded();
+        final EncryptionAlgo encryptionAlgo;
+        final SignatureAlgo signatureAlgo;
         try {
-            // Encode session keys and algorithm names.
-            final byte[] encryptionKeyBytes = this.encryptionKey.getEncoded();
-            final EncryptionAlgo encryptionAlgo = EncryptionAlgo.fromString(this.encryptionKey.getAlgorithm());
-            final byte[] signatureKeyBytes = this.signatureKey.getEncoded();
-            final SignatureAlgo signatureAlgo = SignatureAlgo.fromString(this.signatureKey.getAlgorithm());
-            
-            // Create session data.
-            this.sessiondata = encoder.createObject();
-            if (this.issuerdata != null)
-                this.sessiondata.put(KEY_ISSUER_DATA, this.issuerdata);
-            this.sessiondata.put(KEY_IDENTITY, this.identity);
-            this.sessiondata.put(KEY_ENCRYPTION_KEY, encryptionKeyBytes);
-            this.sessiondata.put(KEY_ENCRYPTION_ALGORITHM, encryptionAlgo);
-            this.sessiondata.put(KEY_HMAC_KEY, signatureKeyBytes);
-            this.sessiondata.put(KEY_SIGNATURE_KEY, signatureKeyBytes);
-            this.sessiondata.put(KEY_SIGNATURE_ALGORITHM, signatureAlgo);
+            encryptionAlgo = EncryptionAlgo.fromString(this.encryptionKey.getAlgorithm());
+            signatureAlgo = SignatureAlgo.fromString(this.signatureKey.getAlgorithm());
         } catch (final IllegalArgumentException e) {
             throw new MslCryptoException(MslError.UNIDENTIFIED_ALGORITHM, "encryption algorithm: " + this.encryptionKey.getAlgorithm() + "; signature algorithm: " + this.signatureKey.getAlgorithm(), e);
         }
+        
+        // Create session data.
+        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+        this.sessiondata = encoder.createObject();
+        if (this.issuerdata != null)
+            this.sessiondata.put(KEY_ISSUER_DATA, this.issuerdata);
+        this.sessiondata.put(KEY_IDENTITY, this.identity);
+        this.sessiondata.put(KEY_ENCRYPTION_KEY, encryptionKeyBytes);
+        this.sessiondata.put(KEY_ENCRYPTION_ALGORITHM, encryptionAlgo);
+        this.sessiondata.put(KEY_HMAC_KEY, signatureKeyBytes);
+        this.sessiondata.put(KEY_SIGNATURE_KEY, signatureKeyBytes);
+        this.sessiondata.put(KEY_SIGNATURE_ALGORITHM, signatureAlgo);
 
         this.tokendataBytes = null;
         this.signatureBytes = null;
@@ -283,7 +284,7 @@ public class MasterToken implements MslEncodable {
                 throw new MslEncodingException(MslError.MASTERTOKEN_SESSIONDATA_MISSING, "mastertokendata " + tokendata);
             plaintext = (this.verified) ? cryptoContext.decrypt(ciphertext, encoder) : null;
         } catch (final MslEncoderException e) {
-            throw new MslEncodingException(MslError.MASTERTOKEN_TOKENDATA_PARSE_ERROR, "mastertokendata " + DatatypeConverter.printBase64Binary(tokendataBytes), e);
+            throw new MslEncodingException(MslError.MASTERTOKEN_TOKENDATA_PARSE_ERROR, "mastertokendata " + Base64.encode(tokendataBytes), e);
         }
         
         // Pull the session data.
@@ -301,7 +302,7 @@ public class MasterToken implements MslEncodable {
                     : sessiondata.getBytes(KEY_HMAC_KEY);
                 signatureAlgo = sessiondata.optString(KEY_SIGNATURE_ALGORITHM, JcaAlgorithm.HMAC_SHA256);
             } catch (final MslEncoderException e) {
-                throw new MslEncodingException(MslError.MASTERTOKEN_SESSIONDATA_PARSE_ERROR, "sessiondata " + DatatypeConverter.printBase64Binary(plaintext), e);
+                throw new MslEncodingException(MslError.MASTERTOKEN_SESSIONDATA_PARSE_ERROR, "sessiondata " + Base64.encode(plaintext), e);
             }
             
             // Decode algorithm names.

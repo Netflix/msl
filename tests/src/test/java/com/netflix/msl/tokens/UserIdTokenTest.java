@@ -476,7 +476,7 @@ public class UserIdTokenTest {
     @Test
     public void invalidUserdata() throws MslEncodingException, MslCryptoException, MslException, UnsupportedEncodingException, MslEncoderException {
         thrown.expect(MslException.class);
-        thrown.expectMslError(MslError.USERIDTOKEN_USERDATA_MISSING);
+        thrown.expectMslError(MslError.USERIDTOKEN_USERDATA_INVALID);
 
         final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
         final byte[] encode = userIdToken.toMslEncoding(encoder, ENCODER_FORMAT);

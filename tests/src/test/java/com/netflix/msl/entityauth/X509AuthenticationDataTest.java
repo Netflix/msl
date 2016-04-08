@@ -30,8 +30,6 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
-import javax.xml.bind.DatatypeConverter;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -47,6 +45,7 @@ import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.io.MslEncoderUtils;
 import com.netflix.msl.io.MslObject;
 import com.netflix.msl.test.ExpectedMslException;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslTestUtils;
@@ -121,7 +120,7 @@ public class X509AuthenticationDataTest {
         assertEquals(EntityAuthenticationScheme.X509.name(), mo.getString(KEY_SCHEME));
         final MslObject authdata = mo.getMslObject(KEY_AUTHDATA, encoder);
         final String x509certificate = authdata.getString(KEY_X509_CERT);
-        assertArrayEquals(MockX509AuthenticationFactory.X509_CERT.getEncoded(), DatatypeConverter.parseBase64Binary(x509certificate));
+        assertArrayEquals(MockX509AuthenticationFactory.X509_CERT.getEncoded(), Base64.decode(x509certificate));
     }
     
     @Test
@@ -163,9 +162,9 @@ public class X509AuthenticationDataTest {
 
         final X509AuthenticationData data = new X509AuthenticationData(MockX509AuthenticationFactory.X509_CERT);
         final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
-        final byte[] x509raw = DatatypeConverter.parseBase64Binary(authdata.getString(KEY_X509_CERT));
+        final byte[] x509raw = Base64.decode(authdata.getString(KEY_X509_CERT));
         ++x509raw[0];
-        authdata.put(KEY_X509_CERT, DatatypeConverter.printBase64Binary(x509raw));
+        authdata.put(KEY_X509_CERT, Base64.encode(x509raw));
         new X509AuthenticationData(authdata);
     }
     

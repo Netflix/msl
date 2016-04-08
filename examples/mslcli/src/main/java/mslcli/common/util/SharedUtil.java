@@ -39,9 +39,6 @@ import java.util.regex.Pattern;
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import javax.xml.bind.DatatypeConverter;
-
-import mslcli.common.Triplet;
 
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslConstants.ResponseCode;
@@ -66,9 +63,12 @@ import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.userauth.UserAuthenticationFactory;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslStore;
 import com.netflix.msl.util.SimpleMslStore;
+
+import mslcli.common.Triplet;
 
 /**
  * <p>Collection of utilities.</p>
@@ -503,28 +503,28 @@ public final class SharedUtil {
          * @return decoded array
          */
         public static byte[] decodeToByteArray(final String encoded) {
-            return DatatypeConverter.parseBase64Binary(encoded);
+            return Base64.decode(encoded);
         }
         /**
          * @param encoded base64-encoded string
          * @return decoded String
          */
         public static String decode(final String encoded) {
-            return new String(DatatypeConverter.parseBase64Binary(encoded), MslConstants.DEFAULT_CHARSET);
+            return new String(Base64.decode(encoded), MslConstants.DEFAULT_CHARSET);
         }
         /**
          * @param data byte array to be encoded
          * @return base64 encoding of the input byte array
          */
         public static String encode(final byte[] data) {
-            return DatatypeConverter.printBase64Binary(data);
+            return Base64.encode(data);
         }
         /**
          * @param data byte array to be encoded
          * @return base64 encoding of the input byte array
          */
         public static String encode(final String data) {
-            return DatatypeConverter.printBase64Binary(data.getBytes(MslConstants.DEFAULT_CHARSET));
+            return Base64.encode(data.getBytes(MslConstants.DEFAULT_CHARSET));
         }
     }
 

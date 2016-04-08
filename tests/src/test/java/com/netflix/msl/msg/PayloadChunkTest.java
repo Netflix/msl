@@ -31,7 +31,6 @@ import java.util.zip.GZIPInputStream;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import javax.xml.bind.DatatypeConverter;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -57,6 +56,7 @@ import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.io.MslObject;
 import com.netflix.msl.test.ExpectedMslException;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslTestUtils;
@@ -135,7 +135,7 @@ public class PayloadChunkTest {
                     throw new MslException(MslError.UNSUPPORTED_COMPRESSION, compressionAlgo.name());
             }
         } catch (final IOException e) {
-            throw new MslException(MslError.UNCOMPRESSION_ERROR, "algo " + compressionAlgo.name() + " data " + DatatypeConverter.printBase64Binary(data), e);
+            throw new MslException(MslError.UNCOMPRESSION_ERROR, "algo " + compressionAlgo.name() + " data " + Base64.encode(data), e);
         }
     }
     

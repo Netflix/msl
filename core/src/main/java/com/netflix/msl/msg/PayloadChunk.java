@@ -19,8 +19,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.xml.bind.DatatypeConverter;
-
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslConstants.CompressionAlgorithm;
 import com.netflix.msl.MslCryptoException;
@@ -35,6 +33,7 @@ import com.netflix.msl.io.MslEncoderException;
 import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.io.MslObject;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslUtils;
 
@@ -227,7 +226,7 @@ public class PayloadChunk implements MslEncodable {
                 data = MslUtils.uncompress(compressionAlgo, compressedData);
             }
         } catch (final MslEncoderException e) {
-            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "payload chunk payload " + DatatypeConverter.printBase64Binary(plaintext), e);
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "payload chunk payload " + Base64.encode(plaintext), e);
         }
     }
     

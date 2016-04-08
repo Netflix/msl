@@ -22,15 +22,6 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Set;
 
-import javax.xml.bind.DatatypeConverter;
-
-import burp.msl.WiretapException;
-import burp.msl.WiretapModule;
-import burp.msl.msg.CaptureMessageDebugContext;
-import burp.msl.msg.WiretapMessageContext;
-import burp.msl.msg.WiretapMessageInputStream;
-import burp.msl.util.WiretapMslContext;
-
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
@@ -49,7 +40,15 @@ import com.netflix.msl.msg.MessageHeader;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.userauth.UserAuthenticationFactory;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslTestUtils;
+
+import burp.msl.WiretapException;
+import burp.msl.WiretapModule;
+import burp.msl.msg.CaptureMessageDebugContext;
+import burp.msl.msg.WiretapMessageContext;
+import burp.msl.msg.WiretapMessageInputStream;
+import burp.msl.util.WiretapMslContext;
 
 /**
  * User: skommidi
@@ -333,7 +332,7 @@ public class MSLHttpListener implements IHttpListener {
             try {
                 MslObject payloadTokenMo;
                 while((payloadTokenMo = mis.nextPayload()) != null) {
-                    final String data = DatatypeConverter.printBase64Binary(payloadTokenMo.getBytes(KEY_DATA));
+                    final String data = Base64.encode(payloadTokenMo.getBytes(KEY_DATA));
                     payloadTokenMo.remove(KEY_DATA);
                     payloadTokenMo.put(KEY_DATA, data);
     
@@ -380,20 +379,20 @@ public class MSLHttpListener implements IHttpListener {
             final long renewalWindow = tokenDataMo.getLong(KEY_RENEWAL_WINDOW);
             final long expiration = tokenDataMo.getLong(KEY_EXPIRATION);
             if (expiration < renewalWindow)
-                throw new MslException(MslError.USERIDTOKEN_EXPIRES_BEFORE_RENEWAL, "usertokendata " + DatatypeConverter.printBase64Binary(tokendata)).setMasterToken(masterToken);
+                throw new MslException(MslError.USERIDTOKEN_EXPIRES_BEFORE_RENEWAL, "usertokendata " + Base64.encode(tokendata)).setMasterToken(masterToken);
             mtSerialNumber = tokenDataMo.getLong(KEY_MASTER_TOKEN_SERIAL_NUMBER);
             if (mtSerialNumber < 0 || mtSerialNumber > MslConstants.MAX_LONG_VALUE)
-                throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + DatatypeConverter.printBase64Binary(tokendata)).setMasterToken(masterToken);
+                throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + Base64.encode(tokendata)).setMasterToken(masterToken);
             final long serialNumber = tokenDataMo.getLong(KEY_SERIAL_NUMBER);
             if (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE)
-                throw new MslException(MslError.USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + DatatypeConverter.printBase64Binary(tokendata)).setMasterToken(masterToken);
+                throw new MslException(MslError.USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + Base64.encode(tokendata)).setMasterToken(masterToken);
             final byte[] ciphertext = tokenDataMo.getBytes(KEY_USERDATA);
             if (ciphertext.length == 0)
                 throw new MslException(MslError.USERIDTOKEN_USERDATA_MISSING, tokenDataMo.getString(KEY_USERDATA)).setMasterToken(masterToken);
             userdata = (verified) ? cryptoContext.decrypt(ciphertext, encoder) : null;
             tokenDataMo.remove(KEY_USERDATA);
         } catch (final MslEncoderException e) {
-            throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR, "usertokendata " + DatatypeConverter.printBase64Binary(tokendata), e).setMasterToken(masterToken);
+            throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR, "usertokendata " + Base64.encode(tokendata), e).setMasterToken(masterToken);
         } catch (final MslCryptoException e) {
             e.setMasterToken(masterToken);
             throw e;
@@ -405,7 +404,7 @@ public class MSLHttpListener implements IHttpListener {
                 final MslObject userDataMo = encoder.parseObject(userdata);
                 tokenDataMo.put(KEY_USERDATA, userDataMo);
             } catch (final MslEncoderException e) {
-                throw new MslEncodingException(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR, "userdata " + DatatypeConverter.printBase64Binary(userdata), e).setMasterToken(masterToken);
+                throw new MslEncodingException(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR, "userdata " + Base64.encode(userdata), e).setMasterToken(masterToken);
             }
         }
 
@@ -442,16 +441,16 @@ public class MSLHttpListener implements IHttpListener {
             final long renewalWindow = tokenDataMo.getLong(KEY_RENEWAL_WINDOW);
             final long expiration = tokenDataMo.getLong(KEY_EXPIRATION);
             if (expiration < renewalWindow)
-                throw new MslException(MslError.MASTERTOKEN_EXPIRES_BEFORE_RENEWAL, "mastertokendata " + DatatypeConverter.printBase64Binary(tokendata));
+                throw new MslException(MslError.MASTERTOKEN_EXPIRES_BEFORE_RENEWAL, "mastertokendata " + Base64.encode(tokendata));
             final long sequenceNumber = tokenDataMo.getLong(KEY_SEQUENCE_NUMBER);
             if (sequenceNumber < 0 || sequenceNumber > MslConstants.MAX_LONG_VALUE)
-                throw new MslException(MslError.MASTERTOKEN_SEQUENCE_NUMBER_OUT_OF_RANGE, "mastertokendata " + DatatypeConverter.printBase64Binary(tokendata));
+                throw new MslException(MslError.MASTERTOKEN_SEQUENCE_NUMBER_OUT_OF_RANGE, "mastertokendata " + Base64.encode(tokendata));
             final long serialNumber = tokenDataMo.getLong(KEY_SERIAL_NUMBER);
             if (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE)
-                throw new MslException(MslError.MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "mastertokendata " + DatatypeConverter.printBase64Binary(tokendata));
+                throw new MslException(MslError.MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "mastertokendata " + Base64.encode(tokendata));
             final byte[] ciphertext;
             try {
-                ciphertext = DatatypeConverter.parseBase64Binary(tokenDataMo.getString(KEY_SESSIONDATA));
+                ciphertext = Base64.decode(tokenDataMo.getString(KEY_SESSIONDATA));
             } catch (final IllegalArgumentException e) {
                 throw new MslEncodingException(MslError.MASTERTOKEN_SESSIONDATA_INVALID, tokenDataMo.getString(KEY_SESSIONDATA));
             }
@@ -460,7 +459,7 @@ public class MSLHttpListener implements IHttpListener {
             sessiondata = (verified) ? cryptoContext.decrypt(ciphertext, encoder) : null;
             tokenDataMo.remove(KEY_SESSIONDATA);
         } catch (final MslEncoderException e) {
-            throw new MslEncodingException(MslError.MASTERTOKEN_TOKENDATA_PARSE_ERROR, "mastertokendata " + DatatypeConverter.printBase64Binary(tokendata), e);
+            throw new MslEncodingException(MslError.MASTERTOKEN_TOKENDATA_PARSE_ERROR, "mastertokendata " + Base64.encode(tokendata), e);
         }
 
         // Pull the session data.
@@ -469,7 +468,7 @@ public class MSLHttpListener implements IHttpListener {
                 final MslObject sessionDataMo = encoder.parseObject(sessiondata);
                 tokenDataMo.put(KEY_SESSIONDATA, sessionDataMo);
             } catch (final MslEncoderException e) {
-                throw new MslEncodingException(MslError.MASTERTOKEN_SESSIONDATA_PARSE_ERROR, "sessiondata " + DatatypeConverter.printBase64Binary(sessiondata), e);
+                throw new MslEncodingException(MslError.MASTERTOKEN_SESSIONDATA_PARSE_ERROR, "sessiondata " + Base64.encode(sessiondata), e);
             }
         }
 

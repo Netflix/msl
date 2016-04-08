@@ -15,8 +15,6 @@
  */
 package com.netflix.msl.crypto;
 
-import javax.xml.bind.DatatypeConverter;
-
 import com.netflix.msl.MslConstants.SignatureAlgo;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
@@ -26,6 +24,7 @@ import com.netflix.msl.io.MslEncoderException;
 import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.io.MslObject;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -172,10 +171,10 @@ public class MslSignatureEnvelope {
                     // Return the envelope.
                     return new MslSignatureEnvelope(algorithm, signature);
                 } catch (final MslEncoderException e) {
-                    throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "signature envelope " + DatatypeConverter.printBase64Binary(envelope), e);
+                    throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "signature envelope " + Base64.encode(envelope), e);
                 }
             default:
-                throw new MslCryptoException(MslError.UNSUPPORTED_SIGNATURE_ENVELOPE, "signature envelope " + DatatypeConverter.printBase64Binary(envelope));
+                throw new MslCryptoException(MslError.UNSUPPORTED_SIGNATURE_ENVELOPE, "signature envelope " + Base64.encode(envelope));
         }
     }
     
@@ -240,7 +239,7 @@ public class MslSignatureEnvelope {
                     return new MslSignatureEnvelope(envelope);
                 }
             default:
-                throw new MslCryptoException(MslError.UNSUPPORTED_SIGNATURE_ENVELOPE, "signature envelope " + DatatypeConverter.printBase64Binary(envelope));
+                throw new MslCryptoException(MslError.UNSUPPORTED_SIGNATURE_ENVELOPE, "signature envelope " + Base64.encode(envelope));
         }
     }
     

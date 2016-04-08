@@ -831,7 +831,7 @@ describe("UserIdToken", function() {
 	
 	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
 	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        tokendataJo[KEY_USERDATA] = "";
+	        tokendataJo[KEY_USERDATA] = "x";
 	        
 	        var cryptoContext = ctx.getMslCryptoContext();
 	        var modifiedTokendata = textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET);
@@ -851,7 +851,7 @@ describe("UserIdToken", function() {
     	waitsFor(function() { return exception; }, "exception not received", 100);
 	    runs(function() {
 	        var f = function() { throw exception; };
-	        expect(f).toThrow(new MslException(MslError.USERIDTOKEN_USERDATA_MISSING));
+	        expect(f).toThrow(new MslException(MslError.USERIDTOKEN_USERDATA_INVALID));
 	    });
     });
     

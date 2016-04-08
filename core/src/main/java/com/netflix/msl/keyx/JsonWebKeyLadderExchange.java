@@ -28,7 +28,6 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import javax.xml.bind.DatatypeConverter;
 
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
@@ -56,6 +55,7 @@ import com.netflix.msl.io.MslObject;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.util.AuthenticationUtils;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -788,7 +788,7 @@ public class JsonWebKeyLadderExchange extends KeyExchangeFactory {
             {
                 wrapKeyCryptoContext = repository.getCryptoContext(requestWrapdata);
                 if (wrapKeyCryptoContext == null)
-                    throw new MslKeyExchangeException(MslError.KEYX_WRAPPING_KEY_MISSING, DatatypeConverter.printBase64Binary(requestWrapdata)).setEntityAuthenticationData(entityAuthData);
+                    throw new MslKeyExchangeException(MslError.KEYX_WRAPPING_KEY_MISSING, Base64.encode(requestWrapdata)).setEntityAuthenticationData(entityAuthData);
                 break;
             }
             default:

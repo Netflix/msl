@@ -34,18 +34,9 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.xml.bind.DatatypeConverter;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.json.JSONObject;
-
-import server.entityauth.SimpleRsaStore;
-import server.msg.SimpleReceiveMessageContext;
-import server.msg.SimpleRequest;
-import server.msg.SimpleRespondMessageContext;
-import server.userauth.SimpleEmailPasswordStore;
-import server.userauth.SimpleUser;
-import server.util.SimpleMslContext;
 
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.crypto.JcaAlgorithm;
@@ -58,7 +49,16 @@ import com.netflix.msl.msg.MessageInputStream;
 import com.netflix.msl.msg.MslControl;
 import com.netflix.msl.msg.MslControl.MslChannel;
 import com.netflix.msl.userauth.EmailPasswordStore;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
+
+import server.entityauth.SimpleRsaStore;
+import server.msg.SimpleReceiveMessageContext;
+import server.msg.SimpleRequest;
+import server.msg.SimpleRespondMessageContext;
+import server.userauth.SimpleEmailPasswordStore;
+import server.userauth.SimpleUser;
+import server.util.SimpleMslContext;
 
 /**
  * <p>An example Java MSL servlet that listens for requests from the example
@@ -108,7 +108,7 @@ public class SimpleServlet extends HttpServlet {
         // Create the RSA key store.
         final RsaStore rsaStore;
         try {
-            final byte[] privKeyEncoded = DatatypeConverter.parseBase64Binary(SimpleConstants.RSA_PRIVKEY_B64);
+            final byte[] privKeyEncoded = Base64.decode(SimpleConstants.RSA_PRIVKEY_B64);
             final PKCS8EncodedKeySpec privKeySpec = new PKCS8EncodedKeySpec(privKeyEncoded);
             final KeyFactory rsaKeyFactory = KeyFactory.getInstance("RSA");
             final PrivateKey privKey = rsaKeyFactory.generatePrivate(privKeySpec);

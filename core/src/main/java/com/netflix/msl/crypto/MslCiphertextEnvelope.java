@@ -25,6 +25,7 @@ import com.netflix.msl.io.MslEncoderException;
 import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.io.MslObject;
+import com.netflix.msl.util.Base64;
 
 /**
  * MSL ciphertext envelopes contain all of the information necessary for
@@ -200,7 +201,7 @@ public class MslCiphertextEnvelope implements MslEncodable {
                     this.cipherSpec = null;
                     this.iv = (mo.has(KEY_IV)) ? mo.getBytes(KEY_IV) : null;
                     this.ciphertext = mo.getBytes(KEY_CIPHERTEXT);
-                    mo.getString(KEY_SHA256);
+                    mo.getBytes(KEY_SHA256);
                 } catch (final MslEncoderException e) {
                     throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "ciphertext envelope " + mo, e);
                 }
@@ -212,11 +213,13 @@ public class MslCiphertextEnvelope implements MslEncodable {
                     if (!Version.V2.equals(this.version))
                         throw new MslCryptoException(MslError.UNIDENTIFIED_CIPHERTEXT_ENVELOPE, "ciphertext envelope " + mo.toString());
                     this.keyId = null;
-                    this.cipherSpec = CipherSpec.fromString(mo.getString(KEY_CIPHERSPEC));
+                    try {
+                        this.cipherSpec = CipherSpec.fromString(mo.getString(KEY_CIPHERSPEC));
+                    } catch (final IllegalArgumentException e) {
+                        throw new MslCryptoException(MslError.UNIDENTIFIED_CIPHERSPEC, "ciphertext envelope " + mo, e);
+                    }
                     this.iv = (mo.has(KEY_IV)) ? mo.getBytes(KEY_IV) : null;
                     this.ciphertext = mo.getBytes(KEY_CIPHERTEXT);
-                } catch (final IllegalArgumentException e) {
-                    throw new MslCryptoException(MslError.UNIDENTIFIED_CIPHERSPEC, "ciphertext envelope " + mo, e);
                 } catch (final MslEncoderException e) {
                     throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "ciphertext envelope " + mo, e);
                 }
@@ -276,7 +279,7 @@ public class MslCiphertextEnvelope implements MslEncodable {
                 mo.put(KEY_KEY_ID, keyId);
                 if (iv != null) mo.put(KEY_IV, iv);
                 mo.put(KEY_CIPHERTEXT, ciphertext);
-                mo.put(KEY_SHA256, "AA==");
+                mo.put(KEY_SHA256, Base64.decode("AA=="));
                 break;
             case V2:
                 mo.put(KEY_VERSION, version.intValue());

@@ -18,8 +18,6 @@ package com.netflix.msl.tokens;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.xml.bind.DatatypeConverter;
-
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslConstants.CompressionAlgorithm;
 import com.netflix.msl.MslCryptoException;
@@ -33,6 +31,7 @@ import com.netflix.msl.io.MslEncoderException;
 import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.io.MslObject;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslUtils;
 
@@ -341,7 +340,7 @@ public class ServiceToken implements MslEncodable {
                 servicedata = (data.length == 0) ? new byte[0] : null;
             }
         } catch (final MslEncoderException e) {
-            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "servicetokendata " + DatatypeConverter.printBase64Binary(tokendataBytes), e).setMasterToken(masterToken).setUserIdToken(userIdToken);
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "servicetokendata " + Base64.encode(tokendataBytes), e).setMasterToken(masterToken).setUserIdToken(userIdToken);
         } catch (final MslCryptoException e) {
             e.setMasterToken(masterToken);
             e.setUserIdToken(userIdToken);

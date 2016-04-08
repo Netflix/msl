@@ -26,8 +26,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 
-import javax.xml.bind.DatatypeConverter;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -154,8 +152,8 @@ public class MslCiphertextEnvelopeSuite {
             
             assertEquals(KEY_ID, mo.getString(KEY_KEY_ID));
             assertFalse(mo.has(KEY_CIPHERSPEC));
-            assertArrayEquals(IV, DatatypeConverter.parseBase64Binary(mo.getString(KEY_IV)));
-            assertArrayEquals(CIPHERTEXT, DatatypeConverter.parseBase64Binary(mo.getString(KEY_CIPHERTEXT)));
+            assertArrayEquals(IV, mo.getBytes(KEY_IV));
+            assertArrayEquals(CIPHERTEXT, mo.getBytes(KEY_CIPHERTEXT));
         }
 
         @Test
@@ -167,7 +165,7 @@ public class MslCiphertextEnvelopeSuite {
             assertEquals(KEY_ID, mo.getString(KEY_KEY_ID));
             assertFalse(mo.has(KEY_CIPHERSPEC));
             assertFalse(mo.has(KEY_IV));
-            assertArrayEquals(CIPHERTEXT, DatatypeConverter.parseBase64Binary(mo.getString(KEY_CIPHERTEXT)));
+            assertArrayEquals(CIPHERTEXT, mo.getBytes(KEY_CIPHERTEXT));
         }
         
         @Test
@@ -218,10 +216,10 @@ public class MslCiphertextEnvelopeSuite {
 
             final byte[] encode = envelope.toMslEncoding(encoder, ENCODER_FORMAT);
             final MslObject mo = encoder.parseObject(encode);
-            final byte[] hash = DatatypeConverter.parseBase64Binary(mo.getString(KEY_SHA256));
+            final byte[] hash = mo.getBytes(KEY_SHA256);
             assertNotNull(hash);
             hash[0] += 1;
-            mo.put(KEY_SHA256, DatatypeConverter.printBase64Binary(hash));
+            mo.put(KEY_SHA256, hash);
 
             final MslCiphertextEnvelope moEnvelope = new MslCiphertextEnvelope(mo);
             assertEquals(KEY_ID, moEnvelope.getKeyId());
@@ -306,8 +304,8 @@ public class MslCiphertextEnvelopeSuite {
             assertEquals(Version.V2.intValue(), mo.getInt(KEY_VERSION));
             assertFalse(mo.has(KEY_KEY_ID));
             assertEquals(cipherSpec.toString(), mo.getString(KEY_CIPHERSPEC));
-            assertArrayEquals(IV, DatatypeConverter.parseBase64Binary(mo.getString(KEY_IV)));
-            assertArrayEquals(CIPHERTEXT, DatatypeConverter.parseBase64Binary(mo.getString(KEY_CIPHERTEXT)));
+            assertArrayEquals(IV, mo.getBytes(KEY_IV));
+            assertArrayEquals(CIPHERTEXT, mo.getBytes(KEY_CIPHERTEXT));
         }
 
         @Test
@@ -320,7 +318,7 @@ public class MslCiphertextEnvelopeSuite {
             assertFalse(mo.has(KEY_KEY_ID));
             assertEquals(cipherSpec.toString(), mo.getString(KEY_CIPHERSPEC));
             assertFalse(mo.has(KEY_IV));
-            assertArrayEquals(CIPHERTEXT, DatatypeConverter.parseBase64Binary(mo.getString(KEY_CIPHERTEXT)));
+            assertArrayEquals(CIPHERTEXT, mo.getBytes(KEY_CIPHERTEXT));
         }
         
         @Test
