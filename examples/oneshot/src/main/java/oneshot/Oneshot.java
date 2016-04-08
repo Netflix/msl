@@ -28,8 +28,6 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import javax.xml.bind.DatatypeConverter;
-
 import com.netflix.msl.MslConstants.ResponseCode;
 import com.netflix.msl.MslException;
 import com.netflix.msl.msg.ErrorHeader;
@@ -37,6 +35,7 @@ import com.netflix.msl.msg.MessageContext;
 import com.netflix.msl.msg.MessageInputStream;
 import com.netflix.msl.msg.MslControl;
 import com.netflix.msl.msg.MslControl.MslChannel;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -76,7 +75,7 @@ public class Oneshot {
         this.ctrl = new MslControl(0);
         
 	    // Setup remote entity public key.
-	    final byte[] pubkeyBytes = DatatypeConverter.parseBase64Binary(remoteRsaPubkeyB64);
+	    final byte[] pubkeyBytes = Base64.decode(remoteRsaPubkeyB64);
 	    final X509EncodedKeySpec pubkeySpec = new X509EncodedKeySpec(pubkeyBytes);
 	    final KeyFactory factory = KeyFactory.getInstance("RSA");
 	    final PublicKey pubkey = factory.generatePublic(pubkeySpec);

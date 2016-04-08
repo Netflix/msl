@@ -17,7 +17,6 @@ package com.netflix.msl.entityauth;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import javax.xml.bind.DatatypeConverter;
 
 import org.json.JSONObject;
 
@@ -28,6 +27,7 @@ import com.netflix.msl.MslInternalException;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.crypto.JcaAlgorithm;
 import com.netflix.msl.crypto.SymmetricCryptoContext;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslTestUtils;
 
@@ -40,16 +40,16 @@ public class MockPresharedProfileAuthenticationFactory extends EntityAuthenticat
     /** PSK ESN. */
     public static final String PSK_ESN = "PSK-ESN";
     /** PSK Kpe. */
-    private static final byte[] PSK_KPE = DatatypeConverter.parseBase64Binary("kzWYEtKSsPI8dOW5YyoILQ==");
+    private static final byte[] PSK_KPE = Base64.decode("kzWYEtKSsPI8dOW5YyoILQ==");
     /** PSK Kph. */
-    private static final byte[] PSK_KPH = DatatypeConverter.parseBase64Binary("VhxNUK7bYIcCV4wLE2YK90do1X3XqhPeMwwllmNh8Jw=");
+    private static final byte[] PSK_KPH = Base64.decode("VhxNUK7bYIcCV4wLE2YK90do1X3XqhPeMwwllmNh8Jw=");
     
     /** PSK ESN 2. */
     public static final String PSK_ESN2 = "PSK-ESN2";
     /** PSK Kpe 2. */
-    private static final byte[] PSK_KPE2 = DatatypeConverter.parseBase64Binary("lzWYEtKSsPI8dOW5YyoILQ==");
+    private static final byte[] PSK_KPE2 = Base64.decode("lzWYEtKSsPI8dOW5YyoILQ==");
     /** PSK Kph 2. */
-    private static final byte[] PSK_KPH2 = DatatypeConverter.parseBase64Binary("WhxNUK7bYIcCV4wLE2YK90do1X3XqhPeMwwllmNh8Jw=");
+    private static final byte[] PSK_KPH2 = Base64.decode("WhxNUK7bYIcCV4wLE2YK90do1X3XqhPeMwwllmNh8Jw=");
     
     /** Profile. */
     public static final String PROFILE = "PROFILE";

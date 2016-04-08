@@ -21,8 +21,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import javax.xml.bind.DatatypeConverter;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -52,6 +50,7 @@ import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.userauth.UserAuthenticationData;
 import com.netflix.msl.userauth.UserAuthenticationFactory;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.JsonUtils;
 import com.netflix.msl.util.MslContext;
 
@@ -517,7 +516,7 @@ public class MessageHeader extends Header {
             
             // Verify and decrypt the header data.
             try {
-                this.headerdata = DatatypeConverter.parseBase64Binary(headerdata);
+                this.headerdata = Base64.decode(headerdata);
             } catch (final IllegalArgumentException e) {
                 throw new MslMessageException(MslError.HEADER_DATA_INVALID, headerdata, e).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData);
             }
@@ -953,8 +952,8 @@ public class MessageHeader extends Header {
                 jsonObj.put(HeaderKeys.KEY_MASTER_TOKEN, masterToken);
             else
                 jsonObj.put(HeaderKeys.KEY_ENTITY_AUTHENTICATION_DATA, entityAuthData);
-            jsonObj.put(HeaderKeys.KEY_HEADERDATA, DatatypeConverter.printBase64Binary(headerdata));
-            jsonObj.put(HeaderKeys.KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+            jsonObj.put(HeaderKeys.KEY_HEADERDATA, Base64.encode(headerdata));
+            jsonObj.put(HeaderKeys.KEY_SIGNATURE, Base64.encode(signature));
             return jsonObj.toString();
         } catch (final JSONException e) {
             throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);

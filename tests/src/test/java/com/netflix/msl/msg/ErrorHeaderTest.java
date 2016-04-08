@@ -26,8 +26,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 
-import javax.xml.bind.DatatypeConverter;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.AfterClass;
@@ -52,6 +50,7 @@ import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.test.ExpectedMslException;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.JsonUtils;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslContext;
@@ -167,10 +166,10 @@ public class ErrorHeaderTest {
         final JSONObject jo = new JSONObject(jsonString);
         final JSONObject entityAuthDataJo = jo.getJSONObject(KEY_ENTITY_AUTHENTICATION_DATA);
         assertTrue(JsonUtils.equals(new JSONObject(ENTITY_AUTH_DATA.toJSONString()), entityAuthDataJo));
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_ERRORDATA));
+        final byte[] ciphertext = Base64.decode(jo.getString(KEY_ERRORDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext);
         final JSONObject errordata = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
-        final byte[] signature = DatatypeConverter.parseBase64Binary(jo.getString(KEY_SIGNATURE));
+        final byte[] signature = Base64.decode(jo.getString(KEY_SIGNATURE));
         assertTrue(cryptoContext.verify(ciphertext, signature));
 
         assertEquals(RECIPIENT, errordata.getString(KEY_RECIPIENT));
@@ -192,10 +191,10 @@ public class ErrorHeaderTest {
         final JSONObject jo = new JSONObject(jsonString);
         final JSONObject entityAuthDataJo = jo.getJSONObject(KEY_ENTITY_AUTHENTICATION_DATA);
         assertTrue(JsonUtils.equals(new JSONObject(ENTITY_AUTH_DATA.toJSONString()), entityAuthDataJo));
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_ERRORDATA));
+        final byte[] ciphertext = Base64.decode(jo.getString(KEY_ERRORDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext);
         final JSONObject errordata = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
-        final byte[] signature = DatatypeConverter.parseBase64Binary(jo.getString(KEY_SIGNATURE));
+        final byte[] signature = Base64.decode(jo.getString(KEY_SIGNATURE));
         assertTrue(cryptoContext.verify(ciphertext, signature));
 
         assertEquals(RECIPIENT, errordata.getString(KEY_RECIPIENT));
@@ -217,10 +216,10 @@ public class ErrorHeaderTest {
         final JSONObject jo = new JSONObject(jsonString);
         final JSONObject entityAuthDataJo = jo.getJSONObject(KEY_ENTITY_AUTHENTICATION_DATA);
         assertTrue(JsonUtils.equals(new JSONObject(ENTITY_AUTH_DATA.toJSONString()), entityAuthDataJo));
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_ERRORDATA));
+        final byte[] ciphertext = Base64.decode(jo.getString(KEY_ERRORDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext);
         final JSONObject errordata = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
-        final byte[] signature = DatatypeConverter.parseBase64Binary(jo.getString(KEY_SIGNATURE));
+        final byte[] signature = Base64.decode(jo.getString(KEY_SIGNATURE));
         assertTrue(cryptoContext.verify(ciphertext, signature));
 
         assertFalse(errordata.has(KEY_RECIPIENT));
@@ -242,10 +241,10 @@ public class ErrorHeaderTest {
         final JSONObject jo = new JSONObject(jsonString);
         final JSONObject entityAuthDataJo = jo.getJSONObject(KEY_ENTITY_AUTHENTICATION_DATA);
         assertTrue(JsonUtils.equals(new JSONObject(ENTITY_AUTH_DATA.toJSONString()), entityAuthDataJo));
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_ERRORDATA));
+        final byte[] ciphertext = Base64.decode(jo.getString(KEY_ERRORDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext);
         final JSONObject errordata = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
-        final byte[] signature = DatatypeConverter.parseBase64Binary(jo.getString(KEY_SIGNATURE));
+        final byte[] signature = Base64.decode(jo.getString(KEY_SIGNATURE));
         assertTrue(cryptoContext.verify(ciphertext, signature));
 
         assertEquals(RECIPIENT, errordata.getString(KEY_RECIPIENT));
@@ -267,10 +266,10 @@ public class ErrorHeaderTest {
         final JSONObject jo = new JSONObject(jsonString);
         final JSONObject entityAuthDataJo = jo.getJSONObject(KEY_ENTITY_AUTHENTICATION_DATA);
         assertTrue(JsonUtils.equals(new JSONObject(ENTITY_AUTH_DATA.toJSONString()), entityAuthDataJo));
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(jo.getString(KEY_ERRORDATA));
+        final byte[] ciphertext = Base64.decode(jo.getString(KEY_ERRORDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext);
         final JSONObject errordata = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
-        final byte[] signature = DatatypeConverter.parseBase64Binary(jo.getString(KEY_SIGNATURE));
+        final byte[] signature = Base64.decode(jo.getString(KEY_SIGNATURE));
         assertTrue(cryptoContext.verify(ciphertext, signature));
 
         assertEquals(RECIPIENT, errordata.getString(KEY_RECIPIENT));
@@ -349,7 +348,7 @@ public class ErrorHeaderTest {
     }
     
     // This unit test no longer passes because
-    // DatatypeConverter.parseBase64Binary() does not error when given invalid
+    // Base64.decode() does not error when given invalid
     // Base64-encoded data.
     @Ignore
     @Test
@@ -393,17 +392,16 @@ public class ErrorHeaderTest {
     
     @Test
     public void invalidErrordata() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, JSONException {
-        thrown.expect(MslMessageException.class);
-        thrown.expectMslError(MslError.HEADER_DATA_MISSING);
+        thrown.expect(MslCryptoException.class);
 
         final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         final JSONObject errorHeaderJo = new JSONObject(errorHeader.toJSONString());
         
         // This tests invalid but trusted error data so we must sign it.
-        errorHeaderJo.put(KEY_ERRORDATA, "x");
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary("x");
+        errorHeaderJo.put(KEY_ERRORDATA, "AA==");
+        final byte[] ciphertext = Base64.decode(errorHeaderJo.getString(KEY_ERRORDATA));
         final byte[] signature = cryptoContext.sign(ciphertext);
-        errorHeaderJo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        errorHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
     }
@@ -418,9 +416,9 @@ public class ErrorHeaderTest {
         
         // This tests empty but trusted error data so we must sign it.
         final byte[] ciphertext = new byte[0];
-        errorHeaderJo.put(KEY_ERRORDATA, DatatypeConverter.printBase64Binary(ciphertext));
+        errorHeaderJo.put(KEY_ERRORDATA, Base64.encode(ciphertext));
         final byte[] signature = cryptoContext.sign(ciphertext);
-        errorHeaderJo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        errorHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
     }
@@ -431,7 +429,7 @@ public class ErrorHeaderTest {
         final JSONObject errorHeaderJo = new JSONObject(errorHeader.toJSONString());
 
         // Before modifying the error data we need to decrypt it.
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(errorHeaderJo.getString(KEY_ERRORDATA));
+        final byte[] ciphertext = Base64.decode(errorHeaderJo.getString(KEY_ERRORDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext);
         final JSONObject errordata = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
         
@@ -439,12 +437,12 @@ public class ErrorHeaderTest {
         assertNotNull(errordata.remove(KEY_TIMESTAMP));
         final byte[] modifiedPlaintext = errordata.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] modifiedCiphertext = cryptoContext.encrypt(modifiedPlaintext);
-        errorHeaderJo.put(KEY_ERRORDATA, DatatypeConverter.printBase64Binary(modifiedCiphertext));
+        errorHeaderJo.put(KEY_ERRORDATA, Base64.encode(modifiedCiphertext));
         
         // The error data must be signed otherwise the error data will not be
         // processed.
         final byte[] modifiedSignature = cryptoContext.sign(modifiedCiphertext);
-        errorHeaderJo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(modifiedSignature));
+        errorHeaderJo.put(KEY_SIGNATURE, Base64.encode(modifiedSignature));
 
         Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
     }
@@ -458,7 +456,7 @@ public class ErrorHeaderTest {
         final JSONObject errorHeaderJo = new JSONObject(errorHeader.toJSONString());
 
         // Before modifying the error data we need to decrypt it.
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(errorHeaderJo.getString(KEY_ERRORDATA));
+        final byte[] ciphertext = Base64.decode(errorHeaderJo.getString(KEY_ERRORDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext);
         final JSONObject errordata = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
 
@@ -466,12 +464,12 @@ public class ErrorHeaderTest {
         errordata.put(KEY_TIMESTAMP, "x");
         final byte[] modifiedPlaintext = errordata.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] modifiedCiphertext = cryptoContext.encrypt(modifiedPlaintext);
-        errorHeaderJo.put(KEY_ERRORDATA, DatatypeConverter.printBase64Binary(modifiedCiphertext));
+        errorHeaderJo.put(KEY_ERRORDATA, Base64.encode(modifiedCiphertext));
 
         // The error data must be signed otherwise the error data will not be
         // processed.
         final byte[] modifiedSignature = cryptoContext.sign(modifiedCiphertext);
-        errorHeaderJo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(modifiedSignature));
+        errorHeaderJo.put(KEY_SIGNATURE, Base64.encode(modifiedSignature));
         
         Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
     }
@@ -485,7 +483,7 @@ public class ErrorHeaderTest {
         final JSONObject errorHeaderJo = new JSONObject(errorHeader.toJSONString());
         
         // Before modifying the error data we need to decrypt it.
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(errorHeaderJo.getString(KEY_ERRORDATA));
+        final byte[] ciphertext = Base64.decode(errorHeaderJo.getString(KEY_ERRORDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext);
         final JSONObject errordata = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
         
@@ -493,12 +491,12 @@ public class ErrorHeaderTest {
         assertNotNull(errordata.remove(KEY_MESSAGE_ID));
         final byte[] modifiedPlaintext = errordata.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] modifiedCiphertext = cryptoContext.encrypt(modifiedPlaintext);
-        errorHeaderJo.put(KEY_ERRORDATA, DatatypeConverter.printBase64Binary(modifiedCiphertext));
+        errorHeaderJo.put(KEY_ERRORDATA, Base64.encode(modifiedCiphertext));
         
         // The error data must be signed otherwise the error data will not be
         // processed.
         final byte[] modifiedSignature = cryptoContext.sign(modifiedCiphertext);
-        errorHeaderJo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(modifiedSignature));
+        errorHeaderJo.put(KEY_SIGNATURE, Base64.encode(modifiedSignature));
         
         Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
     }
@@ -512,7 +510,7 @@ public class ErrorHeaderTest {
         final JSONObject errorHeaderJo = new JSONObject(errorHeader.toJSONString());
 
         // Before modifying the error data we need to decrypt it.
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(errorHeaderJo.getString(KEY_ERRORDATA));
+        final byte[] ciphertext = Base64.decode(errorHeaderJo.getString(KEY_ERRORDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext);
         final JSONObject errordata = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
 
@@ -520,12 +518,12 @@ public class ErrorHeaderTest {
         errordata.put(KEY_MESSAGE_ID, "x");
         final byte[] modifiedPlaintext = errordata.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] modifiedCiphertext = cryptoContext.encrypt(modifiedPlaintext);
-        errorHeaderJo.put(KEY_ERRORDATA, DatatypeConverter.printBase64Binary(modifiedCiphertext));
+        errorHeaderJo.put(KEY_ERRORDATA, Base64.encode(modifiedCiphertext));
 
         // The error data must be signed otherwise the error data will not be
         // processed.
         final byte[] modifiedSignature = cryptoContext.sign(modifiedCiphertext);
-        errorHeaderJo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(modifiedSignature));
+        errorHeaderJo.put(KEY_SIGNATURE, Base64.encode(modifiedSignature));
         
         Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
     }
@@ -549,7 +547,7 @@ public class ErrorHeaderTest {
         final JSONObject errorHeaderJo = new JSONObject(errorHeader.toJSONString());
 
         // Before modifying the error data we need to decrypt it.
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(errorHeaderJo.getString(KEY_ERRORDATA));
+        final byte[] ciphertext = Base64.decode(errorHeaderJo.getString(KEY_ERRORDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext);
         final JSONObject errordata = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
 
@@ -557,12 +555,12 @@ public class ErrorHeaderTest {
         errordata.put(KEY_MESSAGE_ID, -1L);
         final byte[] modifiedPlaintext = errordata.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] modifiedCiphertext = cryptoContext.encrypt(modifiedPlaintext);
-        errorHeaderJo.put(KEY_ERRORDATA, DatatypeConverter.printBase64Binary(modifiedCiphertext));
+        errorHeaderJo.put(KEY_ERRORDATA, Base64.encode(modifiedCiphertext));
 
         // The error data must be signed otherwise the error data will not be
         // processed.
         final byte[] modifiedSignature = cryptoContext.sign(modifiedCiphertext);
-        errorHeaderJo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(modifiedSignature));
+        errorHeaderJo.put(KEY_SIGNATURE, Base64.encode(modifiedSignature));
         
         Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
     }
@@ -576,7 +574,7 @@ public class ErrorHeaderTest {
         final JSONObject errorHeaderJo = new JSONObject(errorHeader.toJSONString());
 
         // Before modifying the error data we need to decrypt it.
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(errorHeaderJo.getString(KEY_ERRORDATA));
+        final byte[] ciphertext = Base64.decode(errorHeaderJo.getString(KEY_ERRORDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext);
         final JSONObject errordata = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
 
@@ -584,12 +582,12 @@ public class ErrorHeaderTest {
         errordata.put(KEY_MESSAGE_ID, MslConstants.MAX_LONG_VALUE + 1);
         final byte[] modifiedPlaintext = errordata.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] modifiedCiphertext = cryptoContext.encrypt(modifiedPlaintext);
-        errorHeaderJo.put(KEY_ERRORDATA, DatatypeConverter.printBase64Binary(modifiedCiphertext));
+        errorHeaderJo.put(KEY_ERRORDATA, Base64.encode(modifiedCiphertext));
 
         // The error data must be signed otherwise the error data will not be
         // processed.
         final byte[] modifiedSignature = cryptoContext.sign(modifiedCiphertext);
-        errorHeaderJo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(modifiedSignature));
+        errorHeaderJo.put(KEY_SIGNATURE, Base64.encode(modifiedSignature));
         
         Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
     }
@@ -604,7 +602,7 @@ public class ErrorHeaderTest {
         final JSONObject errorHeaderJo = new JSONObject(errorHeader.toJSONString());
         
         // Before modifying the error data we need to decrypt it.
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(errorHeaderJo.getString(KEY_ERRORDATA));
+        final byte[] ciphertext = Base64.decode(errorHeaderJo.getString(KEY_ERRORDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext);
         final JSONObject errordata = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
         
@@ -612,12 +610,12 @@ public class ErrorHeaderTest {
         assertNotNull(errordata.remove(KEY_ERROR_CODE));
         final byte[] modifiedPlaintext = errordata.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] modifiedCiphertext = cryptoContext.encrypt(modifiedPlaintext);
-        errorHeaderJo.put(KEY_ERRORDATA, DatatypeConverter.printBase64Binary(modifiedCiphertext));
+        errorHeaderJo.put(KEY_ERRORDATA, Base64.encode(modifiedCiphertext));
         
         // The error data must be signed otherwise the error data will not be
         // processed.
         final byte[] modifiedSignature = cryptoContext.sign(modifiedCiphertext);
-        errorHeaderJo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(modifiedSignature));
+        errorHeaderJo.put(KEY_SIGNATURE, Base64.encode(modifiedSignature));
         
         Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
     }
@@ -632,7 +630,7 @@ public class ErrorHeaderTest {
         final JSONObject errorHeaderJo = new JSONObject(errorHeader.toJSONString());
 
         // Before modifying the error data we need to decrypt it.
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(errorHeaderJo.getString(KEY_ERRORDATA));
+        final byte[] ciphertext = Base64.decode(errorHeaderJo.getString(KEY_ERRORDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext);
         final JSONObject errordata = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
 
@@ -640,12 +638,12 @@ public class ErrorHeaderTest {
         errordata.put(KEY_ERROR_CODE, "x");
         final byte[] modifiedPlaintext = errordata.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] modifiedCiphertext = cryptoContext.encrypt(modifiedPlaintext);
-        errorHeaderJo.put(KEY_ERRORDATA, DatatypeConverter.printBase64Binary(modifiedCiphertext));
+        errorHeaderJo.put(KEY_ERRORDATA, Base64.encode(modifiedCiphertext));
 
         // The error data must be signed otherwise the error data will not be
         // processed.
         final byte[] modifiedSignature = cryptoContext.sign(modifiedCiphertext);
-        errorHeaderJo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(modifiedSignature));
+        errorHeaderJo.put(KEY_SIGNATURE, Base64.encode(modifiedSignature));
         
         Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
     }
@@ -656,7 +654,7 @@ public class ErrorHeaderTest {
         final JSONObject errorHeaderJo = new JSONObject(errorHeader.toJSONString());
         
         // Before modifying the error data we need to decrypt it.
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(errorHeaderJo.getString(KEY_ERRORDATA));
+        final byte[] ciphertext = Base64.decode(errorHeaderJo.getString(KEY_ERRORDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext);
         final JSONObject errordata = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
         
@@ -664,12 +662,12 @@ public class ErrorHeaderTest {
         assertNotNull(errordata.remove(KEY_INTERNAL_CODE));
         final byte[] modifiedPlaintext = errordata.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] modifiedCiphertext = cryptoContext.encrypt(modifiedPlaintext);
-        errorHeaderJo.put(KEY_ERRORDATA, DatatypeConverter.printBase64Binary(modifiedCiphertext));
+        errorHeaderJo.put(KEY_ERRORDATA, Base64.encode(modifiedCiphertext));
         
         // The error data must be signed otherwise the error data will not be
         // processed.
         final byte[] modifiedSignature = cryptoContext.sign(modifiedCiphertext);
-        errorHeaderJo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(modifiedSignature));
+        errorHeaderJo.put(KEY_SIGNATURE, Base64.encode(modifiedSignature));
         
         final ErrorHeader joErrorHeader = (ErrorHeader)Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
         assertEquals(-1, joErrorHeader.getInternalCode());
@@ -685,7 +683,7 @@ public class ErrorHeaderTest {
         final JSONObject errorHeaderJo = new JSONObject(errorHeader.toJSONString());
         
         // Before modifying the error data we need to decrypt it.
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(errorHeaderJo.getString(KEY_ERRORDATA));
+        final byte[] ciphertext = Base64.decode(errorHeaderJo.getString(KEY_ERRORDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext);
         final JSONObject errordata = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
         
@@ -693,12 +691,12 @@ public class ErrorHeaderTest {
         errordata.put(KEY_INTERNAL_CODE, "x");
         final byte[] modifiedPlaintext = errordata.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] modifiedCiphertext = cryptoContext.encrypt(modifiedPlaintext);
-        errorHeaderJo.put(KEY_ERRORDATA, DatatypeConverter.printBase64Binary(modifiedCiphertext));
+        errorHeaderJo.put(KEY_ERRORDATA, Base64.encode(modifiedCiphertext));
         
         // The error data must be signed otherwise the error data will not be
         // processed.
         final byte[] modifiedSignature = cryptoContext.sign(modifiedCiphertext);
-        errorHeaderJo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(modifiedSignature));
+        errorHeaderJo.put(KEY_SIGNATURE, Base64.encode(modifiedSignature));
         
         Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
     }
@@ -713,7 +711,7 @@ public class ErrorHeaderTest {
         final JSONObject errorHeaderJo = new JSONObject(errorHeader.toJSONString());
         
         // Before modifying the error data we need to decrypt it.
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(errorHeaderJo.getString(KEY_ERRORDATA));
+        final byte[] ciphertext = Base64.decode(errorHeaderJo.getString(KEY_ERRORDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext);
         final JSONObject errordata = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
         
@@ -721,12 +719,12 @@ public class ErrorHeaderTest {
         errordata.put(KEY_INTERNAL_CODE, -17);
         final byte[] modifiedPlaintext = errordata.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] modifiedCiphertext = cryptoContext.encrypt(modifiedPlaintext);
-        errorHeaderJo.put(KEY_ERRORDATA, DatatypeConverter.printBase64Binary(modifiedCiphertext));
+        errorHeaderJo.put(KEY_ERRORDATA, Base64.encode(modifiedCiphertext));
         
         // The error data must be signed otherwise the error data will not be
         // processed.
         final byte[] modifiedSignature = cryptoContext.sign(modifiedCiphertext);
-        errorHeaderJo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(modifiedSignature));
+        errorHeaderJo.put(KEY_SIGNATURE, Base64.encode(modifiedSignature));
         
         Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
     }
@@ -737,7 +735,7 @@ public class ErrorHeaderTest {
         final JSONObject errorHeaderJo = new JSONObject(errorHeader.toJSONString());
         
         // Before modifying the error data we need to decrypt it.
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(errorHeaderJo.getString(KEY_ERRORDATA));
+        final byte[] ciphertext = Base64.decode(errorHeaderJo.getString(KEY_ERRORDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext);
         final JSONObject errordata = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
         
@@ -745,12 +743,12 @@ public class ErrorHeaderTest {
         assertNotNull(errordata.remove(KEY_ERROR_MESSAGE));
         final byte[] modifiedPlaintext = errordata.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] modifiedCiphertext = cryptoContext.encrypt(modifiedPlaintext);
-        errorHeaderJo.put(KEY_ERRORDATA, DatatypeConverter.printBase64Binary(modifiedCiphertext));
+        errorHeaderJo.put(KEY_ERRORDATA, Base64.encode(modifiedCiphertext));
         
         // The error data must be signed otherwise the error data will not be
         // processed.
         final byte[] modifiedSignature = cryptoContext.sign(modifiedCiphertext);
-        errorHeaderJo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(modifiedSignature));
+        errorHeaderJo.put(KEY_SIGNATURE, Base64.encode(modifiedSignature));
         
         final ErrorHeader joErrorHeader = (ErrorHeader)Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
         assertNull(joErrorHeader.getErrorMessage());
@@ -762,7 +760,7 @@ public class ErrorHeaderTest {
         final JSONObject errorHeaderJo = new JSONObject(errorHeader.toJSONString());
         
         // Before modifying the error data we need to decrypt it.
-        final byte[] ciphertext = DatatypeConverter.parseBase64Binary(errorHeaderJo.getString(KEY_ERRORDATA));
+        final byte[] ciphertext = Base64.decode(errorHeaderJo.getString(KEY_ERRORDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext);
         final JSONObject errordata = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
         
@@ -770,12 +768,12 @@ public class ErrorHeaderTest {
         assertNotNull(errordata.remove(KEY_USER_MESSAGE));
         final byte[] modifiedPlaintext = errordata.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] modifiedCiphertext = cryptoContext.encrypt(modifiedPlaintext);
-        errorHeaderJo.put(KEY_ERRORDATA, DatatypeConverter.printBase64Binary(modifiedCiphertext));
+        errorHeaderJo.put(KEY_ERRORDATA, Base64.encode(modifiedCiphertext));
         
         // The error data must be signed otherwise the error data will not be
         // processed.
         final byte[] modifiedSignature = cryptoContext.sign(modifiedCiphertext);
-        errorHeaderJo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(modifiedSignature));
+        errorHeaderJo.put(KEY_SIGNATURE, Base64.encode(modifiedSignature));
         
         final ErrorHeader joErrorHeader = (ErrorHeader)Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
         assertNull(joErrorHeader.getUserMessage());

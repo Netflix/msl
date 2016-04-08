@@ -15,8 +15,6 @@
  */
 package com.netflix.msl.crypto;
 
-import javax.xml.bind.DatatypeConverter;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONString;
@@ -26,6 +24,7 @@ import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslInternalException;
+import com.netflix.msl.util.Base64;
 
 /**
  * MSL ciphertext envelopes contain all of the information necessary for
@@ -200,12 +199,12 @@ public class MslCiphertextEnvelope implements JSONString {
                     this.keyId = jsonObj.getString(KEY_KEY_ID);
                     this.cipherSpec = null;
                     try {
-                        this.iv = (jsonObj.has(KEY_IV)) ? DatatypeConverter.parseBase64Binary(jsonObj.getString(KEY_IV)) : null;
+                        this.iv = (jsonObj.has(KEY_IV)) ? Base64.decode(jsonObj.getString(KEY_IV)) : null;
                     } catch (final IllegalArgumentException e) {
                         throw new MslCryptoException(MslError.INVALID_IV, "ciphertext envelope " + jsonObj.toString(), e);
                     }
                     try {
-                        this.ciphertext = DatatypeConverter.parseBase64Binary(jsonObj.getString(KEY_CIPHERTEXT));
+                        this.ciphertext = Base64.decode(jsonObj.getString(KEY_CIPHERTEXT));
                     } catch (final IllegalArgumentException e) {
                         throw new MslCryptoException(MslError.INVALID_CIPHERTEXT, "ciphertext envelope " + jsonObj.toString(), e);
                     }
@@ -223,12 +222,12 @@ public class MslCiphertextEnvelope implements JSONString {
                     this.keyId = null;
                     this.cipherSpec = CipherSpec.fromString(jsonObj.getString(KEY_CIPHERSPEC));
                     try {
-                        this.iv = (jsonObj.has(KEY_IV)) ? DatatypeConverter.parseBase64Binary(jsonObj.getString(KEY_IV)) : null;
+                        this.iv = (jsonObj.has(KEY_IV)) ? Base64.decode(jsonObj.getString(KEY_IV)) : null;
                     } catch (final IllegalArgumentException e) {
                         throw new MslCryptoException(MslError.INVALID_IV, "ciphertext envelope " + jsonObj.toString(), e);
                     }
                     try {
-                        this.ciphertext = DatatypeConverter.parseBase64Binary(jsonObj.getString(KEY_CIPHERTEXT));
+                        this.ciphertext = Base64.decode(jsonObj.getString(KEY_CIPHERTEXT));
                     } catch (final IllegalArgumentException e) {
                         throw new MslCryptoException(MslError.INVALID_CIPHERTEXT, "ciphertext envelope " + jsonObj.toString(), e);
                     }
@@ -292,15 +291,15 @@ public class MslCiphertextEnvelope implements JSONString {
             switch (version) {
                 case V1:
                     jsonObj.put(KEY_KEY_ID, keyId);
-                    if (iv != null) jsonObj.put(KEY_IV, DatatypeConverter.printBase64Binary(iv));
-                    jsonObj.put(KEY_CIPHERTEXT, DatatypeConverter.printBase64Binary(ciphertext));
+                    if (iv != null) jsonObj.put(KEY_IV, Base64.encode(iv));
+                    jsonObj.put(KEY_CIPHERTEXT, Base64.encode(ciphertext));
                     jsonObj.put(KEY_SHA256, "AA==");
                     break;
                 case V2:
                     jsonObj.put(KEY_VERSION, version.intValue());
                     jsonObj.put(KEY_CIPHERSPEC, cipherSpec.toString());
-                    if (iv != null) jsonObj.put(KEY_IV, DatatypeConverter.printBase64Binary(iv));
-                    jsonObj.put(KEY_CIPHERTEXT, DatatypeConverter.printBase64Binary(ciphertext));
+                    if (iv != null) jsonObj.put(KEY_IV, Base64.encode(iv));
+                    jsonObj.put(KEY_CIPHERTEXT, Base64.encode(ciphertext));
                     break;
                 default:
                     throw new MslInternalException("Ciphertext envelope version " + version + " encoding unsupported.");

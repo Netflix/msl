@@ -15,8 +15,6 @@
  */
 package com.netflix.msl.entityauth;
 
-import javax.xml.bind.DatatypeConverter;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -30,6 +28,7 @@ import com.netflix.msl.MslMasterTokenException;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.crypto.SessionCryptoContext;
 import com.netflix.msl.tokens.MasterToken;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -121,12 +120,12 @@ public class MasterTokenProtectedAuthenticationData extends EntityAuthentication
                 throw new MslEntityAuthException(MslError.ENTITYAUTH_MASTERTOKEN_INVALID, "master token protected authdata " + authdataJO.toString(), e);
             }
             try {
-                this.ciphertext = DatatypeConverter.parseBase64Binary(authdataJO.getString(KEY_AUTHENTICATION_DATA));
+                this.ciphertext = Base64.decode(authdataJO.getString(KEY_AUTHENTICATION_DATA));
             } catch (final IllegalArgumentException e) {
                 throw new MslEntityAuthException(MslError.ENTITYAUTH_CIPHERTEXT_INVALID, "master token protected authdata " + authdataJO.toString(), e);
             }
             try {
-                this.signature = DatatypeConverter.parseBase64Binary(authdataJO.getString(KEY_SIGNATURE));
+                this.signature = Base64.decode(authdataJO.getString(KEY_SIGNATURE));
             } catch (final IllegalArgumentException e) {
                 throw new MslEntityAuthException(MslError.ENTITYAUTH_SIGNATURE_INVALID, "master token protected authdata " + authdataJO.toString(), e);
             }
@@ -183,8 +182,8 @@ public class MasterTokenProtectedAuthenticationData extends EntityAuthentication
         try {
             final JSONObject jsonObj = new JSONObject();
             jsonObj.put(KEY_MASTER_TOKEN, masterToken);
-            jsonObj.put(KEY_AUTHENTICATION_DATA, DatatypeConverter.printBase64Binary(ciphertext));
-            jsonObj.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+            jsonObj.put(KEY_AUTHENTICATION_DATA, Base64.encode(ciphertext));
+            jsonObj.put(KEY_SIGNATURE, Base64.encode(signature));
             return new JSONObject(jsonObj.toString());
         } catch (final JSONException e) {
             throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, "master token protected authdata", e);

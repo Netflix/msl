@@ -28,7 +28,6 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import javax.xml.bind.DatatypeConverter;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -55,6 +54,7 @@ import com.netflix.msl.entityauth.PresharedAuthenticationData;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.util.AuthenticationUtils;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -183,7 +183,7 @@ public class JsonWebKeyLadderExchange extends KeyExchangeFactory {
                     case WRAP:
                     {
                         try {
-                            wrapdata = DatatypeConverter.parseBase64Binary(keyRequestJO.getString(KEY_WRAPDATA));
+                            wrapdata = Base64.decode(keyRequestJO.getString(KEY_WRAPDATA));
                         } catch (final IllegalArgumentException e) {
                             throw new MslKeyExchangeException(MslError.KEYX_INVALID_WRAPDATA, "keydata " + keyRequestJO.toString(), e);
                         }
@@ -220,7 +220,7 @@ public class JsonWebKeyLadderExchange extends KeyExchangeFactory {
         protected JSONObject getKeydata() throws JSONException {
             final JSONObject jsonObj = new JSONObject();
             jsonObj.put(KEY_MECHANISM, mechanism.name());
-            if (wrapdata != null) jsonObj.put(KEY_WRAPDATA, DatatypeConverter.printBase64Binary(wrapdata));
+            if (wrapdata != null) jsonObj.put(KEY_WRAPDATA, Base64.encode(wrapdata));
             return jsonObj;
         }
         
@@ -314,22 +314,22 @@ public class JsonWebKeyLadderExchange extends KeyExchangeFactory {
             super(masterToken, KeyExchangeScheme.JWK_LADDER);
             try {
                 try {
-                    wrapKey = DatatypeConverter.parseBase64Binary(keyDataJO.getString(KEY_WRAP_KEY));
+                    wrapKey = Base64.decode(keyDataJO.getString(KEY_WRAP_KEY));
                 } catch (final IllegalArgumentException e) {
                     throw new MslKeyExchangeException(MslError.KEYX_INVALID_WRAPPING_KEY, "keydata " + keyDataJO.toString(), e);
                 }
                 try {
-                    wrapdata = DatatypeConverter.parseBase64Binary(keyDataJO.getString(KEY_WRAPDATA));
+                    wrapdata = Base64.decode(keyDataJO.getString(KEY_WRAPDATA));
                 } catch (final IllegalArgumentException e) {
                     throw new MslKeyExchangeException(MslError.KEYX_INVALID_WRAPDATA, "keydata " + keyDataJO.toString(), e);
                 }
                 try {
-                    encryptionKey = DatatypeConverter.parseBase64Binary(keyDataJO.getString(KEY_ENCRYPTION_KEY));
+                    encryptionKey = Base64.decode(keyDataJO.getString(KEY_ENCRYPTION_KEY));
                 } catch (final IllegalArgumentException e) {
                     throw new MslKeyExchangeException(MslError.KEYX_INVALID_ENCRYPTION_KEY, "keydata " + keyDataJO.toString(), e);
                 }
                 try {
-                    hmacKey = DatatypeConverter.parseBase64Binary(keyDataJO.getString(KEY_HMAC_KEY));
+                    hmacKey = Base64.decode(keyDataJO.getString(KEY_HMAC_KEY));
                 } catch (final IllegalArgumentException e) {
                     throw new MslKeyExchangeException(MslError.KEYX_INVALID_HMAC_KEY, "keydata " + keyDataJO.toString(), e);
                 }
@@ -372,10 +372,10 @@ public class JsonWebKeyLadderExchange extends KeyExchangeFactory {
         @Override
         protected JSONObject getKeydata() throws JSONException {
             final JSONObject jsonObj = new JSONObject();
-            jsonObj.put(KEY_WRAP_KEY, DatatypeConverter.printBase64Binary(wrapKey));
-            jsonObj.put(KEY_WRAPDATA, DatatypeConverter.printBase64Binary(wrapdata));
-            jsonObj.put(KEY_ENCRYPTION_KEY, DatatypeConverter.printBase64Binary(encryptionKey));
-            jsonObj.put(KEY_HMAC_KEY, DatatypeConverter.printBase64Binary(hmacKey));
+            jsonObj.put(KEY_WRAP_KEY, Base64.encode(wrapKey));
+            jsonObj.put(KEY_WRAPDATA, Base64.encode(wrapdata));
+            jsonObj.put(KEY_ENCRYPTION_KEY, Base64.encode(encryptionKey));
+            jsonObj.put(KEY_HMAC_KEY, Base64.encode(hmacKey));
             return jsonObj;
         }
         
@@ -801,7 +801,7 @@ public class JsonWebKeyLadderExchange extends KeyExchangeFactory {
             {
                 wrapKeyCryptoContext = repository.getCryptoContext(requestWrapdata);
                 if (wrapKeyCryptoContext == null)
-                    throw new MslKeyExchangeException(MslError.KEYX_WRAPPING_KEY_MISSING, DatatypeConverter.printBase64Binary(requestWrapdata)).setEntityAuthenticationData(entityAuthData);
+                    throw new MslKeyExchangeException(MslError.KEYX_WRAPPING_KEY_MISSING, Base64.encode(requestWrapdata)).setEntityAuthenticationData(entityAuthData);
                 break;
             }
             default:

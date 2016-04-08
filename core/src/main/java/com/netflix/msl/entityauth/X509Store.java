@@ -33,7 +33,8 @@ import java.util.List;
 import java.util.Map;
 
 import javax.security.auth.x500.X500Principal;
-import javax.xml.bind.DatatypeConverter;
+
+import com.netflix.msl.util.Base64;
 
 /**
  * <p>An X.509 certificate store.</p>
@@ -86,7 +87,7 @@ public class X509Store {
         do {
             final X509Certificate issuer = getIssuer(current);
             if (issuer == null)
-                throw new CertificateException("No issuer found for certificate: " + DatatypeConverter.printBase64Binary(current.getEncoded()));
+                throw new CertificateException("No issuer found for certificate: " + Base64.encode(current.getEncoded()));
             chain.add(0, issuer);
             current = issuer;
         } while (!isSelfSigned(current));
@@ -242,7 +243,7 @@ public class X509Store {
         // Verify that the root certificate is self-signed and add it.
         X509Certificate issuer = chain.get(0);
         if(!isSelfSigned(issuer))
-            throw new CertificateException("First certificate is not self-signed: " + DatatypeConverter.printBase64Binary(issuer.getEncoded()));
+            throw new CertificateException("First certificate is not self-signed: " + Base64.encode(issuer.getEncoded()));
         addTrusted(issuer);
         
         // Add subordinate certificates.
@@ -288,18 +289,18 @@ public class X509Store {
         // Verify this is a CA certificate.
         final int pathlen = cert.getBasicConstraints();
         if (pathlen < 0)
-            throw new CertificateException("Certificate is not a CA certificate: " + DatatypeConverter.printBase64Binary(cert.getEncoded()));
+            throw new CertificateException("Certificate is not a CA certificate: " + Base64.encode(cert.getEncoded()));
 
         // Verify the certificate signature.
         if (isSelfSigned(cert)) {
             cert.verify(cert.getPublicKey());
         } else {
             if (!isVerified(cert))
-                throw new CertificateException("Certificate is not self-signed and not trusted by any known CA certificate: " + DatatypeConverter.printBase64Binary(cert.getEncoded()));
+                throw new CertificateException("Certificate is not self-signed and not trusted by any known CA certificate: " + Base64.encode(cert.getEncoded()));
             
             // Subordinate certificates must have their path length validated.
             if (!isPermittedByIssuer(cert))
-                throw new CertificateException("Certificate appears too far from its issuing CA certificate: " + DatatypeConverter.printBase64Binary(cert.getEncoded()));
+                throw new CertificateException("Certificate appears too far from its issuing CA certificate: " + Base64.encode(cert.getEncoded()));
         }
 
         // Add the certificate.

@@ -770,7 +770,7 @@ public class JsonWebKeyTest {
     }
 
     // This unit test no longer passes because
-    // DatatypeConverter.parseBase64Binary() does not error when given invalid
+    // Base64.decode() does not error when given invalid
     // Base64 encoded data.
     @Ignore
     @Test
@@ -800,7 +800,7 @@ public class JsonWebKeyTest {
     }
     
     // This unit test no longer passes because
-    // DatatypeConverter.parseBase64Binary() does not error when given invalid
+    // Base64.decode() does not error when given invalid
     // Base64 encoded data.
     @Ignore
     @Test

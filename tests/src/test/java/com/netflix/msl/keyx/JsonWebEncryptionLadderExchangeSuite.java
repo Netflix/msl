@@ -30,7 +30,6 @@ import java.util.Random;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import javax.xml.bind.DatatypeConverter;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.json.JSONException;
@@ -74,6 +73,7 @@ import com.netflix.msl.keyx.KeyExchangeFactory.KeyExchangeData;
 import com.netflix.msl.test.ExpectedMslException;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.util.AuthenticationUtils;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.JsonUtils;
 import com.netflix.msl.util.MockAuthenticationUtils;
 import com.netflix.msl.util.MockMslContext;
@@ -204,7 +204,7 @@ public class JsonWebEncryptionLadderExchangeSuite {
             final JSONObject keydata = jo.getJSONObject(KEY_KEYDATA);
             assertEquals(Mechanism.WRAP.name(), keydata.getString(KEY_MECHANISM));
             assertFalse(keydata.has(KEY_PUBLIC_KEY));
-            assertArrayEquals(WRAPDATA, DatatypeConverter.parseBase64Binary(keydata.getString(KEY_WRAPDATA)));
+            assertArrayEquals(WRAPDATA, Base64.decode(keydata.getString(KEY_WRAPDATA)));
         }
         
         @Test
@@ -311,7 +311,7 @@ public class JsonWebEncryptionLadderExchangeSuite {
         @Test
         public void wrapInvalidWrapdata() throws MslCryptoException, MslKeyExchangeException, MslEncodingException, JSONException {
             thrown.expect(MslKeyExchangeException.class);
-            thrown.expectMslError(MslError.KEYX_WRAPPING_KEY_MISSING);
+            thrown.expectMslError(MslError.KEYX_INVALID_WRAPPING_KEY);
 
             final RequestData req = new RequestData(Mechanism.WRAP, WRAPDATA);
             final JSONObject keydata = req.getKeydata();
@@ -410,10 +410,10 @@ public class JsonWebEncryptionLadderExchangeSuite {
             final MasterToken masterToken = new MasterToken(pskCtx, jo.getJSONObject(KEY_MASTER_TOKEN));
             assertEquals(PSK_MASTER_TOKEN, masterToken);
             final JSONObject keydata = jo.getJSONObject(KEY_KEYDATA);
-            assertArrayEquals(PSK_ENCRYPTION_JWK, DatatypeConverter.parseBase64Binary(keydata.getString(KEY_ENCRYPTION_KEY)));
-            assertArrayEquals(PSK_HMAC_JWK, DatatypeConverter.parseBase64Binary(keydata.getString(KEY_HMAC_KEY)));
-            assertArrayEquals(WRAPDATA, DatatypeConverter.parseBase64Binary(keydata.getString(KEY_WRAPDATA)));
-            assertArrayEquals(WRAP_JWK, DatatypeConverter.parseBase64Binary(keydata.getString(KEY_WRAP_KEY)));
+            assertArrayEquals(PSK_ENCRYPTION_JWK, Base64.decode(keydata.getString(KEY_ENCRYPTION_KEY)));
+            assertArrayEquals(PSK_HMAC_JWK, Base64.decode(keydata.getString(KEY_HMAC_KEY)));
+            assertArrayEquals(WRAPDATA, Base64.decode(keydata.getString(KEY_WRAPDATA)));
+            assertArrayEquals(WRAP_JWK, Base64.decode(keydata.getString(KEY_WRAP_KEY)));
         }
         
         @Test

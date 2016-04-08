@@ -21,8 +21,6 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
-import javax.xml.bind.DatatypeConverter;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -30,6 +28,7 @@ import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslInternalException;
+import com.netflix.msl.util.Base64;
 
 /**
  * <p>X.509 asymmetric keys entity authentication data.</p>
@@ -99,7 +98,7 @@ public class X509AuthenticationData extends EntityAuthenticationData {
         // Create X.509 cert.
         final byte[] x509bytes;
         try {
-            x509bytes = DatatypeConverter.parseBase64Binary(x509);
+            x509bytes = Base64.decode(x509);
         } catch (final IllegalArgumentException e) {
             throw new MslCryptoException(MslError.X509CERT_INVALID, x509, e);
         }
@@ -134,7 +133,7 @@ public class X509AuthenticationData extends EntityAuthenticationData {
     public JSONObject getAuthData() throws MslEncodingException {
         final JSONObject jsonObj = new JSONObject();
         try {
-            jsonObj.put(KEY_X509_CERT, DatatypeConverter.printBase64Binary(x509cert.getEncoded()));
+            jsonObj.put(KEY_X509_CERT, Base64.encode(x509cert.getEncoded()));
         } catch (final JSONException e) {
             throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, "X.509 authdata", e);
         } catch (final CertificateEncodingException e) {

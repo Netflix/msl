@@ -35,7 +35,6 @@ import javax.crypto.interfaces.DHPublicKey;
 import javax.crypto.spec.DHParameterSpec;
 import javax.crypto.spec.DHPublicKeySpec;
 import javax.crypto.spec.SecretKeySpec;
-import javax.xml.bind.DatatypeConverter;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -55,6 +54,7 @@ import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.util.AuthenticationUtils;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -143,7 +143,7 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
             super(KeyExchangeScheme.DIFFIE_HELLMAN);
             try {
                 parametersId = keyDataJO.getString(KEY_PARAMETERS_ID);
-                final byte[] publicKeyY = DatatypeConverter.parseBase64Binary(keyDataJO.getString(KEY_PUBLIC_KEY));
+                final byte[] publicKeyY = Base64.decode(keyDataJO.getString(KEY_PUBLIC_KEY));
                 publicKey = new BigInteger(correctNullBytes(publicKeyY));
             } catch (final JSONException e) {
                 throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + keyDataJO.toString(), e);
@@ -162,7 +162,7 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
             final JSONObject jsonObj = new JSONObject();
             jsonObj.put(KEY_PARAMETERS_ID, parametersId);
             final byte[] publicKeyY = publicKey.toByteArray();
-            jsonObj.put(KEY_PUBLIC_KEY, DatatypeConverter.printBase64Binary(correctNullBytes(publicKeyY)));
+            jsonObj.put(KEY_PUBLIC_KEY, Base64.encode(correctNullBytes(publicKeyY)));
             return jsonObj;
         }
 
@@ -272,7 +272,7 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
             super(masterToken, KeyExchangeScheme.DIFFIE_HELLMAN);
             try {
                 parametersId = keyDataJO.getString(KEY_PARAMETERS_ID);
-                final byte[] publicKeyY = DatatypeConverter.parseBase64Binary(keyDataJO.getString(KEY_PUBLIC_KEY));
+                final byte[] publicKeyY = Base64.decode(keyDataJO.getString(KEY_PUBLIC_KEY));
                 publicKey = new BigInteger(correctNullBytes(publicKeyY));
             } catch (final JSONException e) {
                 throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + keyDataJO.toString(), e);
@@ -304,7 +304,7 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
             final JSONObject jsonObj = new JSONObject();
             jsonObj.put(KEY_PARAMETERS_ID, parametersId);
             final byte[] publicKeyY = publicKey.toByteArray();
-            jsonObj.put(KEY_PUBLIC_KEY, DatatypeConverter.printBase64Binary(correctNullBytes(publicKeyY)));
+            jsonObj.put(KEY_PUBLIC_KEY, Base64.encode(correctNullBytes(publicKeyY)));
             return jsonObj;
         }
 

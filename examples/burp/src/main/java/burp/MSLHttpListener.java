@@ -23,17 +23,8 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Set;
 
-import javax.xml.bind.DatatypeConverter;
-
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import burp.msl.WiretapException;
-import burp.msl.WiretapModule;
-import burp.msl.msg.CaptureMessageDebugContext;
-import burp.msl.msg.WiretapMessageContext;
-import burp.msl.msg.WiretapMessageInputStream;
-import burp.msl.util.WiretapMslContext;
 
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
@@ -49,7 +40,15 @@ import com.netflix.msl.msg.MessageHeader;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.userauth.UserAuthenticationFactory;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.JsonUtils;
+
+import burp.msl.WiretapException;
+import burp.msl.WiretapModule;
+import burp.msl.msg.CaptureMessageDebugContext;
+import burp.msl.msg.WiretapMessageContext;
+import burp.msl.msg.WiretapMessageInputStream;
+import burp.msl.util.WiretapMslContext;
 
 /**
  * User: skommidi
@@ -334,7 +333,7 @@ public class MSLHttpListener implements IHttpListener {
             try {
                 JSONObject payloadTokenJO;
                 while((payloadTokenJO = mis.nextPayload()) != null) {
-                    final String data = new String(DatatypeConverter.parseBase64Binary(payloadTokenJO.getString(KEY_DATA)));
+                    final String data = new String(Base64.decode(payloadTokenJO.getString(KEY_DATA)));
                     payloadTokenJO.remove(KEY_DATA);
                     payloadTokenJO.put(KEY_DATA, data);
     
@@ -364,7 +363,7 @@ public class MSLHttpListener implements IHttpListener {
         boolean verified = false;
         try {
             try {
-                tokendata = DatatypeConverter.parseBase64Binary(userIdTokenJO.getString(KEY_TOKENDATA));
+                tokendata = Base64.decode(userIdTokenJO.getString(KEY_TOKENDATA));
             } catch (final IllegalArgumentException e) {
                 throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_INVALID, "useridtoken " + userIdTokenJO.toString(), e).setMasterToken(masterToken);
             }
@@ -372,7 +371,7 @@ public class MSLHttpListener implements IHttpListener {
                 throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_MISSING, "useridtoken " + userIdTokenJO.toString()).setMasterToken(masterToken);
             byte[] signature;
             try {
-                signature = DatatypeConverter.parseBase64Binary(userIdTokenJO.getString(KEY_SIGNATURE));
+                signature = Base64.decode(userIdTokenJO.getString(KEY_SIGNATURE));
             } catch (final IllegalArgumentException e) {
                 throw new MslEncodingException(MslError.USERIDTOKEN_SIGNATURE_INVALID, "useridtoken " + userIdTokenJO.toString(), e).setMasterToken(masterToken);
             }
@@ -400,7 +399,7 @@ public class MSLHttpListener implements IHttpListener {
                 throw new MslException(MslError.USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokenDataJson).setMasterToken(masterToken);
             final byte[] ciphertext;
             try {
-                ciphertext = DatatypeConverter.parseBase64Binary(tokenDataJO.getString(KEY_USERDATA));
+                ciphertext = Base64.decode(tokenDataJO.getString(KEY_USERDATA));
             } catch (final IllegalArgumentException e) {
                 throw new MslException(MslError.USERIDTOKEN_USERDATA_INVALID, tokenDataJO.getString(KEY_USERDATA)).setMasterToken(masterToken);
             }
@@ -443,7 +442,7 @@ public class MSLHttpListener implements IHttpListener {
         boolean verified = false;
         try {
             try {
-                tokendata = DatatypeConverter.parseBase64Binary(masterTokenJO.getString(KEY_TOKENDATA));
+                tokendata = Base64.decode(masterTokenJO.getString(KEY_TOKENDATA));
             } catch (final IllegalArgumentException e) {
                 throw new MslEncodingException(MslError.MASTERTOKEN_TOKENDATA_INVALID, "mastertoken " + masterTokenJO.toString(), e);
             }
@@ -451,7 +450,7 @@ public class MSLHttpListener implements IHttpListener {
                 throw new MslEncodingException(MslError.MASTERTOKEN_TOKENDATA_MISSING, "mastertoken " + masterTokenJO.toString());
             byte[] signature;
             try {
-                signature = DatatypeConverter.parseBase64Binary(masterTokenJO.getString(KEY_SIGNATURE));
+                signature = Base64.decode(masterTokenJO.getString(KEY_SIGNATURE));
             } catch (final IllegalArgumentException e) {
                 throw new MslEncodingException(MslError.MASTERTOKEN_SIGNATURE_INVALID, "mastertoken " + masterTokenJO.toString(), e);
             }
@@ -478,7 +477,7 @@ public class MSLHttpListener implements IHttpListener {
                 throw new MslException(MslError.MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "mastertokendata " + tokenDataJson);
             final byte[] ciphertext;
             try {
-                ciphertext = DatatypeConverter.parseBase64Binary(tokenDataJO.getString(KEY_SESSIONDATA));
+                ciphertext = Base64.decode(tokenDataJO.getString(KEY_SESSIONDATA));
             } catch (final IllegalArgumentException e) {
                 throw new MslEncodingException(MslError.MASTERTOKEN_SESSIONDATA_INVALID, tokenDataJO.getString(KEY_SESSIONDATA));
             }

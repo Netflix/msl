@@ -30,7 +30,6 @@ import java.util.Date;
 import java.util.Random;
 
 import javax.crypto.SecretKey;
-import javax.xml.bind.DatatypeConverter;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -48,6 +47,7 @@ import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.entityauth.MockPresharedAuthenticationFactory;
 import com.netflix.msl.test.ExpectedMslException;
 import com.netflix.msl.tokens.MasterToken;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslContext;
 
@@ -97,9 +97,9 @@ public class SessionCryptoContextTest {
         final MasterToken masterToken = new MasterToken(ctx, renewalWindow, expiration, 1L, 1L, null, identity, encryptionKey, signatureKey);
         final String json = masterToken.toJSONString();
         final JSONObject jo = new JSONObject(json);
-        final byte[] signature = DatatypeConverter.parseBase64Binary(jo.getString("signature"));
+        final byte[] signature = Base64.decode(jo.getString("signature"));
         ++signature[1];
-        jo.put("signature", DatatypeConverter.printBase64Binary(signature));
+        jo.put("signature", Base64.encode(signature));
         final MasterToken untrustedMasterToken = new MasterToken(ctx, jo);
         return untrustedMasterToken;
     }

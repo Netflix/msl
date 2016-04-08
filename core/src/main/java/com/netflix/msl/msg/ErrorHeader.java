@@ -17,8 +17,6 @@ package com.netflix.msl.msg;
 
 import java.util.Date;
 
-import javax.xml.bind.DatatypeConverter;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -34,6 +32,7 @@ import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -197,7 +196,7 @@ public class ErrorHeader extends Header {
             
             // Verify and decrypt the error data.
             try {
-                this.errordata = DatatypeConverter.parseBase64Binary(errordata);
+                this.errordata = Base64.decode(errordata);
             } catch (final IllegalArgumentException e) {
                 throw new MslMessageException(MslError.HEADER_DATA_INVALID, errordata, e).setEntityAuthenticationData(entityAuthData);
             }
@@ -321,8 +320,8 @@ public class ErrorHeader extends Header {
         try {
             final JSONObject jsonObj = new JSONObject();
             jsonObj.put(HeaderKeys.KEY_ENTITY_AUTHENTICATION_DATA, entityAuthData);
-            jsonObj.put(HeaderKeys.KEY_ERRORDATA, DatatypeConverter.printBase64Binary(errordata));
-            jsonObj.put(HeaderKeys.KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+            jsonObj.put(HeaderKeys.KEY_ERRORDATA, Base64.encode(errordata));
+            jsonObj.put(HeaderKeys.KEY_SIGNATURE, Base64.encode(signature));
             return jsonObj.toString();
         } catch (final JSONException e) {
             throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);

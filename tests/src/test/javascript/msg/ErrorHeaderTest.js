@@ -631,7 +631,7 @@ describe("ErrorHeader", function() {
 	        //
 	        // This differs from the Java unit tests because we cannot sign
 	        // empty ciphertext.
-	        errorHeaderJo[KEY_ERRORDATA] = base64$encode("x");
+	        errorHeaderJo[KEY_ERRORDATA] = "AA==";
 	        var ciphertext = base64$decode(errorHeaderJo[KEY_ERRORDATA]);
 	        cryptoContext.sign(ciphertext, {
 	        	result: function(signature) {

@@ -15,14 +15,13 @@
  */
 package kancolle.userauth;
 
-import javax.xml.bind.DatatypeConverter;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.userauth.UserAuthenticationData;
+import com.netflix.msl.util.Base64;
 
 /**
  * <p>Officers are identified by their name and fingerprint hash.</p>
@@ -71,7 +70,7 @@ public class OfficerAuthenticationData extends UserAuthenticationData {
         super(KanColleUserAuthenticationScheme.OFFICER);
         try {
             this.name = officerJo.getString(KEY_NAME);
-            this.fingerprint = DatatypeConverter.parseBase64Binary(officerJo.getString(KEY_FINGERPRINT));
+            this.fingerprint = Base64.decode(officerJo.getString(KEY_FINGERPRINT));
         } catch (final JSONException e) {
             throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "officer authdata " + officerJo.toString(), e);
         }
@@ -99,7 +98,7 @@ public class OfficerAuthenticationData extends UserAuthenticationData {
         try {
             final JSONObject jo = new JSONObject();
             jo.put(KEY_NAME, name);
-            jo.put(KEY_FINGERPRINT, DatatypeConverter.printBase64Binary(fingerprint));
+            jo.put(KEY_FINGERPRINT, Base64.encode(fingerprint));
             return jo;
         } catch (final JSONException e) {
             throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, this.getClass().getName(), e);

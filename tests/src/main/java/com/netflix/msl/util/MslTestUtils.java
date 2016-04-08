@@ -117,9 +117,9 @@ public class MslTestUtils {
         final MasterToken masterToken = new MasterToken(ctx, renewalWindow, expiration, 1L, 1L, null, identity, encryptionKey, hmacKey);
         final String json = masterToken.toJSONString();
         final JSONObject jo = new JSONObject(json);
-        final byte[] signature = DatatypeConverter.parseBase64Binary(jo.getString("signature"));
+        final byte[] signature = Base64.decode(jo.getString("signature"));
         ++signature[1];
-        jo.put("signature", DatatypeConverter.printBase64Binary(signature));
+        jo.put("signature", Base64.encode(signature));
         return new MasterToken(ctx, jo);
     }
     
@@ -165,9 +165,9 @@ public class MslTestUtils {
         final UserIdToken userIdToken = new UserIdToken(ctx, renewalWindow, expiration, masterToken, serialNumber, null, user);
         final String json = userIdToken.toJSONString();
         final JSONObject jo = new JSONObject(json);
-        final byte[] signature = DatatypeConverter.parseBase64Binary(jo.getString("signature"));
+        final byte[] signature = Base64.decode(jo.getString("signature"));
         ++signature[1];
-        jo.put("signature", DatatypeConverter.printBase64Binary(signature));
+        jo.put("signature", Base64.encode(signature));
         return new UserIdToken(ctx, jo, masterToken);
     }
     

@@ -31,8 +31,8 @@ import java.util.Random;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import javax.xml.bind.DatatypeConverter;
 
+import org.bouncycastle.crypto.CryptoException;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.AfterClass;
@@ -57,6 +57,7 @@ import com.netflix.msl.crypto.SymmetricCryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.test.ExpectedMslException;
 import com.netflix.msl.userauth.MockEmailPasswordAuthenticationFactory;
+import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslTestUtils;
@@ -143,7 +144,7 @@ public class ServiceTokenTest {
     }
     
     /** Compression algorithm. */
-    private CompressionAlgorithm compressionAlgo;
+    private final CompressionAlgorithm compressionAlgo;
     
     /**
      * Create a new master token test instance.
@@ -362,9 +363,9 @@ public class ServiceTokenTest {
         final String jsonString = serviceToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
 
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         ++tokendata[0];
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendata));
+        jo.put(KEY_TOKENDATA, Base64.encode(tokendata));
         
         new ServiceToken(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT);
     }
@@ -392,10 +393,10 @@ public class ServiceTokenTest {
         final String jsonString = serviceToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
         assertNotNull(tokendataJo.remove(KEY_NAME));
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
         
         new ServiceToken(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT);
     }
@@ -406,10 +407,10 @@ public class ServiceTokenTest {
         final String jsonString = serviceToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
         assertNotNull(tokendataJo.remove(KEY_MASTER_TOKEN_SERIAL_NUMBER));
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
         
         final ServiceToken joServiceToken = new ServiceToken(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT);
         assertEquals(-1, joServiceToken.getMasterTokenSerialNumber());
@@ -425,10 +426,10 @@ public class ServiceTokenTest {
         final String jsonString = serviceToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
         tokendataJo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, "x");
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
         
         new ServiceToken(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT);
     }
@@ -442,10 +443,10 @@ public class ServiceTokenTest {
         final String jsonString = serviceToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
         tokendataJo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, -1);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
         
         new ServiceToken(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT);
     }
@@ -459,10 +460,10 @@ public class ServiceTokenTest {
         final String jsonString = serviceToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
         tokendataJo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, MslConstants.MAX_LONG_VALUE + 1);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
         
         new ServiceToken(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT);
     }
@@ -473,10 +474,10 @@ public class ServiceTokenTest {
         final String jsonString = serviceToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
         assertNotNull(tokendataJo.remove(KEY_USER_ID_TOKEN_SERIAL_NUMBER));
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
         
         final ServiceToken joServiceToken = new ServiceToken(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT);
         assertEquals(-1, joServiceToken.getUserIdTokenSerialNumber());
@@ -492,10 +493,10 @@ public class ServiceTokenTest {
         final String jsonString = serviceToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
         tokendataJo.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, "x");
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
         
         new ServiceToken(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT);
     }
@@ -509,10 +510,10 @@ public class ServiceTokenTest {
         final String jsonString = serviceToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
         tokendataJo.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, -1);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
         
         new ServiceToken(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT);
     }
@@ -526,10 +527,10 @@ public class ServiceTokenTest {
         final String jsonString = serviceToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
         tokendataJo.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, MslConstants.MAX_LONG_VALUE + 1);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
         
         new ServiceToken(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT);
     }
@@ -543,10 +544,10 @@ public class ServiceTokenTest {
         final String jsonString = serviceToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
         assertNotNull(tokendataJo.remove(KEY_ENCRYPTED));
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
         
         new ServiceToken(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT);
     }
@@ -560,10 +561,10 @@ public class ServiceTokenTest {
         final String jsonString = serviceToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
         tokendataJo.put(KEY_ENCRYPTED, "x");
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
         
         new ServiceToken(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT);
     }
@@ -577,10 +578,10 @@ public class ServiceTokenTest {
         final String jsonString = serviceToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
         tokendataJo.put(KEY_COMPRESSION_ALGORITHM, "x");
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
         
         new ServiceToken(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT);
     }
@@ -594,10 +595,10 @@ public class ServiceTokenTest {
         final String jsonString = serviceToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
         assertNotNull(tokendataJo.remove(KEY_SERVICEDATA));
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(tokendataJo.toString().getBytes()));
+        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
         
         new ServiceToken(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT);
     }
@@ -614,14 +615,14 @@ public class ServiceTokenTest {
         final String jsonString = serviceToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
         tokendataJo.put(KEY_SERVICEDATA, "x");
         
         final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] signature = CRYPTO_CONTEXT.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         new ServiceToken(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT);
     }
@@ -644,9 +645,9 @@ public class ServiceTokenTest {
         final String jsonString = serviceToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] signature = DatatypeConverter.parseBase64Binary(jo.getString(KEY_SIGNATURE));
+        final byte[] signature = Base64.decode(jo.getString(KEY_SIGNATURE));
         ++signature[0];
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         final ServiceToken joServiceToken = new ServiceToken(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT);
         assertTrue(joServiceToken.isDeleted());
@@ -660,16 +661,16 @@ public class ServiceTokenTest {
         final JSONObject jo = new JSONObject(jsonString);
         
         // This is testing service data that is verified but corrupt.
-        final byte[] tokendata = DatatypeConverter.parseBase64Binary(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
         final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] servicedata = DatatypeConverter.parseBase64Binary(tokendataJo.getString(KEY_SERVICEDATA));
+        final byte[] servicedata = Base64.decode(tokendataJo.getString(KEY_SERVICEDATA));
         ++servicedata[servicedata.length-1];
-        tokendataJo.put(KEY_SERVICEDATA, DatatypeConverter.printBase64Binary(servicedata));
+        tokendataJo.put(KEY_SERVICEDATA, Base64.encode(servicedata));
         
         final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] signature = CRYPTO_CONTEXT.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, DatatypeConverter.printBase64Binary(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         new ServiceToken(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT);
     }
@@ -680,9 +681,9 @@ public class ServiceTokenTest {
         final String jsonString = serviceToken.toJSONString();
         final JSONObject jo = new JSONObject(jsonString);
         
-        final byte[] signature = DatatypeConverter.parseBase64Binary(jo.getString(KEY_SIGNATURE));
+        final byte[] signature = Base64.decode(jo.getString(KEY_SIGNATURE));
         ++signature[0];
-        jo.put(KEY_SIGNATURE, DatatypeConverter.printBase64Binary(signature));
+        jo.put(KEY_SIGNATURE, Base64.encode(signature));
         
         final ServiceToken joServiceToken = new ServiceToken(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT);
         assertFalse(joServiceToken.isDecrypted());
