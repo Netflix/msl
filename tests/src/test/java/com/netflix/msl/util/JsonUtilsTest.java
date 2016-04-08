@@ -24,8 +24,6 @@ import static org.junit.Assert.assertTrue;
 import java.nio.charset.Charset;
 import java.util.Random;
 
-import javax.xml.bind.DatatypeConverter;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;

@@ -21,8 +21,6 @@ import java.io.IOException;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import javax.xml.bind.DatatypeConverter;
-
 import com.netflix.msl.MslConstants.CompressionAlgorithm;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslException;
