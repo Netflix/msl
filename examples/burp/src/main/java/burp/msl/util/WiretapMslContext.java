@@ -186,7 +186,7 @@ public class WiretapMslContext extends MslContext {
         else
             throw new IllegalArgumentException("Unsupported authentication type: " + scheme.name());
     }
-
+    
     /* (non-Javadoc)
      * @see com.netflix.msl.util.MslContext#getMslCryptoContext()
      */

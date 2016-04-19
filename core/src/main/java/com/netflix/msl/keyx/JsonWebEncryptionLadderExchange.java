@@ -485,6 +485,11 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
         if (!masterToken.isVerified())
             throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, masterToken);
         
+        // Verify the scheme is permitted.
+        final String identity = masterToken.getIdentity();
+        if (!authutils.isSchemePermitted(identity, this.getScheme()))
+            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication scheme for entity not permitted " + identity + ":" + this.getScheme()).setMasterToken(masterToken);
+        
         // Create random AES-128 wrapping key with a random key ID.
         final String wrapKeyId = String.valueOf(ctx.getRandom().nextLong());
         final byte[] wrapBytes = new byte[16];
@@ -506,11 +511,6 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
         // Grab the request data.
         final Mechanism mechanism = request.getMechanism();
         final byte[] prevWrapdata = request.getWrapdata();
-        final String identity = masterToken.getIdentity();
-        
-        // Verify the scheme is permitted.
-        if(!authutils.isSchemePermitted(identity, this.getScheme()))
-            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + this.getScheme());
         
         // Wrap wrapping key using specified wrapping key.
         final JsonWebKey wrapJwk = new JsonWebKey(Usage.wrap, Algorithm.A128KW, false, wrapKeyId, wrapKey);
@@ -548,8 +548,8 @@ public class JsonWebEncryptionLadderExchange extends KeyExchangeFactory {
         
         // Verify the scheme is permitted.
         final String identity = entityAuthData.getIdentity();
-        if(!authutils.isSchemePermitted(identity, this.getScheme()))
-            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + this.getScheme());
+        if (!authutils.isSchemePermitted(identity, this.getScheme()))
+            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication Sscheme for entity not permitted " + identity + ":" + this.getScheme()).setEntityAuthenticationData(entityAuthData);
 
         // Create random AES-128 wrapping key with a random key ID.
         final String wrapKeyId = String.valueOf(ctx.getRandom().nextLong());

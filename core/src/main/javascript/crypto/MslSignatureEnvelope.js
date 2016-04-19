@@ -197,7 +197,7 @@ var MslSignatureEnvelope$Version;
                             var v             = parseInt(envelopeJo[KEY_VERSION]),
                                 algorithmName = envelopeJo[KEY_ALGORITHM],
                                 signatureB64  = envelopeJo[KEY_SIGNATURE];
-                            if (!v || typeof v !== 'number' || v != v ||
+                            if (typeof v !== 'number' || v != v ||
                                 typeof algorithmName !== 'string' ||
                                 typeof signatureB64 !== 'string')
                             {

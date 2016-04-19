@@ -28,6 +28,7 @@ import com.netflix.msl.MslError;
 import com.netflix.msl.MslException;
 import com.netflix.msl.MslKeyExchangeException;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.keyx.SymmetricWrappedExchange.KeyId;
 import com.netflix.msl.test.ExpectedMslException;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.util.MockMslContext;
@@ -75,7 +76,7 @@ public class KeyResponseDataTest {
 
         final JSONObject jo = new JSONObject();
         jo.put(KEY_MASTER_TOKEN + "x", new JSONObject(MASTER_TOKEN.toJSONString()));
-        jo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED);
+        jo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED.name());
         jo.put(KEY_KEYDATA, new JSONObject());
         KeyResponseData.create(ctx, jo);
     }
@@ -87,7 +88,7 @@ public class KeyResponseDataTest {
 
         final JSONObject jo = new JSONObject();
         jo.put(KEY_MASTER_TOKEN, new JSONObject(MASTER_TOKEN.toJSONString()));
-        jo.put(KEY_SCHEME + "x", KeyExchangeScheme.ASYMMETRIC_WRAPPED);
+        jo.put(KEY_SCHEME + "x", KeyExchangeScheme.ASYMMETRIC_WRAPPED.name());
         jo.put(KEY_KEYDATA, new JSONObject());
         KeyResponseData.create(ctx, jo);
     }
@@ -99,7 +100,7 @@ public class KeyResponseDataTest {
 
         final JSONObject jo = new JSONObject();
         jo.put(KEY_MASTER_TOKEN, new JSONObject(MASTER_TOKEN.toJSONString()));
-        jo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED);
+        jo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED.name());
         jo.put(KEY_KEYDATA + "x", new JSONObject());
         KeyResponseData.create(ctx, jo);
     }
@@ -109,10 +110,14 @@ public class KeyResponseDataTest {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.JSON_PARSE_ERROR);
 
+        final byte[] encryptionKey = new byte[0];
+        final byte[] hmacKey = new byte[0];
+        final KeyResponseData response = new SymmetricWrappedExchange.ResponseData(MASTER_TOKEN, KeyId.PSK, encryptionKey, hmacKey);
+
         final JSONObject jo = new JSONObject();
-        jo.put(KEY_MASTER_TOKEN + "x", new JSONObject());
-        jo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED);
-        jo.put(KEY_KEYDATA, new JSONObject());
+        jo.put(KEY_MASTER_TOKEN, new JSONObject());
+        jo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED.name());
+        jo.put(KEY_KEYDATA, response.getKeydata());
         KeyResponseData.create(ctx, jo);
     }
     

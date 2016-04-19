@@ -125,7 +125,7 @@ public abstract class CommonMslContext extends MslContext {
     public final EntityAuthenticationData getEntityAuthenticationData(final ReauthCode reauthCode) {
         return entityAuthData;
     }
-
+    
     /* (non-Javadoc)
      * @see com.netflix.msl.util.MslContext#getMslCryptoContext()
      */

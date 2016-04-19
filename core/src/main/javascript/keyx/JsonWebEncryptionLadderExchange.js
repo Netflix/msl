@@ -180,7 +180,7 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
 
         // Verify key request data.
         if (!mechanism ||
-            (mechanism == Mechanism.WRAP && (!wrapdataB64 || typeof wrapdataB64 !== 'string')))
+            (mechanism == Mechanism.WRAP && typeof wrapdataB64 !== 'string'))
         {
             throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + JSON.stringify(keyRequestJO));
         }
@@ -299,10 +299,10 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
         var hmacKeyB64 = keyDataJO[KEY_HMAC_KEY];
 
         // Verify key response data.
-        if (!wrapKeyB64 || typeof wrapKeyB64 !== 'string' ||
-            !wrapdataB64 || typeof wrapdataB64 !== 'string' ||
-            !encryptionKeyB64 || typeof encryptionKeyB64 !== 'string' ||
-            !hmacKeyB64 || typeof hmacKeyB64 !== 'string')
+        if (typeof wrapKeyB64 !== 'string' ||
+            typeof wrapdataB64 !== 'string' ||
+            typeof encryptionKeyB64 !== 'string' ||
+            typeof hmacKeyB64 !== 'string')
         {
             throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + JSON.stringify(keyDataJO));
         }
@@ -386,13 +386,15 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
          * Create a new JSON Web Encryption ladder key exchange factory.
          *
          * @param {WrapCryptoContextRepository} repository the wrapping key crypto context repository.
+         * @param {AuthenticationUtils} authentication utilities.
          */
-        init: function init(repository) {
+        init: function init(repository, authutils) {
             init.base.call(this, KeyExchangeScheme.JWE_LADDER);
 
             // The properties.
             var props = {
-                repository: { value: repository, writable: false, enumerable: false, configurable: false }
+                repository: { value: repository, writable: false, enumerable: false, configurable: false },
+                authutils: { value: authutils, writable: false, enumerable: false, configurable: false },
             };
             Object.defineProperties(this, props);
         },
@@ -417,15 +419,23 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                 if (!(keyRequestData instanceof RequestData))
                     throw new MslInternalException("Key request data " + JSON.stringify(keyRequestData) + " was not created by this factory.");
 
-                // If the master token was not issued by the local entity then we
-                // should not be generating a key response for it.
                 var identity;
                 if (entityToken instanceof MasterToken) {
+                    // If the master token was not issued by the local entity then we
+                    // should not be generating a key response for it.
                     if (!entityToken.isVerified())
                         throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, entityToken);
                     identity = entityToken.identity;
+                    
+                    // Verify the scheme is permitted.
+                    if (!this.authutils.isSchemePermitted(identity, this.scheme))
+                        throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication scheme for entity not permitted " + identity + ": " + this.scheme.name).setMasterToken(entityToken);
                 } else {
-                	identity = entityToken.getIdentity();
+                    identity = entityToken.getIdentity();
+                    
+                    // Verify the scheme is permitted.
+                    if (!this.authutils.isSchemePermitted(identity, this.scheme))
+                        throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication scheme for entity not permitted " + identity + ": " + this.scheme.name).setEntityAuthenticationData(entityToken);
                 }
 
                 // Create random AES-128 wrapping key.

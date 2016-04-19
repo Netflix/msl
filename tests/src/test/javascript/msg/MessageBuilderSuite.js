@@ -4007,7 +4007,7 @@ describe("MessageBuilder", function() {
                     if (scheme)
                         ctx.removeKeyExchangeFactories(scheme);
                 }
-				ctx.addKeyExchangeFactory(new SymmetricWrappedExchange());
+				ctx.addKeyExchangeFactory(new SymmetricWrappedExchange(new MockAuthenticationUtils()));
 				
 			    MessageBuilder$createResponse(ctx, request, {
 			        result: function(x) { responseBuilder = x; },
@@ -4512,7 +4512,7 @@ describe("MessageBuilder", function() {
                     if (scheme)
                         ctx.removeKeyExchangeFactories(scheme);
                 }
-				ctx.addKeyExchangeFactory(new SymmetricWrappedExchange());
+				ctx.addKeyExchangeFactory(new SymmetricWrappedExchange(new MockAuthenticationUtils()));
 
 			    MessageBuilder$createResponse(ctx, request, {
 			        result: function(x) { responseBuilder = x; },

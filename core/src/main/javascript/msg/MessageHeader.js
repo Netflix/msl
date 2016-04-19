@@ -1152,7 +1152,7 @@ var MessageHeader$HeaderPeerData;
 
                 // If the message was sent with a master token pull the sender.
                 var sender = (masterToken) ? headerdataJO[KEY_SENDER] : null;
-                if (masterToken && (!sender || typeof sender !== 'string'))
+                if (masterToken && typeof sender !== 'string')
                     throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "headerdata " + headerdataJson).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData).setMessageId(messageId);
                 var recipient = (headerdataJO[KEY_RECIPIENT] !== 'undefined') ? headerdataJO[KEY_RECIPIENT] : null;
                 if (recipient && typeof recipient !== 'string')

@@ -118,7 +118,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
         var keyId = keyDataJO[KEY_KEY_ID];
 
         // Verify key data.
-        if (!keyId || typeof keyId !== 'string')
+        if (typeof keyId !== 'string')
             throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + JSON.stringify(keyDataJO));
 
         // Verify key ID.
@@ -212,9 +212,9 @@ var SymmetricWrappedExchange$ResponseData$parse;
         var hmacKeyB64 = keyDataJO[KEY_HMAC_KEY];
 
         // Verify key response data.
-        if (!keyId || typeof keyId !== 'string' ||
-            !encryptionKeyB64 || typeof encryptionKeyB64 !== 'string' ||
-            !hmacKeyB64 || typeof hmacKeyB64 !== 'string')
+        if (typeof keyId !== 'string' ||
+            typeof encryptionKeyB64 !== 'string' ||
+            typeof hmacKeyB64 !== 'string')
         {
             throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + JSON.stringify(keyDataJO));
         }
@@ -297,9 +297,17 @@ var SymmetricWrappedExchange$ResponseData$parse;
     SymmetricWrappedExchange = KeyExchangeFactory.extend({
         /**
          * Create a new symmetric wrapped key exchange factory.
+         * 
+         * @param {AuthenticationUtils} authutils authentication utilities.
          */
-        init: function init() {
+        init: function init(authutils) {
             init.base.call(this, KeyExchangeScheme.SYMMETRIC_WRAPPED);
+            
+            // The properties.
+            var props = {
+                authutils: { value: authutils, writable: false, enumerable: false, configurable: false },
+            };
+            Object.defineProperties(this, props);
         },
 
         /** @inheritDoc */
@@ -322,12 +330,31 @@ var SymmetricWrappedExchange$ResponseData$parse;
                 if (!(keyRequestData instanceof RequestData))
                     throw new MslInternalException("Key request data " + JSON.stringify(keyRequestData) + " was not created by this factory.");
 
+                var identity;
+                if (entityToken instanceof MasterToken) {
+                    // If the master token was not issued by the local entity then we
+                    // should not be generating a key response for it.
+                    if (!entityToken.isVerified())
+                        throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, entityToken);
+                    identity = entityToken.identity;
+                    
+                    // Verify the scheme is permitted.
+                    if (!this.authutils.isSchemePermitted(identity, this.scheme))
+                        throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication scheme for entity not permitted " + identity + ": " + this.scheme.name).setMasterToken(entityToken);
+                } else {
+                    identity = entityToken.getIdentity();
+                    
+                    // Verify the scheme is permitted.
+                    if (!this.authutils.isSchemePermitted(identity, this.scheme))
+                        throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication scheme for entity not permitted " + identity + ": " + this.scheme.name).setEntityAuthenticationData(entityToken);
+                }
+
                 // Create random AES-128 encryption and SHA-256 HMAC keys.
                 this.generateSessionKeys(ctx, {
                     result: function(sessionkeys) {
                         var encryptionKey = sessionkeys.encryptionKey;
                         var hmacKey = sessionkeys.hmacKey;
-                        wrapKeys(encryptionKey, hmacKey);
+                        wrapKeys(identity, encryptionKey, hmacKey);
                     },
                     error: function(e) {
                         AsyncExecutor(callback, function() {
@@ -339,29 +366,13 @@ var SymmetricWrappedExchange$ResponseData$parse;
                 });
             }, self);
 
-            function wrapKeys(encryptionKey, hmacKey) {
+            function wrapKeys(identity, encryptionKey, hmacKey) {
                 AsyncExecutor(callback, function() {
                     var request = keyRequestData;
 
-                    // If we are renewing a master token then pull the identity
-                    // from the master token. Otherwise we were provided the
-                    // identity and will be issuing a new master token.
-                    var masterToken, identity;
-                    if (entityToken instanceof MasterToken) {
-                        // If the master token was not issued by the local entity then we
-                        // should not be generating a key response for it.
-                        if (!entityToken.isVerified())
-                            throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, entityToken);
-
-                        masterToken = entityToken;
-                        identity = masterToken.identity;
-                    } else {
-                        masterToken = null;
-                        identity = entityToken.getIdentity();
-                    }
-
                     // Wrap session keys with identified key.
                     var keyId = request.keyId;
+                    var masterToken = (entityToken instanceof MasterToken) ? entityToken : null;
                     createCryptoContext(ctx, keyId, masterToken, identity, {
                         result: function(wrapCryptoContext) {
                             wrapCryptoContext.wrap(encryptionKey, {

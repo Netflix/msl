@@ -814,7 +814,7 @@ var MslControl$MslChannel;
             var messageHeader = response.getMessageHeader();
             if (!messageHeader)
                 return;
-
+            
             // Save the crypto context of the message's key response data.
             var store = ctx.getMslStore();
             var keyResponseData = messageHeader.keyResponseData;

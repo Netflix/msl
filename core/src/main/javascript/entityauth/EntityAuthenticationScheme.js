@@ -69,6 +69,8 @@ var EntityAuthenticationScheme$getScheme;
         NONE_SUFFIXED : new EntityAuthenticationScheme("NONE_SUFFIXED", false, false),
         /** Master token protected. */
         MT_PROTECTED : new EntityAuthenticationScheme("MT_PROTECTED", false, false),
+        /** Provisioned. */
+        PROVISIONED : new EntityAuthenticationScheme("PROVISIONED", false, false),
     }));
     Object.freeze(EntityAuthenticationScheme);
 

@@ -178,9 +178,9 @@ var AsymmetricWrappedExchange$ResponseData$parse;
             var encodedKeyB64 = keyRequestJO[KEY_PUBLIC_KEY];
 
             // Verify key request data.
-            if (!keyPairId || typeof keyPairId !== 'string' ||
+            if (typeof keyPairId !== 'string' ||
                 !mechanism ||
-                !encodedKeyB64 || typeof encodedKeyB64 !== 'string')
+                typeof encodedKeyB64 !== 'string')
             {
                 throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + JSON.stringify(keyRequestJO));
             }
@@ -373,9 +373,17 @@ var AsymmetricWrappedExchange$ResponseData$parse;
     AsymmetricWrappedExchange = KeyExchangeFactory.extend({
         /**
          * Create a new asymmetric wrapped key exchange factory.
+         * 
+         * @param {AuthenticationUtils} authutils authentication utilities.
          */
-        init: function init() {
+        init: function init(authutils) {
             init.base.call(this, KeyExchangeScheme.ASYMMETRIC_WRAPPED);
+            
+            // The properties.
+            var props = {
+                authutils: { value: authutils, writable: false, enumerable: false, configurable: false },
+            };
+            Object.defineProperties(this, props);
         },
 
         /** @inheritDoc */
@@ -396,6 +404,25 @@ var AsymmetricWrappedExchange$ResponseData$parse;
             AsyncExecutor(callback, function() {
                 if (!(keyRequestData instanceof RequestData))
                     throw new MslInternalException("Key request data " + JSON.stringify(keyRequestData) + " was not created by this factory.");
+                
+                var identity;
+                if (entityToken instanceof MasterToken) {
+                    // If the master token was not issued by the local entity then we
+                    // should not be generating a key response for it.
+                    if (!entityToken.isVerified())
+                        throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, entityToken);
+                    identity = entityToken.identity;
+                    
+                    // Verify the scheme is permitted.
+                    if (!this.authutils.isSchemePermitted(identity, this.scheme))
+                        throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication scheme for entity not permitted " + identity + ": " + this.scheme.name).setMasterToken(entityToken);
+                } else {
+                    identity = entityToken.getIdentity();
+                    
+                    // Verify the scheme is permitted.
+                    if (!this.authutils.isSchemePermitted(identity, this.scheme))
+                        throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication scheme for entity not permitted " + identity + ": " + this.scheme.name).setEntityAuthenticationData(entityToken);
+                }
 
                 // Create random AES-128 encryption and SHA-256 HMAC keys.
                 this.generateSessionKeys(ctx, {

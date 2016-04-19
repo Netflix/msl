@@ -162,7 +162,7 @@ var MslContext;
          *        data or null or any thrown exceptions.
          */
         getEntityAuthenticationData: function(reauthCode, callback) {},
-    
+        
         /**
          * <p>Returns the primary crypto context used for MSL-level crypto
          * operations. This is used for the master tokens and user ID tokens.</p>

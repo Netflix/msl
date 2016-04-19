@@ -220,7 +220,7 @@ var MslCiphertextEnvelope$Version;
             // If a version was not specified, determine the envelope version.
             if (!version) {
                 version = jsonObj[KEY_VERSION];
-                if (!version || typeof version !== 'number' || version !== version) {
+                if (typeof version !== 'number' || version !== version) {
                     // If anything fails to parse, treat this as a version 1 envelope.
                     version = Version.V1;
                 } else {

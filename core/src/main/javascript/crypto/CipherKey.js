@@ -45,7 +45,7 @@ var CipherKey$import;
             var self = this;
 
             AsyncExecutor(callback, function () {
-                if (!rawKey || typeof rawKey != "object")
+                if (typeof rawKey !== "object")
                     throw new MslCryptoException(MslError.INVALID_SYMMETRIC_KEY);
 
                 if (!keyData && rawKey['extractable']) {
