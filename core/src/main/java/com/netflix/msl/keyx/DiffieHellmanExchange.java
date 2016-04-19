@@ -250,13 +250,11 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
          * provided master token, specified parameters ID and public key.
          * 
          * @param masterToken the master token.
-         * @param identity optional entity identity inside the master token.
-         *        May be {@code null}.
          * @param parametersId the parameters ID.
          * @param publicKey the public key Y-value.
          */
-        public ResponseData(final MasterToken masterToken, final String identity, final String parametersId, final BigInteger publicKey) {
-            super(masterToken, identity, KeyExchangeScheme.DIFFIE_HELLMAN);
+        public ResponseData(final MasterToken masterToken, final String parametersId, final BigInteger publicKey) {
+            super(masterToken, KeyExchangeScheme.DIFFIE_HELLMAN);
             this.parametersId = parametersId;
             this.publicKey = publicKey;
         }
@@ -266,14 +264,12 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
          * provided master token from the provided JSON object.
          * 
          * @param masterToken the master token.
-         * @param identity optional entity identity inside the master token.
-         *        May be {@code null}.
          * @param keyDataJO the JSON object.
          * @throws MslEncodingException if there is an error parsing the JSON.
          * @throws MslKeyExchangeException if the public key is invalid.
          */
-        public ResponseData(final MasterToken masterToken, final String identity, final JSONObject keyDataJO) throws MslEncodingException, MslKeyExchangeException {
-            super(masterToken, identity, KeyExchangeScheme.DIFFIE_HELLMAN);
+        public ResponseData(final MasterToken masterToken, final JSONObject keyDataJO) throws MslEncodingException, MslKeyExchangeException {
+            super(masterToken, KeyExchangeScheme.DIFFIE_HELLMAN);
             try {
                 parametersId = keyDataJO.getString(KEY_PARAMETERS_ID);
                 final byte[] publicKeyY = DatatypeConverter.parseBase64Binary(keyDataJO.getString(KEY_PUBLIC_KEY));
@@ -429,11 +425,11 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.keyx.KeyExchangeFactory#createResponseData(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, java.lang.String, org.json.JSONObject)
+     * @see com.netflix.msl.keyx.KeyExchangeFactory#createResponseData(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, org.json.JSONObject)
      */
     @Override
-    protected KeyResponseData createResponseData(final MslContext ctx, final MasterToken masterToken, final String identity, final JSONObject keyDataJO) throws MslEncodingException, MslKeyExchangeException {
-        return new ResponseData(masterToken, identity, keyDataJO);
+    protected KeyResponseData createResponseData(final MslContext ctx, final MasterToken masterToken, final JSONObject keyDataJO) throws MslEncodingException, MslKeyExchangeException {
+        return new ResponseData(masterToken, keyDataJO);
     }
 
     /* (non-Javadoc)
@@ -500,7 +496,7 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
         final ICryptoContext cryptoContext = new SessionCryptoContext(ctx, newMasterToken);
         
         // Return the key exchange data.
-        final KeyResponseData keyResponseData = new ResponseData(newMasterToken, identity, parametersId, responsePublicKey.getY());
+        final KeyResponseData keyResponseData = new ResponseData(newMasterToken, parametersId, responsePublicKey.getY());
         return new KeyExchangeData(keyResponseData, cryptoContext);
     }
 
@@ -568,7 +564,7 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
         }
 
         // Return the key exchange data.
-        final KeyResponseData keyResponseData = new ResponseData(masterToken, identity, parametersId, responsePublicKey.getY());
+        final KeyResponseData keyResponseData = new ResponseData(masterToken, parametersId, responsePublicKey.getY());
         return new KeyExchangeData(keyResponseData, cryptoContext);
     }
 

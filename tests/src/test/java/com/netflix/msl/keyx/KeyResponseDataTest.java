@@ -51,25 +51,20 @@ public class KeyResponseDataTest {
     private static final String KEY_SCHEME = "scheme";
     /** JSON key key request data. */
     private static final String KEY_KEYDATA = "keydata";
-    /** JSON key identity. */
-    private static final String KEY_IDENTITY = "identity";
     
     @Rule
     public ExpectedMslException thrown = ExpectedMslException.none();
     
     private static MasterToken MASTER_TOKEN;
-    private static String IDENTITY;
 
     @BeforeClass
     public static void setup() throws MslEncodingException, MslCryptoException {
         ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
         MASTER_TOKEN = MslTestUtils.getMasterToken(ctx, 1, 1);
-        IDENTITY = MASTER_TOKEN.getIdentity();
     }
     
     @AfterClass
     public static void teardown() {
-        IDENTITY = null;
         MASTER_TOKEN = null;
         ctx = null;
     }
@@ -81,34 +76,6 @@ public class KeyResponseDataTest {
 
         final JSONObject jo = new JSONObject();
         jo.put(KEY_MASTER_TOKEN + "x", new JSONObject(MASTER_TOKEN.toJSONString()));
-        jo.put(KEY_IDENTITY, IDENTITY);
-        jo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED.name());
-        jo.put(KEY_KEYDATA, new JSONObject());
-        KeyResponseData.create(ctx, jo);
-    }
-    
-    @Test
-    public void noIdentity() throws MslEncodingException, MslCryptoException, MslKeyExchangeException, MslException {
-        final byte[] encryptionKey = new byte[0];
-        final byte[] hmacKey = new byte[0];
-        final KeyResponseData response = new SymmetricWrappedExchange.ResponseData(MASTER_TOKEN, IDENTITY, KeyId.PSK, encryptionKey, hmacKey);
-        
-        final JSONObject jo = new JSONObject();
-        jo.put(KEY_MASTER_TOKEN, new JSONObject(MASTER_TOKEN.toJSONString()));
-        jo.put(KEY_IDENTITY + "x", IDENTITY);
-        jo.put(KEY_SCHEME, KeyExchangeScheme.SYMMETRIC_WRAPPED.name());
-        jo.put(KEY_KEYDATA, response.getKeydata());
-        KeyResponseData.create(ctx, jo);
-    }
-    
-    @Test
-    public void invalidIdentity() throws MslEncodingException, MslCryptoException, MslKeyExchangeException, MslException {
-        thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
-        
-        final JSONObject jo = new JSONObject();
-        jo.put(KEY_MASTER_TOKEN, new JSONObject(MASTER_TOKEN.toJSONString()));
-        jo.put(KEY_IDENTITY, 1);
         jo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED.name());
         jo.put(KEY_KEYDATA, new JSONObject());
         KeyResponseData.create(ctx, jo);
@@ -121,7 +88,6 @@ public class KeyResponseDataTest {
 
         final JSONObject jo = new JSONObject();
         jo.put(KEY_MASTER_TOKEN, new JSONObject(MASTER_TOKEN.toJSONString()));
-        jo.put(KEY_IDENTITY, IDENTITY);
         jo.put(KEY_SCHEME + "x", KeyExchangeScheme.ASYMMETRIC_WRAPPED.name());
         jo.put(KEY_KEYDATA, new JSONObject());
         KeyResponseData.create(ctx, jo);
@@ -134,7 +100,6 @@ public class KeyResponseDataTest {
 
         final JSONObject jo = new JSONObject();
         jo.put(KEY_MASTER_TOKEN, new JSONObject(MASTER_TOKEN.toJSONString()));
-        jo.put(KEY_IDENTITY, IDENTITY);
         jo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED.name());
         jo.put(KEY_KEYDATA + "x", new JSONObject());
         KeyResponseData.create(ctx, jo);
@@ -147,11 +112,10 @@ public class KeyResponseDataTest {
 
         final byte[] encryptionKey = new byte[0];
         final byte[] hmacKey = new byte[0];
-        final KeyResponseData response = new SymmetricWrappedExchange.ResponseData(MASTER_TOKEN, IDENTITY, KeyId.PSK, encryptionKey, hmacKey);
+        final KeyResponseData response = new SymmetricWrappedExchange.ResponseData(MASTER_TOKEN, KeyId.PSK, encryptionKey, hmacKey);
 
         final JSONObject jo = new JSONObject();
         jo.put(KEY_MASTER_TOKEN, new JSONObject());
-        jo.put(KEY_IDENTITY, IDENTITY);
         jo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED.name());
         jo.put(KEY_KEYDATA, response.getKeydata());
         KeyResponseData.create(ctx, jo);
@@ -164,7 +128,6 @@ public class KeyResponseDataTest {
 
         final JSONObject jo = new JSONObject();
         jo.put(KEY_MASTER_TOKEN, new JSONObject(MASTER_TOKEN.toJSONString()));
-        jo.put(KEY_IDENTITY, IDENTITY);
         jo.put(KEY_SCHEME, "x");
         jo.put(KEY_KEYDATA, new JSONObject());
         KeyResponseData.create(ctx, jo);
@@ -179,7 +142,6 @@ public class KeyResponseDataTest {
         ctx.removeKeyExchangeFactories(KeyExchangeScheme.ASYMMETRIC_WRAPPED);
         final JSONObject jo = new JSONObject();
         jo.put(KEY_MASTER_TOKEN, new JSONObject(MASTER_TOKEN.toJSONString()));
-        jo.put(KEY_IDENTITY, IDENTITY);
         jo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED.name());
         jo.put(KEY_KEYDATA, new JSONObject());
         KeyResponseData.create(ctx, jo);

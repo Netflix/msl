@@ -18,6 +18,7 @@ package com.netflix.msl.keyx;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONString;
+import org.json.JSONStringer;
 
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
@@ -41,14 +42,12 @@ import com.netflix.msl.util.MslContext;
  *   "#mandatory" : [ "mastertoken", "scheme", "keydata" ],
  *   "mastertoken" : mastertoken,
  *   "scheme" : "string",
- *   "keydata" : object,
- *   "identity" : "string",
+ *   "keydata" : object
  * }} where:
  * <ul>
  * <li>{@code mastertoken} is the master token associated with the session keys</li>
  * <li>{@code scheme} is the key exchange scheme</li>
  * <li>{@code keydata} is the scheme-specific key data</li>
- * <li>{@code identity} is the entity identity contained in the master token</li>
  * </ul></p>
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
@@ -60,22 +59,16 @@ public abstract class KeyResponseData implements JSONString {
     private static final String KEY_SCHEME = "scheme";
     /** JSON key key data. */
     private static final String KEY_KEYDATA = "keydata";
-    /** JSON key identity. */
-    private static final String KEY_IDENTITY = "identity";
     
     /**
-     * <p>Create a new key response data object with the specified key exchange
-     * scheme and associated master token. The master token entity identity may
-     * also be provided.</p>
+     * Create a new key response data object with the specified key exchange
+     * scheme and associated master token.
      * 
      * @param masterToken the master token.
-     * @param identity optional entity identity inside the master token. May be
-     *        {@code null}.
      * @param scheme the key exchange scheme.
      */
-    protected KeyResponseData(final MasterToken masterToken, final String identity, final KeyExchangeScheme scheme) {
+    protected KeyResponseData(final MasterToken masterToken, final KeyExchangeScheme scheme) {
         this.masterToken = masterToken;
-        this.identity = identity;
         this.scheme = scheme;
     }
     
@@ -103,13 +96,12 @@ public abstract class KeyResponseData implements JSONString {
             if (scheme == null)
                 throw new MslKeyExchangeException(MslError.UNIDENTIFIED_KEYX_SCHEME, schemeName);
             final JSONObject keyData = keyResponseDataJO.getJSONObject(KEY_KEYDATA);
-            final String identity = (keyResponseDataJO.has(KEY_IDENTITY)) ? keyResponseDataJO.getString(KEY_IDENTITY) : null;
             
             // Construct an instance of the concrete subclass.
             final KeyExchangeFactory factory = ctx.getKeyExchangeFactory(scheme);
             if (factory == null)
                 throw new MslKeyExchangeException(MslError.KEYX_FACTORY_NOT_FOUND, scheme.name());
-            return factory.createResponseData(ctx, masterToken, identity, keyData);
+            return factory.createResponseData(ctx, masterToken, keyData);
         } catch (final JSONException e) {
             throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keyresponsedata " + keyResponseDataJO.toString(), e);
         }
@@ -120,13 +112,6 @@ public abstract class KeyResponseData implements JSONString {
      */
     public MasterToken getMasterToken() {
         return masterToken;
-    }
-    
-    /**
-     * @return the entity identity inside the master token. May be {@code null}.
-     */
-    public String getIdentity() {
-        return identity;
     }
     
     /**
@@ -145,8 +130,6 @@ public abstract class KeyResponseData implements JSONString {
     
     /** Master token. */
     private final MasterToken masterToken;
-    /** Master token entity identity. */
-    private final String identity;
     /** Key exchange scheme. */
     private final KeyExchangeScheme scheme;
     
@@ -156,12 +139,13 @@ public abstract class KeyResponseData implements JSONString {
     @Override
     public final String toJSONString() {
         try {
-            final JSONObject jo = new JSONObject();
-            jo.put(KEY_MASTER_TOKEN, masterToken);
-            jo.put(KEY_SCHEME, scheme.name());
-            jo.put(KEY_KEYDATA, getKeydata());
-            if (identity != null) jo.put(KEY_IDENTITY, identity);
-            return jo.toString();
+            return new JSONStringer()
+                .object()
+                    .key(KEY_MASTER_TOKEN).value(masterToken)
+                    .key(KEY_SCHEME).value(scheme.name())
+                    .key(KEY_KEYDATA).value(getKeydata())
+                .endObject()
+                .toString();
         } catch (final JSONException e) {
             throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);
         }

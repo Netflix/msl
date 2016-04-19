@@ -223,10 +223,6 @@ var MockMslContext$create;
 			callback.result(this._entityAuthData);
 		},
 		
-		/** @inheritDoc */
-		setEntityIdentity: function setEntityIdentity() {
-		},
-	    
 	    /**
 	     * Set the MSL crypto context.
 	     * 

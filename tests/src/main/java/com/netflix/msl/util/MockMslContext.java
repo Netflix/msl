@@ -233,10 +233,6 @@ public class MockMslContext extends MslContext {
         return entityAuthData;
     }
 
-    @Override
-    public void setEntityIdentity(final String identity) {
-    }
-    
     /**
      * Set the MSL crypto context.
      *

@@ -96,8 +96,6 @@ public class JsonWebEncryptionLadderExchangeSuite {
     private static final String KEY_SCHEME = "scheme";
     /** JSON key key request data. */
     private static final String KEY_KEYDATA = "keydata";
-    /** JSON key identity. */
-    private static final String KEY_IDENTITY = "identity";
     
     private static ICryptoContext PSK_CRYPTO_CONTEXT, WRAP_CRYPTO_CONTEXT;
     private static byte[] WRAP_JWK;
@@ -382,23 +380,21 @@ public class JsonWebEncryptionLadderExchangeSuite {
         
         @Test
         public void ctors() throws JSONException, MslKeyExchangeException, MslEncodingException {
-            final ResponseData resp = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
+            final ResponseData resp = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
             assertArrayEquals(PSK_ENCRYPTION_JWK, resp.getEncryptionKey());
             assertArrayEquals(PSK_HMAC_JWK, resp.getHmacKey());
             assertEquals(KeyExchangeScheme.JWE_LADDER, resp.getKeyExchangeScheme());
             assertEquals(PSK_MASTER_TOKEN, resp.getMasterToken());
-            assertEquals(PSK_IDENTITY, resp.getIdentity());
             assertArrayEquals(WRAPDATA, resp.getWrapdata());
             assertArrayEquals(WRAP_JWK, resp.getWrapKey());
             final JSONObject keydata = resp.getKeydata();
             assertNotNull(keydata);
             
-            final ResponseData joResp = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, keydata);
+            final ResponseData joResp = new ResponseData(PSK_MASTER_TOKEN, keydata);
             assertArrayEquals(resp.getEncryptionKey(), joResp.getEncryptionKey());
             assertArrayEquals(resp.getHmacKey(), joResp.getHmacKey());
             assertEquals(resp.getKeyExchangeScheme(), joResp.getKeyExchangeScheme());
             assertEquals(resp.getMasterToken(), joResp.getMasterToken());
-            assertEquals(resp.getIdentity(), joResp.getIdentity());
             assertArrayEquals(resp.getWrapdata(), joResp.getWrapdata());
             assertArrayEquals(resp.getWrapKey(), joResp.getWrapKey());
             final JSONObject joKeydata = joResp.getKeydata();
@@ -408,12 +404,11 @@ public class JsonWebEncryptionLadderExchangeSuite {
         
         @Test
         public void json() throws MslEncodingException, MslCryptoException, JSONException, MslException {
-            final ResponseData resp = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
+            final ResponseData resp = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
             final JSONObject jo = new JSONObject(resp.toJSONString());
             assertEquals(KeyExchangeScheme.JWE_LADDER.name(), jo.getString(KEY_SCHEME));
             final MasterToken masterToken = new MasterToken(pskCtx, jo.getJSONObject(KEY_MASTER_TOKEN));
             assertEquals(PSK_MASTER_TOKEN, masterToken);
-            assertEquals(PSK_IDENTITY, jo.getString(KEY_IDENTITY));
             final JSONObject keydata = jo.getJSONObject(KEY_KEYDATA);
             assertArrayEquals(PSK_ENCRYPTION_JWK, DatatypeConverter.parseBase64Binary(keydata.getString(KEY_ENCRYPTION_KEY)));
             assertArrayEquals(PSK_HMAC_JWK, DatatypeConverter.parseBase64Binary(keydata.getString(KEY_HMAC_KEY)));
@@ -423,7 +418,7 @@ public class JsonWebEncryptionLadderExchangeSuite {
         
         @Test
         public void create() throws JSONException, MslEncodingException, MslCryptoException, MslKeyExchangeException, MslException {
-            final ResponseData resp = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
+            final ResponseData resp = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
             final JSONObject jo = new JSONObject(resp.toJSONString());
             final KeyResponseData keyResponseData = KeyResponseData.create(pskCtx, jo);
             assertNotNull(keyResponseData);
@@ -434,7 +429,6 @@ public class JsonWebEncryptionLadderExchangeSuite {
             assertArrayEquals(resp.getHmacKey(), joResp.getHmacKey());
             assertEquals(resp.getKeyExchangeScheme(), joResp.getKeyExchangeScheme());
             assertEquals(resp.getMasterToken(), joResp.getMasterToken());
-            assertEquals(resp.getIdentity(), joResp.getIdentity());
             assertArrayEquals(resp.getWrapdata(), joResp.getWrapdata());
             assertArrayEquals(resp.getWrapKey(), joResp.getWrapKey());
         }
@@ -444,12 +438,12 @@ public class JsonWebEncryptionLadderExchangeSuite {
             thrown.expect(MslEncodingException.class);
             thrown.expectMslError(MslError.JSON_PARSE_ERROR);
 
-            final ResponseData resp = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
+            final ResponseData resp = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
             final JSONObject keydata = resp.getKeydata();
             
             assertNotNull(keydata.remove(KEY_WRAP_KEY));
             
-            new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, keydata);
+            new ResponseData(PSK_MASTER_TOKEN, keydata);
         }
         
         @Test
@@ -457,12 +451,12 @@ public class JsonWebEncryptionLadderExchangeSuite {
             thrown.expect(MslEncodingException.class);
             thrown.expectMslError(MslError.JSON_PARSE_ERROR);
 
-            final ResponseData resp = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
+            final ResponseData resp = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
             final JSONObject keydata = resp.getKeydata();
             
             assertNotNull(keydata.remove(KEY_WRAPDATA));
             
-            new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, keydata);
+            new ResponseData(PSK_MASTER_TOKEN, keydata);
         }
         
         @Test
@@ -470,12 +464,12 @@ public class JsonWebEncryptionLadderExchangeSuite {
             thrown.expect(MslEncodingException.class);
             thrown.expectMslError(MslError.JSON_PARSE_ERROR);
 
-            final ResponseData resp = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
+            final ResponseData resp = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
             final JSONObject keydata = resp.getKeydata();
             
             assertNotNull(keydata.remove(KEY_ENCRYPTION_KEY));
             
-            new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, keydata);
+            new ResponseData(PSK_MASTER_TOKEN, keydata);
         }
         
         @Test
@@ -483,12 +477,12 @@ public class JsonWebEncryptionLadderExchangeSuite {
             thrown.expect(MslEncodingException.class);
             thrown.expectMslError(MslError.JSON_PARSE_ERROR);
 
-            final ResponseData resp = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
+            final ResponseData resp = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
             final JSONObject keydata = resp.getKeydata();
             
             assertNotNull(keydata.remove(KEY_HMAC_KEY));
             
-            new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, keydata);
+            new ResponseData(PSK_MASTER_TOKEN, keydata);
         }
         
         @Test
@@ -496,9 +490,9 @@ public class JsonWebEncryptionLadderExchangeSuite {
             final byte[] wrapKeyB = Arrays.copyOf(WRAP_JWK, WRAP_JWK.length);
             ++wrapKeyB[0];
             
-            final ResponseData dataA = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
-            final ResponseData dataB = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, wrapKeyB, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
-            final ResponseData dataA2 = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, dataA.getKeydata());
+            final ResponseData dataA = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
+            final ResponseData dataB = new ResponseData(PSK_MASTER_TOKEN, wrapKeyB, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
+            final ResponseData dataA2 = new ResponseData(PSK_MASTER_TOKEN, dataA.getKeydata());
             
             assertTrue(dataA.equals(dataA));
             assertEquals(dataA.hashCode(), dataA.hashCode());
@@ -517,9 +511,9 @@ public class JsonWebEncryptionLadderExchangeSuite {
             final byte[] wrapdataB = Arrays.copyOf(WRAPDATA, WRAPDATA.length);
             ++wrapdataB[0];
             
-            final ResponseData dataA = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
-            final ResponseData dataB = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, WRAP_JWK, wrapdataB, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
-            final ResponseData dataA2 = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, dataA.getKeydata());
+            final ResponseData dataA = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
+            final ResponseData dataB = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, wrapdataB, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
+            final ResponseData dataA2 = new ResponseData(PSK_MASTER_TOKEN, dataA.getKeydata());
             
             assertTrue(dataA.equals(dataA));
             assertEquals(dataA.hashCode(), dataA.hashCode());
@@ -538,9 +532,9 @@ public class JsonWebEncryptionLadderExchangeSuite {
             final byte[] encryptionKeyB = Arrays.copyOf(PSK_ENCRYPTION_JWK, PSK_ENCRYPTION_JWK.length);
             ++encryptionKeyB[0];
             
-            final ResponseData dataA = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
-            final ResponseData dataB = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, WRAP_JWK, WRAPDATA, encryptionKeyB, PSK_HMAC_JWK);
-            final ResponseData dataA2 = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, dataA.getKeydata());
+            final ResponseData dataA = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
+            final ResponseData dataB = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, encryptionKeyB, PSK_HMAC_JWK);
+            final ResponseData dataA2 = new ResponseData(PSK_MASTER_TOKEN, dataA.getKeydata());
             
             assertTrue(dataA.equals(dataA));
             assertEquals(dataA.hashCode(), dataA.hashCode());
@@ -559,9 +553,9 @@ public class JsonWebEncryptionLadderExchangeSuite {
             final byte[] hmacKeyB = Arrays.copyOf(PSK_HMAC_JWK, PSK_HMAC_JWK.length);
             ++hmacKeyB[0];
             
-            final ResponseData dataA = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
-            final ResponseData dataB = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, hmacKeyB);
-            final ResponseData dataA2 = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, dataA.getKeydata());
+            final ResponseData dataA = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
+            final ResponseData dataB = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, hmacKeyB);
+            final ResponseData dataA2 = new ResponseData(PSK_MASTER_TOKEN, dataA.getKeydata());
             
             assertTrue(dataA.equals(dataA));
             assertEquals(dataA.hashCode(), dataA.hashCode());
@@ -604,7 +598,7 @@ public class JsonWebEncryptionLadderExchangeSuite {
         private static class FakeKeyResponseData extends KeyResponseData {
             /** Create a new fake key response data. */
             protected FakeKeyResponseData() {
-                super(PSK_MASTER_TOKEN, PSK_IDENTITY, KeyExchangeScheme.JWE_LADDER);
+                super(PSK_MASTER_TOKEN, KeyExchangeScheme.JWE_LADDER);
             }
 
             /* (non-Javadoc)
@@ -967,7 +961,7 @@ public class JsonWebEncryptionLadderExchangeSuite {
             final byte[] wrapJwk = WRAP_CRYPTO_CONTEXT.wrap(data);
             
             final KeyRequestData req = new RequestData(Mechanism.WRAP, WRAPDATA);
-            final KeyResponseData invalidResp = new ResponseData(PSK_MASTER_TOKEN, PSK_IDENTITY, wrapJwk, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
+            final KeyResponseData invalidResp = new ResponseData(PSK_MASTER_TOKEN, wrapJwk, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
             
             repository.addCryptoContext(WRAPDATA, WRAP_CRYPTO_CONTEXT);
             factory.getCryptoContext(pskCtx, req, invalidResp, null);
@@ -1001,7 +995,7 @@ public class JsonWebEncryptionLadderExchangeSuite {
             final byte[] wrapdata = resp.getWrapdata();
             final byte[] hmacJwk = resp.getHmacKey();
             
-            final KeyResponseData invalidResp = new ResponseData(masterToken, PSK_IDENTITY, wrapJwk, wrapdata, encryptionJwk, hmacJwk);
+            final KeyResponseData invalidResp = new ResponseData(masterToken, wrapJwk, wrapdata, encryptionJwk, hmacJwk);
             
             // Reinstall the previous wrap crypto context.
             repository.addCryptoContext(WRAPDATA, WRAP_CRYPTO_CONTEXT);
@@ -1037,7 +1031,7 @@ public class JsonWebEncryptionLadderExchangeSuite {
             final byte[] wrapdata = resp.getWrapdata();
             final byte[] encryptionJwk = resp.getEncryptionKey();
             
-            final KeyResponseData invalidResp = new ResponseData(masterToken, PSK_IDENTITY, wrapJwk, wrapdata, encryptionJwk, hmacJwk);
+            final KeyResponseData invalidResp = new ResponseData(masterToken, wrapJwk, wrapdata, encryptionJwk, hmacJwk);
             
             // Reinstall the previous wrap crypto context.
             repository.addCryptoContext(WRAPDATA, WRAP_CRYPTO_CONTEXT);

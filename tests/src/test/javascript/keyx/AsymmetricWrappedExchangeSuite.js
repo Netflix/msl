@@ -63,8 +63,6 @@ describe("AsymmetricWrappedExchangeSuite", function() {
     var KEY_SCHEME = "scheme";
     /** JSON key key request data. */
     var KEY_KEYDATA = "keydata";
-    /** JSON key identity. */
-    var KEY_IDENTITY = "identity";
     
     /** JSON key key pair ID. */
     var KEY_KEY_PAIR_ID = "keypairid";
@@ -509,23 +507,21 @@ describe("AsymmetricWrappedExchangeSuite", function() {
         var KEY_MASTER_TOKEN = "mastertoken";
         
         it("ctors", function() {
-            var resp = new ResponseData(MASTER_TOKEN, IDENTITY, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
+            var resp = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
             expect(resp.encryptionKey).toEqual(ENCRYPTION_KEY);
             expect(resp.hmacKey).toEqual(HMAC_KEY);
             expect(resp.keyExchangeScheme).toEqual(KeyExchangeScheme.ASYMMETRIC_WRAPPED);
             expect(resp.keyPairId).toEqual(KEYPAIR_ID);
             expect(resp.masterToken).toEqual(MASTER_TOKEN);
-            expect(resp.identity).toEqual(IDENTITY);
             var keydata = resp.getKeydata();
             expect(keydata).not.toBeNull();
 
-            var joResp = ResponseData$parse(MASTER_TOKEN, IDENTITY, keydata);
+            var joResp = ResponseData$parse(MASTER_TOKEN, keydata);
             expect(joResp.encryptionKey).toEqual(resp.encryptionKey);
             expect(joResp.hmacKey).toEqual(resp.hmacKey);
             expect(joResp.keyExchangeScheme).toEqual(resp.keyExchangeScheme);
             expect(joResp.keyPairId).toEqual(resp.keyPairId);
             expect(joResp.masterToken).toEqual(resp.masterToken);
-            expect(joResp.identity).toEqual(resp.identity);
             var joKeydata = resp.getKeydata();
             expect(joKeydata).not.toBeNull();
             expect(joKeydata).toEqual(keydata);
@@ -534,7 +530,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
         it("json is correct", function() {
             var masterToken = undefined, jo;
             runs(function() {
-                var resp = new ResponseData(MASTER_TOKEN, IDENTITY, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
+                var resp = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
                 jo = JSON.parse(JSON.stringify(resp));
                 expect(jo[KEY_SCHEME]).toEqual(KeyExchangeScheme.ASYMMETRIC_WRAPPED.name);
                 
@@ -546,7 +542,6 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             waitsFor(function() { return jo && masterToken; }, "json object and master token not received", 600);
             runs(function() {
 	            expect(masterToken).toEqual(MASTER_TOKEN);
-	            expect(jo[KEY_IDENTITY]).toEqual(IDENTITY);
 	            var keydata = jo[KEY_KEYDATA];
 	            expect(keydata[KEY_KEY_PAIR_ID]).toEqual(KEYPAIR_ID);
 	            expect(base64$decode(keydata[KEY_ENCRYPTION_KEY])).toEqual(ENCRYPTION_KEY);
@@ -555,7 +550,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
         });
         
         it("create", function() {
-            var data = new ResponseData(MASTER_TOKEN, IDENTITY, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
+            var data = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
             
             var keyResponseData;
             runs(function() {
@@ -583,39 +578,39 @@ describe("AsymmetricWrappedExchangeSuite", function() {
 
         it("missing key pair ID", function() {
             var f = function() {
-            	var resp = new ResponseData(MASTER_TOKEN, IDENTITY, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
+            	var resp = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
             	var keydata = resp.getKeydata();
 
             	expect(keydata[KEY_KEY_PAIR_ID]).not.toBeNull();
             	delete keydata[KEY_KEY_PAIR_ID];
 
-            	ResponseData$parse(MASTER_TOKEN, IDENTITY, keydata);
+            	ResponseData$parse(MASTER_TOKEN, keydata);
             };
             expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
         });
 
         it("missing encryption key", function() {
             var f = function() {
-            	var resp = new ResponseData(MASTER_TOKEN, IDENTITY, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
+            	var resp = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
             	var keydata = resp.getKeydata();
 
             	expect(keydata[KEY_ENCRYPTION_KEY]).not.toBeNull();
             	delete keydata[KEY_ENCRYPTION_KEY];
 
-            	ResponseData$parse(MASTER_TOKEN, IDENTITY, keydata);
+            	ResponseData$parse(MASTER_TOKEN, keydata);
             };
             expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
         });
 
         it("missing HMAC key", function() {
             var f = function() {
-            	var resp = new ResponseData(MASTER_TOKEN, IDENTITY, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
+            	var resp = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
             	var keydata = resp.getKeydata();
 
             	expect(keydata[KEY_HMAC_KEY]).not.toBeNull();
             	delete keydata[KEY_HMAC_KEY];
 
-            	ResponseData$parse(MASTER_TOKEN, IDENTITY, keydata);
+            	ResponseData$parse(MASTER_TOKEN, keydata);
             };
             expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
         });
@@ -635,9 +630,9 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens not received", 300);
             
             runs(function() {
-            	var dataA = new ResponseData(masterTokenA, IDENTITY, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
-            	var dataB = new ResponseData(masterTokenB, IDENTITY, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
-            	var dataA2 = ResponseData$parse(masterTokenA, IDENTITY, dataA.getKeydata());
+            	var dataA = new ResponseData(masterTokenA, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
+            	var dataB = new ResponseData(masterTokenB, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
+            	var dataA2 = ResponseData$parse(masterTokenA, dataA.getKeydata());
             	
 	            expect(dataA.equals(dataA)).toBeTruthy();
 	            expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
@@ -653,9 +648,9 @@ describe("AsymmetricWrappedExchangeSuite", function() {
         });
         
         it("equals key pair ID", function() {
-            var dataA = new ResponseData(MASTER_TOKEN, IDENTITY, KEYPAIR_ID + "A", ENCRYPTION_KEY, HMAC_KEY);
-            var dataB = new ResponseData(MASTER_TOKEN, IDENTITY, KEYPAIR_ID + "B", ENCRYPTION_KEY, HMAC_KEY);
-            var dataA2 = ResponseData$parse(MASTER_TOKEN, IDENTITY, dataA.getKeydata());
+            var dataA = new ResponseData(MASTER_TOKEN, KEYPAIR_ID + "A", ENCRYPTION_KEY, HMAC_KEY);
+            var dataB = new ResponseData(MASTER_TOKEN, KEYPAIR_ID + "B", ENCRYPTION_KEY, HMAC_KEY);
+            var dataA2 = ResponseData$parse(MASTER_TOKEN, dataA.getKeydata());
  
             expect(dataA.equals(dataA)).toBeTruthy();
             expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
@@ -673,9 +668,9 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             var encryptionKeyA = Arrays$copyOf(ENCRYPTION_KEY);
             var encryptionKeyB = Arrays$copyOf(ENCRYPTION_KEY);
             ++encryptionKeyB[0];
-            var dataA = new ResponseData(MASTER_TOKEN, IDENTITY, KEYPAIR_ID, encryptionKeyA, HMAC_KEY);
-            var dataB = new ResponseData(MASTER_TOKEN, IDENTITY, KEYPAIR_ID, encryptionKeyB, HMAC_KEY);
-            var dataA2 = ResponseData$parse(MASTER_TOKEN, IDENTITY, dataA.getKeydata());
+            var dataA = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, encryptionKeyA, HMAC_KEY);
+            var dataB = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, encryptionKeyB, HMAC_KEY);
+            var dataA2 = ResponseData$parse(MASTER_TOKEN, dataA.getKeydata());
             
             expect(dataA.equals(dataA)).toBeTruthy();
             expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
@@ -693,9 +688,9 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             var hmacKeyA = Arrays$copyOf(HMAC_KEY);
             var hmacKeyB = Arrays$copyOf(HMAC_KEY);
             ++hmacKeyB[0];
-            var dataA = new ResponseData(MASTER_TOKEN, IDENTITY, KEYPAIR_ID, ENCRYPTION_KEY, hmacKeyA);
-            var dataB = new ResponseData(MASTER_TOKEN, IDENTITY, KEYPAIR_ID, ENCRYPTION_KEY, hmacKeyB);
-            var dataA2 = ResponseData$parse(MASTER_TOKEN, IDENTITY, dataA.getKeydata());
+            var dataA = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, hmacKeyA);
+            var dataB = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, hmacKeyB);
+            var dataA2 = ResponseData$parse(MASTER_TOKEN, dataA.getKeydata());
             
             expect(dataA.equals(dataA)).toBeTruthy();
             expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
@@ -710,7 +705,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
         });
         
         it("equals object", function() {
-            var data = new ResponseData(MASTER_TOKEN, IDENTITY, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
+            var data = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
             expect(data.equals(null)).toBeFalsy();
             expect(data.equals(IDENTITY)).toBeFalsy();
         });
@@ -741,7 +736,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
         var FakeKeyResponseData = KeyResponseData.extend({
             /** Create a new fake key response data. */
             init: function init() {
-                init.base.call(this, MASTER_TOKEN, IDENTITY, KeyExchangeScheme.ASYMMETRIC_WRAPPED);
+                init.base.call(this, MASTER_TOKEN, KeyExchangeScheme.ASYMMETRIC_WRAPPED);
             },
 
             /** @inheritDoc */
@@ -1083,7 +1078,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     var keyResponseData = keyxData.keyResponseData;
                     var masterToken = keyResponseData.masterToken;
 
-                    var mismatchedKeyResponseData = new ResponseData(masterToken, IDENTITY, KEYPAIR_ID + "B", ENCRYPTION_KEY, HMAC_KEY);
+                    var mismatchedKeyResponseData = new ResponseData(masterToken, KEYPAIR_ID + "B", ENCRYPTION_KEY, HMAC_KEY);
 
                     factory.getCryptoContext(ctx, keyRequestData, mismatchedKeyResponseData, null, {
                         result: function() {},
@@ -1149,7 +1144,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     keydata[KEY_ENCRYPTION_KEY] = base64$encode(wrappedEncryptionKey);
                     var wrappedHmacKey = base64$decode(keydata[KEY_HMAC_KEY]);
 
-                    var invalidKeyResponseData = new ResponseData(masterToken, IDENTITY, KEYPAIR_ID, wrappedEncryptionKey, wrappedHmacKey);
+                    var invalidKeyResponseData = new ResponseData(masterToken, KEYPAIR_ID, wrappedEncryptionKey, wrappedHmacKey);
                     factory.getCryptoContext(ctx, keyRequestData, invalidKeyResponseData, null, {
                         result: function() {},
                         error: function(err) { exception = err; }
@@ -1186,7 +1181,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     keydata[KEY_HMAC_KEY] = base64$encode(wrappedHmacKey);
                     var wrappedEncryptionKey = base64$decode(keydata[KEY_ENCRYPTION_KEY]);
 
-                    var invalidKeyResponseData = new ResponseData(masterToken, IDENTITY, KEYPAIR_ID, wrappedEncryptionKey, wrappedHmacKey);
+                    var invalidKeyResponseData = new ResponseData(masterToken, KEYPAIR_ID, wrappedEncryptionKey, wrappedHmacKey);
                     factory.getCryptoContext(ctx, keyRequestData, invalidKeyResponseData, null, {
                         result: function() {},
                         error: function(err) { exception = err; }

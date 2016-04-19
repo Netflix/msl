@@ -15,16 +15,16 @@
  */
 package kancolle.util;
 
-import com.netflix.msl.MslCryptoException;
-import com.netflix.msl.MslInternalException;
-import com.netflix.msl.crypto.ICryptoContext;
-import com.netflix.msl.entityauth.EntityAuthenticationData;
-
 import kancolle.crypto.KanColleCryptoContext;
 import kancolle.entityauth.KanmusuAuthenticationData;
 import kancolle.entityauth.KanmusuDatabase;
 import kancolle.entityauth.NavalPortDatabase;
 import kancolle.userauth.OfficerDatabase;
+
+import com.netflix.msl.MslCryptoException;
+import com.netflix.msl.MslInternalException;
+import com.netflix.msl.crypto.ICryptoContext;
+import com.netflix.msl.entityauth.EntityAuthenticationData;
 
 /**
  * <p>MSL context for Kanmusu ships.</p>
@@ -82,13 +82,6 @@ public class KanmusuMslContext extends KanColleMslContext {
         return entityAuthData;
     }
 
-    /* (non-Javadoc)
-     * @see com.netflix.msl.util.MslContext#setEntityIdentity(java.lang.String)
-     */
-    @Override
-    public void setEntityIdentity(final String identity) {
-    }
-    
     /** Entity authentication data. */
     private final EntityAuthenticationData entityAuthData;
     /** MSL crypto context. */

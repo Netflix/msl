@@ -94,10 +94,6 @@ var SimpleMslContext;
         },
         
         /** @inheritDoc */
-        setEntityIdentity: function setEntityIdentity() {
-        },
-
-        /** @inheritDoc */
         getMslCryptoContext: function getMslCryptoContext() {
             return this._mslCryptoContext;
         },

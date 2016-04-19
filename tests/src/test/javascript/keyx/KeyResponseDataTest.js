@@ -30,14 +30,11 @@ describe("KeyResponseData", function() {
     var KEY_SCHEME = "scheme";
     /** JSON key key request data. */
     var KEY_KEYDATA = "keydata";
-    /** JSON key identity. */
-    var KEY_IDENTITY = "identity";
     
     /** MSL context. */
     var ctx;
     
     var MASTER_TOKEN;
-    var IDENTITY;
 
     var initialized = false;
     beforeEach(function() {
@@ -52,10 +49,7 @@ describe("KeyResponseData", function() {
             
             runs(function() {
                 MslTestUtils.getMasterToken(ctx, 1, 1, {
-                    result: function(masterToken) {
-                        MASTER_TOKEN = masterToken;
-                        IDENTITY = masterToken.identity;
-                    },
+                    result: function(masterToken) { MASTER_TOKEN = masterToken; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
@@ -70,48 +64,6 @@ describe("KeyResponseData", function() {
         runs(function() {
             var jo = {};
             jo[KEY_MASTER_TOKEN + "x"] = JSON.parse(JSON.stringify(MASTER_TOKEN));
-            jo[KEY_IDENTITY] = IDENTITY;
-            jo[KEY_SCHEME] = KeyExchangeScheme.ASYMMETRIC_WRAPPED.name;
-            jo[KEY_KEYDATA] = {};
-            KeyResponseData$parse(ctx, jo, {
-                result: function(x) {},
-                error: function(e) { exception = e; },
-            });
-        });
-        waitsFor(function() { return exception; }, "exception", 100);
-        
-        runs(function() {
-            var f = function() { throw exception; };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
-        });
-    });
-    
-    it("no identity", function() {
-        var encryptionKey = new Uint8Array(0);
-        var hmacKey = new Uint8Array(0);
-        var response = new SymmetricWrappedExchange$ResponseData(MASTER_TOKEN, IDENTITY, SymmetricWrappedExchange$KeyId.PSK, encryptionKey, hmacKey);
-        
-        var response;
-        runs(function() {
-            var jo = {};
-            jo[KEY_MASTER_TOKEN] = JSON.parse(JSON.stringify(MASTER_TOKEN));
-            jo[KEY_IDENTITY + "x"] = IDENTITY;
-            jo[KEY_SCHEME] = KeyExchangeScheme.SYMMETRIC_WRAPPED.name;
-            jo[KEY_KEYDATA] = response.getKeydata();
-            KeyResponseData$parse(ctx, jo, {
-                result: function(x) { response = x; },
-                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
-            });
-        });
-        waitsFor(function() { return response; }, "response", 100);
-    });
-    
-    it("invalid identity", function() {
-        var exception;
-        runs(function() {
-            var jo = {};
-            jo[KEY_MASTER_TOKEN] = JSON.parse(JSON.stringify(MASTER_TOKEN));
-            jo[KEY_IDENTITY] = 1;
             jo[KEY_SCHEME] = KeyExchangeScheme.ASYMMETRIC_WRAPPED.name;
             jo[KEY_KEYDATA] = {};
             KeyResponseData$parse(ctx, jo, {
@@ -132,7 +84,6 @@ describe("KeyResponseData", function() {
         runs(function() {
             var jo = {};
             jo[KEY_MASTER_TOKEN] = JSON.parse(JSON.stringify(MASTER_TOKEN));
-            jo[KEY_IDENTITY] = IDENTITY;
             jo[KEY_SCHEME + "x"] = KeyExchangeScheme.ASYMMETRIC_WRAPPED.name;
             jo[KEY_KEYDATA] = {};
             KeyResponseData$parse(ctx, jo, {
@@ -153,7 +104,6 @@ describe("KeyResponseData", function() {
         runs(function() {
             var jo = {};
             jo[KEY_MASTER_TOKEN] = JSON.parse(JSON.stringify(MASTER_TOKEN));
-            jo[KEY_IDENTITY] = IDENTITY;
             jo[KEY_SCHEME] = KeyExchangeScheme.ASYMMETRIC_WRAPPED.name;
             jo[KEY_KEYDATA + "x"] = {};
             KeyResponseData$parse(ctx, jo, {
@@ -172,13 +122,12 @@ describe("KeyResponseData", function() {
     it("invalid master token", function() {
         var encryptionKey = new Uint8Array(0);
         var hmacKey = new Uint8Array(0);
-        var response = new SymmetricWrappedExchange$ResponseData(MASTER_TOKEN, IDENTITY, SymmetricWrappedExchange$KeyId.PSK, encryptionKey, hmacKey);
+        var response = new SymmetricWrappedExchange$ResponseData(MASTER_TOKEN, SymmetricWrappedExchange$KeyId.PSK, encryptionKey, hmacKey);
         
         var exception;
         runs(function() {
             var jo = {};
             jo[KEY_MASTER_TOKEN] = {},
-            jo[KEY_IDENTITY] = IDENTITY;
             jo[KEY_SCHEME] = KeyExchangeScheme.ASYMMETRIC_WRAPPED.name;
             jo[KEY_KEYDATA] = response.getKeydata();
             KeyResponseData$parse(ctx, jo, {
@@ -199,7 +148,6 @@ describe("KeyResponseData", function() {
         runs(function() {
             var jo = {};
             jo[KEY_MASTER_TOKEN] = JSON.parse(JSON.stringify(MASTER_TOKEN)),
-            jo[KEY_IDENTITY] = IDENTITY;
             jo[KEY_SCHEME] = "x";
             jo[KEY_KEYDATA] = {};
             KeyResponseData$parse(ctx, jo, {
@@ -231,7 +179,6 @@ describe("KeyResponseData", function() {
             
             var jo = {};
             jo[KEY_MASTER_TOKEN] = JSON.parse(JSON.stringify(MASTER_TOKEN)),
-            jo[KEY_IDENTITY] = IDENTITY;
             jo[KEY_SCHEME] = KeyExchangeScheme.ASYMMETRIC_WRAPPED.name;
             jo[KEY_KEYDATA] = {};
             KeyResponseData$parse(ctx, jo, {

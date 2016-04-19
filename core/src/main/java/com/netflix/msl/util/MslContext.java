@@ -159,22 +159,6 @@ public abstract class MslContext {
     public abstract EntityAuthenticationData getEntityAuthenticationData(final ReauthCode reauthCode);
     
     /**
-     * <p>Called to provide the entity identity contained in the master token
-     * issued to this entity, and provided in key response data.</p>
-     * 
-     * <p>This method should not perform any action unless this entity requires
-     * its entity identity to be provided by the remote entity.</p>
-     * 
-     * <p>This method will be called multiple times, often with the same value.
-     * However in some cases the entity identity provided by the remote entity
-     * may change over time. If the entity identity changes, the MSL store
-     * should be cleared before this method returns.</p>
-     * 
-     * @param identity the local entity identity.
-     */
-    public abstract void setEntityIdentity(final String identity);
-    
-    /**
      * <p>Returns the primary crypto context used for MSL-level crypto
      * operations. This is used for the master tokens and user ID tokens.</p>
      * 

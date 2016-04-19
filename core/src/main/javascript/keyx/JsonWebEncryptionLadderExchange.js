@@ -232,15 +232,13 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
          * with the provided master token and wrapped keys.
          *
          * @param {MasterToken} masterToken the master token.
-         * @param {?string} identity optional entity identity inside the master token.
-         *        May be {@code null}.
          * @param {Uint8Array} wrapKey the wrapped wrap key.
          * @param {Uint8Array} wrapdata the wrap data for reconstructing the wrap key.
          * @param {Uint8Array} encryptionKey the wrap key wrapped encryption key.
          * @param {Uint8Array} hmacKey the wrap key wrapped HMAC key.
          */
-        init: function init(masterToken, identity, wrapKey, wrapdata, encryptionKey, hmacKey) {
-            init.base.call(this, masterToken, identity, KeyExchangeScheme.JWE_LADDER);
+        init: function init(masterToken, wrapKey, wrapdata, encryptionKey, hmacKey) {
+            init.base.call(this, masterToken, KeyExchangeScheme.JWE_LADDER);
 
             // The properties.
             var props = {
@@ -289,13 +287,11 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
      * with the provided master token from the provided JSON object.
      *
      * @param {MasterToken} masterToken the master token.
-     * @param {?string} identity optional entity identity inside the master token.
-     *        May be {@code null}.
      * @param {object} keyDataJO the JSON object.
      * @throws MslEncodingException if there is an error parsing the JSON.
      * @throws MslKeyExchangeException if the mechanism is not recognized.
      */
-    var ResponseData$parse = JsonWebEncryptionLadderExchange$ResponseData$parse = function JsonWebEncryptionLadderExchange$ResponseData$parse(masterToken, identity, keyDataJO) {
+    var ResponseData$parse = JsonWebEncryptionLadderExchange$ResponseData$parse = function JsonWebEncryptionLadderExchange$ResponseData$parse(masterToken, keyDataJO) {
         // Pull key response data.
         var wrapKeyB64 = keyDataJO[KEY_WRAP_KEY];
         var wrapdataB64 = keyDataJO[KEY_WRAPDATA];
@@ -331,7 +327,7 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
         }
 
         // Return the response data.
-        return new ResponseData(masterToken, identity, wrapKey, wrapdata, encryptionKey, hmacKey);
+        return new ResponseData(masterToken, wrapKey, wrapdata, encryptionKey, hmacKey);
     };
 
     /**
@@ -411,8 +407,8 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
         },
 
         /** @inheritDoc */
-        createResponseData: function createResponseData(ctx, masterToken, identity, keyDataJO) {
-            return ResponseData$parse(masterToken, identity, keyDataJO);
+        createResponseData: function createResponseData(ctx, masterToken, keyDataJO) {
+            return ResponseData$parse(masterToken, keyDataJO);
         },
 
         /** @inheritDoc */
@@ -503,7 +499,7 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                         result: function (wrapKeyCryptoContext) {
                             wrapKeyCryptoContext.wrap(wrapKey, {
                                 result: function(wrappedWrapJwk) {
-                                    wrapSessionKeys(identity, wrapKey, wrapdata, encryptionKey, hmacKey, wrappedWrapJwk);
+                                    wrapSessionKeys(wrapKey, wrapdata, encryptionKey, hmacKey, wrappedWrapJwk);
                                 },
                                 error: function(e) {
                                     AsyncExecutor(callback, function() {
@@ -525,14 +521,14 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                 }, self);
             }
 
-            function wrapSessionKeys(identity, wrapKey, wrapdata, encryptionKey, hmacKey, wrappedWrapJwk) {
+            function wrapSessionKeys(wrapKey, wrapdata, encryptionKey, hmacKey, wrappedWrapJwk) {
                 AsyncExecutor(callback, function() {
                     var wrapCryptoContext = new JsonWebEncryptionCryptoContext(ctx, JsonWebEncryptionCryptoContext$Algorithm.A128KW, JsonWebEncryptionCryptoContext$Encryption.A128GCM, wrapKey);
                     wrapCryptoContext.wrap(encryptionKey, {
                         result: function(wrappedEncryptionJwk) {
                             wrapCryptoContext.wrap(hmacKey, {
                                 result: function(wrappedHmacJwk) {
-                                    createMasterToken(identity, wrapdata, wrappedWrapJwk, encryptionKey, wrappedEncryptionJwk, hmacKey, wrappedHmacJwk);
+                                    createMasterToken(wrapdata, wrappedWrapJwk, encryptionKey, wrappedEncryptionJwk, hmacKey, wrappedHmacJwk);
                                 },
                                 error: function(e) {
                                     AsyncExecutor(callback, function() {
@@ -554,7 +550,7 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                 }, self);
             }
 
-            function createMasterToken(identity, wrapdata, wrappedWrapJwk, encryptionKey, wrappedEncryptionJwk, hmacKey, wrappedHmacJwk) {
+            function createMasterToken(wrapdata, wrappedWrapJwk, encryptionKey, wrappedEncryptionJwk, hmacKey, wrappedHmacJwk) {
                 AsyncExecutor(callback, function() {
                     // Create the master token.
                     var tokenFactory = ctx.getTokenFactory();
@@ -566,7 +562,7 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                                     var cryptoContext = new SessionCryptoContext(ctx, masterToken);
 
                                     // Return the key exchange data.
-                                    var keyResponseData = new ResponseData(masterToken, identity, wrappedWrapJwk, wrapdata, wrappedEncryptionJwk, wrappedHmacJwk);
+                                    var keyResponseData = new ResponseData(masterToken, wrappedWrapJwk, wrapdata, wrappedEncryptionJwk, wrappedHmacJwk);
                                     return new KeyExchangeFactory.KeyExchangeData(keyResponseData, cryptoContext, callback);
                                 }, self);
                             },
@@ -586,7 +582,7 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                                     var cryptoContext = new SessionCryptoContext(ctx, masterToken);
 
                                     // Return the key exchange data.
-                                    var keyResponseData = new ResponseData(masterToken, identity, wrappedWrapJwk, wrapdata, wrappedEncryptionJwk, wrappedHmacJwk);
+                                    var keyResponseData = new ResponseData(masterToken, wrappedWrapJwk, wrapdata, wrappedEncryptionJwk, wrappedHmacJwk);
                                     return new KeyExchangeFactory.KeyExchangeData(keyResponseData, cryptoContext, callback);
                                 }, self);
                             },

@@ -152,14 +152,12 @@ var SymmetricWrappedExchange$ResponseData$parse;
          * and HMAC keys.
          *
          * @param {MasterToken} masterToken the master token.
-         * @param {?string} identity optional entity identity inside the master token.
-         *        May be {@code null}.
          * @param {KeyId} keyId the wrapping key ID.
          * @param {Uint8Array} encryptionKey the wrapped encryption key.
          * @param {Uint8Array} hmacKey the wrapped HMAC key.
          */
-        init: function init(masterToken, identity, keyId, encryptionKey, hmacKey) {
-            init.base.call(this, masterToken, identity, KeyExchangeScheme.SYMMETRIC_WRAPPED);
+        init: function init(masterToken, keyId, encryptionKey, hmacKey) {
+            init.base.call(this, masterToken, KeyExchangeScheme.SYMMETRIC_WRAPPED);
 
             // The properties.
             var props = {
@@ -201,15 +199,13 @@ var SymmetricWrappedExchange$ResponseData$parse;
      * the provided master token from the provided JSON object.
      *
      * @param {MasterToken} masterToken the master token.
-     * @param {?string} identity optional entity identity inside the master token.
-     *        May be {@code null}.
      * @param {Object} keyDataJO the JSON object.
      * @return {ResponseData} the response data.
      * @throws MslEncodingException if there is an error parsing the JSON.
      * @throws MslCryptoException if an encoded key is invalid.
      * @throws MslKeyExchangeException if the key ID is not recognized.
      */
-    var ResponseData$parse = SymmetricWrappedExchange$ResponseData$parse = function ResponseData$parse(masterToken, identity, keyDataJO) {
+    var ResponseData$parse = SymmetricWrappedExchange$ResponseData$parse = function ResponseData$parse(masterToken, keyDataJO) {
         // Pull key response data.
         var keyId = keyDataJO[KEY_KEY_ID];
         var encryptionKeyB64 = keyDataJO[KEY_ENCRYPTION_KEY];
@@ -242,7 +238,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
         }
 
         // Return the response data.
-        return new ResponseData(masterToken, identity, keyId, encryptionKey, hmacKey);
+        return new ResponseData(masterToken, keyId, encryptionKey, hmacKey);
     };
 
     /**
@@ -322,8 +318,8 @@ var SymmetricWrappedExchange$ResponseData$parse;
         },
 
         /** @inheritDoc */
-        createResponseData: function createResponseData(ctx, masterToken, identity, keyDataJO) {
-            return ResponseData$parse(masterToken, identity, keyDataJO);
+        createResponseData: function createResponseData(ctx, masterToken, keyDataJO) {
+            return ResponseData$parse(masterToken, keyDataJO);
         },
 
         /** @inheritDoc */
@@ -383,7 +379,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
                                 result: function(wrappedEncryptionKey) {
                                     wrapCryptoContext.wrap(hmacKey, {
                                         result: function(wrappedHmacKey) {
-                                            createMasterToken(identity, encryptionKey, wrappedEncryptionKey, hmacKey, wrappedHmacKey);
+                                            createMasterToken(encryptionKey, wrappedEncryptionKey, hmacKey, wrappedHmacKey);
                                         },
                                         error: function(e) {
                                             AsyncExecutor(callback, function() {
@@ -414,7 +410,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
                 }, self);
             }
 
-            function createMasterToken(identity, encryptionKey, wrappedEncryptionKey, hmacKey, wrappedHmacKey) {
+            function createMasterToken(encryptionKey, wrappedEncryptionKey, hmacKey, wrappedHmacKey) {
                 AsyncExecutor(callback, function() {
                     var request = keyRequestData;
 
@@ -437,7 +433,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
                                     }
 
                                     // Return the key exchange data.
-                                    var keyResponseData = new ResponseData(masterToken, identity, request.keyId, wrappedEncryptionKey, wrappedHmacKey);
+                                    var keyResponseData = new ResponseData(masterToken, request.keyId, wrappedEncryptionKey, wrappedHmacKey);
                                     return new KeyExchangeFactory.KeyExchangeData(keyResponseData, cryptoContext);
                                 }, self);
                             },
@@ -464,7 +460,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
                                     }
 
                                     // Return the key exchange data.
-                                    var keyResponseData = new ResponseData(masterToken, identity, request.keyId, wrappedEncryptionKey, wrappedHmacKey);
+                                    var keyResponseData = new ResponseData(masterToken, request.keyId, wrappedEncryptionKey, wrappedHmacKey);
                                     return new KeyExchangeFactory.KeyExchangeData(keyResponseData, cryptoContext);
                                 }, self);
                             },

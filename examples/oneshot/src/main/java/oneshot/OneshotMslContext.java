@@ -126,13 +126,6 @@ public class OneshotMslContext extends MslContext {
 	}
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.util.MslContext#setEntityIdentity(java.lang.String)
-     */
-    @Override
-    public void setEntityIdentity(final String identity) {
-    }
-
-	/* (non-Javadoc)
 	 * @see com.netflix.msl.util.MslContext#getMslCryptoContext()
 	 */
 	@Override

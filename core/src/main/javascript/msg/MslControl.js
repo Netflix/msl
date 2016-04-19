@@ -815,16 +815,11 @@ var MslControl$MslChannel;
             if (!messageHeader)
                 return;
             
+            // Save the crypto context of the message's key response data.
+            var store = ctx.getMslStore();
             var keyResponseData = messageHeader.keyResponseData;
             if (keyResponseData) {
-                // Set the local entity identity.
-                var identity = keyResponseData.identity;
-                if (identity)
-                    ctx.setEntityIdentity(identity);
-                
-                // Save the crypto context of the message's key response data.
                 var keyxMasterToken = keyResponseData.masterToken;
-                var store = ctx.getMslStore();
                 store.setCryptoContext(keyxMasterToken, response.getKeyExchangeCryptoContext());
 
                 // Delete the old master token. We won't use it anymore to build

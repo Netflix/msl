@@ -28,6 +28,8 @@ import java.util.TreeSet;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import burp.msl.tokens.EchoingTokenFactory;
+
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.crypto.JcaAlgorithm;
@@ -57,8 +59,6 @@ import com.netflix.msl.util.MockAuthenticationUtils;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslStore;
 import com.netflix.msl.util.NullMslStore;
-
-import burp.msl.tokens.EchoingTokenFactory;
 
 /**
  * User: skommidi
@@ -187,13 +187,6 @@ public class WiretapMslContext extends MslContext {
             throw new IllegalArgumentException("Unsupported authentication type: " + scheme.name());
     }
     
-    /* (non-Javadoc)
-     * @see com.netflix.msl.util.MslContext#setEntityIdentity(java.lang.String)
-     */
-    @Override
-    public void setEntityIdentity(final String identity) {
-    }
-
     /* (non-Javadoc)
      * @see com.netflix.msl.util.MslContext#getMslCryptoContext()
      */

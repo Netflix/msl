@@ -92,15 +92,13 @@ public abstract class KeyExchangeFactory {
      * 
      * @param ctx MSL context.
      * @param masterToken the master token for the new key response data.
-     * @param identity optional entity identity inside the master token. May be
-     *        {@code null}.
      * @param keyDataJO the JSON object.
      * @return the key response data.
      * @throws MslEncodingException if there is an error parsing the JSON.
      * @throws MslKeyExchangeException if there is an error creating the key
      *         response data.
      */
-    protected abstract KeyResponseData createResponseData(final MslContext ctx, final MasterToken masterToken, final String identity, final JSONObject keyDataJO) throws MslEncodingException, MslKeyExchangeException;
+    protected abstract KeyResponseData createResponseData(final MslContext ctx, final MasterToken masterToken, final JSONObject keyDataJO) throws MslEncodingException, MslKeyExchangeException;
     
     /**
      * <p>Generate a new key response data instance and crypto context in

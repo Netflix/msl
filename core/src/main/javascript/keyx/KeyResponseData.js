@@ -27,14 +27,12 @@
  *   "#mandatory" : [ "mastertoken", "scheme", "keydata" ],
  *   "mastertoken" : mastertoken,
  *   "scheme" : "string",
- *   "keydata" : object,
- *   "identity" : "string",
+ *   "keydata" : object
  * }} where:
  * <ul>
  * <li>{@code mastertoken} is the master token associated with the session keys</li>
  * <li>{@code scheme} is the key exchange scheme</li>
  * <li>{@code keydata} is the scheme-specific key data</li>
- * <li>{@code identity} is the entity identity contained in the master token</li>
  * </ul></p>
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
@@ -61,12 +59,6 @@ var KeyResponseData$parse;
      * @type {string}
      */
     var KEY_KEYDATA = "keydata";
-    /**
-     * JSON key identity.
-     * @const
-     * @type {string}
-     */
-    var KEY_IDENTITY = "identity";
 
     KeyResponseData = util.Class.create({
         /**
@@ -74,19 +66,12 @@ var KeyResponseData$parse;
          * scheme and associated master token.
          *
          * @param {MasterToken} masterToken the master token.
-         * @param {?string} identity optional entity identity inside the master token. May be
-         *        {@code null}.
          * @param {KeyExchangeScheme} scheme the key exchange scheme.
          */
-        init: function init(masterToken, identity, scheme) {
+        init: function init(masterToken, scheme) {
             // The properties.
             var props = {
                 masterToken: { value: masterToken, writable: false, configurable: false },
-                /**
-                 * Master token entity identity. May be {@code null}.
-                 * @type {?string}
-                 */
-                identity: { value: identity, writable: false, configurable: false },
                 keyExchangeScheme: { value: scheme, wrtiable: false, configurable: false },
             };
             Object.defineProperties(this, props);
@@ -105,7 +90,6 @@ var KeyResponseData$parse;
             result[KEY_MASTER_TOKEN] = this.masterToken;
             result[KEY_SCHEME] = this.keyExchangeScheme.name;
             result[KEY_KEYDATA] = this.getKeydata();
-            if (this.identity) result[KEY_IDENTITY] = this.identity;
             return result;
         },
 
@@ -154,13 +138,11 @@ var KeyResponseData$parse;
             var masterTokenJo = keyResponseDataJO[KEY_MASTER_TOKEN];
             var schemeName = keyResponseDataJO[KEY_SCHEME];
             var keyDataJo = keyResponseDataJO[KEY_KEYDATA];
-            var identity = keyResponseDataJO[KEY_IDENTITY];
 
             // Verify key data.
             if (typeof schemeName !== 'string' ||
                 typeof masterTokenJo !== 'object' ||
-                typeof keyDataJo !== 'object' ||
-                (identity && typeof identity !== 'string'))
+                typeof keyDataJo !== 'object')
             {
                 throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keyresponsedata " + JSON.stringify(keyResponseDataJO));
             }
@@ -178,7 +160,7 @@ var KeyResponseData$parse;
                         var factory = ctx.getKeyExchangeFactory(scheme);
                         if (!factory)
                             throw new MslKeyExchangeException(MslError.KEYX_FACTORY_NOT_FOUND, scheme.name);
-                        return factory.createResponseData(ctx, masterToken, identity, keyDataJo);
+                        return factory.createResponseData(ctx, masterToken, keyDataJo);
                     });
                 },
                 error: function(err) { callback.error(err); }

@@ -3,18 +3,18 @@
  */
 package com.netflix.msl.keyx;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
-import com.netflix.msl.MslError;
 import com.netflix.msl.MslException;
+import com.netflix.msl.entityauth.EntityAuthenticationData;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import com.netflix.msl.MslError;
 import com.netflix.msl.MslInternalException;
 import com.netflix.msl.MslKeyExchangeException;
 import com.netflix.msl.crypto.ICryptoContext;
-import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.util.MslContext;
 
@@ -76,10 +76,10 @@ public class FailingKeyExchange extends KeyExchangeFactory {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.keyx.KeyExchangeFactory#createResponseData(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, java.lang.String, org.json.JSONObject)
+     * @see com.netflix.msl.keyx.KeyExchangeFactory#createResponseData(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, org.json.JSONObject)
      */
     @Override
-    protected KeyResponseData createResponseData(final MslContext ctx, final MasterToken masterToken, final String identity, final JSONObject keyDataJO) {
+    protected KeyResponseData createResponseData(final MslContext ctx, final MasterToken masterToken, final JSONObject keyDataJO) {
         // This method should never be called; we should never receive key
         // response data.
         throw new MslInternalException("Unexpected call to create key response data.");

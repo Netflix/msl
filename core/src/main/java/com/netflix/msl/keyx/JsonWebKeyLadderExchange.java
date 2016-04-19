@@ -288,15 +288,13 @@ public class JsonWebKeyLadderExchange extends KeyExchangeFactory {
          * with the provided master token and wrapped keys.
          * 
          * @param masterToken the master token.
-         * @param identity optional entity identity inside the master token.
-         *        May be {@code null}.
          * @param wrapKey the wrapped wrap key.
          * @param wrapdata the wrap data for reconstructing the wrap key.
          * @param encryptionKey the wrap key wrapped encryption key.
          * @param hmacKey the wrap key wrapped HMAC key.
          */
-        public ResponseData(final MasterToken masterToken, final String identity, final byte[] wrapKey, final byte[] wrapdata, final byte[] encryptionKey, final byte[] hmacKey) {
-            super(masterToken, identity, KeyExchangeScheme.JWK_LADDER);
+        public ResponseData(final MasterToken masterToken, final byte[] wrapKey, final byte[] wrapdata, final byte[] encryptionKey, final byte[] hmacKey) {
+            super(masterToken, KeyExchangeScheme.JWK_LADDER);
             this.wrapKey = wrapKey;
             this.wrapdata = wrapdata;
             this.encryptionKey = encryptionKey;
@@ -308,14 +306,12 @@ public class JsonWebKeyLadderExchange extends KeyExchangeFactory {
          * with the provided master token from the provided JSON object.
          * 
          * @param masterToken the master token.
-         * @param identity optional entity identity inside the master token.
-         *        May be {@code null}.
          * @param keyDataJO the JSON object.
          * @throws MslEncodingException if there is an error parsing the JSON.
          * @throws MslKeyExchangeException if the mechanism is not recognized.
          */
-        public ResponseData(final MasterToken masterToken, final String identity, final JSONObject keyDataJO) throws MslKeyExchangeException, MslEncodingException {
-            super(masterToken, identity, KeyExchangeScheme.JWK_LADDER);
+        public ResponseData(final MasterToken masterToken, final JSONObject keyDataJO) throws MslKeyExchangeException, MslEncodingException {
+            super(masterToken, KeyExchangeScheme.JWK_LADDER);
             try {
                 try {
                     wrapKey = DatatypeConverter.parseBase64Binary(keyDataJO.getString(KEY_WRAP_KEY));
@@ -642,11 +638,11 @@ public class JsonWebKeyLadderExchange extends KeyExchangeFactory {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.keyx.KeyExchangeFactory#createResponseData(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, java.lang.String, org.json.JSONObject)
+     * @see com.netflix.msl.keyx.KeyExchangeFactory#createResponseData(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, org.json.JSONObject)
      */
     @Override
-    protected KeyResponseData createResponseData(final MslContext ctx, final MasterToken masterToken, final String identity, final JSONObject keyDataJO) throws MslEncodingException, MslKeyExchangeException {
-        return new ResponseData(masterToken, identity, keyDataJO);
+    protected KeyResponseData createResponseData(final MslContext ctx, final MasterToken masterToken, final JSONObject keyDataJO) throws MslEncodingException, MslKeyExchangeException {
+        return new ResponseData(masterToken, keyDataJO);
     }
 
     /* (non-Javadoc)
@@ -709,7 +705,7 @@ public class JsonWebKeyLadderExchange extends KeyExchangeFactory {
         final ICryptoContext cryptoContext = new SessionCryptoContext(ctx, newMasterToken);
         
         // Return the key exchange data.
-        final KeyResponseData keyResponseData = new ResponseData(newMasterToken, identity, wrappedWrapJwk, wrapdata, wrappedEncryptionJwk, wrappedHmacJwk);
+        final KeyResponseData keyResponseData = new ResponseData(newMasterToken, wrappedWrapJwk, wrapdata, wrappedEncryptionJwk, wrappedHmacJwk);
         return new KeyExchangeData(keyResponseData, cryptoContext);
     }
 
@@ -768,7 +764,7 @@ public class JsonWebKeyLadderExchange extends KeyExchangeFactory {
         final ICryptoContext cryptoContext = new SessionCryptoContext(ctx, newMasterToken);
         
         // Return the key exchange data.
-        final KeyResponseData keyResponseData = new ResponseData(newMasterToken, identity, wrappedWrapJwk, wrapdata, wrappedEncryptionJwk, wrappedHmacJwk);
+        final KeyResponseData keyResponseData = new ResponseData(newMasterToken, wrappedWrapJwk, wrapdata, wrappedEncryptionJwk, wrappedHmacJwk);
         return new KeyExchangeData(keyResponseData, cryptoContext);
     }
 

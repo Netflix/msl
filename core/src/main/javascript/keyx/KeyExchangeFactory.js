@@ -78,15 +78,13 @@ var KeyExchangeFactory;
          *
          * @param {MslContext} ctx MSL context.
          * @param {MasterToken} masterToken the master token for the new key response data.
-         * @param {?string} identity optional entity identity inside the master token. May be
-         *        {@code null}.
          * @param {Object} keyDataJO the JSON object.
          * @return {KeyResponseData} the key response data.
          * @throws MslEncodingException if there is an error parsing the JSON.
          * @throws MslKeyExchangeException if there is an error creating the key
          *         response data.
          */
-        createResponseData: function(ctx, masterToken, identity, keyDataJO) {},
+        createResponseData: function(ctx, masterToken, keyDataJO) {},
 
         /**
          * <p>Generate a new key response data instance and crypto context in

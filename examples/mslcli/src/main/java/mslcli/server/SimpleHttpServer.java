@@ -22,10 +22,12 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.util.Date;
 
-import com.netflix.msl.MslException;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
+
+import com.netflix.msl.MslError;
+import com.netflix.msl.MslException;
 
 import mslcli.common.CmdArguments;
 import mslcli.common.util.ConfigurationException;
@@ -45,7 +47,7 @@ public class SimpleHttpServer {
      * HTTP server launcher
      * @param args command line arguments
      */
-    public static void main(final String[] args) {
+    public static void main(String[] args) {
         if (args.length < 1) {
             log("Parameters: config_file");
             System.exit(1);
@@ -59,13 +61,13 @@ public class SimpleHttpServer {
             server.setExecutor(null); // creates a default executor
             log(String.format("waiting for requests on http://localhost:%d/mslcli-server ...", prop.getServerPort()));
             server.start();
-        } catch (final ConfigurationException e) {
+        } catch (ConfigurationException e) {
             log("Server Configuration Error: " + e.getMessage());
             System.exit(1);
-        } catch (final IOException e) {
+        } catch (IOException e) {
             log("Server Initialization Error: " + e.getMessage());
             System.exit(1);
-        } catch (final Exception e) {
+        } catch (Exception e) {
             log("Server Internal Error: " + e.getMessage());
             SharedUtil.getRootCause(e).printStackTrace(System.err);
             System.exit(1);
@@ -84,7 +86,7 @@ public class SimpleHttpServer {
         }
 
         @Override
-        public void handle(final HttpExchange t) throws IOException {
+        public void handle(HttpExchange t) throws IOException {
             log("Processing request");
             final long t_start = System.currentTimeMillis();
 
@@ -93,18 +95,18 @@ public class SimpleHttpServer {
                 // Allow requests from anywhere.
                 t.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
                 mslServer.processRequest(t.getRequestBody(), out);
-            } catch (final ConfigurationException e) {
+            } catch (ConfigurationException e) {
                 log("Server Configuration Error: " + e.getMessage());
-            } catch (final ConfigurationRuntimeException e) {
+            } catch (ConfigurationRuntimeException e) {
                 log("Server Configuration Error: " + e.getCause().getMessage());
-            } catch (final MslException e) {
+            } catch (MslException e) {
                 log(SharedUtil.getMslExceptionInfo(e));
-            } catch (final IOException e) {
+            } catch (IOException e) {
                 final Throwable thr = SharedUtil.getRootCause(e);
                 log("IO-ERROR: " + e);
                 log("ROOT CAUSE:");
                 thr.printStackTrace(System.err);
-            } catch (final RuntimeException e) {
+            } catch (RuntimeException e) {
                 log("RT-ERROR: " + e);
                 log("ROOT CAUSE:");
                 SharedUtil.getRootCause(e).printStackTrace(System.err);
