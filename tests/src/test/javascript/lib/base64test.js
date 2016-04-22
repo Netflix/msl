@@ -44,21 +44,56 @@ describe("base64", function() {
     
     it("standard", function() {
        for (var i = 0; i < EXAMPLES.length; ++i) {
+    	   // Prepare.
            var example = EXAMPLES[i];
-           var encoded = base64$encode(example.data);
-           var decoded = base64$decode(example.base64);
-           expect(encoded).toEqual(example.base64);
-           expect(decoded).toEqual(example.data);
+           var data = example.data;
+           var base64 = example.base64;
+           
+           // Encode/decode.
+           var encoded = base64$encode(data);
+           var decoded = base64$decode(base64);
+           
+           // Validate.
+           expect(encoded).toEqual(base64);
+           expect(decoded).toEqual(data);
        }
+    });
+    
+    it("whitespace", function() {
+        for (var i = 0; i < EXAMPLES.length; ++i) {
+        	// Prepare.
+            var example = EXAMPLES[i];
+            var data = example.data;
+            var base64 = example.base64;
+            
+            // Modify.
+            var half = base64.length / 2;
+            var modifiedBase64 = "  \t" + base64.substring(0, half) + "\r\n \r\n\t" + base64.substring(half) + " \t \n";
+            
+            // Encode/decode.
+            var encoded = base64$encode(data);
+            var decoded = base64$decode(modifiedBase64);
+            
+            // Validate.
+            expect(encoded).toEqual(base64);
+            expect(decoded).toEqual(data);
+        }
     });
     
     it("url-safe", function() {
         for (var i = 0; i < URL_EXAMPLES.length; ++i) {
+     	   // Prepare.
             var example = URL_EXAMPLES[i];
-            var encoded = base64$encode(example.data, true);
-            var decoded = base64$decode(example.base64, true);
-            expect(encoded).toEqual(example.base64);
-            expect(decoded).toEqual(example.data);
+            var data = example.data;
+            var base64 = example.base64;
+            
+            // Encode/decode.
+            var encoded = base64$encode(data, true);
+            var decoded = base64$decode(base64, true);
+            
+            // Validate.
+            expect(encoded).toEqual(base64);
+            expect(decoded).toEqual(data);
         }
     });
 });

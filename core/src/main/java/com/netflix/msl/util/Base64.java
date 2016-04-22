@@ -15,6 +15,8 @@
  */
 package com.netflix.msl.util;
 
+import java.util.regex.Pattern;
+
 /**
  * <p>Base64 encoder/decoder. Can be configured with a backing
  * implementation.</p>
@@ -22,19 +24,23 @@ package com.netflix.msl.util;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class Base64 {
+    /** Whitespace regular expression. */
+    private static final String WHITESPACE_REGEX = "\\s";
     /** Base64 validation regular expression. */
-    private static final String VALID_REGEXP = "^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$";
+    private static final Pattern BASE64_PATTERN = Pattern.compile("^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$");
+    
     
     /**
      * <p>Validates that a string is a valid Base64 encoding. This uses a
      * regular expression to perform the check. The empty string is also
-     * considered valid.</p>
+     * considered valid. All whitespace is ignored.</p>
      * 
      * @param s the string to validate.
      * @return true if the string is a valid Base64 encoding.
      */
     public static boolean isValidBase64(final String s) {
-        return s.matches(VALID_REGEXP);
+        final String sanitized = s.replaceAll(WHITESPACE_REGEX, "");
+        return BASE64_PATTERN.matcher(sanitized).matches();
     }
     
     /**
