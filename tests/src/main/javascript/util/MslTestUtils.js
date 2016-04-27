@@ -41,6 +41,28 @@ var MslTestUtils$Algorithm;
 
     MslTestUtils = {
         /**
+         * Parse a new {@link MslObject} from the {@link MslEncodable}.
+         * 
+         * @param {MslEncoderFactory} encoder the {@link MslEncoderFactory}.
+         * @param {MslEncodable} encodable a {@link MslEncodable}.
+         * @param {{result: function(MslObject), error: function(Error)}}
+         *        callback the callback that will receive the {@link MslObject} or
+         *        any thrown exceptions.
+         * @throws MslEncoderException if there is an error encoding and converting
+         *         the  object cannot be encoded and converted
+         */
+        toMslObject: function toMslObject(encoder, encodable, callback) {
+            encodable.toMslEncoding(encoder, MslEncoderFormat.JSON, {
+                result: function(encode) {
+                    AsyncExecutor(callback, function() {
+                        return encoder.parseObject(encode);
+                    });
+                },
+                error: callback.error,
+            });
+        },
+            
+        /**
          * Returns an RSA key pair with the specified Web Crypto algorithm
          * and key length.
          * 
@@ -145,12 +167,11 @@ var MslTestUtils$Algorithm;
 		 * @param {result: function(MasterToken), error: function(Error)}
 		 *        callback the callback functions that will receive the new
 		 *        untrusted master token or any thrown exceptions.
-	     * @throws MslEncodingException if there is an error encoding the JSON
-	     *         data.
+	     * @throws MslEncodingException if there is an error encoding the data.
 	     * @throws MslCryptoException if there is an error encrypting or signing
 	     *         the token data.
 	     * @throws MslException if the master token is constructed incorrectly.
-	     * @throws JSONException if there is an error editing the JSON data.
+	     * @throws MslEncoderException if there is an error editing the data.
 	     */
 	    getUntrustedMasterToken: function getUntrustedMasterToken(ctx, callback) {
 	    	AsyncExecutor(callback, function() {
@@ -164,18 +185,24 @@ var MslTestUtils$Algorithm;
 				        MasterToken$create(ctx, renewalWindow, expiration, 1, 1, null, identity, encryptionKey, hmacKey, {
 				        	result: function(masterToken) {
 				        		AsyncExecutor(callback, function() {
-					        		var json = JSON.stringify(masterToken);
-					    	        var jo = JSON.parse(json);
-					    	        var signature = base64$decode(jo["signature"]);
-					    	        ++signature[1];
-					    	        jo["signature"] = base64$encode(signature);
-					    	        MasterToken$parse(ctx, jo, callback);
+				        		    var encoder = ctx.getMslEncoderFactory();
+				        		    toMslObject(encoder, masterToken, {
+				        		        result: function(mo) {
+				        		            AsyncExecutor(callback, function() {
+    		                                    var signature = mo.getBytes("signature");
+    		                                    ++signature[1];
+    		                                    mo.put("signature", signature);
+    		                                    MasterToken$parse(ctx, mo, callback);
+				        		            });
+				        		        },
+				        		        error: callback.error,
+				        		    });
 				        		});
 				        	},
-				        	error: function(err) { callback.error(err); }
+				        	error: callback.error,
 				        });
 		        	},
-		        	error: function(err) { callback.error(err); }
+		        	error: callback.error,
 		        });
 	    	});
 	    },
@@ -229,12 +256,18 @@ var MslTestUtils$Algorithm;
                 UserIdToken$create(ctx, renewalWindow, expiration, masterToken, serialNumber, null, user, {
                     result: function(userIdToken) {
                         AsyncExecutor(callback, function() {
-                            var json = JSON.stringify(userIdToken);
-                            var jo = JSON.parse(json);
-                            var signature = base64$decode(jo["signature"]);
-                            ++signature[1];
-                            jo["signature"] = base64$encode(signature);
-                            UserIdToken$parse(ctx, jo, masterToken, callback);
+                            var encoder = ctx.getMslEncoderFactory();
+                            toMslObject(encoder, userIdToken, {
+                                result: function(mo) {
+                                    AsyncExecutor(callback, function() {
+                                        var signature = mo.getBytes("signature");
+                                        ++signature[1];
+                                        mo.put("signature", signature);
+                                        UserIdToken$parse(ctx, mo, masterToken, callback);
+                                    });
+                                },
+                                error: callback.error,
+                            });
                         });
                     },
                     error: callback.error,

@@ -111,7 +111,7 @@ var MockPresharedAuthenticationFactory$create;
 		getCryptoContext: function getCryptoContext(ctx, authdata) {
 	        // Make sure we have the right kind of entity authentication data.
 	        if (!(authdata instanceof PresharedAuthenticationData))
-	            throw new MslInternalException("Incorrect authentication data type " + JSON.stringify(authdata) + ".");
+	            throw new MslInternalException("Incorrect authentication data type " + authdata + ".");
 	        var pad = authdata;
 
 	        // Try to return the test crypto context.

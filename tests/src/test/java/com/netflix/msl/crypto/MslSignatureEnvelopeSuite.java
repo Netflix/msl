@@ -58,11 +58,11 @@ public class MslSignatureEnvelopeSuite {
     /** MSL encoder format. */
     private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
     
-    /** JSON key version. */
+    /** Key version. */
     private static final String KEY_VERSION = "version";
-    /** JSON key algorithm. */
+    /** Key algorithm. */
     private static final String KEY_ALGORITHM = "algorithm";
-    /** JSON key signature. */
+    /** Key signature. */
     private static final String KEY_SIGNATURE = "signature";
     
     private static final byte[] SIGNATURE = new byte[32];
@@ -102,7 +102,7 @@ public class MslSignatureEnvelopeSuite {
         }
         
         @Test
-        public void json() throws MslCryptoException, MslEncodingException, MslEncoderException {
+        public void encode() throws MslCryptoException, MslEncodingException, MslEncoderException {
             final MslSignatureEnvelope envelope = new MslSignatureEnvelope(SIGNATURE);
             final byte[] envelopeBytes = envelope.getBytes(encoder, ENCODER_FORMAT);
             assertNotNull(envelopeBytes);
@@ -150,7 +150,7 @@ public class MslSignatureEnvelopeSuite {
         }
         
         @Test
-        public void json() throws MslEncoderException, MslEncoderException {
+        public void encode() throws MslEncoderException, MslEncoderException {
             final MslSignatureEnvelope envelope = new MslSignatureEnvelope(algorithm, SIGNATURE);
             final byte[] envelopeBytes = envelope.getBytes(encoder, ENCODER_FORMAT);
             final MslObject mo = encoder.parseObject(envelopeBytes);
@@ -194,7 +194,7 @@ public class MslSignatureEnvelopeSuite {
 
             final byte[] envelopeBytes = envelope.getBytes(encoder, ENCODER_FORMAT);
             final MslObject mo = encoder.parseObject(envelopeBytes);
-            mo.put(KEY_VERSION, "-1");
+            mo.put(KEY_VERSION, -1);
 
             final byte[] moEncode = encoder.encodeObject(mo, ENCODER_FORMAT);
             final MslSignatureEnvelope moEnvelope = MslSignatureEnvelope.parse(moEncode, encoder);

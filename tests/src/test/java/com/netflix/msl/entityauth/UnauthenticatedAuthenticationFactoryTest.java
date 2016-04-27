@@ -48,7 +48,7 @@ public class UnauthenticatedAuthenticationFactoryTest {
 	/** MSL encoder format. */
 	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
 
-    /** JSON key entity identity. */
+    /** Key entity identity. */
     private static final String KEY_IDENTITY = "identity";
     
     @Rule
@@ -89,7 +89,7 @@ public class UnauthenticatedAuthenticationFactoryTest {
         
         final MslObject dataMo = MslTestUtils.toMslObject(encoder, data);
         final MslObject authdataMo = MslTestUtils.toMslObject(encoder, authdata);
-        assertTrue(MslEncoderUtils.equals(dataMo, authdataMo));
+        assertTrue(MslEncoderUtils.equalObjects(dataMo, authdataMo));
     }
     
     @Test

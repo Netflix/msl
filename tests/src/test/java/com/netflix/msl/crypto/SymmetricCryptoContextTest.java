@@ -67,7 +67,7 @@ public class SymmetricCryptoContextTest {
 
     /** Key set ID. */
     private static final String KEYSET_ID = "keysetid";
-    /** JSON key ciphertext. */
+    /** Key ciphertext. */
     private static final String KEY_CIPHERTEXT = "ciphertext";
     
     /** AES-128 CMAC key length in bytes. */

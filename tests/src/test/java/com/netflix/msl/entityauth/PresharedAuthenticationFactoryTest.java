@@ -84,15 +84,15 @@ public class PresharedAuthenticationFactoryTest {
     @Test
     public void createData() throws MslCryptoException, MslEncodingException, MslEntityAuthException, MslEncoderException {
         final PresharedAuthenticationData data = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN);
-        final MslObject entityAuthJO = data.getAuthData(encoder, ENCODER_FORMAT);
+        final MslObject entityAuthMo = data.getAuthData(encoder, ENCODER_FORMAT);
 
-        final EntityAuthenticationData authdata = factory.createData(ctx, entityAuthJO);
+        final EntityAuthenticationData authdata = factory.createData(ctx, entityAuthMo);
         assertNotNull(authdata);
         assertTrue(authdata instanceof PresharedAuthenticationData);
 
         final MslObject dataMo = MslTestUtils.toMslObject(encoder, data);
         final MslObject authdataMo = MslTestUtils.toMslObject(encoder, authdata);
-        assertTrue(MslEncoderUtils.equals(dataMo, authdataMo));
+        assertTrue(MslEncoderUtils.equalObjects(dataMo, authdataMo));
     }
 
     @Test
@@ -101,9 +101,9 @@ public class PresharedAuthenticationFactoryTest {
         thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final PresharedAuthenticationData data = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN);
-        final MslObject entityAuthJO = data.getAuthData(encoder, ENCODER_FORMAT);
-        entityAuthJO.remove(KEY_IDENTITY);
-        factory.createData(ctx, entityAuthJO);
+        final MslObject entityAuthMo = data.getAuthData(encoder, ENCODER_FORMAT);
+        entityAuthMo.remove(KEY_IDENTITY);
+        factory.createData(ctx, entityAuthMo);
     }
 
     @Test

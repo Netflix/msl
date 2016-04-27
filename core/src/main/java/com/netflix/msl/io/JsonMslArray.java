@@ -128,8 +128,13 @@ public class JsonMslArray extends MslArray implements JSONString {
         final Object value = get(index);
         if (value instanceof byte[])
             return (byte[])value;
-        if (value instanceof String)
-            return Base64.decode((String)value);
+        if (value instanceof String) {
+            try {
+                return Base64.decode((String)value);
+            } catch (final IllegalArgumentException e) {
+                // Fall through.
+            }
+        }
         throw new MslEncoderException("MslArray[" + index + "] is not binary data.");
     }
 

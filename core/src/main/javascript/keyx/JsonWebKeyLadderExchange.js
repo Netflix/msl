@@ -289,46 +289,23 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
 
     /**
      * Create a new JSON Web Key ladder key response data instance
-     * with the provided master token from the provided JSON object.
+     * with the provided master token from the provided MSL object.
      *
      * @param {MasterToken} masterToken the master token.
-     * @param {object} keyDataJO the JSON object.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @param {object} keyDataMo the MSL object.
+     * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslKeyExchangeException if the mechanism is not recognized.
      */
-    var ResponseData$parse = JsonWebKeyLadderExchange$ResponseData$parse = function JsonWebKeyLadderExchange$ResponseData$parse(masterToken, keyDataJO) {
-        // Pull key response data.
-        var wrapKeyB64 = keyDataJO[KEY_WRAP_KEY];
-        var wrapdataB64 = keyDataJO[KEY_WRAPDATA];
-        var encryptionKeyB64 = keyDataJO[KEY_ENCRYPTION_KEY];
-        var hmacKeyB64 = keyDataJO[KEY_HMAC_KEY];
-
-        // Verify key response data.
-        if (typeof wrapKeyB64 !== 'string' ||
-            typeof wrapdataB64 !== 'string' ||
-            typeof encryptionKeyB64 !== 'string' ||
-            typeof hmacKeyB64 !== 'string')
-        {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + JSON.stringify(keyDataJO));
-        }
-
-        // Decode keys.
+    var ResponseData$parse = JsonWebKeyLadderExchange$ResponseData$parse = function JsonWebKeyLadderExchange$ResponseData$parse(masterToken, keyDataMo) {
         var wrapKey, wrapdata, encryptionKey, hmacKey;
         try {
-            wrapKey = base64$decode(wrapKeyB64);
-            wrapdata = base64$decode(wrapdataB64);
+            wrapKey = keyDataMo.getBytes(KEY_WRAP_KEY);
+            wrapdata = keyDataMo.getBytes(KEY_WRAPDATA);
+            encryptionKey = keyDataMo.getBytes(KEY_ENCRYPTION_KEY);
+            hmacKey = keyDataMo.getBytes(KEY_HMAC_KEY);
         } catch (e) {
-            throw new MslCryptoException(MslError.INVALID_SYMMETRIC_KEY, "keydata " + JSON.stringify(keyDataJO), e);
-        }
-        try {
-            encryptionKey = base64$decode(encryptionKeyB64);
-        } catch (e) {
-            throw new MslCryptoException(MslError.INVALID_ENCRYPTION_KEY, "keydata " + JSON.stringify(keyDataJO), e);
-        }
-        try {
-            hmacKey = base64$decode(hmacKeyB64);
-        } catch (e) {
-            throw new MslCryptoException(MslError.INVALID_HMAC_KEY, "keydata " + JSON.stringify(keyDataJO), e);
+            if (e instanceof MslEncoderException)
+                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "keydata " + keyDataMo, e);
         }
 
         // Return the response data.
@@ -494,15 +471,15 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
         },
 
         /** @inheritDoc */
-        createRequestData: function createRequestData(ctx, keyRequestJO, callback) {
+        createRequestData: function createRequestData(ctx, keyRequestMo, callback) {
             AsyncExecutor(callback, function() {
-                return RequestData$parse(keyRequestJO);
+                return RequestData$parse(keyRequestMo);
             });
         },
 
         /** @inheritDoc */
-        createResponseData: function createResponseData(ctx, masterToken, keyDataJO) {
-            return ResponseData$parse(masterToken, keyDataJO);
+        createResponseData: function createResponseData(ctx, masterToken, keyResponseMo) {
+            return ResponseData$parse(masterToken, keyResponseMo);
         },
 
         /** @inheritDoc */
@@ -511,7 +488,7 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
 
             AsyncExecutor(callback, function() {
                 if (!(keyRequestData instanceof RequestData))
-                    throw new MslInternalException("Key request data " + JSON.stringify(keyRequestData) + " was not created by this factory.");
+                    throw new MslInternalException("Key request data " + keyRequestData + " was not created by this factory.");
 
                 var masterToken, entityAuthData, identity;
                 if (entityToken instanceof MasterToken) {
@@ -713,10 +690,10 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
 
             AsyncExecutor(callback, function() {
                 if (!(keyRequestData instanceof RequestData))
-                    throw new MslInternalException("Key request data " + JSON.stringify(keyRequestData) + " was not created by this factory.");
+                    throw new MslInternalException("Key request data " + keyRequestData + " was not created by this factory.");
                 var request = keyRequestData;
                 if (!(keyResponseData instanceof ResponseData))
-                    throw new MslInternalException("Key response data " + JSON.stringify(keyResponseData) + " was not created by this factory.");
+                    throw new MslInternalException("Key response data " + keyResponseData + " was not created by this factory.");
                 var response = keyResponseData;
 
                 // Unwrap new wrapping key.

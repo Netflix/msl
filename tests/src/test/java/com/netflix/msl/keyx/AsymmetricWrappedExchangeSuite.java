@@ -235,7 +235,7 @@ public class AsymmetricWrappedExchangeSuite {
                 assertArrayEquals(req.getPublicKey().getEncoded(), moReq.getPublicKey().getEncoded());
                 final MslObject moKeydata = moReq.getKeydata(encoder, ENCODER_FORMAT);
                 assertNotNull(moKeydata);
-                assertTrue(MslEncoderUtils.equals(keydata, moKeydata));
+                assertTrue(MslEncoderUtils.equalObjects(keydata, moKeydata));
             }
 
             @Test
@@ -445,7 +445,7 @@ public class AsymmetricWrappedExchangeSuite {
             assertEquals(resp.getMasterToken(), moResp.getMasterToken());
             final MslObject moKeydata = moResp.getKeydata(encoder, ENCODER_FORMAT);
             assertNotNull(moKeydata);
-            assertTrue(MslEncoderUtils.equals(keydata, moKeydata));
+            assertTrue(MslEncoderUtils.equalObjects(keydata, moKeydata));
         }
         
         @Test

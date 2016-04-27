@@ -14,9 +14,164 @@
  * limitations under the License.
  */
 var MslEncoderUtils$merge;
+var MslEncoderUtils$equalObjects;
+var MslEncoderUtils$equalArrays;
 
 (function() {
     "use strict";
+    
+    /**
+     * Performs a deep comparison of two MSL objects for equivalence. MSL
+     * objects are equivalent if they have the same name/value pairs. Also, two
+     * MSL object references are considered equal if both are null.
+     * 
+     * @param {?MslObject} mo1 first MSL object. May be null.
+     * @param {?MslObject} mo2 second MSL object. May be null.
+     * @return {boolean} true if the MSL objects are equivalent.
+     * @throws MslEncoderException if there is an error parsing the data.
+     */
+    MslEncoderUtils$equalObjects = function MslEncoderUtils$equalObjects(m1, m2) {
+        // Equal if both null or the same object.
+        if (mo1 === mo2)
+            return true;
+        // Not equal if only one of them is null.
+        if (mo1 == null || mo2 == null)
+            return false;
+        
+        // Check the children names. If there are no names, the MSL object is
+        // empty.
+        var names1 = mo1.getKeys();
+        var names2 = mo2.getKeys();
+        // Equal if both null or the same object.
+        if (names1 === names2)
+            return true;
+        // Not equal if only one of them is null or of different length.
+        if (names1 == null || names2 == null || names1.length != names2.length)
+            return false;
+        // Not equal if the sets are not equal.
+        if (!Arrays$containsEachOther(names1, names2))
+            return false;
+        
+        // Bail on the first child element whose values are not equal.
+        for (var i = 0; i < names1.length; ++i) {
+            var name = names1[i];
+            var o1 = mo1.get(name);
+            var o2 = mo2.get(name);
+            // Equal if both null or the same object.
+            if (o1 === o2) continue;
+            // Not equal if only one of them is null.
+            if (o1 == null || o2 == null)
+                return false;
+            // byte[] may be represented differently, so we have to compare by
+            // accessing directly. This isn't perfect but works for now.
+            if (o1 instanceof Uint8Array || o2 instanceof Uint8Array) {
+                var b1 = mo1.getBytes(name);
+                var b2 = mo2.getBytes(name);
+                if (!Arrays$equal(b1, b2))
+                    return false;
+            } else if (o1 instanceof MslObject && o2 instanceof MslObject) {
+                if (!MslEncoderUtils$equalObjects(o1, o2))
+                    return false;
+            } else if (o1 instanceof MslArray && o2 instanceof MslArray) {
+                if (!MslEncoderUtils$equalArrays(o1, o2))
+                    return false;
+            } else {
+                if (typeof o1 !== typeof o2)
+                    return false;
+                if (o1 != o2)
+                    return false;
+            }
+        }
+        
+        // All name/value pairs are equal.
+        return true;
+    };
+    
+    /**
+     * Performs a deep comparison of two MSL arrays for equality. Two MSL
+     * arrays are considered equal if both arrays contain the same number of
+     * elements, and all corresponding pairs of elements in the two arrays are
+     * equal. In other words, two MSL arrays are equal if they contain the
+     * same elements in the same order. Also, two MSL array references are
+     * considered equal if both are null.
+     * 
+     * @param {?MslArray} ma1 first MSL array. May be null.
+     * @param {?MslArray} ma2 second MSL array. May be null.
+     * @return true if the MSL arrays are equal.
+     * @throws MslEncoderException if there is an error parsing the data.
+     */
+    MslEncoderUtils$equalArrays = function MslEncoderUtils$equalArrays(ma1, ma2) {
+        // Equal if both null or the same object.
+        if (ma1 === ma2)
+            return true;
+        // Not equal if only one of them is null or of different length.
+        if (ma1 == null || ma2 == null || ma1.size() != ma2.size())
+            return false;
+        
+        // Bail on the first elements whose values are not equal.
+        for (int i = 0; i < ma1.size(); ++i) {
+            var o1 = ma1.opt(i);
+            var o2 = ma2.opt(i);
+            // Equal if both null or the same object.
+            if (o1 === o2) continue;
+            // Not equal if only one of them is null.
+            if (o1 == null || o2 == null)
+                return false;
+            // byte[] may be represented differently, so we have to compare by
+            // accessing directly. This isn't perfect but works for now.
+            if (o1 instanceof Uint8Array || o2 instanceof Uint8Array) {
+                var b1 = ma1.getBytes(i);
+                var b2 = ma2.getBytes(i);
+                if (!Arrays$equal(b1, b2))
+                    return false;
+            } else if (o1 instanceof MslObject && o2 instanceof MslObject) {
+                if (!MslEncoderUtils$equalObjects(o1, o2))
+                    return false;
+            } else if (o1 instanceof MslArray && o2 instanceof MslArray) {
+                if (!MslEncoderUtils$equalArrays(o1, o2))
+                    return false;
+            } else {
+                if (typeof o1 !== typeof o2)
+                    return false;
+                if (o1 != o2)
+                    return false;
+            }
+        }
+        
+        // All values are equal.
+        return true;
+    };
+    
+    /**
+     * Performs a shallow comparison of two MSL arrays for set equality. Two
+     * MSL arrays are considered set-equal if both arrays contain the same
+     * number of elements and all elements found in one array are also found in
+     * the other. In other words, two MSL arrays are set-equal if they contain
+     * the same elements in the any order. Also, two MSL array references are
+     * considered set-equal if both are null.
+     * 
+     * @param {MslArray} ma1 first MSL array. May be {@code null}.
+     * @param {MslArray} ma2 second MSL array. May be {@code null}.
+     * @return {boolean} true if the MSL arrays are set-equal.
+     * @throws MslEncoderException if there is an error parsing the data.
+     */
+    MslEncoderUtils$equalSets = function MslEncoderUtils$equalSets(ma1, ma2) {
+        // Equal if both null or the same object.
+        if (ma1 == ma2)
+            return true;
+        // Not equal if only one of them is null or of different length.
+        if (ma1 == null || ma2 == null || ma1.size() != ma2.size())
+            return false;
+        
+        // Compare as sets.
+        var s1 = [];
+        var s2 = [];
+        for (var i = 0; i < ma1.size(); ++i) {
+            s1[i] = ma1.opt(i);
+            s2[i] = ma2.opt(i);
+        }
+        return Arrays$containEachOther(s1, s2);
+    }
     
     /**
      * Merge two MSL objects into a single MSL object. If the same key is

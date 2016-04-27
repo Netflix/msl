@@ -59,17 +59,17 @@ import com.netflix.msl.util.MslContext;
 @SuiteClasses({MslCiphertextEnvelopeSuite.Version1.class,
                MslCiphertextEnvelopeSuite.Version2.class})
 public class MslCiphertextEnvelopeSuite {
-    /** JSON key version. */
+    /** Key version. */
     private final static String KEY_VERSION = "version";
-    /** JSON key key ID. */
+    /** Key key ID. */
     private final static String KEY_KEY_ID = "keyid";
-    /** JSON key cipherspec. */
+    /** Key cipherspec. */
     private final static String KEY_CIPHERSPEC = "cipherspec";
-    /** JSON key initialization vector. */
+    /** Key initialization vector. */
     private final static String KEY_IV = "iv";
-    /** JSON key ciphertext. */
+    /** Key ciphertext. */
     private final static String KEY_CIPHERTEXT = "ciphertext";
-    /** JSON key SHA-256. */
+    /** Key SHA-256. */
     private final static String KEY_SHA256 = "sha256";
 
     /** MSL encoder format. */
@@ -145,7 +145,7 @@ public class MslCiphertextEnvelopeSuite {
         }
 
         @Test
-        public void json() throws MslEncoderException, MslCryptoException, MslEncodingException {
+        public void encode() throws MslEncoderException, MslCryptoException, MslEncodingException {
             final MslCiphertextEnvelope envelope = new MslCiphertextEnvelope(KEY_ID, IV, CIPHERTEXT);
             final byte[] encode = envelope.toMslEncoding(encoder, ENCODER_FORMAT);
             final MslObject mo = encoder.parseObject(encode);
@@ -157,7 +157,7 @@ public class MslCiphertextEnvelopeSuite {
         }
 
         @Test
-        public void jsonNullIv() throws MslCryptoException, MslEncodingException, MslEncoderException {
+        public void encodeNullIv() throws MslCryptoException, MslEncodingException, MslEncoderException {
             final MslCiphertextEnvelope envelope = new MslCiphertextEnvelope(KEY_ID, null, CIPHERTEXT);
             final byte[] encode = envelope.toMslEncoding(encoder, ENCODER_FORMAT);
             final MslObject mo = encoder.parseObject(encode);
@@ -296,7 +296,7 @@ public class MslCiphertextEnvelopeSuite {
         }
 
         @Test
-        public void json() throws MslEncoderException, MslCryptoException, MslEncodingException {
+        public void encode() throws MslEncoderException, MslCryptoException, MslEncodingException {
             final MslCiphertextEnvelope envelope = new MslCiphertextEnvelope(cipherSpec, IV, CIPHERTEXT);
             final byte[] encode = envelope.toMslEncoding(encoder, ENCODER_FORMAT);
             final MslObject mo = encoder.parseObject(encode);
@@ -309,7 +309,7 @@ public class MslCiphertextEnvelopeSuite {
         }
 
         @Test
-        public void jsonNullIv() throws MslCryptoException, MslEncodingException, MslEncoderException {
+        public void encodeNullIv() throws MslCryptoException, MslEncodingException, MslEncoderException {
             final MslCiphertextEnvelope envelope = new MslCiphertextEnvelope(cipherSpec, null, CIPHERTEXT);
             final byte[] encode = envelope.toMslEncoding(encoder, ENCODER_FORMAT);
             final MslObject mo = encoder.parseObject(encode);

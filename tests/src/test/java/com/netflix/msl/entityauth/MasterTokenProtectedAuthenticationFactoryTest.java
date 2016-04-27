@@ -49,7 +49,7 @@ public class MasterTokenProtectedAuthenticationFactoryTest {
     /** MSL encoder format. */
     private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
     
-    /** JSON key master token. */
+    /** Key master token. */
     protected static final String KEY_MASTER_TOKEN = "mastertoken";
     
     @Rule

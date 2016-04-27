@@ -1057,7 +1057,7 @@ public class MslEncoderFactorySuite {
             
             // Parse.
             final MslObject parsedMo = encoder.parseObject(encode);
-            assertTrue(MslEncoderUtils.equals(mo, parsedMo));
+            assertTrue(MslEncoderUtils.equalObjects(mo, parsedMo));
         }
 
         @Test

@@ -18,21 +18,25 @@
  * Entity authentication data unit tests.
  * 
  * Successful calls to
- * {@link EntityAuthenticationData#create(MslContext, JSONObject)} covered in
+ * {@link EntityAuthenticationData#create(MslContext, MslObject)} covered in
  * the individual entity authentication data unit tests.
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("EntityAuthenticationData", function() {
-    /** JSON key entity authentication scheme. */
+    /** Key entity authentication scheme. */
     var KEY_SCHEME = "scheme";
-    /** JSON key entity authentication data. */
+    /** Key entity authentication data. */
     var KEY_AUTHDATA = "authdata";
 
     /** MSL context. */
     var ctx;
+    /** MSL encoder factory. */
+    var encoder;
+    
+    var initialized = false;
     beforeEach(function() {
-        if (!ctx) {
+        if (!initialized) {
             runs(function() {
                 MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
                     result: function(c) { ctx = c; },
@@ -40,16 +44,21 @@ describe("EntityAuthenticationData", function() {
                 });
             });
             waitsFor(function() { return ctx; }, "ctx", 100);
+            
+            runs(function() {
+                encoder = ctx.getMslEncoderFactory();
+                initialized = true;
+            });
         }
     });
     
     it("no scheme", function() {
         var exception;
         runs(function() {
-	        var jo = {};
-	        jo[KEY_SCHEME + "x"] = EntityAuthenticationScheme.NONE;
-	        jo[KEY_AUTHDATA] = {};
-	        EntityAuthenticationData$parse(ctx, jo, {
+	        var mo = encoder.createObject();
+	        mo.put(KEY_SCHEME + "x", EntityAuthenticationScheme.NONE.name);
+	        mo.put(KEY_AUTHDATA, new MslObject());
+	        EntityAuthenticationData$parse(ctx, mo, {
 	            result: function() {},
 	            error: function(e) { exception = e; },
 	        });
@@ -58,17 +67,17 @@ describe("EntityAuthenticationData", function() {
     	
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
     it("no authdata", function() {
         var exception;
         runs(function() {
-	        var jo = {};
-	        jo[KEY_SCHEME] = EntityAuthenticationScheme.NONE;
-	        jo[KEY_AUTHDATA + "x"] = {};
-            EntityAuthenticationData$parse(ctx, jo, {
+	        var mo = encoder.createObject();
+	        mo.put(KEY_SCHEME, EntityAuthenticationScheme.NONE.name);
+	        mo.put(KEY_AUTHDATA + "x", new MslObject());
+            EntityAuthenticationData$parse(ctx, mo, {
                 result: function() {},
                 error: function(e) { exception = e; },
             });
@@ -77,17 +86,17 @@ describe("EntityAuthenticationData", function() {
         
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
     it("unidentified scheme", function() {
         var exception;
         runs(function() {
-	        var jo = {};
-	        jo[KEY_SCHEME] = "x";
-	        jo[KEY_AUTHDATA] = {};
-            EntityAuthenticationData$parse(ctx, jo, {
+	        var mo = encoder.createObject();
+	        mo.put(KEY_SCHEME, "x");
+	        mo.put(KEY_AUTHDATA, new MslObject());
+            EntityAuthenticationData$parse(ctx, mo, {
                 result: function() {},
                 error: function(e) { exception = e; },
             });
@@ -113,10 +122,10 @@ describe("EntityAuthenticationData", function() {
         var exception;
         runs(function() {
             ctx.removeEntityAuthenticationFactory(EntityAuthenticationScheme.NONE);
-            var jo = {};
-            jo[KEY_SCHEME] = EntityAuthenticationScheme.NONE.name;
-            jo[KEY_AUTHDATA] = {};
-            EntityAuthenticationData$parse(ctx, jo, {
+            var mo = encoder.createObject();
+            mo.put(KEY_SCHEME, EntityAuthenticationScheme.NONE.name);
+            mo.put(KEY_AUTHDATA, new MslObject());
+            EntityAuthenticationData$parse(ctx, mo, {
                 result: function() {},
                 error: function(e) { exception = e; },
             });

@@ -97,7 +97,7 @@ public class EmailPasswordAuthenticationFactoryTest {
         
         final MslObject dataJo = MslTestUtils.toMslObject(encoder, data);
         final MslObject authdataJo = MslTestUtils.toMslObject(encoder, authdata);
-        assertTrue(MslEncoderUtils.equals(dataJo, authdataJo));
+        assertTrue(MslEncoderUtils.equalObjects(dataJo, authdataJo));
     }
     
     @Test

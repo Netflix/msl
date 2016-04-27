@@ -53,9 +53,6 @@ public class RsaAuthenticationFactoryTest {
 
     @Rule
     public ExpectedMslException thrown = ExpectedMslException.none();
-
-    /** Authentication utilities. */
-    private static MockAuthenticationUtils authutils;
     
     @BeforeClass
     public static void setup() throws MslEncodingException, MslCryptoException {
@@ -92,7 +89,7 @@ public class RsaAuthenticationFactoryTest {
         
         final MslObject dataMo = MslTestUtils.toMslObject(encoder, data);
         final MslObject authdataMo = MslTestUtils.toMslObject(encoder, authdata);
-        assertTrue(MslEncoderUtils.equals(dataMo, authdataMo));
+        assertTrue(MslEncoderUtils.equalObjects(dataMo, authdataMo));
     }
     
     @Test
@@ -163,6 +160,8 @@ public class RsaAuthenticationFactoryTest {
     private static MockMslContext ctx;
     /** MSL encoder factory. */
     private static MslEncoderFactory encoder;
+    /** Authentication utilities. */
+    private static MockAuthenticationUtils authutils;
     /** Entity authentication factory. */
     private static EntityAuthenticationFactory factory;
 }

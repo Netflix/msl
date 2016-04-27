@@ -191,7 +191,7 @@ public class JsonWebKeyLadderExchangeSuite {
             assertArrayEquals(req.getWrapdata(), moReq.getWrapdata());
             final MslObject moKeydata = req.getKeydata(encoder, ENCODER_FORMAT);
             assertNotNull(moKeydata);
-            assertTrue(MslEncoderUtils.equals(keydata, moKeydata));
+            assertTrue(MslEncoderUtils.equalObjects(keydata, moKeydata));
         }
         
         @Test
@@ -239,7 +239,7 @@ public class JsonWebKeyLadderExchangeSuite {
             assertNull(moReq.getWrapdata());
             final MslObject moKeydata = req.getKeydata(encoder, ENCODER_FORMAT);
             assertNotNull(moKeydata);
-            assertTrue(MslEncoderUtils.equals(keydata, moKeydata));
+            assertTrue(MslEncoderUtils.equalObjects(keydata, moKeydata));
         }
         
         @Test
@@ -397,7 +397,7 @@ public class JsonWebKeyLadderExchangeSuite {
             assertArrayEquals(resp.getWrapKey(), moResp.getWrapKey());
             final MslObject moKeydata = moResp.getKeydata(encoder, ENCODER_FORMAT);
             assertNotNull(moKeydata);
-            assertTrue(MslEncoderUtils.equals(keydata, moKeydata));
+            assertTrue(MslEncoderUtils.equalObjects(keydata, moKeydata));
         }
         
         @Test

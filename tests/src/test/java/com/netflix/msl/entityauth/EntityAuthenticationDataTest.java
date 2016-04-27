@@ -41,9 +41,9 @@ import com.netflix.msl.util.MslContext;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class EntityAuthenticationDataTest {
-    /** JSON key entity authentication scheme. */
+    /** Key entity authentication scheme. */
     private static final String KEY_SCHEME = "scheme";
-    /** JSON key entity authentication data. */
+    /** Key entity authentication data. */
     private static final String KEY_AUTHDATA = "authdata";
     
     @Rule

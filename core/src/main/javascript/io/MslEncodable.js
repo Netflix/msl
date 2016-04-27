@@ -41,6 +41,6 @@ var MslEncode;
          * @throws MslEncoderException if the encoder format is not supported or
          *         there is an error encoding the data.
          */
-        toMslEncoding: function(encoder, format) {},
+        toMslEncoding: function(encoder, format, callback) {},
     });
 })();

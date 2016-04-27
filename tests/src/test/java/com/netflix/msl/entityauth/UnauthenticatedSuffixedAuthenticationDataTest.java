@@ -51,14 +51,14 @@ public class UnauthenticatedSuffixedAuthenticationDataTest {
 	/** MSL encoder format. */
 	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
 
-    /** JSON key entity authentication scheme. */
+    /** Key entity authentication scheme. */
     private static final String KEY_SCHEME = "scheme";
-    /** JSON key entity authentication data. */
+    /** Key entity authentication data. */
     private static final String KEY_AUTHDATA = "authdata";
     
-    /** JSON key entity root. */
+    /** Key entity root. */
     private static final String KEY_ROOT = "root";
-    /** JSON key entity suffix. */
+    /** Key entity suffix. */
     private static final String KEY_SUFFIX = "suffix";
     
     /** Identity concatenation character. */
@@ -101,7 +101,7 @@ public class UnauthenticatedSuffixedAuthenticationDataTest {
         assertEquals(data.getScheme(), moData.getScheme());
         final MslObject moAuthdata = moData.getAuthData(encoder, ENCODER_FORMAT);
         assertNotNull(moAuthdata);
-        assertTrue(MslEncoderUtils.equals(authdata, moAuthdata));
+        assertTrue(MslEncoderUtils.equalObjects(authdata, moAuthdata));
         final byte[] moEncode = moData.toMslEncoding(encoder, ENCODER_FORMAT);
         assertNotNull(moEncode);
         assertArrayEquals(encode, moEncode);
@@ -133,7 +133,7 @@ public class UnauthenticatedSuffixedAuthenticationDataTest {
         assertEquals(data.getScheme(), moData.getScheme());
         final MslObject moAuthdata = moData.getAuthData(encoder, ENCODER_FORMAT);
         assertNotNull(moAuthdata);
-        assertTrue(MslEncoderUtils.equals(data.getAuthData(encoder, ENCODER_FORMAT), moAuthdata));
+        assertTrue(MslEncoderUtils.equalObjects(data.getAuthData(encoder, ENCODER_FORMAT), moAuthdata));
         final byte[] moEncode = moData.toMslEncoding(encoder, ENCODER_FORMAT);
         assertNotNull(moEncode);
         assertArrayEquals(encode, moEncode);

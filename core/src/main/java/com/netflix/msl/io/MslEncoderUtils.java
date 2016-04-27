@@ -21,8 +21,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.json.JSONException;
-
 import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 
@@ -150,13 +148,13 @@ public class MslEncoderUtils {
      * @param me2 second JSON object encoded representation.
      * @return true if the encodings are equivalent MSL objects.
      * @throws MslEncoderException if there is an error parsing the data.
-     * @see MslEncoderUtils#equals(MslObject, MslObject)
+     * @see MslEncoderUtils#equalObjects(MslObject, MslObject)
      */
     public static boolean objectEquals(final MslContext ctx, final byte[] me1, final byte[] me2) throws MslEncoderException {
         final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
         final MslObject o1 = encoder.parseObject(me1);
         final MslObject o2 = encoder.parseObject(me2);
-        return MslEncoderUtils.equals(o1, o2);
+        return MslEncoderUtils.equalObjects(o1, o2);
     }
     
     /**
@@ -164,12 +162,12 @@ public class MslEncoderUtils {
      * objects are equivalent if they have the same name/value pairs. Also, two
      * MSL object references are considered equal if both are null.
      * 
-     * @param mo1 first MSL object.
-     * @param mo2 second MSL object.
+     * @param mo1 first MSL object. May be null.
+     * @param mo2 second MSL object. May be null.
      * @return true if the MSL objects are equivalent.
      * @throws MslEncoderException if there is an error parsing the data.
      */
-    public static boolean equals(final MslObject mo1, final MslObject mo2) throws MslEncoderException {
+    public static boolean equalObjects(final MslObject mo1, final MslObject mo2) throws MslEncoderException {
         // Equal if both null or the same object.
         if (mo1 == mo2)
             return true;
@@ -187,7 +185,7 @@ public class MslEncoderUtils {
         // Not equal if only one of them is null or of different length.
         if (names1 == null || names2 == null || names1.size() != names2.size())
             return false;
-        // Not equal if the sets are not equal
+        // Not equal if the sets are not equal.
         if (!names1.equals(names2))
             return false;
         
@@ -208,10 +206,10 @@ public class MslEncoderUtils {
                 if (!Arrays.equals(b1, b2))
                     return false;
             } else if (o1 instanceof MslObject && o2 instanceof MslObject) {
-                if (!MslEncoderUtils.equals((MslObject)o1, (MslObject)o2))
+                if (!MslEncoderUtils.equalObjects((MslObject)o1, (MslObject)o2))
                     return false;
             } else if (o1 instanceof MslArray && o2 instanceof MslArray) {
-                if (!MslEncoderUtils.equals((MslArray)o1, (MslArray)o2))
+                if (!MslEncoderUtils.equalArrays((MslArray)o1, (MslArray)o2))
                     return false;
             } else {
                 if (o1.getClass() != o2.getClass())
@@ -233,12 +231,12 @@ public class MslEncoderUtils {
      * same elements in the same order. Also, two MSL array references are
      * considered equal if both are null.
      * 
-     * @param ja1 first MSL array. May be null.
-     * @param ja2 second MSL array. May be null.
+     * @param ma1 first MSL array. May be null.
+     * @param ma2 second MSL array. May be null.
      * @return true if the MSL arrays are equal.
-     * @throws JSONException if there is an error parsing the MSL.
+     * @throws MslEncoderException if there is an error parsing the data.
      */
-    public static boolean equals(final MslArray ma1, final MslArray ma2) throws MslEncoderException {
+    public static boolean equalArrays(final MslArray ma1, final MslArray ma2) throws MslEncoderException {
         // Equal if both null or the same object.
         if (ma1 == ma2)
             return true;
@@ -263,10 +261,10 @@ public class MslEncoderUtils {
                 if (!Arrays.equals(b1, b2))
                     return false;
             } else if (o1 instanceof MslObject && o2 instanceof MslObject) {
-                if (!MslEncoderUtils.equals((MslObject)o1, (MslObject)o2))
+                if (!MslEncoderUtils.equalObjects((MslObject)o1, (MslObject)o2))
                     return false;
             } else if (o1 instanceof MslArray && o2 instanceof MslArray) {
-                if (!MslEncoderUtils.equals((MslArray)o1, (MslArray)o2))
+                if (!MslEncoderUtils.equalArrays((MslArray)o1, (MslArray)o2))
                     return false;
             } else {
                 if (o1.getClass() != o2.getClass())
@@ -288,8 +286,8 @@ public class MslEncoderUtils {
      * the same elements in the any order. Also, two MSL array references are
      * considered set-equal if both are null.
      * 
-     * @param ja1 first MSL array. May be {@code null}.
-     * @param ja2 second MSL array. May be {@code null}.
+     * @param ma1 first MSL array. May be {@code null}.
+     * @param ma2 second MSL array. May be {@code null}.
      * @return true if the MSL arrays are set-equal.
      * @throws MslEncoderException if there is an error parsing the data.
      */

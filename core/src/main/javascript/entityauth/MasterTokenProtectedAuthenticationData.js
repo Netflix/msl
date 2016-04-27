@@ -94,6 +94,15 @@ var MasterTokenProtectedAuthenticationData$parse;
             return this.authdata.getIdentity();
         },
 
+        /**
+         * Return the encapsulated entity authentication data.
+         * 
+         * @return {EntityAuthenticationData} the encapsulated entity authentication data.
+         */
+        get encapsulatedAuthdata() {
+            return this.authdata;
+        },
+
         /** @inheritDoc */
         getAuthData: function getAuthData(encoder, format, callback) {
             var self = this;

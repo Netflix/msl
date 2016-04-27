@@ -120,7 +120,7 @@ public class X509AuthenticationFactoryTest {
         
         final MslObject dataMo = MslTestUtils.toMslObject(encoder, data);
         final MslObject authdataMo = MslTestUtils.toMslObject(encoder, authdata);
-        assertTrue(MslEncoderUtils.equals(dataMo, authdataMo));
+        assertTrue(MslEncoderUtils.equalObjects(dataMo, authdataMo));
     }
     
     @Test

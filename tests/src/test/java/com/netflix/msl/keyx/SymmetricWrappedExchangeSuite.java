@@ -144,7 +144,7 @@ public class SymmetricWrappedExchangeSuite {
             assertEquals(req.getKeyId(), moReq.getKeyId());
             final MslObject moKeydata = moReq.getKeydata(encoder, ENCODER_FORMAT);
             assertNotNull(moKeydata);
-            assertTrue(MslEncoderUtils.equals(keydata, moKeydata));
+            assertTrue(MslEncoderUtils.equalObjects(keydata, moKeydata));
         }
         
         @Test
@@ -160,7 +160,7 @@ public class SymmetricWrappedExchangeSuite {
             assertEquals(req.getKeyId(), moReq.getKeyId());
             final MslObject moKeydata = moReq.getKeydata(encoder, ENCODER_FORMAT);
             assertNotNull(moKeydata);
-            assertTrue(MslEncoderUtils.equals(keydata, moKeydata));
+            assertTrue(MslEncoderUtils.equalObjects(keydata, moKeydata));
         }
         
         @Test
@@ -265,7 +265,7 @@ public class SymmetricWrappedExchangeSuite {
             assertEquals(resp.getMasterToken(), moResp.getMasterToken());
             final MslObject moKeydata = resp.getKeydata(encoder, ENCODER_FORMAT);
             assertNotNull(moKeydata);
-            assertTrue(MslEncoderUtils.equals(keydata, moKeydata));
+            assertTrue(MslEncoderUtils.equalObjects(keydata, moKeydata));
         }
 
         @Test

@@ -179,7 +179,7 @@ public class DiffieHellmanExchangeSuite {
             assertEquals(req.getPublicKey(), moReq.getPublicKey());
             final MslObject moKeydata = moReq.getKeydata(encoder, ENCODER_FORMAT);
             assertNotNull(moKeydata);
-            assertTrue(MslEncoderUtils.equals(keydata, moKeydata));
+            assertTrue(MslEncoderUtils.equalObjects(keydata, moKeydata));
         }
         
         @Test
@@ -336,7 +336,7 @@ public class DiffieHellmanExchangeSuite {
             assertEquals(resp.getPublicKey(), moResp.getPublicKey());
             final MslObject moKeydata = moResp.getKeydata(encoder, ENCODER_FORMAT);
             assertNotNull(moKeydata);
-            assertTrue(MslEncoderUtils.equals(keydata, moKeydata));
+            assertTrue(MslEncoderUtils.equalObjects(keydata, moKeydata));
         }
         
         @Test

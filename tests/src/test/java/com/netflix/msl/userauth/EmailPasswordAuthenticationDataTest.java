@@ -92,7 +92,7 @@ public class EmailPasswordAuthenticationDataTest {
         assertEquals(data.getPassword(), moData.getPassword());
         final MslObject moAuthdata = moData.getAuthData(encoder, ENCODER_FORMAT);
         assertNotNull(moAuthdata);
-        assertTrue(MslEncoderUtils.equals(authdata, moAuthdata));
+        assertTrue(MslEncoderUtils.equalObjects(authdata, moAuthdata));
         final byte[] moEncode = moData.toMslEncoding(encoder, ENCODER_FORMAT);
         assertNotNull(moEncode);
         assertArrayEquals(encode, moEncode);
@@ -123,7 +123,7 @@ public class EmailPasswordAuthenticationDataTest {
         assertEquals(data.getPassword(), moData.getPassword());
         final MslObject moAuthdata = moData.getAuthData(encoder, ENCODER_FORMAT);
         assertNotNull(moAuthdata);
-        assertTrue(MslEncoderUtils.equals(data.getAuthData(encoder, ENCODER_FORMAT), moAuthdata));
+        assertTrue(MslEncoderUtils.equalObjects(data.getAuthData(encoder, ENCODER_FORMAT), moAuthdata));
         final byte[] moEncode = moData.toMslEncoding(encoder, ENCODER_FORMAT);
         assertNotNull(moEncode);
         assertArrayEquals(encode, moEncode);

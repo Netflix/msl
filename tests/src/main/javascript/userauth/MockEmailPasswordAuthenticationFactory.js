@@ -45,9 +45,9 @@ var MockEmailPasswordAuthenticationFactory;
 	    },
 
 	    /** @inheritDoc */
-	    createData: function createData(ctx, masterToken, userAuthJO, callback) {
+	    createData: function createData(ctx, masterToken, userAuthMo, callback) {
 	        AsyncExecutor(callback, function() {
-	            return EmailPasswordAuthenticationData$parse(userAuthJO);
+	            return EmailPasswordAuthenticationData$parse(userAuthMo);
 	        });
 	    },
 

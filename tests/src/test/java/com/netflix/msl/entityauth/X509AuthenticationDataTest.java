@@ -62,11 +62,11 @@ public class X509AuthenticationDataTest {
     /** X.509 expired resource certificate. */
     private static final String X509_EXPIRED_CERT = "entityauth/expired.pem";
     
-    /** JSON key entity authentication scheme. */
+    /** Key entity authentication scheme. */
     private static final String KEY_SCHEME = "scheme";
-    /** JSON key entity authentication data. */
+    /** Key entity authentication data. */
     private static final String KEY_AUTHDATA = "authdata";
-    /** JSON key entity X.509 certificate. */
+    /** Key entity X.509 certificate. */
     private static final String KEY_X509_CERT = "x509certificate";
 
     @Rule
@@ -107,7 +107,7 @@ public class X509AuthenticationDataTest {
         assertEquals(data.getIdentity(), moData.getIdentity());
         final MslObject moAuthdata = moData.getAuthData(encoder, ENCODER_FORMAT);
         assertNotNull(moAuthdata);
-        assertTrue(MslEncoderUtils.equals(authdata, moAuthdata));
+        assertTrue(MslEncoderUtils.equalObjects(authdata, moAuthdata));
         final byte[] moEncode = moData.toMslEncoding(encoder, ENCODER_FORMAT);
         assertNotNull(moEncode);
         assertArrayEquals(encode, moEncode);
@@ -138,7 +138,7 @@ public class X509AuthenticationDataTest {
         assertEquals(data.getIdentity(), moData.getIdentity());
         final MslObject moAuthdata = moData.getAuthData(encoder, ENCODER_FORMAT);
         assertNotNull(moAuthdata);
-        assertTrue(MslEncoderUtils.equals(data.getAuthData(encoder, ENCODER_FORMAT), moAuthdata));
+        assertTrue(MslEncoderUtils.equalObjects(data.getAuthData(encoder, ENCODER_FORMAT), moAuthdata));
         final byte[] moEncode = moData.toMslEncoding(encoder, ENCODER_FORMAT);
         assertNotNull(moEncode);
         assertArrayEquals(encode, moEncode);

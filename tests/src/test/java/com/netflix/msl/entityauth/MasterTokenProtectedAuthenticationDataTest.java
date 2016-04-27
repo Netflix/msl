@@ -121,7 +121,8 @@ public class MasterTokenProtectedAuthenticationDataTest {
         assertEquals(EntityAuthenticationScheme.MT_PROTECTED.toString(), mo.getString(KEY_SCHEME));
         final MslObject authdata = mo.getMslObject(KEY_AUTHDATA, encoder);
 
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, masterToken), authdata.getMslObject(KEY_MASTER_TOKEN, encoder)));
+        final MslObject masterTokenMo = MslTestUtils.toMslObject(encoder, masterToken);
+        assertTrue(MslEncoderUtils.equalObjects(masterTokenMo, authdata.getMslObject(KEY_MASTER_TOKEN, encoder)));
         // Signature and ciphertext may not be predictable depending on the
         // master token encryption and signature algorithms.
     }

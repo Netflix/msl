@@ -20,8 +20,8 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 /**
- * @param {Uint8Array|Array.<number>} a first array.
- * @param {Uint8Array|Array.<number>} b second array.
+ * @param {(Uint8Array|Array.<number>)} a first array.
+ * @param {(Uint8Array|Array.<number>)} b second array.
  * @return {boolean} true if the two arrays are equal.
  */
 function Arrays$equal(a, b) {

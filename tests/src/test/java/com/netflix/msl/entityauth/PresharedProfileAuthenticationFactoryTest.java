@@ -48,14 +48,11 @@ public class PresharedProfileAuthenticationFactoryTest {
 	/** MSL encoder format. */
 	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
 
-    /** JSON key entity preshared keys identity. */
+    /** Key entity preshared keys identity. */
     private static final String KEY_PSKID = "pskid";
     
     @Rule
     public ExpectedMslException thrown = ExpectedMslException.none();
-
-    /** Authentication utilities. */
-    private static MockAuthenticationUtils authutils;
     
     @BeforeClass
     public static void setup() throws MslEncodingException, MslCryptoException {
@@ -84,15 +81,15 @@ public class PresharedProfileAuthenticationFactoryTest {
     @Test
     public void createData() throws MslCryptoException, MslEncodingException, MslEntityAuthException, MslEncoderException {
         final PresharedProfileAuthenticationData data = new PresharedProfileAuthenticationData(MockPresharedProfileAuthenticationFactory.PSK_ESN, MockPresharedProfileAuthenticationFactory.PROFILE);
-        final MslObject entityAuthJO = data.getAuthData(encoder, ENCODER_FORMAT);
+        final MslObject entityAuthMo = data.getAuthData(encoder, ENCODER_FORMAT);
 
-        final EntityAuthenticationData authdata = factory.createData(ctx, entityAuthJO);
+        final EntityAuthenticationData authdata = factory.createData(ctx, entityAuthMo);
         assertNotNull(authdata);
         assertTrue(authdata instanceof PresharedProfileAuthenticationData);
 
         final MslObject dataMo = MslTestUtils.toMslObject(encoder, data);
         final MslObject authdataMo = MslTestUtils.toMslObject(encoder, authdata);
-        assertTrue(MslEncoderUtils.equals(dataMo, authdataMo));
+        assertTrue(MslEncoderUtils.equalObjects(dataMo, authdataMo));
     }
 
     @Test
@@ -101,9 +98,9 @@ public class PresharedProfileAuthenticationFactoryTest {
         thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final PresharedProfileAuthenticationData data = new PresharedProfileAuthenticationData(MockPresharedProfileAuthenticationFactory.PSK_ESN, MockPresharedProfileAuthenticationFactory.PROFILE);
-        final MslObject entityAuthJO = data.getAuthData(encoder, ENCODER_FORMAT);
-        entityAuthJO.remove(KEY_PSKID);
-        factory.createData(ctx, entityAuthJO);
+        final MslObject entityAuthMo = data.getAuthData(encoder, ENCODER_FORMAT);
+        entityAuthMo.remove(KEY_PSKID);
+        factory.createData(ctx, entityAuthMo);
     }
 
     @Test
@@ -136,6 +133,8 @@ public class PresharedProfileAuthenticationFactoryTest {
     private static MockMslContext ctx;
     /** MSL encoder factory. */
     private static MslEncoderFactory encoder;
+    /** Authentication utilities. */
+    private static MockAuthenticationUtils authutils;
     /** Entity authentication factory. */
     private static EntityAuthenticationFactory factory;
 }

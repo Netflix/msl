@@ -443,7 +443,7 @@ public class MessageHeaderTest {
         
         final MslObject mo = MslTestUtils.toMslObject(encoder, messageHeader);
         final MslObject entityAuthDataMo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, entityAuthData), entityAuthDataMo));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, entityAuthData), entityAuthDataMo));
         assertFalse(mo.has(KEY_MASTER_TOKEN));
         final byte[] ciphertext = Base64.decode(mo.getString(KEY_HEADERDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
@@ -454,9 +454,9 @@ public class MessageHeaderTest {
         assertEquals(NON_REPLAYABLE_ID, (Long)headerdata.getLong(KEY_NON_REPLAYABLE_ID));
         assertEquals(RENEWABLE, headerdata.getBoolean(KEY_RENEWABLE));
         assertEquals(HANDSHAKE, headerdata.getBoolean(KEY_HANDSHAKE));
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, CAPABILITIES), headerdata.getMslObject(KEY_CAPABILITIES, encoder)));
-        assertTrue(MslEncoderUtils.equals(MslEncoderUtils.createArray(trustedNetCtx, KEY_REQUEST_DATA), headerdata.getMslArray(KEY_KEY_REQUEST_DATA)));
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, KEY_RESPONSE_DATA), headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, CAPABILITIES), headerdata.getMslObject(KEY_CAPABILITIES, encoder)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(trustedNetCtx, KEY_REQUEST_DATA), headerdata.getMslArray(KEY_KEY_REQUEST_DATA)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, KEY_RESPONSE_DATA), headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder)));
         assertFalse(headerdata.has(KEY_SENDER));
         assertEquals(RECIPIENT, headerdata.getString(KEY_RECIPIENT));
         assertTrue(isAboutNowSeconds(headerdata.getLong(KEY_TIMESTAMP)));
@@ -465,9 +465,9 @@ public class MessageHeaderTest {
         assertFalse(headerdata.has(KEY_PEER_SERVICE_TOKENS));
         assertFalse(headerdata.has(KEY_PEER_USER_ID_TOKEN));
         final Set<ServiceToken> serviceTokens = builder.getServiceTokens();
-        assertTrue(MslEncoderUtils.equals(MslEncoderUtils.createArray(trustedNetCtx, serviceTokens), headerdata.getMslArray(KEY_SERVICE_TOKENS)));
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, USER_AUTH_DATA), headerdata.getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder)));
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, USER_ID_TOKEN), headerdata.getMslObject(KEY_USER_ID_TOKEN, encoder)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(trustedNetCtx, serviceTokens), headerdata.getMslArray(KEY_SERVICE_TOKENS)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, USER_AUTH_DATA), headerdata.getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, USER_ID_TOKEN), headerdata.getMslObject(KEY_USER_ID_TOKEN, encoder)));
     }
     
     @Test
@@ -489,7 +489,7 @@ public class MessageHeaderTest {
         
         final MslObject mo = MslTestUtils.toMslObject(encoder, messageHeader);
         final MslObject entityAuthDataMo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, entityAuthData), entityAuthDataMo));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, entityAuthData), entityAuthDataMo));
         assertFalse(mo.has(KEY_MASTER_TOKEN));
         final byte[] ciphertext = Base64.decode(mo.getString(KEY_HEADERDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
@@ -500,9 +500,9 @@ public class MessageHeaderTest {
         assertFalse(headerdata.has(KEY_NON_REPLAYABLE_ID));
         assertEquals(RENEWABLE, headerdata.getBoolean(KEY_RENEWABLE));
         assertEquals(HANDSHAKE, headerdata.getBoolean(KEY_HANDSHAKE));
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, CAPABILITIES), headerdata.getMslObject(KEY_CAPABILITIES, encoder)));
-        assertTrue(MslEncoderUtils.equals(MslEncoderUtils.createArray(trustedNetCtx, KEY_REQUEST_DATA), headerdata.getMslArray(KEY_KEY_REQUEST_DATA)));
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, KEY_RESPONSE_DATA), headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, CAPABILITIES), headerdata.getMslObject(KEY_CAPABILITIES, encoder)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(trustedNetCtx, KEY_REQUEST_DATA), headerdata.getMslArray(KEY_KEY_REQUEST_DATA)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, KEY_RESPONSE_DATA), headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder)));
         assertFalse(headerdata.has(KEY_SENDER));
         assertEquals(RECIPIENT, headerdata.getString(KEY_RECIPIENT));
         assertTrue(isAboutNowSeconds(headerdata.getLong(KEY_TIMESTAMP)));
@@ -511,9 +511,9 @@ public class MessageHeaderTest {
         assertFalse(headerdata.has(KEY_PEER_SERVICE_TOKENS));
         assertFalse(headerdata.has(KEY_PEER_USER_ID_TOKEN));
         final Set<ServiceToken> serviceTokens = builder.getServiceTokens();
-        assertTrue(MslEncoderUtils.equals(MslEncoderUtils.createArray(trustedNetCtx, serviceTokens), headerdata.getMslArray(KEY_SERVICE_TOKENS)));
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, USER_AUTH_DATA), headerdata.getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder)));
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, USER_ID_TOKEN), headerdata.getMslObject(KEY_USER_ID_TOKEN, encoder)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(trustedNetCtx, serviceTokens), headerdata.getMslArray(KEY_SERVICE_TOKENS)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, USER_AUTH_DATA), headerdata.getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, USER_ID_TOKEN), headerdata.getMslObject(KEY_USER_ID_TOKEN, encoder)));
     }
     
     @Test
@@ -612,7 +612,7 @@ public class MessageHeaderTest {
         
         final MslObject mo = MslTestUtils.toMslObject(encoder, messageHeader);
         final MslObject entityAuthDataMo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, entityAuthData), entityAuthDataMo));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, entityAuthData), entityAuthDataMo));
         assertFalse(mo.has(KEY_MASTER_TOKEN));
         final byte[] ciphertext = Base64.decode(mo.getString(KEY_HEADERDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
@@ -623,19 +623,19 @@ public class MessageHeaderTest {
         assertEquals(NON_REPLAYABLE_ID, (Long)headerdata.getLong(KEY_NON_REPLAYABLE_ID));
         assertEquals(RENEWABLE, headerdata.getBoolean(KEY_RENEWABLE));
         assertEquals(HANDSHAKE, headerdata.getBoolean(KEY_HANDSHAKE));
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, CAPABILITIES), headerdata.getMslObject(KEY_CAPABILITIES, encoder)));
-        assertTrue(MslEncoderUtils.equals(MslEncoderUtils.createArray(p2pCtx, PEER_KEY_REQUEST_DATA), headerdata.getMslArray(KEY_KEY_REQUEST_DATA)));
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, PEER_KEY_RESPONSE_DATA), headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, CAPABILITIES), headerdata.getMslObject(KEY_CAPABILITIES, encoder)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, PEER_KEY_REQUEST_DATA), headerdata.getMslArray(KEY_KEY_REQUEST_DATA)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, PEER_KEY_RESPONSE_DATA), headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder)));
         assertFalse(headerdata.has(KEY_SENDER));
         assertEquals(RECIPIENT, headerdata.getString(KEY_RECIPIENT));
         assertTrue(isAboutNowSeconds(headerdata.getLong(KEY_TIMESTAMP)));
         assertEquals(MESSAGE_ID, headerdata.getLong(KEY_MESSAGE_ID));
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, PEER_MASTER_TOKEN), headerdata.getMslObject(KEY_PEER_MASTER_TOKEN, encoder)));
-        assertTrue(MslEncoderUtils.equals(MslEncoderUtils.createArray(p2pCtx, peerServiceTokens), headerdata.getMslArray(KEY_PEER_SERVICE_TOKENS)));
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, PEER_USER_ID_TOKEN), headerdata.getMslObject(KEY_PEER_USER_ID_TOKEN, encoder)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, PEER_MASTER_TOKEN), headerdata.getMslObject(KEY_PEER_MASTER_TOKEN, encoder)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, peerServiceTokens), headerdata.getMslArray(KEY_PEER_SERVICE_TOKENS)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, PEER_USER_ID_TOKEN), headerdata.getMslObject(KEY_PEER_USER_ID_TOKEN, encoder)));
         final Set<ServiceToken> serviceTokens = builder.getServiceTokens();
-        assertTrue(MslEncoderUtils.equals(MslEncoderUtils.createArray(p2pCtx, serviceTokens), headerdata.getMslArray(KEY_SERVICE_TOKENS)));
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, USER_AUTH_DATA), headerdata.getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, serviceTokens), headerdata.getMslArray(KEY_SERVICE_TOKENS)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, USER_AUTH_DATA), headerdata.getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder)));
         assertFalse(headerdata.has(KEY_USER_ID_TOKEN));
     }
     
@@ -659,7 +659,7 @@ public class MessageHeaderTest {
         
         final MslObject mo = MslTestUtils.toMslObject(encoder, messageHeader);
         final MslObject entityAuthDataMo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, entityAuthData), entityAuthDataMo));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, entityAuthData), entityAuthDataMo));
         assertFalse(mo.has(KEY_MASTER_TOKEN));
         final byte[] ciphertext = Base64.decode(mo.getString(KEY_HEADERDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
@@ -670,19 +670,19 @@ public class MessageHeaderTest {
         assertFalse(headerdata.has(KEY_NON_REPLAYABLE_ID));
         assertEquals(RENEWABLE, headerdata.getBoolean(KEY_RENEWABLE));
         assertEquals(HANDSHAKE, headerdata.getBoolean(KEY_HANDSHAKE));
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, CAPABILITIES), headerdata.getMslObject(KEY_CAPABILITIES, encoder)));
-        assertTrue(MslEncoderUtils.equals(MslEncoderUtils.createArray(p2pCtx, PEER_KEY_REQUEST_DATA), headerdata.getMslArray(KEY_KEY_REQUEST_DATA)));
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, PEER_KEY_RESPONSE_DATA), headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, CAPABILITIES), headerdata.getMslObject(KEY_CAPABILITIES, encoder)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, PEER_KEY_REQUEST_DATA), headerdata.getMslArray(KEY_KEY_REQUEST_DATA)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, PEER_KEY_RESPONSE_DATA), headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder)));
         assertFalse(headerdata.has(KEY_SENDER));
         assertEquals(RECIPIENT, headerdata.getString(KEY_RECIPIENT));
         assertTrue(isAboutNowSeconds(headerdata.getLong(KEY_TIMESTAMP)));
         assertEquals(MESSAGE_ID, headerdata.getLong(KEY_MESSAGE_ID));
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, PEER_MASTER_TOKEN), headerdata.getMslObject(KEY_PEER_MASTER_TOKEN, encoder)));
-        assertTrue(MslEncoderUtils.equals(MslEncoderUtils.createArray(p2pCtx, peerServiceTokens), headerdata.getMslArray(KEY_PEER_SERVICE_TOKENS)));
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, PEER_USER_ID_TOKEN), headerdata.getMslObject(KEY_PEER_USER_ID_TOKEN, encoder)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, PEER_MASTER_TOKEN), headerdata.getMslObject(KEY_PEER_MASTER_TOKEN, encoder)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, peerServiceTokens), headerdata.getMslArray(KEY_PEER_SERVICE_TOKENS)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, PEER_USER_ID_TOKEN), headerdata.getMslObject(KEY_PEER_USER_ID_TOKEN, encoder)));
         final Set<ServiceToken> serviceTokens = builder.getServiceTokens();
-        assertTrue(MslEncoderUtils.equals(MslEncoderUtils.createArray(p2pCtx, serviceTokens), headerdata.getMslArray(KEY_SERVICE_TOKENS)));
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, USER_AUTH_DATA), headerdata.getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, serviceTokens), headerdata.getMslArray(KEY_SERVICE_TOKENS)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, USER_AUTH_DATA), headerdata.getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder)));
         assertFalse(headerdata.has(KEY_USER_ID_TOKEN));
     }
     
@@ -740,7 +740,7 @@ public class MessageHeaderTest {
         final MslObject mo = MslTestUtils.toMslObject(encoder, messageHeader);
         assertFalse(mo.has(KEY_ENTITY_AUTHENTICATION_DATA));
         final MslObject masterToken = mo.getMslObject(KEY_MASTER_TOKEN, encoder);
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, MASTER_TOKEN), masterToken));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, MASTER_TOKEN), masterToken));
         final byte[] ciphertext = Base64.decode(mo.getString(KEY_HEADERDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdata = encoder.parseObject(plaintext);
@@ -750,9 +750,9 @@ public class MessageHeaderTest {
         assertEquals(NON_REPLAYABLE_ID, (Long)headerdata.getLong(KEY_NON_REPLAYABLE_ID));
         assertEquals(RENEWABLE, headerdata.getBoolean(KEY_RENEWABLE));
         assertEquals(HANDSHAKE, headerdata.getBoolean(KEY_HANDSHAKE));
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, CAPABILITIES), headerdata.getMslObject(KEY_CAPABILITIES, encoder)));
-        assertTrue(MslEncoderUtils.equals(MslEncoderUtils.createArray(trustedNetCtx, KEY_REQUEST_DATA), headerdata.getMslArray(KEY_KEY_REQUEST_DATA)));
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, KEY_RESPONSE_DATA), headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, CAPABILITIES), headerdata.getMslObject(KEY_CAPABILITIES, encoder)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(trustedNetCtx, KEY_REQUEST_DATA), headerdata.getMslArray(KEY_KEY_REQUEST_DATA)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, KEY_RESPONSE_DATA), headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder)));
         assertEquals(entityAuthData.getIdentity(), headerdata.getString(KEY_SENDER));
         assertEquals(RECIPIENT, headerdata.getString(KEY_RECIPIENT));
         assertTrue(isAboutNowSeconds(headerdata.getLong(KEY_TIMESTAMP)));
@@ -761,9 +761,9 @@ public class MessageHeaderTest {
         assertFalse(headerdata.has(KEY_PEER_SERVICE_TOKENS));
         assertFalse(headerdata.has(KEY_PEER_USER_ID_TOKEN));
         final Set<ServiceToken> serviceTokens = builder.getServiceTokens();
-        assertTrue(MslEncoderUtils.equals(MslEncoderUtils.createArray(trustedNetCtx, serviceTokens), headerdata.getMslArray(KEY_SERVICE_TOKENS)));
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, USER_AUTH_DATA), headerdata.getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder)));
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, USER_ID_TOKEN), headerdata.getMslObject(KEY_USER_ID_TOKEN, encoder)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(trustedNetCtx, serviceTokens), headerdata.getMslArray(KEY_SERVICE_TOKENS)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, USER_AUTH_DATA), headerdata.getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, USER_ID_TOKEN), headerdata.getMslObject(KEY_USER_ID_TOKEN, encoder)));
     }
     
     @Test
@@ -828,7 +828,7 @@ public class MessageHeaderTest {
         final MslObject mo = MslTestUtils.toMslObject(encoder, messageHeader);
         assertFalse(mo.has(KEY_ENTITY_AUTHENTICATION_DATA));
         final MslObject masterToken = mo.getMslObject(KEY_MASTER_TOKEN, encoder);
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, MASTER_TOKEN), masterToken));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, MASTER_TOKEN), masterToken));
         final byte[] ciphertext = Base64.decode(mo.getString(KEY_HEADERDATA));
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdata = encoder.parseObject(plaintext);
@@ -838,20 +838,20 @@ public class MessageHeaderTest {
         assertEquals(NON_REPLAYABLE_ID, (Long)headerdata.getLong(KEY_NON_REPLAYABLE_ID));
         assertEquals(RENEWABLE, headerdata.getBoolean(KEY_RENEWABLE));
         assertEquals(HANDSHAKE, headerdata.getBoolean(KEY_HANDSHAKE));
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, CAPABILITIES), headerdata.getMslObject(KEY_CAPABILITIES, encoder)));
-        assertTrue(MslEncoderUtils.equals(MslEncoderUtils.createArray(p2pCtx, PEER_KEY_REQUEST_DATA), headerdata.getMslArray(KEY_KEY_REQUEST_DATA)));
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, PEER_KEY_RESPONSE_DATA), headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, CAPABILITIES), headerdata.getMslObject(KEY_CAPABILITIES, encoder)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, PEER_KEY_REQUEST_DATA), headerdata.getMslArray(KEY_KEY_REQUEST_DATA)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, PEER_KEY_RESPONSE_DATA), headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder)));
         assertEquals(entityAuthData.getIdentity(), headerdata.getString(KEY_SENDER));
         assertEquals(RECIPIENT, headerdata.getString(KEY_RECIPIENT));
         assertTrue(isAboutNowSeconds(headerdata.getLong(KEY_TIMESTAMP)));
         assertEquals(MESSAGE_ID, headerdata.getLong(KEY_MESSAGE_ID));
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, PEER_MASTER_TOKEN), headerdata.getMslObject(KEY_PEER_MASTER_TOKEN, encoder)));
-        assertTrue(MslEncoderUtils.equals(MslEncoderUtils.createArray(p2pCtx, peerServiceTokens), headerdata.getMslArray(KEY_PEER_SERVICE_TOKENS)));
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, PEER_USER_ID_TOKEN), headerdata.getMslObject(KEY_PEER_USER_ID_TOKEN, encoder)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, PEER_MASTER_TOKEN), headerdata.getMslObject(KEY_PEER_MASTER_TOKEN, encoder)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, peerServiceTokens), headerdata.getMslArray(KEY_PEER_SERVICE_TOKENS)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, PEER_USER_ID_TOKEN), headerdata.getMslObject(KEY_PEER_USER_ID_TOKEN, encoder)));
         final Set<ServiceToken> serviceTokens = builder.getServiceTokens();
-        assertTrue(MslEncoderUtils.equals(MslEncoderUtils.createArray(p2pCtx, serviceTokens), headerdata.getMslArray(KEY_SERVICE_TOKENS)));
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, USER_AUTH_DATA), headerdata.getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder)));
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, USER_ID_TOKEN), headerdata.getMslObject(KEY_USER_ID_TOKEN, encoder)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, serviceTokens), headerdata.getMslArray(KEY_SERVICE_TOKENS)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, USER_AUTH_DATA), headerdata.getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, USER_ID_TOKEN), headerdata.getMslObject(KEY_USER_ID_TOKEN, encoder)));
     }
     
     @Test

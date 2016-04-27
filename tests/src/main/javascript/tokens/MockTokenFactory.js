@@ -146,7 +146,7 @@ var MockTokenFactory;
                 var mtIssuerData = masterToken.issuerData;
                 var mergedIssuerData;
                 try {
-                    mergedIssuerData = JsonUtils$merge(masterToken.issuerData, issuerData);
+                    mergedIssuerData = MslEncoderUtils$merge(masterToken.issuerData, issuerData);
                 } catch (e) {
                     if (e instanceof MslEncoderException)
                         throw new MslEncodingException(MslError.MASTERTOKEN_ISSUERDATA_ENCODE_ERROR, "mt issuerdata " + mtIssuerData + "; issuerdata " + issuerData, e);

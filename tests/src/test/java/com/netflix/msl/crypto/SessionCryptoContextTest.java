@@ -59,7 +59,7 @@ import com.netflix.msl.util.MslTestUtils;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class SessionCryptoContextTest {
-    /** JSON key ciphertext. */
+    /** Key ciphertext. */
     private final static String KEY_CIPHERTEXT = "ciphertext";
     /** MSL encoder format. */
     private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
@@ -67,8 +67,7 @@ public class SessionCryptoContextTest {
     /**
      * @param ctx MSL context.
      * @return a new master token.
-     * @throws MslEncodingException if there is an error encoding the JSON
-     *         data.
+     * @throws MslEncodingException if there is an error encoding the data.
      * @throws MslCryptoException if there is an error encrypting or signing
      *         the token data.
      */
@@ -87,12 +86,11 @@ public class SessionCryptoContextTest {
      * @param encryptionKey master token encryption key.
      * @param signatureKey master token signature key.
      * @return a new master token.
-     * @throws MslEncodingException if there is an error encoding the JSON
-     *         data.
+     * @throws MslEncodingException if there is an error encoding the data.
      * @throws MslCryptoException if there is an error encrypting or signing
      *         the token data.
      * @throws MslException if the master token is constructed incorrectly.
-     * @throws MslEncoderException if there is an error editing the JSON data.
+     * @throws MslEncoderException if there is an error editing the data.
      */
     private static MasterToken getUntrustedMasterToken(final MslContext ctx, final SecretKey encryptionKey, final SecretKey signatureKey) throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         final Date renewalWindow = new Date(System.currentTimeMillis() + 1000);

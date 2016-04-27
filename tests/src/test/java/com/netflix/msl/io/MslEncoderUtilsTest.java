@@ -303,9 +303,9 @@ public class MslEncoderUtilsTest {
     
     @Test
     public void mslObjectEqual() throws MslEncoderException {
-        assertTrue(MslEncoderUtils.equals(flatMo, flatMo));
+        assertTrue(MslEncoderUtils.equalObjects(flatMo, flatMo));
         final MslObject mo = encoder.createObject(flatMo.getMap());
-        assertTrue(MslEncoderUtils.equals(flatMo, mo));
+        assertTrue(MslEncoderUtils.equalObjects(flatMo, mo));
     }
     
     @Test
@@ -313,22 +313,22 @@ public class MslEncoderUtilsTest {
         final Set<String> names = flatMo.getKeys();
         for (final String name : names) {
             final MslObject mo = changeValue(flatMo, name);
-            assertFalse(MslEncoderUtils.equals(flatMo, mo));
+            assertFalse(MslEncoderUtils.equalObjects(flatMo, mo));
         }
     }
     
     @Test
     public void mslObjectNull() throws MslEncoderException {
-        assertFalse(MslEncoderUtils.equals(null, new MslObject()));
-        assertFalse(MslEncoderUtils.equals(new MslObject(), null));
-        assertTrue(MslEncoderUtils.equals(nullMo, nullMo));
+        assertFalse(MslEncoderUtils.equalObjects(null, new MslObject()));
+        assertFalse(MslEncoderUtils.equalObjects(new MslObject(), null));
+        assertTrue(MslEncoderUtils.equalObjects(nullMo, nullMo));
     }
     
     @Test
     public void mslObjectChildrenEqual() throws MslEncoderException {
-        assertTrue(MslEncoderUtils.equals(deepMo, deepMo));
+        assertTrue(MslEncoderUtils.equalObjects(deepMo, deepMo));
         final MslObject mo = encoder.createObject(deepMo.getMap());
-        assertTrue(MslEncoderUtils.equals(deepMo, mo));
+        assertTrue(MslEncoderUtils.equalObjects(deepMo, mo));
     }
     
     @Test
@@ -336,15 +336,15 @@ public class MslEncoderUtilsTest {
         final Set<String> names = deepMo.getKeys();
         for (final String name : names) {
             final MslObject mo = changeValue(deepMo, name);
-            assertFalse(MslEncoderUtils.equals(deepMo, mo));
+            assertFalse(MslEncoderUtils.equalObjects(deepMo, mo));
         }
     }
     
     @Test
     public void mslArrayEqual() throws MslEncoderException {
-        assertTrue(MslEncoderUtils.equals(flatMa, flatMa));
+        assertTrue(MslEncoderUtils.equalArrays(flatMa, flatMa));
         final MslArray ma = encoder.createArray(flatMa.getCollection());
-        assertTrue(MslEncoderUtils.equals(flatMa, ma));
+        assertTrue(MslEncoderUtils.equalArrays(flatMa, ma));
         
     }
     
@@ -354,29 +354,29 @@ public class MslEncoderUtilsTest {
         final MslArray ma1 = encoder.createArray(flatMa.getCollection());
         if (ma1.size() > 0) {
             ma1.remove(random.nextInt(ma1.size()));
-            assertFalse(MslEncoderUtils.equals(flatMa, ma1));
+            assertFalse(MslEncoderUtils.equalArrays(flatMa, ma1));
         }
         final MslArray ma2 = encoder.createArray(flatMa.getCollection());
         ma2.put(-1, random.nextInt());
-        assertFalse(MslEncoderUtils.equals(flatMa, ma2));
+        assertFalse(MslEncoderUtils.equalArrays(flatMa, ma2));
         if (flatMa.size() > 0) {
             final MslArray ma3 = changeValue(flatMa, random.nextInt(flatMa.size()));
-            assertFalse(MslEncoderUtils.equals(flatMa, ma3));
+            assertFalse(MslEncoderUtils.equalArrays(flatMa, ma3));
         }
     }
     
     @Test
     public void mslArrayNull() throws MslEncoderException {
-        assertFalse(MslEncoderUtils.equals(null, new MslArray()));
-        assertFalse(MslEncoderUtils.equals(new MslArray(), null));
-        assertTrue(MslEncoderUtils.equals(nullMa, nullMa));
+        assertFalse(MslEncoderUtils.equalArrays(null, new MslArray()));
+        assertFalse(MslEncoderUtils.equalArrays(new MslArray(), null));
+        assertTrue(MslEncoderUtils.equalArrays(nullMa, nullMa));
     }
     
     @Test
     public void mslArrayChildrenEqual() throws MslEncoderException {
-        assertTrue(MslEncoderUtils.equals(deepMa, deepMa));
+        assertTrue(MslEncoderUtils.equalArrays(deepMa, deepMa));
         final MslArray ma = encoder.createArray(deepMa.getCollection());
-        assertTrue(MslEncoderUtils.equals(deepMa, ma));
+        assertTrue(MslEncoderUtils.equalArrays(deepMa, ma));
     }
     
     @Test
@@ -385,14 +385,14 @@ public class MslEncoderUtilsTest {
         final MslArray ma1 = encoder.createArray(deepMa.getCollection());
         if (ma1.size() > 0) {
             ma1.remove(random.nextInt(ma1.size()));
-            assertFalse(MslEncoderUtils.equals(deepMa, ma1));
+            assertFalse(MslEncoderUtils.equalArrays(deepMa, ma1));
         }
         final MslArray ma2 = encoder.createArray(deepMa.getCollection());
         ma2.put(-1, random.nextInt());
-        assertFalse(MslEncoderUtils.equals(deepMa, ma2));
+        assertFalse(MslEncoderUtils.equalArrays(deepMa, ma2));
         if (deepMa.size() > 0) {
             final MslArray ma3 = changeValue(deepMa, random.nextInt(deepMa.size()));
-            assertFalse(MslEncoderUtils.equals(deepMa, ma3));
+            assertFalse(MslEncoderUtils.equalArrays(deepMa, ma3));
         }
     }
     
@@ -409,7 +409,7 @@ public class MslEncoderUtilsTest {
         final MslObject jo1 = null;
         final MslObject jo2 = deepMo;
         final MslObject merged = MslEncoderUtils.merge(jo1, jo2);
-        assertTrue(MslEncoderUtils.equals(merged, jo2));
+        assertTrue(MslEncoderUtils.equalObjects(merged, jo2));
     }
     
     @Test
@@ -417,7 +417,7 @@ public class MslEncoderUtilsTest {
         final MslObject jo1 = deepMo;
         final MslObject jo2 = null;
         final MslObject merged = MslEncoderUtils.merge(jo1, jo2);
-        assertTrue(MslEncoderUtils.equals(merged, jo1));
+        assertTrue(MslEncoderUtils.equalObjects(merged, jo1));
     }
     
     @Test

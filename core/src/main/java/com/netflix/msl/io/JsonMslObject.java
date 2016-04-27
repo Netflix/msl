@@ -152,8 +152,13 @@ public class JsonMslObject extends MslObject implements JSONString {
         final Object value = get(key);
         if (value instanceof byte[])
             return (byte[])value;
-        if (value instanceof String)
-            return Base64.decode((String)value);
+        if (value instanceof String) {
+            try {
+                return Base64.decode((String)value);
+            } catch (final IllegalArgumentException e) {
+                // Fall through.
+            }
+        }
         throw new MslEncoderException("MslObject[" + MslEncoderFactory.quote(key) + "] is not binary data.");
     }
 

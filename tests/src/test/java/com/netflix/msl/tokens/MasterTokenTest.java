@@ -146,7 +146,7 @@ public class MasterTokenTest {
         assertEquals(EXPIRATION.getTime() / MILLISECONDS_PER_SECOND, masterToken.getExpiration().getTime() / MILLISECONDS_PER_SECOND);
         assertArrayEquals(SIGNATURE_KEY.getEncoded(), masterToken.getSignatureKey().getEncoded());
         assertEquals(IDENTITY, masterToken.getIdentity());
-        assertTrue(MslEncoderUtils.equals(ISSUER_DATA, masterToken.getIssuerData()));
+        assertTrue(MslEncoderUtils.equalObjects(ISSUER_DATA, masterToken.getIssuerData()));
         assertEquals(RENEWAL_WINDOW.getTime() / MILLISECONDS_PER_SECOND, masterToken.getRenewalWindow().getTime() / MILLISECONDS_PER_SECOND);
         assertEquals(SEQUENCE_NUMBER, masterToken.getSequenceNumber());
         assertEquals(SERIAL_NUMBER, masterToken.getSerialNumber());
@@ -165,7 +165,7 @@ public class MasterTokenTest {
         assertEquals(masterToken.getExpiration().getTime() / MILLISECONDS_PER_SECOND, moMasterToken.getExpiration().getTime() / MILLISECONDS_PER_SECOND);
         assertArrayEquals(masterToken.getSignatureKey().getEncoded(), moMasterToken.getSignatureKey().getEncoded());
         assertEquals(masterToken.getIdentity(), moMasterToken.getIdentity());
-        assertTrue(MslEncoderUtils.equals(masterToken.getIssuerData(), moMasterToken.getIssuerData()));
+        assertTrue(MslEncoderUtils.equalObjects(masterToken.getIssuerData(), moMasterToken.getIssuerData()));
         assertEquals(masterToken.getRenewalWindow().getTime() / MILLISECONDS_PER_SECOND, moMasterToken.getRenewalWindow().getTime() / MILLISECONDS_PER_SECOND);
         assertEquals(masterToken.getSequenceNumber(), moMasterToken.getSequenceNumber());
         assertEquals(masterToken.getSerialNumber(), moMasterToken.getSerialNumber());
@@ -287,9 +287,9 @@ public class MasterTokenTest {
         final MslObject mo = encoder.parseObject(encode);
         
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);
-        assertNotNull(tokendataJo.remove(KEY_RENEWAL_WINDOW));
-        mo.put(KEY_TOKENDATA, tokendataJo.toString().getBytes());
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        assertNotNull(tokendataMo.remove(KEY_RENEWAL_WINDOW));
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new MasterToken(ctx, mo);
     }
@@ -304,9 +304,9 @@ public class MasterTokenTest {
         final MslObject mo = encoder.parseObject(encode);
         
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);
-        tokendataJo.put(KEY_RENEWAL_WINDOW, "x");
-        mo.put(KEY_TOKENDATA, tokendataJo.toString().getBytes());
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        tokendataMo.put(KEY_RENEWAL_WINDOW, "x");
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new MasterToken(ctx, mo);
     }
@@ -321,9 +321,9 @@ public class MasterTokenTest {
         final MslObject mo = encoder.parseObject(encode);
         
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);
-        assertNotNull(tokendataJo.remove(KEY_EXPIRATION));
-        mo.put(KEY_TOKENDATA, tokendataJo.toString().getBytes());
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        assertNotNull(tokendataMo.remove(KEY_EXPIRATION));
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new MasterToken(ctx, mo);
     }
@@ -338,9 +338,9 @@ public class MasterTokenTest {
         final MslObject mo = encoder.parseObject(encode);
         
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);
-        tokendataJo.put(KEY_EXPIRATION, "x");
-        mo.put(KEY_TOKENDATA, tokendataJo.toString().getBytes());
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        tokendataMo.put(KEY_EXPIRATION, "x");
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new MasterToken(ctx, mo);
     }
@@ -355,9 +355,9 @@ public class MasterTokenTest {
         final MslObject mo = encoder.parseObject(encode);
         
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);
-        assertNotNull(tokendataJo.remove(KEY_SEQUENCE_NUMBER));
-        mo.put(KEY_TOKENDATA, tokendataJo.toString().getBytes());
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        assertNotNull(tokendataMo.remove(KEY_SEQUENCE_NUMBER));
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new MasterToken(ctx, mo);
     }
@@ -372,9 +372,9 @@ public class MasterTokenTest {
         final MslObject mo = encoder.parseObject(encode);
         
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);
-        tokendataJo.put(KEY_SEQUENCE_NUMBER, "x");
-        mo.put(KEY_TOKENDATA, tokendataJo.toString().getBytes());
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        tokendataMo.put(KEY_SEQUENCE_NUMBER, "x");
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new MasterToken(ctx, mo);
     }
@@ -389,9 +389,9 @@ public class MasterTokenTest {
         final MslObject mo = encoder.parseObject(encode);
         
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);
-        tokendataJo.put(KEY_SEQUENCE_NUMBER, -1);
-        mo.put(KEY_TOKENDATA, tokendataJo.toString().getBytes());
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        tokendataMo.put(KEY_SEQUENCE_NUMBER, -1);
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new MasterToken(ctx, mo);
     }
@@ -406,9 +406,9 @@ public class MasterTokenTest {
         final MslObject mo = encoder.parseObject(encode);
         
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);
-        tokendataJo.put(KEY_SEQUENCE_NUMBER, MslConstants.MAX_LONG_VALUE + 1);
-        mo.put(KEY_TOKENDATA, tokendataJo.toString().getBytes());
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        tokendataMo.put(KEY_SEQUENCE_NUMBER, MslConstants.MAX_LONG_VALUE + 1);
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new MasterToken(ctx, mo);
     }
@@ -423,9 +423,9 @@ public class MasterTokenTest {
         final MslObject mo = encoder.parseObject(encode);
         
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);
-        assertNotNull(tokendataJo.remove(KEY_SERIAL_NUMBER));
-        mo.put(KEY_TOKENDATA, tokendataJo.toString().getBytes());
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        assertNotNull(tokendataMo.remove(KEY_SERIAL_NUMBER));
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new MasterToken(ctx, mo);
     }
@@ -440,9 +440,9 @@ public class MasterTokenTest {
         final MslObject mo = encoder.parseObject(encode);
         
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);
-        tokendataJo.put(KEY_SERIAL_NUMBER, "x");
-        mo.put(KEY_TOKENDATA, tokendataJo.toString().getBytes());
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        tokendataMo.put(KEY_SERIAL_NUMBER, "x");
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new MasterToken(ctx, mo);
     }
@@ -457,9 +457,9 @@ public class MasterTokenTest {
         final MslObject mo = encoder.parseObject(encode);
         
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);
-        tokendataJo.put(KEY_SERIAL_NUMBER, -1);
-        mo.put(KEY_TOKENDATA, tokendataJo.toString().getBytes());
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        tokendataMo.put(KEY_SERIAL_NUMBER, -1);
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new MasterToken(ctx, mo);
     }
@@ -474,9 +474,9 @@ public class MasterTokenTest {
         final MslObject mo = encoder.parseObject(encode);
         
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);
-        tokendataJo.put(KEY_SERIAL_NUMBER, MslConstants.MAX_LONG_VALUE + 1);
-        mo.put(KEY_TOKENDATA, tokendataJo.toString().getBytes());
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        tokendataMo.put(KEY_SERIAL_NUMBER, MslConstants.MAX_LONG_VALUE + 1);
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new MasterToken(ctx, mo);
     }
@@ -491,28 +491,28 @@ public class MasterTokenTest {
         final MslObject mo = encoder.parseObject(encode);
         
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);
-        assertNotNull(tokendataJo.remove(KEY_SESSIONDATA));
-        mo.put(KEY_TOKENDATA, tokendataJo.toString().getBytes());
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        assertNotNull(tokendataMo.remove(KEY_SESSIONDATA));
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new MasterToken(ctx, mo);
     }
     
     @Test
     public void invalidSessiondata() throws UnsupportedEncodingException, MslEncoderException, MslException {
-        thrown.expect(MslException.class);
-        thrown.expectMslError(MslError.MASTERTOKEN_SESSIONDATA_INVALID);
+        thrown.expect(MslEncodingException.class);
+        thrown.expectMslError(MslError.MASTERTOKEN_TOKENDATA_PARSE_ERROR);
 
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
         final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
         final MslObject mo = encoder.parseObject(encode);
         
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);
-        tokendataJo.put(KEY_SESSIONDATA, "x");
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        tokendataMo.put(KEY_SESSIONDATA, "x");
         
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
-        final byte[] modifiedTokendata = encoder.encodeObject(tokendataJo, ENCODER_FORMAT);
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
         final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
         mo.put(KEY_TOKENDATA, modifiedTokendata);
         mo.put(KEY_SIGNATURE, signature);
@@ -530,12 +530,12 @@ public class MasterTokenTest {
         final MslObject mo = encoder.parseObject(encode);
         
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
         
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
         final byte[] ciphertext = new byte[0];
-        tokendataJo.put(KEY_SESSIONDATA, ciphertext);
-        final byte[] modifiedTokendata = encoder.encodeObject(tokendataJo, ENCODER_FORMAT);
+        tokendataMo.put(KEY_SESSIONDATA, ciphertext);
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
         final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
         mo.put(KEY_TOKENDATA, modifiedTokendata);
         mo.put(KEY_SIGNATURE, signature);
@@ -551,13 +551,13 @@ public class MasterTokenTest {
         
         // This is testing session data that is verified but corrupt.
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);
-        final byte[] sessiondata = tokendataJo.getBytes(KEY_SESSIONDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        final byte[] sessiondata = tokendataMo.getBytes(KEY_SESSIONDATA);
         ++sessiondata[sessiondata.length-1];
-        tokendataJo.put(KEY_SESSIONDATA, sessiondata);
+        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
         
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
-        final byte[] modifiedTokendata = encoder.encodeObject(tokendataJo, ENCODER_FORMAT);
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
         final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
         mo.put(KEY_TOKENDATA, modifiedTokendata);
         mo.put(KEY_SIGNATURE, signature);
@@ -608,19 +608,19 @@ public class MasterTokenTest {
         
         // Before modifying the session data we need to decrypt it.
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);
-        final byte[] ciphertext = tokendataJo.getBytes(KEY_SESSIONDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        final byte[] ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
-        final MslObject sessiondataJo = encoder.parseObject(plaintext);
+        final MslObject sessiondataMo = encoder.parseObject(plaintext);
         
         // After modifying the session data we need to encrypt it.
-        sessiondataJo.put(KEY_ISSUER_DATA, "x");
-        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataJo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
-        tokendataJo.put(KEY_SESSIONDATA, sessiondata);
+        sessiondataMo.put(KEY_ISSUER_DATA, "x");
+        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
-        final byte[] modifiedTokendata = encoder.encodeObject(tokendataJo, ENCODER_FORMAT);
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
         final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
         mo.put(KEY_TOKENDATA, modifiedTokendata);
         mo.put(KEY_SIGNATURE, signature);
@@ -641,19 +641,19 @@ public class MasterTokenTest {
         
         // Before modifying the session data we need to decrypt it.
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);
-        final byte[] ciphertext = tokendataJo.getBytes(KEY_SESSIONDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        final byte[] ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
-        final MslObject sessiondataJo = encoder.parseObject(plaintext);
+        final MslObject sessiondataMo = encoder.parseObject(plaintext);
         
         // After modifying the session data we need to encrypt it.
-        assertNotNull(sessiondataJo.remove(KEY_IDENTITY));
-        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataJo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
-        tokendataJo.put(KEY_SESSIONDATA, sessiondata);
+        assertNotNull(sessiondataMo.remove(KEY_IDENTITY));
+        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
-        final byte[] modifiedTokendata = encoder.encodeObject(tokendataJo, ENCODER_FORMAT);
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
         final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
         mo.put(KEY_TOKENDATA, modifiedTokendata);
         mo.put(KEY_SIGNATURE, signature);
@@ -674,19 +674,19 @@ public class MasterTokenTest {
         
         // Before modifying the session data we need to decrypt it.
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);
-        final byte[] ciphertext = tokendataJo.getBytes(KEY_SESSIONDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        final byte[] ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
-        final MslObject sessiondataJo = encoder.parseObject(plaintext);
+        final MslObject sessiondataMo = encoder.parseObject(plaintext);
         
         // After modifying the session data we need to encrypt it.
-        assertNotNull(sessiondataJo.remove(KEY_ENCRYPTION_KEY));
-        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataJo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
-        tokendataJo.put(KEY_SESSIONDATA, sessiondata);
+        assertNotNull(sessiondataMo.remove(KEY_ENCRYPTION_KEY));
+        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
-        final byte[] modifiedTokendata = encoder.encodeObject(tokendataJo, ENCODER_FORMAT);
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
         final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
         mo.put(KEY_TOKENDATA, modifiedTokendata);
         mo.put(KEY_SIGNATURE, signature);
@@ -707,19 +707,19 @@ public class MasterTokenTest {
         
         // Before modifying the session data we need to decrypt it.
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);
-        final byte[] ciphertext = tokendataJo.getBytes(KEY_SESSIONDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        final byte[] ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
-        final MslObject sessiondataJo = encoder.parseObject(plaintext);
+        final MslObject sessiondataMo = encoder.parseObject(plaintext);
         
         // After modifying the session data we need to encrypt it.
-        sessiondataJo.put(KEY_ENCRYPTION_KEY, "");
-        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataJo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
-        tokendataJo.put(KEY_SESSIONDATA, sessiondata);
+        sessiondataMo.put(KEY_ENCRYPTION_KEY, "");
+        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
-        final byte[] modifiedTokendata = encoder.encodeObject(tokendataJo, ENCODER_FORMAT);
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
         final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
         mo.put(KEY_TOKENDATA, modifiedTokendata);
         mo.put(KEY_SIGNATURE, signature);
@@ -737,19 +737,19 @@ public class MasterTokenTest {
         
         // Before modifying the session data we need to decrypt it.
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);
-        final byte[] ciphertext = tokendataJo.getBytes(KEY_SESSIONDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        final byte[] ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
-        final MslObject sessiondataJo = encoder.parseObject(plaintext);
+        final MslObject sessiondataMo = encoder.parseObject(plaintext);
         
         // After modifying the session data we need to encrypt it.
-        assertNotNull(sessiondataJo.remove(KEY_ENCRYPTION_ALGORITHM));
-        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataJo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
-        tokendataJo.put(KEY_SESSIONDATA, sessiondata);
+        assertNotNull(sessiondataMo.remove(KEY_ENCRYPTION_ALGORITHM));
+        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
-        final byte[] modifiedTokendata = encoder.encodeObject(tokendataJo, ENCODER_FORMAT);
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
         final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
         mo.put(KEY_TOKENDATA, modifiedTokendata);
         mo.put(KEY_SIGNATURE, signature);
@@ -773,19 +773,19 @@ public class MasterTokenTest {
         
         // Before modifying the session data we need to decrypt it.
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);
-        final byte[] ciphertext = tokendataJo.getBytes(KEY_SESSIONDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        final byte[] ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
-        final MslObject sessiondataJo = encoder.parseObject(plaintext);
+        final MslObject sessiondataMo = encoder.parseObject(plaintext);
         
         // After modifying the session data we need to encrypt it.
-        sessiondataJo.put(KEY_ENCRYPTION_ALGORITHM, "x");
-        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataJo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
-        tokendataJo.put(KEY_SESSIONDATA, sessiondata);
+        sessiondataMo.put(KEY_ENCRYPTION_ALGORITHM, "x");
+        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
-        final byte[] modifiedTokendata = encoder.encodeObject(tokendataJo, ENCODER_FORMAT);
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
         final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
         mo.put(KEY_TOKENDATA, modifiedTokendata);
         mo.put(KEY_SIGNATURE, signature);
@@ -803,19 +803,19 @@ public class MasterTokenTest {
         
         // Before modifying the session data we need to decrypt it.
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);
-        final byte[] ciphertext = tokendataJo.getBytes(KEY_SESSIONDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        final byte[] ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
-        final MslObject sessiondataJo = encoder.parseObject(plaintext);
+        final MslObject sessiondataMo = encoder.parseObject(plaintext);
         
         // After modifying the session data we need to encrypt it.
-        assertNotNull(sessiondataJo.remove(KEY_HMAC_KEY));
-        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataJo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
-        tokendataJo.put(KEY_SESSIONDATA, sessiondata);
+        assertNotNull(sessiondataMo.remove(KEY_HMAC_KEY));
+        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
-        final byte[] modifiedTokendata = encoder.encodeObject(tokendataJo, ENCODER_FORMAT);
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
         final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
         mo.put(KEY_TOKENDATA, modifiedTokendata);
         mo.put(KEY_SIGNATURE, signature);
@@ -836,19 +836,19 @@ public class MasterTokenTest {
         
         // Before modifying the session data we need to decrypt it.
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);
-        final byte[] ciphertext = tokendataJo.getBytes(KEY_SESSIONDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        final byte[] ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
-        final MslObject sessiondataJo = encoder.parseObject(plaintext);
+        final MslObject sessiondataMo = encoder.parseObject(plaintext);
         
         // After modifying the session data we need to encrypt it.
-        assertNotNull(sessiondataJo.remove(KEY_SIGNATURE_KEY));
-        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataJo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
-        tokendataJo.put(KEY_SESSIONDATA, sessiondata);
+        assertNotNull(sessiondataMo.remove(KEY_SIGNATURE_KEY));
+        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
-        final byte[] modifiedTokendata = encoder.encodeObject(tokendataJo, ENCODER_FORMAT);
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
         final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
         mo.put(KEY_TOKENDATA, modifiedTokendata);
         mo.put(KEY_SIGNATURE, signature);
@@ -869,19 +869,19 @@ public class MasterTokenTest {
         
         // Before modifying the session data we need to decrypt it.
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);
-        final byte[] ciphertext = tokendataJo.getBytes(KEY_SESSIONDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        final byte[] ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
-        final MslObject sessiondataJo = encoder.parseObject(plaintext);
+        final MslObject sessiondataMo = encoder.parseObject(plaintext);
         
         // After modifying the session data we need to encrypt it.
-        assertNotNull(sessiondataJo.remove(KEY_SIGNATURE_ALGORITHM));
-        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataJo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
-        tokendataJo.put(KEY_SESSIONDATA, sessiondata);
+        assertNotNull(sessiondataMo.remove(KEY_SIGNATURE_ALGORITHM));
+        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
-        final byte[] modifiedTokendata = encoder.encodeObject(tokendataJo, ENCODER_FORMAT);
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
         final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
         mo.put(KEY_TOKENDATA, modifiedTokendata);
         mo.put(KEY_SIGNATURE, signature);
@@ -905,19 +905,19 @@ public class MasterTokenTest {
         
         // Before modifying the session data we need to decrypt it.
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);
-        final byte[] ciphertext = tokendataJo.getBytes(KEY_SESSIONDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        final byte[] ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
-        final MslObject sessiondataJo = encoder.parseObject(plaintext);
+        final MslObject sessiondataMo = encoder.parseObject(plaintext);
         
         // After modifying the session data we need to encrypt it.
-        sessiondataJo.put(KEY_SIGNATURE_ALGORITHM, "x");
-        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataJo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
-        tokendataJo.put(KEY_SESSIONDATA, sessiondata);
+        sessiondataMo.put(KEY_SIGNATURE_ALGORITHM, "x");
+        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
-        final byte[] modifiedTokendata = encoder.encodeObject(tokendataJo, ENCODER_FORMAT);
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
         final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
         mo.put(KEY_TOKENDATA, modifiedTokendata);
         mo.put(KEY_SIGNATURE, signature);
@@ -938,20 +938,20 @@ public class MasterTokenTest {
         
         // Before modifying the session data we need to decrypt it.
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);
-        final byte[] ciphertext = tokendataJo.getBytes(KEY_SESSIONDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        final byte[] ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
-        final MslObject sessiondataJo = encoder.parseObject(plaintext);
+        final MslObject sessiondataMo = encoder.parseObject(plaintext);
         
         // After modifying the session data we need to encrypt it.
-        assertNotNull(sessiondataJo.remove(KEY_HMAC_KEY));
-        assertNotNull(sessiondataJo.remove(KEY_SIGNATURE_KEY));
-        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataJo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
-        tokendataJo.put(KEY_SESSIONDATA, sessiondata);
+        assertNotNull(sessiondataMo.remove(KEY_HMAC_KEY));
+        assertNotNull(sessiondataMo.remove(KEY_SIGNATURE_KEY));
+        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
-        final byte[] modifiedTokendata = encoder.encodeObject(tokendataJo, ENCODER_FORMAT);
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
         final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
         mo.put(KEY_TOKENDATA, modifiedTokendata);
         mo.put(KEY_SIGNATURE, signature);
@@ -971,20 +971,20 @@ public class MasterTokenTest {
         
         // Before modifying the session data we need to decrypt it.
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);
-        final byte[] ciphertext = tokendataJo.getBytes(KEY_SESSIONDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        final byte[] ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
-        final MslObject sessiondataJo = encoder.parseObject(plaintext);
+        final MslObject sessiondataMo = encoder.parseObject(plaintext);
         
         // After modifying the session data we need to encrypt it.
-        sessiondataJo.put(KEY_HMAC_KEY, "");
-        sessiondataJo.put(KEY_SIGNATURE_KEY, "");
-        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataJo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
-        tokendataJo.put(KEY_SESSIONDATA, sessiondata);
+        sessiondataMo.put(KEY_HMAC_KEY, "");
+        sessiondataMo.put(KEY_SIGNATURE_KEY, "");
+        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
-        final byte[] modifiedTokendata = encoder.encodeObject(tokendataJo, ENCODER_FORMAT);
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
         final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
         mo.put(KEY_TOKENDATA, modifiedTokendata);
         mo.put(KEY_SIGNATURE, signature);

@@ -171,7 +171,7 @@ public class ErrorHeaderTest {
         
         final MslObject mo = MslTestUtils.toMslObject(encoder, errorHeader);
         final MslObject entityAuthDataJo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, ENTITY_AUTH_DATA), entityAuthDataJo));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, ENTITY_AUTH_DATA), entityAuthDataJo));
         final byte[] ciphertext = mo.getBytes(KEY_ERRORDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject errordata = encoder.parseObject(plaintext);
@@ -194,7 +194,7 @@ public class ErrorHeaderTest {
         
         final MslObject mo = MslTestUtils.toMslObject(encoder, errorHeader);
         final MslObject entityAuthDataJo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, ENTITY_AUTH_DATA), entityAuthDataJo));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, ENTITY_AUTH_DATA), entityAuthDataJo));
         final byte[] ciphertext = mo.getBytes(KEY_ERRORDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject errordata = encoder.parseObject(plaintext);
@@ -217,7 +217,7 @@ public class ErrorHeaderTest {
         
         final MslObject mo = MslTestUtils.toMslObject(encoder, errorHeader);
         final MslObject entityAuthDataJo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, ENTITY_AUTH_DATA), entityAuthDataJo));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, ENTITY_AUTH_DATA), entityAuthDataJo));
         final byte[] ciphertext = mo.getBytes(KEY_ERRORDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject errordata = encoder.parseObject(plaintext);
@@ -240,7 +240,7 @@ public class ErrorHeaderTest {
         
         final MslObject mo = MslTestUtils.toMslObject(encoder, errorHeader);
         final MslObject entityAuthDataJo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, ENTITY_AUTH_DATA), entityAuthDataJo));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, ENTITY_AUTH_DATA), entityAuthDataJo));
         final byte[] ciphertext = mo.getBytes(KEY_ERRORDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject errordata = encoder.parseObject(plaintext);
@@ -263,7 +263,7 @@ public class ErrorHeaderTest {
         
         final MslObject mo = MslTestUtils.toMslObject(encoder, errorHeader);
         final MslObject entityAuthDataJo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, ENTITY_AUTH_DATA), entityAuthDataJo));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, ENTITY_AUTH_DATA), entityAuthDataJo));
         final byte[] ciphertext = mo.getBytes(KEY_ERRORDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject errordata = encoder.parseObject(plaintext);

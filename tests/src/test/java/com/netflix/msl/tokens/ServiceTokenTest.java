@@ -399,9 +399,9 @@ public class ServiceTokenTest {
         final MslObject mo = encoder.parseObject(encode);
         
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);;
-        assertNotNull(tokendataJo.remove(KEY_NAME));
-        mo.put(KEY_TOKENDATA, tokendataJo.toString().getBytes());
+        final MslObject tokendataMo = encoder.parseObject(tokendata);;
+        assertNotNull(tokendataMo.remove(KEY_NAME));
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new ServiceToken(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT);
     }
@@ -413,9 +413,9 @@ public class ServiceTokenTest {
         final MslObject mo = encoder.parseObject(encode);
         
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);;
-        assertNotNull(tokendataJo.remove(KEY_MASTER_TOKEN_SERIAL_NUMBER));
-        mo.put(KEY_TOKENDATA, tokendataJo.toString().getBytes());
+        final MslObject tokendataMo = encoder.parseObject(tokendata);;
+        assertNotNull(tokendataMo.remove(KEY_MASTER_TOKEN_SERIAL_NUMBER));
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         final ServiceToken moServiceToken = new ServiceToken(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT);
         assertEquals(-1, moServiceToken.getMasterTokenSerialNumber());
@@ -432,9 +432,9 @@ public class ServiceTokenTest {
         final MslObject mo = encoder.parseObject(encode);
         
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);;
-        tokendataJo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, "x");
-        mo.put(KEY_TOKENDATA, tokendataJo.toString().getBytes());
+        final MslObject tokendataMo = encoder.parseObject(tokendata);;
+        tokendataMo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, "x");
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new ServiceToken(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT);
     }
@@ -449,9 +449,9 @@ public class ServiceTokenTest {
         final MslObject mo = encoder.parseObject(encode);
         
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);;
-        tokendataJo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, -1);
-        mo.put(KEY_TOKENDATA, tokendataJo.toString().getBytes());
+        final MslObject tokendataMo = encoder.parseObject(tokendata);;
+        tokendataMo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, -1);
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new ServiceToken(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT);
     }
@@ -466,9 +466,9 @@ public class ServiceTokenTest {
         final MslObject mo = encoder.parseObject(encode);
         
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);;
-        tokendataJo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, MslConstants.MAX_LONG_VALUE + 1);
-        mo.put(KEY_TOKENDATA, tokendataJo.toString().getBytes());
+        final MslObject tokendataMo = encoder.parseObject(tokendata);;
+        tokendataMo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, MslConstants.MAX_LONG_VALUE + 1);
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new ServiceToken(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT);
     }
@@ -480,9 +480,9 @@ public class ServiceTokenTest {
         final MslObject mo = encoder.parseObject(encode);
         
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);;
-        assertNotNull(tokendataJo.remove(KEY_USER_ID_TOKEN_SERIAL_NUMBER));
-        mo.put(KEY_TOKENDATA, tokendataJo.toString().getBytes());
+        final MslObject tokendataMo = encoder.parseObject(tokendata);;
+        assertNotNull(tokendataMo.remove(KEY_USER_ID_TOKEN_SERIAL_NUMBER));
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         final ServiceToken moServiceToken = new ServiceToken(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT);
         assertEquals(-1, moServiceToken.getUserIdTokenSerialNumber());
@@ -499,9 +499,9 @@ public class ServiceTokenTest {
         final MslObject mo = encoder.parseObject(encode);
         
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);;
-        tokendataJo.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, "x");
-        mo.put(KEY_TOKENDATA, tokendataJo.toString().getBytes());
+        final MslObject tokendataMo = encoder.parseObject(tokendata);;
+        tokendataMo.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, "x");
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new ServiceToken(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT);
     }
@@ -516,9 +516,9 @@ public class ServiceTokenTest {
         final MslObject mo = encoder.parseObject(encode);
         
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);;
-        tokendataJo.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, -1);
-        mo.put(KEY_TOKENDATA, tokendataJo.toString().getBytes());
+        final MslObject tokendataMo = encoder.parseObject(tokendata);;
+        tokendataMo.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, -1);
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new ServiceToken(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT);
     }
@@ -533,9 +533,9 @@ public class ServiceTokenTest {
         final MslObject mo = encoder.parseObject(encode);
         
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);;
-        tokendataJo.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, MslConstants.MAX_LONG_VALUE + 1);
-        mo.put(KEY_TOKENDATA, tokendataJo.toString().getBytes());
+        final MslObject tokendataMo = encoder.parseObject(tokendata);;
+        tokendataMo.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, MslConstants.MAX_LONG_VALUE + 1);
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new ServiceToken(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT);
     }
@@ -550,9 +550,9 @@ public class ServiceTokenTest {
         final MslObject mo = encoder.parseObject(encode);
         
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);;
-        assertNotNull(tokendataJo.remove(KEY_ENCRYPTED));
-        mo.put(KEY_TOKENDATA, tokendataJo.toString().getBytes());
+        final MslObject tokendataMo = encoder.parseObject(tokendata);;
+        assertNotNull(tokendataMo.remove(KEY_ENCRYPTED));
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new ServiceToken(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT);
     }
@@ -567,9 +567,9 @@ public class ServiceTokenTest {
         final MslObject mo = encoder.parseObject(encode);
         
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);;
-        tokendataJo.put(KEY_ENCRYPTED, "x");
-        mo.put(KEY_TOKENDATA, tokendataJo.toString().getBytes());
+        final MslObject tokendataMo = encoder.parseObject(tokendata);;
+        tokendataMo.put(KEY_ENCRYPTED, "x");
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new ServiceToken(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT);
     }
@@ -584,9 +584,9 @@ public class ServiceTokenTest {
         final MslObject mo = encoder.parseObject(encode);
         
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);;
-        tokendataJo.put(KEY_COMPRESSION_ALGORITHM, "x");
-        mo.put(KEY_TOKENDATA, tokendataJo.toString().getBytes());
+        final MslObject tokendataMo = encoder.parseObject(tokendata);;
+        tokendataMo.put(KEY_COMPRESSION_ALGORITHM, "x");
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new ServiceToken(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT);
     }
@@ -601,9 +601,9 @@ public class ServiceTokenTest {
         final MslObject mo = encoder.parseObject(encode);
         
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);;
-        assertNotNull(tokendataJo.remove(KEY_SERVICEDATA));
-        mo.put(KEY_TOKENDATA, tokendataJo.toString().getBytes());
+        final MslObject tokendataMo = encoder.parseObject(tokendata);;
+        assertNotNull(tokendataMo.remove(KEY_SERVICEDATA));
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new ServiceToken(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT);
     }
@@ -618,10 +618,10 @@ public class ServiceTokenTest {
         final MslObject mo = encoder.parseObject(encode);
         
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);;
-        tokendataJo.put(KEY_SERVICEDATA, false);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);;
+        tokendataMo.put(KEY_SERVICEDATA, false);
         
-        final byte[] modifiedTokendata = encoder.encodeObject(tokendataJo, ENCODER_FORMAT);
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
         final byte[] signature = CRYPTO_CONTEXT.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
         mo.put(KEY_TOKENDATA, modifiedTokendata);
         mo.put(KEY_SIGNATURE, signature);
@@ -664,12 +664,12 @@ public class ServiceTokenTest {
         
         // This is testing service data that is verified but corrupt.
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
-        final MslObject tokendataJo = encoder.parseObject(tokendata);;
-        final byte[] servicedata = tokendataJo.getBytes(KEY_SERVICEDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);;
+        final byte[] servicedata = tokendataMo.getBytes(KEY_SERVICEDATA);
         ++servicedata[servicedata.length-1];
-        tokendataJo.put(KEY_SERVICEDATA, servicedata);
+        tokendataMo.put(KEY_SERVICEDATA, servicedata);
         
-        final byte[] modifiedTokendata = encoder.encodeObject(tokendataJo, ENCODER_FORMAT);
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
         final byte[] signature = CRYPTO_CONTEXT.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
         mo.put(KEY_TOKENDATA, modifiedTokendata);
         mo.put(KEY_SIGNATURE, signature);

@@ -120,9 +120,9 @@ public class UserIdTokenAuthenticationDataTest {
         assertEquals(UserAuthenticationScheme.USER_ID_TOKEN.name(), mo.getString(KEY_SCHEME));
         final MslObject authdata = mo.getMslObject(KEY_AUTHDATA, encoder);
         final MslObject masterTokenJo = authdata.getMslObject(KEY_MASTER_TOKEN, encoder);
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, MASTER_TOKEN), masterTokenJo));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, MASTER_TOKEN), masterTokenJo));
         final MslObject userIdTokenJo = authdata.getMslObject(KEY_USER_ID_TOKEN, encoder);
-        assertTrue(MslEncoderUtils.equals(MslTestUtils.toMslObject(encoder, USER_ID_TOKEN), userIdTokenJo));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, USER_ID_TOKEN), userIdTokenJo));
     }
     
     @Test

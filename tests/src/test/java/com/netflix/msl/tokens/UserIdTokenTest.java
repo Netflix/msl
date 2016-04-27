@@ -118,7 +118,7 @@ public class UserIdTokenTest {
         assertFalse(userIdToken.isRenewable(null));
         assertFalse(userIdToken.isExpired(null));
         assertTrue(userIdToken.isBoundTo(MASTER_TOKEN));
-        assertTrue(MslEncoderUtils.equals(ISSUER_DATA, userIdToken.getIssuerData()));
+        assertTrue(MslEncoderUtils.equalObjects(ISSUER_DATA, userIdToken.getIssuerData()));
         assertEquals(USER, userIdToken.getUser());
         assertEquals(EXPIRATION.getTime() / MILLISECONDS_PER_SECOND, userIdToken.getExpiration().getTime() / MILLISECONDS_PER_SECOND);
         assertEquals(MASTER_TOKEN.getSerialNumber(), userIdToken.getMasterTokenSerialNumber());
@@ -134,7 +134,7 @@ public class UserIdTokenTest {
         assertEquals(userIdToken.isRenewable(null), moUserIdToken.isRenewable(null));
         assertEquals(userIdToken.isExpired(null), moUserIdToken.isExpired(null));
         assertTrue(moUserIdToken.isBoundTo(MASTER_TOKEN));
-        assertTrue(MslEncoderUtils.equals(userIdToken.getIssuerData(), moUserIdToken.getIssuerData()));
+        assertTrue(MslEncoderUtils.equalObjects(userIdToken.getIssuerData(), moUserIdToken.getIssuerData()));
         assertEquals(userIdToken.getUser(), moUserIdToken.getUser());
         assertEquals(userIdToken.getExpiration().getTime() / MILLISECONDS_PER_SECOND, moUserIdToken.getExpiration().getTime() / MILLISECONDS_PER_SECOND);
         assertEquals(userIdToken.getMasterTokenSerialNumber(), moUserIdToken.getMasterTokenSerialNumber());
@@ -206,7 +206,7 @@ public class UserIdTokenTest {
         final MslObject tokendataMo = encoder.parseObject(tokendata);
         tokendataMo.put(KEY_EXPIRATION, System.currentTimeMillis() / MILLISECONDS_PER_SECOND - 1);
         tokendataMo.put(KEY_RENEWAL_WINDOW, System.currentTimeMillis() / MILLISECONDS_PER_SECOND);
-        mo.put(KEY_TOKENDATA, tokendataMo.toString().getBytes());
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
@@ -264,7 +264,7 @@ public class UserIdTokenTest {
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
         final MslObject tokendataMo = encoder.parseObject(tokendata);
         assertNotNull(tokendataMo.remove(KEY_RENEWAL_WINDOW));
-        mo.put(KEY_TOKENDATA, tokendataMo.toString().getBytes());
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
@@ -281,7 +281,7 @@ public class UserIdTokenTest {
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
         final MslObject tokendataMo = encoder.parseObject(tokendata);
         tokendataMo.put(KEY_RENEWAL_WINDOW, "x");
-        mo.put(KEY_TOKENDATA, tokendataMo.toString().getBytes());
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
@@ -298,7 +298,7 @@ public class UserIdTokenTest {
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
         final MslObject tokendataMo = encoder.parseObject(tokendata);
         assertNotNull(tokendataMo.remove(KEY_EXPIRATION));
-        mo.put(KEY_TOKENDATA, tokendataMo.toString().getBytes());
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
@@ -315,7 +315,7 @@ public class UserIdTokenTest {
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
         final MslObject tokendataMo = encoder.parseObject(tokendata);
         tokendataMo.put(KEY_EXPIRATION, "x");
-        mo.put(KEY_TOKENDATA, tokendataMo.toString().getBytes());
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
@@ -332,7 +332,7 @@ public class UserIdTokenTest {
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
         final MslObject tokendataMo = encoder.parseObject(tokendata);
         assertNotNull(tokendataMo.remove(KEY_SERIAL_NUMBER));
-        mo.put(KEY_TOKENDATA, tokendataMo.toString().getBytes());
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
@@ -349,7 +349,7 @@ public class UserIdTokenTest {
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
         final MslObject tokendataMo = encoder.parseObject(tokendata);
         tokendataMo.put(KEY_SERIAL_NUMBER, "x");
-        mo.put(KEY_TOKENDATA, tokendataMo.toString().getBytes());
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
@@ -366,7 +366,7 @@ public class UserIdTokenTest {
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
         final MslObject tokendataMo = encoder.parseObject(tokendata);
         tokendataMo.put(KEY_SERIAL_NUMBER, -1);
-        mo.put(KEY_TOKENDATA, tokendataMo.toString().getBytes());
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
@@ -383,7 +383,7 @@ public class UserIdTokenTest {
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
         final MslObject tokendataMo = encoder.parseObject(tokendata);
         tokendataMo.put(KEY_SERIAL_NUMBER, MslConstants.MAX_LONG_VALUE + 1);
-        mo.put(KEY_TOKENDATA, tokendataMo.toString().getBytes());
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
@@ -400,7 +400,7 @@ public class UserIdTokenTest {
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
         final MslObject tokendataMo = encoder.parseObject(tokendata);
         assertNotNull(tokendataMo.remove(KEY_MASTER_TOKEN_SERIAL_NUMBER));
-        mo.put(KEY_TOKENDATA, tokendataMo.toString().getBytes());
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
@@ -417,7 +417,7 @@ public class UserIdTokenTest {
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
         final MslObject tokendataMo = encoder.parseObject(tokendata);
         tokendataMo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, "x");
-        mo.put(KEY_TOKENDATA, tokendataMo.toString().getBytes());
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
@@ -434,7 +434,7 @@ public class UserIdTokenTest {
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
         final MslObject tokendataMo = encoder.parseObject(tokendata);
         tokendataMo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, -1);
-        mo.put(KEY_TOKENDATA, tokendataMo.toString().getBytes());
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
@@ -451,7 +451,7 @@ public class UserIdTokenTest {
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
         final MslObject tokendataMo = encoder.parseObject(tokendata);
         tokendataMo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, MslConstants.MAX_LONG_VALUE + 1);
-        mo.put(KEY_TOKENDATA, tokendataMo.toString().getBytes());
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
@@ -468,15 +468,15 @@ public class UserIdTokenTest {
         final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
         final MslObject tokendataMo = encoder.parseObject(tokendata);
         assertNotNull(tokendataMo.remove(KEY_USERDATA));
-        mo.put(KEY_TOKENDATA, tokendataMo.toString().getBytes());
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
         new UserIdToken(ctx, mo, MASTER_TOKEN);
     }
     
     @Test
     public void invalidUserdata() throws MslEncodingException, MslCryptoException, MslException, UnsupportedEncodingException, MslEncoderException {
-        thrown.expect(MslException.class);
-        thrown.expectMslError(MslError.USERIDTOKEN_USERDATA_INVALID);
+        thrown.expect(MslEncodingException.class);
+        thrown.expectMslError(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR);
 
         final UserIdToken userIdToken = new UserIdToken(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
         final byte[] encode = userIdToken.toMslEncoding(encoder, ENCODER_FORMAT);
