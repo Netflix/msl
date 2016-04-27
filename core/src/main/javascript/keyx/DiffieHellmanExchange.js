@@ -284,13 +284,15 @@ var DiffieHellmanExchange$ResponseData$parse;
          * Create a new Diffie-Hellman key exchange factory.
          *
          * @param {DiffieHellmanParameters} paramSpecs Diffie-Hellman parameters.
+         * @param {AuthenticationUtils} authutils authentication utilities.
          */
-        init: function init(paramSpecs) {
+        init: function init(paramSpecs, authutils) {
             init.base.call(this, KeyExchangeScheme.DIFFIE_HELLMAN);
 
             // The properties.
             var props = {
-                paramSpecs: { value: paramSpecs, writable: false, enumerable: false, configurable: false }
+                paramSpecs: { value: paramSpecs, writable: false, enumerable: false, configurable: false },
+                authutils: { value: authutils, writable: false, enumerable: false, configurable: false },
             };
             Object.defineProperties(this, props);
         },
@@ -361,6 +363,25 @@ var DiffieHellmanExchange$ResponseData$parse;
                     throw new MslInternalException("Key request data " + keyRequestData + " was not created by this factory.");
                 var request = keyRequestData;
 
+                var identity;
+                if (entityToken instanceof MasterToken) {
+                    // If the master token was not issued by the local entity then we
+                    // should not be generating a key response for it.
+                    if (!entityToken.isVerified())
+                        throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, entityToken);
+                    identity = entityToken.identity;
+                    
+                    // Verify the scheme is permitted.
+                    if (!this.authutils.isSchemePermitted(identity, this.scheme))
+                        throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication scheme for entity not permitted " + identity + ": " + this.scheme.name).setMasterToken(entityToken);
+                } else {
+                    identity = entityToken.getIdentity();
+                    
+                    // Verify the scheme is permitted.
+                    if (!this.authutils.isSchemePermitted(identity, this.scheme))
+                        throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication scheme for entity not permitted " + identity + ": " + this.scheme.name).setEntityAuthenticationData(entityToken);
+                }
+
                 // Load matching Diffie-Hellman parameter specification.
                 var parametersId = request.parametersId;
                 var params = this.paramSpecs.getParameterSpec(parametersId);
@@ -426,7 +447,7 @@ var DiffieHellmanExchange$ResponseData$parse;
                                     error: function(e) {
                                         AsyncExecutor(callback, function() {
                                             if (e instanceof MslException)
-                                                e.setMasterToken(entityToken);
+                                                e.setEntityAuthenticationData(entityToken);
                                             throw e;
                                         }, self);
                                     }

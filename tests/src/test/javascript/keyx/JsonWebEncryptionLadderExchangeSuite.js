@@ -101,7 +101,8 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
                 });
                 
                 var repository = new MockCryptoContextRepository();
-                var keyxFactory = new JsonWebEncryptionLadderExchange(repository);
+                var authutils = new MockAuthenticationUtils();
+                var keyxFactory = new JsonWebEncryptionLadderExchange(repository, authutils);
                 pskCtx.addKeyExchangeFactory(keyxFactory);
 
                 MslTestUtils.getMasterToken(pskCtx, 1, 1, {
@@ -700,12 +701,15 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
         var random = new Random();
         /** JWK key ladder crypto context repository. */
         var repository = new MockCryptoContextRepository();
+        /** Authentication utilities. */
+        var authutils = new MockAuthenticationUtils();
         /** Key exchange factory. */
-        var factory = new JsonWebEncryptionLadderExchange(repository);
+        var factory = new JsonWebEncryptionLadderExchange(repository, authutils);
         /** Entity authentication data. */
         var entityAuthData = new PresharedAuthenticationData(PSK_IDENTITY);
         
         beforeEach(function() {
+            authutils.reset();
             pskCtx.getMslStore().clearCryptoContexts();
             pskCtx.getMslStore().clearServiceTokens();
             repository.clear();

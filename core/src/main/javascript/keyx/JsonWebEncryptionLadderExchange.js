@@ -370,13 +370,15 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
          * Create a new JSON Web Encryption ladder key exchange factory.
          *
          * @param {WrapCryptoContextRepository} repository the wrapping key crypto context repository.
+         * @param {AuthenticationUtils} authentication utilities.
          */
-        init: function init(repository) {
+        init: function init(repository, authutils) {
             init.base.call(this, KeyExchangeScheme.JWE_LADDER);
 
             // The properties.
             var props = {
-                repository: { value: repository, writable: false, enumerable: false, configurable: false }
+                repository: { value: repository, writable: false, enumerable: false, configurable: false },
+                authutils: { value: authutils, writable: false, enumerable: false, configurable: false },
             };
             Object.defineProperties(this, props);
         },
@@ -401,15 +403,25 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                 if (!(keyRequestData instanceof RequestData))
                     throw new MslInternalException("Key request data " + keyRequestData + " was not created by this factory.");
 
-                // If the master token was not issued by the local entity then we
-                // should not be generating a key response for it.
-                var identity;
+                var masterToken, entityAuthData, identity;
                 if (entityToken instanceof MasterToken) {
-                    if (!entityToken.isVerified())
+                    // If the master token was not issued by the local entity then we
+                    // should not be generating a key response for it.
+                    masterToken = entityToken;
+                    if (!masterToken.isVerified())
                         throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, entityToken);
-                    identity = entityToken.identity;
+                    identity = masterToken.identity;
+                    
+                    // Verify the scheme is permitted.
+                    if (!this.authutils.isSchemePermitted(identity, this.scheme))
+                        throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication scheme for entity not permitted " + identity + ": " + this.scheme.name).setMasterToken(entityToken);
                 } else {
-                	identity = entityToken.getIdentity();
+                    entityAuthData = entityToken;
+                    identity = entityAuthData.getIdentity();
+                    
+                    // Verify the scheme is permitted.
+                    if (!this.authutils.isSchemePermitted(identity, this.scheme))
+                        throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication scheme for entity not permitted " + identity + ": " + this.scheme.name).setEntityAuthenticationData(entityToken);
                 }
 
                 // Create random AES-128 wrapping key.
@@ -422,12 +434,14 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                             var encoder = ctx.getMslEncoderFactory();
                             mslCryptoContext.wrap(wrapKey, encoder, format, {
                                 result: function(wrapdata) {
-                                    createSessionKeys(identity, wrapKey, wrapdata);
+                                    createSessionKeys(masterToken, entityAuthData, identity, wrapKey, wrapdata);
                                 },
                                 error: function(e) {
                                     AsyncExecutor(callback, function() {
-                                        if (e instanceof MslException)
-                                            e.setMasterToken(entityToken);
+                                        if (e instanceof MslException) {
+                                            e.setMasterToken(masterToken);
+                                            e.setEntityAuthenticationData(entityAuthData);
+                                        }
                                         throw e;
                                     }, self);
                                 }
@@ -442,26 +456,28 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                 });
             }, self);
 
-            function createSessionKeys(identity, wrapKey, wrapdata) {
+            function createSessionKeys(masterToken, entityAuthData, identity, wrapKey, wrapdata) {
                 self.generateSessionKeys(ctx, {
                     result: function(sessionKeys) {
                         AsyncExecutor(callback, function() {
                             var encryptionKey = sessionKeys.encryptionKey;
                             var hmacKey = sessionKeys.hmacKey;
-                            wrapWrappingKey(identity, wrapKey, wrapdata, encryptionKey, hmacKey);
+                            wrapWrappingKey(masterToken, entityAuthData, identity, wrapKey, wrapdata, encryptionKey, hmacKey);
                         }, self);
                     },
                     error: function(e) {
                         AsyncExecutor(callback, function() {
-                            if (e instanceof MslException)
-                                e.setMasterToken(entityToken);
+                            if (e instanceof MslException) {
+                                e.setMasterToken(masterToken);
+                                e.setEntityAuthenticationData(entityAuthData);
+                            }
                             throw e;
                         });
                     }
                 });
             }
 
-            function wrapWrappingKey(identity, wrapKey, wrapdata, encryptionKey, hmacKey) {
+            function wrapWrappingKey(masterToken, entityAuthData, identity, wrapKey, wrapdata, encryptionKey, hmacKey) {
                 AsyncExecutor(callback, function() {
                     var request = keyRequestData;
 
@@ -475,12 +491,14 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                         result: function (wrapKeyCryptoContext) {
                             wrapKeyCryptoContext.wrap(wrapKey, encoder, format, {
                                 result: function(wrappedWrapJwk) {
-                                    wrapSessionKeys(wrapKey, wrapdata, encryptionKey, hmacKey, wrappedWrapJwk);
+                                    wrapSessionKeys(masterToken, entityAuthData, wrapKey, wrapdata, encryptionKey, hmacKey, wrappedWrapJwk);
                                 },
                                 error: function(e) {
                                     AsyncExecutor(callback, function() {
-                                        if (e instanceof MslException)
-                                            e.setMasterToken(entityToken);
+                                        if (e instanceof MslException) {
+                                            e.setMasterToken(masterToken);
+                                            e.setEntityAuthenticationData(entityAuthData);
+                                        }
                                         throw e;
                                     });
                                 }
@@ -488,8 +506,10 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                         },
                         error: function(e) {
                             AsyncExecutor(callback, function() {
-                                if (e instanceof MslException)
-                                    e.setMasterToken(entityToken);
+                                if (e instanceof MslException) {
+                                    e.setMasterToken(masterToken);
+                                    e.setEntityAuthenticationData(entityAuthData);
+                                }
                                 throw e;
                             });
                         }
@@ -497,7 +517,7 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                 }, self);
             }
 
-            function wrapSessionKeys(wrapKey, wrapdata, encryptionKey, hmacKey, wrappedWrapJwk) {
+            function wrapSessionKeys(masterToken, entityAuthData, wrapKey, wrapdata, encryptionKey, hmacKey, wrappedWrapJwk) {
                 AsyncExecutor(callback, function() {
                     var wrapCryptoContext = new JsonWebEncryptionCryptoContext(ctx, JsonWebEncryptionCryptoContext$Algorithm.A128KW, JsonWebEncryptionCryptoContext$Encryption.A128GCM, wrapKey);
                     var encoder = ctx.getMslEncoderFactory();
@@ -505,12 +525,14 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                         result: function(wrappedEncryptionJwk) {
                             wrapCryptoContext.wrap(hmacKey, encoder, format, {
                                 result: function(wrappedHmacJwk) {
-                                    createMasterToken(wrapdata, wrappedWrapJwk, encryptionKey, wrappedEncryptionJwk, hmacKey, wrappedHmacJwk);
+                                    createMasterToken(masterToken, entityAuthData, wrapdata, wrappedWrapJwk, encryptionKey, wrappedEncryptionJwk, hmacKey, wrappedHmacJwk);
                                 },
                                 error: function(e) {
                                     AsyncExecutor(callback, function() {
-                                        if (e instanceof MslException)
-                                            e.setMasterToken(entityToken);
+                                        if (e instanceof MslException) {
+                                            e.setMasterToken(masterToken);
+                                            e.setEntityAuthenticationData(entityAuthData);
+                                        }
                                         throw e;
                                     });
                                 }
@@ -518,8 +540,10 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                         },
                         error: function(e) {
                             AsyncExecutor(callback, function() {
-                                if (e instanceof MslException)
-                                    e.setMasterToken(entityToken);
+                                if (e instanceof MslException) {
+                                    e.setMasterToken(masterToken);
+                                    e.setEntityAuthenticationData(entityAuthData);
+                                }
                                 throw e;
                             });
                         }
@@ -527,7 +551,7 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                 }, self);
             }
 
-            function createMasterToken(wrapdata, wrappedWrapJwk, encryptionKey, wrappedEncryptionJwk, hmacKey, wrappedHmacJwk) {
+            function createMasterToken(masterToken, entityAuthData, wrapdata, wrappedWrapJwk, encryptionKey, wrappedEncryptionJwk, hmacKey, wrappedHmacJwk) {
                 AsyncExecutor(callback, function() {
                     // Create the master token.
                     var tokenFactory = ctx.getTokenFactory();
@@ -545,8 +569,10 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                             },
                             error: function(e) {
                                 AsyncExecutor(callback, function() {
-                                    if (e instanceof MslException)
-                                        e.setMasterToken(entityToken);
+                                    if (e instanceof MslException) {
+                                        e.setMasterToken(masterToken);
+                                        e.setEntityAuthenticationData(entityAuthData);
+                                    }
                                     throw e;
                                 });
                             }
@@ -565,8 +591,10 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                             },
                             error: function(e) {
                                 AsyncExecutor(callback, function() {
-                                    if (e instanceof MslException)
-                                        e.setMasterToken(entityToken);
+                                    if (e instanceof MslException) {
+                                        e.setMasterToken(masterToken);
+                                        e.setEntityAuthenticationData(entityAuthData);
+                                    }
                                     throw e;
                                 });
                             }

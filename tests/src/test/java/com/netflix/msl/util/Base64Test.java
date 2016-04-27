@@ -44,11 +44,38 @@ public class Base64Test {
     @Test
     public void standard() {
         for (int i = 0; i < EXAMPLES.length; ++i) {
+            // Prepare.
             final Object[] example = EXAMPLES[i];
             final byte[] data = (byte[])example[0];
             final String base64 = (String)example[1];
+            
+            // Encode/decode.
             final String encoded = Base64.encode(data);
             final byte[] decoded = Base64.decode(base64);
+            
+            // Validate.
+            assertEquals(base64, encoded);
+            assertArrayEquals(data, decoded);
+        }
+    }
+    
+    @Test
+    public void whitespace() {
+        for (int i = 0; i < EXAMPLES.length; ++i) {
+            // Prepare.
+            final Object[] example = EXAMPLES[i];
+            final byte[] data = (byte[])example[0];
+            final String base64 = (String)example[1];
+            
+            // Modify.
+            final int half = base64.length() / 2;
+            final String modifiedBase64 = "  \t" + base64.substring(0, half) + "\r\n \r\n\t" + base64.substring(half) + " \t \n";
+            
+            // Encode/decode.
+            final String encoded = Base64.encode(data);
+            final byte[] decoded = Base64.decode(modifiedBase64);
+            
+            // Validate.
             assertEquals(base64, encoded);
             assertArrayEquals(data, decoded);
         }

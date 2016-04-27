@@ -30,7 +30,7 @@ import com.netflix.msl.util.MslContext;
 
 /**
  * <p>Key response data contains all the data needed to facilitate a exchange of
- * session keys from the responseor.</p>
+ * session keys from the responder.</p>
  * 
  * <p>Specific key exchange mechanisms should define their own key response data
  * types.</p>

@@ -310,6 +310,8 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         it("ctors", function() {
             var resp = new ResponseData(MASTER_TOKEN, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
             expect(resp.keyExchangeScheme).toEqual(KeyExchangeScheme.DIFFIE_HELLMAN);
+            expect(resp.masterToken).toEqual(MASTER_TOKEN);
+            expect(resp.identity).toEqual(IDENTITY);
             expect(resp.parametersId).toEqual(PARAMETERS_ID);
             expect(resp.publicKey).toEqual(RESPONSE_PUBLIC_KEY);
             var keydata = resp.getKeydata();
@@ -318,6 +320,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             var joResp = ResponseData$parse(MASTER_TOKEN, keydata);
             expect(joResp.keyExchangeScheme).toEqual(resp.keyExchangeScheme);
             expect(joResp.masterToken).toEqual(resp.masterToken);
+            expect(joResp.identity).toEqual(resp.identity);
             expect(joResp.parametersId).toEqual(resp.parametersId);
             expect(joResp.publicKey).toEqual(resp.publicKey);
             var joKeydata = joResp.getKeydata();

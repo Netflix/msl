@@ -467,13 +467,16 @@ describe("SymmetricWrappedExchangeSuite", function() {
 	            });
         	});
         }
-        
+
+        /** Authentication utilities. */
+        var authutils = new MockAuthenticationUtils();
         /** Key exchange factory. */
-        var factory = new SymmetricWrappedExchange();
+        var factory = new SymmetricWrappedExchange(authutils);
         /** Entity authentication data. */
         var entityAuthData = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN);
         
         beforeEach(function() {
+            authutils.reset();
             pskCtx.getMslStore().clearCryptoContexts();
             pskCtx.getMslStore().clearServiceTokens();
         });

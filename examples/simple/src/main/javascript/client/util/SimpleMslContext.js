@@ -92,7 +92,7 @@ var SimpleMslContext;
         getEntityAuthenticationData: function getEntityAuthenticationData(reauthCode, callback) {
             callback.result(this._entityAuthData);
         },
-
+        
         /** @inheritDoc */
         getMslCryptoContext: function getMslCryptoContext() {
             return this._mslCryptoContext;

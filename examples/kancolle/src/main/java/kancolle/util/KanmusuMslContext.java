@@ -81,7 +81,7 @@ public class KanmusuMslContext extends KanColleMslContext {
             return null;
         return entityAuthData;
     }
-    
+
     /** Entity authentication data. */
     private final EntityAuthenticationData entityAuthData;
     /** MSL crypto context. */

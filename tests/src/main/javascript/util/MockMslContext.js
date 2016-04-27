@@ -90,22 +90,23 @@ var MockMslContext$create;
 		        entityAuthFactories[EntityAuthenticationScheme.NONE.name] = new UnauthenticatedAuthenticationFactory();
 		        entityAuthFactories[EntityAuthenticationScheme.NONE_SUFFIXED.name] = new UnauthenticatedSuffixedAuthenticationFactory();
 		        entityAuthFactories[EntityAuthenticationScheme.MT_PROTECTED.name] = new MasterTokenProtectedAuthenticationFactory(authutils);
+		        entityAuthFactories[EntityAuthenticationScheme.PROVISIONED.name] = new ProvisionedAuthenticationFactory(new MockIdentityProvisioningService(this));
                 syncUserAuthFactories(authutils, entityAuthFactories);
 		    }
 		    function syncUserAuthFactories(authutils, entityAuthFactories) {
 		        var userAuthFactories = {};
 		        userAuthFactories[UserAuthenticationScheme.EMAIL_PASSWORD.name] = new MockEmailPasswordAuthenticationFactory();
 		        userAuthFactories[UserAuthenticationScheme.USER_ID_TOKEN.name] = new MockUserIdTokenAuthenticationFactory();
-                mslCryptoContext(entityAuthFactories, userAuthFactories);
+                mslCryptoContext(authutils, entityAuthFactories, userAuthFactories);
 		    }
-		    function mslCryptoContext(entityAuthFactories, userAuthFactories) {
+		    function mslCryptoContext(authutils, entityAuthFactories, userAuthFactories) {
 		        CipherKey$import(MSL_ENCRYPTION_KEY, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
 		            result: function (mslEncryptionKey) {
 		                CipherKey$import(MSL_HMAC_KEY, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
 		                    result: function (mslHmacKey) {
 		                        CipherKey$import(MSL_WRAPPING_KEY, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
 		                            result: function(mslWrappingKey) {
-		                                finish(entityAuthFactories, userAuthFactories, mslEncryptionKey, mslHmacKey, mslWrappingKey);
+		                                finish(authutils, entityAuthFactories, userAuthFactories, mslEncryptionKey, mslHmacKey, mslWrappingKey);
 		                            },
 		                            error: function(e) {
 		                                callback.error(new MslInternalException("Unable to create MSL wrap key.", e));
@@ -122,7 +123,7 @@ var MockMslContext$create;
 		            }
 		        });
 		    }
-		    function finish(entityAuthFactories, userAuthFactories, mslEncryptionKey, mslHmacKey, mslWrapKey) {
+		    function finish(authutils, entityAuthFactories, userAuthFactories, mslEncryptionKey, mslHmacKey, mslWrapKey) {
 		        AsyncExecutor(callback, function() {
 		            // Set up entity authentication data.
 		            var entityAuthData;
@@ -156,9 +157,9 @@ var MockMslContext$create;
 
 		            // Set up key exchange factories.
 		            var keyxFactories = new Array();
-		            keyxFactories.push(new AsymmetricWrappedExchange());
-		            keyxFactories.push(new SymmetricWrappedExchange());
-		            keyxFactories.push(new DiffieHellmanExchange(paramSpecs));
+		            keyxFactories.push(new AsymmetricWrappedExchange(authutils));
+		            keyxFactories.push(new SymmetricWrappedExchange(authutils));
+		            keyxFactories.push(new DiffieHellmanExchange(paramSpecs, authutils));
 
 		            // Set up the MSL store.
 		            var store = new SimpleMslStore();
@@ -221,7 +222,7 @@ var MockMslContext$create;
 		getEntityAuthenticationData: function getEntityAuthenticationData(reauthCode, callback) {
 			callback.result(this._entityAuthData);
 		},
-	    
+		
 	    /**
 	     * Set the MSL crypto context.
 	     * 

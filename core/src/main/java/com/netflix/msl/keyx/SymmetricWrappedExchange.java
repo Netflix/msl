@@ -363,7 +363,7 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
 
         // Verify the scheme is permitted.
         final String identity = masterToken.getIdentity();
-        if(!authutils.isSchemePermitted(identity, this.getScheme()))
+        if (!authutils.isSchemePermitted(identity, this.getScheme()))
             throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + this.getScheme()).setMasterToken(masterToken);
 
         // If the master token was not issued by the local entity then we
@@ -409,7 +409,7 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
 
         // Verify the scheme is permitted.
         final String identity = entityAuthData.getIdentity();
-        if(!authutils.isSchemePermitted(identity, this.getScheme()))
+        if (!authutils.isSchemePermitted(identity, this.getScheme()))
             throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + this.getScheme());
 
         // Create random AES-128 encryption and SHA-256 HMAC keys.

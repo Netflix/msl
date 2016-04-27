@@ -96,7 +96,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return "ctx"; }, "ctx", 300);
+            waitsFor(function() { return "ctx"; }, "ctx", 900);
             
             runs(function() {
                 MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSA_OAEP, WebCryptoUsage.WRAP_UNWRAP, 2048, {
@@ -572,6 +572,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
 	            expect(joData.keyExchangeScheme).toEqual(data.keyExchangeScheme);
 	            expect(joData.keyPairId).toEqual(data.keyPairId);
 	            expect(joData.masterToken).toEqual(data.masterToken);
+	            expect(joData.identity).toEqual(data.identity);
             });
         });
 
@@ -746,12 +747,15 @@ describe("AsymmetricWrappedExchangeSuite", function() {
         
         /** Random. */
         var random = new Random();
+        /** Authentication utilities. */
+        var authutils = new MockAuthenticationUtils();
         /** Key exchange factory. */
-        var factory = new AsymmetricWrappedExchange();
+        var factory = new AsymmetricWrappedExchange(authutils);
         /** Entity authentication data. */
         var entityAuthData = new PresharedAuthenticationData(IDENTITY);
         
         beforeEach(function() {
+            authutils.reset();
             ctx.getMslStore().clearCryptoContexts();
             ctx.getMslStore().clearServiceTokens();
         });

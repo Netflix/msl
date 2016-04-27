@@ -28,7 +28,9 @@ import com.netflix.msl.MslKeyExchangeException;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.io.MslEncoderException;
 import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.io.MslObject;
+import com.netflix.msl.keyx.SymmetricWrappedExchange.KeyId;
 import com.netflix.msl.test.ExpectedMslException;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.util.MockMslContext;
@@ -45,6 +47,9 @@ import com.netflix.msl.util.MslTestUtils;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class KeyResponseDataTest {
+    /** MSL encoder format. */
+    private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
+    
     /** JSON key master token. */
     private static final String KEY_MASTER_TOKEN = "mastertoken";
     /** JSON key key exchange scheme. */
@@ -108,14 +113,18 @@ public class KeyResponseDataTest {
     }
     
     @Test
-    public void invalidMasterToken() throws MslException, MslEncodingException, MslCryptoException, MslKeyExchangeException, MslException {
+    public void invalidMasterToken() throws MslException, MslEncodingException, MslCryptoException, MslKeyExchangeException, MslException, MslEncoderException {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.MSL_PARSE_ERROR);
+
+        final byte[] encryptionKey = new byte[0];
+        final byte[] hmacKey = new byte[0];
+        final KeyResponseData response = new SymmetricWrappedExchange.ResponseData(MASTER_TOKEN, KeyId.PSK, encryptionKey, hmacKey);
 
         final MslObject mo = encoder.createObject();
         mo.put(KEY_MASTER_TOKEN + "x", encoder.createObject());
         mo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED.name());
-        mo.put(KEY_KEYDATA, encoder.createObject());
+        mo.put(KEY_KEYDATA, response.getKeydata(encoder, ENCODER_FORMAT));
         KeyResponseData.create(ctx, mo);
     }
     

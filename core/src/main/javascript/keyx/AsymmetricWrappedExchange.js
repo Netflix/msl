@@ -181,7 +181,6 @@ var AsymmetricWrappedExchange$ResponseData$parse;
                 mechanism = keyRequestMo.getString(KEY_MECHANISM);
                 encodedKey = keyRequestMo.getBytes(KEY_PUBLIC_KEY);
 
-
                 // Verify mechanism.
                 if (!Mechanism[mechanism])
                     throw new MslKeyExchangeException(MslError.UNIDENTIFIED_KEYX_MECHANISM, mechanism);
@@ -362,9 +361,17 @@ var AsymmetricWrappedExchange$ResponseData$parse;
     AsymmetricWrappedExchange = KeyExchangeFactory.extend({
         /**
          * Create a new asymmetric wrapped key exchange factory.
+         * 
+         * @param {AuthenticationUtils} authutils authentication utilities.
          */
-        init: function init() {
+        init: function init(authutils) {
             init.base.call(this, KeyExchangeScheme.ASYMMETRIC_WRAPPED);
+            
+            // The properties.
+            var props = {
+                authutils: { value: authutils, writable: false, enumerable: false, configurable: false },
+            };
+            Object.defineProperties(this, props);
         },
 
         /** @inheritDoc */
@@ -385,25 +392,48 @@ var AsymmetricWrappedExchange$ResponseData$parse;
             AsyncExecutor(callback, function() {
                 if (!(keyRequestData instanceof RequestData))
                     throw new MslInternalException("Key request data " + JSON.stringify(keyRequestData) + " was not created by this factory.");
+                
+                var masterToken, entityAuthData, identity;
+                if (entityToken instanceof MasterToken) {
+                    // If the master token was not issued by the local entity then we
+                    // should not be generating a key response for it.
+                    masterToken = entityToken;
+                    if (!masterToken.isVerified())
+                        throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, entityToken);
+                    identity = masterToken.identity;
+                    
+                    // Verify the scheme is permitted.
+                    if (!this.authutils.isSchemePermitted(identity, this.scheme))
+                        throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication scheme for entity not permitted " + identity + ": " + this.scheme.name).setMasterToken(entityToken);
+                } else {
+                    entityAuthData = entityToken;
+                    identity = entityAuthData.getIdentity();
+                    
+                    // Verify the scheme is permitted.
+                    if (!this.authutils.isSchemePermitted(identity, this.scheme))
+                        throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication scheme for entity not permitted " + identity + ": " + this.scheme.name).setEntityAuthenticationData(entityToken);
+                }
 
                 // Create random AES-128 encryption and SHA-256 HMAC keys.
                 this.generateSessionKeys(ctx, {
                     result: function(sessionKeys) {
                         var encryptionKey = sessionKeys.encryptionKey;
                         var hmacKey = sessionKeys.hmacKey;
-                        wrapKeys(encryptionKey, hmacKey);
+                        wrapKeys(masterToken, entityAuthData, encryptionKey, hmacKey);
                     },
                     error: function(e) {
                         AsyncExecutor(callback, function() {
-                            if (e instanceof MslException)
-                                e.setMasterToken(entityToken);
+                            if (e instanceof MslException) {
+                                e.setMasterToken(masterToken);
+                                e.setEntityAuthenticationData(entityAuthData);
+                            }
                             throw e;
                         }, self);
                     }
                 });
             }, self);
 
-            function wrapKeys(encryptionKey, hmacKey) {
+            function wrapKeys(masterToken, entityAuthData, encryptionKey, hmacKey) {
                 AsyncExecutor(callback, function() {
                     var request = keyRequestData;
 
@@ -418,12 +448,14 @@ var AsymmetricWrappedExchange$ResponseData$parse;
                             AsyncExecutor(callback, function() {
                                 wrapCryptoContext.wrap(hmacKey, encoder, format, {
                                     result: function(wrappedHmacKey) {
-                                        createMasterToken(encryptionKey, wrappedEncryptionKey, hmacKey, wrappedHmacKey);
+                                        createMasterToken(masterToken, entityAuthData, encryptionKey, wrappedEncryptionKey, hmacKey, wrappedHmacKey);
                                     },
                                     error: function(e) {
                                         AsyncExecutor(callback, function() {
-                                            if (e instanceof MslException)
-                                                e.setMasterToken(entityToken);
+                                            if (e instanceof MslException) {
+                                                e.setMasterToken(masterToken);
+                                                e.setEntityAuthenticationData(entityAuthData);
+                                            }
                                             throw e;
                                         }, self);
                                     }
@@ -433,7 +465,10 @@ var AsymmetricWrappedExchange$ResponseData$parse;
                         error: function(e) {
                             AsyncExecutor(callback, function() {
                                 if (e instanceof MslException)
-                                    e.setMasterToken(entityToken);
+                                    if (e instanceof MslException) {
+                                        e.setMasterToken(masterToken);
+                                        e.setEntityAuthenticationData(entityAuthData);
+                                    }
                                 throw e;
                             }, self);
                         }
@@ -441,7 +476,7 @@ var AsymmetricWrappedExchange$ResponseData$parse;
                 }, self);
             }
 
-            function createMasterToken(encryptionKey, wrappedEncryptionKey, hmacKey, wrappedHmacKey) {
+            function createMasterToken(masterToken, entityAuthData, encryptionKey, wrappedEncryptionKey, hmacKey, wrappedHmacKey) {
                 AsyncExecutor(callback, function() {
                     var request = keyRequestData;
 
@@ -461,8 +496,10 @@ var AsymmetricWrappedExchange$ResponseData$parse;
                             },
                             error: function(e) {
                                 AsyncExecutor(callback, function() {
-                                    if (e instanceof MslException)
-                                        e.setMasterToken(entityToken);
+                                    if (e instanceof MslException) {
+                                        e.setMasterToken(masterToken);
+                                        e.setEntityAuthenticationData(entityAuthData);
+                                    }
                                     throw e;
                                 }, self);
                             }
@@ -481,8 +518,10 @@ var AsymmetricWrappedExchange$ResponseData$parse;
                             },
                             error: function(e) {
                                 AsyncExecutor(callback, function() {
-                                    if (e instanceof MslException)
-                                        e.setMasterToken(entityToken);
+                                    if (e instanceof MslException) {
+                                        e.setMasterToken(masterToken);
+                                        e.setEntityAuthenticationData(entityAuthData);
+                                    }
                                     throw e;
                                 }, self);
                             }

@@ -644,8 +644,8 @@ public class JsonWebKeyLadderExchange extends KeyExchangeFactory {
         final String identity = masterToken.getIdentity();
         
         // Verify the scheme is permitted.
-        if(!authutils.isSchemePermitted(identity, this.getScheme()))
-            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + this.getScheme());
+        if (!authutils.isSchemePermitted(identity, this.getScheme()))
+            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication scheme for entity not permitted " + identity + ":" + this.getScheme()).setMasterToken(masterToken);
         
         // Create random AES-128 wrapping key.
         final byte[] wrapBytes = new byte[16];
@@ -703,8 +703,8 @@ public class JsonWebKeyLadderExchange extends KeyExchangeFactory {
         
         // Verify the scheme is permitted.
         final String identity = entityAuthData.getIdentity();
-        if(!authutils.isSchemePermitted(identity, this.getScheme()))
-            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + this.getScheme());
+        if (!authutils.isSchemePermitted(identity, this.getScheme()))
+            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication scheme for entity not permitted " + identity + ":" + this.getScheme()).setEntityAuthenticationData(entityAuthData);
 
         // Create random AES-128 wrapping key.
         final byte[] wrapBytes = new byte[16];

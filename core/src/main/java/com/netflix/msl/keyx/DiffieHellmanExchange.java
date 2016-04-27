@@ -447,11 +447,11 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
         // should not be generating a key response for it.
         if (!masterToken.isVerified())
             throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, masterToken);
-        final String identity = masterToken.getIdentity();
 
         // Verify the scheme is permitted.
-        if(!authutils.isSchemePermitted(identity, this.getScheme()))
-            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + this.getScheme()).setMasterToken(masterToken);
+        final String identity = masterToken.getIdentity();
+        if (!authutils.isSchemePermitted(identity, this.getScheme()))
+            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication scheme for entity not permitted " + identity + ":" + this.getScheme()).setMasterToken(masterToken);
 
         // Load matching Diffie-Hellman parameter specification.
         final String parametersId = request.getParametersId();
@@ -513,8 +513,8 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
 
         // Verify the scheme is permitted.
         final String identity = entityAuthData.getIdentity();
-        if(!authutils.isSchemePermitted(identity, this.getScheme()))
-            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + this.getScheme()).setEntityAuthenticationData(entityAuthData);
+        if (!authutils.isSchemePermitted(identity, this.getScheme()))
+            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication scheme for entity not permitted " + identity + ":" + this.getScheme()).setEntityAuthenticationData(entityAuthData);
 
         // Load matching Diffie-Hellman parameter specification.
         final String parametersId = request.getParametersId();

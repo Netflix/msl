@@ -577,6 +577,8 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
     
     /**
      * Create a new asymmetric wrapped key exchange factory.
+     * 
+     * @param authutils authentication utilities.
      */
     public AsymmetricWrappedExchange(final AuthenticationUtils authutils) {
         super(KeyExchangeScheme.ASYMMETRIC_WRAPPED);
@@ -608,10 +610,15 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
             throw new MslInternalException("Key request data " + keyRequestData.getClass().getName() + " was not created by this factory.");
         final RequestData request = (RequestData)keyRequestData;
 
+        // If the master token was not issued by the local entity then we
+        // should not be generating a key response for it.
+        if (!masterToken.isVerified())
+            throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, masterToken);
+
         // Verify the scheme is permitted.
         final String identity = masterToken.getIdentity();
-        if(!authutils.isSchemePermitted(identity, this.getScheme()))
-            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + this.getScheme()).setMasterToken(masterToken);
+        if (!authutils.isSchemePermitted(identity, this.getScheme()))
+            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication scheme for entity not permitted " + identity + ":" + this.getScheme()).setMasterToken(masterToken);
 
         // Create random AES-128 encryption and SHA-256 HMAC keys.
         final byte[] encryptionBytes = new byte[16];
@@ -683,13 +690,12 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
     public KeyExchangeData generateResponse(final MslContext ctx, final MslEncoderFormat format, final KeyRequestData keyRequestData, final EntityAuthenticationData entityAuthData) throws MslException {
         if (!(keyRequestData instanceof RequestData))
             throw new MslInternalException("Key request data " + keyRequestData.getClass().getName() + " was not created by this factory.");
+        final RequestData request = (RequestData)keyRequestData;
 
         // Verify the scheme is permitted.
         final String identity = entityAuthData.getIdentity();
-        if(!authutils.isSchemePermitted(identity, this.getScheme()))
-            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + this.getScheme()).setEntityAuthenticationData(entityAuthData);
-
-        final RequestData request = (RequestData)keyRequestData;
+        if (!authutils.isSchemePermitted(identity, this.getScheme()))
+            throw new MslKeyExchangeException(MslError.KEYX_INCORRECT_DATA, "Authentication scheme for entity not permitted " + identity + ":" + this.getScheme()).setEntityAuthenticationData(entityAuthData);
         
         // Create random AES-128 encryption and SHA-256 HMAC keys.
         final byte[] encryptionBytes = new byte[16];
