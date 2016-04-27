@@ -468,7 +468,7 @@ var DiffieHellmanExchange$ResponseData$parse;
                                     error: function(e) {
                                         AsyncExecutor(callback, function() {
                                             if (e instanceof MslException)
-                                                e.setMasterToken(entityToken);
+                                                e.setEntityAuthenticationData(entityToken);
                                             throw e;
                                         }, self);
                                     }
