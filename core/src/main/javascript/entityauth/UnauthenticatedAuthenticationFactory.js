@@ -30,7 +30,7 @@ var UnauthenticatedAuthenticationFactory = EntityAuthenticationFactory.extend({
     /** @inheritDoc */
     createData: function createData(ctx, entityAuthJO, callback) {
         AsyncExecutor(callback, function() {
-            return new UnauthenticatedAuthenticationData$parse(entityAuthJO);
+            return UnauthenticatedAuthenticationData$parse(entityAuthJO);
         });
     },
 
