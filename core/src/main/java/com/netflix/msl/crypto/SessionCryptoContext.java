@@ -30,7 +30,8 @@ import com.netflix.msl.util.MslContext;
  */
 public class SessionCryptoContext extends SymmetricCryptoContext {
     /**
-     * Construct a new session crypto context from the provided master token.
+     * <p>Construct a new session crypto context from the provided master
+     * token.</p>
      * 
      * @param ctx MSL context.
      * @param masterToken the master token.
@@ -43,17 +44,17 @@ public class SessionCryptoContext extends SymmetricCryptoContext {
     }
     
     /**
-     * Construct a new session crypto context from the provided master token.
+     * <p>Construct a new session crypto context from the provided master token.
      * The entity identity and keys are assumed to be the same as what is
-     * inside the master token, which may be untrusted.
+     * inside the master token, which may be untrusted.</p>
      * 
      * @param ctx MSL context.
      * @param masterToken master token. May be untrusted.
-     * @param identity entity identity.
+     * @param identity entity identity. May be {@code null}.
      * @param encryptionKey encryption key.
      * @param hmacKey HMAC key.
      */
     public SessionCryptoContext(final MslContext ctx, final MasterToken masterToken, final String identity, final SecretKey encryptionKey, final SecretKey hmacKey) {
-        super(ctx, identity + "_" + masterToken.getSequenceNumber(), encryptionKey, hmacKey, null);
+        super(ctx, (identity != null) ? identity + "_" + masterToken.getSequenceNumber() : Long.toString(masterToken.getSequenceNumber()), encryptionKey, hmacKey, null);
     }
 }
