@@ -15,7 +15,10 @@
  */
 package com.netflix.msl.entityauth;
 
-import org.json.JSONObject;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 
 /**
  * <p>Provisioned entity authentication data. This form of authentication is
@@ -45,9 +48,9 @@ public class ProvisionedAuthenticationData extends EntityAuthenticationData {
      * Construct a new provisioned entity authentication data instance from the
      * provided JSON object.
      * 
-     * @param provisionedAuthJo the authentication data JSON object.
+     * @param provisionedAuthMo the authentication data JSON object.
      */
-    public ProvisionedAuthenticationData(final JSONObject provisionedAuthJo) {
+    public ProvisionedAuthenticationData(final MslObject provisionedAuthMo) {
         super(EntityAuthenticationScheme.PROVISIONED);
     }
     
@@ -71,13 +74,10 @@ public class ProvisionedAuthenticationData extends EntityAuthenticationData {
     public String getIdentity() {
         return identity;
     }
-    
-    /* (non-Javadoc)
-     * @see com.netflix.msl.entityauth.EntityAuthenticationData#getAuthData()
-     */
+
     @Override
-    public JSONObject getAuthData() {
-        return new JSONObject();
+    public MslObject getAuthData(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException {
+        return encoder.createObject();
     }
     
     /* (non-Javadoc)
