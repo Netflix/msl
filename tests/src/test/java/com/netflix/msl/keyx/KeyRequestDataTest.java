@@ -43,9 +43,9 @@ import com.netflix.msl.util.MslContext;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class KeyRequestDataTest {
-    /** JSON key key exchange scheme. */
+    /** Key key exchange scheme. */
     private static final String KEY_SCHEME = "scheme";
-    /** JSON key key request data. */
+    /** Key key request data. */
     private static final String KEY_KEYDATA = "keydata";
     
     @Rule

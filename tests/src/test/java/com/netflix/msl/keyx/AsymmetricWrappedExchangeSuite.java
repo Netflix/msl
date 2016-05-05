@@ -108,16 +108,16 @@ public class AsymmetricWrappedExchangeSuite {
     /** EC generator order n. */
     private static final BigInteger EC_N = new BigInteger("883423532389192164791648750360308884807550341691627752275345424702807307");
 
-    /** JSON key key exchange scheme. */
+    /** Key key exchange scheme. */
     private static final String KEY_SCHEME = "scheme";
-    /** JSON key key request data. */
+    /** Key key request data. */
     private static final String KEY_KEYDATA = "keydata";
     
-    /** JSON key key pair ID. */
+    /** Key key pair ID. */
     private static final String KEY_KEY_PAIR_ID = "keypairid";
-    /** JSON key encrypted encryption key. */
+    /** Key encrypted encryption key. */
     private static final String KEY_ENCRYPTION_KEY = "encryptionkey";
-    /** JSON key encrypted HMAC key. */
+    /** Key encrypted HMAC key. */
     private static final String KEY_HMAC_KEY = "hmackey";
     
     private static final String KEYPAIR_ID = "keypairId";
@@ -171,11 +171,11 @@ public class AsymmetricWrappedExchangeSuite {
     
     /** Request data unit tests. */
     public static class RequestDataTest {
-        /** JSON key key pair ID. */
+        /** Key key pair ID. */
         private static final String KEY_KEY_PAIR_ID = "keypairid";
-        /** JSON key mechanism. */
+        /** Key mechanism. */
         private static final String KEY_MECHANISM = "mechanism";
-        /** JSON key public key. */
+        /** Key public key. */
         private static final String KEY_PUBLIC_KEY = "publickey";
         
         @RunWith(Parameterized.class)
@@ -420,7 +420,7 @@ public class AsymmetricWrappedExchangeSuite {
 
     /** Response data unit tests. */
         public static class ResponseDataTest {
-        /** JSON key master token. */
+        /** Key master token. */
         private static final String KEY_MASTER_TOKEN = "mastertoken";
         
         @Rule

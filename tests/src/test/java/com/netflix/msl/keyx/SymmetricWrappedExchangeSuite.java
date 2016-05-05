@@ -82,16 +82,16 @@ public class SymmetricWrappedExchangeSuite {
 	/** MSL encoder format. */
 	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
 
-    /** JSON key key exchange scheme. */
+    /** Key key exchange scheme. */
     private static final String KEY_SCHEME = "scheme";
-    /** JSON key key request data. */
+    /** Key key request data. */
     private static final String KEY_KEYDATA = "keydata";
     
-    /** JSON key symmetric key ID. */
+    /** Key symmetric key ID. */
     private static final String KEY_KEY_ID = "keyid";
-    /** JSON key wrapped encryption key. */
+    /** Key wrapped encryption key. */
     private static final String KEY_ENCRYPTION_KEY = "encryptionkey";
-    /** JSON key wrapped HMAC key. */
+    /** Key wrapped HMAC key. */
     private static final String KEY_HMAC_KEY = "hmackey";
 
     private static MasterToken PSK_MASTER_TOKEN;
@@ -240,7 +240,7 @@ public class SymmetricWrappedExchangeSuite {
 
     /** Response data unit tests. */
     public static class ResponseDataTest {
-        /** JSON key master token. */
+        /** Key master token. */
         private static final String KEY_MASTER_TOKEN = "mastertoken";
         
         @Rule

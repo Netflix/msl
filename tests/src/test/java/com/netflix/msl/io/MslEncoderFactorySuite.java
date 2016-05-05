@@ -217,7 +217,7 @@ public class MslEncoderFactorySuite {
      * method is used.
      * 
      * @param key MSL object key.
-     * @param type the expected type.
+     * @param type the expected type. May be {@code null}.
      * @param mo the MSL object.
      * @return the MSL object's value.
      */
@@ -248,7 +248,7 @@ public class MslEncoderFactorySuite {
      * method is used.
      * 
      * @param key MSL object key.
-     * @param type the expected type.
+     * @param type the expected type. May be {@code null}.
      * @param mo the MSL object.
      * @return the MSL object's value.
      */
@@ -278,7 +278,7 @@ public class MslEncoderFactorySuite {
      * {@code null} the untyped put method is used.
      * 
      * @param key MSL object key.
-     * @param type the specified type.
+     * @param type the specified type. May be {@code null}.
      * @param value the value.
      * @param mo the MSL object.
      */
@@ -403,7 +403,7 @@ public class MslEncoderFactorySuite {
      * For type {@code null} the untyped put method is used.
      * 
      * @param key MSL object key.
-     * @param type the specified type.
+     * @param type the specified type. May be {@code null}.
      * @param value the value.
      * @param mo the MSL object.
      */

@@ -84,14 +84,14 @@ public class DiffieHellmanExchangeSuite {
 	/** MSL encoder format. */
 	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
 
-    /** JSON key key exchange scheme. */
+    /** Key key exchange scheme. */
     private static final String KEY_SCHEME = "scheme";
-    /** JSON key key request data. */
+    /** Key key request data. */
     private static final String KEY_KEYDATA = "keydata";
     
-    /** JSON key Diffie-Hellman parameters ID. */
+    /** Key Diffie-Hellman parameters ID. */
     private static final String KEY_PARAMETERS_ID = "parametersid";
-    /** JSON key Diffie-Hellman public key. */
+    /** Key Diffie-Hellman public key. */
     private static final String KEY_PUBLIC_KEY = "publickey";
     
     /**
@@ -314,7 +314,7 @@ public class DiffieHellmanExchangeSuite {
     
     /** Response data unit tests. */
     public static class ResponseDataTest {
-        /** JSON key master token. */
+        /** Key master token. */
         private static final String KEY_MASTER_TOKEN = "mastertoken";
         
         @Rule

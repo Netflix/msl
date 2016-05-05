@@ -20,6 +20,9 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("AsymmetricWrappedExchangeSuite", function() {
+	/** MSL encoder format. */
+	var ENCODER_FORMAT = MslEncoderFormat.JSON;
+	
     /** EC curve q. */
     var EC_Q = new BigInteger("883423532389192164791648750360308885314476597252960362792450860609699839");
     /** EC coefficient a. */
@@ -59,20 +62,22 @@ describe("AsymmetricWrappedExchangeSuite", function() {
 			"-----END PUBLIC KEY-----",
 	};
 	
-    /** JSON key key exchange scheme. */
+    /** Key key exchange scheme. */
     var KEY_SCHEME = "scheme";
-    /** JSON key key request data. */
+    /** Key key request data. */
     var KEY_KEYDATA = "keydata";
     
-    /** JSON key key pair ID. */
+    /** Key key pair ID. */
     var KEY_KEY_PAIR_ID = "keypairid";
-    /** JSON key encrypted encryption key. */
+    /** Key encrypted encryption key. */
     var KEY_ENCRYPTION_KEY = "encryptionkey";
-    /** JSON key encrypted HMAC key. */
+    /** Key encrypted HMAC key. */
     var KEY_HMAC_KEY = "hmackey";
     
     /** MSL context. */
     var ctx;
+    /** MSL encoder factory. */
+    var encoder;
     
     var KEYPAIR_ID = "keypairId";
     var ECC_PUBLIC_KEY;
@@ -127,6 +132,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             waitsFor(function() { return RSAES_PUBLIC_KEY && RSAES_PRIVATE_KEY; }, "RSAES keys", 2500);
             
     		runs(function() {
+    			encoder = ctx.getMslEncoderFactory();
     			MslTestUtils.getMasterToken(ctx, 1, 1, {
     				result: function(masterToken) {
     					MASTER_TOKEN = masterToken;
@@ -151,11 +157,11 @@ describe("AsymmetricWrappedExchangeSuite", function() {
     
     /** Request data unit tests. */
     describe("RequestData", function() {
-        /** JSON key key pair ID. */
+        /** Key key pair ID. */
         var KEY_KEY_PAIR_ID = "keypairid";
-        /** JSON key mechanism. */
+        /** Key mechanism. */
         var KEY_MECHANISM = "mechanism";
-        /** JSON key public key. */
+        /** Key public key. */
         var KEY_PUBLIC_KEY = "publickey";
 
         function keyxRequestData() {
@@ -203,11 +209,18 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                 expect(req.mechanism).toEqual(mechanism);
                 expect(req.privateKey.getEncoded()).toEqual(privateKey.getEncoded());
                 expect(req.publicKey.getEncoded()).toEqual(publicKey.getEncoded());
-                var keydata = req.getKeydata();
-                expect(keydata).not.toBeNull();
+                var keydata;
+                runs(function() {
+                	req.getKeydata(encoder, ENCODER_FORMAT, {
+                		result: function(x) { keydata = x; },
+                		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                	});
+                });
+                waitsFor(function() { return keydata; }, "keydata", 100);
 
                 var joReq;
                 runs(function() {
+                	expect(keydata).not.toBeNull();
                     RequestData$parse(keydata, {
                         result: function(data) { joReq = data; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -215,35 +228,61 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                 });
                 waitsFor(function() { return joReq; }, "joReq not received", 100);
 
+                var moKeydata;
                 runs(function() {
                     expect(joReq.keyExchangeScheme).toEqual(req.keyExchangeScheme);
                     expect(joReq.keyPairId).toEqual(req.keyPairId);
                     expect(joReq.mechanism).toEqual(req.mechanism);
                     expect(joReq.privateKey).toBeNull();
                     expect(joReq.publicKey.getEncoded()).toEqual(req.publicKey.getEncoded());
-                    var joKeydata = joReq.getKeydata();
-                    expect(joKeydata).not.toBeNull();
-                    expect(joKeydata).toEqual(keydata);
+                    joReq.getKeydata(encoder, ENCODER_FORMAT, {
+                    	result: function(x) { moKeydata = x; },
+                    	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                });
+                waitsFor(function() { return moKeydata; }, "moKeydata", 100);
+                
+                runs(function() {
+                    expect(moKeydata).not.toBeNull();
+                    expect(moKeydata).toEqual(keydata);
                 });
             });
 
-            it("json is correct", function() {
+            it("mslobject is correct", function() {
                 var req = new RequestData(KEYPAIR_ID, mechanism, publicKey, privateKey);
-                var jo = JSON.parse(JSON.stringify(req));
-                expect(jo[KEY_SCHEME]).toEqual(KeyExchangeScheme.ASYMMETRIC_WRAPPED.name);
-                var keydata = jo[KEY_KEYDATA];
-                expect(keydata[KEY_KEY_PAIR_ID]).toEqual(KEYPAIR_ID);
-                expect(keydata[KEY_MECHANISM]).toEqual(mechanism);
-                expect(base64$decode(keydata[KEY_PUBLIC_KEY])).toEqual(publicKey.getEncoded());
+                
+                var mo;
+                runs(function() {
+                	MslTestUtils.toMslObject(encoder, req, {
+                		result: function(x) { mo = x; },
+                    	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                	});
+                });
+                waitsFor(function() { return mo; }, "mo", 100);
+                
+                runs(function() {
+	                expect(mo.getString(KEY_SCHEME)).toEqual(KeyExchangeScheme.ASYMMETRIC_WRAPPED.name);
+	                var keydata = mo.getMslObject(KEY_KEYDATA, encoder);
+	                expect(keydata.getString(KEY_KEY_PAIR_ID)).toEqual(KEYPAIR_ID);
+	                expect(keydata.getString(KEY_MECHANISM)).toEqual(mechanism);
+	                expect(keydata.getBytes(KEY_PUBLIC_KEY)).toEqual(publicKey.getEncoded());
+                });
             });
 
             it("create", function() {
                 var data = new RequestData(KEYPAIR_ID, mechanism, publicKey, privateKey);
-                var jsonString = JSON.stringify(data);
-                var jo = JSON.parse(jsonString);
+                var mo;
+                runs(function() {
+                	MslTestUtils.toMslObject(encoder, data, {
+                		result: function(x) { mo = x; },
+                    	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                	});
+                });
+                waitsFor(function() { return mo; }, "mo", 100);
+                
                 var keyRequestData;
                 runs(function() {
-                    KeyRequestData$parse(ctx, jo, {
+                    KeyRequestData$parse(ctx, mo, {
                         result: function(data) { keyRequestData = data; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
@@ -254,71 +293,93 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     expect(keyRequestData).not.toBeNull();
                     expect(keyRequestData instanceof RequestData).toBeTruthy();
 
-                    var joData = keyRequestData;
-                    expect(joData.keyExchangeScheme).toEqual(data.keyExchangeScheme);
-                    expect(joData.keyPairId).toEqual(data.keyPairId);
-                    expect(joData.mechanism).toEqual(data.mechanism);
-                    expect(joData.privateKey).toBeNull();
-                    expect(joData.publicKey.getEncoded()).toEqual(data.publicKey.getEncoded());
+                    var moData = keyRequestData;
+                    expect(moData.keyExchangeScheme).toEqual(data.keyExchangeScheme);
+                    expect(moData.keyPairId).toEqual(data.keyPairId);
+                    expect(moData.mechanism).toEqual(data.mechanism);
+                    expect(moData.privateKey).toBeNull();
+                    expect(moData.publicKey.getEncoded()).toEqual(data.publicKey.getEncoded());
                 });
             });
 
             it("missing key pair ID", function() {
-                var exception;
+            	var keydata;
                 runs(function() {
                     var req = new RequestData(KEYPAIR_ID, mechanism, publicKey, privateKey);
-                    var keydata = req.getKeydata();
+                    req.getKeydata(encoder, ENCODER_FORMAT, {
+                    	result: function(x) { keydata = x; },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                });
+                waitsFor(function() { return keydata; }, "keydata", 100);
 
-                    expect(keydata[KEY_KEY_PAIR_ID]).not.toBeNull();
-                    delete keydata[KEY_KEY_PAIR_ID];
+                var exception;
+                runs(function() {
+                	keydata.remove(KEY_KEY_PAIR_ID);
 
-                    RequestData$parse(keydata, {
+                	RequestData$parse(keydata, {
                         result: function() {},
                         error: function(e) { exception = e; }
                     });
                 });
                 waitsFor(function() { return exception; }, "exception", 100);
+                
                 runs(function() {
                     var f = function() { throw exception; };
-                    expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+                    expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
                 });
             });
 
             it("missing mechanism", function() {
-                var exception;
+            	var keydata;
                 runs(function() {
                     var req = new RequestData(KEYPAIR_ID, mechanism, publicKey, privateKey);
-                    var keydata = req.getKeydata();
+                    req.getKeydata(encoder, ENCODER_FORMAT, {
+                    	result: function(x) { keydata = x; },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                });
+                waitsFor(function() { return keydata; }, "keydata", 100);
 
-                    expect(keydata[KEY_MECHANISM]).not.toBeNull();
-                    delete keydata[KEY_MECHANISM];
+                var exception;
+                runs(function() {
+                	keydata.remove(KEY_MECHANISM);
 
-                    RequestData$parse(keydata, {
+                	RequestData$parse(keydata, {
                         result: function() {},
                         error: function(e) { exception = e; }
                     });
                 });
                 waitsFor(function() { return exception; }, "exception", 100);
+
                 runs(function() {
                     var f = function() { throw exception; };
-                    expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+                    expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
                 });
             });
 
             it("invalid mechanism", function() {
-                var exception;
+            	var keydata;
                 runs(function() {
                     var req = new RequestData(KEYPAIR_ID, mechanism, publicKey, privateKey);
-                    var keydata = req.getKeydata();
+                    req.getKeydata(encoder, ENCODER_FORMAT, {
+                    	result: function(x) { keydata = x; },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                });
+                waitsFor(function() { return keydata; }, "keydata", 100);
 
-                    keydata[KEY_MECHANISM] = "x";
+                var exception;
+                runs(function() {
+                	keydata.put(KEY_MECHANISM, "x");
 
-                    RequestData$parse(keydata, {
+                	RequestData$parse(keydata, {
                         result: function() {},
                         error: function(e) { exception = e; }
                     });
                 });
                 waitsFor(function() { return exception; }, "exception", 100);
+                
                 runs(function() {
                     var f = function() { throw exception; };
                     expect(f).toThrow(new MslKeyExchangeException(MslError.UNIDENTIFIED_KEYX_MECHANISM));
@@ -326,42 +387,57 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             });
 
             it("missing public key", function() {
-                var exception;
+            	var keydata;
                 runs(function() {
                     var req = new RequestData(KEYPAIR_ID, mechanism, publicKey, privateKey);
-                    var keydata = req.getKeydata();
+                    req.getKeydata(encoder, ENCODER_FORMAT, {
+                    	result: function(x) { keydata = x; },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                });
+                waitsFor(function() { return keydata; }, "keydata", 100);
 
-                    expect(keydata[KEY_PUBLIC_KEY]).not.toBeNull();
-                    delete keydata[KEY_PUBLIC_KEY];
+                var exception;
+                runs(function() {
+                	keydata.remove(KEY_PUBLIC_KEY);
 
-                    RequestData$parse(keydata, {
+                	RequestData$parse(keydata, {
                         result: function() {},
                         error: function(e) { exception = e; }
                     });
                 });
                 waitsFor(function() { return exception; }, "exception", 100);
+
                 runs(function() {
                     var f = function() { throw exception; };
-                    expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+                    expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
                 });
             });
 
             it("invalid public key", function() {
-                var exception;
+            	var keydata;
                 runs(function() {
                     var req = new RequestData(KEYPAIR_ID, mechanism, publicKey, privateKey);
-                    var keydata = req.getKeydata();
+                    req.getKeydata(encoder, ENCODER_FORMAT, {
+                    	result: function(x) { keydata = x; },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                });
+                waitsFor(function() { return keydata; }, "keydata", 100);
 
+                var exception;
+                runs(function() {
                     var encodedKey = publicKey.getEncoded();
                     var shortKey = Arrays$copyOf(encodedKey, 0, encodedKey.length / 2);
-                    keydata[KEY_PUBLIC_KEY] = base64$encode(shortKey);
+                	keydata.put(KEY_PUBLIC_KEY, shortKey);
 
-                    RequestData$parse(keydata, {
+                	RequestData$parse(keydata, {
                         result: function() {},
                         error: function(e) { exception = e; }
                     });
                 });
                 waitsFor(function() { return exception; }, "exception", 100);
+
                 runs(function() {
                     var f = function() { throw exception; };
                     expect(f).toThrow(new MslCryptoException(MslError.INVALID_PUBLIC_KEY));
@@ -374,10 +450,15 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             var dataB = new RequestData(KEYPAIR_ID + "B", Mechanism.JWE_RSA, RSA_OAEP_PUBLIC_KEY, RSA_OAEP_PRIVATE_KEY);
             var dataA2;
             runs(function() {
-                RequestData$parse(dataA.getKeydata(), {
-                    result: function(data) { dataA2 = data; },
+            	dataA.getKeydata(encoder, ENCODER_FORMAT, {
+            		result: function(keydata) {
+		                RequestData$parse(keydata, {
+		                    result: function(data) { dataA2 = data; },
+		                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                });
+            		},
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                });
+            	});
             });
             waitsFor(function() { return dataA2; }, "dataA2 not received", 300);
             
@@ -400,10 +481,15 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             var dataB = new RequestData(KEYPAIR_ID, Mechanism.ECC, RSA_OAEP_PUBLIC_KEY, RSA_OAEP_PRIVATE_KEY);
             var dataA2;
             runs(function() {
-                RequestData$parse(dataA.getKeydata(), {
-                    result: function(data) { dataA2 = data; },
+            	dataA.getKeydata(encoder, ENCODER_FORMAT, {
+            		result: function(keydata) {
+		                RequestData$parse(keydata, {
+		                    result: function(data) { dataA2 = data; },
+		                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                });
+            		},
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                });
+            	});
             });
             waitsFor(function() { return dataA2; }, "dataA2 not received", 300);
             
@@ -432,13 +518,18 @@ describe("AsymmetricWrappedExchangeSuite", function() {
         	});
         	waitsFor(function() { return rsaPublicKey; }, "RSA public key", 1200);
         	
-        	var dataA = undefined, dataB = undefined, dataA2;
+        	var dataA, dataB, dataA2;
         	runs(function() {
         	    dataA = new RequestData(KEYPAIR_ID, Mechanism.JWE_RSA, RSA_OAEP_PUBLIC_KEY, RSA_OAEP_PRIVATE_KEY);
         	    dataB = new RequestData(KEYPAIR_ID, Mechanism.JWE_RSA, rsaPublicKey, RSA_OAEP_PRIVATE_KEY);
-        	    RequestData$parse(dataA.getKeydata(), {
-        	        result: function(data) { dataA2 = data; },
-        	        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	    dataA.getKeydata(encoder, ENCODER_FORMAT, {
+        	    	result: function(keydata) {
+        	    		RequestData$parse(keydata, {
+        	    			result: function(data) { dataA2 = data; },
+        	    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	    		});
+        	    	},
+        	    	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	    });
         	});
         	waitsFor(function() { return dataA && dataB && dataA2; }, "data not received", 300);
@@ -468,16 +559,21 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             });
             waitsFor(function() { return rsaPrivateKey; }, "RSA private key", 1200);
 
-            var dataA = undefined, dataB = undefined, dataA2;
+            var dataA, dataB, dataA2;
             runs(function() {
                 dataA = new RequestData(KEYPAIR_ID, Mechanism.JWE_RSA, RSA_OAEP_PUBLIC_KEY, RSA_OAEP_PRIVATE_KEY);
                 dataB = new RequestData(KEYPAIR_ID, Mechanism.JWE_RSA, RSA_OAEP_PUBLIC_KEY, rsaPrivateKey);
-                RequestData$parse(dataA.getKeydata(), {
-                    result: function(data) { dataA2 = data; },
-                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                });
+        	    dataA.getKeydata(encoder, ENCODER_FORMAT, {
+        	    	result: function(keydata) {
+        	    		RequestData$parse(keydata, {
+        	    			result: function(data) { dataA2 = data; },
+        	    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	    		});
+        	    	},
+        	    	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	    });
             });
-            waitsFor(function() { return dataA2; }, "dataA2 not received", 300);
+        	waitsFor(function() { return dataA && dataB && dataA2; }, "data not received", 300);
 
             runs(function() {    
                 expect(dataA.equals(dataA)).toBeTruthy();
@@ -503,7 +599,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
 
     /** Response data unit tests. */
     describe("ResponseData", function() {
-        /** JSON key master token. */
+        /** Key master token. */
         var KEY_MASTER_TOKEN = "mastertoken";
         
         it("ctors", function() {
@@ -513,39 +609,67 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             expect(resp.keyExchangeScheme).toEqual(KeyExchangeScheme.ASYMMETRIC_WRAPPED);
             expect(resp.keyPairId).toEqual(KEYPAIR_ID);
             expect(resp.masterToken).toEqual(MASTER_TOKEN);
-            var keydata = resp.getKeydata();
-            expect(keydata).not.toBeNull();
-
-            var joResp = ResponseData$parse(MASTER_TOKEN, keydata);
-            expect(joResp.encryptionKey).toEqual(resp.encryptionKey);
-            expect(joResp.hmacKey).toEqual(resp.hmacKey);
-            expect(joResp.keyExchangeScheme).toEqual(resp.keyExchangeScheme);
-            expect(joResp.keyPairId).toEqual(resp.keyPairId);
-            expect(joResp.masterToken).toEqual(resp.masterToken);
-            var joKeydata = resp.getKeydata();
-            expect(joKeydata).not.toBeNull();
-            expect(joKeydata).toEqual(keydata);
+            
+            var keydata;
+            runs(function() {
+            	resp.getKeydata(encoder, ENCODER_FORMAT, {
+            		result: function(x) { keydata = x; },
+            		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            	});
+            });
+            waitsFor(function() { return keydata; }, "keydata", 100);
+            
+            var moKeydata;
+            runs(function() {
+	            expect(keydata).not.toBeNull();
+	
+	            var moResp = ResponseData$parse(MASTER_TOKEN, keydata);
+	            expect(moResp.encryptionKey).toEqual(resp.encryptionKey);
+	            expect(moResp.hmacKey).toEqual(resp.hmacKey);
+	            expect(moResp.keyExchangeScheme).toEqual(resp.keyExchangeScheme);
+	            expect(moResp.keyPairId).toEqual(resp.keyPairId);
+	            expect(moResp.masterToken).toEqual(resp.masterToken);
+	            resp.getKeydata(encoder, ENCODER_FORMAT, {
+	            	result: function(x) { moKeydata = x; },
+            		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+	            });
+            });
+            waitsFor(function() { return moKeydata; }, "moKeydata", 100);
+            
+            runs(function() {
+	            expect(moKeydata).not.toBeNull();
+	            expect(moKeydata).toEqual(keydata);
+            });
         });
         
-        it("json is correct", function() {
-            var masterToken = undefined, jo;
+        it("mslobject is correct", function() {
+            var mo;
             runs(function() {
                 var resp = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
-                jo = JSON.parse(JSON.stringify(resp));
-                expect(jo[KEY_SCHEME]).toEqual(KeyExchangeScheme.ASYMMETRIC_WRAPPED.name);
+                MslTestUtils.toMslObject(encoder, resp, {
+                	result: function(x) { mo = x; },
+            		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                });
+            });
+            waitsFor(function() { return mo; }, "mo", 100);
+            
+            var masterToken;
+            runs(function() {
+                expect(mo.getString(KEY_SCHEME)).toEqual(KeyExchangeScheme.ASYMMETRIC_WRAPPED.name);
                 
-            	MasterToken$parse(ctx, jo[KEY_MASTER_TOKEN], {
+            	MasterToken$parse(ctx, mo[KEY_MASTER_TOKEN], {
             		result: function(token) { masterToken = token; },
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return jo && masterToken; }, "json object and master token not received", 600);
+            waitsFor(function() { return masterToken; }, "master token not received", 600);
+            
             runs(function() {
 	            expect(masterToken).toEqual(MASTER_TOKEN);
-	            var keydata = jo[KEY_KEYDATA];
-	            expect(keydata[KEY_KEY_PAIR_ID]).toEqual(KEYPAIR_ID);
-	            expect(base64$decode(keydata[KEY_ENCRYPTION_KEY])).toEqual(ENCRYPTION_KEY);
-	            expect(base64$decode(keydata[KEY_HMAC_KEY])).toEqual(HMAC_KEY);
+	            var keydata = mo.getMslObject(KEY_KEYDATA);
+	            expect(keydata.getString(KEY_KEY_PAIR_ID)).toEqual(KEYPAIR_ID);
+	            expect(keydata.getBytes(KEY_ENCRYPTION_KEY)).toEqual(ENCRYPTION_KEY);
+	            expect(keydata.getBytes(KEY_HMAC_KEY)).toEqual(HMAC_KEY);
             });
         });
         
@@ -554,65 +678,90 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             
             var keyResponseData;
             runs(function() {
-                var jsonString = JSON.stringify(data);
-                var jo = JSON.parse(jsonString);
-                KeyResponseData$parse(ctx, jo, {
-                    result: function(data) { keyResponseData = data; },
-                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                });
+            	MslTestUtils.toMslObject(encoder, data, {
+            		result: function(mo) {
+		                KeyResponseData$parse(ctx, mo, {
+		                    result: function(data) { keyResponseData = data; },
+		                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                });
+            		},
+            		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
             });
             waitsFor(function() { return keyResponseData; }, "keyResponseData not received", 300);;
+            
             runs(function() {
 	            expect(keyResponseData).not.toBeNull();
 	            expect(keyResponseData instanceof ResponseData).toBeTruthy();
 	            
-	            var joData = keyResponseData;
-	            expect(joData.encryptionKey).toEqual(data.encryptionKey);
-	            expect(joData.hmacKey).toEqual(data.hmacKey);
-	            expect(joData.keyExchangeScheme).toEqual(data.keyExchangeScheme);
-	            expect(joData.keyPairId).toEqual(data.keyPairId);
-	            expect(joData.masterToken).toEqual(data.masterToken);
-	            expect(joData.identity).toEqual(data.identity);
+	            var moData = keyResponseData;
+	            expect(moData.encryptionKey).toEqual(data.encryptionKey);
+	            expect(moData.hmacKey).toEqual(data.hmacKey);
+	            expect(moData.keyExchangeScheme).toEqual(data.keyExchangeScheme);
+	            expect(moData.keyPairId).toEqual(data.keyPairId);
+	            expect(moData.masterToken).toEqual(data.masterToken);
+	            expect(moData.identity).toEqual(data.identity);
             });
         });
 
         it("missing key pair ID", function() {
-            var f = function() {
+        	var keydata;
+        	runs(function() {
             	var resp = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
-            	var keydata = resp.getKeydata();
-
-            	expect(keydata[KEY_KEY_PAIR_ID]).not.toBeNull();
-            	delete keydata[KEY_KEY_PAIR_ID];
-
-            	ResponseData$parse(MASTER_TOKEN, keydata);
-            };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            	resp.getKeydata(encoder, ENCODER_FORMAT, {
+            		result: function(x) { keydata = x; },
+		                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+        	});
+        	waitsFor(function() { return keydata; }, "keydata", 100;
+        	
+        	runs(function() {
+        		var f = function() {
+            		keydata.remove(KEY_KEY_PAIR_ID);
+        			ResponseData$parse(MASTER_TOKEN, keydata);
+        		};
+        		expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
+        	});
         });
 
         it("missing encryption key", function() {
-            var f = function() {
+        	var keydata;
+        	runs(function() {
             	var resp = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
-            	var keydata = resp.getKeydata();
-
-            	expect(keydata[KEY_ENCRYPTION_KEY]).not.toBeNull();
-            	delete keydata[KEY_ENCRYPTION_KEY];
-
-            	ResponseData$parse(MASTER_TOKEN, keydata);
-            };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            	resp.getKeydata(encoder, ENCODER_FORMAT, {
+            		result: function(x) { keydata = x; },
+		                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+        	});
+        	waitsFor(function() { return keydata; }, "keydata", 100;
+        	
+        	runs(function() {
+        		var f = function() {
+            		keydata.remove(KEY_ENCRYPTION_KEY);
+        			ResponseData$parse(MASTER_TOKEN, keydata);
+        		};
+        		expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
+        	});
         });
 
         it("missing HMAC key", function() {
-            var f = function() {
+        	var keydata;
+        	runs(function() {
             	var resp = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
-            	var keydata = resp.getKeydata();
-
-            	expect(keydata[KEY_HMAC_KEY]).not.toBeNull();
-            	delete keydata[KEY_HMAC_KEY];
-
-            	ResponseData$parse(MASTER_TOKEN, keydata);
-            };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            	resp.getKeydata(encoder, ENCODER_FORMAT, {
+            		result: function(x) { keydata = x; },
+		                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+        	});
+        	waitsFor(function() { return keydata; }, "keydata", 100;
+        	
+        	runs(function() {
+        		var f = function() {
+            		keydata.remove(KEY_HMAC_KEY);
+        			ResponseData$parse(MASTER_TOKEN, keydata);
+        		};
+        		expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
+        	});
         });
         
         it("equals master token", function() {
@@ -629,11 +778,20 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             });
             waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens not received", 300);
             
+            var dataA, dataB, dataA2;
             runs(function() {
-            	var dataA = new ResponseData(masterTokenA, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
-            	var dataB = new ResponseData(masterTokenB, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
-            	var dataA2 = ResponseData$parse(masterTokenA, dataA.getKeydata());
-            	
+            	dataA = new ResponseData(masterTokenA, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
+            	dataB = new ResponseData(masterTokenB, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
+            	dataA.getKeydata(encoder, ENCODER_FORMAT, {
+            		result: function(keydata) {
+            			dataA2 = ResponseData$parse(masterTokenA, keydata);
+            		},
+            		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            	});
+            });
+            waitsFor(function() { return dataA && dataB && dataA2; }, "data", 100;
+            
+            runs(function() {
 	            expect(dataA.equals(dataA)).toBeTruthy();
 	            expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
 	            
@@ -650,18 +808,29 @@ describe("AsymmetricWrappedExchangeSuite", function() {
         it("equals key pair ID", function() {
             var dataA = new ResponseData(MASTER_TOKEN, KEYPAIR_ID + "A", ENCRYPTION_KEY, HMAC_KEY);
             var dataB = new ResponseData(MASTER_TOKEN, KEYPAIR_ID + "B", ENCRYPTION_KEY, HMAC_KEY);
-            var dataA2 = ResponseData$parse(MASTER_TOKEN, dataA.getKeydata());
+            var dataA2;
+            runs(function() {
+	        	dataA.getKeydata(encoder, ENCODER_FORMAT, {
+	        		result: function(keydata) {
+	        			dataA2 = ResponseData$parse(MASTER_TOKEN, keydata);
+	        		},
+	        		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+	        	});
+            });
+            waitsFor(function() { return dataA2; }, "dataA2", 100);
  
-            expect(dataA.equals(dataA)).toBeTruthy();
-            expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
-
-            expect(dataA.equals(dataB)).toBeFalsy();
-            expect(dataB.equals(dataA)).toBeFalsy();
-            expect(dataB.uniqueKey()).not.toEqual(dataA.uniqueKey());
-
-            expect(dataA.equals(dataA2)).toBeTruthy();
-            expect(dataA2.equals(dataA)).toBeTruthy();
-            expect(dataA2.uniqueKey()).toEqual(dataA.uniqueKey());
+            runs(function() {
+	            expect(dataA.equals(dataA)).toBeTruthy();
+	            expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
+	
+	            expect(dataA.equals(dataB)).toBeFalsy();
+	            expect(dataB.equals(dataA)).toBeFalsy();
+	            expect(dataB.uniqueKey()).not.toEqual(dataA.uniqueKey());
+	
+	            expect(dataA.equals(dataA2)).toBeTruthy();
+	            expect(dataA2.equals(dataA)).toBeTruthy();
+	            expect(dataA2.uniqueKey()).toEqual(dataA.uniqueKey());
+            });
         });
         
         it("equals encryption key", function() {
@@ -670,18 +839,29 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             ++encryptionKeyB[0];
             var dataA = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, encryptionKeyA, HMAC_KEY);
             var dataB = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, encryptionKeyB, HMAC_KEY);
-            var dataA2 = ResponseData$parse(MASTER_TOKEN, dataA.getKeydata());
+            var dataA2;
+            runs(function() {
+	        	dataA.getKeydata(encoder, ENCODER_FORMAT, {
+	        		result: function(keydata) {
+	        			dataA2 = ResponseData$parse(MASTER_TOKEN, keydata);
+	        		},
+	        		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+	        	});
+            });
+            waitsFor(function() { return dataA2; }, "dataA2", 100);
             
-            expect(dataA.equals(dataA)).toBeTruthy();
-            expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
-
-            expect(dataA.equals(dataB)).toBeFalsy();
-            expect(dataB.equals(dataA)).toBeFalsy();
-            expect(dataB.uniqueKey()).not.toEqual(dataA.uniqueKey());
-
-            expect(dataA.equals(dataA2)).toBeTruthy();
-            expect(dataA2.equals(dataA)).toBeTruthy();
-            expect(dataA2.uniqueKey()).toEqual(dataA.uniqueKey());
+            runs(function() {
+	            expect(dataA.equals(dataA)).toBeTruthy();
+	            expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
+	
+	            expect(dataA.equals(dataB)).toBeFalsy();
+	            expect(dataB.equals(dataA)).toBeFalsy();
+	            expect(dataB.uniqueKey()).not.toEqual(dataA.uniqueKey());
+	
+	            expect(dataA.equals(dataA2)).toBeTruthy();
+	            expect(dataA2.equals(dataA)).toBeTruthy();
+	            expect(dataA2.uniqueKey()).toEqual(dataA.uniqueKey());
+            });
         });
         
         it("equals HMAC key", function() {
@@ -690,18 +870,29 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             ++hmacKeyB[0];
             var dataA = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, hmacKeyA);
             var dataB = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, hmacKeyB);
-            var dataA2 = ResponseData$parse(MASTER_TOKEN, dataA.getKeydata());
+            var dataA2;
+            runs(function() {
+	        	dataA.getKeydata(encoder, ENCODER_FORMAT, {
+	        		result: function(keydata) {
+	        			dataA2 = ResponseData$parse(MASTER_TOKEN, keydata);
+	        		},
+	        		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+	        	});
+            });
+            waitsFor(function() { return dataA2; }, "dataA2", 100);
             
-            expect(dataA.equals(dataA)).toBeTruthy();
-            expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
-
-            expect(dataA.equals(dataB)).toBeFalsy();
-            expect(dataB.equals(dataA)).toBeFalsy();
-            expect(dataB.uniqueKey()).not.toEqual(dataA.uniqueKey());
-
-            expect(dataA.equals(dataA2)).toBeTruthy();
-            expect(dataA2.equals(dataA)).toBeTruthy();
-            expect(dataA2.uniqueKey()).toEqual(dataA.uniqueKey());
+            runs(function() {
+	            expect(dataA.equals(dataA)).toBeTruthy();
+	            expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
+	
+	            expect(dataA.equals(dataB)).toBeFalsy();
+	            expect(dataB.equals(dataA)).toBeFalsy();
+	            expect(dataB.uniqueKey()).not.toEqual(dataA.uniqueKey());
+	
+	            expect(dataA.equals(dataA2)).toBeTruthy();
+	            expect(dataA2.equals(dataA)).toBeTruthy();
+	            expect(dataA2.uniqueKey()).toEqual(dataA.uniqueKey());
+            });
         });
         
         it("equals object", function() {
@@ -941,11 +1132,11 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                 runs(function() {
                     expect(responseCryptoContext).not.toBeNull();
 
-                    requestCryptoContext.encrypt(data, {
+                    requestCryptoContext.encrypt(data, encoder, ENCODER_FORMAT, {
                         result: function(data) { requestCiphertext = data; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
-                    responseCryptoContext.encrypt(data, {
+                    responseCryptoContext.encrypt(data, encoder, ENCODER_FORMAT, {
                         result: function(data) { responseCiphertext = data; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
@@ -959,11 +1150,11 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                 // Signatures should always be equal.
                 var requestSignature = undefined, responseSignature;
                 runs(function() {
-                    requestCryptoContext.sign(data, {
+                    requestCryptoContext.sign(data, encoder, ENCODER_FORMAT, {
                         result: function(data) { requestSignature = data; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
-                    responseCryptoContext.sign(data, {
+                    responseCryptoContext.sign(data, encoder, ENCODER_FORMAT, {
                         result: function(data) { responseSignature = data; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
@@ -978,11 +1169,11 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                 // Plaintext should always be equal to the original message.
                 var requestPlaintext = undefined, responsePlaintext;
                 runs(function() {
-                    requestCryptoContext.decrypt(responseCiphertext, {
+                    requestCryptoContext.decrypt(responseCiphertext, encoder, {
                         result: function(data) { requestPlaintext = data; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
-                    responseCryptoContext.decrypt(requestCiphertext, {
+                    responseCryptoContext.decrypt(requestCiphertext, encoder, {
                         result: function(data) { responsePlaintext = data; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
@@ -997,11 +1188,11 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                 // Verification should always succeed.
                 var requestVerified; responseVerified = undefined;
                 runs(function() {
-                    requestCryptoContext.verify(data, responseSignature, {
+                    requestCryptoContext.verify(data, responseSignature, encoder, {
                         result: function(data) { requestVerified = data; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
-                    responseCryptoContext.verify(data, requestSignature, {
+                    responseCryptoContext.verify(data, requestSignature, encoder, {
                         result: function(data) { responseVerified = data; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
@@ -1132,25 +1323,34 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                 });
                 waitsFor(function() { return keyxData; }, "keyxData not received", 300);
 
-                var exception;
+                var keydata;
                 runs(function() {
                     var keyResponseData = keyxData.keyResponseData;
                     var masterToken = keyResponseData.masterToken;
 
-                    var keydata = keyResponseData.getKeydata();
-                    var wrappedEncryptionKey = base64$decode(keydata[KEY_ENCRYPTION_KEY]);
+                    keyResponseData.getKeydata(encoder, ENCODER_FORMAT, {
+                    	result: function(x) { keydata = x; },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                });
+                waitsFor(function() { return keydata; }, "keydata", 100);
+                
+                var exception;
+                runs(function() {
+                    var wrappedEncryptionKey = keydata.getBytes(KEY_ENCRYPTION_KEY);
                     //  I think I have to change length - 2 because of padding.
                     ++wrappedEncryptionKey[wrappedEncryptionKey.length-2];
-                    keydata[KEY_ENCRYPTION_KEY] = base64$encode(wrappedEncryptionKey);
-                    var wrappedHmacKey = base64$decode(keydata[KEY_HMAC_KEY]);
+                    keydata.put(KEY_ENCRYPTION_KEY, base64$encode(wrappedEncryptionKey));
+                    var wrappedHmacKey = keydata.getBytes(KEY_HMAC_KEY);
 
                     var invalidKeyResponseData = new ResponseData(masterToken, KEYPAIR_ID, wrappedEncryptionKey, wrappedHmacKey);
                     factory.getCryptoContext(ctx, keyRequestData, invalidKeyResponseData, null, {
                         result: function() {},
-                        error: function(err) { exception = err; }
+                        error: function(e) { exception = e; }
                     });
                 });
                 waitsFor(function() { return exception; }, "exception not recevied", 300);
+                
                 runs(function() {
                     var f = function() { throw exception; };
                     expect(f).toThrow(new MslCryptoException(MslError.NONE));
@@ -1169,25 +1369,34 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                 });
                 waitsFor(function() { return keyxData; }, "keyxData not received", 300);
 
-                var exception;
+                var keydata;
                 runs(function() {
                     var keyResponseData = keyxData.keyResponseData;
                     var masterToken = keyResponseData.masterToken;
 
-                    var keydata = keyResponseData.getKeydata();
-                    var wrappedHmacKey = base64$decode(keydata[KEY_HMAC_KEY]);
+                    keyResponseData.getKeydata(encoder, ENCODER_FORMAT, {
+                    	result: function(x) { keydata = x; },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                });
+                waitsFor(function() { return keydata; }, "keydata", 100);
+                
+                var exception;
+                runs(function() {
+                    var wrappedHmacKey = keydata.getBytes(KEY_HMAC_KEY);
                     //  I think I have to change length - 2 because of padding.
                     ++wrappedHmacKey[wrappedHmacKey.length-2];
-                    keydata[KEY_HMAC_KEY] = base64$encode(wrappedHmacKey);
-                    var wrappedEncryptionKey = base64$decode(keydata[KEY_ENCRYPTION_KEY]);
+                    keydata.put(KEY_HMAC_KEY, base64$encode(wrappedHmacKey));
+                    var wrappedEncryptionKey = keydata.getBytes(KEY_ENCRYPTION_KEY);
 
                     var invalidKeyResponseData = new ResponseData(masterToken, KEYPAIR_ID, wrappedEncryptionKey, wrappedHmacKey);
                     factory.getCryptoContext(ctx, keyRequestData, invalidKeyResponseData, null, {
                         result: function() {},
-                        error: function(err) { exception = err; }
+                        error: function(e) { exception = e; }
                     });
                 });
                 waitsFor(function() { return exception; }, "exception not recevied", 300);
+                
                 runs(function() {
                     var f = function() { throw exception; };
                     expect(f).toThrow(new MslCryptoException(MslError.NONE));

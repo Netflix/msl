@@ -66,7 +66,8 @@ var MslEncoderFactory$quote;
          * inspecting the byte stream identifier located in the first byte.</p>
          * 
          * @param {InputStream} source the binary data to tokenize.
-         * @param {MslEncodingFormat=} format the encoding format.
+         * @param {?MslEncodingFormat} format the encoding format. May be
+         *        {@code null}.
          * @param {number} timeout read timeout used to determine the encoding
          *        format or -1 for no timeout.
          * @param {{result: function(MslTokenizer), timeout: function(), error: function(Error)}}

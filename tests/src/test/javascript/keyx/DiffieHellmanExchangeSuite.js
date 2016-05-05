@@ -20,14 +20,17 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 xdescribe("DiffieHellmanExchangeSuite", function() {
-    /** JSON key key exchange scheme. */
+	/** MSL encoder format. */
+	var ENCODER_FORMAT = MslEncoderFormat.JSON;
+	
+    /** Key key exchange scheme. */
     var KEY_SCHEME = "scheme";
-    /** JSON key key request data. */
+    /** Key key request data. */
     var KEY_KEYDATA = "keydata";
     
-    /** JSON key Diffie-Hellman parameters ID. */
+    /** Key Diffie-Hellman parameters ID. */
     var KEY_PARAMETERS_ID = "parametersid";
-    /** JSON key Diffie-Hellman public key. */
+    /** Key Diffie-Hellman public key. */
     var KEY_PUBLIC_KEY = "publickey";
     
     /**
@@ -56,6 +59,8 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
     var random = new Random();
     /** MSL context. */
     var ctx;
+    /** MSL encoder factory. */
+    var encoder;
     
     var REQUEST_PRIVATE_KEY, REQUEST_PUBLIC_KEY;
     var RESPONSE_PRIVATE_KEY, RESPONSE_PUBLIC_KEY;
@@ -91,6 +96,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             waitsFor(function() { return ctx && REQUEST_PUBLIC_KEY && REQUEST_PRIVATE_KEY && RESPONSE_PUBLIC_KEY && RESPONSE_PRIVATE_KEY; }, "ctx and DH keys", 100);
             
 		    runs(function() {
+		    	encoder = ctx.getMslEncoderFactory();
 		    	MslTestUtils.getMasterToken(ctx, 1, 1, {
 		    		result: function(masterToken) {
 		    			MASTER_TOKEN = masterToken;
@@ -119,45 +125,79 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             expect(req.parametersId).toEqual(PARAMETERS_ID);
             expect(req.privateKey.getEncoded()).toEqual(REQUEST_PRIVATE_KEY.getEncoded());
             expect(req.publicKey).toEqual(REQUEST_PUBLIC_KEY);
-            var keydata = req.getKeydata();
-            expect(keydata).not.toBeNull();
             
-            var joReq;
+            var keydata;
             runs(function() {
+            	req.getKeydata(encoder, ENCODER_FORMAT, {
+            		result: function(x) { keydata = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+            });
+            waitsFor(function() { return keydata; }, "keydata", 100);
+            
+            var moReq;
+            runs(function() {
+                expect(keydata).not.toBeNull();
                 RequestData$parse(keydata, {
-                    result: function(data) { joReq = data; },
+                    result: function(data) { moReq = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return joReq; }, "joReq not received", 100);
+            waitsFor(function() { return moReq; }, "moReq not received", 100);
+            
+            var moKeydata;
+            runs(function() {
+                expect(moReq.keyExchangeScheme).toEqual(req.keyExchangeScheme);
+                expect(moReq.parametersId).toEqual(req.parametersId);
+                expect(moReq.privateKey).toBeNull();
+                expect(moReq.publicKey).toEqual(req.publicKey);
+                moReq.getKeydata(encoder, ENCODER_FORMAT, {
+                	result: function(x) { moKeydata = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return moKeydata; }, "moKeydata", 100);
             
             runs(function() {
-                expect(joReq.keyExchangeScheme).toEqual(req.keyExchangeScheme);
-                expect(joReq.parametersId).toEqual(req.parametersId);
-                expect(joReq.privateKey).toBeNull();
-                expect(joReq.publicKey).toEqual(req.publicKey);
-                var joKeydata = joReq.getKeydata();
-                expect(joKeydata).not.toBeNull();
-                expect(joKeydata).toEqual(keydata);
+                expect(moKeydata).not.toBeNull();
+                expect(moKeydata).toEqual(keydata);
             });
         });
         
-        it("json is correct", function() {
+        it("mslobject is correct", function() {
             var req = new RequestData(PARAMETERS_ID, REQUEST_PUBLIC_KEY, REQUEST_PRIVATE_KEY);
-            var jo = JSON.parse(JSON.stringify(req));
-            expect(jo[KEY_SCHEME]).toEqual(KeyExchangeScheme.DIFFIE_HELLMAN.name);
-            var keydata = jo[KEY_KEYDATA];
-            expect(keydata[KEY_PARAMETERS_ID]).toEqual(PARAMETERS_ID);
-            expect(prependNullByte(base64$decode(keydata[KEY_PUBLIC_KEY]))).toEqual(REQUEST_PUBLIC_KEY.getEncoded());
+            var mo;
+            runs(function() {
+            	MslTestUtils.toMslObject(encoder, mo, {
+            		result: function(x) { mo = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+            });
+            waitsFor(function() { return mo; }, "mo", 100);
+            
+            runs(function() {
+            	expect(mo[KEY_SCHEME]).toEqual(KeyExchangeScheme.DIFFIE_HELLMAN.name);
+            	var keydata = mo.getMslObject(KEY_KEYDATA);
+	            expect(keydata.getString(KEY_PARAMETERS_ID)).toEqual(PARAMETERS_ID);
+	            expect(prependNullByte(keydata.getBytes(KEY_PUBLIC_KEY))).toEqual(REQUEST_PUBLIC_KEY.getEncoded());
+            });
         });
         
         it("create", function() {
             var data = new RequestData(PARAMETERS_ID, REQUEST_PUBLIC_KEY, REQUEST_PRIVATE_KEY);
-            var jsonString = JSON.stringify(data);
-            var jo = JSON.parse(jsonString);
+            
+            var mo;
+            runs(function() {
+            	MslTestUtils.toMslObject(encoder, mo, {
+            		result: function(x) { mo = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+            });
+            waitsFor(function() { return mo; }, "mo", 100);
+            
             var keyRequestData;
             runs(function() {
-                KeyRequestData$parse(ctx, jo, {
+                KeyRequestData$parse(ctx, mo, {
                     result: function(data) { keyRequestData = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -168,50 +208,72 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
                 expect(keyRequestData).not.toBeNull();
                 expect(keyRequestData instanceof RequestData).toBeTruthy();
                 
-                var joData = keyRequestData;
-                expect(joData.keyExchangeScheme).toEqual(data.keyExchangeScheme);
-                expect(joData.parametersId).toEqual(data.parametersId);
-                expect(joData.privateKey).toBeNull();
-                expect(joData.publicKey).toEqual(data.publicKey);
+                var moData = keyRequestData;
+                expect(moData.keyExchangeScheme).toEqual(data.keyExchangeScheme);
+                expect(moData.parametersId).toEqual(data.parametersId);
+                expect(moData.privateKey).toBeNull();
+                expect(moData.publicKey).toEqual(data.publicKey);
             });
         });
         
         it("missing parameters ID", function() {
-            var f = function() {
+        	var keydata;
+        	runs(function() {
 	            var req = new RequestData(PARAMETERS_ID, REQUEST_PUBLIC_KEY, REQUEST_PRIVATE_KEY);
-	            var keydata = req.getKeydata();
-	            
-	            expect(keydata[KEY_PARAMETERS_ID]).not.toBeNull();
-	            delete keydata[KEY_PARAMETERS_ID];
-	            
-	            RequestData$parse(keydata);
-            };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+	            req.getKeydata(encoder, ENCODER_FORMAT, {
+	            	result: function(x) { keydata = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	            });
+        	});
+        	waitsFor(function() { return keydata; }, "keydata", 100);
+        	
+	        runs(function() {
+	        	keydata.remove(KEY_PARAMETERS_ID);
+	        	var f = function() {
+	        		RequestData$parse(keydata);
+	        	};
+	        	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
+	        });
         });
         
         it("missing public key", function() {
-            var f = function() {
+        	var keydata;
+        	runs(function() {
 	            var req = new RequestData(PARAMETERS_ID, REQUEST_PUBLIC_KEY, REQUEST_PRIVATE_KEY);
-	            var keydata = req.getKeydata();
-	            
-	            expect(keydata[KEY_PUBLIC_KEY]).not.toBeNull();
-	            delete keydata[KEY_PUBLIC_KEY];
-	            
-	            RequestData$parse(keydata);
-            };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+	            req.getKeydata(encoder, ENCODER_FORMAT, {
+	            	result: function(x) { keydata = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	            });
+        	});
+        	waitsFor(function() { return keydata; }, "keydata", 100);
+        	
+	        runs(function() {
+	        	keydata.remove(KEY_PUBLIC_KEY);
+	        	var f = function() {
+	        		RequestData$parse(keydata);
+	        	};
+	        	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
+	        });
         });
         
         it("invalid public key", function() {
-            var f = function() {
+        	var keydata;
+        	runs(function() {
 	            var req = new RequestData(PARAMETERS_ID, REQUEST_PUBLIC_KEY, REQUEST_PRIVATE_KEY);
-	            var keydata = req.getKeydata();
-	            
-	            keydata[KEY_PUBLIC_KEY] = "x";
-	            
-	            RequestData$parse(keydata);
-            };
-            expect(f).toThrow(new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY));
+	            req.getKeydata(encoder, ENCODER_FORMAT, {
+	            	result: function(x) { keydata = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	            });
+        	});
+        	waitsFor(function() { return keydata; }, "keydata", 100);
+        	
+	        runs(function() {
+	        	keydata.put(KEY_PUBLIC_KEY, "x");
+	        	var f = function() {
+	        		RequestData$parse(keydata);
+	        	};
+	        	expect(f).toThrow(new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY));
+	        });
         });
         
         it("equals parameters ID", function() {
@@ -219,10 +281,15 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             var dataB = new RequestData(PARAMETERS_ID + "B", REQUEST_PUBLIC_KEY, REQUEST_PRIVATE_KEY);
             var dataA2;
             runs(function() {
-                RequestData$parse(dataA.getKeydata(), {
-                    result: function(data) { dataA2 = data; },
-                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                });
+            	dataA.getKeydata(encoder, ENCODER_FORMAT, {
+            		result: function(keydata) {
+            			RequestData$parse(keydata, {
+            				result: function(data) { dataA2 = data; },
+            				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            			});
+            		},
+            		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	            });
             });
             waitsFor(function() { return dataA2; }, "dataA2 not received", 100);
             
@@ -246,10 +313,15 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             var dataB = new RequestData(PARAMETERS_ID, RESPONSE_PUBLIC_KEY, REQUEST_PRIVATE_KEY);
             var dataA2;
             runs(function() {
-                RequestData$parse(dataA.getKeydata(), {
-                    result: function(data) { dataA2 = data; },
-                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                });
+            	dataA.getKeydata(encoder, ENCODER_FORMAT, {
+            		result: function(keydata) {
+            			RequestData$parse(keydata, {
+            				result: function(data) { dataA2 = data; },
+            				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            			});
+            		},
+            		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	            });
             });
             waitsFor(function() { return dataA2; }, "dataA2 not received", 100);
             
@@ -273,10 +345,15 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             var dataB = new RequestData(PARAMETERS_ID, REQUEST_PUBLIC_KEY, RESPONSE_PRIVATE_KEY);
             var dataA2;
             runs(function() {
-                RequestData$parse(dataA.getKeydata(), {
-                    result: function(data) { dataA2 = data; },
-                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                });
+            	dataA.getKeydata(encoder, ENCODER_FORMAT, {
+            		result: function(keydata) {
+            			RequestData$parse(keydata, {
+            				result: function(data) { dataA2 = data; },
+            				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            			});
+            		},
+            		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	            });
             });
             waitsFor(function() { return dataA2; }, "dataA2 not received", 100);
             
@@ -304,7 +381,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
     
     /** Response data unit tests. */
     describe("ResponseData", function() {
-        /** JSON key master token. */
+        /** Key master token. */
         var KEY_MASTER_TOKEN = "mastertoken";
         
         it("ctors", function() {
@@ -314,38 +391,66 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             expect(resp.identity).toEqual(IDENTITY);
             expect(resp.parametersId).toEqual(PARAMETERS_ID);
             expect(resp.publicKey).toEqual(RESPONSE_PUBLIC_KEY);
-            var keydata = resp.getKeydata();
-            expect(keydata).not.toBeNull();
             
-            var joResp = ResponseData$parse(MASTER_TOKEN, keydata);
-            expect(joResp.keyExchangeScheme).toEqual(resp.keyExchangeScheme);
-            expect(joResp.masterToken).toEqual(resp.masterToken);
-            expect(joResp.identity).toEqual(resp.identity);
-            expect(joResp.parametersId).toEqual(resp.parametersId);
-            expect(joResp.publicKey).toEqual(resp.publicKey);
-            var joKeydata = joResp.getKeydata();
-            expect(joKeydata).not.toBeNull();
-            expect(joKeydata).toEqual(keydata);
+            var keydata;
+            runs(function() {
+            	resp.getKeydata(encoder, ENCODER_FORMAT, {
+            		result: function(x) { keydata = x; },
+        			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+            });
+            waitsFor(function() { return keydata; }, "keydata", 100);
+            
+            var moKeydata;
+            runs(function() {
+	            expect(keydata).not.toBeNull();
+	            
+	            var moResp = ResponseData$parse(MASTER_TOKEN, keydata);
+	            expect(moResp.keyExchangeScheme).toEqual(resp.keyExchangeScheme);
+	            expect(moResp.masterToken).toEqual(resp.masterToken);
+	            expect(moResp.identity).toEqual(resp.identity);
+	            expect(moResp.parametersId).toEqual(resp.parametersId);
+	            expect(moResp.publicKey).toEqual(resp.publicKey);
+	            moResp.getKeydata(encoder, ENCODER_FORMAT, {
+	            	result: function(x) { moKeydata = x; },
+        			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	            });
+            });
+            waitsFor(function() { return moKeydata; }, "moKeydata", 100);
+            
+            runs(function() {
+	            expect(moKeydata).not.toBeNull();
+	            expect(moKeydata).toEqual(keydata);
+            });
         });
         
-        it("json is correct", function() {
-        	var masterToken = undefined, jo;
+        it("mslobject is correct", function() {
+        	var mo;
         	runs(function() {
         		var resp = new ResponseData(MASTER_TOKEN, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
-        		jo = JSON.parse(JSON.stringify(resp));
-        		expect(jo[KEY_SCHEME]).toEqual(KeyExchangeScheme.DIFFIE_HELLMAN.name);
+        		MslTestUtils.toMslObject(encoder, resp, {
+        			result: function(x) { mo = x; },
+        			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        		});
+        	});
+        	waitsFor(function() { return mo; }, "mo", 100);
+        	
+        	var masterToken;
+        	runs(function() {
+        		expect(mo.getString(KEY_SCHEME)).toEqual(KeyExchangeScheme.DIFFIE_HELLMAN.name);
 
-        		MasterToken$parse(ctx, jo[KEY_MASTER_TOKEN], {
+        		MasterToken$parse(ctx, mo.getMslObject(KEY_MASTER_TOKEN), {
         			result: function(token) { masterToken = token; },
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
         	});
-        	waitsFor(function() { return jo && masterToken; }, "json object and master token not received", 100);
+        	waitsFor(function() { masterToken; }, "master token not received", 100);
+        	
         	runs(function() {
         		expect(masterToken).toEqual(MASTER_TOKEN);
-        		var keydata = jo[KEY_KEYDATA];
-        		expect(keydata[KEY_PARAMETERS_ID]).toEqual(PARAMETERS_ID);
-        		expect(prependNullByte(base64$decode(keydata[KEY_PUBLIC_KEY]))).toEqual(RESPONSE_PUBLIC_KEY.getEncoded());
+        		var keydata = mo.getMslObject(KEY_KEYDATA);
+        		expect(keydata.getString(KEY_PARAMETERS_ID)).toEqual(PARAMETERS_ID);
+        		expect(prependNullByte(keydata.getBytes(KEY_PUBLIC_KEY))).toEqual(RESPONSE_PUBLIC_KEY.getEncoded());
         	});
         });
         
@@ -354,62 +459,88 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             
             var keyResponseData;
             runs(function() {
-                var jsonString = JSON.stringify(data);
-                var jo = JSON.parse(jsonString);
-                KeyResponseData$parse(ctx, jo, {
-                    result: function(data) { keyResponseData = data; },
-                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                });
+            	MslTestUtils.toMslObject(encoder, data, {
+            		result: function(mo) {
+		                KeyResponseData$parse(ctx, mo, {
+		                    result: function(data) { keyResponseData = data; },
+		                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                });
+            		},
+        			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
             });
             waitsFor(function() { return keyResponseData; }, "keyResponseData not received", 100);
+            
             runs(function() {
 	            expect(keyResponseData).not.toBeNull();
 	            expect(keyResponseData instanceof ResponseData).toBeTruthy();
 	            
-	            var joData = keyResponseData;
-	            expect(joData.keyExchangeScheme).toEqual(data.keyExchangeScheme);
-	            expect(joData.masterToken).toEqual(data.masterToken);
-	            expect(joData.parametersId).toEqual(data.parametersId);
-	            expect(joData.publicKey).toEqual(data.publicKey);
+	            var moData = keyResponseData;
+	            expect(moData.keyExchangeScheme).toEqual(data.keyExchangeScheme);
+	            expect(moData.masterToken).toEqual(data.masterToken);
+	            expect(moData.parametersId).toEqual(data.parametersId);
+	            expect(moData.publicKey).toEqual(data.publicKey);
             });
         });
         
         it("missing parameters ID", function() {
-            var f = function() {
+            var keydata;
+            runs(function() {
 	            var resp = new ResponseData(MASTER_TOKEN, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
-	            var keydata = resp.getKeydata();
+	            resp.getKeydata(encoder, ENCODER_FORMAT, {
+	            	result: function(x) { keydata = x; },
+        			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	            });
+            });
+            waitsFor(function() { return keydata; }, "keydata", 100);
 	            
-	            expect(keydata[KEY_PARAMETERS_ID]).not.toBeNull();
-	            delete keydata[KEY_PARAMETERS_ID];
-	            
-	            ResponseData$parse(MASTER_TOKEN, keydata);
-            };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            runs(function() {
+	            keydata.remove(KEY_PARAMETERS_ID);
+	            var f = function() {
+	            	ResponseData$parse(MASTER_TOKEN, keydata);
+	            };
+	            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
+            });
         });
         
         it("missing public key", function() {
-            var f = function() {
+            var keydata;
+            runs(function() {
 	            var resp = new ResponseData(MASTER_TOKEN, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
-	            var keydata = resp.getKeydata();
+	            resp.getKeydata(encoder, ENCODER_FORMAT, {
+	            	result: function(x) { keydata = x; },
+        			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	            });
+            });
+            waitsFor(function() { return keydata; }, "keydata", 100);
 	            
-	            expect(keydata[KEY_PUBLIC_KEY]).not.toBeNull();
-	            delete keydata[KEY_PUBLIC_KEY];
-	            
-	            ResponseData$parse(MASTER_TOKEN, keydata);
-            };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            runs(function() {
+	            keydata.remove(KEY_PUBLIC_KEY);
+	            var f = function() {
+	            	ResponseData$parse(MASTER_TOKEN, keydata);
+	            };
+	            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
+            });
         });
         
         it("invalid public key", function() {
-            var f = function() {
+            var keydata;
+            runs(function() {
 	            var resp = new ResponseData(MASTER_TOKEN, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
-	            var keydata = resp.getKeydata();
+	            resp.getKeydata(encoder, ENCODER_FORMAT, {
+	            	result: function(x) { keydata = x; },
+        			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	            });
+            });
+            waitsFor(function() { return keydata; }, "keydata", 100);
 	            
-	            keydata[KEY_PUBLIC_KEY] = "x";
-	            
-	            ResponseData$parse(MASTER_TOKEN, keydata);
-            };
-            expect(f).toThrow(new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY));
+            runs(function() {
+	            keydata.put(KEY_PUBLIC_KEY, "x");
+	            var f = function() {
+	            	ResponseData$parse(MASTER_TOKEN, keydata);
+	            };
+	            expect(f).toThrow(new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY));
+            });
         });
         
         it("equals master token", function() {
@@ -426,11 +557,20 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             });
             waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens not received", 100);
             
+            var dataA, dataB, dataA2;
             runs(function() {
-	            var dataA = new ResponseData(masterTokenA, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
-	            var dataB = new ResponseData(masterTokenB, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
-	            var dataA2 = ResponseData$parse(masterTokenA, dataA.getKeydata());
-	            
+	            dataA = new ResponseData(masterTokenA, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
+	            dataB = new ResponseData(masterTokenB, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
+	            dataA.getKeydata(encoder, ENCODER_FORMAT, {
+	            	result: function(keydata) {
+	            		dataA2 = ResponseData$parse(masterTokenA, keydata);
+	            	},
+            		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+	            });
+            });
+            waitsFor(function() { return dataA && dataB && dataA2; }, "data", 100);
+            
+            runs(function() {
 	            expect(dataA.equals(dataA)).toBeTruthy();
 	            expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
 	            
@@ -447,35 +587,57 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         it("equals parameter ID", function() {
             var dataA = new ResponseData(MASTER_TOKEN, PARAMETERS_ID + "A", RESPONSE_PUBLIC_KEY);
             var dataB = new ResponseData(MASTER_TOKEN, PARAMETERS_ID + "B", RESPONSE_PUBLIC_KEY);
-            var dataA2 = ResponseData$parse(MASTER_TOKEN, dataA.getKeydata());
+            var dataA2;
+            runs(function() {
+	            dataA.getKeydata(encoder, ENCODER_FORMAT, {
+	            	result: function(keydata) {
+	            		dataA2 = ResponseData$parse(masterTokenA, keydata);
+	            	},
+	        		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+	            });
+            });
+            waitsFor(function() { return dataA2; }, "dataA2", 100);
             
-            expect(dataA.equals(dataA)).toBeTruthy();
-            expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
-            
-            expect(dataA.equals(dataB)).toBeFalsy();
-            expect(dataB.equals(dataA)).toBeFalsy();
-            expect(dataB.uniqueKey()).not.toEqual(dataA.uniqueKey());
-            
-            expect(dataA.equals(dataA2)).toBeTruthy();
-            expect(dataA2.equals(dataA)).toBeTruthy();
-            expect(dataA2.uniqueKey()).toEqual(dataA.uniqueKey());
+            runs(function() {
+	            expect(dataA.equals(dataA)).toBeTruthy();
+	            expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
+	            
+	            expect(dataA.equals(dataB)).toBeFalsy();
+	            expect(dataB.equals(dataA)).toBeFalsy();
+	            expect(dataB.uniqueKey()).not.toEqual(dataA.uniqueKey());
+	            
+	            expect(dataA.equals(dataA2)).toBeTruthy();
+	            expect(dataA2.equals(dataA)).toBeTruthy();
+	            expect(dataA2.uniqueKey()).toEqual(dataA.uniqueKey());
+            });
         });
         
         it("equals public key", function() {
             var dataA = new ResponseData(MASTER_TOKEN, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
             var dataB = new ResponseData(MASTER_TOKEN, PARAMETERS_ID, REQUEST_PUBLIC_KEY);
-            var dataA2 = ResponseData$parse(MASTER_TOKEN, dataA.getKeydata());
+            var dataA2;
+            runs(function() {
+	            dataA.getKeydata(encoder, ENCODER_FORMAT, {
+	            	result: function(keydata) {
+	            		dataA2 = ResponseData$parse(masterTokenA, keydata);
+	            	},
+	        		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+	            });
+            });
+            waitsFor(function() { return dataA2; }, "dataA2", 100);
             
-            expect(dataA.equals(dataA)).toBeTruthy();
-            expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
-            
-            expect(dataA.equals(dataB)).toBeFalsy();
-            expect(dataB.equals(dataA)).toBeFalsy();
-            expect(dataB.uniqueKey()).not.toEqual(dataA.uniqueKey());
-            
-            expect(dataA.equals(dataA2)).toBeTruthy();
-            expect(dataA2.equals(dataA)).toBeTruthy();
-            expect(dataA2.uniqueKey()).toEqual(dataA.uniqueKey());
+            runs(function() {
+	            expect(dataA.equals(dataA)).toBeTruthy();
+	            expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
+	            
+	            expect(dataA.equals(dataB)).toBeFalsy();
+	            expect(dataB.equals(dataA)).toBeFalsy();
+	            expect(dataB.uniqueKey()).not.toEqual(dataA.uniqueKey());
+	            
+	            expect(dataA.equals(dataA2)).toBeTruthy();
+	            expect(dataA2.equals(dataA)).toBeTruthy();
+	            expect(dataA2.uniqueKey()).toEqual(dataA.uniqueKey());
+            });
         });
         
         it("equals object", function() {
@@ -735,11 +897,11 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             // enveloped. So we cannot check for equality or inequality.
             var requestCiphertext = undefined, responseCiphertext;
             runs(function() {
-                expect(responseCryptoContext).not.toBeNull();requestCryptoContext.encrypt(data, {
+                expect(responseCryptoContext).not.toBeNull();requestCryptoContext.encrypt(data, encoder, ENCODER_FORMAT, {
                     result: function(data) { requestCiphertext = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                responseCryptoContext.encrypt(data, {
+                responseCryptoContext.encrypt(data, encoder, ENCODER_FORMAT, {
                     result: function(data) { responseCiphertext = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -753,11 +915,11 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             // Signatures should always be equal.
             var requestSignature = undefined, responseSignature;
             runs(function() {
-                requestCryptoContext.sign(data, {
+                requestCryptoContext.sign(data, encoder, ENCODER_FORMAT, {
                     result: function(data) { requestSignature = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                responseCryptoContext.sign(data, {
+                responseCryptoContext.sign(data, encoder, ENCODER_FORMAT, {
                     result: function(data) { responseSignature = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -772,11 +934,11 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             // Plaintext should always be equal to the original message.
             var requestPlaintext = undefined, responsePlaintext;
             runs(function() {
-                requestCryptoContext.decrypt(responseCiphertext, {
+                requestCryptoContext.decrypt(responseCiphertext, encoder, {
                     result: function(data) { requestPlaintext = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                responseCryptoContext.decrypt(requestCiphertext, {
+                responseCryptoContext.decrypt(requestCiphertext, encoder, {
                     result: function(data) { responsePlaintext = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -791,11 +953,11 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             // Verification should always succeed.
             var requestVerified; responseVerified = undefined;
             runs(function() {
-            	requestCryptoContext.verify(data, responseSignature, {
+            	requestCryptoContext.verify(data, responseSignature, encoder, {
             		result: function(data) { requestVerified = data; },
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
-            	responseCryptoContext.verify(data, requestSignature, {
+            	responseCryptoContext.verify(data, requestSignature, encoder, {
             		result: function(data) { responseVerified = data; },
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});

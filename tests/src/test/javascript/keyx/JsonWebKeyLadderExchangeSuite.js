@@ -23,9 +23,12 @@
 xdescribe("JsonWebKeyLadderExchange", function() {
 // Do nothing if executing in the legacy Web Crypto environment.
 if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
-    /** JSON key key exchange scheme. */
+	/** MSL encoder format. */
+	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
+	
+    /** Key key exchange scheme. */
     var KEY_SCHEME = "scheme";
-    /** JSON key key request data. */
+    /** Key key request data. */
     var KEY_KEYDATA = "keydata";
     
     // Shortcuts.
@@ -49,6 +52,8 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
     var random = new Random();
     /** PSK MSL context. */
     var pskCtx;
+    /** MSL encoder factory. */
+    var encoder;
     /** Plaintext data. */
     var data = new Uint8Array(128);
     random.nextBytes(data);
@@ -66,6 +71,8 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             
             var wrapKey;
             runs(function() {
+            	encoder = pskCtx.getMslEncoderFactory();
+            	
                 // Create PSK wrapping crypto context.
                 pskCtx.getEntityAuthenticationData(null, {
                     result: function(entityAuthData) {
@@ -93,7 +100,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
                 WRAP_CRYPTO_CONTEXT = new AesKwJwkCryptoContext(wrapKey);
                 //
                 // Wrap the new wrapping key using a PSK wrap crypto context.
-                PSK_CRYPTO_CONTEXT.wrap(wrapKey, {
+                PSK_CRYPTO_CONTEXT.wrap(wrapKey, encoder, ENCODER_FORMAT, {
                     result: function(x) { WRAP_JWK = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -101,7 +108,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
                 // The wrap data is an AES-128 key wrapped by the primary MSL
                 // context. Technically we shouldn't know this but that's the only
                 // way to verify things.
-                pskCtx.getMslCryptoContext().wrap(wrapKey, {
+                pskCtx.getMslCryptoContext().wrap(wrapKey, encoder, ENCODER_FORMAT, {
                     result: function(x) { WRAPDATA = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -120,12 +127,12 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
 
             runs(function() {
                 var pskEncryptionKey = PSK_MASTER_TOKEN.encryptionKey;
-                WRAP_CRYPTO_CONTEXT.wrap(pskEncryptionKey, {
+                WRAP_CRYPTO_CONTEXT.wrap(pskEncryptionKey, encoder, ENCODER_FORMAT, {
                     result: function(x) { PSK_ENCRYPTION_JWK = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
                 var pskHmacKey = PSK_MASTER_Token.signatureKey;
-                WRAP_CRYPTO_CONTEXT.wrap(pskHmacKey, {
+                WRAP_CRYPTO_CONTEXT.wrap(pskHmacKey, encoder, ENCODER_FORMAT, {
                     result: function(x) { PSK_HMAC_JWK = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -143,9 +150,9 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
     
     /** Request data unit tests. */
     describe("RequestData", function() {
-        /** JSON key wrap key wrapping mechanism. */
+        /** Key wrap key wrapping mechanism. */
         var KEY_MECHANISM = "mechanism";
-        /** JSON key public key. */
+        /** Key public key. */
         var KEY_PUBLIC_KEY = "publickey";
         /** key wrap data. */
         var KEY_WRAPDATA = "wrapdata";
@@ -158,46 +165,81 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             expect(req.publicKey.getEncoded()).toEqual(RSA_PUBLIC_KEY.getEncoded());
             expect(req.wrapdata).toBeNull();
             expect(req.wrapKeyId).toEqual(KEYPAIR_ID);
-            var keydata = req.getKeydata();
-            expect(keydata).not.toBeNull();
-            var joReq;
+            
+            var keydata;
             runs(function() {
+            	req.getKeydata(encoder, ENCODER_FORMAT, {
+            		result: function(x) { keydata = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+            });
+            waitsFor(function() { return keydata; }, "keydata", 100);
+            
+            
+            var moReq;
+            runs(function() {
+            	expect(keydata).not.toBeNull();
                 RequestData$parse(keydata, {
-                    result: function(data) { joReq = data; },
+                    result: function(data) { moReq = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return joReq; }, "joReq", 100);
+            waitsFor(function() { return moReq; }, "moReq", 100);
+            
+            var moKeydata;
+            runs(function() {
+                expect(moReq.keyExchangeScheme).toEqual(req.keyExchangeScheme);
+                expect(moReq.mechanism).toEqual(req.mechanism);
+                expect(moReq.privateKey).toBeNull();
+                expect(moReq.publicKey.getEncoded()).toEqual(req.publicKey.getEncoded());
+                expect(moReq.wrapdata).toEqual(req.wrapdata);
+                expect(moReq.wrapKeyId).toEqual(req.wrapKeyId);
+                req.getKeydata(encoder, ENCODER_FORMAT, {
+                	result: function(x) { moKeydata = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
             
             runs(function() {
-                expect(joReq.keyExchangeScheme).toEqual(req.keyExchangeScheme);
-                expect(joReq.mechanism).toEqual(req.mechanism);
-                expect(joReq.privateKey).toBeNull();
-                expect(joReq.publicKey.getEncoded()).toEqual(req.publicKey.getEncoded());
-                expect(joReq.wrapdata).toEqual(req.wrapdata);
-                expect(joReq.wrapKeyId).toEqual(req.wrapKeyId);
-                var joKeydata = req.getKeydata();
-                expect(joKeydata).not.toBeNull();
-                expect(joKeydata).toEqual(keydata);
+                expect(moKeydata).not.toBeNull();
+                expect(moKeydata).toEqual(keydata);
             });
         });
         
-        xit("json is correct with RSA keys", function() {
+        xit("mslobject is correct with RSA keys", function() {
             var req = new RequestData(Mechanism.RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY, null);
-            var jo = JSON.parse(JSON.stringify(req));
-            expect(jo[KEY_SCHEME]).toEqual(KeyExchangeScheme.JWK_LADDER.name);
-            var keydata = jo[KEY_KEYDATA];
-            expect(keydata[KEY_MECHANISM]).toEqual(Mechanism.RSA);
-            expect(base64$decode(keydata[KEY_PUBLIC_KEY])).toEqual(RSA_PUBLIC_KEY.getEncoded());
-            expect(keydata[KEY_WRAPDATA]).toBeFalsy();
+            var mo;
+            runs(function() {
+            	MslTestUtils.toMslObject(encoder, req, {
+            		result: function(x) { mo = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+            });
+            waitsFor(function() { return mo; }, "mo", 100);
+            
+            runs(function() {
+	            expect(mo.getString(KEY_SCHEME)).toEqual(KeyExchangeScheme.JWK_LADDER.name);
+	            var keydata = mo.getMslObject(KEY_KEYDATA);
+	            expect(keydata.getString(KEY_MECHANISM)).toEqual(Mechanism.RSA);
+	            expect(keydata.getBytes(KEY_PUBLIC_KEY)).toEqual(RSA_PUBLIC_KEY.getEncoded());
+	            expect(keydata.has(KEY_WRAPDATA)).toBeFalsy();
+            });
         });
         
         xit("create with RSA keys", function() {
             var req = new RequestData(Mechanism.RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY, null);
-            var jo = JSON.parse(JSON.stringify(req));
+            var mo;
+            runs(function() {
+            	MslTestUtils.toMslObject(encoder, req, {
+            		result: function(x) { mo = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+            });
+            waitsFor(function() { return mo; }, "mo", 100);
+            
             var keyRequestData;
             runs(function() {
-                KeyRequestData$parse(pskCtx, jo, {
+                KeyRequestData$parse(pskCtx, mo, {
                     result: function(data) { keyRequestData = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -208,12 +250,12 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
                 expect(keyRequestData).not.toBeNull();
                 expect(keyRequestData instanceof RequestData).toBeTruthy();
 
-                var joReq = keyRequestData;
-                expect(joReq.keyExchangeScheme).toEqual(req.keyExchangeScheme);
-                expect(joReq.mechanism).toEqual(req.mechanism);
-                expect(joReq.privateKey).toBeNull();
-                expect(joReq.publicKey.getEncoded()).toEqual(req.publicKey.getEncoded());
-                expect(joReq.wrapdata).toEqual(req.wrapdata);
+                var moReq = keyRequestData;
+                expect(moReq.keyExchangeScheme).toEqual(req.keyExchangeScheme);
+                expect(moReq.mechanism).toEqual(req.mechanism);
+                expect(moReq.privateKey).toBeNull();
+                expect(moReq.publicKey.getEncoded()).toEqual(req.publicKey.getEncoded());
+                expect(moReq.wrapdata).toEqual(req.wrapdata);
             });
         });
         
@@ -236,34 +278,71 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             expect(req.keyExchangeScheme).toEqual(KeyExchangeScheme.JWK_LADDER);
             expect(req.mechanism).toEqual(Mechanism.WRAP);
             expect(req.wrapdata).toEqual(WRAPDATA);
-            var keydata = req.getKeydata();
-            expect(keydata).not.toBeNull();
             
-            var joReq = RequestData$parse(keydata);
-            expect(joReq.keyExchangeScheme).toEqual(req.keyExchangeScheme);
-            expect(joReq.mechanism).toEqual(req.mechanism);
-            expect(joReq.wrapdata).toEqual(req.wrapdata);
-            var joKeydata = req.getKeydata();
-            expect(joKeydata).not.toBeNull();
-            expect(joKeydata).toEqual(keydata);
+            var keydata;
+            runs(function() {
+            	req.getKeydata(encoder, ENCODER_FORMAT, {
+            		result: function(x) { keydata = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+            });
+            
+            var moKeydata;
+            runs(function() {
+	            expect(keydata).not.toBeNull();
+	            
+	            var moReq = RequestData$parse(keydata);
+	            expect(moReq.keyExchangeScheme).toEqual(req.keyExchangeScheme);
+	            expect(moReq.mechanism).toEqual(req.mechanism);
+	            expect(moReq.wrapdata).toEqual(req.wrapdata);
+	            req.getKeydata(encoder, ENCODER_FORMAT, {
+	            	result: function(x) { moKeydata = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	            });
+            });
+            
+            runs(function() {
+	            expect(moKeydata).not.toBeNull();
+	            expect(moKeydata).toEqual(keydata);
+            });
         });
         
-        it("json is correct with wrapdata", function() {
+        it("mslobject is correct with wrapdata", function() {
             var req = new RequestData(Mechanism.WRAP, WRAPDATA);
-            var jo = JSON.parse(JSON.stringify(req));
-            expect(jo[KEY_SCHEME]).toEqual(KeyExchangeScheme.JWK_LADDER.name);
-            var keydata = jo[KEY_KEYDATA];
-            expect(keydata[KEY_MECHANISM]).toEqual(Mechanism.WRAP);
-            expect(keydata[KEY_PUBLIC_KEY]).toBeFalsy();
-            expect(base64$decode(keydata[KEY_WRAPDATA])).toEqual(WRAPDATA);
+            
+            var mo;
+            runs(function() {
+            	MslTestUtils.toMslObject(encoder, req, {
+            		result: function(x) { mo = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+            });
+            waitsFor(function() { return mo; }, "mo", 100);
+            
+            runs(function() {
+	            expect(mo.getString(KEY_SCHEME)).toEqual(KeyExchangeScheme.JWK_LADDER.name);
+	            var keydata = mo.getMslObject(KEY_KEYDATA);
+	            expect(keydata.getString(KEY_MECHANISM)).toEqual(Mechanism.WRAP);
+	            expect(keydata.has(KEY_PUBLIC_KEY)).toBeFalsy();
+	            expect(keydata.getBytes(KEY_WRAPDATA)).toEqual(WRAPDATA);
+            });
         });
         
         it("create with wrapdata", function() {
             var req = new RequestData(Mechanism.WRAP, WRAPDATA);
-            var jo = JSON.parse(JSON.stringify(req));
+            
+            var mo;
+            runs(function() {
+            	MslTestUtils.toMslObject(encoder, req, {
+            		result: function(x) { mo = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+            });
+            waitsFor(function() { return mo; }, "mo", 100);
+            
             var keyRequestData;
             runs(function() {
-                KeyRequestData$parse(pskCtx, jo, {
+                KeyRequestData$parse(pskCtx, mo, {
                     result: function(data) { keyRequestData = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -274,10 +353,10 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
                 expect(keyRequestData).not.toBeNull();
                 expect(keyRequestData instanceof RequestData).toBeTruthy();
                 
-                var joReq = keyRequestData;
-                expect(joReq.keyExchangeScheme).toEqual(req.keyExchangeScheme);
-                expect(joReq.mechanism).toEqual(req.mechanism);
-                expect(joReq.wrapdata).toEqual(req.wrapdata);
+                var moReq = keyRequestData;
+                expect(moReq.keyExchangeScheme).toEqual(req.keyExchangeScheme);
+                expect(moReq.mechanism).toEqual(req.mechanism);
+                expect(moReq.wrapdata).toEqual(req.wrapdata);
             });
         });
         
@@ -293,34 +372,73 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             expect(req.keyExchangeScheme).toEqual(KeyExchangeScheme.JWK_LADDER);
             expect(req.mechanism).toEqual(Mechanism.PSK);
             expect(req.wrapdata).toBeNull();
-            var keydata = req.getKeydata();
-            expect(keydata).not.toBeNull();
             
-            var joReq = RequestData$parse(keydata);
-            expect(joReq.keyExchangeScheme).toEqual(req.keyExchangeScheme);
-            expect(joReq.mechanism).toEqual(req.mechanism);
-            expect(joReq.wrapdata).toBeNull();
-            var joKeydata = req.getKeydata();
-            expect(joKeydata).not.toBeNull();
-            expect(joKeydata).toEqual(keydata);
+            var keydata;
+            runs(function() {
+            	req.getKeydata(encoder, ENCODER_FORMAT, {
+            		result: function(x) { keydata = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+            });
+            waitsFor(function() { return keydata; }, "keydata", 100);
+            
+            var moKeydata;
+            runs(function() {
+	            expect(keydata).not.toBeNull();
+	            
+	            var moReq = RequestData$parse(keydata);
+	            expect(moReq.keyExchangeScheme).toEqual(req.keyExchangeScheme);
+	            expect(moReq.mechanism).toEqual(req.mechanism);
+	            expect(moReq.wrapdata).toBeNull();
+	            req.getKeydata(encoder, ENCODER_FORMAT, {
+	            	result: function(x) { moKeydata = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	            });
+            });
+            waitsFor(function() { return moKeydata; }, "moKeydata", 100);
+            
+            runs(function() {
+	            expect(moKeydata).not.toBeNull();
+	            expect(moKeydata).toEqual(keydata);
+            });
         });
         
-        it("json is correct with PSK", function() {
+        it("mslobject is correct with PSK", function() {
             var req = new RequestData(Mechanism.PSK, null);
-            var jo = JSON.parse(JSON.stringify(req));
-            expect(jo[KEY_SCHEME]).toEqual(KeyExchangeScheme.JWK_LADDER.name);
-            var keydata = jo[KEY_KEYDATA];
-            expect(keydata[KEY_MECHANISM]).toEqual(Mechanism.PSK);
-            expect(keydata[KEY_PUBLIC_KEY]).toBeFalsy();
-            expect(keydata[KEY_WRAPDATA]).toBeFalsy();
+            
+            var mo;
+            runs(function() {
+            	MslTestUtils.toMslObject(encoder, req, {
+            		result: function(x) { mo = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+            });
+            waitsFor(function() { return mo; }, "mo", 100);
+            
+            runs(function() {
+	            expect(mo.getString(KEY_SCHEME)).toEqual(KeyExchangeScheme.JWK_LADDER.name);
+	            var keydata = mo.getMslObject(KEY_KEYDATA);
+	            expect(keydata.getString(KEY_MECHANISM)).toEqual(Mechanism.PSK);
+	            expect(keydata.has(KEY_PUBLIC_KEY)).toBeFalsy();
+	            expect(keydata.getBytes(KEY_WRAPDATA)).toBeFalsy();
+            });
         });
         
         it("create with PSK", function() {
             var req = new RequestData(Mechanism.PSK, null);
-            var jo = JSON.parse(JSON.stringify(req));
+            
+            var mo;
+            runs(function() {
+            	MslTestUtils.toMslObject(encoder, req, {
+            		result: function(x) { mo = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+            });
+            waitsFor(function() { return mo; }, "mo", 100);
+            
             var keyRequestData;
             runs(function() {
-                KeyRequestData$parse(pskCtx, jo, {
+                KeyRequestData$parse(pskCtx, mo, {
                     result: function(data) { keyRequestData = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -331,78 +449,119 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
                 expect(keyRequestData).not.toBeNull();
                 expect(keyRequestData instanceof RequestData).toBeTruthy();
                 
-                var joReq = keyRequestData;
-                expect(joReq.keyExchangeScheme).toEqual(req.keyExchangeScheme);
-                expect(joReq.mechanism).toEqual(req.mechanism);
-                expect(joReq.wrapdata).toBeNull();
+                var moReq = keyRequestData;
+                expect(moReq.keyExchangeScheme).toEqual(req.keyExchangeScheme);
+                expect(moReq.mechanism).toEqual(req.mechanism);
+                expect(moReq.wrapdata).toBeNull();
             });
         });
         
         it("missing mechanism", function() {
-            var f = function() {
+            var keydata;
+            runs(function() {
                 var req = new RequestData(Mechanism.PSK, null);
-                var keydata = req.getKeydata();
+                req.getKeydata(encoder, ENCODER_FORMAT, {
+                	result: function(x) { keydata = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return keydata; }, "keydata", 100);
 
-                expect(keydata[KEY_MECHANISM]).not.toBeNull();
-                delete keydata[KEY_MECHANISM];
-
-                RequestData$parse(keydata);
-            };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            runs(function() {
+            	keydata.remove(KEY_MECHANISM);
+            	var f = function() {
+            		RequestData$parse(keydata);
+            	};
+            	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
+            });
         });
         
         it("invalid mechanism", function() {
-            var f = function() {
+            var keydata;
+            runs(function() {
                 var req = new RequestData(Mechanism.PSK, null);
-                var keydata = req.getKeydata();
+                req.getKeydata(encoder, ENCODER_FORMAT, {
+                	result: function(x) { keydata = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return keydata; }, "keydata", 100);
 
-                keydata[KEY_MECHANISM] = "x";
-
-                RequestData$parse(keydata);
-            };
-            expect(f).toThrow(new MslKeyExchangeException(MslError.UNIDENTIFIED_KEYX_MECHANISM));
+            runs(function() {
+                keydata.put(KEY_MECHANISM, "x");
+                var f = function() {
+                	RequestData$parse(keydata);
+                };
+                expect(f).toThrow(new MslKeyExchangeException(MslError.UNIDENTIFIED_KEYX_MECHANISM));
+            });
         });
         
         it("wrap with missing wrapdata", function() {
-            var f = function() {
+            var keydata;
+            runs(function() {
                 var req = new RequestData(Mechanism.WRAP, WRAPDATA);
-                var keydata = req.getKeydata();
+                req.getKeydata(encoder, ENCODER_FORMAT, {
+                	result: function(x) { keydata = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return keydata; }, "keydata", 100);
 
-                expect(keydata[KEY_WRAPDATA]).not.toBeNull();
-                delete keydata[KEY_WRAPDATA];
-
-                RequestData$parse(keydata);
-            };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            runs(function() {
+            	keydata.remove(KEY_WRAPDATA);
+            	var f = function() {
+            		RequestData$parse(keydata);
+            	};
+            	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
+            });
         });
         
         it("wrap with invalid wrapdata", function() {
-            var f = function() {
+            var keydata;
+            runs(function() {
                 var req = new RequestData(Mechanism.WRAP, WRAPDATA);
-                var keydata = req.getKeydata();
+                req.getKeydata(encoder, ENCODER_FORMAT, {
+                	result: function(x) { keydata = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return keydata; }, "keydata", 100);
 
-                keydata[KEY_WRAPDATA] = "x";
-
-                RequestData$parse(keydata);
-            };
-            expect(f).toThrow(new MslKeyExchangeException(MslError.KEYX_INVALID_WRAPDATA));
+            runs(function() {
+            	keydata.put(KEY_WRAPDATA, "x");
+            	var f = function() {
+            		RequestData$parse(keydata);
+            	};
+            	expect(f).toThrow(new MslKeyExchangeException(MslError.KEYX_INVALID_WRAPDATA));
+            });
         });
         
         it("equals mechanism", function() {
             var dataA = new RequestData(Mechanism.WRAP, WRAPDATA);
             var dataB = new RequestData(Mechanism.PSK, null);
-            var dataA2 = RequestData$parse(dataA.getKeydata());
+            var dataA2;
+            runs(function() {
+            	dataA.getKeydata(encoder, ENCODER_FORMAT, {
+            		result: function(keydata) {
+            			dataA2 = RequestData$parse(keydata);
+            		},
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+            });
+            waitsFor(function() { return dataA2; }, "dataA2", 100);
             
-            expect(dataA.equals(dataA)).toBeTruthy();
-            expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
-
-            expect(dataA.equals(dataB)).toBeFalsy();
-            expect(dataB.equals(dataA)).toBeFalsy();
-            expect(dataB.uniqueKey()).not.toEqual(dataA.uniqueKey());
-
-            expect(dataA.equals(dataA2)).toBeTruthy();
-            expect(dataA2.equals(dataA)).toBeTruthy();
-            expect(dataA2.uniqueKey()).toEqual(dataA.uniqueKey());
+            runs(function() {
+	            expect(dataA.equals(dataA)).toBeTruthy();
+	            expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
+	
+	            expect(dataA.equals(dataB)).toBeFalsy();
+	            expect(dataB.equals(dataA)).toBeFalsy();
+	            expect(dataB.uniqueKey()).not.toEqual(dataA.uniqueKey());
+	
+	            expect(dataA.equals(dataA2)).toBeTruthy();
+	            expect(dataA2.equals(dataA)).toBeTruthy();
+	            expect(dataA2.uniqueKey()).toEqual(dataA.uniqueKey());
+            });
         }); 
         
         it("equals wrapdata", function() {
@@ -411,33 +570,44 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             
             var dataA = new RequestData(Mechanism.WRAP, WRAPDATA);
             var dataB = new RequestData(Mechanism.WRAP, wrapdataB);
-            var dataA2 = RequestData$parse(dataA.getKeydata());
+            var dataA2;
+            runs(function() {
+            	dataA.getKeydata(encoder, ENCODER_FORMAT, {
+            		result: function(keydata) {
+            			dataA2 = RequestData$parse(keydata);
+            		},
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+            });
+            waitsFor(function() { return dataA2; }, "dataA2", 100);
             
-            expect(dataA.equals(dataA)).toBeTruthy();
-            expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
-
-            expect(dataA.equals(dataB)).toBeFalsy();
-            expect(dataB.equals(dataA)).toBeFalsy();
-            expect(dataB.uniqueKey()).not.toEqual(dataA.uniqueKey());
-
-            expect(dataA.equals(dataA2)).toBeTruthy();
-            expect(dataA2.equals(dataA)).toBeTruthy();
-            expect(dataA2.uniqueKey()).toEqual(dataA.uniqueKey());
+            runs(function() {
+	            expect(dataA.equals(dataA)).toBeTruthy();
+	            expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
+	
+	            expect(dataA.equals(dataB)).toBeFalsy();
+	            expect(dataB.equals(dataA)).toBeFalsy();
+	            expect(dataB.uniqueKey()).not.toEqual(dataA.uniqueKey());
+	
+	            expect(dataA.equals(dataA2)).toBeTruthy();
+	            expect(dataA2.equals(dataA)).toBeTruthy();
+	            expect(dataA2.uniqueKey()).toEqual(dataA.uniqueKey());
+            });
         });
     });
     
     /** Response data unit tests. */
     describe("ResponseData", function() {
-        /** JSON key master token. */
+        /** Key master token. */
         var KEY_MASTER_TOKEN = "mastertoken";
         
-        /** JSON key wrapping key. */
+        /** Key wrapping key. */
         var KEY_WRAP_KEY = "wrapkey";
-        /** JSON key wrapping key data. */
+        /** Key wrapping key data. */
         var KEY_WRAPDATA = "wrapdata";
-        /** JSON key encrypted encryption key. */
+        /** Key encrypted encryption key. */
         var KEY_ENCRYPTION_KEY = "encryptionkey";
-        /** JSON key encrypted HMAC key. */
+        /** Key encrypted HMAC key. */
         var KEY_HMAC_KEY = "hmackey";
         
         it("ctors", function() {
@@ -448,29 +618,56 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             expect(resp.masterToken).toEqual(PSK_MASTER_TOKEN);
             expect(resp.wrapdata).toEqual(WRAPDATA);
             expect(resp.wrapKey).toEqual(WRAP_JWK);
-            var keydata = resp.getKeydata();
-            expect(keydata).not.toBeNull();
             
-            var joResp = ResponseData$parse(PSK_MASTER_TOKEN, keydata);
-            expect(joResp.encryptionKey).toEqual(resp.encryptionKey);
-            expect(joResp.hmacKey).toEqual(resp.hmacKey);
-            expect(joResp.keyExchangeScheme).toEqual(resp.keyExchangeScheme);
-            expect(joResp.masterToken).toEqual(resp.masterToken);
-            expect(joResp.wrapdata).toEqual(resp.wrapdata);
-            expect(joResp.wrapKey).toEqual(resp.wrapKey);
-            var joKeydata = joResp.getKeydata();
-            expect(joKeydata).not.toBeNull();
-            expect(joKeydata).toEqual(keydata);
+            var keydata;
+            runs(function() {
+            	resp.getKeydata(encoder, ENCODER_FORMAT, {
+            		result: function(x) { keydata = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+            });
+            waitsFor(function() { return keydata; }, "keydata", 100);
+            
+            var moKeydata;
+            runs(function() {
+	            expect(keydata).not.toBeNull();
+	            
+	            var joResp = ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+	            expect(joResp.encryptionKey).toEqual(resp.encryptionKey);
+	            expect(joResp.hmacKey).toEqual(resp.hmacKey);
+	            expect(joResp.keyExchangeScheme).toEqual(resp.keyExchangeScheme);
+	            expect(joResp.masterToken).toEqual(resp.masterToken);
+	            expect(joResp.wrapdata).toEqual(resp.wrapdata);
+	            expect(joResp.wrapKey).toEqual(resp.wrapKey);
+	            joResp.getKeydata(encoder, ENCODER_FORMAT, {
+	            	result: function(x) { return moKeydata; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	            });
+            });
+            waitsFor(function() { return moKeydata; }, "moKeydata", 100);
+            
+            runs(function() {
+	            expect(moKeydata).not.toBeNull();
+	            expect(moKeydata).toEqual(keydata);
+            });
         });
         
-        it("json is correct", function() {
+        it("mslobject is correct", function() {
             var resp = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
-            var jo = JSON.parse(JSON.stringify(resp));
-            expect(jo[KEY_SCHEME]).toEqual(KeyExchangeScheme.JWK_LADDER.name);
+            var mo;
+            runs(function() {
+            	MslTestUtils.toMslObject(encoder, resp, {
+            		result: function(x) { mo = resp; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+            });
+            waitsFor(function() { return mo; }, "mo", 100);
             
             var masterToken;
             runs(function() {
-                MasterToken$parse(pskCtx, jo[KEY_MASTER_TOKEN], {
+                expect(mo.getString(KEY_SCHEME)).toEqual(KeyExchangeScheme.JWK_LADDER.name);
+                
+                MasterToken$parse(pskCtx, mo.getMslObject(KEY_MASTER_TOKEN), {
                     result: function(x) { masterToken = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -479,20 +676,28 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             
             runs(function() {
                 expect(masterToken).toEqual(PSK_MASTER_TOKEN);
-                var keydata = jo[KEY_KEYDATA];
-                expect(base64$decode(keydata[KEY_ENCRYPTION_KEY])).toEqual(PSK_ENCRYPTION_JWK);
-                expect(base64$decode(keydata[KEY_HMAC_KEY])).toEqual(PSK_HMAC_JWK);
-                expect(base64$decode(keydata[KEY_WRAPDATA])).toEqual(WRAPDATA);
-                expect(base64$decode(keydata[KEY_WRAP_KEY])).toEqual(WRAP_JWK);
+                var keydata = mo.getMslObject(KEY_KEYDATA);
+                expect(keydata.getBytes(KEY_ENCRYPTION_KEY)).toEqual(PSK_ENCRYPTION_JWK);
+                expect(keydata.getBytes(KEY_HMAC_KEY)).toEqual(PSK_HMAC_JWK);
+                expect(keydata.getBytes(KEY_WRAPDATA)).toEqual(WRAPDATA);
+                expect(keydata.getBytes(KEY_WRAP_KEY)).toEqual(WRAP_JWK);
             });
         });
         
         it("create", function() {
             var resp = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
-            var jo = JSON.parse(JSON.stringify(resp));
+            var mo;
+            runs(function() {
+            	MslTestUtils.toMslObject(encoder, resp, {
+            		result: function(x) { mo = resp; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+            });
+            waitsFor(function() { return mo; }, "mo", 100);
+            
             var keyResponseData;
             runs(function() {
-                KeyResponseData$parse(pskCtx, jo, {
+                KeyResponseData$parse(pskCtx, mo, {
                     result: function(data) { keyResponseData = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -514,55 +719,83 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
         });
         
         it("missing wrap key", function() {
-            var f = function() {
+        	var keydata;
+            runs(function() {
                 var resp = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
-                var keydata = resp.getKeydata();
+            	resp.getKeydata(encoder, ENCODER_FORMAT, {
+            		result: function(x) { keydata = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+            });
+            waitsFor(function() { return keydata; }, "keydata", 100);
 
-                expect(keydata[KEY_WRAP_KEY]).not.toBeNull();
-                delete keydata[KEY_WRAP_KEY];
-
-                ResponseData$parse(PSK_MASTER_TOKEN, keydata);
-            };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            runs(function() {
+            	keydata.remove(KEY_WRAP_KEY);
+            	var f = function() {
+            		ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+            	};
+            	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
+            });
         });
         
         it("missing wrapdata", function() {
-            var f = function() {
-                var resp = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
-                var keydata = resp.getKeydata();
+        	var keydata;
+            runs(function() {
+            	var resp = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
+            	resp.getKeydata(encoder, ENCODER_FORMAT, {
+            		result: function(x) { keydata = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+            });
+            waitsFor(function() { return keydata; }, "keydata", 100);
 
-                expect(keydata[KEY_WRAPDATA]).not.toBeNull();
-                delete keydata[KEY_WRAPDATA];
-
-                ResponseData$parse(PSK_MASTER_TOKEN, keydata);
-            };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            runs(function() {
+            	keydata.remove(KEY_WRAPDATA);
+            	var f = function() {
+            		ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+            	};
+            	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
+            });
         });
         
         it("missing encryption key", function() {
-            var f = function() {
+        	var keydata;
+            runs(function() {
                 var resp = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
-                var keydata = resp.getKeydata();
+            	resp.getKeydata(encoder, ENCODER_FORMAT, {
+            		result: function(x) { keydata = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+            });
+            waitsFor(function() { return keydata; }, "keydata", 100);
 
-                expect(keydata[KEY_ENCRYPTION_KEY]).not.toBeNull();
-                delete keydata[KEY_ENCRYPTION_KEY];
-
-                ResponseData$parse(PSK_MASTER_TOKEN, keydata);
-            };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            runs(function() {
+            	keydata.remove(KEY_ENCRYPTION_KEY);
+            	var f = function() {
+            		ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+            	};
+            	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
+            });
         });
         
         it("missing HMAC key", function() {
-            var f = function() {
-                var resp = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
-                var keydata = resp.getKeydata();
+        	var keydata;
+            runs(function() {
+            	var resp = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
+            	resp.getKeydata(encoder, ENCODER_FORMAT, {
+            		result: function(x) { keydata = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+            });
+            waitsFor(function() { return keydata; }, "keydata", 100);
 
-                expect(keydata[KEY_HMAC_KEY]).not.toBeNull();
-                delete keydata[KEY_HMAC_KEY];
-
-                ResponseData$parse(PSK_MASTER_TOKEN, keydata);
-            };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            runs(function() {
+                keydata.remove(KEY_HMAC_KEY);
+                var f = function() {
+                	ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+                };
+                expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
+            });
         });
         
         it("equals wrap key", function() {
@@ -571,18 +804,29 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             
             var dataA = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
             var dataB = new ResponseData(PSK_MASTER_TOKEN, wrapKeyB, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
-            var dataA2 = ResponseData$parse(PSK_MASTER_TOKEN, dataA.getKeydata());
+            var dataA2;
+            runs(function() {
+            	dataA.getKeydata(encoder, ENCODER_FORMAT, {
+            		result: function(keydata) {
+            			dataA2 = ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+            		},
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+            });
+            waitsFor(function() { return dataA2; }, "dataA2", 100);
             
-            expect(dataA.equals(dataA)).toBeTruthy();
-            expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
-
-            expect(dataA.equals(dataB)).toBeFalsy();
-            expect(dataB.equals(dataA)).toBeFalsy();
-            expect(dataB.uniqueKey()).not.toEqual(dataA.uniqueKey());
-
-            expect(dataA.equals(dataA2)).toBeTruthy();
-            expect(dataA2.equals(dataA)).toBeTruthy();
-            expect(dataA2.uniqueKey()).toEqual(dataA.uniqueKey());
+            runs(function() {
+	            expect(dataA.equals(dataA)).toBeTruthy();
+	            expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
+	
+	            expect(dataA.equals(dataB)).toBeFalsy();
+	            expect(dataB.equals(dataA)).toBeFalsy();
+	            expect(dataB.uniqueKey()).not.toEqual(dataA.uniqueKey());
+	
+	            expect(dataA.equals(dataA2)).toBeTruthy();
+	            expect(dataA2.equals(dataA)).toBeTruthy();
+	            expect(dataA2.uniqueKey()).toEqual(dataA.uniqueKey());
+            });
         });
         
         it("equals wrapdata", function() {
@@ -591,18 +835,29 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             
             var dataA = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
             var dataB = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, wrapdataB, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
-            var dataA2 = ResponseData$parse(PSK_MASTER_TOKEN, dataA.getKeydata());
+            var dataA2;
+            runs(function() {
+            	dataA.getKeydata(encoder, ENCODER_FORMAT, {
+            		result: function(keydata) {
+            			dataA2 = ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+            		},
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+            });
+            waitsFor(function() { return dataA2; }, "dataA2", 100);
             
-            expect(dataA.equals(dataA)).toBeTruthy();
-            expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
-
-            expect(dataA.equals(dataB)).toBeFalsy();
-            expect(dataB.equals(dataA)).toBeFalsy();
-            expect(dataB.uniqueKey()).not.toEqual(dataA.uniqueKey());
-
-            expect(dataA.equals(dataA2)).toBeTruthy();
-            expect(dataA2.equals(dataA)).toBeTruthy();
-            expect(dataA2.uniqueKey()).toEqual(dataA.uniqueKey());
+            runs(function() {
+	            expect(dataA.equals(dataA)).toBeTruthy();
+	            expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
+	
+	            expect(dataA.equals(dataB)).toBeFalsy();
+	            expect(dataB.equals(dataA)).toBeFalsy();
+	            expect(dataB.uniqueKey()).not.toEqual(dataA.uniqueKey());
+	
+	            expect(dataA.equals(dataA2)).toBeTruthy();
+	            expect(dataA2.equals(dataA)).toBeTruthy();
+	            expect(dataA2.uniqueKey()).toEqual(dataA.uniqueKey());
+            });
         });
         
         it("equals encryption key", function() {
@@ -611,18 +866,29 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             
             var dataA = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
             var dataB = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, encryptionKeyB, PSK_HMAC_JWK);
-            var dataA2 = ResponseData$parse(PSK_MASTER_TOKEN, dataA.getKeydata());
+            var dataA2;
+            runs(function() {
+            	dataA.getKeydata(encoder, ENCODER_FORMAT, {
+            		result: function(keydata) {
+            			dataA2 = ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+            		},
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+            });
+            waitsFor(function() { return dataA2; }, "dataA2", 100);
 
-            expect(dataA.equals(dataA)).toBeTruthy();
-            expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
-
-            expect(dataA.equals(dataB)).toBeFalsy();
-            expect(dataB.equals(dataA)).toBeFalsy();
-            expect(dataB.uniqueKey()).not.toEqual(dataA.uniqueKey());
-
-            expect(dataA.equals(dataA2)).toBeTruthy();
-            expect(dataA2.equals(dataA)).toBeTruthy();
-            expect(dataA2.uniqueKey()).toEqual(dataA.uniqueKey());
+            runs(function() {
+	            expect(dataA.equals(dataA)).toBeTruthy();
+	            expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
+	
+	            expect(dataA.equals(dataB)).toBeFalsy();
+	            expect(dataB.equals(dataA)).toBeFalsy();
+	            expect(dataB.uniqueKey()).not.toEqual(dataA.uniqueKey());
+	
+	            expect(dataA.equals(dataA2)).toBeTruthy();
+	            expect(dataA2.equals(dataA)).toBeTruthy();
+	            expect(dataA2.uniqueKey()).toEqual(dataA.uniqueKey());
+            });
         });
         
         it("equals HMAC key", function() {
@@ -631,18 +897,29 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             
             var dataA = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, PSK_HMAC_JWK);
             var dataB = new ResponseData(PSK_MASTER_TOKEN, WRAP_JWK, WRAPDATA, PSK_ENCRYPTION_JWK, hmacKeyB);
-            var dataA2 = ResponseData$parse(PSK_MASTER_TOKEN, dataA.getKeydata());
+            var dataA2;
+            runs(function() {
+            	dataA.getKeydata(encoder, ENCODER_FORMAT, {
+            		result: function(keydata) {
+            			dataA2 = ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+            		},
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+            });
+            waitsFor(function() { return dataA2; }, "dataA2", 100);
             
-            expect(dataA.equals(dataA)).toBeTruthy();
-            expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
-
-            expect(dataA.equals(dataB)).toBeFalsy();
-            expect(dataB.equals(dataA)).toBeFalsy();
-            expect(dataB.uniqueKey()).not.toEqual(dataA.uniqueKey());
-
-            expect(dataA.equals(dataA2)).toBeTruthy();
-            expect(dataA2.equals(dataA)).toBeTruthy();
-            expect(dataA2.uniqueKey()).toEqual(dataA.uniqueKey());
+            runs(function() {
+	            expect(dataA.equals(dataA)).toBeTruthy();
+	            expect(dataA.uniqueKey()).toEqual(dataA.uniqueKey());
+	
+	            expect(dataA.equals(dataB)).toBeFalsy();
+	            expect(dataB.equals(dataA)).toBeFalsy();
+	            expect(dataB.uniqueKey()).not.toEqual(dataA.uniqueKey());
+	
+	            expect(dataA.equals(dataA2)).toBeTruthy();
+	            expect(dataA2.equals(dataA)).toBeTruthy();
+	            expect(dataA2.uniqueKey()).toEqual(dataA.uniqueKey());
+	        });
         });
     });
     
@@ -694,8 +971,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
          *         Web Key.
          * @throws JSONException if there is an error reconstructing the JSON
          *         Web Key JSON object.
-         * @throws MslEncodingException if there is an error parsing the JSON
-         *         Web Key JSON object.
+         * @throws MslEncoderException if there is an error parsing the data.
          */
         function extractJwkSecretKey(wrapCryptoContext, wrappedJwk, algo, usages, callback) {
             wrapCryptoContext.unwrap(wrappedJwk, algo, usages, callback);
@@ -781,19 +1057,19 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             runs(function() {
                 refCryptoContext = new SymmetricCryptoContext(pskCtx, KEY_ID, masterToken.encryptionKey, masterToken.signatureKey, null);
                 wrapCryptoContext = new SymmetricCryptoContext(pskCtx, KEY_ID, encryptionKey, hmacKey, null);
-                refCryptoContext.encrypt(data, {
+                refCryptoContext.encrypt(data, encoder, ENCODER_FORMAT, {
                     result: function(x) { refCiphertext = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                wrapCryptoContext.encrypt(data, {
+                wrapCryptoContext.encrypt(data, encoder, ENCODER_FORMAT, {
                     result: function(x) { wrapCiphertext = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                refCryptoContext.sign(data, {
+                refCryptoContext.sign(data, encoder, ENCODER_FORMAT, {
                     result: function(x) { refHmac = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                wrapCryptoContext.sign(data, {
+                wrapCryptoContext.sign(data, encoder, ENCODER_FORMAT, {
                     result: function(x) { wrapHmac = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -801,19 +1077,19 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             waitsFor(function() { return refCiphertext && wrapCiphertext && refHmac && wrapHmac; }, "ciphertexts and HMACs", 100);
             var refPlaintext, wrapPlaintext, refVerified, wrapVerified;
             runs(function() {
-                refCryptoContext.decrypt(wrapCiphertext, {
+                refCryptoContext.decrypt(wrapCiphertext, encoder, {
                     result: function(x) { refPlaintext = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                wrapCryptoContext.decrypt(refCiphertext, {
+                wrapCryptoContext.decrypt(refCiphertext, encoder, {
                     result: function(x) { wrapPlaintext = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                refCryptoContext.verify(data, wrapHmac, {
+                refCryptoContext.verify(data, wrapHmac, encoder, {
                     result: function(x) { refVerified = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                wrapCryptoContext.verify(data, refHmac, {
+                wrapCryptoContext.verify(data, refHmac, encoder, {
                     result: function(x) { wrapVerified = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -882,19 +1158,19 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             runs(function() {
                 refCryptoContext = new SymmetricCryptoContext(pskCtx, KEY_ID, masterToken.encryptionKey, masterToken.signatureKey, null);
                 wrapCryptoContext = new SymmetricCryptoContext(pskCtx, KEY_ID, encryptionKey, hmacKey, null);
-                refCryptoContext.encrypt(data, {
+                refCryptoContext.encrypt(data, encoder, ENCODER_FORMAT, {
                     result: function(x) { refCiphertext = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                wrapCryptoContext.encrypt(data, {
+                wrapCryptoContext.encrypt(data, encoder, ENCODER_FORMAT, {
                     result: function(x) { wrapCiphertext = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                refCryptoContext.sign(data, {
+                refCryptoContext.sign(data, encoder, ENCODER_FORMAT, {
                     result: function(x) { refHmac = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                wrapCryptoContext.sign(data, {
+                wrapCryptoContext.sign(data, encoder, ENCODER_FORMAT, {
                     result: function(x) { wrapHmac = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -902,19 +1178,19 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             waitsFor(function() { return refCiphertext && wrapCiphertext && refHmac && wrapHmac; }, "ciphertexts and HMACs", 100);
             var refPlaintext, wrapPlaintext, refVerified, wrapVerified;
             runs(function() {
-                refCryptoContext.decrypt(wrapCiphertext, {
+                refCryptoContext.decrypt(wrapCiphertext, encoder, {
                     result: function(x) { refPlaintext = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                wrapCryptoContext.decrypt(refCiphertext, {
+                wrapCryptoContext.decrypt(refCiphertext, encoder, {
                     result: function(x) { wrapPlaintext = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                refCryptoContext.verify(data, wrapHmac, {
+                refCryptoContext.verify(data, wrapHmac, encoder, {
                     result: function(x) { refVerified = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                wrapCryptoContext.verify(data, refHmac, {
+                wrapCryptoContext.verify(data, refHmac, encoder, {
                     result: function(x) { wrapVerified = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1000,19 +1276,19 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             runs(function() {
                 refCryptoContext = new SymmetricCryptoContext(pskCtx, KEY_ID, masterToken.encryptionKey, masterToken.signatureKey, null);
                 wrapCryptoContext = new SymmetricCryptoContext(pskCtx, KEY_ID, encryptionKey, hmacKey, null);
-                refCryptoContext.encrypt(data, {
+                refCryptoContext.encrypt(data, encoder, ENCODER_FORMAT, {
                     result: function(x) { refCiphertext = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                wrapCryptoContext.encrypt(data, {
+                wrapCryptoContext.encrypt(data, encoder, ENCODER_FORMAT, {
                     result: function(x) { wrapCiphertext = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                refCryptoContext.sign(data, {
+                refCryptoContext.sign(data, encoder, ENCODER_FORMAT, {
                     result: function(x) { refHmac = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                wrapCryptoContext.sign(data, {
+                wrapCryptoContext.sign(data, encoder, ENCODER_FORMAT, {
                     result: function(x) { wrapHmac = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1020,19 +1296,19 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             waitsFor(function() { return refCiphertext && wrapCiphertext && refHmac && wrapHmac; }, "ciphertexts and HMACs", 100);
             var refPlaintext, wrapPlaintext, refVerified, wrapVerified;
             runs(function() {
-                refCryptoContext.decrypt(wrapCiphertext, {
+                refCryptoContext.decrypt(wrapCiphertext, encoder, {
                     result: function(x) { refPlaintext = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                wrapCryptoContext.decrypt(refCiphertext, {
+                wrapCryptoContext.decrypt(refCiphertext, encoder, {
                     result: function(x) { wrapPlaintext = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                refCryptoContext.verify(data, wrapHmac, {
+                refCryptoContext.verify(data, wrapHmac, encoder, {
                     result: function(x) { refVerified = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                wrapCryptoContext.verify(data, refHmac, {
+                wrapCryptoContext.verify(data, refHmac, encoder, {
                     result: function(x) { wrapVerified = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1103,19 +1379,19 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             runs(function() {
                 refCryptoContext = new SymmetricCryptoContext(pskCtx, KEY_ID, masterToken.encryptionKey, masterToken.signatureKey, null);
                 wrapCryptoContext = new SymmetricCryptoContext(pskCtx, KEY_ID, encryptionKey, hmacKey, null);
-                refCryptoContext.encrypt(data, {
+                refCryptoContext.encrypt(data, encoder, ENCODER_FORMAT, {
                     result: function(x) { refCiphertext = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                wrapCryptoContext.encrypt(data, {
+                wrapCryptoContext.encrypt(data, encoder, ENCODER_FORMAT, {
                     result: function(x) { wrapCiphertext = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                refCryptoContext.sign(data, {
+                refCryptoContext.sign(data, encoder, ENCODER_FORMAT, {
                     result: function(x) { refHmac = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                wrapCryptoContext.sign(data, {
+                wrapCryptoContext.sign(data, encoder, ENCODER_FORMAT, {
                     result: function(x) { wrapHmac = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1123,19 +1399,19 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             waitsFor(function() { return refCiphertext && wrapCiphertext && refHmac && wrapHmac; }, "ciphertexts and HMACs", 100);
             var refPlaintext, wrapPlaintext, refVerified, wrapVerified;
             runs(function() {
-                refCryptoContext.decrypt(wrapCiphertext, {
+                refCryptoContext.decrypt(wrapCiphertext, encoder, {
                     result: function(x) { refPlaintext = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                wrapCryptoContext.decrypt(refCiphertext, {
+                wrapCryptoContext.decrypt(refCiphertext, encoder, {
                     result: function(x) { wrapPlaintext = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                refCryptoContext.verify(data, wrapHmac, {
+                refCryptoContext.verify(data, wrapHmac, encoder, {
                     result: function(x) { refVerified = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                wrapCryptoContext.verify(data, refHmac, {
+                wrapCryptoContext.verify(data, refHmac, encoder, {
                     result: function(x) { wrapVerified = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1228,11 +1504,11 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
                 expect(wrapdata).not.toEqual(WRAPDATA);
                 expect(wrapdata).toEqual(resp.wrapdata);
                 
-                reqCryptoContext.encrypt(data, {
+                reqCryptoContext.encrypt(data, encoder, ENCODER_FORMAT, {
                     result: function(data) { requestCiphertext = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                respCryptoContext.encrypt(data, {
+                respCryptoContext.encrypt(data, encoder, ENCODER_FORMAT, {
                     result: function(data) { responseCiphertext = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1245,11 +1521,11 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
                 expect(requestCiphertext).not.toEqual(data);
                 expect(responseCiphertext).not.toEqual(data);
 
-                reqCryptoContext.sign(data, {
+                reqCryptoContext.sign(data, encoder, ENCODER_FORMAT, {
                     result: function(data) { requestSignature = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                respCryptoContext.sign(data, {
+                respCryptoContext.sign(data, encoder, ENCODER_FORMAT, {
                     result: function(data) { responseSignature = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1263,11 +1539,11 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
                 expect(responseSignature).not.toEqual(data);
                 expect(responseSignature).toEqual(requestSignature);
                 
-                reqCryptoContext.decrypt(responseCiphertext, {
+                reqCryptoContext.decrypt(responseCiphertext, encoder, {
                     result: function(data) { requestPlaintext = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                respCryptoContext.decrypt(requestCiphertext, {
+                respCryptoContext.decrypt(requestCiphertext, encoder, {
                     result: function(data) { responsePlaintext = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1281,11 +1557,11 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
                 expect(requestPlaintext).toEqual(data);
                 expect(responsePlaintext).toEqual(requestPlaintext);
                 
-                reqCryptoContext.verify(data, responseSignature, {
+                reqCryptoContext.verify(data, responseSignature, encoder, {
                     result: function(verified) { reqVerified = verified; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                respCryptoContext.verify(data, requestSignature, {
+                respCryptoContext.verify(data, requestSignature, encoder, {
                     result: function(verified) { respVerified = verified; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1333,11 +1609,11 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             runs(function() {
                 expect(repository.getWrapdata()).toEqual(resp.wrapdata);
                 
-                reqCryptoContext.encrypt(data, {
+                reqCryptoContext.encrypt(data, encoder, ENCODER_FORMAT, {
                     result: function(data) { requestCiphertext = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                respCryptoContext.encrypt(data, {
+                respCryptoContext.encrypt(data, encoder, ENCODER_FORMAT, {
                     result: function(data) { responseCiphertext = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1350,11 +1626,11 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
                 expect(requestCiphertext).not.toEqual(data);
                 expect(responseCiphertext).not.toEqual(data);
 
-                reqCryptoContext.sign(data, {
+                reqCryptoContext.sign(data, encoder, ENCODER_FORMAT, {
                     result: function(data) { requestSignature = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                respCryptoContext.sign(data, {
+                respCryptoContext.sign(data, encoder, ENCODER_FORMAT, {
                     result: function(data) { responseSignature = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1368,11 +1644,11 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
                 expect(responseSignature).not.toEqual(data);
                 expect(responseSignature).toEqual(requestSignature);
                 
-                reqCryptoContext.decrypt(responseCiphertext, {
+                reqCryptoContext.decrypt(responseCiphertext, encoder, {
                     result: function(data) { requestPlaintext = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                respCryptoContext.decrypt(requestCiphertext, {
+                respCryptoContext.decrypt(requestCiphertext, encoder, {
                     result: function(data) { responsePlaintext = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1386,11 +1662,11 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
                 expect(requestPlaintext).toEqual(data);
                 expect(responsePlaintext).toEqual(requestPlaintext);
                 
-                reqCryptoContext.verify(data, responseSignature, {
+                reqCryptoContext.verify(data, responseSignature, encoder, {
                     result: function(verified) { requestVerified = true; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                respCryptoContext.verify(data, requestSignature, {
+                respCryptoContext.verify(data, requestSignature, encoder, {
                     result: function(verified) { responseVerified = true; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });

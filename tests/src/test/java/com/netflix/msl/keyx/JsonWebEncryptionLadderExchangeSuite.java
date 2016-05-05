@@ -92,9 +92,9 @@ public class JsonWebEncryptionLadderExchangeSuite {
 	/** MSL encoder format. */
 	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
     
-    /** JSON key key exchange scheme. */
+    /** Key key exchange scheme. */
     private static final String KEY_SCHEME = "scheme";
-    /** JSON key key request data. */
+    /** Key key request data. */
     private static final String KEY_KEYDATA = "keydata";
     
     private static ICryptoContext PSK_CRYPTO_CONTEXT, WRAP_CRYPTO_CONTEXT;
@@ -171,11 +171,11 @@ public class JsonWebEncryptionLadderExchangeSuite {
 
     /** Request data unit tests. */
     public static class RequestDataTest {
-        /** JSON key wrap key wrapping mechanism. */
+        /** Key wrap key wrapping mechanism. */
         private static final String KEY_MECHANISM = "mechanism";
-        /** JSON key public key. */
+        /** Key public key. */
         private static final String KEY_PUBLIC_KEY = "publickey";
-        /** JSON key wrap data. */
+        /** Key wrap data. */
         private static final String KEY_WRAPDATA = "wrapdata";
         
         @Rule
@@ -366,16 +366,16 @@ public class JsonWebEncryptionLadderExchangeSuite {
     
     /** Response data unit tests. */
     public static class ResponseDataTest {
-        /** JSON key master token. */
+        /** Key master token. */
         private static final String KEY_MASTER_TOKEN = "mastertoken";
         
-        /** JSON key wrapping key. */
+        /** Key wrapping key. */
         private static final String KEY_WRAP_KEY = "wrapkey";
-        /** JSON key wrapping key data. */
+        /** Key wrapping key data. */
         private static final String KEY_WRAPDATA = "wrapdata";
-        /** JSON key encrypted encryption key. */
+        /** Key encrypted encryption key. */
         private static final String KEY_ENCRYPTION_KEY = "encryptionkey";
-        /** JSON key encrypted HMAC key. */
+        /** Key encrypted HMAC key. */
         private static final String KEY_HMAC_KEY = "hmackey";
         
         @Rule
