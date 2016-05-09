@@ -346,7 +346,7 @@ public class AsymmetricWrappedExchangeSuite {
             assertFalse(dataB.equals(dataA));
             assertTrue(dataA.hashCode() != dataB.hashCode());
 
-            // The private keys don't transfer via the JSON constructor.
+            // The private keys don't transfer via the parse constructor.
             assertFalse(dataA.equals(dataA2));
             assertFalse(dataA2.equals(dataA));
             assertTrue(dataA.hashCode() != dataA2.hashCode());
@@ -365,7 +365,7 @@ public class AsymmetricWrappedExchangeSuite {
             assertFalse(dataB.equals(dataA));
             assertTrue(dataA.hashCode() != dataB.hashCode());
 
-            // The private keys don't transfer via the JSON constructor.
+            // The private keys don't transfer via the parse constructor.
             assertFalse(dataA.equals(dataA2));
             assertFalse(dataA2.equals(dataA));
             assertTrue(dataA.hashCode() != dataA2.hashCode());
@@ -384,7 +384,7 @@ public class AsymmetricWrappedExchangeSuite {
             assertFalse(dataB.equals(dataA));
             assertTrue(dataA.hashCode() != dataB.hashCode());
 
-            // The private keys don't transfer via the JSON constructor.
+            // The private keys don't transfer via the parse constructor.
             assertFalse(dataA.equals(dataA2));
             assertFalse(dataA2.equals(dataA));
             assertTrue(dataA.hashCode() != dataA2.hashCode());
@@ -403,7 +403,7 @@ public class AsymmetricWrappedExchangeSuite {
             assertFalse(dataB.equals(dataA));
             assertTrue(dataA.hashCode() != dataB.hashCode());
 
-            // The private keys don't transfer via the JSON constructor.
+            // The private keys don't transfer via the parse constructor.
             assertFalse(dataA.equals(dataA2));
             assertFalse(dataA2.equals(dataA));
             assertTrue(dataA.hashCode() != dataA2.hashCode());
@@ -419,7 +419,7 @@ public class AsymmetricWrappedExchangeSuite {
     }
 
     /** Response data unit tests. */
-        public static class ResponseDataTest {
+    public static class ResponseDataTest {
         /** Key master token. */
         private static final String KEY_MASTER_TOKEN = "mastertoken";
         
@@ -654,7 +654,7 @@ public class AsymmetricWrappedExchangeSuite {
          * @throws MslCryptoException if there is an error encrypting or signing
          *         the token data.
          * @throws MslException if the master token is constructed incorrectly.
-         * @throws MslException if there is an error editing the JSON data.
+         * @throws MslException if there is an error editing the data.
          * @throws MslEncoderException if there is an error modifying the data.
          */
         private static MasterToken getUntrustedMasterToken(final MslContext ctx, final SecretKey encryptionKey, final SecretKey hmacKey) throws MslEncodingException, MslCryptoException, MslException, MslException, MslEncoderException {
