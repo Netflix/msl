@@ -123,7 +123,7 @@ describe("UnauthenticatedAuthenticationData", function() {
         
         runs(function() {
             expect(mo.getString(KEY_SCHEME)).toEqual(EntityAuthenticationScheme.NONE.name);
-            var authdata = mo.getMslObject(KEY_AUTHDATA);
+            var authdata = mo.getMslObject(KEY_AUTHDATA, encoder);
             expect(authdata.getString(KEY_IDENTITY)).toEqual(IDENTITY);
         });
     });

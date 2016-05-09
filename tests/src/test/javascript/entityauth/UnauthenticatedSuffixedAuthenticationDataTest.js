@@ -134,7 +134,7 @@ describe("UnauthenticatedSuffixedAuthenticationData", function() {
 
         runs(function() {
             expect(mo.getString(KEY_SCHEME)).toEqual(EntityAuthenticationScheme.NONE_SUFFIXED.name);
-            var authdata = mo.getMslObject(KEY_AUTHDATA);
+            var authdata = mo.getMslObject(KEY_AUTHDATA, encoder);
             expect(authdata.getString(KEY_ROOT)).toEqual(ROOT);
             expect(authdata.getString(KEY_SUFFIX)).toEqual(SUFFIX);
         });

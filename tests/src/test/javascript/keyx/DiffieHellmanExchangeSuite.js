@@ -177,7 +177,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             
             runs(function() {
             	expect(mo[KEY_SCHEME]).toEqual(KeyExchangeScheme.DIFFIE_HELLMAN.name);
-            	var keydata = mo.getMslObject(KEY_KEYDATA);
+            	var keydata = mo.getMslObject(KEY_KEYDATA, encoder);
 	            expect(keydata.getString(KEY_PARAMETERS_ID)).toEqual(PARAMETERS_ID);
 	            expect(prependNullByte(keydata.getBytes(KEY_PUBLIC_KEY))).toEqual(REQUEST_PUBLIC_KEY.getEncoded());
             });
@@ -439,7 +439,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         	runs(function() {
         		expect(mo.getString(KEY_SCHEME)).toEqual(KeyExchangeScheme.DIFFIE_HELLMAN.name);
 
-        		MasterToken$parse(ctx, mo.getMslObject(KEY_MASTER_TOKEN), {
+        		MasterToken$parse(ctx, mo.getMslObject(KEY_MASTER_TOKEN, encoder), {
         			result: function(token) { masterToken = token; },
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
@@ -448,7 +448,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         	
         	runs(function() {
         		expect(masterToken).toEqual(MASTER_TOKEN);
-        		var keydata = mo.getMslObject(KEY_KEYDATA);
+        		var keydata = mo.getMslObject(KEY_KEYDATA, encoder);
         		expect(keydata.getString(KEY_PARAMETERS_ID)).toEqual(PARAMETERS_ID);
         		expect(prependNullByte(keydata.getBytes(KEY_PUBLIC_KEY))).toEqual(RESPONSE_PUBLIC_KEY.getEncoded());
         	});
@@ -702,7 +702,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             var keyRequestData = new RequestData(PARAMETERS_ID, REQUEST_PUBLIC_KEY, REQUEST_PRIVATE_KEY);
             var keyxData;
             runs(function() {
-                factory.generateResponse(ctx, keyRequestData, entityAuthData, {
+                factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData, {
                     result: function(data) { keyxData = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -725,7 +725,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             var exception;
             runs(function() {
 	            var keyRequestData = new FakeKeyRequestData();
-	            factory.generateResponse(ctx, keyRequestData, entityAuthData, {
+	            factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData, {
                     result: function() {},
                     error: function(err) { exception = err; }
                 });
@@ -741,7 +741,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         	var exception;
             runs(function() {
 	            var keyRequestData = new RequestData("x", REQUEST_PUBLIC_KEY, REQUEST_PRIVATE_KEY);
-	            factory.generateResponse(ctx, keyRequestData, entityAuthData, {
+	            factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData, {
                     result: function() {},
                     error: function(err) { exception = err; }
                 });
@@ -757,7 +757,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         	var exception;
             runs(function() {
 	            var keyRequestData = new RequestData('98765', REQUEST_PUBLIC_KEY, REQUEST_PRIVATE_KEY);
-	            factory.generateResponse(ctx, keyRequestData, entityAuthData, {
+	            factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData, {
                     result: function() {},
                     error: function(err) { exception = err; }
                 });
@@ -773,7 +773,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             var keyRequestData = new RequestData(PARAMETERS_ID, REQUEST_PUBLIC_KEY, REQUEST_PRIVATE_KEY);
             var keyxData;
             runs(function() {
-                factory.generateResponse(ctx, keyRequestData, MASTER_TOKEN, {
+                factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, MASTER_TOKEN, {
                     result: function(data) { keyxData = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -808,7 +808,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         	
             var exception;
             runs(function() {
-	            factory.generateResponse(ctx, keyRequestData, masterToken, {
+	            factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, masterToken, {
                     result: function() {},
                     error: function(err) { exception = err; }
                 });
@@ -824,7 +824,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             var exception;
             runs(function() {
 	            var keyRequestData = new FakeKeyRequestData();
-	            factory.generateResponse(ctx, keyRequestData, MASTER_TOKEN, {
+	            factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, MASTER_TOKEN, {
                     result: function() {},
                     error: function(err) { exception = err; }
                 });
@@ -840,7 +840,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             var exception;
             runs(function() {
             	var keyRequestData = new RequestData("x", REQUEST_PUBLIC_KEY, REQUEST_PRIVATE_KEY);
-            	factory.generateResponse(ctx, keyRequestData, MASTER_TOKEN, {
+            	factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, MASTER_TOKEN, {
             		result: function() {},
             		error: function(err) { exception = err; }
             	});
@@ -856,7 +856,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             var exception;
             runs(function() {
             	var keyRequestData = new RequestData('98765', REQUEST_PUBLIC_KEY, REQUEST_PRIVATE_KEY);
-            	factory.generateResponse(ctx, keyRequestData, MASTER_TOKEN, {
+            	factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, MASTER_TOKEN, {
             		result: function() {},
             		error: function(err) { exception = err; }
             	});
@@ -872,7 +872,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             var keyRequestData = new RequestData(PARAMETERS_ID, REQUEST_PUBLIC_KEY, REQUEST_PRIVATE_KEY);
             var keyxData;
             runs(function() {
-                factory.generateResponse(ctx, keyRequestData, entityAuthData, {
+                factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData, {
                     result: function(data) { keyxData = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -973,7 +973,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         	var keyRequestData = new RequestData(PARAMETERS_ID, REQUEST_PUBLIC_KEY, REQUEST_PRIVATE_KEY);
         	var keyxData;
         	runs(function() {
-        		factory.generateResponse(ctx, keyRequestData, entityAuthData, {
+        		factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData, {
         			result: function(data) { keyxData = data; },
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
@@ -1020,7 +1020,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             var keyRequestData = new RequestData(PARAMETERS_ID, REQUEST_PUBLIC_KEY, REQUEST_PRIVATE_KEY);
             var keyxData;
             runs(function() {
-                factory.generateResponse(ctx, keyRequestData, entityAuthData, {
+                factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData, {
                     result: function(data) { keyxData = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1051,7 +1051,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             var keyRequestData = new RequestData(PARAMETERS_ID, REQUEST_PUBLIC_KEY, null);
             var keyxData;
             runs(function() {
-                factory.generateResponse(ctx, keyRequestData, entityAuthData, {
+                factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData, {
                     result: function(data) { keyxData = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });

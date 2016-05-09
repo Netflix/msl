@@ -666,7 +666,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             
             runs(function() {
 	            expect(masterToken).toEqual(MASTER_TOKEN);
-	            var keydata = mo.getMslObject(KEY_KEYDATA);
+	            var keydata = mo.getMslObject(KEY_KEYDATA, encoder);
 	            expect(keydata.getString(KEY_KEY_PAIR_ID)).toEqual(KEYPAIR_ID);
 	            expect(keydata.getBytes(KEY_ENCRYPTION_KEY)).toEqual(ENCRYPTION_KEY);
 	            expect(keydata.getBytes(KEY_HMAC_KEY)).toEqual(HMAC_KEY);
@@ -959,7 +959,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             var exception;
             runs(function() {
                 var keyRequestData = new FakeKeyRequestData();
-                factory.generateResponse(ctx, keyRequestData, entityAuthData, {
+                factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData, {
                     result: function() {},
                     error: function(err) { exception = err; }
                 });
@@ -975,7 +975,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             var keyRequestData = new FakeKeyRequestData();
             var exception;
             runs(function() {
-                factory.generateResponse(ctx, keyRequestData, MASTER_TOKEN, {
+                factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, MASTER_TOKEN, {
                     result: function() {},
                     error: function(err) { exception = err; }
                 });
@@ -1030,7 +1030,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                 var keyRequestData = new RequestData(KEYPAIR_ID, mechanism, publicKey, privateKey);
                 var keyxData;
                 runs(function() {
-                    factory.generateResponse(ctx, keyRequestData, entityAuthData, {
+                    factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData, {
                         result: function(data) { keyxData = data; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
@@ -1053,7 +1053,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                 var keyRequestData = new RequestData(KEYPAIR_ID, mechanism, publicKey, privateKey);
                 var keyxData;
                 runs(function() {
-                    factory.generateResponse(ctx, keyRequestData, MASTER_TOKEN, {
+                    factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, MASTER_TOKEN, {
                         result: function(data) { keyxData = data; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
@@ -1088,7 +1088,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
 
                 var exception;
                 runs(function() {
-                    factory.generateResponse(ctx, keyRequestData, masterToken, {
+                    factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, masterToken, {
                         result: function() {},
                         error: function(err) { exception = err; }
                     });
@@ -1105,7 +1105,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                 var keyRequestData = new RequestData(KEYPAIR_ID, mechanism, publicKey, privateKey);
                 var keyxData;
                 runs(function() {
-                    factory.generateResponse(ctx, keyRequestData, entityAuthData, {
+                    factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData, {
                         result: function(data) { keyxData = data; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
@@ -1209,7 +1209,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
 
                 var keyxData;
                 runs(function() {
-                    factory.generateResponse(ctx, keyRequestData, entityAuthData, {
+                    factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData, {
                         result: function(data) { keyxData = data; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
@@ -1257,7 +1257,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
 
                 var keyxData;
                 runs(function() {
-                    factory.generateResponse(ctx, keyRequestData, entityAuthData, {
+                    factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData, {
                         result: function(data) { keyxData = data; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
@@ -1288,7 +1288,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
 
                 var keyxData;
                 runs(function() {
-                    factory.generateResponse(ctx, keyRequestData, entityAuthData, {
+                    factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData, {
                         result: function(data) { keyxData = data; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
@@ -1316,7 +1316,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
 
                 var keyxData;
                 runs(function() {
-                    factory.generateResponse(ctx, keyRequestData, entityAuthData, {
+                    factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData, {
                         result: function(data) { keyxData = data; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
@@ -1362,7 +1362,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
 
                 var keyxData;
                 runs(function() {
-                    factory.generateResponse(ctx, keyRequestData, entityAuthData, {
+                    factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData, {
                         result: function(data) { keyxData = data; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });

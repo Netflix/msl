@@ -219,7 +219,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             
             runs(function() {
 	            expect(mo.getString(KEY_SCHEME)).toEqual(KeyExchangeScheme.JWK_LADDER.name);
-	            var keydata = mo.getMslObject(KEY_KEYDATA);
+	            var keydata = mo.getMslObject(KEY_KEYDATA, encoder);
 	            expect(keydata.getString(KEY_MECHANISM)).toEqual(Mechanism.RSA);
 	            expect(keydata.getBytes(KEY_PUBLIC_KEY)).toEqual(RSA_PUBLIC_KEY.getEncoded());
 	            expect(keydata.has(KEY_WRAPDATA)).toBeFalsy();
@@ -321,7 +321,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             
             runs(function() {
 	            expect(mo.getString(KEY_SCHEME)).toEqual(KeyExchangeScheme.JWK_LADDER.name);
-	            var keydata = mo.getMslObject(KEY_KEYDATA);
+	            var keydata = mo.getMslObject(KEY_KEYDATA, encoder);
 	            expect(keydata.getString(KEY_MECHANISM)).toEqual(Mechanism.WRAP);
 	            expect(keydata.has(KEY_PUBLIC_KEY)).toBeFalsy();
 	            expect(keydata.getBytes(KEY_WRAPDATA)).toEqual(WRAPDATA);
@@ -417,7 +417,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             
             runs(function() {
 	            expect(mo.getString(KEY_SCHEME)).toEqual(KeyExchangeScheme.JWK_LADDER.name);
-	            var keydata = mo.getMslObject(KEY_KEYDATA);
+	            var keydata = mo.getMslObject(KEY_KEYDATA, encoder);
 	            expect(keydata.getString(KEY_MECHANISM)).toEqual(Mechanism.PSK);
 	            expect(keydata.has(KEY_PUBLIC_KEY)).toBeFalsy();
 	            expect(keydata.getBytes(KEY_WRAPDATA)).toBeFalsy();
@@ -667,7 +667,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             runs(function() {
                 expect(mo.getString(KEY_SCHEME)).toEqual(KeyExchangeScheme.JWK_LADDER.name);
                 
-                MasterToken$parse(pskCtx, mo.getMslObject(KEY_MASTER_TOKEN), {
+                MasterToken$parse(pskCtx, mo.getMslObject(KEY_MASTER_TOKEN, encoder), {
                     result: function(x) { masterToken = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -676,7 +676,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             
             runs(function() {
                 expect(masterToken).toEqual(PSK_MASTER_TOKEN);
-                var keydata = mo.getMslObject(KEY_KEYDATA);
+                var keydata = mo.getMslObject(KEY_KEYDATA, encoder);
                 expect(keydata.getBytes(KEY_ENCRYPTION_KEY)).toEqual(PSK_ENCRYPTION_JWK);
                 expect(keydata.getBytes(KEY_HMAC_KEY)).toEqual(PSK_HMAC_JWK);
                 expect(keydata.getBytes(KEY_WRAPDATA)).toEqual(WRAPDATA);
@@ -1005,7 +1005,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             var req, keyxData;
             runs(function() {
                 req = new RequestData(Mechanism.WRAP, WRAPDATA);
-                factory.generateResponse(pskCtx, req, entityAuthData, {
+                factory.generateResponse(pskCtx, ENCODER_FORMAT, req, entityAuthData, {
                     result: function(x) { keyxData = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1107,7 +1107,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             var keyxData;
             runs(function() {
                 var req = new RequestData(Mechanism.PSK, null);
-                factory.generateResponse(pskCtx, req, entityAuthData, {
+                factory.generateResponse(pskCtx, ENCODER_FORMAT, req, entityAuthData, {
                     result: function(x) { keyxData = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1207,7 +1207,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             var exception;
             runs(function() {
                 var req = new FakeKeyRequestData();
-                factory.generateResponse(pskCtx, req, entityAuthData, {
+                factory.generateResponse(pskCtx, ENCODER_FORMAT, req, entityAuthData, {
                     result: function() {},
                     error: function(e) { exception = e; }
                 });
@@ -1223,7 +1223,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             var keyxData;
             runs(function() {
                 var req = new RequestData(Mechanism.WRAP, WRAPDATA);
-                factory.generateResponse(pskCtx, req, PSK_MASTER_TOKEN, {
+                factory.generateResponse(pskCtx, ENCODER_FORMAT, req, PSK_MASTER_TOKEN, {
                     result: function(x) { keyxData = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1326,7 +1326,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             var keyxData;
             runs(function() {
                 var req = new RequestData(Mechanism.PSK, null);
-                factory.generateResponse(pskCtx, req, PSK_MASTER_TOKEN, {
+                factory.generateResponse(pskCtx, ENCODER_FORMAT, req, PSK_MASTER_TOKEN, {
                     result: function(x) { keyxData = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1428,7 +1428,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             var exception;
             runs(function() {
                 var req = new FakeKeyRequestData();
-                factory.generateResponse(pskCtx, req, PSK_MASTER_TOKEN, {
+                factory.generateResponse(pskCtx, ENCODER_FORMAT, req, PSK_MASTER_TOKEN, {
                     result: function() {},
                     error: function(e) { exception = e; }
                 });
@@ -1453,7 +1453,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             var exception;
             runs(function() {
                 var req = new RequestData(Mechanism.PSK, null);
-                factory.generateResponse(pskCtx, req, masterToken, {
+                factory.generateResponse(pskCtx, ENCODER_FORMAT, req, masterToken, {
                     result: function() {},
                     error: function(e) { exception = e; }
                 });
@@ -1469,7 +1469,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             var req, keyxData;
             runs(function() {
                 req = new RequestData(Mechanism.WRAP, WRAPDATA);
-                factory.generateResponse(pskCtx, req, entityAuthData, {
+                factory.generateResponse(pskCtx, ENCODER_FORMAT, req, entityAuthData, {
                     result: function(x) { keyxData = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1579,7 +1579,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             var req, keyxData;
             runs(function() {
                 req = new RequestData(Mechanism.PSK, null);
-                factory.generateResponse(pskCtx, req, entityAuthData, {
+                factory.generateResponse(pskCtx, ENCODER_FORMAT, req, entityAuthData, {
                     result: function(x) { keyxData = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1683,7 +1683,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             var keyxData;
             runs(function() {
                 var req = new RequestData(Mechanism.WRAP, WRAPDATA);
-                factory.generateResponse(pskCtx, req, entityAuthData, {
+                factory.generateResponse(pskCtx, ENCODER_FORMAT, req, entityAuthData, {
                     result: function(x) { keyxData = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1740,7 +1740,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             var keyxData;
             runs(function() {
                 var req = new RequestData(Mechanism.PSK, null);
-                factory.generateResponse(ctx, req, entityAuthData, {
+                factory.generateResponse(ctx, ENCODER_FORMAT, req, entityAuthData, {
                     result: function(x) { keyxData = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1769,7 +1769,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             var req, keyxData;
             runs(function() {
                 req = new RequestData(Mechanism.WRAP, WRAPDATA);
-                factory.generateResponse(pskCtx, req, entityAuthData, {
+                factory.generateResponse(pskCtx, ENCODER_FORMAT, req, entityAuthData, {
                     result: function(x) { keyxData = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1820,7 +1820,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             var req, keyxData;
             runs(function() {
                 req = new RequestData(Mechanism.WRAP, WRAPDATA);
-                factory.generateResponse(pskCtx, req, entityAuthData, {
+                factory.generateResponse(pskCtx, ENCODER_FORMAT, req, entityAuthData, {
                     result: function(x) { keyxData = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1877,7 +1877,7 @@ if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
             var req, keyxData;
             runs(function() {
                 req = new RequestData(Mechanism.WRAP, WRAPDATA);
-                factory.generateResponse(pskCtx, req, entityAuthData, {
+                factory.generateResponse(pskCtx, ENCODER_FORMAT, req, entityAuthData, {
                     result: function(x) { keyxData = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });

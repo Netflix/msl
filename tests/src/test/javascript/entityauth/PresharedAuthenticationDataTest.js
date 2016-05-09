@@ -122,7 +122,7 @@ describe("PresharedAuthenticationData", function() {
         
         runs(function() {
             expect(mo.getString(KEY_SCHEME)).toEqual(EntityAuthenticationScheme.PSK.name);
-            var authdata = mo.getMslObject(KEY_AUTHDATA);
+            var authdata = mo.getMslObject(KEY_AUTHDATA, encoder);
             expect(authdata.getString(KEY_IDENTITY)).toEqual(MockPresharedAuthenticationFactory.PSK_ESN);
         });
     });

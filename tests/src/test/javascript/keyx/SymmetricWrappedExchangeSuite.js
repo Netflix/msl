@@ -170,7 +170,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             
             runs(function() {
 	            expect(mo.getString(KEY_SCHEME)).toEqual(KeyExchangeScheme.SYMMETRIC_WRAPPED.name);
-	            var keydata = mo.getMslObject(KEY_KEYDATA);
+	            var keydata = mo.getMslObject(KEY_KEYDATA, encoder);
 	            expect(keydata.getString(KEY_KEY_ID)).toEqual(KeyId.PSK);
             });
         });
@@ -338,7 +338,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         	var masterToken;
         	runs(function() {
         		expect(mo.getString(KEY_SCHEME)).toEqual(KeyExchangeScheme.SYMMETRIC_WRAPPED.name);
-        		MasterToken$parse(pskCtx, mo.getMslObject(KEY_MASTER_TOKEN), {
+        		MasterToken$parse(pskCtx, mo.getMslObject(KEY_MASTER_TOKEN, encoder), {
         			result: function(token) { masterToken = token; },
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
@@ -347,7 +347,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         	
         	runs(function() {
 	            expect(PSK_MASTER_TOKEN.equals(masterToken)).toBeTruthy();
-	            var keydata = mo.getMslObject(KEY_KEYDATA);
+	            var keydata = mo.getMslObject(KEY_KEYDATA, encoder);
 	            expect(keydata.getString(KEY_KEY_ID)).toEqual(KeyId.PSK);
 	            expect(keydata.getBytes(KEY_ENCRYPTION_KEY)).toEqual(ENCRYPTION_KEY);
 	            expect(keydata.getBytes(KEY_HMAC_KEY)).toEqual(HMAC_KEY);
@@ -679,7 +679,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             var keyRequestData = new RequestData(KeyId.PSK);
             var keyxData;
             runs(function() {
-                factory.generateResponse(unauthCtx, keyRequestData, entityAuthData, {
+                factory.generateResponse(unauthCtx, ENCODER_FORMAT, keyRequestData, entityAuthData, {
                     result: function(data) { keyxData = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -704,7 +704,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             var keyRequestData = new RequestData(KeyId.SESSION);
             var keyxData;
             runs(function() {
-                factory.generateResponse(unauthCtx, keyRequestData, PSK_MASTER_TOKEN, {
+                factory.generateResponse(unauthCtx, ENCODER_FORMAT, keyRequestData, PSK_MASTER_TOKEN, {
                     result: function(data) { keyxData = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -728,7 +728,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             runs(function() {
 	            var keyRequestData = new RequestData(KeyId.PSK);
 	            var entityAuthData = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN + "x");
-	            factory.generateResponse(unauthCtx, keyRequestData, entityAuthData, {
+	            factory.generateResponse(unauthCtx, ENCODER_FORMAT, keyRequestData, entityAuthData, {
                     result: function() {},
                     error: function(err) { exception = err; }
                 });
@@ -744,7 +744,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         	var exception;
             runs(function() {
 	            var keyRequestData = new FakeKeyRequestData();
-	            factory.generateResponse(unauthCtx, keyRequestData, entityAuthData, {
+	            factory.generateResponse(unauthCtx, ENCODER_FORMAT, keyRequestData, entityAuthData, {
                     result: function() {},
                     error: function(err) { exception = err; }
                 });
@@ -760,7 +760,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             var keyRequestData = new RequestData(KeyId.PSK);
             var keyxData;
             runs(function() {
-                factory.generateResponse(unauthCtx, keyRequestData, PSK_MASTER_TOKEN, {
+                factory.generateResponse(unauthCtx, ENCODER_FORMAT, keyRequestData, PSK_MASTER_TOKEN, {
                     result: function(data) { keyxData = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -787,7 +787,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             var keyRequestData = new RequestData(KeyId.SESSION);
             var keyxData;
             runs(function() {
-                factory.generateResponse(unauthCtx, keyRequestData, PSK_MASTER_TOKEN, {
+                factory.generateResponse(unauthCtx, ENCODER_FORMAT, keyRequestData, PSK_MASTER_TOKEN, {
                     result: function(data) { keyxData = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -824,7 +824,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         	var exception;
             runs(function() {
         		var keyRequestData = new RequestData(KeyId.PSK);
-	            factory.generateResponse(unauthCtx, keyRequestData, masterToken, {
+	            factory.generateResponse(unauthCtx, ENCODER_FORMAT, keyRequestData, masterToken, {
                     result: function() {},
                     error: function(err) { exception = err; }
                 });
@@ -840,7 +840,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         	var exception;
             runs(function() {
 	            var keyRequestData = new FakeKeyRequestData();
-	            factory.generateResponse(unauthCtx, keyRequestData, PSK_MASTER_TOKEN, {
+	            factory.generateResponse(unauthCtx, ENCODER_FORMAT, keyRequestData, PSK_MASTER_TOKEN, {
                     result: function() {},
                     error: function(err) { exception = err; }
                 });
@@ -868,7 +868,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         	var exception;
             runs(function() {
 	            var keyRequestData = new RequestData(KeyId.SESSION);
-	            factory.generateResponse(unauthCtx, keyRequestData, masterToken, {
+	            factory.generateResponse(unauthCtx, ENCODER_FORMAT, keyRequestData, masterToken, {
                     result: function() {},
                     error: function(err) { exception = err; }
                 });
@@ -884,7 +884,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             var keyRequestData = new RequestData(KeyId.PSK);
             var keyxData;
             runs(function() {
-                factory.generateResponse(unauthCtx, keyRequestData, entityAuthData, {
+                factory.generateResponse(unauthCtx, ENCODER_FORMAT, keyRequestData, entityAuthData, {
                     result: function(data) { keyxData = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -987,7 +987,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             var keyRequestData = new RequestData(KeyId.SESSION);
             var keyxData;
             runs(function() {
-                factory.generateResponse(unauthCtx, keyRequestData, PSK_MASTER_TOKEN, {
+                factory.generateResponse(unauthCtx, ENCODER_FORMAT, keyRequestData, PSK_MASTER_TOKEN, {
                     result: function(data) { keyxData = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1090,7 +1090,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         	var keyRequestData = new RequestData(KeyId.SESSION);
         	var keyxData;
         	runs(function() {
-        		factory.generateResponse(unauthCtx, keyRequestData, PSK_MASTER_TOKEN, {
+        		factory.generateResponse(unauthCtx, ENCODER_FORMAT, keyRequestData, PSK_MASTER_TOKEN, {
         			result: function(data) { keyxData = data; },
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
@@ -1117,7 +1117,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         	var keyRequestData = new RequestData(KeyId.PSK);
         	var keyxData;
         	runs(function() {
-        		factory.generateResponse(unauthCtx, keyRequestData, entityAuthData, {
+        		factory.generateResponse(unauthCtx, ENCODER_FORMAT, keyRequestData, entityAuthData, {
         			result: function(data) { keyxData = data; },
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
@@ -1163,7 +1163,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         	var keyRequestData = new RequestData(KeyId.PSK);
         	var keyxData;
         	runs(function() {
-        		factory.generateResponse(unauthCtx, keyRequestData, entityAuthData, {
+        		factory.generateResponse(unauthCtx, ENCODER_FORMAT, keyRequestData, entityAuthData, {
         			result: function(data) { keyxData = data; },
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
@@ -1193,7 +1193,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         	var keyRequestData = new RequestData(KeyId.PSK);
         	var keyxData;
         	runs(function() {
-        		factory.generateResponse(unauthCtx, keyRequestData, entityAuthData, {
+        		factory.generateResponse(unauthCtx, ENCODER_FORMAT, keyRequestData, entityAuthData, {
         			result: function(data) { keyxData = data; },
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
@@ -1235,7 +1235,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             var keyRequestData = new RequestData(KeyId.PSK);
             var keyxData;
             runs(function() {
-                factory.generateResponse(unauthCtx, keyRequestData, entityAuthData, {
+                factory.generateResponse(unauthCtx, ENCODER_FORMAT, keyRequestData, entityAuthData, {
                     result: function(data) { keyxData = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });

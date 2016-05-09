@@ -124,7 +124,7 @@ describe("RsaAuthenticationData", function() {
         
         runs(function() {
             expect(mo.getString(KEY_SCHEME)).toEqual(EntityAuthenticationScheme.RSA.name);
-            var authdata = mo.getMslObject(KEY_AUTHDATA);
+            var authdata = mo.getMslObject(KEY_AUTHDATA, encoder);
             expect(authdata.getString(KEY_IDENTITY)).toEqual(MockRsaAuthenticationFactory.RSA_ESN);
             expect(authdata.getString(KEY_PUBKEY_ID)).toEqual(MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
         });
