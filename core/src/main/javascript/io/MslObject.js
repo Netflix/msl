@@ -700,6 +700,22 @@ var MslObject;
             return clone;
         },
         
+        /**
+         * @param {?} that the reference object with which to compare.
+         * @return {boolean} true if the other object is a {@code MslObject}
+         *         with the same keys and values.
+         */
+        equals: function equals(that) {
+        	if (this == that) return true;
+        	if (!(that instanceof MslObject)) return false;
+        	try {
+        		return MslEncoderUtils$equalsObjects(this, that);
+	    	} catch (e) {
+	    		if (e instanceof MslEncoderException) return false;
+	    		throw e;
+	    	}
+        },
+        
         /** @inheritDoc */
         toString: function toString() {
             return JSON.stringify(this.map);

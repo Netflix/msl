@@ -713,7 +713,30 @@ public class MslObject {
     public Map<String,Object> getMap() {
         return Collections.unmodifiableMap(map);
     }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof MslObject)) return false;
+        final MslObject that = (MslObject)obj;
+        try {
+            return MslEncoderUtils.equalObjects(this, that);
+        } catch (final MslEncoderException e) {
+            return false;
+        }
+    }
     
+    /* (non-Javadoc)
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+        return MslEncoderUtils.hashObject(this);
+    }
+
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
      */

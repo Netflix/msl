@@ -523,7 +523,8 @@ var MslArray;
                 value instanceof MslObject ||
                 value instanceof MslArray ||
                 value instanceof String ||
-                typeof value === 'string')
+                typeof value === 'string' ||
+                value === null)
             {
                 element = value;
             }
@@ -531,8 +532,6 @@ var MslArray;
                 element = new MslObject(value);
             } else if (value instanceof Array) {
                 element = new MslArray(value);
-            } else if (value === null) {
-                element = null;
             } else {
                 throw new TypeError("Value [" + typeof value + "] is an unsupported type.");
             }
@@ -730,6 +729,22 @@ var MslArray;
          */
         getCollection: function getCollection() {
             return this.list.slice();
+        },
+        
+        /**
+         * @param {?} that the reference object with which to compare.
+         * @return {boolean} true if the other object is a {@code MslArray}
+         *         with the same elements in the same order.
+         */
+        equals: function equals(that) {
+        	if (this == that) return true;
+        	if (!(that instanceof MslArray)) return false;
+        	try {
+        		return MslEncoderUtils$equalsArrays(this, that);
+        	} catch (e) {
+        		if (e instanceof MslEncoderException) return false;
+        		throw e;
+        	}
         },
         
         /** @inheritDoc */

@@ -19,6 +19,7 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import com.netflix.msl.util.Base64;
@@ -110,6 +111,7 @@ public class MslEncoderUtils {
      * <code>MslEncodable</code> into a <code>MslObject</code>.
      * 
      * @param c a collection of MSL encoding-compatible objects.
+     * @return the constructed MSL array.
      * @throws MslEncoderException if a <code>MslEncodable</code> cannot be
      *         encoded properly or an unsupported object is encountered.
      */
@@ -123,6 +125,10 @@ public class MslEncoderUtils {
                 o instanceof MslObject ||
                 o instanceof Number ||
                 o instanceof String ||
+                o instanceof Map ||
+                o instanceof Collection ||
+                o instanceof Object[] ||
+                o instanceof Enum ||
                 o == null)
             {
                 array.put(-1, o);
@@ -131,8 +137,6 @@ public class MslEncoderUtils {
                 final byte[] encode = me.toMslEncoding(encoder, MslEncoderFormat.JSON);
                 final MslObject mo = encoder.parseObject(encode);
                 array.put(-1, mo);
-            } else if (o instanceof Enum) {
-                array.put(-1, ((Enum<?>)o).name());
             } else {
                 throw new MslEncoderException("Class " + o.getClass().getName() + " is not MSL encoding-compatible.");
             }
@@ -191,8 +195,8 @@ public class MslEncoderUtils {
         
         // Bail on the first child element whose values are not equal.
         for (final String name : names1) {
-            final Object o1 = mo1.get(name);
-            final Object o2 = mo2.get(name);
+            final Object o1 = mo1.opt(name);
+            final Object o2 = mo2.opt(name);
             // Equal if both null or the same object.
             if (o1 == o2) continue;
             // Not equal if only one of them is null.
@@ -221,6 +225,39 @@ public class MslEncoderUtils {
         
         // All name/value pairs are equal.
         return true;
+    }
+    
+    /**
+     * Computes the hash code of a MSL object in a manner that is consistent
+     * with MSL object equality.
+     * 
+     * @param mo MSL object. May be {@code null}.
+     * @return the hash code.
+     */
+    public static int hashObject(final MslObject mo) {
+        if (mo == null) return -1;
+        int hashcode = 0;
+        final Set<String> names = mo.getKeys();
+        for (final String name : names) {
+            // byte[] may be represented differently, so try accessing directly
+            // first.
+            final byte[] b = mo.optBytes(name, null);
+            if (b != null) {
+                hashcode ^= Arrays.hashCode(b);
+                continue;
+            }
+            
+            // Otherwise process normally.
+            final Object o = mo.opt(name);
+            if (o instanceof MslObject) {
+                hashcode ^= hashObject((MslObject)o);
+            } else if (o instanceof MslArray) {
+                hashcode ^= hashArray((MslArray)o);
+            } else if (o != null) {
+                hashcode ^= o.hashCode();
+            }
+        }
+        return hashcode;
     }
     
     /**
@@ -276,6 +313,38 @@ public class MslEncoderUtils {
         
         // All values are equal.
         return true;
+    }
+
+    /**
+     * Computes the hash code of a MSL array in a manner that is consistent
+     * with MSL array equality.
+     * 
+     * @param ma MSL array. May be {@code null}.
+     * @return the hash code.
+     */
+    public static int hashArray(final MslArray ma) {
+        if (ma == null) return -1;
+        int hashcode = 0;
+        for (int i = 0; i < ma.size(); ++i) {
+            // byte[] may be represented differently, so try accessing directly
+            // first.
+            final byte[] b = ma.optBytes(i, null);
+            if (b != null) {
+                hashcode ^= Arrays.hashCode(b);
+                continue;
+            }
+            
+            // Otherwise process normally.
+            final Object o = ma.opt(i);
+            if (o instanceof MslObject) {
+                hashcode ^= hashObject((MslObject)o);
+            } else if (o instanceof MslArray) {
+                hashcode ^= hashArray((MslArray)o);
+            } else if (o != null) {
+                hashcode ^= o.hashCode();
+            }
+        }
+        return hashcode;
     }
     
     /**

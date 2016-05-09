@@ -13,12 +13,91 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var MslEncoderUtils$merge;
+var MslEncoderUtils$createArray;
+var MslEncoderUtils$objectEquals;
 var MslEncoderUtils$equalObjects;
 var MslEncoderUtils$equalArrays;
+var MslEncoderUtils$equalSets;
+var MslEncoderUtils$merge;
 
 (function() {
     "use strict";
+    
+    /**
+     * Create a MSL array from a collection of objects that are either one of
+     * the accepted types: <code>Boolean</code>, <code>Byte[]</code>,
+     * <code>MslArray</code>, <code>MslObject</code>, <code>Number</code>,
+     * <code>String</code>, <code>null</code>, or turn any
+     * <code>MslEncodable</code> into a <code>MslObject</code>.
+     * 
+     * @param {Array<*>} c a collection of MSL encoding-compatible objects.
+     * @param {{result: function(MslArray), error: function(Error)}} callback
+     *        the callback that will receive the constructed MSL array or any
+     *        thrown exceptions.
+     * @throws MslEncoderException if a <code>MslEncodable</code> cannot be
+     *         encoded properly or an unsupported object is encountered.
+     */
+    MslEncoderUtils$createArray = function MslEncoderUtils$createArray(ctx, c, callback) {
+    	function add(encoder, array, i, callback) {
+	    	AsyncExecutor(callback, function() {
+	    		if (i >= c.length) return array;
+	    		var o = c[i];
+	    		if (o instanceof Boolean ||
+	    			typeof o === 'boolean' ||
+	    			o instanceof Uint8Array ||
+	    			o instanceof Number ||
+	    			typeof o === 'number' ||
+	    			o instanceof MslObject ||
+	    			o instanceof MslArray ||
+	    			o instanceof String ||
+	    			typeof o === 'string' ||
+	    			(value instanceof Object && value.constructor === Object) ||
+	    			value instanceof Array ||
+	    			o === null)
+	    		{
+	    			array.put(-1, o);
+	    			add(encoder, array, i+1, callback);
+	    		} else if (o instanceof MslEncodable) {
+	    			var me = o;
+	    			me.toMslEncoding(encoder, MslEncoderFormat.JSON, {
+	    				result: function(encode) {
+	    					AsyncExecutor(callback, function() {
+	    						var mo = encoder.parseObject(encode);
+	    						array.put(-1, mo);
+	    						add(encoder, array, i+1, callback);
+	    					});
+	    				},
+	    				error: callback.error,
+	    			});
+	    		} else {
+	    			throw new MslEncoderException("Class " + typeof o + " is not MSL encoding-compatible.");
+	    		}
+	    	});
+    	}
+    	
+    	AsyncExecutor(callback, function() {
+    		var encoder = ctx.getMslEncoderFactory();
+    		var array = encoder.createArray();
+    		add(encoder, array, 0, callback);
+    	});
+    };
+    
+    /**
+     * Performs a deep comparison of two MSL objects.
+     * 
+     * @param {MslContext} ctx MSL context.
+     * @param {Uint8Array} me1 first MSL object encoded representation.
+     * @param {Uint8Array} me2 second JSON object encoded representation.
+     * @return {boolean} true if the encodings are equivalent MSL objects.
+     * @throws MslEncoderException if there is an error parsing the data.
+     * @see MslEncoderUtils#equalObjects(MslObject, MslObject)
+     */
+    MslEncoderUtils$objectEquals = function MslEncoderUtils$objectEquals(ctx, me1, me2) throws MslEncoderException {
+        var encoder = ctx.getMslEncoderFactory();
+        var o1 = encoder.parseObject(me1);
+        var o2 = encoder.parseObject(me2);
+        return MslEncoderUtils$equalObjects(o1, o2);
+    }
     
     /**
      * Performs a deep comparison of two MSL objects for equivalence. MSL
@@ -55,8 +134,8 @@ var MslEncoderUtils$equalArrays;
         // Bail on the first child element whose values are not equal.
         for (var i = 0; i < names1.length; ++i) {
             var name = names1[i];
-            var o1 = mo1.get(name);
-            var o2 = mo2.get(name);
+            var o1 = mo1.opt(name);
+            var o2 = mo2.opt(name);
             // Equal if both null or the same object.
             if (o1 === o2) continue;
             // Not equal if only one of them is null.

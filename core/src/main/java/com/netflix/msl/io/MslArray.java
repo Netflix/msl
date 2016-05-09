@@ -755,7 +755,30 @@ public class MslArray {
     public Collection<Object> getCollection() {
         return Collections.unmodifiableList(list);
     }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof MslArray)) return false;
+        final MslArray that = (MslArray)obj;
+        try {
+            return MslEncoderUtils.equalArrays(this, that);
+        } catch (final MslEncoderException e) {
+            return false;
+        }
+    }
     
+    /* (non-Javadoc)
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+        return MslEncoderUtils.hashArray(this);
+    }
+
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
      */
