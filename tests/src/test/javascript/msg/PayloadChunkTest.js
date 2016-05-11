@@ -20,24 +20,27 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("PayloadChunk", function() {
+    /** MSL encoder format. */
+    var ENCODER_FORMAT = MslEncoderFormat.JSON;
+    
     /** RAW data file. */
     var DATAFILE = "pg1112.txt";
     
-    /** JSON key payload. */
+    /** Key payload. */
     var KEY_PAYLOAD = "payload";
-    /** JSON key signature. */
+    /** Key signature. */
     var KEY_SIGNATURE = "signature";
     
     // payload
-    /** JSON key sequence number. */
+    /** Key sequence number. */
     var KEY_SEQUENCE_NUMBER = "sequencenumber";
-    /** JSON key message ID. */
+    /** Key message ID. */
     var KEY_MESSAGE_ID = "messageid";
-    /** JSON key end of message. */
+    /** Key end of message. */
     var KEY_END_OF_MESSAGE = "endofmsg";
-    /** JSON key compression algorithm. */
+    /** Key compression algorithm. */
     var KEY_COMPRESSION_ALGORITHM = "compressionalgo";
-    /** JSON key encrypted data. */
+    /** Key encrypted data. */
     var KEY_DATA = "data";
     
     // Shortcuts.
@@ -62,6 +65,8 @@ describe("PayloadChunk", function() {
     
     /** MSL context. */
     var ctx;
+    /** MSL encoder factory. */
+    var encoder;
     /** Random. */
     var random = new Random();
     
@@ -94,6 +99,8 @@ describe("PayloadChunk", function() {
             waitsFor(function() { return ctx; }, "ctx", 900);
 
             runs(function () {
+                encoder = ctx.getMslEncoderFactory();
+                
                 var encryptionBytes = new Uint8Array(16);
                 var hmacBytes = new Uint8Array(32);
                 random.nextBytes(encryptionBytes);
@@ -121,40 +128,54 @@ describe("PayloadChunk", function() {
     it("ctors", function() {
         var chunk;
         runs(function() {
-            PayloadChunk$create(SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk not received", 100);
+        waitsFor(function() { return chunk; }, "chunk", 100);
+        
+        var encode;
         runs(function() {
-	        expect(chunk.isEndOfMessage()).toEqual(END_OF_MSG);
-	        expect(chunk.data).toEqual(DATA);
-	        expect(chunk.compressionAlgo).toBeNull();
-	        expect(chunk.messageId).toEqual(MSG_ID);
-	        expect(chunk.sequenceNumber).toEqual(SEQ_NO);
-        });
-
-        var jsonString = undefined, joChunk;
-        runs(function() {
-	        jsonString = JSON.stringify(chunk);
-	        expect(jsonString).not.toBeNull();
-            PayloadChunk$parse(JSON.parse(jsonString), CRYPTO_CONTEXT, {
-                result: function(x) { joChunk = x; },
+            expect(chunk.isEndOfMessage()).toEqual(END_OF_MSG);
+            expect(chunk.data).toEqual(DATA);
+            expect(chunk.compressionAlgo).toBeNull();
+            expect(chunk.messageId).toEqual(MSG_ID);
+            expect(chunk.sequenceNumber).toEqual(SEQ_NO);
+            
+            chunk.toMslEncoding(encoder, ENCODER_FORMAT, {
+                result: function(x) { encode = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return jsonString && joChunk; }, "json string and joChunk not received", 100);
+        waitsFor(function() { return encode; }, "encode", 100);
+
+        var moChunk;
+        runs(function() {
+	        expect(encode).not.toBeNull();
+            PayloadChunk$parse(ctx, encoder.parseObject(encode), CRYPTO_CONTEXT, {
+                result: function(x) { moChunk = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return moChunk; }, "moChunk", 100);
+        
+        var moEncode;
+        runs(function() {
+	        expect(moChunk.isEndOfMessage()).toEqual(chunk.isEndOfMessage());
+	        expect(moChunk.data).toEqual(chunk.data);
+	        expect(moChunk.messageId).toEqual(chunk.messageId);
+	        expect(moChunk.sequenceNumber).toEqual(chunk.sequenceNumber);
+	        moChunk.toMslEncoding(encoder, ENCODER_FORMAT, {
+	            result: function(x) { moEncode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return moEncode; }, "moEncode", 100);
         
         runs(function() {
-	        waitsFor(function() { return joChunk; }, "joChunk not received", 100);
-	        expect(joChunk.isEndOfMessage()).toEqual(chunk.isEndOfMessage());
-	        expect(joChunk.data).toEqual(chunk.data);
-	        expect(joChunk.messageId).toEqual(chunk.messageId);
-	        expect(joChunk.sequenceNumber).toEqual(chunk.sequenceNumber);
-	        var joJsonString = JSON.stringify(joChunk);
-	        expect(joJsonString).not.toBeNull();
-	        expect(joJsonString).toEqual(jsonString);
+	        expect(moEncode).not.toBeNull();
+	        expect(moEncode).toEqual(encode);
         });
     });
     
@@ -162,12 +183,12 @@ describe("PayloadChunk", function() {
     	var exception;
     	runs(function() {
             var sequenceNumber = -1;
-	        PayloadChunk$create(sequenceNumber, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
+	        PayloadChunk$create(ctx, sequenceNumber, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslInternalException());
@@ -178,12 +199,12 @@ describe("PayloadChunk", function() {
     	var exception;
     	runs(function() {
 	        var sequenceNumber = MslConstants$MAX_LONG_VALUE + 2;
-	        PayloadChunk$create(sequenceNumber, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
+	        PayloadChunk$create(ctx, sequenceNumber, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslInternalException());
@@ -194,12 +215,12 @@ describe("PayloadChunk", function() {
     	var exception;
     	runs(function() {
     		var messageId = -1;
-	        PayloadChunk$create(SEQ_NO, messageId, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
+	        PayloadChunk$create(ctx, SEQ_NO, messageId, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslInternalException());
@@ -210,72 +231,80 @@ describe("PayloadChunk", function() {
     	var exception;
     	runs(function() {
 	        var messageId = MslConstants$MAX_LONG_VALUE + 2;
-	        PayloadChunk$create(SEQ_NO, messageId, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
+	        PayloadChunk$create(ctx, SEQ_NO, messageId, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslInternalException());
         });
     });
     
-    it("json is correct", function() {
+    it("mslobject is correct", function() {
         var chunk;
         runs(function() {
-            PayloadChunk$create(SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk not received", 100);
-
-        var ciphertext = undefined, verified;
+        waitsFor(function() { return chunk; }, "chunk", 100);
+        
+        var encode;
         runs(function() {
-	        var jsonString = JSON.stringify(chunk);
-	        expect(jsonString).not.toBeNull();
-	        var jo = JSON.parse(jsonString);
-	        ciphertext = base64$decode(jo[KEY_PAYLOAD]);
-	        var signature = base64$decode(jo[KEY_SIGNATURE]);
-	        CRYPTO_CONTEXT.verify(ciphertext, signature, {
+            chunk.toMslEncoding(encoder, ENCODER_FORMAT, {
+                result: function(x) { encode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return encode; }, "encode", 100);
+
+        var ciphertext, verified;
+        runs(function() {
+	        expect(encode).not.toBeNull();
+	        var mo = encoder.parseObject(encode);
+	        ciphertext = mo.getBytes(KEY_PAYLOAD);
+	        var signature = mo.getBytes(KEY_SIGNATURE);
+	        CRYPTO_CONTEXT.verify(ciphertext, signature, encoder, {
 	        	result: function(v) { verified = v; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return ciphertext && verified !== undefined; }, "ciphertext and verified not received", 100);
-        runs(function() {
-	        expect(verified).toBeTruthy();
-        });
+        waitsFor(function() { return ciphertext && verified !== undefined; }, "ciphertext and verified", 100);
         
         var payload;
         runs(function() {
-            CRYPTO_CONTEXT.decrypt(ciphertext, {
+            expect(verified).toBeTruthy();
+            
+            CRYPTO_CONTEXT.decrypt(ciphertext, encoder, {
                 result: function(data) { payload = data; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return payload; }, "payload not received", 100);
+        waitsFor(function() { return payload; }, "payload", 100);
+        
         runs(function() {
-	        var payloadJo = JSON.parse(textEncoding$getString(payload, MslConstants$DEFAULT_CHARSET));
-	        expect(parseInt(payloadJo[KEY_SEQUENCE_NUMBER])).toEqual(SEQ_NO);
-	        expect(parseInt(payloadJo[KEY_MESSAGE_ID])).toEqual(MSG_ID);
-	        expect(payloadJo[KEY_END_OF_MESSAGE] || false).toEqual(END_OF_MSG);
-	        expect(payloadJo[KEY_COMPRESSION_ALGORITHM]).toBeFalsy();
-	        expect(base64$decode(payloadJo[KEY_DATA])).toEqual(DATA);
+	        var payloadMo = encoder.parseObject(payload);
+	        expect(payloadMo.getLong(KEY_SEQUENCE_NUMBER)).toEqual(SEQ_NO);
+	        expect(payloadMo.getLong(KEY_MESSAGE_ID)).toEqual(MSG_ID);
+	        expect(payloadMo.optBoolean(KEY_END_OF_MESSAGE)).toEqual(END_OF_MSG);
+	        expect(payloadMo.has(KEY_COMPRESSION_ALGORITHM)).toBeFalsy();
+	        expect(payloadMo.getBytes(KEY_DATA)).toEqual(DATA);
         });
     });
     
     xit("ctor with GZIP", function() {
         var chunk;
         runs(function() {
-            PayloadChunk$create(SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk not received", 100);
+        waitsFor(function() { return chunk; }, "chunk", 100);
         runs(function() {
 	        expect(chunk.isEndOfMessage()).toEqual(END_OF_MSG);
 	        expect(chunk.data).toEqual(DATA);
@@ -283,81 +312,105 @@ describe("PayloadChunk", function() {
 	        expect(chunk.messageId).toEqual(MSG_ID);
 	        expect(chunk.sequenceNumber).toEqual(SEQ_NO);
         });
-
-        var jsonString = undefined, joChunk;
+        
+        var encode;
         runs(function() {
-            jsonString = JSON.stringify(chunk);
-            expect(jsonString).not.toBeNull();
-            PayloadChunk$parse(JSON.parse(jsonString), CRYPTO_CONTEXT, {
-                result: function(x) { joChunk = x; },
+            chunk.toMslEncoding(encoder, ENCODER_FORMAT, {
+                result: function(x) { encode = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return jsonString && joChunk; }, "json string and joChunk not received", 100);
+        waitsFor(function() { return encode; }, "encode", 100);
+
+        var moChunk;
         runs(function() {
-	        expect(joChunk.isEndOfMessage()).toEqual(chunk.isEndOfMessage());
-	        expect(joChunk.data).toEqual(chunk.data);
-	        expect(joChunk.messageId).toEqual(chunk.messageId);
-	        expect(joChunk.sequenceNumber).toEqual(chunk.sequenceNumber);
-	        var joJsonString = JSON.stringify(joChunk);
-	        expect(joJsonString).not.toBeNull();
-	        expect(joJsonString).toEqual(jsonString);
+            expect(encode).not.toBeNull();
+            PayloadChunk$parse(ctx, encoder.parseObject(encode), CRYPTO_CONTEXT, {
+                result: function(x) { moChunk = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return moChunk; }, "moChunk", 100);
+        
+        var moEncode;
+        runs(function() {
+	        expect(moChunk.isEndOfMessage()).toEqual(chunk.isEndOfMessage());
+	        expect(moChunk.data).toEqual(chunk.data);
+	        expect(moChunk.messageId).toEqual(chunk.messageId);
+	        expect(moChunk.sequenceNumber).toEqual(chunk.sequenceNumber);
+	        moChunk.toMslEncoding(encoder, ENCODER_FORMAT, {
+                result: function(x) { moEncode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return moEncode; }, "moEncode", 100);
+        
+        runs(function() {
+	        expect(moEncode).not.toBeNull();
+	        expect(moEncode).toEqual(encode);
         });
     });
     
-    xit("json is correct with GZIP", function() {
+    xit("mslencode is correct with GZIP", function() {
         var chunk;
         runs(function() {
-            PayloadChunk$create(SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk not received", 100);
+        waitsFor(function() { return chunk; }, "chunk", 100);
         
-        var verified = undefined, ciphertext;
+        var encode;
         runs(function() {
-	        var jsonString = JSON.stringify(chunk);
-	        expect(jsonString).not.toBeNull();
-	        var jo = JSON.parse(jsonString);
-	        ciphertext = base64$decode(jo[KEY_PAYLOAD]);
-	        var signature = base64$decode(jo[KEY_SIGNATURE]);
-	        CRYPTO_CONTEXT.verify(ciphertext, signature, {
+            chunk.toMslEncoding(encoder, ENCODER_FORMAT, {
+                result: function(x) { encode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return encode; }, "encode", 100);
+        
+        var verified, ciphertext;
+        runs(function() {
+	        expect(encode).not.toBeNull();
+	        var mo = encoder.parseObject(encode);
+	        ciphertext = mo.getBytes(KEY_PAYLOAD);
+	        var signature = mo.getBytes(KEY_SIGNATURE);
+	        CRYPTO_CONTEXT.verify(ciphertext, signature, encoder, {
 	        	result: function(v) { verified = v; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return ciphertext && verified !== undefined; }, "ciphertext and verified not received", 100);
-        runs(function() {
-        	expect(verified).toBeTruthy();
-        });
+        waitsFor(function() { return ciphertext && verified !== undefined; }, "ciphertext and verified", 100);
         
         var payload;
         runs(function() {
-            CRYPTO_CONTEXT.decrypt(ciphertext, {
+        	expect(verified).toBeTruthy();
+        	
+            CRYPTO_CONTEXT.decrypt(ciphertext, encoder, {
                 result: function(data) { payload = data; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return payload; }, "payload not received", 100);
+        waitsFor(function() { return payload; }, "payload", 100);
         
         var plaintext;
         runs(function() {
-	        var payloadJo = JSON.parse(textEncoding$getString(payload, MslConstants$DEFAULT_CHARSET));
-	        expect(parseInt(payloadJo[KEY_SEQUENCE_NUMBER])).toEqual(SEQ_NO);
-	        expect(parseInt(payloadJo[KEY_MESSAGE_ID])).toEqual(MSG_ID);
+	        var payloadMo = encoder.parseObject(payload);
+	        expect(payloadMo.getLong(KEY_SEQUENCE_NUMBER)).toEqual(SEQ_NO);
+	        expect(payloadMo.getLong(KEY_MESSAGE_ID)).toEqual(MSG_ID);
 	        if (END_OF_MSG)
-	        	expect(payloadJo[KEY_END_OF_MESSAGE]).toBeTruthy();
+	        	expect(payloadMo.getBoolean(KEY_END_OF_MESSAGE)).toBeTruthy();
 	        else
-	        	expect(payloadJo[KEY_END_OF_MESSAGE]).toBeFalsy();
-	        expect(payloadJo[KEY_COMPRESSION_ALGORITHM]).toEqual(CompressionAlgorithm.GZIP.toString());
-	        var gzipped = base64$decode(payloadJo[KEY_DATA]);
+	        	expect(payloadMo.getBoolean(KEY_END_OF_MESSAGE)).toBeFalsy();
+	        expect(payloadMo.getString(KEY_COMPRESSION_ALGORITHM)).toEqual(CompressionAlgorithm.GZIP);
+	        var gzipped = payloadMo.getBytes(KEY_DATA);
 	        uncompress(CompressionAlgorithm.GZIP, gzipped, {
 	        	result: function(x) { plaintext = x; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return plaintext; }, "plaintext not received", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", 100);
         
         runs(function() {
 	        expect(plaintext).toEqual(DATA);
@@ -367,12 +420,12 @@ describe("PayloadChunk", function() {
     it("ctor with LZW", function() {
         var chunk;
         runs(function() {
-            PayloadChunk$create(SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.LZW, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.LZW, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk not received", 100);
+        waitsFor(function() { return chunk; }, "chunk", 100);
         runs(function() {
 	        expect(chunk.isEndOfMessage()).toEqual(END_OF_MSG);
 	        expect(chunk.data).toEqual(DATA);
@@ -380,74 +433,98 @@ describe("PayloadChunk", function() {
 	        expect(chunk.messageId).toEqual(MSG_ID);
 	        expect(chunk.sequenceNumber).toEqual(SEQ_NO);
         });
-
-        var jsonString = undefined, joChunk;
+        
+        var encode;
         runs(function() {
-            jsonString = JSON.stringify(chunk);
-            expect(jsonString).not.toBeNull();
-            PayloadChunk$parse(JSON.parse(jsonString), CRYPTO_CONTEXT, {
-                result: function(x) { joChunk = x; },
+            chunk.toMslEncoding(encoder, ENCODER_FORMAT, {
+                result: function(x) { encode = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return jsonString && joChunk; }, "json string and joChunk not received", 100);
+        waitsFor(function() { return encode; }, "encode", 100);
+
+        var moChunk;
         runs(function() {
-	        expect(joChunk.isEndOfMessage()).toEqual(chunk.isEndOfMessage());
-	        expect(new Uint8Array(joChunk.data)).toEqual(chunk.data);
-	        expect(joChunk.messageId).toEqual(chunk.messageId);
-	        expect(joChunk.sequenceNumber).toEqual(chunk.sequenceNumber);
-	        var joJsonString = JSON.stringify(joChunk);
-	        expect(joJsonString).not.toBeNull();
-	        expect(joJsonString).toEqual(jsonString);
+            expect(encode).not.toBeNull();
+            PayloadChunk$parse(ctx, encoder.parseObject(encode), CRYPTO_CONTEXT, {
+                result: function(x) { moChunk = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return moChunk; }, "moChunk", 100);
+        
+        var moEncode;
+        runs(function() {
+	        expect(moChunk.isEndOfMessage()).toEqual(chunk.isEndOfMessage());
+	        expect(new Uint8Array(moChunk.data)).toEqual(chunk.data);
+	        expect(moChunk.messageId).toEqual(chunk.messageId);
+	        expect(moChunk.sequenceNumber).toEqual(chunk.sequenceNumber);
+	        moChunk.toMslEncoding(encoder, ENCODER_FORMAT, {
+                result: function(x) { moEncode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return moEncode; }, "moEncode", 100);
+        
+        runs(function() {
+	        expect(moEncode).not.toBeNull();
+	        expect(moEncode).toEqual(encode);
         });
     });
     
     it("json is correct with LZW", function() {
         var chunk;
         runs(function() {
-            PayloadChunk$create(SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.LZW, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.LZW, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk not received", 100);
+        waitsFor(function() { return chunk; }, "chunk", 100);
         
-        var verified = undefined, ciphertext;
+        var encode;
         runs(function() {
-	        var jsonString = JSON.stringify(chunk);
-	        expect(jsonString).not.toBeNull();
-	        var jo = JSON.parse(jsonString);
-	        ciphertext = base64$decode(jo[KEY_PAYLOAD]);
-	        var signature = base64$decode(jo[KEY_SIGNATURE]);
-	        CRYPTO_CONTEXT.verify(ciphertext, signature, {
+            chunk.toMslEncoding(encoder, ENCODER_FORMAT, {
+                result: function(x) { encode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return encode; }, "encode", 100);
+        
+        var verified, ciphertext;
+        runs(function() {
+	        expect(encode).not.toBeNull();
+	        var mo = encoder.parseObject(encode);
+	        ciphertext = mo.getBytes(KEY_PAYLOAD);
+	        var signature = mo.getBytes(KEY_SIGNATURE);
+	        CRYPTO_CONTEXT.verify(ciphertext, signature, encoder, {
 	        	result: function(v) { verified = v; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return ciphertext && verified !== undefined; }, "ciphertext and verified not received", 100);
-        runs(function() {
-        	expect(verified).toBeTruthy();
-        });
+        waitsFor(function() { return ciphertext && verified !== undefined; }, "ciphertext and verified", 100);
         
         var payload;
         runs(function() {
-            CRYPTO_CONTEXT.decrypt(ciphertext, {
+        	expect(verified).toBeTruthy();
+        	
+            CRYPTO_CONTEXT.decrypt(ciphertext, encoder, {
                 result: function(data) { payload = data; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return payload; }, "payload not received", 100);
+        waitsFor(function() { return payload; }, "payload", 100);
         
         runs(function() {
-	        var payloadJo = JSON.parse(textEncoding$getString(payload, MslConstants$DEFAULT_CHARSET));
-	        expect(parseInt(payloadJo[KEY_SEQUENCE_NUMBER])).toEqual(SEQ_NO);
-	        expect(parseInt(payloadJo[KEY_MESSAGE_ID])).toEqual(MSG_ID);
+	        var payloadMo = encoder.parseObject(payload);
+	        expect(payloadMo.getLong(KEY_SEQUENCE_NUMBER)).toEqual(SEQ_NO);
+	        expect(payloadMo.getLong(KEY_MESSAGE_ID)).toEqual(MSG_ID);
 	        if (END_OF_MSG)
-	        	expect(payloadJo[KEY_END_OF_MESSAGE]).toBeTruthy();
+	        	expect(payloadMo.getBoolean(KEY_END_OF_MESSAGE)).toBeTruthy();
 	        else
-	        	expect(payloadJo[KEY_END_OF_MESSAGE]).toBeFalsy();
-	        expect(payloadJo[KEY_COMPRESSION_ALGORITHM]).toEqual(CompressionAlgorithm.LZW.toString());
-	        var lzw = base64$decode(payloadJo[KEY_DATA]);
+	        	expect(payloadMo.getBoolean(KEY_END_OF_MESSAGE)).toBeFalsy();
+	        expect(payloadMo.getString(KEY_COMPRESSION_ALGORITHM)).toEqual(CompressionAlgorithm.LZW);
+	        var lzw = payloadMo.getBytes(KEY_DATA);
 	        var plaintext = uncompress(CompressionAlgorithm.LZW, lzw);
 	        expect(new Uint8Array(plaintext)).toEqual(DATA);
         });
@@ -459,22 +536,31 @@ describe("PayloadChunk", function() {
 
     	var chunk;
         runs(function() {
-            PayloadChunk$create(SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, cryptoContextA, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, cryptoContextA, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk not received", 100);
+        waitsFor(function() { return chunk; }, "chunk", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, chunk, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jo = JSON.parse(JSON.stringify(chunk));
-	        PayloadChunk$parse(jo, cryptoContextB, {
+	        PayloadChunk$parse(ctx, mo, cryptoContextB, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslCryptoException(MslError.NONE));
@@ -482,7 +568,7 @@ describe("PayloadChunk", function() {
     });
     
     it("mismatched crypto context encryption key", function() {
-        var encryptionKeyA = undefined, encryptionKeyB;
+        var encryptionKeyA, encryptionKeyB;
         runs(function() {
             var encryptionBytesA = new Uint8Array(16);
             var encryptionBytesB = new Uint8Array(16);
@@ -500,28 +586,37 @@ describe("PayloadChunk", function() {
         waitsFor(function() { return encryptionKeyA && encryptionKeyB; }, "encryption keys", 100);
 
     	// Mismatched encryption keys will just result in the wrong data.
-    	var cryptoContextA = undefined, cryptoContextB;
+    	var cryptoContextA, cryptoContextB;
     	var chunk;
         runs(function() {
             cryptoContextA = new SymmetricCryptoContext(ctx, CRYPTO_CONTEXT_ID, encryptionKeyA, HMAC_KEY, null);
             cryptoContextB = new SymmetricCryptoContext(ctx,CRYPTO_CONTEXT_ID, encryptionKeyB, HMAC_KEY, null);
             
-            PayloadChunk$create(SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, cryptoContextA, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, cryptoContextA, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return cryptoContextA && cryptoContextB && chunk; }, "crypto contexts and chunk not received", 100);
+        waitsFor(function() { return cryptoContextA && cryptoContextB && chunk; }, "crypto contexts and chunk", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, chunk, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jo = JSON.parse(JSON.stringify(chunk));
-	        PayloadChunk$parse(jo, cryptoContextB, {
+	        PayloadChunk$parse(ctx, mo, cryptoContextB, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
         	// Sometimes decryption will succeed so check for a crypto exception
         	// or encoding exception. Both are OK.
@@ -530,7 +625,7 @@ describe("PayloadChunk", function() {
     });
     
     it("mismatched crypto context signing key", function() {
-        var hmacKeyA = undefined, hmacKeyB;
+        var hmacKeyA, hmacKeyB;
         runs(function() {
         	var hmacBytesA = new Uint8Array(32);
         	var hmacBytesB = new Uint8Array(32);
@@ -553,22 +648,31 @@ describe("PayloadChunk", function() {
             cryptoContextA = new SymmetricCryptoContext(ctx, CRYPTO_CONTEXT_ID, ENCRYPTION_KEY, hmacKeyA, null);
             cryptoContextB = new SymmetricCryptoContext(ctx, CRYPTO_CONTEXT_ID, ENCRYPTION_KEY, hmacKeyB, null);
             
-            PayloadChunk$create(SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, cryptoContextA, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, cryptoContextA, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return cryptoContextA && cryptoContextB && chunk; }, "crypto contexts and chunk not received", 100);
+        waitsFor(function() { return cryptoContextA && cryptoContextB && chunk; }, "crypto contexts and chunk", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, chunk, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jo = JSON.parse(JSON.stringify(chunk));
-	        PayloadChunk$parse(jo, cryptoContextB, {
+	        PayloadChunk$parse(ctx, mo, cryptoContextB, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
 	    });
-	    waitsFor(function() { return exception; }, "exception not received", 100);
+	    waitsFor(function() { return exception; }, "exception", 100);
+	    
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslCryptoException(MslError.PAYLOAD_VERIFICATION_FAILED));
@@ -578,27 +682,35 @@ describe("PayloadChunk", function() {
     it("incorrect signature", function() {
     	var chunk;
     	runs(function() {
-    		PayloadChunk$create(SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
+    		PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
     			result: function(x) { chunk = x; },
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
     	});
-    	waitsFor(function() { return chunk; }, "chunk not received", 100);
+    	waitsFor(function() { return chunk; }, "chunk", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, chunk, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jo = JSON.parse(JSON.stringify(chunk));
-	        
 	        var signature = new Uint8Array(32);
 	        random.nextBytes(signature);
-	        jo[KEY_SIGNATURE] = base64$encode(signature);
+	        mo.put(KEY_SIGNATURE, signature);
 	        
-	        PayloadChunk$parse(jo, CRYPTO_CONTEXT, {
+	        PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslCryptoException(MslError.PAYLOAD_VERIFICATION_FAILED));
@@ -608,54 +720,69 @@ describe("PayloadChunk", function() {
     it("missing payload", function() {
     	var chunk;
         runs(function() {
-            PayloadChunk$create(SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk not received", 100);
+        waitsFor(function() { return chunk; }, "chunk", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, chunk, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jo = JSON.parse(JSON.stringify(chunk));
+        	mo.remove(KEY_PAYLOAD);
 	        
-	        expect(jo[KEY_PAYLOAD]).not.toBeNull();
-	        delete jo[KEY_PAYLOAD];
-	        
-	        PayloadChunk$parse(jo, CRYPTO_CONTEXT, {
+	        PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
     it("invalid payload", function() {
     	var chunk;
         runs(function() {
-            PayloadChunk$create(SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk not received", 100);
+        waitsFor(function() { return chunk; }, "chunk", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, chunk, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
 
         var exception;
         runs(function() {
-	        var jo = JSON.parse(JSON.stringify(chunk));
+	        mo.put(KEY_PAYLOAD, "x");
 	
-	        jo[KEY_PAYLOAD] = "x";
-	
-	        PayloadChunk$parse(jo, CRYPTO_CONTEXT, {
+	        PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslMessageException(MslError.PAYLOAD_INVALID));
@@ -663,39 +790,47 @@ describe("PayloadChunk", function() {
     });
     
     it("corrupt payload", function() {
-	        var chunk;
+    	var chunk;
         runs(function() {
-            PayloadChunk$create(SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk not received", 100);
-
-        var jo = undefined, signature;
+        waitsFor(function() { return chunk; }, "chunk", 100);
+        
+        var mo;
         runs(function() {
-	        jo = JSON.parse(JSON.stringify(chunk));
-	
+        	MslTestUtils.toMslObject(encoder, chunk, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+
+        var signature;
+        runs(function() {
 	        var ciphertext = new Uint8Array(32);
 	        random.nextBytes(ciphertext);
-	        jo[KEY_PAYLOAD] = base64$encode(ciphertext);
-	        CRYPTO_CONTEXT.sign(ciphertext, {
+	        mo.put(KEY_PAYLOAD, ciphertext);
+	        CRYPTO_CONTEXT.sign(ciphertext, encoder, ENCODER_FORMAT, {
 	        	result: function(data) { signature = data; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return jo && signature; }, "json object and signature not received", 100);
+        waitsFor(function() { return signature; }, "signature", 100);
 
 	   var exception;
 	   runs(function() {
-	        jo[KEY_SIGNATURE] = base64$encode(signature);
+	        mo.put(KEY_SIGNATURE, signature);
 	
-	        PayloadChunk$parse(jo, CRYPTO_CONTEXT, {
+	        PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslCryptoException(MslError.NONE));
@@ -706,202 +841,236 @@ describe("PayloadChunk", function() {
         var chunk;
         runs(function() {
         	var data = new Uint8Array(0);
-            PayloadChunk$create(SEQ_NO, MSG_ID, true, null, data, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, null, data, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk not received", 100);
+        waitsFor(function() { return chunk; }, "chunk", 100);
         
-        var joChunk;
+        var mo;
         runs(function() {
-        	var jo = JSON.parse(JSON.stringify(chunk));
-            PayloadChunk$parse(jo, CRYPTO_CONTEXT, {
-                result: function(x) { joChunk = x; },
+        	MslTestUtils.toMslObject(encoder, chunk, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var moChunk;
+        runs(function() {
+            PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+                result: function(x) { moChunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return joChunk; }, "joChunk not received", 100);
+        waitsFor(function() { return moChunk; }, "moChunk", 100);
+        
         runs(function() {
-        	expect(joChunk.data.length).toEqual(0);
+        	expect(moChunk.data.length).toEqual(0);
         });
     });
     
     it("missing sequence number", function() {
     	var chunk;
         runs(function() {
-            PayloadChunk$create(SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk not received", 100);
+        waitsFor(function() { return chunk; }, "chunk", 100);
         
-        var jo = undefined, payload;
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, chunk, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var payload;
 	    runs(function() {
-	        jo = JSON.parse(JSON.stringify(chunk));
-	
-	        var ciphertext = base64$decode(jo[KEY_PAYLOAD]);
-	        CRYPTO_CONTEXT.decrypt(ciphertext, {
+	        var ciphertext = mo.getBytes(KEY_PAYLOAD);
+	        CRYPTO_CONTEXT.decrypt(ciphertext, encoder, {
 	        	result: function(data) { payload = data; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
 	    });
-	    waitsFor(function() { return jo && payload; }, "json object and payload not received", 100);
+	    waitsFor(function() { return payload; }, "payload", 100);
 	    
 	    var newPayload;
         runs(function() {
-            var payloadJo = JSON.parse(textEncoding$getString(payload, MslConstants$DEFAULT_CHARSET));
+            var payloadMo = encoder.parseObject(payload);
 	        
-	        expect(payloadJo[KEY_SEQUENCE_NUMBER]).not.toBeNull();
-	        delete payloadJo[KEY_SEQUENCE_NUMBER];
+	        payloadMo.remove(KEY_SEQUENCE_NUMBER);
 	
-	        var plaintext = textEncoding$getBytes(JSON.stringify(payloadJo), MslConstants$DEFAULT_CHARSET);
-	        CRYPTO_CONTEXT.encrypt(plaintext, {
+	        var plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
+	        CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT, {
 	        	result: function(data) { newPayload = data; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return newPayload; }, "newPayload not received", 100);
+        waitsFor(function() { return newPayload; }, "newPayload", 100);
         
         var signature;
         runs(function() {
-        	CRYPTO_CONTEXT.sign(newPayload, {
+        	CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT, {
         		result: function(data) { signature = data; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return signature; }, "signature not received", 100);
+        waitsFor(function() { return signature; }, "signature", 100);
         
         var exception;
         runs(function() {
-        	jo[KEY_PAYLOAD] = base64$encode(newPayload);
-	        jo[KEY_SIGNATURE] = base64$encode(signature);
+        	mo.put(KEY_PAYLOAD, newPayload);
+	        mo.put(KEY_SIGNATURE, signature);
 	        
-	        PayloadChunk$parse(jo, CRYPTO_CONTEXT, {
+	        PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
     it("invalid sequence number", function() {
     	var chunk;
         runs(function() {
-            PayloadChunk$create(SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk not received", 100);
+        waitsFor(function() { return chunk; }, "chunk", 100);
         
-        var jo = undefined, payload;
+        var mo;
         runs(function() {
-        	jo = JSON.parse(JSON.stringify(chunk));
-        	var ciphertext = base64$decode(jo[KEY_PAYLOAD]);
-        	CRYPTO_CONTEXT.decrypt(ciphertext, {
+        	MslTestUtils.toMslObject(encoder, chunk, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var payload;
+        runs(function() {
+        	var ciphertext = mo.getBytes(KEY_PAYLOAD);
+        	CRYPTO_CONTEXT.decrypt(ciphertext, encoder, {
         		result: function(data) { payload = data; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return jo && payload; }, "json object and payload not received", 100);
+        waitsFor(function() { return payload; }, "payload", 100);
 
         var newPayload;
         runs(function() {
-	        var payloadJo = JSON.parse(textEncoding$getString(payload, MslConstants$DEFAULT_CHARSET));
-	        payloadJo[KEY_SEQUENCE_NUMBER] = "x";
-	        var plaintext = textEncoding$getBytes(JSON.stringify(payloadJo), MslConstants$DEFAULT_CHARSET);
-	        CRYPTO_CONTEXT.encrypt(plaintext, {
+	        var payloadMo = encoder.parseObject(payload);
+	        payloadMo.put(KEY_SEQUENCE_NUMBER, "x");
+	        var plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
+	        CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT, {
 	        	result: function(data) { newPayload = data; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return newPayload; }, "newPayload not received", 100);
+        waitsFor(function() { return newPayload; }, "newPayload", 100);
 
         var signature;
         runs(function() {
-        	CRYPTO_CONTEXT.sign(newPayload, {
+        	CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT, {
         		result: function(data) { signature = data; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return signature; }, "signature not received", 100);
+        waitsFor(function() { return signature; }, "signature", 100);
         
         var exception;
         runs(function() {
-        	jo[KEY_PAYLOAD] = base64$encode(newPayload);
-	        jo[KEY_SIGNATURE] = base64$encode(signature);
+        	mo.put(KEY_PAYLOAD, newPayload);
+	        mo.put(KEY_SIGNATURE, signature);
 	        
-	        PayloadChunk$parse(jo, CRYPTO_CONTEXT, {
+	        PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
     it("negative sequence number", function() {
     	var chunk;
         runs(function() {
-            PayloadChunk$create(SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk not received", 100);
+        waitsFor(function() { return chunk; }, "chunk", 100);
         
-        var jo = undefined, payload;
+        var mo;
         runs(function() {
-        	jo = JSON.parse(JSON.stringify(chunk));
-	        var ciphertext = base64$decode(jo[KEY_PAYLOAD]);
-	        CRYPTO_CONTEXT.decrypt(ciphertext, {
+        	MslTestUtils.toMslObject(encoder, chunk, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var payload;
+        runs(function() {
+	        var ciphertext = mo.getBytes(KEY_PAYLOAD);
+	        CRYPTO_CONTEXT.decrypt(ciphertext, encoder, {
 	        	result: function(data) { payload = data; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return jo && payload; }, "json object and payload not received", 100);
+        waitsFor(function() { return payload; }, "payload", 100);
 
         var newPayload;
         runs(function() {
-        	var payloadJo = JSON.parse(textEncoding$getString(payload, MslConstants$DEFAULT_CHARSET));
-	        payloadJo[KEY_SEQUENCE_NUMBER] = -1;
-	        var plaintext = textEncoding$getBytes(JSON.stringify(payloadJo), MslConstants$DEFAULT_CHARSET);
-	        CRYPTO_CONTEXT.encrypt(plaintext, {
+        	var payloadMo = encoder.parseObject(payload);
+	        payloadMo.put(KEY_SEQUENCE_NUMBER, -1);
+	        var plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
+	        CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT, {
 	        	result: function(data) { newPayload = data; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return newPayload; }, "newPayload not received", 100);
+        waitsFor(function() { return newPayload; }, "newPayload", 100);
 	    
         var signature;
         runs(function() {
-        	CRYPTO_CONTEXT.sign(newPayload, {
+        	CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT, {
         		result: function(data) { signature = data; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return signature; }, "signature not received", 100);
+        waitsFor(function() { return signature; }, "signature", 100);
 
         var exception;
         runs(function() {
-	        jo[KEY_PAYLOAD] = base64$encode(newPayload);
-	        jo[KEY_SIGNATURE] = base64$encode(signature);
+	        mo.put(KEY_PAYLOAD, newPayload);
+	        mo.put(KEY_SIGNATURE, signature);
 	        
-	        PayloadChunk$parse(jo, CRYPTO_CONTEXT, {
+	        PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslException(MslError.PAYLOAD_SEQUENCE_NUMBER_OUT_OF_RANGE));
@@ -911,56 +1080,65 @@ describe("PayloadChunk", function() {
     it("too large sequence number", function() {
     	var chunk;
         runs(function() {
-            PayloadChunk$create(SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk not received", 100);
-
-        var jo = undefined, payload;
+        waitsFor(function() { return chunk; }, "chunk", 100);
+        
+        var mo;
         runs(function() {
-        	jo = JSON.parse(JSON.stringify(chunk));
-	        var ciphertext = base64$decode(jo[KEY_PAYLOAD]);
-	        CRYPTO_CONTEXT.decrypt(ciphertext, {
+        	MslTestUtils.toMslObject(encoder, chunk, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+
+        var payload;
+        runs(function() {
+	        var ciphertext = mo.getBytes(KEY_PAYLOAD);
+	        CRYPTO_CONTEXT.decrypt(ciphertext, encoder, {
 	        	result: function(data) { payload = data; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return jo && payload; }, "json object and payload not received", 100);
+        waitsFor(function() { return payload; }, "payload", 100);
 
         var newPayload;
         runs(function() {
-        	var payloadJo = JSON.parse(textEncoding$getString(payload, MslConstants$DEFAULT_CHARSET));
-	        payloadJo[KEY_SEQUENCE_NUMBER] = MslConstants$MAX_LONG_VALUE + 2;
-	        var plaintext = textEncoding$getBytes(JSON.stringify(payloadJo), MslConstants$DEFAULT_CHARSET);
-	        CRYPTO_CONTEXT.encrypt(plaintext, {
+        	var payloadMo = encoder.parseObject(payload);
+	        payloadMo.put(KEY_SEQUENCE_NUMBER, MslConstants$MAX_LONG_VALUE + 2);
+	        var plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
+	        CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT, {
 	        	result: function(data) { newPayload = data; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return newPayload; }, "newPayload not received", 100);
+        waitsFor(function() { return newPayload; }, "newPayload", 100);
 	    
         var signature;
         runs(function() {
-        	CRYPTO_CONTEXT.sign(newPayload, {
+        	CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT, {
         		result: function(data) { signature = data; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return signature; }, "signature not received", 100);
+        waitsFor(function() { return signature; }, "signature", 100);
 
         var exception;
         runs(function() {
-	        jo[KEY_PAYLOAD] = base64$encode(newPayload);
-	        jo[KEY_SIGNATURE] = base64$encode(signature);
+	        mo.put(KEY_PAYLOAD, newPayload);
+	        mo.put(KEY_SIGNATURE, signature);
 	        
-	        PayloadChunk$parse(jo, CRYPTO_CONTEXT, {
+	        PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslException(MslError.PAYLOAD_SEQUENCE_NUMBER_OUT_OF_RANGE));
@@ -970,234 +1148,269 @@ describe("PayloadChunk", function() {
     it("missing message ID", function() {
 	    var chunk;
         runs(function() {
-            PayloadChunk$create(SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk not received", 100);
+        waitsFor(function() { return chunk; }, "chunk", 100);
         
-        var jo = undefined, payload;
+        var mo;
         runs(function() {
-	        jo = JSON.parse(JSON.stringify(chunk));
-	        var ciphertext = base64$decode(jo[KEY_PAYLOAD]);
-            CRYPTO_CONTEXT.decrypt(ciphertext, {
+        	MslTestUtils.toMslObject(encoder, chunk, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var payload;
+        runs(function() {
+	        var ciphertext = mo.getBytes(KEY_PAYLOAD);
+            CRYPTO_CONTEXT.decrypt(ciphertext, encoder, {
                 result: function(data) { payload = data; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return jo && payload; }, "json object and payload not received", 100);
+        waitsFor(function() { return payload; }, "payload", 100);
 
         var newPayload;
         runs(function() {
-        	var payloadJo = JSON.parse(textEncoding$getString(payload, MslConstants$DEFAULT_CHARSET));
-	        expect(payloadJo[KEY_MESSAGE_ID]).not.toBeNull();
-	        delete payloadJo[KEY_MESSAGE_ID];
-	        var plaintext = textEncoding$getBytes(JSON.stringify(payloadJo), MslConstants$DEFAULT_CHARSET);
-	        CRYPTO_CONTEXT.encrypt(plaintext, {
+        	var payloadMo = encoder.parseObject(payload);
+        	payloadMo.remove(KEY_MESSAGE_ID);
+	        var plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
+	        CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT, {
 	        	result: function(data) { newPayload = data; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return newPayload; }, "newPayload not received", 100);
+        waitsFor(function() { return newPayload; }, "newPayload", 100);
         
         var signature;
         runs(function() {
-        	CRYPTO_CONTEXT.sign(newPayload, {
+        	CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT, {
         		result: function(data) { signature = data; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return signature; }, "signature not received", 100);
+        waitsFor(function() { return signature; }, "signature", 100);
         
         var exception;
         runs(function() {
-	        jo[KEY_PAYLOAD] = base64$encode(newPayload);
-	        jo[KEY_SIGNATURE] = base64$encode(signature);
+	        mo.put(KEY_PAYLOAD, newPayload);
+	        mo.put(KEY_SIGNATURE, signature);
 
-	        PayloadChunk$parse(jo, CRYPTO_CONTEXT, {
+	        PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
     it("invalid message ID", function() {
     	var chunk;
         runs(function() {
-            PayloadChunk$create(SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk not received", 100);
-
-        var jo = undefined, payload;
+        waitsFor(function() { return chunk; }, "chunk", 100);
+        
+        var mo;
         runs(function() {
-	        jo = JSON.parse(JSON.stringify(chunk));
-	        var ciphertext = base64$decode(jo[KEY_PAYLOAD]);
-            CRYPTO_CONTEXT.decrypt(ciphertext, {
+        	MslTestUtils.toMslObject(encoder, chunk, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+
+        var payload;
+        runs(function() {
+	        var ciphertext = mo.getBytes(KEY_PAYLOAD);
+            CRYPTO_CONTEXT.decrypt(ciphertext, encoder, {
                 result: function(data) { payload = data; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return jo && payload; }, "json object and payload not received", 100);
+        waitsFor(function() { return payload; }, "payload", 100);
 
         var newPayload;
         runs(function() {
-            var payloadJo = JSON.parse(textEncoding$getString(payload, MslConstants$DEFAULT_CHARSET));
-	        payloadJo[KEY_MESSAGE_ID] = "x";
-	        var plaintext = textEncoding$getBytes(JSON.stringify(payloadJo), MslConstants$DEFAULT_CHARSET);
-	        CRYPTO_CONTEXT.encrypt(plaintext, {
+            var payloadMo = encoder.parseObject(payload);
+	        payloadMo.put(KEY_MESSAGE_ID, "x");
+	        var plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
+	        CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT, {
 	        	result: function(data) { newPayload = data; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return newPayload; }, "newPayload not received", 100);
+        waitsFor(function() { return newPayload; }, "newPayload", 100);
 
         var signature;
         runs(function() {
-        	CRYPTO_CONTEXT.sign(newPayload, {
+        	CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT, {
         		result: function(data) { signature = data; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return signature; }, "signature not received", 100);
+        waitsFor(function() { return signature; }, "signature", 100);
         
         var exception;
         runs(function() {
-        	jo[KEY_PAYLOAD] = base64$encode(newPayload);
-        	jo[KEY_SIGNATURE] = base64$encode(signature);
+        	mo.put(KEY_PAYLOAD, newPayload);
+        	mo.put(KEY_SIGNATURE, signature);
 
-        	PayloadChunk$parse(jo, CRYPTO_CONTEXT, {
+        	PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
         		result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
     it("invalid end of message", function() {
-	        var chunk;
+    	var chunk;
         runs(function() {
-            PayloadChunk$create(SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk not received", 100);
-
-        var jo = undefined, payload;
+        waitsFor(function() { return chunk; }, "chunk", 100);
+        
+        var mo;
         runs(function() {
-	        jo = JSON.parse(JSON.stringify(chunk));
-	        var ciphertext = base64$decode(jo[KEY_PAYLOAD]);
-            CRYPTO_CONTEXT.decrypt(ciphertext, {
+        	MslTestUtils.toMslObject(encoder, chunk, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+
+        var payload;
+        runs(function() {
+	        var ciphertext = mo.getBytes(KEY_PAYLOAD);
+            CRYPTO_CONTEXT.decrypt(ciphertext, encoder, {
                 result: function(data) { payload = data; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return jo && payload; }, "json object and payload not received", 100);
+        waitsFor(function() { return payload; }, "payload", 100);
         
         var newPayload;
         runs(function() {
-        	var payloadJo = JSON.parse(textEncoding$getString(payload, MslConstants$DEFAULT_CHARSET));
-	        payloadJo[KEY_END_OF_MESSAGE] = "x";
-	        var plaintext = textEncoding$getBytes(JSON.stringify(payloadJo), MslConstants$DEFAULT_CHARSET);
-	        CRYPTO_CONTEXT.encrypt(plaintext, {
+        	var payloadMo = encoder.parseObject(payload);
+	        payloadMo.put(KEY_END_OF_MESSAGE, "x");
+	        var plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
+	        CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT, {
 	        	result: function(data) { newPayload = data; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return newPayload; }, "newPayload not received", 100);
+        waitsFor(function() { return newPayload; }, "newPayload", 100);
 
         var signature;
         runs(function() {
-        	CRYPTO_CONTEXT.sign(newPayload, {
+        	CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT, {
         		result: function(data) { signature = data; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return signature; }, "signature not received", 100);
+        waitsFor(function() { return signature; }, "signature", 100);
      
         var exception;
         runs(function() {
-        	jo[KEY_PAYLOAD] = base64$encode(newPayload);
-        	jo[KEY_SIGNATURE] = base64$encode(signature);
+        	mo.put(KEY_PAYLOAD, newPayload);
+        	mo.put(KEY_SIGNATURE, signature);
 
-        	PayloadChunk$parse(jo, CRYPTO_CONTEXT, {
+        	PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
     it("invalid compression algorithm", function() {
     	var chunk;
         runs(function() {
-            PayloadChunk$create(SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk not received", 100);
+        waitsFor(function() { return chunk; }, "chunk", 100);
         
-        var jo = undefined, payload;
+        var mo;
         runs(function() {
-	        jo = JSON.parse(JSON.stringify(chunk));
-	        var ciphertext = base64$decode(jo[KEY_PAYLOAD]);
-            CRYPTO_CONTEXT.decrypt(ciphertext, {
+        	MslTestUtils.toMslObject(encoder, chunk, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var payload;
+        runs(function() {
+	        var ciphertext = mo.getBytes(KEY_PAYLOAD);
+            CRYPTO_CONTEXT.decrypt(ciphertext, encoder, {
                 result: function(data) { payload = data; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return jo && payload; }, "json object and payload not received", 100);
+        waitsFor(function() { return payload; }, "payload", 100);
         
         var newPayload;
         runs(function() {
-        	var payloadJo = JSON.parse(textEncoding$getString(payload, MslConstants$DEFAULT_CHARSET));
-	        payloadJo[KEY_COMPRESSION_ALGORITHM] = "x";
-	        var plaintext = textEncoding$getBytes(JSON.stringify(payloadJo), MslConstants$DEFAULT_CHARSET);
-	        CRYPTO_CONTEXT.encrypt(plaintext, {
+        	var payloadMo = encoder.parseObject(payload);
+	        payloadMo.put(KEY_COMPRESSION_ALGORITHM, "x");
+	        var plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
+	        CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT, {
 	        	result: function(data) { newPayload = data; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return newPayload; }, "newPayload not received", 100);
+        waitsFor(function() { return newPayload; }, "newPayload", 100);
  
         var signature;
         runs(function() {
-        	CRYPTO_CONTEXT.sign(newPayload, {
+        	CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT, {
         		result: function(data) { signature = data; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return signature; }, "signature not received", 100);
+        waitsFor(function() { return signature; }, "signature", 100);
         
         var exception;
         runs(function() {
-        	jo[KEY_PAYLOAD] = base64$encode(newPayload);
-	        jo[KEY_SIGNATURE] = base64$encode(signature);
+        	mo.put(KEY_PAYLOAD, newPayload);
+	        mo.put(KEY_SIGNATURE, signature);
 	        
-	        PayloadChunk$parse(jo, CRYPTO_CONTEXT, {
+	        PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslMessageException(MslError.UNIDENTIFIED_COMPRESSION));
@@ -1207,116 +1420,133 @@ describe("PayloadChunk", function() {
     it("missing data", function() {
     	var chunk;
         runs(function() {
-            PayloadChunk$create(SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk not received", 100);
-
-        var jo = undefined, payload;
+        waitsFor(function() { return chunk; }, "chunk", 100);
+        
+        var mo;
         runs(function() {
-	        jo = JSON.parse(JSON.stringify(chunk));
-	        var ciphertext = base64$decode(jo[KEY_PAYLOAD]);
-            CRYPTO_CONTEXT.decrypt(ciphertext, {
+        	MslTestUtils.toMslObject(encoder, chunk, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+
+        var payload;
+        runs(function() {
+	        var ciphertext = mo.getBytes(KEY_PAYLOAD);
+            CRYPTO_CONTEXT.decrypt(ciphertext, encoder, {
                 result: function(data) { payload = data; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return jo && payload; }, "json object and payload not received", 100);
+        waitsFor(function() { return payload; }, "payload", 100);
         
         var newPayload;
         runs(function() {
-            var payloadJo = JSON.parse(textEncoding$getString(payload, MslConstants$DEFAULT_CHARSET));
-	        expect(payloadJo[KEY_DATA]).not.toBeNull();
-	        delete payloadJo[KEY_DATA];
-	        var plaintext = textEncoding$getBytes(JSON.stringify(payloadJo), MslConstants$DEFAULT_CHARSET);
-	        CRYPTO_CONTEXT.encrypt(plaintext, {
+            var payloadMo = encoder.parseObject(payload);
+            payloadMo.remove(KEY_DATA);
+	        var plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
+	        CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT, {
 	        	result: function(data) { newPayload = data; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return newPayload; }, "newPayload not received", 100);
+        waitsFor(function() { return newPayload; }, "newPayload", 100);
  
         var signature;
         runs(function() {
-        	CRYPTO_CONTEXT.sign(newPayload, {
+        	CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT, {
         		result: function(data) { signature = data; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return signature; }, "signature not received", 100);
+        waitsFor(function() { return signature; }, "signature", 100);
      
         var exception;
         runs(function() {
-        	jo[KEY_PAYLOAD] = base64$encode(newPayload);
-	        jo[KEY_SIGNATURE] = base64$encode(signature);
+        	mo.put(KEY_PAYLOAD, newPayload);
+	        mo.put(KEY_SIGNATURE, signature);
 	        
-	        PayloadChunk$parse(jo, CRYPTO_CONTEXT, {
+	        PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
     it("empty data", function() {
     	var chunk;
         runs(function() {
-            PayloadChunk$create(SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk not received", 100);
-
-        var jo = undefined, payload;
+        waitsFor(function() { return chunk; }, "chunk", 100);
+        
+        var mo;
         runs(function() {
-	        jo = JSON.parse(JSON.stringify(chunk));
-	        var ciphertext = base64$decode(jo[KEY_PAYLOAD]);
-            CRYPTO_CONTEXT.decrypt(ciphertext, {
+        	MslTestUtils.toMslObject(encoder, chunk, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+
+        var payload;
+        runs(function() {
+	        var ciphertext = mo.getBytes(KEY_PAYLOAD);
+            CRYPTO_CONTEXT.decrypt(ciphertext, encoder, {
                 result: function(data) { payload = data; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return jo && payload; }, "json object and payload not received", 100);
+        waitsFor(function() { return payload; }, "payload", 100);
         
         var newPayload;
         runs(function() {
-            var payloadJo = JSON.parse(textEncoding$getString(payload, MslConstants$DEFAULT_CHARSET));
-	        payloadJo[KEY_DATA] = "";
-	        var plaintext = textEncoding$getBytes(JSON.stringify(payloadJo), MslConstants$DEFAULT_CHARSET);
-	        CRYPTO_CONTEXT.encrypt(plaintext, {
+            var payloadMo = encoder.parseObject(payload);
+	        payloadMo.put(KEY_DATA, "");
+	        var plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
+	        CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT, {
 	        	result: function(data) { newPayload = data; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return newPayload; }, "newPayload not received", 100);
+        waitsFor(function() { return newPayload; }, "newPayload", 100);
  
         var signature;
         runs(function() {
-        	CRYPTO_CONTEXT.sign(newPayload, {
+        	CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT, {
         		result: function(data) { signature = data; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return signature; }, "signature not received", 100);
+        waitsFor(function() { return signature; }, "signature", 100);
         
         var exception;
         runs(function() {
-	        jo[KEY_PAYLOAD] = base64$encode(newPayload);
-	        jo[KEY_SIGNATURE] = base64$encode(signature);
+	        mo.put(KEY_PAYLOAD, newPayload);
+	        mo.put(KEY_SIGNATURE, signature);
 	        
-	        PayloadChunk$parse(jo, CRYPTO_CONTEXT, {
+	        PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslMessageException(MslError.PAYLOAD_DATA_MISSING));
@@ -1326,56 +1556,65 @@ describe("PayloadChunk", function() {
     it("end of message payload with invalid data", function() {
     	var chunk;
         runs(function() {
-            PayloadChunk$create(SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk not received", 100);
-
-        var jo = undefined, payload;
+        waitsFor(function() { return chunk; }, "chunk", 100);
+        
+        var mo;
         runs(function() {
-	        jo = JSON.parse(JSON.stringify(chunk));
-	        var ciphertext = base64$decode(jo[KEY_PAYLOAD]);
-            CRYPTO_CONTEXT.decrypt(ciphertext, {
+        	MslTestUtils.toMslObject(encoder, chunk, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+
+        var payload;
+        runs(function() {
+	        var ciphertext = mo.getBytes(KEY_PAYLOAD);
+            CRYPTO_CONTEXT.decrypt(ciphertext, encoder, {
                 result: function(data) { payload = data; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return jo && payload; }, "json object and payload not received", 100);
+        waitsFor(function() { return payload; }, "payload", 100);
         
         var newPayload;
         runs(function() {
-            var payloadJo = JSON.parse(textEncoding$getString(payload, MslConstants$DEFAULT_CHARSET));
-	        payloadJo[KEY_DATA] = "x";
-	        var plaintext = textEncoding$getBytes(JSON.stringify(payloadJo), MslConstants$DEFAULT_CHARSET);
-	        CRYPTO_CONTEXT.encrypt(plaintext, {
+            var payloadMo = encoder.parseObject(payload);
+	        payloadMo.put(KEY_DATA, "x");
+	        var plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
+	        CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT, {
 	        	result: function(data) { newPayload = data; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return newPayload; }, "newPayload not received", 100);
+        waitsFor(function() { return newPayload; }, "newPayload", 100);
 
         var signature;
         runs(function() {
-        	CRYPTO_CONTEXT.sign(newPayload, {
+        	CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT, {
         		result: function(data) { signature = data; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return signature; }, "signature not received", 100);
+        waitsFor(function() { return signature; }, "signature", 100);
         
         var exception;
         runs(function() {
-        	jo[KEY_PAYLOAD] = base64$encode(newPayload);
-	        jo[KEY_SIGNATURE] = base64$encode(signature);
+        	mo.put(KEY_PAYLOAD, newPayload);
+	        mo.put(KEY_SIGNATURE, signature);
 	        
-	        PayloadChunk$parse(jo, CRYPTO_CONTEXT, {
+	        PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslMessageException(MslError.PAYLOAD_DATA_CORRUPT));
@@ -1386,25 +1625,34 @@ describe("PayloadChunk", function() {
     it("large data", function() {
         var chunk;
         runs(function() {
-            PayloadChunk$create(SEQ_NO, MSG_ID, true, null, largedata, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, null, largedata, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk not received", 3000);
+        waitsFor(function() { return chunk; }, "chunk", 3000);
         
-        var joChunk;
+        var mo;
         runs(function() {
             expect(chunk.data).toEqual(largedata);
-            var jo = JSON.parse(JSON.stringify(chunk));
-            PayloadChunk$parse(jo, CRYPTO_CONTEXT, {
-                result: function(x) { joChunk = x; },
+        	MslTestUtils.toMslObject(encoder, chunk, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var moChunk;
+        runs(function() {
+            PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+                result: function(x) { moChunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return joChunk; }, "joChunk not received", 3000);
+        waitsFor(function() { return moChunk; }, "moChunk", 3000);
+        
         runs(function() {
-        	expect(joChunk.data).toEqual(chunk.data);
+        	expect(moChunk.data).toEqual(chunk.data);
         });
     });
     
@@ -1412,60 +1660,78 @@ describe("PayloadChunk", function() {
     xit("GZIP large data", function() {
         var chunk;
         runs(function() {
-            PayloadChunk$create(SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, largedata, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, largedata, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk not received", 3000);
+        waitsFor(function() { return chunk; }, "chunk", 3000);
         
-        var joChunk;
+        var mo;
         runs(function() {
             expect(chunk.data).toEqual(largedata);
             
             // Random data will not compress.
             expect(chunk.compressionAlgo).toBeNull();
             
-            var jo = JSON.parse(JSON.stringify(chunk));
-            PayloadChunk$parse(jo, CRYPTO_CONTEXT, {
-                result: function(x) { joChunk = x; },
+        	MslTestUtils.toMslObject(encoder, chunk, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var moChunk;
+        runs(function() {
+            PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+                result: function(x) { moChunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return joChunk; }, "joChunk not received", 3000);
+        waitsFor(function() { return moChunk; }, "moChunk", 3000);
+        
         runs(function() {
-        	expect(joChunk.data).toEqual(chunk.data);
-        	expect(joChunk.compressionAlgo).toEqual(chunk.compressionAlgo);
+        	expect(moChunk.data).toEqual(chunk.data);
+        	expect(moChunk.compressionAlgo).toEqual(chunk.compressionAlgo);
         });
     });
     
     xit("GZIP verona", function() {
         var chunk;
         runs(function() {
-            PayloadChunk$create(SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, rawdata, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, rawdata, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk not received", 100);
+        waitsFor(function() { return chunk; }, "chunk", 100);
         
-        var joChunk;
+        var mo;
         runs(function() {
             expect(chunk.data).toEqual(data);
-            
+
             // Romeo and Juliet will compress.
-            expect(chunk.compressionAlgo).toEqual(CompressionAlgorithm.GZIP.toString());
+            expect(chunk.compressionAlgo).toEqual(CompressionAlgorithm.GZIP);
             
-            var jo = JSON.parse(JSON.stringify(chunk));
-            PayloadChunk$parse(jo, CRYPTO_CONTEXT, {
-                result: function(x) { joChunk = x; },
+        	MslTestUtils.toMslObject(encoder, chunk, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var moChunk;
+        runs(function() {
+            PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+                result: function(x) { moChunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return joChunk; }, "joChunk not received", 100);
+        waitsFor(function() { return moChunk; }, "moChunk", 100);
+        
         runs(function() {
-        	expect(joChunk.data).toEqual(chunk.data);
-        	expect(joChunk.compressionAlgo).toEqual(chunk.compressionAlgo);
+        	expect(moChunk.data).toEqual(chunk.data);
+        	expect(moChunk.compressionAlgo).toEqual(chunk.compressionAlgo);
         });
     });
     
@@ -1473,86 +1739,108 @@ describe("PayloadChunk", function() {
     it("LZW large data", function() {
         var chunk;
         runs(function() {
-            PayloadChunk$create(SEQ_NO, MSG_ID, true, CompressionAlgorithm.LZW, largedata, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.LZW, largedata, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk not received", 3000);
+        waitsFor(function() { return chunk; }, "chunk", 3000);
         
-        var joChunk;
+        var mo;
         runs(function() {
             expect(chunk.data).toEqual(largedata);
-            
+
             // Random data will not compress.
             expect(chunk.compressionAlgo).toBeNull();
             
-            var jo = JSON.parse(JSON.stringify(chunk));
-            PayloadChunk$parse(jo, CRYPTO_CONTEXT, {
-                result: function(x) { joChunk = x; },
+        	MslTestUtils.toMslObject(encoder, chunk, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var moChunk;
+        runs(function() {
+            PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+                result: function(x) { moChunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return joChunk; }, "joChunk not received", 3000);
+        waitsFor(function() { return moChunk; }, "moChunk", 3000);
         runs(function() {
-        	expect(joChunk.data).toEqual(chunk.data);
-        	expect(joChunk.compressionAlgo).toEqual(chunk.compressionAlgo);
+        	expect(moChunk.data).toEqual(chunk.data);
+        	expect(moChunk.compressionAlgo).toEqual(chunk.compressionAlgo);
         });
     });
     
     xit("LZW verona", function() {
         var chunk;
         runs(function() {
-            PayloadChunk$create(SEQ_NO, MSG_ID, true, CompressionAlgorithm.LZW, rawdata, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.LZW, rawdata, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk not received", 100);
+        waitsFor(function() { return chunk; }, "chunk", 100);
         
-        var joChunk;
+        var mo;
         runs(function() {
             expect(chunk.data).toEqual(data);
-            
+
             // Romeo and Juliet will compress.
-            expect(chunk.compressionAlgo).toEqual(CompressionAlgorithm.LZW.toString());
+            expect(chunk.compressionAlgo).toEqual(CompressionAlgorithm.LZW);
             
-            var jo = JSON.parse(JSON.stringify(chunk));
-            PayloadChunk$parse(jo, CRYPTO_CONTEXT, {
-                result: function(x) { joChunk = x; },
+        	MslTestUtils.toMslObject(encoder, chunk, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var moChunk;
+        runs(function() {
+            PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+                result: function(x) { moChunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return joChunk; }, "joChunk not received", 100);
+        waitsFor(function() { return moChunk; }, "moChunk", 100);
+        
         runs(function() {
-        	expect(joChunk.data).toEqual(chunk.data);
-        	expect(joChunk.compressionAlgo).toEqual(chunk.compressionAlgo);
+        	expect(moChunk.data).toEqual(chunk.data);
+        	expect(moChunk.compressionAlgo).toEqual(chunk.compressionAlgo);
         });
     });
     
     xit("equals sequence number", function() {
         var seqNoA = 1;
         var seqNoB = 2;
-        var chunkA = undefined, chunkB;
+        var chunkA, chunkB;
         runs(function() {
-            PayloadChunk$create(seqNoA, MSG_ID, false, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, seqNoA, MSG_ID, false, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunkA = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            PayloadChunk$create(seqNoB, MSG_ID, false, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, seqNoB, MSG_ID, false, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunkB = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunkA && chunkB; }, "chunks not received", 100);
+        waitsFor(function() { return chunkA && chunkB; }, "chunks", 100);
         var chunkA2;
         runs(function() {
-            PayloadChunk$parse(JSON.parse(JSON.stringify(chunkA)), CRYPTO_CONTEXT, {
-                result: function(x) { chunkA2 = x; },
+        	MslTestUtils.toMslObject(encoder, chunkA, {
+        		result: function(mo) {
+		            PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+		                result: function(x) { chunkA2 = x; },
+		                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		            });
+        		},
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            });
+        	});
         });
-        waitsFor(function() { return chunkA2; }, "chunkA2 not received", 100);
+        waitsFor(function() { return chunkA2; }, "chunkA2", 100);
         
         runs(function() {
 	        expect(chunkA.equals(chunkA)).toBeTruthy();
@@ -1573,24 +1861,29 @@ describe("PayloadChunk", function() {
         var msgIdB = 2;
         var chunkA = undefined, chunkB;
         runs(function() {
-            PayloadChunk$create(SEQ_NO, msgIdA, false, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, msgIdA, false, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunkA = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            PayloadChunk$create(SEQ_NO, msgIdB, false, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, msgIdB, false, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunkB = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunkA && chunkB; }, "chunks not received", 100);
+        waitsFor(function() { return chunkA && chunkB; }, "chunks", 100);
         var chunkA2;
         runs(function() {
-            PayloadChunk$parse(JSON.parse(JSON.stringify(chunkA)), CRYPTO_CONTEXT, {
-                result: function(x) { chunkA2 = x; },
+        	MslTestUtils.toMslObject(encoder, chunkA, {
+        		result: function(mo) {
+		            PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+		                result: function(x) { chunkA2 = x; },
+		                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		            });
+        		},
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            });
+        	});
         });
-        waitsFor(function() { return chunkA2; }, "chunkA2 not received", 100);
+        waitsFor(function() { return chunkA2; }, "chunkA2", 100);
         
         runs(function() {
 	        expect(chunkA.equals(chunkA)).toBeTruthy();
@@ -1609,24 +1902,29 @@ describe("PayloadChunk", function() {
     xit("equals end of message", function() {
         var chunkA = undefined, chunkB;
         runs(function() {
-            PayloadChunk$create(SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunkA = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            PayloadChunk$create(SEQ_NO, MSG_ID, false, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, false, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunkB = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunkA && chunkB; }, "chunks not received", 100);
+        waitsFor(function() { return chunkA && chunkB; }, "chunks", 100);
         var chunkA2;
         runs(function() {
-            PayloadChunk$parse(JSON.parse(JSON.stringify(chunkA)), CRYPTO_CONTEXT, {
-                result: function(x) { chunkA2 = x; },
+        	MslTestUtils.toMslObject(encoder, chunkA, {
+        		result: function(mo) {
+		            PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+		                result: function(x) { chunkA2 = x; },
+		                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		            });
+        		},
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            });
+        	});
         });
-        waitsFor(function() { return chunkA2; }, "chunkA2 not received", 100);
+        waitsFor(function() { return chunkA2; }, "chunkA2", 100);
         
         runs(function() {
 	        expect(chunkA.equals(chunkA)).toBeTruthy();
@@ -1645,24 +1943,29 @@ describe("PayloadChunk", function() {
     xit("equals compression algorithm", function() {
         var chunkA = undefined, chunkB;
         runs(function() {
-            PayloadChunk$create(SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunkA = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            PayloadChunk$create(SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunkB = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunkA && chunkB; }, "chunks not received", 100);
+        waitsFor(function() { return chunkA && chunkB; }, "chunks", 100);
         var chunkA2;
         runs(function() {
-            PayloadChunk$parse(JSON.parse(JSON.stringify(chunkA)), CRYPTO_CONTEXT, {
-                result: function(x) { chunkA2 = x; },
+        	MslTestUtils.toMslObject(encoder, chunkA, {
+        		result: function(mo) {
+		            PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+		                result: function(x) { chunkA2 = x; },
+		                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		            });
+        		},
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            });
+        	});
         });
-        waitsFor(function() { return chunkA2; }, "chunkA2 not received", 100);
+        waitsFor(function() { return chunkA2; }, "chunkA2", 100);
         
         runs(function() {
 	        expect(chunkA.equals(chunkA)).toBeTruthy();
@@ -1686,28 +1989,33 @@ describe("PayloadChunk", function() {
         var dataC = new Uint8Array(0);
         var chunkA = undefined, chunkB = undefined, chunkC;
         runs(function() {
-            PayloadChunk$create(SEQ_NO, MSG_ID, true, null, dataA, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, null, dataA, CRYPTO_CONTEXT, {
                 result: function(x) { chunkA = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            PayloadChunk$create(SEQ_NO, MSG_ID, true, null, dataB, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, null, dataB, CRYPTO_CONTEXT, {
                 result: function(x) { chunkB = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            PayloadChunk$create(SEQ_NO, MSG_ID, true, null, dataC, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, null, dataC, CRYPTO_CONTEXT, {
                 result: function(x) { chunkC = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunkA && chunkB && chunkC; }, "chunks not received", 100);
+        waitsFor(function() { return chunkA && chunkB && chunkC; }, "chunks", 100);
         var chunkA2;
         runs(function() {
-            PayloadChunk$parse(JSON.parse(JSON.stringify(chunkA)), CRYPTO_CONTEXT, {
-                result: function(x) { chunkA2 = x; },
+        	MslTestUtils.toMslObject(encoder, chunkA, {
+        		result: function(mo) {
+		            PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+		                result: function(x) { chunkA2 = x; },
+		                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		            });
+        		},
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            });
+        	});
         });
-        waitsFor(function() { return chunkA2; }, "chunkA2 not received", 100);
+        waitsFor(function() { return chunkA2; }, "chunkA2", 100);
         
         runs(function() {
 	        expect(chunkA.equals(chunkA)).toBeTruthy();
@@ -1730,12 +2038,12 @@ describe("PayloadChunk", function() {
     xit("equals object", function() {
         var chunk;
         runs(function() {
-            PayloadChunk$create(SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk not received", 100);
+        waitsFor(function() { return chunk; }, "chunk", 100);
         
         runs(function() {
 	        expect(chunk.equals(null)).toBeFalsy();

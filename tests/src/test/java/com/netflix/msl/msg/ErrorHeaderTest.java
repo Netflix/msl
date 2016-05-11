@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 
+import org.bouncycastle.util.encoders.Base64;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -68,27 +69,27 @@ public class ErrorHeaderTest {
     /** Milliseconds per second. */
     private static final long MILLISECONDS_PER_SECOND = 1000;
     
-    /** JSON key entity authentication data. */
+    /** Key entity authentication data. */
     private static final String KEY_ENTITY_AUTHENTICATION_DATA = "entityauthdata";
-    /** JSON key error data. */
+    /** Key error data. */
     private static final String KEY_ERRORDATA = "errordata";
-    /** JSON key error data signature. */
+    /** Key error data signature. */
     private static final String KEY_SIGNATURE = "signature";
     
     // Message error data.
-    /** JSON key recipient. */
+    /** Key recipient. */
     private static final String KEY_RECIPIENT = "recipient";
-    /** JSON key timestamp. */
+    /** Key timestamp. */
     private static final String KEY_TIMESTAMP = "timestamp";
-    /** JSON key message ID. */
+    /** Key message ID. */
     private static final String KEY_MESSAGE_ID = "messageid";
-    /** JSON key error code. */
+    /** Key error code. */
     private static final String KEY_ERROR_CODE = "errorcode";
-    /** JSON key internal code. */
+    /** Key internal code. */
     private static final String KEY_INTERNAL_CODE = "internalcode";
-    /** JSON key error message. */
+    /** Key error message. */
     private static final String KEY_ERROR_MESSAGE = "errormsg";
-    /** JSON key user message. */
+    /** Key user message. */
     private static final String KEY_USER_MESSAGE = "usermsg";
     
     /**
@@ -170,8 +171,8 @@ public class ErrorHeaderTest {
         final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         
         final MslObject mo = MslTestUtils.toMslObject(encoder, errorHeader);
-        final MslObject entityAuthDataJo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
-        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, ENTITY_AUTH_DATA), entityAuthDataJo));
+        final MslObject entityAuthDataMo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, ENTITY_AUTH_DATA), entityAuthDataMo));
         final byte[] ciphertext = mo.getBytes(KEY_ERRORDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject errordata = encoder.parseObject(plaintext);
@@ -188,13 +189,13 @@ public class ErrorHeaderTest {
     }
     
     @Test
-    public void negativeInternalCodeJson() throws MslEncodingException, MslEntityAuthException, MslEncoderException, MslMessageException, MslCryptoException {
+    public void negativeInternalCodeMslObject() throws MslEncodingException, MslEntityAuthException, MslEncoderException, MslMessageException, MslCryptoException {
         final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, -17, ERROR_MSG, USER_MSG);
         assertEquals(-1, errorHeader.getInternalCode());
         
         final MslObject mo = MslTestUtils.toMslObject(encoder, errorHeader);
-        final MslObject entityAuthDataJo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
-        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, ENTITY_AUTH_DATA), entityAuthDataJo));
+        final MslObject entityAuthDataMo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, ENTITY_AUTH_DATA), entityAuthDataMo));
         final byte[] ciphertext = mo.getBytes(KEY_ERRORDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject errordata = encoder.parseObject(plaintext);
@@ -211,13 +212,13 @@ public class ErrorHeaderTest {
     }
     
     @Test
-    public void nullRecipientJson() throws MslEncodingException, MslEntityAuthException, MslMessageException, MslEncoderException, MslCryptoException {
+    public void nullRecipientMslObject() throws MslEncodingException, MslEntityAuthException, MslMessageException, MslEncoderException, MslCryptoException {
         final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, null, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         assertNull(errorHeader.getRecipient());
         
         final MslObject mo = MslTestUtils.toMslObject(encoder, errorHeader);
-        final MslObject entityAuthDataJo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
-        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, ENTITY_AUTH_DATA), entityAuthDataJo));
+        final MslObject entityAuthDataMo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, ENTITY_AUTH_DATA), entityAuthDataMo));
         final byte[] ciphertext = mo.getBytes(KEY_ERRORDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject errordata = encoder.parseObject(plaintext);
@@ -234,13 +235,13 @@ public class ErrorHeaderTest {
     }
     
     @Test
-    public void nullErrorMessageJson() throws MslEncodingException, MslEntityAuthException, MslEncoderException, MslMessageException, MslCryptoException {
+    public void nullErrorMessageMslObject() throws MslEncodingException, MslEntityAuthException, MslEncoderException, MslMessageException, MslCryptoException {
         final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, null, USER_MSG);
         assertNull(errorHeader.getErrorMessage());
         
         final MslObject mo = MslTestUtils.toMslObject(encoder, errorHeader);
-        final MslObject entityAuthDataJo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
-        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, ENTITY_AUTH_DATA), entityAuthDataJo));
+        final MslObject entityAuthDataMo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, ENTITY_AUTH_DATA), entityAuthDataMo));
         final byte[] ciphertext = mo.getBytes(KEY_ERRORDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject errordata = encoder.parseObject(plaintext);
@@ -257,13 +258,13 @@ public class ErrorHeaderTest {
     }
     
     @Test
-    public void nullUserMessageJson() throws MslEncodingException, MslEntityAuthException, MslEncoderException, MslMessageException, MslCryptoException {
+    public void nullUserMessageMslObject() throws MslEncodingException, MslEntityAuthException, MslEncoderException, MslMessageException, MslCryptoException {
         final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, null);
         assertNull(errorHeader.getUserMessage());
         
         final MslObject mo = MslTestUtils.toMslObject(encoder, errorHeader);
-        final MslObject entityAuthDataJo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
-        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, ENTITY_AUTH_DATA), entityAuthDataJo));
+        final MslObject entityAuthDataMo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, ENTITY_AUTH_DATA), entityAuthDataMo));
         final byte[] ciphertext = mo.getBytes(KEY_ERRORDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject errordata = encoder.parseObject(plaintext);
@@ -282,8 +283,8 @@ public class ErrorHeaderTest {
     @Test
     public void parseHeader() throws MslEncoderException, MslKeyExchangeException, MslUserAuthException, MslException {
         final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-        final MslObject errorHeaderJo = MslTestUtils.toMslObject(encoder, errorHeader);
-        final Header header = Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
+        final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
+        final Header header = Header.parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS);
         assertNotNull(header);
         assertTrue(header instanceof ErrorHeader);
         final ErrorHeader moErrorHeader = (ErrorHeader)header;
@@ -312,11 +313,11 @@ public class ErrorHeaderTest {
         thrown.expectMslError(MslError.MESSAGE_ENTITY_NOT_FOUND);
 
         final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-        final MslObject errorHeaderJo = MslTestUtils.toMslObject(encoder, errorHeader);
+        final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         
-        assertNotNull(errorHeaderJo.remove(KEY_ENTITY_AUTHENTICATION_DATA));
+        assertNotNull(errorHeaderMo.remove(KEY_ENTITY_AUTHENTICATION_DATA));
         
-        Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
@@ -325,11 +326,11 @@ public class ErrorHeaderTest {
         thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-        final MslObject errorHeaderJo = MslTestUtils.toMslObject(encoder, errorHeader);
+        final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         
-        errorHeaderJo.put(KEY_ENTITY_AUTHENTICATION_DATA, "x");
+        errorHeaderMo.put(KEY_ENTITY_AUTHENTICATION_DATA, "x");
 
-        Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
@@ -338,11 +339,11 @@ public class ErrorHeaderTest {
         thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-        final MslObject errorHeaderJo = MslTestUtils.toMslObject(encoder, errorHeader);
+        final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         
-        assertNotNull(errorHeaderJo.remove(KEY_SIGNATURE));
+        assertNotNull(errorHeaderMo.remove(KEY_SIGNATURE));
 
-        Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
@@ -351,11 +352,11 @@ public class ErrorHeaderTest {
         thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-        final MslObject errorHeaderJo = MslTestUtils.toMslObject(encoder, errorHeader);
+        final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         
-        errorHeaderJo.put(KEY_SIGNATURE, false);
+        errorHeaderMo.put(KEY_SIGNATURE, false);
 
-        Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
@@ -364,11 +365,11 @@ public class ErrorHeaderTest {
         thrown.expectMslError(MslError.MESSAGE_VERIFICATION_FAILED);
 
         final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-        final MslObject errorHeaderJo = MslTestUtils.toMslObject(encoder, errorHeader);
+        final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         
-        errorHeaderJo.put(KEY_SIGNATURE, "AAA=");
+        errorHeaderMo.put(KEY_SIGNATURE, Base64.decode("AAA="));
 
-        Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
@@ -377,11 +378,11 @@ public class ErrorHeaderTest {
         thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-        final MslObject errorHeaderJo = MslTestUtils.toMslObject(encoder, errorHeader);
+        final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         
-        assertNotNull(errorHeaderJo.remove(KEY_ERRORDATA));
+        assertNotNull(errorHeaderMo.remove(KEY_ERRORDATA));
         
-        Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
@@ -390,15 +391,15 @@ public class ErrorHeaderTest {
         thrown.expectMslError(MslError.HEADER_DATA_MISSING);
 
         final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-        final MslObject errorHeaderJo = MslTestUtils.toMslObject(encoder, errorHeader);
+        final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         
         // This tests invalid but trusted error data so we must sign it.
         final byte[] errordata = new byte[0];
-        errorHeaderJo.put(KEY_ERRORDATA, errordata);
+        errorHeaderMo.put(KEY_ERRORDATA, errordata);
         final byte[] signature = cryptoContext.sign(errordata, encoder, ENCODER_FORMAT);
-        errorHeaderJo.put(KEY_SIGNATURE, signature);
+        errorHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
@@ -407,39 +408,39 @@ public class ErrorHeaderTest {
         thrown.expectMslError(MslError.HEADER_DATA_MISSING);
 
         final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-        final MslObject errorHeaderJo = MslTestUtils.toMslObject(encoder, errorHeader);
+        final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         
         // This tests empty but trusted error data so we must sign it.
         final byte[] ciphertext = new byte[0];
-        errorHeaderJo.put(KEY_ERRORDATA, ciphertext);
+        errorHeaderMo.put(KEY_ERRORDATA, ciphertext);
         final byte[] signature = cryptoContext.sign(ciphertext, encoder, ENCODER_FORMAT);
-        errorHeaderJo.put(KEY_SIGNATURE, signature);
+        errorHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
     public void missingTimestamp() throws MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
         final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-        final MslObject errorHeaderJo = MslTestUtils.toMslObject(encoder, errorHeader);
+        final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
 
         // Before modifying the error data we need to decrypt it.
-        final byte[] ciphertext = errorHeaderJo.getBytes(KEY_ERRORDATA);
+        final byte[] ciphertext = errorHeaderMo.getBytes(KEY_ERRORDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject errordata = encoder.parseObject(plaintext);
         
         // After modifying the error data we need to encrypt it.
         assertNotNull(errordata.remove(KEY_TIMESTAMP));
-        final byte[] modifiedPlaintext = errordata.toString().getBytes(MslConstants.DEFAULT_CHARSET);
+        final byte[] modifiedPlaintext = encoder.encodeObject(errordata, ENCODER_FORMAT);
         final byte[] modifiedCiphertext = cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT);
-        errorHeaderJo.put(KEY_ERRORDATA, modifiedCiphertext);
+        errorHeaderMo.put(KEY_ERRORDATA, modifiedCiphertext);
         
         // The error data must be signed otherwise the error data will not be
         // processed.
         final byte[] modifiedSignature = cryptoContext.sign(modifiedCiphertext, encoder, ENCODER_FORMAT);
-        errorHeaderJo.put(KEY_SIGNATURE, modifiedSignature);
+        errorHeaderMo.put(KEY_SIGNATURE, modifiedSignature);
 
-        Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
@@ -448,10 +449,10 @@ public class ErrorHeaderTest {
         thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-        final MslObject errorHeaderJo = MslTestUtils.toMslObject(encoder, errorHeader);
+        final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
 
         // Before modifying the error data we need to decrypt it.
-        final byte[] ciphertext = errorHeaderJo.getBytes(KEY_ERRORDATA);
+        final byte[] ciphertext = errorHeaderMo.getBytes(KEY_ERRORDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject errordata = encoder.parseObject(plaintext);
 
@@ -459,14 +460,14 @@ public class ErrorHeaderTest {
         errordata.put(KEY_TIMESTAMP, "x");
         final byte[] modifiedPlaintext = errordata.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] modifiedCiphertext = cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT);
-        errorHeaderJo.put(KEY_ERRORDATA, modifiedCiphertext);
+        errorHeaderMo.put(KEY_ERRORDATA, modifiedCiphertext);
 
         // The error data must be signed otherwise the error data will not be
         // processed.
         final byte[] modifiedSignature = cryptoContext.sign(modifiedCiphertext, encoder, ENCODER_FORMAT);
-        errorHeaderJo.put(KEY_SIGNATURE, modifiedSignature);
+        errorHeaderMo.put(KEY_SIGNATURE, modifiedSignature);
         
-        Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
@@ -475,10 +476,10 @@ public class ErrorHeaderTest {
         thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-        final MslObject errorHeaderJo = MslTestUtils.toMslObject(encoder, errorHeader);
+        final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         
         // Before modifying the error data we need to decrypt it.
-        final byte[] ciphertext = errorHeaderJo.getBytes(KEY_ERRORDATA);
+        final byte[] ciphertext = errorHeaderMo.getBytes(KEY_ERRORDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject errordata = encoder.parseObject(plaintext);
         
@@ -486,14 +487,14 @@ public class ErrorHeaderTest {
         assertNotNull(errordata.remove(KEY_MESSAGE_ID));
         final byte[] modifiedPlaintext = errordata.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] modifiedCiphertext = cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT);
-        errorHeaderJo.put(KEY_ERRORDATA, modifiedCiphertext);
+        errorHeaderMo.put(KEY_ERRORDATA, modifiedCiphertext);
         
         // The error data must be signed otherwise the error data will not be
         // processed.
         final byte[] modifiedSignature = cryptoContext.sign(modifiedCiphertext, encoder, ENCODER_FORMAT);
-        errorHeaderJo.put(KEY_SIGNATURE, modifiedSignature);
+        errorHeaderMo.put(KEY_SIGNATURE, modifiedSignature);
         
-        Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
@@ -502,10 +503,10 @@ public class ErrorHeaderTest {
         thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-        final MslObject errorHeaderJo = MslTestUtils.toMslObject(encoder, errorHeader);
+        final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
 
         // Before modifying the error data we need to decrypt it.
-        final byte[] ciphertext = errorHeaderJo.getBytes(KEY_ERRORDATA);
+        final byte[] ciphertext = errorHeaderMo.getBytes(KEY_ERRORDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject errordata = encoder.parseObject(plaintext);
 
@@ -513,14 +514,14 @@ public class ErrorHeaderTest {
         errordata.put(KEY_MESSAGE_ID, "x");
         final byte[] modifiedPlaintext = errordata.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] modifiedCiphertext = cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT);
-        errorHeaderJo.put(KEY_ERRORDATA, modifiedCiphertext);
+        errorHeaderMo.put(KEY_ERRORDATA, modifiedCiphertext);
 
         // The error data must be signed otherwise the error data will not be
         // processed.
         final byte[] modifiedSignature = cryptoContext.sign(modifiedCiphertext, encoder, ENCODER_FORMAT);
-        errorHeaderJo.put(KEY_SIGNATURE, modifiedSignature);
+        errorHeaderMo.put(KEY_SIGNATURE, modifiedSignature);
         
-        Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test(expected = MslInternalException.class)
@@ -539,10 +540,10 @@ public class ErrorHeaderTest {
         thrown.expectMslError(MslError.MESSAGE_ID_OUT_OF_RANGE);
 
         final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-        final MslObject errorHeaderJo = MslTestUtils.toMslObject(encoder, errorHeader);
+        final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
 
         // Before modifying the error data we need to decrypt it.
-        final byte[] ciphertext = errorHeaderJo.getBytes(KEY_ERRORDATA);
+        final byte[] ciphertext = errorHeaderMo.getBytes(KEY_ERRORDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject errordata = encoder.parseObject(plaintext);
 
@@ -550,14 +551,14 @@ public class ErrorHeaderTest {
         errordata.put(KEY_MESSAGE_ID, -1L);
         final byte[] modifiedPlaintext = errordata.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] modifiedCiphertext = cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT);
-        errorHeaderJo.put(KEY_ERRORDATA, modifiedCiphertext);
+        errorHeaderMo.put(KEY_ERRORDATA, modifiedCiphertext);
 
         // The error data must be signed otherwise the error data will not be
         // processed.
         final byte[] modifiedSignature = cryptoContext.sign(modifiedCiphertext, encoder, ENCODER_FORMAT);
-        errorHeaderJo.put(KEY_SIGNATURE, modifiedSignature);
+        errorHeaderMo.put(KEY_SIGNATURE, modifiedSignature);
         
-        Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
@@ -566,10 +567,10 @@ public class ErrorHeaderTest {
         thrown.expectMslError(MslError.MESSAGE_ID_OUT_OF_RANGE);
 
         final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-        final MslObject errorHeaderJo = MslTestUtils.toMslObject(encoder, errorHeader);
+        final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
 
         // Before modifying the error data we need to decrypt it.
-        final byte[] ciphertext = errorHeaderJo.getBytes(KEY_ERRORDATA);
+        final byte[] ciphertext = errorHeaderMo.getBytes(KEY_ERRORDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject errordata = encoder.parseObject(plaintext);
 
@@ -577,14 +578,14 @@ public class ErrorHeaderTest {
         errordata.put(KEY_MESSAGE_ID, MslConstants.MAX_LONG_VALUE + 1);
         final byte[] modifiedPlaintext = errordata.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] modifiedCiphertext = cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT);
-        errorHeaderJo.put(KEY_ERRORDATA, modifiedCiphertext);
+        errorHeaderMo.put(KEY_ERRORDATA, modifiedCiphertext);
 
         // The error data must be signed otherwise the error data will not be
         // processed.
         final byte[] modifiedSignature = cryptoContext.sign(modifiedCiphertext, encoder, ENCODER_FORMAT);
-        errorHeaderJo.put(KEY_SIGNATURE, modifiedSignature);
+        errorHeaderMo.put(KEY_SIGNATURE, modifiedSignature);
         
-        Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
@@ -594,10 +595,10 @@ public class ErrorHeaderTest {
         thrown.expectMessageId(MESSAGE_ID);
 
         final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-        final MslObject errorHeaderJo = MslTestUtils.toMslObject(encoder, errorHeader);
+        final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         
         // Before modifying the error data we need to decrypt it.
-        final byte[] ciphertext = errorHeaderJo.getBytes(KEY_ERRORDATA);
+        final byte[] ciphertext = errorHeaderMo.getBytes(KEY_ERRORDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject errordata = encoder.parseObject(plaintext);
         
@@ -605,14 +606,14 @@ public class ErrorHeaderTest {
         assertNotNull(errordata.remove(KEY_ERROR_CODE));
         final byte[] modifiedPlaintext = errordata.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] modifiedCiphertext = cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT);
-        errorHeaderJo.put(KEY_ERRORDATA, modifiedCiphertext);
+        errorHeaderMo.put(KEY_ERRORDATA, modifiedCiphertext);
         
         // The error data must be signed otherwise the error data will not be
         // processed.
         final byte[] modifiedSignature = cryptoContext.sign(modifiedCiphertext, encoder, ENCODER_FORMAT);
-        errorHeaderJo.put(KEY_SIGNATURE, modifiedSignature);
+        errorHeaderMo.put(KEY_SIGNATURE, modifiedSignature);
         
-        Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
@@ -622,10 +623,10 @@ public class ErrorHeaderTest {
         thrown.expectMessageId(MESSAGE_ID);
 
         final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-        final MslObject errorHeaderJo = MslTestUtils.toMslObject(encoder, errorHeader);
+        final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
 
         // Before modifying the error data we need to decrypt it.
-        final byte[] ciphertext = errorHeaderJo.getBytes(KEY_ERRORDATA);
+        final byte[] ciphertext = errorHeaderMo.getBytes(KEY_ERRORDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject errordata = encoder.parseObject(plaintext);
 
@@ -633,23 +634,23 @@ public class ErrorHeaderTest {
         errordata.put(KEY_ERROR_CODE, "x");
         final byte[] modifiedPlaintext = errordata.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] modifiedCiphertext = cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT);
-        errorHeaderJo.put(KEY_ERRORDATA, modifiedCiphertext);
+        errorHeaderMo.put(KEY_ERRORDATA, modifiedCiphertext);
 
         // The error data must be signed otherwise the error data will not be
         // processed.
         final byte[] modifiedSignature = cryptoContext.sign(modifiedCiphertext, encoder, ENCODER_FORMAT);
-        errorHeaderJo.put(KEY_SIGNATURE, modifiedSignature);
+        errorHeaderMo.put(KEY_SIGNATURE, modifiedSignature);
         
-        Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
     public void missingInternalCode() throws MslEncoderException, MslKeyExchangeException, MslUserAuthException, MslException {
         final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-        final MslObject errorHeaderJo = MslTestUtils.toMslObject(encoder, errorHeader);
+        final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         
         // Before modifying the error data we need to decrypt it.
-        final byte[] ciphertext = errorHeaderJo.getBytes(KEY_ERRORDATA);
+        final byte[] ciphertext = errorHeaderMo.getBytes(KEY_ERRORDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject errordata = encoder.parseObject(plaintext);
         
@@ -657,14 +658,14 @@ public class ErrorHeaderTest {
         assertNotNull(errordata.remove(KEY_INTERNAL_CODE));
         final byte[] modifiedPlaintext = errordata.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] modifiedCiphertext = cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT);
-        errorHeaderJo.put(KEY_ERRORDATA, modifiedCiphertext);
+        errorHeaderMo.put(KEY_ERRORDATA, modifiedCiphertext);
         
         // The error data must be signed otherwise the error data will not be
         // processed.
         final byte[] modifiedSignature = cryptoContext.sign(modifiedCiphertext, encoder, ENCODER_FORMAT);
-        errorHeaderJo.put(KEY_SIGNATURE, modifiedSignature);
+        errorHeaderMo.put(KEY_SIGNATURE, modifiedSignature);
         
-        final ErrorHeader moErrorHeader = (ErrorHeader)Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
+        final ErrorHeader moErrorHeader = (ErrorHeader)Header.parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS);
         assertEquals(-1, moErrorHeader.getInternalCode());
     }
     
@@ -675,10 +676,10 @@ public class ErrorHeaderTest {
         thrown.expectMessageId(MESSAGE_ID);
 
         final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-        final MslObject errorHeaderJo = MslTestUtils.toMslObject(encoder, errorHeader);
+        final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         
         // Before modifying the error data we need to decrypt it.
-        final byte[] ciphertext = errorHeaderJo.getBytes(KEY_ERRORDATA);
+        final byte[] ciphertext = errorHeaderMo.getBytes(KEY_ERRORDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject errordata = encoder.parseObject(plaintext);
         
@@ -686,14 +687,14 @@ public class ErrorHeaderTest {
         errordata.put(KEY_INTERNAL_CODE, "x");
         final byte[] modifiedPlaintext = errordata.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] modifiedCiphertext = cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT);
-        errorHeaderJo.put(KEY_ERRORDATA, modifiedCiphertext);
+        errorHeaderMo.put(KEY_ERRORDATA, modifiedCiphertext);
         
         // The error data must be signed otherwise the error data will not be
         // processed.
         final byte[] modifiedSignature = cryptoContext.sign(modifiedCiphertext, encoder, ENCODER_FORMAT);
-        errorHeaderJo.put(KEY_SIGNATURE, modifiedSignature);
+        errorHeaderMo.put(KEY_SIGNATURE, modifiedSignature);
         
-        Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
@@ -703,10 +704,10 @@ public class ErrorHeaderTest {
         thrown.expectMessageId(MESSAGE_ID);
 
         final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-        final MslObject errorHeaderJo = MslTestUtils.toMslObject(encoder, errorHeader);
+        final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         
         // Before modifying the error data we need to decrypt it.
-        final byte[] ciphertext = errorHeaderJo.getBytes(KEY_ERRORDATA);
+        final byte[] ciphertext = errorHeaderMo.getBytes(KEY_ERRORDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject errordata = encoder.parseObject(plaintext);
         
@@ -714,23 +715,23 @@ public class ErrorHeaderTest {
         errordata.put(KEY_INTERNAL_CODE, -17);
         final byte[] modifiedPlaintext = errordata.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] modifiedCiphertext = cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT);
-        errorHeaderJo.put(KEY_ERRORDATA, modifiedCiphertext);
+        errorHeaderMo.put(KEY_ERRORDATA, modifiedCiphertext);
         
         // The error data must be signed otherwise the error data will not be
         // processed.
         final byte[] modifiedSignature = cryptoContext.sign(modifiedCiphertext, encoder, ENCODER_FORMAT);
-        errorHeaderJo.put(KEY_SIGNATURE, modifiedSignature);
+        errorHeaderMo.put(KEY_SIGNATURE, modifiedSignature);
         
-        Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
     public void missingErrorMessage() throws UnsupportedEncodingException, MslEncoderException, MslKeyExchangeException, MslUserAuthException, MslException {
         final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-        final MslObject errorHeaderJo = MslTestUtils.toMslObject(encoder, errorHeader);
+        final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         
         // Before modifying the error data we need to decrypt it.
-        final byte[] ciphertext = errorHeaderJo.getBytes(KEY_ERRORDATA);
+        final byte[] ciphertext = errorHeaderMo.getBytes(KEY_ERRORDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject errordata = encoder.parseObject(plaintext);
         
@@ -738,24 +739,24 @@ public class ErrorHeaderTest {
         assertNotNull(errordata.remove(KEY_ERROR_MESSAGE));
         final byte[] modifiedPlaintext = errordata.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] modifiedCiphertext = cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT);
-        errorHeaderJo.put(KEY_ERRORDATA, modifiedCiphertext);
+        errorHeaderMo.put(KEY_ERRORDATA, modifiedCiphertext);
         
         // The error data must be signed otherwise the error data will not be
         // processed.
         final byte[] modifiedSignature = cryptoContext.sign(modifiedCiphertext, encoder, ENCODER_FORMAT);
-        errorHeaderJo.put(KEY_SIGNATURE, modifiedSignature);
+        errorHeaderMo.put(KEY_SIGNATURE, modifiedSignature);
         
-        final ErrorHeader moErrorHeader = (ErrorHeader)Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
+        final ErrorHeader moErrorHeader = (ErrorHeader)Header.parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS);
         assertNull(moErrorHeader.getErrorMessage());
     }
     
     @Test
     public void missingUserMessage() throws MslEncodingException, MslEntityAuthException, MslMessageException, MslKeyExchangeException, MslUserAuthException, MslEncoderException, MslException {
         final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-        final MslObject errorHeaderJo = MslTestUtils.toMslObject(encoder, errorHeader);
+        final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         
         // Before modifying the error data we need to decrypt it.
-        final byte[] ciphertext = errorHeaderJo.getBytes(KEY_ERRORDATA);
+        final byte[] ciphertext = errorHeaderMo.getBytes(KEY_ERRORDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject errordata = encoder.parseObject(plaintext);
         
@@ -763,14 +764,14 @@ public class ErrorHeaderTest {
         assertNotNull(errordata.remove(KEY_USER_MESSAGE));
         final byte[] modifiedPlaintext = errordata.toString().getBytes(MslConstants.DEFAULT_CHARSET);
         final byte[] modifiedCiphertext = cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT);
-        errorHeaderJo.put(KEY_ERRORDATA, modifiedCiphertext);
+        errorHeaderMo.put(KEY_ERRORDATA, modifiedCiphertext);
         
         // The error data must be signed otherwise the error data will not be
         // processed.
         final byte[] modifiedSignature = cryptoContext.sign(modifiedCiphertext, encoder, ENCODER_FORMAT);
-        errorHeaderJo.put(KEY_SIGNATURE, modifiedSignature);
+        errorHeaderMo.put(KEY_SIGNATURE, modifiedSignature);
         
-        final ErrorHeader moErrorHeader = (ErrorHeader)Header.parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS);
+        final ErrorHeader moErrorHeader = (ErrorHeader)Header.parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS);
         assertNull(moErrorHeader.getUserMessage());
     }
     

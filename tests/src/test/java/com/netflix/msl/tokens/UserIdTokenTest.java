@@ -60,27 +60,27 @@ public class UserIdTokenTest {
     /** Milliseconds per second. */
     private static final long MILLISECONDS_PER_SECOND = 1000;
     
-    /** JSON key token data. */
+    /** Key token data. */
     private static final String KEY_TOKENDATA = "tokendata";
-    /** JSON key signature. */
+    /** Key signature. */
     private static final String KEY_SIGNATURE = "signature";
     
     // tokendata
-    /** JSON key renewal window timestamp. */
+    /** Key renewal window timestamp. */
     private static final String KEY_RENEWAL_WINDOW = "renewalwindow";
-    /** JSON key expiration timestamp. */
+    /** Key expiration timestamp. */
     private static final String KEY_EXPIRATION = "expiration";
-    /** JSON key master token serial number. */
+    /** Key master token serial number. */
     private static final String KEY_MASTER_TOKEN_SERIAL_NUMBER = "mtserialnumber";
-    /** JSON key user ID token serial number. */
+    /** Key user ID token serial number. */
     private static final String KEY_SERIAL_NUMBER = "serialnumber";
-    /** JSON key token user identification data. */
+    /** Key token user identification data. */
     private static final String KEY_USERDATA = "userdata";
     
     // userdata
-    /** JSON key issuer data. */
+    /** Key issuer data. */
     private static final String KEY_ISSUER_DATA = "issuerdata";
-    /** JSON key identity. */
+    /** Key identity. */
     private static final String KEY_IDENTITY = "identity";
     
     private static final Date RENEWAL_WINDOW = new Date(System.currentTimeMillis() + 60000);

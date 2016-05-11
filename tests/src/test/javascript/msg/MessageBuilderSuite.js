@@ -32,6 +32,8 @@ describe("MessageBuilder", function() {
     var trustedNetCtx;
 	/** MSL peer-to-peer context. */
 	var p2pCtx;
+    /** MSL encoder factory. */
+    var encoder;
 	
 	var CRYPTO_CONTEXT = new NullCryptoContext();
 	
@@ -85,6 +87,7 @@ describe("MessageBuilder", function() {
             waitsFor(function() { return trustedNetCtx && p2pCtx && encryptionKey && hmacKey && wrappingKey; }, "MSL contexts and keys", 1000);
 
 			runs(function() {
+			    encoder = trustedNetCtx.getMslEncoderFactory();
 			    ALT_MSL_CRYPTO_CONTEXT = new SymmetricCryptoContext(trustedNetCtx, "clientMslCryptoContext", encryptionKey, hmacKey, wrappingKey);
 			    USER_AUTH_DATA = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL, MockEmailPasswordAuthenticationFactory.PASSWORD);
 			    
@@ -2292,7 +2295,7 @@ describe("MessageBuilder", function() {
 		var RSA_PRIVATE_KEY;
 		var CRYPTO_CONTEXTS = {};
 
-		var ISSUER_DATA = { issuerid: 17 };
+		var ISSUER_DATA = encoder.parseObject(textEncoding$getBytes("{ issuerid: 17 }"));
 		var USER = MockEmailPasswordAuthenticationFactory.USER;
         
         /**
@@ -4090,6 +4093,15 @@ describe("MessageBuilder", function() {
                 });
 			});
 			waitsFor(function() { return encryptionKey2 && hmacKey2 && wrappingKey2; }, "secondary keys", 100);
+			
+			var mo;
+			runs(function() {
+			    MslTestUtils.toMslObject(encoder, request, {
+			        result: function(x) { mo = x; },
+                    error: function() { expect(function() { throw e; }).not.toThrow(); }
+			    });
+			});
+			waitsFor(function() { return mo; }, "mo", 100);
 
 			var untrustedRequest;
 			runs(function() {
@@ -4103,9 +4115,7 @@ describe("MessageBuilder", function() {
 		        ctx.setMslCryptoContext(new SymmetricCryptoContext(ctx, "clientMslCryptoContext", encryptionKey2, hmacKey2, wrappingKey2));
 		        
 		        // Reconstruct the request with an untrusted master token.
-		        var json = JSON.stringify(request);
-		        var jo = JSON.parse(json);
-		        Header$parseHeader(ctx, jo, CRYPTO_CONTEXTS, {
+		        Header$parseHeader(ctx, mo, CRYPTO_CONTEXTS, {
 		        	result: function(x) { untrustedRequest = x; },
 		        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		        });
@@ -4856,15 +4866,23 @@ describe("MessageBuilder", function() {
 			});
 			waitsFor(function() { return requestUserIdToken; }, "requestUserIdToken not received", 100);
 			
-            var unverifiedUserIdToken;
-            runs(function() {
-    			// Change the MSL crypto context so the master token and user ID
+			var userIdTokenMo;
+			runs(function() {
+                // Change the MSL crypto context so the master token and user ID
                 // token are not issued by the local entity.
                 ctx.setMslCryptoContext(ALT_MSL_CRYPTO_CONTEXT);
-    			
+
                 // Now rebuild the user ID token and the build the request.
-            	var userIdTokenJo = JSON.parse(JSON.stringify(requestUserIdToken));
-            	UserIdToken$parse(ctx, userIdTokenJo, MASTER_TOKEN, {
+			    MslTestUtils.toMslObject(encoder, requestUserIdToken, {
+			        result: function(x) { userIdTokenMo = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			    });
+			});
+			waitsFor(function() { return userIdTokenMo; }, "userIdTokenMo", 100);
+			
+            var unverifiedUserIdToken;
+            runs(function() {
+            	UserIdToken$parse(ctx, userIdTokenMo, MASTER_TOKEN, {
             		result: function(x) { unverifiedUserIdToken = x; },
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
@@ -5223,19 +5241,27 @@ describe("MessageBuilder", function() {
 			    });
 			});
 			waitsFor(function() { return request; }, "request not received", 100);
+			
+			var requestMo;
+			runs(function() {
+			    MslTestUtils.toMslObject(encoder, request, {
+			        result: function(x) { requestMo = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			    });
+			});
+			waitsFor(function() { return requestMo; }, "requestMo", 100);
 
 			var responseBuilder;
 			runs(function() {
-				var requestJo = JSON.parse(JSON.stringify(request));
-				Header$parseHeader(ctx, requestJo, CRYPTO_CONTEXTS, {
-					result: function(joRequest) {
-						expect(joRequest.user).not.toBeNull();
+				Header$parseHeader(ctx, requestMo, CRYPTO_CONTEXTS, {
+					result: function(moRequest) {
+						expect(moRequest.user).not.toBeNull();
 
 						// Remove support for user authentication to prove the response
 						// does not perform it.
 						ctx.removeUserAuthenticationFactory(USER_AUTH_DATA.scheme);
 
-					    MessageBuilder$createResponse(ctx, joRequest, {
+					    MessageBuilder$createResponse(ctx, moRequest, {
 					        result: function(x) { responseBuilder = x; },
 					        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 					    });
@@ -5337,19 +5363,27 @@ describe("MessageBuilder", function() {
 			    });
 			});
 			waitsFor(function() { return request; }, "request not received", 100);
+            
+            var requestMo;
+            runs(function() {
+                MslTestUtils.toMslObject(encoder, request, {
+                    result: function(x) { requestMo = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return requestMo; }, "requestMo", 100);
 
 			var responseBuilder;
 			runs(function() {
-				var requestJo = JSON.parse(JSON.stringify(request));
-				Header$parseHeader(ctx, requestJo, CRYPTO_CONTEXTS, {
-					result: function(joRequest) {
-						expect(joRequest.user).not.toBeNull();
+				Header$parseHeader(ctx, requestMo, CRYPTO_CONTEXTS, {
+					result: function(moRequest) {
+						expect(moRequest.user).not.toBeNull();
 
 						// Remove support for user authentication to prove the response
 						// does not perform it.
 						ctx.removeUserAuthenticationFactory(USER_AUTH_DATA.scheme);
 
-						MessageBuilder$createResponse(ctx, joRequest, {
+						MessageBuilder$createResponse(ctx, moRequest, {
 							result: function(x) { responseBuilder = x; },
 							error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 						});
@@ -5464,19 +5498,27 @@ describe("MessageBuilder", function() {
 			    });
 			});
 			waitsFor(function() { return request; }, "request not received", 100);
+            
+            var requestMo;
+            runs(function() {
+                MslTestUtils.toMslObject(encoder, request, {
+                    result: function(x) { requestMo = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return requestMo; }, "requestMo", 100);
 
 			var responseBuilder;
 			runs(function() {
-				var requestJo = JSON.parse(JSON.stringify(request));
-				Header$parseHeader(ctx, requestJo, CRYPTO_CONTEXTS, {
-					result: function(joRequest) {
-						expect(joRequest.user).not.toBeNull();
+				Header$parseHeader(ctx, requestMo, CRYPTO_CONTEXTS, {
+					result: function(moRequest) {
+						expect(moRequest.user).not.toBeNull();
 
 						// Remove support for user authentication to prove the response
 						// does not perform it.
 						ctx.removeUserAuthenticationFactory(USER_AUTH_DATA.scheme);
 
-						MessageBuilder$createResponse(ctx, joRequest, {
+						MessageBuilder$createResponse(ctx, moRequest, {
 							result: function(x) { responseBuilder = x; },
 							error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 						});
@@ -5642,19 +5684,27 @@ describe("MessageBuilder", function() {
                 });
             });
             waitsFor(function() { return request; }, "request not received", 100);
+            
+            var requestMo;
+            runs(function() {
+                MslTestUtils.toMslObject(encoder, request, {
+                    result: function(x) { requestMo = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return requestMo; }, "requestMo", 100);
 
 			var responseBuilder;
 			runs(function() {
-                var requestJo = JSON.parse(JSON.stringify(request));
-                Header$parseHeader(ctx, requestJo, CRYPTO_CONTEXTS, {
-                	result: function(joRequest) {
-                		expect(joRequest.user).not.toBeNull();
+                Header$parseHeader(ctx, requestMo, CRYPTO_CONTEXTS, {
+                	result: function(moRequest) {
+                		expect(moRequest.user).not.toBeNull();
 
                 		// Remove support for user authentication to prove the response
                 		// does not perform it.
                 		ctx.removeUserAuthenticationFactory(USER_AUTH_DATA.scheme);
 
-                		MessageBuilder$createResponse(ctx, joRequest, {
+                		MessageBuilder$createResponse(ctx, moRequest, {
                 			result: function(x) { responseBuilder = x; },
                 			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 		});
@@ -5911,9 +5961,8 @@ describe("MessageBuilder", function() {
 			});
 			waitsFor(function() { return responseBuilder; }, "responseBuilder not received", 200);
 
-            var messageHeader = undefined, updatedServiceTokens;
+            var messageHeader, updatedServiceTokens;
             runs(function() {
-                
                 // The message service tokens will include all unbound service
                 // tokens.
                 updatedServiceTokens = Arrays$combineTokens(serviceTokens, peerServiceTokens,
@@ -5980,9 +6029,8 @@ describe("MessageBuilder", function() {
 			});
 			waitsFor(function() { return responseBuilder; }, "responseBuilder not received", 200);
 
-            var messageHeader = undefined, updatedServiceTokens;
+            var messageHeader, updatedServiceTokens;
             runs(function() {
-                
                 // The message service tokens will include all unbound service
                 // tokens.
                 updatedServiceTokens = Arrays$combineTokens(serviceTokens, peerServiceTokens,
@@ -6477,7 +6525,7 @@ describe("MessageBuilder", function() {
         it("one compression algorithm in request", function() {
             var algos = [ CompressionAlgorithm.GZIP, CompressionAlgorithm.LZW ];
             var lzwOnly = [ CompressionAlgorithm.LZW ];
-            var caps = new MessageCapabilities(lzwOnly, null);
+            var caps = new MessageCapabilities(lzwOnly, null, null);
             
             var ctx;
             runs(function() {
@@ -6507,7 +6555,7 @@ describe("MessageBuilder", function() {
             runs(function() {
                 expect(request.messageCapabilities).toEqual(caps);
                 
-                ctx.setMessageCapabilities(new MessageCapabilities(algos, null));
+                ctx.setMessageCapabilities(new MessageCapabilities(algos, null, null));
                 MessageBuilder$createResponse(ctx, request, {
                     result: function(responseBuilder) {
                         responseBuilder.getHeader({
@@ -6556,7 +6604,7 @@ describe("MessageBuilder", function() {
             runs(function() {
                 expect(request.messageCapabilities).toBeNull();
                 
-                ctx.setMessageCapabilities(new MessageCapabilities(algos, null));
+                ctx.setMessageCapabilities(new MessageCapabilities(algos, null, null));
                 MessageBuilder$createResponse(ctx, request, {
                     result: function(responseBuilder) {
                         responseBuilder.getHeader({

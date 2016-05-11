@@ -72,23 +72,23 @@ public class ServiceTokenTest {
 	/** MSL encoder format. */
 	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
 
-    /** JSON key token data. */
+    /** Key token data. */
     private static final String KEY_TOKENDATA = "tokendata";
-    /** JSON key signature. */
+    /** Key signature. */
     private static final String KEY_SIGNATURE = "signature";
     
     // tokendata
-    /** JSON key token name. */
+    /** Key token name. */
     private static final String KEY_NAME = "name";
-    /** JSON key master token serial number. */
+    /** Key master token serial number. */
     private static final String KEY_MASTER_TOKEN_SERIAL_NUMBER = "mtserialnumber";
-    /** JSON key user ID token serial number. */
+    /** Key user ID token serial number. */
     private static final String KEY_USER_ID_TOKEN_SERIAL_NUMBER = "uitserialnumber";
-    /** JSON key encrypted. */
+    /** Key encrypted. */
     private static final String KEY_ENCRYPTED = "encrypted";
-    /** JSON key compression algorithm. */
+    /** Key compression algorithm. */
     private static final String KEY_COMPRESSION_ALGORITHM = "compressionalgo";
-    /** JSON key service data. */
+    /** Key service data. */
     private static final String KEY_SERVICEDATA = "servicedata";
     
     private static final String NAME = "tokenName";

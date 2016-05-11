@@ -55,6 +55,7 @@ import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.io.MslObject;
 import com.netflix.msl.io.MslTokenizer;
@@ -86,11 +87,15 @@ public class MessageOutputStreamTest {
         "Kiba and Nami immortalized in code. I will never forget you. I'm sorry and I love you. Forgive me." +
         "Kiba and Nami immortalized in code. I will never forget you. I'm sorry and I love you. Forgive me."
     ).getBytes();
+    /** I/O operation timeout in milliseconds. */
+    private static final int TIMEOUT = 20;
     
     /** Random. */
     private static Random random = new Random();
     /** MSL context. */
     private static MslContext ctx;
+    /** MSL encoder factory. */
+    private static MslEncoderFactory encoder;
     /** Destination output stream. */
     private static ByteArrayOutputStream destination = new ByteArrayOutputStream();
     /** Payload crypto context. */
@@ -105,6 +110,7 @@ public class MessageOutputStreamTest {
     @BeforeClass
     public static void setup() throws MslMasterTokenException, MslEntityAuthException, MslException {
         ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
+        encoder = ctx.getMslEncoderFactory();
         
         final HeaderData headerData = new HeaderData(null, 1, null, false, false, ctx.getMessageCapabilities(), null, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
@@ -120,6 +126,7 @@ public class MessageOutputStreamTest {
         PAYLOAD_CRYPTO_CONTEXT = null;
         ERROR_HEADER = null;
         MESSAGE_HEADER = null;
+        encoder = null;
         ctx = null;
     }
     
@@ -134,37 +141,37 @@ public class MessageOutputStreamTest {
         mos.close();
         
         final InputStream mslMessage = new ByteArrayInputStream(destination.toByteArray());
-        final MslTokenizer tokenizer = ctx.getMslEncoderFactory().createTokenizer(mslMessage);
+        final MslTokenizer tokenizer = encoder.createTokenizer(mslMessage);
         
         // There should be one header.
-        assertTrue(tokenizer.more(-1));
-        final Object first = tokenizer.nextObject(-1);
+        assertTrue(tokenizer.more(TIMEOUT));
+        final Object first = tokenizer.nextObject(TIMEOUT);
         assertTrue(first instanceof MslObject);
-        final MslObject headerJo = (MslObject)first;
+        final MslObject headerMo = (MslObject)first;
         
         // The reconstructed header should be equal to the original.
-        final Header header = Header.parseHeader(ctx, headerJo, cryptoContexts);
+        final Header header = Header.parseHeader(ctx, headerMo, cryptoContexts);
         assertTrue(header instanceof MessageHeader);
         final MessageHeader messageHeader = (MessageHeader)header;
         assertEquals(MESSAGE_HEADER, messageHeader);
         
         // There should be one payload with no data indicating end of message.
-        assertTrue(tokenizer.more(-1));
-        final Object second = tokenizer.nextObject(-1);
+        assertTrue(tokenizer.more(TIMEOUT));
+        final Object second = tokenizer.nextObject(TIMEOUT);
         assertTrue(second instanceof MslObject);
-        final MslObject payloadJo = (MslObject)second;
+        final MslObject payloadMo = (MslObject)second;
         
         // Verify the payload.
         final ICryptoContext cryptoContext = messageHeader.getCryptoContext();
         assertNotNull(cryptoContext);
-        final PayloadChunk payload = new PayloadChunk(ctx, payloadJo, cryptoContext);
+        final PayloadChunk payload = new PayloadChunk(ctx, payloadMo, cryptoContext);
         assertTrue(payload.isEndOfMessage());
         assertEquals(1, payload.getSequenceNumber());
         assertEquals(MESSAGE_HEADER.getMessageId(), payload.getMessageId());
         assertEquals(0, payload.getData().length);
         
         // There should be nothing else.
-        assertFalse(tokenizer.more(-1));
+        assertFalse(tokenizer.more(TIMEOUT));
         
         // Verify cached payloads.
         final List<PayloadChunk> payloads = mos.getPayloads();
@@ -178,21 +185,21 @@ public class MessageOutputStreamTest {
         mos.close();
 
         final InputStream mslMessage = new ByteArrayInputStream(destination.toByteArray());
-        final MslTokenizer tokenizer = ctx.getMslEncoderFactory().createTokenizer(mslMessage);
+        final MslTokenizer tokenizer = encoder.createTokenizer(mslMessage);
         
         // There should be one header.
-        assertTrue(tokenizer.more(-1));
-        final Object first = tokenizer.nextObject(-1);
+        assertTrue(tokenizer.more(TIMEOUT));
+        final Object first = tokenizer.nextObject(TIMEOUT);
         assertTrue(first instanceof MslObject);
-        final MslObject headerJo = (MslObject)first;
+        final MslObject headerMo = (MslObject)first;
 
         // The reconstructed header should be equal to the original.
-        final Header header = Header.parseHeader(ctx, headerJo, cryptoContexts);
+        final Header header = Header.parseHeader(ctx, headerMo, cryptoContexts);
         assertTrue(header instanceof ErrorHeader);
         assertEquals(ERROR_HEADER, header);
         
         // There should be no payloads.
-        assertFalse(tokenizer.more(-1));
+        assertFalse(tokenizer.more(TIMEOUT));
         
         // Verify cached payloads.
         final List<PayloadChunk> payloads = mos.getPayloads();
@@ -211,36 +218,36 @@ public class MessageOutputStreamTest {
         mos.close();
 
         final InputStream mslMessage = new ByteArrayInputStream(destination.toByteArray());
-        final MslTokenizer tokenizer = ctx.getMslEncoderFactory().createTokenizer(mslMessage);
+        final MslTokenizer tokenizer = encoder.createTokenizer(mslMessage);
         
         // There should be one header.
-        assertTrue(tokenizer.more(-1));
-        final Object first = tokenizer.nextObject(-1);
+        assertTrue(tokenizer.more(TIMEOUT));
+        final Object first = tokenizer.nextObject(TIMEOUT);
         assertTrue(first instanceof MslObject);
-        final MslObject headerJo = (MslObject)first;
+        final MslObject headerMo = (MslObject)first;
         
         // We assume the reconstructed header is equal to the original.
-        final Header header = Header.parseHeader(ctx, headerJo, cryptoContexts);
+        final Header header = Header.parseHeader(ctx, headerMo, cryptoContexts);
         assertTrue(header instanceof MessageHeader);
         final MessageHeader messageHeader = (MessageHeader)header;
         
         // There should be one payload.
-        assertTrue(tokenizer.more(-1));
-        final Object second = tokenizer.nextObject(-1);
+        assertTrue(tokenizer.more(TIMEOUT));
+        final Object second = tokenizer.nextObject(TIMEOUT);
         assertTrue(second instanceof MslObject);
-        final MslObject payloadJo = (MslObject)second;
+        final MslObject payloadMo = (MslObject)second;
         
         // Verify the payload.
         final ICryptoContext cryptoContext = messageHeader.getCryptoContext();
         assertNotNull(cryptoContext);
-        final PayloadChunk payload = new PayloadChunk(ctx, payloadJo, cryptoContext);
+        final PayloadChunk payload = new PayloadChunk(ctx, payloadMo, cryptoContext);
         assertTrue(payload.isEndOfMessage());
         assertEquals(1, payload.getSequenceNumber());
         assertEquals(MESSAGE_HEADER.getMessageId(), payload.getMessageId());
         assertArrayEquals(Arrays.copyOfRange(data, from, to), payload.getData());
         
         // There should be nothing else.
-        assertFalse(tokenizer.more(-1));
+        assertFalse(tokenizer.more(TIMEOUT));
         
         // Verify cached payloads.
         final List<PayloadChunk> payloads = mos.getPayloads();
@@ -257,36 +264,36 @@ public class MessageOutputStreamTest {
         mos.close();
 
         final InputStream mslMessage = new ByteArrayInputStream(destination.toByteArray());
-        final MslTokenizer tokenizer = ctx.getMslEncoderFactory().createTokenizer(mslMessage);
+        final MslTokenizer tokenizer = encoder.createTokenizer(mslMessage);
         
         // There should be one header.
-        assertTrue(tokenizer.more(-1));
-        final Object first = tokenizer.nextObject(-1);
+        assertTrue(tokenizer.more(TIMEOUT));
+        final Object first = tokenizer.nextObject(TIMEOUT);
         assertTrue(first instanceof MslObject);
-        final MslObject headerJo = (MslObject)first;
+        final MslObject headerMo = (MslObject)first;
         
         // We assume the reconstructed header is equal to the original.
-        final Header header = Header.parseHeader(ctx, headerJo, cryptoContexts);
+        final Header header = Header.parseHeader(ctx, headerMo, cryptoContexts);
         assertTrue(header instanceof MessageHeader);
         final MessageHeader messageHeader = (MessageHeader)header;
         
         // There should be one payload.
-        assertTrue(tokenizer.more(-1));
-        final Object second = tokenizer.nextObject(-1);
+        assertTrue(tokenizer.more(TIMEOUT));
+        final Object second = tokenizer.nextObject(TIMEOUT);
         assertTrue(second instanceof MslObject);
-        final MslObject payloadJo = (MslObject)second;
+        final MslObject payloadMo = (MslObject)second;
         
         // Verify the payload.
         final ICryptoContext cryptoContext = messageHeader.getCryptoContext();
         assertNotNull(cryptoContext);
-        final PayloadChunk payload = new PayloadChunk(ctx, payloadJo, cryptoContext);
+        final PayloadChunk payload = new PayloadChunk(ctx, payloadMo, cryptoContext);
         assertTrue(payload.isEndOfMessage());
         assertEquals(1, payload.getSequenceNumber());
         assertEquals(MESSAGE_HEADER.getMessageId(), payload.getMessageId());
         assertArrayEquals(data, payload.getData());
         
         // There should be nothing else.
-        assertFalse(tokenizer.more(-1));
+        assertFalse(tokenizer.more(TIMEOUT));
         
         // Verify cached payloads.
         final List<PayloadChunk> payloads = mos.getPayloads();
@@ -302,36 +309,36 @@ public class MessageOutputStreamTest {
         mos.close();
 
         final InputStream mslMessage = new ByteArrayInputStream(destination.toByteArray());
-        final MslTokenizer tokenizer = ctx.getMslEncoderFactory().createTokenizer(mslMessage);
+        final MslTokenizer tokenizer = encoder.createTokenizer(mslMessage);
         
         // There should be one header.
-        assertTrue(tokenizer.more(-1));
-        final Object first = tokenizer.nextObject(-1);
+        assertTrue(tokenizer.more(TIMEOUT));
+        final Object first = tokenizer.nextObject(TIMEOUT);
         assertTrue(first instanceof MslObject);
-        final MslObject headerJo = (MslObject)first;
+        final MslObject headerMo = (MslObject)first;
         
         // We assume the reconstructed header is equal to the original.
-        final Header header = Header.parseHeader(ctx, headerJo, cryptoContexts);
+        final Header header = Header.parseHeader(ctx, headerMo, cryptoContexts);
         assertTrue(header instanceof MessageHeader);
         final MessageHeader messageHeader = (MessageHeader)header;
         
         // There should be one payload.
-        assertTrue(tokenizer.more(-1));
-        final Object second = tokenizer.nextObject(-1);
+        assertTrue(tokenizer.more(TIMEOUT));
+        final Object second = tokenizer.nextObject(TIMEOUT);
         assertTrue(second instanceof MslObject);
-        final MslObject payloadJo = (MslObject)second;
+        final MslObject payloadMo = (MslObject)second;
         
         // Verify the payload.
         final ICryptoContext cryptoContext = messageHeader.getCryptoContext();
         assertNotNull(cryptoContext);
-        final PayloadChunk payload = new PayloadChunk(ctx, payloadJo, cryptoContext);
+        final PayloadChunk payload = new PayloadChunk(ctx, payloadMo, cryptoContext);
         assertTrue(payload.isEndOfMessage());
         assertEquals(1, payload.getSequenceNumber());
         assertEquals(MESSAGE_HEADER.getMessageId(), payload.getMessageId());
         assertArrayEquals(new byte[] { value }, payload.getData());
         
         // There should be nothing else.
-        assertFalse(tokenizer.more(-1));
+        assertFalse(tokenizer.more(TIMEOUT));
         
         // Verify cached payloads.
         final List<PayloadChunk> payloads = mos.getPayloads();
@@ -371,30 +378,30 @@ public class MessageOutputStreamTest {
         // Closing should create a final end-of-message payload.
         mos.close();
         
-        // Grab the JSON objects.
+        // Grab the MSL objects.
         final InputStream mslMessage = new ByteArrayInputStream(destination.toByteArray());
-        final MslTokenizer tokenizer = ctx.getMslEncoderFactory().createTokenizer(mslMessage);
-        final MslObject headerJo = tokenizer.nextObject(-1);
-        final List<MslObject> payloadJos = new ArrayList<MslObject>();
-        while (tokenizer.more(-1))
-            payloadJos.add(tokenizer.nextObject(-1));
+        final MslTokenizer tokenizer = encoder.createTokenizer(mslMessage);
+        final MslObject headerMo = tokenizer.nextObject(TIMEOUT);
+        final List<MslObject> payloadMos = new ArrayList<MslObject>();
+        while (tokenizer.more(TIMEOUT))
+            payloadMos.add(tokenizer.nextObject(TIMEOUT));
         
         // Verify the number and contents of the payloads.
-        final MessageHeader messageHeader = (MessageHeader)Header.parseHeader(ctx, headerJo, cryptoContexts);
+        final MessageHeader messageHeader = (MessageHeader)Header.parseHeader(ctx, headerMo, cryptoContexts);
         final ICryptoContext cryptoContext = messageHeader.getCryptoContext();
-        assertEquals(3, payloadJos.size());
-        final PayloadChunk firstPayload = new PayloadChunk(ctx, payloadJos.get(0), cryptoContext);
+        assertEquals(3, payloadMos.size());
+        final PayloadChunk firstPayload = new PayloadChunk(ctx, payloadMos.get(0), cryptoContext);
         assertArrayEquals(first, firstPayload.getData());
-        final PayloadChunk secondPayload = new PayloadChunk(ctx, payloadJos.get(1), cryptoContext);
+        final PayloadChunk secondPayload = new PayloadChunk(ctx, payloadMos.get(1), cryptoContext);
         assertArrayEquals(secondA, Arrays.copyOfRange(secondPayload.getData(), 0, secondA.length));
         assertArrayEquals(secondB, Arrays.copyOfRange(secondPayload.getData(), secondA.length, secondA.length + secondB.length));
-        final PayloadChunk thirdPayload = new PayloadChunk(ctx, payloadJos.get(2), cryptoContext);
+        final PayloadChunk thirdPayload = new PayloadChunk(ctx, payloadMos.get(2), cryptoContext);
         assertEquals(0, thirdPayload.getData().length);
         assertTrue(thirdPayload.isEndOfMessage());
         
         // Verify cached payloads.
         final List<PayloadChunk> payloads = mos.getPayloads();
-        assertEquals(payloadJos.size(), payloads.size());
+        assertEquals(payloadMos.size(), payloads.size());
         assertEquals(firstPayload, payloads.get(0));
         assertEquals(secondPayload, payloads.get(1));
         assertEquals(thirdPayload, payloads.get(2));
@@ -426,30 +433,30 @@ public class MessageOutputStreamTest {
         // Closing should create a final end-of-message payload.
         mos.close();
         
-        // Grab the JSON objects.
+        // Grab the MSL objects.
         final InputStream mslMessage = new ByteArrayInputStream(destination.toByteArray());
-        final MslTokenizer tokenizer = ctx.getMslEncoderFactory().createTokenizer(mslMessage);
-        final MslObject headerJo = tokenizer.nextObject(-1);
-        final List<MslObject> payloadJos = new ArrayList<MslObject>();
-        while (tokenizer.more(-1))
-            payloadJos.add(tokenizer.nextObject(-1));
+        final MslTokenizer tokenizer = encoder.createTokenizer(mslMessage);
+        final MslObject headerMo = tokenizer.nextObject(TIMEOUT);
+        final List<MslObject> payloadMos = new ArrayList<MslObject>();
+        while (tokenizer.more(TIMEOUT))
+            payloadMos.add(tokenizer.nextObject(TIMEOUT));
         
         // Verify the number and contents of the payloads.
-        final MessageHeader messageHeader = (MessageHeader)Header.parseHeader(ctx, headerJo, cryptoContexts);
+        final MessageHeader messageHeader = (MessageHeader)Header.parseHeader(ctx, headerMo, cryptoContexts);
         final ICryptoContext cryptoContext = messageHeader.getCryptoContext();
-        assertEquals(3, payloadJos.size());
-        final PayloadChunk firstPayload = new PayloadChunk(ctx, payloadJos.get(0), cryptoContext);
+        assertEquals(3, payloadMos.size());
+        final PayloadChunk firstPayload = new PayloadChunk(ctx, payloadMos.get(0), cryptoContext);
         assertArrayEquals(first, firstPayload.getData());
-        final PayloadChunk secondPayload = new PayloadChunk(ctx, payloadJos.get(1), cryptoContext);
+        final PayloadChunk secondPayload = new PayloadChunk(ctx, payloadMos.get(1), cryptoContext);
         assertArrayEquals(secondA, Arrays.copyOfRange(secondPayload.getData(), 0, secondA.length));
         assertArrayEquals(secondB, Arrays.copyOfRange(secondPayload.getData(), secondA.length, secondA.length + secondB.length));
-        final PayloadChunk thirdPayload = new PayloadChunk(ctx, payloadJos.get(2), cryptoContext);
+        final PayloadChunk thirdPayload = new PayloadChunk(ctx, payloadMos.get(2), cryptoContext);
         assertEquals(0, thirdPayload.getData().length);
         assertTrue(thirdPayload.isEndOfMessage());
         
         // Verify cached payloads.
         final List<PayloadChunk> payloads = mos.getPayloads();
-        assertEquals(payloadJos.size(), payloads.size());
+        assertEquals(payloadMos.size(), payloads.size());
         assertEquals(firstPayload, payloads.get(0));
         assertEquals(secondPayload, payloads.get(1));
         assertEquals(thirdPayload, payloads.get(2));
@@ -536,36 +543,36 @@ public class MessageOutputStreamTest {
         mos.close();
 
         final InputStream mslMessage = new ByteArrayInputStream(destination.toByteArray());
-        final MslTokenizer tokenizer = ctx.getMslEncoderFactory().createTokenizer(mslMessage);
+        final MslTokenizer tokenizer = encoder.createTokenizer(mslMessage);
         
         // There should be one header.
-        assertTrue(tokenizer.more(-1));
-        final Object first = tokenizer.nextObject(-1);
+        assertTrue(tokenizer.more(TIMEOUT));
+        final Object first = tokenizer.nextObject(TIMEOUT);
         assertTrue(first instanceof MslObject);
-        final MslObject headerJo = (MslObject)first;
+        final MslObject headerMo = (MslObject)first;
         
         // We assume the reconstructed header is equal to the original.
-        final Header header = Header.parseHeader(ctx, headerJo, cryptoContexts);
+        final Header header = Header.parseHeader(ctx, headerMo, cryptoContexts);
         assertTrue(header instanceof MessageHeader);
         final MessageHeader messageHeader = (MessageHeader)header;
         
         // There should be one payload with no data indicating end of message.
-        assertTrue(tokenizer.more(-1));
-        final Object second = tokenizer.nextObject(-1);
+        assertTrue(tokenizer.more(TIMEOUT));
+        final Object second = tokenizer.nextObject(TIMEOUT);
         assertTrue(second instanceof MslObject);
-        final MslObject payloadJo = (MslObject)second;
+        final MslObject payloadMo = (MslObject)second;
         
         // Verify the payload.
         final ICryptoContext cryptoContext = messageHeader.getCryptoContext();
         assertNotNull(cryptoContext);
-        final PayloadChunk payload = new PayloadChunk(ctx, payloadJo, cryptoContext);
+        final PayloadChunk payload = new PayloadChunk(ctx, payloadMo, cryptoContext);
         assertTrue(payload.isEndOfMessage());
         assertEquals(1, payload.getSequenceNumber());
         assertEquals(MESSAGE_HEADER.getMessageId(), payload.getMessageId());
         assertEquals(0, payload.getData().length);
         
         // There should be nothing else.
-        assertFalse(tokenizer.more(-1));
+        assertFalse(tokenizer.more(TIMEOUT));
         
         // Verify cached payloads.
         final List<PayloadChunk> payloads = mos.getPayloads();
@@ -595,13 +602,13 @@ public class MessageOutputStreamTest {
         // The destination should have received the message header followed by
         // one or more payload chunks.
         final InputStream mslMessage = new ByteArrayInputStream(destination.toByteArray());
-        final MslTokenizer tokenizer = ctx.getMslEncoderFactory().createTokenizer(mslMessage);
-        final MslObject headerJo = tokenizer.nextObject(-1);
-        final List<MslObject> payloadJos = new ArrayList<MslObject>();
-        while (tokenizer.more(-1))
-            payloadJos.add(tokenizer.nextObject(-1));
+        final MslTokenizer tokenizer = encoder.createTokenizer(mslMessage);
+        final MslObject headerMo = tokenizer.nextObject(TIMEOUT);
+        final List<MslObject> payloadMos = new ArrayList<MslObject>();
+        while (tokenizer.more(TIMEOUT))
+            payloadMos.add(tokenizer.nextObject(TIMEOUT));
         
-        final Header header = Header.parseHeader(ctx, headerJo, cryptoContexts);
+        final Header header = Header.parseHeader(ctx, headerMo, cryptoContexts);
         assertTrue(header instanceof MessageHeader);
         final MessageHeader messageHeader = (MessageHeader)header;
         
@@ -610,12 +617,12 @@ public class MessageOutputStreamTest {
         final ByteArrayOutputStream data = new ByteArrayOutputStream();
         final ICryptoContext cryptoContext = messageHeader.getCryptoContext();
         final List<PayloadChunk> payloads = mos.getPayloads();
-        assertEquals(payloadJos.size(), payloads.size());
-        for (int i = 0; i < payloadJos.size(); ++i) {
-            final PayloadChunk payload = new PayloadChunk(ctx, payloadJos.get(i), cryptoContext);
+        assertEquals(payloadMos.size(), payloads.size());
+        for (int i = 0; i < payloadMos.size(); ++i) {
+            final PayloadChunk payload = new PayloadChunk(ctx, payloadMos.get(i), cryptoContext);
             assertEquals(sequenceNumber++, payload.getSequenceNumber());
             assertEquals(messageHeader.getMessageId(), payload.getMessageId());
-            assertEquals(i == payloadJos.size() - 1, payload.isEndOfMessage());
+            assertEquals(i == payloadMos.size() - 1, payload.isEndOfMessage());
             data.write(payload.getData());
             assertEquals(payload, payloads.get(i));
         }

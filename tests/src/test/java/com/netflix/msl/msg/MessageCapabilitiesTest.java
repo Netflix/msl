@@ -97,7 +97,7 @@ public class MessageCapabilitiesTest {
         final byte[] moEncode = moCaps.toMslEncoding(encoder, ENCODER_FORMAT);
         assertNotNull(moEncode);
         // This test will not always pass since set data is unordered.
-        //assertTrue(MslEncoderUtils.objectEquals(jsonString, moJsonString));
+        //assertEquals(encode, moEncode);
         final MessageCapabilities mo2Caps = new MessageCapabilities(encoder.parseObject(moEncode));
         assertEquals(moCaps, mo2Caps);
     }
@@ -120,7 +120,7 @@ public class MessageCapabilitiesTest {
         final byte[] moEncode = moCaps.toMslEncoding(encoder, ENCODER_FORMAT);
         assertNotNull(moEncode);
         // This test will not always pass since set data is unordered.
-        //assertTrue(MslEncoderUtils.objectEquals(jsonString, moJsonString));
+        //assertEquals(encode, moEncode);
         final MessageCapabilities mo2Caps = new MessageCapabilities(encoder.parseObject(moEncode));
         assertEquals(moCaps, mo2Caps);
     }
@@ -156,7 +156,7 @@ public class MessageCapabilitiesTest {
         final byte[] moEncode = moCaps.toMslEncoding(encoder, ENCODER_FORMAT);
         assertNotNull(moEncode);
         // This test will not always pass since set data is unordered.
-        //assertTrue(MslEncoderUtils.objectEquals(jsonString, moJsonString));
+        //assertEquals(encode, moEncode);
         final MessageCapabilities mo2Caps = new MessageCapabilities(encoder.parseObject(moEncode));
         assertEquals(moCaps, mo2Caps);
     }
@@ -179,7 +179,7 @@ public class MessageCapabilitiesTest {
         final byte[] moEncode = moCaps.toMslEncoding(encoder, ENCODER_FORMAT);
         assertNotNull(moEncode);
         // This test will not always pass since set data is unordered.
-        //assertTrue(MslEncoderUtils.objectEquals(jsonString, moJsonString));
+        //assertEquals(encode, moEncode);
         final MessageCapabilities mo2Caps = new MessageCapabilities(encoder.parseObject(moEncode));
         assertEquals(moCaps, mo2Caps);
     }

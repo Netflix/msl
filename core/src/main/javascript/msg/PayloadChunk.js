@@ -260,6 +260,7 @@ var PayloadChunk$parse;
      * provided crypto context. If requested, the data will be compressed
      * before encrypting.
      *
+     * @param {MslContext} ctx the MSL context.
      * @param {number} sequenceNumber sequence number.
      * @param {number} messageId the message ID.
      * @param {boolean} endofmsg true if this is the last payload chunk of the message.
@@ -276,9 +277,9 @@ var PayloadChunk$parse;
      *         the payload chunk.
      * @throws MslException if there is an error compressing the data.
      */
-    PayloadChunk$create = function PayloadChunk$create(sequenceNumber, messageId, endofmsg, compressionAlgo, data, cryptoContext, callback) {
+    PayloadChunk$create = function PayloadChunk$create(ctx, sequenceNumber, messageId, endofmsg, compressionAlgo, data, cryptoContext, callback) {
         AsyncExecutor(callback, function() {
-            return new PayloadChunk(sequenceNumber, messageId, endofmsg, compressionAlgo, data, cryptoContext, null);
+            return new PayloadChunk(ctx, sequenceNumber, messageId, endofmsg, compressionAlgo, data, cryptoContext, null);
         });
     };
 

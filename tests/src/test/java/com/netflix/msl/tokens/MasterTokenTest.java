@@ -64,37 +64,37 @@ public class MasterTokenTest {
     /** Milliseconds per second. */
     private static final long MILLISECONDS_PER_SECOND = 1000;
     
-    /** JSON key token data. */
+    /** Key token data. */
     private static final String KEY_TOKENDATA = "tokendata";
-    /** JSON key signature. */
+    /** Key signature. */
     private static final String KEY_SIGNATURE = "signature";
 
     // tokendata
-    /** JSON key renewal window timestamp. */
+    /** Key renewal window timestamp. */
     private static final String KEY_RENEWAL_WINDOW = "renewalwindow";
-    /** JSON key expiration timestamp. */
+    /** Key expiration timestamp. */
     private static final String KEY_EXPIRATION = "expiration";
-    /** JSON key sequence number. */
+    /** Key sequence number. */
     private static final String KEY_SEQUENCE_NUMBER = "sequencenumber";
-    /** JSON key serial number. */
+    /** Key serial number. */
     private static final String KEY_SERIAL_NUMBER = "serialnumber";
-    /** JSON key session data. */
+    /** Key session data. */
     private static final String KEY_SESSIONDATA = "sessiondata";
     
     // sessiondata
-    /** JSON key issuer data. */
+    /** Key issuer data. */
     private static final String KEY_ISSUER_DATA = "issuerdata";
-    /** JSON key identity. */
+    /** Key identity. */
     private static final String KEY_IDENTITY = "identity";
-    /** JSON key symmetric encryption key. */
+    /** Key symmetric encryption key. */
     private static final String KEY_ENCRYPTION_KEY = "encryptionkey";
-    /** JSON key encryption algorithm. */
+    /** Key encryption algorithm. */
     private static final String KEY_ENCRYPTION_ALGORITHM = "encryptionalgorithm";
-    /** JSON key symmetric HMAC key. */
+    /** Key symmetric HMAC key. */
     private static final String KEY_HMAC_KEY = "hmackey";
-    /** JSON key signature key. */
+    /** Key signature key. */
     private static final String KEY_SIGNATURE_KEY = "signaturekey";
-    /** JSON key signature algorithm. */
+    /** Key signature algorithm. */
     private static final String KEY_SIGNATURE_ALGORITHM = "signaturealgorithm";
     
     private static final Date RENEWAL_WINDOW = new Date(System.currentTimeMillis() + 60000);

@@ -101,49 +101,49 @@ public class MessageHeaderTest {
     /** Milliseconds per second. */
     private static final long MILLISECONDS_PER_SECOND = 1000;
     
-    /** JSON key entity authentication data. */
+    /** Key entity authentication data. */
     private static final String KEY_ENTITY_AUTHENTICATION_DATA = "entityauthdata";
-    /** JSON key master token. */
+    /** Key master token. */
     private static final String KEY_MASTER_TOKEN = "mastertoken";
-    /** JSON key header data. */
+    /** Key header data. */
     private static final String KEY_HEADERDATA = "headerdata";
-    /** JSON key error data signature. */
+    /** Key error data signature. */
     private static final String KEY_SIGNATURE = "signature";
 
     // Message header data.
-    /** JSON key sender. */
+    /** Key sender. */
     private static final String KEY_SENDER = "sender";
-    /** JSON key recipient. */
+    /** Key recipient. */
     private static final String KEY_RECIPIENT = "recipient";
-    /** JSON key timestamp. */
+    /** Key timestamp. */
     private static final String KEY_TIMESTAMP = "timestamp";
-    /** JSON key message ID. */
+    /** Key message ID. */
     private static final String KEY_MESSAGE_ID = "messageid";
-    /** JSON key non-replayable ID. */
+    /** Key non-replayable ID. */
     private static final String KEY_NON_REPLAYABLE_ID = "nonreplayableid";
-    /** JSON key renewable flag. */
+    /** Key renewable flag. */
     private static final String KEY_RENEWABLE = "renewable";
-    /** JSON key handshake flag */
+    /** Key handshake flag */
     private static final String KEY_HANDSHAKE = "handshake";
-    /** JSON key capabilities. */
+    /** Key capabilities. */
     private static final String KEY_CAPABILITIES = "capabilities";
-    /** JSON key key negotiation request. */
+    /** Key key negotiation request. */
     private static final String KEY_KEY_REQUEST_DATA = "keyrequestdata";
-    /** JSON key key negotiation response. */
+    /** Key key negotiation response. */
     private static final String KEY_KEY_RESPONSE_DATA = "keyresponsedata";
-    /** JSON key user authentication data. */
+    /** Key user authentication data. */
     private static final String KEY_USER_AUTHENTICATION_DATA = "userauthdata";
-    /** JSON key user ID token. */
+    /** Key user ID token. */
     private static final String KEY_USER_ID_TOKEN = "useridtoken";
-    /** JSON key service tokens. */
+    /** Key service tokens. */
     private static final String KEY_SERVICE_TOKENS = "servicetokens";
     
     // Message header peer data.
-    /** JSON key peer master token. */
+    /** Key peer master token. */
     private static final String KEY_PEER_MASTER_TOKEN = "peermastertoken";
-    /** JSON key peer user ID token. */
+    /** Key peer user ID token. */
     private static final String KEY_PEER_USER_ID_TOKEN = "peeruseridtoken";
-    /** JSON key peer service tokens. */
+    /** Key peer service tokens. */
     private static final String KEY_PEER_SERVICE_TOKENS = "peerservicetokens";
     
     /**
@@ -445,10 +445,10 @@ public class MessageHeaderTest {
         final MslObject entityAuthDataMo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, entityAuthData), entityAuthDataMo));
         assertFalse(mo.has(KEY_MASTER_TOKEN));
-        final byte[] ciphertext = Base64.decode(mo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = mo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdata = encoder.parseObject(plaintext);
-        final byte[] signature = Base64.decode(mo.getString(KEY_SIGNATURE));
+        final byte[] signature = mo.getBytes(KEY_SIGNATURE);
         assertTrue(cryptoContext.verify(ciphertext, signature, encoder));
         
         assertEquals(NON_REPLAYABLE_ID, (Long)headerdata.getLong(KEY_NON_REPLAYABLE_ID));
@@ -491,10 +491,10 @@ public class MessageHeaderTest {
         final MslObject entityAuthDataMo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, entityAuthData), entityAuthDataMo));
         assertFalse(mo.has(KEY_MASTER_TOKEN));
-        final byte[] ciphertext = Base64.decode(mo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = mo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdata = encoder.parseObject(plaintext);
-        final byte[] signature = Base64.decode(mo.getString(KEY_SIGNATURE));
+        final byte[] signature = mo.getBytes(KEY_SIGNATURE);
         assertTrue(cryptoContext.verify(ciphertext, signature, encoder));
         
         assertFalse(headerdata.has(KEY_NON_REPLAYABLE_ID));
@@ -614,10 +614,10 @@ public class MessageHeaderTest {
         final MslObject entityAuthDataMo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, entityAuthData), entityAuthDataMo));
         assertFalse(mo.has(KEY_MASTER_TOKEN));
-        final byte[] ciphertext = Base64.decode(mo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = mo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdata = encoder.parseObject(plaintext);
-        final byte[] signature = Base64.decode(mo.getString(KEY_SIGNATURE));
+        final byte[] signature = mo.getBytes(KEY_SIGNATURE);
         assertTrue(cryptoContext.verify(ciphertext, signature, encoder));
         
         assertEquals(NON_REPLAYABLE_ID, (Long)headerdata.getLong(KEY_NON_REPLAYABLE_ID));
@@ -661,10 +661,10 @@ public class MessageHeaderTest {
         final MslObject entityAuthDataMo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, entityAuthData), entityAuthDataMo));
         assertFalse(mo.has(KEY_MASTER_TOKEN));
-        final byte[] ciphertext = Base64.decode(mo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = mo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdata = encoder.parseObject(plaintext);
-        final byte[] signature = Base64.decode(mo.getString(KEY_SIGNATURE));
+        final byte[] signature = mo.getBytes(KEY_SIGNATURE);
         assertTrue(cryptoContext.verify(ciphertext, signature, encoder));
         
         assertFalse(headerdata.has(KEY_NON_REPLAYABLE_ID));
@@ -741,10 +741,10 @@ public class MessageHeaderTest {
         assertFalse(mo.has(KEY_ENTITY_AUTHENTICATION_DATA));
         final MslObject masterToken = mo.getMslObject(KEY_MASTER_TOKEN, encoder);
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, MASTER_TOKEN), masterToken));
-        final byte[] ciphertext = Base64.decode(mo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = mo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdata = encoder.parseObject(plaintext);
-        final byte[] signature = Base64.decode(mo.getString(KEY_SIGNATURE));
+        final byte[] signature = mo.getBytes(KEY_SIGNATURE);
         assertTrue(cryptoContext.verify(ciphertext, signature, encoder));
         
         assertEquals(NON_REPLAYABLE_ID, (Long)headerdata.getLong(KEY_NON_REPLAYABLE_ID));
@@ -829,10 +829,10 @@ public class MessageHeaderTest {
         assertFalse(mo.has(KEY_ENTITY_AUTHENTICATION_DATA));
         final MslObject masterToken = mo.getMslObject(KEY_MASTER_TOKEN, encoder);
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, MASTER_TOKEN), masterToken));
-        final byte[] ciphertext = Base64.decode(mo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = mo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdata = encoder.parseObject(plaintext);
-        final byte[] signature = Base64.decode(mo.getString(KEY_SIGNATURE));
+        final byte[] signature = mo.getBytes(KEY_SIGNATURE);
         assertTrue(cryptoContext.verify(ciphertext, signature, encoder));
         
         assertEquals(NON_REPLAYABLE_ID, (Long)headerdata.getLong(KEY_NON_REPLAYABLE_ID));
@@ -1711,7 +1711,7 @@ public class MessageHeaderTest {
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
         final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
-        messageHeaderMo.put(KEY_SIGNATURE, "AAA=");
+        messageHeaderMo.put(KEY_SIGNATURE, Base64.decode("AAA="));
         
         Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
@@ -1762,7 +1762,7 @@ public class MessageHeaderTest {
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, MASTER_TOKEN, headerData, peerData);
         final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         ++ciphertext[0];
         messageHeaderMo.put(KEY_HEADERDATA, ciphertext);
         
@@ -1828,7 +1828,7 @@ public class MessageHeaderTest {
         final EntityAuthenticationScheme scheme = entityAuthData.getScheme();
         final EntityAuthenticationFactory factory = p2pCtx.getEntityAuthenticationFactory(scheme);
         final ICryptoContext cryptoContext = factory.getCryptoContext(p2pCtx, entityAuthData);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -1929,7 +1929,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -1998,7 +1998,7 @@ public class MessageHeaderTest {
         final EntityAuthenticationScheme scheme = entityAuthData.getScheme();
         final EntityAuthenticationFactory factory = trustedNetCtx.getEntityAuthenticationFactory(scheme);
         final ICryptoContext cryptoContext = factory.getCryptoContext(trustedNetCtx, entityAuthData);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -2030,7 +2030,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(trustedNetCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -2064,7 +2064,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(trustedNetCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -2097,7 +2097,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -2126,7 +2126,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -2157,7 +2157,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(trustedNetCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -2190,7 +2190,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(trustedNetCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -2225,7 +2225,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -2257,7 +2257,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -2289,7 +2289,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -2347,7 +2347,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(trustedNetCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -2376,7 +2376,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(trustedNetCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -2408,7 +2408,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(trustedNetCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -2440,7 +2440,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -2472,7 +2472,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -2526,7 +2526,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -2558,7 +2558,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -2591,7 +2591,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -2624,7 +2624,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -2657,7 +2657,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -2692,7 +2692,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -2729,7 +2729,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -2762,7 +2762,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -2794,7 +2794,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -2826,7 +2826,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -2860,7 +2860,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -2892,7 +2892,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -2926,7 +2926,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -2958,7 +2958,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -2992,7 +2992,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -3024,7 +3024,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         
@@ -3056,7 +3056,7 @@ public class MessageHeaderTest {
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderMo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         

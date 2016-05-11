@@ -19,34 +19,39 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("UserIdToken", function() {
+	/** MSL encoder format. */
+	var ENCODER_FORMAT = MslEncoderFormat.JSON;
+	
     /** Milliseconds per second. */
     var MILLISECONDS_PER_SECOND = 1000;
     
-    /** JSON key token data. */
+    /** Key token data. */
     var KEY_TOKENDATA = "tokendata";
-    /** JSON key signature. */
+    /** Key signature. */
     var KEY_SIGNATURE = "signature";
     
     // tokendata
-    /** JSON key renewal window timestamp. */
+    /** Key renewal window timestamp. */
     var KEY_RENEWAL_WINDOW = "renewalwindow";
-    /** JSON key expiration timestamp. */
+    /** Key expiration timestamp. */
     var KEY_EXPIRATION = "expiration";
-    /** JSON key master token serial number. */
+    /** Key master token serial number. */
     var KEY_MASTER_TOKEN_SERIAL_NUMBER = "mtserialnumber";
-    /** JSON key user ID token serial number. */
+    /** Key user ID token serial number. */
     var KEY_SERIAL_NUMBER = "serialnumber";
-    /** JSON key token user identification data. */
+    /** Key token user identification data. */
     var KEY_USERDATA = "userdata";
     
     // userdata
-    /** JSON key issuer data. */
+    /** Key issuer data. */
     var KEY_ISSUER_DATA = "issuerdata";
-    /** JSON key identity. */
+    /** Key identity. */
     var KEY_IDENTITY = "identity";
     
     /** MSL context. */
     var ctx;
+    /** MSL encoder factory. */
+    var encoder;
     
     var RENEWAL_WINDOW = new Date(Date.now() + 120000);
     var EXPIRATION = new Date(Date.now() + 180000);
@@ -66,12 +71,13 @@ describe("UserIdToken", function() {
             });
             waitsFor(function() { return ctx; }, "ctx", 100);
     		runs(function() {
+    			encoder = ctx.getMslEncoderFactory();
     			MslTestUtils.getMasterToken(ctx, 1, 1, {
     				result: function(token) { MASTER_TOKEN = token; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     			});
     		});
-    		waitsFor(function() { return MASTER_TOKEN; }, "master token not received", 100);
+    		waitsFor(function() { return MASTER_TOKEN; }, "master token", 100);
     		runs(function() { initialized = true; });
     	}
     });
@@ -84,9 +90,9 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
         
-        var jsonString;
+        var encode;
         runs(function() {
 	        expect(userIdToken.isDecrypted()).toBeTruthy();
 	        expect(userIdToken.isVerified()).toBeTruthy();
@@ -99,35 +105,46 @@ describe("UserIdToken", function() {
 	        expect(userIdToken.mtSerialNumber).toEqual(MASTER_TOKEN.serialNumber);
 	        expect(userIdToken.renewalWindow.getTime() / MILLISECONDS_PER_SECOND).toEqual(Math.floor(RENEWAL_WINDOW.getTime() / MILLISECONDS_PER_SECOND));
 	        expect(userIdToken.serialNumber).toEqual(SERIAL_NUMBER);
-	        jsonString = JSON.stringify(userIdToken);
-	        expect(jsonString).not.toBeNull();
+	        userIdToken.toMslEncodingFormat(encoder, ENCODER_FORMAT, {
+	        	result: function(x) { encode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
         });
+        waitsFor(function() { return encode; }, "enocde", 100);
         
-        var joUserIdToken;
+        var moUserIdToken;
         runs(function() {
-            var jo = JSON.parse(jsonString);
-            UserIdToken$parse(ctx, jo, MASTER_TOKEN, {
-                result: function(token) { joUserIdToken = token; },
+            var mo = encoder.parseObject(encode);
+            UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+                result: function(token) { moUserIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return joUserIdToken; }, "joUserIdToken not received", 100);
+        waitsFor(function() { return moUserIdToken; }, "moUserIdToken", 100);
+        
+        var moEncode;
+        runs(function() {
+	        expect(moUserIdToken.isDecrypted()).toEqual(userIdToken.isDecrypted());
+	        expect(moUserIdToken.isVerified()).toEqual(userIdToken.isVerified());
+	        expect(moUserIdToken.isRenewable(null)).toEqual(userIdToken.isRenewable(null));
+	        expect(moUserIdToken.isExpired(null)).toEqual(userIdToken.isExpired(null));
+	        expect(moUserIdToken.isBoundTo(MASTER_TOKEN)).toBeTruthy();
+	        expect(moUserIdToken.issuerData).toEqual(userIdToken.issuerData);
+	        expect(moUserIdToken.user).toEqual(userIdToken.user);
+	        expect(moUserIdToken.expiration.getTime() / MILLISECONDS_PER_SECOND).toEqual(userIdToken.expiration.getTime() / MILLISECONDS_PER_SECOND);
+	        expect(moUserIdToken.mtSerialNumber).toEqual(userIdToken.mtSerialNumber);
+	        expect(moUserIdToken.renewalWindow.getTime() / MILLISECONDS_PER_SECOND).toEqual(userIdToken.renewalWindow.getTime() / MILLISECONDS_PER_SECOND);
+	        expect(moUserIdToken.serialNumber).toEqual(userIdToken.serialNumber);
+	        moUserIdToken.toMslEncoding(encoder, ENCODER_FORMAT, {
+	        	result: function(x) { moEncode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return moEncode; }, "moEncode", 100);
         
         runs(function() {
-	        expect(joUserIdToken.isDecrypted()).toEqual(userIdToken.isDecrypted());
-	        expect(joUserIdToken.isVerified()).toEqual(userIdToken.isVerified());
-	        expect(joUserIdToken.isRenewable(null)).toEqual(userIdToken.isRenewable(null));
-	        expect(joUserIdToken.isExpired(null)).toEqual(userIdToken.isExpired(null));
-	        expect(joUserIdToken.isBoundTo(MASTER_TOKEN)).toBeTruthy();
-	        expect(joUserIdToken.issuerData).toEqual(userIdToken.issuerData);
-	        expect(joUserIdToken.user).toEqual(userIdToken.user);
-	        expect(joUserIdToken.expiration.getTime() / MILLISECONDS_PER_SECOND).toEqual(userIdToken.expiration.getTime() / MILLISECONDS_PER_SECOND);
-	        expect(joUserIdToken.mtSerialNumber).toEqual(userIdToken.mtSerialNumber);
-	        expect(joUserIdToken.renewalWindow.getTime() / MILLISECONDS_PER_SECOND).toEqual(userIdToken.renewalWindow.getTime() / MILLISECONDS_PER_SECOND);
-	        expect(joUserIdToken.serialNumber).toEqual(userIdToken.serialNumber);
-	        var joJsonString = JSON.stringify(joUserIdToken);
-	        expect(joJsonString).not.toBeNull();
-	        expect(joJsonString).toEqual(jsonString);
+	        expect(moEncode).not.toBeNull();
+	        expect(moEncode).toEqual(encode);
         });
     });
     
@@ -141,7 +158,7 @@ describe("UserIdToken", function() {
     		    error: function(err) { exception = err; },
     		});
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception", 100);
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslInternalException());
@@ -158,7 +175,7 @@ describe("UserIdToken", function() {
     			error: function(err) { exception = err; },
     		});
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception", 100);
     	runs(function() {
     		var f = function() { throw exception; };
     		expect(f).toThrow(new MslInternalException());
@@ -173,7 +190,7 @@ describe("UserIdToken", function() {
     		    error: function(err) { exception = err; },
     		});
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception", 100);
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslInternalException());
@@ -192,7 +209,7 @@ describe("UserIdToken", function() {
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
     	});
-    	waitsFor(function() { return masterToken && joMasterToken; }, "master token not received", 100);
+    	waitsFor(function() { return masterToken && joMasterToken; }, "master token", 100);
     	
     	var userIdToken;
         runs(function() {
@@ -201,16 +218,22 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
 	        
         var exception;
         runs(function() {
-	        UserIdToken$parse(ctx, JSON.parse(JSON.stringify(userIdToken)), joMasterToken, {
-	            result: function() {},
-	            error: function(err) { exception = err; },
-	        });
+        	MslTestUtils.toMslObject(encoder, userIdToken, {
+        		result: function(mo) {
+        			UserIdToken$parse(ctx, mo, joMasterToken, {
+        				result: function() {},
+        				error: function(err) { exception = err; },
+        			});
+        		},
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
 		});
-		waitsFor(function() { return exception; }, "exception not received", 100);
+		waitsFor(function() { return exception; }, "exception", 100);
+		
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH));
@@ -225,7 +248,7 @@ describe("UserIdToken", function() {
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
     	});
-    	waitsFor(function() { return masterToken; }, "master token not received", 100);
+    	waitsFor(function() { return masterToken; }, "master token", 100);
     	
     	var userIdToken;
         runs(function() {
@@ -234,16 +257,22 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
 	        
         var exception;
         runs(function() {
-	        UserIdToken$parse(ctx, JSON.parse(JSON.stringify(userIdToken)), null, {
-	            result: function() {},
-	            error: function(err) { exception = err; },
-	        });
-    	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+        	MslTestUtils.toMslObject(encoder, userIdToken, {
+        		result: function(mo) {
+        			UserIdToken$parse(ctx, mo, joMasterToken, {
+        				result: function() {},
+        				error: function(err) { exception = err; },
+        			});
+        		},
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+		});
+		waitsFor(function() { return exception; }, "exception", 100);
+
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH));
@@ -262,7 +291,8 @@ describe("UserIdToken", function() {
 	            error: function(err) { exception = err; },
 	        });
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception", 100);
+    	
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslInternalException());
@@ -277,25 +307,32 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, userIdToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(userIdToken);
-	        var jo = JSON.parse(jsonString);
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.encodeObject(tokendata, ENCODER_FORMAT);
+	        tokendataMo.put(KEY_EXPIRATION, (Date.now() / MILLISECONDS_PER_SECOND) - 1);
+	        tokendataMo.put(KEY_RENEWAL_WINDOW, Date.now() / MILLISECONDS_PER_SECOND);
+	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
 	        
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        tokendataJo[KEY_EXPIRATION] = (Date.now() / MILLISECONDS_PER_SECOND) - 1;
-	        tokendataJo[KEY_RENEWAL_WINDOW] = Date.now() / MILLISECONDS_PER_SECOND;
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
-	        
-	        UserIdToken$parse(ctx, jo, MASTER_TOKEN, {
+	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(err) { exception = err; },
 	        });
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception", 100);
+    	
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslException(MslError.USERIDTOKEN_EXPIRES_BEFORE_RENEWAL));
@@ -310,25 +347,31 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, userIdToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(userIdToken);
-	        var jo = JSON.parse(jsonString);
+	        mo.remove(KEY_TOKENDATA);
 	        
-	        expect(jo[KEY_TOKENDATA]).not.toBeNull();
-	        delete jo[KEY_TOKENDATA];
-	        
-	        UserIdToken$parse(ctx, jo, MASTER_TOKEN, {
+	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(err) { exception = err; },
 	        });
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception", 100);
+    	
     	runs(function() {
     	    var f = function() { throw exception; };
-    	    expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+    	    expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
     	});
     });
     
@@ -340,23 +383,30 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, userIdToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(userIdToken);
-	        var jo = JSON.parse(jsonString);
-	        
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        ++tokendata[0];
-	        jo[KEY_TOKENDATA] = base64$encode(tokendata);
+	        mo.put(KEY_TOKENDATA, tokendata);
 	        
-	        UserIdToken$parse(ctx, jo, MASTER_TOKEN, {
+	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(err) { exception = err; },
 	        });
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception", 100);
+    	
 	    runs(function() {
 	        var f = function() { throw exception; };
 	        expect(f).toThrow(new MslEncodingException(MslError.NONE));
@@ -371,25 +421,31 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, userIdToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(userIdToken);
-	        var jo = JSON.parse(jsonString);
+	        mo.remove(KEY_SIGNATURE);
 	        
-	        expect(jo[KEY_SIGNATURE]).not.toBeNull();
-	        delete jo[KEY_SIGNATURE];
-	        
-	        UserIdToken$parse(ctx, jo, MASTER_TOKEN, {
+	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(err) { exception = err; },
 	        });
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception", 100);
+    	
 	    runs(function() {
 	        var f = function() { throw exception; };
-	        expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+	        expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
 	    });
     });
     
@@ -401,25 +457,31 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, userIdToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(userIdToken);
-	        var jo = JSON.parse(jsonString);
-	
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        expect(tokendataJo[KEY_RENEWAL_WINDOW]).not.toBeNull();
-	        delete tokendataJo[KEY_RENEWAL_WINDOW];
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.encodeObject(tokendata, ENCODER_FORMAT);
+	        tokendataMo.remove(KEY_RENEWAL_WINDOW);
+	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
 	        
-	        UserIdToken$parse(ctx, jo, MASTER_TOKEN, {
+	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(err) { exception = err; },
 	        });
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception", 100);
+    	
 	    runs(function() {
 	        var f = function() { throw exception; };
 	        expect(f).toThrow(new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR));
@@ -434,24 +496,31 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, userIdToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(userIdToken);
-	        var jo = JSON.parse(jsonString);
-	
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        tokendataJo[KEY_RENEWAL_WINDOW] = "x";
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.encodeObject(tokendata, ENCODER_FORMAT);
+	        tokendataMo.put(KEY_RENEWAL_WINDOW, "x");
+	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
 	        
-	        UserIdToken$parse(ctx, jo, MASTER_TOKEN, {
+	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(err) { exception = err; },
 	        });
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception", 100);
+    	
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR));
@@ -466,25 +535,31 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, userIdToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(userIdToken);
-	        var jo = JSON.parse(jsonString);
-	
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        expect(tokendataJo[KEY_EXPIRATION]).not.toBeNull();
-	        delete tokendataJo[KEY_EXPIRATION];
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.encodeObject(tokendata, ENCODER_FORMAT);
+	        tokendataMo.remove(KEY_EXPIRATION);
+	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
 	        
-	        UserIdToken$parse(ctx, jo, MASTER_TOKEN, {
+	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(err) { exception = err; },
 	        });
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception", 100);
+    	
 	    runs(function() {
 	        var f = function() { throw exception; };
 	        expect(f).toThrow(new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR));
@@ -499,24 +574,31 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, userIdToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(userIdToken);
-	        var jo = JSON.parse(jsonString);
-	
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        tokendataJo[KEY_EXPIRATION] = "x";
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.encodeObject(tokendata, ENCODER_FORMAT);
+	        tokendataMo.put(KEY_EXPIRATION, "x");
+	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
 	        
-	        UserIdToken$parse(ctx, jo, MASTER_TOKEN, {
+	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(err) { exception = err; },
 	        });
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception", 100);
+    	
 	    runs(function() {
 	        var f = function() { throw exception; };
 	        expect(f).toThrow(new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR));
@@ -531,25 +613,31 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, userIdToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(userIdToken);
-	        var jo = JSON.parse(jsonString);
-	
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        expect(tokendataJo[KEY_SERIAL_NUMBER]).not.toBeNull();
-	        delete tokendataJo[KEY_SERIAL_NUMBER];
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.encodeObject(tokendata, ENCODER_FORMAT);
+	        tokendataMo.remove(KEY_SERIAL_NUMBER);
+	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
 	        
-	        UserIdToken$parse(ctx, jo, MASTER_TOKEN, {
+	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(err) { exception = err; },
 	        });
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception", 100);
+    	
 	    runs(function() {
 	        var f = function() { throw exception; };
 	        expect(f).toThrow(new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR));
@@ -564,24 +652,31 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, userIdToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(userIdToken);
-	        var jo = JSON.parse(jsonString);
-	
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        tokendataJo[KEY_SERIAL_NUMBER] = "x";
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.encodeObject(tokendata, ENCODER_FORMAT);
+	        tokendataMo.put(KEY_SERIAL_NUMBER, "x");
+	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
 	        
-	        UserIdToken$parse(ctx, jo, MASTER_TOKEN, {
+	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(err) { exception = err; },
 	        });
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception", 100);
+    	
 	    runs(function() {
 	        var f = function() { throw exception; };
 	        expect(f).toThrow(new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR));
@@ -596,24 +691,31 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, userIdToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(userIdToken);
-	        var jo = JSON.parse(jsonString);
-	
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        tokendataJo[KEY_SERIAL_NUMBER] = -1;
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.encodeObject(tokendata, ENCODER_FORMAT);
+	        tokendataMo.put(KEY_SERIAL_NUMBER, -1);
+	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
 	        
-	        UserIdToken$parse(ctx, jo, MASTER_TOKEN, {
+	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(err) { exception = err; },
 	        });
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception", 100);
+    	
 	    runs(function() {
 	        var f = function() { throw exception; };
 	        expect(f).toThrow(new MslException(MslError.USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE));
@@ -628,24 +730,31 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, userIdToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(userIdToken);
-	        var jo = JSON.parse(jsonString);
-	
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        tokendataJo[KEY_SERIAL_NUMBER] = MslConstants$MAX_LONG_VALUE + 2;
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.encodeObject(tokendata, ENCODER_FORMAT);
+	        tokendataMo.put(KEY_SERIAL_NUMBER, MslConstants$MAX_LONG_VALUE + 2);
+	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
 	        
-	        UserIdToken$parse(ctx, jo, MASTER_TOKEN, {
+	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(err) { exception = err; },
 	        });
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception", 100);
+    	
 	    runs(function() {
 	        var f = function() { throw exception; };
 	        expect(f).toThrow(new MslException(MslError.USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE));
@@ -660,25 +769,31 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, userIdToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(userIdToken);
-	        var jo = JSON.parse(jsonString);
-	
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        expect(tokendataJo[KEY_MASTER_TOKEN_SERIAL_NUMBER]).not.toBeNull();
-	        delete tokendataJo[KEY_MASTER_TOKEN_SERIAL_NUMBER];
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.encodeObject(tokendata, ENCODER_FORMAT);
+	        tokendataMo.remove(KEY_MASTER_TOKEN_SERIAL_NUMBER);
+	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
 	        
-	        UserIdToken$parse(ctx, jo, MASTER_TOKEN, {
+	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(err) { exception = err; },
 	        });
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception", 100);
+    	
 	    runs(function() {
 	        var f = function() { throw exception; };
 	        expect(f).toThrow(new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR));
@@ -693,24 +808,31 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, userIdToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
 
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(userIdToken);
-	        var jo = JSON.parse(jsonString);
-	
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        tokendataJo[KEY_MASTER_TOKEN_SERIAL_NUMBER] = "x";
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.encodeObject(tokendata, ENCODER_FORMAT);
+	        tokendataMo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, "x");
+	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
 	        
-	        UserIdToken$parse(ctx, jo, MASTER_TOKEN, {
+	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(err) { exception = err; },
 	        });
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception", 100);
+    	
 	    runs(function() {
 	        var f = function() { throw exception; };
 	        expect(f).toThrow(new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR));
@@ -725,24 +847,31 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, userIdToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
 
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(userIdToken);
-	        var jo = JSON.parse(jsonString);
-	
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        tokendataJo[KEY_MASTER_TOKEN_SERIAL_NUMBER] = -1;
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.encodeObject(tokendata, ENCODER_FORMAT);
+	        tokendataMo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, -1);
+	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
 	        
-	        UserIdToken$parse(ctx, jo, MASTER_TOKEN, {
+	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(err) { exception = err; },
 	        });
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception", 100);
+    	
 	    runs(function() {
 	        var f = function() { throw exception; };
 	        expect(f).toThrow(new MslException(MslError.USERIDTOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE));
@@ -757,24 +886,31 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, userIdToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
 
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(userIdToken);
-	        var jo = JSON.parse(jsonString);
-	
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        tokendataJo[KEY_MASTER_TOKEN_SERIAL_NUMBER] = MslConstants$MAX_LONG_VALUE + 2;
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.encodeObject(tokendata, ENCODER_FORMAT);
+	        tokendataMo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, MslConstants$MAX_LONG_VALUE + 2);
+	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
 	        
-	        UserIdToken$parse(ctx, jo, MASTER_TOKEN, {
+	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(err) { exception = err; },
 	        });
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception", 100);
+    	
 	    runs(function() {
 	        var f = function() { throw exception; };
 	        expect(f).toThrow(new MslException(MslError.USERIDTOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE));
@@ -789,25 +925,31 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, userIdToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
 
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(userIdToken);
-	        var jo = JSON.parse(jsonString);
-	
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        expect(tokendataJo[KEY_USERDATA]).not.toBeNull();
-	        delete tokendataJo[KEY_USERDATA];
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.encodeObject(tokendata, ENCODER_FORMAT);
+	        tokendataMo.remove(KEY_USERDATA);
+	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
 	        
-	        UserIdToken$parse(ctx, jo, MASTER_TOKEN, {
+	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(err) { exception = err; },
 	        });
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception", 100);
+    	
 	    runs(function() {
 	        var f = function() { throw exception; };
 	        expect(f).toThrow(new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR));
@@ -822,25 +964,31 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, userIdToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
 
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(userIdToken);
-	        var jo = JSON.parse(jsonString);
-	
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        tokendataJo[KEY_USERDATA] = "x";
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.encodeObject(tokendata, ENCODER_FORMAT);
+	        tokendataMo.put(KEY_USERDATA, "x");
 	        
 	        var cryptoContext = ctx.getMslCryptoContext();
-	        var modifiedTokendata = textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET);
-	        cryptoContext.sign(modifiedTokendata, {
+	        var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+	        cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT, {
 	        	result: function(signature) {
-	        		jo[KEY_TOKENDATA] = base64$encode(modifiedTokendata);
-	    	        jo[KEY_SIGNATURE] = base64$encode(signature);
+	        		mo.put(KEY_TOKENDATA, modifiedTokendata);
+	    	        mo.put(KEY_SIGNATURE, signature);
 	    	        
-	    	        UserIdToken$parse(ctx, jo, MASTER_TOKEN, {
+	    	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
 	    	            result: function() {},
 	    	            error: function(err) { exception = err; },
 	    	        });	
@@ -848,7 +996,8 @@ describe("UserIdToken", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception", 100);
+    	
 	    runs(function() {
 	        var f = function() { throw exception; };
 	        expect(f).toThrow(new MslException(MslError.USERIDTOKEN_USERDATA_INVALID));
@@ -863,26 +1012,32 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, userIdToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
 
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(userIdToken);
-	        var jo = JSON.parse(jsonString);
-	
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.encodeObject(tokendata, ENCODER_FORMAT);
 	
 	        var cryptoContext = ctx.getMslCryptoContext();
 	        var ciphertext = new Uint8Array(0);
-	        tokendataJo[KEY_USERDATA] = base64$encode(ciphertext);
-	        var modifiedTokendata = textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET);
-	        cryptoContext.sign(modifiedTokendata, {
+	        tokendataMo.put(KEY_USERDATA, ciphertext);
+	        var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+	        cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT, {
 	        	result: function(signature) {
-	        		jo[KEY_TOKENDATA] = base64$encode(modifiedTokendata);
-	    	        jo[KEY_SIGNATURE] = base64$encode(signature);
+	        		mo.put(KEY_TOKENDATA, modifiedTokendata);
+	    	        mo.put(KEY_SIGNATURE, signature);
 	    	        
-	    	        UserIdToken$parse(ctx, jo, MASTER_TOKEN, {
+	    	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
 	    	            result: function() {},
 	    	            error: function(err) { exception = err; },
 	    	        });	
@@ -890,7 +1045,8 @@ describe("UserIdToken", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception", 100);
+    	
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslException(MslError.USERIDTOKEN_USERDATA_MISSING));
@@ -905,28 +1061,34 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, userIdToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
 
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(userIdToken);
-	        var jo = JSON.parse(jsonString);
-	
 	        // This is testing user data that is verified but corrupt.
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        var userdata = base64$decode(tokendataJo[KEY_USERDATA]);
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.encodeObject(tokendata, ENCODER_FORMAT);
+	        var userdata = tokendataMo.getBytes(KEY_USERDATA);
 	        ++userdata[userdata.length-1];
-	        tokendataJo[KEY_USERDATA] = base64$encode(userdata);
+	        tokendataMo.put(KEY_USERDATA, userdata);
 	        
 	        var cryptoContext = ctx.getMslCryptoContext();
-	        var modifiedTokendata = textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET);
-	        cryptoContext.sign(modifiedTokendata, {
+	        var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+	        cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT, {
 	        	result: function(signature) {
-	        		jo[KEY_TOKENDATA] = base64$encode(modifiedTokendata);
-	    	        jo[KEY_SIGNATURE] = base64$encode(signature);
+	        		mo.put(KEY_TOKENDATA, modifiedTokendata);
+	    	        mo.put(KEY_SIGNATURE, signature);
 	    	        
-	    	        UserIdToken$parse(ctx, jo, MASTER_TOKEN, {
+	    	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
 	    	            result: function() {},
 	    	            error: function(err) { exception = err; },
 	    	        });	
@@ -934,7 +1096,8 @@ describe("UserIdToken", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception", 100);
+    	
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslCryptoException(MslError.NONE));
@@ -949,38 +1112,44 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, userIdToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
 
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(userIdToken);
-	        var jo = JSON.parse(jsonString);
-
 	        var cryptoContext = ctx.getMslCryptoContext();
 	        
 	        // Before modifying the user data we need to decrypt it.
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        var ciphertext = base64$decode(tokendataJo[KEY_USERDATA]);
-	        cryptoContext.decrypt(ciphertext, {
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.encodeObject(tokendata, ENCODER_FORMAT);
+	        var ciphertext = tokendataMo.getBytes(KEY_USERDATA);
+	        cryptoContext.decrypt(ciphertext, encoder, {
 	        	result: function(plaintext) {
-	        		var userdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+	        		var userdataMo = encoder.parseObject(plaintext);
 	        		
 	        		// After modifying the user data we need to encrypt it.
-	        		userdataJo[KEY_IDENTITY] = {};
-	        		cryptoContext.encrypt(textEncoding$getBytes(JSON.stringify(userdataJo, MslConstants$DEFAULT_CHARSET)), {
+	        		userdataMo.put(KEY_IDENTITY, encoder.createObject());
+	        		cryptoContext.encrypt(encoder.encodeObject(userdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT, {
 	        			result: function(userdata) {
-	        				tokendataJo[KEY_USERDATA] = base64$encode(userdata);
+	        				tokendataMo.put(KEY_USERDATA, userdata);
 	        				
 	        				// The tokendata must be signed otherwise the user data will not be
 	        				// processed.
-	        				var modifiedTokendata = textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET);
-	        				cryptoContext.sign(modifiedTokendata, {
+	        				var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+	        				cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT, {
 	        		        	result: function(signature) {
-	        		        		jo[KEY_TOKENDATA] = base64$encode(modifiedTokendata);
-	        		    	        jo[KEY_SIGNATURE] = base64$encode(signature);
+	        		        		mo.put(KEY_TOKENDATA, modifiedTokendata);
+	        		    	        mo.put(KEY_SIGNATURE, signature);
 	        		    	        
-	        		    	        UserIdToken$parse(ctx, jo, MASTER_TOKEN, {
+	        		    	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
 	        		    	            result: function() {},
 	        		    	            error: function(err) { exception = err; },
 	        		    	        });	
@@ -994,7 +1163,8 @@ describe("UserIdToken", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslEncodingException(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR));
@@ -1009,38 +1179,44 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, userIdToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
 
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(userIdToken);
-	        var jo = JSON.parse(jsonString);
-
 	        var cryptoContext = ctx.getMslCryptoContext();
 	        
 	        // Before modifying the user data we need to decrypt it.
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        var ciphertext = base64$decode(tokendataJo[KEY_USERDATA]);
-	        cryptoContext.decrypt(ciphertext, {
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.encodeObject(tokendata, ENCODER_FORMAT);
+	        var ciphertext = tokendataMo.getBytes(KEY_USERDATA);
+	        cryptoContext.decrypt(ciphertext, encoder, {
 	        	result: function(plaintext) {
-	        		var userdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+	        		var userdataMo = encoder.parseObject(plaintext);
 	        		
 	        		// After modifying the user data we need to encrypt it.
-	        		userdataJo[KEY_IDENTITY] = "";
-	        		cryptoContext.encrypt(textEncoding$getBytes(JSON.stringify(userdataJo, MslConstants$DEFAULT_CHARSET)), {
+	        		userdataMo.put(KEY_IDENTITY, "");
+	        		cryptoContext.encrypt(encoder.encodeObject(userdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT, {
 	        			result: function(userdata) {
-	        				tokendataJo[KEY_USERDATA] = base64$encode(userdata);
+	        				tokendataMo.put(KEY_USERDATA, userdata);
 	        				
 	        				// The tokendata must be signed otherwise the user data will not be
 	        				// processed.
-	        				var modifiedTokendata = textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET);
-	        				cryptoContext.sign(modifiedTokendata, {
+	        				var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+	        				cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT, {
 	        		        	result: function(signature) {
-	        		        		jo[KEY_TOKENDATA] = base64$encode(modifiedTokendata);
-	        		    	        jo[KEY_SIGNATURE] = base64$encode(signature);
+	        		        		mo.put(KEY_TOKENDATA, modifiedTokendata);
+	        		    	        mo.put(KEY_SIGNATURE, signature);
 	        		    	        
-	        		    	        UserIdToken$parse(ctx, jo, MASTER_TOKEN, {
+	        		    	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
 	        		    	            result: function() {},
 	        		    	            error: function(err) { exception = err; },
 	        		    	        });	
@@ -1054,7 +1230,8 @@ describe("UserIdToken", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslException(MslError.USERIDTOKEN_IDENTITY_INVALID));
@@ -1069,38 +1246,44 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, userIdToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
 
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(userIdToken);
-	        var jo = JSON.parse(jsonString);
-
 	        var cryptoContext = ctx.getMslCryptoContext();
 	        
 	        // Before modifying the user data we need to decrypt it.
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        var ciphertext = base64$decode(tokendataJo[KEY_USERDATA]);
-	        cryptoContext.decrypt(ciphertext, {
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.encodeObject(tokendata, ENCODER_FORMAT);
+	        var ciphertext = tokendataMo.getBytes(KEY_USERDATA);
+	        cryptoContext.decrypt(ciphertext, encoder, {
 	        	result: function(plaintext) {
-	        		var userdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+	        		var userdataMo = encoder.parseObject(plaintext);
 	        		
 	        		// After modifying the user data we need to encrypt it.
-	        		delete userdataJo[KEY_IDENTITY];
-	        		cryptoContext.encrypt(textEncoding$getBytes(JSON.stringify(userdataJo, MslConstants$DEFAULT_CHARSET)), {
+	        		userdataMo.remove(KEY_IDENTITY);
+	        		cryptoContext.encrypt(encoder.encodeObject(userdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT, {
 	        			result: function(userdata) {
-	        				tokendataJo[KEY_USERDATA] = base64$encode(userdata);
+	        				tokendataMo.put(KEY_USERDATA, userdata);
 	        				
 	        				// The tokendata must be signed otherwise the user data will not be
 	        				// processed.
-	        				var modifiedTokendata = textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET);
-	        				cryptoContext.sign(modifiedTokendata, {
+	        				var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+	        				cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT, {
 	        		        	result: function(signature) {
-	        		        		jo[KEY_TOKENDATA] = base64$encode(modifiedTokendata);
-	        		    	        jo[KEY_SIGNATURE] = base64$encode(signature);
+	        		        		mo.put(KEY_TOKENDATA, modifiedTokendata);
+	        		    	        mo.put(KEY_SIGNATURE, signature);
 	        		    	        
-	        		    	        UserIdToken$parse(ctx, jo, MASTER_TOKEN, {
+	        		    	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
 	        		    	            result: function() {},
 	        		    	            error: function(err) { exception = err; },
 	        		    	        });	
@@ -1114,7 +1297,8 @@ describe("UserIdToken", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslEncodingException(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR));
@@ -1129,38 +1313,44 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, userIdToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
 
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(userIdToken);
-	        var jo = JSON.parse(jsonString);
-
 	        var cryptoContext = ctx.getMslCryptoContext();
 	        
 	        // Before modifying the user data we need to decrypt it.
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        var ciphertext = base64$decode(tokendataJo[KEY_USERDATA]);
-	        cryptoContext.decrypt(ciphertext, {
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.encodeObject(tokendata, ENCODER_FORMAT);
+	        var ciphertext = tokendataMo.getBytes(KEY_USERDATA);
+	        cryptoContext.decrypt(ciphertext, encoder, {
 	        	result: function(plaintext) {
-	        		var userdataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+	        		var userdataMo = encoder.parseObject(plaintext);
 	        		
 	        		// After modifying the user data we need to encrypt it.
-	        		userdataJo[KEY_ISSUER_DATA] = "x";
-	        		cryptoContext.encrypt(textEncoding$getBytes(JSON.stringify(userdataJo, MslConstants$DEFAULT_CHARSET)), {
+	        		userdataMo.put(KEY_ISSUER_DATA, "x");
+	        		cryptoContext.encrypt(encoder.encodeObject(userdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT, {
 	        			result: function(userdata) {
-	        				tokendataJo[KEY_USERDATA] = base64$encode(userdata);
+	        				tokendataMo.put(KEY_USERDATA, userdata);
 	        				
 	        				// The tokendata must be signed otherwise the user data will not be
 	        				// processed.
-	        				var modifiedTokendata = textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET);
-	        				cryptoContext.sign(modifiedTokendata, {
+	        				var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+	        				cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT, {
 	        		        	result: function(signature) {
-	        		        		jo[KEY_TOKENDATA] = base64$encode(modifiedTokendata);
-	        		    	        jo[KEY_SIGNATURE] = base64$encode(signature);
+	        		        		mo.put(KEY_TOKENDATA, modifiedTokendata);
+	        		    	        mo.put(KEY_SIGNATURE, signature);
 	        		    	        
-	        		    	        UserIdToken$parse(ctx, jo, MASTER_TOKEN, {
+	        		    	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
 	        		    	            result: function() {},
 	        		    	            error: function(err) { exception = err; },
 	        		    	        });	
@@ -1174,7 +1364,8 @@ describe("UserIdToken", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslEncodingException(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR));
@@ -1189,37 +1380,53 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
-        
-        var jsonString = undefined, joUserIdToken;
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
+
+        var encode;
         runs(function() {
-            jsonString = JSON.stringify(userIdToken);
-            var jo = JSON.parse(jsonString);
+        	userIdToken.toMslEncodingFormat(encoder, ENCODER_FORMAT, {
+        		result: function(x) { encode = x; },
+        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return encode; }, "enocde", 100);
+        
+        var moUserIdToken;
+        runs(function() {
+            var mo = encoder.parseObject(encode);
 
-            var signature = base64$decode(jo[KEY_SIGNATURE]);
+            var signature = mo.getBytes(KEY_SIGNATURE);
             ++signature[0];
-            jo[KEY_SIGNATURE] = base64$encode(signature);
+            mo.put(KEY_SIGNATURE, signature);
 
-            UserIdToken$parse(ctx, jo, MASTER_TOKEN, {
-                result: function(token) { joUserIdToken = token; },
+            UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+                result: function(token) { moUserIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return jsonString && joUserIdToken; }, "joUserIdToken not received", 100);
+        waitsFor(function() { return moUserIdToken; }, "moUserIdToken", 100);
+        
+        var moEncode;
         runs(function() {
-	        expect(joUserIdToken.isDecrypted()).toBeFalsy();
-	        expect(joUserIdToken.isVerified()).toBeFalsy();
-	        expect(joUserIdToken.isRenewable(null)).not.toEqual(userIdToken.isRenewable(null));
-	        expect(joUserIdToken.isExpired(null)).toEqual(userIdToken.isExpired(null));
-	        expect(joUserIdToken.isBoundTo(MASTER_TOKEN)).toEqual(userIdToken.isBoundTo(MASTER_TOKEN));
-	        expect(joUserIdToken.user).toBeNull();
-	        expect(joUserIdToken.expiration.getTime() / MILLISECONDS_PER_SECOND).toEqual(userIdToken.expiration.getTime() / MILLISECONDS_PER_SECOND);
-	        expect(joUserIdToken.mtSerialNumber).toEqual(userIdToken.mtSerialNumber);
-	        expect(joUserIdToken.renewalWindow.getTime() / MILLISECONDS_PER_SECOND).toEqual(userIdToken.renewalWindow.getTime() / MILLISECONDS_PER_SECOND);
-	        expect(joUserIdToken.serialNumber).toEqual(userIdToken.serialNumber);
-	        var joJsonString = JSON.stringify(joUserIdToken);
-	        expect(joJsonString).not.toBeNull();
-	        expect(joJsonString).not.toEqual(jsonString);
+	        expect(moUserIdToken.isDecrypted()).toBeFalsy();
+	        expect(moUserIdToken.isVerified()).toBeFalsy();
+	        expect(moUserIdToken.isRenewable(null)).not.toEqual(userIdToken.isRenewable(null));
+	        expect(moUserIdToken.isExpired(null)).toEqual(userIdToken.isExpired(null));
+	        expect(moUserIdToken.isBoundTo(MASTER_TOKEN)).toEqual(userIdToken.isBoundTo(MASTER_TOKEN));
+	        expect(moUserIdToken.user).toBeNull();
+	        expect(moUserIdToken.expiration.getTime() / MILLISECONDS_PER_SECOND).toEqual(userIdToken.expiration.getTime() / MILLISECONDS_PER_SECOND);
+	        expect(moUserIdToken.mtSerialNumber).toEqual(userIdToken.mtSerialNumber);
+	        expect(moUserIdToken.renewalWindow.getTime() / MILLISECONDS_PER_SECOND).toEqual(userIdToken.renewalWindow.getTime() / MILLISECONDS_PER_SECOND);
+	        expect(moUserIdToken.serialNumber).toEqual(userIdToken.serialNumber);moUserIdToken.toMslEncoding(encoder, ENCODER_FORMAT, {
+	        	result: function(x) { moEncode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return moEncode; }, "moEncode", 100);
+        
+        runs(function() {
+	        expect(moEncode).not.toBeNull();
+	        expect(moEncode).not.toEqual(encode);
         });
     });
 
@@ -1233,7 +1440,7 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
         runs(function() {
             var now = new Date();
 	        expect(userIdToken.isRenewable(null)).toBeTruthy();
@@ -1261,7 +1468,7 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
         runs(function() {
             var now = new Date();
 	        expect(userIdToken.isRenewable(null)).toBeTruthy();
@@ -1289,7 +1496,7 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
         runs(function() {
             var now = new Date();
 	        expect(userIdToken.isRenewable(null)).toBeFalsy();
@@ -1308,7 +1515,7 @@ describe("UserIdToken", function() {
     });
 
     it("is bound to master token", function() {
-        var masterTokenA = undefined, masterTokenB;
+        var masterTokenA, masterTokenB;
         runs(function() {
         	MslTestUtils.getMasterToken(ctx, 1, 1, {
         		result: function(token) { masterTokenA = token; },
@@ -1319,9 +1526,9 @@ describe("UserIdToken", function() {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
         	});
         });
-        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens not received", 100);
+        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens", 100);
         
-        var userIdTokenA = undefined, userIdTokenB;
+        var userIdTokenA, userIdTokenB;
         runs(function() {
             UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, masterTokenA, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdTokenA = token; },
@@ -1332,7 +1539,7 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdTokenA && userIdTokenB; }, "user ID tokens not received", 100);
+        waitsFor(function() { return userIdTokenA && userIdTokenB; }, "user ID tokens", 100);
         runs(function() {
 	        expect(userIdTokenA.isBoundTo(masterTokenA)).toBeTruthy();
 	        expect(userIdTokenA.isBoundTo(masterTokenB)).toBeFalsy();
@@ -1346,7 +1553,7 @@ describe("UserIdToken", function() {
     it("equals serial number", function() {
         var serialNumberA = 1;
         var serialNumberB = 2;
-        var userIdTokenA = undefined, userIdTokenB;
+        var userIdTokenA, userIdTokenB;
         runs(function() {
             UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, serialNumberA, ISSUER_DATA, USER, {
                 result: function(token) { userIdTokenA = token; },
@@ -1357,13 +1564,18 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdTokenA && userIdTokenB; }, "user ID tokens not received", 100);
+        waitsFor(function() { return userIdTokenA && userIdTokenB; }, "user ID tokens", 100);
         var userIdTokenA2;
         runs(function() {
-            UserIdToken$parse(ctx, JSON.parse(JSON.stringify(userIdTokenA)), MASTER_TOKEN, {
-                result: function(token) { userIdTokenA2 = token; },
-                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            });
+        	MslTestUtils.toMslObject(encoder, userIdTokenA, {
+        		result: function(mo) {
+        			UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+        				result: function(token) { userIdTokenA2 = token; },
+        				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        			});
+        		},
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
         });
         waitsFor(function() { return userIdTokenA2; }, "user ID token parsed", 100);
         runs(function() {
@@ -1381,7 +1593,7 @@ describe("UserIdToken", function() {
     });
 
     it("equals master token serial number", function() {
-        var masterTokenA = undefined, masterTokenB;
+        var masterTokenA, masterTokenB;
         runs(function() {
         	MslTestUtils.getMasterToken(ctx, 1, 1, {
         		result: function(token) { masterTokenA = token; },
@@ -1392,9 +1604,9 @@ describe("UserIdToken", function() {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
         	});
         });
-        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens not received", 100);
+        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens", 100);
         
-        var userIdTokenA = undefined, userIdTokenB;
+        var userIdTokenA, userIdTokenB;
         runs(function() {
             UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, masterTokenA, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdTokenA = token; },
@@ -1405,14 +1617,19 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdTokenA && userIdTokenB; }, "user ID tokens not received", 100);
-        
+        waitsFor(function() { return userIdTokenA && userIdTokenB; }, "user ID tokens", 100);
+
         var userIdTokenA2;
         runs(function() {
-            UserIdToken$parse(ctx, JSON.parse(JSON.stringify(userIdTokenA)), masterTokenA, {
-                result: function(token) { userIdTokenA2 = token; },
-                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            });
+        	MslTestUtils.toMslObject(encoder, userIdTokenA, {
+        		result: function(mo) {
+        			UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+        				result: function(token) { userIdTokenA2 = token; },
+        				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        			});
+        		},
+				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
         });
         waitsFor(function() { return userIdTokenA2; }, "user ID token parsed", 100);
         runs(function() {
@@ -1437,7 +1654,7 @@ describe("UserIdToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
+        waitsFor(function() { return userIdToken; }, "userIdToken", 100);
         runs(function() {
 	        expect(userIdToken.equals(null)).toBeFalsy();
 	        expect(userIdToken.equals(RENEWAL_WINDOW)).toBeFalsy();

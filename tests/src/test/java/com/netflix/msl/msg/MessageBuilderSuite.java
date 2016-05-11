@@ -2279,8 +2279,8 @@ public class MessageBuilderSuite {
             ctx.setMslCryptoContext(ALT_MSL_CRYPTO_CONTEXT);
             
             // Now rebuild the user ID token and the build the request.
-            final MslObject userIdTokenJo = MslTestUtils.toMslObject(encoder, requestUserIdToken);
-            final UserIdToken unverifiedUserIdToken = new UserIdToken(ctx, userIdTokenJo, MASTER_TOKEN);
+            final MslObject userIdTokenMo = MslTestUtils.toMslObject(encoder, requestUserIdToken);
+            final UserIdToken unverifiedUserIdToken = new UserIdToken(ctx, userIdTokenMo, MASTER_TOKEN);
             final MessageBuilder requestBuilder = MessageBuilder.createRequest(ctx, MASTER_TOKEN, unverifiedUserIdToken, null);
             final MessageHeader request = requestBuilder.getHeader();
             
@@ -2400,8 +2400,8 @@ public class MessageBuilderSuite {
             requestBuilder.setUserAuthenticationData(USER_AUTH_DATA);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MslObject requestJo = MslTestUtils.toMslObject(encoder, request);
-            final MessageHeader moRequest = (MessageHeader)Header.parseHeader(ctx, requestJo, CRYPTO_CONTEXTS);
+            final MslObject requestMo = MslTestUtils.toMslObject(encoder, request);
+            final MessageHeader moRequest = (MessageHeader)Header.parseHeader(ctx, requestMo, CRYPTO_CONTEXTS);
             assertNotNull(moRequest.getUser());
             
             // Remove support for user authentication to prove the response
@@ -2439,8 +2439,8 @@ public class MessageBuilderSuite {
             requestBuilder.setUserAuthenticationData(USER_AUTH_DATA);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MslObject requestJo = MslTestUtils.toMslObject(encoder, request);
-            final MessageHeader moRequest = (MessageHeader)Header.parseHeader(ctx, requestJo, CRYPTO_CONTEXTS);
+            final MslObject requestMo = MslTestUtils.toMslObject(encoder, request);
+            final MessageHeader moRequest = (MessageHeader)Header.parseHeader(ctx, requestMo, CRYPTO_CONTEXTS);
             assertNotNull(moRequest.getUser());
             
             // Remove support for user authentication to prove the response
@@ -2487,8 +2487,8 @@ public class MessageBuilderSuite {
                 requestBuilder.addKeyRequestData(keyRequestData);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MslObject requestJo = MslTestUtils.toMslObject(encoder, request);
-            final MessageHeader moRequest = (MessageHeader)Header.parseHeader(ctx, requestJo, CRYPTO_CONTEXTS);
+            final MslObject requestMo = MslTestUtils.toMslObject(encoder, request);
+            final MessageHeader moRequest = (MessageHeader)Header.parseHeader(ctx, requestMo, CRYPTO_CONTEXTS);
             assertNotNull(moRequest.getUser());
             
             // Remove support for user authentication to prove the response
@@ -2556,8 +2556,8 @@ public class MessageBuilderSuite {
                 requestBuilder.addKeyRequestData(keyRequestData);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MslObject requestJo = MslTestUtils.toMslObject(encoder, request);
-            final MessageHeader moRequest = (MessageHeader)Header.parseHeader(ctx, requestJo, CRYPTO_CONTEXTS);
+            final MslObject requestMo = MslTestUtils.toMslObject(encoder, request);
+            final MessageHeader moRequest = (MessageHeader)Header.parseHeader(ctx, requestMo, CRYPTO_CONTEXTS);
             assertNotNull(moRequest.getUser());
             
             // Remove support for user authentication to prove the response

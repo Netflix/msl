@@ -20,51 +20,53 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("MasterToken", function() {
+	/** MSL encoder format. */
+	var ENCODER_FORMAT = MslEncoderFormat.JSON;
+	
     /** Milliseconds per second. */
     var MILLISECONDS_PER_SECOND = 1000;
     
-    /** JSON key token data. */
+    /** Key token data. */
     var KEY_TOKENDATA = "tokendata";
-    /** JSON key signature. */
+    /** Key signature. */
     var KEY_SIGNATURE = "signature";
 
     // tokendata
-    /** JSON key renewal window timestamp. */
+    /** Key renewal window timestamp. */
     var KEY_RENEWAL_WINDOW = "renewalwindow";
-    /** JSON key expiration timestamp. */
+    /** Key expiration timestamp. */
     var KEY_EXPIRATION = "expiration";
-    /** JSON key sequence number. */
+    /** Key sequence number. */
     var KEY_SEQUENCE_NUMBER = "sequencenumber";
-    /** JSON key serial number. */
+    /** Key serial number. */
     var KEY_SERIAL_NUMBER = "serialnumber";
-    /** JSON key session data. */
+    /** Key session data. */
     var KEY_SESSIONDATA = "sessiondata";
     
     // sessiondata
-    /** JSON key issuer data. */
+    /** Key issuer data. */
     var KEY_ISSUER_DATA = "issuerdata";
-    /** JSON key identity. */
+    /** Key identity. */
     var KEY_IDENTITY = "identity";
-    /** JSON key symmetric encryption key. */
+    /** Key symmetric encryption key. */
     var KEY_ENCRYPTION_KEY = "encryptionkey";
-    /** JSON key encryption algorithm. */
+    /** Key encryption algorithm. */
     var KEY_ENCRYPTION_ALGORITHM = "encryptionalgorithm";
-    /** JSON key symmetric HMAC key. */
+    /** Key symmetric HMAC key. */
     var KEY_HMAC_KEY = "hmackey";
-    /** JSON key signature key. */
+    /** Key signature key. */
     var KEY_SIGNATURE_KEY = "signaturekey";
-    /** JSON key signature algorithm. */
+    /** Key signature algorithm. */
     var KEY_SIGNATURE_ALGORITHM = "signaturealgorithm";
     
     var RENEWAL_WINDOW = new Date(Date.now() + 120000);
     var EXPIRATION = new Date(Date.now() + 180000);
     var SEQUENCE_NUMBER = 1;
     var SERIAL_NUMBER = 42;
+    var ISSUER_DATA;
     var IDENTITY = MockPresharedAuthenticationFactory.PSK_ESN;
     var ENCRYPTION_KEY;
     var SIGNATURE_KEY;
-    
-    var ISSUER_DATA = { "issuerid": 17 };
     
     /** MSL context. */
     var ctx;
@@ -80,12 +82,15 @@ describe("MasterToken", function() {
             });
             waitsFor(function() { return ctx; }, "ctx", 500);
             runs(function() {
+            	encoder = ctx.getMslEncoderFactory();
+            	ISSUER_DATA = encoder.parseObject(textEncoding$getBytes("{ 'issuerid' : 17 }"));
+            	
                 // These keys won't exist until after the factory is instantiated.
                 ENCRYPTION_KEY = MockPresharedAuthenticationFactory.KPE;
                 SIGNATURE_KEY = MockPresharedAuthenticationFactory.KPH;
+                
+                initialized = true;
             });
-            waitsFor(function() { return ENCRYPTION_KEY && SIGNATURE_KEY; }, "keys", 500);
-            runs(function() { initialized = true; });
         }
     });
 
@@ -109,9 +114,9 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
         
-        var jsonString;
+        var encode;
         runs(function() {
 	        expect(masterToken.isDecrypted()).toBeTruthy();
 	        expect(masterToken.isVerified()).toBeTruthy();
@@ -126,37 +131,52 @@ describe("MasterToken", function() {
 	        expect(masterToken.renewalWindow.getTime() / MILLISECONDS_PER_SECOND).toEqual(Math.floor(RENEWAL_WINDOW.getTime() / MILLISECONDS_PER_SECOND));
 	        expect(masterToken.sequenceNumber).toEqual(SEQUENCE_NUMBER);
 	        expect(masterToken.serialNumber).toEqual(SERIAL_NUMBER);
-	        jsonString = JSON.stringify(masterToken);
-	        expect(jsonString).not.toBeNull();
+	        masterToken.toMslEncoding(encoder, ENCODER_FORMAT, {
+	        	result: function(x) { encode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
         });
+        waitsFor(function() { return encode; }, "encode", 100);
         
-        var joMasterToken;
+        var moMasterToken;
         runs(function() {
-        	var jo = JSON.parse(jsonString);
-            MasterToken$parse(ctx, jo, {
-                result: function(token) { joMasterToken = token; },
+        	expect(encode).not.toBeNull();
+        	
+        	var mo = encoder.parseObject(encode);
+            MasterToken$parse(ctx, mo, {
+                result: function(token) { moMasterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return joMasterToken; }, "joMasterToken not received", 500);
+        waitsFor(function() { return moMasterToken; }, "moMasterToken", 500);
+        
+        var moEncode;
         runs(function() {
-	        expect(joMasterToken.isDecrypted()).toEqual(masterToken.isDecrypted());
-	        expect(joMasterToken.isVerified()).toEqual(masterToken.isVerified());
-	        expect(joMasterToken.isRenewable(null)).toEqual(masterToken.isRenewable(null));
-	        expect(joMasterToken.isExpired(null)).toEqual(masterToken.isExpired(null));
-	        expect(joMasterToken.isNewerThan(masterToken)).toBeFalsy();
-	        expect(masterToken.isNewerThan(joMasterToken)).toBeFalsy();
-	        expect(joMasterToken.encryptionKey.toByteArray()).toEqual(masterToken.encryptionKey.toByteArray());
-	        expect(joMasterToken.expiration.getTime() / MILLISECONDS_PER_SECOND).toEqual(masterToken.expiration.getTime() / MILLISECONDS_PER_SECOND);
-	        expect(joMasterToken.signatureKey.toByteArray()).toEqual(masterToken.signatureKey.toByteArray());
-	        expect(joMasterToken.identity).toEqual(masterToken.identity);
-	        expect(joMasterToken.issuerData).toEqual(masterToken.issuerData);
-	        expect(joMasterToken.renewalWindow.getTime() / MILLISECONDS_PER_SECOND).toEqual(masterToken.renewalWindow.getTime() / MILLISECONDS_PER_SECOND);
-	        expect(joMasterToken.sequenceNumber).toEqual(masterToken.sequenceNumber);
-	        expect(joMasterToken.serialNumber).toEqual(masterToken.serialNumber);
-	        var joJsonString = JSON.stringify(joMasterToken);
-	        expect(joJsonString).not.toBeNull();
-	        expect(joJsonString).toEqual(jsonString);
+	        expect(moMasterToken.isDecrypted()).toEqual(masterToken.isDecrypted());
+	        expect(moMasterToken.isVerified()).toEqual(masterToken.isVerified());
+	        expect(moMasterToken.isRenewable(null)).toEqual(masterToken.isRenewable(null));
+	        expect(moMasterToken.isExpired(null)).toEqual(masterToken.isExpired(null));
+	        expect(moMasterToken.isNewerThan(masterToken)).toBeFalsy();
+	        expect(masterToken.isNewerThan(moMasterToken)).toBeFalsy();
+	        expect(moMasterToken.encryptionKey.toByteArray()).toEqual(masterToken.encryptionKey.toByteArray());
+	        expect(moMasterToken.expiration.getTime() / MILLISECONDS_PER_SECOND).toEqual(masterToken.expiration.getTime() / MILLISECONDS_PER_SECOND);
+	        expect(moMasterToken.signatureKey.toByteArray()).toEqual(masterToken.signatureKey.toByteArray());
+	        expect(moMasterToken.identity).toEqual(masterToken.identity);
+	        expect(moMasterToken.issuerData).toEqual(masterToken.issuerData);
+	        expect(moMasterToken.renewalWindow.getTime() / MILLISECONDS_PER_SECOND).toEqual(masterToken.renewalWindow.getTime() / MILLISECONDS_PER_SECOND);
+	        expect(moMasterToken.sequenceNumber).toEqual(masterToken.sequenceNumber);
+	        expect(moMasterToken.serialNumber).toEqual(masterToken.serialNumber);
+	        
+	        moMasterToken.toMslEncoding(encoder, ENCODER_FORMAT, {
+	        	result: function(x) { moEncode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return moEncode; }, "moEncode", 100);
+	    
+        runs(function() {
+	        expect(moEncode).not.toBeNull();
+	        expect(moEncode).toEqual(encode);
         });
     });
     
@@ -169,7 +189,7 @@ describe("MasterToken", function() {
 	        	error: function(err) { exception = err; },
 	        });
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 500);
+    	waitsFor(function() { return exception; }, "exception", 500);
     	runs(function() {
     		var f = function() { throw exception; };
     		expect(f).toThrow(new MslInternalException());
@@ -185,7 +205,7 @@ describe("MasterToken", function() {
 	            error: function(err) { exception = err; },
 	        });
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 500);
+    	waitsFor(function() { return exception; }, "exception", 500);
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslInternalException());
@@ -201,7 +221,7 @@ describe("MasterToken", function() {
 	            error: function(err) { exception = err; },
 	        });
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 500);
+    	waitsFor(function() { return exception; }, "exception", 500);
     	runs(function() {
     		var f = function() { throw exception; };
     		expect(f).toThrow(new MslInternalException());
@@ -217,7 +237,7 @@ describe("MasterToken", function() {
 	            error: function(err) { exception = err; },
 	        });
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 500);
+    	waitsFor(function() { return exception; }, "exception", 500);
     	runs(function() {
     		var f = function() { throw exception; };
     		expect(f).toThrow(new MslInternalException());
@@ -235,14 +255,14 @@ describe("MasterToken", function() {
 	            error: function(err) { exception = err; },
 	        });
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 500);
+    	waitsFor(function() { return exception; }, "exception", 500);
     	runs(function() {
     		var f = function() { throw exception; };
     		expect(f).toThrow(new MslInternalException());
     	});
     });
     
-    it("inconsistent expiration JSON", function() {
+    it("inconsistent expiration parse", function() {
     	var masterToken;
         runs(function() {
             MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
@@ -250,25 +270,31 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(masterToken);
-	        var jo = JSON.parse(jsonString);
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        tokendataMo.put(KEY_EXPIRATION, (Date.now() / MILLISECONDS_PER_SECOND) - 1);
+	        tokendataMo.put(KEY_RENEWAL_WINDOW, Date.now() / MILLISECONDS_PER_SECOND);
+	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
 	        
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        tokendataJo[KEY_EXPIRATION] = (Date.now() / MILLISECONDS_PER_SECOND) - 1;
-	        tokendataJo[KEY_RENEWAL_WINDOW] = Date.now() / MILLISECONDS_PER_SECOND;
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
-	        
-	        MasterToken$parse(ctx, jo, {
+	        MasterToken$parse(ctx, mo, {
 	        	result: function() {},
 	        	error: function(err) { exception = err; },
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 500);
+        waitsFor(function() { return exception; }, "exception", 500);
     	
     	runs(function() {
     	    var f = function() { throw exception; };
@@ -284,24 +310,30 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        
+        var mo;
         runs(function() {
         	expect(masterToken.issuerData).toBeNull();
+        	
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
         });
+        waitsFor(function() { return mo; }, "mo", 100);
         
-        var joMasterToken;
+        var moMasterToken;
         runs(function() {
-            var jsonString = JSON.stringify(masterToken);
-            var jo = JSON.parse(jsonString);
-            
-            MasterToken$parse(ctx, jo, {
-                result: function(token) { joMasterToken = token; },
+            MasterToken$parse(ctx, mo, {
+                result: function(token) { moMasterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return joMasterToken; }, "joMasterToken not received", 500);
+        waitsFor(function() { return moMasterToken; }, "moMasterToken", 500);
+        
         runs(function() {
-        	expect(joMasterToken.issuerData).toBeUndefined();
+        	expect(moMasterToken.issuerData).toBeUndefined();
         });
     });
     
@@ -313,25 +345,31 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(masterToken);
-	        var jo = JSON.parse(jsonString);
+        	mo.remove(KEY_TOKENDATA);
 	
-	        expect(jo[KEY_TOKENDATA]).not.toBeNull();
-	        delete jo[KEY_TOKENDATA];
-	
-	        MasterToken$parse(ctx, jo, {
+	        MasterToken$parse(ctx, mo, {
 	        	result: function() {},
 	        	error: function(err) { exception = err; },
 	        });
     	});
-        waitsFor(function() { return exception; }, "exception not received", 500);
+        waitsFor(function() { return exception; }, "exception", 500);
+        
     	runs(function() {
     	    var f = function() { throw exception; };
-    	    expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+    	    expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
     	});
     });
     
@@ -343,23 +381,30 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(masterToken);
-	        var jo = JSON.parse(jsonString);
-	        
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        ++tokendata[0];
-	        jo[KEY_TOKENDATA] = base64$encode(tokendata);
+	        mo.put(KEY_TOKENDATA, tokendata);
 	        
-	        MasterToken$parse(ctx, jo, {
+	        MasterToken$parse(ctx, mo, {
 	        	result: function() {},
 	        	error: function(err) { exception = err; },
 	        });
     	});
-        waitsFor(function() { return exception; }, "exception not received", 500);
+        waitsFor(function() { return exception; }, "exception", 500);
+        
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslEncodingException(MslError.NONE));
@@ -374,25 +419,31 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(masterToken);
-	        var jo = JSON.parse(jsonString);
+	        mo.remove(KEY_SIGNATURE);
 	        
-	        expect(jo[KEY_SIGNATURE]).not.toBeNull();
-	        delete jo[KEY_SIGNATURE];
-	        
-	        MasterToken$parse(ctx, jo, {
+	        MasterToken$parse(ctx, mo, {
 	        	result: function() {},
 	        	error: function(err) { exception = err; }
 	        });
     	});
-        waitsFor(function() { return exception; }, "exception not received", 500);
+        waitsFor(function() { return exception; }, "exception", 500);
+        
     	runs(function() {
     	    var f = function() { throw exception; };
-    	    expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+    	    expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
     	});
     });
     
@@ -404,25 +455,31 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(masterToken);
-	        var jo = JSON.parse(jsonString);
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        tokendataMo.remove(KEY_RENEWAL_WINDOW);
+	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
 	        
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        expect(tokendataJo[KEY_RENEWAL_WINDOW]).not.toBeNull();
-	        delete tokendataJo[KEY_RENEWAL_WINDOW];
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
-	        
-	        MasterToken$parse(ctx, jo, {
+	        MasterToken$parse(ctx, mo, {
 	        	result: function() {},
 	        	error: function(err) { exception = err; },
 	        });
     	});
-        waitsFor(function() { return exception; }, "exception not received", 500);
+        waitsFor(function() { return exception; }, "exception", 500);
+        
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslEncodingException(MslError.MASTERTOKEN_TOKENDATA_PARSE_ERROR));
@@ -437,24 +494,31 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(masterToken);
-	        var jo = JSON.parse(jsonString);
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        tokendataMo.put(KEY_RENEWAL_WINDOW, "x");
+	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
 	        
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        tokendataJo[KEY_RENEWAL_WINDOW] = "x";
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
-	        
-	        MasterToken$parse(ctx, jo, {
+	        MasterToken$parse(ctx, mo, {
 	        	result: function() {},
 	        	error: function(err) { exception = err; }
 	        });
     	});
-        waitsFor(function() { return exception; }, "exception not received", 500);
+        waitsFor(function() { return exception; }, "exception", 500);
+        
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslEncodingException(MslError.MASTERTOKEN_TOKENDATA_PARSE_ERROR));
@@ -469,25 +533,31 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(masterToken);
-	        var jo = JSON.parse(jsonString);
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        tokendataMo.remove(KEY_EXPIRATION);
+	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
 	        
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        expect(tokendataJo[KEY_EXPIRATION]).not.toBeNull();
-	        delete tokendataJo[KEY_EXPIRATION];
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
-	        
-	        MasterToken$parse(ctx, jo, {
+	        MasterToken$parse(ctx, mo, {
 	        	result: function() {},
 	        	error: function(err) { exception = err; },
 	        });
     	});
-        waitsFor(function() { return exception; }, "exception not received", 500);
+        waitsFor(function() { return exception; }, "exception", 500);
+        
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslEncodingException(MslError.MASTERTOKEN_TOKENDATA_PARSE_ERROR));
@@ -502,24 +572,31 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(masterToken);
-	        var jo = JSON.parse(jsonString);
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        tokendataMo.put(KEY_EXPIRATION, "x");
+	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
 	        
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        tokendataJo[KEY_EXPIRATION] = "x";
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
-	        
-	        MasterToken$parse(ctx, jo, {
+	        MasterToken$parse(ctx, mo, {
 	        	result: function() {},
 	        	error: function(err) { exception = err; }
 	        });
     	});
-        waitsFor(function() { return exception; }, "exception not received", 500);
+        waitsFor(function() { return exception; }, "exception", 500);
+        
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslEncodingException(MslError.MASTERTOKEN_TOKENDATA_PARSE_ERROR));
@@ -534,25 +611,31 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(masterToken);
-	        var jo = JSON.parse(jsonString);
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        tokendataMo.remove(KEY_SEQUENCE_NUMBER);
+	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
 	        
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        expect(tokendataJo[KEY_SEQUENCE_NUMBER]).not.toBeNull();
-	        delete tokendataJo[KEY_SEQUENCE_NUMBER];
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
-	        
-	        MasterToken$parse(ctx, jo, {
+	        MasterToken$parse(ctx, mo, {
 	        	result: function() {},
 	        	error: function(err) { exception = err; }
 	        });
     	});
-        waitsFor(function() { return exception; }, "exception not received", 500);
+        waitsFor(function() { return exception; }, "exception", 500);
+        
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslEncodingException(MslError.MASTERTOKEN_TOKENDATA_PARSE_ERROR));
@@ -567,24 +650,31 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(masterToken);
-	        var jo = JSON.parse(jsonString);
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        tokendataMo.put(KEY_SEQUENCE_NUMBER, "x");
+	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
 	        
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        tokendataJo[KEY_SEQUENCE_NUMBER] = "x";
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
-	        
-	        MasterToken$parse(ctx, jo, {
+	        MasterToken$parse(ctx, mo, {
 	        	result: function() {},
 	        	error: function(err) { exception = err; }
 	        });
     	});
-        waitsFor(function() { return exception; }, "exception not received", 500);
+        waitsFor(function() { return exception; }, "exception", 500);
+        
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslEncodingException(MslError.MASTERTOKEN_TOKENDATA_PARSE_ERROR));
@@ -599,24 +689,31 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(masterToken);
-	        var jo = JSON.parse(jsonString);
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        tokendataMo.put(KEY_SEQUENCE_NUMBER, -1);
+	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
 	        
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        tokendataJo[KEY_SEQUENCE_NUMBER] = -1;
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
-	        
-	        MasterToken$parse(ctx, jo, {
+	        MasterToken$parse(ctx, mo, {
 	        	result: function() {},
 	        	error: function(err) { exception = err; },
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 500);
+        waitsFor(function() { return exception; }, "exception", 500);
+        
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslException(MslError.MASTERTOKEN_SEQUENCE_NUMBER_OUT_OF_RANGE));
@@ -631,24 +728,31 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(masterToken);
-	        var jo = JSON.parse(jsonString);
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        tokendataMo.put(KEY_SEQUENCE_NUMBER, MslConstants$MAX_LONG_VALUE + 2);
+	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
 	        
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        tokendataJo[KEY_SEQUENCE_NUMBER] = MslConstants$MAX_LONG_VALUE + 2;
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
-	        
-	        MasterToken$parse(ctx, jo, {
+	        MasterToken$parse(ctx, mo, {
 	        	result: function() {},
 	        	error: function(err) { exception = err; },
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 500);
+        waitsFor(function() { return exception; }, "exception", 500);
+        
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslException(MslError.MASTERTOKEN_SEQUENCE_NUMBER_OUT_OF_RANGE));
@@ -663,25 +767,31 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(masterToken);
-	        var jo = JSON.parse(jsonString);
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        tokendataMo.remove(KEY_SERIAL_NUMBER);
+	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
 	        
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        expect(tokendataJo[KEY_SERIAL_NUMBER]).not.toBeNull();
-	        delete tokendataJo[KEY_SERIAL_NUMBER];
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
-	        
-	        MasterToken$parse(ctx, jo, {
+	        MasterToken$parse(ctx, mo, {
 	        	result: function() {},
 	        	error: function(err) { exception = err; },
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 500);
+        waitsFor(function() { return exception; }, "exception", 500);
+        
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslEncodingException(MslError.MASTERTOKEN_TOKENDATA_PARSE_ERROR));
@@ -697,24 +807,31 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
 
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(masterToken);
-	        var jo = JSON.parse(jsonString);
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        tokendataMo.put(KEY_SERIAL_NUMBER, "x");
+	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
 	        
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        tokendataJo[KEY_SERIAL_NUMBER] = "x";
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
-	        
-	        MasterToken$parse(ctx, jo, {
+	        MasterToken$parse(ctx, mo, {
 	        	result: function() {},
 	        	error: function(err) { exception = err; },
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 500);
+        waitsFor(function() { return exception; }, "exception", 500);
+        
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslEncodingException(MslError.MASTERTOKEN_TOKENDATA_PARSE_ERROR));
@@ -729,24 +846,31 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(masterToken);
-	        var jo = JSON.parse(jsonString);
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        tokendataMo.put(KEY_SERIAL_NUMBER, -1);
+	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
 	        
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        tokendataJo[KEY_SERIAL_NUMBER] = -1;
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
-	        
-	        MasterToken$parse(ctx, jo, {
+	        MasterToken$parse(ctx, mo, {
 	        	result: function() {},
 	        	error: function(err) { exception = err; },
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 500);
+        waitsFor(function() { return exception; }, "exception", 500);
+        
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslException(MslError.MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE));
@@ -761,24 +885,31 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(masterToken);
-	        var jo = JSON.parse(jsonString);
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        tokendataMo.put(KEY_SERIAL_NUMBER, MslConstants$MAX_LONG_VALUE + 2);
+	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
 	        
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        tokendataJo[KEY_SERIAL_NUMBER] = MslConstants$MAX_LONG_VALUE + 2;
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
-	        
-	        MasterToken$parse(ctx, jo, {
+	        MasterToken$parse(ctx, mo, {
 	        	result: function() {},
 	        	error: function(err) { exception = err; },
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 500);
+        waitsFor(function() { return exception; }, "exception", 500);
+        
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslException(MslError.MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE));
@@ -793,25 +924,31 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(masterToken);
-	        var jo = JSON.parse(jsonString);
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        tokendataMo.remove(KEY_SESSIONDATA);
+	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
 	        
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        expect(tokendataJo[KEY_SESSIONDATA]).not.toBeNull();
-	        delete tokendataJo[KEY_SESSIONDATA];
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
-	        
-	        MasterToken$parse(ctx, jo, {
+	        MasterToken$parse(ctx, mo, {
 	        	result: function() {},
 	        	error: function(err) { exception = err; },
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 500);
+        waitsFor(function() { return exception; }, "exception", 500);
+        
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslEncodingException(MslError.MASTERTOKEN_TOKENDATA_PARSE_ERROR));
@@ -826,25 +963,31 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(masterToken);
-	        var jo = JSON.parse(jsonString);
-	        
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        tokendataJo[KEY_SESSIONDATA] = "x";
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        tokendataMo.put(KEY_SESSIONDATA, "x");
 	        
 	        var cryptoContext = ctx.getMslCryptoContext();
-	        var modifiedTokendata = textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET);
+	        var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
 	        cryptoContext.sign(modifiedTokendata, {
 	        	result: function(signature) {
-	        		jo[KEY_TOKENDATA] = base64$encode(modifiedTokendata);
-	    	        jo[KEY_SIGNATURE] = base64$encode(signature);
+	        		mo.put(KEY_TOKENDATA, modifiedTokendata);
+	    	        mo.put(KEY_SIGNATURE, signature);
 	    	        
-	    	        MasterToken$parse(ctx, jo, {
+	    	        MasterToken$parse(ctx, mo, {
 	    	        	result: function() {},
 	    	        	error: function(err) { exception = err; },
 	    	        });	
@@ -852,7 +995,8 @@ describe("MasterToken", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 500);
+        waitsFor(function() { return exception; }, "exception", 500);
+        
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslException(MslError.MASTERTOKEN_SESSIONDATA_INVALID));
@@ -867,26 +1011,32 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(masterToken);
-	        var jo = JSON.parse(jsonString);
-	        
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
 	        
 	        var cryptoContext = ctx.getMslCryptoContext();
 	        var ciphertext = new Uint8Array(0);
-	        tokendataJo[KEY_SESSIONDATA] = base64$encode(ciphertext);
-	        var modifiedTokendata = textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET);
+	        tokendataMo.put(KEY_SESSIONDATA, ciphertext);
+	        var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
 	        cryptoContext.sign(modifiedTokendata, {
 	        	result: function(signature) {
-	    	        jo[KEY_TOKENDATA] = base64$encode(modifiedTokendata);
-	    	        jo[KEY_SIGNATURE] = base64$encode(signature);
+	    	        mo.put(KEY_TOKENDATA, modifiedTokendata);
+	    	        mo.put(KEY_SIGNATURE, signature);
 	    	        
-	    	        MasterToken$parse(ctx, jo, {
+	    	        MasterToken$parse(ctx, mo, {
 	    	        	result: function() {},
 	    	        	error: function(err) { exception = err; },
 	    	        });
@@ -894,7 +1044,8 @@ describe("MasterToken", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 500);
+        waitsFor(function() { return exception; }, "exception", 500);
+        
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslException(MslError.MASTERTOKEN_SESSIONDATA_MISSING));
@@ -909,28 +1060,34 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(masterToken);
-	        var jo = JSON.parse(jsonString);
-	        
 	        // This is testing session data that is verified but corrupt.
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        var sessiondata = base64$decode(tokendataJo[KEY_SESSIONDATA]);
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        var sessiondata = base64$decode(tokendataMo[KEY_SESSIONDATA]);
 	        ++sessiondata[sessiondata.length-1];
-	        tokendataJo[KEY_SESSIONDATA] = base64$encode(sessiondata);
+	        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
 	        
 	        var cryptoContext = ctx.getMslCryptoContext();
-	        var modifiedTokendata = textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET);
+	        var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
 	        cryptoContext.sign(modifiedTokendata, {
 	            result: function(signature) {
-	                jo[KEY_TOKENDATA] = base64$encode(modifiedTokendata);
-	                jo[KEY_SIGNATURE] = base64$encode(signature);
+	                mo.put(KEY_TOKENDATA, modifiedTokendata);
+	                mo.put(KEY_SIGNATURE, signature);
 
-	                MasterToken$parse(ctx, jo, {
+	                MasterToken$parse(ctx, mo, {
 	                    result: function() {},
 	    	        	error: function(err) { exception = err; },
 	    	        });	        		
@@ -938,7 +1095,8 @@ describe("MasterToken", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 500);
+        waitsFor(function() { return exception; }, "exception", 500);
+        
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslCryptoException(MslError.NONE));
@@ -953,43 +1111,56 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
-
-        var jsonString;
-        var joMasterToken;
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        
+        var mo;
         runs(function() {
-	        jsonString = JSON.stringify(masterToken);
-	        var jo = JSON.parse(jsonString);
-	        
-	        var signature = base64$decode(jo[KEY_SIGNATURE]);
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+
+        var moMasterToken;
+        runs(function() {
+	        var signature = mo.getBytes(KEY_SIGNATURE);
 	        ++signature[0];
-	        jo[KEY_SIGNATURE] = base64$encode(signature);
+	        mo.put(KEY_SIGNATURE, signature);
 	        
-            MasterToken$parse(ctx, jo, {
-                result: function(token) { joMasterToken = token; },
+            MasterToken$parse(ctx, mo, {
+                result: function(token) { moMasterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return jsonString && joMasterToken; }, "joMasterToken not received", 500);
+        waitsFor(function() { return moMasterToken; }, "moMasterToken", 500);
+        
+        var moEncode;
+        runs(function() {
+	        expect(moMasterToken.isDecrypted()).toBeFalsy();
+	        expect(moMasterToken.isVerified()).toBeFalsy();
+	        expect(moMasterToken.isRenewable(null)).not.toEqual(masterToken.isRenewable(null));
+	        expect(moMasterToken.isExpired(null)).toEqual(masterToken.isExpired(null));
+	        expect(moMasterToken.isNewerThan(masterToken)).toBeFalsy();
+	        expect(masterToken.isNewerThan(moMasterToken)).toBeFalsy();
+	        expect(moMasterToken.encryptionKey).toBeNull();
+	        expect(moMasterToken.expiration.getTime() / MILLISECONDS_PER_SECOND).toEqual(masterToken.expiration.getTime() / MILLISECONDS_PER_SECOND);
+	        expect(moMasterToken.signatureKey).toBeNull();
+	        expect(moMasterToken.identity).toBeNull();
+	        expect(moMasterToken.issuerData).toBeNull();
+	        expect(moMasterToken.renewalWindow.getTime() / MILLISECONDS_PER_SECOND).toEqual(masterToken.renewalWindow.getTime() / MILLISECONDS_PER_SECOND);
+	        expect(moMasterToken.sequenceNumber).toEqual(masterToken.sequenceNumber);
+	        expect(moMasterToken.serialNumber).toEqual(masterToken.serialNumber);
+	        moMasterToken.toMslEncoding(encoder, ENCODER_FORMAT, {
+	        	result: function(x) { moEncode = x; },
+	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return moEncode; }, "moEncode", 100);
         
         runs(function() {
-	        expect(joMasterToken.isDecrypted()).toBeFalsy();
-	        expect(joMasterToken.isVerified()).toBeFalsy();
-	        expect(joMasterToken.isRenewable(null)).not.toEqual(masterToken.isRenewable(null));
-	        expect(joMasterToken.isExpired(null)).toEqual(masterToken.isExpired(null));
-	        expect(joMasterToken.isNewerThan(masterToken)).toBeFalsy();
-	        expect(masterToken.isNewerThan(joMasterToken)).toBeFalsy();
-	        expect(joMasterToken.encryptionKey).toBeNull();
-	        expect(joMasterToken.expiration.getTime() / MILLISECONDS_PER_SECOND).toEqual(masterToken.expiration.getTime() / MILLISECONDS_PER_SECOND);
-	        expect(joMasterToken.signatureKey).toBeNull();
-	        expect(joMasterToken.identity).toBeNull();
-	        expect(joMasterToken.issuerData).toBeNull();
-	        expect(joMasterToken.renewalWindow.getTime() / MILLISECONDS_PER_SECOND).toEqual(masterToken.renewalWindow.getTime() / MILLISECONDS_PER_SECOND);
-	        expect(joMasterToken.sequenceNumber).toEqual(masterToken.sequenceNumber);
-	        expect(joMasterToken.serialNumber).toEqual(masterToken.serialNumber);
-	        var joJsonString = JSON.stringify(joMasterToken);
-	        expect(joJsonString).not.toBeNull();
-	        expect(joJsonString).not.toEqual(jsonString);
+	        expect(moEncode).not.toBeNull();
+	        expect(moEncode).not.toEqual(encode);
         });
     });
     
@@ -1002,39 +1173,44 @@ describe("MasterToken", function() {
     		});
     	});
     	waitsFor(function() { return masterToken; }, "masterToken", 500);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
     	
     	var exception;
     	runs(function() {
-	        var jsonString = JSON.stringify(masterToken);
-	        var jo = JSON.parse(jsonString);
-	        
 	        var cryptoContext = ctx.getMslCryptoContext();
 	        
 	        // Before modifying the session data we need to decrypt it.
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        var ciphertext = base64$decode(tokendataJo[KEY_SESSIONDATA]);
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        var ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
 	        cryptoContext.decrypt(ciphertext, {
 	        	result: function(plaintext) {
-	        		var sessiondataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+	        		var sessiondataMo = encoder.parseObject(plaintext);
 	    	        
 	    	        // After modifying the session data we need to encrypt it.
-	    	        sessiondataJo[KEY_ISSUER_DATA] = "x";
-	    	        var json = JSON.stringify(sessiondataJo);
-	    	        plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+	    	        sessiondataMo.put(KEY_ISSUER_DATA, "x");
+	    	        plaintext = encoder.encodeObject(sessiondataMo, ENCODER_FORMAT);
 	    	        cryptoContext.encrypt(plaintext, {
 	    	        	result: function(sessiondata) {
-	    	    	        tokendataJo[KEY_SESSIONDATA] = base64$encode(sessiondata);
+	    	    	        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
 	    	    	        
 	    	    	        // The tokendata must be signed otherwise the session data will not be
 	    	    	        // processed.
-	    	    	        var modifiedTokendata = textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET);
+	    	    	        var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
 	    	    	        cryptoContext.sign(modifiedTokendata, {
 	    	    	        	result: function(signature) {
-	    	    	    	        jo[KEY_TOKENDATA] = base64$encode(modifiedTokendata);
-	    	    	    	        jo[KEY_SIGNATURE] = base64$encode(signature);
+	    	    	    	        mo.put(KEY_TOKENDATA, modifiedTokendata);
+	    	    	    	        mo.put(KEY_SIGNATURE, signature);
 	    	    	    	        
-	    	    	    	        MasterToken$parse(ctx, jo, {
+	    	    	    	        MasterToken$parse(ctx, mo, {
 	    	    	    	        	result: function() {},
 	    	    	    	        	error: function(err) { exception = err; }
 	    	    	    	        });	    	    	        		
@@ -1048,7 +1224,7 @@ describe("MasterToken", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-    	waitsFor(function() { return exception; }, "exception not received", 500);
+    	waitsFor(function() { return exception; }, "exception", 500);
 	    runs(function() {
 	        var f = function() { throw exception; };
 	        expect(f).toThrow(new MslEncodingException(MslError.MASTERTOKEN_SESSIONDATA_PARSE_ERROR));
@@ -1063,41 +1239,45 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(masterToken);
-	        var jo = JSON.parse(jsonString);
-	        
 	        var cryptoContext = ctx.getMslCryptoContext();
 	        
 	        // Before modifying the session data we need to decrypt it.
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        var ciphertext = base64$decode(tokendataJo[KEY_SESSIONDATA]);
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        var ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
 	        cryptoContext.decrypt(ciphertext, {
 	        	result: function(plaintext) {
-	        		var sessiondataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+	        		var sessiondataMo = encoder.parseObject(plaintext);
 	    	        
 	    	        // After modifying the session data we need to encrypt it.
-	    	        expect(sessiondataJo[KEY_IDENTITY]).not.toBeNull();
-	    	        delete sessiondataJo[KEY_IDENTITY];
-	    	        var json = JSON.stringify(sessiondataJo);
-	    	        plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+	    	        sessiondataMo.remove(KEY_IDENTITY);
+	    	        plaintext = encoder.encodeObject(sessiondataMo, ENCODER_FORMAT);
 	    	        cryptoContext.encrypt(plaintext, {
 	    	        	result: function(sessiondata) {
-	    	    	        tokendataJo[KEY_SESSIONDATA] = base64$encode(sessiondata);
+	    	    	        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
 	    	    	        
 	    	    	        // The tokendata must be signed otherwise the session data will not be
 	    	    	        // processed.
-	    	    	        var modifiedTokendata = textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET);
+	    	    	        var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
 	    	    	        cryptoContext.sign(modifiedTokendata, {
 	    	    	        	result: function(signature) {
-	    	    	    	        jo[KEY_TOKENDATA] = base64$encode(modifiedTokendata);
-	    	    	    	        jo[KEY_SIGNATURE] = base64$encode(signature);
+	    	    	    	        mo.put(KEY_TOKENDATA, modifiedTokendata);
+	    	    	    	        mo.put(KEY_SIGNATURE, signature);
 	    	    	    	        
-	    	    	    	        MasterToken$parse(ctx, jo, {
+	    	    	    	        MasterToken$parse(ctx, mo, {
 	    	    	    	        	result: function() {},
 	    	    	    	        	error: function(err) { exception = err; }
 	    	    	    	        });
@@ -1111,7 +1291,7 @@ describe("MasterToken", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 500);
+        waitsFor(function() { return exception; }, "exception", 500);
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslEncodingException(MslError.MASTERTOKEN_SESSIONDATA_PARSE_ERROR));
@@ -1126,41 +1306,45 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(masterToken);
-	        var jo = JSON.parse(jsonString);
-	        
 	        var cryptoContext = ctx.getMslCryptoContext();
 	        
 	        // Before modifying the session data we need to decrypt it.
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        var ciphertext = base64$decode(tokendataJo[KEY_SESSIONDATA]);
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        var ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
 	        cryptoContext.decrypt(ciphertext, {
 	        	result: function(plaintext) {
-	        		var sessiondataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+	        		var sessiondataMo = encoder.parseObject(plaintext);
 	    	        
 	    	        // After modifying the session data we need to encrypt it.
-	    	        expect(sessiondataJo[KEY_ENCRYPTION_KEY]).not.toBeNull();
-	    	        delete sessiondataJo[KEY_ENCRYPTION_KEY];
-	    	        var json = JSON.stringify(sessiondataJo);
-	    	        plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+	    	        sessiondataMo.remove(KEY_ENCRYPTION_KEY);
+	    	        plaintext = encoder.encodeObject(sessiondataMo, ENCODER_FORMAT);
 	    	        cryptoContext.encrypt(plaintext, {
 	    	        	result: function(sessiondata) {
-	    	        		tokendataJo[KEY_SESSIONDATA] = base64$encode(sessiondata);
+	    	        		tokendataMo.put(KEY_SESSIONDATA, sessiondata);
 	    	    	        
 	    	    	        // The tokendata must be signed otherwise the session data will not be
 	    	    	        // processed.
-	    	    	        var modifiedTokendata = textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET);
+	    	    	        var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
 	    	    	        cryptoContext.sign(modifiedTokendata, {
 	    	    	        	result: function(signature) {
-	    	    	        		jo[KEY_TOKENDATA] = base64$encode(modifiedTokendata);
-	    	    	    	        jo[KEY_SIGNATURE] = base64$encode(signature);
+	    	    	        		mo.put(KEY_TOKENDATA, modifiedTokendata);
+	    	    	    	        mo.put(KEY_SIGNATURE, signature);
 	    	    	    	        
-	    	    	    	        MasterToken$parse(ctx, jo, {
+	    	    	    	        MasterToken$parse(ctx, mo, {
 	    	    	    	        	result: function() {},
 	    	    	    	        	error: function(err) { exception = err; }
 	    	    	    	        });	
@@ -1174,7 +1358,7 @@ describe("MasterToken", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 500);
+        waitsFor(function() { return exception; }, "exception", 500);
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslEncodingException(MslError.MASTERTOKEN_SESSIONDATA_PARSE_ERROR));
@@ -1189,40 +1373,45 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(masterToken);
-	        var jo = JSON.parse(jsonString);
-	        
 	        var cryptoContext = ctx.getMslCryptoContext();
 	        
 	        // Before modifying the session data we need to decrypt it.
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        var ciphertext = base64$decode(tokendataJo[KEY_SESSIONDATA]);
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        var ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
 	        cryptoContext.decrypt(ciphertext, {
 	        	result: function(plaintext) {
-	        		var sessiondataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+	        		var sessiondataMo = encoder.parseObject(plaintext);
 	    	        
 	    	        // After modifying the session data we need to encrypt it.
-	    	        sessiondataJo[KEY_ENCRYPTION_KEY] = "";
-	    	        var json = JSON.stringify(sessiondataJo);
-	    	        plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+	    	        sessiondataMo.put(KEY_ENCRYPTION_KEY, "");
+	    	        plaintext = encoder.encodeObject(sessiondataMo, ENCODER_FORMAT);
 	    	        cryptoContext.encrypt(plaintext, {
 	    	        	result: function(sessiondata) {
-	    	        		tokendataJo[KEY_SESSIONDATA] = base64$encode(sessiondata);
+	    	        		tokendataMo.put(KEY_SESSIONDATA, sessiondata);
 	    	    	        
 	    	    	        // The tokendata must be signed otherwise the session data will not be
 	    	    	        // processed.
-	    	    	        var modifiedTokendata = textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET);
+	    	    	        var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
 	    	    	        cryptoContext.sign(modifiedTokendata, {
 	    	    	        	result: function(signature) {
-	    	    	        		jo[KEY_TOKENDATA] = base64$encode(modifiedTokendata);
-	    	    	    	        jo[KEY_SIGNATURE] = base64$encode(signature);
+	    	    	        		mo.put(KEY_TOKENDATA, modifiedTokendata);
+	    	    	    	        mo.put(KEY_SIGNATURE, signature);
 	    	    	    	        
-	    	    	    	        MasterToken$parse(ctx, jo, {
+	    	    	    	        MasterToken$parse(ctx, mo, {
 	    	    	    	        	result: function() {},
 	    	    	    	        	error: function(err) { exception = err; }
 	    	    	    	        });	
@@ -1236,7 +1425,7 @@ describe("MasterToken", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 500);
+        waitsFor(function() { return exception; }, "exception", 500);
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslCryptoException(MslError.MASTERTOKEN_KEY_CREATION_ERROR));
@@ -1251,42 +1440,46 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
         
-        var joMasterToken;
+        var mo;
         runs(function() {
-            var jsonString = JSON.stringify(masterToken);
-            var jo = JSON.parse(jsonString);
-            
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var moMasterToken;
+        runs(function() {
             var cryptoContext = ctx.getMslCryptoContext();
             
             // Before modifying the session data we need to decrypt it.
-            var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-            var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-            var ciphertext = base64$decode(tokendataJo[KEY_SESSIONDATA]);
+            var tokendata = mo.getBytes(KEY_TOKENDATA);
+            var tokendataMo = encoder.parseObject(tokendata);
+            var ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
             cryptoContext.decrypt(ciphertext, {
                 result: function(plaintext) {
-                    var sessiondataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+                    var sessiondataMo = encoder.parseObject(plaintext);
                     
                     // After modifying the session data we need to encrypt it.
-                    expect(sessiondataJo[KEY_ENCRYPTION_ALGORITHM]).not.toBeNull();
-                    delete sessiondataJo[KEY_ENCRYPTION_ALGORITHM];
-                    var json = JSON.stringify(sessiondataJo);
-                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    sessiondataMo.remove(KEY_ENCRYPTION_ALGORITHM);
+                    plaintext = encoder.encodeObject(sessiondataMo, ENCODER_FORMAT);
                     cryptoContext.encrypt(plaintext, {
                         result: function(sessiondata) {
-                            tokendataJo[KEY_SESSIONDATA] = base64$encode(sessiondata);
+                            tokendataMo.put(KEY_SESSIONDATA, sessiondata);
                             
                             // The tokendata must be signed otherwise the session data will not be
                             // processed.
-                            var modifiedTokendata = textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET);
+                            var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
                             cryptoContext.sign(modifiedTokendata, {
                                 result: function(signature) {
-                                    jo[KEY_TOKENDATA] = base64$encode(modifiedTokendata);
-                                    jo[KEY_SIGNATURE] = base64$encode(signature);
+                                    mo.put(KEY_TOKENDATA, modifiedTokendata);
+                                    mo.put(KEY_SIGNATURE, signature);
                                     
-                                    MasterToken$parse(ctx, jo, {
-                                        result: function(x) { joMasterToken = x; },
+                                    MasterToken$parse(ctx, mo, {
+                                        result: function(x) { moMasterToken = x; },
                                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                                     }); 
                                 },
@@ -1299,11 +1492,11 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return joMasterToken; }, "joMasterToken not received", 500);
+        waitsFor(function() { return moMasterToken; }, "moMasterToken", 500);
         
         runs(function() {
             // Confirm default algorithm.
-            var joEncryptionKey = joMasterToken.encryptionKey;
+            var joEncryptionKey = moMasterToken.encryptionKey;
             expect(MslTestUtils$Algorithm.equals(WebCryptoAlgorithm.AES_CBC, joEncryptionKey.algorithm)).toBeTruthy();
         });
     });
@@ -1316,40 +1509,45 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-            var jsonString = JSON.stringify(masterToken);
-            var jo = JSON.parse(jsonString);
-            
             var cryptoContext = ctx.getMslCryptoContext();
             
             // Before modifying the session data we need to decrypt it.
-            var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-            var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-            var ciphertext = base64$decode(tokendataJo[KEY_SESSIONDATA]);
+            var tokendata = mo.getBytes(KEY_TOKENDATA);
+            var tokendataMo = encoder.parseObject(tokendata);
+            var ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
             cryptoContext.decrypt(ciphertext, {
                 result: function(plaintext) {
-                    var sessiondataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+                    var sessiondataMo = encoder.parseObject(plaintext);
                     
                     // After modifying the session data we need to encrypt it.
-                    sessiondataJo[KEY_ENCRYPTION_ALGORITHM] = "x";
-                    var json = JSON.stringify(sessiondataJo);
-                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    sessiondataMo.put(KEY_ENCRYPTION_ALGORITHM, "x");
+                    plaintext = encoder.encodeObject(sessiondataMo, ENCODER_FORMAT);
                     cryptoContext.encrypt(plaintext, {
                         result: function(sessiondata) {
-                            tokendataJo[KEY_SESSIONDATA] = base64$encode(sessiondata);
+                            tokendataMo.put(KEY_SESSIONDATA, sessiondata);
                             
                             // The tokendata must be signed otherwise the session data will not be
                             // processed.
-                            var modifiedTokendata = textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET);
+                            var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
                             cryptoContext.sign(modifiedTokendata, {
                                 result: function(signature) {
-                                    jo[KEY_TOKENDATA] = base64$encode(modifiedTokendata);
-                                    jo[KEY_SIGNATURE] = base64$encode(signature);
+                                    mo.put(KEY_TOKENDATA, modifiedTokendata);
+                                    mo.put(KEY_SIGNATURE, signature);
                                     
-                                    MasterToken$parse(ctx, jo, {
+                                    MasterToken$parse(ctx, mo, {
                                         result: function() {},
                                         error: function(e) { exception = e; }
                                     }); 
@@ -1363,7 +1561,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return exception; }, "exception not received", 500);
+        waitsFor(function() { return exception; }, "exception", 500);
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslCryptoException(MslError.UNIDENTIFIED_ALGORITHM));
@@ -1378,42 +1576,46 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
         
-        var joMasterToken;
+        var mo;
         runs(function() {
-            var jsonString = JSON.stringify(masterToken);
-            var jo = JSON.parse(jsonString);
-            
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var moMasterToken;
+        runs(function() {
             var cryptoContext = ctx.getMslCryptoContext();
             
             // Before modifying the session data we need to decrypt it.
-            var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-            var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-            var ciphertext = base64$decode(tokendataJo[KEY_SESSIONDATA]);
+            var tokendata = mo.getBytes(KEY_TOKENDATA);
+            var tokendataMo = encoder.parseObject(tokendata);
+            var ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
             cryptoContext.decrypt(ciphertext, {
                 result: function(plaintext) {
-                    var sessiondataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+                    var sessiondataMo = encoder.parseObject(plaintext);
                     
                     // After modifying the session data we need to encrypt it.
-                    expect(sessiondataJo[KEY_HMAC_KEY]).not.toBeNull();
-                    delete sessiondataJo[KEY_HMAC_KEY];
-                    var json = JSON.stringify(sessiondataJo);
-                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    sessiondataMo.remove(KEY_HMAC_KEY);
+                    plaintext = encoder.encodeObject(sessiondataMo, ENCODER_FORMAT);
                     cryptoContext.encrypt(plaintext, {
                         result: function(sessiondata) {
-                            tokendataJo[KEY_SESSIONDATA] = base64$encode(sessiondata);
+                            tokendataMo.put(KEY_SESSIONDATA, sessiondata);
                             
                             // The tokendata must be signed otherwise the session data will not be
                             // processed.
-                            var modifiedTokendata = textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET);
+                            var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
                             cryptoContext.sign(modifiedTokendata, {
                                 result: function(signature) {
-                                    jo[KEY_TOKENDATA] = base64$encode(modifiedTokendata);
-                                    jo[KEY_SIGNATURE] = base64$encode(signature);
+                                    mo.put(KEY_TOKENDATA, modifiedTokendata);
+                                    mo.put(KEY_SIGNATURE, signature);
                                     
-                                    MasterToken$parse(ctx, jo, {
-                                        result: function(x) { joMasterToken = x; },
+                                    MasterToken$parse(ctx, mo, {
+                                        result: function(x) { moMasterToken = x; },
                                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                                     }); 
                                 },
@@ -1426,12 +1628,12 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return joMasterToken; }, "joMasterToken not received", 500);
+        waitsFor(function() { return moMasterToken; }, "moMasterToken", 500);
         
         runs(function() {
             // Confirm signature key.
-            var joSignatureKey = joMasterToken.signatureKey;
-            expect(joSignatureKey.toByteArray()).toEqual(masterToken.signatureKey.toByteArray());
+            var moSignatureKey = moMasterToken.signatureKey;
+            expect(moSignatureKey.toByteArray()).toEqual(masterToken.signatureKey.toByteArray());
         });
     });
     
@@ -1443,42 +1645,46 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
         
-        var joMasterToken;
+        var mo;
         runs(function() {
-            var jsonString = JSON.stringify(masterToken);
-            var jo = JSON.parse(jsonString);
-            
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var moMasterToken;
+        runs(function() {
             var cryptoContext = ctx.getMslCryptoContext();
             
             // Before modifying the session data we need to decrypt it.
-            var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-            var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-            var ciphertext = base64$decode(tokendataJo[KEY_SESSIONDATA]);
+            var tokendata = mo.getBytes(KEY_TOKENDATA);
+            var tokendataMo = encoder.parseObject(tokendata);
+            var ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
             cryptoContext.decrypt(ciphertext, {
                 result: function(plaintext) {
-                    var sessiondataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+                    var sessiondataMo = encoder.parseObject(plaintext);
                     
                     // After modifying the session data we need to encrypt it.
-                    expect(sessiondataJo[KEY_SIGNATURE_KEY]).not.toBeNull();
-                    delete sessiondataJo[KEY_SIGNATURE_KEY];
-                    var json = JSON.stringify(sessiondataJo);
-                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    sessiondataMo.remove(KEY_SIGNATURE_KEY);
+                    plaintext = encoder.encodeObject(sessiondataMo, ENCODER_FORMAT);
                     cryptoContext.encrypt(plaintext, {
                         result: function(sessiondata) {
-                            tokendataJo[KEY_SESSIONDATA] = base64$encode(sessiondata);
+                            tokendataMo.put(KEY_SESSIONDATA, sessiondata);
                             
                             // The tokendata must be signed otherwise the session data will not be
                             // processed.
-                            var modifiedTokendata = textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET);
+                            var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
                             cryptoContext.sign(modifiedTokendata, {
                                 result: function(signature) {
-                                    jo[KEY_TOKENDATA] = base64$encode(modifiedTokendata);
-                                    jo[KEY_SIGNATURE] = base64$encode(signature);
+                                    mo.put(KEY_TOKENDATA, modifiedTokendata);
+                                    mo.put(KEY_SIGNATURE, signature);
                                     
-                                    MasterToken$parse(ctx, jo, {
-                                        result: function(x) { joMasterToken = x; },
+                                    MasterToken$parse(ctx, mo, {
+                                        result: function(x) { moMasterToken = x; },
                                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                                     }); 
                                 },
@@ -1491,12 +1697,12 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return joMasterToken; }, "joMasterToken not received", 500);
+        waitsFor(function() { return moMasterToken; }, "moMasterToken", 500);
         
         runs(function() {
             // Confirm signature key.
-            var joSignatureKey = joMasterToken.signatureKey;
-            expect(joSignatureKey.toByteArray()).toEqual(masterToken.signatureKey.toByteArray());
+            var moSignatureKey = moMasterToken.signatureKey;
+            expect(moSignatureKey.toByteArray()).toEqual(masterToken.signatureKey.toByteArray());
         });
     });
     
@@ -1508,42 +1714,46 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
         
-        var joMasterToken;
+        var mo;
         runs(function() {
-            var jsonString = JSON.stringify(masterToken);
-            var jo = JSON.parse(jsonString);
-            
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var moMasterToken;
+        runs(function() {
             var cryptoContext = ctx.getMslCryptoContext();
             
             // Before modifying the session data we need to decrypt it.
-            var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-            var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-            var ciphertext = base64$decode(tokendataJo[KEY_SESSIONDATA]);
+            var tokendata = mo.getBytes(KEY_TOKENDATA);
+            var tokendataMo = encoder.parseObject(tokendata);
+            var ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
             cryptoContext.decrypt(ciphertext, {
                 result: function(plaintext) {
-                    var sessiondataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+                    var sessiondataMo = encoder.parseObject(plaintext);
                     
                     // After modifying the session data we need to encrypt it.
-                    expect(sessiondataJo[KEY_SIGNATURE_ALGORITHM]).not.toBeNull();
-                    delete sessiondataJo[KEY_SIGNATURE_ALGORITHM];
-                    var json = JSON.stringify(sessiondataJo);
-                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    sessiondataMo.remove(KEY_SIGNATURE_ALGORITHM);
+                    plaintext = encoder.encodeObject(sessiondataMo, ENCODER_FORMAT);
                     cryptoContext.encrypt(plaintext, {
                         result: function(sessiondata) {
-                            tokendataJo[KEY_SESSIONDATA] = base64$encode(sessiondata);
+                            tokendataMo.put(KEY_SESSIONDATA, sessiondata);
                             
                             // The tokendata must be signed otherwise the session data will not be
                             // processed.
-                            var modifiedTokendata = textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET);
+                            var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
                             cryptoContext.sign(modifiedTokendata, {
                                 result: function(signature) {
-                                    jo[KEY_TOKENDATA] = base64$encode(modifiedTokendata);
-                                    jo[KEY_SIGNATURE] = base64$encode(signature);
+                                    mo.put(KEY_TOKENDATA, modifiedTokendata);
+                                    mo.put(KEY_SIGNATURE, signature);
                                     
-                                    MasterToken$parse(ctx, jo, {
-                                        result: function(x) { joMasterToken = x; },
+                                    MasterToken$parse(ctx, mo, {
+                                        result: function(x) { moMasterToken = x; },
                                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                                     }); 
                                 },
@@ -1556,12 +1766,12 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return joMasterToken; }, "joMasterToken not received", 500);
+        waitsFor(function() { return moMasterToken; }, "moMasterToken", 500);
         
         runs(function() {
             // Confirm default algorithm.
-            var joSignatureKey = joMasterToken.signatureKey;
-            expect(MslTestUtils$Algorithm.equals(WebCryptoAlgorithm.HMAC_SHA256, joSignatureKey.algorithm)).toBeTruthy();
+            var moSignatureKey = moMasterToken.signatureKey;
+            expect(MslTestUtils$Algorithm.equals(WebCryptoAlgorithm.HMAC_SHA256, moSignatureKey.algorithm)).toBeTruthy();
         });
     });
     
@@ -1573,40 +1783,45 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-            var jsonString = JSON.stringify(masterToken);
-            var jo = JSON.parse(jsonString);
-            
             var cryptoContext = ctx.getMslCryptoContext();
             
             // Before modifying the session data we need to decrypt it.
-            var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-            var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-            var ciphertext = base64$decode(tokendataJo[KEY_SESSIONDATA]);
+            var tokendata = mo.getBytes(KEY_TOKENDATA);
+            var tokendataMo = encoder.parseObject(tokendata);
+            var ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
             cryptoContext.decrypt(ciphertext, {
                 result: function(plaintext) {
-                    var sessiondataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+                    var sessiondataMo = encoder.parseObject(plaintext);
                     
                     // After modifying the session data we need to encrypt it.
-                    sessiondataJo[KEY_SIGNATURE_ALGORITHM] = "x";
-                    var json = JSON.stringify(sessiondataJo);
-                    plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    sessiondataMo.put(KEY_SIGNATURE_ALGORITHM, "x");
+                    plaintext = encoder.encodeObject(sessiondataMo, ENCODER_FORMAT);
                     cryptoContext.encrypt(plaintext, {
                         result: function(sessiondata) {
-                            tokendataJo[KEY_SESSIONDATA] = base64$encode(sessiondata);
+                            tokendataMo.put(KEY_SESSIONDATA, sessiondata);
                             
                             // The tokendata must be signed otherwise the session data will not be
                             // processed.
-                            var modifiedTokendata = textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET);
+                            var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
                             cryptoContext.sign(modifiedTokendata, {
                                 result: function(signature) {
-                                    jo[KEY_TOKENDATA] = base64$encode(modifiedTokendata);
-                                    jo[KEY_SIGNATURE] = base64$encode(signature);
+                                    mo.put(KEY_TOKENDATA, modifiedTokendata);
+                                    mo.put(KEY_SIGNATURE, signature);
                                     
-                                    MasterToken$parse(ctx, jo, {
+                                    MasterToken$parse(ctx, mo, {
                                         result: function() {},
                                         error: function(e) { exception = e; }
                                     }); 
@@ -1620,7 +1835,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return exception; }, "exception not received", 500);
+        waitsFor(function() { return exception; }, "exception", 500);
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslCryptoException(MslError.UNIDENTIFIED_ALGORITHM));
@@ -1635,43 +1850,46 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(masterToken);
-	        var jo = JSON.parse(jsonString);
-	        
 	        var cryptoContext = ctx.getMslCryptoContext();
 	        
 	        // Before modifying the session data we need to decrypt it.
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        var ciphertext = base64$decode(tokendataJo[KEY_SESSIONDATA]);
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        var ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
 	        cryptoContext.decrypt(ciphertext, {
 	        	result: function(plaintext) {
-	        		var sessiondataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+	        		var sessiondataMo = encoder.parseObject(plaintext);
 	    	        
 	    	        // After modifying the session data we need to encrypt it.
-                    expect(sessiondataJo[KEY_HMAC_KEY]).not.toBeNull();
-                    delete sessiondataJo[KEY_HMAC_KEY];
-	    	        expect(sessiondataJo[KEY_SIGNATURE_KEY]).not.toBeNull();
-	    	        delete sessiondataJo[KEY_SIGNATURE_KEY];
-	    	        var json = JSON.stringify(sessiondataJo);
-	    	        var plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    sessiondataMo.remove(KEY_HMAC_KEY);
+	    	        sessiondataMo.remove(KEY_SIGNATURE_KEY);
+	    	        plaintext = encoder.encodeObject(sessiondataMo, ENCODER_FORMAT);
 	    	        cryptoContext.encrypt(plaintext, {
 	    	        	result: function(sessiondata) {
-	    	        		tokendataJo[KEY_SESSIONDATA] = base64$encode(sessiondata);
+	    	        		tokendataMo.put(KEY_SESSIONDATA, sessiondata);
 	    	    	        
 	    	    	        // The tokendata must be signed otherwise the session data will not be
 	    	    	        // processed.
-	    	    	        var modifiedTokendata = textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET);
+	    	    	        var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
 	    	    	        cryptoContext.sign(modifiedTokendata, {
 	    	    	        	result: function(signature) {
-	    	    	        		jo[KEY_TOKENDATA] = base64$encode(modifiedTokendata);
-	    	    	    	        jo[KEY_SIGNATURE] = base64$encode(signature);
+	    	    	        		mo.put(KEY_TOKENDATA, modifiedTokendata);
+	    	    	    	        mo.put(KEY_SIGNATURE, signature);
 	    	    	    	        
-	    	    	    	        MasterToken$parse(ctx, jo, {
+	    	    	    	        MasterToken$parse(ctx, mo, {
 	    	    	    	        	result: function() {},
 	    	    	    	        	error: function(err) { exception = err; }
 	    	    	    	        });	
@@ -1685,7 +1903,7 @@ describe("MasterToken", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 500);
+        waitsFor(function() { return exception; }, "exception", 500);
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslEncodingException(MslError.MASTERTOKEN_SESSIONDATA_PARSE_ERROR));
@@ -1700,41 +1918,46 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(masterToken);
-	        var jo = JSON.parse(jsonString);
-	        
 	        var cryptoContext = ctx.getMslCryptoContext();
 	        
 	        // Before modifying the session data we need to decrypt it.
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        var ciphertext = base64$decode(tokendataJo[KEY_SESSIONDATA]);
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        var ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
 	        cryptoContext.decrypt(ciphertext, {
 	        	result: function(plaintext) {
-	        		var sessiondataJo = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
+	        		var sessiondataMo = encoder.parseObject(plaintext);
 	    	        
 	    	        // After modifying the session data we need to encrypt it.
-                    sessiondataJo[KEY_HMAC_KEY] = "";
-	    	        sessiondataJo[KEY_SIGNATURE_KEY] = "";
-	    	        var json = JSON.stringify(sessiondataJo);
-	    	        plaintext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                    sessiondataMo.put(KEY_HMAC_KEY, "");
+	    	        sessiondataMo.put(KEY_SIGNATURE_KEY, "");
+	    	        plaintext = encoder.encodeObject(sessiondataMo, ENCODER_FORMAT);
 	    	        cryptoContext.encrypt(plaintext, {
 	    	        	result: function(sessiondata) {
-	    	        		tokendataJo[KEY_SESSIONDATA] = base64$encode(sessiondata);
+	    	        		tokendataMo.put(KEY_SESSIONDATA, sessiondata);
 	    	    	        
 	    	    	        // The tokendata must be signed otherwise the session data will not be
 	    	    	        // processed.
-	    	    	        var modifiedTokendata = textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET);
+	    	    	        var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
 	    	    	        cryptoContext.sign(modifiedTokendata, {
 	    	    	        	result: function(signature) {
-	    	    	        		jo[KEY_TOKENDATA] = base64$encode(modifiedTokendata);
-	    	    	    	        jo[KEY_SIGNATURE] = base64$encode(signature);
+	    	    	        		mo.put(KEY_TOKENDATA, modifiedTokendata);
+	    	    	    	        mo.put(KEY_SIGNATURE, signature);
 	    	    	    	        
-	    	    	    	        MasterToken$parse(ctx, jo, {
+	    	    	    	        MasterToken$parse(ctx, mo, {
 	    	    	    	        	result: function() {},
 	    	    	    	        	error: function(err) { exception = err; }
 	    	    	    	        });	    	        		
@@ -1748,7 +1971,7 @@ describe("MasterToken", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 500);
+        waitsFor(function() { return exception; }, "exception", 500);
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslCryptoException(MslError.MASTERTOKEN_KEY_CREATION_ERROR));
@@ -1765,7 +1988,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
         runs(function() {
             var now = new Date();
 	        expect(masterToken.isRenewable(null)).toBeTruthy();
@@ -1793,7 +2016,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
         runs(function() {
             var now = new Date();
 	        expect(masterToken.isRenewable(null)).toBeTruthy();
@@ -1821,7 +2044,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
         runs(function() {
             var now = new Date();
 	        expect(masterToken.isRenewable(null)).toBeFalsy();
@@ -1842,7 +2065,7 @@ describe("MasterToken", function() {
     it("is newer than with different sequence numbers", function() {
         var sequenceNumberA = 1;
         var sequenceNumberB = 2;
-        var masterTokenA = undefined, masterTokenB;
+        var masterTokenA, masterTokenB;
         runs(function() {
             MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, sequenceNumberA, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterTokenA = token; },
@@ -1853,7 +2076,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens not received", 500);
+        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens", 500);
         runs(function() {
         	expect(masterTokenB.isNewerThan(masterTokenA)).toBeTruthy();
         	expect(masterTokenA.isNewerThan(masterTokenB)).toBeFalsy();
@@ -1873,8 +2096,8 @@ describe("MasterToken", function() {
         	var plus128 = incrementSequenceNumber(zero, 128);
 
         	var masterToken;
-        	var minus1MasterToken = undefined, plus1MasterToken;
-        	var plus127MasterToken = undefined, plus128MasterToken;
+        	var minus1MasterToken, plus1MasterToken;
+        	var plus127MasterToken, plus128MasterToken;
         	runs(function() {
         		MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, zero, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
         			result: function(x) { masterToken = x; },
@@ -1915,7 +2138,7 @@ describe("MasterToken", function() {
     it("is newer than with different expirations", function() {
     	var expirationA = new Date(EXPIRATION.getTime());
     	var expirationB = new Date(EXPIRATION.getTime() + 10000);
-        var masterTokenA = undefined, masterTokenB;
+        var masterTokenA, masterTokenB;
         runs(function() {
             MasterToken$create(ctx, RENEWAL_WINDOW, expirationA, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterTokenA = token; },
@@ -1926,7 +2149,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens not received", 1000);
+        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens", 1000);
         runs(function() {
         	expect(masterTokenB.isNewerThan(masterTokenA)).toBeTruthy();
         	expect(masterTokenA.isNewerThan(masterTokenB)).toBeFalsy();
@@ -1939,7 +2162,7 @@ describe("MasterToken", function() {
         var serialNumberB = 2;
         var sequenceNumberA = 1;
         var sequenceNumberB = 2;
-        var masterTokenA = undefined, masterTokenB;
+        var masterTokenA, masterTokenB;
         runs(function() {
             MasterToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, sequenceNumberA, serialNumberA, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterTokenA = token; },
@@ -1950,7 +2173,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens not received", 500);
+        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens", 500);
         runs(function() {
 	        expect(masterTokenB.isNewerThan(masterTokenA)).toBeTruthy();
 	        expect(masterTokenA.isNewerThan(masterTokenB)).toBeFalsy();
@@ -1970,21 +2193,28 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, masterToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var untrustedMasterToken;
         runs(function() {
-            var json = JSON.stringify(masterToken);
-            var jo = JSON.parse(json);
-            var signature = base64$decode(jo["signature"]);
+            var signature = mo.getBytes(KEY_SIGNATURE);
             ++signature[1];
-            jo["signature"] = base64$encode(signature);
-            MasterToken$parse(ctx, jo, {
+            mo.put(KEY_SIGNATURE, signature);
+            MasterToken$parse(ctx, mo, {
                 result: function(token) { untrustedMasterToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return untrustedMasterToken; }, "untrustedMasterToken not received", 500);
+        waitsFor(function() { return untrustedMasterToken; }, "untrustedMasterToken", 500);
         runs(function() {
         	expect(masterToken.equals(untrustedMasterToken)).toBeTruthy();
         });
@@ -2004,13 +2234,18 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens not received", 500);
+        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens", 500);
         var masterTokenA2;
         runs(function() {
-            MasterToken$parse(ctx, JSON.parse(JSON.stringify(masterTokenA)), {
-                result: function(token) { masterTokenA2 = token; },
+        	MslTestUtils.toMslObject(encoder, masterTokenA, {
+        		result: function(mo) {
+        			MasterToken$parse(ctx, mo, {
+        				result: function(token) { masterTokenA2 = token; },
+        				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        			});
+        		},
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            });
+        	});
         });
         waitsFor(function() { return masterTokenA2; }, "master token parsed", 500);
         runs(function() {
@@ -2041,13 +2276,18 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens not received", 500);
+        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens", 500);
         var masterTokenA2;
         runs(function() {
-            MasterToken$parse(ctx, JSON.parse(JSON.stringify(masterTokenA)), {
-                result: function(token) { masterTokenA2 = token; },
+        	MslTestUtils.toMslObject(encoder, masterTokenA, {
+        		result: function(mo) {
+        			MasterToken$parse(ctx, mo, {
+        				result: function(token) { masterTokenA2 = token; },
+        				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        			});
+        		},
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            });
+        	});
         });
         waitsFor(function() { return masterTokenA2; }, "master token parsed", 500);
         runs(function() {
@@ -2078,13 +2318,18 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens not received", 500);
+        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens", 500);
         var masterTokenA2;
         runs(function() {
-            MasterToken$parse(ctx, JSON.parse(JSON.stringify(masterTokenA)), {
-                result: function(token) { masterTokenA2 = token; },
+        	MslTestUtils.toMslObject(encoder, masterTokenA, {
+        		result: function(mo) {
+        			MasterToken$parse(ctx, mo, {
+        				result: function(token) { masterTokenA2 = token; },
+        				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        			});
+        		},
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            });
+        	});
         });
         waitsFor(function() { return masterTokenA2; }, "master token parsed", 500);
         runs(function() {
@@ -2109,7 +2354,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", 500);
         runs(function() {
 	        expect(masterToken.equals(null)).toBeFalsy();
 	        expect(masterToken.equals(IDENTITY)).toBeFalsy();
