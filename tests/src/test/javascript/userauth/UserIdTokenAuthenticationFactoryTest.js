@@ -20,7 +20,7 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("UserIdTokenAuthenticationFactory", function() {
-    /** JSON master token key. */
+    /** Key master token. */
     var KEY_MASTER_TOKEN = "mastertoken";
     
     /** MSL context. */

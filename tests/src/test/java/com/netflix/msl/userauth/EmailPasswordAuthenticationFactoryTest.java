@@ -53,7 +53,7 @@ public class EmailPasswordAuthenticationFactoryTest {
 	/** MSL encoder format. */
 	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
 
-    /** JSON email key. */
+    /** Key email. */
     private static final String KEY_EMAIL = "email";
     
     /** Empty string. */
@@ -89,15 +89,15 @@ public class EmailPasswordAuthenticationFactoryTest {
     @Test
     public void createData() throws MslEncodingException, MslUserAuthException, MslEncoderException, MslCryptoException {
         final EmailPasswordAuthenticationData data = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL, MockEmailPasswordAuthenticationFactory.PASSWORD);
-        final MslObject userAuthJO = data.getAuthData(encoder, ENCODER_FORMAT);
+        final MslObject userAuthMo = data.getAuthData(encoder, ENCODER_FORMAT);
         
-        final UserAuthenticationData authdata = factory.createData(ctx, null, userAuthJO);
+        final UserAuthenticationData authdata = factory.createData(ctx, null, userAuthMo);
         assertNotNull(authdata);
         assertTrue(authdata instanceof EmailPasswordAuthenticationData);
         
-        final MslObject dataJo = MslTestUtils.toMslObject(encoder, data);
-        final MslObject authdataJo = MslTestUtils.toMslObject(encoder, authdata);
-        assertTrue(MslEncoderUtils.equalObjects(dataJo, authdataJo));
+        final MslObject dataMo = MslTestUtils.toMslObject(encoder, data);
+        final MslObject authdataMo = MslTestUtils.toMslObject(encoder, authdata);
+        assertTrue(MslEncoderUtils.equalObjects(dataMo, authdataMo));
     }
     
     @Test
@@ -106,9 +106,9 @@ public class EmailPasswordAuthenticationFactoryTest {
         thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final EmailPasswordAuthenticationData data = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL, MockEmailPasswordAuthenticationFactory.PASSWORD);
-        final MslObject userAuthJO = data.getAuthData(encoder, ENCODER_FORMAT);
-        userAuthJO.remove(KEY_EMAIL);
-        factory.createData(ctx, null, userAuthJO);
+        final MslObject userAuthMo = data.getAuthData(encoder, ENCODER_FORMAT);
+        userAuthMo.remove(KEY_EMAIL);
+        factory.createData(ctx, null, userAuthMo);
     }
     
     @Test

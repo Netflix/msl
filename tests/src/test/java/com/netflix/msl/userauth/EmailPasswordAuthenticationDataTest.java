@@ -52,13 +52,13 @@ public class EmailPasswordAuthenticationDataTest {
 	/** MSL encoder format. */
 	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
 
-    /** JSON key user authentication scheme. */
+    /** Key user authentication scheme. */
     private static final String KEY_SCHEME = "scheme";
-    /** JSON key user authentication data. */
+    /** Key user authentication data. */
     private static final String KEY_AUTHDATA = "authdata";
-    /** JSON email key. */
+    /** Key email. */
     private static final String KEY_EMAIL = "email";
-    /** JSON password key. */
+    /** Key password. */
     private static final String KEY_PASSWORD = "password";
 
     @Rule

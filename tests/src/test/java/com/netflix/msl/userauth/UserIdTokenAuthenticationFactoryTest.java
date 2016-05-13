@@ -55,7 +55,7 @@ public class UserIdTokenAuthenticationFactoryTest {
 	/** MSL encoder format. */
 	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
 
-    /** JSON master token key. */
+    /** Key master token. */
     private static final String KEY_MASTER_TOKEN = "mastertoken";
     
     @Rule

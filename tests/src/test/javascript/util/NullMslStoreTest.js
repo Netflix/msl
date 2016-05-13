@@ -89,7 +89,7 @@ describe("NullMslStore", function() {
     });
     
     it("get service tokens with mismatched tokens", function() {
-        var masterToken = undefined, mismatchedMasterToken;
+        var masterToken, mismatchedMasterToken;
         runs(function() {
         	MslTestUtils.getMasterToken(ctx, 1, 1, {
         		result: function(token) { masterToken = token; },
@@ -147,7 +147,7 @@ describe("NullMslStore", function() {
     });
     
     it("remove service tokens with mismatched tokens", function() {
-        var masterToken = undefined, mismatchedMasterToken;
+        var masterToken, mismatchedMasterToken;
         runs(function() {
         	MslTestUtils.getMasterToken(ctx, 1, 1, {
         		result: function(token) { masterToken = token; },

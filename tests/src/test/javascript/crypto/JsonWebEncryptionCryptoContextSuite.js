@@ -28,22 +28,22 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
     /** Encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
 
-    /** Key recipients. */
+    /** JSON key recipients. */
     var KEY_RECIPIENTS = "recipients";
-    /** Key header. */
+    /** JSON key header. */
     var KEY_HEADER = "header";
-    /** Key encrypted key. */
+    /** JSON key encrypted key. */
     var KEY_ENCRYPTED_KEY = "encrypted_key";
-    /** Key integrity value. */
+    /** JSON key integrity value. */
     var KEY_INTEGRITY_VALUE = "integrity_value";
-    /** Key initialization vector. */
+    /** JSON key initialization vector. */
     var KEY_INITIALIZATION_VECTOR = "initialization_vector";
-    /** Key ciphertext. */
+    /** JSON key ciphertext. */
     var KEY_CIPHERTEXT = "ciphertext";
     
-    /** Key wrap algorithm. */
+    /** JSON key wrap algorithm. */
     var KEY_ALGORITHM = "alg";
-    /** Key encryption algorithm. */
+    /** JSON key encryption algorithm. */
     var KEY_ENCRYPTION = "enc";
     
     /**

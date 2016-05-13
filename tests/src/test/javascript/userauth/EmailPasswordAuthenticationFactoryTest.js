@@ -20,27 +20,28 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("EmailPasswordAuthenticationFactory", function() {
-    /** JSON email key. */
+	/** MSL encoder format. */
+	var ENCODER_FORMAT = MslEncoderFormat.JSON;
+	
+    /** Key email. */
     var KEY_EMAIL = "email";
     
     /** Empty string. */
     var EMPTY_STRING = "";
     
-    /** User authentication factory. */
-    var factory;
-    
     /** MSL context. */
     var ctx;
+    /** MSL encoder factory. */
+    var encoder;
+    /** Authentication utilities. */
+    var authutils;
+    /** User authentication factory. */
+    var factory;
     
     var initialized = false;
     beforeEach(function() {
         if (!initialized) {
             runs(function() {
-                var store = new MockEmailPasswordStore();
-                store.addUser(MockEmailPasswordAuthenticationFactory.EMAIL, MockEmailPasswordAuthenticationFactory.PASSWORD, MockEmailPasswordAuthenticationFactory.USER);
-                var authutils = new MockAuthenticationUtils();
-                factory = new EmailPasswordAuthenticationFactory(store, authutils);
-                
                 MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -48,41 +49,76 @@ describe("EmailPasswordAuthenticationFactory", function() {
             });
             waitsFor(function() { return factory && ctx; }, "static initialization", 100);
             runs(function() {
+            	encoder = ctx.getMslEncoderFactory();
+                var store = new MockEmailPasswordStore();
+                store.addUser(MockEmailPasswordAuthenticationFactory.EMAIL, MockEmailPasswordAuthenticationFactory.PASSWORD, MockEmailPasswordAuthenticationFactory.USER);
+                authutils = new MockAuthenticationUtils();
+                factory = new EmailPasswordAuthenticationFactory(store, authutils);
+                
                 initialized = true;
             });
+        } else {
+        	authutils.reset();
         }
     });
 
     it("create data", function() {
         var data = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL, MockEmailPasswordAuthenticationFactory.PASSWORD);
-        var userAuthJO = data.getAuthData();
+        
+        var userAuthMo;
+        runs(function() {
+        	data.getAuthData(encoder, ENCODER_FORMAT, {
+        		result: function(x) { userAuthMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return userAuthMo; }, "userAuthMo", 100);
         
         var authdata;
         runs(function() {
-            factory.createData(ctx, null, userAuthJO, {
+            factory.createData(ctx, null, userAuthMo, {
                 result: function(x) { authdata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
         waitsFor(function() { return authdata; }, "authdata", 100);
         
+        var dataMo, authdataMo;
         runs(function() {
             expect(authdata).not.toBeNull();
             expect(authdata instanceof EmailPasswordAuthenticationData).toBeTruthy();
             
-            var dataJo = JSON.parse(JSON.stringify(data));
-            var authdataJo = JSON.parse(JSON.stringify(authdata));
-            expect(authdataJo).toEqual(dataJo);
+            MslTestUtils.toMslObject(encoder, data, {
+            	result: function(x) { dataMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            MslTestUtils.toMslObject(encoder, authdata, {
+            	result: function(x) { authdataMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return dataMo && authdataMo; }, "msl objects", 100);
+        
+        runs(function() {
+            expect(authdataMo).toEqual(dataMo);
         });
     });
     
     it("encode exception", function() {
-    	var exception;
+    	var userAuthMo;
     	runs(function() {
 	        var data = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL, MockEmailPasswordAuthenticationFactory.PASSWORD);
-	        var userAuthJO = data.getAuthData();
-	        delete userAuthJO[KEY_EMAIL];
-	        factory.createData(ctx, null, userAuthJO, {
+        	data.getAuthData(encoder, ENCODER_FORMAT, {
+        		result: function(x) { userAuthMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return userAuthMo; }, "userAuthMo", 100);
+        
+        var exception;
+        runs(function() {
+	        userAuthMo.remove(KEY_EMAIL);
+	        factory.createData(ctx, null, userAuthMo, {
 	            result: function() {},
 	            error: function(e) { exception = e; },
 	        });
@@ -91,7 +127,7 @@ describe("EmailPasswordAuthenticationFactory", function() {
     	
     	runs(function() {
     	    var f = function() { throw exception; };
-    	    expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+    	    expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
     	});
     });
     

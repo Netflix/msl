@@ -26,6 +26,7 @@ import com.netflix.msl.MslError;
 import com.netflix.msl.MslUserAuthException;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.io.MslObject;
 import com.netflix.msl.test.ExpectedMslException;
 import com.netflix.msl.util.MockMslContext;
@@ -41,9 +42,9 @@ import com.netflix.msl.util.MslContext;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class UserAuthenticationDataTest {
-    /** JSON key user authentication scheme. */
+    /** Key user authentication scheme. */
     private static final String KEY_SCHEME = "scheme";
-    /** JSON key user authentication data. */
+    /** Key user authentication data. */
     private static final String KEY_AUTHDATA = "authdata";
 
     @Rule
@@ -52,10 +53,12 @@ public class UserAuthenticationDataTest {
     @BeforeClass
     public static void setup() throws MslEncodingException, MslCryptoException {
         ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
+        encoder = ctx.getMslEncoderFactory();
     }
     
     @AfterClass
     public static void teardown() {
+        encoder = null;
         ctx = null;
     }
     
@@ -64,9 +67,9 @@ public class UserAuthenticationDataTest {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
-        final MslObject mo = new MslObject();
+        final MslObject mo = encoder.createObject();
         mo.put(KEY_SCHEME + "x", UserAuthenticationScheme.EMAIL_PASSWORD.name());
-        mo.put(KEY_AUTHDATA, new MslObject());
+        mo.put(KEY_AUTHDATA, encoder.createObject());
         UserAuthenticationData.create(ctx, null, mo);
     }
     
@@ -75,9 +78,9 @@ public class UserAuthenticationDataTest {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
-        final MslObject mo = new MslObject();
+        final MslObject mo = encoder.createObject();
         mo.put(KEY_SCHEME, UserAuthenticationScheme.EMAIL_PASSWORD.name());
-        mo.put(KEY_AUTHDATA + "x", new MslObject());
+        mo.put(KEY_AUTHDATA + "x", encoder.createObject());
         UserAuthenticationData.create(ctx, null, mo);
     }
     
@@ -86,9 +89,9 @@ public class UserAuthenticationDataTest {
         thrown.expect(MslUserAuthException.class);
         thrown.expectMslError(MslError.UNIDENTIFIED_USERAUTH_SCHEME);
 
-        final MslObject mo = new MslObject();
+        final MslObject mo = encoder.createObject();
         mo.put(KEY_SCHEME, "x");
-        mo.put(KEY_AUTHDATA, new MslObject());
+        mo.put(KEY_AUTHDATA, encoder.createObject());
         UserAuthenticationData.create(ctx, null, mo);
     }
     
@@ -99,12 +102,14 @@ public class UserAuthenticationDataTest {
 
         final MockMslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
         ctx.removeUserAuthenticationFactory(UserAuthenticationScheme.EMAIL_PASSWORD);
-        final MslObject mo = new MslObject();
+        final MslObject mo = encoder.createObject();
         mo.put(KEY_SCHEME, UserAuthenticationScheme.EMAIL_PASSWORD.name());
-        mo.put(KEY_AUTHDATA, new MslObject());
+        mo.put(KEY_AUTHDATA, encoder.createObject());
         UserAuthenticationData.create(ctx, null, mo);
     }
     
     /** MSL context. */
     private static MslContext ctx;
+    /** MSL encoder factory. */
+    private static MslEncoderFactory encoder;
 }

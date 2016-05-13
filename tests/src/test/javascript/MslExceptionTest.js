@@ -37,72 +37,72 @@ describe("MslException", function() {
     });
 
 	it("error as expected", function() {
-		var e = new MslException(MslError.JSON_PARSE_ERROR);
-		expect(e.error).toBe(MslError.JSON_PARSE_ERROR);
-		expect(e.message).toEqual(MslError.JSON_PARSE_ERROR.message);
+		var e = new MslException(MslError.MSL_PARSE_ERROR);
+		expect(e.error).toBe(MslError.MSL_PARSE_ERROR);
+		expect(e.message).toEqual(MslError.MSL_PARSE_ERROR.message);
 		expect(e.cause).toBeUndefined();
 		expect(e.messageId).toBeUndefined();
 	});
 
 	it("error details as expected", function() {
-		var e = new MslException(MslError.JSON_PARSE_ERROR, "details");
-		expect(e.error).toBe(MslError.JSON_PARSE_ERROR);
-		expect(e.message).toEqual(MslError.JSON_PARSE_ERROR.message + " [details]");
+		var e = new MslException(MslError.MSL_PARSE_ERROR, "details");
+		expect(e.error).toBe(MslError.MSL_PARSE_ERROR);
+		expect(e.message).toEqual(MslError.MSL_PARSE_ERROR.message + " [details]");
 		expect(e.cause).toBeUndefined();
 		expect(e.messageId).toBeUndefined();
 	});
 
 	it("error details and cause as expected", function() {
-		var e = new MslException(MslError.JSON_PARSE_ERROR, "details", new Error("cause"));
-		expect(e.error).toBe(MslError.JSON_PARSE_ERROR);
-		expect(e.message).toEqual(MslError.JSON_PARSE_ERROR.message + " [details]");
+		var e = new MslException(MslError.MSL_PARSE_ERROR, "details", new Error("cause"));
+		expect(e.error).toBe(MslError.MSL_PARSE_ERROR);
+		expect(e.message).toEqual(MslError.MSL_PARSE_ERROR.message + " [details]");
 		expect(e.cause).not.toBeNull();
 		expect(e.cause.message).toBe("cause");
 	});
 
 	it("message ID can be set", function() {
-		var e = new MslException(MslError.JSON_PARSE_ERROR);
+		var e = new MslException(MslError.MSL_PARSE_ERROR);
 		expect(e.messageId).toBeUndefined();
 		e.messageId = 1;
 		expect(e.messageId).toEqual(1);
 	});
 
 	it("message ID can be set via setMessageId()", function() {
-		var e = new MslException(MslError.JSON_PARSE_ERROR);
+		var e = new MslException(MslError.MSL_PARSE_ERROR);
 		expect(e.messageId).toBeUndefined();
 		e.setMessageId(1);
 		expect(e.messageId).toEqual(1);
 	});
 
 	it("name is correct", function() {
-		var e = new MslException(MslError.JSON_PARSE_ERROR);
+		var e = new MslException(MslError.MSL_PARSE_ERROR);
 		expect(e.name).toEqual("MslException");
 	});
 
 	it("toString() is correct", function() {
-		var e = new MslException(MslError.JSON_PARSE_ERROR, "details", new Error("cause"));
-		expect(e.toString()).toEqual('MslException: ' + MslError.JSON_PARSE_ERROR.message + ' [details]');
+		var e = new MslException(MslError.MSL_PARSE_ERROR, "details", new Error("cause"));
+		expect(e.toString()).toEqual('MslException: ' + MslError.MSL_PARSE_ERROR.message + ' [details]');
 	});
 
 	it("exception properties are not writable", function() {
-		var e = new MslException(MslError.JSON_PARSE_ERROR, "details", new Error("cause"));
+		var e = new MslException(MslError.MSL_PARSE_ERROR, "details", new Error("cause"));
 		e.message = "x";
 		e.error = "x";
 		e.cause = "x";
 		e.name = "x";
-		expect(e.error).toBe(MslError.JSON_PARSE_ERROR);
-		expect(e.message).toEqual(MslError.JSON_PARSE_ERROR.message + " [details]");
+		expect(e.error).toBe(MslError.MSL_PARSE_ERROR);
+		expect(e.message).toEqual(MslError.MSL_PARSE_ERROR.message + " [details]");
 		expect(e.cause).not.toBeNull();
 		expect(e.cause.message).toBe("cause");
 	});
 
 	it("instanceof MslException", function() {
-		var e = new MslException(MslError.JSON_PARSE_ERROR);
+		var e = new MslException(MslError.MSL_PARSE_ERROR);
 		expect(e instanceof MslException).toBeTruthy();
 	});
 
 	it("instanceof Error", function() {
-		var e = new MslException(MslError.JSON_PARSE_ERROR);
+		var e = new MslException(MslError.MSL_PARSE_ERROR);
 		expect(e instanceof Error).toBeTruthy();
 	});
 
@@ -112,7 +112,7 @@ describe("MslException", function() {
 	});
 
     it("set master token", function() {
-        var e = new MslException(MslError.JSON_PARSE_ERROR);
+        var e = new MslException(MslError.MSL_PARSE_ERROR);
         expect(e.masterToken).toBeNull();
         expect(e.entityAuthenticationData).toBeNull();
 
@@ -143,7 +143,7 @@ describe("MslException", function() {
     });
 
     it("set entity authentication data", function() {
-        var e = new MslException(MslError.JSON_PARSE_ERROR);
+        var e = new MslException(MslError.MSL_PARSE_ERROR);
         expect(e.masterToken).toBeNull();
         expect(e.entityAuthenticationData).toBeNull();
 
@@ -164,7 +164,7 @@ describe("MslException", function() {
     });
 
     it("set user ID token", function() {
-        var e = new MslException(MslError.JSON_PARSE_ERROR);
+        var e = new MslException(MslError.MSL_PARSE_ERROR);
         expect(e.userIdToken).toBeNull();
         expect(e.userAuthenticationData).toBeNull();
 
@@ -198,7 +198,7 @@ describe("MslException", function() {
     });
 
     it("set user authentication data", function() {
-        var e = new MslException(MslError.JSON_PARSE_ERROR);
+        var e = new MslException(MslError.MSL_PARSE_ERROR);
         expect(e.userIdToken).toBeNull();
         expect(e.userAuthenticationData).toBeNull();
         var userAuthData = getUserAuthenticationData();
@@ -208,7 +208,7 @@ describe("MslException", function() {
     });
 
     it("set message ID", function() {
-    	var e = new MslException(MslError.JSON_PARSE_ERROR);
+    	var e = new MslException(MslError.MSL_PARSE_ERROR);
         expect(e.messageId).toBeUndefined();
         e.messageId = 1;
         expect(e.messageId).toEqual(1);
@@ -216,7 +216,7 @@ describe("MslException", function() {
 
     it("negative message ID", function() {
     	var f = function() {
-    		var e = new MslException(MslError.JSON_PARSE_ERROR);
+    		var e = new MslException(MslError.MSL_PARSE_ERROR);
     		e.messageId = -1;
     	};
     	expect(f).toThrow(new RangeError());
@@ -224,7 +224,7 @@ describe("MslException", function() {
 
     it("too large message ID", function() {
     	var f = function() {
-    		var e = new MslException(MslError.JSON_PARSE_ERROR);
+    		var e = new MslException(MslError.MSL_PARSE_ERROR);
     		e.messageId = MslConstants$MAX_LONG_VALUE + 2;
     	};
     	expect(f).toThrow(new RangeError());

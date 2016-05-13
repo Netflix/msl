@@ -53,13 +53,13 @@ public class UserIdTokenAuthenticationDataTest {
 	/** MSL encoder format. */
 	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
 
-    /** JSON key user authentication scheme. */
+    /** Key user authentication scheme. */
     private static final String KEY_SCHEME = "scheme";
-    /** JSON key user authentication data. */
+    /** Key user authentication data. */
     private static final String KEY_AUTHDATA = "authdata";
-    /** JSON master token key. */
+    /** Key master token. */
     private static final String KEY_MASTER_TOKEN = "mastertoken";
-    /** JSON user ID token key. */
+    /** Key user ID token. */
     private static final String KEY_USER_ID_TOKEN = "useridtoken";
     
     @Rule

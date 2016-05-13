@@ -20,24 +20,31 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("UserIdTokenAuthenticationData", function() {
-    /** JSON key user authentication scheme. */
+	/** MSL encoder format. */
+	var ENCODER_FORMAT = MslEncoderFormat.JSON;
+	
+    /** Key user authentication scheme. */
     var KEY_SCHEME = "scheme";
-    /** JSON key user authentication data. */
+    /** Key user authentication data. */
     var KEY_AUTHDATA = "authdata";
-    /** JSON master token key. */
+    /** Key master token. */
     var KEY_MASTER_TOKEN = "mastertoken";
-    /** JSON user ID token key. */
+    /** Key user ID token. */
     var KEY_USER_ID_TOKEN = "useridtoken";
     
     /** Master token. */
-    var MASTER_TOKEN;
+    var MASTER_TOKEN, MASTER_TOKEN_MO;
     /** User ID token. */
-    var USER_ID_TOKEN;
+    var USER_ID_TOKEN, USER_ID_TOKEN_MO;
     
     /** MSL context. */
     var ctx;
+    /** MSL encoder factory. */
+    var encoder;
+    
+    var initialized = false;
     beforeEach(function() {
-        if (!ctx) {
+        if (!initialized) {
             runs(function() {
                 MockMslContext$create(EntityAuthenticationScheme.X509, false, {
                     result: function(c) { ctx = c; },
@@ -46,6 +53,7 @@ describe("UserIdTokenAuthenticationData", function() {
             });
             waitsFor(function() { return ctx; }, "ctx", 100);
             runs(function() {
+            	encoder = ctx.getMslEncoderFactory();
                 MslTestUtils.getMasterToken(ctx, 1, 1, {
                     result: function(x) { MASTER_TOKEN = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -60,87 +68,176 @@ describe("UserIdTokenAuthenticationData", function() {
                 });
             });
             waitsFor(function() { return USER_ID_TOKEN; }, "user ID token", 100);
+            runs(function() {
+            	MslTestUtils.toMslObject(encoder, MASTER_TOKEN, {
+            		result: function(x) { MASTER_TOKEN_MO = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+            	MslTestUtils.toMslObject(encoder, USER_ID_TOKEN, {
+            		result: function(x) { USER_ID_TOKEN_MO = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+            });
+            waitsFor(function() { MASTER_TOKEN_MO && USER_ID_TOKEN_MO; }, "msl objects", 100);
+            runs(function() { initialized = true; });
         }
     });
     
     it("ctors", function() {
-        var data, authdata, jsonString, joData;
+        var data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
+        
+        var authdata;
         runs(function () {
-            data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
             expect(data.scheme).toEqual(UserAuthenticationScheme.USER_ID_TOKEN);
             expect(data.masterToken).toEqual(MASTER_TOKEN);
             expect(data.userIdToken).toEqual(USER_ID_TOKEN);
-            authdata = data.getAuthData();
-            expect(authdata).not.toBeNull();
-            jsonString = JSON.stringify(data);
-            
-            UserIdTokenAuthenticationData$parse(ctx, authdata, {
-                result: function(x) { joData = x; },
+        
+            data.getAuthData(encoder, ENCODER_FORMAT, {
+            	result: function(x) { authdata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return joData; }, "joData", 100);
+        waitsFor(function() { return authdata; }, "authdata", 100);
+        
+        var encode;
+        runs(function() {
+            expect(authdata).not.toBeNull();
+            data.toMslEncoding(encoder, ENCODER_FORMAT, {
+            	result: function(x) { encode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return encode; }, "encode", 100);
+        
+        var moData;
+        runs(function() {
+            UserIdTokenAuthenticationData$parse(ctx, authdata, {
+                result: function(x) { moData = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return moData; }, "moData", 100);
+        
+        var moAuthdata;
+        runs(function() {
+            expect(moData.scheme).toEqual(data.scheme);
+            expect(moData.masterToken).toEqual(data.masterToken);
+            expect(moData.userIdToken).toEqual(data.userIdToken);
+            moData.getAuthData(encoder, ENCODER_FORMAT, {
+            	result: function(x) { moAuthdata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return moAuthdata; }, "moAuthdata", 100);
+        
+        var moEncode;
+        runs(function() {
+            expect(moAuthdata).not.toBeNull();
+            expect(moAuthdata).toEqual(authdata);
+            moData.toMslEncoding(encoder, ENCODER_FORMAT, {
+            	result: function(x) { moEncode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return moEncode; }, "moEncode", 100);
         
         runs(function() {
-            expect(joData.scheme).toEqual(data.scheme);
-            expect(joData.masterToken).toEqual(data.masterToken);
-            expect(joData.userIdToken).toEqual(data.userIdToken);
-            var joAuthdata = joData.getAuthData();
-            expect(joAuthdata).not.toBeNull();
-            expect(joAuthdata).toEqual(authdata);
-            var joJsonString = JSON.stringify(joData);
-            expect(joJsonString).not.toBeNull();
-            expect(joJsonString).toEqual(jsonString);
+            expect(moEncode).not.toBeNull();
+            expect(moEncode).toEqual(encode);
         });
     });
     
-    it("json is correct", function() {
+    it("mslobject is correct", function() {
         var data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
-        var jo = JSON.parse(JSON.stringify(data));
-        expect(jo[KEY_SCHEME]).toEqual(UserAuthenticationScheme.USER_ID_TOKEN.name);
-        var authdata = jo[KEY_AUTHDATA];
-        var masterTokenJo = authdata[KEY_MASTER_TOKEN];
-        expect(masterTokenJo).toEqual(JSON.parse(JSON.stringify(MASTER_TOKEN)));
-        var userIdTokenJo = authdata[KEY_USER_ID_TOKEN];
-        expect(userIdTokenJo).toEqual(JSON.parse(JSON.stringify(USER_ID_TOKEN)));
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, data, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        runs(function() {
+        	expect(mo.getString(KEY_SCHEME)).toEqual(UserAuthenticationScheme.USER_ID_TOKEN.name);
+        	var authdata = mo.getMslObject(KEY_AUTHDATA, encoder);
+        	var masterTokenMo = authdata.getMslObject(KEY_MASTER_TOKEN);
+	        expect(masterTokenMo).toEqual(MASTER_TOKEN_MO);
+	        var userIdTokenJo = authdata.getMslObject(KEY_USER_ID_TOKEN);
+	        expect(userIdTokenJo).toEqual(USER_ID_TOKEN_MO);
+        });
     });
     
     it("create", function() {
         var data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
-        var jsonString = JSON.stringify(data);
-        var jo = JSON.parse(jsonString);
+        
+        var encode;
+        runs(function() {
+            data.toMslEncoding(encoder, ENCODER_FORMAT, {
+            	result: function(x) { encode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return encode; }, "encode", 100);
+        
         var userdata;
         runs(function() {
-            UserAuthenticationData$parse(ctx, null, jo, {
+        	var mo = encoder.parseObject(encode);
+            UserAuthenticationData$parse(ctx, null, mo, {
                 result: function(x) { userdata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
         waitsFor(function() { return userdata; }, "userdata", 100);
         
+        var moAuthdata;
         runs(function() {
             expect(userdata).not.toBeNull();
             expect(userdata instanceof UserIdTokenAuthenticationData).toBeTruthy();
             
-            var joData = userdata;
-            expect(joData.scheme).toEqual(data.scheme);
-            expect(joData.masterToken).toEqual(data.masterToken);
-            expect(joData.userIdToken).toEqual(data.userIdToken);
-            var joAuthdata = joData.getAuthData();
-            expect(joAuthdata).not.toBeNull();
-            expect(joAuthdata).toEqual(data.getAuthData());
-            var joJsonString = JSON.stringify(joData);
-            expect(joJsonString).not.toBeNull();
-            expect(joJsonString).toEqual(jsonString);
-        });        
+            var moData = userdata;
+            expect(moData.scheme).toEqual(data.scheme);
+            expect(moData.masterToken).toEqual(data.masterToken);
+            expect(moData.userIdToken).toEqual(data.userIdToken);
+            moData.getAuthData(encoder, ENCODER_FORMAT, {
+            	result: function(x) { moAuthdata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return moAuthdata; }, "moAuthdata", 100);
+        
+        var moEncode;
+        runs(function() {
+            expect(moAuthdata).not.toBeNull();
+            expect(moAuthdata).toEqual(data.getAuthData());
+            moData.toMslEncoding(encoder, ENCODER_FORMAT, {
+            	result: function(x) { moEncode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return moEncode; }, "moEncode", 100);
+        
+        runs(function() {
+            expect(moEncode).not.toBeNull();
+            expect(moEncode).toEqual(encode);
+        });
     });
     
     it("missing master token", function() {
-        var exception;
+        var authdata;
         runs(function() {
             var data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
-            var authdata = data.getAuthData();
-            delete authdata[KEY_MASTER_TOKEN];
+            data.getAuthData(encoder, ENCODER_FORMAT, {
+            	result: function(x) { authdata = x; },
+            	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return authdata; }, "authdata", 100);
+        
+        var exception;
+        runs(function() {
+            authdata.remove(KEY_MASTER_TOKEN);
             UserIdTokenAuthenticationData$parse(ctx, authdata, {
                 result: function() {},
                 error: function(e) { exception = e; },
@@ -150,16 +247,23 @@ describe("UserIdTokenAuthenticationData", function() {
         
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
     it("invalid master token", function() {
-        var exception;
+        var authdata;
         runs(function() {
             var data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
-            var authdata = data.getAuthData();
-            authdata[KEY_MASTER_TOKEN] = {};
+            data.getAuthData(encoder, ENCODER_FORMAT, {
+            	result: function(x) { authdata = x; },
+            	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return authdata; }, "authdata", 100);
+        
+        runs(function() {
+            authdata.put(KEY_MASTER_TOKEN, encoder.createObject());
             UserIdTokenAuthenticationData$parse(ctx, authdata, {
                 result: function() {},
                 error: function(e) { exception = e; },
@@ -174,11 +278,19 @@ describe("UserIdTokenAuthenticationData", function() {
     });
     
     it("missing user ID token", function() {
-        var exception;
+        var authdata;
         runs(function() {
             var data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
-            var authdata = data.getAuthData();
-            delete authdata[KEY_USER_ID_TOKEN];
+            data.getAuthData(encoder, ENCODER_FORMAT, {
+            	result: function(x) { authdata = x; },
+            	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return authdata; }, "authdata", 100);
+        
+        var exception;
+        runs(function() {
+            authdata.remove(KEY_USER_ID_TOKEN);
             UserIdTokenAuthenticationData$parse(ctx, authdata, {
                 result: function() {},
                 error: function(e) { exception = e; },
@@ -188,16 +300,24 @@ describe("UserIdTokenAuthenticationData", function() {
 
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
     it("invalid user ID token", function() {
-        var exception;
+        var authdata;
         runs(function() {
             var data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
-            var authdata = data.getAuthData();
-            authdata[KEY_USER_ID_TOKEN] = {};
+            data.getAuthData(encoder, ENCODER_FORMAT, {
+            	result: function(x) { authdata = x; },
+            	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return authdata; }, "authdata", 100);
+        
+        var exception;
+        runs(function() {
+            authdata.put(KEY_USER_ID_TOKEN, encoder.createObject());
             UserIdTokenAuthenticationData$parse(ctx, authdata, {
                 result: function() {},
                 error: function(e) { exception = e; },
@@ -225,8 +345,13 @@ describe("UserIdTokenAuthenticationData", function() {
         runs(function() {
             dataA = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
             dataB = new UserIdTokenAuthenticationData(masterToken, USER_ID_TOKEN);
-            UserIdTokenAuthenticationData$parse(ctx, dataA.getAuthData(), {
-                result: function(x) { dataA2 = x; },
+            MslTestUtils.toMslObject(encoder, dataA, {
+            	result: function(mo) {
+		            UserIdTokenAuthenticationData$parse(ctx, mo, {
+		                result: function(x) { dataA2 = x; },
+		                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		            });
+            	},
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
@@ -257,8 +382,13 @@ describe("UserIdTokenAuthenticationData", function() {
         runs(function() {
             dataA = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
             dataB = new UserIdTokenAuthenticationData(MASTER_TOKEN, userIdToken);
-            UserIdTokenAuthenticationData$parse(ctx, dataA.getAuthData(), {
-                result: function(x) { dataA2 = x; },
+            MslTestUtils.toMslObject(encoder, dataA, {
+            	result: function(mo) {
+		            UserIdTokenAuthenticationData$parse(ctx, mo, {
+		                result: function(x) { dataA2 = x; },
+		                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		            });
+            	},
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });

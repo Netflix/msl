@@ -17,20 +17,20 @@ describe("MslError", function() {
     var BASE = 100000;
     
     it("JSON parse error is correct", function() {
-        expect(MslError.JSON_PARSE_ERROR).not.toBeUndefined();
-        expect(MslError.JSON_PARSE_ERROR).not.toBeNull();
-        expect(MslError.JSON_PARSE_ERROR.internalCode).toEqual(BASE);
-        expect(MslError.JSON_PARSE_ERROR.responseCode).toEqual(MslConstants$ResponseCode.FAIL);
-        expect(MslError.JSON_PARSE_ERROR.message).toEqual("Error parsing JSON.");
+        expect(MslError.MSL_PARSE_ERROR).not.toBeUndefined();
+        expect(MslError.MSL_PARSE_ERROR).not.toBeNull();
+        expect(MslError.MSL_PARSE_ERROR.internalCode).toEqual(BASE);
+        expect(MslError.MSL_PARSE_ERROR.responseCode).toEqual(MslConstants$ResponseCode.FAIL);
+        expect(MslError.MSL_PARSE_ERROR.message).toEqual("Error parsing JSON.");
     });
     
     it("is immutable", function() {
-    	MslError.JSON_PARSE_ERROR.internalCode = "x";
-    	MslError.JSON_PARSE_ERROR.responseCode = "x";
-    	MslError.JSON_PARSE_ERROR.message = "x";
-        expect(MslError.JSON_PARSE_ERROR.internalCode).toEqual(BASE);
-        expect(MslError.JSON_PARSE_ERROR.responseCode).toEqual(MslConstants$ResponseCode.FAIL);
-        expect(MslError.JSON_PARSE_ERROR.message).toEqual("Error parsing JSON.");
+    	MslError.MSL_PARSE_ERROR.internalCode = "x";
+    	MslError.MSL_PARSE_ERROR.responseCode = "x";
+    	MslError.MSL_PARSE_ERROR.message = "x";
+        expect(MslError.MSL_PARSE_ERROR.internalCode).toEqual(BASE);
+        expect(MslError.MSL_PARSE_ERROR.responseCode).toEqual(MslConstants$ResponseCode.FAIL);
+        expect(MslError.MSL_PARSE_ERROR.message).toEqual("Error parsing JSON.");
     });
     
     it("no repeated internal codes", function() {

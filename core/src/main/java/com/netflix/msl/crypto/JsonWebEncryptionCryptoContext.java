@@ -62,22 +62,22 @@ public class JsonWebEncryptionCryptoContext implements ICryptoContext {
     /** Encoding charset. */
     private static final Charset UTF_8 = Charset.forName("UTF-8");
     
-    /** Key recipients. */
+    /** JSON key recipients. */
     private static final String KEY_RECIPIENTS = "recipients";
-    /** Key header. */
+    /** JSON key header. */
     private static final String KEY_HEADER = "header";
-    /** Key encrypted key. */
+    /** JSON key encrypted key. */
     private static final String KEY_ENCRYPTED_KEY = "encrypted_key";
-    /** Key integrity value. */
+    /** JSON key integrity value. */
     private static final String KEY_INTEGRITY_VALUE = "integrity_value";
-    /** Key initialization vector. */
+    /** JSON key initialization vector. */
     private static final String KEY_INITIALIZATION_VECTOR = "initialization_vector";
-    /** Key ciphertext. */
+    /** JSON key ciphertext. */
     private static final String KEY_CIPHERTEXT = "ciphertext";
     
-    /** Key wrap algorithm. */
+    /** JSON key wrap algorithm. */
     private static final String KEY_ALGORITHM = "alg";
-    /** Key encryption algorithm. */
+    /** JSON key encryption algorithm. */
     private static final String KEY_ENCRYPTION = "enc";
     
     /** AES-128 GCM authentication tag length in bits. */

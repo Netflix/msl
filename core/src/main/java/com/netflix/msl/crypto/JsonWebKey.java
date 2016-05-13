@@ -55,29 +55,29 @@ import com.netflix.msl.io.MslObject;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class JsonWebKey implements MslEncodable {
-    /** Key key type. */
+    /** JSON key key type. */
     private static final String KEY_TYPE = "kty";
-    /** Key usage. */
+    /** JSON key usage. */
     private static final String KEY_USAGE = "use";
-    /** Key key operations. */
+    /** JSON key key operations. */
     private static final String KEY_KEY_OPS = "key_ops";
-    /** Key algorithm. */
+    /** JSON key algorithm. */
     private static final String KEY_ALGORITHM = "alg";
-    /** Key extractable. */
+    /** JSON key extractable. */
     private static final String KEY_EXTRACTABLE = "extractable";
-    /** Key key ID. */
+    /** JSON key key ID. */
     private static final String KEY_KEY_ID = "kid";
     
     // RSA keys.
-    /** Key modulus. */
+    /** JSON key modulus. */
     private static final String KEY_MODULUS = "n";
-    /** Key public exponent. */
+    /** JSON key public exponent. */
     private static final String KEY_PUBLIC_EXPONENT = "e";
-    /** Key private exponent. */
+    /** JSON key private exponent. */
     private static final String KEY_PRIVATE_EXPONENT = "d";
     
     // Symmetric keys.
-    /** Key key. */
+    /** JSON key key. */
     private static final String KEY_KEY = "k";
     
     /** Supported key types. */
