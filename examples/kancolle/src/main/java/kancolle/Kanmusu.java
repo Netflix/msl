@@ -27,26 +27,28 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import kancolle.keyx.DiffieHellmanManager;
+import kancolle.keyx.KanColleDiffieHellmanParameters;
+import kancolle.msg.CriticalMessageContext;
+import kancolle.msg.Message;
+import kancolle.msg.Message.Type;
+import kancolle.msg.MessageProcessor;
+import kancolle.msg.OrderRequestMessageContext;
+import kancolle.msg.PingMessageContext;
+import kancolle.msg.ReportMessageContext;
+import kancolle.util.ConsoleManager;
+import kancolle.util.KanmusuMslContext;
+
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslMessageException;
+import com.netflix.msl.io.JavaUrl;
+import com.netflix.msl.io.Url;
 import com.netflix.msl.msg.ErrorHeader;
 import com.netflix.msl.msg.MessageContext;
 import com.netflix.msl.msg.MessageInputStream;
 import com.netflix.msl.msg.MslControl;
 import com.netflix.msl.msg.MslControl.MslChannel;
 import com.netflix.msl.util.MslContext;
-
-import kancolle.keyx.DiffieHellmanManager;
-import kancolle.keyx.KanColleDiffieHellmanParameters;
-import kancolle.msg.CriticalMessageContext;
-import kancolle.msg.Message;
-import kancolle.msg.MessageProcessor;
-import kancolle.msg.OrderRequestMessageContext;
-import kancolle.msg.PingMessageContext;
-import kancolle.msg.ReportMessageContext;
-import kancolle.msg.Message.Type;
-import kancolle.util.ConsoleManager;
-import kancolle.util.KanmusuMslContext;
 
 /**
  * <p>KanColle Kanmusu ship.</p>
@@ -157,7 +159,7 @@ public class Kanmusu extends Thread {
     public void run() {
         while (true) try {
             // Construct the port URL.
-            final URL portUrl = new URL("kc://" + port.getIdentity() + "/");
+            final Url portUrl = new JavaUrl(new URL("kc://" + port.getIdentity() + "/"));
             
             // Wait for a request or send a ping if the ping interval has
             // elapsed.

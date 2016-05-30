@@ -17,7 +17,6 @@
 package mslcli.client;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -30,6 +29,7 @@ import mslcli.common.util.ConfigurationException;
 import mslcli.common.util.SharedUtil;
 
 import com.netflix.msl.MslException;
+import com.netflix.msl.io.JavaUrl;
 import com.netflix.msl.msg.ErrorHeader;
 import com.netflix.msl.msg.MessageContext;
 import com.netflix.msl.msg.MslControl;
@@ -164,7 +164,7 @@ public final class Client {
         mslCfg.validate();
 
         // set remote URL
-        final URL remoteUrl = args.getUrl();
+        final JavaUrl remoteUrl = new JavaUrl(args.getUrl());
 
         final MslContext mslCtx = new ClientMslContext(appCtx, mslCfg);
         final MessageContext msgCtx = new ClientRequestMessageContext(mslCfg, request);
