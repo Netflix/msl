@@ -20,8 +20,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
-import java.net.URL;
-import java.net.URLConnection;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.FileLockInterruptionException;
 import java.util.Collections;
@@ -72,6 +70,8 @@ import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.entityauth.UnauthenticatedAuthenticationData;
+import com.netflix.msl.io.Url;
+import com.netflix.msl.io.Url.Connection;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeFactory.KeyExchangeData;
 import com.netflix.msl.keyx.KeyExchangeScheme;
@@ -2930,7 +2930,7 @@ public class MslControl {
              * 
              * @param conn backing URL connection.
              */
-            public DelayedInputStream(final URLConnection conn) {
+            public DelayedInputStream(final Connection conn) {
                 super(null);
                 this.conn = conn;
             }
@@ -2993,8 +2993,8 @@ public class MslControl {
                 return super.skip(n);
             }
             
-            /** URL connection providing the input stream. */
-            private final URLConnection conn;
+            /** Connection providing the input stream. */
+            private final Connection conn;
         }
         
         /** MSL context. */
@@ -3002,7 +3002,7 @@ public class MslControl {
         /** Message context. */
         private final MessageContext msgCtx;
         /** Remote entity URL. */
-        private final URL remoteEntity;
+        private final Url remoteEntity;
         /** Remote entity input stream. */
         private InputStream in;
         /** Remote entity output stream. */
@@ -3028,7 +3028,7 @@ public class MslControl {
          * @param timeout connect, read, and renewal lock acquisition timeout
          *        in milliseconds.
          */
-        public RequestService(final MslContext ctx, final MessageContext msgCtx, final URL remoteEntity, final int timeout) {
+        public RequestService(final MslContext ctx, final MessageContext msgCtx, final Url remoteEntity, final int timeout) {
             this.ctx = ctx;
             this.msgCtx = msgCtx;
             this.remoteEntity = remoteEntity;
@@ -3073,7 +3073,7 @@ public class MslControl {
          * @param msgCount number of messages that have already been sent or
          *        received.
          */
-        public RequestService(final MslContext ctx, final MessageContext msgCtx, final URL remoteEntity, final MessageBuilder builder, final int timeout, final int msgCount) {
+        public RequestService(final MslContext ctx, final MessageContext msgCtx, final Url remoteEntity, final MessageBuilder builder, final int timeout, final int msgCount) {
             this.ctx = ctx;
             this.msgCtx = msgCtx;
             this.remoteEntity = remoteEntity;
@@ -3364,18 +3364,14 @@ public class MslControl {
             if (in == null || out == null) {
                 try {
                     // Set up the connection.
-                    final URLConnection connection = remoteEntity.openConnection();
-                    connection.setConnectTimeout(timeout);
-                    connection.setReadTimeout(timeout);
-                    connection.setDoOutput(true);
-                    connection.setDoInput(true);
+                    remoteEntity.setTimeout(timeout);
                     
                     // Connect. Keep track of how much time this takes to subtract
                     // that from the lock timeout timeout.
                     final long start = System.currentTimeMillis();
-                    connection.connect();
-                    out = connection.getOutputStream();
-                    in = new DelayedInputStream(connection);
+                    final Connection conn = remoteEntity.openConnection();
+                    out = conn.getOutputStream();
+                    in = new DelayedInputStream(conn);
                     lockTimeout = timeout - (int)(System.currentTimeMillis() - start);
                     openedStreams = true;
                 } catch (final IOException e) {
@@ -3626,7 +3622,7 @@ public class MslControl {
      * @return a future for the communication channel.
      * @throws IllegalStateException if used in peer-to-peer mode.
      */
-    public Future<MslChannel> request(final MslContext ctx, final MessageContext msgCtx, final URL remoteEntity, final int timeout) {
+    public Future<MslChannel> request(final MslContext ctx, final MessageContext msgCtx, final Url remoteEntity, final int timeout) {
         if (ctx.isPeerToPeer())
             throw new IllegalStateException("This method cannot be used in peer-to-peer mode.");
         final RequestService service = new RequestService(ctx, msgCtx, remoteEntity, timeout);

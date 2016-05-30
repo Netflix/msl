@@ -15,6 +15,12 @@
  */
 package com.netflix.msl.client.configuration;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.NoSuchAlgorithmException;
+
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
@@ -33,6 +39,8 @@ import com.netflix.msl.entityauth.RsaAuthenticationData;
 import com.netflix.msl.entityauth.UnauthenticatedAuthenticationData;
 import com.netflix.msl.entityauth.UnauthenticatedAuthenticationFactory;
 import com.netflix.msl.entityauth.X509AuthenticationData;
+import com.netflix.msl.io.JavaUrl;
+import com.netflix.msl.io.Url;
 import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.msg.MslControl;
 import com.netflix.msl.userauth.EmailPasswordAuthenticationData;
@@ -41,12 +49,6 @@ import com.netflix.msl.userauth.UserAuthenticationData;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
 import com.netflix.msl.util.AuthenticationUtils;
 import com.netflix.msl.util.MockAuthenticationUtils;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.NoSuchAlgorithmException;
 
 /**
  * User: skommidi
@@ -60,7 +62,7 @@ public class ClientConfiguration {
     private MslControl mslControl;
     private ClientMslContext mslContext;
     private ClientMessageContext messageContext;
-    private URL remoteEntity;
+    private Url remoteEntity;
     private String scheme = "http";
     private String remoteHost = "localhost";
     private String path = "";
@@ -176,7 +178,7 @@ public class ClientConfiguration {
     }
 
     public void commitConfiguration() throws URISyntaxException, IOException, MslCryptoException, MslEncodingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, MslKeyExchangeException {
-        remoteEntity = new URL(scheme + "://" + remoteHost + path);
+        remoteEntity = new JavaUrl(new URL(scheme + "://" + remoteHost + path));
 
         /** create msl context and configure */
         mslContext = new ClientMslContext(entityAuthenticationScheme, isPeerToPeer, isNullCryptoContext);
@@ -283,7 +285,7 @@ public class ClientConfiguration {
         return messageContext;
     }
 
-    public URL getRemoteEntity() {
+    public Url getRemoteEntity() {
         return remoteEntity;
     }
 

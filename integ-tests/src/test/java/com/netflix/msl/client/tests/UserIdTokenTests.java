@@ -23,11 +23,14 @@ import com.netflix.msl.client.common.BaseTestClass;
 import com.netflix.msl.client.configuration.ClientConfiguration;
 import com.netflix.msl.client.configuration.ServerConfiguration;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.io.Url;
+import com.netflix.msl.io.Url.Connection;
 import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.msg.MessageInputStream;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
+
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -36,7 +39,6 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
-import java.net.URLConnection;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
@@ -87,13 +89,10 @@ public class UserIdTokenTests extends BaseTestClass {
     @BeforeMethod
     public void beforeTest() throws IOException, ExecutionException, InterruptedException {
         try {
-            final URLConnection connection = clientConfig.getRemoteEntity().openConnection();
-            connection.setConnectTimeout(TIME_OUT);
-            connection.setReadTimeout(TIME_OUT);
-            connection.setDoOutput(true);
-            connection.setDoInput(true);
+            final Url remoteEntity = clientConfig.getRemoteEntity();
+            remoteEntity.setTimeout(TIME_OUT);
+            final Connection connection = remoteEntity.openConnection();
 
-            connection.connect();
             out = connection.getOutputStream();
             in = new DelayedInputStream(connection);
         } catch (final IOException e) {
