@@ -30,6 +30,8 @@ import java.util.concurrent.Future;
 
 import com.netflix.msl.MslConstants.ResponseCode;
 import com.netflix.msl.MslException;
+import com.netflix.msl.io.JavaUrl;
+import com.netflix.msl.io.Url;
 import com.netflix.msl.msg.ErrorHeader;
 import com.netflix.msl.msg.MessageContext;
 import com.netflix.msl.msg.MessageInputStream;
@@ -100,7 +102,7 @@ public class Oneshot {
 	 * @throws OneshotErrorResponse if the remote entity returned a MSL error.
 	 * @throws IOException if there is an error reading the response.
 	 */
-	public byte[] request(final URL remoteEntity, final byte[] data) throws MslException, ExecutionException, InterruptedException, OneshotErrorResponse, IOException {
+	public byte[] request(final Url remoteEntity, final byte[] data) throws MslException, ExecutionException, InterruptedException, OneshotErrorResponse, IOException {
 	    // Setup message context.
 	    final MessageContext msgCtx = new OneshotMessageContext(data, email, password);
 	    
@@ -167,7 +169,7 @@ public class Oneshot {
 	        }
 
             // Grab remote URL and data file.
-            final URL url = new URL(args[0]);
+            final Url url = new JavaUrl(new URL(args[0]));
 	        final String file = args[1];
 
 	        // Read request data.

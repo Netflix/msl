@@ -4379,6 +4379,7 @@ var MslControl$MslChannel;
                             this._ctrl.releaseMasterToken(this._ctx, this._tokenTicket);
 
                         // Close any open streams.
+                        // We don't care about an I/O exception on close.
                         if (this._output) this._output.close(this._timeout, NULL_CLOSE_HANDLER);
                         if (this._input) this._input.close(this._timeout, NULL_CLOSE_HANDLER);
 
@@ -4402,6 +4403,7 @@ var MslControl$MslChannel;
                         timeout: function() {
                             InterruptibleExecutor(callback, function() {
                                 // Close the streams if we opened them.
+                                // We don't care about an I/O exception on close.
                                 if (this._openedStreams) {
                                     this._output.close(this._timeout, NULL_CLOSE_HANDLER);
                                     this._input.close(this._timeout, NULL_CLOSE_HANDLER);
@@ -4412,6 +4414,7 @@ var MslControl$MslChannel;
                         error: function(e) {
                             InterruptibleExecutor(callback, function() {
                                 // Close the streams if we opened them.
+                                // We don't care about an I/O exception on close.
                                 if (this._openedStreams) {
                                     this._output.close(this._timeout, NULL_CLOSE_HANDLER);
                                     this._input.close(this._timeout, NULL_CLOSE_HANDLER);
@@ -4447,6 +4450,7 @@ var MslControl$MslChannel;
                         timeout: function() {
                             InterruptibleExecutor(callback, function() {
                                 // Close the streams if we opened them.
+                                // We don't care about an I/O exception on close.
                                 if (this._openedStreams) {
                                     this._output.close(lockTimeout, NULL_CLOSE_HANDLER);
                                     this._input.close(lockTimeout, NULL_CLOSE_HANDLER);
@@ -4457,6 +4461,7 @@ var MslControl$MslChannel;
                         error: function(e) {
                             InterruptibleExecutor(callback, function() {
                                 // Close the streams if we opened them.
+                                // We don't care about an I/O exception on close.
                                 if (this._openedStreams) {
                                     this._output.close(lockTimeout, NULL_CLOSE_HANDLER);
                                     this._input.close(lockTimeout, NULL_CLOSE_HANDLER);

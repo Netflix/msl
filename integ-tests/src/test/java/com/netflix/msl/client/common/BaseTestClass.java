@@ -18,7 +18,6 @@ package com.netflix.msl.client.common;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.URLConnection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Properties;
@@ -44,6 +43,7 @@ import com.netflix.msl.entityauth.MockPresharedAuthenticationFactory;
 import com.netflix.msl.io.MslEncoderException;
 import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.io.MslObject;
+import com.netflix.msl.io.Url.Connection;
 import com.netflix.msl.keyx.KeyRequestData;
 import com.netflix.msl.msg.MessageBuilder;
 import com.netflix.msl.msg.MessageHeader;
@@ -293,7 +293,7 @@ public class BaseTestClass {
          *
          * @param conn backing URL connection.
          */
-        public DelayedInputStream(final URLConnection conn) {
+        public DelayedInputStream(final Connection conn) {
             super(null);
             this.conn = conn;
         }
@@ -357,6 +357,6 @@ public class BaseTestClass {
         }
 
         /** URL connection providing the input stream. */
-        private final URLConnection conn;
+        private final Connection conn;
     }
 }

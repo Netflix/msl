@@ -76,6 +76,7 @@ task javadoc_public(type: Javadoc) {
         "**/MslUserIdTokenException.java",
         "**/ServiceToken.java",
         "**/TokenFactory.java",
+        "**/Url.java",
         "**/UserAuthenticationData.java",
         "**/UserAuthenticationFactory.java",
         "**/UserAuthenticationScheme.java",
