@@ -3385,8 +3385,9 @@ public class MslControl {
                         releaseMasterToken(ctx, builder.getMasterToken());
                     
                     // Close any open streams.
-                    if (out != null) out.close();
-                    if (in != null) in.close();
+                    // We don't care about an I/O exception on close.
+                    if (out != null) try { out.close(); } catch (final IOException ioe) { }
+                    if (in != null) try { in.close(); } catch (final IOException ioe) { }
                     
                     // If we were cancelled then return null.
                     if (cancelled(e)) return null;
@@ -3396,10 +3397,11 @@ public class MslControl {
                     // master token read lock.
                     if (builder != null)
                         releaseMasterToken(ctx, builder.getMasterToken());
-                    
+
                     // Close any open streams.
-                    if (out != null) out.close();
-                    if (in != null) in.close();
+                    // We don't care about an I/O exception on close.
+                    if (out != null) try { out.close(); } catch (final IOException ioe) { }
+                    if (in != null) try { in.close(); } catch (final IOException ioe) { }
                     
                     throw e;
                 }
@@ -3414,9 +3416,10 @@ public class MslControl {
                     builder = buildRequest(ctx, msgCtx);
                 } catch (final InterruptedException e) {
                     // Close the streams if we opened them.
+                    // We don't care about an I/O exception on close.
                     if (openedStreams) {
-                        out.close();
-                        in.close();
+                        try { out.close(); } catch (final IOException ioe) { }
+                        try { in.close(); } catch (final IOException ioe) { }
                     }
                     
                     // We were cancelled so return null.
@@ -3434,40 +3437,22 @@ public class MslControl {
                 
                 // Return the established channel.
                 return channel;
-            } catch (final MslException e) {
-                // Close the streams if we opened them.
-                if (openedStreams) {
-                    out.close();
-                    in.close();
-                }
-                
-                // If we were cancelled then return null.
-                if (cancelled(e)) return null;
-                throw e;
-            } catch (final IOException e) {
-                // Close the streams if we opened them.
-                if (openedStreams) {
-                    out.close();
-                    in.close();
-                }
-                
-                // If we were cancelled then return null.
-                if (cancelled(e)) return null;
-                throw e;
             } catch (final InterruptedException e) {
                 // Close the streams if we opened them.
+                // We don't care about an I/O exception on close.
                 if (openedStreams) {
-                    out.close();
-                    in.close();
+                    try { out.close(); } catch (final IOException ioe) { }
+                    try { in.close(); } catch (final IOException ioe) { }
                 }
                 
                 // We were cancelled so return null.
                 return null;
-            } catch (final RuntimeException e) {
+            } catch (final MslException | IOException | RuntimeException e) {
                 // Close the streams if we opened them.
+                // We don't care about an I/O exception on close.
                 if (openedStreams) {
-                    out.close();
-                    in.close();
+                    try { out.close(); } catch (final IOException ioe) { }
+                    try { in.close(); } catch (final IOException ioe) { }
                 }
                 
                 // If we were cancelled then return null.
