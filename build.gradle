@@ -26,6 +26,6 @@ subprojects {
     }
 
     tasks.withType(Test) {
-        maxHeapSize = '512m'
+        maxHeapSize = '1024m'
     }
 }
