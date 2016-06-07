@@ -35,61 +35,33 @@ import javax.crypto.NoSuchPaddingException;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class CryptoCache {
-    /** Cache of transforms onto ciphers. */
-    private static ThreadLocal<Map<String,Cipher>> cipherCache = new ThreadLocal<Map<String,Cipher>>() {
+    private static class ThreadLocalMap<T> extends ThreadLocal<Map<String, T>> {
         @Override
-        protected Map<String,Cipher> initialValue() {
-            return new HashMap<String,Cipher>();
+        protected Map<String, T> initialValue() {
+            return new HashMap<String, T>();
         }
-    };
+    }
+
+    /** Cache of transforms onto ciphers. */
+    private static ThreadLocal<Map<String,Cipher>> cipherCache = new ThreadLocalMap<>();
     
     /** Cache of algorithms onto signatures. */
-    private static ThreadLocal<Map<String,Signature>> signatureCache = new ThreadLocal<Map<String,Signature>>() {
-        @Override
-        protected Map<String,Signature> initialValue() {
-            return new HashMap<String,Signature>();
-        }
-    };
+    private static ThreadLocal<Map<String,Signature>> signatureCache = new ThreadLocalMap<>();
     
     /** Cache of algorithms onto message digests. */
-    private static ThreadLocal<Map<String,MessageDigest>> digestCache = new ThreadLocal<Map<String,MessageDigest>>() {
-        @Override
-        protected Map<String,MessageDigest> initialValue() {
-            return new HashMap<String,MessageDigest>();
-        }
-    };
+    private static ThreadLocal<Map<String,MessageDigest>> digestCache = new ThreadLocalMap<>();
     
     /** Cache of algorithms onto MACs. */
-    private static ThreadLocal<Map<String,Mac>> macCache = new ThreadLocal<Map<String,Mac>>() {
-        @Override
-        protected Map<String,Mac> initialValue() {
-            return new HashMap<String,Mac>();
-        }
-    };
+    private static ThreadLocal<Map<String,Mac>> macCache = new ThreadLocalMap<>();
     
     /** Cache of algorithms onto key factories. */
-    private static ThreadLocal<Map<String,KeyFactory>> keyFactoryCache = new ThreadLocal<Map<String,KeyFactory>>() {
-        @Override
-        protected Map<String,KeyFactory> initialValue() {
-            return new HashMap<String,KeyFactory>();
-        }
-    };
+    private static ThreadLocal<Map<String,KeyFactory>> keyFactoryCache = new ThreadLocalMap<>();
     
     /** Cache of algorithms onto key agreements. */
-    private static ThreadLocal<Map<String,KeyAgreement>> keyAgreementCache = new ThreadLocal<Map<String,KeyAgreement>>() {
-        @Override
-        protected Map<String,KeyAgreement> initialValue() {
-            return new HashMap<String,KeyAgreement>();
-        }
-    };
+    private static ThreadLocal<Map<String,KeyAgreement>> keyAgreementCache = new ThreadLocalMap<>();
     
     /** Cache of algorithms onto key pair generators. */
-    private static ThreadLocal<Map<String,KeyPairGenerator>> keyPairGeneratorCache = new ThreadLocal<Map<String,KeyPairGenerator>>() {
-        @Override
-        protected Map<String,KeyPairGenerator> initialValue() {
-            return new HashMap<String,KeyPairGenerator>();
-        }
-    };
+    private static ThreadLocal<Map<String,KeyPairGenerator>> keyPairGeneratorCache = new ThreadLocalMap<>();
     
     /**
      * Returns a {@code Cipher} object that implements the specified transform.
