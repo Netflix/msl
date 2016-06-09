@@ -36,6 +36,12 @@ public class Base64JaxbTest {
     }
 
     @Test
+    public void decodeNull() throws Exception {
+        expectedException.expect(NullPointerException.class);
+        subject.decode(null);
+    }
+
+    @Test
     public void decodeIncorrect() throws Exception {
         expectedException.expect(RuntimeException.class);
         byte[] decoded = subject.decode("%$#@=");

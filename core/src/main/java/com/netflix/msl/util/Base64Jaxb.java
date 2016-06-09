@@ -38,7 +38,7 @@ public class Base64Jaxb implements Base64Impl {
      */
     @Override
     public byte[] decode(final String s) {
-        if (s.isEmpty()) {
+        if (s != null && s.isEmpty()) {
             return new byte[0];
         }
         byte[] bytes = DatatypeConverter.parseBase64Binary(s);
