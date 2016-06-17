@@ -48,16 +48,22 @@ public class MslUtils {
                 {
                     final ByteArrayOutputStream baos = new ByteArrayOutputStream(data.length);
                     final GZIPOutputStream gzos = new GZIPOutputStream(baos);
-                    gzos.write(data);
-                    gzos.close();
+                    try {
+                        gzos.write(data);
+                    } finally {
+                        gzos.close();
+                    }
                     return baos.toByteArray();
                 }
                 case LZW:
                 {
                     final ByteArrayOutputStream baos = new ByteArrayOutputStream(data.length);
                     final LZWOutputStream lzwos = new LZWOutputStream(baos);
-                    lzwos.write(data);
-                    lzwos.close();
+                    try {
+                        lzwos.write(data);
+                    } finally {
+                        lzwos.close();
+                    }
                     return baos.toByteArray();
                 }
                 default:
@@ -84,14 +90,18 @@ public class MslUtils {
                 {
                     final ByteArrayInputStream bais = new ByteArrayInputStream(data);
                     final GZIPInputStream gzis = new GZIPInputStream(bais);
-                    final byte[] buffer = new byte[data.length];
-                    final ByteArrayOutputStream baos = new ByteArrayOutputStream(data.length);
-                    do {
-                        final int bytesRead = gzis.read(buffer);
-                        if (bytesRead == -1) break;
-                        baos.write(buffer, 0, bytesRead);
-                    } while (true);
-                    return baos.toByteArray();
+                    try {
+                        final byte[] buffer = new byte[data.length];
+                        final ByteArrayOutputStream baos = new ByteArrayOutputStream(data.length);
+                        do {
+                            final int bytesRead = gzis.read(buffer);
+                            if (bytesRead == -1) break;
+                            baos.write(buffer, 0, bytesRead);
+                        } while (true);
+                        return baos.toByteArray();
+                    } finally {
+                        gzis.close();
+                    }
                 }
                 case LZW:
                 {
