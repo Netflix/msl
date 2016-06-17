@@ -1,5 +1,5 @@
 plugins {
-    id 'nebula.netflixoss' version '3.2.0'
+    id 'nebula.netflixoss' version '3.2.3'
 }
 
 subprojects {
@@ -25,4 +25,7 @@ subprojects {
         }
     }
 
+    tasks.withType(Test) {
+        maxHeapSize = '1024m'
+    }
 }

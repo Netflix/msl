@@ -17,6 +17,7 @@ test.useTestNG()
 
 gretty {
     integrationTestTask = 'test'
+    jvmArgs = ['-Xmx512m']
 }
 
 war.baseName = "msl-test-server"
