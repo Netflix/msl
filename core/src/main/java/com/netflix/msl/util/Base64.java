@@ -104,5 +104,5 @@ public class Base64 {
     }
     
     /** The backing implementation. */
-    private static Base64Impl impl = new Base64Jaxb();
+    private static Base64Impl impl = new Base64Secure();
 }
