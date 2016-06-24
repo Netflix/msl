@@ -66,7 +66,11 @@ public class Base64Test {
         "AAAAA",
         "AAAAAAA",
         "%$#@=",
-        "ZZZZZZZZZZ="
+        "ZZZZZZZZZZ=",
+        "ZZZZZZZZZ==",
+        "U29tZXRpbWVzIHBvcmN1cGluZX=gbmVlZCBiZWRzIHRvIHNsZWVwIG9uLg==",
+        "RXZlbiB0aGUgcmVzdGxlc3MgZHJ=YW1lciBlbmpveXMgaG9tZS1jb29rZWQgZm9vZHMu",
+        "RXZlbiB0aGUgcmVzdGxlc3MgZHJ=Y",
     };
     
     @Parameters

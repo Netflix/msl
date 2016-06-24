@@ -132,6 +132,7 @@ public class Base64Secure implements Base64Impl {
         // Convert each quadruplet to three bytes.
         final byte[] quadruplet = new byte[4];
         int q = 0;
+        boolean lastQuad = false;
         for (int i = 0; i < strlen; ++i) {
             final char c = s.charAt(i);
             final byte b = DECODE_MAP[c];
@@ -144,6 +145,10 @@ public class Base64Secure implements Base64Impl {
                 continue;
             }
             
+            // If we already saw the last quadruplet, we shouldn't see anymore.
+            if (lastQuad)
+                invalid = true;
+            
             // Append value to quadruplet.
             quadruplet[q++] = b;
             
@@ -152,6 +157,11 @@ public class Base64Secure implements Base64Impl {
                 // If the quadruplet starts with padding, flag invalid.
                 if (quadruplet[0] == PADDING || quadruplet[1] == PADDING)
                     invalid = true;
+                
+                // If the quadruplet ends with padding, this better be the last
+                // quadruplet.
+                if (quadruplet[2] == PADDING || quadruplet[3] == PADDING)
+                    lastQuad = true;
                 
                 // Decode into the destination buffer.
                 out[o++] = (byte)((quadruplet[0] << 2) | (quadruplet[1] >> 4));
