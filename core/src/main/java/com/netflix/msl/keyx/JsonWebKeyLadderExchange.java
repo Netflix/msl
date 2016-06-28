@@ -16,6 +16,7 @@
 package com.netflix.msl.keyx;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
@@ -78,7 +79,7 @@ import com.netflix.msl.util.MslContext;
  */
 public class JsonWebKeyLadderExchange extends KeyExchangeFactory {
     /** Encoding charset. */
-    private static final Charset UTF_8 = Charset.forName("UTF-8");
+    private static final Charset UTF_8 = StandardCharsets.UTF_8;
     
     /** Dummy wrapping key ID. */
     private static final String WRAP_KEY_ID = "wrapKeyId";

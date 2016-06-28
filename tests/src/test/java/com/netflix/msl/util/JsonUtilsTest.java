@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Random;
 
 import org.json.JSONArray;
@@ -38,7 +39,7 @@ import org.junit.Test;
  */
 public class JsonUtilsTest {
     /** Encoding charset. */
-    private static final Charset UTF_8 = Charset.forName("UTF-8");
+    private static final Charset UTF_8 = StandardCharsets.UTF_8;
     
     /** URL-safe Base64 examples. */
     private static final String[][] B64_URL_EXAMPLES = new String[][] {

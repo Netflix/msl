@@ -16,6 +16,7 @@
 package com.netflix.msl.crypto;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -59,7 +60,7 @@ import com.netflix.msl.util.MslContext;
  */
 public class JsonWebEncryptionCryptoContext implements ICryptoContext {
     /** Encoding charset. */
-    private static final Charset UTF_8 = Charset.forName("UTF-8");
+    private static final Charset UTF_8 = StandardCharsets.UTF_8;
     
     /** JSON key recipients. */
     private static final String KEY_RECIPIENTS = "recipients";

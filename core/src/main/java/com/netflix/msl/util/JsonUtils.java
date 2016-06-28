@@ -16,6 +16,7 @@
 package com.netflix.msl.util;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -33,7 +34,7 @@ import org.json.JSONString;
  */
 public class JsonUtils {
     /** Encoding charset. */
-    private static final Charset UTF_8 = Charset.forName("UTF-8");
+    private static final Charset UTF_8 = StandardCharsets.UTF_8;
     /** Base64 characters. */
     private static final char CHAR_PLUS = '+';
     private static final char CHAR_MINUS = '-';

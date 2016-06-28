@@ -16,6 +16,7 @@
 package com.netflix.msl;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
 /**
@@ -25,7 +26,7 @@ import java.util.Set;
  */
 public abstract class MslConstants {
     /** RFC-4627 defines UTF-8 as the default encoding. */
-    public static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
+    public static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
     
     /** Maximum long integer value (2^53 limited by JavaScript). */
     public static final long MAX_LONG_VALUE = 9007199254740992L;

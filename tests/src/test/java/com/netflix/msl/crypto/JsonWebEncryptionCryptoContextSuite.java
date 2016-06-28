@@ -21,6 +21,7 @@ import static org.junit.Assert.assertNotNull;
 
 import java.math.BigInteger;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -75,7 +76,7 @@ import com.netflix.msl.util.MslContext;
                JsonWebEncryptionCryptoContextSuite.AesKwJsonSerialization.class})
 public class JsonWebEncryptionCryptoContextSuite {
     /** Encoding charset. */
-    private static final Charset UTF_8 = Charset.forName("UTF-8");
+    private static final Charset UTF_8 = StandardCharsets.UTF_8;
 
     /** JSON key recipients. */
     private static final String KEY_RECIPIENTS = "recipients";

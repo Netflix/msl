@@ -23,6 +23,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.util.Arrays;
@@ -90,7 +91,7 @@ import com.netflix.msl.util.MslTestUtils;
                JsonWebEncryptionLadderExchangeSuite.ResponseDataTest.class})
 public class JsonWebEncryptionLadderExchangeSuite {
     /** Encoding charset. */
-    private static final Charset UTF_8 = Charset.forName("UTF-8");
+    private static final Charset UTF_8 = StandardCharsets.UTF_8;
     
     /** JSON key key exchange scheme. */
     private static final String KEY_SCHEME = "scheme";
