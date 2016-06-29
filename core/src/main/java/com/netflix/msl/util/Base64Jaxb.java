@@ -20,7 +20,7 @@ import javax.xml.bind.DatatypeConverter;
 import com.netflix.msl.util.Base64.Base64Impl;
 
 /**
- * <p>Base64 encoder/decoder implementation that uses the JAXB {@link DatatypConverter}
+ * <p>Base64 encoder/decoder implementation that uses the JAXB {@link DatatypeConverter}
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
