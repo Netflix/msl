@@ -111,7 +111,8 @@ describe("UnauthenticatedAuthenticationData", function() {
     });
     
     it("mslobject is correct", function() {
-        var data = new UnauthenticatedAuthenticationData(IDENTITY);.
+        var data = new UnauthenticatedAuthenticationData(IDENTITY);
+        
         var mo;
         runs(function() {
             MslTestUtils.toMslObject(data, {

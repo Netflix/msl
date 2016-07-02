@@ -258,38 +258,47 @@ var ErrorHeader$parse;
                 }
                 
                 // Encrypt and sign the error data.
-                var plaintext = encoder.encodeObject(this.errordata, format);
-                cryptoContext.encrypt(plaintext, encoder, format, {
-                    result: function(errordata) {
-                        cryptoContext.sign(errordata, {
-                            result: function(signature) {
-                                AsyncExecutor(callback, function() {
-                                    // Create the encoding.
-                                    var header = encoder.createObject();
-                                    header.put(KEY_ENTITY_AUTHENTICATION_DATA, this.entityAuthData);
-                                    header.put(KEY_ERRORDATA, ciphertext);
-                                    header.put(KEY_SIGNATURE, signature);
-                                    var encoding = encoder.encodeObject(header, format);
-                                    
-                                    // Cache and return the encoding.
-                                    this.encodings[format] = encoding;
-                                    return encoding;
-                                }, self);
-                            },
-                            error: function(e) {
-                                if (e instanceof MslCryptoException)
-                                    e = new MslEncoderException("Error signing the error data.", e);
-                                callback.error(e);
-                            }
-                        });
-                    },
-                    error: function(e) {
-                        if (e instanceof MslCryptoException)
-                            e = new MslEncoderException("Error signing the error data.", e);
-                        callback.error(e);
-                    }
+                encoder.encodeObject(this.errordata, format, {
+                	result: function(plaintext) {
+		                cryptoContext.encrypt(plaintext, encoder, format, {
+		                    result: function(errordata) {
+		                        cryptoContext.sign(errordata, {
+		                            result: function(signature) {
+		                                AsyncExecutor(callback, function() {
+		                                    // Create the encoding.
+		                                    var header = encoder.createObject();
+		                                    header.put(KEY_ENTITY_AUTHENTICATION_DATA, this.entityAuthData);
+		                                    header.put(KEY_ERRORDATA, ciphertext);
+		                                    header.put(KEY_SIGNATURE, signature);
+		                                    encoder.encodeObject(header, format, {
+		                                    	result: function(encoding) {
+		                                    		AsyncExecutor(callback, function() {
+		                                    			// Cache and return the encoding.
+		                                    			this.encodings[format] = encoding;
+		                                    			return encoding;
+		                                    		}, self);
+		                                    	},
+		                                    	error: callback.error,
+		                                    });
+		                                }, self);
+		                            },
+		                            error: function(e) {
+		                                if (e instanceof MslCryptoException)
+		                                    e = new MslEncoderException("Error signing the error data.", e);
+		                                callback.error(e);
+		                            }
+		                        });
+		                    },
+		                    error: function(e) {
+		                        if (e instanceof MslCryptoException)
+		                            e = new MslEncoderException("Error signing the error data.", e);
+		                        callback.error(e);
+		                    }
+		                });
+                	},
+                	error: callback.error,
                 });
-            }, this);
+            }, self);
         },
     });
 

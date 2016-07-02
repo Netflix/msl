@@ -85,7 +85,7 @@ describe("MslSignatureEnvelope", function() {
             runs(function() {
                 expect(envelopeBytes).not.toBeNull();
 
-                MslSignatureEnvelope$parse(envelopeBytes, null, {
+                MslSignatureEnvelope$parse(envelopeBytes, null, encoder, {
                     result: function(x) { moEnvelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -167,7 +167,7 @@ describe("MslSignatureEnvelope", function() {
             runs(function() {
                 expect(envelopeBytes).not.toBeNull();
 
-                MslSignatureEnvelope$parse(envelopeBytes, null, {
+                MslSignatureEnvelope$parse(envelopeBytes, null, encoder, {
                     result: function(x) { moEnvelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -184,6 +184,8 @@ describe("MslSignatureEnvelope", function() {
                 });
             });
             waitsFor(function() { return moEnvelopeBytes; }, "moEnvelopeBytes", 100);
+            
+            runs(function() {
                 expect(moEnvelopeBytes).toEqual(envelopeBytes);
             });
         });
@@ -235,13 +237,21 @@ describe("MslSignatureEnvelope", function() {
             });
             waitsFor(function() { return envelopeBytes; }, "envelopeBytes", 100);
             
-            var moEncode, moEnvelope;
+            var moEncode;
             runs(function() {
                 var mo = encoder.parseObject(envelopeBytes);
                 mo.remove(KEY_VERSION);
                 
-                moEncode = encoder.encodeObject(mo, ENCODER_FORMAT);
-                MslSignatureEnvelope$parse(moEncode, null, {
+                encoder.encodeObject(mo, ENCODER_FORMAT, {
+                	result: function(x) { moEncode = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return moEncode; }, "moEncode", 100);
+            
+            var moEnvelope;
+            runs(function() {
+                MslSignatureEnvelope$parse(moEncode, null, encoder, {
                     result: function(x) { moEnvelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -271,15 +281,23 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moEnvelopeBytes; }, "moEnvelopeBytes", 100);
+            waitsFor(function() { return envelopeBytes; }, "envelopeBytes", 100);
 
-            var moEncode, moEnvelope;
+            var moEncode;
             runs(function() {
                 var mo = encoder.parseObject(envelopeBytes);
                 mo.put(KEY_VERSION, "x");
                 
-                moEncode = encoder.encodeObject(mo, ENCODER_FORMAT);
-                MslSignatureEnvelope$parse(moEncode, null, {
+                encoder.encodeObject(mo, ENCODER_FORMAT, {
+                	result: function(x) { moEncode = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return moEncode; }, "moEncode", 100);
+            
+            var moEnvelope;
+            runs(function() {
+                MslSignatureEnvelope$parse(moEncode, null, encoder, {
                     result: function(x) { moEnvelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -309,15 +327,23 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moEnvelopeBytes; }, "moEnvelopeBytes", 100);
+            waitsFor(function() { return envelopeBytes; }, "envelopeBytes", 100);
 
-            var moEncode, moEnvelope;
+            var moEncode;
             runs(function() {
                 var mo = encoder.parseObject(envelopeBytes);
                 mo.put(KEY_VERSION, -1);
 
-                moEncode = encoder.encodeObject(mo, ENCODER_FORMAT);
-                MslSignatureEnvelope$parse(moEncode, null, {
+                encoder.encodeObject(mo, ENCODER_FORMAT, {
+                	result: function(x) { moEncode = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return moEncode; }, "moEncode", 100);
+            
+            var moEnvelope;
+            runs(function() {
+                MslSignatureEnvelope$parse(moEncode, null, encoder, {
                     result: function(x) { moEnvelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -347,15 +373,23 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moEnvelopeBytes; }, "moEnvelopeBytes", 100);
+            waitsFor(function() { return envelopeBytes; }, "envelopeBytes", 100);
 
-            var moEncode, moEnvelope;
+            var moEncode;
             runs(function() {
                 var mo = encoder.parseObject(envelopeBytes);
                 mo.remove(KEY_ALGORITHM);
 
-                moEncode = encoder.encodeObject(mo, ENCODER_FORMAT);
-                MslSignatureEnvelope$parse(moEncode, null, {
+                encoder.encodeObject(mo, ENCODER_FORMAT, {
+                	result: function(x) { moEncode = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return moEncode; }, "moEncode", 100);
+            
+            var moEnvelope;
+            runs(function() {
+                MslSignatureEnvelope$parse(moEncode, null, encoder, {
                     result: function(x) { moEnvelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -385,15 +419,23 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moEnvelopeBytes; }, "moEnvelopeBytes", 100);
+            waitsFor(function() { return envelopeBytes; }, "envelopeBytes", 100);
 
-            var moEncode, moEnvelope;
+            var moEncode;
             runs(function() {
                 var mo = encoder.parseObject(envelopeBytes);
                 mo.put(KEY_ALGORITHM, "x");
 
-                moEncode = encoder.encodeObject(mo, ENCODER_FORMAT);
-                MslSignatureEnvelope$parse(moEncode, null, {
+                encoder.encodeObject(mo, ENCODER_FORMAT, {
+                	result: function(x) { moEncode = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return moEncode; }, "moEncode", 100);
+            
+            var moEnvelope;
+            runs(function() {
+                MslSignatureEnvelope$parse(moEncode, null, encoder, {
                     result: function(x) { moEnvelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -423,15 +465,23 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moEnvelopeBytes; }, "moEnvelopeBytes", 100);
+            waitsFor(function() { return envelopeBytes; }, "envelopeBytes", 100);
 
-            var moEncode, moEnvelope;
+            var moEncode;
             runs(function() {
                 var mo = encoder.parseObject(envelopeBytes);
                 mo.remove(KEY_SIGNATURE);
 
-                moEncode = encoder.encodeObject(mo, ENCODER_FORMAT);
-                MslSignatureEnvelope$parse(moEncode, null, {
+                encoder.encodeObject(mo, ENCODER_FORMAT, {
+                	result: function(x) { moEncode = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return moEncode; }, "moEncode", 100);
+            
+            var moEnvelope;
+            runs(function() {
+                MslSignatureEnvelope$parse(moEncode, null, encoder, {
                     result: function(x) { moEnvelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });

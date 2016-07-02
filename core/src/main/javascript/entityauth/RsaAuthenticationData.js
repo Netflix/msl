@@ -105,7 +105,7 @@ var RsaAuthenticationData$parse;
             return new RsaAuthenticationData(identity, pubkeyid);
         } catch (e) {
             if (e instanceof MslEncoderException)
-                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "RSA authdata" + rsaAuthMo);
+                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "RSA authdata" + rsaAuthMo);
             throw e;
         }
     };

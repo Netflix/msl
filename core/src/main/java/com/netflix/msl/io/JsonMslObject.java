@@ -65,7 +65,7 @@ public class JsonMslObject extends MslObject implements JSONString {
         this.encoder = encoder;
         try {
             for (final String key : o.getKeys())
-                put(key, o.get(key));
+                put(key, o.opt(key));
         } catch (final IllegalArgumentException e) {
             throw new MslEncoderException("Invalid MSL object encoding.", e);
         }
@@ -85,7 +85,7 @@ public class JsonMslObject extends MslObject implements JSONString {
             for (final Object key : jo.keySet()) {
                 if (!(key instanceof String))
                     throw new MslEncoderException("Invalid JSON object encoding.");
-                put((String)key, jo.get((String)key));
+                put((String)key, jo.opt((String)key));
             }
         } catch (final JSONException e) {
             throw new MslEncoderException("Invalid JSON object encoding.", e);
@@ -109,7 +109,7 @@ public class JsonMslObject extends MslObject implements JSONString {
             for (final Object key : jo.keySet()) {
                 if (!(key instanceof String))
                     throw new MslEncoderException("Invalid JSON object encoding.");
-                put((String)key, jo.get((String)key));
+                put((String)key, jo.opt((String)key));
             }
         } catch (final JSONException e) {
             throw new MslEncoderException("Invalid JSON object encoding.", e);
@@ -168,29 +168,29 @@ public class JsonMslObject extends MslObject implements JSONString {
     @Override
     public String toJSONString() {
         try {
-            final MslObject mo = encoder.createObject();
+            final JSONObject jo = new JSONObject();
             final Set<String> keys = getKeys();
             for (final String key : keys) {
-                final Object value = get(key);
+                final Object value = opt(key);
                 if (value instanceof byte[]) {
-                    mo.put(key, Base64.encode((byte[])value));
+                    jo.put(key, Base64.encode((byte[])value));
                 } else if (value instanceof JsonMslObject || value instanceof JsonMslArray) {
-                    mo.put(key, value);
+                    jo.put(key, value);
                 } else if (value instanceof MslObject) {
                     final JsonMslObject jsonValue = new JsonMslObject(encoder, (MslObject)value);
-                    mo.put(key, jsonValue);
+                    jo.put(key, jsonValue);
                 } else if (value instanceof MslArray) {
                     final JsonMslArray jsonValue = new JsonMslArray(encoder, (MslArray)value);
-                    mo.put(key, jsonValue);
+                    jo.put(key, jsonValue);
                 } else if (value instanceof MslEncodable) {
                     final byte[] json = ((MslEncodable)value).toMslEncoding(encoder, MslEncoderFormat.JSON);
                     final JsonMslObject jsonValue = new JsonMslObject(encoder, json);
-                    mo.put(key, jsonValue);
+                    jo.put(key, jsonValue);
                 } else {
-                    mo.put(key, value);
+                    jo.put(key, value);
                 }
             }
-            return mo.toString();
+            return jo.toString();
         } catch (final IllegalArgumentException e) {
             throw new MslInternalException("Error encoding MSL object as JSON.", e);
         } catch (final MslEncoderException e) {

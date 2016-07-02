@@ -46,13 +46,16 @@ var JsonMslTokenizer;
          * <p>Create a new JSON MSL tokenizer that will read tokens off the
          * provided input stream.</p>
          * 
-         * @param {InputStream} source the MSL message input stream.
+         * @param {MslEncoderFactory} encoder MSL encoder factory.
+         * @param {InputStream} source JSON input stream.
          */
-        init: function init(source) {
+        init: function init(encoder, source) {
             init.base.call(this);
             
             // The properties.
             var props = {
+            	/** @type {MslEncoderFactory} */
+            	_encoder: { value: encoder, writable: false, enumerable: false, configurable: false },
                 /** @type {InputStream} */
                 _source: { value: source, writable: false, enumerable: false, configurable: false },
                 /** @type {string} */
@@ -144,8 +147,8 @@ var JsonMslTokenizer;
                         callback.timeout(this._remainingData);
                     }, self);
                 },
-                error: {
-                    calback.error(new MslEncoderException("Error reading from the source input stream.", e);
+                error: function(e) {
+                    callback.error(new MslEncoderException("Error reading from the source input stream.", e));
                 },
             });
         },
@@ -157,7 +160,7 @@ var JsonMslTokenizer;
             InterruptibleExecutor(callback, function() {
                 var value = (this._parser) ? this._parser.nextValue() : undefined;
                 if (value !== undefined)
-                    return value;
+                    return new JsonMslObject(this._encoder, value);
 
                 this.nextParser(this._timeout, {
                     result: function(parser) {
@@ -177,7 +180,7 @@ var JsonMslTokenizer;
                             var value = this._parser.nextValue();
                             if (typeof value !== 'object')
                                 throw new MslEncoderException("Malformed MSL message. Parsed " + typeof value + " instead of object.");
-                            return new JsonMslObject(value);
+                            return new JsonMslObject(this._encoder, value);
                         }, self);
                     },
                     timeout: function(remainingData) {

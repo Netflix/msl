@@ -21,7 +21,7 @@
  */
 describe("SymmetricWrappedExchangeSuite", function() {
 	/** MSL encoder format. */
-	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
+	var ENCODER_FORMAT = MslEncoderFormat.JSON;
 	
     /** Key key exchange scheme. */
     var KEY_SCHEME = "scheme";
@@ -1214,7 +1214,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         	runs(function() {
 	            var wrappedEncryptionKey = keydata.getBytes(KEY_ENCRYPTION_KEY);
 	            ++wrappedEncryptionKey[wrappedEncryptionKey.length-1];
-	            keydata.put(KEY_ENCRYPTION_KEY wrappedEncryptionKey);
+	            keydata.put(KEY_ENCRYPTION_KEY, wrappedEncryptionKey);
 	            var wrappedHmacKey = keydata.getBytes(KEY_HMAC_KEY);
 
 	            var masterToken = keyResponseData.masterToken;

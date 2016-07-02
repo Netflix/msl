@@ -20,7 +20,7 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MslEncode;
+var MslEncodable;
 
 (function() {
     "use strict";
@@ -28,7 +28,7 @@ var MslEncode;
     /**
      * @interface
      */
-    MslEncode = util.Class.create({
+    MslEncodable = util.Class.create({
         /**
          * Returns the requested encoding of a MSL object representing the
          * implementing class.

@@ -41,12 +41,19 @@ var JsonMslArray;
         init: function init(encoder, source) {
             init.base.call(this);
             
+            // Set properties.
+            var props = {
+                encoder: { value: encoder, writable: false, enumerable: false, configurable: false },
+            };
+            Object.defineProperties(this, props);
+            
             // Identify the source data.
             var ja = [];
             if (source instanceof Array) {
                 ja = source;
             } else if (source instanceof MslArray) {
-                ja = source.ja;
+            	for (var i = 0; i < source.size(); ++i)
+            		ja.push(source.opt(i));
             } else if (source instanceof Uint8Array) {
                 try {
                     var json = textEncoding$getString(source, MslConstants$DEFAULT_CHARSET);
@@ -77,17 +84,17 @@ var JsonMslArray;
             var o;
             try {
                 // Convert JSONObject to MslObject.
-                if (value instanceof Object)
-                    o = new JsonMslObject(encoder, value);
+                if (value instanceof Object && value.constructor === Object)
+                    o = new JsonMslObject(this.encoder, value);
                 // Convert JSONarray to a MslArray.
                 else if (value instanceof Array)
-                    o = new JsonMslArray(encoder, value);
+                    o = new JsonMslArray(this.encoder, value);
                 // All other types are OK as-is.
                 else
                     o = value;
             } catch (e) {
                 if (e instanceof MslEncoderException)
-                    throw new IllegalArgumentException("Unsupported JSON object or array representation.", e);
+                    throw new TypeError("Unsupported JSON object or array representation.");
                 throw e;
             }
             return put.base.call(this, index, o);
@@ -109,9 +116,99 @@ var JsonMslArray;
             throw new MslEncoderException("MslArray[" + index + "] is not binary data.");
         },
         
-        /** @inheritDoc */
-        toJSON: function toJSON() {
-            return JSON.stringify(this.list);
+        /**
+         * Generates and returns the JSON array.
+         * 
+         * @param {MslEncoderFactory} encoder MSL encoder factory.
+         * @param {{result: function(Array), error: function(Error)}} callback
+         *        the callback that will receive the JSON array or any thrown
+         *        exceptions.
+         * @throws MslEncoderException if there is an error encoding a value.
+         */
+        toJSONArray: function toJSONArray(encoder, callback) {
+        	var self = this;
+        	
+        	AsyncExecutor(callback, function() {
+        		var ja = [];
+        		var size = this.size();
+        		next(ja, size, 0);
+        	}, self);
+        	
+        	function next(ja, size, i) {
+    			AsyncExecutor(callback, function() {
+	    			if (i >= size)
+	    				return ja;
+	    			
+	    			var value = this.opt(i);
+	        		if (value instanceof Uint8Array) {
+	        			ja.push(base64$encode(value));
+	        			next(ja, size, i+1);
+	        		} else if (value instanceof JsonMslObject) {
+	        			value.toJSONObject(encoder, {
+	        				result: function(o) {
+	        	    			AsyncExecutor(callback, function() {
+	        	    				ja.push(o);
+	        	        			next(ja, size, i+1);
+	        	    			}, self);
+	        				},
+	        				error: callback.error,
+	        			});
+	        		} else if (value instanceof JsonMslArray) {
+	        			value.toJSONArray(encoder, {
+	        				result: function(a) {
+	        	    			AsyncExecutor(callback, function() {
+	        	    				ja.push(a);
+	        	        			next(ja, size, i+1);
+	        	    			}, self);
+	        				},
+	        				error: callback.error,
+	        			});
+	        		} else if (value instanceof MslObject) {
+	        			var jsonValue = new JsonMslObject(encoder, value);
+	        			jsonValue.toJSONObject(encoder, {
+	        				result: function(o) {
+	        	    			AsyncExecutor(callback, function() {
+	        	    				ja.push(o);
+	        	        			next(ja, size, i+1);
+	        	    			}, self);
+	        				},
+	        				error: callback.error,
+	        			})
+	        		} else if (value instanceof MslArray) {
+	        			var jsonValue = new JsonMslArray(encoder, value);
+	        			jsonValue.toJSONArray(encoder, {
+	        				result: function(a) {
+	        	    			AsyncExecutor(callback, function() {
+	        	    				ja.push(a);
+	        	        			next(ja, size, i+1);
+	        	    			}, self);
+	        				},
+	        				error: callback.error,
+	        			});
+	        		} else if (value instanceof MslEncodable) {
+	        			value.toMslEncoding(encoder, MslEncoderFormat.JSON, {
+	        				result: function(json) {
+	        					AsyncExecutor(callback, function() {
+	        						var jsonValue = new JsonMslObject(encoder, json);
+	        						jsonValue.toJSONObject(encoder, {
+	        	        				result: function(o) {
+	        	        	    			AsyncExecutor(callback, function() {
+	        	        	    				ja.push(o);
+	        	        	        			next(ja, size, i+1);
+	        	        	    			}, self);
+	        	        				},
+	        	        				error: callback.error,
+	        						});
+	        					}, self);
+	        				},
+	        				error: callback.error,
+	        			});
+	        		} else {
+	        			ja.push(value);
+	        			next(ja, size, i+1);
+	        		}
+    			}, self);
+        	}
         },
     });
 })();

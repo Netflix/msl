@@ -60,8 +60,8 @@ var MslArray;
             
             // Populate array.
             if (array) {
-                for (var value in array)
-                    this.put(-1, value);
+                for (var i = 0; i < array.length; ++i)
+                    this.put(-1, array[i]);
             }
         },
         
@@ -79,7 +79,7 @@ var MslArray;
             if (index < 0 || index >= this.list.length)
                 throw new RangeError("MslArray[" + index + "] is negative or exceeds array length.");
             var o = this.list[index];
-            if (!o)
+            if (o === null || o === undefined)
                 throw new MslEncoderException("MslArray[" + index + "] is null.");
             if (o instanceof Object && o.constructor === Object)
                 return new MslObject(o);
@@ -103,7 +103,7 @@ var MslArray;
             if (o instanceof Boolean)
                 return o.valueOf();
             if (typeof o === 'boolean')
-                return p;
+                return o;
             throw new MslEncoderException("MslArray[" + index + "] is not a boolean.");
         },
     
@@ -227,11 +227,11 @@ var MslArray;
          */
         getLong: function getLong(index) {
             var o = this.get(index);
-            // The ~~ operator truncates to the integer value.
+            // I don't know of a better way than using parseInt().
             if (o instanceof Number)
-                return ~~o.valueOf();
+                return parseInt(o.valueOf());
             if (typeof o === 'number')
-                return ~~o;
+                return parseInt(o);
             throw new MslEncoderException("MslArray[" + index + "] is not a number.");
         },
     
@@ -275,7 +275,7 @@ var MslArray;
          * 
          * @return {number} the array size.
          */
-        length: function length() {
+        size: function size() {
             return this.list.length;
         },
         
@@ -415,11 +415,12 @@ var MslArray;
          * is not of the correct type.
          * 
          * @param {number} index the index.
+         * @param {MslEncoderFactory} the MSL encoder factory.
          * @return {MslObject} the {@code MslObject}.
          * @throws RangeError if the index is negative or
          *         exceeds the number of elements in the array.
          */
-        optMslObject: function optMslObject(index) {
+        optMslObject: function optMslObject(index, encoder) {
             var o = this.opt(index);
             if (o instanceof MslObject)
                 return o;
@@ -464,15 +465,15 @@ var MslArray;
          */
         optLong: function optLong(index, defaultValue) {
             var o = this.opt(index);
-            // The ~~ operator truncates to the integer value.
+            // I don't know of a better way than using parseInt().
             if (o instanceof Number)
-                return ~~o.valueOf();
+                return parseInt(o.valueOf());
             if (typeof o === 'number')
-                return ~~o;
+                return parseInt(o);
             if (defaultValue instanceof Number)
-                return ~~defaultValue.valueOf();
+                return parseInt(defaultValue.valueOf());
             if (typeof defaultValue === 'number')
-                return ~~defaultValue;
+                return parseInt(defaultValue);
             return 0;
         },
         
@@ -524,6 +525,7 @@ var MslArray;
                 value instanceof MslArray ||
                 value instanceof String ||
                 typeof value === 'string' ||
+                value instanceof MslEncodable ||
                 value === null)
             {
                 element = value;
@@ -538,11 +540,11 @@ var MslArray;
             
             // Fill with null elements as necessary.
             for (var i = this.list.length; i < index; ++i)
-                this.list[] = null;
+                this.list.push(null);
             
             // Append if requested.
             if (index == -1 || index == this.list.length) {
-                this.list[] = element;
+                this.list.push(element);
                 return this;
             }
             
@@ -558,13 +560,13 @@ var MslArray;
          * <p>This method will call {@link #put(int, Object)}.</p>
          * 
          * @param {number} index the index. -1 for the end of the array.
-         * @param {boolean} value the value.
+         * @param {boolean} value the value. May be {@code null}.
          * @return {MslArray} this.
          * @throws RangeError if the index is less than -1.
          * @throws TypeError if the value is of the incorrect type.
          */
         putBoolean: function putBoolean(index, value) {
-            if (!(value instanceof Boolean) && typeof value !== 'boolean')
+            if (!(value instanceof Boolean) && typeof value !== 'boolean' && value !== null)
                 throw new TypeError("Value [" + typeof value + "] is not a boolean.");
             return this.put(index, value);
         },
@@ -576,13 +578,13 @@ var MslArray;
          * <p>This method will call {@link #put(int, Object)}.</p>
          * 
          * @param {number} index the index. -1 for the end of the array.
-         * @param {Uint8Array} value the value.
+         * @param {Uint8Array} value the value. May be {@code null}.
          * @return {MslArray} this.
          * @throws RangeError if the index is less than -1.
          * @throws TypeError if the value is of the incorrect type.
          */
         putBytes: function putBytes(index, value) {
-            if (!(value instanceof Uint8Array))
+            if (!(value instanceof Uint8Array) && value !== null)
                 throw new TypeError("Value [" + typeof value + "] is not binary data.");
             return this.put(index, value);
         },
@@ -602,7 +604,7 @@ var MslArray;
          * @throws TypeError if the value is of the incorrect type.
          */
         putCollection: function putCollection(index, value) {
-            if (!(value instanceof Array))
+            if (!(value instanceof Array) && value !== null)
                 throw new TypeError("Value [" + typeof value + "] is not a collection.");
             return this.put(index, value);
         },
@@ -614,13 +616,13 @@ var MslArray;
          * <p>This method will call {@link #put(int, Object)}.</p>
          * 
          * @param {number} index the index. -1 for the end of the array.
-         * @param {number} value the value.
+         * @param {number} value the value. May be {@code null}.
          * @return {MslArray} this.
          * @throws RangeError if the index is less than -1.
          * @throws TypeError if the value is of the incorrect type.
          */
         putDouble: function putDouble(index, value) {
-            if (!(value instanceof Number) && typeof value !== 'number')
+            if (!(value instanceof Number) && typeof value !== 'number' && value !== null)
                 throw new TypeError("Value [" + typeof value + "] is not a number.");
             return this.put(index, value);
         },
@@ -632,7 +634,7 @@ var MslArray;
          * <p>This method will call {@link #put(int, Object)}.</p>
          * 
          * @param {number} index the index. -1 for the end of the array.
-         * @param {number} value the value.
+         * @param {number} value the value. May be {@code null}.
          * @return {MslArray} this.
          * @throws RangeError if the index is less than -1.
          * @throws TypeError if the value is of the incorrect type.
@@ -643,6 +645,8 @@ var MslArray;
                 return this.put(index, value.valueOf() << 0);
             if (typeof value === 'number')
                 return this.put(index, value << 0);
+            if (value === null)
+            	return this.put(index, value);
             throw new TypeError("Value [" + typeof value + "] is not a number.");
         },
         
@@ -653,17 +657,19 @@ var MslArray;
          * <p>This method will call {@link #put(int, Object)}.</p>
          * 
          * @param {number} index the index. -1 for the end of the array.
-         * @param {number} value the value.
+         * @param {number} value the value. May be {@code null}.
          * @return {MslArray} this.
          * @throws RangeError if the index is less than -1.
          * @throws TypeError if the value is of the incorrect type.
          */
         putLong: function putLong(index, value) {
-            // The ~~ operator truncates to the integer value.
+            // The parseInt function converts to the integer value.
             if (value instanceof Number)
-                return this.put(index, ~~value.valueOf());
+                return this.put(index, parseInt(value.valueOf()));
             if (typeof value === 'number')
-                return this.put(index, ~~value);
+                return this.put(index, parseInt(value));
+            if (value === null)
+            	return this.put(index, value);
             throw new TypeError("Value [" + typeof value + "] is not a number.");
         },
         
@@ -682,7 +688,7 @@ var MslArray;
          * @throws TypeError if the value is of the incorrect type.
          */
         putMap: function putMap(index, value) {
-            if (!(value instanceof Object && value.constructor === Object))
+            if (!(value instanceof Object && value.constructor === Object) && value !== null)
                 throw new TypeError("Value [" + typeof value + "] is not a map.");
             return this.put(index, value);
         },
@@ -694,13 +700,13 @@ var MslArray;
          * <p>This method will call {@link #put(int, Object)}.</p>
          * 
          * @param {number} index the index. -1 for the end of the array.
-         * @param {string} value the value.
+         * @param {string} value the value. May be {@code null}.
          * @return {MslArray} this.
          * @throws RangeError if the index is less than -1.
          * @throws TypeError if the value is of the incorrect type.
          */
         putString: function putString(index, value) {
-            if (!(value instanceof String) && typeof value !== 'string')
+            if (!(value instanceof String) && typeof value !== 'string' && value !== null)
                 throw new TypeError("Value [" + typeof value + "] is not a string.");
             return this.put(index, value);
         },
@@ -740,7 +746,7 @@ var MslArray;
         	if (this == that) return true;
         	if (!(that instanceof MslArray)) return false;
         	try {
-        		return MslEncoderUtils$equalsArrays(this, that);
+        		return MslEncoderUtils$equalArrays(this, that);
         	} catch (e) {
         		if (e instanceof MslEncoderException) return false;
         		throw e;
@@ -749,7 +755,7 @@ var MslArray;
         
         /** @inheritDoc */
         toString: function toString() {
-            return JSON.stringify(this.list);
+        	return MslEncoderFactory$stringify(this.list);
         },
     });
 })();

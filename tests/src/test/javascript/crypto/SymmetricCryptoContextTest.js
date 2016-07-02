@@ -40,7 +40,7 @@ describe("SymmetricCryptoContext", function() {
     /** MSL Context. */
     var ctx;
     /** MSL encoder factory. */
-    private static MslEncoderFactory encoder;
+    var encoder;
     /** Random. */
     var random = new Random();
     
@@ -132,7 +132,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return ciphertextA && ciphertextB; }, "ciphertext not received", 100);
+            waitsFor(function() { return ciphertextA && ciphertextB; }, "ciphertext", 100);
             runs(function() {
                 expect(ciphertextA).not.toBeNull();
                 expect(ciphertextA).not.toEqual(messageA);
@@ -152,7 +152,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return plaintextA && plaintextB; }, "plaintext not received", 100);
+            waitsFor(function() { return plaintextA && plaintextB; }, "plaintext", 100);
             runs(function() {
                 expect(plaintextA).not.toBeNull();
                 expect(plaintextA).toEqual(messageA);
@@ -172,7 +172,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return ciphertext; }, "ciphertext not received", 100);
+            waitsFor(function() { return ciphertext; }, "ciphertext", 100);
 
             var envelope;
             runs(function() {
@@ -203,16 +203,16 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return encode; }, "encode not received", 100);
+            waitsFor(function() { return encode; }, "encode", 100);
 
             var exception;
             runs(function() {
                 cryptoContext.decrypt(encode, encoder, {
                     result: function() {},
-                    error: function(err) { exception = err; },
+                    error: function(e) { exception = e; },
                 });
             });
-            waitsFor(function() { return exception; }, "exception not received", 100);
+            waitsFor(function() { return exception; }, "exception", 100);
 
             runs(function() {
                 var f = function() { throw exception; };
@@ -231,7 +231,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ciphertext; }, "ciphertext not received", 100);
+            waitsFor(function() { return ciphertext; }, "ciphertext", 100);
 
             var envelope;
             runs(function() {
@@ -261,16 +261,16 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return encode; }, "encode not received", 100);
+            waitsFor(function() { return encode; }, "encode", 100);
 
             var exception;
             runs(function() {
                 cryptoContext.decrypt(encode, encoder, {
                     result: function() {},
-                    error: function(err) { exception = err; }
+                    error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception not received", 100);
+            waitsFor(function() { return exception; }, "exception", 100);
 
             runs(function() {
                 var f = function() { throw exception; };
@@ -289,16 +289,24 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return ciphertext; }, "ciphertext not received", 100);
+            waitsFor(function() { return ciphertext; }, "ciphertext", 100);
 
-            var exception;
+            var encode;
             runs(function() {
                 var envelopeMo = encoder.parseObject(envelopeMo);
                 envelopeMo.remove(KEY_CIPHERTEXT);
-                var encode = encoder.encodeObject(envelopeMo, ENCODER_FORMAT);
+                encoder.encodeObject(envelopeMo, ENCODER_FORMAT, {
+                	result: function(x) { encode = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                });
+            });
+            waitsFor(function() { return encode; }, "encode", 100);
+            
+            var exception;
+            runs(function() {
                 cryptoContext.decrypt(encode, encoder, {
                     result: function() {},
-                    error: function(err) { exception = err; },
+                    error: function(e) { exception = e; },
                 });
             });
 
@@ -319,14 +327,14 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return ciphertext; }, "ciphertext not received", 100);
+            waitsFor(function() { return ciphertext; }, "ciphertext", 100);
 
             var exception;
             runs(function() {
                 ciphertext[0] = 0;
                 cryptoContext.decrypt(ciphertext, encoder, {
                     result: function() {},
-                    error: function(err) { exception = err; }
+                    error: function(e) { exception = e; }
                 });
             });
 
@@ -346,7 +354,7 @@ describe("SymmetricCryptoContext", function() {
             runs(function() {
                 cryptoContext.encrypt(message, encoder, ENCODER_FORMAT, {
                     result: function() {},
-                    error: function(err) { exception = err; },
+                    error: function(e) { exception = e; },
                 });
             });
 
@@ -376,7 +384,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return ciphertextA && ciphertextB; }, "ciphertext not received", 100);
+            waitsFor(function() { return ciphertextA && ciphertextB; }, "ciphertext", 100);
             runs(function() {
                 expect(ciphertextA).not.toBeNull();
                 expect(ciphertextA).not.toEqual(messageA);
@@ -396,7 +404,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return plaintextA && plaintextB; }, "plaintext not received", 100);
+            waitsFor(function() { return plaintextA && plaintextB; }, "plaintext", 100);
             runs(function() {
                 expect(plaintextA).not.toBeNull();
                 expect(plaintextA).toEqual(messageA);
@@ -419,16 +427,16 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return ciphertext; }, "ciphertext not received", 100);
+            waitsFor(function() { return ciphertext; }, "ciphertext", 100);
 
             var exception;
             runs(function() {
                 cryptoContextB.decrypt(ciphertext, encoder, {
                     result: function() {},
-                    error: function(err) { exception = err; },
+                    error: function(e) { exception = e; },
                 });
             });
-            waitsFor(function() { return exception; }, "exception not received", 100);
+            waitsFor(function() { return exception; }, "exception", 100);
 
             runs(function() {
                 var f = function() { throw exception; };
@@ -450,16 +458,16 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return ciphertext; }, "ciphertext not received", 100);
+            waitsFor(function() { return ciphertext; }, "ciphertext", 100);
 
             var exception;
             runs(function() {
                 cryptoContextB.decrypt(ciphertext, encoder, {
                     result: function() {},
-                    error: function(err) { exception = err; },
+                    error: function(e) { exception = e; },
                 });
             });
-            waitsFor(function() { return exception; }, "exception not received", 200);
+            waitsFor(function() { return exception; }, "exception", 200);
 
             runs(function() {
                 var f = function() { throw exception; };
@@ -475,7 +483,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped", 100);
 
             var unwrapped;
             runs(function() {
@@ -486,7 +494,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return unwrapped; }, "unwrapped not received", 100);
+            waitsFor(function() { return unwrapped; }, "unwrapped", 100);
 
             // We must verify the unwrapped key by performing a crypto
             // operation as the wrapped key is not exportable.
@@ -531,7 +539,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped", 100);
 
             var exception;
             runs(function() {
@@ -603,7 +611,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return signatureA && signatureB; }, "signature not received", 100);
+            waitsFor(function() { return signatureA && signatureB; }, "signature", 100);
             runs(function() {
                 expect(signatureA).not.toBeNull();
                 expect(signatureA.length).toBeGreaterThan(0);
@@ -627,7 +635,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return verifiedAA !== undefined && verifiedBB !== undefined && verifiedBA !== undefined; }, "verified not received", 100);
+            waitsFor(function() { return verifiedAA !== undefined && verifiedBB !== undefined && verifiedBA !== undefined; }, "verified", 100);
             runs(function() {
                 expect(verifiedAA).toBeTruthy();
                 expect(verifiedBB).toBeTruthy();
@@ -649,7 +657,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return signature; }, "signature not received", 100);
+            waitsFor(function() { return signature; }, "signature", 100);
 
             var verified;
             runs(function() {
@@ -658,7 +666,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return verified !== undefined; }, "verified not received", 100);
+            waitsFor(function() { return verified !== undefined; }, "verified", 100);
             runs(function() {
                 expect(verified).toBeFalsy();
             });
@@ -684,7 +692,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return signatureA && signatureB; }, "signature not received", 100);
+            waitsFor(function() { return signatureA && signatureB; }, "signature", 100);
             runs(function() {
                 expect(signatureA).not.toBeNull();
                 expect(signatureA.length).toBeGreaterThan(0);
@@ -708,7 +716,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return verifiedAA !== undefined && verifiedBB !== undefined && verifiedBA !== undefined; }, "verified not received", 100);
+            waitsFor(function() { return verifiedAA !== undefined && verifiedBB !== undefined && verifiedBA !== undefined; }, "verified", 100);
             runs(function() {
                 expect(verifiedAA).toBeTruthy();
                 expect(verifiedBB).toBeTruthy();
@@ -726,10 +734,10 @@ describe("SymmetricCryptoContext", function() {
             runs(function() {
                 cryptoContext.sign(messageA, encoder, ENCODER_FORMAT, {
                     result: function() {},
-                    error: function(err) { exception = err; },
+                    error: function(e) { exception = e; },
                 });
             });
-            waitsFor(function() { return exception; }, "exception not received", 100);
+            waitsFor(function() { return exception; }, "exception", 100);
 
             runs(function() {
                 var f = function() { throw exception; };

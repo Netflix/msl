@@ -172,7 +172,7 @@ var ServiceToken$parse;
         this.verified = verified;
     };
 
-    ServiceToken = util.Class.create({
+    ServiceToken = MslEncodable.extend({
         /**
          * <p>Construct a new service token with the specified name and data. If a
          * master token is provided, the service token is bound to the master
@@ -418,8 +418,8 @@ var ServiceToken$parse;
             var self = this;
             AsyncExecutor(callback, function() {
                 // Return any cached encoding.
-                if (encodings[format])
-                    return encodings[format];
+                if (this.encodings[format])
+                    return this.encodings[format];
                 
                 // If we parsed this token (i.e. did not create it from scratch) then
                 // we should not re-encrypt or re-sign as there is no guarantee out MSL
@@ -462,18 +462,24 @@ var ServiceToken$parse;
                     tokendata.put(KEY_SERVICEDATA, ciphertext);
 
                     // Sign the token data.
-                    data = encoder.encodeObject(tokendata, format);
-                    this.cryptoContext.sign(data, encoder, format, {
-                        result: function(signature) {
-                            encodeToken(data, signature);
-                        },
-                        error: function(e) {
-                            AsyncExecutor(callback, function() {
-                                if (e instanceof MslCryptoException)
-                                    throw new MslEncoderException("Error signing the token data.", e);
-                                throw e;
-                            }, self);
-                        }
+                    encoder.encodeObject(tokendata, format, {
+                    	result: function(data) {
+                    		AsyncExecutor(callback, function() {
+			                    this.cryptoContext.sign(data, encoder, format, {
+			                        result: function(signature) {
+			                            encodeToken(data, signature);
+			                        },
+			                        error: function(e) {
+			                            AsyncExecutor(callback, function() {
+			                                if (e instanceof MslCryptoException)
+			                                    throw new MslEncoderException("Error signing the token data.", e);
+			                                throw e;
+			                            }, self);
+			                        }
+			                    });
+                    		}, self);
+                    	},
+                    	error: callback.error,
                     });
                 }, self);
             }
@@ -484,11 +490,16 @@ var ServiceToken$parse;
                     var token = encoder.createObject();
                     token.put(KEY_TOKENDATA, data);
                     token.put(KEY_SIGNATURE, signature);
-                    var encoding = encoder.createObject(token, format);
-
-                    // Cache and return the encoding.
-                    this.encodings[format] = encoding;
-                    return encoding;
+                    encoder.encodeObject(token, format, {
+                    	result: function(encoding) {
+                    		AsyncExecutor(callback, function() {
+                                // Cache and return the encoding.
+                                this.encodings[format] = encoding;
+                                return encoding;
+                    		}, self);
+                    	},
+                    	error: callback.error,
+                    });
                 }, self);
             }
         },
@@ -503,7 +514,7 @@ var ServiceToken$parse;
             tokendata.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, this.uitSerialNumber);
             tokendata.put(KEY_SERVICEDATA, this.servicedata);
 
-            final MslObject token = encoder.createObject();
+            var token = encoder.createObject();
             token.put(KEY_TOKENDATA, tokendata);
             token.put(KEY_SIGNATURE, null);
             return token.toString();
@@ -743,7 +754,7 @@ var ServiceToken$parse;
                 
                 // Return the new service token.
                 var creationData = new CreationData(tokendataBytes, signatureBytes, verified);
-                new ServiceToken(ctx, name, servicedata, (mtSerialNumber != -1) ? masterToken : null, (uitSerialNumber != -1) ? userIdToken : null, encrypted, compressionAlgo, cryptoContext, creationData, callback);
+                return new ServiceToken(ctx, name, servicedata, (mtSerialNumber != -1) ? masterToken : null, (uitSerialNumber != -1) ? userIdToken : null, encrypted, compressionAlgo, cryptoContext, creationData);
             });
         }
     };

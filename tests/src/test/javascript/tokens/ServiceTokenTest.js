@@ -434,7 +434,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
 	        ServiceToken$parse(ctx, mo, joMasterToken, null, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
         waitsFor(function() { return exception; }, "exception", 100);
@@ -468,7 +468,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
 	        ServiceToken$parse(ctx, mo, null, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
         waitsFor(function() { return exception; }, "exception", 100);
@@ -515,7 +515,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
 	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, joUserIdToken, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
         waitsFor(function() { return exception; }, "exception", 100);
@@ -549,7 +549,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
 	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, null, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
         waitsFor(function() { return exception; }, "exception", 100);
@@ -587,7 +587,7 @@ function(encoding, compressionAlgo) {
     	runs(function() {
     		ServiceToken$create(ctx, NAME, DATA, masterTokenA, userIdToken, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
     			result: function() {},
-    			error: function(err) { exception = err; }
+    			error: function(e) { exception = e; }
     		});
     	});
     	waitsFor(function() { return exception; }, "exception", 100);
@@ -623,7 +623,7 @@ function(encoding, compressionAlgo) {
 	        
 	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
         waitsFor(function() { return exception; }, "exception", 100);
@@ -660,7 +660,7 @@ function(encoding, compressionAlgo) {
 	        
 	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
         waitsFor(function() { return exception; }, "exception", 100);
@@ -696,7 +696,7 @@ function(encoding, compressionAlgo) {
 	        
 	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
         waitsFor(function() { return exception; }, "exception", 100);
@@ -726,15 +726,25 @@ function(encoding, compressionAlgo) {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
+        var modifiedTokendata;
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        tokendataMo.remove(KEY_NAME);
-	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
+        	encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+        		result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        
+        var exception;
+        runs(function() {
+	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
 	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
         waitsFor(function() { return exception; }, "exception", 100);
@@ -764,12 +774,21 @@ function(encoding, compressionAlgo) {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var moServiceToken;
+        var modifiedTokendata;
         runs(function() {
             var tokendata = mo.getBytes(KEY_TOKENDATA);
             var tokendataMo = encoder.parseObject(tokendata);
             tokendataMo.remove(KEY_MASTER_TOKEN_SERIAL_NUMBER);
-            mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
+            encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+            	result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        
+        var moServiceToken;
+        runs(function() {
+            mo.put(KEY_TOKENDATA, modifiedTokendata);
             
             ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
                 result: function(token) { moServiceToken = token; },
@@ -808,11 +827,20 @@ function(encoding, compressionAlgo) {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        tokendataMo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, "x");
-	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
+            encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+            	result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        
+        var exception;
+        runs(function() {
+	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
 	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
         waitsFor(function() { return exception; }, "exception", 100);
@@ -842,15 +870,25 @@ function(encoding, compressionAlgo) {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
+        var modifiedTokendata;
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        tokendataMo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, -1);
-	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
+            encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+            	result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        
+        var exception;
+        runs(function() {
+	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
 	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
         waitsFor(function() { return exception; }, "exception", 100);
@@ -880,16 +918,25 @@ function(encoding, compressionAlgo) {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
+        var modifiedTokendata;
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        tokendataMo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, MslConstants$MAX_LONG_VALUE + 2);
-	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
+            encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+            	result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        
+        var exception;
+        runs(function() {
+	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
 	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
         waitsFor(function() { return exception; }, "exception", 100);
@@ -919,12 +966,21 @@ function(encoding, compressionAlgo) {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var moServiceToken;
+        var modifiedTokendata;
         runs(function() {
             var tokendata = mo.getBytes(KEY_TOKENDATA);
             var tokendataMo = encoder.parseObject(tokendata);
             tokendataMo.remove(KEY_USER_ID_TOKEN_SERIAL_NUMBER);
-            mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
+            encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+            	result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        
+        var moServiceToken;
+        runs(function() {
+            mo.put(KEY_TOKENDATA, modifiedTokendata);
             
             ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
                 result: function(token) { moServiceToken = token; },
@@ -958,16 +1014,25 @@ function(encoding, compressionAlgo) {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
+        var modifiedTokendata;
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        tokendataMo.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, "x");
-	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
+            encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+            	result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        
+        var exception;
+        runs(function() {
+	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
 	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
         waitsFor(function() { return exception; }, "exception", 100);
@@ -997,16 +1062,25 @@ function(encoding, compressionAlgo) {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
+        var modifiedTokendata;
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        tokendataMo.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, -1);
-	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
+            encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+            	result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        
+        var exception;
+        runs(function() {
+	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
 	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
         waitsFor(function() { return exception; }, "exception", 100);;
@@ -1036,16 +1110,25 @@ function(encoding, compressionAlgo) {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
+        var modifiedTokendata;
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        tokendataMo.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, MslConstants$MAX_LONG_VALUE + 2);
-	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
+            encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+            	result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        
+        var exception;
+        runs(function() {
+	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
 	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
         waitsFor(function() { return exception; }, "exception", 100);
@@ -1075,16 +1158,25 @@ function(encoding, compressionAlgo) {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
+        var modifiedTokendata;
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        tokendataMo.remove(KEY_ENCRYPTED);
-	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
+            encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+            	result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        
+        var exception;
+        runs(function() {
+	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
 	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
         waitsFor(function() { return exception; }, "exception", 100);
@@ -1114,16 +1206,25 @@ function(encoding, compressionAlgo) {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
+        var modifiedTokendata;
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        tokendataMo.put(KEY_ENCRYPTED, "x");
-	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
+            encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+            	result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        
+        var exception;
+        runs(function() {
+	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
 	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
         waitsFor(function() { return exception; }, "exception", 100);
@@ -1153,16 +1254,25 @@ function(encoding, compressionAlgo) {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
+        var modifiedTokendata;
         runs(function() {
             var tokendata = mo.getBytes(KEY_TOKENDATA);
             var tokendataMo = encoder.parseObject(tokendata);
             tokendataMo.put(KEY_COMPRESSION_ALGORITHM, "x");
-            mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
+            encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+            	result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        
+        var exception;
+        runs(function() {
+            mo.put(KEY_TOKENDATA, modifiedTokendata);
             
             ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
                 result: function() {},
-                error: function(err) { exception = err; }
+                error: function(e) { exception = e; }
             });
         });
         waitsFor(function() { return exception; }, "exception", 100);
@@ -1192,16 +1302,25 @@ function(encoding, compressionAlgo) {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
+        var modifiedTokendata;
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        tokendataMo.remove(KEY_SERVICEDATA);
-	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
+            encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+            	result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        
+        var exception;
+        runs(function() {
+	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
 	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
         waitsFor(function() { return exception; }, "exception", 100);
@@ -1231,13 +1350,21 @@ function(encoding, compressionAlgo) {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
+        var modifiedTokendata;
         runs(function() {
         	var tokendata = mo.getBytes(KEY_TOKENDATA);
         	var tokendataMo = encoder.parseObject(tokendata);
         	tokendataMo.put(KEY_SERVICEDATA, "x");
 
-        	var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+            encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+            	result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        
+        var exception;
+        runs(function() {
         	CRYPTO_CONTEXT.sign(modifiedTokendata, {
         		result: function(signature) {
                 	mo.put(KEY_TOKENDATA, modifiedTokendata);
@@ -1245,7 +1372,7 @@ function(encoding, compressionAlgo) {
 
                 	ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
                 		result: function() {},
-                		error: function(err) { exception = err; }
+                		error: function(e) { exception = e; }
                 	});
         		},
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1351,7 +1478,7 @@ function(encoding, compressionAlgo) {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
+        var modifiedTokendata;
         runs(function() {
 	        // This is testing service data that is verified but corrupt.
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
@@ -1360,7 +1487,15 @@ function(encoding, compressionAlgo) {
 	        ++servicedata[servicedata.length-1];
 	        tokendataMo.put(KEY_SERVICEDATA, servicedata);
 	        
-	        var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+	        encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+	        	result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        
+        var exception;
+        runs(function() {
 	        CRYPTO_CONTEXT.sign(modifiedTokendata, {
 	        	result: function(signature) {
 	    	        mo.put(KEY_TOKENDATA, modifiedTokendata);
@@ -1368,7 +1503,7 @@ function(encoding, compressionAlgo) {
 	    	        
 	    	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	    	        	result: function() {},
-	    	        	error: function(err) { exception = err; }
+	    	        	error: function(e) { exception = e; }
 	    	        });
 	        	},
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }

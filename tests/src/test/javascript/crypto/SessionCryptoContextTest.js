@@ -398,11 +398,20 @@ describe("SessionCryptoContext", function() {
     	});
     	waitsFor(function() { return ciphertext; }, "ciphertext not received", 100);
     	
-    	var exception;
+    	var encode;
     	runs(function() {
     	    var envelopeMo = encoder.parseObject(ciphertext);
     	    envelopeMo.remove(KEY_CIPHERTEXT);
-	    	cryptoContext.decrypt(encoder.encodeObject(envelopeMo, ENCODER_FORMAT), encoder, {
+    	    encoder.encodeObject(envelopeMo, ENCODER_FORMAT, {
+    	    	result: function(x) { encode = x; },
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    	    });
+    	});
+    	waitsFor(function() { return encode; }, "encode", 100);
+    	
+    	var exception;
+    	runs(function() {
+	    	cryptoContext.decrypt(encode, encoder, {
 	    		result: function() {},
 	    		error: function(err) { exception = err; },
 	    	});

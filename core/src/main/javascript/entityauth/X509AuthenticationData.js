@@ -107,7 +107,7 @@ var X509AuthenticationData$parse;
             certB64 = x509AuthMo.getString(KEY_X509_CERT);
         } catch (e) {
             if (e instanceof MslEncoderException)
-                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "X.509 authdata" + x509AuthMo);
+                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "X.509 authdata" + x509AuthMo);
             throw e;
         }
 

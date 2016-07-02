@@ -141,10 +141,16 @@ var MasterTokenProtectedAuthenticationData$parse;
                                             mo.put(KEY_SIGNATURE, signature);
 
                                             // Cache and return the object.
-                                            var encoded = encoder.encodeObject(mo, format);
-                                            var decoded = encoder.parseObject(encoded);
-                                            encodings[format] = decoded;
-                                            return decoded;
+                                            encoder.encodeObject(mo, format, {
+                                            	result: function(encoded) {
+                                            		AsyncExecutor(callback, function() {
+	                                                    var decoded = encoder.parseObject(encoded);
+	                                                    encodings[format] = decoded;
+	                                                    return decoded;
+                                            		}, self);
+                                            	},
+                                            	error: callback.error,
+                                            });
                                         }, self);
                                     },
                                     error: function(e) {
@@ -264,7 +270,7 @@ var MasterTokenProtectedAuthenticationData$parse;
                                                     internalAuthdataMo = encoder.parseObject(plaintext);
                                                 } catch (e) {
                                                     if (e instanceof MslEncoderException)
-                                                        throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "master token protected authdata " + authdataMo, e);
+                                                        throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "master token protected authdata " + authdataMo, e);
                                                     throw e;
                                                 }
                                                 EntityAuthenticationData$parse(ctx, internalAuthdataJO, {

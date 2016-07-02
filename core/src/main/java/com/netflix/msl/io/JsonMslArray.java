@@ -48,7 +48,7 @@ public class JsonMslArray extends MslArray implements JSONString {
         this.encoder = encoder;
         try {
             for (int i = 0; i < a.size(); ++i)
-                put(i, a.get(i));
+                put(i, a.opt(i));
         } catch (final IllegalArgumentException e) {
             throw new MslEncoderException("Invalid MSL array encoding.", e);
         }
@@ -66,7 +66,7 @@ public class JsonMslArray extends MslArray implements JSONString {
         this.encoder = encoder;
         try {
             for (int i = 0; i < ja.length(); ++i)
-                put(-1, ja.get(i));
+                put(-1, ja.opt(i));
         } catch (final JSONException e) {
             throw new MslEncoderException("Invalid JSON array encoding.", e);
         } catch (final IllegalArgumentException e) {
@@ -86,7 +86,7 @@ public class JsonMslArray extends MslArray implements JSONString {
             final String json = new String(encoding, UTF_8);
             final JSONArray ja = new JSONArray(json);
             for (int i = 0; i < ja.length(); ++i)
-                put(-1, ja.get(i));
+                put(-1, ja.opt(i));
         } catch (final JSONException e) {
             throw new MslEncoderException("Invalid JSON array encoding.", e);
         } catch (final IllegalArgumentException e) {
@@ -147,7 +147,7 @@ public class JsonMslArray extends MslArray implements JSONString {
             final JSONArray ja = new JSONArray();
             final int size = size();
             for (int i = 0; i < size; ++i) {
-                final Object value = get(i);
+                final Object value = opt(i);
                 if (value instanceof byte[]) {
                     ja.put(i, Base64.encode((byte[])value));
                 } else if (value instanceof JsonMslObject || value instanceof JsonMslArray) {

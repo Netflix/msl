@@ -157,7 +157,7 @@ var UserIdToken$parse;
         this.verified = verified;
     };
 
-    UserIdToken = util.Class.create({
+    UserIdToken = MslEncodable.extend({
         /**
          * Create a new user ID token with the specified user.
          *
@@ -263,7 +263,7 @@ var UserIdToken$parse;
                  * Signature bytes.
                  * @type {Uint8Array}
                  */
-                signatureBytes: { value: signature, writable: false, enumerable: false, configurable: false },
+                signatureBytes: { value: signatureBytes, writable: false, enumerable: false, configurable: false },
                 /**
                  * Token is verified.
                  * @type {boolean}
@@ -393,41 +393,49 @@ var UserIdToken$parse;
                     }
                     
                     // Encrypt the user data.
-                    var plaintext = encoder.encodeObject(this.userdata, format);
-                    cryptoContext.encrypt(plaintext, encoder, format, {
-                        result: function(ciphertext) {
-                            AsyncExecutor(callback, function() {
-                                // Construct the token data.
-                                var tokendata = encoder.createObject();
-                                tokendata.put(KEY_RENEWAL_WINDOW, this.renewalWindowSeconds);
-                                tokendata.put(KEY_EXPIRATION, this.expirationSeconds);
-                                tokendata.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, this.mtSerialNumber);
-                                tokendata.put(KEY_SERIAL_NUMBER, this.serialNumber);
-                                tokendata.put(KEY_USERDATA, ciphertext);
-                                
-                                // Sign the token data.
-                                var data = encoder.encodeObject(tokendata, format);
-                                cryptoContext.sign(data, encoder, format, {
-                                    result: function(signature) {
-                                        encodeToken(data, signature);
-                                    },
-                                    error: function(e) {
-                                        AsyncExecutor(callback, function() {
-                                            if (e instanceof MslCryptoException)
-                                                throw new MslEncoderException("Error signing the token data.", e);
-                                            throw e;
-                                        }, self);
-                                    }
-                                });
-                            }, self);
-                        },
-                        error: function(e) {
-                            AsyncExecutor(callback, function() {
-                                if (e instanceof MslCryptoException)
-                                    throw new MslEncoderException("Error encrypting the user data.", e);
-                                throw e;
-                            }, self);
-                        }
+                    encoder.encodeObject(this.userdata, format, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, format, {
+		                        result: function(ciphertext) {
+		                            AsyncExecutor(callback, function() {
+		                                // Construct the token data.
+		                                var tokendata = encoder.createObject();
+		                                tokendata.put(KEY_RENEWAL_WINDOW, this.renewalWindowSeconds);
+		                                tokendata.put(KEY_EXPIRATION, this.expirationSeconds);
+		                                tokendata.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, this.mtSerialNumber);
+		                                tokendata.put(KEY_SERIAL_NUMBER, this.serialNumber);
+		                                tokendata.put(KEY_USERDATA, ciphertext);
+		                                
+		                                // Sign the token data.
+		                                encoder.encodeObject(tokendata, format, {
+		                                	result: function(data) {
+				                                cryptoContext.sign(data, encoder, format, {
+				                                    result: function(signature) {
+				                                        encodeToken(data, signature);
+				                                    },
+				                                    error: function(e) {
+				                                        AsyncExecutor(callback, function() {
+				                                            if (e instanceof MslCryptoException)
+				                                                throw new MslEncoderException("Error signing the token data.", e);
+				                                            throw e;
+				                                        }, self);
+				                                    }
+				                                });
+		                                	},
+		                                	error: callback.error,
+		                                });
+		                            }, self);
+		                        },
+		                        error: function(e) {
+		                            AsyncExecutor(callback, function() {
+		                                if (e instanceof MslCryptoException)
+		                                    throw new MslEncoderException("Error encrypting the user data.", e);
+		                                throw e;
+		                            }, self);
+		                        }
+		                    });
+                    	},
+                    	error: callback.error,
                     });
                 }
             }, self);
@@ -438,11 +446,16 @@ var UserIdToken$parse;
                     var token = encoder.createObject();
                     token.put(KEY_TOKENDATA, data);
                     token.put(KEY_SIGNATURE, signature);
-                    var encoding = encoder.encodeObject(token, format);
-                    
-                    // Cache and return the encoding.
-                    this.encodings[format] = encoding;
-                    return encoding;
+                    encoder.encodeObject(token, format, {
+                    	result: function(encoding) {
+                    		AsyncExecutor(callback, function() {
+	                    		// Cache and return the encoding.
+	                    		this.encodings[format] = encoding;
+	                    		return encoding;
+                    		}, self);
+                    	},
+                    	error: callback.error,
+                    });
                 }, self);
             }
         },
@@ -514,7 +527,9 @@ var UserIdToken$parse;
      *         the token data.
      */
     UserIdToken$create = function UserIdToken$create(ctx, renewalWindow, expiration, masterToken, serialNumber, issuerData, user, callback) {
-        new UserIdToken(ctx, renewalWindow, expiration, masterToken, serialNumber, issuerData, user, null, callback);
+    	AsyncExecutor(callback, function() {
+    		return new UserIdToken(ctx, renewalWindow, expiration, masterToken, serialNumber, issuerData, user, null);
+    	});
     };
 
     /**
@@ -606,7 +621,7 @@ var UserIdToken$parse;
             });
         }
         
-        function parseUserdata(encoder, tokendataBytes, signatureBytes, verified
+        function parseUserdata(encoder, tokendataBytes, signatureBytes, verified,
                                renewalWindowSeconds, expirationSeconds, mtSerialNumber, serialNumber,
                                plaintext)
         {
@@ -655,7 +670,7 @@ var UserIdToken$parse;
 
                 // Return the new user ID token.
                 var creationData = new CreationData(userdata, tokendataBytes, signatureBytes, verified);
-                new UserIdToken(ctx, renewalWindow, expiration, masterToken, serialNumber, issuerData, user, creationData, callback);
+                return new UserIdToken(ctx, renewalWindow, expiration, masterToken, serialNumber, issuerData, user, creationData);
             });
         }
     };

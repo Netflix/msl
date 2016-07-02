@@ -25,7 +25,6 @@ import java.util.Set;
 import com.netflix.msl.MslConstants.CompressionAlgorithm;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
-import com.netflix.msl.MslInternalException;
 import com.netflix.msl.io.MslArray;
 import com.netflix.msl.io.MslEncodable;
 import com.netflix.msl.io.MslEncoderException;
@@ -175,19 +174,15 @@ public class MessageCapabilities implements MslEncodable {
      * @see com.netflix.msl.io.MslEncodable#toMslEncoding(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public byte[] toMslEncoding(final MslEncoderFactory encoder, final MslEncoderFormat format) {
-        try {
-            final MslObject mo = encoder.createObject();
-            mo.put(KEY_COMPRESSION_ALGOS, encoder.createArray(compressionAlgos));
-            mo.put(KEY_LANGUAGES, languages);
-            final MslArray formats = encoder.createArray();
-            for (final MslEncoderFormat encoderFormat : encoderFormats)
-                formats.put(-1, encoderFormat.name());
-            mo.put(KEY_ENCODER_FORMATS, formats);
-            return encoder.encodeObject(mo, format);
-        } catch (final MslEncoderException e) {
-            throw new MslInternalException("Error encoding " + this.getClass().getName() + ".", e);
-        }
+    public byte[] toMslEncoding(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException {
+        final MslObject mo = encoder.createObject();
+        mo.put(KEY_COMPRESSION_ALGOS, encoder.createArray(compressionAlgos));
+        mo.put(KEY_LANGUAGES, languages);
+        final MslArray formats = encoder.createArray();
+        for (final MslEncoderFormat encoderFormat : encoderFormats)
+            formats.put(-1, encoderFormat.name());
+        mo.put(KEY_ENCODER_FORMATS, formats);
+        return encoder.encodeObject(mo, format);
     }
 
     /* (non-Javadoc)

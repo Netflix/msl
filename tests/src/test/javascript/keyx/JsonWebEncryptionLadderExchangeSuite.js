@@ -668,7 +668,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
                 expect(keydata.getBytes(KEY_ENCRYPTION_KEY)).toEqual(PSK_ENCRYPTION_JWK);
                 expect(keydata.getBytes(KEY_HMAC_KEY)).toEqual(PSK_HMAC_JWK);
                 expect(keydata.getBytes(KEY_WRAPDATA)).toEqual(WRAPDATA);
-                expect(keydata.getBytes(KEY_WRAP_KEY))).toEqual(WRAP_JWK);
+                expect(keydata.getBytes(KEY_WRAP_KEY)).toEqual(WRAP_JWK);
             });
         });
         

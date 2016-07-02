@@ -118,7 +118,7 @@ var PayloadChunk$parse;
         this.payload = payload;
     }
 
-    PayloadChunk = util.Class.create({
+    PayloadChunk = MslEncodable.extend({
         /**
          * Construct a new payload chunk with the given message ID, data and
          * provided crypto context. If requested, the data will be compressed
@@ -216,40 +216,53 @@ var PayloadChunk$parse;
                     return this.encodings[format];
                 
                 // Encrypt the payload.
-                var plaintext = encoder.encodeObject(this.payload, format);
-                this.cryptoContext.encrypt(plaintext, encoder, format, {
-                    result: function(ciphertext) {
-                        // Sign the payload.
-                        cryptoContext.sign(ciphertext, encoder, format, {
-                            result: function(signature) {
-                                AsyncExecutor(callback, function() {
-                                    // Encode the payload chunk.
-                                    var mo = encoder.createObject();
-                                    mo.put(KEY_PAYLOAD, ciphertext);
-                                    mo.put(KEY_SIGNATURE, signature);
-                                    var encoding = encoder.encodeObject(mo, format);
-                                    
-                                    // Cache and return the encoding.
-                                    encodings[format] = encoding;
-                                    return encoding;
-                                }, self);
-                            },
-                            error: function(e) {
-                                AsyncExecutor(callback, function() {
-                                    if (e instanceof MslCryptoException)
-                                        throw new MslEncoderException("Error signing the payload.", e);
-                                    throw e;
-                                }, self);
-                            }
-                        });
-                    },
-                    error: function(e) {
-                        AsyncExecutor(callback, function() {
-                            if (e instanceof MslCryptoException)
-                                throw new MslEncoderException("Error encrypting the payload.", e);
-                            throw e;
-                        }, self);
-                    }
+                encoder.encodeObject(this.payload, format, {
+                	result: function(plaintext) {
+                		AsyncExecutor(callback, function() {
+                			this.cryptoContext.encrypt(plaintext, encoder, format, {
+                				result: function(ciphertext) {
+                					AsyncExecutor(callback, function() {
+                						// Sign the payload.
+                						this.cryptoContext.sign(ciphertext, encoder, format, {
+                							result: function(signature) {
+                								AsyncExecutor(callback, function() {
+                									// Encode the payload chunk.
+                									var mo = encoder.createObject();
+                									mo.put(KEY_PAYLOAD, ciphertext);
+                									mo.put(KEY_SIGNATURE, signature);
+                									encoder.encodeObject(mo, format, {
+                										result: function(encoding) {
+                											AsyncExecutor(callback, function() {
+                												// Cache and return the encoding.
+                												this.encodings[format] = encoding;
+                												return encoding;
+                											}, self);
+                										},
+                										error: callback.error,
+                									});
+                								}, self);
+                							},
+                							error: function(e) {
+                								AsyncExecutor(callback, function() {
+                									if (e instanceof MslCryptoException)
+                										throw new MslEncoderException("Error signing the payload.", e);
+                									throw e;
+                								}, self);
+                							}
+                						});
+                					}, self);
+                				},
+                				error: function(e) {
+                					AsyncExecutor(callback, function() {
+                						if (e instanceof MslCryptoException)
+                							throw new MslEncoderException("Error encrypting the payload.", e);
+                						throw e;
+                					}, self);
+                				}
+                			});
+                		}, self);
+                	},
+                	error: callback.error,
                 });
             }, self);
         },
@@ -302,7 +315,7 @@ var PayloadChunk$parse;
      *         or the payload data is corrupt or missing.
      * @throws MslException if there is an error uncompressing the data.
      */
-    PayloadChunk$parse = function PayloadChunk$parse(ctx, payloadChunkJO, cryptoContext, callback) {
+    PayloadChunk$parse = function PayloadChunk$parse(ctx, payloadChunkMo, cryptoContext, callback) {
         AsyncExecutor(callback, function() {
             var encoder = ctx.getMslEncoderFactory();
             
@@ -338,7 +351,7 @@ var PayloadChunk$parse;
         function parsePayload(encoder, plaintext) {
             AsyncExecutor(callback, function() {
                 try {
-                    var payload = encoder.parseObject();
+                    var payload = encoder.parseObject(plaintext);
                     var sequenceNumber = payload.getLong(KEY_SEQUENCE_NUMBER);
                     if (sequenceNumber < 0 || sequenceNumber > MslConstants$MAX_LONG_VALUE)
                         throw new MslException(MslError.PAYLOAD_SEQUENCE_NUMBER_OUT_OF_RANGE, "payload chunk payload " + payload);

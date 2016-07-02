@@ -713,7 +713,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
 		                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
         	});
-        	waitsFor(function() { return keydata; }, "keydata", 100;
+        	waitsFor(function() { return keydata; }, "keydata", 100);
         	
         	runs(function() {
         		var f = function() {
@@ -733,7 +733,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
 		                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
         	});
-        	waitsFor(function() { return keydata; }, "keydata", 100;
+        	waitsFor(function() { return keydata; }, "keydata", 100);
         	
         	runs(function() {
         		var f = function() {
@@ -753,7 +753,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
 		                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
         	});
-        	waitsFor(function() { return keydata; }, "keydata", 100;
+        	waitsFor(function() { return keydata; }, "keydata", 100);
         	
         	runs(function() {
         		var f = function() {
@@ -789,7 +789,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             	});
             });
-            waitsFor(function() { return dataA && dataB && dataA2; }, "data", 100;
+            waitsFor(function() { return dataA && dataB && dataA2; }, "data", 100);
             
             runs(function() {
 	            expect(dataA.equals(dataA)).toBeTruthy();

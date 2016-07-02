@@ -145,23 +145,6 @@ public class MslEncoderUtils {
     }
     
     /**
-     * Performs a deep comparison of two MSL objects.
-     * 
-     * @param ctx MSL context.
-     * @param me1 first MSL object encoded representation.
-     * @param me2 second JSON object encoded representation.
-     * @return true if the encodings are equivalent MSL objects.
-     * @throws MslEncoderException if there is an error parsing the data.
-     * @see MslEncoderUtils#equalObjects(MslObject, MslObject)
-     */
-    public static boolean objectEquals(final MslContext ctx, final byte[] me1, final byte[] me2) throws MslEncoderException {
-        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
-        final MslObject o1 = encoder.parseObject(me1);
-        final MslObject o2 = encoder.parseObject(me2);
-        return MslEncoderUtils.equalObjects(o1, o2);
-    }
-    
-    /**
      * Performs a deep comparison of two MSL objects for equivalence. MSL
      * objects are equivalent if they have the same name/value pairs. Also, two
      * MSL object references are considered equal if both are null.

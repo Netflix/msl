@@ -21,7 +21,7 @@
  */
 describe("MslEncoderFactory", function() {
     /** Maximum number of object fields or array elements. */
-    var MAX_NUM_ELEMENTS = 10;
+    var MAX_NUM_ELEMENTS = 20;
     /** MSL object base key name. */
     var MSL_OBJECT_KEY = "KEY";
     
@@ -41,7 +41,7 @@ describe("MslEncoderFactory", function() {
 	            	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	            });
         	});
-        	waitsFor(function() { return ctx; }, "ctx", 900);
+        	waitsFor(function() { return ctx; }, "ctx", 1200);
         	
         	runs(function() {
         		encoder = ctx.getMslEncoderFactory();
@@ -54,7 +54,7 @@ describe("MslEncoderFactory", function() {
     /**
      * @return {string} a random type.
      */
-    var getRandomType() {
+    function getRandomType() {
         var i = random.nextInt(8);
         switch (i) {
             case 0:
@@ -85,7 +85,7 @@ describe("MslEncoderFactory", function() {
         if ("boolean" == type)
             return random.nextBoolean();
         if ("Uint8Array" == type) {
-            var b = new byte[random.nextInt(10)];
+            var b = new Uint8Array(random.nextInt(10));
             random.nextBytes(b);
             return b;
         }
@@ -201,7 +201,7 @@ describe("MslEncoderFactory", function() {
         if ("Uint8Array" == type)
             return mo.optBytes(key, new Uint8Array(0));
         if ("double" == type)
-            return mo.optDouble(key, Double.NaN);
+            return mo.optDouble(key, Number.NaN);
         if ("integer" == type)
             return mo.optInt(key, 0);
         if ("MslArray" == type)
@@ -227,21 +227,21 @@ describe("MslEncoderFactory", function() {
      */
     function putTypedField(key, type, value, mo) {
         if ("boolean" == type)
-            mo.putBoolean(key, (Boolean)value);
+            mo.putBoolean(key, value);
         if ("Uint8Array" == type)
-            mo.putBytes(key, (byte[])value);
+            mo.putBytes(key, value);
         if ("double" == type)
-            mo.putDouble(key, (Double)value);
+            mo.putDouble(key, value);
         if ("integer" == type)
-            mo.putInt(key, (Integer)value);
+            mo.putInt(key, value);
         if ("MslArray" == type)
-            mo.putCollection(key, (value != null) ? ((MslArray)value).getCollection() : null);
+            mo.putCollection(key, (value != null) ? value.getCollection() : null);
         if ("MslObject" == type)
-            mo.putMap(key, (value != null) ? ((MslObject)value).getMap() : null);
+            mo.putMap(key, (value != null) ? value.getMap() : null);
         if ("long" == type)
-            mo.putLong(key, (Long)value);
+            mo.putLong(key, value);
         if ("string" == type)
-            mo.putString(key, (String)value);
+            mo.putString(key, value);
         mo.put(key, value);
     }
     
@@ -258,7 +258,7 @@ describe("MslEncoderFactory", function() {
      * @throws MslEncoderException if the value type is not equal to the
      *         expected type.
      */
-    function getTypedElement(index, type, ma) throws MslEncoderException {
+    function getTypedElement(index, type, ma) {
         if ("boolean" == type)
             return ma.getBoolean(index);
         if ("Uint8Array" == type)
@@ -326,7 +326,7 @@ describe("MslEncoderFactory", function() {
         if ("Uint8Array" == type)
             return ma.optBytes(index, new Uint8Array(0));
         if ("double" == type)
-            return ma.optDouble(index, Double.NaN);
+            return ma.optDouble(index, Number.NaN);
         if ("integer" == type)
             return ma.optInt(index, 0);
         if ("MslArray" == type)
@@ -352,43 +352,45 @@ describe("MslEncoderFactory", function() {
      */
     function putTypedElement(index, type, value, ma) {
         if ("boolean" == type)
-            ma.putBoolean(index, (Boolean)value);
+            ma.putBoolean(index, value);
         if ("Uint8Array" == type)
-            ma.putBytes(index, (byte[])value);
+            ma.putBytes(index, value);
         if ("double" == type)
-            ma.putDouble(index, (Double)value);
+            ma.putDouble(index, value);
         if ("integer" == type)
-            ma.putInt(index, (Integer)value);
+            ma.putInt(index, value);
         if ("MslArray" == type)
-            ma.putCollection(index, (value != null) ? ((MslArray)value).getCollection() : null);
+            ma.putCollection(index, (value != null) ? value.getCollection() : null);
         if ("MslObject" == type)
-            ma.putMap(index, (value != null) ? ((MslObject)value).getMap() : null);
+            ma.putMap(index, (value != null) ? value.getMap() : null);
         if ("long" == type)
-            ma.putLong(index, (Long)value);
+            ma.putLong(index, value);
         if ("string" == type)
-            ma.putString(index, (String)value);
+            ma.putString(index, value);
         ma.put(index, value);
     }
     
     /** Tokenizer unit tests. */
     describe("Tokenizer", function() {
         /** Example payloads. */
-        var PAYLOADS = {
-            "payload1".getBytes(MslConstants.DEFAULT_CHARSET),
-            "payload2".getBytes(MslConstants.DEFAULT_CHARSET),
-        };
+        var PAYLOADS = [
+            textEncoding$getBytes("payload1", MslConstants$DEFAULT_CHARSET),
+            textEncoding$getBytes("payload2", MslConstants$DEFAULT_CHARSET),
+        ];
         
         var jsonMessageData, unsupportedMessageData;
+        
+        var initialized = false;
     	beforeEach(function() {
-    		if (!params) {
+    		if (!initialized) {
+    	    	// JSON encoder format.
+    	        var jsonCaps = new MessageCapabilities(null, null, [ MslEncoderFormat.JSON ]);
+
+    	        // Create MSL message.
+    	        var destination = new ByteArrayOutputStream();
+    	        var peerData = new MessageHeader$HeaderPeerData(null, null, null);
 	    		var entityAuthData;
 	    		runs(function() {
-	    	    	// JSON encoder format.
-	    	        var jsonCaps = new MessageCapabilities(null, null, [ MslEncoderFormat.JSON ]);
-	    	        
-	    	        // Create MSL message.
-	    	        var destination = new ByteArrayOutputStream();
-	    	        var peerData = new MessageHeader$HeaderPeerData(null, null, null);
 	        		ctx.getEntityAuthenticationData(null, {
 	        			result: function(x) { entityAuthData = x; },
 		            	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
@@ -409,35 +411,64 @@ describe("MslEncoderFactory", function() {
 	        	
 	        	var jsonMos;
 	        	runs(function() {
-		        	var jsonCryptoContext = jsonMessageHeader.getCryptoContext();
+		        	var jsonCryptoContext = jsonMessageHeader.cryptoContext;
 		            MessageOutputStream$create(ctx, destination, jsonMessageHeader, jsonCryptoContext, null, -1, {
 		            	result: function(x) { jsonMos = x; },
+		                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
 		            	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 		            });
 	        	});
 	        	waitsFor(function() { return jsonMos; }, "jsonMos", 100);
 	        	
 	        	runs(function() {
-	        		for (var payload : PAYLOADS) {
-	                    jsonMos.write(payload);
-	                    jsonMos.flush();
-	                }
-	                jsonMos.close();
-	                
-	                // JSON.
-	                jsonMessageData = destination.toByteArray();
-	                
-	                // Unsupported.
-	                unsupportedMessageData = Arrays$copyOf(jsonMessageData, 0, jsonMessageData.length);
-	                unsupportedMessageData[0] = '1';
+	        		function writePayload(index) {
+	        			if (index >= PAYLOADS.length) {
+	        				closeMos();
+	        				return;
+	        			}
+	        			
+	        			var payload = PAYLOADS[index];
+	        			jsonMos.write(payload, 0, payload.length, -1, {
+	        				result: function(count) {
+	        					jsonMos.flush(-1, {
+	        						result: function(flushed) {
+	        							writePayload(index + 1);
+	        						},
+	    			                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
+	    			            	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+	        					})
+	        				},
+			                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
+			            	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+	        			});
+	        		}
+	        		writePayload(0);
+	        		
+	        		function closeMos() {
+	        			jsonMos.close(-1, {
+	        				result: function(closed) {
+	        	                // JSON.
+	        	                jsonMessageData = destination.toByteArray();
+	        	                
+	        	                // Unsupported.
+	        	                unsupportedMessageData = Arrays$copyOf(jsonMessageData, 0, jsonMessageData.length);
+	        	                unsupportedMessageData[0] = '1';
+	        	                
+	        	                initialized = true;
+	        				},
+			                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
+			            	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+	        			});
+	        		}
 	        	});
+	        	waitsFor(function() { return initialized; }, "initialized", 100);
     		}
     	});
     	
     	parameterize("Parameterized", function data() {
     		return [
-    		    [ MslEncoderFormat.JSON, jsonMessageData, null ],
-    		    [ null, unsupportedMessageData, new MslEncoderException() ],
+    		    [ MslEncoderFormat.JSON, null ],
+    		    [ null, new MslEncoderException() ],
     		];
     	},
         /**
@@ -445,10 +476,23 @@ describe("MslEncoderFactory", function() {
          * encoding format and provided message data.
          * 
          * @param {?MslEncoderFormat} format MSL encoding format.
-         * @param {Uint8Array} messageData encoded message.
          * @param {?Error} exceptionClass expected exception class.
          */
-    	function(format, messageData, expectedException) {
+    	function(format, expectedException) {
+    		/**
+    		 * Encoded message.
+    		 * @type {Uint8Array}
+    		 */
+    		var messageData;
+    		beforeEach(function() {
+    			if (format == MslEncoderFormat.JSON)
+    				messageData = jsonMessageData;
+    			else if (format == null)
+    				messageData = unsupportedMessageData;
+    			else
+    				throw new Error("Unidentified message format.");
+    		});
+    		
 	        it("detect tokenizer", function() {
 	            var tokenizer, exception;
 	            runs(function() {
@@ -456,10 +500,11 @@ describe("MslEncoderFactory", function() {
 		            var source = new ByteArrayInputStream(messageData);
 		            encoder.createTokenizer(source, null, -1, {
 		            	result: function(x) { tokenizer = x; },
+		                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
 		            	error: function(e) { exception = e; },
 		            });
 	            });
-	            waitsFor(function() { return tokenizer; }, "tokenizer", 100);
+	            waitsFor(function() { return tokenizer || exception; }, "tokenizer or exception", 100);
 	
 	            runs(function() {
 	            	if (expectedException) {
@@ -486,9 +531,11 @@ describe("MslEncoderFactory", function() {
 			            					tokens.push(object);
 			            					f();
 			            				},
+			            				timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
 			    	            		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 			            			});
 			            		},
+				                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
 			            		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 			            	});
 			            }
@@ -502,6 +549,7 @@ describe("MslEncoderFactory", function() {
 			            expect(objects.length).toEqual(PAYLOADS.length + 2);
 			            tokenizer.nextObject(-1, {
 			            	result: function(object) { nextObject = object; },
+			                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
 			            	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 			            });
 			        });
@@ -527,7 +575,7 @@ describe("MslEncoderFactory", function() {
 			            var messageHeader = header;
 			            
 			            // Verify payloads.
-			            var payloadCryptoContext = messageHeader.getCryptoContext();
+			            var payloadCryptoContext = messageHeader.cryptoContext;
 			            function f(i) {
 			            	if (i >= PAYLOADS.length) {
 			            		verified = true;
@@ -539,7 +587,7 @@ describe("MslEncoderFactory", function() {
 			            		result: function(payload) {
 			            			var data = payload.data;
 			    	                expect(data).toEqual(expectedPayload);
-			    	                f(1);
+			    	                f(i+1);
 			            		},
 			            		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 			            	});
@@ -557,10 +605,11 @@ describe("MslEncoderFactory", function() {
 		            var source = new ByteArrayInputStream(messageData);
 		            encoder.createTokenizer(source, format, -1, {
 		            	result: function(x) { tokenizer = x; },
+		                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
 		            	error: function(e) { exception = e; },
 		            });
 	            });
-	            waitsFor(function() { return tokenizer; }, "tokenizer", 100);
+	            waitsFor(function() { return tokenizer || exception; }, "tokenizer or exception", 100);
 	
 	            runs(function() {
 	            	if (expectedException) {
@@ -587,9 +636,11 @@ describe("MslEncoderFactory", function() {
 			            					tokens.push(object);
 			            					f();
 			            				},
+						                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
 			    	            		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 			            			});
 			            		},
+				                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
 			            		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 			            	});
 			            }
@@ -603,6 +654,7 @@ describe("MslEncoderFactory", function() {
 			            expect(objects.length).toEqual(PAYLOADS.length + 2);
 			            tokenizer.nextObject(-1, {
 			            	result: function(object) { nextObject = object; },
+			                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
 			            	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 			            });
 			        });
@@ -628,7 +680,7 @@ describe("MslEncoderFactory", function() {
 			            var messageHeader = header;
 			            
 			            // Verify payloads.
-			            var payloadCryptoContext = messageHeader.getCryptoContext();
+			            var payloadCryptoContext = messageHeader.cryptoContext;
 			            function f(i) {
 			            	if (i >= PAYLOADS.length) {
 			            		verified = true;
@@ -640,7 +692,7 @@ describe("MslEncoderFactory", function() {
 			            		result: function(payload) {
 			            			var data = payload.data;
 			    	                expect(data).toEqual(expectedPayload);
-			    	                f(1);
+			    	                f(i+1);
 			            		},
 			            		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 			            	});
@@ -673,8 +725,8 @@ describe("MslEncoderFactory", function() {
     	 * @returns the long value of the number.
     	 */
     	function longValue(n) {
-    		// The ~~ operator truncates to the integer value.
-    		return ~~n;
+    		// The parseInt function converts to the integer value.
+    		return parseInt(n);
     	}
     	
     	/**
@@ -738,7 +790,7 @@ describe("MslEncoderFactory", function() {
             }
             
             // Verify opt functions.
-            for (var key : map.keySet()) {
+            for (var key in map) {
                 var expected = map[key];
                 var value = mo.opt(key);
                 expect(value).toEqual(expected);
@@ -769,7 +821,7 @@ describe("MslEncoderFactory", function() {
                      "long" == randomType ||
                      "double" == randomType))
                 {
-                    expect(numbersEqual(type, expected, typedValue)).toBeTruthy();
+                    expect(numbersEqual(randomType, expected, typedValue)).toBeTruthy();
                 }
                 // Double expects NaN...
                 else if ("double" == randomType) {
@@ -783,7 +835,7 @@ describe("MslEncoderFactory", function() {
                 }
                 // byte[] expects an empty byte array...
                 else if ("Uint8Array" == randomType) {
-                    expect(typeof instanceof Uint8Array).toBeTruthy();
+                    expect(typedValue instanceof Uint8Array).toBeTruthy();
                     expect(typedValue).toEqual(new Uint8Array(0));
                 }
                 // String expects the empty string...
@@ -801,7 +853,7 @@ describe("MslEncoderFactory", function() {
             expect(mo.optBoolean("boolean", true)).toBeTruthy();
             var b = new Uint8Array(10);
             random.nextBytes(b);
-            expect(mo.optBytes("bytes", b).toEqual(b));
+            expect(mo.optBytes("bytes", b)).toEqual(b);
             var d = random.nextDouble();
             expect(mo.optDouble("double", d)).toEqual(d);
             var i = random.nextInt();
@@ -810,7 +862,7 @@ describe("MslEncoderFactory", function() {
             expect(mo.optMslObject("object", encoder)).toBeNull();
             var l = random.nextLong();
             expect(mo.optLong("long", l)).toEqual(l);
-            var s = textEncoding$toString(b);
+            var s = base64$encode(b);
             expect(mo.optString("string", s)).toEqual(s);
         });
 
@@ -849,11 +901,13 @@ describe("MslEncoderFactory", function() {
 
             // Populate it with some stuff.
             var list = [];
+            var types = [];
             for (var i = 0; i < MAX_NUM_ELEMENTS; ++i) {
                 var typeValue = createRandomValue();
                 var type = typeValue.type;
                 var value = typeValue.value;
                 list.push(value);
+                types.push(type);
                 ma.put(-1, value);
             };
 
@@ -899,7 +953,7 @@ describe("MslEncoderFactory", function() {
                      "long" == randomType ||
                      "double" == randomType))
                 {
-                    expect(numbersEqual(type, expected, typedValue)).toBeTruthy();
+                    expect(numbersEqual(randomType, expected, typedValue)).toBeTruthy();
                 }
                 // Double expects NaN...
                 else if ("double" == randomType) {
@@ -932,7 +986,7 @@ describe("MslEncoderFactory", function() {
             expect(ma.optBoolean(0, true)).toBeTruthy();
             var b = new Uint8Array(10);
             random.nextBytes(b);
-            expect(ma.optBytes(0, b).toEqual(b));
+            expect(ma.optBytes(0, b)).toEqual(b);
             var d = random.nextDouble();
             expect(ma.optDouble(0, d)).toEqual(d);
             var i = random.nextInt();
@@ -941,7 +995,7 @@ describe("MslEncoderFactory", function() {
             expect(ma.optMslObject(0, encoder)).toBeNull();
             var l = random.nextLong();
             expect(ma.optLong(0, l)).toEqual(l);
-            var s = new textEncoding$toString(b);
+            var s = base64$encode(b);
             expect(ma.optString(0, s)).toEqual(s);
         });
 
@@ -1133,13 +1187,23 @@ describe("MslEncoderFactory", function() {
             var mo = encoder.createObject(map);
             expect(mo).not.toBeNull();
 
-            // Encode.
-            var encode = encoder.encodeObject(mo, format);
-            expect(encode).not.toBeNull();
+            var encode;
+            runs(function() {
+                // Encode.
+            	encoder.encodeObject(mo, format, {
+            		result: function(x) { encode = x; },
+            		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            	});
+            });
+            waitsFor(function() { return encode; }, "encode", 100);
             
-            // Parse.
-            var parsedMo = encoder.parseObject(encode);
-            expect(MslEncoderUtils$equalObjects(mo, parsedMo)).toBeTruthy();
+            runs(function() {
+	            expect(encode).not.toBeNull();
+	            
+	            // Parse.
+	            var parsedMo = encoder.parseObject(encode);
+	            expect(MslEncoderUtils$equalObjects(mo, parsedMo)).toBeTruthy();
+            });
         });
 
         it("parse invalid object", function() {
@@ -1156,19 +1220,29 @@ describe("MslEncoderFactory", function() {
             var mo = encoder.createObject(map);
             expect(mo).not.toBeNull();
 
-            // Encode.
-            var encode = encoder.encodeObject(mo, format);
-            expect(encode).not.toBeNull();
-
-            // Corrupt the encode.
-            encode[0] = 0;
-            encode[encode.length - 1] = 'x';
+            var encode;
+            runs(function() {
+                // Encode.
+            	encoder.encodeObject(mo, format, {
+            		result: function(x) { encode = x; },
+            		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            	});
+            });
+            waitsFor(function() { return encode; }, "encode", 100);
             
-            // Parse.
-            var f = function() {
-            	encoder.parseObject(encode);
-            };
-            expect(f).toThrow(new MslEncoderException());
+            runs(function() {
+	            expect(encode).not.toBeNull();
+	
+	            // Corrupt the encode.
+	            encode[0] = 0;
+	            encode[encode.length - 1] = 'x';
+	            
+	            // Parse.
+	            var f = function() {
+	            	encoder.parseObject(encode);
+	            };
+	            expect(f).toThrow(new MslEncoderException());
+            });
         });
     });
 });

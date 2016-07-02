@@ -687,7 +687,7 @@ describe("MslCiphertextEnvelope", function() {
             var exception;
             runs(function() {
                 var mo = encoder.parseObject(encode);
-                mo.remvoe(KEY_CIPHERSPEC);
+                mo.remove(KEY_CIPHERSPEC);
 
                 MslCiphertextEnvelope$parse(mo, null, {
                     result: function() {},

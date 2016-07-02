@@ -119,11 +119,12 @@ var MslSignatureEnvelope$Version;
                     case Version.V2:
                         var mo = encoder.createObject();
                         mo.put(KEY_VERSION, this.version);
-                        mo.put(KEY_ALGORITHM, this.algorithm.name()),
+                        mo.put(KEY_ALGORITHM, this.algorithm),
                         mo.put(KEY_SIGNATURE, this.signature);
-                        return encoder.encodeObject(mo, format);
+                        encoder.encodeObject(mo, format, callback);
+                        break;
                     default:
-                        throw new MslInternalException("Signature envelope version " + version + " encoding unsupported.");
+                        throw new MslInternalException("Signature envelope version " + this.version + " encoding unsupported.");
                 }
             }, this);
         },
@@ -254,6 +255,17 @@ var MslSignatureEnvelope$Version;
                 try {
                     envelopeVersion = envelopeMo.getInt(KEY_VERSION);
                     if (envelopeVersion !== envelopeVersion) {
+                        // There is a possibility that this is a version 1 envelope.
+                        envelopeVersion = Version.V1;
+                    }
+                    var recognized = false;
+                    for (var version in Version) {
+                    	if (Version[version] == envelopeVersion) {
+                    		recognized = true;
+                    		break;
+                    	}
+                    }
+                    if (!recognized) {
                         // There is a possibility that this is a version 1 envelope.
                         envelopeVersion = Version.V1;
                     }

@@ -415,51 +415,51 @@ public class MslEncoderUtilsTest {
     
     @Test
     public void mergeNulls() throws MslEncoderException {
-        final MslObject jo1 = null;
-        final MslObject jo2 = null;
-        final MslObject merged = MslEncoderUtils.merge(jo1, jo2);
+        final MslObject mo1 = null;
+        final MslObject mo2 = null;
+        final MslObject merged = MslEncoderUtils.merge(mo1, mo2);
         assertNull(merged);
     }
     
     @Test
     public void mergeFirstNull() throws MslEncoderException {
-        final MslObject jo1 = null;
-        final MslObject jo2 = deepMo;
-        final MslObject merged = MslEncoderUtils.merge(jo1, jo2);
-        assertTrue(MslEncoderUtils.equalObjects(merged, jo2));
-        assertEquals(MslEncoderUtils.hashObject(merged), MslEncoderUtils.hashObject(jo2));
+        final MslObject mo1 = null;
+        final MslObject mo2 = deepMo;
+        final MslObject merged = MslEncoderUtils.merge(mo1, mo2);
+        assertTrue(MslEncoderUtils.equalObjects(merged, mo2));
+        assertEquals(MslEncoderUtils.hashObject(merged), MslEncoderUtils.hashObject(mo2));
     }
     
     @Test
     public void mergeSecondNull() throws MslEncoderException {
-        final MslObject jo1 = deepMo;
-        final MslObject jo2 = null;
-        final MslObject merged = MslEncoderUtils.merge(jo1, jo2);
-        assertTrue(MslEncoderUtils.equalObjects(merged, jo1));
-        assertEquals(MslEncoderUtils.hashObject(merged), MslEncoderUtils.hashObject(jo1));
+        final MslObject mo1 = deepMo;
+        final MslObject mo2 = null;
+        final MslObject merged = MslEncoderUtils.merge(mo1, mo2);
+        assertTrue(MslEncoderUtils.equalObjects(merged, mo1));
+        assertEquals(MslEncoderUtils.hashObject(merged), MslEncoderUtils.hashObject(mo1));
     }
     
     @Test
     public void mergeOverwriting() throws MslEncoderException {
-        final MslObject jo1 = createFlatMslObject(random);
-        final MslObject jo2 = createFlatMslObject(random);
+        final MslObject mo1 = createFlatMslObject(random);
+        final MslObject mo2 = createFlatMslObject(random);
         
         // Insert some shared keys.
-        jo1.put("key1", true);
-        jo2.put("key1", "value1");
-        jo1.put("key2", 17);
-        jo2.put("key2", 34);
+        mo1.put("key1", true);
+        mo2.put("key1", "value1");
+        mo1.put("key2", 17);
+        mo2.put("key2", 34);
         
         // Ensure second overwrites first.
-        final MslObject merged = MslEncoderUtils.merge(jo1, jo2);
+        final MslObject merged = MslEncoderUtils.merge(mo1, mo2);
         for (final String key : merged.getKeys()) {
             final Object value = merged.get(key);
             if (key.equals("key1") || key.equals("key2")) {
-                assertEquals(jo2.get(key), value);
-            } else if (jo2.has(key)) {
-                assertEquals(jo2.get(key), value);
+                assertEquals(mo2.get(key), value);
+            } else if (mo2.has(key)) {
+                assertEquals(mo2.get(key), value);
             } else {
-                assertEquals(jo1.get(key), value);
+                assertEquals(mo1.get(key), value);
             }
         }
     }

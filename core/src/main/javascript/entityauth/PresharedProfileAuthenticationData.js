@@ -119,7 +119,7 @@ var PresharedProfileAuthenticationData$parse;
             return new PresharedProfileAuthenticationData(pskid, profile);
         } catch (e) {
             if (e instanceof MslEncoderException)
-                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "psk profile authdata " + authMo);
+                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "psk profile authdata " + authMo);
             throw e;
         }
     };

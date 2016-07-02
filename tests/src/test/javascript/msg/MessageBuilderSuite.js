@@ -2164,7 +2164,7 @@ describe("MessageBuilder", function() {
 	/** Create error unit tests. */
 	describe("createError", function() {
 		var REQUEST_MESSAGE_ID = 17;
-		var MSL_ERROR = MslError.JSON_PARSE_ERROR;
+		var MSL_ERROR = MslError.MSL_PARSE_ERROR;
 		var USER_MESSAGE = "user message";
 
 		it("ctor", function() {

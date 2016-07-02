@@ -82,7 +82,7 @@ import com.netflix.msl.util.MslContext;
                MslEncoderFactorySuite.Encoding.class})
 public class MslEncoderFactorySuite {
     /** Maximum number of object fields or array elements. */
-    private static final int MAX_NUM_ELEMENTS = 10;
+    private static final int MAX_NUM_ELEMENTS = 20;
     /** MSL object base key name. */
     private static final String MSL_OBJECT_KEY = "KEY";
     

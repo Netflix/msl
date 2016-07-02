@@ -120,44 +120,37 @@ var MslCiphertextEnvelope$Version;
          *        identifier or cipher specification.
          * @param {?Uint8Array} iv the initialization vector. May be null.
          * @param {Uint8Array} ciphertext the ciphertext.
-         * @param {{result: function(MslCiphertextEnvelope), error: function(Error)}}
-         *        callback the callback functions that will receive the envelope
-         *        or any thrown exceptions.
          * @constructor
          */
-        init: function init(keyIdOrSpec, iv, ciphertext, callback) {
-            AsyncExecutor(callback, function() {
-                // Determine envelope version from first parameter.
-                var version = Version.V1,
-                    keyId   = keyIdOrSpec,
-                    cipherSpec = null;
-                for (var key in MslConstants$CipherSpec) {
-                    if (MslConstants$CipherSpec[key] == keyIdOrSpec) {
-                        version = Version.V2;
-                        keyId = null;
-                        cipherSpec = keyIdOrSpec;
-                        break;
-                    }
-                }
-                
-                // The properties.
-                var props = {
-                    version: { value: version, writable: false, enumerable: false, configurable: false },
-                    keyId: { value: keyId, writable: false, configurable: false },
-                    cipherSpec: { value: cipherSpec, writable: false, configurable: false },
-                    iv: { value: iv, writable: false, configurable: false },
-                    ciphertext: { value: ciphertext, writable: false, configurable: false },
-                };
-                Object.defineProperties(this, props);
-                return this;
-            }, this);
+        init: function init(keyIdOrSpec, iv, ciphertext) {
+        	// Determine envelope version from first parameter.
+        	var version    = Version.V1,
+        		keyId      = keyIdOrSpec,
+        		cipherSpec = null;
+        	for (var key in MslConstants$CipherSpec) {
+        		if (MslConstants$CipherSpec[key] == keyIdOrSpec) {
+        			version = Version.V2;
+        			keyId = null;
+        			cipherSpec = keyIdOrSpec;
+        			break;
+        		}
+        	}
+
+        	// The properties.
+        	var props = {
+        		version: { value: version, writable: false, enumerable: false, configurable: false },
+        		keyId: { value: keyId, writable: false, configurable: false },
+        		cipherSpec: { value: cipherSpec, writable: false, configurable: false },
+        		iv: { value: iv, writable: false, configurable: false },
+        		ciphertext: { value: ciphertext, writable: false, configurable: false },
+        	};
+        	Object.defineProperties(this, props);
         },
 
         /** @inheritDoc */
         toMslEncoding: function toMslEncoding(encoder, format, callback) {
             AsyncExecutor(callback, function() {
-                // Construct the JSON.
-                var mo = {};
+                var mo = encoder.createObject();
                 switch (this.version) {
                     case Version.V1:
                         mo.put(KEY_KEY_ID, this.keyId);
@@ -174,7 +167,7 @@ var MslCiphertextEnvelope$Version;
                     default:
                         throw new MslInternalException("Ciphertext envelope version " + this.version + " encoding unsupported.");
                 }
-                return encoder.encodeObject(mo, format);
+                encoder.encodeObject(mo, format, callback);
             }, this);
         }
     });
@@ -191,7 +184,9 @@ var MslCiphertextEnvelope$Version;
      *        or any thrown exceptions.
      */
     MslCiphertextEnvelope$create = function MslCiphertextEnvelope$create(keyIdOrCipherSpec, iv, ciphertext, callback) {
-        new MslCiphertextEnvelope(keyIdOrCipherSpec, iv, ciphertext, callback);
+    	AsyncExecutor(callback, function() {
+    		return new MslCiphertextEnvelope(keyIdOrCipherSpec, iv, ciphertext);
+    	});
     };
 
     /**
@@ -201,7 +196,6 @@ var MslCiphertextEnvelope$Version;
      * @param {MslObject} mo the MSL object.
      * @param {?MslCiphertextEnvelope$Version} version the envelope version.
      *        May be null.
-     * @param {MslEncoderFactory} MSL encoder factory.
      * @param {{result: function(MslCiphertextEnvelope), error: function(Error)}}
      *        callback the callback functions that will receive the envelope
      *        or any thrown exceptions.
@@ -209,7 +203,7 @@ var MslCiphertextEnvelope$Version;
      *         encryption envelope.
      * @throws MslEncodingException if there is an error parsing the data.
      */
-    MslCiphertextEnvelope$parse = function MslCiphertextEnvelope$parse(mo, version, encoder, callback) {
+    MslCiphertextEnvelope$parse = function MslCiphertextEnvelope$parse(mo, version, callback) {
         AsyncExecutor(callback, function() {
             // If a version was not specified, determine the envelope version.
             if (!version) {
@@ -225,10 +219,12 @@ var MslCiphertextEnvelope$Version;
                     if (!identified)
                         throw new MslCryptoException(MslError.UNIDENTIFIED_CIPHERTEXT_ENVELOPE, "ciphertext envelope " + mo);
                 } catch (e) {
-                    if (e instanceof MslEncoderException)
+                    if (e instanceof MslEncoderException) {
                         // If anything fails to parse, treat this as a version 1 envelope.
                         version = Version.V1;
-                    throw e;
+                    } else {
+                    	throw e;
+                    }
                 }
             }
             
@@ -261,7 +257,7 @@ var MslCiphertextEnvelope$Version;
                         ciphertext = mo.getBytes(KEY_CIPHERTEXT);
                     } catch (e) {
                         if (e instanceof MslEncoderException)
-                            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "ciphertext envelope " + mo, e);
+                            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "ciphertext envelope " + mo, e);
                         throw e;
                     }
                     break;
@@ -270,7 +266,7 @@ var MslCiphertextEnvelope$Version;
             }
             
             // Return envelope.
-            new MslCiphertextEnvelope(keyIdOrSpec, iv, ciphertext, callback);
+            return new MslCiphertextEnvelope(keyIdOrSpec, iv, ciphertext);
         });
     };
 })();

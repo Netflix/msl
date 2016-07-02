@@ -51,7 +51,7 @@ var UserAuthenticationData$parse;
      */
     var KEY_AUTHDATA = "authdata";
 
-    UserAuthenticationData = util.Class.create({
+    UserAuthenticationData = MslEncodable.extend({
         /**
          * Create a new user authentication data object with the specified user
          * authentication scheme.
@@ -116,11 +116,16 @@ var UserAuthenticationData$parse;
                             var mo = encoder.createObject();
                             mo.put(KEY_SCHEME, this.scheme.name);
                             mo.put(KEY_AUTHDATA, authdata);
-                            var encoding = encoder.encodeObject(mo, format);
-                            
-                            // Cache and return the encoding.
-                            this.encodings[format] = encoding;
-                            return encoding;
+                            encoder.encodeObject(mo, format, {
+                            	result: function(encoding) {
+                            		AsyncExecutor(callback, function() {
+                            			// Cache and return the encoding.
+                            			this.encodings[format] = encoding;
+                            			return encoding;
+                            		}, self);
+                            	},
+                            	error: callback.error
+                            });
                         }, self);
                     },
                     error: callback.error,

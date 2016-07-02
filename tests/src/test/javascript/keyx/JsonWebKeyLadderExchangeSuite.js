@@ -24,7 +24,7 @@ xdescribe("JsonWebKeyLadderExchange", function() {
 // Do nothing if executing in the legacy Web Crypto environment.
 if (mslCrypto$version != MslCrypto$WebCryptoVersion.LEGACY) {
 	/** MSL encoder format. */
-	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
+	var ENCODER_FORMAT = MslEncoderFormat.JSON;
 	
     /** Key key exchange scheme. */
     var KEY_SCHEME = "scheme";

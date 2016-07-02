@@ -112,7 +112,7 @@ describe("MessageOutputStream", function() {
         runs(function() {
             MessageOutputStream$create(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT, TIMEOUT, {
                 result: function(x) { mos = x; },
-                timeout: function() { throw new Error("Timed out waiting for mos."); },
+                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
@@ -1536,7 +1536,7 @@ describe("MessageOutputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return responseHeader, }, "responseHeader", 100);
+        waitsFor(function() { return responseHeader; }, "responseHeader", 100);
 
         var mos;
         runs(function() {

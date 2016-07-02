@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 var MslEncoderUtils$createArray;
-var MslEncoderUtils$objectEquals;
 var MslEncoderUtils$equalObjects;
 var MslEncoderUtils$equalArrays;
 var MslEncoderUtils$equalSets;
@@ -51,8 +50,8 @@ var MslEncoderUtils$merge;
 	    			o instanceof MslArray ||
 	    			o instanceof String ||
 	    			typeof o === 'string' ||
-	    			(value instanceof Object && value.constructor === Object) ||
-	    			value instanceof Array ||
+	    			(o instanceof Object && o.constructor === Object) ||
+	    			o instanceof Array ||
 	    			o === null)
 	    		{
 	    			array.put(-1, o);
@@ -83,23 +82,6 @@ var MslEncoderUtils$merge;
     };
     
     /**
-     * Performs a deep comparison of two MSL objects.
-     * 
-     * @param {MslContext} ctx MSL context.
-     * @param {Uint8Array} me1 first MSL object encoded representation.
-     * @param {Uint8Array} me2 second JSON object encoded representation.
-     * @return {boolean} true if the encodings are equivalent MSL objects.
-     * @throws MslEncoderException if there is an error parsing the data.
-     * @see MslEncoderUtils#equalObjects(MslObject, MslObject)
-     */
-    MslEncoderUtils$objectEquals = function MslEncoderUtils$objectEquals(ctx, me1, me2) throws MslEncoderException {
-        var encoder = ctx.getMslEncoderFactory();
-        var o1 = encoder.parseObject(me1);
-        var o2 = encoder.parseObject(me2);
-        return MslEncoderUtils$equalObjects(o1, o2);
-    }
-    
-    /**
      * Performs a deep comparison of two MSL objects for equivalence. MSL
      * objects are equivalent if they have the same name/value pairs. Also, two
      * MSL object references are considered equal if both are null.
@@ -109,7 +91,7 @@ var MslEncoderUtils$merge;
      * @return {boolean} true if the MSL objects are equivalent.
      * @throws MslEncoderException if there is an error parsing the data.
      */
-    MslEncoderUtils$equalObjects = function MslEncoderUtils$equalObjects(m1, m2) {
+    MslEncoderUtils$equalObjects = function MslEncoderUtils$equalObjects(mo1, mo2) {
         // Equal if both null or the same object.
         if (mo1 === mo2)
             return true;
@@ -128,7 +110,7 @@ var MslEncoderUtils$merge;
         if (names1 == null || names2 == null || names1.length != names2.length)
             return false;
         // Not equal if the sets are not equal.
-        if (!Arrays$containsEachOther(names1, names2))
+        if (!Arrays$containEachOther(names1, names2))
             return false;
         
         // Bail on the first child element whose values are not equal.
@@ -188,7 +170,7 @@ var MslEncoderUtils$merge;
             return false;
         
         // Bail on the first elements whose values are not equal.
-        for (int i = 0; i < ma1.size(); ++i) {
+        for (var i = 0; i < ma1.size(); ++i) {
             var o1 = ma1.opt(i);
             var o2 = ma2.opt(i);
             // Equal if both null or the same object.
@@ -271,15 +253,18 @@ var MslEncoderUtils$merge;
         // Make a copy of the first object, or create an empty object.
         var mo = (mo1)
             ? new MslObject(mo1.getMap())
-            : {};
+            : new MslObject();
 
         // If the second object is null, we're done and just return the copy.
         if (!mo2)
             return mo;
         
         // Copy the contents of the second object into the final object.
-        for (var key in mo2.getKeys())
+        var keys = mo2.getKeys();
+        for (var i = 0; i < keys.length; ++i) {
+        	var key = keys[i];
             mo.put(key, mo2.get(key));
+        }
         return mo;
     };
 })();

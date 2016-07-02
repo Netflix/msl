@@ -40,113 +40,115 @@ describe("MslEncoderUtils", function() {
      * @return {MslObject} a MSL object containing no MSL objects or MSL arrays.
      */
     function createFlatMslObject(random) {
-        var jo = {};
+        var mo = new MslObject();
         for (var i = random.nextInt(MAX_ELEMENTS); i > 0; --i) {
             switch (random.nextInt(4)) {
                 case 0:
-                    jo[KEY_BOOLEAN + i] = random.nextBoolean();
+                    mo.put(KEY_BOOLEAN + i, random.nextBoolean());
                     break;
                 case 1:
-                    jo[KEY_NUMBER + i] = random.nextInt();
+                    mo.put(KEY_NUMBER + i, random.nextInt());
                     break;
                 case 2:
-                    jo[KEY_STRING + i] = randomString(random);
+                    mo.put(KEY_STRING + i, randomString(random));
                     break;
                 case 3:
-                    jo[KEY_NULL + i] = null;
+                    mo.put(KEY_NULL + i, null);
                     break;
             }
         }
-        return jo;
+        return mo;
     }
 
     /**
      * @param {Random} random random source.
      * @param {number} depth maximum depth. A depth of 1 indicates no children may have
      *        more children.
-     * @return {Object} a MSL object that may contain MSL objects or MSL arrays.
+     * @return {MslObject} a MSL object that may contain MSL objects or MSL arrays.
      */
     function createDeepMslObject(random, depth) {
-        var jo = {};
+        var mo = new MslObject();
         for (var i = random.nextInt(MAX_ELEMENTS); i > 0; --i) {
             switch (random.nextInt(6)) {
-                case 0:
-                    jo[KEY_BOOLEAN + i] = random.nextBoolean();
-                    break;
-                case 1:
-                    jo[KEY_NUMBER + i] = random.nextInt();
-                    break;
-                case 2:
-                    jo[KEY_STRING + i] = randomString(random);
-                    break;
-                case 3:
-                    jo[KEY_NULL + i] = null;
-                    break;
-                case 4:
-                    jo[KEY_OBJECT + i] = (depth > 1) ? createDeepMslObject(random, depth - 1) : createFlatMslObject(random);
-                    break;
-                case 5:
-                    jo[KEY_ARRAY + i] = (depth > 1) ? createDeepMslObject(random, depth - 1) : createFlatMslArray(random);
+	            case 0:
+	                mo.put(KEY_BOOLEAN + i, random.nextBoolean());
+	                break;
+	            case 1:
+	                mo.put(KEY_NUMBER + i, random.nextInt());
+	                break;
+	            case 2:
+	                mo.put(KEY_STRING + i, randomString(random));
+	                break;
+	            case 3:
+	                mo.put(KEY_NULL + i, null);
+	                break;
+	            case 4:
+	                mo.put(KEY_OBJECT + i, (depth > 1) ? createDeepMslObject(random, depth - 1) : createFlatMslObject(random));
+	                break;
+	            case 5:
+	                mo.put(KEY_ARRAY + i, (depth > 1) ? createDeepMslObject(random, depth - 1) : createFlatMslArray(random));
+	                break;
             }
         }
+        return mo;
     }
     
     /**
      * @param {Random} random random source.
-     * @return {Array} a MSL array containing no MSL objects or MSL arrays.
+     * @return {MslArray} a MSL array containing no MSL objects or MSL arrays.
      */
-    function createFlatMSLArray(random) {
-        var ja = [];
+    function createFlatMslArray(random) {
+        var ma = new MslArray();
         for (var i = random.nextInt(MAX_ELEMENTS); i > 0; --i) {
             switch (random.nextInt(4)) {
                 case 0:
-                    ja.push(random.nextBoolean());
+                    ma.put(-1, random.nextBoolean());
                     break;
                 case 1:
-                    ja.push(random.nextInt());
+                    ma.put(-1, random.nextInt());
                     break;
                 case 2:
-                    ja.push(randomString(random));
+                    ma.put(-1, randomString(random));
                     break;
                 case 3:
-                    ja.push(null);
+                    ma.put(-1, null);
                     break;
             }
         }
-        return ja;
+        return ma;
     }
     
     /**
      * @param {Random} random random source.
      * @param {number} depth maximum depth. A depth of 1 indicates no children may have
      *        more children.
-     * @return {Object} a MSL array that may contain MSL objects or MSL arrays.
+     * @return {MslArray} a MSL array that may contain MSL objects or MSL arrays.
      */
     function createDeepMslArray(random, depth) {
-        var ja = [];
+        var ma = new MslArray();
         for (var i = random.nextInt(MAX_ELEMENTS); i > 0; --i) {
             switch (random.nextInt(6)) {
                 case 0:
-                    ja.push(random.nextBoolean());
+                    ma.put(-1, random.nextBoolean());
                     break;
                 case 1:
-                    ja.push(random.nextInt());
+                    ma.put(-1, random.nextInt());
                     break;
                 case 2:
-                    ja.push(randomString(random));
+                    ma.put(-1, randomString(random));
                     break;
                 case 3:
-                    ja.push(null);
+                    ma.put(-1, null);
                     break;
                 case 4:
-                    ja.push((depth > 1) ? createDeepMslObject(random, depth - 1) : createFlatMslObject(random));
+                    ma.put(-1, (depth > 1) ? createDeepMslObject(random, depth - 1) : createFlatMslObject(random));
                     break;
                 case 5:
-                    ja.push((depth > 1) ? createDeepMslArray(random, depth - 1) : createFlatMslArray(random));
+                    ma.put(-1, (depth > 1) ? createDeepMslArray(random, depth - 1) : createFlatMslArray(random));
                     break;
             }
         }
-        return ja;
+        return ma;
     }
     
     var random;
@@ -186,10 +188,10 @@ describe("MslEncoderUtils", function() {
         var mo2 = createFlatMslObject(random);
         
         // Insert some shared keys.
-        mo1["key1"] = true;
-        mo2["key1"] = "value1";
-        mo1["key2"] = 17;
-        mo2["key2"] = 34;
+        mo1.put("key1", true);
+        mo2.put("key1", "value1");
+        mo1.put("key2", 17);
+        mo2.put("key2", 34);
         
         // Ensure second overwites first.
         var merged = MslEncoderUtils$merge(mo1, mo2);

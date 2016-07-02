@@ -177,7 +177,7 @@ var RsaCryptoContext$Mode;
                     throw new MslCryptoException(MslError.DECRYPT_ERROR, null, e);
                 }
 
-                MslCiphertextEnvelope$parse(encryptionEnvelopeMo, MslCiphertextEnvelope$Version.V1, encoder, {
+                MslCiphertextEnvelope$parse(encryptionEnvelopeMo, MslCiphertextEnvelope$Version.V1, {
                     result: function(envelope) {
                         try {
                             // Verify key ID.

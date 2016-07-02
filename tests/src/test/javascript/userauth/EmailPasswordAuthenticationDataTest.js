@@ -21,7 +21,7 @@
  */
 describe("EmailPasswordAuthenticationData", function() {
     /** MSL encoder format. */
-    private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
+    var ENCODER_FORMAT = MslEncoderFormat.JSON;
     
     /** Key user authentication scheme. */
     var KEY_SCHEME = "scheme";
@@ -61,7 +61,7 @@ describe("EmailPasswordAuthenticationData", function() {
         expect(data.password).toEqual(MockEmailPasswordAuthenticationFactory.PASSWORD);
         
         var authdata;
-        runs(fuction() {
+        runs(function() {
             data.getAuthData(encoder, ENCODER_FORMAT, {
                 result: function(x) { authdata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }

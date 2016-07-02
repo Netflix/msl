@@ -93,7 +93,7 @@ var Header$parseHeader;
      *         authentication data or a master token or a token is improperly
      *         bound to another token.
      */
-    Header$parseHeader = function Header$parseHeader(ctx, headerJO, cryptoContexts, callback) {
+    Header$parseHeader = function Header$parseHeader(ctx, headerMo, cryptoContexts, callback) {
         AsyncExecutor(callback, function() {
             // Pull authentication data.
             var entityAuthDataMo;
@@ -102,13 +102,13 @@ var Header$parseHeader;
             try {
                 // Pull message data.
                 var encoder = ctx.getMslEncoderFactory();
-                entityAuthDataMo = (headerMo.has(KEY_ENTITY_AUTHENTICATION_DATA))
-                    ? headerMo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder)
+                entityAuthDataMo = (headerMo.has(Header$KEY_ENTITY_AUTHENTICATION_DATA))
+                    ? headerMo.getMslObject(Header$KEY_ENTITY_AUTHENTICATION_DATA, encoder)
                     : null;
-                masterToken = (headerMo.has(KEY_MASTER_TOKEN))
-                    ? headerMo.getMslObject(KEY_MASTER_TOKEN, encoder)
+                masterTokenMo = (headerMo.has(Header$KEY_MASTER_TOKEN))
+                    ? headerMo.getMslObject(Header$KEY_MASTER_TOKEN, encoder)
                     : null;
-                signature = headerMo.getBytes(KEY_SIGNATURE);
+                signature = headerMo.getBytes(Header$KEY_SIGNATURE);
             } catch (e) {
                 if (e instanceof MslEncoderException)
                     throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "header/errormsg " + headerMo, e);
@@ -145,23 +145,25 @@ var Header$parseHeader;
             AsyncExecutor(callback, function() {
                 try {
                     // Process message headers.
-                    if (headerMo.has(KEY_HEADERDATA)) {
-                        var headerdata = headerMo.getBytes(KEY_HEADERDATA);
+                    if (headerMo.has(Header$KEY_HEADERDATA)) {
+                        var headerdata = headerMo.getBytes(Header$KEY_HEADERDATA);
                         if (headerdata.length == 0)
                             throw new MslMessageException(MslError.HEADER_DATA_MISSING, base64$encode(headerdata)).setMasterToken(masterToken).setEntityAuthenicationData(entityAuthData);
                         MessageHeader$parse(ctx, headerdata, entityAuthData, masterToken, signature, cryptoContexts, callback);
                     }
                     
                     // Process error headers.
-                    else if (headerMo.has(KEY_ERRORDATA)) {
-                        var errordata = headerMo.getBytes(KEY_ERRORDATA);
+                    else if (headerMo.has(Header$KEY_ERRORDATA)) {
+                        var errordata = headerMo.getBytes(Header$KEY_ERRORDATA);
                         if (errordata.length == 0)
                             throw new MslMessageException(MslError.HEADER_DATA_MISSING, base64$encode(errordata)).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData);
                         ErrorHeader$parse(ctx, errordata, entityAuthData, signature, callback);
                     }
                     
                     // Unknown header.
-                    throw new MslEncodingException(MslError.MSL_PARSE_ERROR, headerMo);
+                    else {
+                    	throw new MslEncodingException(MslError.MSL_PARSE_ERROR, headerMo);
+                    }
                 } catch (e) {
                     if (e instanceof MslEncoderException)
                         throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "header/errormsg " + headerMo, e);

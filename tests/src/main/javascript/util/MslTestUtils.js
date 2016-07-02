@@ -151,9 +151,9 @@ var MslTestUtils$Algorithm;
 		        		var identity = entityAuthData.identity;
 				        var encryptionKey = MockPresharedAuthenticationFactory.KPE;
 				        var hmacKey = MockPresharedAuthenticationFactory.KPH;
-				        MasterToken$create(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, null, identity, encryptionKey, hmacKey, callback);		        		
+				        MasterToken$create(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, null, identity, encryptionKey, hmacKey, callback);
 		        	},
-		        	error: function(err) { callback.error(err); }
+		        	error: callback.error,
 		        });
 	    	});
 	    },
@@ -186,7 +186,7 @@ var MslTestUtils$Algorithm;
 				        	result: function(masterToken) {
 				        		AsyncExecutor(callback, function() {
 				        		    var encoder = ctx.getMslEncoderFactory();
-				        		    toMslObject(encoder, masterToken, {
+				        		    MslTestUtils.toMslObject(encoder, masterToken, {
 				        		        result: function(mo) {
 				        		            AsyncExecutor(callback, function() {
     		                                    var signature = mo.getBytes("signature");
@@ -257,7 +257,7 @@ var MslTestUtils$Algorithm;
                     result: function(userIdToken) {
                         AsyncExecutor(callback, function() {
                             var encoder = ctx.getMslEncoderFactory();
-                            toMslObject(encoder, userIdToken, {
+                            MslTestUtils.toMslObject(encoder, userIdToken, {
                                 result: function(mo) {
                                     AsyncExecutor(callback, function() {
                                         var signature = mo.getBytes("signature");

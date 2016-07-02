@@ -22,13 +22,14 @@
  */
 var MslEncoderFactory;
 var MslEncoderFactory$quote;
+var MslEncoderFactory$stringify;
 
 (function() {
     
     /**
      * Escape a string to be output as a single line of text.
      * 
-     * @param {string} s the string.
+     * @param {?string} s the string. May be {@code null}.
      * @returns {string} the escaped string.
      */
     var quote = MslEncoderFactory$quote = function MslEncoderFactory$quote(s) {
@@ -44,7 +45,30 @@ var MslEncoderFactory$quote;
             .replace(/[\t]/g, '\\t');
     };
     
-    MslEncoderFactory = util.Class.Create({
+    /**
+     * Convert a value to a string for print purposes.
+     * 
+     * @param {?} value the value to convert to a string. May be {@code null}.
+     * @return {string} the string.
+     */
+    var stringify = MslEncoderFactory$stringify = function MslEncoderFactory$stringify(v) {
+    	if (v instanceof MslObject || v instanceof MslArray) {
+    		return v.toString();
+    	} else {
+    		var json = JSON.stringify(v);
+    		return json
+    			.replace(/[\"]/g, '\\"')
+    			.replace(/[\\]/g, '\\\\')
+    			.replace(/[\/]/g, '\\/')
+    			.replace(/[\b]/g, '\\b')
+    			.replace(/[\f]/g, '\\f')
+    			.replace(/[\n]/g, '\\n')
+    			.replace(/[\r]/g, '\\r')
+    			.replace(/[\t]/g, '\\t');
+    	}
+    };
+    
+    MslEncoderFactory = util.Class.create({
         /**
          * Returns the most preferred encoder format from the provided set of
          * formats.
@@ -66,7 +90,7 @@ var MslEncoderFactory$quote;
          * inspecting the byte stream identifier located in the first byte.</p>
          * 
          * @param {InputStream} source the binary data to tokenize.
-         * @param {?MslEncodingFormat} format the encoding format. May be
+         * @param {?MslEncoderFormat} format the encoding format. May be
          *        {@code null}.
          * @param {number} timeout read timeout used to determine the encoding
          *        format or -1 for no timeout.
@@ -88,7 +112,7 @@ var MslEncoderFactory$quote;
                                 if (bytes == null || bytes.length < 1)
                                     throw new new MslEncoderException("Failure reading the byte stream identifier.");
                                 var id = bytes[0];
-                                format = MslEncodingFormat$getFormat(id);
+                                format = MslEncoderFormat$getFormat(id);
                                 source.reset();
                                 generate(format);
                             });
@@ -105,12 +129,11 @@ var MslEncoderFactory$quote;
                 function generate(format) {
                     AsyncExecutor(callback, function() {
                         // JSON.
-                        if (MslEncodingFormat.JSON === format) {
-                            return new JsonMslTokenizer(source);
-                        }
+                        if (MslEncoderFormat.JSON === format)
+                            return new JsonMslTokenizer(this, source);
                         
                         // Unsupported encoding format.
-                        throw new MslEncoderException("Unsupported encoding format: " + format + ".");
+                        throw new MslEncoderException("Unsupported encoder format: " + format + ".");
                     });
                 }
             });
@@ -182,17 +205,23 @@ var MslEncoderFactory$quote;
          * 
          * @param {MslObject} object the {@link MslObject} to encode.
          * @param {MslEncoderFormat} format the encoder format.
-         * @return {Uint8Array} the encoded data.
+         * @param {{result: function(Uint8Array), error: function(Error)}}
+         *        callback the callback that will receive the encoded data or
+         *        any thrown exceptions.
          * @throws MslEncoderException if the encoder format is not supported or
          *         there is an error encoding the object.
          */
-        encodeObject: function encodeObject(object, format) {
-            // JSON.
-            if (MslEncoderFormat.JSON == format)
-                return JsonMslObject$getEncoded(this, object);
-            
-            // Unsupported encoder format.
-            throw new MslEncoderException("Unsupported encoder format: " + format + ".");
+        encodeObject: function encodeObject(object, format, callback) {
+        	AsyncExecutor(callback, function() {
+	            // JSON.
+	            if (MslEncoderFormat.JSON == format) {
+	                JsonMslObject$encode(this, object, callback);
+	                return;
+	            }
+	            
+	            // Unsupported encoder format.
+	            throw new MslEncoderException("Unsupported encoder format: " + format + ".");
+        	}, this);
         },
 
         /**

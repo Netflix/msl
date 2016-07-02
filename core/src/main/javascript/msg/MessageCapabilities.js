@@ -94,7 +94,7 @@ var MessageCapabilities$intersection;
         
         // Compute the intersection of encoder formats. This may not respect
         // order.
-        var encoderFormats = computerIntersection(mc1.encoderFormats, mc2.encoderFormats);
+        var encoderFormats = computeIntersection(mc1.encoderFormats, mc2.encoderFormats);
         
         return new MessageCapabilities(compressionAlgos, languages, encoderFormats);
     };
@@ -132,18 +132,18 @@ var MessageCapabilities$intersection;
 
         /** @inheritDoc */
         toMslEncoding: function toMslEncoding(encoder, format, callback) {
-            try {
-                var mo = encoder.createObject();
-                mo.put(KEY_COMPRESSION_ALGOS, encoder.createArray(this.compressionAlgorithms));
-                mo.put(KEY_LANGUAGES, this.languages);
-                mo.put(KEY_ENCODER_FORMATS, encoder.createArray(this.encoderFormats));
-                return encoder.encodeObject(mo, format);
-            } catch (e) {
-                if (e instanceof MslEncoderFormat)
-                    throw new MslInternalException("Error encoding MessageCapabilities.", e);
-                throw e;
-            }
-        }
+        	var self = this;
+        	AsyncExecutor(callback, function() {
+        		var mo = encoder.createObject();
+        		mo.put(KEY_COMPRESSION_ALGOS, encoder.createArray(this.compressionAlgorithms));
+        		mo.put(KEY_LANGUAGES, this.languages);
+        		var formats = encoder.createArray();
+        		for (var i = 0; i < this.encoderFormats.length; ++i)
+        			formats.put(-1, this.encoderFormats[i].name);
+        		mo.put(KEY_ENCODER_FORMATS, formats);
+        		encoder.encodeObject(mo, format, callback);
+        	}, self);
+        },
 
         /** @inheritDoc */
         equals: function equals(that) {

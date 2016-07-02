@@ -72,9 +72,9 @@ var MslEncoderFormat$getFormat;
     /** @lends {MslEncoderFormat} */
     ({
         /** JSON. */
-        JSON : new MslEncodingFormat("JSON", JSON_IDENTIFIER),
+        JSON : new MslEncoderFormat("JSON", JSON_IDENTIFIER),
     }));
-    Object.freeze(MslEncodingFormat);
+    Object.freeze(MslEncoderFormat);
     
     /**
      * @param {string|Uint8Array} f the encoding format name or identifier.

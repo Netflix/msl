@@ -343,7 +343,6 @@ describe("MessageHeader", function() {
 					result: function(x) { CAPABILITIES_MO = x; },
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
-				MslTestUtils
 				MslTestUtils.toMslObject(encoder, MASTER_TOKEN, {
 					result: function(x) { MASTER_TOKEN_MO = x; },
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -381,7 +380,7 @@ describe("MessageHeader", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 				MslEncoderUtils$createArray(p2pCtx, PEER_KEY_REQUEST_DATA, {
-					result: function(x) { KEY_REQUEST_DATA_MA = x; },
+					result: function(x) { PEER_KEY_REQUEST_DATA_MA = x; },
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 				MslTestUtils.toMslObject(encoder, PEER_KEY_RESPONSE_DATA, {
@@ -3224,7 +3223,7 @@ describe("MessageHeader", function() {
 		waitsFor(function() { return exception; }, "exception not received", 100);
 		runs(function() {
 			var f = function() { throw exception; };
-			expect(f).toThrow(new MslMessageException(MslError.HEADER_DATA_INVALID));
+			expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
 		});
 	});
 
@@ -3394,24 +3393,28 @@ describe("MessageHeader", function() {
                     headerdataMo.put(KEY_KEY_REQUEST_DATA, encoder.createArray());
                     headerdataMo.put(KEY_SERVICE_TOKENS, encoder.createArray());
                     headerdataMo.put(KEY_PEER_SERVICE_TOKENS, encoder.createArray());
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function(h) { header = h; },
-                                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
-                        },
-                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function(h) { header = h; },
+		                                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
+                    	},
+                    	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
                 },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -3567,22 +3570,26 @@ describe("MessageHeader", function() {
                     headerdataMo.put(KEY_KEY_REQUEST_DATA, encoder.createArray());
                     headerdataMo.put(KEY_SERVICE_TOKENS, encoder.createArray());
                     headerdataMo.put(KEY_PEER_SERVICE_TOKENS, encoder.createArray());
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function(h) { header = h; },
-                                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function(h) { header = h; },
+		                                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
                         },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
@@ -3688,23 +3695,27 @@ describe("MessageHeader", function() {
         
                     // After modifying the header data we need to encrypt it.
                     headerdataMo.put(KEY_USER_ID_TOKEN, userIdToken);
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function() {},
-                                        error: function(err) { exception = err; },
-                                    });
-                                }, error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
-                        },
-                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function() {},
+		                                        error: function(err) { exception = err; },
+		                                    });
+		                                }, error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
+                    	},
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -3769,22 +3780,26 @@ describe("MessageHeader", function() {
         
                     // After modifying the header data we need to encrypt it.
                     headerdataMo.put(KEY_USER_ID_TOKEN, userIdToken);
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function() {},
-                                        error: function(err) { exception = err; },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function() {},
+		                                        error: function(err) { exception = err; },
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
                         },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
@@ -3852,22 +3867,26 @@ describe("MessageHeader", function() {
                     // After modifying the header data we need to encrypt it.
                     var userAuthData = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL_2, MockEmailPasswordAuthenticationFactory.PASSWORD_2);
                     headerdataMo.put(KEY_USER_AUTHENTICATION_DATA, userAuthData);
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function() {},
-                                        error: function(err) { exception = err; },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function() {},
+		                                        error: function(err) { exception = err; },
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
                         },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
@@ -3929,22 +3948,26 @@ describe("MessageHeader", function() {
         
                     // After modifying the header data we need to encrypt it.
                     headerdataMo.remove(KEY_PEER_MASTER_TOKEN);
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function() {},
-                                        error: function(err) { exception = err; },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function() {},
+		                                        error: function(err) { exception = err; },
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
                         },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
@@ -4006,22 +4029,26 @@ describe("MessageHeader", function() {
         
                     // After modifying the header data we need to encrypt it.
                     headerdataMo.put(KEY_PEER_MASTER_TOKEN, MASTER_TOKEN);
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function() {},
-                                        error: function(err) { exception = err; },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function() {},
+		                                        error: function(err) { exception = err; },
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
                         },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
@@ -4087,22 +4114,26 @@ describe("MessageHeader", function() {
                         serviceTokens.push(mismatchedToken);
                     }, this);
                     headerdataMo.put(KEY_SERVICE_TOKENS, serviceTokens);
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function() {},
-                                        error: function(err) { exception = err; },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function() {},
+		                                        error: function(err) { exception = err; },
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
                         },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
@@ -4177,22 +4208,26 @@ describe("MessageHeader", function() {
                         serviceTokens.push(mismatchedToken);
                     }, this);
                     headerdataMo.put(KEY_SERVICE_TOKENS, serviceTokens);
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function() {},
-                                        error: function(err) { exception = err; },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function() {},
+		                                        error: function(err) { exception = err; },
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
                         },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
@@ -4254,24 +4289,28 @@ describe("MessageHeader", function() {
         
                     // After modifying the header data we need to encrypt it.
                     headerdataMo.remove(KEY_PEER_MASTER_TOKEN);
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function() {},
-                                        error: function(err) { exception = err; },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
-                        },
-                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+                    		cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function() {},
+		                                        error: function(err) { exception = err; },
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
+                    	},
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -4331,22 +4370,26 @@ describe("MessageHeader", function() {
         
                     // After modifying the header data we need to encrypt it.
                     headerdataMo.put(KEY_PEER_MASTER_TOKEN, MASTER_TOKEN);
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function() {},
-                                        error: function(err) { exception = err; },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function() {},
+		                                        error: function(err) { exception = err; },
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
                         },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
@@ -4417,22 +4460,26 @@ describe("MessageHeader", function() {
 
                     // After modifying the header data we need to encrypt it.
                     headerdataMo.put(KEY_PEER_USER_ID_TOKEN, userIdToken);
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function() {},
-                                        error: function(err) { exception = err; },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function() {},
+		                                        error: function(err) { exception = err; },
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
                         },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
@@ -4564,22 +4611,26 @@ describe("MessageHeader", function() {
         
                     // After modifying the header data we need to encrypt it.
                     headerdataMo.remove(KEY_SENDER);
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function() {},
-                                        error: function(err) { exception = err; },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function() {},
+		                                        error: function(err) { exception = err; },
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
                         },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
@@ -4638,22 +4689,26 @@ describe("MessageHeader", function() {
         
                     // After modifying the header data we need to encrypt it.
                     headerdataMo.remove(KEY_TIMESTAMP);
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function(x) { header = x; },
-                                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function(x) { header = x; },
+		                                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
                         },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
@@ -4708,22 +4763,26 @@ describe("MessageHeader", function() {
         
                     // After modifying the header data we need to encrypt it.
                     headerdataMo.put(KEY_TIMESTAMP, "x");
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function() {},
-                                        error: function(e) { exception = e; },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function() {},
+		                                        error: function(e) { exception = e; },
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
                         },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
@@ -4785,22 +4844,26 @@ describe("MessageHeader", function() {
         
                     // After modifying the header data we need to encrypt it.
                     headerdataMo.remove(KEY_MESSAGE_ID);
-                    plaintext = encoder.encodeObject(headerdataMo);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function() {},
-                                        error: function(err) { exception = err; },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function() {},
+		                                        error: function(err) { exception = err; },
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
                         },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
@@ -4862,22 +4925,26 @@ describe("MessageHeader", function() {
         
                     // After modifying the header data we need to encrypt it.
                     headerdataMo.put(KEY_MESSAGE_ID, "x");
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function() {},
-                                        error: function(err) { exception = err; },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function() {},
+		                                        error: function(err) { exception = err; },
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
                         },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
@@ -4997,22 +5064,26 @@ describe("MessageHeader", function() {
         
                     // After modifying the header data we need to encrypt it.
                     headerdataMo.put(KEY_MESSAGE_ID, -1);
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function() {},
-                                        error: function(err) { exception = err; },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function() {},
+		                                        error: function(err) { exception = err; },
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
                         },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
@@ -5074,22 +5145,26 @@ describe("MessageHeader", function() {
         
                     // After modifying the header data we need to encrypt it.
                     headerdataMo.put(KEY_MESSAGE_ID, MslConstants$MAX_LONG_VALUE + 2);
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function() {},
-                                        error: function(err) { exception = err; },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function() {},
+		                                        error: function(err) { exception = err; },
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
                         },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
@@ -5151,22 +5226,26 @@ describe("MessageHeader", function() {
         
                     // After modifying the header data we need to encrypt it.
                     headerdataMo.put(KEY_NON_REPLAYABLE_ID, "x");
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function() {},
-                                        error: function(err) { exception = err; },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function() {},
+		                                        error: function(err) { exception = err; },
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
                         },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
@@ -5228,22 +5307,26 @@ describe("MessageHeader", function() {
         
                     // After modifying the header data we need to encrypt it.
                     headerdataMo.remove(KEY_RENEWABLE);
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function() {},
-                                        error: function(err) { exception = err; },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function() {},
+		                                        error: function(err) { exception = err; },
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
                         },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
@@ -5305,22 +5388,26 @@ describe("MessageHeader", function() {
         
                     // After modifying the header data we need to encrypt it.
                     headerdataMo.put(KEY_RENEWABLE, "x");
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function() {},
-                                        error: function(err) { exception = err; },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function() {},
+		                                        error: function(err) { exception = err; },
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
                         },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
@@ -5384,22 +5471,26 @@ describe("MessageHeader", function() {
         
                     // After modifying the header data we need to encrypt it.
                     headerdataMo.remove(KEY_HANDSHAKE);
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function(x) { header = x; },
-                                        error: function(err) { exception = err; },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function(x) { header = x; },
+		                                        error: function(err) { exception = err; },
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
                         },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
@@ -5464,22 +5555,26 @@ describe("MessageHeader", function() {
         
                     // After modifying the header data we need to encrypt it.
                     headerdataMo.put(KEY_HANDSHAKE, "x");
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function() {},
-                                        error: function(err) { exception = err; },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function() {},
+		                                        error: function(err) { exception = err; },
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
                         },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
@@ -5541,22 +5636,26 @@ describe("MessageHeader", function() {
         
                     // After modifying the header data we need to encrypt it.
                     headerdataMo.put(KEY_CAPABILITIES, "x");
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function() {},
-                                        error: function(err) { exception = err; },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function() {},
+		                                        error: function(err) { exception = err; },
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
                         },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
@@ -5618,22 +5717,26 @@ describe("MessageHeader", function() {
         
                     // After modifying the header data we need to encrypt it.
                     headerdataMo.put(KEY_KEY_REQUEST_DATA, "x");
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function() {},
-                                        error: function(err) { exception = err; },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function() {},
+		                                        error: function(err) { exception = err; },
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
                         },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
@@ -5697,22 +5800,26 @@ describe("MessageHeader", function() {
                     var a = encoder.createArray();
                     a.put(-1, "x");
                     headerdataMo.put(KEY_PEER_SERVICE_TOKENS, a);
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function() {},
-                                        error: function(err) { exception = err; },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function() {},
+		                                        error: function(err) { exception = err; },
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
                         },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
@@ -5774,22 +5881,26 @@ describe("MessageHeader", function() {
         
                     // After modifying the header data we need to encrypt it.
                     headerdataMo.put(KEY_SERVICE_TOKENS, "x");
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function() {},
-                                        error: function(err) { exception = err; },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function() {},
+		                                        error: function(err) { exception = err; },
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
                         },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
@@ -5853,22 +5964,26 @@ describe("MessageHeader", function() {
                     var a = encoder.createArray();
                     a.put(-1, "x");
                     headerdataMo.put(KEY_SERVICE_TOKENS, a);
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function() {},
-                                        error: function(err) { exception = err; },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function() {},
+		                                        error: function(err) { exception = err; },
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
                         },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
@@ -5930,22 +6045,26 @@ describe("MessageHeader", function() {
         
                     // After modifying the header data we need to encrypt it.
                     headerdataMo.put(KEY_PEER_SERVICE_TOKENS, "x");
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function() {},
-                                        error: function(err) { exception = err; },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function() {},
+		                                        error: function(err) { exception = err; },
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
                         },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
@@ -6009,22 +6128,26 @@ describe("MessageHeader", function() {
                     var a = encoder.createArray();
                     a.put(-1, "x");
                     headerdataMo.put(KEY_PEER_SERVICE_TOKENS, a);
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function() {},
-                                        error: function(err) { exception = err; },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function() {},
+		                                        error: function(err) { exception = err; },
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
                         },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
@@ -6085,22 +6208,26 @@ describe("MessageHeader", function() {
         
                     // After modifying the header data we need to encrypt it.
                     headerdataMo.put(KEY_PEER_MASTER_TOKEN, "x");
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function() {},
-                                        error: function(err) { exception = err; },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+                    		cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+                    			result: function(headerdata) {
+                    				messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+
+                    				// The header data must be signed or it will not be processed.
+                    				cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+                    					result: function(signature) {
+                    						messageHeaderMo.put(KEY_SIGNATURE, signature);
+                    						Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+                    							result: function() {},
+                    							error: function(err) { exception = err; },
+                    						});
+                    					},
+                    					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    				});
+                    			},
+                    			error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    		});
                         },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
@@ -6162,22 +6289,26 @@ describe("MessageHeader", function() {
         
                     // After modifying the header data we need to encrypt it.
                     headerdataMo.put(KEY_PEER_USER_ID_TOKEN, "x");
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function() {},
-                                        error: function(err) { exception = err; },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function() {},
+		                                        error: function(err) { exception = err; },
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
                         },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
@@ -6239,22 +6370,26 @@ describe("MessageHeader", function() {
         
                     // After modifying the header data we need to encrypt it.
                     headerdataMo.put(KEY_USER_AUTHENTICATION_DATA, "x");
-                    plaintext = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
-                        result: function(headerdata) {
-                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
-                    
-                            // The header data must be signed or it will not be processed.
-                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
-                                result: function(signature) {
-                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-                                        result: function() {},
-                                        error: function(err) { exception = err; },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+		                        result: function(headerdata) {
+		                            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+		                    
+		                            // The header data must be signed or it will not be processed.
+		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+		                                result: function(signature) {
+		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
+		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                        result: function() {},
+		                                        error: function(err) { exception = err; },
+		                                    });
+		                                },
+		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		                            });
+		                        },
+		                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+		                    });
                         },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });

@@ -96,7 +96,7 @@ var UnauthenticatedAuthenticationData$parse;
             return new UnauthenticatedAuthenticationData(identity);
         } catch (e) {
             if (e instanceof MslEncoderException)
-                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "Unauthenticated authdata" + unauthenticatedAuthMo);
+                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "Unauthenticated authdata" + unauthenticatedAuthMo);
             throw e;
         }
     };

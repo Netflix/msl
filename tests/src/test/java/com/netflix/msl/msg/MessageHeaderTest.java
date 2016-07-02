@@ -1735,8 +1735,8 @@ public class MessageHeaderTest {
     
     @Test
     public void invalidHeaderDataParseHeader() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
-        thrown.expect(MslMessageException.class);
-        thrown.expectMslError(MslError.HEADER_DATA_INVALID);
+        thrown.expect(MslEncodingException.class);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final HeaderDataBuilder builder = new HeaderDataBuilder(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, false);
         final HeaderData headerData = builder.build();

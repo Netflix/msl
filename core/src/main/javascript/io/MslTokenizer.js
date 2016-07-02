@@ -68,7 +68,7 @@ var MslTokenizer;
             InterruptibleExecutor(callback, function() {
                 if (this._aborted) return false;
                 if (this._next) return true;
-                nextObject(timeout, {
+                this.nextObject(timeout, {
                     result: function(o) {
                         InterruptibleExecutor(callback, function() {
                             this._next = o;
@@ -121,11 +121,11 @@ var MslTokenizer;
                 if (this._aborted)
                     return null;
                 if (this._next != null) {
-                    var mo = next;
+                    var mo = this._next;
                     this._next = null;
                     return mo;
                 }
-                next(timeout, callback);
+                this.next(timeout, callback);
             }, self);
         },
     });

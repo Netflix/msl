@@ -645,7 +645,7 @@ describe("ErrorHeader", function() {
 
         var exception;
         runs(function() {
-	        errorHeaderMo.put(KEY_SIGNATURE], base64$decode("AAA="));
+	        errorHeaderMo.put(KEY_SIGNATURE, base64$decode("AAA="));
 	
 	        Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
 	        	result: function() {},
@@ -815,13 +815,21 @@ describe("ErrorHeader", function() {
         });
         waitsFor(function() { return plaintext; }, "plaintext", 100);
         
-        var modifiedCiphertext;
+        var modifiedPlaintext;
         runs(function() {
             var errordata = encoder.parseObject(plaintext);
                     
             // After modifying the error data we need to encrypt it.
             errordata.remove(KEY_TIMESTAMP);
-            var modifiedPlaintext = encoder.encodeObject(errordata, ENCODER_FORMAT);
+            encoder.encodeObject(errordata, ENCODER_FORMAT, {
+            	result: function(x) { modifiedPlaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        
+        var modifiedCiphertext;
+        runs(function() {
             cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT, {
                 result: function(x) { modifiedCiphertext = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -884,13 +892,21 @@ describe("ErrorHeader", function() {
         });
         waitsFor(function() { return plaintext; }, "plaintext", 100);
         
-        var modifiedCiphertext;
+        var modifiedPlaintext;
         runs(function() {
             var errordata = encoder.parseObject(plaintext);
                     
             // After modifying the error data we need to encrypt it.
             errordata.put(KEY_TIMESTAMP, "x");
-            var modifiedPlaintext = encoder.encodeObject(errordata, ENCODER_FORMAT);
+            encoder.encodeObject(errordata, ENCODER_FORMAT, {
+            	result: function(x) { modifiedPlaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        
+        var modifiedCiphertext;
+        runs(function() {
             cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT, {
                 result: function(x) { modifiedCiphertext = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -957,13 +973,21 @@ describe("ErrorHeader", function() {
         });
         waitsFor(function() { return plaintext; }, "plaintext", 100);
         
-        var modifiedCiphertext;
+        var modifiedPlaintext;
         runs(function() {
             var errordata = encoder.parseObject(plaintext);
                     
             // After modifying the error data we need to encrypt it.
             errordata.remove(KEY_MESSAGE_ID);
-            var modifiedPlaintext = encoder.encodeObject(errordata, ENCODER_FORMAT);
+            encoder.encodeObject(errordata, ENCODER_FORMAT, {
+            	result: function(x) { modifiedPlaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        
+        var modifiedCiphertext;
+        runs(function() {
             cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT, {
                 result: function(x) { modifiedCiphertext = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1030,13 +1054,21 @@ describe("ErrorHeader", function() {
         });
         waitsFor(function() { return plaintext; }, "plaintext", 100);
         
-        var modifiedCiphertext;
+        var modifiedPlaintext;
         runs(function() {
             var errordata = encoder.parseObject(plaintext);
                     
             // After modifying the error data we need to encrypt it.
             errordata.put(KEY_MESSAGE_ID, "x");
-            var modifiedPlaintext = encoder.encodeObject(errordata, ENCODER_FORMAT);
+            encoder.encodeObject(errordata, ENCODER_FORMAT, {
+            	result: function(x) { modifiedPlaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        
+        var modifiedCiphertext;
+        runs(function() {
             cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT, {
                 result: function(x) { modifiedCiphertext = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1133,13 +1165,21 @@ describe("ErrorHeader", function() {
         });
         waitsFor(function() { return plaintext; }, "plaintext", 100);
         
-        var modifiedCiphertext;
+        var modifiedPlaintext;
         runs(function() {
             var errordata = encoder.parseObject(plaintext);
                     
             // After modifying the error data we need to encrypt it.
             errordata.put(KEY_MESSAGE_ID, -1);
-            var modifiedPlaintext = encoder.encodeObject(errordata, ENCODER_FORMAT);
+            encoder.encodeObject(errordata, ENCODER_FORMAT, {
+            	result: function(x) { modifiedPlaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        
+        var modifiedCiphertext;
+        runs(function() {
             cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT, {
                 result: function(x) { modifiedCiphertext = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1206,13 +1246,21 @@ describe("ErrorHeader", function() {
         });
         waitsFor(function() { return plaintext; }, "plaintext", 100);
 
-        var modifiedCiphertext;
+        var modifiedPlaintext;
         runs(function() {
             var errordata = encoder.parseObject(plaintext);
 
             // After modifying the error data we need to encrypt it.
             errordata.put(KEY_MESSAGE_ID, MslConstants$MAX_LONG_VALUE + 2);
-            var modifiedPlaintext = encoder.encodeObject(errordata, ENCODER_FORMAT);
+            encoder.encodeObject(errordata, ENCODER_FORMAT, {
+            	result: function(x) { modifiedPlaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        
+        var modifiedCiphertext;
+        runs(function() {
             cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT, {
                 result: function(x) { modifiedCiphertext = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1279,13 +1327,21 @@ describe("ErrorHeader", function() {
         });
         waitsFor(function() { return plaintext; }, "plaintext", 100);
         
-        var modifiedCiphertext;
+        var modifiedPlaintext;
         runs(function() {
             var errordata = encoder.parseObject(plaintext);
                     
             // After modifying the error data we need to encrypt it.
             errordata.remove(KEY_ERROR_CODE);
-            var modifiedPlaintext = encoder.encodeObject(errordata, ENCODER_FORMAT);
+            encoder.encodeObject(errordata, ENCODER_FORMAT, {
+            	result: function(x) { modifiedPlaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        
+        var modifiedCiphertext;
+        runs(function() {
             cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT, {
                 result: function(x) { modifiedCiphertext = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1318,7 +1374,7 @@ describe("ErrorHeader", function() {
         waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
         	var f = function() { throw exception; };
-        	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR), MESSAGE_ID));
+        	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR, MESSAGE_ID));
         });
     });
 
@@ -1352,13 +1408,21 @@ describe("ErrorHeader", function() {
         });
         waitsFor(function() { return plaintext; }, "plaintext", 100);
         
-        var modifiedCiphertext;
+        var modifiedPlaintext;
         runs(function() {
             var errordata = encoder.parseObject(plaintext);
                     
             // After modifying the error data we need to encrypt it.
             errordata.put(KEY_ERROR_CODE, "x");
-            var modifiedPlaintext = encoder.encodeObject(errordata, ENCODER_FORMAT);
+            encoder.encodeObject(errordata, ENCODER_FORMAT, {
+            	result: function(x) { modifiedPlaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        
+        var modifiedCiphertext;
+        runs(function() {
             cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT, {
                 result: function(x) { modifiedCiphertext = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1391,7 +1455,7 @@ describe("ErrorHeader", function() {
         waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
         	var f = function() { throw exception; };
-        	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR), MESSAGE_ID));
+        	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR, MESSAGE_ID));
         });
     });
     
@@ -1425,13 +1489,21 @@ describe("ErrorHeader", function() {
         });
         waitsFor(function() { return plaintext; }, "plaintext", 100);
         
-        var modifiedCiphertext;
+        var modifiedPlaintext;
         runs(function() {
             var errordata = encoder.parseObject(plaintext);
                     
             // After modifying the error data we need to encrypt it.
             errordata.remove(KEY_INTERNAL_CODE);
-            var modifiedPlaintext = encoder.encodeObject(errordata, ENCODER_FORMAT);
+            encoder.encodeObject(errordata, ENCODER_FORMAT, {
+            	result: function(x) { modifiedPlaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        
+        var modifiedCiphertext;
+        runs(function() {
             cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT, {
                 result: function(x) { modifiedCiphertext = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1497,13 +1569,21 @@ describe("ErrorHeader", function() {
         });
         waitsFor(function() { return plaintext; }, "plaintext", 100);
         
-        var modifiedCiphertext;
+        var modifiedPlaintext;
         runs(function() {
             var errordata = encoder.parseObject(plaintext);
                     
             // After modifying the error data we need to encrypt it.
             errordata.put(KEY_INTERNAL_CODE, "x");
-            var modifiedPlaintext = encoder.encodeObject(errordata, ENCODER_FORMAT);
+            encoder.encodeObject(errordata, ENCODER_FORMAT, {
+            	result: function(x) { modifiedPlaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        
+        var modifiedCiphertext;
+        runs(function() {
             cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT, {
                 result: function(x) { modifiedCiphertext = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1536,7 +1616,7 @@ describe("ErrorHeader", function() {
         waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
         	var f = function() { throw exception; };
-        	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR), MESSAGE_ID));
+        	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR, MESSAGE_ID));
         });
     });
     
@@ -1570,13 +1650,21 @@ describe("ErrorHeader", function() {
         });
         waitsFor(function() { return plaintext; }, "plaintext", 100);
         
-        var modifiedCiphertext;
+        var modifiedPlaintext;
         runs(function() {
             var errordata = encoder.parseObject(plaintext);
                     
             // After modifying the error data we need to encrypt it.
             errordata.put(KEY_INTERNAL_CODE, -1);
-            var modifiedPlaintext = encoder.encodeObject(errordata, ENCODER_FORMAT);
+            encoder.encodeObject(errordata, ENCODER_FORMAT, {
+            	result: function(x) { modifiedPlaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        
+        var modifiedCiphertext;
+        runs(function() {
             cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT, {
                 result: function(x) { modifiedCiphertext = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1609,7 +1697,7 @@ describe("ErrorHeader", function() {
         waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
         	var f = function() { throw exception; };
-        	expect(f).toThrow(new MslMessageException(MslError.INTERNAL_CODE_NEGATIVE), MESSAGE_ID));
+        	expect(f).toThrow(new MslMessageException(MslError.INTERNAL_CODE_NEGATIVE, MESSAGE_ID));
         });
     });
     
@@ -1643,13 +1731,21 @@ describe("ErrorHeader", function() {
         });
         waitsFor(function() { return plaintext; }, "plaintext", 100);
         
-        var modifiedCiphertext;
+        var modifiedPlaintext;
         runs(function() {
             var errordata = encoder.parseObject(plaintext);
                     
             // After modifying the error data we need to encrypt it.
             errordata.remove(KEY_ERROR_MESSAGE);
-            var modifiedPlaintext = encoder.encodeObject(errordata, ENCODER_FORMAT);
+            encoder.encodeObject(errordata, ENCODER_FORMAT, {
+            	result: function(x) { modifiedPlaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        
+        var modifiedCiphertext;
+        runs(function() {
             cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT, {
                 result: function(x) { modifiedCiphertext = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1715,13 +1811,21 @@ describe("ErrorHeader", function() {
         });
         waitsFor(function() { return plaintext; }, "plaintext", 100);
         
-        var modifiedCiphertext;
+        var modifiedPlaintext;
         runs(function() {
             var errordata = encoder.parseObject(plaintext);
                     
             // After modifying the error data we need to encrypt it.
             errordata.remove(KEY_USER_MESSAGE);
-            var modifiedPlaintext = encoder.encodeObject(errordata, ENCODER_FORMAT);
+            encoder.encodeObject(errordata, ENCODER_FORMAT, {
+            	result: function(x) { modifiedPlaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        
+        var modifiedCiphertext;
+        runs(function() {
             cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT, {
                 result: function(x) { modifiedCiphertext = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }

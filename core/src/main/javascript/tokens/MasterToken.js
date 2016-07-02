@@ -221,7 +221,7 @@ var MasterToken$parse;
         this.verified = verified;
     };
 
-    MasterToken = util.Class.create({
+    MasterToken = MslEncodable.extend({
         /**
          * Create a new master token with the specified expiration, identity,
          * serial number, and encryption and signature keys.
@@ -268,6 +268,7 @@ var MasterToken$parse;
                     throw new MslCryptoException(MslError.UNIDENTIFIED_ALGORITHM, "encryption algorithm: " + encryptionKey.algorithm + "; signature algorithm: " + signatureKey.algorithm);
 
                 // Create session data.
+                var encoder = ctx.getMslEncoderFactory();
                 sessiondata = encoder.createObject();
                 if (issuerData)
                     sessiondata.put(KEY_ISSUER_DATA, issuerData);
@@ -503,41 +504,49 @@ var MasterToken$parse;
                     }
                     
                     // Encrypt the session data.
-                    var plaintext = encoder.encodeObject(this.sessiondata, format);
-                    cryptoContext.encrypt(plaintext, encoder, format, {
-                        result: function(ciphertext) {
-                            Async Executor(callback, function() {
-                                // Construct the token data.
-                                var tokendata = encoder.createObject();
-                                tokendata.put(KEY_RENEWAL_WINDOW, this.renewalWindowSeconds);
-                                tokendata.put(KEY_EXPIRATION, this.expirationSeconds);
-                                tokendata.put(KEY_SEQUENCE_NUMBER, this.sequenceNumber);
-                                tokendata.put(KEY_SERIAL_NUMBER, this.serialNumber);
-                                tokendata.put(KEY_SESSIONDATA, ciphertext);
-                                
-                                // Sign the token data.
-                                var data = encoder.encodeObject(tokendata, format);
-                                cryptoContext.sign(data, encoder, format, {
-                                    result: function(signature) {
-                                        encodeToken(data, signature);
-                                    },
-                                    error: function(e) {
-                                        AsyncExecutor(callback, function() {
-                                            if (e instanceof MslCryptoException)
-                                                throw new MslEncoderException("Error signing the token data.", e);
-                                            throw e;
-                                        }, self);
-                                    }
-                                });
-                            }, self);
-                        },
-                        error: function(e) {
-                            AsyncExecutor(callback, function() {
-                                if (e instanceof MslCryptoException)
-                                    throw new MslEncoderException("Error encrypting the session data.", e);
-                                throw e;
-                            }, self);
-                        }
+                    encoder.encodeObject(this.sessiondata, format, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, format, {
+		                        result: function(ciphertext) {
+		                            AsyncExecutor(callback, function() {
+		                                // Construct the token data.
+		                                var tokendata = encoder.createObject();
+		                                tokendata.put(KEY_RENEWAL_WINDOW, this.renewalWindowSeconds);
+		                                tokendata.put(KEY_EXPIRATION, this.expirationSeconds);
+		                                tokendata.put(KEY_SEQUENCE_NUMBER, this.sequenceNumber);
+		                                tokendata.put(KEY_SERIAL_NUMBER, this.serialNumber);
+		                                tokendata.put(KEY_SESSIONDATA, ciphertext);
+		                                
+		                                // Sign the token data.
+		                                encoder.encodeObject(tokendata, format, {
+		                                	result: function(data) {
+				                                cryptoContext.sign(data, encoder, format, {
+				                                    result: function(signature) {
+				                                        encodeToken(data, signature);
+				                                    },
+				                                    error: function(e) {
+				                                        AsyncExecutor(callback, function() {
+				                                            if (e instanceof MslCryptoException)
+				                                                throw new MslEncoderException("Error signing the token data.", e);
+				                                            throw e;
+				                                        }, self);
+				                                    }
+				                                });
+		                                	}, 
+		                                	error: callback.error,
+		                                });
+		                            }, self);
+		                        },
+		                        error: function(e) {
+		                            AsyncExecutor(callback, function() {
+		                                if (e instanceof MslCryptoException)
+		                                    throw new MslEncoderException("Error encrypting the session data.", e);
+		                                throw e;
+		                            }, self);
+		                        }
+		                    });
+                    	},
+                    	error: callback.error,
                     });
                 }
             }, self);
@@ -548,11 +557,16 @@ var MasterToken$parse;
                     var token = encoder.createObject();
                     token.put(KEY_TOKENDATA, data);
                     token.put(KEY_SIGNATURE, signature);
-                    var encoding = encoder.encodeObject(token, format);
-                    
-                    // Cache and return the encoding.
-                    this.encodings[format] = encoding;
-                    return encoding;
+                    encoder.encodeObject(token, format, {
+                    	result: function(encoding) {
+                    		AsyncExecutor(callback, function() {
+			                    // Cache and return the encoding.
+			                    this.encodings[format] = encoding;
+			                    return encoding;
+                    		}, self);
+                    	},
+                    	error: callback.error,
+                    });
                 }, self);
             }
         },
@@ -644,7 +658,7 @@ var MasterToken$parse;
      * Create a new master token from the provided JSON.
      *
      * @param {MslContext} ctx MSL context.
-     * @param {Object} masterTokenJO master token JSON object.
+     * @param {Object} masterTokenMo master token JSON object.
      * @param {{result: function(MasterToken), error: function(Error)}}
      *        callback the callback functions that will receive the master token
      *        or any thrown exceptions.
@@ -656,7 +670,7 @@ var MasterToken$parse;
      *         serial number is out of range, or the token data or signature is
      *         invalid.
      */
-    MasterToken$parse = function MasterToken$parse(ctx, masterTokenJO, callback) {
+    MasterToken$parse = function MasterToken$parse(ctx, masterTokenMo, callback) {
         AsyncExecutor(callback, function() {
             // Grab the crypto context.
             var cryptoContext = ctx.getMslCryptoContext();
@@ -758,7 +772,7 @@ var MasterToken$parse;
                     result: function(encryptionKey) {
                         CipherKey$import(signatureBytes, wcSignatureAlgo, WebCryptoUsage.SIGN_VERIFY, {
                             result: function(signatureKey) {
-                                constructToken(cryptoContext, encoder, tokendataBytes, signatureBytes, verified
+                                constructToken(cryptoContext, encoder, tokendataBytes, signatureBytes, verified,
                                     renewalWindow, expiration, sequenceNumber, serialNumber,
                                     sessiondata, issuerdata, identity, encryptionKey, signatureKey);
                             },

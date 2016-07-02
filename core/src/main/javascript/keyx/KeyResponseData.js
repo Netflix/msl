@@ -99,7 +99,7 @@ var KeyResponseData$parse;
                         mo.put(KEY_MASTER_TOKEN, this.masterToken);
                         mo.put(KEY_SCHEME, this.keyExchangeScheme.name);
                         mo.put(KEY_KEYDATA, keydata);
-                        return encoder.encodeObject(mo, format);
+                        encoder.encodeObject(mo, format, callback);
                     }, self);
                 },
                 error: callback.error,

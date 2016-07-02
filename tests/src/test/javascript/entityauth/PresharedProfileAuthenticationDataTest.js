@@ -130,10 +130,10 @@ describe("PresharedProfileAuthenticationData", function() {
         waitsFor(function() { return mo; }, "mo", 100);
         
         runs(function() {
-            expect(mo.getString(KEY_SCHEME).toEqual(EntityAuthenticationScheme.PSK_PROFILE.name);
+            expect(mo.getString(KEY_SCHEME)).toEqual(EntityAuthenticationScheme.PSK_PROFILE.name);
             var authdata = mo.getMslObject(KEY_AUTHDATA, encoder);
             expect(authdata.getString(KEY_PSKID)).toEqual(MockPresharedProfileAuthenticationFactory.PSK_ESN);
-            expect(authdata.getString(KEY_PROFILE).toEqual(MockPresharedProfileAuthenticationFactory.PROFILE);
+            expect(authdata.getString(KEY_PROFILE)).toEqual(MockPresharedProfileAuthenticationFactory.PROFILE);
         });
     });
     

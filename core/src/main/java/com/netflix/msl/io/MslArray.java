@@ -575,7 +575,8 @@ public class MslArray {
             value instanceof Number ||
             value instanceof MslObject ||
             value instanceof MslArray ||
-            value instanceof String)
+            value instanceof String ||
+            value instanceof MslEncodable)
         {
             element = value;
         }
@@ -615,7 +616,7 @@ public class MslArray {
      * <p>This method will call {@link #put(int, Object)}.</p>
      * 
      * @param index the index. -1 for the end of the array.
-     * @param value the value.
+     * @param value the value. May be {@code null}.
      * @return this.
      * @throws ArrayIndexOutOfBoundsException if the index is less than -1.
      */
@@ -630,7 +631,7 @@ public class MslArray {
      * <p>This method will call {@link #put(int, Object)}.</p>
      * 
      * @param index the index. -1 for the end of the array.
-     * @param value the value.
+     * @param value the value. May be {@code null}.
      * @return this.
      * @throws ArrayIndexOutOfBoundsException if the index is less than -1.
      */
@@ -644,7 +645,7 @@ public class MslArray {
      * the index exceeds the length, null elements will be added as necessary.
      * 
      * @param index the index. -1 for the end of the array.
-     * @param value the value. May be {@code null}.
+     * @param value the value. May be {@code null}. May be {@code null}.
      * @return this.
      * @throws ArrayIndexOutOfBoundsException if the index is less than -1.
      * @throws IllegalArgumentException if the value contains an unsupported
@@ -661,7 +662,7 @@ public class MslArray {
      * <p>This method will call {@link #put(int, Object)}.</p>
      * 
      * @param index the index. -1 for the end of the array.
-     * @param value the value.
+     * @param value the value. May be {@code null}.
      * @return this.
      * @throws ArrayIndexOutOfBoundsException if the index is less than -1.
      */
@@ -676,7 +677,7 @@ public class MslArray {
      * <p>This method will call {@link #put(int, Object)}.</p>
      * 
      * @param index the index. -1 for the end of the array.
-     * @param value the value.
+     * @param value the value. May be {@code null}.
      * @return this.
      * @throws ArrayIndexOutOfBoundsException if the index is less than -1.
      */
@@ -691,7 +692,7 @@ public class MslArray {
      * <p>This method will call {@link #put(int, Object)}.</p>
      * 
      * @param index the index. -1 for the end of the array.
-     * @param value the value.
+     * @param value the value. May be {@code null}.
      * @return this.
      * @throws ArrayIndexOutOfBoundsException if the index is less than -1.
      */
@@ -722,7 +723,7 @@ public class MslArray {
      * <p>This method will call {@link #put(int, Object)}.</p>
      * 
      * @param index the index. -1 for the end of the array.
-     * @param value the value.
+     * @param value the value. May be {@code null}.
      * @return this.
      * @throws ArrayIndexOutOfBoundsException if the index is less than -1.
      */

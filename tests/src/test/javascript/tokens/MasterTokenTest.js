@@ -281,13 +281,22 @@ describe("MasterToken", function() {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
+        var tokendataEncode;
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        tokendataMo.put(KEY_EXPIRATION, (Date.now() / MILLISECONDS_PER_SECOND) - 1);
 	        tokendataMo.put(KEY_RENEWAL_WINDOW, Date.now() / MILLISECONDS_PER_SECOND);
-	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
+	        encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+	        	result: function(x) { tokendataEncode = x; },
+	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", 100);
+        
+        var exception;
+        runs(function() {
+	        mo.put(KEY_TOKENDATA, tokendataEncode);
 	        
 	        MasterToken$parse(ctx, mo, {
 	        	result: function() {},
@@ -466,12 +475,21 @@ describe("MasterToken", function() {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
+        var tokendataEncode;
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        tokendataMo.remove(KEY_RENEWAL_WINDOW);
-	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
+	        encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+	        	result: function(x) { tokendataEncode = x; },
+	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", 100);
+        
+        var exception;
+        runs(function() {
+	        mo.put(KEY_TOKENDATA, tokendataEncode);
 	        
 	        MasterToken$parse(ctx, mo, {
 	        	result: function() {},
@@ -505,12 +523,21 @@ describe("MasterToken", function() {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
+        var tokendataEncode;
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        tokendataMo.put(KEY_RENEWAL_WINDOW, "x");
-	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
+	        encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+	        	result: function(x) { tokendataEncode = x; },
+	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", 100);
+        
+        var exception;
+        runs(function() {
+	        mo.put(KEY_TOKENDATA, tokendataEncode);
 	        
 	        MasterToken$parse(ctx, mo, {
 	        	result: function() {},
@@ -544,12 +571,21 @@ describe("MasterToken", function() {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
+        var tokendataEncode;
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        tokendataMo.remove(KEY_EXPIRATION);
-	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
+	        encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+	        	result: function(x) { tokendataEncode = x; },
+	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", 100);
+        
+        var exception;
+        runs(function() {
+	        mo.put(KEY_TOKENDATA, tokendataEncode);
 	        
 	        MasterToken$parse(ctx, mo, {
 	        	result: function() {},
@@ -583,12 +619,21 @@ describe("MasterToken", function() {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
+        var tokendataEncode;
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        tokendataMo.put(KEY_EXPIRATION, "x");
-	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
+	        encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+	        	result: function(x) { tokendataEncode = x; },
+	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", 100);
+        
+        var exception;
+        runs(function() {
+	        mo.put(KEY_TOKENDATA, tokendataEncode);
 	        
 	        MasterToken$parse(ctx, mo, {
 	        	result: function() {},
@@ -622,12 +667,21 @@ describe("MasterToken", function() {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
+        var tokendataEncode;
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        tokendataMo.remove(KEY_SEQUENCE_NUMBER);
-	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
+	        encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+	        	result: function(x) { tokendataEncode = x; },
+	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", 100);
+        
+        var exception;
+        runs(function() {
+	        mo.put(KEY_TOKENDATA, tokendataEncode);
 	        
 	        MasterToken$parse(ctx, mo, {
 	        	result: function() {},
@@ -661,12 +715,21 @@ describe("MasterToken", function() {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
+        var tokendataEncode;
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        tokendataMo.put(KEY_SEQUENCE_NUMBER, "x");
-	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
+	        encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+	        	result: function(x) { tokendataEncode = x; },
+	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", 100);
+        
+        var exception;
+        runs(function() {
+	        mo.put(KEY_TOKENDATA, tokendataEncode);
 	        
 	        MasterToken$parse(ctx, mo, {
 	        	result: function() {},
@@ -700,12 +763,21 @@ describe("MasterToken", function() {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
+        var tokendataEncode;
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        tokendataMo.put(KEY_SEQUENCE_NUMBER, -1);
-	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
+	        encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+	        	result: function(x) { tokendataEncode = x; },
+	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", 100);
+        
+        var exception;
+        runs(function() {
+	        mo.put(KEY_TOKENDATA, tokendataEncode);
 	        
 	        MasterToken$parse(ctx, mo, {
 	        	result: function() {},
@@ -739,12 +811,21 @@ describe("MasterToken", function() {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
+        var tokendataEncode;
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        tokendataMo.put(KEY_SEQUENCE_NUMBER, MslConstants$MAX_LONG_VALUE + 2);
-	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
+	        encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+	        	result: function(x) { tokendataEncode = x; },
+	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", 100);
+        
+        var exception;
+        runs(function() {
+	        mo.put(KEY_TOKENDATA, tokendataEncode);
 	        
 	        MasterToken$parse(ctx, mo, {
 	        	result: function() {},
@@ -778,12 +859,21 @@ describe("MasterToken", function() {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
+        var tokendataEncode;
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        tokendataMo.remove(KEY_SERIAL_NUMBER);
-	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
+	        encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+	        	result: function(x) { tokendataEncode = x; },
+	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", 100);
+        
+        var exception;
+        runs(function() {
+	        mo.put(KEY_TOKENDATA, tokendataEncode);
 	        
 	        MasterToken$parse(ctx, mo, {
 	        	result: function() {},
@@ -818,12 +908,21 @@ describe("MasterToken", function() {
         });
         waitsFor(function() { return mo; }, "mo", 100);
 
-        var exception;
+        var tokendataEncode;
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        tokendataMo.put(KEY_SERIAL_NUMBER, "x");
-	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
+	        encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+	        	result: function(x) { tokendataEncode = x; },
+	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", 100);
+        
+        var exception;
+        runs(function() {
+	        mo.put(KEY_TOKENDATA, tokendataEncode);
 	        
 	        MasterToken$parse(ctx, mo, {
 	        	result: function() {},
@@ -857,12 +956,21 @@ describe("MasterToken", function() {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
+        var tokendataEncode;
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        tokendataMo.put(KEY_SERIAL_NUMBER, -1);
-	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
+	        encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+	        	result: function(x) { tokendataEncode = x; },
+	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", 100);
+        
+        var exception;
+        runs(function() {
+	        mo.put(KEY_TOKENDATA, tokendataEncode);
 	        
 	        MasterToken$parse(ctx, mo, {
 	        	result: function() {},
@@ -896,12 +1004,21 @@ describe("MasterToken", function() {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
+        var tokendataEncode;
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        tokendataMo.put(KEY_SERIAL_NUMBER, MslConstants$MAX_LONG_VALUE + 2);
-	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
+	        encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+	        	result: function(x) { tokendataEncode = x; },
+	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", 100);
+        
+        var exception;
+        runs(function() {
+	        mo.put(KEY_TOKENDATA, tokendataEncode);
 	        
 	        MasterToken$parse(ctx, mo, {
 	        	result: function() {},
@@ -935,12 +1052,21 @@ describe("MasterToken", function() {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
+        var tokendataEncode;
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        tokendataMo.remove(KEY_SESSIONDATA);
-	        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
+	        encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+	        	result: function(x) { tokendataEncode = x; },
+	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", 100);
+        
+        var exception;
+        runs(function() {
+	        mo.put(KEY_TOKENDATA, tokendataEncode);
 	        
 	        MasterToken$parse(ctx, mo, {
 	        	result: function() {},
@@ -974,14 +1100,21 @@ describe("MasterToken", function() {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
+        var modifiedTokendata;
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        tokendataMo.put(KEY_SESSIONDATA, "x");
-	        
+	        encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+	        	result: function(x) { modifiedTokendata = x; },
+	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        
+        var exception;
+        runs(function() {
 	        var cryptoContext = ctx.getMslCryptoContext();
-	        var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
 	        cryptoContext.sign(modifiedTokendata, {
 	        	result: function(signature) {
 	        		mo.put(KEY_TOKENDATA, modifiedTokendata);
@@ -1022,15 +1155,23 @@ describe("MasterToken", function() {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
+        var modifiedTokendata;
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        
-	        var cryptoContext = ctx.getMslCryptoContext();
 	        var ciphertext = new Uint8Array(0);
 	        tokendataMo.put(KEY_SESSIONDATA, ciphertext);
-	        var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+	        encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+	        	result: function(x) { modifiedTokendata = x; },
+	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        
+        var exception;
+        runs(function() {
+	        var cryptoContext = ctx.getMslCryptoContext();
 	        cryptoContext.sign(modifiedTokendata, {
 	        	result: function(signature) {
 	    	        mo.put(KEY_TOKENDATA, modifiedTokendata);
@@ -1071,7 +1212,7 @@ describe("MasterToken", function() {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
+        var modifiedTokendata;
         runs(function() {
 	        // This is testing session data that is verified but corrupt.
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
@@ -1080,8 +1221,16 @@ describe("MasterToken", function() {
 	        ++sessiondata[sessiondata.length-1];
 	        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
 	        
+	        encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+	        	result: function(x) { modifiedTokendata = x; },
+	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        
+        var exception;
+        runs(function() {
 	        var cryptoContext = ctx.getMslCryptoContext();
-	        var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
 	        cryptoContext.sign(modifiedTokendata, {
 	            result: function(signature) {
 	                mo.put(KEY_TOKENDATA, modifiedTokendata);
@@ -1182,49 +1331,74 @@ describe("MasterToken", function() {
         	});
         });
         waitsFor(function() { return mo; }, "mo", 100);
-    	
-    	var exception;
+        
+        var cryptoContext, plaintext;
     	runs(function() {
-	        var cryptoContext = ctx.getMslCryptoContext();
+	        cryptoContext = ctx.getMslCryptoContext();
 	        
 	        // Before modifying the session data we need to decrypt it.
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        var ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
 	        cryptoContext.decrypt(ciphertext, {
-	        	result: function(plaintext) {
-	        		var sessiondataMo = encoder.parseObject(plaintext);
-	    	        
-	    	        // After modifying the session data we need to encrypt it.
-	    	        sessiondataMo.put(KEY_ISSUER_DATA, "x");
-	    	        plaintext = encoder.encodeObject(sessiondataMo, ENCODER_FORMAT);
-	    	        cryptoContext.encrypt(plaintext, {
-	    	        	result: function(sessiondata) {
-	    	    	        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
-	    	    	        
-	    	    	        // The tokendata must be signed otherwise the session data will not be
-	    	    	        // processed.
-	    	    	        var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
-	    	    	        cryptoContext.sign(modifiedTokendata, {
-	    	    	        	result: function(signature) {
-	    	    	    	        mo.put(KEY_TOKENDATA, modifiedTokendata);
-	    	    	    	        mo.put(KEY_SIGNATURE, signature);
-	    	    	    	        
-	    	    	    	        MasterToken$parse(ctx, mo, {
-	    	    	    	        	result: function() {},
-	    	    	    	        	error: function(err) { exception = err; }
-	    	    	    	        });	    	    	        		
-	    	    	        	},
-	    	    	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-	    	    	        });
-	    	        	},
-	    	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
-	    	        });
-	        	},
-	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        	result: function(x) { plaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
-        });
+    	});
+    	waitsFor(function() { return plaintext; }, "plaintext", 100);
+    	
+    	var modifiedPlaintext;
+    	runs(function() {
+    		var sessiondataMo = encoder.parseObject(plaintext);
+
+    		// After modifying the session data we need to encrypt it.
+    		sessiondataMo.put(KEY_ISSUER_DATA, "x");
+    		encoder.encodeObject(sessiondataMo, ENCODER_FORMAT, {
+    			result: function(x) { modifiedPlaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", 100);
+    	
+    	var sessiondata;
+    	runs(function() {
+    		cryptoContext.encrypt(modifiedPlaintext, {
+    			result: function(x) { sessiondata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return sessiondata; }, "sessiondata", 100);
+    	
+    	var modifiedTokendata;
+    	runs(function() {
+    		tokendataMo.put(KEY_SESSIONDATA, sessiondata);
+
+    		// The tokendata must be signed otherwise the session data will not be
+    		// processed.
+    		encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+    			result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+    	
+    	var exception;
+    	runs(function() {
+    		cryptoContext.sign(modifiedTokendata, {
+    			result: function(signature) {
+    				mo.put(KEY_TOKENDATA, modifiedTokendata);
+    				mo.put(KEY_SIGNATURE, signature);
+
+    				MasterToken$parse(ctx, mo, {
+    					result: function() {},
+    					error: function(err) { exception = err; }
+    				});	    	    	        		
+    			},
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
     	waitsFor(function() { return exception; }, "exception", 500);
+    	
 	    runs(function() {
 	        var f = function() { throw exception; };
 	        expect(f).toThrow(new MslEncodingException(MslError.MASTERTOKEN_SESSIONDATA_PARSE_ERROR));
@@ -1250,7 +1424,7 @@ describe("MasterToken", function() {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
+        var plaintext;
         runs(function() {
 	        var cryptoContext = ctx.getMslCryptoContext();
 	        
@@ -1259,39 +1433,64 @@ describe("MasterToken", function() {
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        var ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
 	        cryptoContext.decrypt(ciphertext, {
-	        	result: function(plaintext) {
-	        		var sessiondataMo = encoder.parseObject(plaintext);
-	    	        
-	    	        // After modifying the session data we need to encrypt it.
-	    	        sessiondataMo.remove(KEY_IDENTITY);
-	    	        plaintext = encoder.encodeObject(sessiondataMo, ENCODER_FORMAT);
-	    	        cryptoContext.encrypt(plaintext, {
-	    	        	result: function(sessiondata) {
-	    	    	        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
-	    	    	        
-	    	    	        // The tokendata must be signed otherwise the session data will not be
-	    	    	        // processed.
-	    	    	        var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
-	    	    	        cryptoContext.sign(modifiedTokendata, {
-	    	    	        	result: function(signature) {
-	    	    	    	        mo.put(KEY_TOKENDATA, modifiedTokendata);
-	    	    	    	        mo.put(KEY_SIGNATURE, signature);
-	    	    	    	        
-	    	    	    	        MasterToken$parse(ctx, mo, {
-	    	    	    	        	result: function() {},
-	    	    	    	        	error: function(err) { exception = err; }
-	    	    	    	        });
-	    	    	        	},
-	    	    	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
-	    	    	        });
-	    	        	},
-	    	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-	    	        });
-	        	},
-	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        	result: function(x) { plaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
+    	});
+    	waitsFor(function() { return plaintext; }, "plaintext", 100);
+    	
+    	var cryptoContext, modifiedPlaintext;
+    	runs(function() {
+    		sessiondataMo = encoder.parseObject(plaintext);
+
+    		// After modifying the session data we need to encrypt it.
+    		sessiondataMo.remove(KEY_IDENTITY);
+    		encoder.encodeObject(sessiondataMo, ENCODER_FORMAT, {
+    			result: function(x) { modifiedPlaintext = x; },
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", 100);
+    	
+    	var sessiondata;
+    	runs(function() {
+    		cryptoContext.encrypt(modifiedPlaintext, {
+    			result: function(x) { sessiondata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return sessiondata; }, "sessiondata", 100);
+
+    	var modifiedTokendata;
+    	runs(function() {
+    		tokendataMo.put(KEY_SESSIONDATA, sessiondata);
+
+    		// The tokendata must be signed otherwise the session data will not be
+    		// processed.
+    		encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+    			result: function(x) { modifiedTokendata = x; },
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+
+    	var exception;
+    	runs(function() {
+    		cryptoContext.sign(modifiedTokendata, {
+    			result: function(signature) {
+    				mo.put(KEY_TOKENDATA, modifiedTokendata);
+    				mo.put(KEY_SIGNATURE, signature);
+
+    				MasterToken$parse(ctx, mo, {
+    					result: function() {},
+    					error: function(err) { exception = err; }
+    				});
+    			},
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+    		});
         });
         waitsFor(function() { return exception; }, "exception", 500);
+        
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslEncodingException(MslError.MASTERTOKEN_SESSIONDATA_PARSE_ERROR));
@@ -1316,49 +1515,74 @@ describe("MasterToken", function() {
         	});
         });
         waitsFor(function() { return mo; }, "mo", 100);
-        
-        var exception;
+
+        var cryptoContext, plaintext;
         runs(function() {
-	        var cryptoContext = ctx.getMslCryptoContext();
+	        cryptoContext = ctx.getMslCryptoContext();
 	        
 	        // Before modifying the session data we need to decrypt it.
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        var ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
 	        cryptoContext.decrypt(ciphertext, {
-	        	result: function(plaintext) {
-	        		var sessiondataMo = encoder.parseObject(plaintext);
-	    	        
-	    	        // After modifying the session data we need to encrypt it.
-	    	        sessiondataMo.remove(KEY_ENCRYPTION_KEY);
-	    	        plaintext = encoder.encodeObject(sessiondataMo, ENCODER_FORMAT);
-	    	        cryptoContext.encrypt(plaintext, {
-	    	        	result: function(sessiondata) {
-	    	        		tokendataMo.put(KEY_SESSIONDATA, sessiondata);
-	    	    	        
-	    	    	        // The tokendata must be signed otherwise the session data will not be
-	    	    	        // processed.
-	    	    	        var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
-	    	    	        cryptoContext.sign(modifiedTokendata, {
-	    	    	        	result: function(signature) {
-	    	    	        		mo.put(KEY_TOKENDATA, modifiedTokendata);
-	    	    	    	        mo.put(KEY_SIGNATURE, signature);
-	    	    	    	        
-	    	    	    	        MasterToken$parse(ctx, mo, {
-	    	    	    	        	result: function() {},
-	    	    	    	        	error: function(err) { exception = err; }
-	    	    	    	        });	
-	    	    	        	},
-	    	    	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-	    	    	        });
-	    	        	},
-	    	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-	    	        });
-	        	},
-	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        	result: function(x) { plaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
+    	});
+    	waitsFor(function() { return plaintext; }, "plaintext", 100);
+    	
+    	var modifiedPlaintext;
+    	runs(function() {
+    		var sessiondataMo = encoder.parseObject(plaintext);
+
+    		// After modifying the session data we need to encrypt it.
+    		sessiondataMo.remove(KEY_ENCRYPTION_KEY);
+    		encoder.encodeObject(sessiondataMo, ENCODER_FORMAT, {
+    			result: function(x) { modifiedPlaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", 100);
+    	
+    	var sessiondata;
+    	runs(function() {
+    		cryptoContext.encrypt(modifiedPlaintext, {
+    			result: function(x) { sessiondata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return sessiondata; }, "sessiondata", 100);
+    	
+    	var modifiedTokendata;
+    	runs(function() {
+    		tokendataMo.put(KEY_SESSIONDATA, sessiondata);
+
+    		// The tokendata must be signed otherwise the session data will not be
+    		// processed.
+    		encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+    			result: function(x) { modifiedTokendata = x; },
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+
+    	var exception;
+    	runs(function() {
+    		cryptoContext.sign(modifiedTokendata, {
+    			result: function(signature) {
+    				mo.put(KEY_TOKENDATA, modifiedTokendata);
+    				mo.put(KEY_SIGNATURE, signature);
+
+    				MasterToken$parse(ctx, mo, {
+    					result: function() {},
+    					error: function(err) { exception = err; }
+    				});	
+    			},
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
         });
         waitsFor(function() { return exception; }, "exception", 500);
+        
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslEncodingException(MslError.MASTERTOKEN_SESSIONDATA_PARSE_ERROR));
@@ -1383,49 +1607,74 @@ describe("MasterToken", function() {
         	});
         });
         waitsFor(function() { return mo; }, "mo", 100);
-        
-        var exception;
-        runs(function() {
-	        var cryptoContext = ctx.getMslCryptoContext();
+
+        var cryptoContext, plaintext;
+    	runs(function() {
+	        cryptoContext = ctx.getMslCryptoContext();
 	        
 	        // Before modifying the session data we need to decrypt it.
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        var ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
 	        cryptoContext.decrypt(ciphertext, {
-	        	result: function(plaintext) {
-	        		var sessiondataMo = encoder.parseObject(plaintext);
-	    	        
-	    	        // After modifying the session data we need to encrypt it.
-	    	        sessiondataMo.put(KEY_ENCRYPTION_KEY, "");
-	    	        plaintext = encoder.encodeObject(sessiondataMo, ENCODER_FORMAT);
-	    	        cryptoContext.encrypt(plaintext, {
-	    	        	result: function(sessiondata) {
-	    	        		tokendataMo.put(KEY_SESSIONDATA, sessiondata);
-	    	    	        
-	    	    	        // The tokendata must be signed otherwise the session data will not be
-	    	    	        // processed.
-	    	    	        var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
-	    	    	        cryptoContext.sign(modifiedTokendata, {
-	    	    	        	result: function(signature) {
-	    	    	        		mo.put(KEY_TOKENDATA, modifiedTokendata);
-	    	    	    	        mo.put(KEY_SIGNATURE, signature);
-	    	    	    	        
-	    	    	    	        MasterToken$parse(ctx, mo, {
-	    	    	    	        	result: function() {},
-	    	    	    	        	error: function(err) { exception = err; }
-	    	    	    	        });	
-	    	    	        	},
-	    	    	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-	    	    	        });
-	    	        	},
-	    	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-	    	        });
-	        	},
-	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        	result: function(x) { plaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
+    	});
+    	waitsFor(function() { return plaintext; }, "plaintext", 100);
+    	
+    	var modifiedPlaintext;
+    	runs(function() {
+    		var sessiondataMo = encoder.parseObject(plaintext);
+
+    		// After modifying the session data we need to encrypt it.
+    		sessiondataMo.put(KEY_ENCRYPTION_KEY, "");
+    		encoder.encodeObject(sessiondataMo, ENCODER_FORMAT, {
+    			result: function(x) { modifiedPlaintext = x; },
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", 100);
+
+    	var sessiondata;
+    	runs(function() {
+    		cryptoContext.encrypt(modifiedPlaintext, {
+    			result: function(x) { sessiondata = x; },
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return sessiondata; }, "sessiondata", 100);
+
+    	var modifiedTokendata;
+    	runs(function() {
+    		tokendataMo.put(KEY_SESSIONDATA, sessiondata);
+
+    		// The tokendata must be signed otherwise the session data will not be
+    		// processed.
+    		encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+    			result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+    	
+    	var exception;
+    	runs(function() {
+    		cryptoContext.sign(modifiedTokendata, {
+    			result: function(signature) {
+    				mo.put(KEY_TOKENDATA, modifiedTokendata);
+    				mo.put(KEY_SIGNATURE, signature);
+
+    				MasterToken$parse(ctx, mo, {
+    					result: function() {},
+    					error: function(err) { exception = err; }
+    				});	
+    			},
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
         });
         waitsFor(function() { return exception; }, "exception", 500);
+        
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslCryptoException(MslError.MASTERTOKEN_KEY_CREATION_ERROR));
@@ -1451,53 +1700,77 @@ describe("MasterToken", function() {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var moMasterToken;
-        runs(function() {
-            var cryptoContext = ctx.getMslCryptoContext();
+        var cryptoContext, plaintext;
+    	runs(function() {
+	        cryptoContext = ctx.getMslCryptoContext();
             
             // Before modifying the session data we need to decrypt it.
             var tokendata = mo.getBytes(KEY_TOKENDATA);
             var tokendataMo = encoder.parseObject(tokendata);
             var ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
-            cryptoContext.decrypt(ciphertext, {
-                result: function(plaintext) {
-                    var sessiondataMo = encoder.parseObject(plaintext);
-                    
-                    // After modifying the session data we need to encrypt it.
-                    sessiondataMo.remove(KEY_ENCRYPTION_ALGORITHM);
-                    plaintext = encoder.encodeObject(sessiondataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, {
-                        result: function(sessiondata) {
-                            tokendataMo.put(KEY_SESSIONDATA, sessiondata);
-                            
-                            // The tokendata must be signed otherwise the session data will not be
-                            // processed.
-                            var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
-                            cryptoContext.sign(modifiedTokendata, {
-                                result: function(signature) {
-                                    mo.put(KEY_TOKENDATA, modifiedTokendata);
-                                    mo.put(KEY_SIGNATURE, signature);
-                                    
-                                    MasterToken$parse(ctx, mo, {
-                                        result: function(x) { moMasterToken = x; },
-                                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                                    }); 
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
-                        },
-                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                    });
-                },
+	        cryptoContext.decrypt(ciphertext, {
+	        	result: function(x) { plaintext = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            });
+	        });
+    	});
+    	waitsFor(function() { return plaintext; }, "plaintext", 100);
+    	
+    	var modifiedPlaintext;
+    	runs(function() {
+    		var sessiondataMo = encoder.parseObject(plaintext);
+
+    		// After modifying the session data we need to encrypt it.
+    		sessiondataMo.remove(KEY_ENCRYPTION_ALGORITHM);
+    		encoder.encodeObject(sessiondataMo, ENCODER_FORMAT, {
+    			result: function(x) { modifiedPlaintext = x; },
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", 100);
+
+    	var sessiondata;
+    	runs(function() {
+    		cryptoContext.encrypt(modifiedPlaintext, {
+    			result: function(x) { sessiondata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return sessiondata; }, "sessiondata", 100);
+    	
+    	var modifiedTokendata;
+    	runs(function() {
+    		tokendataMo.put(KEY_SESSIONDATA, sessiondata);
+
+    		// The tokendata must be signed otherwise the session data will not be
+    		// processed.
+    		encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+    			result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+    	
+    	var moMasterToken;
+    	runs(function() {
+    		cryptoContext.sign(modifiedTokendata, {
+    			result: function(signature) {
+    				mo.put(KEY_TOKENDATA, modifiedTokendata);
+    				mo.put(KEY_SIGNATURE, signature);
+
+    				MasterToken$parse(ctx, mo, {
+    					result: function(x) { moMasterToken = x; },
+    					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    				}); 
+    			},
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
         });
         waitsFor(function() { return moMasterToken; }, "moMasterToken", 500);
         
         runs(function() {
             // Confirm default algorithm.
-            var joEncryptionKey = moMasterToken.encryptionKey;
-            expect(MslTestUtils$Algorithm.equals(WebCryptoAlgorithm.AES_CBC, joEncryptionKey.algorithm)).toBeTruthy();
+            var moEncryptionKey = moMasterToken.encryptionKey;
+            expect(MslTestUtils$Algorithm.equals(WebCryptoAlgorithm.AES_CBC, moEncryptionKey.algorithm)).toBeTruthy();
         });
     });
     
@@ -1519,49 +1792,74 @@ describe("MasterToken", function() {
         	});
         });
         waitsFor(function() { return mo; }, "mo", 100);
-        
-        var exception;
-        runs(function() {
-            var cryptoContext = ctx.getMslCryptoContext();
+
+        var cryptoContext, plaintext;
+    	runs(function() {
+	        cryptoContext = ctx.getMslCryptoContext();
             
             // Before modifying the session data we need to decrypt it.
             var tokendata = mo.getBytes(KEY_TOKENDATA);
             var tokendataMo = encoder.parseObject(tokendata);
             var ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
-            cryptoContext.decrypt(ciphertext, {
-                result: function(plaintext) {
-                    var sessiondataMo = encoder.parseObject(plaintext);
-                    
-                    // After modifying the session data we need to encrypt it.
-                    sessiondataMo.put(KEY_ENCRYPTION_ALGORITHM, "x");
-                    plaintext = encoder.encodeObject(sessiondataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, {
-                        result: function(sessiondata) {
-                            tokendataMo.put(KEY_SESSIONDATA, sessiondata);
-                            
-                            // The tokendata must be signed otherwise the session data will not be
-                            // processed.
-                            var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
-                            cryptoContext.sign(modifiedTokendata, {
-                                result: function(signature) {
-                                    mo.put(KEY_TOKENDATA, modifiedTokendata);
-                                    mo.put(KEY_SIGNATURE, signature);
-                                    
-                                    MasterToken$parse(ctx, mo, {
-                                        result: function() {},
-                                        error: function(e) { exception = e; }
-                                    }); 
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
-                        },
-                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                    });
-                },
+	        cryptoContext.decrypt(ciphertext, {
+	        	result: function(x) { plaintext = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            });
-        });
-        waitsFor(function() { return exception; }, "exception", 500);
+	        });
+    	});
+    	waitsFor(function() { return plaintext; }, "plaintext", 100);
+    	
+    	var modifiedPlaintext;
+    	runs(function() {
+    		var sessiondataMo = encoder.parseObject(plaintext);
+
+    		// After modifying the session data we need to encrypt it.
+    		sessiondataMo.put(KEY_ENCRYPTION_ALGORITHM, "x");
+    		encoder.encodeObject(sessiondataMo, ENCODER_FORMAT, {
+    			result: function(x) { modifiedPlaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", 100);
+    	
+    	var sessiondata;
+    	runs(function() {
+    		cryptoContext.encrypt(modifiedPlaintext, {
+    			result: function(x) { sessiondata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return sessiondata; }, "sessiondata", 100);
+    	
+    	var modifiedTokendata;
+    	runs(function() {
+    		tokendataMo.put(KEY_SESSIONDATA, sessiondata);
+
+    		// The tokendata must be signed otherwise the session data will not be
+    		// processed.
+    		encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+    			result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+    	
+    	var exception;
+    	runs(function() {
+    		cryptoContext.sign(modifiedTokendata, {
+    			result: function(signature) {
+    				mo.put(KEY_TOKENDATA, modifiedTokendata);
+    				mo.put(KEY_SIGNATURE, signature);
+
+    				MasterToken$parse(ctx, mo, {
+    					result: function() {},
+    					error: function(e) { exception = e; }
+    				}); 
+    			},
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return exception; }, "exception", 500);
+    	
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslCryptoException(MslError.UNIDENTIFIED_ALGORITHM));
@@ -1586,47 +1884,71 @@ describe("MasterToken", function() {
         	});
         });
         waitsFor(function() { return mo; }, "mo", 100);
-        
-        var moMasterToken;
-        runs(function() {
-            var cryptoContext = ctx.getMslCryptoContext();
+
+        var cryptoContext, plaintext;
+    	runs(function() {
+	        cryptoContext = ctx.getMslCryptoContext();
             
             // Before modifying the session data we need to decrypt it.
             var tokendata = mo.getBytes(KEY_TOKENDATA);
             var tokendataMo = encoder.parseObject(tokendata);
             var ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
-            cryptoContext.decrypt(ciphertext, {
-                result: function(plaintext) {
-                    var sessiondataMo = encoder.parseObject(plaintext);
-                    
-                    // After modifying the session data we need to encrypt it.
-                    sessiondataMo.remove(KEY_HMAC_KEY);
-                    plaintext = encoder.encodeObject(sessiondataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, {
-                        result: function(sessiondata) {
-                            tokendataMo.put(KEY_SESSIONDATA, sessiondata);
-                            
-                            // The tokendata must be signed otherwise the session data will not be
-                            // processed.
-                            var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
-                            cryptoContext.sign(modifiedTokendata, {
-                                result: function(signature) {
-                                    mo.put(KEY_TOKENDATA, modifiedTokendata);
-                                    mo.put(KEY_SIGNATURE, signature);
-                                    
-                                    MasterToken$parse(ctx, mo, {
-                                        result: function(x) { moMasterToken = x; },
-                                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                                    }); 
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
-                        },
-                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                    });
-                },
+	        cryptoContext.decrypt(ciphertext, {
+	        	result: function(x) { plaintext = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            });
+	        });
+    	});
+    	waitsFor(function() { return plaintext; }, "plaintext", 100);
+    	
+    	var modifiedPlaintext;
+    	runs(function() {
+    		var sessiondataMo = encoder.parseObject(plaintext);
+
+    		// After modifying the session data we need to encrypt it.
+    		sessiondataMo.remove(KEY_HMAC_KEY);
+    		encoder.encodeObject(sessiondataMo, ENCODER_FORMAT, {
+    			result: function(x) { modifiedPlaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", 100);
+    	
+    	var sessiondata;
+    	runs(function() {
+    		cryptoContext.encrypt(modifiedPlaintext, {
+    			result: function(x) { sessiondata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return sessiondata; }, "sessiondata", 100);
+    	
+    	var modifiedTokendata;
+    	runs(function() {
+    		tokendataMo.put(KEY_SESSIONDATA, sessiondata);
+
+    		// The tokendata must be signed otherwise the session data will not be
+    		// processed.
+    		encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+    			result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+    	
+    	var moMasterToken;
+    	runs(function() {
+    		cryptoContext.sign(modifiedTokendata, {
+    			result: function(signature) {
+    				mo.put(KEY_TOKENDATA, modifiedTokendata);
+    				mo.put(KEY_SIGNATURE, signature);
+
+    				MasterToken$parse(ctx, mo, {
+    					result: function(x) { moMasterToken = x; },
+    					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    				}); 
+    			},
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
         });
         waitsFor(function() { return moMasterToken; }, "moMasterToken", 500);
         
@@ -1655,47 +1977,71 @@ describe("MasterToken", function() {
         	});
         });
         waitsFor(function() { return mo; }, "mo", 100);
-        
-        var moMasterToken;
-        runs(function() {
-            var cryptoContext = ctx.getMslCryptoContext();
+
+        var cryptoContext, plaintext;
+    	runs(function() {
+	        cryptoContext = ctx.getMslCryptoContext();
             
             // Before modifying the session data we need to decrypt it.
             var tokendata = mo.getBytes(KEY_TOKENDATA);
             var tokendataMo = encoder.parseObject(tokendata);
             var ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
-            cryptoContext.decrypt(ciphertext, {
-                result: function(plaintext) {
-                    var sessiondataMo = encoder.parseObject(plaintext);
-                    
-                    // After modifying the session data we need to encrypt it.
-                    sessiondataMo.remove(KEY_SIGNATURE_KEY);
-                    plaintext = encoder.encodeObject(sessiondataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, {
-                        result: function(sessiondata) {
-                            tokendataMo.put(KEY_SESSIONDATA, sessiondata);
-                            
-                            // The tokendata must be signed otherwise the session data will not be
-                            // processed.
-                            var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
-                            cryptoContext.sign(modifiedTokendata, {
-                                result: function(signature) {
-                                    mo.put(KEY_TOKENDATA, modifiedTokendata);
-                                    mo.put(KEY_SIGNATURE, signature);
-                                    
-                                    MasterToken$parse(ctx, mo, {
-                                        result: function(x) { moMasterToken = x; },
-                                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                                    }); 
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
-                        },
-                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                    });
-                },
+	        cryptoContext.decrypt(ciphertext, {
+	        	result: function(x) { plaintext = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            });
+	        });
+    	});
+    	waitsFor(function() { return plaintext; }, "plaintext", 100);
+    	
+    	var modifiedPlaintext;
+    	runs(function() {
+    		var sessiondataMo = encoder.parseObject(plaintext);
+
+    		// After modifying the session data we need to encrypt it.
+    		sessiondataMo.remove(KEY_SIGNATURE_KEY);
+    		encoder.encodeObject(sessiondataMo, ENCODER_FORMAT, {
+    			result: function(x) { modifiedPlaintext = x; },
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", 100);
+    	
+    	var sessiondata;
+    	runs(function() {
+    		cryptoContext.encrypt(modifiedPlaintext, {
+    			result: function(x) { sessiondata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return sessiondata; }, "sessiondata", 100);
+    	
+    	var modifiedTokendata;
+    	runs(function() {
+    		tokendataMo.put(KEY_SESSIONDATA, sessiondata);
+
+    		// The tokendata must be signed otherwise the session data will not be
+    		// processed.
+    		encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+    			result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+    	
+    	var moMasterToken;
+    	runs(function() {
+    		cryptoContext.sign(modifiedTokendata, {
+    			result: function(signature) {
+    				mo.put(KEY_TOKENDATA, modifiedTokendata);
+    				mo.put(KEY_SIGNATURE, signature);
+
+    				MasterToken$parse(ctx, mo, {
+    					result: function(x) { moMasterToken = x; },
+    					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    				}); 
+    			},
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
         });
         waitsFor(function() { return moMasterToken; }, "moMasterToken", 500);
         
@@ -1725,49 +2071,73 @@ describe("MasterToken", function() {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var moMasterToken;
-        runs(function() {
-            var cryptoContext = ctx.getMslCryptoContext();
+        var cryptoContext, plaintext;
+    	runs(function() {
+	        cryptoContext = ctx.getMslCryptoContext();
             
             // Before modifying the session data we need to decrypt it.
             var tokendata = mo.getBytes(KEY_TOKENDATA);
             var tokendataMo = encoder.parseObject(tokendata);
             var ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
-            cryptoContext.decrypt(ciphertext, {
-                result: function(plaintext) {
-                    var sessiondataMo = encoder.parseObject(plaintext);
-                    
-                    // After modifying the session data we need to encrypt it.
-                    sessiondataMo.remove(KEY_SIGNATURE_ALGORITHM);
-                    plaintext = encoder.encodeObject(sessiondataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, {
-                        result: function(sessiondata) {
-                            tokendataMo.put(KEY_SESSIONDATA, sessiondata);
-                            
-                            // The tokendata must be signed otherwise the session data will not be
-                            // processed.
-                            var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
-                            cryptoContext.sign(modifiedTokendata, {
-                                result: function(signature) {
-                                    mo.put(KEY_TOKENDATA, modifiedTokendata);
-                                    mo.put(KEY_SIGNATURE, signature);
-                                    
-                                    MasterToken$parse(ctx, mo, {
-                                        result: function(x) { moMasterToken = x; },
-                                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                                    }); 
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
-                        },
-                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                    });
-                },
+	        cryptoContext.decrypt(ciphertext, {
+	        	result: function(x) { plaintext = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            });
-        });
-        waitsFor(function() { return moMasterToken; }, "moMasterToken", 500);
-        
+	        });
+    	});
+    	waitsFor(function() { return plaintext; }, "plaintext", 100);
+    	
+    	var modifiedPlaintext;
+    	runs(function() {
+    		var sessiondataMo = encoder.parseObject(plaintext);
+
+    		// After modifying the session data we need to encrypt it.
+    		sessiondataMo.remove(KEY_SIGNATURE_ALGORITHM);
+    		encoder.encodeObject(sessiondataMo, ENCODER_FORMAT, {
+    			result: function(x) { modifiedPlaintext = x; },
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", 100);
+
+    	var sessiondata;
+    	runs(function() {
+    		cryptoContext.encrypt(modifiedPlaintext, {
+    			result: function(x) { sessiondata = x; },
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return sessiondata; }, "sessiondata", 100);
+
+    	var modifiedTokendata;
+    	runs(function() {
+    		tokendataMo.put(KEY_SESSIONDATA, sessiondata);
+
+    		// The tokendata must be signed otherwise the session data will not be
+    		// processed.
+    		encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+    			result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+    	
+    	var moMasterToken;
+    	runs(function() {
+    		cryptoContext.sign(modifiedTokendata, {
+    			result: function(signature) {
+    				mo.put(KEY_TOKENDATA, modifiedTokendata);
+    				mo.put(KEY_SIGNATURE, signature);
+
+    				MasterToken$parse(ctx, mo, {
+    					result: function(x) { moMasterToken = x; },
+    					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    				}); 
+    			},
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return moMasterToken; }, "moMasterToken", 500);
+
         runs(function() {
             // Confirm default algorithm.
             var moSignatureKey = moMasterToken.signatureKey;
@@ -1794,48 +2164,73 @@ describe("MasterToken", function() {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
-        runs(function() {
-            var cryptoContext = ctx.getMslCryptoContext();
+        var cryptoContext, plaintext;
+    	runs(function() {
+	        cryptoContext = ctx.getMslCryptoContext();
             
             // Before modifying the session data we need to decrypt it.
             var tokendata = mo.getBytes(KEY_TOKENDATA);
             var tokendataMo = encoder.parseObject(tokendata);
             var ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
-            cryptoContext.decrypt(ciphertext, {
-                result: function(plaintext) {
-                    var sessiondataMo = encoder.parseObject(plaintext);
-                    
-                    // After modifying the session data we need to encrypt it.
-                    sessiondataMo.put(KEY_SIGNATURE_ALGORITHM, "x");
-                    plaintext = encoder.encodeObject(sessiondataMo, ENCODER_FORMAT);
-                    cryptoContext.encrypt(plaintext, {
-                        result: function(sessiondata) {
-                            tokendataMo.put(KEY_SESSIONDATA, sessiondata);
-                            
-                            // The tokendata must be signed otherwise the session data will not be
-                            // processed.
-                            var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
-                            cryptoContext.sign(modifiedTokendata, {
-                                result: function(signature) {
-                                    mo.put(KEY_TOKENDATA, modifiedTokendata);
-                                    mo.put(KEY_SIGNATURE, signature);
-                                    
-                                    MasterToken$parse(ctx, mo, {
-                                        result: function() {},
-                                        error: function(e) { exception = e; }
-                                    }); 
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
-                        },
-                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                    });
-                },
+	        cryptoContext.decrypt(ciphertext, {
+	        	result: function(x) { plaintext = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            });
+	        });
+    	});
+    	waitsFor(function() { return plaintext; }, "plaintext", 100);
+    	
+    	var modifiedPlaintext;
+    	runs(function() {
+    		var sessiondataMo = encoder.parseObject(plaintext);
+
+    		// After modifying the session data we need to encrypt it.
+    		sessiondataMo.put(KEY_SIGNATURE_ALGORITHM, "x");
+    		encoder.encodeObject(sessiondataMo, ENCODER_FORMAT, {
+    			result: function(x) { modifiedPlaintext = x; },
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", 100);
+
+    	var sessiondata;
+    	runs(function() {
+    		cryptoContext.encrypt(modifiedPlaintext, {
+    			result: function(x) { sessiondata = x; },
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return sessiondata; }, "sessiondata", 100);
+
+    	var modifiedTokendata;
+    	runs(function() {
+    		tokendataMo.put(KEY_SESSIONDATA, sessiondata);
+
+    		// The tokendata must be signed otherwise the session data will not be
+    		// processed.
+    		encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+    			result: function(x) { modifiedTokendata = x; },
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+
+    	var exception;
+    	runs(function() {
+    		cryptoContext.sign(modifiedTokendata, {
+    			result: function(signature) {
+    				mo.put(KEY_TOKENDATA, modifiedTokendata);
+    				mo.put(KEY_SIGNATURE, signature);
+
+    				MasterToken$parse(ctx, mo, {
+    					result: function() {},
+    					error: function(e) { exception = e; }
+    				}); 
+    			},
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
         });
         waitsFor(function() { return exception; }, "exception", 500);
+        
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslCryptoException(MslError.UNIDENTIFIED_ALGORITHM));
@@ -1861,49 +2256,74 @@ describe("MasterToken", function() {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
-        runs(function() {
-	        var cryptoContext = ctx.getMslCryptoContext();
+        var cryptoContext, plaintext;
+    	runs(function() {
+	        cryptoContext = ctx.getMslCryptoContext();
 	        
 	        // Before modifying the session data we need to decrypt it.
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        var ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
 	        cryptoContext.decrypt(ciphertext, {
-	        	result: function(plaintext) {
-	        		var sessiondataMo = encoder.parseObject(plaintext);
-	    	        
-	    	        // After modifying the session data we need to encrypt it.
-                    sessiondataMo.remove(KEY_HMAC_KEY);
-	    	        sessiondataMo.remove(KEY_SIGNATURE_KEY);
-	    	        plaintext = encoder.encodeObject(sessiondataMo, ENCODER_FORMAT);
-	    	        cryptoContext.encrypt(plaintext, {
-	    	        	result: function(sessiondata) {
-	    	        		tokendataMo.put(KEY_SESSIONDATA, sessiondata);
-	    	    	        
-	    	    	        // The tokendata must be signed otherwise the session data will not be
-	    	    	        // processed.
-	    	    	        var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
-	    	    	        cryptoContext.sign(modifiedTokendata, {
-	    	    	        	result: function(signature) {
-	    	    	        		mo.put(KEY_TOKENDATA, modifiedTokendata);
-	    	    	    	        mo.put(KEY_SIGNATURE, signature);
-	    	    	    	        
-	    	    	    	        MasterToken$parse(ctx, mo, {
-	    	    	    	        	result: function() {},
-	    	    	    	        	error: function(err) { exception = err; }
-	    	    	    	        });	
-	    	    	        	},
-	    	    	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-	    	    	        });
-	    	        	},
-	    	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-	    	        });
-	        	},
-	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+	        	result: function(x) { plaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
-        });
+    	});
+    	waitsFor(function() { return plaintext; }, "plaintext", 100);
+    	
+    	var modifiedPlaintext;
+    	runs(function() {
+    		var sessiondataMo = encoder.parseObject(plaintext);
+
+    		// After modifying the session data we need to encrypt it.
+    		sessiondataMo.remove(KEY_HMAC_KEY);
+    		sessiondataMo.remove(KEY_SIGNATURE_KEY);
+    		encoder.encodeObject(sessiondataMo, ENCODER_FORMAT, {
+    			result: function(x) { modifiedPlaintext = x; },
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", 100);
+
+    	var sessiondata;
+    	runs(function() {
+    		cryptoContext.encrypt(modifiedPlaintext, {
+    			result: function(x) { sessiondata = x; },
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return sessiondata; }, "sessiondata", 100);
+
+    	var modifiedTokendata;
+    	runs(function() {
+    		tokendataMo.put(KEY_SESSIONDATA, sessiondata);
+
+    		// The tokendata must be signed otherwise the session data will not be
+    		// processed.
+    		encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+    			result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+    	
+    	var exception;
+    	runs(function() {
+    		cryptoContext.sign(modifiedTokendata, {
+    			result: function(signature) {
+    				mo.put(KEY_TOKENDATA, modifiedTokendata);
+    				mo.put(KEY_SIGNATURE, signature);
+
+    				MasterToken$parse(ctx, mo, {
+    					result: function() {},
+    					error: function(err) { exception = err; }
+    				});	
+    			},
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
         waitsFor(function() { return exception; }, "exception", 500);
+        
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslEncodingException(MslError.MASTERTOKEN_SESSIONDATA_PARSE_ERROR));
@@ -1929,49 +2349,74 @@ describe("MasterToken", function() {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
-        runs(function() {
-	        var cryptoContext = ctx.getMslCryptoContext();
+        var cryptoContext, plaintext;
+    	runs(function() {
+	        cryptoContext = ctx.getMslCryptoContext();
 	        
 	        // Before modifying the session data we need to decrypt it.
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        var ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
 	        cryptoContext.decrypt(ciphertext, {
-	        	result: function(plaintext) {
-	        		var sessiondataMo = encoder.parseObject(plaintext);
-	    	        
-	    	        // After modifying the session data we need to encrypt it.
-                    sessiondataMo.put(KEY_HMAC_KEY, "");
-	    	        sessiondataMo.put(KEY_SIGNATURE_KEY, "");
-	    	        plaintext = encoder.encodeObject(sessiondataMo, ENCODER_FORMAT);
-	    	        cryptoContext.encrypt(plaintext, {
-	    	        	result: function(sessiondata) {
-	    	        		tokendataMo.put(KEY_SESSIONDATA, sessiondata);
-	    	    	        
-	    	    	        // The tokendata must be signed otherwise the session data will not be
-	    	    	        // processed.
-	    	    	        var modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
-	    	    	        cryptoContext.sign(modifiedTokendata, {
-	    	    	        	result: function(signature) {
-	    	    	        		mo.put(KEY_TOKENDATA, modifiedTokendata);
-	    	    	    	        mo.put(KEY_SIGNATURE, signature);
-	    	    	    	        
-	    	    	    	        MasterToken$parse(ctx, mo, {
-	    	    	    	        	result: function() {},
-	    	    	    	        	error: function(err) { exception = err; }
-	    	    	    	        });	    	        		
-	    	    	        	},
-	    	    	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-	    	    	        });	
-	    	        	},
-	    	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-	    	        });
-	        	},
-	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+	        	result: function(x) { plaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
+    	});
+    	waitsFor(function() { return plaintext; }, "plaintext", 100);
+    	
+    	var modifiedPlaintext;
+    	runs(function() {
+    		var sessiondataMo = encoder.parseObject(plaintext);
+
+    		// After modifying the session data we need to encrypt it.
+    		sessiondataMo.put(KEY_HMAC_KEY, "");
+    		sessiondataMo.put(KEY_SIGNATURE_KEY, "");
+    		encoder.encodeObject(sessiondataMo, ENCODER_FORMAT, {
+    			result: function(x) { modifiedPlaintext = x; },
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", 100);
+
+    	var sessiondata;
+    	runs(function() {
+    		cryptoContext.encrypt(modifiedPlaintext, {
+    			result: function(x) { sessiondata = x; },
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return sessiondata; }, "sessiondata", 100);
+
+    	var modifiedTokendata;
+    	runs(function() {
+    		tokendataMo.put(KEY_SESSIONDATA, sessiondata);
+
+    		// The tokendata must be signed otherwise the session data will not be
+    		// processed.
+    		encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+    			result: function(x) { modifiedTokendata = x; },
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});
+    	});
+    	waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+
+    	var exception;
+    	runs(function() {
+    		cryptoContext.sign(modifiedTokendata, {
+    			result: function(signature) {
+    				mo.put(KEY_TOKENDATA, modifiedTokendata);
+    				mo.put(KEY_SIGNATURE, signature);
+
+    				MasterToken$parse(ctx, mo, {
+    					result: function() {},
+    					error: function(err) { exception = err; }
+    				});	    	        		
+    			},
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		});	
         });
         waitsFor(function() { return exception; }, "exception", 500);
+        
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslCryptoException(MslError.MASTERTOKEN_KEY_CREATION_ERROR));

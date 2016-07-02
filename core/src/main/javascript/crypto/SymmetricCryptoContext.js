@@ -122,7 +122,7 @@ var SymmetricCryptoContext;
                     throw new MslCryptoException(MslError.DECRYPT_ERROR, null, e);
                 }
 
-                MslCiphertextEnvelope$parse(encryptionEnvelopeMo, MslCiphertextEnvelope$Version.V1, encoder, {
+                MslCiphertextEnvelope$parse(encryptionEnvelopeMo, MslCiphertextEnvelope$Version.V1, {
                     result: function(envelope) {
                         try {
                             // Verify key ID.
@@ -220,13 +220,16 @@ var SymmetricCryptoContext;
                         // Return the signature envelope byte representation.
                         MslSignatureEnvelope$create(new Uint8Array(hash), {
                             result: function(envelope) {
-                                try {
-                                    callback.result(envelope.getBytes(encoder, format));
-                                } catch (e) {
-                                    if (e instanceof MslEncoderException)
-                                        e = new MslCryptoException(MslError.SIGNATURE_ENVELOPE_ENCODE_ERROR, e);
-                                    callback.error(e);
-                                }
+                            	envelope.getBytes(encoder, format, {
+                            		result: callback.result,
+                            		error: function(e) {
+                            			AsyncExecutor(callback, function() {
+		                                    if (e instanceof MslEncoderException)
+		                                        e = new MslCryptoException(MslError.SIGNATURE_ENVELOPE_ENCODE_ERROR, e);
+		                                    callback.error(e);
+                            			}, self);
+                            		},
+                                });
                             },
                             error: callback.error,
                         });

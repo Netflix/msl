@@ -88,7 +88,7 @@ var MslObject;
             if (typeof key !== 'string')
                 throw new TypeError("Unsupported key.");
             var o = this.map[key];
-            if (!o)
+            if (o === null || o === undefined)
                 throw new MslEncoderException("MslObject[" + MslEncoderFactory$quote(key) + "] not found.");
             if (o instanceof Object && o.constructor === Object)
                 return new MslObject(o);
@@ -229,11 +229,11 @@ var MslObject;
          */
         getLong: function getLong(key) {
             var o = this.get(key);
-            // The ~~ operator truncates to the integer value.
+            // I don't know of a better way than using parseInt().
             if (o instanceof Number)
-                return ~~o.valueOf();
+                return parseInt(o.valueOf());
             if (typeof o === 'number')
-                return ~~o;
+                return parseInt(o);
             throw new MslEncoderException("MslObject[" + MslEncoderFactory$quote(key) + "] is not a number.");
         },
         
@@ -338,7 +338,7 @@ var MslObject;
         /**
          * Return the value associated with the specified key, or {@code NaN}
          * or the default value if the key is unknown or the value is not of
-         * the　correct type.
+         * the correct type.
          * 
          * @param {string} key the key.
          * @param {number=} defaultValue the optional default value.
@@ -448,15 +448,15 @@ var MslObject;
          */
         optLong: function optLong(key, defaultValue) {
             var o = this.opt(key);
-            // The ~~ operator truncates to the integer value.
+            // I don't know of a better way than using parseInt().
             if (o instanceof Number)
-                return ~~o.valueOf();
+                return parseInt(o.valueOf());
             if (typeof o === 'number')
-                return ~~o;
+                return parseInt(o);
             if (defaultValue instanceof Number)
-                return ~~defaultValue.valueOf();
+                return parseInt(defaultValue.valueOf());
             if (typeof defaultValue === 'number')
-                return ~~defaultValue;
+                return parseInt(defaultValue);
             return 0;
         },
     
@@ -500,7 +500,7 @@ var MslObject;
                 throw new TypeError("Unsupported key.");
             
             // Remove if requested.
-            if (!value) {
+            if (value === null) {
                 delete this.map[key];
                 return this;
             }
@@ -508,6 +508,7 @@ var MslObject;
             // Otherwise set.
             if (value instanceof Boolean ||
                 typeof value === 'boolean' ||
+                value instanceof Uint8Array ||
                 value instanceof Number ||
                 typeof value === 'number' ||
                 value instanceof MslObject ||
@@ -540,7 +541,7 @@ var MslObject;
          *         incorrect type.
          */
         putBoolean: function putBooleans(key, value) {
-            if (!(value instanceof Boolean) && typeof value !== 'boolean')
+            if (!(value instanceof Boolean) && typeof value !== 'boolean' && value !== null)
                 throw new TypeError("Value [" + typeof value + "] is not a boolean");
             return this.put(key, value);
         },
@@ -558,7 +559,7 @@ var MslObject;
          *         incorrect type.
          */
         putBytes: function putBytes(key, value) {
-            if (!(value instanceof Uint8Array))
+            if (!(value instanceof Uint8Array) && value !== null)
                 throw new TypeError("Value [" + typeof value + "] is not binary data.");
             return this.put(key, value);
         },
@@ -577,7 +578,7 @@ var MslObject;
          *         incorrect type.
          */
         putCollection: function putCollection(key, value) {
-            if (!(value instanceof Array))
+            if (!(value instanceof Array) && value !== null)
                 throw new TypeError("Value [" + typeof value + "] is not a collection.");
             return this.put(key, value);
         },
@@ -595,7 +596,7 @@ var MslObject;
          *         incorrect type.
          */
         putDouble: function putDouble(key, value) {
-            if (!(value instanceof Number) && typeof value !== 'number')
+            if (!(value instanceof Number) && typeof value !== 'number' && value !== null)
                 throw new TypeError("Value [" + typeof value + "] is not a number.");
             return this.put(key, value);
         },
@@ -618,6 +619,8 @@ var MslObject;
                 return this.put(key, value.valueOf() << 0);
             if (typeof value === 'number')
                 return this.put(key, value << 0);
+            if (value === null)
+            	return this.put(key, value);
             throw new TypeError("Value [" + typeof value + "] is not a number.");
         },
     
@@ -634,11 +637,13 @@ var MslObject;
          *         incorrect type.
          */
         putLong: function putLong(key, value) {
-            // The ~~ operator truncates to the integer value.
+            // The parseInt function converts to the integer value.
             if (value instanceof Number)
-                return this.put(key, ~~value.valueOf());
+                return this.put(key, parseInt(value.valueOf()));
             if (typeof value === 'number')
-                return this.put(key, ~~value);
+                return this.put(key, parseInt(value));
+            if (value === null)
+            	return this.put(key, value);
             throw new TypeError("Value [" + typeof value + "] is not a number.");
         },
     
@@ -649,7 +654,7 @@ var MslObject;
          * 
          * <p>This method will call {@link #put(String, Object)}.</p>
          * 
-         * @param {key} key the key.
+         * @param {string} key the key.
          * @param {object} value the value. May be {@code null}.
          * @return {MslObject} this.
          * @throws TypeError if the key is not a string, the value is of the
@@ -657,8 +662,26 @@ var MslObject;
          *         unsupported type.
          */
         putMap: function putMap(key, value) {
-            if (!(value instanceof Object && value.constructor === Object))
+            if (!(value instanceof Object && value.constructor === Object) && value !== null)
                 throw new TypeError("Value [" + typeof value + "] is not a map.");
+            return this.put(key, value);
+        },
+
+        /**
+         * <p>Put a key/value pair into the {@code MslObject}. If the value is
+         * {@code null} the key will be removed.</p>
+         * 
+         * <p>This method will call {@link #put(String, Object)}.</p>
+         * 
+         * @param {string} key the key.
+         * @param {string} value the value. May be {@code null}.
+         * @return {MslObject} this.
+         * @throws TypeError if the key is not a string or the value is of the
+         *         incorrect type.
+         */
+        putString: function putString(key, value) {
+            if (!(value instanceof String) && typeof value !== 'string' && value !== null)
+                throw new TypeError("Value [" + typeof value + "] is not a string.");
             return this.put(key, value);
         },
         
@@ -685,7 +708,7 @@ var MslObject;
          * @return {Array<string>} the unmodifiable set of the {@code MslObject} keys.
          */
         getKeys: function getKeys() {
-            return this.map.keys().slice();
+            return Object.keys(this.map);
         },
         
         /**
@@ -709,7 +732,7 @@ var MslObject;
         	if (this == that) return true;
         	if (!(that instanceof MslObject)) return false;
         	try {
-        		return MslEncoderUtils$equalsObjects(this, that);
+        		return MslEncoderUtils$equalObjects(this, that);
 	    	} catch (e) {
 	    		if (e instanceof MslEncoderException) return false;
 	    		throw e;
@@ -718,7 +741,7 @@ var MslObject;
         
         /** @inheritDoc */
         toString: function toString() {
-            return JSON.stringify(this.map);
+        	return MslEncoderFactory$stringify(this.map);
         },
     });
 })();

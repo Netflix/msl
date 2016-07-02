@@ -96,6 +96,7 @@ var EntityAuthenticationData$parse;
 
         /** @inheritDoc */
         toMslEncoding: function toMslEncoding(encoder, format, callback) {
+        	var self = this;
             AsyncExecutor(callback, function() {
                 // Return any cached encoding.
                 if (this.encodings[format])
@@ -109,16 +110,21 @@ var EntityAuthenticationData$parse;
                             var mo = encoder.createObject();
                             mo.put(KEY_SCHEME, this.scheme.name);
                             mo.put(KEY_AUTHDATA, authdata);
-                            var encoding = encoder.encodeObject(mo, format);
-                
-                            // Cache and return the encoding.
-                            this.encodings[format] = encoding;
-                            return encoding;
-                        }, this);
+                            encoder.encodeObject(mo, format, {
+                            	result: function(encoding) {
+                            		AsyncExecutor(callback, function() {
+                            			// Cache and return the encoding.
+                            			this.encodings[format] = encoding;
+                            			return encoding;
+                            		}, self);
+                            	},
+                            	error: callback.error,
+                            });
+                        }, self);
                     },
                     error: callback.error,
                 });
-            }, this);
+            }, self);
         },
     });
 

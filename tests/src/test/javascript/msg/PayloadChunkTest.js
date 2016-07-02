@@ -900,13 +900,21 @@ describe("PayloadChunk", function() {
 	    });
 	    waitsFor(function() { return payload; }, "payload", 100);
 	    
-	    var newPayload;
+	    var plaintext;
         runs(function() {
             var payloadMo = encoder.parseObject(payload);
 	        
 	        payloadMo.remove(KEY_SEQUENCE_NUMBER);
 	
-	        var plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
+	        encoder.encodeObject(payloadMo, ENCODER_FORMAT, {
+	        	result: function(x) { plaintext = x; },
+	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        
+        var newPayload;
+        runs(function() {
 	        CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT, {
 	        	result: function(data) { newPayload = data; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -970,11 +978,19 @@ describe("PayloadChunk", function() {
         });
         waitsFor(function() { return payload; }, "payload", 100);
 
-        var newPayload;
+        var plaintext;
         runs(function() {
 	        var payloadMo = encoder.parseObject(payload);
 	        payloadMo.put(KEY_SEQUENCE_NUMBER, "x");
-	        var plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
+	        encoder.encodeObject(payloadMo, ENCODER_FORMAT, {
+	        	result: function(x) { plaintext = x; },
+	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        
+        var newPayload;
+        runs(function() {
 	        CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT, {
 	        	result: function(data) { newPayload = data; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1038,11 +1054,19 @@ describe("PayloadChunk", function() {
         });
         waitsFor(function() { return payload; }, "payload", 100);
 
-        var newPayload;
+        var plaintext;
         runs(function() {
         	var payloadMo = encoder.parseObject(payload);
 	        payloadMo.put(KEY_SEQUENCE_NUMBER, -1);
-	        var plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
+	        encoder.encodeObject(payloadMo, ENCODER_FORMAT, {
+	        	result: function(x) { plaintext = x; },
+	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        
+        var newPayload;
+        runs(function() {
 	        CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT, {
 	        	result: function(data) { newPayload = data; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1106,11 +1130,19 @@ describe("PayloadChunk", function() {
         });
         waitsFor(function() { return payload; }, "payload", 100);
 
-        var newPayload;
+        var plaintext;
         runs(function() {
         	var payloadMo = encoder.parseObject(payload);
 	        payloadMo.put(KEY_SEQUENCE_NUMBER, MslConstants$MAX_LONG_VALUE + 2);
-	        var plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
+	        encoder.encodeObject(payloadMo, ENCODER_FORMAT, {
+	        	result: function(x) { plaintext = x; },
+	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        
+        var newPayload;
+        runs(function() {
 	        CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT, {
 	        	result: function(data) { newPayload = data; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1174,11 +1206,19 @@ describe("PayloadChunk", function() {
         });
         waitsFor(function() { return payload; }, "payload", 100);
 
-        var newPayload;
+        var plaintext;
         runs(function() {
         	var payloadMo = encoder.parseObject(payload);
         	payloadMo.remove(KEY_MESSAGE_ID);
-	        var plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
+        	encoder.encodeObject(payloadMo, ENCODER_FORMAT, {
+	        	result: function(x) { plaintext = x; },
+	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        
+        var newPayload;
+        runs(function() {
 	        CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT, {
 	        	result: function(data) { newPayload = data; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1242,11 +1282,19 @@ describe("PayloadChunk", function() {
         });
         waitsFor(function() { return payload; }, "payload", 100);
 
-        var newPayload;
+        var plaintext;
         runs(function() {
             var payloadMo = encoder.parseObject(payload);
 	        payloadMo.put(KEY_MESSAGE_ID, "x");
-	        var plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
+	        encoder.encodeObject(payloadMo, ENCODER_FORMAT, {
+	        	result: function(x) { plaintext = x; },
+	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        
+        var newPayload;
+        runs(function() {
 	        CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT, {
 	        	result: function(data) { newPayload = data; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1310,11 +1358,19 @@ describe("PayloadChunk", function() {
         });
         waitsFor(function() { return payload; }, "payload", 100);
         
-        var newPayload;
+        var plaintext;
         runs(function() {
         	var payloadMo = encoder.parseObject(payload);
 	        payloadMo.put(KEY_END_OF_MESSAGE, "x");
-	        var plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
+	        encoder.encodeObject(payloadMo, ENCODER_FORMAT, {
+	        	result: function(x) { plaintext = x; },
+	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        
+        var newPayload;
+        runs(function() {
 	        CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT, {
 	        	result: function(data) { newPayload = data; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1378,11 +1434,19 @@ describe("PayloadChunk", function() {
         });
         waitsFor(function() { return payload; }, "payload", 100);
         
-        var newPayload;
+        var plaintext;
         runs(function() {
         	var payloadMo = encoder.parseObject(payload);
 	        payloadMo.put(KEY_COMPRESSION_ALGORITHM, "x");
-	        var plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
+	        encoder.encodeObject(payloadMo, ENCODER_FORMAT, {
+	        	result: function(x) { plaintext = x; },
+	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        
+        var newPayload;
+        runs(function() {
 	        CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT, {
 	        	result: function(data) { newPayload = data; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1446,11 +1510,19 @@ describe("PayloadChunk", function() {
         });
         waitsFor(function() { return payload; }, "payload", 100);
         
-        var newPayload;
+        var plaintext;
         runs(function() {
             var payloadMo = encoder.parseObject(payload);
             payloadMo.remove(KEY_DATA);
-	        var plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
+            encoder.encodeObject(payloadMo, ENCODER_FORMAT, {
+	        	result: function(x) { plaintext = x; },
+	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        
+        var newPayload;
+        runs(function() {
 	        CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT, {
 	        	result: function(data) { newPayload = data; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1514,11 +1586,19 @@ describe("PayloadChunk", function() {
         });
         waitsFor(function() { return payload; }, "payload", 100);
         
-        var newPayload;
+        var plaintext;
         runs(function() {
             var payloadMo = encoder.parseObject(payload);
 	        payloadMo.put(KEY_DATA, "");
-	        var plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
+	        encoder.encodeObject(payloadMo, ENCODER_FORMAT, {
+	        	result: function(x) { plaintext = x; },
+	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        
+        var newPayload;
+        runs(function() {
 	        CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT, {
 	        	result: function(data) { newPayload = data; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1582,11 +1662,19 @@ describe("PayloadChunk", function() {
         });
         waitsFor(function() { return payload; }, "payload", 100);
         
-        var newPayload;
+        var plaintext;
         runs(function() {
             var payloadMo = encoder.parseObject(payload);
 	        payloadMo.put(KEY_DATA, "x");
-	        var plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
+	        encoder.encodeObject(payloadMo, ENCODER_FORMAT, {
+	        	result: function(x) { plaintext = x; },
+	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        
+        var newPayload;
+        runs(function() {
 	        CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT, {
 	        	result: function(data) { newPayload = data; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }

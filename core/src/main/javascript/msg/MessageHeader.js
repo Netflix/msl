@@ -703,6 +703,7 @@ var MessageHeader$HeaderPeerData;
                         peerMasterToken, peerUserIdToken, peerServiceTokens,
                         user, messageCryptoContext)
                     Object.defineProperties(this, props);
+                    return this;
                 }, self);
             }
         },
@@ -745,41 +746,56 @@ var MessageHeader$HeaderPeerData;
                     return this.encodings[format];
                 
                 // Encrypt and sign the headerdata.
-                var plaintext = encoder.encodeObject(headerdata, format);
-                this.messageCryptoContext.encrypt(plaintext, encoder, format, {
-                    result: function(ciphertext) {
-                        AsyncExecutor(callback, function() {
-                            this.messageCryptoContext.sign(ciphertext, encoder, format, {
-                                result: function(signature) {
-                                    AsyncExecutor(callback, function() {
-                                        // Create the encoding.
-                                        var header = encoder.createObject();
-                                        if (masterToken)
-                                            header.put(KEY_MASTER_TOKEN, masterToken);
-                                        else
-                                            header.put(KEY_ENTITY_AUTHENTICATION_DATA, entityAuthData);
-                                        header.put(KEY_HEADERDATA, ciphertext);
-                                        header.put(KEY_SIGNATURE, signature);
-                                        var encoding = encoder.encodeObject(header, format);
-                                        
-                                        // Cache and return the encoding.
-                                        this.encodings[format] = encoding;
-                                        return encoding;
-                                    }, self);
-                                },
-                                error: function(e) {
-                                    if (e instanceof MslCryptoException)
-                                        e = new MslEncoderException("Error signing the header data.", e);
-                                    callback.error(e);
-                                },
-                            });
-                        }, self);
-                    },
-                    error: function(e) {
-                        if (e instanceof MslCryptoException)
-                            e = new MslEncoderException("Error encrypting the header data.", e);
-                        callback.error(e);
-                    },
+                encoder.encodeObject(this.headerdata, format, {
+                	result: function(plaintext) {
+                		AsyncExecutor(callback, function() {
+			                this.cryptoContext.encrypt(plaintext, encoder, format, {
+			                    result: function(ciphertext) {
+			                        AsyncExecutor(callback, function() {
+			                            this.cryptoContext.sign(ciphertext, encoder, format, {
+			                                result: function(signature) {
+			                                    AsyncExecutor(callback, function() {
+			                                        // Create the encoding.
+			                                        var header = encoder.createObject();
+			                                        if (this.masterToken)
+			                                            header.put(Header$KEY_MASTER_TOKEN, this.masterToken);
+			                                        else
+			                                            header.put(Header$KEY_ENTITY_AUTHENTICATION_DATA, this.entityAuthenticationData);
+			                                        header.put(Header$KEY_HEADERDATA, ciphertext);
+			                                        header.put(Header$KEY_SIGNATURE, signature);
+			                                        encoder.encodeObject(header, format, {
+			                                        	result: function(encoding) {
+					                                        AsyncExecutor(callback, function() {
+						                                        // Cache and return the encoding.
+						                                        this.encodings[format] = encoding;
+						                                        return encoding;
+					                                        }, self);
+			                                        	},
+			                                        	error: callback.error,
+			                                        });
+			                                    }, self);
+			                                },
+			                                error: function(e) {
+                								AsyncExecutor(callback, function() {
+                									if (e instanceof MslCryptoException)
+                										e = new MslEncoderException("Error signing the header data.", e);
+                									throw e;
+                								}, self);
+			                                },
+			                            });
+			                        }, self);
+			                    },
+			                    error: function(e) {
+                					AsyncExecutor(callback, function() {
+				                        if (e instanceof MslCryptoException)
+				                            e = new MslEncoderException("Error encrypting the header data.", e);
+				                        throw e;
+                					}, self);
+			                    },
+			                });
+                		}, self);
+                	},
+                	error: callback.error, 
                 });
             }, self);
         },
@@ -931,7 +947,7 @@ var MessageHeader$HeaderPeerData;
 
     /**
      * @param {MslContext} ctx MSL context.
-     * @param {MslObject} headerdataMo header data MSL object.
+     * @param {MslObject} headerdata header data MSL object.
      * @param {?KeyResponseData} keyResponseData key response data.
      * @param {Object.<string,ICryptoContext>} cryptoContexts service token
      *        crypto contexts.
@@ -941,14 +957,14 @@ var MessageHeader$HeaderPeerData;
      * @throws MslEncodingException if there is an error parsing the JSON
      *         object.
      */
-    function getPeerToPeerTokens(ctx, headerdataMo, keyResponseData, cryptoContexts, callback) {
-        function getPeerMasterToken(ctx, headerdataMo, callback) {
+    function getPeerToPeerTokens(ctx, headerdata, keyResponseData, cryptoContexts, callback) {
+        function getPeerMasterToken(ctx, headerdata, callback) {
             AsyncExecutor(callback, function() {
                 try {
-                    if (!headerdataMo.has(KEY_PEER_MASTER_TOKEN))
+                    if (!headerdata.has(KEY_PEER_MASTER_TOKEN))
                         return null;
                     var encoder = ctx.getMslEncoderFactory();
-                    var peerMasterTokenMo = headerdataMo.getMslObject(KEY_PEER_MASTER_TOKEN, encoder);
+                    var peerMasterTokenMo = headerdata.getMslObject(KEY_PEER_MASTER_TOKEN, encoder);
                     MasterToken$parse(ctx, peerMasterTokenMo, callback);
                 } catch (e) {
                     if (e instanceof MslEncoderException)
@@ -961,10 +977,10 @@ var MessageHeader$HeaderPeerData;
         function getPeerUserIdToken(ctx, headerdataJO, masterToken, callback) {
             AsyncExecutor(callback, function() {
                 try {
-                    if (!headerdataMo.has(KEY_PEER_USER_ID_TOKEN))
+                    if (!headerdata.has(KEY_PEER_USER_ID_TOKEN))
                         return null;
                     var encoder = ctx.getMslEncoderFactory();
-                    var peerUserIdTokenMo = headerdataMo.getMslObject(KEY_PEER_USER_ID_TOKEN, encoder)
+                    var peerUserIdTokenMo = headerdata.getMslObject(KEY_PEER_USER_ID_TOKEN, encoder)
                     UserIdToken$parse(ctx, peerUserIdTokenMo, masterToken, callback);
                 } catch (e) {
                     if (e instanceof MslEncoderException)
@@ -984,7 +1000,7 @@ var MessageHeader$HeaderPeerData;
             }
 
             // Pull peer master token.
-            getPeerMasterToken(ctx, headerdataMo, {
+            getPeerMasterToken(ctx, headerdata, {
                 result: function(peerMasterToken) {
                     AsyncExecutor(callback, function() {
                         // The key response data master token is used for peer token
@@ -995,12 +1011,12 @@ var MessageHeader$HeaderPeerData;
 
                         // Pull peer user ID token. User ID tokens are always
                         // authenticated by a master token.
-                        getPeerUserIdToken(ctx, headerdataMo, peerVerificationMasterToken, {
+                        getPeerUserIdToken(ctx, headerdata, peerVerificationMasterToken, {
                             result: function(peerUserIdToken) {
                                 AsyncExecutor(callback, function() {
                                     // Peer service tokens are authenticated by the peer master
                                     // token if it exists or by the application crypto context.
-                                    var peerServiceTokensMa = headerdataMo.getMslArray(KEY_PEER_SERVICE_TOKENS);
+                                    var peerServiceTokensMa = headerdata.getMslArray(KEY_PEER_SERVICE_TOKENS);
                                     getServiceTokens(ctx, peerServiceTokensJA, peerVerificationMasterToken, peerUserIdToken, cryptoContexts, headerdata, {
                                         result: function(peerServiceTokens) {
                                             AsyncExecutor(callback, function() {
@@ -1040,13 +1056,13 @@ var MessageHeader$HeaderPeerData;
 
     /**
      * @param {MslContext} ctx MSL context.
-     * @param {MslObject} headerdataMo header data MSL object.
+     * @param {MslObject} headerdata header data MSL object.
      * @param {string} headerdataJson header data JSON string.
      * @param {{result: function(Array.<KeyRequestData>}, error: function(Error)}}
      *        callback the callback to receive the key request data or any
      *        thrown exceptions.
      */
-    function getKeyRequestData(ctx, headerdataMo, callback) {
+    function getKeyRequestData(ctx, headerdata, callback) {
         var keyRequestData = [];
 
         function addKeyRequestData(keyRequestDataMa, index) {
@@ -1076,7 +1092,7 @@ var MessageHeader$HeaderPeerData;
                 addKeyRequestData(keyRequestDataMa, 0);
             } catch (e) {
                 if (e instanceof MslEncoderException)
-                    throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + headerdataMo, e);
+                    throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + headerdata, e);
                 throw e;
             }
         });
@@ -1218,11 +1234,11 @@ var MessageHeader$HeaderPeerData;
                     keyResponseDataMo = (headerdata.has(KEY_KEY_RESPONSE_DATA)) 
                         ? headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder)
                         : null;
-                    userIdTokenMo = (headerdata.has(KEY_USER_ID_TOKEN]))
+                    userIdTokenMo = (headerdata.has(KEY_USER_ID_TOKEN))
                         ? headerdata.getMslObject(KEY_USE_ID_TOKEN, encoder)
                         : null;
                     userAuthDataMo = (headerdata.has(KEY_USER_AUTHENTICATION_DATA))
-                        ? headerdata.getMslObject(KEY_USER_AUTHENTICATION_DATA)
+                        ? headerdata.getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder)
                         : null;
                     tokensMa = (headerdata.has(KEY_SERVICE_TOKENS))
                         ? headerdata.getMslArray(KEY_SERVICE_TOKENS)
@@ -1248,11 +1264,11 @@ var MessageHeader$HeaderPeerData;
                     }
                 };
                 
-                reconstructObjects(headerdata, messageId, sender, recipient, timestamp, keyResponseDataMo, userIdTokenMo, userAuthDataMo, tokensMa, callback);
+                reconstructObjects(messageCryptoContext, headerdata, messageId, sender, recipient, timestamp, keyResponseDataMo, userIdTokenMo, userAuthDataMo, tokensMa, callback);
             });
         }
         
-        function reconstructObjects(headerdata, messageId, sender, recipient, timestamp, keyResponseDataMo, userIdTokenMo, userAuthDataMo, tokensMa, callback) {
+        function reconstructObjects(messageCryptoContext, headerdata, messageId, sender, recipient, timestamp, keyResponseDataMo, userIdTokenMo, userAuthDataMo, tokensMa, callback) {
             AsyncExecutor(callback, function() {
                 var encoder = ctx.getMslEncoderFactory();
                 
@@ -1295,7 +1311,7 @@ var MessageHeader$HeaderPeerData;
                                                     // exists or by the application crypto context.
                                                     getServiceTokens(ctx, tokensMa, tokenVerificationMasterToken, userIdToken, cryptoContexts, headerdata, {
                                                         result: function(serviceTokens) {
-                                                            buildHeader(headerdata, messageId, sender, recipient, timestamp, keyResponseData, userIdToken, userAuthData, serviceTokens, callback);
+                                                            buildHeader(messageCryptoContext, headerdata, messageId, sender, recipient, timestamp, keyResponseData, userIdToken, userAuthData, user, serviceTokens, callback);
                                                         },
                                                         error: callback.error,
                                                     });
@@ -1314,7 +1330,7 @@ var MessageHeader$HeaderPeerData;
             });
         }
         
-        function buildHeader(headerdata, messageId, sender, recipient, timestamp, keyResponseData, userIdToken, userAuthData, serviceTokens, callback) {
+        function buildHeader(messageCryptoContext, headerdata, messageId, sender, recipient, timestamp, keyResponseData, userIdToken, userAuthData, user, serviceTokens, callback) {
             AsyncExecutor(callback, function() {
                 var encoder = ctx.getMslEncoderFactory();
                 
@@ -1338,11 +1354,11 @@ var MessageHeader$HeaderPeerData;
                 } catch (e) {
                     if (e instanceof MslEncoderException) {
                         throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + headerdata.toString(), e)
-                        .setMasterToken(masterToken)
-                        .setEntityAuthenticationData(entityAuthData)
-                        .setUserIdToken(userIdToken)
-                        .setUserAuthenticationData(userAuthData)
-                        .setMessageId(messageId);
+	                        .setMasterToken(masterToken)
+	                        .setEntityAuthenticationData(entityAuthData)
+	                        .setUserIdToken(userIdToken)
+	                        .setUserAuthenticationData(userAuthData)
+	                        .setMessageId(messageId);
                     }
                     throw e;
                 }
@@ -1351,7 +1367,7 @@ var MessageHeader$HeaderPeerData;
                 getKeyRequestData(ctx, headerdata, {
                     result: function(keyRequestData) {
                         // Get peer-to-peer tokens.
-                        getPeerToPeerTokens(ctx, headerdataJO, keyResponseData, cryptoContexts, headerdataJson, {
+                        getPeerToPeerTokens(ctx, headerdata, keyResponseData, cryptoContexts, {
                             result: function(result) {
                                 AsyncExecutor(callback, function() {
                                     var peerMasterToken = result.peerMasterToken;
@@ -1363,7 +1379,7 @@ var MessageHeader$HeaderPeerData;
                                             keyRequestData, keyResponseData, userAuthData, userIdToken,
                                             serviceTokens);
                                     var headerPeerData = new HeaderPeerData(peerMasterToken, peerUserIdToken, peerServiceTokens);
-                                    var creationData = new CreationData(user, sender, timestampSeconds, messageCryptoContext, headerdata);
+                                    var creationData = new CreationData(user, sender, timestamp, messageCryptoContext, headerdata);
                                     new MessageHeader(ctx, entityAuthData, masterToken, headerData, headerPeerData, creationData, callback);
                                 });
                             },

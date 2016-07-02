@@ -73,7 +73,7 @@ var EmailPasswordAuthenticationData$parse;
             AsyncExecutor(callback, function() {
                 var mo = encoder.createObject();
                 mo.put(KEY_EMAIL, this.email);
-                mo.put(KEY_PASSWORD< this.password);
+                mo.put(KEY_PASSWORD, this.password);
                 return mo;
             }, this);
         },

@@ -189,21 +189,23 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
         }
 
         var wrapdata;
-        switch (mechanism) {
-            case PSK:
-            {
-                wrapdata = null;
-                break;
-            }
-            case Mechanism.WRAP:
-            {
-                wrapdata = keyRequestMo.getBytes(KEY_WRAPDATA);
-                if (wrapdata.length == 0)
-                    throw new MslKeyExchangeException(MslError.KEYX_WRAPPING_KEY_MISSING, "keydata " + keyRequestMo);
-                break;
-            }
-            default:
-                throw new MslCryptoException(MslError.UNSUPPORTED_KEYX_MECHANISM, mechanism);
+        try {
+        	switch (mechanism) {
+	            case PSK:
+	            {
+	                wrapdata = null;
+	                break;
+	            }
+	            case Mechanism.WRAP:
+	            {
+	                wrapdata = keyRequestMo.getBytes(KEY_WRAPDATA);
+	                if (wrapdata.length == 0)
+	                    throw new MslKeyExchangeException(MslError.KEYX_WRAPPING_KEY_MISSING, "keydata " + keyRequestMo);
+	                break;
+	            }
+	            default:
+	                throw new MslCryptoException(MslError.UNSUPPORTED_KEYX_MECHANISM, mechanism);
+        	}
         } catch (e) {
             if (e instanceof MslEncoderException)
                 throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "keydata " + keyRequestMo, e);

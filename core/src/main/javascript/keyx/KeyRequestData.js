@@ -86,9 +86,9 @@ var KeyRequestData$parse;
                 result: function(keydata) {
                     AsyncExecutor(callback, function() {
                         var mo = encoder.createObject();
-                        mo.put(KEY_SCHEME, this.scheme.name);
+                        mo.put(KEY_SCHEME, this.keyExchangeScheme.name);
                         mo.put(KEY_KEYDATA, keydata);
-                        return encoder.encodeObject(mo, format);
+                        encoder.encodeObject(mo, format, callback);
                     }, self);
                 },
                 error: callback.error,

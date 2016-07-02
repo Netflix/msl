@@ -21,7 +21,7 @@ describe("MslError", function() {
         expect(MslError.MSL_PARSE_ERROR).not.toBeNull();
         expect(MslError.MSL_PARSE_ERROR.internalCode).toEqual(BASE);
         expect(MslError.MSL_PARSE_ERROR.responseCode).toEqual(MslConstants$ResponseCode.FAIL);
-        expect(MslError.MSL_PARSE_ERROR.message).toEqual("Error parsing JSON.");
+        expect(MslError.MSL_PARSE_ERROR.message).toEqual("Error parsing MSL encodable.");
     });
     
     it("is immutable", function() {
@@ -30,7 +30,7 @@ describe("MslError", function() {
     	MslError.MSL_PARSE_ERROR.message = "x";
         expect(MslError.MSL_PARSE_ERROR.internalCode).toEqual(BASE);
         expect(MslError.MSL_PARSE_ERROR.responseCode).toEqual(MslConstants$ResponseCode.FAIL);
-        expect(MslError.MSL_PARSE_ERROR.message).toEqual("Error parsing JSON.");
+        expect(MslError.MSL_PARSE_ERROR.message).toEqual("Error parsing MSL encodable.");
     });
     
     it("no repeated internal codes", function() {
