@@ -113,10 +113,10 @@ var JsonMslObject$encode;
                     }
                 }
             } catch (e) {
-                if (e instanceof SyntaxError)
-                    throw new MslEncoderException("Invalid JSON object encoding.", e);
                 if (e instanceof TypeError)
                     throw new MslEncoderException("Invalid MSL object encoding.", e);
+            	if (!(e instanceof MslException))
+                    throw new MslEncoderException("Invalid JSON object encoding.", e);
                 throw e;
             }
         },
@@ -151,11 +151,37 @@ var JsonMslObject$encode;
             var value = this.get(key);
             if (value instanceof Uint8Array)
                 return value;
-            if (value instanceof String)
-                return base64$decode(value.valueOf());
-            if (typeof value === 'string')
-                return base64$decode(value);
+            try {
+	            if (value instanceof String)
+	                return base64$decode(value.valueOf());
+	            if (typeof value === 'string')
+	                return base64$decode(value);
+            } catch (e) {
+                throw new MslEncoderException("MslObject[" + MslEncoderFactory$quote(key) + "] is not binary data.");
+            }
             throw new MslEncoderException("MslObject[" + MslEncoderFactory$quote(key) + "] is not binary data.");
+        },
+        
+        /** @inheritDoc */
+        optBytes: function optBytes(key, defaultValue) {
+            // When a JsonMslObject is decoded, there's no way for us to know if a
+            // value is supposed to be a String to byte[]. Therefore interpret
+            // Strings as Base64-encoded data consistent with the toJSONString()
+            // and getEncoded().
+        	var value = this.opt(key);
+        	if (value instanceof Uint8Array)
+        		return value;
+            try {
+	            if (value instanceof String)
+	                return base64$decode(value.valueOf());
+	            if (typeof value === 'string')
+	                return base64$decode(value);
+            } catch (e) {
+                // Fall through.
+            }
+            if (defaultValue instanceof Uint8Array || defaultValue === null)
+            	return defaultValue;
+            return new Uint8Array(0);
         },
         
         /**

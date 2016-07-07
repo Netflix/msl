@@ -100,7 +100,7 @@ describe("NullCryptoContext", function() {
         
         var plaintext;
         runs(function() {
-            cryptoContext.unwrap(ciphertext, encoder, {
+            cryptoContext.unwrap(ciphertext, null, null, encoder, {
                 result: function(p) { plaintext = p; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });

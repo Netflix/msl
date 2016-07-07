@@ -578,23 +578,23 @@ var MasterToken$parse;
             var sessiondata;
             if (this.isDecrypted()) {
                 sessiondata = encoder.createObject();
-                if (issuerdata != null)
-                    sessiondata.put(KEY_ISSUER_DATA, issuerdata);
-                sessiondata.put(KEY_IDENTITY, identity);
-                sessiondata.put(KEY_ENCRYPTION_KEY, encryptionKey.getEncoded());
-                sessiondata.put(KEY_ENCRYPTION_ALGORITHM, encryptionKey.algorithm);
-                sessiondata.put(KEY_HMAC_KEY, signatureKey.getEncoded());
-                sessiondata.put(KEY_SIGNATURE_KEY, signatureKey.getEncoded());
-                sessiondata.put(KEY_SIGNATURE_ALGORITHM, signatureKey.algorithm);
+                if (this.issuerData != null)
+                    sessiondata.put(KEY_ISSUER_DATA, this.issuerData);
+                sessiondata.put(KEY_IDENTITY, this.identity);
+                sessiondata.put(KEY_ENCRYPTION_KEY, this.encryptionKey.getEncoded());
+                sessiondata.put(KEY_ENCRYPTION_ALGORITHM, this.encryptionKey.algorithm);
+                sessiondata.put(KEY_HMAC_KEY, this.signatureKey.getEncoded());
+                sessiondata.put(KEY_SIGNATURE_KEY, this.signatureKey.getEncoded());
+                sessiondata.put(KEY_SIGNATURE_ALGORITHM, this.signatureKey.algorithm);
             } else {
                 sessiondata = null;
             }
             
             var tokendata = encoder.createObject();
-            tokendata.put(KEY_RENEWAL_WINDOW, renewalWindowSeconds);
-            tokendata.put(KEY_EXPIRATION, expirationSeconds);
-            tokendata.put(KEY_SEQUENCE_NUMBER, sequenceNumber);
-            tokendata.put(KEY_SERIAL_NUMBER, serialNumber);
+            tokendata.put(KEY_RENEWAL_WINDOW, this.renewalWindowSeconds);
+            tokendata.put(KEY_EXPIRATION, this.expirationSeconds);
+            tokendata.put(KEY_SEQUENCE_NUMBER, this.sequenceNumber);
+            tokendata.put(KEY_SERIAL_NUMBER, this.serialNumber);
             tokendata.put(KEY_SESSIONDATA, sessiondata);
 
             var token = encoder.createObject();
@@ -701,20 +701,25 @@ var MasterToken$parse;
                 // Pull the token data.
                 try {
                     var tokendata = encoder.parseObject(tokendataBytes);
-                    var renewalWindow = tokendata.getLong(KEY_RENEWAL_WINDOW);
-                    var expiration = tokendata.getLong(KEY_EXPIRATION);
-                    if (expiration < renewalWindow)
+                    var renewalWindowSeconds = tokendata.getLong(KEY_RENEWAL_WINDOW);
+                    var expirationSeconds = tokendata.getLong(KEY_EXPIRATION);
+                    if (expirationSeconds < renewalWindowSeconds)
                         throw new MslException(MslError.MASTERTOKEN_EXPIRES_BEFORE_RENEWAL, "mastertokendata " + tokendata);
                     var sequenceNumber = tokendata.getLong(KEY_SEQUENCE_NUMBER);
-                    if (sequenceNumber < 0 || sequenceNumber > MslConstants.MAX_LONG_VALUE)
+                    if (sequenceNumber < 0 || sequenceNumber > MslConstants$MAX_LONG_VALUE)
                         throw new MslException(MslError.MASTERTOKEN_SEQUENCE_NUMBER_OUT_OF_RANGE, "mastertokendata " + tokendata);
                     var serialNumber = tokendata.getLong(KEY_SERIAL_NUMBER);
-                    if (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE)
+                    if (serialNumber < 0 || serialNumber > MslConstants$MAX_LONG_VALUE)
                         throw new MslException(MslError.MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "mastertokendata " + tokendata);
                     var ciphertext = tokendata.getBytes(KEY_SESSIONDATA);
                     if (ciphertext.length == 0)
                         throw new MslEncodingException(MslError.MASTERTOKEN_SESSIONDATA_MISSING, "mastertokendata " + tokendata);
-                    if (this.verified) {
+                    
+                    // Convert dates.
+                    var renewalWindow = new Date(renewalWindowSeconds * MILLISECONDS_PER_SECOND);
+                    var expiration = new Date(expirationSeconds * MILLISECONDS_PER_SECOND);
+                    
+                    if (verified) {
                         cryptoContext.decrypt(ciphertext, encoder, {
                             result: function(plaintext) {
                                 parseSessiondata(cryptoContext, encoder, tokendataBytes, signatureBytes, verified,
@@ -795,7 +800,7 @@ var MasterToken$parse;
             AsyncExecutor(callback, function() {
                 // Return the new master token.
                 var creationData = new CreationData(sessiondata, tokendataBytes, signatureBytes, verified);
-                return new MasterToken(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, signatureKey, creationData);
+                return new MasterToken(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerdata, identity, encryptionKey, signatureKey, creationData);
             });
         }
     };

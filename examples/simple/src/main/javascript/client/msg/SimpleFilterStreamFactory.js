@@ -66,14 +66,26 @@ var SimpleFilterStreamFactory;
             
             this._input.read(len, timeout, {
                 result: function(data) {
-                    if (data)
-                        self._target.innerHTML += textEncoding$getString(data, MslConstants$DEFAULT_CHARSET);
-                    callback.result(data);
+                	AsyncExecutor(callback, function() {
+                		try {
+		                    if (data)
+		                        self._target.innerHTML += textEncoding$getString(data, MslConstants$DEFAULT_CHARSET);
+		                    return data;
+                		} catch (e) {
+                			throw new MslIoException("Error encoding data into string.", e);
+                		}
+                	}, self);
                 },
                 timeout: function(data) {
-                    if (data)
-                        self._target.innerHTML += textEncoding$getString(data, MslConstants$DEFAULT_CHARSET);
-                    callback.timeout(data);
+                	AsyncExecutor(callback, function() {
+                		try {
+		                    if (data)
+		                        self._target.innerHTML += textEncoding$getString(data, MslConstants$DEFAULT_CHARSET);
+		                    return data;
+                		} catch (e) {
+                			throw new MslIoException("Error encoding data into string.", e);
+                		}
+                	}, self);
                 },
                 error: callback.error,
             });
@@ -109,8 +121,15 @@ var SimpleFilterStreamFactory;
 
         /** @inheritDoc */
         write: function write(data, off, len, timeout, callback) {
-            this._target.innerHTML += textEncoding$getString(data.subarray(off, off + len), MslConstants$DEFAULT_CHARSET);
-            this._output.write(data, off, len, timeout, callback);
+        	var self = this;
+        	AsyncExecutor(callback, function() {
+        		try {
+        			this._target.innerHTML += textEncoding$getString(data.subarray(off, off + len), MslConstants$DEFAULT_CHARSET);
+        		} catch (e) {
+        			throw new MslIoException("Error encoding data into string.", e);
+        		}
+	            this._output.write(data, off, len, timeout, callback);
+        	}, self);
         },
 
         /** @inheritDoc */

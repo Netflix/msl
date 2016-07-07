@@ -1679,13 +1679,10 @@ public class MessageHeaderTest {
         Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
-    // This test no longer passes because DataConverter.parseBase64Binary()
-    // does not error when given invalid Base64-encoded data.
-    @Ignore
     @Test
     public void invalidSignatureParseHeader() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException, MslEncoderException {
-        thrown.expect(MslMessageException.class);
-        thrown.expectMslError(MslError.HEADER_SIGNATURE_INVALID);
+        thrown.expect(MslEncodingException.class);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final HeaderDataBuilder builder = new HeaderDataBuilder(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, false);
         final HeaderData headerData = builder.build();

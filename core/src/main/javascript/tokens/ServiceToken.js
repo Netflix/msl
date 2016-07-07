@@ -141,9 +141,9 @@ var ServiceToken$parse;
      * @throws MslEncodingException if there is a problem parsing the data.
      * @throws MslException if the token data is invalid.
      */
-    function selectCryptoContext(encoder, serviceTokenJO, cryptoContexts) {
+    function selectCryptoContext(encoder, serviceTokenMo, cryptoContexts) {
         try {
-            var tokendata = serverTokenMo.getBytes(KEY_TOKENDATA);
+            var tokendata = serviceTokenMo.getBytes(KEY_TOKENDATA);
             if (tokendata.length == 0)
                 throw new MslEncodingException(MslError.SERVICETOKEN_TOKENDATA_MISSING, "servicetoken " + serviceTokenMo);
             var tokenDataMo = encoder.parseObject(tokendata);
@@ -203,10 +203,6 @@ var ServiceToken$parse;
             // token must be bound to the master token.
             if (masterToken && userIdToken && !userIdToken.isBoundTo(masterToken))
                 throw new MslInternalException("Cannot construct a service token bound to a master token and user ID token where the user ID token is not bound to the same master token.");
-         
-            // The crypto context may not be null.
-            if (cryptoContext == null)
-                throw new NullPointerException("Crypto context may not be null.");
            
             // Grab the master token and user ID token serial numbers.
             var mtSerialNumber = (masterToken) ? masterToken.serialNumber : -1;
@@ -215,6 +211,10 @@ var ServiceToken$parse;
             // Construct the token data.
             var compressedServicedata, tokendataBytes, signatureBytes, verified;
             if (!creationData) {
+                // The crypto context may not be null.
+                if (!cryptoContext)
+                    throw new TypeError("Crypto context may not be null.");
+                
                 // Optionally compress the service data.
                 var plaintext;
                 if (compressionAlgo) {
@@ -625,7 +625,7 @@ var ServiceToken$parse;
             
             // Grab the crypto context.
             if (cryptoContext && !(cryptoContext instanceof ICryptoContext))
-                cryptoContext = selectCryptoContext(serviceTokenJO, cryptoContext);
+                cryptoContext = selectCryptoContext(encoder, serviceTokenMo, cryptoContext);
 
             // Verify the data representation.
             var tokendataBytes, signatureBytes;
@@ -741,7 +741,7 @@ var ServiceToken$parse;
             });
         }
             
-        function reconstruct(encoder, tokendataBytes, signature, verified,
+        function reconstruct(encoder, tokendataBytes, signatureBytes, verified,
                 name, mtSerialNumber, uitSerialNumber, encrypted, compressionAlgo,
                 compressedServicedata, servicedata)
         {

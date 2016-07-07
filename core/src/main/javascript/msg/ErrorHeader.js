@@ -147,12 +147,12 @@ var ErrorHeader$parse;
             // Construct the error data.
             var timestampSeconds, errordata;
             if (!creationData) {
-                var timestampSeconds = ctx.getTime() / MILLISECONDS_PER_SECOND;
+                timestampSeconds = parseInt(ctx.getTime() / MILLISECONDS_PER_SECOND);
 
                 // Construct the error data.
                 var encoder = ctx.getMslEncoderFactory();
                 var errordata = encoder.createObject();
-                if (recipient) errordata.put(KEY_RECIPIENT, this.recipient);
+                if (recipient) errordata.put(KEY_RECIPIENT, recipient);
                 errordata.put(KEY_TIMESTAMP, timestampSeconds);
                 errordata.put(KEY_MESSAGE_ID, messageId);
                 errordata.put(KEY_ERROR_CODE, errorCode);
@@ -250,7 +250,7 @@ var ErrorHeader$parse;
                     throw new MslEncoderException("No entity authentication factory found for entity.");
                 var cryptoContext;
                 try {
-                    cryptoContext = factory.getCryptoContext(ctx, entityAuthData);
+                    cryptoContext = factory.getCryptoContext(this.ctx, this.entityAuthenticationData);
                 } catch (e) {
                     if (e instanceof MslEntityAuthException || e instanceof MslCryptoException)
                         throw new MslEncoderException("Error creating the entity crypto context.", e);
@@ -261,15 +261,15 @@ var ErrorHeader$parse;
                 encoder.encodeObject(this.errordata, format, {
                 	result: function(plaintext) {
 		                cryptoContext.encrypt(plaintext, encoder, format, {
-		                    result: function(errordata) {
-		                        cryptoContext.sign(errordata, {
+		                    result: function(ciphertext) {
+		                        cryptoContext.sign(ciphertext, encoder, format, {
 		                            result: function(signature) {
 		                                AsyncExecutor(callback, function() {
 		                                    // Create the encoding.
 		                                    var header = encoder.createObject();
-		                                    header.put(KEY_ENTITY_AUTHENTICATION_DATA, this.entityAuthData);
-		                                    header.put(KEY_ERRORDATA, ciphertext);
-		                                    header.put(KEY_SIGNATURE, signature);
+		                                    header.put(Header$KEY_ENTITY_AUTHENTICATION_DATA, this.entityAuthenticationData);
+		                                    header.put(Header$KEY_ERRORDATA, ciphertext);
+		                                    header.put(Header$KEY_SIGNATURE, signature);
 		                                    encoder.encodeObject(header, format, {
 		                                    	result: function(encoding) {
 		                                    		AsyncExecutor(callback, function() {
@@ -376,7 +376,7 @@ var ErrorHeader$parse;
                     AsyncExecutor(callback, function() {
                         if (!verified)
                             throw new MslCryptoException(MslError.MESSAGE_VERIFICATION_FAILED).setEntityAuthenticationData(entityAuthData);
-                        cryptoContext.decrypt(errordata, {
+                        cryptoContext.decrypt(errordataBytes, encoder, {
                             result: function(plaintext) {
                                 AsyncExecutor(callback, function() {
                                     var errordata, messageId;
@@ -391,10 +391,10 @@ var ErrorHeader$parse;
                                         throw e;
                                     }
                                     
-                                    var recipient, timestamp, errorCode, internalCode, errorMsg, userMsg;
+                                    var recipient, timestampSeconds, errorCode, internalCode, errorMsg, userMsg;
                                     try {
                                         recipient = (errordata.has(KEY_RECIPIENT)) ? errordata.getString(KEY_RECIPIENT) : null;
-                                        timestamp = (errordata.has(KEY_TIMESTAMP)) ? errordata.getLong(KEY_TIMESTAMP) : null;
+                                        timestampSeconds = (errordata.has(KEY_TIMESTAMP)) ? errordata.getLong(KEY_TIMESTAMP) : null;
                                         
                                         // If we do not recognize the error code then default to fail.
                                         errorCode = errordata.getInt(KEY_ERROR_CODE);

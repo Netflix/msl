@@ -68,7 +68,7 @@ describe("SessionCryptoContext", function() {
                         var signature = mo.getBytes("signature");
                         ++signature[1];
                         mo.put("signature", signature);
-                        MasterToken$parse(ctx, jo, callback);
+                        MasterToken$parse(ctx, mo, callback);
         	        },
         	        error: callback.error,
         	    });
@@ -93,7 +93,7 @@ describe("SessionCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 100);
+            waitsFor(function() { return ctx; }, "ctx", 900);
             
             runs(function() {
                 encoder = ctx.getMslEncoderFactory();
@@ -110,7 +110,7 @@ describe("SessionCryptoContext", function() {
     	runs(function() {
     		getUntrustedMasterToken(ctx, encryptionKey, signatureKey, {
     			result: function(mt) { masterToken = mt; },
-    			error: function(err) { console.log(err); throw err; }
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
     	});
     	waitsFor(function() { return masterToken; }, "master token not received", 100);
@@ -365,7 +365,7 @@ describe("SessionCryptoContext", function() {
     	runs(function() {
         	cryptoContext.decrypt(encode, encoder, {
         		result: function() {},
-        		error: function(e) { exception = err; }
+        		error: function(e) { exception = e; }
         	});
     	});
     	waitsFor(function() { return exception; }, "exception not received", 100);

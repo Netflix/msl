@@ -98,7 +98,12 @@ var JsonMslTokenizer;
                         
                         // Append the new data to the previous data and attempt
                         // to parse the JSON.
-                        var json = this._remainingData.concat(textEncoding$getString(data, this._charset));
+                        var json;
+                        try {
+                        	json = this._remainingData.concat(textEncoding$getString(data, this._charset));
+                        } catch (e) {
+                        	throw new MslEncoderException("Invalid JSON text encoding.");
+                        }
                         var parser = new ClarinetParser(json);
     
                         // If we got something then return the parser and
@@ -131,7 +136,12 @@ var JsonMslTokenizer;
     
                         // Append the new data to the previous data and attempt
                         // to parse the JSON.
-                        var json = this._remainingData.concat(textEncoding$getString(data, this._charset));
+                        var json;
+                        try {
+                        	json = this._remainingData.concat(textEncoding$getString(data, this._charset));
+                        } catch (e) {
+                        	throw new MslEncoderException("Invalid JSON text encoding.");
+                        }
                         var parser = new ClarinetParser(json);
     
                         // If we got something then return the parser and

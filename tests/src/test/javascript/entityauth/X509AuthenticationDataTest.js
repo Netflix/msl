@@ -68,7 +68,7 @@ describe("X509AuthenticationData", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 100);
+            waitsFor(function() { return ctx; }, "ctx", 900);
             
             runs(function() {
                 encoder = ctx.getMslEncoderFactory();
@@ -102,11 +102,11 @@ describe("X509AuthenticationData", function() {
         });
         waitsFor(function() { return encode; }, "encode", 100);
         
-        var moAuthdata;
+        var moData, moAuthdata;
         runs(function() {
             expect(encode).not.toBeNull();
             
-            var moData = new X509AuthenticationData$parse(authdata);
+            moData = new X509AuthenticationData$parse(authdata);
             expect(moData.scheme).toEqual(data.scheme);
             expect(moData.x509cert.hex).toEqual(data.x509cert.hex);
             expect(moData.getIdentity()).toEqual(data.getIdentity());
@@ -138,7 +138,7 @@ describe("X509AuthenticationData", function() {
 		var data = new X509AuthenticationData(MockX509AuthenticationFactory.X509_CERT);
         var mo;
         runs(function() {
-            MslTestUtils.toMslObject(data, {
+            MslTestUtils.toMslObject(encoder, data, {
                 result: function(x) { mo = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -146,9 +146,11 @@ describe("X509AuthenticationData", function() {
         waitsFor(function() { return mo; }, "mo", 100);
         
         runs(function() {
-            var certB64 = hex2b64(MockX509AuthenticationFactory.X509_CERT.hex);
             expect(mo.getString(KEY_SCHEME)).toEqual(EntityAuthenticationScheme.X509.name);
-            expect(mo.getString(KEY_X509_CERT)).toEqual(certB64);
+            var authdata = mo.getMslObject(KEY_AUTHDATA, encoder);
+            var x509certificate = authdata.getString(KEY_X509_CERT);
+            var certB64 = hex2b64(MockX509AuthenticationFactory.X509_CERT.hex);
+            expect(x509certificate).toEqual(certB64);
         });
 	});
 	
@@ -182,12 +184,12 @@ describe("X509AuthenticationData", function() {
         });
         waitsFor(function() { return entitydata }, "entitydata", 100);
 
-        var moAuthdata;
+        var moData, moAuthdata;
         runs(function() {
             expect(entitydata).not.toBeNull();
         	expect(entitydata instanceof X509AuthenticationData).toBeTruthy();
         	
-        	var moData = entitydata;
+        	moData = entitydata;
         	expect(moData.scheme).toEqual(data.scheme);
         	expect(moData.x509cert.hex).toEqual(data.x509cert.hex);
         	expect(moData.getIdentity()).toEqual(data.getIdentity());
@@ -197,6 +199,15 @@ describe("X509AuthenticationData", function() {
             });
         });
         waitsFor(function() { return moAuthdata; }, "moAuthdata", 100);
+        
+        var authdata;
+        runs(function() {
+            data.getAuthData(encoder, ENCODER_FORMAT, {
+                result: function(x) { authdata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return authdata; }, "authdata", 100);
         
         var moEncode;
         runs(function() {

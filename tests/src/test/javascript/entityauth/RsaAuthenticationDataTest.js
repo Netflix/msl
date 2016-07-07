@@ -46,7 +46,7 @@ describe("RsaAuthenticationData", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 100);
+            waitsFor(function() { return ctx; }, "ctx", 900);
             runs(function() {
                 encoder = ctx.getMslEncoderFactory();
                 initialized = true;
@@ -79,11 +79,11 @@ describe("RsaAuthenticationData", function() {
         });
         waitsFor(function() { return encode; }, "encode", 100);
         
-        var moAuthdata;
+        var moData, moAuthdata;
         runs(function() {
             expect(encode).not.toBeNull();
         
-            var moData = RsaAuthenticationData$parse(authdata);
+            moData = RsaAuthenticationData$parse(authdata);
             expect(moData.getIdentity()).toEqual(data.getIdentity());
             expect(moData.publicKeyId).toEqual(data.publicKeyId);
             expect(moData.scheme).toEqual(data.scheme);
@@ -115,7 +115,7 @@ describe("RsaAuthenticationData", function() {
         var data = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
         var mo;
         runs(function() {
-            MslTestUtils.toMslObject(data, {
+            MslTestUtils.toMslObject(encoder, data, {
                 result: function(x) { mo = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -160,12 +160,12 @@ describe("RsaAuthenticationData", function() {
         });
         waitsFor(function() { return entitydata }, "entitydata", 100);
         
-        var moAuthdata;
+        var moData, moAuthdata;
         runs(function() {
             expect(entitydata).not.toBeNull();
             expect(entitydata instanceof RsaAuthenticationData).toBeTruthy();
             
-            var moData = entitydata;
+            moData = entitydata;
             expect(moData.getIdentity()).toEqual(data.getIdentity());
             expect(moData.publicKeyId).toEqual(data.publicKeyId);
             expect(moData.scheme).toEqual(data.scheme);
@@ -175,6 +175,15 @@ describe("RsaAuthenticationData", function() {
             });
         });
         waitsFor(function() { return moAuthdata; }, "moAuthdata", 100);
+        
+        var authdata;
+        runs(function() {
+            data.getAuthData(encoder, ENCODER_FORMAT, {
+                result: function(x) { authdata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return authdata; }, "authdata", 100);
         
         var moEncode;
         runs(function() {

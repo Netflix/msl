@@ -175,7 +175,8 @@ describe("PayloadChunk", function() {
         
         runs(function() {
 	        expect(moEncode).not.toBeNull();
-	        expect(moEncode).toEqual(encode);
+	        // The two payload chunk encodings will not be equal because the
+	        // ciphertext and signature will be generated on-demand.
         });
     });
     
@@ -468,7 +469,8 @@ describe("PayloadChunk", function() {
         
         runs(function() {
 	        expect(moEncode).not.toBeNull();
-	        expect(moEncode).toEqual(encode);
+	        // The two payload chunk encodings will not be equal because the
+	        // ciphertext and signature will be generated on-demand.
         });
     });
     
@@ -519,10 +521,7 @@ describe("PayloadChunk", function() {
 	        var payloadMo = encoder.parseObject(payload);
 	        expect(payloadMo.getLong(KEY_SEQUENCE_NUMBER)).toEqual(SEQ_NO);
 	        expect(payloadMo.getLong(KEY_MESSAGE_ID)).toEqual(MSG_ID);
-	        if (END_OF_MSG)
-	        	expect(payloadMo.getBoolean(KEY_END_OF_MESSAGE)).toBeTruthy();
-	        else
-	        	expect(payloadMo.getBoolean(KEY_END_OF_MESSAGE)).toBeFalsy();
+	        expect(payloadMo.optBoolean(KEY_END_OF_MESSAGE)).toEqual(END_OF_MSG);
 	        expect(payloadMo.getString(KEY_COMPRESSION_ALGORITHM)).toEqual(CompressionAlgorithm.LZW);
 	        var lzw = payloadMo.getBytes(KEY_DATA);
 	        var plaintext = uncompress(CompressionAlgorithm.LZW, lzw);
@@ -785,7 +784,7 @@ describe("PayloadChunk", function() {
         
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslMessageException(MslError.PAYLOAD_INVALID));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
@@ -1705,7 +1704,7 @@ describe("PayloadChunk", function() {
         
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslMessageException(MslError.PAYLOAD_DATA_CORRUPT));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     

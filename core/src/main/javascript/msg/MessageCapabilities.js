@@ -172,8 +172,8 @@ var MessageCapabilities$intersection;
             // Extract compression algorithms.
             var compressionAlgos = [];
             var algos = capabilitiesMo.optMslArray(KEY_COMPRESSION_ALGOS);
-            for (var i = 0; algos && i < algos.length; ++i) {
-                var algo = algos[i];
+            for (var i = 0; algos && i < algos.size(); ++i) {
+                var algo = algos.getString(i);
                 // Ignore unsupported algorithms.
                 if (MslConstants$CompressionAlgorithm[algo])
                     compressionAlgos.push(algo);
@@ -182,15 +182,15 @@ var MessageCapabilities$intersection;
             // Extract languages.
             var languages = [];
             var langs = capabilitiesMo.optMslArray(KEY_LANGUAGES);
-            for (var i = 0; langs && i < langs.length; ++i)
+            for (var i = 0; langs && i < langs.size(); ++i)
                 languages.push(langs.getString(i));
             
             // Extract encoder formats.
             var encoderFormats = [];
             var formats = capabilitiesMo.optMslArray(KEY_ENCODER_FORMATS);
-            for (var i = 0; formats && i < formats.length; ++i) {
+            for (var i = 0; formats && i < formats.size(); ++i) {
                 var format = formats.getString(i);
-                var encoderFormat = MslEncoderFormat.getFormat(format);
+                var encoderFormat = MslEncoderFormat$getFormat(format);
                 // Ignore unsupported formats.
                 if (encoderFormat)
                     encoderFormats.push(encoderFormat);

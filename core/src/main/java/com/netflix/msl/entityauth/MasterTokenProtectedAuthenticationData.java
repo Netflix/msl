@@ -161,8 +161,8 @@ public class MasterTokenProtectedAuthenticationData extends EntityAuthentication
     @Override
     public MslObject getAuthData(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException {
         // Return any cached object.
-        if (encodings.containsKey(format))
-            return encodings.get(format);
+        if (objects.containsKey(format))
+            return objects.get(format);
         
         // Grab master token crypto context.
         final ICryptoContext cryptoContext;
@@ -195,7 +195,7 @@ public class MasterTokenProtectedAuthenticationData extends EntityAuthentication
         // Cache and return the object.
         final byte[] encoded = encoder.encodeObject(mo, format);
         final MslObject decoded = encoder.parseObject(encoded);
-        encodings.put(format, decoded);
+        objects.put(format, decoded);
         return decoded;
     }
 
@@ -230,6 +230,6 @@ public class MasterTokenProtectedAuthenticationData extends EntityAuthentication
     /** Entity authentication data. */
     private final EntityAuthenticationData authdata;
     
-    /** Cached encodings. */
-    private final Map<MslEncoderFormat,MslObject> encodings = new HashMap<MslEncoderFormat,MslObject>();
+    /** Cached encoded objects. */
+    private final Map<MslEncoderFormat,MslObject> objects = new HashMap<MslEncoderFormat,MslObject>();
 }

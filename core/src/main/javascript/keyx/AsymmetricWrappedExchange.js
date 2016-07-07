@@ -192,40 +192,39 @@ var AsymmetricWrappedExchange$ResponseData$parse;
 
             // Reconstruct public key.
             try {
-                var encodedKey = base64$decode(encodedKeyB64);
                 switch (mechanism) {
-                case Mechanism.RSA:
-                case Mechanism.JWE_RSA:
-                case Mechanism.JWEJS_RSA:
-                case Mechanism.JWK_RSA:
-                {
-                    PublicKey$import(encodedKey, WebCryptoAlgorithm.RSA_OAEP, WebCryptoUsage.WRAP, {
-                        result: function(publicKey) {
-                            constructRequestData(keyPairId, mechanism, publicKey);
-                        },
-                        error: function(e) { callback.error(e); }
-                    });
-                    break;
-                }
-                case Mechanism.JWK_RSAES:
-                {
-                    PublicKey$import(encodedKey, WebCryptoAlgorithm.RSAES, WebCryptoUsage.WRAP, {
-                        result: function(publicKey) {
-                            constructRequestData(keyPairId, mechanism, publicKey);
-                        },
-                        error: function(e) { callback.error(e); }
-                    });
-                    break;
-                }
-                /* Does not currently work.
-                case Mechanism.ECC:
-                 */
-                default:
-                    throw new MslCryptoException(MslError.UNSUPPORTED_KEYX_MECHANISM, mechanism);
+	                case Mechanism.RSA:
+	                case Mechanism.JWE_RSA:
+	                case Mechanism.JWEJS_RSA:
+	                case Mechanism.JWK_RSA:
+	                {
+	                    PublicKey$import(encodedKey, WebCryptoAlgorithm.RSA_OAEP, WebCryptoUsage.WRAP, {
+	                        result: function(publicKey) {
+	                            constructRequestData(keyPairId, mechanism, publicKey);
+	                        },
+	                        error: callback.error,
+	                    });
+	                    break;
+	                }
+	                case Mechanism.JWK_RSAES:
+	                {
+	                    PublicKey$import(encodedKey, WebCryptoAlgorithm.RSAES, WebCryptoUsage.WRAP, {
+	                        result: function(publicKey) {
+	                            constructRequestData(keyPairId, mechanism, publicKey);
+	                        },
+	                        error: callback.error,
+	                    });
+	                    break;
+	                }
+	                /* Does not currently work.
+	                case Mechanism.ECC:
+	                 */
+	                default:
+	                    throw new MslCryptoException(MslError.UNSUPPORTED_KEYX_MECHANISM, mechanism);
                 }
             } catch (e) {
                 if (!(e instanceof MslException))
-                    throw new MslCryptoException(MslError.INVALID_PUBLIC_KEY, "keydata " + JSON.stringify(keyRequestJO), e);
+                    throw new MslCryptoException(MslError.INVALID_PUBLIC_KEY, "keydata " + keyRequestMo, e);
                 throw e;
             }
         });

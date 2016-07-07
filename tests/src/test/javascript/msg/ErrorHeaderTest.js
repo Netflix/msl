@@ -70,7 +70,7 @@ describe("ErrorHeader", function() {
     function isAboutNowSeconds(seconds) {
         var now = Date.now();
         var time = seconds * MILLISECONDS_PER_SECOND;
-        return (now - 1000 <= time && time <= now + 1000);
+        return (now - 2000 <= time && time <= now + 2000);
     }
     
     /** MSL context. */
@@ -99,7 +99,7 @@ describe("ErrorHeader", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 300);
+            waitsFor(function() { return ctx; }, "ctx", 900);
     		runs(function() {
     		    encoder = ctx.getMslEncoderFactory();
     			ctx.getEntityAuthenticationData(null, {
@@ -620,7 +620,7 @@ describe("ErrorHeader", function() {
         waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslMessageException(MslError.HEADER_SIGNATURE_INVALID));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
@@ -716,10 +716,8 @@ describe("ErrorHeader", function() {
         var exception;
         runs(function() {
 	        // This tests invalid but trusted error data so we must sign it.
-	        //
-	        // This differs from the Java unit tests because we cannot sign
-	        // empty ciphertext.
-            var errordata = new Uint8Array(0);
+            var errordata = new Uint8Array(1);
+            errordata[0] = 'x';
 	        errorHeaderMo.put(KEY_ERRORDATA, errordata);
 	        cryptoContext.sign(errordata, encoder, ENCODER_FORMAT, {
 	        	result: function(signature) {
@@ -736,13 +734,11 @@ describe("ErrorHeader", function() {
         waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
         	var f = function() { throw exception; };
-        	expect(f).toThrow(new MslCryptoException(MslError.NONE));
+        	expect(f).toThrow(new MslCryptoException(MslError.CIPHERTEXT_ENVELOPE_PARSE_ERROR));
         });
     });
     
-    // Not applicable because we cannot sign empty ciphertext with
-    // Web Crypto.
-    xit("empty errordata", function() {
+    it("empty errordata", function() {
         var errorHeader;
         runs(function() {
         	ErrorHeader$create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
@@ -933,7 +929,7 @@ describe("ErrorHeader", function() {
 
             Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
                 result: function() {},
-                error: function(x) { exception = x; },
+                error: function(e) { exception = e; },
             });
         });
         waitsFor(function() { return exception; }, "exception", 100);
@@ -1014,7 +1010,7 @@ describe("ErrorHeader", function() {
 
             Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
                 result: function() {},
-                error: function(x) { exception = x; },
+                error: function(e) { exception = e; },
             });
         });
         waitsFor(function() { return exception; }, "exception", 100);
@@ -1095,7 +1091,7 @@ describe("ErrorHeader", function() {
 
             Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
                 result: function() {},
-                error: function(x) { exception = x; },
+                error: function(e) { exception = e; },
             });
         });
         waitsFor(function() { return exception; }, "exception", 100);
@@ -1206,7 +1202,7 @@ describe("ErrorHeader", function() {
 
             Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
                 result: function() {},
-                error: function(x) { exception = x; },
+                error: function(e) { exception = e; },
             });
         });
         waitsFor(function() { return exception; }, "exception", 100);
@@ -1287,7 +1283,7 @@ describe("ErrorHeader", function() {
 
             Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
                 result: function() {},
-                error: function(x) { exception = x; },
+                error: function(e) { exception = e; },
             });
         });
         waitsFor(function() { return exception; }, "exception", 100);
@@ -1368,7 +1364,7 @@ describe("ErrorHeader", function() {
 
             Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
                 result: function() {},
-                error: function(x) { exception = x; },
+                error: function(e) { exception = e; },
             });
         });
         waitsFor(function() { return exception; }, "exception", 100);
@@ -1449,7 +1445,7 @@ describe("ErrorHeader", function() {
 
             Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
                 result: function() {},
-                error: function(x) { exception = x; },
+                error: function(e) { exception = e; },
             });
         });
         waitsFor(function() { return exception; }, "exception", 100);
@@ -1610,7 +1606,7 @@ describe("ErrorHeader", function() {
 
             Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
                 result: function() {},
-                error: function(x) { exception = x; },
+                error: function(e) { exception = e; },
             });
         });
         waitsFor(function() { return exception; }, "exception", 100);
@@ -1691,7 +1687,7 @@ describe("ErrorHeader", function() {
 
             Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
                 result: function() {},
-                error: function(x) { exception = x; },
+                error: function(e) { exception = e; },
             });
         });
         waitsFor(function() { return exception; }, "exception", 100);

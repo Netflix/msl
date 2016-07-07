@@ -72,7 +72,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return AES_128_KEY && AES_CMAC_KEY && ctx; }, "static initialization", 100);
+            waitsFor(function() { return AES_128_KEY && AES_CMAC_KEY && ctx; }, "static initialization", 900);
             runs(function() {
                 encoder = ctx.getMslEncoderFactory();
                 SYMMETRIC_CRYPTO_CONTEXT = new SymmetricCryptoContext(ctx, KEY_ID, AES_128_KEY, null, null);
@@ -293,7 +293,7 @@ describe("SymmetricCryptoContext", function() {
 
             var encode;
             runs(function() {
-                var envelopeMo = encoder.parseObject(envelopeMo);
+                var envelopeMo = encoder.parseObject(ciphertext);
                 envelopeMo.remove(KEY_CIPHERTEXT);
                 encoder.encodeObject(envelopeMo, ENCODER_FORMAT, {
                 	result: function(x) { encode = x; },

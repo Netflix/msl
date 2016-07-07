@@ -51,7 +51,7 @@ describe("KeyResponseData", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 900);
+            waitsFor(function() { return ctx; }, "ctx", 1200);
             
             runs(function() {
             	encoder = ctx.getMslEncoderFactory();
@@ -139,12 +139,21 @@ describe("KeyResponseData", function() {
         var hmacKey = new Uint8Array(0);
         var response = new SymmetricWrappedExchange$ResponseData(MASTER_TOKEN, SymmetricWrappedExchange$KeyId.PSK, encryptionKey, hmacKey);
         
+        var keydata;
+        runs(function() {
+        	response.getKeydata(encoder, ENCODER_FORMAT, {
+        		result: function(x) { keydata = x; },
+                error: function(e) { exception = e; },
+        	});
+        });
+        waitsFor(function() { return keydata; }, "keydata", 100);
+        
         var exception;
         runs(function() {
             var mo = encoder.createObject();
             mo.put(KEY_MASTER_TOKEN, encoder.createObject());
             mo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED.name);
-            mo.put(KEY_KEYDATA, response.getKeydata());
+            mo.put(KEY_KEYDATA, keydata);
             KeyResponseData$parse(ctx, mo, {
                 result: function(x) {},
                 error: function(e) { exception = e; },

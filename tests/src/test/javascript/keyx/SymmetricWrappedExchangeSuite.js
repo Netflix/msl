@@ -64,7 +64,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return pskCtx && unauthCtx; }, "MSL contexts", 100);
+            waitsFor(function() { return pskCtx && unauthCtx; }, "MSL contexts", 900);
             
 		    runs(function() {
 		    	encoder = pskCtx.getMslEncoderFactory();
@@ -1200,9 +1200,9 @@ describe("SymmetricWrappedExchangeSuite", function() {
         	});
         	waitsFor(function() { return keyxData; }, "keyxData not received", 100);
         	
-        	var keydata;
+        	var keyResponseData, keydata;
         	runs(function() {
-	            var keyResponseData = keyxData.keyResponseData;
+	            keyResponseData = keyxData.keyResponseData;
 	            keyResponseData.getKeydata(encoder, ENCODER_FORMAT, {
 	            	result: function(x) { keydata = x; },
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1242,9 +1242,9 @@ describe("SymmetricWrappedExchangeSuite", function() {
             });
             waitsFor(function() { return keyxData; }, "keyxData not received", 100);
         	
-        	var keydata;
+        	var keyResponseData, keydata;
         	runs(function() {
-	            var keyResponseData = keyxData.keyResponseData;
+	            keyResponseData = keyxData.keyResponseData;
 	            keyResponseData.getKeydata(encoder, ENCODER_FORMAT, {
 	            	result: function(x) { keydata = x; },
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }

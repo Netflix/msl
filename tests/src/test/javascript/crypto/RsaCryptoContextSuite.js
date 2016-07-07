@@ -911,7 +911,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return publicKeyA && privateKeyA; }, "publicKeyA && privateKeyA", 900);
+            waitsFor(function() { return publicKeyA && privateKeyA; }, "publicKeyA && privateKeyA", 1200);
 
             runs(function() {
                 // TODO: read from RSA_KEYPAIR_B.publicKey
@@ -924,7 +924,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function () { return publicKeyB && privateKeyB; }, "publicKeyB && privateKeyB", 900);
+            waitsFor(function () { return publicKeyB && privateKeyB; }, "publicKeyB && privateKeyB", 1200);
             
             runs(function() { initialized = true; });
         });

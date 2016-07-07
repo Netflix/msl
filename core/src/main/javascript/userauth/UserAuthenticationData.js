@@ -168,6 +168,7 @@ var UserAuthenticationData$parse;
                 var factory = ctx.getUserAuthenticationFactory(scheme);
                 if (!factory)
                     throw new MslUserAuthException(MslError.USERAUTH_FACTORY_NOT_FOUND, scheme.name);
+                var encoder = ctx.getMslEncoderFactory();
                 factory.createData(ctx, masterToken, userAuthMo.getMslObject(KEY_AUTHDATA, encoder), callback);
             } catch (e) {
                 if (e instanceof MslEncoderException)

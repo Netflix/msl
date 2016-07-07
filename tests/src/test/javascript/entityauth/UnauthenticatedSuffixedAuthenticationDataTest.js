@@ -53,7 +53,7 @@ describe("UnauthenticatedSuffixedAuthenticationData", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 100);
+            waitsFor(function() { return ctx; }, "ctx", 900);
             
             runs(function() {
                 encoder = ctx.getMslEncoderFactory();
@@ -88,11 +88,11 @@ describe("UnauthenticatedSuffixedAuthenticationData", function() {
         });
         waitsFor(function() { return encode; }, "encode", 100);
         
-        var moAuthdata;
+        var moData, moAuthdata;
         runs(function() {
             expect(encode).not.toBeNull();
         
-            var moData = UnauthenticatedSuffixedAuthenticationData$parse(authdata);
+            moData = UnauthenticatedSuffixedAuthenticationData$parse(authdata);
             expect(moData.getIdentity()).toEqual(data.getIdentity());
             expect(moData.root).toEqual(data.root);
             expect(moData.suffix).toEqual(data.suffix);
@@ -125,7 +125,7 @@ describe("UnauthenticatedSuffixedAuthenticationData", function() {
         var data = new UnauthenticatedSuffixedAuthenticationData(ROOT, SUFFIX);
         var mo;
         runs(function() {
-            MslTestUtils.toMslObject(data, {
+            MslTestUtils.toMslObject(encoder, data, {
                 result: function(x) { mo = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -170,12 +170,12 @@ describe("UnauthenticatedSuffixedAuthenticationData", function() {
         });
         waitsFor(function() { return entitydata }, "entitydata", 100);
 
-        var moAuthdata;
+        var moData, moAuthdata;
         runs(function() {
             expect(entitydata).not.toBeNull();
             expect(entitydata instanceof UnauthenticatedSuffixedAuthenticationData).toBeTruthy();
             
-            var moData = entitydata;
+            moData = entitydata;
             expect(moData.getIdentity()).toEqual(data.getIdentity());
             expect(moData.root).toEqual(data.root);
             expect(moData.suffix).toEqual(data.suffix);
@@ -186,6 +186,15 @@ describe("UnauthenticatedSuffixedAuthenticationData", function() {
             });
         });
         waitsFor(function() { return moAuthdata; }, "moAuthdata", 100);
+        
+        var authdata;
+        runs(function() {
+            data.getAuthData(encoder, ENCODER_FORMAT, {
+                result: function(x) { authdata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return authdata; }, "authdata", 100);
         
         var moEncode;
         runs(function() {

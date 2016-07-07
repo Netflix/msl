@@ -340,9 +340,9 @@ var MslArray;
             var o = this.opt(index);
             if (o instanceof Uint8Array)
                 return o;
-            if (defaultValue instanceof Uint8Array)
+            if (defaultValue instanceof Uint8Array || defaultValue === null)
                 return defaultValue;
-            return new Uint8Array();
+            return new Uint8Array(0);
         },
         
         /**
@@ -495,7 +495,7 @@ var MslArray;
                 return o;
             if (defaultValue instanceof String)
                 return defaultValue.valueOf();
-            if (typeof defaultValue === 'string')
+            if (typeof defaultValue === 'string' || defaultValue === null)
                 return defaultValue;
             return '';
         },

@@ -218,24 +218,24 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                 });
                 waitsFor(function() { return keydata; }, "keydata", 100);
 
-                var joReq;
+                var moReq;
                 runs(function() {
                 	expect(keydata).not.toBeNull();
                     RequestData$parse(keydata, {
-                        result: function(data) { joReq = data; },
+                        result: function(data) { moReq = data; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return joReq; }, "joReq not received", 100);
+                waitsFor(function() { return moReq; }, "moReq not received", 100);
 
                 var moKeydata;
                 runs(function() {
-                    expect(joReq.keyExchangeScheme).toEqual(req.keyExchangeScheme);
-                    expect(joReq.keyPairId).toEqual(req.keyPairId);
-                    expect(joReq.mechanism).toEqual(req.mechanism);
-                    expect(joReq.privateKey).toBeNull();
-                    expect(joReq.publicKey.getEncoded()).toEqual(req.publicKey.getEncoded());
-                    joReq.getKeydata(encoder, ENCODER_FORMAT, {
+                    expect(moReq.keyExchangeScheme).toEqual(req.keyExchangeScheme);
+                    expect(moReq.keyPairId).toEqual(req.keyPairId);
+                    expect(moReq.mechanism).toEqual(req.mechanism);
+                    expect(moReq.privateKey).toBeNull();
+                    expect(moReq.publicKey.getEncoded()).toEqual(req.publicKey.getEncoded());
+                    moReq.getKeydata(encoder, ENCODER_FORMAT, {
                     	result: function(x) { moKeydata = x; },
                     	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
@@ -657,7 +657,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             runs(function() {
                 expect(mo.getString(KEY_SCHEME)).toEqual(KeyExchangeScheme.ASYMMETRIC_WRAPPED.name);
                 
-            	MasterToken$parse(ctx, mo[KEY_MASTER_TOKEN], {
+            	MasterToken$parse(ctx, mo.getMslObject(KEY_MASTER_TOKEN, encoder), {
             		result: function(token) { masterToken = token; },
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
@@ -1323,10 +1323,10 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                 });
                 waitsFor(function() { return keyxData; }, "keyxData not received", 300);
 
-                var keydata;
+                var masterToken, keydata;
                 runs(function() {
                     var keyResponseData = keyxData.keyResponseData;
-                    var masterToken = keyResponseData.masterToken;
+                    masterToken = keyResponseData.masterToken;
 
                     keyResponseData.getKeydata(encoder, ENCODER_FORMAT, {
                     	result: function(x) { keydata = x; },
@@ -1369,10 +1369,10 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                 });
                 waitsFor(function() { return keyxData; }, "keyxData not received", 300);
 
-                var keydata;
+                var masterToken, keydata;
                 runs(function() {
                     var keyResponseData = keyxData.keyResponseData;
-                    var masterToken = keyResponseData.masterToken;
+                    masterToken = keyResponseData.masterToken;
 
                     keyResponseData.getKeydata(encoder, ENCODER_FORMAT, {
                     	result: function(x) { keydata = x; },

@@ -638,7 +638,7 @@ var MessageHeader$HeaderPeerData;
                         user = (userIdToken) ? userIdToken.user : null;
                         
                         // Set the creation timestamp.
-                        timestampSeconds = ctx.getTime() / MILLISECONDS_PER_SECOND;
+                        timestampSeconds = parseInt(ctx.getTime() / MILLISECONDS_PER_SECOND);
 
                         // Construct the header data.
                         try {
@@ -908,7 +908,7 @@ var MessageHeader$HeaderPeerData;
         
         function addServiceToken(tokensMa, index, callback) {
             AsyncExecutor(callback, function() {
-                if (index >= tokensMa.length()) {
+                if (index >= tokensMa.size()) {
                     var serviceTokens = new Array();
                     for (var key in serviceTokensMap)
                         serviceTokens.push(serviceTokensMap[key]);
@@ -921,7 +921,7 @@ var MessageHeader$HeaderPeerData;
                     tokenMo = tokensMa.getMslObject(index, encoder);
                 } catch (e) {
                     if (e instanceof MslEncoderException)
-                        throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + base64$encode(plaintext), e);
+                        throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + headerdata, e);
                     throw e;
                 }
                 ServiceToken$parse(ctx, tokenMo, masterToken, userIdToken, cryptoContexts, {
@@ -958,36 +958,51 @@ var MessageHeader$HeaderPeerData;
      *         object.
      */
     function getPeerToPeerTokens(ctx, headerdata, keyResponseData, cryptoContexts, callback) {
-        function getPeerMasterToken(ctx, headerdata, callback) {
+        function getPeerMasterToken(ctx, headerdataMo, callback) {
             AsyncExecutor(callback, function() {
                 try {
-                    if (!headerdata.has(KEY_PEER_MASTER_TOKEN))
+                    if (!headerdataMo.has(KEY_PEER_MASTER_TOKEN))
                         return null;
                     var encoder = ctx.getMslEncoderFactory();
-                    var peerMasterTokenMo = headerdata.getMslObject(KEY_PEER_MASTER_TOKEN, encoder);
+                    var peerMasterTokenMo = headerdataMo.getMslObject(KEY_PEER_MASTER_TOKEN, encoder);
                     MasterToken$parse(ctx, peerMasterTokenMo, callback);
                 } catch (e) {
                     if (e instanceof MslEncoderException)
-                        throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + headerdata, e);
+                        throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + headerdataMo, e);
                     throw e;
                 }
             });
         }
 
-        function getPeerUserIdToken(ctx, headerdataJO, masterToken, callback) {
+        function getPeerUserIdToken(ctx, headerdataMo, masterToken, callback) {
             AsyncExecutor(callback, function() {
                 try {
-                    if (!headerdata.has(KEY_PEER_USER_ID_TOKEN))
+                    if (!headerdataMo.has(KEY_PEER_USER_ID_TOKEN))
                         return null;
                     var encoder = ctx.getMslEncoderFactory();
-                    var peerUserIdTokenMo = headerdata.getMslObject(KEY_PEER_USER_ID_TOKEN, encoder)
+                    var peerUserIdTokenMo = headerdataMo.getMslObject(KEY_PEER_USER_ID_TOKEN, encoder)
                     UserIdToken$parse(ctx, peerUserIdTokenMo, masterToken, callback);
                 } catch (e) {
                     if (e instanceof MslEncoderException)
-                        throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + headerdata, e);
+                        throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + headerdataMo, e);
                     throw e;
                 }
             });
+        }
+        
+        function getPeerServiceTokens(ctx, headerdataMo, peerMasterToken, peerUserIdToken, cryptoContexts, callback) {
+        	AsyncExecutor(callback, function() {
+        		try {
+        			if (!headerdata.has(KEY_PEER_SERVICE_TOKENS))
+        				return [];
+        			var tokens = headerdata.getMslArray(KEY_PEER_SERVICE_TOKENS);
+                    getServiceTokens(ctx, tokens, peerMasterToken, peerUserIdToken, cryptoContexts, headerdataMo, callback);
+        		} catch (e) {
+        			if (e instanceof MslEncoderException)
+        				throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + headerdataMo, e);
+        			throw e;
+        		}
+        	});
         }
 
         AsyncExecutor(callback, function() {
@@ -1013,31 +1028,28 @@ var MessageHeader$HeaderPeerData;
                         // authenticated by a master token.
                         getPeerUserIdToken(ctx, headerdata, peerVerificationMasterToken, {
                             result: function(peerUserIdToken) {
-                                AsyncExecutor(callback, function() {
-                                    // Peer service tokens are authenticated by the peer master
-                                    // token if it exists or by the application crypto context.
-                                    var peerServiceTokensMa = headerdata.getMslArray(KEY_PEER_SERVICE_TOKENS);
-                                    getServiceTokens(ctx, peerServiceTokensJA, peerVerificationMasterToken, peerUserIdToken, cryptoContexts, headerdata, {
-                                        result: function(peerServiceTokens) {
-                                            AsyncExecutor(callback, function() {
-                                                return {
-                                                    peerMasterToken: peerMasterToken,
-                                                    peerUserIdToken: peerUserIdToken,
-                                                    peerServiceTokens: peerServiceTokens,
-                                                };
-                                            });
-                                        },
-                                        error: function(e) {
-                                            AsyncExecutor(callback, function() {
-                                                if (e instanceof MslException) {
-                                                    e.setMasterToken(peerVerificationMasterToken);
-                                                    e.setUserIdToken(peerUserIdToken);
-                                                }
-                                                throw e;
-                                            });
-                                        }
-                                    });
-                                });
+                            	// Peer service tokens are authenticated by the peer master
+                            	// token if it exists or by the application crypto context.
+                            	getPeerServiceTokens(ctx, headerdata, peerVerificationMasterToken, peerUserIdToken, cryptoContexts, {
+                            		result: function(peerServiceTokens) {
+                            			AsyncExecutor(callback, function() {
+                            				return {
+                            					peerMasterToken: peerMasterToken,
+                            					peerUserIdToken: peerUserIdToken,
+                            					peerServiceTokens: peerServiceTokens,
+                            				};
+                            			});
+                            		},
+                            		error: function(e) {
+                            			AsyncExecutor(callback, function() {
+                            				if (e instanceof MslException) {
+                            					e.setMasterToken(peerVerificationMasterToken);
+                            					e.setUserIdToken(peerUserIdToken);
+                            				}
+                            				throw e;
+                            			});
+                            		}
+                            	});
                             },
                             error: function(e) {
                                 AsyncExecutor(callback, function() {
@@ -1067,7 +1079,7 @@ var MessageHeader$HeaderPeerData;
 
         function addKeyRequestData(keyRequestDataMa, index) {
             AsyncExecutor(callback, function() {
-                if (index >= keyRequestDataMa.length())
+                if (index >= keyRequestDataMa.size())
                     return keyRequestData;
                 
                 var encoder = ctx.getMslEncoderFactory();
@@ -1235,7 +1247,7 @@ var MessageHeader$HeaderPeerData;
                         ? headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder)
                         : null;
                     userIdTokenMo = (headerdata.has(KEY_USER_ID_TOKEN))
-                        ? headerdata.getMslObject(KEY_USE_ID_TOKEN, encoder)
+                        ? headerdata.getMslObject(KEY_USER_ID_TOKEN, encoder)
                         : null;
                     userAuthDataMo = (headerdata.has(KEY_USER_AUTHENTICATION_DATA))
                         ? headerdata.getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder)

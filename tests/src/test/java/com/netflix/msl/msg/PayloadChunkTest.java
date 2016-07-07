@@ -435,8 +435,8 @@ public class PayloadChunkTest {
     
     @Test
     public void invalidPayload() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
-        thrown.expect(MslCryptoException.class);
-        thrown.expectMslError(MslError.PAYLOAD_VERIFICATION_FAILED);
+        thrown.expect(MslEncodingException.class);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT);
         final MslObject mo = MslTestUtils.toMslObject(encoder, chunk);

@@ -44,7 +44,7 @@ describe("PresharedAuthenticationData", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 100);
+            waitsFor(function() { return ctx; }, "ctx", 1200);
             
             runs(function() {
                 encoder = ctx.getMslEncoderFactory();
@@ -77,11 +77,11 @@ describe("PresharedAuthenticationData", function() {
         });
         waitsFor(function() { return encode; }, "encode", 100);
         
-        var moAuthdata;
+        var moData, moAuthdata;
         runs(function() {
             expect(encode).not.toBeNull();
             
-            var moData = PresharedAuthenticationData$parse(authdata);
+            moData = PresharedAuthenticationData$parse(authdata);
             expect(moData.getIdentity()).toEqual(data.getIdentity());
             expect(moData.scheme).toEqual(data.scheme);
             moData.getAuthData(encoder, ENCODER_FORMAT, {
@@ -113,7 +113,7 @@ describe("PresharedAuthenticationData", function() {
         
         var mo;
         runs(function() {
-            MslTestUtils.toMslObject(data, {
+            MslTestUtils.toMslObject(encoder, data, {
                 result: function(x) { mo = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -150,19 +150,19 @@ describe("PresharedAuthenticationData", function() {
         
         var entitydata;
         runs(function() {
-            EntityAuthenticationData$parse(ctx, jo, {
+            EntityAuthenticationData$parse(ctx, mo, {
                 result: function(x) { entitydata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
         waitsFor(function() { return entitydata; }, "entitydata", 100);
         
-        var moAuthdata;
+        var moData, moAuthdata;
         runs(function() {
             expect(entitydata).not.toBeNull();
             expect(entitydata instanceof PresharedAuthenticationData).toBeTruthy();
             
-            var moData = entitydata;
+            moData = entitydata;
             expect(moData.identity).toEqual(data.identity);
             expect(moData.scheme).toEqual(data.scheme);
             moData.getAuthData(encoder, ENCODER_FORMAT, {
@@ -172,10 +172,19 @@ describe("PresharedAuthenticationData", function() {
         });
         waitsFor(function() { return moAuthdata; }, "moAuthdata", 100);
         
+        var authdata;
+        runs(function() {
+            data.getAuthData(encoder, ENCODER_FORMAT, {
+                result: function(x) { authdata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return authdata; }, "authdata", 100);
+        
         var moEncode;
         runs(function() {
             expect(moAuthdata).not.toBeNull();
-            expect(moAuthdata).toEqual(data.getAuthData());
+            expect(moAuthdata).toEqual(authdata);
             moData.toMslEncoding(encoder, ENCODER_FORMAT, {
                 result: function(x) { moEncode = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },

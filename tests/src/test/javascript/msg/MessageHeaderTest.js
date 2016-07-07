@@ -280,7 +280,7 @@ describe("MessageHeader", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return trustedNetCtx && p2pCtx; }, "trustedNetCtx and p2pCtx", 900);
+            waitsFor(function() { return trustedNetCtx && p2pCtx; }, "trustedNetCtx and p2pCtx", 1200);
             
 			runs(function() {
 				encoder = trustedNetCtx.getMslEncoderFactory();
@@ -925,7 +925,7 @@ describe("MessageHeader", function() {
             expect(headerdata.getLong(KEY_NON_REPLAYABLE_ID)).toEqual(NON_REPLAYABLE_ID);
             expect(headerdata.getBoolean(KEY_RENEWABLE)).toEqual(RENEWABLE);
             expect(headerdata.getBoolean(KEY_HANDSHAKE)).toEqual(HANDSHAKE);
-            expect(headerdata.getMslObject(CAPABILITIES, encoder)).toEqual(CAPABILITIES_MO);
+            expect(headerdata.getMslObject(KEY_CAPABILITIES, encoder)).toEqual(CAPABILITIES_MO);
             expect(headerdata.getMslArray(KEY_KEY_REQUEST_DATA)).toEqual(PEER_KEY_REQUEST_DATA_MA);
             expect(headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder)).toEqual(PEER_KEY_RESPONSE_DATA_MO);
             expect(headerdata.has(KEY_SENDER)).toBeFalsy();
@@ -1032,7 +1032,7 @@ describe("MessageHeader", function() {
             expect(headerdata.has(KEY_NON_REPLAYABLE_ID)).toBeFalsy();
             expect(headerdata.getBoolean(KEY_RENEWABLE)).toEqual(RENEWABLE);
             expect(headerdata.getBoolean(KEY_HANDSHAKE)).toEqual(HANDSHAKE);
-            expect(headerdata.getMslObject(CAPABILITIES, encoder)).toEqual(CAPABILITIES_MO);
+            expect(headerdata.getMslObject(KEY_CAPABILITIES, encoder)).toEqual(CAPABILITIES_MO);
             expect(headerdata.getMslArray(KEY_KEY_REQUEST_DATA)).toEqual(PEER_KEY_REQUEST_DATA_MA);
             expect(headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder)).toEqual(PEER_KEY_RESPONSE_DATA_MO);
             expect(headerdata.has(KEY_SENDER)).toBeFalsy();
@@ -1179,7 +1179,7 @@ describe("MessageHeader", function() {
         runs(function() {
             expect(headerdata.getLong(KEY_NON_REPLAYABLE_ID)).toEqual(NON_REPLAYABLE_ID);
             expect(headerdata.getBoolean(KEY_RENEWABLE)).toEqual(RENEWABLE);
-            expect(headerdata.getBoolean(HANDSHAKE)).toEqual(HANDSHAKE);
+            expect(headerdata.getBoolean(KEY_HANDSHAKE)).toEqual(HANDSHAKE);
             expect(headerdata.getMslObject(KEY_CAPABILITIES, encoder)).toEqual(CAPABILITIES_MO);
             expect(headerdata.getMslArray(KEY_KEY_REQUEST_DATA)).toEqual(KEY_REQUEST_DATA_MA);
             expect(headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder)).toEqual(KEY_RESPONSE_DATA_MO);
@@ -1331,11 +1331,21 @@ describe("MessageHeader", function() {
 			});
 		});
 		waitsFor(function() { return serviceTokensMa; }, "service tokens", 100);
+		
+		var peerServiceTokensMa;
+		runs(function() {
+			MslEncoderUtils$createArray(trustedNetCtx, peerServiceTokens, {
+				result: function(x) { peerServiceTokensMa = x; },
+		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			});
+		});
+		waitsFor(function() { return peerServiceTokensMa; }, "peer service tokens", 100);
+		
 
         runs(function() {
             expect(headerdata.getLong(KEY_NON_REPLAYABLE_ID)).toEqual(NON_REPLAYABLE_ID);
             expect(headerdata.getBoolean(KEY_RENEWABLE)).toEqual(RENEWABLE);
-            expect(headerdata.getBoolean(HANDSHAKE)).toEqual(HANDSHAKE);
+            expect(headerdata.getBoolean(KEY_HANDSHAKE)).toEqual(HANDSHAKE);
             expect(headerdata.getMslObject(KEY_CAPABILITIES, encoder)).toEqual(CAPABILITIES_MO);
             expect(headerdata.getMslArray(KEY_KEY_REQUEST_DATA)).toEqual(PEER_KEY_REQUEST_DATA_MA);
             expect(headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder)).toEqual(PEER_KEY_RESPONSE_DATA_MO);
@@ -3100,7 +3110,7 @@ describe("MessageHeader", function() {
         waitsFor(function() { return exception; }, "exception not received", 100);
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslMessageException(MslError.HEADER_SIGNATURE_INVALID));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
 

@@ -148,7 +148,7 @@ describe("RsaAuthenticationFactory", function() {
         
         var plaintext = new Uint8Array(16);
         ctx.getRandom().nextBytes(plaintext);
-        cryptoContext.sign(plaintext, {
+        cryptoContext.sign(plaintext, encoder, ENCODER_FORMAT, {
             result: function(ciphertext) {},
             error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         });

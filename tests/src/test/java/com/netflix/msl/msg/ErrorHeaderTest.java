@@ -387,14 +387,15 @@ public class ErrorHeaderTest {
     
     @Test
     public void invalidErrordata() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
-        thrown.expect(MslMessageException.class);
-        thrown.expectMslError(MslError.HEADER_DATA_MISSING);
+        thrown.expect(MslCryptoException.class);
+        thrown.expectMslError(MslError.CIPHERTEXT_ENVELOPE_PARSE_ERROR);
 
         final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         
         // This tests invalid but trusted error data so we must sign it.
-        final byte[] errordata = new byte[0];
+        final byte[] errordata = new byte[1];
+        errordata[0] = 'x';
         errorHeaderMo.put(KEY_ERRORDATA, errordata);
         final byte[] signature = cryptoContext.sign(errordata, encoder, ENCODER_FORMAT);
         errorHeaderMo.put(KEY_SIGNATURE, signature);

@@ -670,7 +670,7 @@ var UserIdToken$parse;
 
                 // Return the new user ID token.
                 var creationData = new CreationData(userdata, tokendataBytes, signatureBytes, verified);
-                return new UserIdToken(ctx, renewalWindow, expiration, masterToken, serialNumber, issuerData, user, creationData);
+                return new UserIdToken(ctx, renewalWindow, expiration, masterToken, serialNumber, issuerdata, user, creationData);
             });
         }
     };

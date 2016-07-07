@@ -145,7 +145,7 @@ var KeyResponseData$parse;
      * @throws MslException if the key response master token expiration
      *         timestamp occurs before the renewal window.
      */
-    KeyResponseData$parse = function KeyResponseData$parse(ctx, keyResponseDataJO, callback) {
+    KeyResponseData$parse = function KeyResponseData$parse(ctx, keyResponseDataMo, callback) {
         AsyncExecutor(callback, function() {
             var encoder = ctx.getMslEncoderFactory();
             

@@ -178,64 +178,78 @@ var MessageInputStream$create;
          */
         init: function init(ctx, source, keyRequestData, cryptoContexts, timeout, callback) {
             var self = this;
+            
             InterruptibleExecutor(callback, function() {
-                var tokenizer = ctx.getMslEncoderFactory().createTokenizer(source);
-                
-                // Set properties.
-                var props = {
-                    _ctx: { value: ctx, writable: false, enumerable: false, configurable: false },
-                    _source: { value: source, writable: false, enumerable: false, configurable: false },
-                    _tokenizer: { value: tokenzier, writable: false, enumerable: false, configurable: false },
-                    _header: { value: undefined, writable: true, enumerable: false, configurable: false },
-                    _cryptoContext: { value: undefined, writable: true, enumerable: false, configurable: false },
-                    _keyxCryptoContext: { value: undefined, writable: true, enumerable: false, configurable: false },
-                    _payloadSequenceNumber: { value: 1, writable: true, enuemrable: false, configurable: false },
-                    _eom: { value: false, writable: true, enumerable: false, configurable: false },
-                    _handshake: { value: null, writable: true, enumerable: false, configurable: false },
-                    _closeSource: { value: false, writable: true, enumerable: false, configurable: false },
-                    /** @type {Array.<Uint8Array>} */
-                    _payloads: { value: new Array(), writable: true, enumerable: false, configurable: false },
-                    _payloadIndex: { value: -1, writable: true, enumerable: false, configurable: false },
-                    _payloadOffset: { value: 0, writable: true, enuemrable: false, configurable: false },
-                    _markOffset: { value: 0, writable: true, enumerable: false, configurable: false },
-                    _currentPayload: { value: null, writable: true, enumerable: false, configurable: false },
-                    _readException: { value: null, writable: true, enumerable: false, configurable: false },
-                    // Set true once the header has been read and payloads may
-                    // be read.
-                    _ready: { value: false, writable: true, enumerable: false, configurable: false },
-                    // Use a blocking queue as a semaphore.
-                    _readyQueue: { value: new BlockingQueue(), writable: false, enumerable: false, configurable: false },
-                    _aborted: { value: false, writable: true, enumerable: false, configurable: false },
-                    // If timed out reading the header then deliver the timeout
-                    // at the next operation.
-                    _timedout: { value: false, writable: true, enumerable: false, configurable: false },
-                    // If an error occurs while reading the header then deliver
-                    // it at the next operation.
-                    _errored: { value: null, writable: true, enumerable: false, configurable: false },
-                };
-                Object.defineProperties(this, props);
-                
-                this._tokenizer.more(-1, {
-                    result: function(available) {
-                        if (!available) {
-                            self._errored = new MslEncodingException(MslError.MESSAGE_DATA_MISSING);
-                            ready();
-                            return;
-                        }
-                        parseHeader();
-                    },
-                    error: function(e) {
-                        if (e instanceof MslEncoderException)
-                            e = new MslEncodingException(MslError.MSL_PARSE_ERROR, "header", e);
-                        self._errored = e;
-                        ready();
-                    }
-                });
-                
-                // Return this immediately instead of after reading the header
-                // so the read can be aborted.
-                return this;
+            	var encoder = ctx.getMslEncoderFactory();
+            	encoder.createTokenizer(source, null, timeout, {
+            		result: setProperties,
+            		timeout: callback.timeout,
+            		error: callback.error,
+            	})
             }, self);
+            
+            function setProperties(tokenizer) {
+            	InterruptibleExecutor(callback, function() {
+            		// Set properties.
+            		var props = {
+            			_ctx: { value: ctx, writable: false, enumerable: false, configurable: false },
+            			_source: { value: source, writable: false, enumerable: false, configurable: false },
+            			_tokenizer: { value: tokenizer, writable: false, enumerable: false, configurable: false },
+            			_header: { value: undefined, writable: true, enumerable: false, configurable: false },
+            			_cryptoContext: { value: undefined, writable: true, enumerable: false, configurable: false },
+            			_keyxCryptoContext: { value: undefined, writable: true, enumerable: false, configurable: false },
+            			_payloadSequenceNumber: { value: 1, writable: true, enuemrable: false, configurable: false },
+            			_eom: { value: false, writable: true, enumerable: false, configurable: false },
+            			_handshake: { value: null, writable: true, enumerable: false, configurable: false },
+            			_closeSource: { value: false, writable: true, enumerable: false, configurable: false },
+            			/** @type {Array.<Uint8Array>} */
+            			_payloads: { value: new Array(), writable: true, enumerable: false, configurable: false },
+            			_payloadIndex: { value: -1, writable: true, enumerable: false, configurable: false },
+            			_payloadOffset: { value: 0, writable: true, enuemrable: false, configurable: false },
+            			_markOffset: { value: 0, writable: true, enumerable: false, configurable: false },
+            			_currentPayload: { value: null, writable: true, enumerable: false, configurable: false },
+            			_readException: { value: null, writable: true, enumerable: false, configurable: false },
+            			// Set true once the header has been read and payloads may
+            			// be read.
+            			_ready: { value: false, writable: true, enumerable: false, configurable: false },
+            			// Use a blocking queue as a semaphore.
+            			_readyQueue: { value: new BlockingQueue(), writable: false, enumerable: false, configurable: false },
+            			_aborted: { value: false, writable: true, enumerable: false, configurable: false },
+            			// If timed out reading the header then deliver the timeout
+            			// at the next operation.
+            			_timedout: { value: false, writable: true, enumerable: false, configurable: false },
+            			// If an error occurs while reading the header then deliver
+            			// it at the next operation.
+            			_errored: { value: null, writable: true, enumerable: false, configurable: false },
+            		};
+            		Object.defineProperties(this, props);
+
+            		this._tokenizer.more(-1, {
+            			result: function(available) {
+            				if (!available) {
+            					self._errored = new MslEncodingException(MslError.MESSAGE_DATA_MISSING);
+            					ready();
+            					return;
+            				}
+            				parseHeader();
+            			},
+            			timeout: function() {
+            				self._timedout = true;
+            				ready();
+            			},
+            			error: function(e) {
+            				if (e instanceof MslEncoderException)
+            					e = new MslEncodingException(MslError.MSL_PARSE_ERROR, "header", e);
+            				self._errored = e;
+            				ready();
+            			}
+            		});
+
+            		// Return this immediately instead of after reading the header
+            		// so the read can be aborted.
+            		return this;
+            	}, self);
+            }
 
             function ready() {
                 self._ready = true;
@@ -253,6 +267,10 @@ var MessageInputStream$create;
                             }
                         });
                     },
+        			timeout: function() {
+        				self._timedout = true;
+        				ready();
+        			},
                     error: function(e) {
                         if (e instanceof MslEncoderException)
                             e = new MslEncodingException(MslError.MSL_PARSE_ERROR, "header", e);
@@ -590,7 +608,9 @@ var MessageInputStream$create;
          * Retrieve the next MSL object.
          * 
          * @param {number} timeout read timeout in milliseconds.
-         * @return {MslObject} the next MSL object or null if none remaining.
+         * @param {{result: function(MslObject), timeout: function(), error: function(Error)}}
+         *        callback the callback that will receive the next MSL object
+         *        or null if none remaining, or any thrown exceptions.
          * @throws MslEncodingException if there is a problem parsing the data.
          */
         nextMslObject: function nextMslObject(timeout, callback) {
@@ -616,6 +636,7 @@ var MessageInputStream$create;
                             }
                             this._tokenizer.nextObject(-1, {
                                 result: callback.result,
+                                timeout: callback.timeout,
                                 error: function(e) {
                                     InterruptibleExecutor(callback, function() {
                                         if (e instanceof MslEncoderException)
@@ -626,6 +647,7 @@ var MessageInputStream$create;
                             });
                         }, self);
                     },
+                    timeout: callback.timeout,
                     error: function(e) {
                         InterruptibleExecutor(callback, function() {
                             if (e instanceof MslEncoderException)
@@ -674,7 +696,7 @@ var MessageInputStream$create;
                     result: function(payloadMo) {
                         InterruptibleExecutor(callback, function() {
                             if (!payloadMo) return null;
-                            PayloadChunk$parse(payloadMo, this._cryptoContext, {
+                            PayloadChunk$parse(this._ctx, payloadMo, this._cryptoContext, {
                                 result: function(payload) {
                                     InterruptibleExecutor(callback, function() {
                                         // Make sure the payload belongs to this message and is the one
@@ -793,8 +815,11 @@ var MessageInputStream$create;
          * once the old behavior of inferred handshake messages based on a single
          * empty payload chunk is no longer supported.
          *
-         * @return {boolean} true if the message is a handshake message or
-         *         undefined if aborted.
+         * @param {number} timeout read timeout in milliseconds or -1 for no
+         *        timeout.
+         * @param {{result: function(boolean), timeout: function(), error: function(Error)}}
+         *        callback the callback that will receive true if the message
+         *        is a handshake message or any thrown exceptions.
          * @throws MslCryptoException if there is a problem decrypting or verifying
          *         the payload chunk.
          * @throws MslEncodingException if there is a problem parsing the data.

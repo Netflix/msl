@@ -48,7 +48,7 @@ describe("MessageCapabilities", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 100);
+            waitsFor(function() { return ctx; }, "ctx", 900);
             
             runs(function() {
                 encoder = ctx.getMslEncoderFactory();
@@ -72,11 +72,11 @@ describe("MessageCapabilities", function() {
         });
         waitsFor(function() { return encode; }, "encode", 100);
         
-        var moEncode;
+        var moCaps, moEncode;
         runs(function() {
             expect(encode).not.toBeNull();
 
-            var moCaps = MessageCapabilities$parse(encoder.parseObject(encode));
+            moCaps = MessageCapabilities$parse(encoder.parseObject(encode));
             expect(moCaps.compressionAlgorithms).toEqual(caps.compressionAlgorithms);
             expect(moCaps.languages).toEqual(caps.languages);
             expect(moCaps.encoderFormats).toEqual(caps.encoderFormats);
@@ -113,11 +113,11 @@ describe("MessageCapabilities", function() {
         });
         waitsFor(function() { return encode; }, "encode", 100);
         
-        var moEncode;
+        var moCaps, moEncode;
         runs(function() {
             expect(encode).not.toBeNull();
             
-            var moCaps = MessageCapabilities$parse(encoder.parseObject(encode));
+            moCaps = MessageCapabilities$parse(encoder.parseObject(encode));
             expect(moCaps.compressionAlgorithms).toEqual(caps.compressionAlgorithms);
             expect(moCaps.languages).toEqual(caps.languages);
             expect(moCaps.encoderFormats).toEqual(caps.encoderFormats);
@@ -175,9 +175,9 @@ describe("MessageCapabilities", function() {
         });
         waitsFor(function() { return encode; }, "encode", 100);
         
-        var moEncode;
+        var moCaps, moEncode;
         runs(function() {
-            var moCaps = MessageCapabilities$parse(encoder.parseObject(encode));
+            moCaps = MessageCapabilities$parse(encoder.parseObject(encode));
             expect(moCaps.compressionAlgorithms).toEqual(caps.compressionAlgorithms);
             expect(moCaps.languages).toEqual(caps.languages);
             expect(moCaps.encoderFormats).toEqual(caps.encoderFormats);
@@ -214,9 +214,9 @@ describe("MessageCapabilities", function() {
         });
         waitsFor(function() { return encode; }, "encode", 100);
         
-        var moEncode;
+        var moCaps, moEncode;
         runs(function() {
-            var moCaps = MessageCapabilities$parse(encoder.parseObject(encode));
+            moCaps = MessageCapabilities$parse(encoder.parseObject(encode));
             expect(moCaps.compressionAlgorithms).toEqual(caps.compressionAlgorithms);
             expect(moCaps.languages).toEqual(caps.languages);
             expect(moCaps.encoderFormats).toEqual(caps.encoderFormats);

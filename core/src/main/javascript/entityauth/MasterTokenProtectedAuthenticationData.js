@@ -81,10 +81,10 @@ var MasterTokenProtectedAuthenticationData$parse;
                 masterToken: { value: masterToken, writable: false, enumerable: false, configurable: false },
                 authdata: { value: authdata, writable: false, enumerable: false, configurable: false },
                 /**
-                 * Cached encodings.
+                 * Cached encoded objects.
                  * @type {Object.<MslEncoderFormat,MslObject>}
                  */
-                encodings: { value: {}, writable: false, enumerable: false, configurable: false },
+                objects: { value: {}, writable: false, enumerable: false, configurable: false },
             };
             Object.defineProperties(this, props);
         },
@@ -109,17 +109,17 @@ var MasterTokenProtectedAuthenticationData$parse;
             
             AsyncExecutor(callback, function() {
                 // Return any cached object.
-                if (encodings[format])
-                    return encodings[format];
+                if (this.objects[format])
+                    return this.objects[format];
                 
                 // Grab master token crypto context.
                 var cryptoContext;
                 try {
-                    var cachedCryptoContext = ctx.getMslStore().getCryptoContext(masterToken);
+                    var cachedCryptoContext = this.ctx.getMslStore().getCryptoContext(this.masterToken);
                     if (cachedCryptoContext)
                         cryptoContext = cachedCryptoContext;
                     else
-                        cryptoContext = new SessionCryptoContext(ctx, masterToken);
+                        cryptoContext = new SessionCryptoContext(this.ctx, this.masterToken);
                 } catch (e) {
                     if (e instanceof MslMasterTokenException)
                         throw new MslEntityAuthException(MslError.ENTITYAUTH_MASTERTOKEN_NOT_DECRYPTED, e);
@@ -127,7 +127,7 @@ var MasterTokenProtectedAuthenticationData$parse;
                 }
                 
                 // Encrypt and sign the authentication data.
-                authdata.toMslEncoding(encoder, format, {
+                this.authdata.toMslEncoding(encoder, format, {
                     result: function(plaintext) {
                         cryptoContext.encrypt(plaintext, encoder, format, {
                             result: function(ciphertext) {
@@ -136,7 +136,7 @@ var MasterTokenProtectedAuthenticationData$parse;
                                         AsyncExecutor(callback, function() {
                                             // Return the authentication data.
                                             var mo = encoder.createObject();
-                                            mo.put(KEY_MASTER_TOKEN, masterToken);
+                                            mo.put(KEY_MASTER_TOKEN, this.masterToken);
                                             mo.put(KEY_AUTHENTICATION_DATA, ciphertext);
                                             mo.put(KEY_SIGNATURE, signature);
 
@@ -145,7 +145,7 @@ var MasterTokenProtectedAuthenticationData$parse;
                                             	result: function(encoded) {
                                             		AsyncExecutor(callback, function() {
 	                                                    var decoded = encoder.parseObject(encoded);
-	                                                    encodings[format] = decoded;
+	                                                    this.objects[format] = decoded;
 	                                                    return decoded;
                                             		}, self);
                                             	},
@@ -209,7 +209,7 @@ var MasterTokenProtectedAuthenticationData$parse;
      * instance from the provided JSON object.</p>
      * 
      * @param {MslContext} ctx MSL context.
-     * @param {MslObject} authdataJO the authentication data JSON object.
+     * @param {MslObject} authdataMo the authentication data JSON object.
      * @param {{result: function(MasterTokenProtectedAuthenticationData), error: function(Error)}}
      *        callback the callback that will receive the authentication
      *        data or any thrown exceptions.
@@ -222,7 +222,7 @@ var MasterTokenProtectedAuthenticationData$parse;
      *         the master token crypto context cannot be found in the MSL store
      *         and cannot be created.
      */
-    MasterTokenProtectedAuthenticationData$parse = function MasterTokenProtectedAuthenticationData$parse(ctx, authdataJO, callback) {
+    MasterTokenProtectedAuthenticationData$parse = function MasterTokenProtectedAuthenticationData$parse(ctx, authdataMo, callback) {
         AsyncExecutor(callback, function() {
             var encoder = ctx.getMslEncoderFactory();
             
@@ -239,7 +239,7 @@ var MasterTokenProtectedAuthenticationData$parse;
             }
             
             // Reconstruct master token.
-            MasterToken$parse(ctx, masterTokenJo, {
+            MasterToken$parse(ctx, masterTokenMo, {
                 result: function(masterToken) {
                     AsyncExecutor(callback, function() {
                         // Grab master token crypto context.
@@ -273,7 +273,7 @@ var MasterTokenProtectedAuthenticationData$parse;
                                                         throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "master token protected authdata " + authdataMo, e);
                                                     throw e;
                                                 }
-                                                EntityAuthenticationData$parse(ctx, internalAuthdataJO, {
+                                                EntityAuthenticationData$parse(ctx, internalAuthdataMo, {
                                                     result: function(internalAuthdata) {
                                                         AsyncExecutor(callback, function() {
                                                             return new MasterTokenProtectedAuthenticationData(ctx, masterToken, internalAuthdata);
@@ -294,7 +294,7 @@ var MasterTokenProtectedAuthenticationData$parse;
                 error: function(e) {
                     AsyncExecutor(callback, function() {
                         if (e instanceof MslException)
-                            throw new MslEntityAuthException(MslError.ENTITYAUTH_MASTERTOKEN_INVALID, "master token protected authdata " + JSON.stringify(authdataJO), e);
+                            throw new MslEntityAuthException(MslError.ENTITYAUTH_MASTERTOKEN_INVALID, "master token protected authdata " + authdataMo, e);
                         throw e;
                     });
                 }

@@ -46,7 +46,7 @@ describe("UnauthenticatedAuthenticationData", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 100);
+            waitsFor(function() { return ctx; }, "ctx", 900);
             
             runs(function() {
                 encoder = ctx.getMslEncoderFactory();
@@ -79,11 +79,11 @@ describe("UnauthenticatedAuthenticationData", function() {
         });
         waitsFor(function() { return encode; }, "encode", 100);
         
-        var moAuthdata;
+        var moData, moAuthdata;
         runs(function() {
             expect(encode).not.toBeNull();
 
-            var moData = UnauthenticatedAuthenticationData$parse(authdata);
+            moData = UnauthenticatedAuthenticationData$parse(authdata);
             expect(moData.getIdentity()).toEqual(data.getIdentity());
             expect(moData.scheme).toEqual(data.scheme);
             moData.getAuthData(encoder, ENCODER_FORMAT, {
@@ -115,7 +115,7 @@ describe("UnauthenticatedAuthenticationData", function() {
         
         var mo;
         runs(function() {
-            MslTestUtils.toMslObject(data, {
+            MslTestUtils.toMslObject(encoder, data, {
                 result: function(x) { mo = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -159,12 +159,12 @@ describe("UnauthenticatedAuthenticationData", function() {
         });
         waitsFor(function() { return entitydata }, "entitydata", 100);
 
-        var moAuthdata;
+        var moData, moAuthdata;
         runs(function() {
             expect(entitydata).not.toBeNull();
             expect(entitydata instanceof UnauthenticatedAuthenticationData).toBeTruthy();
 
-            var moData = entitydata;
+            moData = entitydata;
             expect(moData.getIdentity()).toEqual(data.getIdentity());
             expect(moData.scheme).toEqual(data.scheme);
             moData.getAuthData(encoder, ENCODER_FORMAT, {
@@ -173,6 +173,15 @@ describe("UnauthenticatedAuthenticationData", function() {
             });
         });
         waitsFor(function() { return moAuthdata; }, "moAuthdata", 100);
+        
+        var authdata;
+        runs(function() {
+            data.getAuthData(encoder, ENCODER_FORMAT, {
+                result: function(x) { authdata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return authdata; }, "authdata", 100);
         
         var moEncode;
         runs(function() {
