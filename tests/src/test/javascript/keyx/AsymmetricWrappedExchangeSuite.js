@@ -1340,7 +1340,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     var wrappedEncryptionKey = keydata.getBytes(KEY_ENCRYPTION_KEY);
                     //  I think I have to change length - 2 because of padding.
                     ++wrappedEncryptionKey[wrappedEncryptionKey.length-2];
-                    keydata.put(KEY_ENCRYPTION_KEY, base64$encode(wrappedEncryptionKey));
+                    keydata.put(KEY_ENCRYPTION_KEY, wrappedEncryptionKey);
                     var wrappedHmacKey = keydata.getBytes(KEY_HMAC_KEY);
 
                     var invalidKeyResponseData = new ResponseData(masterToken, KEYPAIR_ID, wrappedEncryptionKey, wrappedHmacKey);
@@ -1386,7 +1386,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     var wrappedHmacKey = keydata.getBytes(KEY_HMAC_KEY);
                     //  I think I have to change length - 2 because of padding.
                     ++wrappedHmacKey[wrappedHmacKey.length-2];
-                    keydata.put(KEY_HMAC_KEY, base64$encode(wrappedHmacKey));
+                    keydata.put(KEY_HMAC_KEY, wrappedHmacKey);
                     var wrappedEncryptionKey = keydata.getBytes(KEY_ENCRYPTION_KEY);
 
                     var invalidKeyResponseData = new ResponseData(masterToken, KEYPAIR_ID, wrappedEncryptionKey, wrappedHmacKey);
