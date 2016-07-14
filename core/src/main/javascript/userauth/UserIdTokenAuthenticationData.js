@@ -72,12 +72,21 @@ var UserIdTokenAuthenticationData$parse;
 
         /** @inheritDoc */
         getAuthData: function getAuthData(encoder, format, callback) {
+        	var self = this;
+        	
             AsyncExecutor(callback, function() {
                 var authdata = encoder.createObject();
                 authdata.put(KEY_MASTER_TOKEN, this.masterToken);
                 authdata.put(KEY_USER_ID_TOKEN, this.userIdToken);
-                return authdata;
-            }, this);
+                encoder.encodeObject(authdata, format, {
+                	result: function(encode) {
+                		AsyncExecutor(callback, function() {
+                			return encoder.parseObject(encode);
+                		}, self);
+                	},
+                	error: callback.error,
+                });
+            }, self);
         },
 
         /** @inheritDoc */
@@ -107,7 +116,7 @@ var UserIdTokenAuthenticationData$parse;
         AsyncExecutor(callback, function() {
             // Extract master token and user ID token representations.
             var encoder = ctx.getMslEncoderFactory();
-            var masterTokenJo, userIdTokenMo;
+            var masterTokenMo, userIdTokenMo;
             try {
                 masterTokenMo = userIdTokenAuthMo.getMslObject(KEY_MASTER_TOKEN, encoder);
                 userIdTokenMo = userIdTokenAuthMo.getMslObject(KEY_USER_ID_TOKEN, encoder);
@@ -130,7 +139,7 @@ var UserIdTokenAuthenticationData$parse;
                         error: function(e) {
                             AsyncExecutor(callback, function() {
                                 if (e instanceof MslException)
-                                    throw new MslUserAuthException(MslError.USERAUTH_USERIDTOKEN_INVALID, "user ID token authdata " + JSON.stringify(userIdTokenAuthJO), e);
+                                    throw new MslUserAuthException(MslError.USERAUTH_USERIDTOKEN_INVALID, "user ID token authdata " + userIdTokenAuthMo, e);
                                 throw e;
                             });
                         },
@@ -139,7 +148,7 @@ var UserIdTokenAuthenticationData$parse;
                 error: function(e) {
                     AsyncExecutor(callback, function() {
                         if (e instanceof MslException)
-                            throw new MslUserAuthException(MslError.USERAUTH_MASTERTOKEN_INVALID, "user ID token authdata " + JSON.stringify(userIdTokenAuthJO), e);
+                            throw new MslUserAuthException(MslError.USERAUTH_MASTERTOKEN_INVALID, "user ID token authdata " + userIdTokenAuthMo, e);
                         throw e;
                     });
                 },

@@ -309,7 +309,7 @@ public class JsonWebKeyLadderExchangeSuite {
         @Test
         public void wrapInvalidWrapdata() throws MslCryptoException, MslKeyExchangeException, MslEncodingException, MslException, MslEncoderException {
             thrown.expect(MslKeyExchangeException.class);
-            thrown.expectMslError(MslError.KEYX_INVALID_WRAPDATA);
+            thrown.expectMslError(MslError.KEYX_WRAPPING_KEY_MISSING);
 
             final RequestData req = new RequestData(Mechanism.WRAP, WRAPDATA);
             final MslObject keydata = req.getKeydata(encoder, ENCODER_FORMAT);

@@ -2295,7 +2295,7 @@ describe("MessageBuilder", function() {
 		var RSA_PRIVATE_KEY;
 		var CRYPTO_CONTEXTS = {};
 
-		var ISSUER_DATA = encoder.parseObject(textEncoding$getBytes("{ issuerid: 17 }"));
+		var ISSUER_DATA;
 		var USER = MockEmailPasswordAuthenticationFactory.USER;
         
         /**
@@ -2316,6 +2316,8 @@ describe("MessageBuilder", function() {
             
 		    if (!initialized) {
 		        runs(function() {
+		        	ISSUER_DATA = encoder.parseObject(textEncoding$getBytes("{ \"issuerid\" : 17 }"));
+		        	
 		            MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSA_OAEP, WebCryptoUsage.WRAP_UNWRAP, 2048, {
 		                result: function(publicKey, privateKey) {
 		                    RSA_PUBLIC_KEY = publicKey;
@@ -4933,8 +4935,7 @@ describe("MessageBuilder", function() {
 				// won't have it.
 				expect(responseUserIdToken.mtSerialNumber).toEqual(unverifiedUserIdToken.mtSerialNumber);
 				expect(responseUserIdToken.serialNumber).toEqual(unverifiedUserIdToken.serialNumber);
-				expect(responseUserIdToken.renewalWindow).toEqual(unverifiedUserIdToken.renewalWindow);
-				expect(responseUserIdToken.expiration).toEqual(unverifiedUserIdToken.expiration);
+				expect(responseUserIdToken.isExpired(null)).toBeFalsy();
 			});
 		});
 

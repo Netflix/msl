@@ -57,7 +57,7 @@ describe("UserIdToken", function() {
     var EXPIRATION = new Date(Date.now() + 180000);
     var MASTER_TOKEN;
     var SERIAL_NUMBER = 42;
-    var ISSUER_DATA = { issuerid: 17 };
+    var ISSUER_DATA;
     var USER = MockEmailPasswordAuthenticationFactory.USER;
     
     var initialized = false;
@@ -69,13 +69,14 @@ describe("UserIdToken", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 100);
+            waitsFor(function() { return ctx; }, "ctx", 900);
     		runs(function() {
     			encoder = ctx.getMslEncoderFactory();
     			MslTestUtils.getMasterToken(ctx, 1, 1, {
     				result: function(token) { MASTER_TOKEN = token; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     			});
+    			ISSUER_DATA = encoder.parseObject(textEncoding$getBytes("{ \"issuerid\" : 17 }"));
     		});
     		waitsFor(function() { return MASTER_TOKEN; }, "master token", 100);
     		runs(function() { initialized = true; });
@@ -105,7 +106,7 @@ describe("UserIdToken", function() {
 	        expect(userIdToken.mtSerialNumber).toEqual(MASTER_TOKEN.serialNumber);
 	        expect(userIdToken.renewalWindow.getTime() / MILLISECONDS_PER_SECOND).toEqual(Math.floor(RENEWAL_WINDOW.getTime() / MILLISECONDS_PER_SECOND));
 	        expect(userIdToken.serialNumber).toEqual(SERIAL_NUMBER);
-	        userIdToken.toMslEncodingFormat(encoder, ENCODER_FORMAT, {
+	        userIdToken.toMslEncoding(encoder, ENCODER_FORMAT, {
 	        	result: function(x) { encode = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
@@ -263,7 +264,7 @@ describe("UserIdToken", function() {
         runs(function() {
         	MslTestUtils.toMslObject(encoder, userIdToken, {
         		result: function(mo) {
-        			UserIdToken$parse(ctx, mo, joMasterToken, {
+        			UserIdToken$parse(ctx, mo, null, {
         				result: function() {},
         				error: function(e) { exception = e; },
         			});
@@ -1101,13 +1102,13 @@ describe("UserIdToken", function() {
         });
         waitsFor(function() { return mo; }, "mo", 100);
 
-        var modifiedTokendata;
+        var cryptoContext, modifiedTokendata;
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        tokendataMo.put(KEY_USERDATA, "x");
 	        
-	        var cryptoContext = ctx.getMslCryptoContext();
+	        cryptoContext = ctx.getMslCryptoContext();
 	        encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
 	        	result: function(x) { modifiedTokendata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1134,7 +1135,7 @@ describe("UserIdToken", function() {
     	
 	    runs(function() {
 	        var f = function() { throw exception; };
-	        expect(f).toThrow(new MslException(MslError.USERIDTOKEN_USERDATA_INVALID));
+	        expect(f).toThrow(new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR));
 	    });
     });
     
@@ -1157,12 +1158,12 @@ describe("UserIdToken", function() {
         });
         waitsFor(function() { return mo; }, "mo", 100);
 
-        var modifiedTokendata;
+        var cryptoContext, modifiedTokendata;
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
 	
-	        var cryptoContext = ctx.getMslCryptoContext();
+	        cryptoContext = ctx.getMslCryptoContext();
 	        var ciphertext = new Uint8Array(0);
 	        tokendataMo.put(KEY_USERDATA, ciphertext);
 	        encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
@@ -1214,7 +1215,7 @@ describe("UserIdToken", function() {
         });
         waitsFor(function() { return mo; }, "mo", 100);
 
-        var modifiedTokendata;
+        var cryptoContext, modifiedTokendata;
         runs(function() {
 	        // This is testing user data that is verified but corrupt.
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
@@ -1223,7 +1224,7 @@ describe("UserIdToken", function() {
 	        ++userdata[userdata.length-1];
 	        tokendataMo.put(KEY_USERDATA, userdata);
 	        
-	        var cryptoContext = ctx.getMslCryptoContext();
+	        cryptoContext = ctx.getMslCryptoContext();
 	        encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
 	        	result: function(x) { modifiedTokendata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1273,7 +1274,7 @@ describe("UserIdToken", function() {
         });
         waitsFor(function() { return mo; }, "mo", 100);
 
-        var modifiedUserdata;
+        var exception;
         runs(function() {
 	        var cryptoContext = ctx.getMslCryptoContext();
 	        
@@ -1570,7 +1571,7 @@ describe("UserIdToken", function() {
 
         var encode;
         runs(function() {
-        	userIdToken.toMslEncodingFormat(encoder, ENCODER_FORMAT, {
+        	userIdToken.toMslEncoding(encoder, ENCODER_FORMAT, {
         		result: function(x) { encode = x; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});

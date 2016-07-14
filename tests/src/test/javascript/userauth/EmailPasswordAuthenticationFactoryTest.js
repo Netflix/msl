@@ -47,7 +47,7 @@ describe("EmailPasswordAuthenticationFactory", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return factory && ctx; }, "static initialization", 100);
+            waitsFor(function() { return ctx; }, "ctx", 900);
             runs(function() {
             	encoder = ctx.getMslEncoderFactory();
                 var store = new MockEmailPasswordStore();

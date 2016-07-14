@@ -19,7 +19,7 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var ByteArrayOutputStream = util.Class.create({
+var ByteArrayOutputStream = OutputStream.extend({
     /**
      * Create a new byte array output stream.
      */

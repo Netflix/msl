@@ -748,15 +748,15 @@ var MasterToken$parse;
             AsyncExecutor(callback, function() {
                 // Pull the session data.
                 var sessiondata, issuerdata, identity;
-                var encryptionBytes, signatureBytes;
+                var rawEncryptionKey, rawSignatureKey;
                 var encryptionAlgo, signatureAlgo;
                 try {
                     sessiondata = encoder.parseObject(plaintext);
                     issuerdata = (sessiondata.has(KEY_ISSUER_DATA)) ? sessiondata.getMslObject(KEY_ISSUER_DATA, encoder) : null;
                     identity = sessiondata.getString(KEY_IDENTITY);
-                    encryptionBytes = sessiondata.getBytes(KEY_ENCRYPTION_KEY);
+                    rawEncryptionKey = sessiondata.getBytes(KEY_ENCRYPTION_KEY);
                     encryptionAlgo = sessiondata.optString(KEY_ENCRYPTION_ALGORITHM, MslConstants$EncryptionAlgo.AES);
-                    signatureBytes = (sessiondata.has(KEY_SIGNATURE_KEY))
+                    rawSignatureKey = (sessiondata.has(KEY_SIGNATURE_KEY))
                         ? sessiondata.getBytes(KEY_SIGNATURE_KEY)
                         : sessiondata.getBytes(KEY_HMAC_KEY);
                     signatureAlgo = sessiondata.optString(KEY_SIGNATURE_ALGORITHM, MslConstants$SignatureAlgo.HmacSHA256);
@@ -773,9 +773,9 @@ var MasterToken$parse;
                     throw new MslCryptoException(MslError.UNIDENTIFIED_ALGORITHM, "encryption algorithm: " + encryptionAlgo + "; signature algorithm: " + signatureAlgo);
                 
                 // Reconstruct keys.
-                CipherKey$import(encryptionBytes, wcEncryptionAlgo, WebCryptoUsage.ENCRYPT_DECRYPT, {
+                CipherKey$import(rawEncryptionKey, wcEncryptionAlgo, WebCryptoUsage.ENCRYPT_DECRYPT, {
                     result: function(encryptionKey) {
-                        CipherKey$import(signatureBytes, wcSignatureAlgo, WebCryptoUsage.SIGN_VERIFY, {
+                        CipherKey$import(rawSignatureKey, wcSignatureAlgo, WebCryptoUsage.SIGN_VERIFY, {
                             result: function(signatureKey) {
                                 constructToken(cryptoContext, encoder, tokendataBytes, signatureBytes, verified,
                                     renewalWindow, expiration, sequenceNumber, serialNumber,

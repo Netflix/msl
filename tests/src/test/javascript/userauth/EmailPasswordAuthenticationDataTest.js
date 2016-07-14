@@ -46,7 +46,7 @@ describe("EmailPasswordAuthenticationData", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 100);
+            waitsFor(function() { return ctx; }, "ctx", 900);
             runs(function() {
                 encoder = ctx.getMslEncoderFactory();
                 initialized = true;
@@ -79,9 +79,9 @@ describe("EmailPasswordAuthenticationData", function() {
         });
         waitsFor(function() { return encode; }, "encode", 100);
         
-        var moAuthdata;
+        var moData, moAuthdata;
         runs(function() {
-            var moData = EmailPasswordAuthenticationData$parse(authdata);
+            moData = EmailPasswordAuthenticationData$parse(authdata);
             expect(moData.scheme).toEqual(data.scheme);
             expect(moData.email).toEqual(data.email);
             expect(moData.password).toEqual(data.password);
@@ -151,12 +151,12 @@ describe("EmailPasswordAuthenticationData", function() {
         });
         waitsFor(function() { return userdata; }, "userdata", 100);
 
-        var moAuthdata;
+        var moData, moAuthdata;
         runs(function() {
             expect(userdata).not.toBeNull();
             expect(userdata instanceof EmailPasswordAuthenticationData).toBeTruthy();
 
-            var moData = userdata;
+            moData = userdata;
             expect(moData.scheme).toEqual(data.scheme);
             expect(moData.email).toEqual(data.email);
             expect(moData.password).toEqual(data.password);
@@ -167,10 +167,19 @@ describe("EmailPasswordAuthenticationData", function() {
         });
         waitsFor(function() { return moAuthdata; }, "moAuthdata", 100);
         
+        var authdata;
+        runs(function() {
+        	data.getAuthData(encoder, ENCODER_FORMAT, {
+        		result: function(x) { authdata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return authdata; }, "authdata", 100);
+        
         var moEncode;
         runs(function() {
             expect(moAuthdata).not.toBeNull();
-            expect(moAuthdata).toEqual(data.getAuthData());
+            expect(moAuthdata).toEqual(authdata);
             moData.toMslEncoding(encoder, ENCODER_FORMAT, {
                 result: function(x) { moEncode = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }

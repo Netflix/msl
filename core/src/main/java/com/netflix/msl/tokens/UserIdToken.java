@@ -215,7 +215,7 @@ public class UserIdToken implements MslEncodable {
                 throw new MslException(MslError.USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokendata).setMasterToken(masterToken);
             final byte[] ciphertext = tokendata.getBytes(KEY_USERDATA);
             if (ciphertext.length == 0)
-                throw new MslException(MslError.USERIDTOKEN_USERDATA_MISSING, tokendata.getString(KEY_USERDATA)).setMasterToken(masterToken);
+                throw new MslException(MslError.USERIDTOKEN_USERDATA_MISSING).setMasterToken(masterToken);
             plaintext = (verified) ? cryptoContext.decrypt(ciphertext, encoder) : null;
         } catch (final MslEncoderException e) {
             throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR, "usertokendata " + Base64.encode(tokendataBytes), e).setMasterToken(masterToken);

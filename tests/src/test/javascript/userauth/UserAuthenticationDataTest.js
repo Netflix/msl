@@ -43,7 +43,7 @@ describe("UserAuthenticationData", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 100);
+            waitsFor(function() { return ctx; }, "ctx", 900);
             runs(function() {
             	encoder = ctx.getMslEncoderFactory();
             	initialized = true;
@@ -55,7 +55,7 @@ describe("UserAuthenticationData", function() {
         var exception;
         runs(function() {
             var mo = encoder.createObject();
-            mo.put(KEY_SCHEME + "x", UserAuthenticationScheme.EMAIL_PASSWORD);
+            mo.put(KEY_SCHEME + "x", UserAuthenticationScheme.EMAIL_PASSWORD.name);
             mo.put(KEY_AUTHDATA, encoder.createObject());
             UserAuthenticationData$parse(ctx, null, mo, {
                 result: function() {},
@@ -74,7 +74,7 @@ describe("UserAuthenticationData", function() {
         var exception;
         runs(function() {
 	        var mo = encoder.createObject();
-	        mo.put(KEY_SCHEME, UserAuthenticationScheme.EMAIL_PASSWORD);
+	        mo.put(KEY_SCHEME, UserAuthenticationScheme.EMAIL_PASSWORD.name);
 	        mo.put(KEY_AUTHDATA + "x", encoder.createObject());
 	        UserAuthenticationData$parse(ctx, null, mo, {
                 result: function() {},

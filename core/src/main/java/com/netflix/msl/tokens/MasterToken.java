@@ -289,15 +289,15 @@ public class MasterToken implements MslEncodable {
         
         // Pull the session data.
         if (plaintext != null) {
-            final byte[] encryptionBytes, signatureBytes;
+            final byte[] rawEncryptionKey, rawSignatureKey;
             final String encryptionAlgo, signatureAlgo;
             try {
                 sessiondata = encoder.parseObject(plaintext);
                 issuerdata = (sessiondata.has(KEY_ISSUER_DATA)) ? sessiondata.getMslObject(KEY_ISSUER_DATA, encoder) : null;
                 identity = sessiondata.getString(KEY_IDENTITY);
-                encryptionBytes = sessiondata.getBytes(KEY_ENCRYPTION_KEY);
+                rawEncryptionKey = sessiondata.getBytes(KEY_ENCRYPTION_KEY);
                 encryptionAlgo = sessiondata.optString(KEY_ENCRYPTION_ALGORITHM, JcaAlgorithm.AES);
-                signatureBytes = (sessiondata.has(KEY_SIGNATURE_KEY))
+                rawSignatureKey = (sessiondata.has(KEY_SIGNATURE_KEY))
                     ? sessiondata.getBytes(KEY_SIGNATURE_KEY)
                     : sessiondata.getBytes(KEY_HMAC_KEY);
                 signatureAlgo = sessiondata.optString(KEY_SIGNATURE_ALGORITHM, JcaAlgorithm.HMAC_SHA256);
@@ -316,8 +316,8 @@ public class MasterToken implements MslEncodable {
             
             // Reconstruct keys.
             try {
-                encryptionKey = new SecretKeySpec(encryptionBytes, jcaEncryptionAlgo);
-                signatureKey = new SecretKeySpec(signatureBytes, jcaSignatureAlgo);
+                encryptionKey = new SecretKeySpec(rawEncryptionKey, jcaEncryptionAlgo);
+                signatureKey = new SecretKeySpec(rawSignatureKey, jcaSignatureAlgo);
             } catch (final IllegalArgumentException e) {
                 throw new MslCryptoException(MslError.MASTERTOKEN_KEY_CREATION_ERROR, e);
             }

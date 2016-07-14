@@ -107,9 +107,9 @@ public class UserIdTokenAuthenticationFactoryTest {
     @Test
     public void createData() throws MslEncodingException, MslUserAuthException, MslCryptoException, MslEncoderException {
         final UserIdTokenAuthenticationData data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
-        final MslObject userAuthJO = data.getAuthData(encoder, ENCODER_FORMAT);
+        final MslObject userAuthMo = data.getAuthData(encoder, ENCODER_FORMAT);
         
-        final UserAuthenticationData authdata = factory.createData(ctx, null, userAuthJO);
+        final UserAuthenticationData authdata = factory.createData(ctx, null, userAuthMo);
         assertNotNull(authdata);
         assertTrue(authdata instanceof UserIdTokenAuthenticationData);
         assertEquals(data, authdata);
@@ -121,9 +121,9 @@ public class UserIdTokenAuthenticationFactoryTest {
         thrown.expectMslError(MslError.MSL_PARSE_ERROR);
         
         final UserIdTokenAuthenticationData data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
-        final MslObject userAuthJO = data.getAuthData(encoder, ENCODER_FORMAT);
-        userAuthJO.remove(KEY_MASTER_TOKEN);
-        factory.createData(ctx, null, userAuthJO);
+        final MslObject userAuthMo = data.getAuthData(encoder, ENCODER_FORMAT);
+        userAuthMo.remove(KEY_MASTER_TOKEN);
+        factory.createData(ctx, null, userAuthMo);
     }
     
     @Test

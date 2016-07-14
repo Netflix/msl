@@ -1584,7 +1584,7 @@ var MslControl$MslChannel;
 
                                         // Send the request.
                                         var os = (this._filterFactory != null) ? this._filterFactory.getOutputStream(out) : out;
-                                        this._streamFactory.createOutputStream(ctx, os, MslConstants$DEFAULT_CHARSET, requestHeader, payloadCryptoContext, timeout, {
+                                        this._streamFactory.createOutputStream(ctx, os, MslConstants$DEFAULT_CHARSET, requestHeader, payloadCryptoContext, null, timeout, {
                                             result: function(request) {
                                                 InterruptibleExecutor(callback, function() {
                                                     service.setAbort(function() { request.abort(); });

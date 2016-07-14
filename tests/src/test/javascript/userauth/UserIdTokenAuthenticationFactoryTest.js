@@ -20,11 +20,16 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("UserIdTokenAuthenticationFactory", function() {
+	/** MSL encoder format. */
+	var ENCODER_FORMAT = MslEncoderFormat.JSON;
+	
     /** Key master token. */
     var KEY_MASTER_TOKEN = "mastertoken";
     
     /** MSL context. */
     var ctx;
+    /** MSL encoder factory. */
+    var encoder;
     /** Authentication utilities. */
     var authutils;
     /** User authentication factory. */
@@ -43,8 +48,9 @@ describe("UserIdTokenAuthenticationFactory", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 100);
+            waitsFor(function() { return ctx; }, "ctx", 900);
             runs(function() {
+            	encoder = ctx.getMslEncoderFactory();
                 authutils = new MockAuthenticationUtils();
                 factory = new UserIdTokenAuthenticationFactory(authutils);
                 ctx.addUserAuthenticationFactory(factory);
@@ -71,12 +77,19 @@ describe("UserIdTokenAuthenticationFactory", function() {
     });
     
     it("create data", function() {
-        var data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
-        var userAuthJO = data.getAuthData();
+    	var data, userAuthMo;
+    	runs(function() {
+	        data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
+	        data.getAuthData(encoder, ENCODER_FORMAT, {
+	        	result: function(x) { userAuthMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+	        });
+    	});
+    	waitsFor(function() { return userAuthMo; }, "userAuthMo", 100);
         
         var authdata;
         runs(function() {
-            factory.createData(ctx, null, userAuthJO, {
+            factory.createData(ctx, null, userAuthMo, {
                 result: function(x) { authdata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -86,20 +99,25 @@ describe("UserIdTokenAuthenticationFactory", function() {
         runs(function() {
             expect(authdata).not.toBeNull();
             expect(authdata instanceof UserIdTokenAuthenticationData).toBeTruthy();
-            
-            var dataJo = JSON.parse(JSON.stringify(data));
-            var authdataJo = JSON.parse(JSON.stringify(authdata));
-            expect(authdataJo).toEqual(dataJo);
+            expect(authdata).toEqual(data);
         });
     });
     
     it("encode exception", function() {
+    	var userAuthMo;
+    	runs(function() {
+            var data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
+            data.getAuthData(encoder, ENCODER_FORMAT, {
+            	result: function(x) { userAuthMo = x; },
+                error: function(e) { exception = e; },
+            });
+    	});
+    	waitsFor(function() { return userAuthMo; }, "userAuthMo", 100);
+    	
         var exception;
         runs(function() {
-            var data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
-            var userAuthJO = data.getAuthData();
-            delete userAuthJO[KEY_MASTER_TOKEN];
-            factory.createData(ctx, null, userAuthJO, {
+            userAuthMo.remove(KEY_MASTER_TOKEN);
+            factory.createData(ctx, null, userAuthMo, {
                 result: function(x) {},
                 error: function(e) { exception = e; },
             });

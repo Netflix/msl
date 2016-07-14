@@ -15,6 +15,7 @@
  */
 package com.netflix.msl.userauth;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -111,6 +112,7 @@ public class UserIdTokenAuthenticationDataTest {
         assertNotNull(moAuthdata);
         final byte[] moEncode = moData.toMslEncoding(encoder, ENCODER_FORMAT);
         assertNotNull(moEncode);
+        assertArrayEquals(moEncode, encode);
     }
     
     @Test
@@ -142,7 +144,7 @@ public class UserIdTokenAuthenticationDataTest {
         assertNotNull(moAuthdata);
         final byte[] moEncode = moData.toMslEncoding(encoder, ENCODER_FORMAT);
         assertNotNull(moEncode);
-        
+        assertArrayEquals(moEncode, encode);
     }
     
     @Test

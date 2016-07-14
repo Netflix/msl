@@ -23,7 +23,6 @@ parameterize("ServiceToken", function data() {
     return [
         [ null ],
         [ MslConstants$CompressionAlgorithm.LZW ],
-        [ MslConstants$CompressionAlgorithm.LZW ]
     ];
 },
 function(encoding, compressionAlgo) {
@@ -104,7 +103,7 @@ function(encoding, compressionAlgo) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 100);
+            waitsFor(function() { return ctx; }, "ctx", 900);
 	    	runs(function() {
 	    		encoder = ctx.getMslEncoderFactory();
 	    	    getCryptoContext(ctx, {
@@ -292,6 +291,7 @@ function(encoding, compressionAlgo) {
         });
         waitsFor(function() { return encode; }, "encode", 100);
 
+        var moServiceToken;
         runs(function() {
             var mo = encoder.parseObject(encode);
 
@@ -653,6 +653,7 @@ function(encoding, compressionAlgo) {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
+        var exception;
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        ++tokendata[0];
@@ -1365,7 +1366,7 @@ function(encoding, compressionAlgo) {
         
         var exception;
         runs(function() {
-        	CRYPTO_CONTEXT.sign(modifiedTokendata, {
+        	CRYPTO_CONTEXT.sign(modifiedTokendata, encoder, ENCODER_FORMAT, {
         		result: function(signature) {
                 	mo.put(KEY_TOKENDATA, modifiedTokendata);
                 	mo.put(KEY_SIGNATURE, signature);
@@ -1382,7 +1383,7 @@ function(encoding, compressionAlgo) {
         
         runs(function() {
         	var f = function() { throw exception; };
-        	expect(f).toThrow(new MslException(MslError.SERVICETOKEN_SERVICEDATA_INVALID));
+        	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
@@ -1496,7 +1497,7 @@ function(encoding, compressionAlgo) {
         
         var exception;
         runs(function() {
-	        CRYPTO_CONTEXT.sign(modifiedTokendata, {
+	        CRYPTO_CONTEXT.sign(modifiedTokendata, encoder, ENCODER_FORMAT, {
 	        	result: function(signature) {
 	    	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	    	        mo.put(KEY_SIGNATURE, signature);

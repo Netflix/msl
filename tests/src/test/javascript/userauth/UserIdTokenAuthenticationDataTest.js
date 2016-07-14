@@ -51,7 +51,7 @@ describe("UserIdTokenAuthenticationData", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 100);
+            waitsFor(function() { return ctx; }, "ctx", 900);
             runs(function() {
             	encoder = ctx.getMslEncoderFactory();
                 MslTestUtils.getMasterToken(ctx, 1, 1, {
@@ -78,7 +78,7 @@ describe("UserIdTokenAuthenticationData", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { MASTER_TOKEN_MO && USER_ID_TOKEN_MO; }, "msl objects", 100);
+            waitsFor(function() { return MASTER_TOKEN_MO && USER_ID_TOKEN_MO; }, "msl objects", 100);
             runs(function() { initialized = true; });
         }
     });
@@ -133,7 +133,6 @@ describe("UserIdTokenAuthenticationData", function() {
         var moEncode;
         runs(function() {
             expect(moAuthdata).not.toBeNull();
-            expect(moAuthdata).toEqual(authdata);
             moData.toMslEncoding(encoder, ENCODER_FORMAT, {
             	result: function(x) { moEncode = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -191,12 +190,12 @@ describe("UserIdTokenAuthenticationData", function() {
         });
         waitsFor(function() { return userdata; }, "userdata", 100);
         
-        var moAuthdata;
+        var moData, moAuthdata;
         runs(function() {
             expect(userdata).not.toBeNull();
             expect(userdata instanceof UserIdTokenAuthenticationData).toBeTruthy();
             
-            var moData = userdata;
+            moData = userdata;
             expect(moData.scheme).toEqual(data.scheme);
             expect(moData.masterToken).toEqual(data.masterToken);
             expect(moData.userIdToken).toEqual(data.userIdToken);
@@ -210,7 +209,6 @@ describe("UserIdTokenAuthenticationData", function() {
         var moEncode;
         runs(function() {
             expect(moAuthdata).not.toBeNull();
-            expect(moAuthdata).toEqual(data.getAuthData());
             moData.toMslEncoding(encoder, ENCODER_FORMAT, {
             	result: function(x) { moEncode = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -341,21 +339,25 @@ describe("UserIdTokenAuthenticationData", function() {
         });
         waitsFor(function() { return masterToken; }, "masterToken", 100);
         
-        var dataA, dataB, dataA2;
+        var dataA, dataB, authdata;
         runs(function() {
             dataA = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
             dataB = new UserIdTokenAuthenticationData(masterToken, USER_ID_TOKEN);
-            MslTestUtils.toMslObject(encoder, dataA, {
-            	result: function(mo) {
-		            UserIdTokenAuthenticationData$parse(ctx, mo, {
-		                result: function(x) { dataA2 = x; },
-		                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-		            });
-            	},
+            dataA.getAuthData(encoder, ENCODER_FORMAT, {
+            	result: function(x) { authdata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return dataA && dataB && dataA2; }, "data", 100);
+        waitsFor(function() { return authdata; }, "authdata", 100);
+        
+        var dataA2;
+        runs(function() {
+        	UserIdTokenAuthenticationData$parse(ctx, authdata, {
+        		result: function(x) { dataA2 = x; },
+        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return dataA2; }, "data", 100);
         
         runs(function() {
             expect(dataA.equals(dataA)).toBeTruthy();
@@ -377,22 +379,26 @@ describe("UserIdTokenAuthenticationData", function() {
             });
         });
         waitsFor(function() { return userIdToken; }, "userIdToken", 100);
-        
-        var dataA, dataB, dataA2;
+
+        var dataA, dataB, authdata;
         runs(function() {
             dataA = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
             dataB = new UserIdTokenAuthenticationData(MASTER_TOKEN, userIdToken);
-            MslTestUtils.toMslObject(encoder, dataA, {
-            	result: function(mo) {
-		            UserIdTokenAuthenticationData$parse(ctx, mo, {
-		                result: function(x) { dataA2 = x; },
-		                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-		            });
-            	},
+            dataA.getAuthData(encoder, ENCODER_FORMAT, {
+            	result: function(x) { authdata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return dataA && dataB && dataA2; }, "data", 100);
+        waitsFor(function() { return authdata; }, "authdata", 100);
+            
+        var dataA2;
+        runs(function() {
+        	UserIdTokenAuthenticationData$parse(ctx, authdata, {
+        		result: function(x) { dataA2 = x; },
+        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return dataA2; }, "data", 100);
         
         runs(function() {
             expect(dataA.equals(dataA)).toBeTruthy();

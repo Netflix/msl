@@ -76,6 +76,8 @@ var UserIdToken$create;
 var UserIdToken$parse;
 
 (function() {
+	"use strict";
+	
     /** Milliseconds per second.
      * @const
      * @type {number}
@@ -203,7 +205,7 @@ var UserIdToken$parse;
                 
                 tokendataBytes = null;
                 signatureBytes = null;
-                verfied = true;
+                verified = true;
             } else {
                 userdata = creationData.userdata;
                 tokendataBytes = creationData.tokendataBytes;
@@ -579,7 +581,7 @@ var UserIdToken$parse;
         function parseToken(encoder, cryptoContext, tokendataBytes, signatureBytes, verified) {
             AsyncExecutor(callback, function() {
                 // Pull the token data.
-                var renewalWindow, expiration, mtSerialNumber, serialNumber, ciphertext;
+                var renewalWindowSeconds, expirationSeconds, mtSerialNumber, serialNumber, ciphertext;
                 try {
                     var tokendata = encoder.parseObject(tokendataBytes);
                     renewalWindowSeconds = tokendata.getLong(KEY_RENEWAL_WINDOW);
@@ -593,6 +595,8 @@ var UserIdToken$parse;
                     if (serialNumber < 0 || serialNumber > MslConstants$MAX_LONG_VALUE)
                         throw new MslException(MslError.USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokendata).setMasterToken(masterToken);
                     ciphertext = tokendata.getBytes(KEY_USERDATA);
+                    if (ciphertext.length == 0)
+                        throw new MslException(MslError.USERIDTOKEN_USERDATA_MISSING).setMasterToken(masterToken);
                 } catch (e) {
                     if (e instanceof MslEncoderException)
                         throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR, "usertokendata " + base64$encode(tokendataBytes), e).setMasterToken(masterToken);

@@ -19,7 +19,7 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var ByteArrayInputStream = util.Class.create({
+var ByteArrayInputStream = InputStream.extend({
     /**
      * Create a new byte array input stream from the provided data.
      *

@@ -68,7 +68,7 @@ public class KeyResponseDataTest {
         ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
         encoder = ctx.getMslEncoderFactory();
         MASTER_TOKEN = MslTestUtils.getMasterToken(ctx, 1, 1);
-        MASTER_TOKEN_MO = MASTER_TOKEN_MO;
+        MASTER_TOKEN_MO = MslTestUtils.toMslObject(encoder, MASTER_TOKEN);
     }
     
     @AfterClass

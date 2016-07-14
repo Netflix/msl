@@ -661,6 +661,7 @@ var ServiceToken$parse;
             AsyncExecutor(callback, function() {
                 var name, mtSerialNumber, uitSerialNumber, encrypted, compressionAlgo, data;
                 try {
+                	// Pull the token data.
                     var tokendata = encoder.parseObject(tokendataBytes);
                     name = tokendata.getString(KEY_NAME);
                     if (tokendata.has(KEY_MASTER_TOKEN_SERIAL_NUMBER)) {
@@ -672,7 +673,7 @@ var ServiceToken$parse;
                     }
                     if (tokendata.has(KEY_USER_ID_TOKEN_SERIAL_NUMBER)) {
                         uitSerialNumber = tokendata.getLong(KEY_USER_ID_TOKEN_SERIAL_NUMBER);
-                        if (uitSerialNumber < 0 || uitSerialNumber > MslConstants$MAX_LONG_VALUE.MAX_LONG_VALUE)
+                        if (uitSerialNumber < 0 || uitSerialNumber > MslConstants$MAX_LONG_VALUE)
                             throw new MslException(MslError.SERVICETOKEN_USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "servicetokendata " + tokendata).setMasterToken(masterToken).setUserIdToken(userIdToken);
                     } else {
                         uitSerialNumber = -1;
@@ -706,8 +707,8 @@ var ServiceToken$parse;
                         cryptoContext.decrypt(ciphertext, encoder, {
                             result: function(compressedServicedata) {
                                 var servicedata = (compressionAlgo)
-                                    ? MslUtils$uncompress(compressionAlgo, compressedData)
-                                    : compressedData;
+                                    ? MslUtils$uncompress(compressionAlgo, compressedServicedata)
+                                    : compressedServicedata;
                                 reconstruct(encoder, tokendataBytes, signatureBytes, verified,
                                     name, mtSerialNumber, uitSerialNumber, encrypted, compressionAlgo,
                                     compressedServicedata, servicedata);
@@ -725,8 +726,8 @@ var ServiceToken$parse;
                     } else {
                         var compressedServicedata = ciphertext;
                         var servicedata = (compressionAlgo)
-                            ? MslUtils$uncompress(compressionAlgo, compressedData)
-                            : compressedData;
+                            ? MslUtils$uncompress(compressionAlgo, compressedServicedata)
+                            : compressedServicedata;
                         reconstruct(encoder, tokendataBytes, signatureBytes, verified,
                             name, mtSerialNumber, uitSerialNumber, encrypted, compressionAlgo,
                             compressedServicedata, servicedata);
