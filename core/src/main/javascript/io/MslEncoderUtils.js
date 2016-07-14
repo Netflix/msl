@@ -58,7 +58,7 @@ var MslEncoderUtils$merge;
 	    			add(encoder, array, i+1, callback);
 	    		} else if (o instanceof MslEncodable) {
 	    			var me = o;
-	    			me.toMslEncoding(encoder, MslEncoderFormat.JSON, {
+	    			me.toMslEncoding(encoder, encoder.getPreferredFormat(null), {
 	    				result: function(encode) {
 	    					AsyncExecutor(callback, function() {
 	    						var mo = encoder.parseObject(encode);

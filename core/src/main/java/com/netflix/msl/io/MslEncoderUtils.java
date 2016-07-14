@@ -134,7 +134,7 @@ public class MslEncoderUtils {
                 array.put(-1, o);
             } else if (o instanceof MslEncodable) {
                 final MslEncodable me = (MslEncodable)o;
-                final byte[] encode = me.toMslEncoding(encoder, MslEncoderFormat.JSON);
+                final byte[] encode = me.toMslEncoding(encoder, encoder.getPreferredFormat(null));
                 final MslObject mo = encoder.parseObject(encode);
                 array.put(-1, mo);
             } else {

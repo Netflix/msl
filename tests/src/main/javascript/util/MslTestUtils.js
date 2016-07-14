@@ -52,7 +52,7 @@ var MslTestUtils$Algorithm;
          *         the  object cannot be encoded and converted
          */
         toMslObject: function toMslObject(encoder, encodable, callback) {
-            encodable.toMslEncoding(encoder, MslEncoderFormat.JSON, {
+            encodable.toMslEncoding(encoder, encoder.getPreferredFormat(null), {
                 result: function(encode) {
                     AsyncExecutor(callback, function() {
                         return encoder.parseObject(encode);

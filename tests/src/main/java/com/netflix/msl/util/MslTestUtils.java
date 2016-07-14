@@ -39,7 +39,6 @@ import com.netflix.msl.entityauth.MockPresharedAuthenticationFactory;
 import com.netflix.msl.io.MslEncodable;
 import com.netflix.msl.io.MslEncoderException;
 import com.netflix.msl.io.MslEncoderFactory;
-import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.io.MslObject;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.MslUser;
@@ -83,7 +82,7 @@ public class MslTestUtils {
      *         the  object cannot be encoded and converted
      */
     public static MslObject toMslObject(final MslEncoderFactory encoder, final MslEncodable encode) throws MslEncoderException {
-        final byte[] encoding = encode.toMslEncoding(encoder, MslEncoderFormat.JSON);
+        final byte[] encoding = encode.toMslEncoding(encoder, encoder.getPreferredFormat(null));
         return encoder.parseObject(encoding);
     }
 
