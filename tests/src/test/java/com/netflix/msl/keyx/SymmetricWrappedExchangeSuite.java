@@ -63,7 +63,6 @@ import com.netflix.msl.keyx.SymmetricWrappedExchange.RequestData;
 import com.netflix.msl.keyx.SymmetricWrappedExchange.ResponseData;
 import com.netflix.msl.test.ExpectedMslException;
 import com.netflix.msl.tokens.MasterToken;
-import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MockAuthenticationUtils;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslContext;
@@ -479,7 +478,7 @@ public class SymmetricWrappedExchangeSuite {
             final Date expiration = new Date(System.currentTimeMillis() + 2000);
             final MasterToken masterToken = new MasterToken(ctx, renewalWindow, expiration, 1L, 1L, null, identity, encryptionKey, hmacKey);
             final MslObject mo = MslTestUtils.toMslObject(encoder, masterToken);
-            final byte[] signature = Base64.decode(mo.getString("signature"));
+            final byte[] signature = mo.getBytes("signature");
             ++signature[1];
             mo.put("signature", signature);
             final MasterToken untrustedMasterToken = new MasterToken(ctx, mo);
