@@ -54,6 +54,8 @@ var MslEncoderFactory$stringify;
     var stringify = MslEncoderFactory$stringify = function MslEncoderFactory$stringify(v) {
     	if (v instanceof MslObject || v instanceof MslArray) {
     		return v.toString();
+    	} else if (v instanceof Uint8Array) {
+    	    return base64$encode(v);
     	} else {
     		var json = JSON.stringify(v);
     		return json

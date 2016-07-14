@@ -22,6 +22,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
+import com.netflix.msl.util.Base64;
+
 /**
  * <p>A factory class for producing {@link MslTokener}, {@link MslObject},
  * and {@link MslArray} instances of various encoder formats.</p>
@@ -119,6 +121,8 @@ public class MslEncoderFactory {
             return new MslArray((Object[])value).toString();
         } else if (value instanceof Number || value instanceof Boolean) {
             return value.toString();
+        } else if (value instanceof byte[]) {
+            return Base64.encode((byte[])value);
         } else {
             return quote(value.toString());
         }
