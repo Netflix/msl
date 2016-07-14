@@ -226,18 +226,20 @@ public class MslEncoderUtils {
             // first.
             final byte[] b = mo.optBytes(name, null);
             if (b != null) {
-                hashcode ^= Arrays.hashCode(b);
+                hashcode = 37 * hashcode + Arrays.hashCode(b);
                 continue;
             }
             
             // Otherwise process normally.
             final Object o = mo.opt(name);
             if (o instanceof MslObject) {
-                hashcode ^= hashObject((MslObject)o);
+                hashcode = 37 * hashcode + hashObject((MslObject)o);
             } else if (o instanceof MslArray) {
-                hashcode ^= hashArray((MslArray)o);
+                hashcode = 37 * hashcode + hashArray((MslArray)o);
             } else if (o != null) {
-                hashcode ^= o.hashCode();
+                hashcode = 37 * hashcode + o.hashCode();
+            } else {
+                hashcode = 37 * hashcode + 1;
             }
         }
         return hashcode;
@@ -313,18 +315,20 @@ public class MslEncoderUtils {
             // first.
             final byte[] b = ma.optBytes(i, null);
             if (b != null) {
-                hashcode ^= Arrays.hashCode(b);
+                hashcode = 37 * hashcode + Arrays.hashCode(b);
                 continue;
             }
             
             // Otherwise process normally.
             final Object o = ma.opt(i);
             if (o instanceof MslObject) {
-                hashcode ^= hashObject((MslObject)o);
+                hashcode = 37 * hashcode + hashObject((MslObject)o);
             } else if (o instanceof MslArray) {
-                hashcode ^= hashArray((MslArray)o);
+                hashcode = 37 * hashcode + hashArray((MslArray)o);
             } else if (o != null) {
-                hashcode ^= o.hashCode();
+                hashcode = 37 * hashcode + o.hashCode();
+            } else {
+                hashcode = 37 * hashcode + 1;
             }
         }
         return hashcode;
