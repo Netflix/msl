@@ -379,13 +379,13 @@ public class MSLHttpListener implements IHttpListener {
             final long renewalWindow = tokenDataMo.getLong(KEY_RENEWAL_WINDOW);
             final long expiration = tokenDataMo.getLong(KEY_EXPIRATION);
             if (expiration < renewalWindow)
-                throw new MslException(MslError.USERIDTOKEN_EXPIRES_BEFORE_RENEWAL, "usertokendata " + Base64.encode(tokendata)).setMasterToken(masterToken);
+                throw new MslException(MslError.USERIDTOKEN_EXPIRES_BEFORE_RENEWAL, "usertokendata " + tokenDataMo).setMasterToken(masterToken);
             mtSerialNumber = tokenDataMo.getLong(KEY_MASTER_TOKEN_SERIAL_NUMBER);
             if (mtSerialNumber < 0 || mtSerialNumber > MslConstants.MAX_LONG_VALUE)
-                throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + Base64.encode(tokendata)).setMasterToken(masterToken);
+                throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokenDataMo).setMasterToken(masterToken);
             final long serialNumber = tokenDataMo.getLong(KEY_SERIAL_NUMBER);
             if (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE)
-                throw new MslException(MslError.USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + Base64.encode(tokendata)).setMasterToken(masterToken);
+                throw new MslException(MslError.USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokenDataMo).setMasterToken(masterToken);
             final byte[] ciphertext = tokenDataMo.getBytes(KEY_USERDATA);
             if (ciphertext.length == 0)
                 throw new MslException(MslError.USERIDTOKEN_USERDATA_MISSING, tokenDataMo.getString(KEY_USERDATA)).setMasterToken(masterToken);
@@ -441,16 +441,16 @@ public class MSLHttpListener implements IHttpListener {
             final long renewalWindow = tokenDataMo.getLong(KEY_RENEWAL_WINDOW);
             final long expiration = tokenDataMo.getLong(KEY_EXPIRATION);
             if (expiration < renewalWindow)
-                throw new MslException(MslError.MASTERTOKEN_EXPIRES_BEFORE_RENEWAL, "mastertokendata " + Base64.encode(tokendata));
+                throw new MslException(MslError.MASTERTOKEN_EXPIRES_BEFORE_RENEWAL, "mastertokendata " + tokenDataMo);
             final long sequenceNumber = tokenDataMo.getLong(KEY_SEQUENCE_NUMBER);
             if (sequenceNumber < 0 || sequenceNumber > MslConstants.MAX_LONG_VALUE)
-                throw new MslException(MslError.MASTERTOKEN_SEQUENCE_NUMBER_OUT_OF_RANGE, "mastertokendata " + Base64.encode(tokendata));
+                throw new MslException(MslError.MASTERTOKEN_SEQUENCE_NUMBER_OUT_OF_RANGE, "mastertokendata " + tokenDataMo);
             final long serialNumber = tokenDataMo.getLong(KEY_SERIAL_NUMBER);
             if (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE)
-                throw new MslException(MslError.MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "mastertokendata " + Base64.encode(tokendata));
+                throw new MslException(MslError.MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "mastertokendata " + tokenDataMo);
             final byte[] ciphertext;
             try {
-                ciphertext = Base64.decode(tokenDataMo.getString(KEY_SESSIONDATA));
+                ciphertext = tokenDataMo.getBytes(KEY_SESSIONDATA);
             } catch (final IllegalArgumentException e) {
                 throw new MslEncodingException(MslError.MASTERTOKEN_SESSIONDATA_INVALID, tokenDataMo.getString(KEY_SESSIONDATA));
             }
