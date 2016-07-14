@@ -22,7 +22,6 @@ import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.io.MslObject;
 import com.netflix.msl.userauth.UserAuthenticationData;
-import com.netflix.msl.util.Base64;
 
 /**
  * <p>Officers are identified by their name and fingerprint hash.</p>
@@ -31,11 +30,11 @@ import com.netflix.msl.util.Base64;
  * {@code {
  *   "#mandatory" : [ "name", "fingerprint" ],
  *   "name" : "string",
- *   "fingerprint" : "base64"
+ *   "fingerprint" : "binary"
  * }} where:
  * <ul>
  * <li>{@code name} is the officer's name</li>
- * <li>{@code fingerprint} is the Base64-encoded SHA-256 hash of the officer's fingerprint</li>
+ * <li>{@code fingerprint} is the SHA-256 hash of the officer's fingerprint</li>
  * </ul></p>
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
@@ -71,7 +70,7 @@ public class OfficerAuthenticationData extends UserAuthenticationData {
         super(KanColleUserAuthenticationScheme.OFFICER);
         try {
             this.name = officerMo.getString(KEY_NAME);
-            this.fingerprint = Base64.decode(officerMo.getString(KEY_FINGERPRINT));
+            this.fingerprint = officerMo.getBytes(KEY_FINGERPRINT);
         } catch (final MslEncoderException e) {
             throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "officer authdata " + officerMo.toString(), e);
         }
