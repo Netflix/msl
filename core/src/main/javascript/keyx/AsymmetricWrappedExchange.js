@@ -87,12 +87,12 @@ var AsymmetricWrappedExchange$ResponseData$parse;
      *   "#mandatory" : [ "keypairid", "mechanism", "publickey" ],
      *   "keypairid" : "string",
      *   "mechanism" : "string",
-     *   "publickey" : "base64"
+     *   "publickey" : "binary"
      * }} where:
      * <ul>
      * <li>{@code keypairid} identifies the key pair for wrapping and unwrapping the session keys</li>
      * <li>{@code mechanism} the public key cryptographic mechanism of the key pair</li>
-     * <li>{@code publickey} the Base64-encoded public key used to wrap the session keys</li>
+     * <li>{@code publickey} the public key used to wrap the session keys</li>
      * </ul></p>
      */
     var RequestData = AsymmetricWrappedExchange$RequestData = KeyRequestData.extend({
@@ -243,13 +243,13 @@ var AsymmetricWrappedExchange$ResponseData$parse;
      * {@code {
      *   "#mandatory" : [ "keypairid", "encryptionkey", "hmackey" ],
      *   "keypairid" : "string",
-     *   "encryptionkey" : "base64",
-     *   "hmackey" : "base64"
+     *   "encryptionkey" : "binary",
+     *   "hmackey" : "binary"
      * }} where:
      * <ul>
      * <li>{@code keypairid} identifies the key pair for wrapping and unwrapping the session keys</li>
-     * <li>{@code encryptionkey} the Base64-encoded wrapped session encryption key</li>
-     * <li>{@code hmackey} the Base64-encoded wrapped session HMAC key</li>
+     * <li>{@code encryptionkey} the wrapped session encryption key</li>
+     * <li>{@code hmackey} the wrapped session HMAC key</li>
      * </ul></p>
      */
     var ResponseData = AsymmetricWrappedExchange$ResponseData = KeyResponseData.extend({

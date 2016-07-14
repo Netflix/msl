@@ -21,13 +21,13 @@
  * {@code {
  *   "#mandatory" : [ "mastertoken", "authdata", "signature" ],
  *   "mastertoken" : mastertoken,
- *   "authdata" : "base64",
- *   "signature" : "base64",
+ *   "authdata" : "binary",
+ *   "signature" : "binary",
  * }} where:
  * <ul>
  * <li>{@code mastertoken} is the master token used to protect the encapsulated authentication data</li>
- * <li>{@code authdata} is the Base64-encoded ciphertext envelope containing the encapsulated authentication data</li>
- * <li>{@code signature} is the Base64-encoded signature envelope verifying the encapsulated authentication data</li>
+ * <li>{@code authdata} is the ciphertext envelope containing the encapsulated authentication data</li>
+ * <li>{@code signature} is the signature envelope verifying the encapsulated authentication data</li>
  * </ul></p>
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>

@@ -152,13 +152,13 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
      * {@code {
      *   "#mandatory" : [ "keyid", "encryptionkey", "hmackey" ],
      *   "keyid" : "string",
-     *   "encryptionkey" : "base64",
-     *   "hmackey" : "base64"
+     *   "encryptionkey" : "binary",
+     *   "hmackey" : "binary"
      * }} where:
      * <ul>
      * <li>{@code keyid} identifies the key that was used to wrap the session keys</li>
-     * <li>{@code encryptionkey} the Base64-encoded wrapped session encryption key</li>
-     * <li>{@code hmackey} the Base64-encoded wrapped session HMAC key</li>
+     * <li>{@code encryptionkey} the wrapped session encryption key</li>
+     * <li>{@code hmackey} the wrapped session HMAC key</li>
      * </ul></p>
      */
     public static class ResponseData extends KeyResponseData {

@@ -26,14 +26,14 @@
  *   "#conditions" : [ "entityauthdata xor mastertoken" ],
  *   "entityauthdata" : entityauthdata,
  *   "mastertoken" : mastertoken,
- *   "headerdata" : "base64",
- *   "signature" : "base64"
+ *   "headerdata" : "binary",
+ *   "signature" : "binary"
  * }} where:
  * <ul>
  * <li>{@code entityauthdata} is the entity authentication data (mutually exclusive with mastertoken)</li>
  * <li>{@code mastertoken} is the master token (mutually exclusive with entityauthdata)</li>
- * <li>{@code headerdata} is the Base64-encoded encrypted header data (headerdata)</li>
- * <li>{@code signature} is the Base64-encoded verification data of the header data</li>
+ * <li>{@code headerdata} is the encrypted header data (headerdata)</li>
+ * <li>{@code signature} is the verification data of the header data</li>
  * </ul></p>
  *
  * <p>An error header is represented as
@@ -41,13 +41,13 @@
  * errorheader = {
  *   "#mandatory" : [ "entityauthdata", "errordata", "signature" ],
  *   "entityauthdata" : entityauthdata,
- *   "errordata" : "base64",
- *   "signature" : "base64"
+ *   "errordata" : "binary",
+ *   "signature" : "binary"
  * }} where:
  * <ul>
  * <li>{@code entityauthdata} is the entity authentication data</li>
- * <li>{@code errordata} is the Base64-encoded encrypted error data (errordata)</li>
- * <li>{@code signature} is the Base64-encoded verification data of the error data</li>
+ * <li>{@code errordata} is the encrypted error data (errordata)</li>
+ * <li>{@code signature} is the verification data of the error data</li>
  * </ul></p>
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
@@ -148,7 +148,7 @@ var Header$parseHeader;
                     if (headerMo.has(Header$KEY_HEADERDATA)) {
                         var headerdata = headerMo.getBytes(Header$KEY_HEADERDATA);
                         if (headerdata.length == 0)
-                            throw new MslMessageException(MslError.HEADER_DATA_MISSING, base64$encode(headerdata)).setMasterToken(masterToken).setEntityAuthenicationData(entityAuthData);
+                            throw new MslMessageException(MslError.HEADER_DATA_MISSING).setMasterToken(masterToken).setEntityAuthenicationData(entityAuthData);
                         MessageHeader$parse(ctx, headerdata, entityAuthData, masterToken, signature, cryptoContexts, callback);
                     }
                     
@@ -156,7 +156,7 @@ var Header$parseHeader;
                     else if (headerMo.has(Header$KEY_ERRORDATA)) {
                         var errordata = headerMo.getBytes(Header$KEY_ERRORDATA);
                         if (errordata.length == 0)
-                            throw new MslMessageException(MslError.HEADER_DATA_MISSING, base64$encode(errordata)).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData);
+                            throw new MslMessageException(MslError.HEADER_DATA_MISSING).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData);
                         ErrorHeader$parse(ctx, errordata, entityAuthData, signature, callback);
                     }
                     

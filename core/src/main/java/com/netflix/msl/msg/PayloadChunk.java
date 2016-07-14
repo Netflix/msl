@@ -52,8 +52,8 @@ import com.netflix.msl.util.MslUtils;
  * {@code
  * payloadchunk = {
  *   "#mandatory" : [ "payload", "signature" ],
- *   "payload" : "base64",
- *   "signature" : "base64"
+ *   "payload" : "binary",
+ *   "signature" : "binary"
  * }} where:
  * <ul>
  * <li>{@code payload} is the Base64-encoded encrypted payload (payload)</li>
@@ -68,14 +68,14 @@ import com.netflix.msl.util.MslUtils;
  *   "messageid" : "int64(0,2^53^)",
  *   "endofmsg" : "boolean",
  *   "compressionalgo" : "enum(GZIP|LZW)",
- *   "data" : "base64"
+ *   "data" : "binary"
  * }} where:
  * <ul>
  * <li>{@code sequencenumber} is the chunk sequence number</li>
  * <li>{@code messageid} is the message ID</li>
  * <li>{@code endofmsg} indicates this is the last payload of the message</li>
  * <li>{@code compressionalgo} indicates the algorithm used to compress the data</li>
- * <li>{@code data} is the Base64-encoded optionally compressed application data</li>
+ * <li>{@code data} is the optionally compressed application data</li>
  * </ul></p>
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>

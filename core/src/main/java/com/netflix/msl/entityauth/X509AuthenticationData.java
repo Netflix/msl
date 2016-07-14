@@ -42,10 +42,10 @@ import com.netflix.msl.util.Base64;
  * <p>
  * {@code {
  *   "#mandatory" : [ "x509certificate" ],
- *   "x509certificate" : "base64"
+ *   "x509certificate" : "string"
  * }} where:
  * <ul>
- * <li>{@code x509certificate} is Base64-encoded X.509 certificate</li>
+ * <li>{@code x509certificate} is the Base64-encoded X.509 certificate</li>
  * </ul></p>
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>

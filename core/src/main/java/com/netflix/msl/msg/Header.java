@@ -32,7 +32,6 @@ import com.netflix.msl.io.MslEncoderException;
 import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.io.MslObject;
 import com.netflix.msl.tokens.MasterToken;
-import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -47,14 +46,14 @@ import com.netflix.msl.util.MslContext;
  *   "#conditions" : [ "entityauthdata xor mastertoken" ],
  *   "entityauthdata" : entityauthdata,
  *   "mastertoken" : mastertoken,
- *   "headerdata" : "base64",
- *   "signature" : "base64"
+ *   "headerdata" : "binary",
+ *   "signature" : "binary"
  * }} where:
  * <ul>
  * <li>{@code entityauthdata} is the entity authentication data (mutually exclusive with mastertoken)</li>
  * <li>{@code mastertoken} is the master token (mutually exclusive with entityauthdata)</li>
- * <li>{@code headerdata} is the Base64-encoded encrypted header data (headerdata)</li>
- * <li>{@code signature} is the Base64-encoded verification data of the header data</li>
+ * <li>{@code headerdata} is the encrypted header data (headerdata)</li>
+ * <li>{@code signature} is the verification data of the header data</li>
  * </ul></p>
  * 
  * <p>An error header is represented as
@@ -62,13 +61,13 @@ import com.netflix.msl.util.MslContext;
  * errorheader = {
  *   "#mandatory" : [ "entityauthdata", "errordata", "signature" ],
  *   "entityauthdata" : entityauthdata,
- *   "errordata" : "base64",
- *   "signature" : "base64"
+ *   "errordata" : "binary",
+ *   "signature" : "binary"
  * }} where:
  * <ul>
  * <li>{@code entityauthdata} is the entity authentication data</li>
- * <li>{@code errordata} is the Base64-encoded encrypted error data (errordata)</li>
- * <li>{@code signature} is the Base64-encoded verification data of the error data</li>
+ * <li>{@code errordata} is the encrypted error data (errordata)</li>
+ * <li>{@code signature} is the verification data of the error data</li>
  * </ul></p>
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
@@ -136,7 +135,7 @@ public abstract class Header implements MslEncodable {
             if (headerMo.has(HeaderKeys.KEY_HEADERDATA)) {
                 final byte[] headerdata = headerMo.getBytes(HeaderKeys.KEY_HEADERDATA);
                 if (headerdata.length == 0)
-                    throw new MslMessageException(MslError.HEADER_DATA_MISSING, Base64.encode(headerdata)).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData);
+                    throw new MslMessageException(MslError.HEADER_DATA_MISSING).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData);
                 return new MessageHeader(ctx, headerdata, entityAuthData, masterToken, signature, cryptoContexts);
             }
             
@@ -144,7 +143,7 @@ public abstract class Header implements MslEncodable {
             else if (headerMo.has(HeaderKeys.KEY_ERRORDATA)) {
                 final byte[] errordata = headerMo.getBytes(HeaderKeys.KEY_ERRORDATA);
                 if (errordata.length == 0)
-                    throw new MslMessageException(MslError.HEADER_DATA_MISSING, Base64.encode(errordata)).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData);
+                    throw new MslMessageException(MslError.HEADER_DATA_MISSING).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData);
                 return new ErrorHeader(ctx, errordata, entityAuthData, signature);
             }
             

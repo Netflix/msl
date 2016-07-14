@@ -52,12 +52,12 @@
  * {@code
  * mastertoken = {
  *   "#mandatory" : [ "tokendata", "signature" ],
- *   "tokendata" : "base64",
- *   "signature" : "base64"
+ *   "tokendata" : "binary",
+ *   "signature" : "binary"
  * }} where:
  * <ul>
- * <li>{@code tokendata} is the Base64-encoded master token data (mastertokendata)</li>
- * <li>{@code signature} is the Base64-encoded verification data of the master token data</li>
+ * <li>{@code tokendata} is the master token data (mastertokendata)</li>
+ * <li>{@code signature} is the verification data of the master token data</li>
  * </ul></p>
  *
  * <p>The token data is represented as
@@ -68,14 +68,14 @@
  *   "expiration" : "int64(0,-)",
  *   "sequencenumber" : "int64(0,-)",
  *   "serialnumber" : "int64(0,-)",
- *   "sessiondata" : "base64"
+ *   "sessiondata" : "binary"
  * }} where:
  * <ul>
  * <li>{@code renewalwindow} is when the renewal window opens in seconds since the epoch</li>
  * <li>{@code expiration} is the expiration timestamp in seconds since the epoch</li>
  * <li>{@code sequencenumber} is the master token sequence number</li>
  * <li>{@code serialnumber} is the master token serial number</li>
- * <li>{@code sessiondata} is the Base64-encoded encrypted session data (sessiondata)</li>
+ * <li>{@code sessiondata} is the encrypted session data (sessiondata)</li>
  * </ul></p>
  *
  * <p>The decrypted session data is represented as
@@ -85,20 +85,20 @@
  *   "#conditions" : [ "hmackey" or "signaturekey" ],
  *   "issuerdata" : object,
  *   "identity" : "string",
- *   "encryptionkey" : "base64",
+ *   "encryptionkey" : "binary",
  *   "encryptionkeyalgorithm" : "string",
- *   "hmackey" : "base64",
- *   "signaturekey" : "base64",
+ *   "hmackey" : "binary",
+ *   "signaturekey" : "binary",
  *   "signaturekeyalgorithm" : "string",
  * }}
  * where:
  * <ul>
  * <li>{@code issuerdata} is the master token issuer data</li>
  * <li>{@code identity} is the identifier of the remote entity</li>
- * <li>{@code encryptionkey} is the Base64-encoded encryption session key</li>
+ * <li>{@code encryptionkey} is the encryption session key</li>
  * <li>{@code encryptionkeyalgorithm} is the JCA encryption algorithm name (default: AES/CBC/PKCS5Padding)</li>
- * <li>{@code hmackey} is the Base64-encoded HMAC session key</li>
- * <li>{@code signaturekey} is the Base64-encoded signature session key</li>
+ * <li>{@code hmackey} is the HMAC session key</li>
+ * <li>{@code signaturekey} is the signature session key</li>
  * <li>{@code signaturekeyalgorithm} is the JCA signature algorithm name (default: HmacSHA256)</li> 
  * </ul></p>
  *

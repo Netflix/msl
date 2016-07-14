@@ -55,15 +55,15 @@ public class MslCiphertextEnvelope implements MslEncodable {
          * {@code {
          *   "#mandatory" : [ "keyid", "iv", "ciphertext", "sha256" ],
          *   "keyid" : "string",
-         *   "iv" : "base64",
-         *   "ciphertext" : "base64",
-         *   "sha256" : "base64",
+         *   "iv" : "binary",
+         *   "ciphertext" : "binary",
+         *   "sha256" : "binary",
          * }} where:
          * <ul>
          * <li>{@code keyid} is the encryption key ID</li>
-         * <li>{@code iv} is the Base64-encoded initialization vector</li>
-         * <li>{@code ciphertext} is the Base64-encoded ciphertext</li>
-         * <li>{@code sha256} is the Base64-encoded SHA-256 of the encryption envelope</li>
+         * <li>{@code iv} is the initialization vector</li>
+         * <li>{@code ciphertext} is the ciphertext</li>
+         * <li>{@code sha256} is the SHA-256 of the encryption envelope</li>
          * </ul>
          * 
          * <p>The SHA-256 is computed over the concatenation of {@code key ID ||
@@ -77,14 +77,14 @@ public class MslCiphertextEnvelope implements MslEncodable {
          *   "#mandatory" : [ "version", "cipherspec", "ciphertext" ],
          *   "version" : "number",
          *   "cipherspec" : "string",
-         *   "iv" : "base64",
-         *   "ciphertext" : "base64",
+         *   "iv" : "binary",
+         *   "ciphertext" : "binary",
          * }} where:
          * <ul>
          * <li>{@code version} is the number '2'</li>
          * <li>{@code cipherspec} is one of the recognized cipher specifications</li>
-         * <li>{@code iv} is the optional Base64-encoded initialization vector</li>
-         * <li>{@code ciphertext} is the Base64-encoded ciphertext</li>
+         * <li>{@code iv} is the optional initialization vector</li>
+         * <li>{@code ciphertext} is the ciphertext</li>
          * </ul>
          * 
          * <p>Supported cipher specifications:

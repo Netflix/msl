@@ -55,12 +55,12 @@ import com.netflix.msl.util.MslUtils;
  * {@code
  * servicetoken = {
  *   "#mandatory" : [ "tokendata", "signature" ],
- *   "tokendata" : "base64,
- *   "signature" : "base64"
+ *   "tokendata" : "binary",
+ *   "signature" : "binary"
  * }} where:
  * <ul>
- * <li>{@code tokendata} is the Base64-encoded service token data (servicetokendata)</li>
- * <li>{@code signature} is the Base64-encoded verification data of the service token data</li>
+ * <li>{@code tokendata} is the service token data (servicetokendata)</li>
+ * <li>{@code signature} is the verification data of the service token data</li>
  * </ul></p>
  * 
  * <p>The token data is represented as
@@ -72,7 +72,7 @@ import com.netflix.msl.util.MslUtils;
  *   "uitserialnumber" : "int64(0,2^53^)",
  *   "encrypted" : "boolean",
  *   "compressionalgo" : "enum(GZIP|LZW)",
- *   "servicedata" : "base64"
+ *   "servicedata" : "binary"
  * }} where:
  * <ul>
  * <li>{@code name} is the token name</li>
@@ -80,7 +80,7 @@ import com.netflix.msl.util.MslUtils;
  * <li>{@code utserialnumber} is the user ID token serial number or -1 if unbound</li>
  * <li>{@code encrypted} indicates if the service data is encrypted or not</li>
  * <li>{@code compressionalgo} indicates the algorithm used to compress the data</li>
- * <li>{@code servicedata} is the Base64-encoded optionally encrypted service data</li>
+ * <li>{@code servicedata} is the optionally encrypted service data</li>
  * </ul></p>  
  * 
  * <p>Service token names should follow a reverse fully-qualified domain

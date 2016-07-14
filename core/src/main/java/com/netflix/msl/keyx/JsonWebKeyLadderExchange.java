@@ -106,11 +106,11 @@ public class JsonWebKeyLadderExchange extends KeyExchangeFactory {
      * {@code {
      *   "#mandatory" : [ "mechanism" ],
      *   "mechanism" : "enum(PSK|MGK|WRAP)",
-     *   "wrapdata" : "base64",
+     *   "wrapdata" : "binary",
      * }} where:
      * <ul>
      * <li>{@code mechanism} identifies the mechanism for wrapping and unwrapping the wrapping key</li>
-     * <li>{@code wrapdata} the Base64-encoded wrapping data for the previous wrapping key</li>
+     * <li>{@code wrapdata} the wrapping data for the previous wrapping key</li>
      * </ul></p>
      */
     public static class RequestData extends KeyRequestData {
@@ -258,16 +258,16 @@ public class JsonWebKeyLadderExchange extends KeyExchangeFactory {
      * <p>
      * {@code {
      *   "#mandatory" : [ "wrapkey", "wrapdata", "encryptionkey", "hmackey" ],
-     *   "wrapkey" : "base64",
-     *   "wrapdata" : "base64",
-     *   "encryptionkey" : "base64",
-     *   "hmackey" : "base64",
+     *   "wrapkey" : "binary",
+     *   "wrapdata" : "binary",
+     *   "encryptionkey" : "binary",
+     *   "hmackey" : "binary",
      * }} where:
      * <ul>
-     * <li>{@code wrapkey} the Base64-encoded new wrapping key in JWK format, wrapped by the wrapping key</li>
-     * <li>{@code wrapdata} the Base64-encoded wrapping key data for use in subsequent key request data</li>
-     * <li>{@code encryptionkey} the Base64-encoded session encryption key in JWK format, wrapped with the new wrapping key</li>
-     * <li>{@code hmackey} the Base64-encoded session HMAC key in JWK format, wrapped with the new wrapping key</li>
+     * <li>{@code wrapkey} the new wrapping key in JWK format, wrapped by the wrapping key</li>
+     * <li>{@code wrapdata} the wrapping key data for use in subsequent key request data</li>
+     * <li>{@code encryptionkey} the session encryption key in JWK format, wrapped with the new wrapping key</li>
+     * <li>{@code hmackey} the session HMAC key in JWK format, wrapped with the new wrapping key</li>
      * </ul></p>
      */
     public static class ResponseData extends KeyResponseData {

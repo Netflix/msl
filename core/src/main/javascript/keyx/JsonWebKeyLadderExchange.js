@@ -94,11 +94,11 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
      * {@code {
      *   "#mandatory" : [ "mechanism" ],
      *   "mechanism" : "enum(PSK|MGK|WRAP)",
-     *   "wrapdata" : "base64",
+     *   "wrapdata" : "binary",
      * }} where:
      * <ul>
      * <li>{@code mechanism} identifies the mechanism for wrapping and unwrapping the wrapping key</li>
-     * <li>{@code wrapdata} the Base64-encoded wrapping data for the previous wrapping key</li>
+     * <li>{@code wrapdata} the wrapping data for the previous wrapping key</li>
      * </ul></p>
      */
     var RequestData = JsonWebKeyLadderExchange$RequestData = KeyRequestData.extend({
@@ -221,16 +221,16 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
      * <p>
      * {@code {
      *   "#mandatory" : [ "wrapkey", "wrapdata", "encryptionkey", "hmackey" ],
-     *   "wrapkey" : "base64",
-     *   "wrapdata" : "base64",
-     *   "encryptionkey" : "base64",
-     *   "hmackey" : "base64",
+     *   "wrapkey" : "binary",
+     *   "wrapdata" : "binary",
+     *   "encryptionkey" : "binary",
+     *   "hmackey" : "binary",
      * }} where:
      * <ul>
-     * <li>{@code wrapkey} the Base64-encoded new wrapping key in JWE format, wrapped by the wrapping key</li>
-     * <li>{@code wrapdata} the Base64-encoded wrapping key data for use in subsequent key request data</li>
-     * <li>{@code encryptionkey} the Base64-encoded session encryption key in JWE format, wrapped with the new wrapping key</li>
-     * <li>{@code hmackey} the Base64-encoded session HMAC key in JWE format, wrapped with the new wrapping key</li>
+     * <li>{@code wrapkey} the new wrapping key in JWE format, wrapped by the wrapping key</li>
+     * <li>{@code wrapdata} the wrapping key data for use in subsequent key request data</li>
+     * <li>{@code encryptionkey} the session encryption key in JWE format, wrapped with the new wrapping key</li>
+     * <li>{@code hmackey} the session HMAC key in JWE format, wrapped with the new wrapping key</li>
      * </ul></p>
      */
     var ResponseData = JsonWebKeyLadderExchange$ResponseData = KeyResponseData.extend({
@@ -258,13 +258,16 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
         },
 
         /** @inheritDoc */
-        getKeydata: function getKeydata() {
-            var keydata = {};
-            keydata[KEY_WRAP_KEY] = base64$encode(this.wrapKey);
-            keydata[KEY_WRAPDATA] = base64$encode(this.wrapdata);
-            keydata[KEY_ENCRYPTION_KEY] = base64$encode(this.encryptionKey);
-            keydata[KEY_HMAC_KEY] = base64$encode(this.hmacKey);
-            return keydata;
+        getKeydata: function getKeydata(encoder, format, callback) {
+            var self = this;
+            AsyncExecutor(callback, function() {
+                var mo = encoder.createObject();
+                mo.put(KEY_WRAP_KEY, this.wrapKey);
+                mo.put(KEY_WRAPDATA, this.wrapdata);
+                mo.put(KEY_ENCRYPTION_KEY, this.encryptionKey);
+                mo.put(KEY_HMAC_KEY, this.hmacKey);
+                return mo;
+            }, self);
         },
 
         /** @inheritDoc */

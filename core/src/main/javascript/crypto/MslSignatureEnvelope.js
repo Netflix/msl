@@ -62,12 +62,12 @@ var MslSignatureEnvelope$Version;
          *   "#mandatory" : [ "version", "algorithm", "signature" ],
          *   "version" : "number",
          *   "algorithm" : "string",
-         *   "signature" : "base64"
+         *   "signature" : "binary"
          * }} where:
          * <ul>
          * <li>{@code version} is the number '2'</li>
          * <li>{@code algorithm} is one of the recognized signature algorithms</li>
-         * <li>{@code signature} is the Base64-encoded signature</li>
+         * <li>{@code signature} is the signature</li>
          * </ul>
          *
          * <p>Supported algorithms:

@@ -30,12 +30,12 @@
  * {@code
  * useridtoken = {
  *   "#mandatory" : [ "tokendata", "signature" ],
- *   "tokendata" : "base64",
- *   "signature" : "base64"
+ *   "tokendata" : "binary",
+ *   "signature" : "binary"
  * }} where:
  * <ul>
- * <li>{@code tokendata} is the Base64-encoded user ID token data (usertokendata)</li>
- * <li>{@code signature} is the Base64-encoded verification data of the user ID token data</li>
+ * <li>{@code tokendata} is the user ID token data (usertokendata)</li>
+ * <li>{@code signature} is the verification data of the user ID token data</li>
  * </ul>
  *
  * <p>The token data is represented as
@@ -46,14 +46,14 @@
  *   "expiration" : "int64(0,-)",
  *   "mtserialnumber" : "int64(0,2^53^)",
  *   "serialnumber" : "int64(0,2^53^)",
- *   "userdata" : "base64"
+ *   "userdata" : "binary"
  * }} where:
  * <ul>
  * <li>{@code renewalwindow} is when the renewal window opens in seconds since the epoch</li>
  * <li>{@code expiration} is the expiration timestamp in seconds since the epoch</li>
  * <li>{@code mtserialnumber} is the master token serial number</li>
  * <li>{@code serialnumber} is the user ID token serial number</li>
- * <li>{@code userdata} is the Base64-encoded encrypted user data (userdata)</li>
+ * <li>{@code userdata} is the encrypted user data (userdata)</li>
  * </ul></p>
  *
  * <p>The decrypted user data is represented as

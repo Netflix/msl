@@ -47,11 +47,11 @@ var DiffieHellmanExchange$ResponseData$parse;
      * {@code {
      *   "#mandatory" : [ "parametersid", "publickey" ],
      *   "parametersid" : "string",
-     *   "publickey" : "base64",
+     *   "publickey" : "binary",
      * } where:
      * <ul>
      * <li>{@code parametersid} identifies the Diffie-Hellman paramters to use</li>
-     * <li>{@code publickey} the Base64-encoded public key used to generate the shared secret</li>
+     * <li>{@code publickey} the public key used to generate the shared secret</li>
      * </ul></p>
      *
      */
@@ -153,11 +153,11 @@ var DiffieHellmanExchange$ResponseData$parse;
      * {@code {
      *   "#mandatory" : [ "parametersid", "publickey" ],
      *   "parametersid" : "string",
-     *   "publickey" : "base64",
+     *   "publickey" : "binary",
      * } where:
      * <ul>
      * <li>{@code parametersid} identifies the Diffie-Hellman paramters to use</li>
-     * <li>{@code publickey} the Base64-encoded public key used to generate the shared secret</li>
+     * <li>{@code publickey} the public key used to generate the shared secret</li>
      * </ul></p>
      */
     var ResponseData = DiffieHellmanExchange$ResponseData = KeyResponseData.extend({
