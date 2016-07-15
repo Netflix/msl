@@ -37,7 +37,8 @@ var SimpleMslContext;
             // Message capabilities.
             var compressionAlgos = [ MslConstants$CompressionAlgorithm.LZW ];
             var languages = [ "US_en" ];
-            var msgCaps = new MessageCapabilities(compressionAlgos, languages);
+            var encoderFormats = [ MslEncoderFormat.JSON ];
+            var msgCaps = new MessageCapabilities(compressionAlgos, languages, encoderFormats);
 
             // Entity authentication data.
             var entityAuthData = new UnauthenticatedAuthenticationData(clientId);
@@ -53,6 +54,9 @@ var SimpleMslContext;
 
             // MSL store.
             var store = new SimpleKeyxMslStore(keyxMgr, errorCallback);
+            
+            // MSL encoder factory.
+            var encoder = new MslEncoderFactory();
 
             // Set properties.
             var props = {
@@ -64,6 +68,7 @@ var SimpleMslContext;
                 _tokenFactory: { value: new ClientTokenFactory(), writable: false, enumerable: false, configurable: false },
                 _keyxFactories: { value: keyxFactories, writable: false, enumerable: false, configurable: false },
                 _store: { value: store, writable: false, enumerable: false, configurable: false },
+                _encoder: { value: encoder, writable: false, enumerable: false, configurable: false },
             };
             Object.defineProperties(this, props);
         },
@@ -148,6 +153,11 @@ var SimpleMslContext;
         /** @inheritDoc */
         getMslStore: function getMslStore() {
             return this._store;
+        },
+        
+        /** @inheritDoc */
+        getMslEncoderFactory: function getMslEncoderFactory() {
+            return this._encoder;
         },
     });
 })();
