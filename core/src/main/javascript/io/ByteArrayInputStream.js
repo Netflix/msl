@@ -31,7 +31,7 @@ var ByteArrayInputStream = InputStream.extend({
             _data: { value: data, writable: false, enumerable: false, configurable: false },
             _closed: { value: false, writable: true, enumerable: false, configurable: false },
             _currentPosition: { value: 0, writable: true, enumerable: false, configurable: false },
-            _mark: { value: -1, writable: true, enumerable: false, configurable: false },
+            _mark: { value: 0, writable: true, enumerable: false, configurable: false },
         };
         Object.defineProperties(this, props);
     },
@@ -57,14 +57,12 @@ var ByteArrayInputStream = InputStream.extend({
 
     /**
      * Repositions this stream to the position at the time the mark method was
-     * last called on this input stream.
+     * last called on this input stream. If the mark method has never been
+     * called then the stream will be reset to the beginning.
      *
-     * @throws IOException if this stream has not been marked.
      * @see #mark()
      */
     reset: function reset() {
-        if (this._mark == -1)
-            throw new MslIoException("Stream has not been marked.");
         this._currentPosition = this._mark;
     },
 
