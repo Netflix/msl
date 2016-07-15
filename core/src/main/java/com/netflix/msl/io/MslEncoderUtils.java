@@ -222,25 +222,30 @@ public class MslEncoderUtils {
         int hashcode = 0;
         final Set<String> names = mo.getKeys();
         for (final String name : names) {
+            final int valuehash;
             // byte[] may be represented differently, so try accessing directly
             // first.
             final byte[] b = mo.optBytes(name, null);
             if (b != null) {
-                hashcode = 37 * hashcode + Arrays.hashCode(b);
-                continue;
+                valuehash = Arrays.hashCode(b);
+            }
+
+            // Otherwise process normally.
+            else {
+                final Object o = mo.opt(name);
+                if (o instanceof MslObject) {
+                    valuehash = hashObject((MslObject)o);
+                } else if (o instanceof MslArray) {
+                    valuehash = hashArray((MslArray)o);
+                } else if (o != null) {
+                    valuehash = o.hashCode();
+                } else {
+                    valuehash = 1;
+                }
             }
             
-            // Otherwise process normally.
-            final Object o = mo.opt(name);
-            if (o instanceof MslObject) {
-                hashcode = 37 * hashcode + hashObject((MslObject)o);
-            } else if (o instanceof MslArray) {
-                hashcode = 37 * hashcode + hashArray((MslArray)o);
-            } else if (o != null) {
-                hashcode = 37 * hashcode + o.hashCode();
-            } else {
-                hashcode = 37 * hashcode + 1;
-            }
+            // Modify the hash code. The name/value association matters.
+            hashcode ^= (name.hashCode() + valuehash);
         }
         return hashcode;
     }

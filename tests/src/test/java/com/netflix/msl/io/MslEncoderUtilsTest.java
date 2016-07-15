@@ -464,6 +464,28 @@ public class MslEncoderUtilsTest {
         }
     }
     
+    @Test
+    public void objectHash() throws MslEncoderException {
+        final MslObject mo1 = deepMo;
+        final MslObject mo2 = new MslObject(mo1.getMap());
+        assertTrue(MslEncoderUtils.equalObjects(mo1, mo2));
+        assertEquals(MslEncoderUtils.hashObject(mo2), MslEncoderUtils.hashObject(mo1));
+        
+        final String[] keys = mo1.getKeys().toArray(new String[0]);
+        final String key = keys[0];
+        final Object value = mo1.get(key);
+        mo1.remove(key);
+        mo1.put(key + "x", value);
+        assertFalse(MslEncoderUtils.equalObjects(mo1, mo2));
+        assertNotEquals(MslEncoderUtils.hashObject(mo2), MslEncoderUtils.hashObject(mo1));
+        mo1.put(key, value);
+        assertFalse(MslEncoderUtils.equalObjects(mo1, mo2));
+        assertNotEquals(MslEncoderUtils.hashObject(mo2), MslEncoderUtils.hashObject(mo1));
+        mo1.remove(key + "x");
+        assertTrue(MslEncoderUtils.equalObjects(mo1, mo2));
+        assertEquals(MslEncoderUtils.hashObject(mo2), MslEncoderUtils.hashObject(mo1));
+    }
+    
     /** MSL encoder factory. */
     private static MslEncoderFactory encoder;
     
