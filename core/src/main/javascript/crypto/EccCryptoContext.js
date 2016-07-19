@@ -21,9 +21,21 @@
  * @implements {ICryptoContext}
  */
 var EccCryptoContext;
+var EccCryptoContext$Mode;
 
 (function() {
     "use strict";
+
+    /**
+     * ECC crypto context mode.
+     * @enum
+     */
+    EccCryptoContext$Mode = {
+        ENCRYPT_DECRYPT: 1,
+        SIGN_VERIFY: 2
+    };
+
+    var Mode = EccCryptoContext$Mode;
 
     EccCryptoContext = ICryptoContext.extend({
         /**
@@ -33,12 +45,13 @@ var EccCryptoContext;
          * @param {PrivateKey} privateKey the private key.
          * @constructor
          */
-        init: function init(ctx, privateKey) {
+        init: function init(ctx, privateKey, publicKey, mode) {
             init.base.call(this);
 
             // The properties.
             var props = {
-                privateKey: { value: privateKey, writable: false, enumerable: false, configurable: false }
+                privateKey: { value: privateKey, writable: false, enumerable: false, configurable: false },
+                publicKey: { value: publicKey, writable: false, enumerable: false, configurable: false }
             };
             Object.defineProperties(this, props);
         },
@@ -74,6 +87,8 @@ var EccCryptoContext;
         /** @inheritDoc */
         sign: function sign(data, callback) {
             AsyncExecutor(callback, function() {
+                if (!this.privateKey)
+                    throw new MslCryptoException(MslError.SIGN_NOT_SUPPORTED, "no private key");
                 var oncomplete = function(hash) {
                     // Return the signature envelope byte representation.
                     MslSignatureEnvelope$create(new Uint8Array(hash), {
@@ -93,8 +108,25 @@ var EccCryptoContext;
 
         /** @inheritDoc */
         verify: function verify(data, signature, callback) {
+            var self = this;
             AsyncExecutor(callback, function() {
-                throw new MslCryptoException(MslError.VERIFY_NOT_SUPPORTED, "ECC does not verify");
+                if (!this.publicKey)
+                    throw new MslCryptoException(MslError.VERIFY_NOT_SUPPORTED, "no public key");
+
+                // Reconstitute the signature envelope.
+                MslSignatureEnvelope$parse(signature, MslSignatureEnvelope$Version.V1, {
+                    result: function(envelope) {
+                        AsyncExecutor(callback, function() {
+                            var oncomplete = callback.result;
+                            var onerror = function(e) {
+                                callback.error(new MslCryptoException(MslError.SIGNATURE_ERROR));
+                            };
+                            mslCrypto['verify'](WebCryptoAlgorithm.ECDSA_SHA256, this.publicKey, envelope.signature, data)
+                                .then(oncomplete, onerror);
+                        }, self);
+                    },
+                    error: callback.error
+                });
             }, this);
         }
     });
