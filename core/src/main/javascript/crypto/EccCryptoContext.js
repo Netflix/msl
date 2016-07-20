@@ -15,37 +15,32 @@
  */
 
 /**
- * <p>An ECC crypto context supports sign.</p>
+ * <p>An ECC crypto context performs ECDSA sign/verify using a
+ *    public/private ECC key pair.</p>
  *
  * @author Pablo Pissanetzky <ppissanetzky@netflix.com>
  * @implements {ICryptoContext}
  */
 var EccCryptoContext;
-var EccCryptoContext$Mode;
 
 (function() {
     "use strict";
 
-    /**
-     * ECC crypto context mode.
-     * @enum
-     */
-    EccCryptoContext$Mode = {
-        ENCRYPT_DECRYPT: 1,
-        SIGN_VERIFY: 2
-    };
-
-    var Mode = EccCryptoContext$Mode;
-
     EccCryptoContext = ICryptoContext.extend({
         /**
-         * <p>Create a new ECC crypto context for sign using the provided private key.
+         * <p>Create a new ECC crypto context with the provided public and
+         * private keys.</p>
+         *
+         * <p>If there is no private key, signing is unsupported.</p>
+         *
+         * <p>If there is no public key, verification is unsupported.</p>
          *
          * @param {MslContext} ctx MSL context.
-         * @param {PrivateKey} privateKey the private key.
+         * @param {PrivateKey} privateKey the private key used for signing.
+         * @param {PublicKey} publicKey the public key used for verification.
          * @constructor
          */
-        init: function init(ctx, privateKey, publicKey, mode) {
+        init: function init(ctx, privateKey, publicKey) {
             init.base.call(this);
 
             // The properties.
