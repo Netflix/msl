@@ -16,14 +16,18 @@
 
 /**
  * ECC crypto context unit tests.
- *
  */
 describe("EccCryptoContext", function() {
+    /** ECC public key A. */
     var publicKeyA;
+    /** ECC private key A. */
     var privateKeyA;
+    /** ECC public key B. */
     var publicKeyB;
+    /** ECC private key B. */
     var privateKeyB;
 
+    /** ECC keypair A. */
     var ECDSA_KEYPAIR_A = {
         publicKeyJSON: {
             "kty": "EC",
@@ -44,6 +48,7 @@ describe("EccCryptoContext", function() {
         }
     };
 
+    /** ECC keypair B. */
     var ECDSA_KEYPAIR_B = {
         publicKeyJSON: {
             "kty": "EC",
@@ -71,55 +76,46 @@ describe("EccCryptoContext", function() {
     random.nextBytes(message);
     /** MSL context. */
     var ctx = null;
+    
     var initialized = false;
-
     beforeEach(function() {
-        var extractable = true;
-        var _algo = WebCryptoAlgorithm.ECDSA_SHA256;
-        _algo['namedCurve'] = ECDSA_KEYPAIR_A.publicKeyJSON['crv'];
-
         if (!initialized) {
             runs(function() {
+                var extractable = true;
+                var _algo = WebCryptoAlgorithm.ECDSA_SHA256;
+                _algo['namedCurve'] = ECDSA_KEYPAIR_A.publicKeyJSON['crv'];
+                
                 mslCrypto["importKey"]("jwk", ECDSA_KEYPAIR_A.publicKeyJSON, _algo, extractable, ["verify"])
                     .then(function (key) {
                         publicKeyA = key;
                     },
-                    function (err) {
-                        expect(function() { throw err; }).not.toThrow();
-                    }
+                    function(e) { expect(function() { throw e; }).not.toThrow(); }
                 );
                 mslCrypto["importKey"]("jwk", ECDSA_KEYPAIR_A.privateKeyJSON, _algo, extractable, ["sign"])
                     .then(function (key) {
                         privateKeyA = key;
                     },
-                    function (err) {
-                        expect(function() { throw err; }).not.toThrow();
-                    }
+                    function(e) { expect(function() { throw e; }).not.toThrow(); }
                 );
                 mslCrypto["importKey"]("jwk", ECDSA_KEYPAIR_B.publicKeyJSON, _algo, extractable, ["verify"])
                     .then(function (key) {
                         publicKeyB = key;
                     },
-                    function (err) {
-                        expect(function() { throw err; }).not.toThrow();
-                    }
+                    function(e) { expect(function() { throw e; }).not.toThrow(); }
                 );
                 mslCrypto["importKey"]("jwk", ECDSA_KEYPAIR_B.privateKeyJSON, _algo, extractable, ["sign"])
                     .then(function (key) {
                         privateKeyB = key;
                     },
-                    function (err) {
-                        expect(function() { throw err; }).not.toThrow();
-                    }
+                    function(e) { expect(function() { throw e; }).not.toThrow(); }
                 );
             });
             waitsFor(function() { return publicKeyA && privateKeyA && publicKeyB && privateKeyB; }, "Import ECDSA keypairs A/B", 1500);
-            initialized = true;
+            runs(function() { initialized = true; });
         }
     });
 
     describe("sign/verify", function() {
-
         it("sign/verify", function() {
             var messageA = new Uint8Array(32);
             random.nextBytes(messageA);
@@ -128,7 +124,7 @@ describe("EccCryptoContext", function() {
             random.nextBytes(messageB);
 
             var cryptoContext = new EccCryptoContext(ctx, privateKeyA, publicKeyA);
-            var signatureA = null, signatureB = null;
+            var signatureA, signatureB;
             runs(function() {
                 cryptoContext.sign(messageA, {
                     result: function(s) { signatureA = s; },
@@ -148,7 +144,7 @@ describe("EccCryptoContext", function() {
                 expect(signatureB).not.toEqual(signatureA);
             });
 
-            var verifiedAA = null, verifiedBB = null, verifiedBA;
+            var verifiedAA, verifiedBB, verifiedBA;
             runs(function() {
                 cryptoContext.verify(messageA, signatureA, {
                     result: function(v) { verifiedAA = v; },
@@ -163,7 +159,7 @@ describe("EccCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return verifiedAA !== null && verifiedBB !== null && verifiedBA !== null; }, "verified", 300);
+            waitsFor(function() { return verifiedAA !== undefined && verifiedBB !== undefined && verifiedBA !== undefined; }, "verified", 300);
             runs(function() {
                 expect(verifiedAA).toBeTruthy();
                 expect(verifiedBB).toBeTruthy();
@@ -189,7 +185,7 @@ describe("EccCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return verified !== null; }, "verified", 300);
+            waitsFor(function() { return verified !== undefined; }, "verified", 300);
             runs(function() {
                 expect(verified).toBeFalsy();
             });
