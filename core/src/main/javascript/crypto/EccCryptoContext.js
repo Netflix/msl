@@ -15,7 +15,8 @@
  */
 
 /**
- * <p>An ECC crypto context supports sign.</p>
+ * <p>An ECC crypto context performs ECDSA sign/verify using a
+ *    public/private ECC key pair.</p>
  *
  * @author Pablo Pissanetzky <ppissanetzky@netflix.com>
  * @implements {ICryptoContext}
@@ -27,18 +28,25 @@ var EccCryptoContext;
 
     EccCryptoContext = ICryptoContext.extend({
         /**
-         * <p>Create a new ECC crypto context for sign using the provided private key.
+         * <p>Create a new ECC crypto context with the provided public and
+         * private keys.</p>
+         *
+         * <p>If there is no private key, signing is unsupported.</p>
+         *
+         * <p>If there is no public key, verification is unsupported.</p>
          *
          * @param {MslContext} ctx MSL context.
-         * @param {PrivateKey} privateKey the private key.
+         * @param {PrivateKey} privateKey the private key used for signing.
+         * @param {PublicKey} publicKey the public key used for verification.
          * @constructor
          */
-        init: function init(ctx, privateKey) {
+        init: function init(ctx, privateKey, publicKey) {
             init.base.call(this);
 
             // The properties.
             var props = {
-                privateKey: { value: privateKey, writable: false, enumerable: false, configurable: false }
+                privateKey: { value: privateKey, writable: false, enumerable: false, configurable: false },
+                publicKey: { value: publicKey, writable: false, enumerable: false, configurable: false }
             };
             Object.defineProperties(this, props);
         },
@@ -74,6 +82,8 @@ var EccCryptoContext;
         /** @inheritDoc */
         sign: function sign(data, callback) {
             AsyncExecutor(callback, function() {
+                if (!this.privateKey)
+                    throw new MslCryptoException(MslError.SIGN_NOT_SUPPORTED, "no private key");
                 var oncomplete = function(hash) {
                     // Return the signature envelope byte representation.
                     MslSignatureEnvelope$create(new Uint8Array(hash), {
@@ -93,8 +103,25 @@ var EccCryptoContext;
 
         /** @inheritDoc */
         verify: function verify(data, signature, callback) {
+            var self = this;
             AsyncExecutor(callback, function() {
-                throw new MslCryptoException(MslError.VERIFY_NOT_SUPPORTED, "ECC does not verify");
+                if (!this.publicKey)
+                    throw new MslCryptoException(MslError.VERIFY_NOT_SUPPORTED, "no public key");
+
+                // Reconstitute the signature envelope.
+                MslSignatureEnvelope$parse(signature, MslSignatureEnvelope$Version.V1, {
+                    result: function(envelope) {
+                        AsyncExecutor(callback, function() {
+                            var oncomplete = callback.result;
+                            var onerror = function(e) {
+                                callback.error(new MslCryptoException(MslError.SIGNATURE_ERROR));
+                            };
+                            mslCrypto['verify'](WebCryptoAlgorithm.ECDSA_SHA256, this.publicKey, envelope.signature, data)
+                                .then(oncomplete, onerror);
+                        }, self);
+                    },
+                    error: callback.error
+                });
             }, this);
         }
     });
