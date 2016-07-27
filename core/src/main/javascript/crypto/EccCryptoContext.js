@@ -43,6 +43,12 @@ var EccCryptoContext;
         init: function init(ctx, privateKey, publicKey) {
             init.base.call(this);
 
+            // Extract the RAW ECC keys
+            if (privateKey)
+                privateKey = privateKey.rawKey;
+            if (publicKey)
+                publicKey = publicKey.rawKey;
+
             // The properties.
             var props = {
                 privateKey: { value: privateKey, writable: false, enumerable: false, configurable: false },
