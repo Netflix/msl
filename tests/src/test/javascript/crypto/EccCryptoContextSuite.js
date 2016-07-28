@@ -76,7 +76,7 @@ describe("EccCryptoContext", function() {
     random.nextBytes(message);
     /** MSL context. */
     var ctx = null;
-    
+
     var initialized = false;
     beforeEach(function() {
         if (!initialized) {
@@ -84,28 +84,40 @@ describe("EccCryptoContext", function() {
                 var extractable = true;
                 var _algo = WebCryptoAlgorithm.ECDSA_SHA256;
                 _algo['namedCurve'] = ECDSA_KEYPAIR_A.publicKeyJSON['crv'];
-                
+
                 mslCrypto["importKey"]("jwk", ECDSA_KEYPAIR_A.publicKeyJSON, _algo, extractable, ["verify"])
                     .then(function (key) {
-                        publicKeyA = key;
+                        PublicKey$create(key, {
+                            result: function(publicKey) { publicKeyA = publicKey; },
+                            error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                        });
                     },
                     function(e) { expect(function() { throw e; }).not.toThrow(); }
                 );
                 mslCrypto["importKey"]("jwk", ECDSA_KEYPAIR_A.privateKeyJSON, _algo, extractable, ["sign"])
                     .then(function (key) {
-                        privateKeyA = key;
+                        PrivateKey$create(key, {
+                            result: function(privateKey) { privateKeyA = privateKey; },
+                            error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                        });
                     },
                     function(e) { expect(function() { throw e; }).not.toThrow(); }
                 );
                 mslCrypto["importKey"]("jwk", ECDSA_KEYPAIR_B.publicKeyJSON, _algo, extractable, ["verify"])
                     .then(function (key) {
-                        publicKeyB = key;
+                        PublicKey$create(key, {
+                            result: function(publicKey) { publicKeyB = publicKey; },
+                            error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                        });
                     },
                     function(e) { expect(function() { throw e; }).not.toThrow(); }
                 );
                 mslCrypto["importKey"]("jwk", ECDSA_KEYPAIR_B.privateKeyJSON, _algo, extractable, ["sign"])
                     .then(function (key) {
-                        privateKeyB = key;
+                        PrivateKey$create(key, {
+                            result: function(privateKey) { privateKeyB = privateKey; },
+                            error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                        });
                     },
                     function(e) { expect(function() { throw e; }).not.toThrow(); }
                 );
