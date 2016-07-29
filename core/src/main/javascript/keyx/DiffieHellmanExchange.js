@@ -141,7 +141,7 @@ var DiffieHellmanExchange$ResponseData$parse;
             }
             if (!publicKeyBytes || publicKeyBytes.length == 0)
                 throw new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY, "keydata " + JSON.stringify(keyDataJO));
-            PublicKey$import(publicKeyBytes, WebCryptoAlgorithm.DIFFIE_HELLMAN, WebCryptoUsage.DERIVE_KEY, {
+            PublicKey$import(publicKeyBytes, WebCryptoAlgorithm.DIFFIE_HELLMAN, WebCryptoUsage.DERIVE_KEY, KeyFormat.SPKI, {
                 result: function(publicKey) {
                     constructRequestData(parametersId, publicKey);
                 },

@@ -53,9 +53,9 @@ var PrivateKey$import;
                         createKey(new Uint8Array(result));
                     };
                     var onerror = function(e) {
-                        callback.error(new MslCryptoException(MslError.KEY_EXPORT_ERROR, "pkcs8"));
+                        callback.error(new MslCryptoException(MslError.KEY_EXPORT_ERROR, KeyFormat.PKCS8));
                     };
-                    mslCrypto['exportKey']("pkcs8", rawKey)
+                    mslCrypto['exportKey'](KeyFormat.PKCS8, rawKey)
                         .then(oncomplete, onerror);
                 } else {
                     createKey(encoded);
@@ -107,7 +107,7 @@ var PrivateKey$import;
      * Creates a private key from the provided key data. The key's
      * byte encoding will be available.
      *
-     * @param {string|Uint8Array} pkcs8 Base64-encoded or raw PKCS#8.
+     * @param {string|Uint8Array|JSON Object} input Base64-encoded or raw PKCS#8.
      * @param {WebCryptoAlgorithm} algo Web Crypto algorithm.
      * @param {WebCryptoUsage} usages Web Crypto key usages.
      * @param {{result: function(PrivateKey), error: function(Error)}}
@@ -115,20 +115,17 @@ var PrivateKey$import;
      *        or any thrown exceptions.
      * @throws MslCryptoException if the key data is invalid.
      */
-    PrivateKey$import = function PrivateKey$import(pkcs8, algo, usages, callback) {
+    PrivateKey$import = function PrivateKey$import(input, algo, usages, format, callback) {
         AsyncExecutor(callback, function() {
-            try {
-                pkcs8 = (typeof pkcs8 == "string") ? base64$decode(pkcs8) : pkcs8;
-            } catch (e) {
-                throw new MslCryptoException(MslError.INVALID_PRIVATE_KEY, "pkcs8 " + pkcs8, e);
-            }
+            input = KeyFormat.normalizePrivkeyInput(input, format);
+
             var oncomplete = function(result) {
-                new PrivateKey(result, callback, pkcs8);
+                new PrivateKey(result, callback, input);
             };
             var onerror = function(e) {
                 callback.error(new MslCryptoException(MslError.INVALID_PRIVATE_KEY));
             };
-            mslCrypto["importKey"]("pkcs8", pkcs8, algo, true, usages)
+            mslCrypto["importKey"](format, input, algo, true, usages)
                 .then(oncomplete, onerror);
         });
     };

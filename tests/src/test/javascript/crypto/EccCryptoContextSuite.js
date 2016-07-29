@@ -65,7 +65,7 @@ describe("EccCryptoContext", function() {
             "y":   "eBVHsIhtASlzUIzGnMAl0TDfj0pqgldZrbsZobEL-78",
             "d":   "TBP2kKufnhTHEf88VPcOIPDlk8uAFlLgi7C1iv86huY",
             "use": "sig",
-            "kid": "B"
+            "kid": "Bpriv"
         }
     };
 
@@ -84,43 +84,24 @@ describe("EccCryptoContext", function() {
                 var extractable = true;
                 var _algo = WebCryptoAlgorithm.ECDSA_SHA256;
                 _algo['namedCurve'] = ECDSA_KEYPAIR_A.publicKeyJSON['crv'];
+                
+                PublicKey$import(ECDSA_KEYPAIR_A.publicKeyJSON, WebCryptoAlgorithm.ECDSA_SHA256, WebCryptoUsage.VERIFY, KeyFormat.JWK, {
+                    result: function (pubkey) { publicKeyA = pubkey; },
+                    error:  function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+                PrivateKey$import(ECDSA_KEYPAIR_A.privateKeyJSON, WebCryptoAlgorithm.ECDSA_SHA256, WebCryptoUsage.SIGN, KeyFormat.JWK, {
+                    result: function (privkey) { privateKeyA = privkey; },
+                    error:  function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+                PublicKey$import(ECDSA_KEYPAIR_B.publicKeyJSON, WebCryptoAlgorithm.ECDSA_SHA256, WebCryptoUsage.VERIFY, KeyFormat.JWK, {
+                    result: function (pubkey) { publicKeyB = pubkey; },
+                    error:  function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
 
-                mslCrypto["importKey"]("jwk", ECDSA_KEYPAIR_A.publicKeyJSON, _algo, extractable, ["verify"])
-                    .then(function (key) {
-                        PublicKey$create(key, {
-                            result: function(publicKey) { publicKeyA = publicKey; },
-                            error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                        });
-                    },
-                    function(e) { expect(function() { throw e; }).not.toThrow(); }
-                );
-                mslCrypto["importKey"]("jwk", ECDSA_KEYPAIR_A.privateKeyJSON, _algo, extractable, ["sign"])
-                    .then(function (key) {
-                        PrivateKey$create(key, {
-                            result: function(privateKey) { privateKeyA = privateKey; },
-                            error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                        });
-                    },
-                    function(e) { expect(function() { throw e; }).not.toThrow(); }
-                );
-                mslCrypto["importKey"]("jwk", ECDSA_KEYPAIR_B.publicKeyJSON, _algo, extractable, ["verify"])
-                    .then(function (key) {
-                        PublicKey$create(key, {
-                            result: function(publicKey) { publicKeyB = publicKey; },
-                            error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                        });
-                    },
-                    function(e) { expect(function() { throw e; }).not.toThrow(); }
-                );
-                mslCrypto["importKey"]("jwk", ECDSA_KEYPAIR_B.privateKeyJSON, _algo, extractable, ["sign"])
-                    .then(function (key) {
-                        PrivateKey$create(key, {
-                            result: function(privateKey) { privateKeyB = privateKey; },
-                            error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                        });
-                    },
-                    function(e) { expect(function() { throw e; }).not.toThrow(); }
-                );
+                PrivateKey$import(ECDSA_KEYPAIR_B.privateKeyJSON, WebCryptoAlgorithm.ECDSA_SHA256, WebCryptoUsage.SIGN, KeyFormat.JWK, {
+                    result: function (privkey) { privateKeyB = privkey; },
+                    error:  function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
             });
             waitsFor(function() { return publicKeyA && privateKeyA && publicKeyB && privateKeyB; }, "Import ECDSA keypairs A/B", 1500);
             runs(function() { initialized = true; });

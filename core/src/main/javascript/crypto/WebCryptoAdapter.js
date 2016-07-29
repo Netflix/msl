@@ -261,7 +261,7 @@ var MslCrypto$setCryptoSubtle;
                     var op = nfCryptoSubtle.importKey(format, keyData, algorithm, ext, ku);
                     return promisedOperation(op);
                 case WebCryptoVersion.V2014_02_SAFARI:
-                    if (format == 'spki' || format == 'pkcs8') {
+                    if (format == KeyFormat.SPKI || format == KeyFormat.PKCS8) {
                         return Promise.resolve().then(function() {
                             var alg = ASN1.webCryptoAlgorithmToJwkAlg(algorithm);
                             var keyOps = ASN1.webCryptoUsageToJwkKeyOps(ku);
@@ -289,7 +289,7 @@ var MslCrypto$setCryptoSubtle;
                     var op = nfCryptoSubtle.exportKey(format, key);
                     return promisedOperation(op);
                 case WebCryptoVersion.V2014_02_SAFARI:
-                    if (format == 'spki' || format == 'pkcs8') {
+                    if (format == KeyFormat.SPKI || format == KeyFormat.PKCS8) {
 						var op = nfCryptoSubtle.exportKey('jwk', key);
                         return promisedOperation(op).then(function (result) {
                             var jwkObj = JSON.parse(utf8$getString(new Uint8Array(result)));

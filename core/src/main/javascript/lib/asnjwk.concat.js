@@ -1070,10 +1070,10 @@ function jwkToRsaDer(jwk) {
     var type;
     var der;
     if (rsaKey instanceof RsaPublicKey) {
-        type = 'spki';
+        type = KeyFormat.SPKI;
         der = buildRsaSpki(rsaKey).der;
     } else if (rsaKey instanceof RsaPrivateKey) {
-        type = 'pkcs8';
+        type = KeyFormat.PKCS8;
         der = buildRsaPkcs8(rsaKey).der;
     } else {
         return undefined;
