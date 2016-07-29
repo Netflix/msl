@@ -19,7 +19,10 @@
  *
  */
 
+var KeyFormat;
+
 (function() {
+    "use strict";
 
     KeyFormat = {
         RAW : "raw",
@@ -30,22 +33,27 @@
         /**
          * Normalize public key input into expected WebCrypto format.
          *
-         * @param {string|JSON|Uint8Array} input Base64-encoded or JSON or ByteArray of key.
-         * @param {string} format key format type ("spki" | "jwk")
-         * @return webcrypto format for the public key.
+         * @param {string|object|Uint8Array} input Base64-encoded or JSON object or ByteArray of key.
+         * @param {KeyFormat} format key format type ("spki" | "jwk")
+         * @return WebCrypto acceptable format of the public key.
          * @throws MslCryptoException if the key data is invalid.
          */
         normalizePubkeyInput: function normalizePubkeyInput(input, format) {
             if (format == KeyFormat.SPKI) {
                 try {
-                    input = (typeof input == "string") ? base64$decode(input) : input;
+                    input = (typeof input === "string") ? base64$decode(input) : input;
                 } catch (e) {
                     throw new MslCryptoException(MslError.INVALID_PUBLIC_KEY, format + " " + input, e);
                 }
             }
             else if (format == KeyFormat.JWK) {
                 try {
-                    input = (typeof input == "string") ? JSON.parse(input) : input;
+                    input = (typeof input === "string") ? JSON.parse(input) : input;
+                    /* input must be a JSON object */
+                    if (typeof input !== "object") {
+                        console.log("JWK key is not JSON format")
+                        throw "JWK key is not JSON format";
+                    }
                 } catch (e) {
                     throw new MslCryptoException(MslError.INVALID_PUBLIC_KEY, format + " " + input, e);
                 }
@@ -60,24 +68,29 @@
         /**
          * Normalize private key input into expected WebCrypto format.
          *
-         * @param {string|JSON|Uint8Array} input Base64-encoded or JSON or ByteArray of key.
-         * @param {string} format key format type ("pkcs8" | "jwk")
-         * @return webcrypto format for private key.
+         * @param {string|object|Uint8Array} input Base64-encoded or JSON object or ByteArray of key.
+         * @param {KeyFormat} format key format type ("pkcs8" | "jwk")
+         * @return WebCrypto acceptable format of the private key.
          * @throws MslCryptoException if the key data is invalid.
          */
         normalizePrivkeyInput: function normalizePrivkeyInput(input, format) {
             if (format == KeyFormat.PKCS8) {
                 try {
-                    input = (typeof input == "string") ? base64$decode(input) : input;
+                    input = (typeof input === "string") ? base64$decode(input) : input;
                 } catch (e) {
                     throw new MslCryptoException(MslError.INVALID_PRIVATE_KEY, format + " " + input, e);
                 }
             }
-            else if (format == "jwk") {
+            else if (format == KeyFormat.JWK) {
                 try {
-                    input = (typeof input == "string") ? JSON.parse(input) : input;
+                    input = (typeof input === "string") ? JSON.parse(input) : input;
+                    /* input must be a JSON object */
+                    if (typeof input !== "object") {
+                        console.log("JWK key is not JSON format")
+                        throw "JWK key is not JSON format";
+                    }
                 } catch (e) {
-                    throw new MslCryptoException(MslError.INVALID_PUBLIC_KEY, format + " " + input, e);
+                    throw new MslCryptoException(MslError.INVALID_PRIVATE_KEY, format + " " + input, e);
                 }
             }
             else {

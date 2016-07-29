@@ -107,9 +107,10 @@ var PrivateKey$import;
      * Creates a private key from the provided key data. The key's
      * byte encoding will be available.
      *
-     * @param {string|Uint8Array|JSON Object} input Base64-encoded or raw PKCS#8.
+     * @param {string|Uint8Array|object} input Base64-encoded, Raw or JSON key data (PKCS#8|JWK).
      * @param {WebCryptoAlgorithm} algo Web Crypto algorithm.
      * @param {WebCryptoUsage} usages Web Crypto key usages.
+     * @param {KeyFormat} format format of the key to import.
      * @param {{result: function(PrivateKey), error: function(Error)}}
      *        callback the callback will receive the new public key
      *        or any thrown exceptions.
