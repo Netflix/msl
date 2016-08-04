@@ -50,8 +50,7 @@ var KeyFormat;
                 try {
                     input = (typeof input === "string") ? JSON.parse(input) : input;
                     /* input must be a JSON object */
-                    if (typeof input !== "object") {
-                        console.log("JWK key is not JSON format")
+                    if (typeof input !== "object" || input.constructor !== Object) {
                         throw "JWK key is not JSON format";
                     }
                 } catch (e) {
@@ -85,8 +84,7 @@ var KeyFormat;
                 try {
                     input = (typeof input === "string") ? JSON.parse(input) : input;
                     /* input must be a JSON object */
-                    if (typeof input !== "object") {
-                        console.log("JWK key is not JSON format")
+                    if (typeof input !== "object" || input.constructor !== Object) {
                         throw "JWK key is not JSON format";
                     }
                 } catch (e) {
