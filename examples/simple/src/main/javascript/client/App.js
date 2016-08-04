@@ -108,7 +108,7 @@ function addRsaKey() {
     keyB64 = keyB64.replace(/\s+/g, '');
 
     // Import the public key.
-    PublicKey$import(keyB64, WebCryptoAlgorithm.RSASSA_SHA256, WebCryptoUsage.VERIFY, {
+    PublicKey$import(keyB64, WebCryptoAlgorithm.RSASSA_SHA256, WebCryptoUsage.VERIFY, KeyFormat.SPKI, {
         result: function (pubkey) {
             client.addRsaPublicKey(identity, pubkey);
             keyform.style.visibility = 'hidden';

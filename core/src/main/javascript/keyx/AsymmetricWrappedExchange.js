@@ -193,34 +193,34 @@ var AsymmetricWrappedExchange$ResponseData$parse;
             // Reconstruct public key.
             try {
                 switch (mechanism) {
-	                case Mechanism.RSA:
-	                case Mechanism.JWE_RSA:
-	                case Mechanism.JWEJS_RSA:
-	                case Mechanism.JWK_RSA:
-	                {
-	                    PublicKey$import(encodedKey, WebCryptoAlgorithm.RSA_OAEP, WebCryptoUsage.WRAP, {
-	                        result: function(publicKey) {
-	                            constructRequestData(keyPairId, mechanism, publicKey);
-	                        },
-	                        error: callback.error,
-	                    });
-	                    break;
-	                }
-	                case Mechanism.JWK_RSAES:
-	                {
-	                    PublicKey$import(encodedKey, WebCryptoAlgorithm.RSAES, WebCryptoUsage.WRAP, {
-	                        result: function(publicKey) {
-	                            constructRequestData(keyPairId, mechanism, publicKey);
-	                        },
-	                        error: callback.error,
-	                    });
-	                    break;
-	                }
-	                /* Does not currently work.
-	                case Mechanism.ECC:
-	                 */
-	                default:
-	                    throw new MslCryptoException(MslError.UNSUPPORTED_KEYX_MECHANISM, mechanism);
+                    case Mechanism.RSA:
+                    case Mechanism.JWE_RSA:
+                    case Mechanism.JWEJS_RSA:
+                    case Mechanism.JWK_RSA:
+                    {
+                        PublicKey$import(encodedKey, WebCryptoAlgorithm.RSA_OAEP, WebCryptoUsage.WRAP, KeyFormat.SPKI, {
+                            result: function(publicKey) {
+                                constructRequestData(keyPairId, mechanism, publicKey);
+                            },
+                            error: callback.error,
+                        });
+                        break;
+                    }
+                    case Mechanism.JWK_RSAES:
+                    {
+                        PublicKey$import(encodedKey, WebCryptoAlgorithm.RSAES, WebCryptoUsage.WRAP, KeyFormat.SPKI, {
+                            result: function(publicKey) {
+                                constructRequestData(keyPairId, mechanism, publicKey);
+                            },
+                            error: callback.error,
+                        });
+                        break;
+                    }
+                    /* Does not currently work.
+                    case Mechanism.ECC:
+                     */
+                    default:
+                        throw new MslCryptoException(MslError.UNSUPPORTED_KEYX_MECHANISM, mechanism);
                 }
             } catch (e) {
                 if (!(e instanceof MslException))

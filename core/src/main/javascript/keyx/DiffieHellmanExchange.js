@@ -129,7 +129,7 @@ var DiffieHellmanExchange$ResponseData$parse;
                 var publicKeyY = keyDataMo.getBytes(KEY_PUBLIC_KEY);
                 if (publicKeyY.length == 0)
                     throw new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY, "keydata " + keyDataMo);
-                PublicKey$import(publicKeyY, WebCryptoAlgorithm.DIFFIE_HELLMAN, WebCryptoUsage.DERIVE_KEY, {
+                PublicKey$import(publicKeyY, WebCryptoAlgorithm.DIFFIE_HELLMAN, WebCryptoUsage.DERIVE_KEY, KeyFormat.SPKI, {
                     result: function(publicKey) {
                         var privateKey = null;
                         callback.result(new RequestData(parametersId, publicKey, privateKey));
