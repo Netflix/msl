@@ -63,6 +63,8 @@ var EntityAuthenticationScheme$getScheme;
         X509 : new EntityAuthenticationScheme("X509", false, true),
         /** RSA public/private key pair. */
         RSA : new EntityAuthenticationScheme("RSA", false, true),
+        /** ECC public/private key pair. */
+        ECC: new EntityAuthenticationScheme("ECC", false, true),
         /** Unauthenticated. */
         NONE : new EntityAuthenticationScheme("NONE", false, false),
         /** Unauthenticated suffixed. */

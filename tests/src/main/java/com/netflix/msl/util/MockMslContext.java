@@ -45,11 +45,13 @@ import com.netflix.msl.entityauth.MockIdentityProvisioningService;
 import com.netflix.msl.entityauth.MockPresharedAuthenticationFactory;
 import com.netflix.msl.entityauth.MockPresharedProfileAuthenticationFactory;
 import com.netflix.msl.entityauth.MockRsaAuthenticationFactory;
+import com.netflix.msl.entityauth.MockEccAuthenticationFactory;
 import com.netflix.msl.entityauth.MockX509AuthenticationFactory;
 import com.netflix.msl.entityauth.PresharedAuthenticationData;
 import com.netflix.msl.entityauth.PresharedProfileAuthenticationData;
 import com.netflix.msl.entityauth.ProvisionedAuthenticationFactory;
 import com.netflix.msl.entityauth.RsaAuthenticationData;
+import com.netflix.msl.entityauth.EccAuthenticationData;
 import com.netflix.msl.entityauth.UnauthenticatedAuthenticationData;
 import com.netflix.msl.entityauth.UnauthenticatedAuthenticationFactory;
 import com.netflix.msl.entityauth.UnauthenticatedSuffixedAuthenticationData;
@@ -146,6 +148,8 @@ public class MockMslContext extends MslContext {
             entityAuthData = new X509AuthenticationData(MockX509AuthenticationFactory.X509_CERT);
         else if (EntityAuthenticationScheme.RSA.equals(scheme))
             entityAuthData = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
+        else if (EntityAuthenticationScheme.ECC.equals(scheme))
+            entityAuthData = new EccAuthenticationData(MockEccAuthenticationFactory.ECC_ESN, MockEccAuthenticationFactory.ECC_PUBKEY_ID);
         else if (EntityAuthenticationScheme.NONE.equals(scheme))
             entityAuthData = new UnauthenticatedAuthenticationData("MOCKUNAUTH-ESN");
         else if (EntityAuthenticationScheme.NONE_SUFFIXED.equals(scheme))
@@ -174,6 +178,7 @@ public class MockMslContext extends MslContext {
         entityAuthFactories.put(EntityAuthenticationScheme.PSK, new MockPresharedAuthenticationFactory());
         entityAuthFactories.put(EntityAuthenticationScheme.PSK_PROFILE, new MockPresharedProfileAuthenticationFactory());
         entityAuthFactories.put(EntityAuthenticationScheme.RSA, new MockRsaAuthenticationFactory());
+        entityAuthFactories.put(EntityAuthenticationScheme.ECC, new MockEccAuthenticationFactory());
         entityAuthFactories.put(EntityAuthenticationScheme.NONE, new UnauthenticatedAuthenticationFactory(authutils));
         entityAuthFactories.put(EntityAuthenticationScheme.X509, new MockX509AuthenticationFactory());
         entityAuthFactories.put(EntityAuthenticationScheme.NONE_SUFFIXED, new UnauthenticatedSuffixedAuthenticationFactory(authutils));
