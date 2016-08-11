@@ -142,12 +142,12 @@ var MockEccAuthenticationFactory$create;
         _algo['namedCurve'] = ECDSA_KEYPAIR.publicKeyJSON['crv'];
                 
         PublicKey$import(ECDSA_KEYPAIR.publicKeyJSON, WebCryptoAlgorithm.ECDSA_SHA256, WebCryptoUsage.VERIFY, KeyFormat.JWK, {
-            result: function (pubkey) { MockEccAuthenticationFactory.ECC_PUBKEY = pubkey; },
+            result: function (pubkey) { MockEccAuthenticationFactory.ECC_PUBKEY = pubkey; keysDefined.signalAll(); },
             error:  function(e) { expect(function() { throw e; }).not.toThrow(); }
         });
         PrivateKey$import(ECDSA_KEYPAIR.privateKeyJSON, WebCryptoAlgorithm.ECDSA_SHA256, WebCryptoUsage.SIGN, KeyFormat.JWK, {
-            result: function (privkey) { MockEccAuthenticationFactory.ECC_PRIVKEY = privkey; },
+            result: function (privkey) { MockEccAuthenticationFactory.ECC_PRIVKEY = privkey; keysDefined.signalAll(); },
             error:  function(e) { expect(function() { throw e; }).not.toThrow(); }
         });
-    }());
+    })();
 })();
