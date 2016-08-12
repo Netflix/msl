@@ -51,7 +51,7 @@ var EntityAuthenticationFactory = util.Class.create({
      * @throws MslEntityAuthException if there is an error creating the entity
      *         authentication data.
      */
-    createData: function(ctx, entityAuthJO, callback) {},
+    createData: function(ctx, entityAuthMo, callback) {},
 
     /**
      * Create a crypto context that can be used to encrypt/decrypt and
