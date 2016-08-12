@@ -25,9 +25,11 @@ import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.entityauth.MockPresharedAuthenticationFactory;
 import com.netflix.msl.entityauth.MockRsaAuthenticationFactory;
+import com.netflix.msl.entityauth.MockEccAuthenticationFactory;
 import com.netflix.msl.entityauth.MockX509AuthenticationFactory;
 import com.netflix.msl.entityauth.PresharedAuthenticationData;
 import com.netflix.msl.entityauth.RsaAuthenticationData;
+import com.netflix.msl.entityauth.EccAuthenticationData;
 import com.netflix.msl.entityauth.UnauthenticatedAuthenticationData;
 import com.netflix.msl.entityauth.X509AuthenticationData;
 import com.netflix.msl.util.MockMslContext;
@@ -90,6 +92,7 @@ public class ClientMslContext extends MockMslContext {
         pskAuthData = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN);
         x509AuthData = new X509AuthenticationData(MockX509AuthenticationFactory.X509_CERT);
         rsaAuthData = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
+        eccAuthData = new EccAuthenticationData(MockEccAuthenticationFactory.ECC_ESN, MockEccAuthenticationFactory.ECC_PUBKEY_ID);
         noneAuthData = new UnauthenticatedAuthenticationData("MOCKUNAUTH-ESN-TEST");
 
         // Server is with NONE entity authentication, to be different from server.
@@ -118,6 +121,8 @@ public class ClientMslContext extends MockMslContext {
                     entityAuthData = x509AuthData;
                 else if (EntityAuthenticationScheme.RSA.equals(schemeUsed))
                     entityAuthData = rsaAuthData;
+                else if (EntityAuthenticationScheme.ECC.equals(schemeUsed))
+                    entityAuthData = eccAuthData;
                 else if (EntityAuthenticationScheme.NONE.equals(schemeUsed))
                     entityAuthData = noneAuthData;
                 else
@@ -132,7 +137,7 @@ public class ClientMslContext extends MockMslContext {
     /** MSL crypto context. */
     private ICryptoContext mslCryptoContext;
     /** Entity Authentication Data */
-    private EntityAuthenticationData pskAuthData, x509AuthData, rsaAuthData, noneAuthData;
+    private EntityAuthenticationData pskAuthData, x509AuthData, rsaAuthData, noneAuthData, eccAuthData;
 
     public void setMaxRetryCount(int retryCount) {
         maxRetryCount = retryCount;

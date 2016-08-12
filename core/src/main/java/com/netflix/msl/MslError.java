@@ -169,6 +169,8 @@ public class MslError {
     public static final MslError ENTITYAUTH_CIPHERTEXT_INVALID = new MslError(4034, ResponseCode.ENTITYDATA_REAUTH, "Invalid entity authentication data ciphertext.");
     public static final MslError ENTITYAUTH_VERIFICATION_FAILED = new MslError(4035, ResponseCode.ENTITYDATA_REAUTH, "Entity authentication data signature verification failed.");
     public static final MslError ENTITYAUTH_MASTERTOKEN_INVALID = new MslError(4036, ResponseCode.FAIL, "Invalid entity authentication data master token.");
+    public static final MslError ECC_PUBLICKEY_NOT_FOUND = new MslError(4037, ResponseCode.ENTITYDATA_REAUTH, "ECC public key not found.");
+    public static final MslError ECC_PRIVATEKEY_NOT_FOUND = new MslError(4038, ResponseCode.ENTITYDATA_REAUTH, "ECC private key not found.");
     
     // 5 User Authentication
     public static final MslError UNIDENTIFIED_USERAUTH_SCHEME = new MslError(5003, ResponseCode.FAIL, "Unable to identify user authentication scheme.");

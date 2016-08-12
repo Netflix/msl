@@ -135,6 +135,8 @@ var MockMslContext$create;
 		                entityAuthData = new X509AuthenticationData(MockX509AuthenticationFactory.X509_CERT);
 		            } else if (EntityAuthenticationScheme.RSA == scheme) {
 		                entityAuthData = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
+		            } else if (EntityAuthenticationScheme.ECC == scheme) {
+		                entityAuthData = new EccAuthenticationData(MockRsaAuthenticationFactory.ECC_ESN, MockRsaAuthenticationFactory.ECC_PUBKEY_ID);
 		            } else if (EntityAuthenticationScheme.NONE == scheme) {
 		                entityAuthData = new UnauthenticatedAuthenticationData("MOCKUNAUTH-ESN");
 		            } else if (EntityAuthenticationScheme.NONE_SUFFIXED == scheme) {

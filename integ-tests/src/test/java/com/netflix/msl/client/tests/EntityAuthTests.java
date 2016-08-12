@@ -246,7 +246,81 @@ public class EntityAuthTests extends BaseTestClass {
                 .shouldHave().validBuffer();
     }
 
+    /**
+     *
+     *
+     * @throws InvalidAlgorithmParameterException
+     * @throws MslEncodingException
+     * @throws NoSuchAlgorithmException
+     * @throws IOException
+     * @throws MslCryptoException
+     * @throws URISyntaxException
+     * @throws MslKeyExchangeException
+     * @throws ExecutionException
+     * @throws InterruptedException
+     */
+    @Test(testName = "Valid Entity Auth - ECC")
+    public void validEntityAuthECC() throws InvalidAlgorithmParameterException, MslEncodingException, NoSuchAlgorithmException, IOException, MslCryptoException, URISyntaxException, MslKeyExchangeException, ExecutionException, InterruptedException {
+        clientConfig = new ClientConfiguration()
+                .setScheme("http")
+                .setHost(getRemoteEntityUrl())
+                .setPath(PATH)
+                .setNumThreads(numThreads)
+                .setEntityAuthenticationScheme(EntityAuthenticationScheme.ECC)
+                .setIsPeerToPeer(false)
+                .setUserAuthenticationScheme(UserAuthenticationScheme.EMAIL_PASSWORD)
+                .setKeyRequestData(KeyExchangeScheme.ASYMMETRIC_WRAPPED);
+        clientConfig.commitConfiguration();
 
+        MessageInputStream message = sendReceive(TIME_OUT);
+
+        thenThe(message)
+                .shouldBe().validFirstEntityAuthECCMsg()
+                .shouldHave().validBuffer();
+
+        message = sendReceive(TIME_OUT);
+
+        thenThe(message)
+                .shouldBe().validateSecondMsg()
+                .shouldHave().validBuffer();
+
+    }
+
+    /**
+     *
+     * @throws InvalidAlgorithmParameterException
+     * @throws MslEncodingException
+     * @throws NoSuchAlgorithmException
+     * @throws IOException
+     * @throws MslCryptoException
+     * @throws URISyntaxException
+     * @throws MslKeyExchangeException
+     * @throws ExecutionException
+     * @throws InterruptedException
+     */
+    @Test(testName = "Invalid Entity Auth - ECC")
+    public void invalidEntityAuthECC() throws InvalidAlgorithmParameterException, MslEncodingException, NoSuchAlgorithmException, IOException, MslCryptoException, URISyntaxException, MslKeyExchangeException, ExecutionException, InterruptedException {
+        clientConfig = new ClientConfiguration()
+                .setScheme("http")
+                .setHost(getRemoteEntityUrl())
+                .setPath(PATH)
+                .setNumThreads(numThreads)
+                .setEntityAuthenticationScheme(EntityAuthenticationScheme.ECC)
+                .setInvalidEntityAuthData()
+                .setMaxEntityAuthRetryCount(5)
+                .resetCurrentEntityAuthRetryCount()
+                .setIsPeerToPeer(false)
+                .setUserAuthenticationScheme(UserAuthenticationScheme.EMAIL_PASSWORD)
+                .setKeyRequestData(KeyExchangeScheme.ASYMMETRIC_WRAPPED);
+        clientConfig.commitConfiguration();
+
+        MessageInputStream message = sendReceive(TIME_OUT);
+
+        thenTheErr(message)
+                .shouldBe().validateHdr()
+                .shouldHave().validateErrCode(MslConstants.ResponseCode.ENTITYDATA_REAUTH);
+
+    }
 
     /**
      *

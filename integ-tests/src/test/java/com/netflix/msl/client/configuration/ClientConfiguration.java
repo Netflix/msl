@@ -27,6 +27,7 @@ import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslKeyExchangeException;
 import com.netflix.msl.client.configuration.entityauth.TestPresharedAuthenticationFactory;
 import com.netflix.msl.client.configuration.entityauth.TestRsaAuthenticationFactory;
+import com.netflix.msl.client.configuration.entityauth.TestEccAuthenticationFactory;
 import com.netflix.msl.client.configuration.entityauth.TestX509AuthenticationFactory;
 import com.netflix.msl.client.configuration.msg.ClientMessageContext;
 import com.netflix.msl.client.configuration.msg.InvalidUserAuthScheme;
@@ -36,6 +37,7 @@ import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.entityauth.PresharedAuthenticationData;
 import com.netflix.msl.entityauth.RsaAuthenticationData;
+import com.netflix.msl.entityauth.EccAuthenticationData;
 import com.netflix.msl.entityauth.UnauthenticatedAuthenticationData;
 import com.netflix.msl.entityauth.UnauthenticatedAuthenticationFactory;
 import com.netflix.msl.entityauth.X509AuthenticationData;
@@ -199,6 +201,8 @@ public class ClientConfiguration {
                 entityAuthenticationFactory = new TestX509AuthenticationFactory();
             else if (EntityAuthenticationScheme.RSA.equals(entityAuthenticationScheme))
                 entityAuthenticationFactory = new TestRsaAuthenticationFactory();
+            else if (EntityAuthenticationScheme.ECC.equals(entityAuthenticationScheme))
+                entityAuthenticationFactory = new TestEccAuthenticationFactory();
             else if (EntityAuthenticationScheme.NONE.equals(entityAuthenticationScheme))
                 entityAuthenticationFactory = new UnauthenticatedAuthenticationFactory(authutils);
             else
@@ -214,6 +218,8 @@ public class ClientConfiguration {
                 entityAuthenticationData = new X509AuthenticationData(TestX509AuthenticationFactory.X509_CERT);
             else if (EntityAuthenticationScheme.RSA.equals(entityAuthenticationScheme))
                 entityAuthenticationData = new RsaAuthenticationData(TestRsaAuthenticationFactory.RSA_ESN, TestRsaAuthenticationFactory.RSA_PUBKEY_ID);
+            else if (EntityAuthenticationScheme.ECC.equals(entityAuthenticationScheme))
+                entityAuthenticationData = new EccAuthenticationData(TestEccAuthenticationFactory.ECC_ESN, TestEccAuthenticationFactory.ECC_PUBKEY_ID);
             else if (EntityAuthenticationScheme.NONE.equals(entityAuthenticationScheme))
                 entityAuthenticationData = new UnauthenticatedAuthenticationData("identity-test");
             else

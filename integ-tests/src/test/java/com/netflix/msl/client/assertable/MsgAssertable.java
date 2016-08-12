@@ -187,6 +187,11 @@ public class MsgAssertable {
         return this;
     }
 
+    public MsgAssertable validFirstEntityAuthECCMsg() {
+        validFirstMsg(false);
+        return this;
+    }
+
     public MsgAssertable validFirstEntityAuthX509Msg() {
         validFirstMsg(false);
         return this;

@@ -39,6 +39,8 @@ public class EntityAuthenticationScheme {
     public static final EntityAuthenticationScheme X509 = new EntityAuthenticationScheme("X509", false, true);
     /** RSA public/private key pair. */
     public static final EntityAuthenticationScheme RSA = new EntityAuthenticationScheme("RSA", false, true);
+    /** ECC public/private key pair. */
+    public static final EntityAuthenticationScheme ECC = new EntityAuthenticationScheme("ECC", false, true);
     /** Unauthenticated. */
     public static final EntityAuthenticationScheme NONE = new EntityAuthenticationScheme("NONE", false, false);
     /** Unauthenticated suffixed. */
