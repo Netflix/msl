@@ -3468,7 +3468,7 @@ public class MslControl {
      * <p>This method should only be used by trusted network servers and peer-
      * to-peer entities to receive a request initiated by the remote entity.
      * The remote entity should have used
-     * {@link #request(MslContext, MessageContext, URL, int)}.<p>
+     * {@link #request(MslContext, MessageContext, Url, int)}.<p>
      * 
      * <p>The returned {@code Future} will return the received
      * {@code MessageInputStream} on completion or {@code null} if a reply was
@@ -3501,7 +3501,7 @@ public class MslControl {
      * to-peer entities after receiving a request via
      * {@link #receive(MslContext, MessageContext, InputStream, OutputStream, int)}.
      * The remote entity should have used
-     * {@link #request(MslContext, MessageContext, URL, int)}.</p>
+     * {@link #request(MslContext, MessageContext, Url, int)}.</p>
      * 
      * <p>The returned {@code Future} will return a {@code MslChannel}
      * containing the final {@code MessageOutputStream} that should be used to
@@ -3562,7 +3562,7 @@ public class MslControl {
      * to-peer entities after receiving a request via
      * {@link #receive(MslContext, MessageContext, InputStream, OutputStream, int)}.
      * The remote entity should have used
-     * {@link #request(MslContext, MessageContext, URL, int)}.</p>
+     * {@link #request(MslContext, MessageContext, Url, int)}.</p>
      * 
      * <p>The returned {@code Future} will return true on success or false if
      * cancelled or interrupted. The {@code Future} may throw an
