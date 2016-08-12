@@ -390,7 +390,7 @@ var AsymmetricWrappedExchange$ResponseData$parse;
 
             AsyncExecutor(callback, function() {
                 if (!(keyRequestData instanceof RequestData))
-                    throw new MslInternalException("Key request data " + JSON.stringify(keyRequestData) + " was not created by this factory.");
+                    throw new MslInternalException("Key request data " + keyRequestData + " was not created by this factory.");
                 
                 var masterToken, entityAuthData, identity;
                 if (entityToken instanceof MasterToken) {
