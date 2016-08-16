@@ -43,9 +43,9 @@ import com.netflix.msl.util.MslContext;
  * Date: 9/24/14
  */
 public class WiretapMessageInputStream extends MessageInputStream {
-    /** JSON key payload. */
+    /** Key payload. */
     private static final String KEY_PAYLOAD = "payload";
-    /** JSON key signature. */
+    /** Key signature. */
     private static final String KEY_SIGNATURE = "signature";
 
     /**

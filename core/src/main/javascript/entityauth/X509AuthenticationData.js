@@ -38,7 +38,7 @@ var X509AuthenticationData$parse;
 
 (function() {
     /**
-     * JSON key entity X.509 certificate.
+     * Key entity X.509 certificate.
      * @const
      * @type {string}
      */

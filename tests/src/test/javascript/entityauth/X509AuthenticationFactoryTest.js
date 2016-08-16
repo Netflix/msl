@@ -74,7 +74,7 @@ describe("X509AuthenticationFactory", function() {
     	"zT6XbGJFn+CX\n" +
     	"-----END CERTIFICATE-----";
 
-    /** JSON key entity X.509 certificate. */
+    /** Key entity X.509 certificate. */
     var KEY_X509_CERT = "x509certificate";
 
     /** X.509 store. */

@@ -51,16 +51,16 @@ public class MasterTokenProtectedAuthenticationDataTest {
     /** MSL encoder format. */
     private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
     
-    /** JSON key entity authentication scheme. */
+    /** Key entity authentication scheme. */
     private static final String KEY_SCHEME = "scheme";
-    /** JSON key entity authentication data. */
+    /** Key entity authentication data. */
     private static final String KEY_AUTHDATA = "authdata";
     
-    /** JSON key master token. */
+    /** Key master token. */
     protected static final String KEY_MASTER_TOKEN = "mastertoken";
-    /** JSON key authentication data. */
+    /** Key authentication data. */
     protected static final String KEY_AUTHENTICATION_DATA = "authdata";
-    /** JSON key signature. */
+    /** Key signature. */
     protected static final String KEY_SIGNATURE = "signature";
     
     @Rule

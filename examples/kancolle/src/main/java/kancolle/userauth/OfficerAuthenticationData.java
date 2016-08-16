@@ -40,9 +40,9 @@ import com.netflix.msl.userauth.UserAuthenticationData;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class OfficerAuthenticationData extends UserAuthenticationData {
-    /** JSON key name. */
+    /** Key name. */
     private static final String KEY_NAME = "name";
-    /** JSON key fingerprint hash. */
+    /** Key fingerprint hash. */
     private static final String KEY_FINGERPRINT = "fingerprint";
     
     /**

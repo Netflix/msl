@@ -48,7 +48,7 @@ public class RsaAuthenticationFactoryTest {
 	/** MSL encoder format. */
 	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
 
-    /** JSON key entity identity. */
+    /** Key entity identity. */
     private static final String KEY_IDENTITY = "identity";
 
     @Rule

@@ -15,31 +15,31 @@
  */
 
 /**
- * JSON key entity authentication data.
+ * Common header keys.
  * @const
  * @type {string}
  */
 var Header$KEY_ENTITY_AUTHENTICATION_DATA = "entityauthdata";
 /**
- * JSON key master token.
+ * Key master token.
  * @const
  * @type {string}
  */
 var Header$KEY_MASTER_TOKEN = "mastertoken";
 /**
- * JSON key header data.
+ * Key header data.
  * @const
  * @type {string}
  */
 var Header$KEY_HEADERDATA = "headerdata";
 /**
- * JSON key error data.
+ * Key error data.
  * @const
  * @type {string}
  */
 var Header$KEY_ERRORDATA = "errordata";
 /**
- * JSON key signature.
+ * Key signature.
  * @const
  * @type {string}
  */

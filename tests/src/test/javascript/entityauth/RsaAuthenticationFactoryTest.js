@@ -23,7 +23,7 @@ describe("RsaAuthenticationFactory", function() {
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
     
-    /** JSON key entity identity. */
+    /** Key entity identity. */
     var KEY_IDENTITY = "identity";
 
     /** MSL context. */

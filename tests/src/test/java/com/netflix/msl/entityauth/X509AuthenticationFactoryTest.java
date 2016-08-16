@@ -64,7 +64,7 @@ public class X509AuthenticationFactoryTest {
     /** X.509 untrusted resource certificate. */
     private static final String X509_UNTRUSTED_CERT = "entityauth/untrusted.pem";
 
-    /** JSON key entity X.509 certificate. */
+    /** Key entity X.509 certificate. */
     private static final String KEY_X509_CERT = "x509certificate";
 
     @Rule
