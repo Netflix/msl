@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
+import java.net.URL;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.FileLockInterruptionException;
 import java.util.Collections;
@@ -41,6 +42,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -1830,8 +1832,10 @@ public class MslControl {
      *         header.
      * @throws InterruptedException if the thread is interrupted while trying
      *         to delete an old master token the received message is replacing.
+     * @throws TimeoutException if the thread timed out while trying to acquire
+     *         a master token from a renewing thread.
      */
-    private SendReceiveResult sendReceive(final MslContext ctx, final MessageContext msgCtx, final InputStream in, final OutputStream out, final MessageBuilder builder, final boolean receive, final boolean closeStreams, final int timeout) throws IOException, MslEncodingException, MslCryptoException, MslEntityAuthException, MslUserAuthException, MslMessageException, MslMasterTokenException, MslKeyExchangeException, MslException, InterruptedException {
+    private SendReceiveResult sendReceive(final MslContext ctx, final MessageContext msgCtx, final InputStream in, final OutputStream out, final MessageBuilder builder, final boolean receive, final boolean closeStreams, final int timeout) throws IOException, MslEncodingException, MslCryptoException, MslEntityAuthException, MslUserAuthException, MslMessageException, MslMasterTokenException, MslKeyExchangeException, MslException, InterruptedException, TimeoutException {
         // Attempt to acquire the renewal lock.
         final BlockingQueue<MasterToken> renewalQueue = new ArrayBlockingQueue<MasterToken>(1, true);
         final boolean renewing;
@@ -1843,7 +1847,7 @@ public class MslControl {
             
             // This should only be if we were cancelled so return null.
             return null;
-        } catch (final RuntimeException e) {
+        } catch (final TimeoutException | RuntimeException e) {
             // Release the master token lock.
             releaseMasterToken(ctx, builder.getMasterToken());
             throw e;
@@ -1936,9 +1940,11 @@ public class MslControl {
      *         needed.
      * @throws InterruptedException if interrupted while waiting to acquire
      *         a master token from a renewing thread.
+     * @throws TimeoutException if timed out while waiting to acquire a master
+     *         token from a renewing thread.
      * @see #releaseRenewalLock(MslContext, BlockingQueue, MessageInputStream)
      */
-    private boolean acquireRenewalLock(final MslContext ctx, final MessageContext msgCtx, final BlockingQueue<MasterToken> queue, final MessageBuilder builder, final long timeout) throws InterruptedException {
+    private boolean acquireRenewalLock(final MslContext ctx, final MessageContext msgCtx, final BlockingQueue<MasterToken> queue, final MessageBuilder builder, final long timeout) throws InterruptedException, TimeoutException {
         MasterToken masterToken = builder.getMasterToken();
         UserIdToken userIdToken = builder.getUserIdToken();
         final String userId = msgCtx.getUserId();
@@ -1981,6 +1987,10 @@ public class MslControl {
                 // Otherwise we need to wait for a master token from the
                 // renewing request.
                 final MasterToken newMasterToken = ctxRenewingQueue.poll(timeout, TimeUnit.MILLISECONDS);
+                
+                // If timed out throw an exception.
+                if (newMasterToken == null)
+                    throw new TimeoutException("acquireRenewalLock timed out.");
 
                 // Put the same master token back on the renewing queue so
                 // anyone else waiting can also proceed.
@@ -2230,10 +2240,12 @@ public class MslControl {
          *         automatically generated error response.
          * @throws IOException if there was an error reading or writing a
          *         message.
+         * @throws TimeoutException if the thread timed out while trying to
+         *         acquire the renewal lock.
          * @see java.util.concurrent.Callable#call()
          */
         @Override
-        public MessageInputStream call() throws MslException, MslErrorResponseException, IOException {
+        public MessageInputStream call() throws MslException, MslErrorResponseException, IOException, TimeoutException {
             final MessageDebugContext debugCtx = msgCtx.getDebugContext();
             
             // Read the incoming message.
@@ -2585,8 +2597,10 @@ public class MslControl {
          * @throws IOException if there was an error writing the message.
          * @throws InterruptedException if the thread is interrupted while
          *         trying to acquire the master token lock.
+         * @throws TimeoutException if the thread timed out while trying to
+         *         acquire the renewal lock.
          */
-        private MslChannel peerToPeerExecute(final MessageContext msgCtx, final MessageBuilder builder, int msgCount) throws MslException, IOException, InterruptedException, MslErrorResponseException {
+        private MslChannel peerToPeerExecute(final MessageContext msgCtx, final MessageBuilder builder, int msgCount) throws MslException, IOException, InterruptedException, MslErrorResponseException, TimeoutException {
             final MessageDebugContext debugCtx = msgCtx.getDebugContext();
             final MessageHeader requestHeader = request.getMessageHeader();
             
@@ -3129,8 +3143,10 @@ public class MslControl {
          *         message.
          * @throws InterruptedException if the thread is interrupted while
          *         trying to acquire a master token's read lock.
+         * @throws TimeoutException if the thread timed out while trying to
+         *         acquire the renewal lock.
          */
-        private MslChannel execute(final MessageContext msgCtx, final MessageBuilder builder, final int timeout, int msgCount) throws MslException, IOException, InterruptedException {
+        private MslChannel execute(final MessageContext msgCtx, final MessageBuilder builder, final int timeout, int msgCount) throws MslException, IOException, InterruptedException, TimeoutException {
             // Do not do anything if cannot send and receive two more messages.
             //
             // Make sure to release the master token lock.
@@ -3356,10 +3372,12 @@ public class MslControl {
          *         a message.
          * @throws IOException if there was an error reading or writing a
          *         message.
+         * @throws TimeoutException if the thread timed out while trying to
+         *         acquire the renewal lock.
          * @see java.util.concurrent.Callable#call()
          */
         @Override
-        public MslChannel call() throws MslException, IOException {
+        public MslChannel call() throws MslException, IOException, TimeoutException {
             // If we do not already have a connection then establish one.
             final int lockTimeout;
             if (in == null || out == null) {
@@ -3444,7 +3462,7 @@ public class MslControl {
                 
                 // We were cancelled so return null.
                 return null;
-            } catch (final MslException | IOException | RuntimeException e) {
+            } catch (final MslException | IOException | RuntimeException | TimeoutException e) {
                 // Close the streams if we opened them.
                 // We don't care about an I/O exception on close.
                 if (openedStreams) {
@@ -3477,7 +3495,8 @@ public class MslControl {
      * be an error message if the maximum number of messages is hit without
      * successfully receiving the final message. The {@code Future} may throw
      * an {@code ExecutionException} whose cause is a {@code MslException},
-     * {@code MslErrorResponseException}, or {@code IOException}.</p>
+     * {@code MslErrorResponseException}, {@code IOException}, or
+     * {@code TimeoutException}.</p>
      * 
      * <p>The remote entity input and output streams will not be closed in case
      * the caller wishes to reuse them.</p>
@@ -3530,8 +3549,8 @@ public class MslControl {
      * {@link #receive(MslContext, MessageContext, InputStream, OutputStream, int)}.</p>
      * 
      * <p>The {@code Future} may throw an {@code ExecutionException} whose
-     * cause is a {@code MslException}, {@code MslErrorResponseException}, or
-     * {@code IOException}.</p>
+     * cause is a {@code MslException}, {@code MslErrorResponseException},
+     * {@code IOException}, or {@code TimeoutException}.</p>
      * 
      * <p>The remote entity input and output streams will not be closed in case
      * the caller wishes to reuse them.</p>
@@ -3609,8 +3628,8 @@ public class MslControl {
      * interrupted. The returned message may be an error message if the maximum
      * number of messages is hit without successfully sending the request and
      * receiving the response. The {@code Future} may throw an
-     * {@code ExecutionException} whose cause is a {@code MslException} or
-     * {@code IOException}.</p>
+     * {@code ExecutionException} whose cause is a {@code MslException},
+     * {@code IOException}, or {@code TimeoutException}.</p>
      * 
      * <p>The caller must close the returned message input stream and message
      * outut stream.</p>
@@ -3652,8 +3671,8 @@ public class MslControl {
      * interrupted. The returned message may be an error message if the maximum
      * number of messages is hit without successfully sending the request and
      * receiving the response. The {@code Future} may throw an
-     * {@code ExecutionException} whose cause is a {@code MslException} or
-     * {@code IOException}.</p>
+     * {@code ExecutionException} whose cause is a {@code MslException},
+     * {@code IOException}, or {@code TimeoutException}.</p>
      * 
      * <p>The caller must close the returned message input stream and message
      * outut stream. The remote entity input and output streams will not be
