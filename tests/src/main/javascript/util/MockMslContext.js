@@ -79,11 +79,22 @@ var MockMslContext$create;
 		            result: function(factory) {
 		                AsyncExecutor(callback, function() {
 		                    entityAuthFactories[EntityAuthenticationScheme.RSA.name] = factory;
-		                    syncEntityAuthFactories(authutils, entityAuthFactories);
+		                    eccAuthFactory(authutils, entityAuthFactories);
 		                }, self);
 		            },
 		            error: callback.error,
 		        });
+		    }
+		    function eccAuthFactory(authutils, entityAuthFactories) {
+                MockEccAuthenticationFactory$create(null, {
+                    result: function(factory) {
+                        AsyncExecutor(callback, function() {
+                            entityAuthFactories[EntityAuthenticationScheme.ECC.name] = factory;
+                            syncEntityAuthFactories(authutils, entityAuthFactories);
+                        }, self);
+                    },
+                    error: callback.error,
+                });
 		    }
 		    function syncEntityAuthFactories(authutils, entityAuthFactories) {
 		        entityAuthFactories[EntityAuthenticationScheme.X509.name] = new MockX509AuthenticationFactory();

@@ -95,10 +95,12 @@ var EccCryptoContext;
                     MslSignatureEnvelope$create(new Uint8Array(hash), {
                         result: function(envelope) {
                             envelope.getBytes(encoder, format, {
-                                result: function(bytes) {
-                                    callback.result(bytes);
+                                result: callback.result,
+                                error: function(e) {
+                                    if (e instanceof MslEncoderException)
+                                        e = new MslCryptoException(MslError.SIGNATURE_ENVELOPE_ENCODE_ERROR, e);
+                                    callback.error(e);
                                 },
-                                error: callback.error,
                             });
                         },
                         error: callback.error
@@ -120,7 +122,7 @@ var EccCryptoContext;
                     throw new MslCryptoException(MslError.VERIFY_NOT_SUPPORTED, "no public key");
 
                 // Reconstitute the signature envelope.
-                MslSignatureEnvelope$parse(signature, MslSignatureEnvelope$Version.V1, {
+                MslSignatureEnvelope$parse(signature, MslSignatureEnvelope$Version.V1, encoder, {
                     result: function(envelope) {
                         AsyncExecutor(callback, function() {
                             var oncomplete = callback.result;

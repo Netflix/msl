@@ -43,9 +43,9 @@ var EccAuthenticationFactory = EntityAuthenticationFactory.extend({
     },
 
     /** @inheritDoc */
-    createData: function createData(ctx, entityAuthJO, callback) {
+    createData: function createData(ctx, entityAuthMo, callback) {
         AsyncExecutor(callback, function() {
-            return EccAuthenticationData$parse(entityAuthJO);
+            return EccAuthenticationData$parse(entityAuthMo);
         });
     },
 

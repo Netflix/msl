@@ -69,18 +69,28 @@ describe("EccCryptoContext", function() {
         }
     };
 
+    /** MSL encoder format. */
+    var ENCODER_FORMAT = MslEncoderFormat.JSON;
+
     /** Random. */
     var random = new Random();
     /** Message. */
     var message = new Uint8Array(32);
     random.nextBytes(message);
     /** MSL context. */
-    var ctx = null;
+    var ctx;
+    /** MSL encoder factory. */
+    var encoder;
 
     var initialized = false;
     beforeEach(function() {
         if (!initialized) {
             runs(function() {
+                MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+                    result: function(c) { ctx = c; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+                
                 var extractable = true;
                 var _algo = WebCryptoAlgorithm.ECDSA_SHA256;
                 _algo['namedCurve'] = ECDSA_KEYPAIR_A.publicKeyJSON['crv'];
@@ -103,8 +113,11 @@ describe("EccCryptoContext", function() {
                     error:  function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return publicKeyA && privateKeyA && publicKeyB && privateKeyB; }, "Import ECDSA keypairs A/B", 1500);
-            runs(function() { initialized = true; });
+            waitsFor(function() { return ctx && publicKeyA && privateKeyA && publicKeyB && privateKeyB; }, "static initialization", 1500);
+            runs(function() {
+                encoder = ctx.getMslEncoderFactory();
+                initialized = true;
+            });
         }
     });
 
@@ -119,11 +132,11 @@ describe("EccCryptoContext", function() {
             var cryptoContext = new EccCryptoContext(ctx, privateKeyA, publicKeyA);
             var signatureA, signatureB;
             runs(function() {
-                cryptoContext.sign(messageA, {
+                cryptoContext.sign(messageA, encoder, ENCODER_FORMAT, {
                     result: function(s) { signatureA = s; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
-                cryptoContext.sign(messageB, {
+                cryptoContext.sign(messageB, encoder, ENCODER_FORMAT, {
                     result: function(s) { signatureB = s; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
@@ -139,15 +152,15 @@ describe("EccCryptoContext", function() {
 
             var verifiedAA, verifiedBB, verifiedBA;
             runs(function() {
-                cryptoContext.verify(messageA, signatureA, {
+                cryptoContext.verify(messageA, signatureA, encoder, {
                     result: function(v) { verifiedAA = v; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                cryptoContext.verify(messageB, signatureB, {
+                cryptoContext.verify(messageB, signatureB, encoder, {
                     result: function(v) { verifiedBB = v; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                cryptoContext.verify(messageB, signatureA, {
+                cryptoContext.verify(messageB, signatureA, encoder, {
                     result: function(v) { verifiedBA = v; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -165,7 +178,7 @@ describe("EccCryptoContext", function() {
             var cryptoContextB = new EccCryptoContext(ctx, privateKeyB, publicKeyB);
             var signature;
             runs(function() {
-                cryptoContextA.sign(message, {
+                cryptoContextA.sign(message, encoder, ENCODER_FORMAT, {
                     result: function(s) { signature = s; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -173,7 +186,7 @@ describe("EccCryptoContext", function() {
             waitsFor(function() { return signature; }, "signature", 300);
             var verified;
             runs(function() {
-                cryptoContextB.verify(message, signature, {
+                cryptoContextB.verify(message, signature, encoder, {
                     result: function(v) { verified = v; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -188,7 +201,7 @@ describe("EccCryptoContext", function() {
             var cryptoContext = new EccCryptoContext(ctx, null, publicKeyA);
             var exception;
             runs(function() {
-                cryptoContext.sign(message, {
+                cryptoContext.sign(message, encoder, ENCODER_FORMAT, {
                     result: function() {},
                     error: function(err) { exception = err; }
                 });
@@ -204,7 +217,7 @@ describe("EccCryptoContext", function() {
             var cryptoContext = new EccCryptoContext(ctx, privateKeyA, null);
             var signature;
             runs(function() {
-                cryptoContext.sign(message, {
+                cryptoContext.sign(message, encoder, ENCODER_FORMAT, {
                     result: function(s) { signature = s; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
@@ -213,7 +226,7 @@ describe("EccCryptoContext", function() {
 
             var exception;
             runs(function() {
-                cryptoContext.verify(message, signature, {
+                cryptoContext.verify(message, signature, encoder, {
                     result: function() {},
                     error: function(err) { exception = err; }
                 });

@@ -15,12 +15,15 @@
  */
 package com.netflix.msl.entityauth;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
 import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -30,23 +33,29 @@ import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
 import com.netflix.msl.MslError;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslEncoderUtils;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.test.ExpectedMslException;
-import com.netflix.msl.util.JsonUtils;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslContext;
+import com.netflix.msl.util.MslTestUtils;
 
 /**
  * ECC entity authentication data unit tests.
- * 
  */
 public class EccAuthenticationDataTest {
-    /** JSON key entity authentication scheme. */
+    /** MSL encoder format. */
+    private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
+    /** Key entity authentication scheme. */
     private static final String KEY_SCHEME = "scheme";
-    /** JSON key entity authentication data. */
+    /** Key entity authentication data. */
     private static final String KEY_AUTHDATA = "authdata";
-    /** JSON key entity identity. */
+    /** Key entity identity. */
     private static final String KEY_IDENTITY = "identity";
-    /** JSON key public key ID. */
+    /** Key public key ID. */
     private static final String KEY_PUBKEY_ID = "pubkeyid";
     
     @Rule
@@ -55,96 +64,98 @@ public class EccAuthenticationDataTest {
     @BeforeClass
     public static void setup() throws IOException, MslEncodingException, MslCryptoException {
         ctx = new MockMslContext(EntityAuthenticationScheme.X509, false);
+        encoder = ctx.getMslEncoderFactory();
     }
     
     @AfterClass
     public static void teardown() {
+        encoder = null;
         ctx = null;
     }
     
     @Test
-    public void ctors() throws MslEncodingException, JSONException, MslCryptoException {
+    public void ctors() throws MslEncodingException, MslCryptoException, MslEncoderException {
         final EccAuthenticationData data = new EccAuthenticationData(MockEccAuthenticationFactory.ECC_ESN, MockEccAuthenticationFactory.ECC_PUBKEY_ID);
         assertEquals(MockEccAuthenticationFactory.ECC_ESN, data.getIdentity());
         assertEquals(MockEccAuthenticationFactory.ECC_PUBKEY_ID, data.getPublicKeyId());
         assertEquals(EntityAuthenticationScheme.ECC, data.getScheme());
-        final JSONObject authdata = data.getAuthData();
+        final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
         assertNotNull(authdata);
-        final String jsonString = data.toJSONString();
-        assertNotNull(jsonString);
+        final byte[] encode = data.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(encode);
         
-        final EccAuthenticationData joData = new EccAuthenticationData(authdata);
-        assertEquals(data.getIdentity(), joData.getIdentity());
-        assertEquals(data.getPublicKeyId(), joData.getPublicKeyId());
-        assertEquals(data.getScheme(), joData.getScheme());
-        final JSONObject joAuthdata = joData.getAuthData();
-        assertNotNull(joAuthdata);
-        assertTrue(JsonUtils.equals(authdata, joAuthdata));
-        final String joJsonString = joData.toJSONString();
-        assertNotNull(joJsonString);
-        assertEquals(jsonString, joJsonString);
+        final EccAuthenticationData moData = new EccAuthenticationData(authdata);
+        assertEquals(data.getIdentity(), moData.getIdentity());
+        assertEquals(data.getPublicKeyId(), moData.getPublicKeyId());
+        assertEquals(data.getScheme(), moData.getScheme());
+        final MslObject moAuthdata = moData.getAuthData(encoder, ENCODER_FORMAT);
+        assertNotNull(moAuthdata);
+        assertTrue(MslEncoderUtils.equalObjects(authdata, moAuthdata));
+        final byte[] moEncode = moData.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
+        assertArrayEquals(encode, moEncode);
     }
     
     @Test
-    public void jsonString() throws JSONException, MslCryptoException {
+    public void mslObject() throws JSONException, MslCryptoException, MslEncoderException {
         final EccAuthenticationData data = new EccAuthenticationData(MockEccAuthenticationFactory.ECC_ESN, MockEccAuthenticationFactory.ECC_PUBKEY_ID);
-        final JSONObject jo = new JSONObject(data.toJSONString());
-        assertEquals(EntityAuthenticationScheme.ECC.toString(), jo.getString(KEY_SCHEME));
-        final JSONObject authdata = jo.getJSONObject(KEY_AUTHDATA);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, data);
+        assertEquals(EntityAuthenticationScheme.ECC.toString(), mo.getString(KEY_SCHEME));
+        final MslObject authdata = mo.getMslObject(KEY_AUTHDATA, encoder);
         assertEquals(MockEccAuthenticationFactory.ECC_ESN, authdata.getString(KEY_IDENTITY));
         assertEquals(MockEccAuthenticationFactory.ECC_PUBKEY_ID, authdata.get(KEY_PUBKEY_ID));
     }
     
     @Test
-    public void create() throws JSONException, MslEntityAuthException, MslEncodingException, MslCryptoException {
+    public void create() throws JSONException, MslEntityAuthException, MslEncodingException, MslCryptoException, MslEncoderException {
         final EccAuthenticationData data = new EccAuthenticationData(MockEccAuthenticationFactory.ECC_ESN, MockEccAuthenticationFactory.ECC_PUBKEY_ID);
-        final String jsonString = data.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
-        final EntityAuthenticationData entitydata = EntityAuthenticationData.create(ctx, jo);
+        final byte[] encode = data.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, data);
+        final EntityAuthenticationData entitydata = EntityAuthenticationData.create(ctx, mo);
         assertNotNull(entitydata);
         assertTrue(entitydata instanceof EccAuthenticationData);
         
-        final EccAuthenticationData joData = (EccAuthenticationData)entitydata;
-        assertEquals(data.getIdentity(), joData.getIdentity());
-        assertEquals(data.getPublicKeyId(), joData.getPublicKeyId());
-        assertEquals(data.getScheme(), joData.getScheme());
-        final JSONObject joAuthdata = joData.getAuthData();
-        assertNotNull(joAuthdata);
-        assertTrue(JsonUtils.equals(data.getAuthData(), joAuthdata));
-        final String joJsonString = joData.toJSONString();
-        assertNotNull(joJsonString);
-        assertEquals(jsonString, joJsonString);
+        final EccAuthenticationData moData = (EccAuthenticationData)entitydata;
+        assertEquals(data.getIdentity(), moData.getIdentity());
+        assertEquals(data.getPublicKeyId(), moData.getPublicKeyId());
+        assertEquals(data.getScheme(), moData.getScheme());
+        final MslObject moAuthdata = moData.getAuthData(encoder, ENCODER_FORMAT);
+        assertNotNull(moAuthdata);
+        assertTrue(MslEncoderUtils.equalObjects(data.getAuthData(encoder, ENCODER_FORMAT), moAuthdata));
+        final byte[] moEncode = moData.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
+        assertArrayEquals(encode, moEncode);
     }
     
     @Test
-    public void missingIdentity() throws MslEncodingException, MslCryptoException {
+    public void missingIdentity() throws MslEncodingException, MslCryptoException, MslEncoderException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final EccAuthenticationData data = new EccAuthenticationData(MockEccAuthenticationFactory.ECC_ESN, MockEccAuthenticationFactory.ECC_PUBKEY_ID);
-        final JSONObject authdata = data.getAuthData();
-        assertNotNull(authdata.remove(KEY_IDENTITY));
+        final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
+        authdata.remove(KEY_IDENTITY);
         new EccAuthenticationData(authdata);
     }
 
     @Test
-    public void missingPubkeyId() throws MslEncodingException, MslCryptoException {
+    public void missingPubkeyId() throws MslEncodingException, MslCryptoException, MslEncoderException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final EccAuthenticationData data = new EccAuthenticationData(MockEccAuthenticationFactory.ECC_ESN, MockEccAuthenticationFactory.ECC_PUBKEY_ID);
-        final JSONObject authdata = data.getAuthData();
-        assertNotNull(authdata.remove(KEY_PUBKEY_ID));
+        final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
+        authdata.remove(KEY_PUBKEY_ID);
         new EccAuthenticationData(authdata);
     }
     
     @Test
-    public void equalsIdentity() throws MslEncodingException, JSONException, MslEntityAuthException, MslCryptoException {
+    public void equalsIdentity() throws MslEncodingException, JSONException, MslEntityAuthException, MslCryptoException, MslEncoderException {
         final String identityA = MockEccAuthenticationFactory.ECC_ESN + "A";
         final String identityB = MockEccAuthenticationFactory.ECC_ESN + "B";
         final EccAuthenticationData dataA = new EccAuthenticationData(identityA, MockEccAuthenticationFactory.ECC_PUBKEY_ID);
         final EccAuthenticationData dataB = new EccAuthenticationData(identityB, MockEccAuthenticationFactory.ECC_PUBKEY_ID);
-        final EntityAuthenticationData dataA2 = EntityAuthenticationData.create(ctx, new JSONObject(dataA.toJSONString()));
+        final EntityAuthenticationData dataA2 = EntityAuthenticationData.create(ctx, MslTestUtils.toMslObject(encoder, dataA));
         
         assertTrue(dataA.equals(dataA));
         assertEquals(dataA.hashCode(), dataA.hashCode());
@@ -159,12 +170,12 @@ public class EccAuthenticationDataTest {
     }
     
     @Test
-    public void equalsPubKeyId() throws MslEncodingException, JSONException, MslEntityAuthException, MslCryptoException {
+    public void equalsPubKeyId() throws MslEncodingException, JSONException, MslEntityAuthException, MslCryptoException, MslEncoderException {
         final String pubkeyidA = MockEccAuthenticationFactory.ECC_PUBKEY_ID + "A";
         final String pubkeyidB = MockEccAuthenticationFactory.ECC_PUBKEY_ID + "B";
         final EccAuthenticationData dataA = new EccAuthenticationData(MockEccAuthenticationFactory.ECC_ESN, pubkeyidA);
         final EccAuthenticationData dataB = new EccAuthenticationData(MockEccAuthenticationFactory.ECC_ESN, pubkeyidB);
-        final EntityAuthenticationData dataA2 = EntityAuthenticationData.create(ctx, new JSONObject(dataA.toJSONString()));
+        final EntityAuthenticationData dataA2 = EntityAuthenticationData.create(ctx, MslTestUtils.toMslObject(encoder, dataA));
         
         assertTrue(dataA.equals(dataA));
         assertEquals(dataA.hashCode(), dataA.hashCode());
@@ -188,4 +199,6 @@ public class EccAuthenticationDataTest {
 
     /** MSL context. */
     private static MslContext ctx;
+    /** MSL encoder factory. */
+    private static MslEncoderFactory encoder;
 }
