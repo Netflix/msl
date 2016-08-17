@@ -82,7 +82,7 @@ var MockRsaAuthenticationFactory$create;
          *        or any thrown exceptions.
     	 */
     	init: function init(store, callback) {
-    		init.base.call(this, store);
+    		init.base.call(this, null, store);
     		
     		var self = this;
             AsyncExecutor(callback, function() {

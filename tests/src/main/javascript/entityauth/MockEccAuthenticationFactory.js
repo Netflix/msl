@@ -80,7 +80,7 @@ var MockEccAuthenticationFactory$create;
          *        or any thrown exceptions.
     	 */
     	init: function init(store, callback) {
-    		init.base.call(this, store);
+    		init.base.call(this, null, store);
     		
     		var self = this;
             AsyncExecutor(callback, function() {
@@ -142,12 +142,22 @@ var MockEccAuthenticationFactory$create;
         _algo['namedCurve'] = ECDSA_KEYPAIR.publicKeyJSON['crv'];
                 
         PublicKey$import(ECDSA_KEYPAIR.publicKeyJSON, WebCryptoAlgorithm.ECDSA_SHA256, WebCryptoUsage.VERIFY, KeyFormat.JWK, {
-            result: function (pubkey) { MockEccAuthenticationFactory.ECC_PUBKEY = pubkey; keysDefined.signalAll(); },
-            error:  function(e) { expect(function() { throw e; }).not.toThrow(); }
+            result: function (pubkey) {
+                ECC_PUBKEY = MockEccAuthenticationFactory.ECC_PUBKEY = pubkey;
+                keysDefined.signalAll();
+            },
+            error: function(e) {
+                throw new MslInternalException("Hard-coded RSA key failure.", e);
+            }
         });
         PrivateKey$import(ECDSA_KEYPAIR.privateKeyJSON, WebCryptoAlgorithm.ECDSA_SHA256, WebCryptoUsage.SIGN, KeyFormat.JWK, {
-            result: function (privkey) { MockEccAuthenticationFactory.ECC_PRIVKEY = privkey; keysDefined.signalAll(); },
-            error:  function(e) { expect(function() { throw e; }).not.toThrow(); }
+            result: function (privkey) {
+                ECC_PRIVKEY = MockEccAuthenticationFactory.ECC_PRIVKEY = privkey;
+                keysDefined.signalAll();
+            },
+            error: function(e) {
+                throw new MslInternalException("Hard-coded RSA key failure.", e);
+            }
         });
     })();
 })();
