@@ -103,15 +103,15 @@ var MslEncoderUtils$merge;
         // empty.
         var names1 = mo1.getKeys();
         var names2 = mo2.getKeys();
-        // Equal if both null or the same object.
-        if (names1 === names2)
-            return true;
-        // Not equal if only one of them is null or of different length.
-        if (names1 == null || names2 == null || names1.length != names2.length)
-            return false;
-        // Not equal if the sets are not equal.
-        if (!Arrays$containEachOther(names1, names2))
-            return false;
+        // Continue if the same object.
+        if (names1 !== names2) {
+	        // Not equal if only one of them is null or of different length.
+	        if (names1 == null || names2 == null || names1.length != names2.length)
+	            return false;
+	        // Not equal if the sets are not equal.
+	        if (!Arrays$containEachOther(names1, names2))
+	            return false;
+        }
         
         // Bail on the first child element whose values are not equal.
         for (var i = 0; i < names1.length; ++i) {
