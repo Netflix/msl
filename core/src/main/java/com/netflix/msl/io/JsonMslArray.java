@@ -137,6 +137,32 @@ public class JsonMslArray extends MslArray implements JSONString {
         }
         throw new MslEncoderException("MslArray[" + index + "] is not binary data.");
     }
+    
+    /* (non-Javadoc)
+     * @see com.netflix.msl.io.MslArray#optBytes(int)
+     */
+    @Override
+    public byte[] optBytes(final int index) {
+        return optBytes(index, new byte[0]);
+    }
+    
+    public byte[] optBytes(final int index, final byte[] defaultValue) {
+        // When a JsonMslArray is decoded, there's no way for us to know if a
+        // value is supposed to be a String to byte[]. Therefore interpret
+        // Strings as Base64-encoded data consistent with the toJSONString()
+        // and getEncoded().
+        final Object value = opt(index);
+        if (value instanceof byte[])
+            return (byte[])value;
+        if (value instanceof String) {
+            try {
+                return Base64.decode((String)value);
+            } catch (final IllegalArgumentException e) {
+                // Fall through.
+            }
+        }
+        return defaultValue;
+    }
 
     /* (non-Javadoc)
      * @see org.json.JSONString#toJSONString()
