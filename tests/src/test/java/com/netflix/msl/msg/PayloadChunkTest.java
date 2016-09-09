@@ -484,7 +484,7 @@ public class PayloadChunkTest {
         
         assertNotNull(payloadMo.remove(KEY_SEQUENCE_NUMBER));
 
-        final byte[] plaintext = payloadMo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
+        final byte[] plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
         final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT);
         final byte[] signature = CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT);
         mo.put(KEY_PAYLOAD, newPayload);
@@ -507,7 +507,7 @@ public class PayloadChunkTest {
         
         payloadMo.put(KEY_SEQUENCE_NUMBER, "x");
         
-        final byte[] plaintext = payloadMo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
+        final byte[] plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
         final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT);
         final byte[] signature = CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT);
         mo.put(KEY_PAYLOAD, newPayload);
@@ -530,7 +530,7 @@ public class PayloadChunkTest {
         
         payloadMo.put(KEY_SEQUENCE_NUMBER, -1);
         
-        final byte[] plaintext = payloadMo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
+        final byte[] plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
         final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT);
         final byte[] signature = CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT);
         mo.put(KEY_PAYLOAD, newPayload);
@@ -553,7 +553,7 @@ public class PayloadChunkTest {
         
         payloadMo.put(KEY_SEQUENCE_NUMBER, MslConstants.MAX_LONG_VALUE + 1);
         
-        final byte[] plaintext = payloadMo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
+        final byte[] plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
         final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT);
         final byte[] signature = CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT);
         mo.put(KEY_PAYLOAD, newPayload);
@@ -576,7 +576,7 @@ public class PayloadChunkTest {
         
         assertNotNull(payloadMo.remove(KEY_MESSAGE_ID));
 
-        final byte[] plaintext = payloadMo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
+        final byte[] plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
         final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT);
         final byte[] signature = CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT);
         mo.put(KEY_PAYLOAD, newPayload);
@@ -599,7 +599,7 @@ public class PayloadChunkTest {
         
         payloadMo.put(KEY_MESSAGE_ID, "x");
 
-        final byte[] plaintext = payloadMo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
+        final byte[] plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
         final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT);
         final byte[] signature = CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT);
         mo.put(KEY_PAYLOAD, newPayload);
@@ -622,7 +622,7 @@ public class PayloadChunkTest {
         
         payloadMo.put(KEY_END_OF_MESSAGE, "x");
 
-        final byte[] plaintext = payloadMo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
+        final byte[] plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
         final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT);
         final byte[] signature = CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT);
         mo.put(KEY_PAYLOAD, newPayload);
@@ -645,7 +645,7 @@ public class PayloadChunkTest {
 
         payloadMo.put(KEY_COMPRESSION_ALGORITHM, "x");
 
-        final byte[] plaintext = payloadMo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
+        final byte[] plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
         final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT);
         final byte[] signature = CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT);
         mo.put(KEY_PAYLOAD, newPayload);
@@ -668,7 +668,7 @@ public class PayloadChunkTest {
         
         assertNotNull(payloadMo.remove(KEY_DATA));
 
-        final byte[] plaintext = payloadMo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
+        final byte[] plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
         final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT);
         final byte[] signature = CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT);
         mo.put(KEY_PAYLOAD, newPayload);
@@ -691,7 +691,7 @@ public class PayloadChunkTest {
         
         payloadMo.put(KEY_DATA, "");
 
-        final byte[] plaintext = payloadMo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
+        final byte[] plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
         final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT);
         final byte[] signature = CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT);
         mo.put(KEY_PAYLOAD, newPayload);
@@ -714,7 +714,7 @@ public class PayloadChunkTest {
         
         payloadMo.put(KEY_DATA, false);
 
-        final byte[] plaintext = payloadMo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
+        final byte[] plaintext = encoder.encodeObject(payloadMo, ENCODER_FORMAT);
         final byte[] newPayload = CRYPTO_CONTEXT.encrypt(plaintext, encoder, ENCODER_FORMAT);
         final byte[] signature = CRYPTO_CONTEXT.sign(newPayload, encoder, ENCODER_FORMAT);
         mo.put(KEY_PAYLOAD, newPayload);
