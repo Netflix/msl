@@ -40,8 +40,11 @@ var ByteArrayInputStream = InputStream.extend({
     abort: function abort() {},
 
     /** @inheritDoc */
-    close: function close() {
-        this._closed = true;
+    close: function close(timeout, callback) {
+    	InterruptibleExecutor(callback, function() {
+    		this._closed = true;
+    		return true;
+    	});
     },
 
     /**
