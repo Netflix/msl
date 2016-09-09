@@ -516,8 +516,6 @@ public class MslObject {
      * <p>Put a key/value pair into the {@code MslObject}. If the value is
      * {@code null} the key will be removed.</p>
      * 
-     * <p>This method will call {@link #put(String, Object)}.</p>
-     * 
      * @param key the key.
      * @param value the value. May be {@code null}.
      * @return this.
