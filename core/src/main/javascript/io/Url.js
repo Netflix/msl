@@ -214,8 +214,9 @@ var IHttpLocation = util.Class.create({
         close: function close(timeout, callback) {
             InterruptibleExecutor(callback, function() {
                 if (this._buffer)
-                    this._buffer.close();
-                return true;
+                    this._buffer.close(timeout, callback);
+                else
+                	return true;
             }, this);
         },
 

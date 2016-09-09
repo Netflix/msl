@@ -2944,7 +2944,11 @@ var MslControl$MslChannel;
             function handshakeResponse(request) {
                 InterruptibleExecutor(callback, function() {
                     // Close the request. We're done with it.
-                    request.close();
+                    request.close(this._timeout, {
+                    	result: function() {},
+                    	timeout: function() {},
+                    	error: function() {}
+                    });
 
                     // This is a handshake request so automatically return a response.
                     //
