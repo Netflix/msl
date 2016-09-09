@@ -81,9 +81,9 @@ public class UnauthenticatedAuthenticationFactoryTest {
     @Test
     public void createData() throws MslCryptoException, MslEncodingException, MslEntityAuthException, MslEncoderException {
         final UnauthenticatedAuthenticationData data = new UnauthenticatedAuthenticationData(UNAUTHENTICATED_ESN);
-        final MslObject entityAuthJO = data.getAuthData(encoder, ENCODER_FORMAT);
+        final MslObject entityAuthMo = data.getAuthData(encoder, ENCODER_FORMAT);
         
-        final EntityAuthenticationData authdata = factory.createData(ctx, entityAuthJO);
+        final EntityAuthenticationData authdata = factory.createData(ctx, entityAuthMo);
         assertNotNull(authdata);
         assertTrue(authdata instanceof UnauthenticatedAuthenticationData);
         

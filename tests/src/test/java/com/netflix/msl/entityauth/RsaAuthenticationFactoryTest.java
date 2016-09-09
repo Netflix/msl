@@ -81,9 +81,9 @@ public class RsaAuthenticationFactoryTest {
     @Test
     public void createData() throws MslEncodingException, MslEntityAuthException, MslEncoderException, MslCryptoException {
         final RsaAuthenticationData data = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
-        final MslObject entityAuthJO = data.getAuthData(encoder, ENCODER_FORMAT);
+        final MslObject entityAuthMo = data.getAuthData(encoder, ENCODER_FORMAT);
         
-        final EntityAuthenticationData authdata = factory.createData(ctx, entityAuthJO);
+        final EntityAuthenticationData authdata = factory.createData(ctx, entityAuthMo);
         assertNotNull(authdata);
         assertTrue(authdata instanceof RsaAuthenticationData);
         
@@ -98,9 +98,9 @@ public class RsaAuthenticationFactoryTest {
         thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final RsaAuthenticationData data = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
-        final MslObject entityAuthJO = data.getAuthData(encoder, ENCODER_FORMAT);
-        entityAuthJO.remove(KEY_IDENTITY);
-        factory.createData(ctx, entityAuthJO);
+        final MslObject entityAuthMo = data.getAuthData(encoder, ENCODER_FORMAT);
+        entityAuthMo.remove(KEY_IDENTITY);
+        factory.createData(ctx, entityAuthMo);
     }
     
     @Test
