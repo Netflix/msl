@@ -982,7 +982,7 @@ public class MessageBuilderSuite {
             final Set<ServiceToken> tokens = messageHeader.getPeerServiceTokens();
             for (final ServiceToken token : tokens) {
                 if (token.getName().equals(SERVICE_TOKEN_NAME))
-                    fail("Deleted unknown service token.");
+                    fail("Deleted unknown peer service token.");
             }
         }
         

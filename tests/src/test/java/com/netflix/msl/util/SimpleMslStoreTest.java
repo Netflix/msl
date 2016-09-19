@@ -215,7 +215,7 @@ public class SimpleMslStoreTest {
         
         store.clearCryptoContexts();
         assertNull(store.getCryptoContext(mtA));
-        assertNull(store.getCryptoContext(mtA));
+        assertNull(store.getCryptoContext(mtB));
         assertNull(store.getMasterToken());
     }
     
