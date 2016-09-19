@@ -119,7 +119,7 @@ var MslSignatureEnvelope$Version;
                     case Version.V2:
                         var mo = encoder.createObject();
                         mo.put(KEY_VERSION, this.version);
-                        mo.put(KEY_ALGORITHM, this.algorithm),
+                        mo.put(KEY_ALGORITHM, this.algorithm);
                         mo.put(KEY_SIGNATURE, this.signature);
                         encoder.encodeObject(mo, format, callback);
                         break;
