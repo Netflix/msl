@@ -53,7 +53,8 @@ var OutputStream = util.Class.create({
      * @param {Uint8Array} data the data to write.
      * @param {number} off offset into the data.
      * @param {number} len number of bytes to write.
-     * @param {number} timeout write timeout in milliseconds.
+     * @param {number} timeout write timeout in milliseconds or -1 for no
+     *        timeout.
      * @param {{result: function(number), timeout: function(number), error: function(Error)}}
      *        callback the callback that will receive the number of bytes
      *        written which will be less than the length if aborted, be

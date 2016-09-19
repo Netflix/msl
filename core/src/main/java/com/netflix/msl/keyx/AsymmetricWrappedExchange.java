@@ -770,7 +770,6 @@ public class AsymmetricWrappedExchange extends KeyExchangeFactory {
         final RequestData request = (RequestData)keyRequestData;
         if (!(keyResponseData instanceof ResponseData))
             throw new MslInternalException("Key response data " + keyResponseData.getClass().getName() + " was not created by this factory.");
-
         final ResponseData response = (ResponseData)keyResponseData;
         
         // Verify response matches request.
