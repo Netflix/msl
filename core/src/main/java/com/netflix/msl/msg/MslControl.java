@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
-import java.net.URL;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.FileLockInterruptionException;
 import java.util.Collections;
@@ -2311,10 +2310,7 @@ public class MslControl {
                     final String recipient = (masterToken != null) ? masterToken.getIdentity() : ((entityAuthData != null) ? entityAuthData.getIdentity() : null);
                     final MslError error = e.getError();
                     final String userMessage = messageRegistry.getUserMessage(error, null);
-                    final ErrorHeader errorHeader = MessageBuilder.createErrorResponse(ctx, recipient, e.getMessageId(), error, userMessage);
-                    if (debugCtx != null) debugCtx.sentHeader(errorHeader);
-                    final MessageOutputStream response = streamFactory.createOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
-                    response.close();
+                    sendError(ctx, debugCtx, requestHeader, recipient, e.getMessageId(), error, userMessage, out);
                 } catch (final Throwable rt) {
                     // If we were cancelled then return null.
                     if (cancelled(rt)) return null;
