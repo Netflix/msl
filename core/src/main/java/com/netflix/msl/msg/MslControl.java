@@ -2256,6 +2256,28 @@ public class MslControl {
             try {
                 if (!request.isHandshake())
                     return request;
+            } catch (final MslException e) {
+                // If we were cancelled then return null.
+                if (cancelled(e)) return null;
+                
+                // Try to send an error response.
+                try {
+                    final MasterToken masterToken = e.getMasterToken();
+                    final EntityAuthenticationData entityAuthData = e.getEntityAuthenticationData();
+                    final String recipient = (masterToken != null) ? masterToken.getIdentity() : ((entityAuthData != null) ? entityAuthData.getIdentity() : null);
+                    final MslError error = e.getError();
+                    final String userMessage = messageRegistry.getUserMessage(error, null);
+                    final ErrorHeader errorHeader = MessageBuilder.createErrorResponse(ctx, recipient, e.getMessageId(), error, userMessage);
+                    if (debugCtx != null) debugCtx.sentHeader(errorHeader);
+                    final MessageOutputStream response = streamFactory.createOutputStream(ctx, out, MslConstants.DEFAULT_CHARSET, errorHeader);
+                    response.close();
+                } catch (final Throwable rt) {
+                    // If we were cancelled then return null.
+                    if (cancelled(rt)) return null;
+                    
+                    throw new MslErrorResponseException("Error peeking into the message payloads.", rt, e);
+                }
+                throw e;
             } catch (final Throwable t) {
                 // If we were cancelled then return null.
                 if (cancelled(t)) return null;

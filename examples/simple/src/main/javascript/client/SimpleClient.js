@@ -73,7 +73,7 @@ var SimpleClient$create;
             var self = this;
             
             // Import the server RSA public key.
-            PublicKey$import(SimpleConstants.RSA_PUBKEY_B64, WebCryptoAlgorithm.RSASSA_SHA256, WebCryptoUsage.VERIFY, {
+            PublicKey$import(SimpleConstants.RSA_PUBKEY_B64, WebCryptoAlgorithm.RSASSA_SHA256, WebCryptoUsage.VERIFY, KeyFormat.SPKI, {
                 result: function(publicKey) {
                 	AsyncExecutor(callback, function() {
 	                    // Create the key manager.
