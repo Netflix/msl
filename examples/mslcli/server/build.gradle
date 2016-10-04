@@ -1,0 +1,15 @@
+apply plugin: 'java'
+apply plugin: 'application'
+apply plugin: 'war'
+
+dependencies {
+    compile 'javax.servlet:servlet-api:2.5'
+    compile project(':msl-core')
+    compile project(':msl-cli')
+    compile 'org.bouncycastle:bcprov-jdk15on:1.46'
+    compile 'org.json:json:20140107'
+}
+
+mainClassName = "mslcli.server.SimpleHttpServer"
+war.baseName = "mslcli-server"
+jar.enabled = true
