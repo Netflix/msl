@@ -6,7 +6,7 @@ The server is a web project containing a single Java servlet. It can be run from
 
 The following Gradle command, executed from the top-level directory, will use Jetty to run the server on port 8080.
 
-    ./gradlew :msl-example:appRun
+    ./gradlew :msl-example-server:appRun
     
 # Client
 Open the _src/main/javascript/client/SimpleClient.html_ web page in your web browser. The web page and its associated files can also be hosted on a web server, including the same server running the Java servlet.
