@@ -2,32 +2,49 @@ MSL Command Line Interface.
 
 This implementation is very basic by intent.
 MSL server is a simple ECHO server accepting arbitrary inputs.
-Passing JSON-formatted payloads and implementing data abstraction
-layer for payload marshalling/unmarshalling was not viewed as an
-essential goal, because it does not help in understanding of MSL
-core; MSL messages in general can carry arbitrary payload data.
+Passing JSON-formatted payloads and implementing data abstraction layer
+for payload marshalling/unmarshalling was not viewed as an essential goal,
+because it does not help in understanding of MSL core; MSL messages in
+general can carry arbitrary payload data.
 
 MSL CLI should be built from the top level directory where the gradlew binary
 is located:
-% ./gradlew -p examples/mslcli compileJava
 
-Build distribution, so all dependencies can be picked up easily:
-% ./gradlew -p examples/mslcli distZip
+Contents:
+========
 
-Then go to the mslcli build directory:
-% cd examples/mslcli/build
+ * client:
+   Client code example, and MSLCLI common library.
 
-Unzip the distribution ZIP into the build directory:
+ * server:
+   Server code example - depends upon client MSLCLI.
+
+
+First build the client/lib and distribution:
+
+% ./gradlew -p examples/mslcli/client compileJava
+% ./gradlew -p examples/mslcli/client distZip
+
+Next, build the Server
+
+% ./gradlew -p examples/mslcli/server compileJava
+% ./gradlew -p examples/mslcli/server distZip
+
+Extract the client and server distributions into their respective build
+directories:
+
+% cd examples/mslcli/client/build
+% unzip distributions/*.zip
+% cd ../../../../examples/mslcli/server/build
 % unzip distributions/*.zip
 
-From the new directory, open two terminal sessions to run the MSL CLI client
-and server.
+From the new client directory, open a new terminal session to run the MSL CLI client
 
 From one, start the client
-% ./bin/mslclient.sh [options]
-% ./bin/mslclient.sh help
+% ./client/build/distributions/*/bin/mslclient.sh [options]
+% ./client/build/distributions/*/bin/mslclient.sh help
 
-From another start the server
-% ./bin/mslserver.sh
+From another terminal start the server
+% ./server/build/distributions/*/bin/mslserver.sh
 
 The server is terminated by pressing Ctrl-C.
