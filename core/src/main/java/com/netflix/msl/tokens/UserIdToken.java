@@ -453,22 +453,12 @@ public class UserIdToken implements JSONString {
     @Override
     public String toString() {
         try {
-            final JSONObject userdataJO;
-            if (isDecrypted()) {
-                userdataJO = new JSONObject();
-                if (issuerData != null)
-                    userdataJO.put(KEY_ISSUER_DATA, issuerData);
-                userdataJO.put(KEY_IDENTITY, user);
-            } else {
-                userdataJO = null;
-            }
-            
             final JSONObject tokendataJO = new JSONObject();
             tokendataJO.put(KEY_RENEWAL_WINDOW, renewalWindow);
             tokendataJO.put(KEY_EXPIRATION, expiration);
             tokendataJO.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, mtSerialNumber);
             tokendataJO.put(KEY_SERIAL_NUMBER, serialNumber);
-            tokendataJO.put(KEY_USERDATA, userdataJO);
+            tokendataJO.put(KEY_USERDATA, "(redacted)");
             
             final JSONObject jsonObj = new JSONObject();
             jsonObj.put(KEY_TOKENDATA, tokendataJO);

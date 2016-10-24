@@ -571,27 +571,12 @@ public class MasterToken implements JSONString {
     @Override
     public String toString() {
         try {
-            final JSONObject sessiondataJO;
-            if (isDecrypted()) {
-                sessiondataJO = new JSONObject();
-                if (issuerData != null)
-                    sessiondataJO.put(KEY_ISSUER_DATA, issuerData);
-                sessiondataJO.put(KEY_IDENTITY, identity);
-                sessiondataJO.put(KEY_ENCRYPTION_KEY, encryptionKey);
-                sessiondataJO.put(KEY_ENCRYPTION_ALGORITHM, encryptionKey.getAlgorithm());
-                sessiondataJO.put(KEY_HMAC_KEY, signatureKey);
-                sessiondataJO.put(KEY_SIGNATURE_KEY, signatureKey);
-                sessiondataJO.put(KEY_SIGNATURE_ALGORITHM, signatureKey.getAlgorithm());
-            } else {
-                sessiondataJO = null;
-            }
-            
             final JSONObject tokendataJO = new JSONObject();
             tokendataJO.put(KEY_RENEWAL_WINDOW, renewalWindow);
             tokendataJO.put(KEY_EXPIRATION, expiration);
             tokendataJO.put(KEY_SEQUENCE_NUMBER, sequenceNumber);
             tokendataJO.put(KEY_SERIAL_NUMBER, serialNumber);
-            tokendataJO.put(KEY_SESSIONDATA, sessiondataJO);
+            tokendataJO.put(KEY_SESSIONDATA, "(redacted)");
             
             final JSONObject jsonObj = new JSONObject();
             jsonObj.put(KEY_TOKENDATA, tokendataJO);
