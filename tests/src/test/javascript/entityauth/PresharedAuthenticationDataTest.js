@@ -219,7 +219,7 @@ describe("PresharedAuthenticationData", function() {
     });
 
     it("equals identity", function() {
-        var dataA, dataB, dataA2;
+        var dataA, dataB;
         runs(function() {
             var identityA = MockPresharedAuthenticationFactory.PSK_ESN + "A";
             var identityB = MockPresharedAuthenticationFactory.PSK_ESN + "B";
