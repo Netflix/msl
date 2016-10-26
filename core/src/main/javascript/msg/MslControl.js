@@ -514,8 +514,15 @@ var MslControl$MslChannel;
     var NULL_MASTER_TOKEN = {};
 
     /**
-     * Returns true if the current operation has been interrupted/cancelled as
-     * indicated by the type of caught error.
+     * <p>Returns true if the current operation has been interrupted/cancelled
+     * as indicated by the type of caught error.</p>
+     * 
+     * <p>The following error types are considered interruptions or
+     * cancellations that the application initiated or should otherwise be
+     * aware of:
+     * <ul>
+     * <li>{@link MslInterruptedException}</li>
+     * </ul></p>
      *
      * @param {?Error} e caught error. May be null.
      * @return {boolean} true if the error indicates an operation was
@@ -2465,11 +2472,13 @@ var MslControl$MslChannel;
          * <p>The returned {@code Future} will return the received
          * {@code MessageInputStream} on completion or {@code null} if a reply was
          * automatically sent (for example in response to a handshake request) or
-         * if the operation was cancelled or interrupted. The returned message may
-         * be an error message if the maximum number of messages is hit without
-         * successfully receiving the final message. The {@code Future} may throw
-         * an {@code ExecutionException} whose cause is a {@code MslException},
-         * {@code MslErrorResponseException}, or {@code IOException}.</p>
+         * if the operation was
+         * {@link #cancelled(Throwable) cancelled or interrupted}. The returned
+         * message may be an error message if the maximum number of messages is hit
+         * without successfully receiving the final message. The {@code Future} may
+         * throw an {@code ExecutionException} whose cause is a
+         * {@code MslException}, {@code MslErrorResponseException},
+         * or {@code IOException}.</p>
          *
          * <p>The remote entity input and output streams will not be closed in case
          * the caller wishes to reuse them.</p>
@@ -2520,14 +2529,15 @@ var MslControl$MslChannel;
          * only contain new application data that is a continuation of the previous
          * message's application data.</p>
          *
-         * <p>The returned {@code Future} will return {@code null} if cancelled,
-         * interrupted, if an error response was received (peer-to-peer only)
-         * resulting in a failure to establish the communication channel, if the
-         * response could not be sent with encryption or integrity protection when
-         * required (trusted network-mode only), if a user cannot be attached to
-         * the response due to lack of a master token, or if the maximum number of
-         * messages is hit without sending the message. In these cases the remote
-         * entity's next message can be received by another call to
+         * <p>The returned {@code Future} will return {@code null} if
+         * {@link #cancelled(Throwable) cancelled or interrupted}, if an error
+         * response was received (peer-to-peer only) resulting in a failure to
+         * establish the communication channel, if the response could not be sent
+         * with encryption or integrity protection when required (trusted network-
+         * mode only), if a user cannot be attached to the response due to lack of
+         * a master token, or if the maximum number of messages is hit without
+         * sending the message. In these cases the remote entity's next message can
+         * be received by another call to
          * {@link #receive(MslContext, MessageContext, InputStream, OutputStream, int)}.</p>
          * 
          * <p>The {@code Future} may throw an {@code ExecutionException} whose
@@ -2570,9 +2580,9 @@ var MslControl$MslChannel;
          * {@link #request(MslContext, MessageContext, URL, int)}.</p>
          *
          * <p>The returned {@code Future} will return true on success or false if
-         * cancelled or interrupted. The {@code Future} may throw an
-         * {@code ExecutionException} whose cause is a {@code MslException} or
-         * {@code IOException}.</p>
+         * {@link #cancelled(Throwable) cancelled or interrupted}. The
+         * {@code Future} may throw an {@code ExecutionException} whose cause is a
+         * {@code MslException} or {@code IOException}.</p>
          *
          * <p>The remote entity input and output streams will not be closed in case
          * the caller wishes to reuse them.</p>
@@ -2667,12 +2677,12 @@ var MslControl$MslChannel;
          * channel. If an error message was received then the MSL channel's message
          * output stream will be {@code null}.</p>
          *
-         * <p>The returned {@code Future} will return {@code null} if cancelled or
-         * interrupted. The returned message may be an error message if the maximum
-         * number of messages is hit without successfully sending the request and
-         * receiving the response. The {@code Future} may throw an
-         * {@code ExecutionException} whose cause is a {@code MslException} or
-         * {@code IOException}.</p>
+         * <p>The returned {@code Future} will return {@code null} if
+         * {@link #cancelled(Throwable) cancelled or interrupted}. The returned
+         * message may be an error message if the maximum number of messages is hit
+         * without successfully sending the request and receiving the response. The
+         * {@code Future} may throw an {@code ExecutionException} whose cause is a
+         * {@code MslException} or {@code IOException}.</p>
          */
         request: function request(ctx, msgCtx /* variable arguments */) {
             if (this._shutdown)

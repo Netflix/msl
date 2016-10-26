@@ -65,6 +65,7 @@ task javadoc_public(type: Javadoc) {
         "**/MslMasterTokenException.java",
         "**/MslMessageException.java",
         "**/MslStore.java",
+        "**/MslUser.java",
         "**/MslUserAuthException.java",
         "**/MslUserIdTokenException.java",
         "**/ServiceToken.java",
