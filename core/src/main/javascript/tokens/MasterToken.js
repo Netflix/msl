@@ -575,31 +575,16 @@ var MasterToken$parse;
         toString: function toString() {
             var encoder = this.ctx.getMslEncoderFactory();
             
-            var sessiondata;
-            if (this.isDecrypted()) {
-                sessiondata = encoder.createObject();
-                if (this.issuerData != null)
-                    sessiondata.put(KEY_ISSUER_DATA, this.issuerData);
-                sessiondata.put(KEY_IDENTITY, this.identity);
-                sessiondata.put(KEY_ENCRYPTION_KEY, this.encryptionKey.getEncoded());
-                sessiondata.put(KEY_ENCRYPTION_ALGORITHM, this.encryptionKey.algorithm);
-                sessiondata.put(KEY_HMAC_KEY, this.signatureKey.getEncoded());
-                sessiondata.put(KEY_SIGNATURE_KEY, this.signatureKey.getEncoded());
-                sessiondata.put(KEY_SIGNATURE_ALGORITHM, this.signatureKey.algorithm);
-            } else {
-                sessiondata = null;
-            }
-            
             var tokendata = encoder.createObject();
             tokendata.put(KEY_RENEWAL_WINDOW, this.renewalWindowSeconds);
             tokendata.put(KEY_EXPIRATION, this.expirationSeconds);
             tokendata.put(KEY_SEQUENCE_NUMBER, this.sequenceNumber);
             tokendata.put(KEY_SERIAL_NUMBER, this.serialNumber);
-            tokendata.put(KEY_SESSIONDATA, sessiondata);
+            tokendata.put(KEY_SESSIONDATA, "(redacted)");
 
             var token = encoder.createObject();
             token.put(KEY_TOKENDATA, tokendata);
-            token.put(KEY_SIGNATURE, null);
+            token.put(KEY_SIGNATURE, (this.signatureBytes) ? this.signatureBytes : "(null)");
             return token.toString();
         },
 

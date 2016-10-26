@@ -1,6 +1,5 @@
 apply plugin: 'java'
 apply plugin: 'application'
-apply plugin: 'war'
 
 dependencies {
     compile 'javax.servlet:servlet-api:2.5'
@@ -12,4 +11,3 @@ dependencies {
 mainClassName = "mslcli.client.ClientApp"
 
 jar.baseName "mslcli-core"
-war.baseName = "mslcli-server"

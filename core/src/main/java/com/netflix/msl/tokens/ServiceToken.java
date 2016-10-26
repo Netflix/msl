@@ -575,11 +575,11 @@ public class ServiceToken implements MslEncodable {
         tokendata.put(KEY_NAME, name);
         tokendata.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, mtSerialNumber);
         tokendata.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, uitSerialNumber);
-        tokendata.put(KEY_SERVICEDATA, servicedata);
+        tokendata.put(KEY_SERVICEDATA, "(redacted)");
 
         final MslObject token = encoder.createObject();
         token.put(KEY_TOKENDATA, tokendata);
-        token.put(KEY_SIGNATURE, null);
+        token.put(KEY_SIGNATURE, (signatureBytes != null) ? signatureBytes : "(null)");
         return token.toString();
     }
 

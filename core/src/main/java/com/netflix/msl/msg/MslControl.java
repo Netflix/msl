@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
+import java.net.SocketTimeoutException;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.FileLockInterruptionException;
 import java.util.Collections;
@@ -696,9 +697,18 @@ public class MslControl {
     }
     
     /**
-     * Returns true if the current thread has been interrupted as indicated by
-     * the {@code Thread#isInterrupted()} method or the type of caught
-     * throwable.
+     * <p>Returns true if the current thread has been interrupted as indicated
+     * by the {@code Thread#isInterrupted()} method or the type of caught
+     * throwable.</p>
+     * 
+     * <p>The following {@code Throwable} types are considered interruptions that the application
+     * initiated or should otherwise be aware of:
+     * <ul>
+     * <li>{@link InterruptedException}</li>
+     * <li>{@link InterruptedIOException} except for {@link SocketTimeoutException}</li>
+     * <li>{@link FileLockInterruptionException}</li>
+     * <li>{@link ClosedByInterruptException}</li>
+     * </ul></p>
      * 
      * @param t caught throwable. May be null.
      * @return true if this thread was interrupted or the exception indicates
@@ -711,7 +721,7 @@ public class MslControl {
             return true;
         while (t != null) {
             if (t instanceof InterruptedException ||
-                t instanceof InterruptedIOException ||
+                (t instanceof InterruptedIOException && !(t instanceof SocketTimeoutException)) ||
                 t instanceof FileLockInterruptionException ||
                 t instanceof ClosedByInterruptException)
             {
@@ -3509,12 +3519,13 @@ public class MslControl {
      * <p>The returned {@code Future} will return the received
      * {@code MessageInputStream} on completion or {@code null} if a reply was
      * automatically sent (for example in response to a handshake request) or
-     * if the operation was cancelled or interrupted. The returned message may
-     * be an error message if the maximum number of messages is hit without
-     * successfully receiving the final message. The {@code Future} may throw
-     * an {@code ExecutionException} whose cause is a {@code MslException},
-     * {@code MslErrorResponseException}, {@code IOException}, or
-     * {@code TimeoutException}.</p>
+     * if the operation was
+     * {@link #cancelled(Throwable) cancelled or interrupted}. The returned
+     * message may be an error message if the maximum number of messages is hit
+     * without successfully receiving the final message. The {@code Future} may
+     * throw an {@code ExecutionException} whose cause is a
+     * {@code MslException}, {@code MslErrorResponseException},
+     * {@code IOException}, or {@code TimeoutException}.</p>
      * 
      * <p>The remote entity input and output streams will not be closed in case
      * the caller wishes to reuse them.</p>
@@ -3556,14 +3567,15 @@ public class MslControl {
      * only contain new application data that is a continuation of the previous
      * message's application data.</p>
      * 
-     * <p>The returned {@code Future} will return {@code null} if cancelled,
-     * interrupted, if an error response was received (peer-to-peer only)
-     * resulting in a failure to establish the communication channel, if the
-     * response could not be sent with encryption or integrity protection when
-     * required (trusted network-mode only), if a user cannot be attached to
-     * the response due to lack of a master token, or if the maximum number of
-     * messages is hit without sending the message. In these cases the remote
-     * entity's next message can be received by another call to
+     * <p>The returned {@code Future} will return {@code null} if
+     * {@link #cancelled(Throwable) cancelled or interrupted}, if an error
+     * response was received (peer-to-peer only) resulting in a failure to
+     * establish the communication channel, if the response could not be sent
+     * with encryption or integrity protection when required (trusted network-
+     * mode only), if a user cannot be attached to the response due to lack of
+     * a master token, or if the maximum number of messages is hit without
+     * sending the message. In these cases the remote entity's next message can
+     * be received by another call to
      * {@link #receive(MslContext, MessageContext, InputStream, OutputStream, int)}.</p>
      * 
      * <p>The {@code Future} may throw an {@code ExecutionException} whose
@@ -3602,9 +3614,9 @@ public class MslControl {
      * {@link #request(MslContext, MessageContext, Url, int)}.</p>
      * 
      * <p>The returned {@code Future} will return true on success or false if
-     * cancelled or interrupted. The {@code Future} may throw an
-     * {@code ExecutionException} whose cause is a {@code MslException} or
-     * {@code IOException}.</p>
+     * {@link #cancelled(Throwable) cancelled or interrupted}. The
+     * {@code Future} may throw an {@code ExecutionException} whose cause is a
+     * {@code MslException} or {@code IOException}.</p>
      * 
      * <p>The remote entity input and output streams will not be closed in case
      * the caller wishes to reuse them.</p>
@@ -3642,12 +3654,13 @@ public class MslControl {
      * channel. If an error message was received then the MSL channel's message
      * output stream will be {@code null}.</p>
      * 
-     * <p>The returned {@code Future} will return {@code null} if cancelled or
-     * interrupted. The returned message may be an error message if the maximum
-     * number of messages is hit without successfully sending the request and
-     * receiving the response. The {@code Future} may throw an
-     * {@code ExecutionException} whose cause is a {@code MslException},
-     * {@code IOException}, or {@code TimeoutException}.</p>
+     * <p>The returned {@code Future} will return {@code null} if
+     * {@link #cancelled(Throwable) cancelled or interrupted}. The returned
+     * message may be an error message if the maximum number of messages is hit
+     * without successfully sending the request and receiving the response. The
+     * {@code Future} may throw an {@code ExecutionException} whose cause is a
+     * {@code MslException}, {@code IOException}, or
+     * {@code TimeoutException}.</p>
      * 
      * <p>The caller must close the returned message input stream and message
      * outut stream.</p>
@@ -3685,12 +3698,13 @@ public class MslControl {
      * channel. If an error message was received then the MSL channel's message
      * output stream will be {@code null}.</p>
      * 
-     * <p>The returned {@code Future} will return {@code null} if cancelled or
-     * interrupted. The returned message may be an error message if the maximum
-     * number of messages is hit without successfully sending the request and
-     * receiving the response. The {@code Future} may throw an
-     * {@code ExecutionException} whose cause is a {@code MslException},
-     * {@code IOException}, or {@code TimeoutException}.</p>
+     * <p>The returned {@code Future} will return {@code null} if
+     * {@link #cancelled(Throwable) cancelled or interrupted}. The returned
+     * message may be an error message if the maximum number of messages is hit
+     * without successfully sending the request and receiving the response. The
+     * {@code Future} may throw an {@code ExecutionException} whose cause is a
+     * {@code MslException}, {@code IOException}, or
+     * {@code TimeoutException}.</p>
      * 
      * <p>The caller must close the returned message input stream and message
      * outut stream. The remote entity input and output streams will not be

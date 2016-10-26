@@ -512,11 +512,11 @@ var ServiceToken$parse;
             tokendata.put(KEY_NAME, this.name);
             tokendata.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, this.mtSerialNumber);
             tokendata.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, this.uitSerialNumber);
-            tokendata.put(KEY_SERVICEDATA, this.servicedata);
+            tokendata.put(KEY_SERVICEDATA, "(redacted)");
 
             var token = encoder.createObject();
             token.put(KEY_TOKENDATA, tokendata);
-            token.put(KEY_SIGNATURE, null);
+            token.put(KEY_SIGNATURE, (this.signatureBytes) ? this.signatureBytes : "(null)");
             return token.toString();
         },
 

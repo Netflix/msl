@@ -472,26 +472,16 @@ public class UserIdToken implements MslEncodable {
     public String toString() {
         final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
 
-        final MslObject userdataMo;
-        if (isDecrypted()) {
-            userdataMo = encoder.createObject();
-            if (issuerdata != null)
-                userdataMo.put(KEY_ISSUER_DATA, issuerdata);
-            userdataMo.put(KEY_IDENTITY, user.toString());
-        } else {
-            userdataMo = null;
-        }
-
         final MslObject tokendataMo = encoder.createObject();
         tokendataMo.put(KEY_RENEWAL_WINDOW, renewalWindow);
         tokendataMo.put(KEY_EXPIRATION, expiration);
         tokendataMo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, mtSerialNumber);
         tokendataMo.put(KEY_SERIAL_NUMBER, serialNumber);
-        tokendataMo.put(KEY_USERDATA, userdataMo);
+        tokendataMo.put(KEY_USERDATA, "(redacted)");
 
         final MslObject mslObj = encoder.createObject();
         mslObj.put(KEY_TOKENDATA, tokendataMo);
-        mslObj.put(KEY_SIGNATURE, null);
+        mslObj.put(KEY_SIGNATURE, (signatureBytes != null) ? signatureBytes : "(null)");
         return mslObj.toString();
     }
 

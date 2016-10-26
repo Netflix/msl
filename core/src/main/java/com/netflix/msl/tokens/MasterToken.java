@@ -597,31 +597,16 @@ public class MasterToken implements MslEncodable {
     public String toString() {
         final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
 
-        final MslObject sessiondata;
-        if (isDecrypted()) {
-            sessiondata = encoder.createObject();
-            if (issuerdata != null)
-                sessiondata.put(KEY_ISSUER_DATA, issuerdata);
-            sessiondata.put(KEY_IDENTITY, identity);
-            sessiondata.put(KEY_ENCRYPTION_KEY, encryptionKey.getEncoded());
-            sessiondata.put(KEY_ENCRYPTION_ALGORITHM, encryptionKey.getAlgorithm());
-            sessiondata.put(KEY_HMAC_KEY, signatureKey.getEncoded());
-            sessiondata.put(KEY_SIGNATURE_KEY, signatureKey.getEncoded());
-            sessiondata.put(KEY_SIGNATURE_ALGORITHM, signatureKey.getAlgorithm());
-        } else {
-            sessiondata = null;
-        }
-
         final MslObject tokendata = encoder.createObject();
         tokendata.put(KEY_RENEWAL_WINDOW, renewalWindow);
         tokendata.put(KEY_EXPIRATION, expiration);
         tokendata.put(KEY_SEQUENCE_NUMBER, sequenceNumber);
         tokendata.put(KEY_SERIAL_NUMBER, serialNumber);
-        tokendata.put(KEY_SESSIONDATA, sessiondata);
+        tokendata.put(KEY_SESSIONDATA, "(redacted)");
 
         final MslObject token = encoder.createObject();
         token.put(KEY_TOKENDATA, tokendata);
-        token.put(KEY_SIGNATURE, null);
+        token.put(KEY_SIGNATURE, (signatureBytes != null) ? signatureBytes : "(null)");
         return token.toString();
     }
 

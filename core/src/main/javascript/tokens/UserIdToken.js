@@ -466,26 +466,16 @@ var UserIdToken$parse;
         toString: function toString() {
             var encoder = this.ctx.getMslEncoderFactory();
             
-            var userdataMo;
-            if (this.isDecrypted()) {
-                userdataMo = encoder.createObject();
-                if (this.issuerdata)
-                    userdataMo.put(KEY_ISSUER_DATA, issuerdata);
-                userdataMo.put(KEY_IDENTITY, this.user.toString());
-            } else {
-                userdataMo = null;
-            }
-            
             var tokendataMo = encoder.createObject();
             tokendataMo.put(KEY_RENEWAL_WINDOW, this.renewalWindowSeconds);
             tokendataMo.put(KEY_EXPIRATION, this.expirationSeconds);
             tokendataMo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, this.mtSerialNumber);
             tokendataMo.put(KEY_SERIAL_NUMBER, this.serialNumber);
-            tokendataMo.put(KEY_USERDATA, userdataMo);
+            tokendataMo.put(KEY_USERDATA, "(redacted)");
 
             var mslObj = encoder.createObject();
             mslObj.put(KEY_TOKENDATA, tokendataMo);
-            mslObj.put(KEY_SIGNATURE, null);
+            mslObj.put(KEY_SIGNATURE, (this.signatureBytes) ? this.signatureBytes : "(null)");
             return mslObj.toString();
         },
 
