@@ -550,7 +550,7 @@ public class ServiceToken implements JSONString {
             tokendataJO.put(KEY_NAME, name);
             tokendataJO.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, mtSerialNumber);
             tokendataJO.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, uitSerialNumber);
-            tokendataJO.put(KEY_SERVICEDATA, Base64.encode(servicedata));
+            tokendataJO.put(KEY_SERVICEDATA, "(redacted)");
             
             final JSONObject jsonObj = new JSONObject();
             jsonObj.put(KEY_TOKENDATA, tokendataJO);
