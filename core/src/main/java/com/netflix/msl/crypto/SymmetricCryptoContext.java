@@ -192,7 +192,7 @@ public class SymmetricCryptoContext implements ICryptoContext {
         } catch (final BadPaddingException e) {
             throw new MslCryptoException(MslError.PLAINTEXT_BAD_PADDING, "not expected when encrypting", e);
         } catch (final MslEncoderException e) {
-            throw new MslCryptoException(MslError.MSL_ENCODE_ERROR, e);
+            throw new MslCryptoException(MslError.CIPHERTEXT_ENVELOPE_ENCODE_ERROR, e);
         }
     }
 
@@ -378,7 +378,7 @@ public class SymmetricCryptoContext implements ICryptoContext {
         } catch (final InvalidKeyException e) {
             throw new MslCryptoException(MslError.INVALID_HMAC_KEY, e);
         } catch (final MslEncoderException e) {
-            throw new MslCryptoException(MslError.CIPHERTEXT_ENVELOPE_ENCODE_ERROR, e);
+            throw new MslCryptoException(MslError.SIGNATURE_ENVELOPE_ENCODE_ERROR, e);
         }
     }
 
