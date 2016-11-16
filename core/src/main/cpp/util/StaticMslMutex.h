@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef SRC_STATICMSLMUTEX_H_
-#define SRC_STATICMSLMUTEX_H_
+#ifndef SRC_UTIL_STATICMSLMUTEX_H_
+#define SRC_UTIL_STATICMSLMUTEX_H_
 
-#include <Mutex.h>
 #include <Macros.h>
+#include <util/Mutex.h>
 
 namespace netflix {
 namespace msl {
+namespace util {
 
 // This special IMutex implementation uses the same underlying MslMutex for all
 // instances. In typical use, this is a static member used to mutex-protect
@@ -40,6 +41,6 @@ private:
     DISALLOW_COPY_AND_ASSIGN(StaticMslMutex);
 };
 
-}} // namespace netlfix::msl
+}}} // namespace netflix::msl::util
 
-#endif /* SRC_STATICMSLMUTEX_H_ */
+#endif /* SRC_UTIL_STATICMSLMUTEX_H_ */

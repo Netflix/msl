@@ -16,6 +16,7 @@
 
 #ifndef SRC_IO_MSLOBJECT_H_
 #define SRC_IO_MSLOBJECT_H_
+
 #include <io/MslEncoderException.h>
 #include <io/MslVariant.h>
 #include <util/Base64.h>

@@ -19,9 +19,10 @@
 #include <MslInternalException.h>
 #include <numerics/safe_math.h>
 #include <openssl/evp.h>
-#include <ScopedDisposer.h>
+#include <util/ScopedDisposer.h>
 
 using namespace std;
+using namespace netflix::msl::util;
 
 using base::internal::CheckedNumeric;
 

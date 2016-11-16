@@ -17,7 +17,7 @@
 #include <util/MslContext.h>
 #include <IllegalArgumentException.h>
 #include <numerics/safe_math.h>
-#include <StaticMslMutex.h>
+#include <util/StaticMslMutex.h>
 
 using base::internal::CheckedNumeric;
 

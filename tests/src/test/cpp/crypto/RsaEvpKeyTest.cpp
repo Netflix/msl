@@ -23,6 +23,7 @@
 
 using namespace std;
 using namespace netflix::msl;
+using namespace netflix::msl::util;
 
 namespace netflix {
 namespace msl {

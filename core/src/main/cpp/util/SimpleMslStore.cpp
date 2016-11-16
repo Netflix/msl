@@ -19,12 +19,12 @@
 #include <MslError.h>
 #include <MslException.h>
 #include <MslInternalException.h>
-#include <Mutex.h>
 #include <crypto/ICryptoContext.h>
 #include <tokens/MasterToken.h>
 #include <tokens/ServiceToken.h>
 #include <tokens/UserIdToken.h>
 #include <util/MslUtils.h>
+#include <util/Mutex.h>
 #include <algorithm>
 
 using namespace std;

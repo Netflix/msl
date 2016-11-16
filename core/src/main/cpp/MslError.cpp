@@ -19,10 +19,10 @@
 #include <MslInternalException.h>
 #include <sstream>
 
-namespace netflix
-{
-namespace msl
-{
+using namespace netflix::msl::util;
+
+namespace netflix {
+namespace msl {
 
 using namespace netflix::msl::MslConstants;
 
@@ -296,5 +296,4 @@ MslError& MslError::operator=(const MslError& other)
     return *this;
 }
 
-} /* namespace msl */
-} /* namespace netflix */
+}} // namespace netflix::msl

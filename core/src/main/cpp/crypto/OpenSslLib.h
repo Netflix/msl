@@ -21,7 +21,7 @@
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <stdint.h>
-#include <ScopedDisposer.h>
+#include <util/ScopedDisposer.h>
 #include <string>
 #include <vector>
 
@@ -87,7 +87,7 @@ public:
     void toRaw(std::shared_ptr<ByteArray>& pubMod, std::shared_ptr<ByteArray>& pubExp, std::shared_ptr<ByteArray>& privExp) const;
     RsaEvpKey(EVP_PKEY * key, bool isPrivate) : key(key), isPrivate(isPrivate) {}
 private:
-    const ScopedDisposer<EVP_PKEY, void, EVP_PKEY_free> key;
+    const util::ScopedDisposer<EVP_PKEY, void, EVP_PKEY_free> key;
     const bool isPrivate;
 };
 

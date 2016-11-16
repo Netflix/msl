@@ -19,10 +19,12 @@
 #include <IllegalArgumentException.h>
 #include <MslCryptoException.h>
 #include <MslError.h>
-#include <ScopedDisposer.h>
 #include <openssl/cmac.h>
+#include <util/ScopedDisposer.h>
 
 // See https://tools.ietf.org/html/rfc4493
+
+using namespace netflix::msl::util;
 
 namespace netflix {
 namespace msl {

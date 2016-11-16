@@ -21,7 +21,7 @@
 #include <crypto/Key.h>
 #include <crypto/OpenSslLib.h>
 #include <Macros.h>
-#include <ScopedDisposer.h>
+#include <util/ScopedDisposer.h>
 
 namespace netflix {
 namespace msl {

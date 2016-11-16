@@ -18,7 +18,6 @@
 #include <MslCryptoException.h>
 #include <MslError.h>
 #include <MslInternalException.h>
-#include <ScopedDisposer.h>
 #include <openssl/conf.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
@@ -30,11 +29,13 @@
 #include <cassert>
 #include <iostream>
 #include <pthread.h>
+#include <util/ScopedDisposer.h>
 #include <memory>
 
 // TODO: use  *dyn* callbacks??
 
 using namespace std;
+using namespace netflix::msl::util;
 
 namespace netflix {
 namespace msl {

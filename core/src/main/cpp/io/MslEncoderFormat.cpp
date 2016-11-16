@@ -16,6 +16,8 @@
 
 #include <io/MslEncoderFormat.h>
 
+using namespace netflix::msl::util;
+
 namespace netflix {
 namespace msl {
 namespace io {

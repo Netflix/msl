@@ -15,9 +15,10 @@
  */
 
 #include <entityauth/EntityAuthenticationScheme.h>
-#include <Mutex.h>
+#include <util/Mutex.h>
 
 using namespace std;
+using namespace netflix::msl::util;
 
 namespace netflix {
 namespace msl {

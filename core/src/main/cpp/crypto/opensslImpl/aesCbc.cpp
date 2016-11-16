@@ -19,12 +19,14 @@
 #include "../OpenSslLib.h"
 #include <MslCryptoException.h>
 #include <MslError.h>
-#include <ScopedDisposer.h>
 #include <util/Hex.h>
 #include <assert.h>
 #include <numerics/safe_math.h>
 #include <openssl/evp.h>
 #include <openssl/crypto.h>
+#include <util/ScopedDisposer.h>
+
+using namespace netflix::msl::util;
 
 namespace netflix {
 namespace msl {

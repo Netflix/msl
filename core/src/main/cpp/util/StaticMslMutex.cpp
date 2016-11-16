@@ -14,12 +14,36 @@
  * limitations under the License.
  */
 
-#include <crypto/Random.h>
+#include <pthread.h>
+#include <util/StaticMslMutex.h>
+#include <cstdlib>
 
-namespace netflix
-{
-namespace msl
-{
+namespace netflix {
+namespace msl {
+namespace util {
 
-} /* namespace msl */
-} /* namespace netflix */
+namespace {
+pthread_once_t once = PTHREAD_ONCE_INIT;
+void mutexOnce(pthread_once_t *once, void (*init)(void))
+{
+    if (pthread_once(once, init) != 0) {
+        abort();
+    }
+}
+}
+
+MslMutex * StaticMslMutex::mutex_ = 0;
+
+StaticMslMutex::StaticMslMutex()
+{
+    mutexOnce(&once, StaticMslMutex::init);
+}
+
+// static
+void StaticMslMutex::init()
+{
+    if (!mutex_)
+        mutex_ = new MslMutex();
+}
+
+}}} // namespace netflix::msl::util

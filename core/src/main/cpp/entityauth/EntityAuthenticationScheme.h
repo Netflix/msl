@@ -18,7 +18,7 @@
 #define SRC_ENTITYAUTH_ENTITYAUTHENTICATIONSCHEME_H_
 
 #include <Macros.h>
-#include <StaticMslMutex.h>
+#include <util/StaticMslMutex.h>
 #include <map>
 #include <string>
 #include <vector>
@@ -97,7 +97,7 @@ public:
     EntityAuthenticationScheme(const std::string& name, bool encrypts, bool protects);
 
 private:
-    static StaticMslMutex& mutex();
+    static util::StaticMslMutex& mutex();
     typedef std::map<std::string, EntityAuthenticationScheme> MapType;
     static MapType& schemes();
 

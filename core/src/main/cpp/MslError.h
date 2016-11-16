@@ -17,8 +17,8 @@
 #ifndef SRC_MSLERROR_H_
 #define SRC_MSLERROR_H_
 
-#include <StaticMslMutex.h>
 #include <MslConstants.h>
+#include <util/StaticMslMutex.h>
 #include <string>
 
 namespace netflix {
@@ -313,7 +313,7 @@ protected:
 
     static const int BASE = 100000;
     /** Mutex that protects internal error code set. */
-    static StaticMslMutex internalCodesLock;
+    static util::StaticMslMutex internalCodesLock;
     /** Internal error code set. */
     static std::set<int> internalCodes;
 

@@ -18,8 +18,8 @@
 #define SRC_IO_MSLENCODERFORMAT_H_
 
 #include <Macros.h>
-#include <StaticMslMutex.h>
 #include <stdint.h>
+#include <util/StaticMslMutex.h>
 #include <iosfwd>
 #include <string>
 #include <map>
@@ -97,7 +97,7 @@ public:
     uint8_t identifier() const { return identifier_; }
 
 private:
-    static StaticMslMutex mutex_;
+    static util::StaticMslMutex mutex_;
     static std::map<std::string, MslEncoderFormat> formatsByName_;
     static std::map<uint8_t, MslEncoderFormat> formatsById_;
     mutable std::string name_;

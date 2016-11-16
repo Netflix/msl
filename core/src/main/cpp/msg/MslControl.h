@@ -11,7 +11,7 @@
 
 namespace netflix {
 namespace msl {
-namespace io { class MslUrl; class OutputStream; class InputStream; }
+namespace io { class Url; class OutputStream; class InputStream; }
 namespace util { class MslContext; class ReadWriteLock; class Executor; }
 namespace msg {
 
@@ -364,7 +364,7 @@ public:
     std::future<std::shared_ptr<MslChannel>> request(
             std::shared_ptr<util::MslContext> ctx,
             std::shared_ptr<MessageContext> msgCtx,
-            std::shared_ptr<io::MslUrl> remoteEntity,
+            std::shared_ptr<io::Url> remoteEntity,
             int64_t timeout);
 
     /**

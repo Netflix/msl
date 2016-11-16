@@ -16,7 +16,7 @@
 
 #ifndef SRC_KEYX_KEYEXCHANGESCHEME_H_
 #define SRC_KEYX_KEYEXCHANGESCHEME_H_
-#include <StaticMslMutex.h>
+#include <util/StaticMslMutex.h>
 #include <map>
 #include <string>
 #include <vector>
@@ -90,7 +90,7 @@ public:
     KeyExchangeScheme(const std::string& name);
 
 private:
-    static StaticMslMutex& mutex();
+    static util::StaticMslMutex& mutex();
     /** Map of names onto schemes. */
     static MapType& schemes();
     /** Scheme name. */

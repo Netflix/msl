@@ -15,14 +15,13 @@
  */
 
 #include <assert.h>
-#include <Mutex.h>
 #include <MslInternalException.h>
-#include <ScopedDisposer.h>
+#include <util/Mutex.h>
+#include <util/ScopedDisposer.h>
 
-namespace netflix
-{
-namespace msl
-{
+namespace netflix {
+namespace msl {
+namespace util {
 
 MslMutex::MslMutex() : lockCount_(0)
 {
@@ -60,6 +59,5 @@ void MslMutex::unlock()
     lockCount_--;
 }
 
-} /* namespace msl */
-} /* namespace netflix */
+}}} // namespace netflix::msl::util
 

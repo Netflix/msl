@@ -30,8 +30,10 @@
 
 #include <openssl/x509.h>
 #include <stdint.h>
-#include <ScopedDisposer.h>
+#include <util/ScopedDisposer.h>
 #include <vector>
+
+using namespace netflix::msl::util;
 
 using std::vector;
 

@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2016 Netflix, Inc.  All rights reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,36 +14,37 @@
  * limitations under the License.
  */
 
-#include <StaticMslMutex.h>
-#include <pthread.h>
-#include <cstdlib>
+#ifndef SRC_IO_URL_H_
+#define SRC_IO_URL_H_
+
+#include "InputStream.h"
+#include "OutputStream.h"
 
 namespace netflix {
 namespace msl {
+namespace io {
 
-namespace {
-pthread_once_t once = PTHREAD_ONCE_INIT;
-void mutexOnce(pthread_once_t *once, void (*init)(void))
+class Connection;
+
+class Url
 {
-    if (pthread_once(once, init) != 0) {
-        abort();
-    }
-}
-}
+public:
+    virtual ~Url() {};
+    
+    virtual std::shared_ptr<Connection> openConnection() = 0;
 
-MslMutex * StaticMslMutex::mutex_ = 0;
+    virtual void setTimeout(int64_t timeout) = 0;
+};
 
-StaticMslMutex::StaticMslMutex()
+class Connection
 {
-    mutexOnce(&once, StaticMslMutex::init);
-}
+public:
+    virtual ~Connection() {};
+    
+    virtual std::shared_ptr<InputStream> getInputStream() = 0;
+    virtual std::shared_ptr<OutputStream> getOutputStream() = 0;
+};
+    
+}}} // namespace netflix::msl::io
 
-// static
-void StaticMslMutex::init()
-{
-    if (!mutex_)
-        mutex_ = new MslMutex();
-}
-
-} /* namespace msl */
-} /* namespace netflix */
+#endif /* SRC_IO_URL_H_ */

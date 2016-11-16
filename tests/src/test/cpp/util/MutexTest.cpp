@@ -16,9 +16,9 @@
 
 #include <gtest/gtest.h>
 #include <MslInternalException.h>
-#include <Mutex.h>
+#include <util/Mutex.h>
 
-using namespace netflix::msl;
+using namespace netflix::msl::util;
 
 class MslMutexTest : public ::testing::Test
 {

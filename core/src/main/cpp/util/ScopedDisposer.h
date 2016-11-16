@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef SRC_CRYPTO_SCOPEDOPENSSL_H_
-#define SRC_CRYPTO_SCOPEDOPENSSL_H_
+#ifndef SRC_UTIL_SCOPEDOPENSSL_H_
+#define SRC_UTIL_SCOPEDOPENSSL_H_
 
 #include <stddef.h>
 
 namespace netflix {
 namespace msl {
+namespace util {
 
 // A helper class that takes care of destroying objects when they go out of scope.
 template <typename T, typename R, R (*destructor)(T*)>
@@ -54,9 +55,6 @@ private:
     void operator=(const ScopedDisposer&);
 };
 
-} // namespace msl
-} // namespace netflix
+}}} // namespace netflix::msl::util
 
-
-
-#endif /* SRC_CRYPTO_SCOPEDOPENSSL_H_ */
+#endif /* SRC_UTIL_SCOPEDOPENSSL_H_ */

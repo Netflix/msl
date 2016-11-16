@@ -17,7 +17,7 @@
 #ifndef SRC_USERAUTH_USERAUTHENTICATIONSCHEME_H_
 #define SRC_USERAUTH_USERAUTHENTICATIONSCHEME_H_
 
-#include <StaticMslMutex.h>
+#include <util/StaticMslMutex.h>
 #include <string>
 #include <vector>
 #include <map>
@@ -72,7 +72,7 @@ protected:
     UserAuthenticationScheme(const std::string& name);
 
 private:
-    static IMutex& mutex();
+    static util::IMutex& mutex();
     typedef std::map<std::string, UserAuthenticationScheme> MapType;
     /** Map of names onto schemes. */
     

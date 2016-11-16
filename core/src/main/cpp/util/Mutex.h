@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef SRC_MUTEX_H_
-#define SRC_MUTEX_H_
+#ifndef SRC_UTIL_MUTEX_H_
+#define SRC_UTIL_MUTEX_H_
 
 #include <Macros.h>
 #include <pthread.h>
 
 namespace netflix {
 namespace msl {
+namespace util {
 
 struct IMutex
 {
@@ -60,6 +61,6 @@ do { \
     op \
 } while (0)
 
-}} // namespace netflix::msl
+}}} // namespace netflix::msl::util
 
-#endif /* SRC_MUTEX_H_ */
+#endif /* SRC_UTIL_MUTEX_H_ */

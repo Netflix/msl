@@ -19,7 +19,7 @@
 #include "util.h"
 #include <MslInternalException.h>
 #include <openssl/evp.h>
-#include <ScopedDisposer.h>
+#include <util/ScopedDisposer.h>
 
 namespace netflix {
 namespace msl {

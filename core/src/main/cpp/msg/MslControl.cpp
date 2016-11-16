@@ -26,8 +26,8 @@
 #include <entityauth/UnauthenticatedAuthenticationData.h>
 #include <io/InputStream.h>
 #include <io/MslEncoderFactory.h>
-#include <io/MslUrl.h>
 #include <io/OutputStream.h>
+#include <io/Url.h>
 #include <IllegalStateException.h>
 #include <IOException.h>
 #include <keyx/KeyExchangeFactory.h>
@@ -1575,7 +1575,7 @@ public:
      *        in milliseconds.
      */
     RequestService(MslControl *mslControl, shared_ptr<MslContext> ctx, shared_ptr<MessageContext> msgCtx,
-            shared_ptr<MslUrl> remoteEntity, int64_t timeout)
+            shared_ptr<Url> remoteEntity, int64_t timeout)
     : Callable(mslControl, ctx, msgCtx)
     , remoteEntity(remoteEntity)
     , in(nullptr)
@@ -1620,7 +1620,7 @@ public:
      *        received.
      */
     RequestService(MslControl *mslControl, shared_ptr<MslContext> ctx, shared_ptr<MessageContext> msgCtx,
-            shared_ptr<MslUrl> remoteEntity, shared_ptr<MessageBuilder> builder,
+            shared_ptr<Url> remoteEntity, shared_ptr<MessageBuilder> builder,
             int64_t timeout, int32_t msgCount)
     : Callable(mslControl, ctx, msgCtx)
     , remoteEntity(remoteEntity)
@@ -1680,7 +1680,7 @@ public:
                 // Connect. Keep track of how much time this takes to subtract
                 // that from the lock timeout timeout->
                 const int64_t start = Date::now().getTime();
-                shared_ptr<MslConnection> conn = remoteEntity->openConnection();
+                shared_ptr<Connection> conn = remoteEntity->openConnection();
                 out = conn->getOutputStream();
                 in = conn->getInputStream();
                 lockTimeout = timeout - (Date::now().getTime() - start);
@@ -2032,7 +2032,7 @@ private:
     /** Message context. */
     //shared_ptr<MessageContext> msgCtx;
     /** Remote entity URL. */
-    shared_ptr<MslUrl> remoteEntity;
+    shared_ptr<Url> remoteEntity;
     /** Remote entity input stream. */
     shared_ptr<InputStream> in;
     /** Remote entity output stream. */
@@ -2868,7 +2868,7 @@ future<bool> MslControl::error(shared_ptr<MslContext> ctx,
                 
 future<shared_ptr<MslChannel>> MslControl::request(shared_ptr<MslContext> ctx,
                                                    shared_ptr<MessageContext> msgCtx,
-                                                   shared_ptr<MslUrl> remoteEntity,
+                                                   shared_ptr<Url> remoteEntity,
                                                    int64_t timeout)
 {
     if (ctx->isPeerToPeer())

@@ -17,10 +17,12 @@
 #include "../OpenSslLib.h"
 #include <MslInternalException.h>
 #include <numerics/safe_math.h>
-#include <ScopedDisposer.h>
 #include <openssl/x509.h>
+#include <util/ScopedDisposer.h>
 
 using base::internal::CheckedNumeric;
+
+using namespace netflix::msl::util;
 
 namespace netflix {
 namespace msl {

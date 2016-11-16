@@ -19,12 +19,12 @@
 #include <crypto/JsonWebKey.h>
 #include <crypto/Random.h>
 #include <io/MslArray.h>
-#include <ScopedDisposer.h>
 #include <util/MockMslContext.h>
 #include <memory>
 #include <set>
 #include <string>
 #include <openssl/x509.h>
+#include <util/ScopedDisposer.h>
 
 using namespace std;
 using namespace netflix::msl;

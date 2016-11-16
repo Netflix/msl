@@ -19,7 +19,6 @@
 #include <crypto/IRandom.h>
 #include <crypto/NullCryptoContext.h>
 #include <Date.h>
-#include <ScopedDisposer.h>
 #include <crypto/OpenSslLib.h>
 #include <entityauth/EntityAuthenticationData.h>
 #include <io/MslEncodable.h>
@@ -40,6 +39,7 @@
 
 #include <gtest/gtest.h>
 #include <entityauth/MockPresharedAuthenticationFactory.h>
+#include <util/ScopedDisposer.h>
 
 using namespace std;
 using namespace testing;

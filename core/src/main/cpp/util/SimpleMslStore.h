@@ -17,8 +17,8 @@
 #ifndef SRC_UTIL_SIMPLEMSLSTORE_H_
 #define SRC_UTIL_SIMPLEMSLSTORE_H_
 
-#include <Mutex.h>
 #include <util/MslStore.h>
+#include <util/Mutex.h>
 
 namespace netflix {
 namespace msl {
