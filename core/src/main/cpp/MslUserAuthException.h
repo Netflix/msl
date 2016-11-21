@@ -75,7 +75,7 @@ public:
     MslUserAuthException(const MslError& error, const IException& cause)
         : MslException(error, cause) {}
 
-    virtual MslUserAuthException& setMessageId(uint64_t messageId) {
+    virtual MslUserAuthException& setMessageId(int64_t messageId) {
         MslException::setMessageId(messageId);
         return *this;
     }

@@ -69,7 +69,7 @@ public:
     inline MslCryptoException(const MslError& error, const IException& cause)
         : MslException(error, cause) {}
 
-    virtual MslCryptoException& setMessageId(uint64_t messageId) {
+    virtual MslCryptoException& setMessageId(int64_t messageId) {
         MslException::setMessageId(messageId);
         return *this;
     }

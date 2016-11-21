@@ -61,7 +61,7 @@ public:
          setMasterToken(masterToken);
      }
 
-     virtual MslMasterTokenException& setMessageId(uint64_t messageId) {
+     virtual MslMasterTokenException& setMessageId(int64_t messageId) {
          MslException::setMessageId(messageId);
          return *this;
      }

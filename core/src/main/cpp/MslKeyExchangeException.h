@@ -76,7 +76,7 @@ public:
     MslKeyExchangeException(const MslError& error, const IException& cause)
     : MslException(error, cause) {}
 
-    virtual MslKeyExchangeException& setMessageId(uint64_t messageId) {
+    virtual MslKeyExchangeException& setMessageId(int64_t messageId) {
         MslException::setMessageId(messageId);
         return *this;
     }

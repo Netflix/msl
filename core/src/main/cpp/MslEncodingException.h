@@ -70,7 +70,7 @@ public:
     MslEncodingException(const MslError& error, const IException& cause)
         : MslException(error, cause) {}
 
-    virtual MslEncodingException& setMessageId(uint64_t messageId) {
+    virtual MslEncodingException& setMessageId(int64_t messageId) {
         MslException::setMessageId(messageId);
         return *this;
     }

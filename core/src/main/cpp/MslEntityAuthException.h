@@ -70,7 +70,7 @@ public:
     MslEntityAuthException(const MslError& error, const IException& cause)
         : MslException(error, cause) {}
 
-    virtual MslEntityAuthException& setMessageId(uint64_t messageId) {
+    virtual MslEntityAuthException& setMessageId(int64_t messageId) {
         MslException::setMessageId(messageId);
         return *this;
     }
