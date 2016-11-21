@@ -124,7 +124,7 @@ string modeToString(const RsaCryptoContext::Mode& mode) {
 ostream & operator<<(ostream& os, const TestParameters& tp) {
     return os << "mode:" << modeToString(tp.mode) << " messageSize:" << tp.messageSize;
 }
-string sufx(testing::TestParamInfo<class TestParameters> tp) {
+string sufx(testing::TestParamInfo<struct TestParameters> tp) {
     return modeToString(tp.param.mode);
 }
 
