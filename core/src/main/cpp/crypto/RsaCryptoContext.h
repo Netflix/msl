@@ -17,19 +17,20 @@
 #ifndef SRC_CRYPTO_RSACRYPTOCONTEXT_H_
 #define SRC_CRYPTO_RSACRYPTOCONTEXT_H_
 
-#include <crypto/AsymmetricCryptoContext.h>
+#include <crypto/ICryptoContext.h>
+#include <crypto/Key.h>
+#include <crypto/OpenSslLib.h>
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace netflix {
 namespace msl {
+typedef std::vector<uint8_t> ByteArray;
 namespace util { class MslContext; }
 namespace crypto {
 
-class PrivateKey;
-class PublicKey;
-
-class RsaCryptoContext: public AsymmetricCryptoContext
+class RsaCryptoContext : public ICryptoContext
 {
 public:
     virtual ~RsaCryptoContext() {}
@@ -61,10 +62,43 @@ public:
      * @param id the key pair identity.
      * @param privateKey the private key. May be null.
      * @param publicKey the public key. May be null.
-     * @param algo crypto context algorithm.
+     * @param mode crypto context mode.
      */
     RsaCryptoContext(std::shared_ptr<util::MslContext> ctx, const std::string& id,
-            const crypto::PrivateKey& privateKey, const crypto::PublicKey& publicKey, const Mode& algo);
+            const crypto::PrivateKey& privateKey, const crypto::PublicKey& publicKey, const Mode& mode);
+
+    /** @inheritDoc */
+    virtual std::shared_ptr<ByteArray> encrypt(std::shared_ptr<ByteArray> data, std::shared_ptr<io::MslEncoderFactory> encoder, const io::MslEncoderFormat& format);
+
+    /** @inheritDoc */
+    virtual std::shared_ptr<ByteArray> decrypt(std::shared_ptr<ByteArray> data, std::shared_ptr<io::MslEncoderFactory> encoder);
+
+    /** @inheritDoc */
+    virtual std::shared_ptr<ByteArray> wrap(std::shared_ptr<ByteArray> data, std::shared_ptr<io::MslEncoderFactory> encoder, const io::MslEncoderFormat& format);
+
+    /** @inheritDoc */
+    virtual std::shared_ptr<ByteArray> unwrap(std::shared_ptr<ByteArray> data, std::shared_ptr<io::MslEncoderFactory> encoder);
+
+    /** @inheritDoc */
+    virtual std::shared_ptr<ByteArray> sign(std::shared_ptr<ByteArray> data, std::shared_ptr<io::MslEncoderFactory> encoder, const io::MslEncoderFormat& format);
+
+    /** @inheritDoc */
+    virtual bool verify(std::shared_ptr<ByteArray> data, std::shared_ptr<ByteArray> signature, std::shared_ptr<io::MslEncoderFactory> encoder);
+
+protected:
+    /** Key pair identity. */
+    const std::string id;
+    /** Encryption/decryption cipher. */
+    const PrivateKey privateKey;
+    /** Sign/verify signature. */
+    const PublicKey publicKey;
+    /** Encryption/decryption transform. */
+    std::string transform;
+    /** Sign/verify algorithm. */
+    std::string algo;
+    // OpenSSL key structures stored here as an optimization
+    std::shared_ptr<RsaEvpKey> privateKeyEvp;
+    std::shared_ptr<RsaEvpKey> publicKeyEvp;
 
 private:
     RsaCryptoContext(); // not implemented
