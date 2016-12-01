@@ -259,9 +259,9 @@ public class MessageServiceTokenBuilder {
         final ICryptoContext cryptoContext = selectCryptoContext(name, cryptoContexts);
         if (cryptoContext == null)
             return false;
-        final ServiceToken serviceToken = new ServiceToken(ctx, name, data, null, null, encrypt, compressionAlgo, cryptoContext);
         
         // Add the service token.
+        final ServiceToken serviceToken = new ServiceToken(ctx, name, data, null, null, encrypt, compressionAlgo, cryptoContext);
         try {
             builder.addPeerServiceToken(serviceToken);
         } catch (final MslMessageException e) {
