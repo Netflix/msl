@@ -199,11 +199,11 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
                 random.nextBytes(aes128Bytes);
                 var hmac256Bytes = new Uint8Array(32);
                 random.nextBytes(hmac256Bytes);
-                CipherKey$import(aes128Bytes, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+                SecretKey$import(aes128Bytes, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
                     result: function(k) { AES_128_KEY = k; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                CipherKey$import(hmac256Bytes, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
+                SecretKey$import(hmac256Bytes, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
                     result: function(k) { HMAC_256_KEY = k; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -218,7 +218,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
                 
                 var keydata = new Uint8Array(16);
                 random.nextBytes(keydata);
-                CipherKey$import(keydata, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
+                SecretKey$import(keydata, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
                     result: function(key) { AES_WRAP_KEY = key; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1699,7 +1699,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
                 runs(function() {
                     var keydata = new Uint8Array(16);
                     random.nextBytes(keydata);
-                    CipherKey$import(keydata, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
+                    SecretKey$import(keydata, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
                         result: function(key) { secretKey = key; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });

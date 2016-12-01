@@ -83,7 +83,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
                 // Create the new wrapping key and wrap crypto context.
                 var wrappingKey = new Uint8Array(16);
                 pskCtx.getRandom().nextBytes(wrappingKey);
-                CipherKey$import(wrappingKey, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
+                SecretKey$import(wrappingKey, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
                     result: function(k) { wrapKey = k; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -952,7 +952,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
          * @param {Uint8Array} wrappedJwk the wrapped JSON Web Key.
          * @param {WebCryptoAlgorithm} algo the wrapped JSON Web Key web crypto algorithm.
          * @param {Array.<string>} usages the wrapped JSON Web Key web crypto key usages.
-         * @param {result: function(CipherKey), error: function(Error)}
+         * @param {result: function(SecretKey), error: function(Error)}
          *        callback the callback that will receive the secret key or any
          *        thrown exceptions.
          * @throws MslCryptoException if there is an error unwrapping the JSON

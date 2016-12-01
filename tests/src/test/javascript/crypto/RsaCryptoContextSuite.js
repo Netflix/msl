@@ -111,11 +111,11 @@ describe("RsaCryptoContext", function() {
                 random.nextBytes(aes128Bytes);
                 var hmac256Bytes = new Uint8Array(32);
                 random.nextBytes(hmac256Bytes);
-                CipherKey$import(aes128Bytes, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+                SecretKey$import(aes128Bytes, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
                     result: function(k) { AES_128_KEY = k; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                CipherKey$import(hmac256Bytes, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
+                SecretKey$import(hmac256Bytes, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
                     result: function(k) { HMAC_256_KEY = k; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -335,7 +335,7 @@ describe("RsaCryptoContext", function() {
             runs(function() {
                 var keydataA = new Uint8Array(16);
                 random.nextBytes(keydataA);
-                CipherKey$import(keydataA, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+                SecretKey$import(keydataA, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
                     result: function(k) { keyA = k; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1085,7 +1085,7 @@ describe("RsaCryptoContext", function() {
             runs(function() {
                 var keydataA = new Uint8Array(16);
                 random.nextBytes(keydataA);
-                CipherKey$import(keydataA, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+                SecretKey$import(keydataA, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
                     result: function(k) { keyA = k; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });

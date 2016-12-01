@@ -103,8 +103,8 @@ var TokenFactory = util.Class.create({
      * 
      * @param {MslContext} ctx MSL context.
      * @param {EntityAuthenticationData} entityAuthData the entity authentication data.
-     * @param {CipherKey} encryptionKey the session encryption key.
-     * @param {CipherKey} hmacKey the session HMAC key.
+     * @param {SecretKey} encryptionKey the session encryption key.
+     * @param {SecretKey} hmacKey the session HMAC key.
      * @param {?MslObject} issuerData optional master token issuer data that should be
      *        included in the master token. May be {@code null}.
      * @param {{result: function(MasterToken), error: function(Error)}}
@@ -146,8 +146,8 @@ var TokenFactory = util.Class.create({
      *
      * @param {MslContext} ctx MSL context.
      * @param {MasterToken} masterToken the master token to renew.
-     * @param {CipherKey} encryptionKey the session encryption key.
-     * @param {CipherKey} hmacKey the session HMAC key.
+     * @param {SecretKey} encryptionKey the session encryption key.
+     * @param {SecretKey} hmacKey the session HMAC key.
      * @param {?MslObject} issuerData optional master token issuer data that should be
      *        merged into or overwrite any existing issuer data. May be
      *        {@code null}.

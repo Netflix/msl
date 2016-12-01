@@ -19,14 +19,14 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var CipherKey;
-var CipherKey$create;
-var CipherKey$import;
+var SecretKey;
+var SecretKey$create;
+var SecretKey$import;
 
 (function () {
     "use strict";
 
-    CipherKey = util.Class.create({
+    SecretKey = util.Class.create({
         /**
          * Create a new cipher key from an original symmetric key.
          *
@@ -34,7 +34,7 @@ var CipherKey$import;
          * extracted if possible.
          *
          * @param {Object} rawKey cryptoSubtle key.
-         * @param {{result: function(CipherKey), error: function(Error)}}
+         * @param {{result: function(SecretKey), error: function(Error)}}
          *        callback the callback will receive the new cipher key
          *        or any thrown exceptions.
          * @param {Uint8Array=} keyData optional raw key data.
@@ -113,13 +113,13 @@ var CipherKey$import;
      * Create a new cipher key from an original symmetric key.
      *
      * @param {Object} cryptoSubtle rawKey.
-     * @param {{result: function(CipherKey), error: function(Error)}}
+     * @param {{result: function(SecretKey), error: function(Error)}}
      *        callback the callback will receive the new cipher key
      *        or any thrown exceptions.
      * @throws MslCryptoException if the rawKey is invalid.
      */
-    CipherKey$create = function CipherKey$create(rawKey, callback) {
-        new CipherKey(rawKey, callback);
+    SecretKey$create = function SecretKey$create(rawKey, callback) {
+        new SecretKey(rawKey, callback);
     };
 
     /**
@@ -129,12 +129,12 @@ var CipherKey$import;
      * @param {string|Uint8Array} keydata Base64-encoded or raw key data.
      * @param {WebCryptoAlgorithm} algo Web Crypto algorithm.
      * @param {WebCryptoUsage} usages Web Crypto key usages.
-     * @param {{result: function(CipherKey), error: function(Error)}}
+     * @param {{result: function(SecretKey), error: function(Error)}}
      *        callback the callback will receive the new cipher key
      *        or any thrown exceptions.
      * @throws MslCryptoException if the key data is invalid.
      */
-    CipherKey$import = function CipherKey$import(keydata, algo, usages, callback) {
+    SecretKey$import = function SecretKey$import(keydata, algo, usages, callback) {
         AsyncExecutor(callback, function() {
             try {
                 keydata = (typeof keydata == "string") ? base64$decode(keydata) : keydata;
@@ -143,7 +143,7 @@ var CipherKey$import;
             }
 
             var oncomplete = function(result) {
-                new CipherKey(result, callback, keydata);
+                new SecretKey(result, callback, keydata);
             };
             var onerror = function(e) {
                 callback.error(new MslCryptoException(MslError.INVALID_SYMMETRIC_KEY));

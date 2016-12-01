@@ -28,9 +28,9 @@ var PresharedKeyStore;
         /**
          * Create a new key set with the given keys.
          * 
-         * @param {CipherKey} encryptionKey the encryption key.
-         * @param {CipherKey} hmacKey the HMAC key.
-         * @param {CipherKey} wrappingKey the wrapping key.
+         * @param {SecretKey} encryptionKey the encryption key.
+         * @param {SecretKey} hmacKey the HMAC key.
+         * @param {SecretKey} wrappingKey the wrapping key.
          */
         init: function init(encryptionKey, hmacKey, wrappingKey) {
             // The properties.

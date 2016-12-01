@@ -37,9 +37,9 @@ var SymmetricCryptoContext;
          *
          * @param {MslContext} ctx MSL context.
          * @param {string} id the key set identity.
-         * @param {CipherKey} encryptionKey the key used for encryption/decryption.
-         * @param {CipherKey} signatureKey the key used for HMAC or CMAC computation.
-         * @param {CipherKey} wrapKey the key used for wrap/unwrap.
+         * @param {SecretKey} encryptionKey the key used for encryption/decryption.
+         * @param {SecretKey} signatureKey the key used for HMAC or CMAC computation.
+         * @param {SecretKey} wrapKey the key used for wrap/unwrap.
          * @throws MslCryptoException if the encryption key length is unsupported.
          */
         init: function init(ctx, id, encryptionKey, signatureKey, wrapKey) {
@@ -192,7 +192,7 @@ var SymmetricCryptoContext;
                 AsyncExecutor(callback, function() {
                     switch (rawKey["type"]) {
                         case "secret":
-                            CipherKey$create(rawKey, callback);
+                            SecretKey$create(rawKey, callback);
                             break;
                         case "public":
                             PublicKey$create(rawKey, callback);

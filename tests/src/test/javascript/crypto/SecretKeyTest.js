@@ -15,11 +15,11 @@
  */
 
 /**
- * CipherKey unit tests.
+ * SecretKey unit tests.
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-describe("CipherKey", function() {
+describe("SecretKey", function() {
     /** 128-bit key. */
     var keydata128B64 = "rXIN3PgEoTjJzeqSD1SwDw==";
 	var key128;
@@ -32,11 +32,11 @@ describe("CipherKey", function() {
 	beforeEach(function () {
 	    if (!initialized) {
 	        runs(function () {
-	            CipherKey$import(keydata128B64,WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+	            SecretKey$import(keydata128B64,WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
 	                result: function (key) { key128 = key; },
 	                error: function (e) { expect(function() { throw e; }).not.toThrow(); }
 	            });
-	            CipherKey$import(keydata256B64, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
+	            SecretKey$import(keydata256B64, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
 	                result: function (key) { key256 = key; },
 	                error: function (e) { expect(function() { throw e; }).not.toThrow(); }
 	            });

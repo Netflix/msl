@@ -111,11 +111,11 @@ var MockMslContext$create;
                 mslCryptoContext(authutils, entityAuthFactories, userAuthFactories);
 		    }
 		    function mslCryptoContext(authutils, entityAuthFactories, userAuthFactories) {
-		        CipherKey$import(MSL_ENCRYPTION_KEY, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+		        SecretKey$import(MSL_ENCRYPTION_KEY, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
 		            result: function (mslEncryptionKey) {
-		                CipherKey$import(MSL_HMAC_KEY, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
+		                SecretKey$import(MSL_HMAC_KEY, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
 		                    result: function (mslHmacKey) {
-		                        CipherKey$import(MSL_WRAPPING_KEY, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
+		                        SecretKey$import(MSL_WRAPPING_KEY, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
 		                            result: function(mslWrappingKey) {
 		                                finish(authutils, entityAuthFactories, userAuthFactories, mslEncryptionKey, mslHmacKey, mslWrappingKey);
 		                            },

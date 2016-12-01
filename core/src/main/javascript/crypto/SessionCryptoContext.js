@@ -33,8 +33,8 @@ var SessionCryptoContext = SymmetricCryptoContext.extend({
      * @param {MasterToken} masterToken the master token. May be untrusted if
      *        the identity, encryption key, and HMAC key are provided.
      * @param {?string=} identity entity identity. May be {@code null}.
-     * @param {CipherKey=} encryptionKey encryption key.
-     * @param {CipherKey=} signatureKey signature key.
+     * @param {SecretKey=} encryptionKey encryption key.
+     * @param {SecretKey=} signatureKey signature key.
      * @throws MslMasterTokenException if the master token is not trusted.
      * @throws MslCryptoException if the encryption key length is unsupported.
      */

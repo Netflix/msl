@@ -70,9 +70,9 @@ function(encoding, compressionAlgo) {
             random.nextBytes(encryptionBytes);
             var hmacBytes = new Uint8Array(32);
             random.nextBytes(hmacBytes);
-            CipherKey$import(encryptionBytes, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+            SecretKey$import(encryptionBytes, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
                 result: function(encryptionKey) {
-                    CipherKey$import(hmacBytes, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
+                    SecretKey$import(hmacBytes, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
                         result: function(hmacKey) {
                             AsyncExecutor(callback, function() {
                                 var cryptoContext = new SymmetricCryptoContext(ctx, keysetId, encryptionKey, hmacKey, null);

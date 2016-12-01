@@ -314,7 +314,7 @@ var DiffieHellmanExchange$ResponseData$parse;
          * @param {PublicKey} publicKey Diffie-Hellman public key.
          * @param {PrivateKey} privateKey Diffie-Hellman private key.
          * @param {DhParameterSpec} params Diffie-Hellman parameter specification.
-         * @param {{result: function({encryptionKey: CipherKey, hmacKey: CipherKey}), error: function(Error)}}
+         * @param {{result: function({encryptionKey: SecretKey, hmacKey: SecretKey}), error: function(Error)}}
          *        callback the callback that will receive the session keys or any
          *        thrown exceptions.
          * @throws CryptoException if there is an error creating the session keys.

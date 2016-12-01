@@ -325,7 +325,7 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
          * Create an AES key wrap JSON web key crypto context with the provided
          * key.
          * 
-         * @param {CipherKey} wrapKey AES secret key.
+         * @param {SecretKey} wrapKey AES secret key.
          */
         init: function(wrapKey) {
             // Extract actual wrapping key.
@@ -380,7 +380,7 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
                 AsyncExecutor(callback, function() {
                     switch (rawKey["type"]) {
                         case "secret":
-                            CipherKey$create(rawKey, callback);
+                            SecretKey$create(rawKey, callback);
                             break;
                         case "public":
                             PublicKey$create(rawKey, callback);
@@ -519,7 +519,7 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
                 // Create random AES-128 wrapping key.
                 var wrapBytes = new Uint8Array(16);
                 ctx.getRandom().nextBytes(wrapBytes);
-                CipherKey$import(wrapBytes, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
+                SecretKey$import(wrapBytes, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
                     result: function(wrapKey) {
                         AsyncExecutor(callback, function() {
                             var mslCryptoContext = ctx.getMslCryptoContext();

@@ -45,8 +45,8 @@ describe("SessionCryptoContext", function() {
     
     /**
      * @param {MslContext} ctx MSL context.
-     * @param {CipherKey} encryptionKey master token encryption key.
-     * @param {CipherKey} signatureKey master token signature key.
+     * @param {SecretKey} encryptionKey master token encryption key.
+     * @param {SecretKey} signatureKey master token signature key.
 	 * @param {result: function(MasterToken), error: function(Error)}
 	 *        callback the callback functions that will receive the envelope
 	 *        or any thrown exceptions.

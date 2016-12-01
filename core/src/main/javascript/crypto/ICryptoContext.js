@@ -50,7 +50,7 @@ var ICryptoContext = util.Class.create({
     /**
      * Wraps a key.
      *
-     * @param {CipherKey|PublicKey|PrivateKey} key the key to wrap.
+     * @param {SecretKey|PublicKey|PrivateKey} key the key to wrap.
      * @param {MslEncoderFactory} encoder MSL encoder factory.
      * @param {MslEncoderFormat} format MSL encoder format.
      * @return {result: function(Uint8Array), error: function(Error)}
@@ -67,7 +67,7 @@ var ICryptoContext = util.Class.create({
      * @param {WebCryptoAlgorithm} algo for the wrapped key.
      * @param {WebCryptoUsage} usages the key usages for the wrapped key.
      * @param {MslEncoderFactory} encoder MSL encoder factory.
-     * @return {result: function({CipherKey|PublicKey|PrivateKey}), error: function(Error)}
+     * @return {result: function({SecretKey|PublicKey|PrivateKey}), error: function(Error)}
      *         callback the callback functions that will receive the unwrapped
      *         key or any thrown exceptions.
      * @throws MslCryptoException if there is an error unwrapping the key.

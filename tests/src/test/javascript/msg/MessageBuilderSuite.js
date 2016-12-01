@@ -71,15 +71,15 @@ describe("MessageBuilder", function() {
                 random.nextBytes(mke);
                 random.nextBytes(mkh);
                 random.nextBytes(mkw);
-                CipherKey$import(mke, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+                SecretKey$import(mke, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
                     result: function (key) { encryptionKey = key; },
                     error: function (e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                CipherKey$import(mkh, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
+                SecretKey$import(mkh, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
                     result: function (key) { hmacKey = key; },
                     error: function (e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                CipherKey$import(mkw, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
+                SecretKey$import(mkw, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
                     result: function(key) { wrappingKey = key; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -4081,15 +4081,15 @@ describe("MessageBuilder", function() {
 	            random.nextBytes(mke);
 	            random.nextBytes(mkh);
 	            random.nextBytes(mkw);
-			    CipherKey$import(mke, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+			    SecretKey$import(mke, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
 			        result: function(key) { encryptionKey2 = key; },
 			        error: function() { expect(function() { throw e; }).not.toThrow(); }
 			    });
-                CipherKey$import(mkh, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
+                SecretKey$import(mkh, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
                     result: function (key) { hmacKey2 = key; },
                     error: function() { expect(function() { throw e; }).not.toThrow(); }
                 });
-                CipherKey$import(mkw, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
+                SecretKey$import(mkw, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
                     result: function(key) { wrappingKey2 = key; },
                     error: function() { expect(function() { throw e; }).not.toThrow(); }
                 });

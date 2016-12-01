@@ -623,8 +623,8 @@ describe("SymmetricWrappedExchangeSuite", function() {
         /**
          * @param {MslContext} ctx MSL context.
          * @param {string} identity entity identity.
-         * @param {CipherKey} encryptionKey master token encryption key.
-         * @param {CipherKey hmacKey master token HMAC key.
+         * @param {SecretKey} encryptionKey master token encryption key.
+         * @param {SecretKey hmacKey master token HMAC key.
          * @param callback
          * @throws MslEncodingException if there is an error encoding the JSON
          *         data.

@@ -427,7 +427,7 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                 // Create random AES-128 wrapping key.
                 var wrapBytes = new Uint8Array(16);
                 ctx.getRandom().nextBytes(wrapBytes);
-                CipherKey$import(wrapBytes, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
+                SecretKey$import(wrapBytes, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
                     result: function(wrapKey) {
                         AsyncExecutor(callback, function() {
                             var mslCryptoContext = ctx.getMslCryptoContext();

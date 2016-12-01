@@ -106,11 +106,11 @@ describe("PayloadChunk", function() {
                 random.nextBytes(encryptionBytes);
                 random.nextBytes(hmacBytes);
                 
-                CipherKey$import(encryptionBytes, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+                SecretKey$import(encryptionBytes, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
                     result: function (key) { ENCRYPTION_KEY = key; },
                     error: function (e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                CipherKey$import(hmacBytes, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
+                SecretKey$import(hmacBytes, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
                     result: function (key) { HMAC_KEY = key; },
                     error: function (e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -573,11 +573,11 @@ describe("PayloadChunk", function() {
             var encryptionBytesB = new Uint8Array(16);
             random.nextBytes(encryptionBytesA);
             random.nextBytes(encryptionBytesB);
-            CipherKey$import(encryptionBytesA, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+            SecretKey$import(encryptionBytesA, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
                 result: function(x) { encryptionKeyA = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            CipherKey$import(encryptionBytesB, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+            SecretKey$import(encryptionBytesB, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
                 result: function(x) { encryptionKeyB = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -630,11 +630,11 @@ describe("PayloadChunk", function() {
         	var hmacBytesB = new Uint8Array(32);
         	random.nextBytes(hmacBytesA);
         	random.nextBytes(hmacBytesB);
-        	CipherKey$import(hmacBytesA, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
+        	SecretKey$import(hmacBytesA, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
         	    result: function(x) { hmacKeyA = x; },
         	    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
-        	CipherKey$import(hmacBytesB, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
+        	SecretKey$import(hmacBytesB, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
         	    result: function(x) { hmacKeyB = x; },
         	    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});

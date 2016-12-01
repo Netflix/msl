@@ -50,16 +50,16 @@ var MockMessageContext$create;
      * @param {WebCryptoAlgorithm} algo key algorithm.
      * @param {WebCryptoUsage} usages key usages.
      * @param {number} bitlength key length in bits.
-     * @param {result: function(CipherKey), error: function(Error)}
+     * @param {result: function(SecretKey), error: function(Error)}
      *        callback the callback will receive the new key or
      *        any thrown exceptions.
      * @throws CryptoException if there is an error creating the key.
      */
-    function getCipherKey(ctx, algo, usages, bitlength, callback) {
+    function getSecretKey(ctx, algo, usages, bitlength, callback) {
         AsyncExecutor(callback, function() {
             var keydata = new Uint8Array(Math.floor(bitlength / 8));
             ctx.getRandom().nextBytes(keydata);
-            CipherKey$import(keydata, algo, usages, callback);
+            SecretKey$import(keydata, algo, usages, callback);
         });
     }
     
@@ -84,13 +84,13 @@ var MockMessageContext$create;
 	    init: function init(ctx, userId, scheme, callback) {
 	        var self = this;
 	        AsyncExecutor(callback, function() {
-	            getCipherKey(ctx, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, 128, {
+	            getSecretKey(ctx, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, 128, {
 	                result: function(encryptionKeyA) {
-	                    getCipherKey(ctx, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, 256, {
+	                    getSecretKey(ctx, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, 256, {
 	                        result: function(hmacKeyA) {
-	                            getCipherKey(ctx, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, 128, {
+	                            getSecretKey(ctx, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, 128, {
 	                                result: function(encryptionKeyB) {
-	                                    getCipherKey(ctx, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, 256, {
+	                                    getSecretKey(ctx, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, 256, {
 	                                        result: function(hmacKeyB) {
 	                                            createContext(encryptionKeyA, hmacKeyA, encryptionKeyB, hmacKeyB);
 	                                        },

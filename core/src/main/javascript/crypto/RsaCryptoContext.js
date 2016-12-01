@@ -250,7 +250,7 @@ var RsaCryptoContext$Mode;
                 AsyncExecutor(callback, function() {
                     switch (rawKey["type"]) {
                         case "secret":
-                            CipherKey$create(rawKey, callback);
+                            SecretKey$create(rawKey, callback);
                             break;
                         case "public":
                             PublicKey$create(rawKey, callback);

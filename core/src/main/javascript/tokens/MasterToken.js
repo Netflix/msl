@@ -233,8 +233,8 @@ var MasterToken$parse;
          * @param {number} serialNumber the master token serial number.
          * @param {Object} issuerData the issuer data. May be null.
          * @param {string} identity the singular identity this master token represents.
-         * @param {CipherKey} encryptionKey the session encryption key.
-         * @param {CipherKey} signatureKey the session signature key.
+         * @param {SecretKey} encryptionKey the session encryption key.
+         * @param {SecretKey} signatureKey the session signature key.
          * @param {?CreationData} creationData optional creation data.
          * @throws MslEncodingException if there is an error encoding the JSON
          *         data.
@@ -333,12 +333,12 @@ var MasterToken$parse;
                 identity: { value: identity, writable: false, configurable: false },
                 /**
                  * Encryption key.
-                 * @type {CipherKey}
+                 * @type {SecretKey}
                  */
                 encryptionKey: { value: encryptionKey, writable: false, configurable: false },
                 /**
                  * Signature key.
-                 * @type {CipherKey}
+                 * @type {SecretKey}
                  */
                 signatureKey: { value: signatureKey, writable: false, configurable: false },
                 /**
@@ -622,8 +622,8 @@ var MasterToken$parse;
      * @param {number} serialNumber the master token serial number.
      * @param {Object} issuerData the issuer data. May be null.
      * @param {string} identity the singular identity this master token represents.
-     * @param {CipherKey} encryptionKey the session encryption key.
-     * @param {CipherKey} signatureKey the session signature key.
+     * @param {SecretKey} encryptionKey the session encryption key.
+     * @param {SecretKey} signatureKey the session signature key.
      * @param {CreationData} creationData optional creation data.
      * @param {{result: function(MasterToken), error: function(Error)}}
      *        callback the callback functions that will receive the master token
@@ -758,9 +758,9 @@ var MasterToken$parse;
                     throw new MslCryptoException(MslError.UNIDENTIFIED_ALGORITHM, "encryption algorithm: " + encryptionAlgo + "; signature algorithm: " + signatureAlgo);
                 
                 // Reconstruct keys.
-                CipherKey$import(rawEncryptionKey, wcEncryptionAlgo, WebCryptoUsage.ENCRYPT_DECRYPT, {
+                SecretKey$import(rawEncryptionKey, wcEncryptionAlgo, WebCryptoUsage.ENCRYPT_DECRYPT, {
                     result: function(encryptionKey) {
-                        CipherKey$import(rawSignatureKey, wcSignatureAlgo, WebCryptoUsage.SIGN_VERIFY, {
+                        SecretKey$import(rawSignatureKey, wcSignatureAlgo, WebCryptoUsage.SIGN_VERIFY, {
                             result: function(signatureKey) {
                                 constructToken(cryptoContext, encoder, tokendataBytes, signatureBytes, verified,
                                     renewalWindow, expiration, sequenceNumber, serialNumber,

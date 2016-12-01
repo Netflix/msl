@@ -194,15 +194,15 @@ describe("MessageInputStream", function() {
                 random.nextBytes(mke);
                 random.nextBytes(mkh);
                 random.nextBytes(mkw);
-                CipherKey$import(mke, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+                SecretKey$import(mke, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
                     result: function(x) { encryptionKey = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                CipherKey$import(mkh, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
+                SecretKey$import(mkh, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
                     result: function(x) { hmacKey = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                CipherKey$import(mkw, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
+                SecretKey$import(mkw, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
                     result: function(x) { wrappingKey = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });

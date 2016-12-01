@@ -446,7 +446,7 @@ var MslTestUtils$Algorithm;
 	        
 	        // HMAC-SHA256 the keys with the salt as the HMAC key.
 	        function saltStep(bits) {
-                CipherKey$import(SALT, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
+                SecretKey$import(SALT, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
                     result: function(saltKey) {
                         var oncomplete = function(result) {
                             infoStep(new Uint8Array(result));
@@ -463,7 +463,7 @@ var MslTestUtils$Algorithm;
             
 	        // HMAC-SHA256 the info with the intermediate key as the HMAC key.
 	        function infoStep(intermediateBits) {
-	            CipherKey$import(intermediateBits, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
+	            SecretKey$import(intermediateBits, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
 	                result: function(intermediateKey) {
 	                    AsyncExecutor(callback, function() {
                             var oncomplete = function(result) {

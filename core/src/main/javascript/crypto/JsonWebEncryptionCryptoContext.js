@@ -62,7 +62,7 @@ var JsonWebEncryptionCryptoContext$Encryption;
          * @param {MslContext} ctx MSL context.
          * @param {Algorithm} algo content encryption key encryption algorithm.
          * @param {Encryption} enc plaintext encryption algorithm.
-         * @param {?PrivateKey|CipherKey} key content encryption key encryption
+         * @param {?PrivateKey|SecretKey} key content encryption key encryption
          *        private key for asymmetric encryption algorithms or secret key
          *        for symmetric encryption algorithms.
          * @param {PublicKey=} publicKey content encryption key encryption
@@ -142,7 +142,7 @@ var JsonWebEncryptionCryptoContext$Encryption;
                 AsyncExecutor(callback, function() {
                     switch (rawKey["type"]) {
                         case "secret":
-                            CipherKey$create(rawKey, callback);
+                            SecretKey$create(rawKey, callback);
                             break;
                         case "public":
                             PublicKey$create(rawKey, callback);

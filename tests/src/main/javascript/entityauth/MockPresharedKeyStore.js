@@ -37,9 +37,9 @@ var MockPresharedKeyStore = PresharedKeyStore.extend({
      * Add a preshared key set to the store.
      * 
      * @param {string} identity preshared keys entity identity.
-     * @param {CipherKey} encryptionKey the encryption key.
-     * @param {CipherKey} hmacKey the HMAC key.
-     * @param {CipherKey} wrappingKey the wrapping key.
+     * @param {SecretKey} encryptionKey the encryption key.
+     * @param {SecretKey} hmacKey the HMAC key.
+     * @param {SecretKey} wrappingKey the wrapping key.
      */
     addKeys: function addKeys(identity, encryptionKey, hmacKey, wrappingKey) {
         var keyset = new KeySet(encryptionKey, hmacKey, wrappingKey);

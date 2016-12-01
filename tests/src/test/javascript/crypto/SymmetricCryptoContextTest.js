@@ -54,13 +54,13 @@ describe("SymmetricCryptoContext", function() {
             runs(function() {
                 var aes128Bytes = new Uint8Array(16);
                 random.nextBytes(aes128Bytes);
-                CipherKey$import(aes128Bytes, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+                SecretKey$import(aes128Bytes, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
                     result: function(k) { AES_128_KEY = k; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
                 /* TODO AES-CMAC is not supported by any browsers yet. We need to check
                  * based on the MslCrypto$WebCryptoVersion, once it is supported.
-                CipherKey$import(aes128Bytes, WebCryptoAlgorithm.AES_CMAC, WebCryptoUsage.SIGN_VERIFY, {
+                SecretKey$import(aes128Bytes, WebCryptoAlgorithm.AES_CMAC, WebCryptoUsage.SIGN_VERIFY, {
                     result: function(k) { AES_CMAC_KEY = k; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
