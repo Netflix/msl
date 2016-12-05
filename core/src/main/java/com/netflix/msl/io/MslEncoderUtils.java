@@ -94,16 +94,6 @@ public class MslEncoderUtils {
     }
     
     /**
-     * URL-safe Base64 decode data as UTF-8 that has no padding characters. 
-     * 
-     * @param data the Base64 encoded data.
-     * @return the decoded data as a UTF-8 string.
-     */
-    public static String b64urlDecodeToString(final String data) {
-        return new String(b64urlDecode(data), UTF_8);
-    }
-    
-    /**
      * Create a MSL array from a collection of objects that are either one of
      * the accepted types: <code>Boolean</code>, <code>Byte[]</code>,
      * <code>MslArray</code>, <code>MslObject</code>, <code>Number</code>,

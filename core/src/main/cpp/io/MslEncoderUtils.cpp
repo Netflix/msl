@@ -75,11 +75,6 @@ shared_ptr<ByteArray> b64urlDecode(shared_ptr<string> data) {
 	return Base64::decode(modified);
 }
 
-shared_ptr<string> b64urlDecodeToString(shared_ptr<string> data) {
-	shared_ptr<ByteArray> encoded = b64urlDecode(data);
-	return make_shared<string>(encoded->begin(), encoded->end());
-}
-
 shared_ptr<MslArray> createArray(shared_ptr<MslContext> ctx, const vector<Variant>& c) {
 	shared_ptr<MslEncoderFactory> encoder = ctx->getMslEncoderFactory();
 	shared_ptr<MslArray> array = encoder->createArray();

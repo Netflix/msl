@@ -60,14 +60,6 @@ namespace MslEncoderUtils
 	std::shared_ptr<ByteArray> b64urlDecode(std::shared_ptr<std::string> data);
 
 	/**
-	 * URL-safe Base64 decode data as UTF-8 that has no padding characters.
-	 *
-	 * @param data the Base64 encoded data.
-	 * @return the decoded data as a UTF-8 string.
-	 */
-	std::shared_ptr<std::string> b64urlDecodeToString(std::shared_ptr<std::string> data);
-
-	/**
 	 * Create a MSL array from a collection of objects that are either one of
 	 * the accepted types: <code>Boolean</code>, <code>Byte[]</code>,
 	 * <code>MslArray</code>, <code>MslObject</code>, <code>Number</code>,
