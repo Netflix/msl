@@ -253,6 +253,11 @@ void clearOpenSslErrStack()
     ERR_clear_error();
 }
 
+void shutdownOpenSsl()
+{
+    OpenSslLib::cleanup();
+}
+
 OpenSslErrStackTracer::~OpenSslErrStackTracer()
 {
     clearOpenSslErrStack();
