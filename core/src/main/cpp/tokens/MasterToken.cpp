@@ -257,7 +257,11 @@ MasterToken::MasterToken(shared_ptr<util::MslContext> ctx, shared_ptr<MslObject>
 
 bool MasterToken::isRenewable(const Date& now) const
 {
-    return renewalWindow_ * MILLISECONDS_PER_SECOND <= now.getTime();
+	if (!now.isNull())
+		return renewalWindow_ * MILLISECONDS_PER_SECOND <= now.getTime();
+	if (isVerified())
+		return renewalWindow_ * MILLISECONDS_PER_SECOND <= ctx_->getTime();
+	return true;
 }
 bool MasterToken::isRenewable() const
 {
@@ -270,7 +274,11 @@ Date MasterToken::getRenewalWindow() const
 
 bool MasterToken::isExpired(const Date& now) const
 {
-    return expiration_ * MILLISECONDS_PER_SECOND <= now.getTime();
+	if (!now.isNull())
+		return expiration_ * MILLISECONDS_PER_SECOND <= now.getTime();
+	if (isVerified())
+		return expiration_ * MILLISECONDS_PER_SECOND <= ctx_->getTime();
+	return false;
 }
 bool MasterToken::isExpired() const
 {

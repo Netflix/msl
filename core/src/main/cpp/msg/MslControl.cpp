@@ -719,6 +719,10 @@ shared_ptr<MessageBuilder> MslControl::buildRequest(shared_ptr<MslContext> ctx,
         // Release the master token lock.
         releaseMasterToken(ctx, masterToken);
         throw MslInternalException("User ID token not bound to master token despite internal check.", e);
+    } catch (...) {
+    	// Release the master token lock.
+    	releaseMasterToken(ctx, masterToken);
+    	throw;
     }
 }
 
@@ -1095,7 +1099,7 @@ shared_ptr<MslControl::SendResult> MslControl::send(shared_ptr<MslContext> ctx, 
     else
         payloadCryptoContext = requestHeader->getCryptoContext();
 
-    // Send the request->
+    // Send the request.
     shared_ptr<OutputStream> os = (filterFactory) ? filterFactory->getOutputStream(out) : out;
     shared_ptr<MessageOutputStream> request = streamFactory->createOutputStream(ctx, os, requestHeader, payloadCryptoContext);
     request->closeDestination(closeDestination);
@@ -1170,7 +1174,7 @@ shared_ptr<MessageInputStream> MslControl::receive(shared_ptr<MslContext> ctx,
             }
         }
 
-        // Process the response->
+        // Process the response.
         const string localIdentity = ctx->getEntityAuthenticationData()->getIdentity();
         if (responseHeader) {
             // Reject messages if the local entity is the issuer of the master
@@ -1229,8 +1233,7 @@ shared_ptr<MessageInputStream> MslControl::receive(shared_ptr<MslContext> ctx,
         // Update the synchronized clock if we are a trusted network client
         // (there is a request) or peer-to-peer entity.
         const Date timestamp = (responseHeader) ? responseHeader->getTimestamp() : errorHeader->getTimestamp();
-        //if (timestamp != null && (request || ctx->isPeerToPeer()))  // FIXME: Can't have null Date
-        if (request || ctx->isPeerToPeer())
+        if (!timestamp.isNull() && (request || ctx->isPeerToPeer()))
             ctx->updateRemoteTime(timestamp);
     } catch (MslException& e) {
         e.setMasterToken(masterToken);
@@ -1260,17 +1263,13 @@ shared_ptr<MslControl::SendReceiveResult> MslControl::sendReceive(shared_ptr<Msl
 //
 //        // This should only be if we were cancelled so return null.
 //        return nullptr;
-    } catch (const TimeoutException& e) {
+    } catch (...) {
         // Release the master token lock.
         releaseMasterToken(ctx, builder->getMasterToken());
         throw e;
-//    } catch (const RuntimeException& e) {    // FIXME: What to do here?
-//        // Release the master token lock.
-//        releaseMasterToken(ctx, builder->getMasterToken());
-//        throw e;
     }
 
-    // Send the request and receive the response->
+    // Send the request and receive the response.
     shared_ptr<SendResult> sent;
     shared_ptr<MessageInputStream> response;
 
@@ -1302,7 +1301,7 @@ shared_ptr<MslControl::SendReceiveResult> MslControl::sendReceive(shared_ptr<Msl
     };
     Cleanup cleanup(this, renewing, ctx, renewalQueue, response, builder->getMasterToken());
 
-    // Send the request->
+    // Send the request.
     builder->setRenewable(renewing);
     sent = send(ctx, msgCtx, out, builder, closeStreams);
 
@@ -1319,11 +1318,11 @@ shared_ptr<MslControl::SendReceiveResult> MslControl::sendReceive(shared_ptr<Msl
 
         // If we received an error response then cleanup.
         shared_ptr<ErrorHeader> errorHeader = response->getErrorHeader();
-        if (errorHeader )
+        if (errorHeader)
             cleanupContext(ctx, requestHeader, errorHeader);
     }
 
-    // Return the response->
+    // Return the response.
     return make_shared<SendReceiveResult>(response, sent);
 }
 
@@ -1372,12 +1371,12 @@ bool MslControl::acquireRenewalLock(shared_ptr<MslContext> ctx, shared_ptr<Messa
                 return true;
 
             // Otherwise we need to wait for a master token from the
-            // renewing request->
+            // renewing request.
             shared_ptr<MasterToken> newMasterToken = ctxRenewingQueue->poll(timeout);
 
             // If timed out throw an exception.
             if (!newMasterToken)
-                throw TimeoutException("acquireRenewalLock timed out->");
+                throw TimeoutException("acquireRenewalLock timed out.");
 
             // Put the same master token back on the renewing queue so
             // anyone else waiting can also proceed.
@@ -1716,7 +1715,7 @@ public:
             lockTimeout = timeout;
         }
 
-        // If no builder was provided then build a new request-> This will
+        // If no builder was provided then build a new request. This will
         // acquire the master token lock.
         if (!builder) {
             // FIXME: How to handle cancellation?
@@ -1845,7 +1844,7 @@ private:
             if (!errMsg)
                 return make_shared<MslChannel>(response, nullptr);
 
-            // In trusted network mode send the response in a new request->
+            // In trusted network mode send the response in a new request.
             // In peer-to-peer mode reuse the connection.
             shared_ptr<MslChannel> newChannel;
             shared_ptr<MessageBuilder> requestBuilder = errMsg->builder;
@@ -1859,7 +1858,7 @@ private:
             } else {
                 // Send the error response. Recursively execute this
                 // because it may take multiple messages to succeed with
-                // sending the request->
+                // sending the request.
                 //
                 // The master token lock will be released by the recursive
                 // call to execute().
@@ -1959,7 +1958,7 @@ private:
             shared_ptr<MessageBuilder> keyxBuilder = mslControl->buildResponse(ctx, keyxMsgCtx, responseHeader);
 
             // Release the master token read lock with any exit from this scope.
-            // FIXME: duplicate in ResponService::trustedNetworkExecute
+            // FIXME: duplicate in RespondService::trustedNetworkExecute
             struct Cleanup
             {
                 Cleanup(MslControl * mslControl, shared_ptr<MslContext> ctx, shared_ptr<MasterToken> masterToken)
