@@ -1266,7 +1266,7 @@ shared_ptr<MslControl::SendReceiveResult> MslControl::sendReceive(shared_ptr<Msl
     } catch (...) {
         // Release the master token lock.
         releaseMasterToken(ctx, builder->getMasterToken());
-        throw e;
+        throw;
     }
 
     // Send the request and receive the response.
