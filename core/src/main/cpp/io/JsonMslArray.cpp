@@ -59,10 +59,18 @@ JsonMslArray::JsonMslArray(shared_ptr<ByteArray> encoding)
     // done here by rapidjson.
     Document document;
     try {
-    	// Be evil and insert a null character so rapidjson can parse the data
-    	// as a string, but the caller does not see any modification to the
-    	// provided byte array size.
-    	encoding->reserve(encoding->size()+1); (*encoding)[encoding->size()] = 0;
+        // Insert a trailing null character so rapidjson can parse the data as a
+        // null-terminated string. Make sure to remove it before returning so
+    	// the caller does not see any change in size.
+        class AddTempNull
+        {
+        public:
+            AddTempNull(shared_ptr<ByteArray>& ba) : ba(ba) { ba->push_back(0); }
+            ~AddTempNull() { ba->pop_back(); }
+        private:
+            shared_ptr<ByteArray>& ba;
+        };
+        AddTempNull addTempNull(encoding);
     	if (document.Parse(reinterpret_cast<const char*>(&(*encoding)[0])).HasParseError()) {
             ParseErrorCode e = document.GetParseError();
             size_t o = document.GetErrorOffset();
