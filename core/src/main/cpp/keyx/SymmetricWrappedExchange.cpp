@@ -245,8 +245,10 @@ shared_ptr<KeyExchangeFactory::KeyExchangeData> SymmetricWrappedExchange::genera
         shared_ptr<KeyRequestData> keyRequestData,
         shared_ptr<MasterToken> masterToken)
 {
-    if (!(instanceof<RequestData>(keyRequestData.get())))
-        throw MslInternalException("Key request data " + string(typeid(*keyRequestData).name()) + " was not created by this factory.");
+    if (!(instanceof<RequestData>(keyRequestData.get()))) {
+        const KeyRequestData& krd = *keyRequestData;
+        throw MslInternalException("Key request data " + string(typeid(krd).name()) + " was not created by this factory.");
+    }
     shared_ptr<RequestData> request = dynamic_pointer_cast<RequestData>(keyRequestData);
 
     // Verify the scheme is permitted.
@@ -291,8 +293,10 @@ shared_ptr<KeyExchangeFactory::KeyExchangeData> SymmetricWrappedExchange::genera
         shared_ptr<KeyRequestData> keyRequestData,
         shared_ptr<EntityAuthenticationData> entityAuthData)
 {
-    if (!(instanceof<RequestData>(keyRequestData.get())))
-        throw MslInternalException("Key request data " + string(typeid(*keyRequestData).name()) + " was not created by this factory.");
+    if (!(instanceof<RequestData>(keyRequestData.get()))) {
+        const KeyRequestData& krd = *keyRequestData;
+        throw MslInternalException("Key request data " + string(typeid(krd).name()) + " was not created by this factory.");
+    }
     shared_ptr<RequestData> request = dynamic_pointer_cast<RequestData>(keyRequestData);
 
     // Verify the scheme is permitted.
@@ -341,11 +345,12 @@ shared_ptr<ICryptoContext> SymmetricWrappedExchange::getCryptoContext(
         shared_ptr<MslContext> ctx, shared_ptr<KeyRequestData> keyRequestData,
         shared_ptr<KeyResponseData> keyResponseData, shared_ptr<MasterToken> masterToken)
 {
+    const KeyRequestData& krd = *keyRequestData;
     if (!(instanceof<RequestData>(keyRequestData.get())))
-        throw MslInternalException("Key request data " + string(typeid(*keyRequestData).name()) + " was not created by this factory.");
+        throw MslInternalException("Key request data " + string(typeid(krd).name()) + " was not created by this factory.");
     shared_ptr<RequestData> request = dynamic_pointer_cast<RequestData>(keyRequestData);
     if (!(instanceof<ResponseData>(keyResponseData.get())))
-        throw MslInternalException("Key response data " + string(typeid(*keyResponseData).name()) + " was not created by this factory.");
+        throw MslInternalException("Key response data " + string(typeid(krd).name()) + " was not created by this factory.");
     shared_ptr<ResponseData> response = dynamic_pointer_cast<ResponseData>(keyResponseData);
 
     // Verify response matches request.

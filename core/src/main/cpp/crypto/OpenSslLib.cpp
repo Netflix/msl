@@ -77,11 +77,13 @@ void lock_func(int mode, int n, const char *, int)
     if (mode & CRYPTO_LOCK)
     {
         int ret = pthread_mutex_lock(mutex_array->at(n));
+        (void)ret;
         assert(ret == 0);
     }
     else
     {
         int ret = pthread_mutex_unlock(mutex_array->at(n));
+        (void)ret;
         assert(ret == 0);
     }
 }
@@ -143,6 +145,7 @@ void OpenSslLib::initThread()
         pthread_mutex_t * const mutex = new pthread_mutex_t;
         assert(mutex);
         int ret = pthread_mutex_init(mutex, NULL);
+        (void)ret;
         assert(ret == 0);
         mutex_array->push_back(mutex);
     }
@@ -154,10 +157,11 @@ void OpenSslLib::cleanupThread()
 {
     CRYPTO_set_locking_callback(NULL);
     int ret = CRYPTO_THREADID_set_callback(NULL);
+    (void)ret;
     assert(ret == 0);
     for (size_t i=0; i < mutex_array->size(); ++i)
     {
-        int ret = pthread_mutex_destroy(mutex_array->at(i));
+        ret = pthread_mutex_destroy(mutex_array->at(i));
         assert(ret == 0);
         delete mutex_array->at(i);
     }
@@ -251,6 +255,11 @@ void clearOpenSslErrStack()
     cerr << getOpenSSLErrorString() << endl;
 #endif
     ERR_clear_error();
+}
+
+void shutdownOpenSsl()
+{
+    OpenSslLib::cleanup();
 }
 
 OpenSslErrStackTracer::~OpenSslErrStackTracer()

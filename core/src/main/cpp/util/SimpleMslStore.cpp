@@ -296,7 +296,7 @@ void SimpleMslStore::addServiceTokens(set<shared_ptr<ServiceToken>> tokens) {
 			}
 			if (!foundUserIdToken) {
 				stringstream ss;
-				ss << "st uitserialnumber " + token->getUserIdTokenSerialNumber();
+				ss << "st uitserialnumber " << token->getUserIdTokenSerialNumber();
 				throw MslException(MslError::SERVICETOKEN_USERIDTOKEN_NOT_FOUND, ss.str());
 			}
 		}

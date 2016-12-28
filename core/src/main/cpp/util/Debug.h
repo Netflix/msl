@@ -25,10 +25,9 @@ namespace util {
 
 class Debug
 {
-    std::ostream& stream;
   public:
-    Debug(std::ostream& s) : stream(s) {}
 #ifdef DEBUG
+    Debug(std::ostream& s) : stream(s) {}
     template<typename T> Debug& operator<<(const T& item)
     {
       stream << item;
@@ -39,7 +38,10 @@ class Debug
       stream << pf;
       return *this;
     }
+  private:
+    std::ostream& stream;
 #else
+    Debug(std::ostream&) {}
     template<typename T> Debug& operator<<(const T&) { return *this; }
     Debug& operator<<(std::ostream& (*pf)(std::ostream&)) { (void)pf; return *this; }
 #endif

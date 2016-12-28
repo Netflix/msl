@@ -79,7 +79,7 @@ public:
         MslException::setUserIdToken(userIdToken);
     }
 
-    virtual MslUserIdTokenException& setMessageId(uint64_t messageId) {
+    virtual MslUserIdTokenException& setMessageId(int64_t messageId) {
         MslException::setMessageId(messageId);
         return *this;
     }
