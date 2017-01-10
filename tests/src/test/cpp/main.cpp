@@ -5,6 +5,7 @@
  *      Author: padolph
  */
 
+#include <crypto/OpenSslLib.h>
 #include "gtest/gtest.h"
 #include <stdlib.h>
 #include <iostream>

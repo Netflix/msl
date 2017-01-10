@@ -107,7 +107,7 @@ ostream & operator<<(ostream& os, const TestParameters& tp) {
     return os << "compression algorithm: " << tp.compAlg.toString();
 }
 
-string sufx(testing::TestParamInfo<class TestParameters> tpi) {
+string sufx(testing::TestParamInfo<struct TestParameters> tpi) {
     return tpi.param.compAlg.toString();
 }
 

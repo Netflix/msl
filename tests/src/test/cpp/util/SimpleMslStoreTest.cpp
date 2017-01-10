@@ -56,10 +56,10 @@ const string KEYSET_ID = "keyset";
 const string USER_ID = "userid";
 
 /** Maximum number of randomly generated tokens. */
-const int MAX_TOKENS = 3;
+//const int MAX_TOKENS = 3;
 
 /** Stress test pool shutdown timeout in milliseconds. */
-const int STRESS_TIMEOUT_MILLIS = 3000;
+//const int STRESS_TIMEOUT_MILLIS = 3000;
 
 shared_ptr<string> NULL_NAME;
 shared_ptr<MasterToken> NULL_MASTER_TOKEN;
