@@ -69,7 +69,6 @@ file(GLOB THISDIR_SRC
 set(GTEST_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../../main/cpp/lib)
 file(GLOB_RECURSE GTEST_SRC ${GTEST_ROOT}/gtest/*)
 file(GLOB GMOCK_SRC ${GTEST_ROOT}/gmock/*)
-message(STATUS ${GTEST_SRC})
 
 add_executable(${PROJECT_NAME}
     $<TARGET_OBJECTS:cryptoTest>
