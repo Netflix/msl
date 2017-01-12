@@ -67,8 +67,6 @@ file(GLOB THISDIR_SRC
 
 # GTest source
 set(GTEST_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../../main/cpp/lib)
-file(GLOB_RECURSE GTEST_SRC ${GTEST_ROOT}/gtest/*)
-file(GLOB GMOCK_SRC ${GTEST_ROOT}/gmock/*)
 
 add_executable(${PROJECT_NAME}
     $<TARGET_OBJECTS:cryptoTest>
@@ -80,8 +78,8 @@ add_executable(${PROJECT_NAME}
     $<TARGET_OBJECTS:userauthTest>
     $<TARGET_OBJECTS:utilTest>
     ${THISDIR_SRC}
-    ${GTEST_SRC}
-    ${GMOCK_SRC}
+    ${GTEST_ROOT}/gtest/gtest-all.cc
+    ${GTEST_ROOT}/gmock/gmock-all.cc
 )
 
 target_link_libraries( ${PROJECT_NAME}
@@ -89,3 +87,6 @@ target_link_libraries( ${PROJECT_NAME}
     mslCore
     mslMock
 )
+
+# Copy resource files used by tests
+file(COPY ../resources DESTINATION src/test/)
