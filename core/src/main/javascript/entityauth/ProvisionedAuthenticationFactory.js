@@ -64,7 +64,7 @@ var ProvisionedAuthenticationFactory$IdentityProvisioningService;
         getCryptoContext: function getCryptoContext(ctx, authdata) {
             // Make sure we have the right kind of entity authentication data.
             if (!(authdata instanceof ProvisionedAuthenticationData))
-                throw new MslInternalException("Incorrect authentication data type " + JSON.stringify(authdata) + ".");
+                throw new MslInternalException("Incorrect authentication data type " + authdata + ".");
             var pad = authdata;
             
             // Provision an entity identity.
