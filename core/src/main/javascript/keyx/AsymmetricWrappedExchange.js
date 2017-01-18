@@ -535,10 +535,10 @@ var AsymmetricWrappedExchange$ResponseData$parse;
             var self = this;
             AsyncExecutor(callback, function() {
                 if (!(keyRequestData instanceof RequestData))
-                    throw new MslInternalException("Key request data " + JSON.stringify(keyRequestData) + " was not created by this factory.");
+                    throw new MslInternalException("Key request data " + keyRequestData + " was not created by this factory.");
                 var request = keyRequestData;
                 if (!(keyResponseData instanceof ResponseData))
-                    throw new MslInternalException("Key response data " + JSON.stringify(keyResponseData) + " was not created by this factory.");
+                    throw new MslInternalException("Key response data " + keyResponseData + " was not created by this factory.");
                 var response = keyResponseData;
 
                 // Verify response matches request.
