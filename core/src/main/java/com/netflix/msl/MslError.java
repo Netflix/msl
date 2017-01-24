@@ -223,7 +223,7 @@ public class MslError {
     public static final MslError RESPONSE_REQUIRES_MASTERTOKEN = new MslError(6027, ResponseCode.KEYX_REQUIRED, "Message response requires a master token.");
     public static final MslError RESPONSE_REQUIRES_USERIDTOKEN = new MslError(6028, ResponseCode.USER_REAUTH, "Message response requires a user ID token.");
     public static final MslError REQUEST_REQUIRES_USERAUTHDATA = new MslError(6029, ResponseCode.FAIL, "User-associated message requires user authentication data.");
-    public static final MslError UNEXPECTED_MESSAGE_SENDER = new MslError(6030, ResponseCode.FAIL, "Message sender is equal to the local entity or not the master token entity.");
+    public static final MslError UNEXPECTED_MESSAGE_SENDER = new MslError(6030, ResponseCode.FAIL, "Message sender is not the master token entity.");
     public static final MslError NONREPLAYABLE_MESSAGE_REQUIRES_MASTERTOKEN = new MslError(6031, ResponseCode.FAIL, "Non-replayable message requires a master token.");
     public static final MslError NONREPLAYABLE_ID_OUT_OF_RANGE = new MslError(6032, ResponseCode.FAIL, "Non-replayable message non-replayable ID is out of range.");
     public static final MslError MESSAGE_SERVICETOKEN_MISMATCH = new MslError(6033, ResponseCode.FAIL, "Service token master token or user ID token serial number does not match the message token serial numbers.");
@@ -234,6 +234,7 @@ public class MslError {
     public static final MslError MESSAGE_ENTITYDATABASED_VERIFICATION_FAILED = new MslError(6038, ResponseCode.ENTITYDATA_REAUTH, "Message header entity-based signature verification failed.");
     public static final MslError MESSAGE_MASTERTOKENBASED_VERIFICATION_FAILED = new MslError(6039, ResponseCode.ENTITY_REAUTH, "Message header master token-based signature verification failed.");
     public static final MslError MESSAGE_REPLAYED_UNRECOVERABLE = new MslError(6040, ResponseCode.ENTITY_REAUTH, "Non-replayable message replayed with a sequence number that is too far out of sync to recover.");
+    public static final MslError UNEXPECTED_LOCAL_MESSAGE_SENDER = new MslError(6041, ResponseCode.FAIL, "Message sender is equal to the local entity.");
 
     // 7 Key Exchange
     public static final MslError UNIDENTIFIED_KEYX_SCHEME = new MslError(7000, ResponseCode.FAIL, "Unable to identify key exchange scheme.");
