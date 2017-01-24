@@ -34,6 +34,8 @@ void ensureOpenSslInit();
 
 void clearOpenSslErrStack();
 
+void shutdownOpenSsl();
+
 // Place an instance of this class on the call stack to ensure OpenSSL is
 // initialized, and to automatically clear the OpenSSL error stack on function
 // exit.

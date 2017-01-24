@@ -34,6 +34,7 @@
 #include <memory>
 #include <set>
 #include <sstream>
+#include <string>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
 
@@ -81,9 +82,6 @@ const string SERVICE_TOKEN_NAME = "serviceTokenName";
  * tokens for the tests.
  */
 const int32_t NUM_SERVICE_TOKENS = 12;
-
-/** Wrapping key length in bytes. */
-const int32_t WRAPPING_KEY_LENGTH = 128 / 8;
 
 } // namespace anonymous
 
@@ -277,7 +275,7 @@ set<shared_ptr<ServiceToken>> getMasterBoundServiceTokens(shared_ptr<MslContext>
 	for (int count = random->nextInt(NUM_SERVICE_TOKENS); count >= 0; --count) {
 		shared_ptr<ByteArray> data = make_shared<ByteArray>(8);
 		random->nextBytes(*data);
-		shared_ptr<ServiceToken> token = make_shared<ServiceToken>(ctx, "masterbound" + count, data, masterToken, shared_ptr<UserIdToken>(), false, MslConstants::CompressionAlgorithm::NOCOMPRESSION, cryptoContext);
+		shared_ptr<ServiceToken> token = make_shared<ServiceToken>(ctx, "masterbound" + to_string(count), data, masterToken, shared_ptr<UserIdToken>(), false, MslConstants::CompressionAlgorithm::NOCOMPRESSION, cryptoContext);
 		tokens.insert(token);
 	}
 	return tokens;
@@ -292,7 +290,7 @@ set<shared_ptr<ServiceToken>> getUserBoundServiceTokens(shared_ptr<MslContext> c
 	for (int count = random->nextInt(NUM_SERVICE_TOKENS); count >= 0; --count) {
 		shared_ptr<ByteArray> data = make_shared<ByteArray>(8);
 		random->nextBytes(*data);
-		shared_ptr<ServiceToken> token = make_shared<ServiceToken>(ctx, "masterbound" + count, data, masterToken, userIdToken, false, MslConstants::CompressionAlgorithm::NOCOMPRESSION, cryptoContext);
+		shared_ptr<ServiceToken> token = make_shared<ServiceToken>(ctx, "masterbound" + to_string(count), data, masterToken, userIdToken, false, MslConstants::CompressionAlgorithm::NOCOMPRESSION, cryptoContext);
 		tokens.insert(token);
 	}
 	return tokens;

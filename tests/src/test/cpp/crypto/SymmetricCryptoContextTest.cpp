@@ -62,7 +62,7 @@ ostream & operator<<(ostream& os, const TestParameters& tp) {
     return os << "algorithm:" << tp.algorithm << " keysize:" << tp.keysize;
 }
 
-string sufx(testing::TestParamInfo<class TestParameters> tpi) {
+string sufx(testing::TestParamInfo<struct TestParameters> tpi) {
     return tpi.param.algorithm;
 }
 } // namespace anonymous

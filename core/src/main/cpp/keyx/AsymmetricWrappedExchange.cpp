@@ -269,8 +269,10 @@ shared_ptr<KeyResponseData> AsymmetricWrappedExchange::createResponseData(shared
 
 shared_ptr<KeyExchangeData> AsymmetricWrappedExchange::generateResponse(shared_ptr<MslContext> ctx, const MslEncoderFormat& /*format*/, shared_ptr<KeyRequestData> keyRequestData, shared_ptr<MasterToken> masterToken)
 {
-	if (!instanceof<RequestData>(keyRequestData))
-		throw MslInternalException("Key request data " + string(typeid(*keyRequestData).name()) + " was not created by this factory.");
+	if (!instanceof<RequestData>(keyRequestData)) {
+		const KeyRequestData& krd = *keyRequestData;
+		throw MslInternalException("Key request data " + string(typeid(krd).name()) + " was not created by this factory.");
+	}
 	shared_ptr<RequestData> request = dynamic_pointer_cast<RequestData>(keyRequestData);
 
 	// If the master token was not issued by the local entity then we
@@ -351,8 +353,10 @@ shared_ptr<KeyExchangeData> AsymmetricWrappedExchange::generateResponse(shared_p
 
 shared_ptr<KeyExchangeData> AsymmetricWrappedExchange::generateResponse(shared_ptr<MslContext> ctx, const MslEncoderFormat& /*format*/, shared_ptr<KeyRequestData> keyRequestData, shared_ptr<EntityAuthenticationData> entityAuthData)
 {
-	if (!instanceof<RequestData>(keyRequestData))
-		throw MslInternalException("Key request data " + string(typeid(*keyRequestData).name()) + " was not created by this factory.");
+	if (!instanceof<RequestData>(keyRequestData)) {
+		const KeyRequestData& krd = *keyRequestData;
+		throw MslInternalException("Key request data " + string(typeid(krd).name()) + " was not created by this factory.");
+	}
 	shared_ptr<RequestData> request = dynamic_pointer_cast<RequestData>(keyRequestData);
 
 	// Verify the scheme is permitted.
@@ -433,11 +437,12 @@ shared_ptr<KeyExchangeData> AsymmetricWrappedExchange::generateResponse(shared_p
 
 shared_ptr<ICryptoContext> AsymmetricWrappedExchange::getCryptoContext(shared_ptr<MslContext> ctx, shared_ptr<KeyRequestData> keyRequestData, shared_ptr<KeyResponseData> keyResponseData, shared_ptr<MasterToken> /*masterToken*/)
 {
+	const KeyRequestData& krd = *keyRequestData;
 	if (!instanceof<RequestData>(keyRequestData))
-		throw MslInternalException("Key request data " + string(typeid(*keyRequestData).name()) + " was not created by this factory.");
+		throw MslInternalException("Key request data " + string(typeid(krd).name()) + " was not created by this factory.");
 	shared_ptr<RequestData> request = dynamic_pointer_cast<RequestData>(keyRequestData);
 	if (!instanceof<ResponseData>(keyResponseData))
-		throw MslInternalException("Key response data " + string(typeid(*keyResponseData).name()) + " was not created by this factory.");
+		throw MslInternalException("Key response data " + string(typeid(krd).name()) + " was not created by this factory.");
 	shared_ptr<ResponseData> response = dynamic_pointer_cast<ResponseData>(keyResponseData);
 
 	// Verify response matches request.

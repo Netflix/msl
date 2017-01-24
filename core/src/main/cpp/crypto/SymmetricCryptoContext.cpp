@@ -43,8 +43,6 @@ namespace crypto {
 namespace {
 /** AES encryption initial value size in bytes. */
 const int AES_IV_SIZE = 16;
-/** AES key wrap block size in bytes. */
-const int AESKW_BLOCK_SIZE = 8;
 /** Key wrap initial value. */
 const ByteArray AESKW_AIV;
 } // namespace anonymous

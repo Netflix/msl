@@ -88,7 +88,7 @@ std::ostream & operator<<(std::ostream& os, const TestParameters& tp) {
     return os << tp.name;
 }
 
-string sufx(testing::TestParamInfo<class TestParameters> tpi) {
+string sufx(testing::TestParamInfo<struct TestParameters> tpi) {
     return tpi.param.name;
 }
 

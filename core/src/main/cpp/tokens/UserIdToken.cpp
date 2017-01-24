@@ -198,7 +198,11 @@ Date UserIdToken::getRenewalWindow() const
 
 bool UserIdToken::isRenewable(const Date& now) const
 {
-    return renewalWindow_ * MILLISECONDS_PER_SECOND <= now.getTime();
+	if (!now.isNull())
+		return renewalWindow_ * MILLISECONDS_PER_SECOND <= now.getTime();
+	if (isVerified())
+		return renewalWindow_ * MILLISECONDS_PER_SECOND <= ctx_->getTime();
+	return true;
 }
 
 bool UserIdToken::isRenewable() const
@@ -215,7 +219,11 @@ Date UserIdToken::getExpiration() const
 
 bool UserIdToken::isExpired(const Date& now) const
 {
-    return expiration_ * MILLISECONDS_PER_SECOND <= now.getTime();
+	if (!now.isNull())
+		return expiration_ * MILLISECONDS_PER_SECOND <= now.getTime();
+    if (isVerified())
+    	return expiration_ * MILLISECONDS_PER_SECOND <= ctx_->getTime();
+    return false;
 }
 
 bool UserIdToken::isExpired() const

@@ -35,18 +35,16 @@ namespace crypto {
 
 namespace {
 
-const size_t AES_KEY_LENGTH = 16;
 const size_t AESCMAC_OUTPUT_LENGTH = 16;
 
 void aesCmacSign(const ByteArray& key, const ByteArray& data, ByteArray& signature)
 {
     OpenSslErrStackTracer errTracer;
 
-    // RFC4493 defines; AES-CMAC as using AES-CBC 128, which requires a key size
+    // RFC4493 defines AES-CMAC as using AES-CBC 128, which requires a key size
     // of 16 bytes.
     if (key.size() != 16)
         throw MslCryptoException(MslError::SIGN_NOT_SUPPORTED, "AES-CMAC key size must be 16 bytes");
-
 
     ScopedDisposer<CMAC_CTX, void, CMAC_CTX_free> context(CMAC_CTX_new());
     if (!context.get())

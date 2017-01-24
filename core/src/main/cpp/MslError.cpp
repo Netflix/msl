@@ -219,7 +219,7 @@ const MslError MslError::PAYLOAD_SIGNATURE_INVALID(6026, ResponseCode::FAIL, "In
 const MslError MslError::RESPONSE_REQUIRES_MASTERTOKEN(6027, ResponseCode::KEYX_REQUIRED, "Message response requires a master token.");
 const MslError MslError::RESPONSE_REQUIRES_USERIDTOKEN(6028, ResponseCode::USER_REAUTH, "Message response requires a user ID token.");
 const MslError MslError::REQUEST_REQUIRES_USERAUTHDATA(6029, ResponseCode::FAIL, "User-associated message requires user authentication data.");
-const MslError MslError::UNEXPECTED_MESSAGE_SENDER(6030, ResponseCode::FAIL, "Message sender is equal to the local entity or not the master token entity.");
+const MslError MslError::UNEXPECTED_MESSAGE_SENDER(6030, ResponseCode::FAIL, "Message sender is not the master token entity.");
 const MslError MslError::NONREPLAYABLE_MESSAGE_REQUIRES_MASTERTOKEN(6031, ResponseCode::FAIL, "Non-replayable message requires a master token.");
 const MslError MslError::NONREPLAYABLE_ID_OUT_OF_RANGE(6032, ResponseCode::FAIL, "Non-replayable message non-replayable ID is out of range.");
 const MslError MslError::MESSAGE_SERVICETOKEN_MISMATCH(6033, ResponseCode::FAIL, "Service token master token or user ID token serial number does not match the message token serial numbers.");
@@ -230,6 +230,7 @@ const MslError MslError::MESSAGE_RECIPIENT_MISMATCH(6037, ResponseCode::FAIL, "M
 const MslError MslError::MESSAGE_ENTITYDATABASED_VERIFICATION_FAILED(6038, ResponseCode::ENTITYDATA_REAUTH, "Message header entity-based signature verification failed.");
 const MslError MslError::MESSAGE_MASTERTOKENBASED_VERIFICATION_FAILED(6039, ResponseCode::ENTITY_REAUTH, "Message header master token-based signature verification failed.");
 const MslError MslError::MESSAGE_REPLAYED_UNRECOVERABLE(6040, ResponseCode::ENTITY_REAUTH, "Non-replayable message replayed with a sequence number that is too far out of sync to recover.");
+const MslError MslError::UNEXPECTED_LOCAL_MESSAGE_SENDER(6041, ResponseCode::FAIL, "Message sender is equal to the local entity.");
 
 // 7 Key Exchange
 const MslError MslError::UNIDENTIFIED_KEYX_SCHEME(7000, ResponseCode::FAIL, "Unable to identify key exchange scheme.");

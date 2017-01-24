@@ -90,7 +90,7 @@ MslError MockTokenFactory::acceptNonReplayableId(shared_ptr<MslContext>,
     if (!masterToken->isDecrypted())
          throw MslMasterTokenException(MslError::MASTERTOKEN_UNTRUSTED, masterToken);
      if (nonReplayableId < 0 || nonReplayableId > MslConstants::MAX_LONG_VALUE)
-         throw MslException(MslError::NONREPLAYABLE_ID_OUT_OF_RANGE, "nonReplayableId " + nonReplayableId);
+         throw MslException(MslError::NONREPLAYABLE_ID_OUT_OF_RANGE, "nonReplayableId " + to_string(nonReplayableId));
 
      // Reject if the non-replayable ID is equal or just a few messages
      // behind. The sender can recover by incrementing.

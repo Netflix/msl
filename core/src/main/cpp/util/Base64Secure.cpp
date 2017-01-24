@@ -61,7 +61,7 @@ const uint8_t PADDING = 127;
 static const signed char PADDING_CHAR = '=';
 
 // FIXME: Must check for over/underflow
-inline size_t base64Length(size_t n) { return ((4 * n / 3) + 3) & ~3; }
+inline size_t base64Length(size_t n) { return ((4 * n / 3) + 3) & ~3u; }
 inline size_t lengthBound(size_t n)  { return n * 3 / 4; }
 
 typedef std::string::const_iterator StringConstIterator;
@@ -69,9 +69,9 @@ typedef ByteArray::const_iterator ByteArrayConstIterator;
 typedef std::back_insert_iterator<std::string> StringAppendIterator;
 typedef std::back_insert_iterator<ByteArray> ByteArrayAppendIterator;
 
-inline bool isAllowedChar(uint8_t c) {
-  return (isalnum(c) || (c == '+') || (c == '/') || (c == '='));
-}
+//inline bool isAllowedChar(uint8_t c) {
+//  return (isalnum(c) || (c == '+') || (c == '/') || (c == '='));
+//}
 
 } // namespace anonymous
 

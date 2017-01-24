@@ -431,7 +431,7 @@ private: // types
     /**
      * The result of sending and receiving messages, forward declaration.
      */
-    class SendReceiveResult;
+    struct SendReceiveResult;
 
     /**
      * Forward declarations of thread-callable classes

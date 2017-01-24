@@ -5,6 +5,7 @@
  *      Author: padolph
  */
 
+#include <crypto/OpenSslLib.h>
 #include "gtest/gtest.h"
 #include <stdlib.h>
 #include <iostream>
@@ -32,4 +33,5 @@ int main(int argc, char **argv)
       }
   }
   return RUN_ALL_TESTS();
+  netflix::msl::crypto::shutdownOpenSsl();
 }

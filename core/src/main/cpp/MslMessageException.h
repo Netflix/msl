@@ -64,7 +64,7 @@ public:
     MslMessageException(const MslError& error, const std::string& details, const IException& cause)
     : MslException(error, details, cause) {}
 
-    virtual MslMessageException& setMessageId(uint64_t messageId) {
+    virtual MslMessageException& setMessageId(int64_t messageId) {
         MslException::setMessageId(messageId);
         return *this;
     }
