@@ -1182,10 +1182,17 @@ shared_ptr<MessageInputStream> MslControl::receive(shared_ptr<MslContext> ctx,
             // or if the remote entity identity is equal to this entity
             // identity.
             const string sender = (masterToken) ? responseHeader->getSender() : entityAuthData->getIdentity();
-            if ((masterToken && masterToken->isDecrypted() && masterToken->getIdentity() != sender) ||
-                localIdentity == sender)
+            if ((masterToken && masterToken->isDecrypted() && masterToken->getIdentity() != sender))
             {
-                throw MslMessageException(MslError::UNEXPECTED_MESSAGE_SENDER, sender);
+            	stringstream ss;
+            	ss << "sender " << sender << "; master token " << masterToken->getIdentity();
+            	throw new MslMessageException(MslError::UNEXPECTED_MESSAGE_SENDER, ss.str());
+            }
+            if (localIdentity == sender)
+            {
+            	stringstream ss;
+            	ss << sender << " == " << localIdentity;
+                throw MslMessageException(MslError::UNEXPECTED_LOCAL_MESSAGE_SENDER, ss.str());
             }
 
             // Reject messages if the message recipient is specified and not
