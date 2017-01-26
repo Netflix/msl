@@ -45,17 +45,17 @@ var UserAuthenticationFactory = util.Class.create({
      *
      * @param {MslContext} ctx MSL context.
      * @param {MasterToken} the entity master token. May be {@code null}.
-     * @param {Object} userAuthJO the JSON object.
+     * @param {MslObject} entityAuthMo the MSL object.
      * @param {{result: function(UserAuthenticationData), error: function(Error)}}
      *        callback the callback functions that will receive the user
      *        authentication data or any thrown exceptions.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslUserAuthException if there is an error creating the user
      *         authentication data.
      * @throws MslCryptoException if there is an error with the user
      *         authentication data cryptography.
      */
-    createData: function(ctx, masterToken, entityAuthJO, callback) {},
+    createData: function(ctx, masterToken, entityAuthMo, callback) {},
 
     /**
      * <p>Authenticate the user using the provided authentication data.</p>

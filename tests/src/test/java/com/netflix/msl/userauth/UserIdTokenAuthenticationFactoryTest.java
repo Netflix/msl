@@ -19,8 +19,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -34,12 +32,15 @@ import com.netflix.msl.MslException;
 import com.netflix.msl.MslUserAuthException;
 import com.netflix.msl.MslUserIdTokenException;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.test.ExpectedMslException;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.MockMslUser;
 import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.tokens.UserIdToken;
-import com.netflix.msl.util.JsonUtils;
 import com.netflix.msl.util.MockAuthenticationUtils;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslContext;
@@ -51,7 +52,10 @@ import com.netflix.msl.util.MslTestUtils;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class UserIdTokenAuthenticationFactoryTest {
-    /** JSON master token key. */
+	/** MSL encoder format. */
+	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
+
+    /** Key master token. */
     private static final String KEY_MASTER_TOKEN = "mastertoken";
     
     @Rule
@@ -59,6 +63,8 @@ public class UserIdTokenAuthenticationFactoryTest {
     
     /** MSL context. */
     private static MockMslContext ctx;
+    /** MSL encoder factory. */
+    private static MslEncoderFactory encoder;
     /** Authentication utilities. */
     private static MockAuthenticationUtils authutils;
     /** User authentication factory. */
@@ -72,6 +78,7 @@ public class UserIdTokenAuthenticationFactoryTest {
     @BeforeClass
     public static void setup() throws MslEncodingException, MslCryptoException {
         ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
+        encoder = ctx.getMslEncoderFactory();
         authutils = new MockAuthenticationUtils();
         factory = new UserIdTokenAuthenticationFactory(authutils);
         ctx.addUserAuthenticationFactory(factory);
@@ -88,6 +95,7 @@ public class UserIdTokenAuthenticationFactoryTest {
         
         factory = null;
         authutils = null;
+        encoder = null;
         ctx = null;
     }
     
@@ -97,28 +105,25 @@ public class UserIdTokenAuthenticationFactoryTest {
     }
     
     @Test
-    public void createData() throws MslEncodingException, MslUserAuthException, MslCryptoException {
+    public void createData() throws MslEncodingException, MslUserAuthException, MslCryptoException, MslEncoderException {
         final UserIdTokenAuthenticationData data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
-        final JSONObject userAuthJO = data.getAuthData();
+        final MslObject userAuthMo = data.getAuthData(encoder, ENCODER_FORMAT);
         
-        final UserAuthenticationData authdata = factory.createData(ctx, null, userAuthJO);
+        final UserAuthenticationData authdata = factory.createData(ctx, null, userAuthMo);
         assertNotNull(authdata);
         assertTrue(authdata instanceof UserIdTokenAuthenticationData);
-        
-        final JSONObject dataJo = new JSONObject(data.toJSONString());
-        final JSONObject authdataJo = new JSONObject(authdata.toJSONString());
-        assertTrue(JsonUtils.equals(dataJo, authdataJo));
+        assertEquals(data, authdata);
     }
     
     @Test
-    public void encodeException() throws MslEncodingException, MslUserAuthException, MslCryptoException {
+    public void encodeException() throws MslEncodingException, MslUserAuthException, MslCryptoException, MslEncoderException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
         
         final UserIdTokenAuthenticationData data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
-        final JSONObject userAuthJO = data.getAuthData();
-        userAuthJO.remove(KEY_MASTER_TOKEN);
-        factory.createData(ctx, null, userAuthJO);
+        final MslObject userAuthMo = data.getAuthData(encoder, ENCODER_FORMAT);
+        userAuthMo.remove(KEY_MASTER_TOKEN);
+        factory.createData(ctx, null, userAuthMo);
     }
     
     @Test
@@ -151,7 +156,7 @@ public class UserIdTokenAuthenticationFactoryTest {
     }
     
     @Test
-    public void untrustedMasterToken() throws MslEncodingException, MslCryptoException, JSONException, MslException {
+    public void untrustedMasterToken() throws MslEncodingException, MslCryptoException, MslEncoderException, MslException {
         thrown.expect(MslUserAuthException.class);
         thrown.expectMslError(MslError.USERAUTH_MASTERTOKEN_NOT_DECRYPTED);
         
@@ -172,7 +177,7 @@ public class UserIdTokenAuthenticationFactoryTest {
     }
     
     @Test
-    public void untrustedUserIdToken() throws MslEncodingException, MslCryptoException, JSONException, MslException {
+    public void untrustedUserIdToken() throws MslEncodingException, MslCryptoException, MslEncoderException, MslException {
         thrown.expect(MslUserAuthException.class);
         thrown.expectMslError(MslError.USERAUTH_USERIDTOKEN_NOT_DECRYPTED);
         

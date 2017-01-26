@@ -24,17 +24,23 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("KeyResponseData", function() {
-    /** JSON key master token. */
+    /** MSL encoder format. */
+    var ENCODER_FORMAT = MslEncoderFormat.JSON;
+    
+    /** Key master token. */
     var KEY_MASTER_TOKEN = "mastertoken";
-    /** JSON key key exchange scheme. */
+    /** Key key exchange scheme. */
     var KEY_SCHEME = "scheme";
-    /** JSON key key request data. */
+    /** Key key request data. */
     var KEY_KEYDATA = "keydata";
     
     /** MSL context. */
     var ctx;
+    /** MSL encoder factory. */
+    var encoder;
     
     var MASTER_TOKEN;
+    var MASTER_TOKEN_MO;
 
     var initialized = false;
     beforeEach(function() {
@@ -45,15 +51,24 @@ describe("KeyResponseData", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 900);
+            waitsFor(function() { return ctx; }, "ctx", 1200);
             
             runs(function() {
+            	encoder = ctx.getMslEncoderFactory();
                 MslTestUtils.getMasterToken(ctx, 1, 1, {
                     result: function(masterToken) { MASTER_TOKEN = masterToken; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
             waitsFor(function() { return MASTER_TOKEN; }, "master token", 100);
+            
+            runs(function() {
+            	MslTestUtils.toMslObject(encoder, MASTER_TOKEN, {
+            		result: function(x) { MASTER_TOKEN_MO = x; },
+            		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+            });
+            waitsFor(function() { return MASTER_TOKEN_MO; }, "master token MSL object", 100);
             
             runs(function() { initialized = true; });
         }
@@ -62,11 +77,11 @@ describe("KeyResponseData", function() {
     it("no master token", function() {
         var exception;
         runs(function() {
-            var jo = {};
-            jo[KEY_MASTER_TOKEN + "x"] = JSON.parse(JSON.stringify(MASTER_TOKEN));
-            jo[KEY_SCHEME] = KeyExchangeScheme.ASYMMETRIC_WRAPPED.name;
-            jo[KEY_KEYDATA] = {};
-            KeyResponseData$parse(ctx, jo, {
+            var mo = encoder.createObject();
+            mo.put(KEY_MASTER_TOKEN + "x", MASTER_TOKEN_MO);
+            mo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED.name);
+            mo.put(KEY_KEYDATA, encoder.createObject());
+            KeyResponseData$parse(ctx, mo, {
                 result: function(x) {},
                 error: function(e) { exception = e; },
             });
@@ -75,18 +90,18 @@ describe("KeyResponseData", function() {
         
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
     it("no scheme", function() {
         var exception;
         runs(function() {
-            var jo = {};
-            jo[KEY_MASTER_TOKEN] = JSON.parse(JSON.stringify(MASTER_TOKEN));
-            jo[KEY_SCHEME + "x"] = KeyExchangeScheme.ASYMMETRIC_WRAPPED.name;
-            jo[KEY_KEYDATA] = {};
-            KeyResponseData$parse(ctx, jo, {
+            var mo = encoder.createObject();
+            mo.put(KEY_MASTER_TOKEN, MASTER_TOKEN_MO);
+            mo.put(KEY_SCHEME + "x", KeyExchangeScheme.ASYMMETRIC_WRAPPED.name);
+            mo.put(KEY_KEYDATA, encoder.createObject());
+            KeyResponseData$parse(ctx, mo, {
                 result: function(x) {},
                 error: function(e) { exception = e; },
             });
@@ -95,18 +110,18 @@ describe("KeyResponseData", function() {
         
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
     it("no keydata", function() {
         var exception;
         runs(function() {
-            var jo = {};
-            jo[KEY_MASTER_TOKEN] = JSON.parse(JSON.stringify(MASTER_TOKEN));
-            jo[KEY_SCHEME] = KeyExchangeScheme.ASYMMETRIC_WRAPPED.name;
-            jo[KEY_KEYDATA + "x"] = {};
-            KeyResponseData$parse(ctx, jo, {
+            var mo = encoder.createObject();
+            mo.put(KEY_MASTER_TOKEN, MASTER_TOKEN_MO);
+            mo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED.name);
+            mo.put(KEY_KEYDATA + "x", encoder.createObject());
+            KeyResponseData$parse(ctx, mo, {
                 result: function(x) {},
                 error: function(e) { exception = e; },
             });
@@ -115,7 +130,7 @@ describe("KeyResponseData", function() {
         
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
@@ -124,13 +139,22 @@ describe("KeyResponseData", function() {
         var hmacKey = new Uint8Array(0);
         var response = new SymmetricWrappedExchange$ResponseData(MASTER_TOKEN, SymmetricWrappedExchange$KeyId.PSK, encryptionKey, hmacKey);
         
+        var keydata;
+        runs(function() {
+        	response.getKeydata(encoder, ENCODER_FORMAT, {
+        		result: function(x) { keydata = x; },
+                error: function(e) { exception = e; },
+        	});
+        });
+        waitsFor(function() { return keydata; }, "keydata", 100);
+        
         var exception;
         runs(function() {
-            var jo = {};
-            jo[KEY_MASTER_TOKEN] = {},
-            jo[KEY_SCHEME] = KeyExchangeScheme.ASYMMETRIC_WRAPPED.name;
-            jo[KEY_KEYDATA] = response.getKeydata();
-            KeyResponseData$parse(ctx, jo, {
+            var mo = encoder.createObject();
+            mo.put(KEY_MASTER_TOKEN, encoder.createObject());
+            mo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED.name);
+            mo.put(KEY_KEYDATA, keydata);
+            KeyResponseData$parse(ctx, mo, {
                 result: function(x) {},
                 error: function(e) { exception = e; },
             });
@@ -139,18 +163,18 @@ describe("KeyResponseData", function() {
         
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
     it("unidentified scheme", function() {
         var exception;
         runs(function() {
-            var jo = {};
-            jo[KEY_MASTER_TOKEN] = JSON.parse(JSON.stringify(MASTER_TOKEN)),
-            jo[KEY_SCHEME] = "x";
-            jo[KEY_KEYDATA] = {};
-            KeyResponseData$parse(ctx, jo, {
+            var mo = encoder.createObject();
+            mo.put(KEY_MASTER_TOKEN, MASTER_TOKEN_MO);
+            mo.put(KEY_SCHEME, "x");
+            mo.put(KEY_KEYDATA, encoder.createObject());
+            KeyResponseData$parse(ctx, mo, {
                 result: function(x) {},
                 error: function(e) { exception = e; },
             });
@@ -177,11 +201,11 @@ describe("KeyResponseData", function() {
         runs(function() {
             ctx.removeKeyExchangeFactories(KeyExchangeScheme.ASYMMETRIC_WRAPPED);
             
-            var jo = {};
-            jo[KEY_MASTER_TOKEN] = JSON.parse(JSON.stringify(MASTER_TOKEN)),
-            jo[KEY_SCHEME] = KeyExchangeScheme.ASYMMETRIC_WRAPPED.name;
-            jo[KEY_KEYDATA] = {};
-            KeyResponseData$parse(ctx, jo, {
+            var mo = encoder.createObject();
+            mo.put(KEY_MASTER_TOKEN, MASTER_TOKEN_MO);
+            mo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED.name);
+            mo.put(KEY_KEYDATA, encoder.createObject());
+            KeyResponseData$parse(ctx, mo, {
                 result: function(x) {},
                 error: function(e) { exception = e; },
             });

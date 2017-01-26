@@ -20,16 +20,17 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("SessionCryptoContext", function() {
-    /** JSON key ciphertext. */
+    /** Key ciphertext. */
     var KEY_CIPHERTEXT = "ciphertext";
+    /** MSL encoder format. */
+    var ENCODER_FORMAT = MslEncoderFormat.JSON;
     
     /**
      * @param {MslContext} ctx MSL context.
 	 * @param {result: function(MasterToken), error: function(Error)}
 	 *        callback the callback functions that will receive the envelope
 	 *        or any thrown exceptions.
-     * @throws MslEncodingException if there is an error encoding the JSON
-     *         data.
+     * @throws MslEncodingException if there is an error encoding the data.
      * @throws MslCryptoException if there is an error encrypting or signing
      *         the token data.
      */
@@ -49,12 +50,11 @@ describe("SessionCryptoContext", function() {
 	 * @param {result: function(MasterToken), error: function(Error)}
 	 *        callback the callback functions that will receive the envelope
 	 *        or any thrown exceptions.
-     * @throws MslEncodingException if there is an error encoding the JSON
-     *         data.
+     * @throws MslEncodingException if there is an error encoding the data.
      * @throws MslCryptoException if there is an error encrypting or signing
      *         the token data.
      * @throws MslException if the master token is constructed incorrectly.
-     * @throws JSONException if there is an error editing the JSON data.
+     * @throws MslEncoderException if there is an error editing the data.
      */
     function getUntrustedMasterToken(ctx, encryptionKey, signatureKey, callback) {
 		var renewalWindow = new Date(Date.now() + 1000);
@@ -63,32 +63,44 @@ describe("SessionCryptoContext", function() {
         
         MasterToken$create(ctx, renewalWindow, expiration, 1, 1, null, identity, encryptionKey, signatureKey, {
         	result: function(masterToken) {
-        		var json = JSON.stringify(masterToken);
-                var jo = JSON.parse(json);
-                var signature = base64$decode(jo["signature"]);
-                ++signature[1];
-                jo["signature"] = base64$encode(signature);
-                MasterToken$parse(ctx, jo, callback);
+        	    var mo = MslTestUtils.toMslObject(encoder, masterToken, {
+        	        result: function(mo) {
+                        var signature = mo.getBytes("signature");
+                        ++signature[1];
+                        mo.put("signature", signature);
+                        MasterToken$parse(ctx, mo, callback);
+        	        },
+        	        error: callback.error,
+        	    });
         	},
-        	error: function(err) { callback.error(err); }
+        	error: callback.error,
         });
     }
     
     /** MSL context. */
     var ctx;
+    /** MSL encoder factory. */
+    var encoder;
+    /** Random. */
+    var random = new Random();
+    
+    var initialized = false;
     beforeEach(function() {
-        if (!ctx) {
+        if (!initialized) {
             runs(function() {
                 MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 100);
+            waitsFor(function() { return ctx; }, "ctx", 900);
+            
+            runs(function() {
+                encoder = ctx.getMslEncoderFactory();
+                initialized = true;
+            });
         }
     });
-    /** Random. */
-    var random = new Random();
 
     it("untrusted", function() {
     	var encryptionKey = MockPresharedAuthenticationFactory.KPE;
@@ -98,7 +110,7 @@ describe("SessionCryptoContext", function() {
     	runs(function() {
     		getUntrustedMasterToken(ctx, encryptionKey, signatureKey, {
     			result: function(mt) { masterToken = mt; },
-    			error: function(err) { console.log(err); throw err; }
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
     	});
     	waitsFor(function() { return masterToken; }, "master token not received", 100);
@@ -129,11 +141,11 @@ describe("SessionCryptoContext", function() {
         
         var ciphertextA = undefined, ciphertextB;
         runs(function() {
-        	cryptoContext.encrypt(messageA, {
+        	cryptoContext.encrypt(messageA, encoder, ENCODER_FORMAT, {
         		result: function(c) { ciphertextA = c; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
-        	cryptoContext.encrypt(messageB, {
+        	cryptoContext.encrypt(messageB, encoder, ENCODER_FORMAT, {
         		result: function(c) { ciphertextB = c; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
@@ -149,11 +161,11 @@ describe("SessionCryptoContext", function() {
         
         var plaintextA = undefined, plaintextB;
         runs(function() {
-	        cryptoContext.decrypt(ciphertextA, {
+	        cryptoContext.decrypt(ciphertextA, encoder, {
 	        	result: function(p) { plaintextA = p; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
-	        cryptoContext.decrypt(ciphertextB, {
+	        cryptoContext.decrypt(ciphertextB, encoder, {
 	        	result: function(p) { plaintextB = p; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
@@ -190,11 +202,11 @@ describe("SessionCryptoContext", function() {
         
         var ciphertextA = undefined, ciphertextB;
         runs(function() {
-        	cryptoContext.encrypt(messageA, {
+        	cryptoContext.encrypt(messageA, encoder, ENCODER_FORMAT, {
         		result: function(c) { ciphertextA = c; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
-        	cryptoContext.encrypt(messageB, {
+        	cryptoContext.encrypt(messageB, encoder, ENCODER_FORMAT, {
         		result: function(c) { ciphertextB = c; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
@@ -210,11 +222,11 @@ describe("SessionCryptoContext", function() {
         
         var plaintextA = undefined, plaintextB;
         runs(function() {
-	        cryptoContext.decrypt(ciphertextA, {
+	        cryptoContext.decrypt(ciphertextA, encoder, {
 	        	result: function(p) { plaintextA = p; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
-	        cryptoContext.decrypt(ciphertextB, {
+	        cryptoContext.decrypt(ciphertextB, encoder, {
 	        	result: function(p) { plaintextB = p; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
@@ -243,7 +255,7 @@ describe("SessionCryptoContext", function() {
 
     	var ciphertext;
     	runs(function() {
-    		cryptoContext.encrypt(message, {
+    		cryptoContext.encrypt(message, encoder, ENCODER_FORMAT, {
     			result: function(c) { ciphertext = c; },
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     		});
@@ -252,8 +264,8 @@ describe("SessionCryptoContext", function() {
 
     	var envelope;
     	runs(function() {
-        	var envelopeJo = JSON.parse(textEncoding$getString(ciphertext, MslConstants$DEFAULT_CHARSET));
-    		MslCiphertextEnvelope$parse(envelopeJo, null, {
+    	    var envelopeMo = encoder.parseObject(ciphertext);
+    		MslCiphertextEnvelope$parse(envelopeMo, null, {
     			result: function(e) { envelope = e; },
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     		});
@@ -272,11 +284,18 @@ describe("SessionCryptoContext", function() {
     	});
     	waitsFor(function() { return shortEnvelope; }, "created envelope not received", 100);
     	
+    	var encode;
+    	runs(function() {
+    	    shortEnvelope.toMslEncoding(encoder, ENCODER_FORMAT, {
+    	        result: function(x) { encode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+    	    });
+    	});
+    	waitsFor(function() { return encode; }, "encode not received", 100);
+    	
     	var exception;
     	runs(function() {
-    		var json = JSON.stringify(shortEnvelope);
-    		var ciphertext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
-    		cryptoContext.decrypt(ciphertext, {
+    		cryptoContext.decrypt(encode, encoder, {
     			result: function() {},
     			error: function(e) { exception = e; },
     		});
@@ -304,7 +323,7 @@ describe("SessionCryptoContext", function() {
 
     	var ciphertext;
     	runs(function() {
-    		cryptoContext.encrypt(message, {
+    		cryptoContext.encrypt(message, encoder, ENCODER_FORMAT, {
     			result: function(c) { ciphertext = c; },
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     		});
@@ -313,8 +332,8 @@ describe("SessionCryptoContext", function() {
     	
     	var envelope;
     	runs(function() {
-	    	var envelopeJo = JSON.parse(textEncoding$getString(ciphertext, MslConstants$DEFAULT_CHARSET));
-	    	MslCiphertextEnvelope$parse(envelopeJo, null, {
+    	    var envelopeMo = encoder.parseObject(ciphertext);
+	    	MslCiphertextEnvelope$parse(envelopeMo, null, {
 	    		result: function(e) { envelope = e; },
 	    		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	    	});
@@ -332,14 +351,21 @@ describe("SessionCryptoContext", function() {
 	    	});
     	});
     	waitsFor(function() { return shortEnvelope; }, "created envelope not received", 100);
+        
+        var encode;
+        runs(function() {
+            shortEnvelope.toMslEncoding(encoder, ENCODER_FORMAT, {
+                result: function(x) { encode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return encode; }, "encode not received", 100);
     	
     	var exception;
     	runs(function() {
-    		var json = JSON.stringify(shortEnvelope);
-    		var ciphertext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
-        	cryptoContext.decrypt(ciphertext, {
+        	cryptoContext.decrypt(encode, encoder, {
         		result: function() {},
-        		error: function(err) { exception = err; }
+        		error: function(e) { exception = e; }
         	});
     	});
     	waitsFor(function() { return exception; }, "exception not received", 100);
@@ -365,20 +391,27 @@ describe("SessionCryptoContext", function() {
 
     	var ciphertext;
     	runs(function() {
-    		cryptoContext.encrypt(message, {
+    		cryptoContext.encrypt(message, encoder, ENCODER_FORMAT, {
     			result: function(c) { ciphertext = c; },
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
     	});
     	waitsFor(function() { return ciphertext; }, "ciphertext not received", 100);
     	
+    	var encode;
+    	runs(function() {
+    	    var envelopeMo = encoder.parseObject(ciphertext);
+    	    envelopeMo.remove(KEY_CIPHERTEXT);
+    	    encoder.encodeObject(envelopeMo, ENCODER_FORMAT, {
+    	    	result: function(x) { encode = x; },
+    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    	    });
+    	});
+    	waitsFor(function() { return encode; }, "encode", 100);
+    	
     	var exception;
     	runs(function() {
-	    	var envelopeJo = JSON.parse(textEncoding$getString(ciphertext, MslConstants$DEFAULT_CHARSET));
-	    	delete envelopeJo[KEY_CIPHERTEXT];
-	    	var json = JSON.stringify(envelopeJo);
-	    	ciphertext = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
-	    	cryptoContext.decrypt(ciphertext, {
+	    	cryptoContext.decrypt(encode, encoder, {
 	    		result: function() {},
 	    		error: function(err) { exception = err; },
 	    	});
@@ -406,7 +439,7 @@ describe("SessionCryptoContext", function() {
 
     	var ciphertext;
     	runs(function() {
-    		cryptoContext.encrypt(message, {
+    		cryptoContext.encrypt(message, encoder, ENCODER_FORMAT, {
     			result: function(c) { ciphertext = c; },
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     		});
@@ -416,7 +449,7 @@ describe("SessionCryptoContext", function() {
     	var exception;
     	runs(function() {
     		ciphertext[0] = 0;
-    		cryptoContext.decrypt(ciphertext, {
+    		cryptoContext.decrypt(ciphertext, encoder, {
     			result: function() {},
     			error: function(err) { exception = err; },
     		});
@@ -449,7 +482,7 @@ describe("SessionCryptoContext", function() {
 
     	var exception;
     	runs(function() {
-    		cryptoContext.encrypt(messageA, {
+    		cryptoContext.encrypt(messageA, encoder, ENCODER_FORMAT, {
     			result: function() {},
     			error: function(err) { exception = err; }
     		});
@@ -484,11 +517,11 @@ describe("SessionCryptoContext", function() {
         
         var ciphertextA = undefined, ciphertextB;
         runs(function() {
-	        cryptoContext.encrypt(messageA, {
+	        cryptoContext.encrypt(messageA, encoder, ENCODER_FORMAT, {
 	        	result: function(c) { ciphertextA = c; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	        });
-	        cryptoContext.encrypt(messageB, {
+	        cryptoContext.encrypt(messageB, encoder, ENCODER_FORMAT, {
 	        	result: function(c) { ciphertextB = c; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	        });
@@ -504,11 +537,11 @@ describe("SessionCryptoContext", function() {
         
         var plaintextA = undefined, plaintextB;
         runs(function() {
-        	cryptoContext.decrypt(ciphertextA, {
+        	cryptoContext.decrypt(ciphertextA, encoder, {
         		result: function(p) { plaintextA = p; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
-        	cryptoContext.decrypt(ciphertextB, {
+        	cryptoContext.decrypt(ciphertextB, encoder, {
         		result: function(p) { plaintextB = p; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
@@ -547,7 +580,7 @@ describe("SessionCryptoContext", function() {
 
     	var ciphertext;
     	runs(function() {
-    		cryptoContextA.encrypt(message, {
+    		cryptoContextA.encrypt(message, encoder, ENCODER_FORMAT, {
     			result: function(c) { ciphertext = c; },
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     		});
@@ -556,7 +589,7 @@ describe("SessionCryptoContext", function() {
     	
     	var exception;
     	runs(function() {
-    		cryptoContextB.decrypt(ciphertext, {
+    		cryptoContextB.decrypt(ciphertext, encoder, {
     			result: function() {},
     			error: function(err) { exception = err; },
     		});
@@ -603,7 +636,7 @@ describe("SessionCryptoContext", function() {
 
     	var ciphertext;
     	runs(function() {
-    		cryptoContextA.encrypt(message, {
+    		cryptoContextA.encrypt(message, encoder, ENCODER_FORMAT, {
     			result: function(c) { ciphertext = c; },
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     		});
@@ -612,7 +645,7 @@ describe("SessionCryptoContext", function() {
     	
     	var exception;
     	runs(function() {
-    		cryptoContextB.decrypt(ciphertext, {
+    		cryptoContextB.decrypt(ciphertext, encoder, {
     			result: function() {},
     			error: function(err) { exception = err; },
     		});
@@ -643,11 +676,11 @@ describe("SessionCryptoContext", function() {
         
         var signatureA = undefined, signatureB;
         runs(function() {
-        	cryptoContext.sign(messageA, {
+        	cryptoContext.sign(messageA, encoder, ENCODER_FORMAT, {
         		result: function(s) { signatureA = s; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
         	});
-            cryptoContext.sign(messageB, {
+            cryptoContext.sign(messageB, encoder, ENCODER_FORMAT, {
             	result: function(s) { signatureB = s; },
             	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
@@ -663,15 +696,15 @@ describe("SessionCryptoContext", function() {
         
         var verifiedAA = undefined, verifiedBB = undefined, verifiedBA;
         runs(function() {
-        	cryptoContext.verify(messageA, signatureA, {
+        	cryptoContext.verify(messageA, signatureA, encoder, {
         		result: function(v) { verifiedAA = v; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
         	});
-        	cryptoContext.verify(messageB, signatureB, {
+        	cryptoContext.verify(messageB, signatureB, encoder, {
         		result: function(v) { verifiedBB = v; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
-        	cryptoContext.verify(messageB, signatureA, {
+        	cryptoContext.verify(messageB, signatureA, encoder, {
         		result: function(v) { verifiedBA = v; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
@@ -718,7 +751,7 @@ describe("SessionCryptoContext", function() {
         
         var signature;
         runs(function() {
-        	cryptoContextA.sign(message, {
+        	cryptoContextA.sign(message, encoder, ENCODER_FORMAT, {
         		result: function(s) { signature = s; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
@@ -727,7 +760,7 @@ describe("SessionCryptoContext", function() {
         
         var verified;
         runs(function() {
-        	cryptoContextB.verify(message, signature, {
+        	cryptoContextB.verify(message, signature, encoder, {
         		result: function(v) { verified = v; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
@@ -761,11 +794,11 @@ describe("SessionCryptoContext", function() {
         
         var signatureA = undefined, signatureB;
         runs(function() {
-        	cryptoContext.sign(messageA, {
+        	cryptoContext.sign(messageA, encoder, ENCODER_FORMAT, {
         		result: function(s) { signatureA = s; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
         	});
-        	cryptoContext.sign(messageB, {
+        	cryptoContext.sign(messageB, encoder, ENCODER_FORMAT, {
         		result: function(s) { signatureB = s; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
         	});
@@ -781,15 +814,15 @@ describe("SessionCryptoContext", function() {
         
         var verifiedAA = undefined, verifiedBB = undefined, verifiedBA;
         runs(function() {
-        	cryptoContext.verify(messageA, signatureA, {
+        	cryptoContext.verify(messageA, signatureA, encoder, {
         		result: function(v) { verifiedAA = v; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
         	});
-        	cryptoContext.verify(messageB, signatureB, {
+        	cryptoContext.verify(messageB, signatureB, encoder, {
         		result: function(v) { verifiedBB = v; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
-        	cryptoContext.verify(messageB, signatureA, {
+        	cryptoContext.verify(messageB, signatureA, encoder, {
         		result: function(v) { verifiedBA = v; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
@@ -825,11 +858,11 @@ describe("SessionCryptoContext", function() {
         
         var signatureA = undefined, signatureB;
         runs(function() {
-        	cryptoContext.sign(messageA, {
+        	cryptoContext.sign(messageA, encoder, ENCODER_FORMAT, {
         		result: function(s) { signatureA = s; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
         	});
-        	cryptoContext.sign(messageB, {
+        	cryptoContext.sign(messageB, encoder, ENCODER_FORMAT, {
         		result: function(s) { signatureB = s; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
         	});
@@ -845,15 +878,15 @@ describe("SessionCryptoContext", function() {
 
         var verifiedAA = undefined, verifiedBB = undefined, verifiedBA;
         runs(function() {
-        	cryptoContext.verify(messageA, signatureA, {
+        	cryptoContext.verify(messageA, signatureA, encoder, {
         		result: function(v) { verifiedAA = v; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
         	});
-        	cryptoContext.verify(messageB, signatureB, {
+        	cryptoContext.verify(messageB, signatureB, encoder, {
         		result: function(v) { verifiedBB = v; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
-        	cryptoContext.verify(messageB, signatureA, {
+        	cryptoContext.verify(messageB, signatureA, encoder, {
         		result: function(v) { verifiedBA = v; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
@@ -886,7 +919,7 @@ describe("SessionCryptoContext", function() {
     	
     	var exception;
     	runs(function() {
-    		cryptoContext.sign(messageA, {
+    		cryptoContext.sign(messageA, encoder, ENCODER_FORMAT, {
     			result: function() {},
     			error: function(err) { exception = err; },
     		});

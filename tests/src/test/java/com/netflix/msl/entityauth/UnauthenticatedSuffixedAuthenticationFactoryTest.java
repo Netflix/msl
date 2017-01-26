@@ -18,8 +18,6 @@ package com.netflix.msl.entityauth;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -31,10 +29,15 @@ import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.crypto.ICryptoContext;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslEncoderUtils;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.test.ExpectedMslException;
-import com.netflix.msl.util.JsonUtils;
 import com.netflix.msl.util.MockAuthenticationUtils;
 import com.netflix.msl.util.MockMslContext;
+import com.netflix.msl.util.MslTestUtils;
 
 /**
  * Unauthenticated suffixed authentication factory unit tests.
@@ -42,7 +45,10 @@ import com.netflix.msl.util.MockMslContext;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class UnauthenticatedSuffixedAuthenticationFactoryTest {
-    /** JSON key entity root. */
+	/** MSL encoder format. */
+	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
+
+    /** Key entity root. */
     private static final String KEY_ROOT = "root";
     
     @Rule
@@ -57,6 +63,7 @@ public class UnauthenticatedSuffixedAuthenticationFactoryTest {
     @BeforeClass
     public static void setup() throws MslEncodingException, MslCryptoException {
         ctx = new MockMslContext(EntityAuthenticationScheme.NONE, false);
+        encoder = ctx.getMslEncoderFactory();
         authutils = new MockAuthenticationUtils();
         factory = new UnauthenticatedSuffixedAuthenticationFactory(authutils);
         ctx.addEntityAuthenticationFactory(factory);
@@ -65,6 +72,7 @@ public class UnauthenticatedSuffixedAuthenticationFactoryTest {
     @AfterClass
     public static void teardown() {
         factory = null;
+        encoder = null;
         ctx = null;
     }
     
@@ -74,26 +82,26 @@ public class UnauthenticatedSuffixedAuthenticationFactoryTest {
     }
     
     @Test
-    public void createData() throws MslCryptoException, MslEncodingException, MslEntityAuthException, JSONException {
+    public void createData() throws MslCryptoException, MslEncodingException, MslEntityAuthException, MslEncoderException {
         final UnauthenticatedSuffixedAuthenticationData data = new UnauthenticatedSuffixedAuthenticationData(UNAUTHENTICATED_ROOT, UNAUTHENTICATED_SUFFIX);
-        final JSONObject entityAuthJO = data.getAuthData();
+        final MslObject entityAuthJO = data.getAuthData(encoder, ENCODER_FORMAT);
         
         final EntityAuthenticationData authdata = factory.createData(ctx, entityAuthJO);
         assertNotNull(authdata);
         assertTrue(authdata instanceof UnauthenticatedSuffixedAuthenticationData);
         
-        final JSONObject dataJo = new JSONObject(data.toJSONString());
-        final JSONObject authdataJo = new JSONObject(authdata.toJSONString());
-        assertTrue(JsonUtils.equals(dataJo, authdataJo));
+        final MslObject dataMo = MslTestUtils.toMslObject(encoder, data);
+        final MslObject authdataMo = MslTestUtils.toMslObject(encoder, authdata);
+        assertTrue(MslEncoderUtils.equalObjects(dataMo, authdataMo));
     }
     
     @Test
     public void encodeException() throws MslCryptoException, MslEncodingException, MslEntityAuthException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final UnauthenticatedSuffixedAuthenticationData data = new UnauthenticatedSuffixedAuthenticationData(UNAUTHENTICATED_ROOT, UNAUTHENTICATED_SUFFIX);
-        final JSONObject entityAuthJO = data.getAuthData();
+        final MslObject entityAuthJO = data.getAuthData(encoder, ENCODER_FORMAT);
         entityAuthJO.remove(KEY_ROOT);
         factory.createData(ctx, entityAuthJO);
     }
@@ -117,6 +125,8 @@ public class UnauthenticatedSuffixedAuthenticationFactoryTest {
     
     /** MSL context. */
     private static MockMslContext ctx;
+    /** MSL encoder factory. */
+    private static MslEncoderFactory encoder;
     /** Entity authentication factory. */
     private static EntityAuthenticationFactory factory;
 }

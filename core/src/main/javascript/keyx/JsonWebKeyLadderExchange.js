@@ -57,31 +57,31 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
     };
 
     /**
-     * JSON key wrap key wrapping mechanism.
+     * Key wrap key wrapping mechanism.
      * @const
      * @type {string}
      */
     var KEY_MECHANISM = "mechanism";
     /**
-     * JSON key wrap data.
+     * Key wrap data.
      * @const
      * @type {string}
      */
     var KEY_WRAPDATA = "wrapdata";
     /**
-     * JSON key wrapping key.
+     * Key wrapping key.
      * @const
      * @type {string}
      */
     var KEY_WRAP_KEY = "wrapkey";
     /**
-     * JSON key encrypted encryption key.
+     * Key encrypted encryption key.
      * @const
      * @type {string}
      */
     var KEY_ENCRYPTION_KEY = "encryptionkey";
     /**
-     * JSON key encrypted HMAC key.
+     * Key encrypted HMAC key.
      * @const
      * @type {string}
      */
@@ -94,11 +94,11 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
      * {@code {
      *   "#mandatory" : [ "mechanism" ],
      *   "mechanism" : "enum(PSK|MGK|WRAP)",
-     *   "wrapdata" : "base64",
+     *   "wrapdata" : "binary",
      * }} where:
      * <ul>
      * <li>{@code mechanism} identifies the mechanism for wrapping and unwrapping the wrapping key</li>
-     * <li>{@code wrapdata} the Base64-encoded wrapping data for the previous wrapping key</li>
+     * <li>{@code wrapdata} the wrapping data for the previous wrapping key</li>
      * </ul></p>
      */
     var RequestData = JsonWebKeyLadderExchange$RequestData = KeyRequestData.extend({
@@ -138,11 +138,13 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
         },
 
         /** @inheritDoc */
-        getKeydata: function getKeydata() {
-            var keydata = {};
-            keydata[KEY_MECHANISM] = this.mechanism;
-            if (this.wrapdata) keydata[KEY_WRAPDATA] = base64$encode(this.wrapdata);
-            return keydata;
+        getKeydata: function getKeydata(encoder, format, callback) {
+            AsyncExecutor(callback, function() {
+                var mo = encoder.createObject();
+                mo.put(KEY_MECHANISM, this.mechanism);
+                if (this.wrapdata) mo.put(KEY_WRAPDATA, this.wrapdata);
+                return mo;
+            }, this);
         },
 
         /** @inheritDoc */
@@ -165,47 +167,51 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
 
     /**
      * Create a new JSON Web Key ladder key request data instance
-     * from the provided JSON object.
+     * from the provided MSL object.
      *
-     * @param {object} keyRequestJO the JSON object.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @param {MslObject} keyRequestMo the MSL object.
+     * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslCryptoException the wrapped key data cannot be verified
      *         or decrypted, or the specified mechanism is not supported.
      * @throws MslKeyExchangeException if the specified mechanism is not
      *         recognized.
      */
-    var RequestData$parse = JsonWebKeyLadderExchange$RequestData$parse = function RequestData$parse(keyRequestJO) {
-        // Pull key request data.
-        var mechanism = keyRequestJO[KEY_MECHANISM];
-        var wrapdataB64 = keyRequestJO[KEY_WRAPDATA];
-
-        // Verify key request data.
-        if (!mechanism ||
-            (mechanism == Mechanism.WRAP && typeof wrapdataB64 !== 'string'))
-        {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + JSON.stringify(keyRequestJO));
+    var RequestData$parse = JsonWebKeyLadderExchange$RequestData$parse = function RequestData$parse(keyRequestMo) {
+        var mechanism;
+        try {
+            mechanism = keyRequestMo.getString(KEY_MECHANISM);
+            if (!Mechanism[mechanism])
+                throw new MslKeyExchangeException(MslError.UNIDENTIFIED_KEYX_MECHANISM, mechanism);
+        } catch (e) {
+            if (e instanceof MslEncoderException)
+                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "keydata " + keyRequestMo, e);
+            throw e;
         }
 
-        // Verify mechanism.
-        if (!Mechanism[mechanism])
-            throw new MslKeyExchangeException(MslError.UNIDENTIFIED_KEYX_MECHANISM, mechanism);
-
-        // Create the request data.
         var wrapdata;
-        switch (mechanism) {
-            case Mechanism.WRAP:
-                try {
-                    wrapdata = base64$decode(wrapdataB64);
-                } catch (e) {
-                    throw new MslKeyExchangeException(MslError.KEYX_WRAPPING_KEY_MISSING, "keydata " + keyRequestJO.toString());
-                }
-                if (wrapdata == null || wrapdata.length == 0)
-                    throw new MslKeyExchangeException(MslError.KEYX_WRAPPING_KEY_MISSING, "keydata " + keyRequestJO.toString());
-                break;
-            default:
-                wrapdata = null;
-                break;
+        try {
+        	switch (mechanism) {
+	            case PSK:
+	            {
+	                wrapdata = null;
+	                break;
+	            }
+	            case Mechanism.WRAP:
+	            {
+	                wrapdata = keyRequestMo.getBytes(KEY_WRAPDATA);
+	                if (wrapdata.length == 0)
+	                    throw new MslKeyExchangeException(MslError.KEYX_WRAPPING_KEY_MISSING, "keydata " + keyRequestMo);
+	                break;
+	            }
+	            default:
+	                throw new MslCryptoException(MslError.UNSUPPORTED_KEYX_MECHANISM, mechanism);
+        	}
+        } catch (e) {
+            if (e instanceof MslEncoderException)
+                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "keydata " + keyRequestMo, e);
+            throw e;
         }
+        
         return new RequestData(mechanism, wrapdata);
     };
 
@@ -215,16 +221,16 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
      * <p>
      * {@code {
      *   "#mandatory" : [ "wrapkey", "wrapdata", "encryptionkey", "hmackey" ],
-     *   "wrapkey" : "base64",
-     *   "wrapdata" : "base64",
-     *   "encryptionkey" : "base64",
-     *   "hmackey" : "base64",
+     *   "wrapkey" : "binary",
+     *   "wrapdata" : "binary",
+     *   "encryptionkey" : "binary",
+     *   "hmackey" : "binary",
      * }} where:
      * <ul>
-     * <li>{@code wrapkey} the Base64-encoded new wrapping key in JWE format, wrapped by the wrapping key</li>
-     * <li>{@code wrapdata} the Base64-encoded wrapping key data for use in subsequent key request data</li>
-     * <li>{@code encryptionkey} the Base64-encoded session encryption key in JWE format, wrapped with the new wrapping key</li>
-     * <li>{@code hmackey} the Base64-encoded session HMAC key in JWE format, wrapped with the new wrapping key</li>
+     * <li>{@code wrapkey} the new wrapping key in JWE format, wrapped by the wrapping key</li>
+     * <li>{@code wrapdata} the wrapping key data for use in subsequent key request data</li>
+     * <li>{@code encryptionkey} the session encryption key in JWE format, wrapped with the new wrapping key</li>
+     * <li>{@code hmackey} the session HMAC key in JWE format, wrapped with the new wrapping key</li>
      * </ul></p>
      */
     var ResponseData = JsonWebKeyLadderExchange$ResponseData = KeyResponseData.extend({
@@ -252,13 +258,16 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
         },
 
         /** @inheritDoc */
-        getKeydata: function getKeydata() {
-            var keydata = {};
-            keydata[KEY_WRAP_KEY] = base64$encode(this.wrapKey);
-            keydata[KEY_WRAPDATA] = base64$encode(this.wrapdata);
-            keydata[KEY_ENCRYPTION_KEY] = base64$encode(this.encryptionKey);
-            keydata[KEY_HMAC_KEY] = base64$encode(this.hmacKey);
-            return keydata;
+        getKeydata: function getKeydata(encoder, format, callback) {
+            var self = this;
+            AsyncExecutor(callback, function() {
+                var mo = encoder.createObject();
+                mo.put(KEY_WRAP_KEY, this.wrapKey);
+                mo.put(KEY_WRAPDATA, this.wrapdata);
+                mo.put(KEY_ENCRYPTION_KEY, this.encryptionKey);
+                mo.put(KEY_HMAC_KEY, this.hmacKey);
+                return mo;
+            }, self);
         },
 
         /** @inheritDoc */
@@ -285,46 +294,23 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
 
     /**
      * Create a new JSON Web Key ladder key response data instance
-     * with the provided master token from the provided JSON object.
+     * with the provided master token from the provided MSL object.
      *
      * @param {MasterToken} masterToken the master token.
-     * @param {object} keyDataJO the JSON object.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @param {object} keyDataMo the MSL object.
+     * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslKeyExchangeException if the mechanism is not recognized.
      */
-    var ResponseData$parse = JsonWebKeyLadderExchange$ResponseData$parse = function JsonWebKeyLadderExchange$ResponseData$parse(masterToken, keyDataJO) {
-        // Pull key response data.
-        var wrapKeyB64 = keyDataJO[KEY_WRAP_KEY];
-        var wrapdataB64 = keyDataJO[KEY_WRAPDATA];
-        var encryptionKeyB64 = keyDataJO[KEY_ENCRYPTION_KEY];
-        var hmacKeyB64 = keyDataJO[KEY_HMAC_KEY];
-
-        // Verify key response data.
-        if (typeof wrapKeyB64 !== 'string' ||
-            typeof wrapdataB64 !== 'string' ||
-            typeof encryptionKeyB64 !== 'string' ||
-            typeof hmacKeyB64 !== 'string')
-        {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + JSON.stringify(keyDataJO));
-        }
-
-        // Decode keys.
+    var ResponseData$parse = JsonWebKeyLadderExchange$ResponseData$parse = function JsonWebKeyLadderExchange$ResponseData$parse(masterToken, keyDataMo) {
         var wrapKey, wrapdata, encryptionKey, hmacKey;
         try {
-            wrapKey = base64$decode(wrapKeyB64);
-            wrapdata = base64$decode(wrapdataB64);
+            wrapKey = keyDataMo.getBytes(KEY_WRAP_KEY);
+            wrapdata = keyDataMo.getBytes(KEY_WRAPDATA);
+            encryptionKey = keyDataMo.getBytes(KEY_ENCRYPTION_KEY);
+            hmacKey = keyDataMo.getBytes(KEY_HMAC_KEY);
         } catch (e) {
-            throw new MslCryptoException(MslError.INVALID_SYMMETRIC_KEY, "keydata " + JSON.stringify(keyDataJO), e);
-        }
-        try {
-            encryptionKey = base64$decode(encryptionKeyB64);
-        } catch (e) {
-            throw new MslCryptoException(MslError.INVALID_ENCRYPTION_KEY, "keydata " + JSON.stringify(keyDataJO), e);
-        }
-        try {
-            hmacKey = base64$decode(hmacKeyB64);
-        } catch (e) {
-            throw new MslCryptoException(MslError.INVALID_HMAC_KEY, "keydata " + JSON.stringify(keyDataJO), e);
+            if (e instanceof MslEncoderException)
+                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "keydata " + keyDataMo, e);
         }
 
         // Return the response data.
@@ -490,15 +476,15 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
         },
 
         /** @inheritDoc */
-        createRequestData: function createRequestData(ctx, keyRequestJO, callback) {
+        createRequestData: function createRequestData(ctx, keyRequestMo, callback) {
             AsyncExecutor(callback, function() {
-                return RequestData$parse(keyRequestJO);
+                return RequestData$parse(keyRequestMo);
             });
         },
 
         /** @inheritDoc */
-        createResponseData: function createResponseData(ctx, masterToken, keyDataJO) {
-            return ResponseData$parse(masterToken, keyDataJO);
+        createResponseData: function createResponseData(ctx, masterToken, keyResponseMo) {
+            return ResponseData$parse(masterToken, keyResponseMo);
         },
 
         /** @inheritDoc */
@@ -507,7 +493,7 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
 
             AsyncExecutor(callback, function() {
                 if (!(keyRequestData instanceof RequestData))
-                    throw new MslInternalException("Key request data " + JSON.stringify(keyRequestData) + " was not created by this factory.");
+                    throw new MslInternalException("Key request data " + keyRequestData + " was not created by this factory.");
 
                 var masterToken, entityAuthData, identity;
                 if (entityToken instanceof MasterToken) {
@@ -709,10 +695,10 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
 
             AsyncExecutor(callback, function() {
                 if (!(keyRequestData instanceof RequestData))
-                    throw new MslInternalException("Key request data " + JSON.stringify(keyRequestData) + " was not created by this factory.");
+                    throw new MslInternalException("Key request data " + keyRequestData + " was not created by this factory.");
                 var request = keyRequestData;
                 if (!(keyResponseData instanceof ResponseData))
-                    throw new MslInternalException("Key response data " + JSON.stringify(keyResponseData) + " was not created by this factory.");
+                    throw new MslInternalException("Key response data " + keyResponseData + " was not created by this factory.");
                 var response = keyResponseData;
 
                 // Unwrap new wrapping key.

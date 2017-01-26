@@ -105,13 +105,12 @@ var TokenFactory = util.Class.create({
      * @param {EntityAuthenticationData} entityAuthData the entity authentication data.
      * @param {CipherKey} encryptionKey the session encryption key.
      * @param {CipherKey} hmacKey the session HMAC key.
-     * @param {Object} issuerData optional master token issuer data that should be
+     * @param {?MslObject} issuerData optional master token issuer data that should be
      *        included in the master token. May be {@code null}.
      * @param {{result: function(MasterToken), error: function(Error)}}
      *        callback the callback functions that will receive the new master
      *        token or any thrown exceptions.
-     * @throws MslEncodingException if there is an error encoding the JSON
-     *         data.
+     * @throws MslEncodingException if there is an error encoding the data.
      * @throws MslCryptoException if there is an error encrypting or signing
      *         the token data.
      * @throws MslException if there is an error creating the master token.
@@ -149,14 +148,13 @@ var TokenFactory = util.Class.create({
      * @param {MasterToken} masterToken the master token to renew.
      * @param {CipherKey} encryptionKey the session encryption key.
      * @param {CipherKey} hmacKey the session HMAC key.
-     * @param {Object} issuerData optional master token issuer data that should be
+     * @param {?MslObject} issuerData optional master token issuer data that should be
      *        merged into or overwrite any existing issuer data. May be
      *        {@code null}.
      * @param {{result: function(MasterToken), error: function(Error)}}
      *        callback the callback functions that will receive the new master
      *        token or any thrown exceptions.
-     * @throws MslEncodingException if there is an error encoding the JSON
-     *         data.
+     * @throws MslEncodingException if there is an error encoding the data.
      * @throws MslCryptoException if there is an error encrypting or signing
      *         the token data.
      * @throws MslMasterTokenException if the master token is not trusted or
@@ -200,8 +198,7 @@ var TokenFactory = util.Class.create({
      * @param {{result: function(UserIdToken), error: function(Error)}}
      *        callback the callback functions that will receive the new user ID
      *        token or any thrown exceptions.
-     * @throws MslEncodingException if there is an error encoding the JSON
-     *         data.
+     * @throws MslEncodingException if there is an error encoding the data.
      * @throws MslCryptoException if there is an error encrypting or signing
      *         the token data.
      * @throws MslMasterTokenException if the master token is not trusted.
@@ -221,8 +218,7 @@ var TokenFactory = util.Class.create({
      * @param {{result: function(UserIdToken), error: function(Error)}}
      *        callback the callback functions that will receive the new user ID
      *        token or any thrown exceptions.
-     * @throws MslEncodingException if there is an error encoding the JSON
-     *         data.
+     * @throws MslEncodingException if there is an error encoding the data.
      * @throws MslCryptoException if there is an error encrypting or signing
      *         the token data.
      * @throws MslUserIdTokenException if the user ID token is not decrypted or

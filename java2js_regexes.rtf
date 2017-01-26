@@ -1,8 +1,8 @@
-{\rtf1\ansi\ansicpg1252\cocoartf1138\cocoasubrtf510
-{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\rtf1\ansi\ansicpg1252\cocoartf1404\cocoasubrtf130
+\cocoascreenfonts1{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
 {\colortbl;\red255\green255\blue255;\red127\green0\blue85;\red60\green60\blue60;}
-\margl1440\margr1440\vieww14860\viewh13880\viewkind0
-\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+\margl1440\margr1440\vieww15160\viewh14180\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
 
 \f0\fs24 \cf0 /\\*\\* (JSON .+?) \\*/\
 /\\*\\*\\n     * \\1\\n     * @const\\n     * @type \{string\}\\n     */\
@@ -127,7 +127,7 @@ it("\\4", function() \{\\n\\3    var f = function() \{\\n\\5\\n\\6    \};\\n\\6 
 ([\\t ]+?)var (.+?) = (.+?\\.getEntityAuthenticationData\\(.+?)\\);\
 \\1var \\2;\\n\\1runs(function() \{\\n\\1    \\3, \{\\n\\1        result: function(x) \{ \\2 = x; \},\\n\\1        error: function(e) \{ expect(\cf2 function\cf0 ()\cf3  \cf0 \{\cf3  \cf2 throw\cf3  \cf0 e;\cf3  \cf0 \}).not.toThrow(); \}\\n\\1    \});\\n\\1\});\\n\\1waitsFor(function() \{ return \\2; \}, "\\2", 100);\
 \
-\pard\pardeftab720
+\pard\pardeftab720\partightenfactor0
 \cf0 ([\\t ]+?)var (.+?) = new MockMslContext\\((.+?)\\);\
 \\1var \\2;\\n\\1beforeEach(function() \{\\n\\1    if (!\\2) \{\\n\\1        runs(function() \{\\n\\1            MockMslContext\\$create(\\3, \{\\n\\1                result: function(x) \{ \\2 = x; \},\\n\\1                error: function(e) \{ expect(\cf2 function\cf0 ()\cf3  \cf0 \{\cf3  \cf2 throw\cf3  \cf0 e;\cf3  \cf0 \}).not.toThrow(); \}\\n\\1            \});\\n\\1        \});\\n\\1        waitsFor(function() \{ return \\2; \}, "\\2", 100);\\n\\1    \}\\n\\1\});\
 \
@@ -136,7 +136,7 @@ it("\\4", function() \{\\n\\3    var f = function() \{\\n\\5\\n\\6    \};\\n\\6 
 \
 ([\\t ]+?)var (.+?) = (MslCiphertextEnvelope|MslSignatureEnvelope)\\.parse\\((.+?)\\);\
 \\1var \\2;\\n\\1runs(function() \{\\n\\1    \\3\\$parse(\\4, \{\\n\\1        result: function(x) \{ \\2 = x; \},\\n\\1        error: function(e) \{ expect(\cf2 function\cf0 ()\cf3  \cf0 \{\cf3  \cf2 throw\cf3  \cf0 e;\cf3  \cf0 \}).not.toThrow(); \}\\n\\1    \});\\n\\1\});\\n\\1waitsFor(function() \{ return \\2; \}, "\\2", 100);\
-\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
 \cf0 \
 ([\\t ]+?)var (.+?) = (factory.(generateResponse|getCryptoContext)\\(.+?)\\);\
 \\1var \\2;\\n\\1runs(function() \{\\n\\1    \\3, \{\\n\\1        result: function(x) \{ \\2 = x; \},\\n\\1        error: function(e) \{ expect(\cf2 function\cf0 ()\cf3  \cf0 \{\cf3  \cf2 throw\cf3  \cf0 e;\cf3  \cf0 \}).not.toThrow(); \}\\n\\1    \});\\n\\1\});\\n\\1waitsFor(function() \{ return \\2; \}, "\\2", 100);\
@@ -147,7 +147,7 @@ it("\\4", function() \{\\n\\3    var f = function() \{\\n\\5\\n\\6    \};\\n\\6 
 ([\\t ]+)(.+?\\.(encrypt|decrypt|sign|verify|wrap|unwrap)\\(.+?)\\);\
 \\1var exception;\\n\\1runs(function() \{\\n\\1    \\2, \{\\n\\1        result: function() \{\},\\n\\1        error: function(e) \{ exception = e; \}\\n\\1    \});\\n\\1\});\\n\\1waitsFor(function() \{ return exception; \}, "exception", 100);\
 \
-([\\t ]+?)var (.+?) = ((ResponseData|KeyResponseData|RequestData|KeyRequestData|)\\$parse\\(.+?)\\);\
+([\\t ]+?)var (.+?) = ((ResponseData|KeyResponseData|RequestData|KeyRequestData)\\$parse\\(.+?)\\);\
 \\1var \\2;\\n\\1runs(function() \{\\n\\1    \\3, \{\\n\\1        result: function(data) \{ \\2 = data; \},\\n\\1        error: function(e) \{ expect(\cf2 function\cf0 ()\cf3  \cf0 \{\cf3  \cf2 throw\cf3  \cf0 e;\cf3  \cf0 \}).not.toThrow(); \}\\n\\1    \});\\n\\1\});\\n\\1waitsFor(function() \{ return \\2; \}, "\\2", 100);\
 \
 ([\\t ]+?)expect\\((.+?(add|exclude|del).+?Token\\(.+?)\\)\\).(toBe.+?);\

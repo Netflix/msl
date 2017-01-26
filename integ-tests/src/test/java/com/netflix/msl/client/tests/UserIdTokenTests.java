@@ -15,26 +15,9 @@
  */
 package com.netflix.msl.client.tests;
 
-import com.netflix.msl.MslCryptoException;
-import com.netflix.msl.MslEncodingException;
-import com.netflix.msl.MslException;
-import com.netflix.msl.MslKeyExchangeException;
-import com.netflix.msl.client.common.BaseTestClass;
-import com.netflix.msl.client.configuration.ClientConfiguration;
-import com.netflix.msl.client.configuration.ServerConfiguration;
-import com.netflix.msl.entityauth.EntityAuthenticationScheme;
-import com.netflix.msl.io.Url;
-import com.netflix.msl.io.Url.Connection;
-import com.netflix.msl.keyx.KeyExchangeScheme;
-import com.netflix.msl.msg.MessageInputStream;
-import com.netflix.msl.tokens.MasterToken;
-import com.netflix.msl.tokens.UserIdToken;
-import com.netflix.msl.userauth.UserAuthenticationScheme;
-
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -44,9 +27,27 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.concurrent.ExecutionException;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import com.netflix.msl.MslCryptoException;
+import com.netflix.msl.MslEncodingException;
+import com.netflix.msl.MslException;
+import com.netflix.msl.MslKeyExchangeException;
+import com.netflix.msl.client.common.BaseTestClass;
+import com.netflix.msl.client.configuration.ClientConfiguration;
+import com.netflix.msl.client.configuration.ServerConfiguration;
+import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.Url;
+import com.netflix.msl.io.Url.Connection;
+import com.netflix.msl.keyx.KeyExchangeScheme;
+import com.netflix.msl.msg.MessageInputStream;
+import com.netflix.msl.tokens.MasterToken;
+import com.netflix.msl.tokens.UserIdToken;
+import com.netflix.msl.userauth.UserAuthenticationScheme;
 
 /**
  * User: skommidi
@@ -104,97 +105,97 @@ public class UserIdTokenTests extends BaseTestClass {
     }
 
     @Test(testName = "userIdtoken happy case")
-    public void validUserIdToken() throws InterruptedException, ExecutionException, MslException, IOException {
-        MasterToken masterToken = getInitialMasterToken(TIME_OUT);
+    public void validUserIdToken() throws InterruptedException, ExecutionException, MslException, IOException, MslEncoderException {
+        final MasterToken masterToken = getInitialMasterToken(TIME_OUT);
 
-        Date renewalWindow = new Date(System.currentTimeMillis() + 10000);
-        Date expiration = new Date(System.currentTimeMillis() + 20000);
+        final Date renewalWindow = new Date(System.currentTimeMillis() + 10000);
+        final Date expiration = new Date(System.currentTimeMillis() + 20000);
         final UserIdToken userIdToken = getUserIdToken(masterToken, renewalWindow, expiration, TIME_OUT);
 
-        MessageInputStream message = sendReceive(out, in, masterToken, userIdToken, null, true /*isRenewable*/, false /*addKeyRequestData*/);
+        final MessageInputStream message = sendReceive(out, in, masterToken, userIdToken, null, true /*isRenewable*/, false /*addKeyRequestData*/);
 
         thenThe(message)
                 .shouldHave().validBuffer();
 
-        UserIdToken newUserIdToken = message.getMessageHeader().getUserIdToken();
+        final UserIdToken newUserIdToken = message.getMessageHeader().getUserIdToken();
 
         validateUserIdTokenEqual(userIdToken, newUserIdToken, masterToken);
     }
 
     @Test(testName = "expired userIdToken with renewable flag set true, expect renewed userIdToken")
-    public void expiredUserIdTokenWithRenewableTrue() throws ExecutionException, InterruptedException, MslException, IOException {
-        MasterToken masterToken = getInitialMasterToken(TIME_OUT);
+    public void expiredUserIdTokenWithRenewableTrue() throws ExecutionException, InterruptedException, MslException, IOException, MslEncoderException {
+        final MasterToken masterToken = getInitialMasterToken(TIME_OUT);
 
-        Date renewalWindow = new Date(System.currentTimeMillis() - 20000);
-        Date expiration = new Date(System.currentTimeMillis() - 10000);
+        final Date renewalWindow = new Date(System.currentTimeMillis() - 20000);
+        final Date expiration = new Date(System.currentTimeMillis() - 10000);
         final UserIdToken userIdToken = getUserIdToken(masterToken, renewalWindow, expiration, TIME_OUT);
 
-        MessageInputStream message = sendReceive(out, in, masterToken, userIdToken, null, true /*isRenewable*/, false /*addKeyRequestData*/);
+        final MessageInputStream message = sendReceive(out, in, masterToken, userIdToken, null, true /*isRenewable*/, false /*addKeyRequestData*/);
 
         thenThe(message)
                 .shouldHave().validBuffer();
 
-        UserIdToken newUserIdToken = message.getMessageHeader().getUserIdToken();
+        final UserIdToken newUserIdToken = message.getMessageHeader().getUserIdToken();
 
         validateUserIdTokenNotEqual(userIdToken, newUserIdToken, masterToken);
     }
 
     @Test(testName = "expired userIdToken with renewable flag set false, expect renewed userIdToken")
-    public void expiredUserIdTokenWithRenewableFalse() throws ExecutionException, InterruptedException, MslException, IOException {
-        MasterToken masterToken = getInitialMasterToken(TIME_OUT);
+    public void expiredUserIdTokenWithRenewableFalse() throws ExecutionException, InterruptedException, MslException, IOException, MslEncoderException {
+        final MasterToken masterToken = getInitialMasterToken(TIME_OUT);
 
-        Date renewalWindow = new Date(System.currentTimeMillis() - 20000);
-        Date expiration = new Date(System.currentTimeMillis() - 10000);
+        final Date renewalWindow = new Date(System.currentTimeMillis() - 20000);
+        final Date expiration = new Date(System.currentTimeMillis() - 10000);
         final UserIdToken userIdToken = getUserIdToken(masterToken, renewalWindow, expiration, TIME_OUT);
 
-        MessageInputStream message = sendReceive(out, in, masterToken, userIdToken, null, false /*isRenewable*/, false /*addKeyRequestData*/);
+        final MessageInputStream message = sendReceive(out, in, masterToken, userIdToken, null, false /*isRenewable*/, false /*addKeyRequestData*/);
 
         thenThe(message)
                 .shouldHave().validBuffer();
 
-        UserIdToken newUserIdToken = message.getMessageHeader().getUserIdToken();
+        final UserIdToken newUserIdToken = message.getMessageHeader().getUserIdToken();
 
         validateUserIdTokenNotEqual(userIdToken, newUserIdToken, masterToken);
     }
 
     @Test(testName = "renewable userIdToken with renewable flag set true, expect renewed userIdToken")
-    public void renewableUserIdTokenWithRenewableTrue() throws ExecutionException, InterruptedException, MslException, IOException {
-        MasterToken masterToken = getInitialMasterToken(TIME_OUT);
+    public void renewableUserIdTokenWithRenewableTrue() throws ExecutionException, InterruptedException, MslException, IOException, MslEncoderException {
+        final MasterToken masterToken = getInitialMasterToken(TIME_OUT);
 
-        Date renewalWindow = new Date(System.currentTimeMillis() - 10000);
-        Date expiration = new Date(System.currentTimeMillis() + 10000);
+        final Date renewalWindow = new Date(System.currentTimeMillis() - 10000);
+        final Date expiration = new Date(System.currentTimeMillis() + 10000);
         final UserIdToken userIdToken = getUserIdToken(masterToken, renewalWindow, expiration, TIME_OUT);
 
-        MessageInputStream message = sendReceive(out, in, masterToken, userIdToken, null, true /*isRenewable*/, false /*addKeyRequestData*/);
+        final MessageInputStream message = sendReceive(out, in, masterToken, userIdToken, null, true /*isRenewable*/, false /*addKeyRequestData*/);
 
         thenThe(message)
                 .shouldHave().validBuffer();
 
-        UserIdToken newUserIdToken = message.getMessageHeader().getUserIdToken();
+        final UserIdToken newUserIdToken = message.getMessageHeader().getUserIdToken();
 
         validateUserIdTokenNotEqual(userIdToken, newUserIdToken, masterToken);
     }
 
     @Test(testName = "renewable userIdToken with renewable flag set false, expect renewed userIdToken")
-    public void renewableUserIdTokenWithRenewableFalse() throws ExecutionException, InterruptedException, MslException, IOException {
-        MasterToken masterToken = getInitialMasterToken(TIME_OUT);
+    public void renewableUserIdTokenWithRenewableFalse() throws ExecutionException, InterruptedException, MslException, IOException, MslEncoderException {
+        final MasterToken masterToken = getInitialMasterToken(TIME_OUT);
 
-        Date renewalWindow = new Date(System.currentTimeMillis() - 10000);
-        Date expiration = new Date(System.currentTimeMillis() + 10000);
+        final Date renewalWindow = new Date(System.currentTimeMillis() - 10000);
+        final Date expiration = new Date(System.currentTimeMillis() + 10000);
         final UserIdToken userIdToken = getUserIdToken(masterToken, renewalWindow, expiration, TIME_OUT);
 
-        MessageInputStream message = sendReceive(out, in, masterToken, userIdToken, null, false /*isRenewable*/, false /*addKeyRequestData*/);
+        final MessageInputStream message = sendReceive(out, in, masterToken, userIdToken, null, false /*isRenewable*/, false /*addKeyRequestData*/);
 
         thenThe(message)
                 .shouldHave().validBuffer();
 
-        UserIdToken newUserIdToken = message.getMessageHeader().getUserIdToken();
+        final UserIdToken newUserIdToken = message.getMessageHeader().getUserIdToken();
 
         validateUserIdTokenEqual(userIdToken, newUserIdToken, masterToken);
     }
 
-    private void validateUserIdTokenEqual(UserIdToken userIdToken, UserIdToken newUserIdToken, MasterToken masterToken) {
-        Date now = new Date();
+    private void validateUserIdTokenEqual(final UserIdToken userIdToken, final UserIdToken newUserIdToken, final MasterToken masterToken) {
+        final Date now = new Date();
 
         assertEquals(newUserIdToken.getSerialNumber(), userIdToken.getSerialNumber());
         assertEquals(newUserIdToken.getMasterTokenSerialNumber(), userIdToken.getMasterTokenSerialNumber());
@@ -208,8 +209,8 @@ public class UserIdTokenTests extends BaseTestClass {
         assertTrue(newUserIdToken.isRenewable(now) == userIdToken.isRenewable(now));
     }
 
-    private void validateUserIdTokenNotEqual(UserIdToken userIdToken, UserIdToken newUserIdToken, MasterToken masterToken) {
-        Date now = new Date();
+    private void validateUserIdTokenNotEqual(final UserIdToken userIdToken, final UserIdToken newUserIdToken, final MasterToken masterToken) {
+        final Date now = new Date();
 
         assertEquals(newUserIdToken.getSerialNumber(), userIdToken.getSerialNumber());
         assertEquals(newUserIdToken.getMasterTokenSerialNumber(), userIdToken.getMasterTokenSerialNumber());
@@ -226,7 +227,7 @@ public class UserIdTokenTests extends BaseTestClass {
 
 
     private ServerConfiguration serverConfig;
-    private int numThreads = 0;
+    private final int numThreads = 0;
     private OutputStream out;
     private DelayedInputStream in;
 }

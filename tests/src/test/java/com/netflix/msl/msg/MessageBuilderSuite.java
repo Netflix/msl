@@ -43,8 +43,6 @@ import javax.crypto.interfaces.DHPublicKey;
 import javax.crypto.spec.DHParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -74,6 +72,9 @@ import com.netflix.msl.crypto.SymmetricCryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.entityauth.MockPresharedAuthenticationFactory;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.keyx.AsymmetricWrappedExchange;
 import com.netflix.msl.keyx.AsymmetricWrappedExchange.RequestData.Mechanism;
 import com.netflix.msl.keyx.DiffieHellmanExchange;
@@ -124,6 +125,8 @@ public class MessageBuilderSuite {
     private static MslContext trustedNetCtx;
     /** MSL peer-to-peer context. */
     private static MslContext p2pCtx;
+    /** MSL encoder factory. */
+    private static MslEncoderFactory encoder;
     
     private static MasterToken MASTER_TOKEN, PEER_MASTER_TOKEN;
     private static ICryptoContext CRYPTO_CONTEXT, ALT_MSL_CRYPTO_CONTEXT;
@@ -138,6 +141,7 @@ public class MessageBuilderSuite {
             random = new Random();
             trustedNetCtx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
             p2pCtx = new MockMslContext(EntityAuthenticationScheme.PSK, true);
+            encoder = trustedNetCtx.getMslEncoderFactory();
             
             USER_AUTH_DATA = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL, MockEmailPasswordAuthenticationFactory.PASSWORD);
             
@@ -1180,7 +1184,7 @@ public class MessageBuilderSuite {
     /** Create error unit tests. */
         public static class CreateErrorTest {
         private static final Long REQUEST_MESSAGE_ID = Long.valueOf(17L);
-        private static final MslError MSL_ERROR = MslError.JSON_PARSE_ERROR;
+        private static final MslError MSL_ERROR = MslError.MSL_PARSE_ERROR;
         private static final String USER_MESSAGE = "user message";
         
         @Test
@@ -1255,7 +1259,7 @@ public class MessageBuilderSuite {
         private static PrivateKey RSA_PRIVATE_KEY;
         private static final Map<String,ICryptoContext> CRYPTO_CONTEXTS = new HashMap<String,ICryptoContext>();
         
-        private static JSONObject ISSUER_DATA;
+        private static MslObject ISSUER_DATA;
         private static MslUser USER;
         
         /**
@@ -1271,12 +1275,12 @@ public class MessageBuilderSuite {
         public ExpectedMslException thrown = ExpectedMslException.none();
         
         @BeforeClass
-        public static void setup() throws NoSuchAlgorithmException, JSONException {
+        public static void setup() throws NoSuchAlgorithmException, MslEncoderException {
             final KeyPairGenerator rsaGenerator = KeyPairGenerator.getInstance("RSA");
             final KeyPair rsaKeyPair = rsaGenerator.generateKeyPair();
             RSA_PUBLIC_KEY = rsaKeyPair.getPublic();
             RSA_PRIVATE_KEY = rsaKeyPair.getPrivate();
-            ISSUER_DATA = new JSONObject("{ 'issuerid' : 17 }");
+            ISSUER_DATA = encoder.parseObject("{ 'issuerid' : 17 }".getBytes());
             USER = MockEmailPasswordAuthenticationFactory.USER;
         }
         
@@ -1984,7 +1988,7 @@ public class MessageBuilderSuite {
         }
         
         @Test(expected = MslMasterTokenException.class)
-        public void untrustedMasterTokenRenewMasterToken() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, JSONException, MslException {
+        public void untrustedMasterTokenRenewMasterToken() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslEncoderException, MslException {
             final MockMslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
             
             final Date renewalWindow = new Date(System.currentTimeMillis() - 10000);
@@ -1993,6 +1997,10 @@ public class MessageBuilderSuite {
             final HeaderData headerData = new HeaderData(null, REQUEST_MESSAGE_ID, null, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
             final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
             final MessageHeader request = new MessageHeader(ctx, null, requestMasterToken, headerData, peerData);
+            
+            // Encode the request. This will use the MSL crypto context to
+            // encrypt and sign the master token.
+            final MslObject mo = MslTestUtils.toMslObject(encoder, request);
 
             // The master token's crypto context must be cached, so we can
             // rebuild the message.
@@ -2012,10 +2020,9 @@ public class MessageBuilderSuite {
             final SecretKey wrappingKey = new SecretKeySpec(mkw, JcaAlgorithm.AESKW);
             ctx.setMslCryptoContext(new SymmetricCryptoContext(ctx, "clientMslCryptoContext", encryptionKey, hmacKey, wrappingKey));
 
-            // Reconstruct the request with an untrusted master token.
-            final String json = request.toJSONString();
-            final JSONObject jo = new JSONObject(json);
-            final MessageHeader untrustedRequest = (MessageHeader)Header.parseHeader(ctx, jo, CRYPTO_CONTEXTS);
+            // Reconstruct the request now that we no longer have the same
+            // MSL crypto context.
+            final MessageHeader untrustedRequest = (MessageHeader)Header.parseHeader(ctx, mo, CRYPTO_CONTEXTS);
 
             MessageBuilder.createResponse(ctx, untrustedRequest);
         }
@@ -2260,7 +2267,7 @@ public class MessageBuilderSuite {
         }
         
         @Test
-        public void expiredUserIdTokenServerMessage() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException, JSONException {
+        public void expiredUserIdTokenServerMessage() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
             final MockMslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
             
             final Date renewalWindow = new Date(System.currentTimeMillis() - 20000);
@@ -2272,8 +2279,8 @@ public class MessageBuilderSuite {
             ctx.setMslCryptoContext(ALT_MSL_CRYPTO_CONTEXT);
             
             // Now rebuild the user ID token and the build the request.
-            final JSONObject userIdTokenJo = new JSONObject(requestUserIdToken.toJSONString());
-            final UserIdToken unverifiedUserIdToken = new UserIdToken(ctx, userIdTokenJo, MASTER_TOKEN);
+            final MslObject userIdTokenMo = MslTestUtils.toMslObject(encoder, requestUserIdToken);
+            final UserIdToken unverifiedUserIdToken = new UserIdToken(ctx, userIdTokenMo, MASTER_TOKEN);
             final MessageBuilder requestBuilder = MessageBuilder.createRequest(ctx, MASTER_TOKEN, unverifiedUserIdToken, null);
             final MessageHeader request = requestBuilder.getHeader();
             
@@ -2385,7 +2392,7 @@ public class MessageBuilderSuite {
         }
         
         @Test
-        public void masterTokenUserAuthenticated() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException, JSONException {
+        public void masterTokenUserAuthenticated() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
             final MockMslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
             
             final MessageBuilder requestBuilder = MessageBuilder.createRequest(ctx, MASTER_TOKEN, null, null);
@@ -2393,15 +2400,15 @@ public class MessageBuilderSuite {
             requestBuilder.setUserAuthenticationData(USER_AUTH_DATA);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final JSONObject requestJo = new JSONObject(request.toJSONString());
-            final MessageHeader joRequest = (MessageHeader)Header.parseHeader(ctx, requestJo, CRYPTO_CONTEXTS);
-            assertNotNull(joRequest.getUser());
+            final MslObject requestMo = MslTestUtils.toMslObject(encoder, request);
+            final MessageHeader moRequest = (MessageHeader)Header.parseHeader(ctx, requestMo, CRYPTO_CONTEXTS);
+            assertNotNull(moRequest.getUser());
             
             // Remove support for user authentication to prove the response
             // does not perform it.
             ctx.removeUserAuthenticationFactory(USER_AUTH_DATA.getScheme());
             
-            final MessageBuilder responseBuilder = MessageBuilder.createResponse(ctx, joRequest);
+            final MessageBuilder responseBuilder = MessageBuilder.createResponse(ctx, moRequest);
             final MessageHeader response = responseBuilder.getHeader();
             final UserIdToken userIdToken = response.getUserIdToken();
             assertNotNull(userIdToken);
@@ -2424,7 +2431,7 @@ public class MessageBuilderSuite {
         }
         
         @Test
-        public void peerMasterTokenUserAuthenticated() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException, JSONException {
+        public void peerMasterTokenUserAuthenticated() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
             final MockMslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, true);
             
             final MessageBuilder requestBuilder = MessageBuilder.createRequest(ctx, MASTER_TOKEN, null, null);
@@ -2432,15 +2439,15 @@ public class MessageBuilderSuite {
             requestBuilder.setUserAuthenticationData(USER_AUTH_DATA);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final JSONObject requestJo = new JSONObject(request.toJSONString());
-            final MessageHeader joRequest = (MessageHeader)Header.parseHeader(ctx, requestJo, CRYPTO_CONTEXTS);
-            assertNotNull(joRequest.getUser());
+            final MslObject requestMo = MslTestUtils.toMslObject(encoder, request);
+            final MessageHeader moRequest = (MessageHeader)Header.parseHeader(ctx, requestMo, CRYPTO_CONTEXTS);
+            assertNotNull(moRequest.getUser());
             
             // Remove support for user authentication to prove the response
             // does not perform it.
             ctx.removeUserAuthenticationFactory(USER_AUTH_DATA.getScheme());
             
-            final MessageBuilder responseBuilder = MessageBuilder.createResponse(ctx, joRequest);
+            final MessageBuilder responseBuilder = MessageBuilder.createResponse(ctx, moRequest);
             final MessageHeader response = responseBuilder.getHeader();
             final UserIdToken userIdToken = response.getPeerUserIdToken();
             assertNotNull(userIdToken);
@@ -2470,7 +2477,7 @@ public class MessageBuilderSuite {
         }
         
         @Test
-        public void entityAuthDataUserAuthenticatedData() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException, JSONException {
+        public void entityAuthDataUserAuthenticatedData() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
             final MockMslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
             
             final MessageBuilder requestBuilder = MessageBuilder.createRequest(ctx, null, null, null);
@@ -2480,15 +2487,15 @@ public class MessageBuilderSuite {
                 requestBuilder.addKeyRequestData(keyRequestData);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final JSONObject requestJo = new JSONObject(request.toJSONString());
-            final MessageHeader joRequest = (MessageHeader)Header.parseHeader(ctx, requestJo, CRYPTO_CONTEXTS);
-            assertNotNull(joRequest.getUser());
+            final MslObject requestMo = MslTestUtils.toMslObject(encoder, request);
+            final MessageHeader moRequest = (MessageHeader)Header.parseHeader(ctx, requestMo, CRYPTO_CONTEXTS);
+            assertNotNull(moRequest.getUser());
             
             // Remove support for user authentication to prove the response
             // does not perform it.
             ctx.removeUserAuthenticationFactory(USER_AUTH_DATA.getScheme());
             
-            final MessageBuilder responseBuilder = MessageBuilder.createResponse(ctx, joRequest);
+            final MessageBuilder responseBuilder = MessageBuilder.createResponse(ctx, moRequest);
             final MessageHeader response = responseBuilder.getHeader();
             assertNull(response.getMasterToken());
             final KeyResponseData keyResponseData = response.getKeyResponseData();
@@ -2539,7 +2546,7 @@ public class MessageBuilderSuite {
         }
         
         @Test
-        public void peerEntityAuthDataUserAuthenticatedData() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException, JSONException {
+        public void peerEntityAuthDataUserAuthenticatedData() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
             final MockMslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, true);
             
             final MessageBuilder requestBuilder = MessageBuilder.createRequest(ctx, null, null, null);
@@ -2549,15 +2556,15 @@ public class MessageBuilderSuite {
                 requestBuilder.addKeyRequestData(keyRequestData);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final JSONObject requestJo = new JSONObject(request.toJSONString());
-            final MessageHeader joRequest = (MessageHeader)Header.parseHeader(ctx, requestJo, CRYPTO_CONTEXTS);
-            assertNotNull(joRequest.getUser());
+            final MslObject requestMo = MslTestUtils.toMslObject(encoder, request);
+            final MessageHeader moRequest = (MessageHeader)Header.parseHeader(ctx, requestMo, CRYPTO_CONTEXTS);
+            assertNotNull(moRequest.getUser());
             
             // Remove support for user authentication to prove the response
             // does not perform it.
             ctx.removeUserAuthenticationFactory(USER_AUTH_DATA.getScheme());
             
-            final MessageBuilder responseBuilder = MessageBuilder.createResponse(ctx, joRequest);
+            final MessageBuilder responseBuilder = MessageBuilder.createResponse(ctx, moRequest);
             final MessageHeader response = responseBuilder.getHeader();
             assertNull(response.getMasterToken());
             final KeyResponseData keyResponseData = response.getKeyResponseData();
@@ -2862,13 +2869,13 @@ public class MessageBuilderSuite {
             gzipOnly.add(CompressionAlgorithm.GZIP);
             
             final MockMslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
-            final MessageCapabilities caps = new MessageCapabilities(gzipOnly, null);
+            final MessageCapabilities caps = new MessageCapabilities(gzipOnly, null, null);
             ctx.setMessageCapabilities(caps);
             final MessageBuilder requestBuilder = MessageBuilder.createRequest(ctx, null, null, null);
             final MessageHeader request = requestBuilder.getHeader();
             assertEquals(caps, request.getMessageCapabilities());
             
-            ctx.setMessageCapabilities(new MessageCapabilities(algos, null));
+            ctx.setMessageCapabilities(new MessageCapabilities(algos, null, null));
             final MessageBuilder responseBuilder = MessageBuilder.createResponse(ctx, request);
             final MessageHeader response = responseBuilder.getHeader();
             assertEquals(caps, response.getMessageCapabilities());
@@ -2886,7 +2893,7 @@ public class MessageBuilderSuite {
             final MessageHeader request = requestBuilder.getHeader();
             assertNull(request.getMessageCapabilities());
             
-            ctx.setMessageCapabilities(new MessageCapabilities(algos, null));
+            ctx.setMessageCapabilities(new MessageCapabilities(algos, null, null));
             final MessageBuilder responseBuilder = MessageBuilder.createResponse(ctx, request);
             final MessageHeader response = responseBuilder.getHeader();
             assertNull(response.getMessageCapabilities());

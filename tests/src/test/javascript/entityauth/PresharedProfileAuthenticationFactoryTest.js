@@ -20,15 +20,20 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("PresharedProfileAuthenticationFactory", function() {
-    /** JSON key entity preshared keys identity. */
+    /** MSL encoder format. */
+    var ENCODER_FORMAT = MslEncoderFormat.JSON;
+    
+    /** Key entity preshared keys identity. */
     var KEY_PSKID = "pskid";
 
+    /** MSL context. */
+    var ctx;
+    /** MSL encoder factory. */
+    var encoder;
     /** Authentication utilities. */
     var authutils = new MockAuthenticationUtils();
     /** Entity authentication factory. */
     var factory;
-    /** MSL context. */
-    var ctx;
     
     var initialized = false;
     beforeEach(function() {
@@ -41,6 +46,7 @@ describe("PresharedProfileAuthenticationFactory", function() {
             });
             waitsFor(function() { return ctx; }, "ctx", 100);
             runs(function() {
+                encoder = ctx.getMslEncoderFactory();
                 var store = new MockPresharedKeyStore();
                 store.addKeys(MockPresharedProfileAuthenticationFactory.PSK_ESN, MockPresharedProfileAuthenticationFactory.KPE, MockPresharedProfileAuthenticationFactory.KPH, MockPresharedProfileAuthenticationFactory.KPW);
                 factory = new PresharedProfileAuthenticationFactory(store, authutils);
@@ -56,34 +62,60 @@ describe("PresharedProfileAuthenticationFactory", function() {
     
     it("createData", function () {
         var data = new PresharedProfileAuthenticationData(MockPresharedProfileAuthenticationFactory.PSK_ESN, MockPresharedProfileAuthenticationFactory.PROFILE);
-        var entityAuthJO = data.getAuthData();
+        var entityAuthMo;
+        runs(function() {
+            data.getAuthData(encoder, ENCODER_FORMAT, {
+                result: function(x) { entityAuthMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return entityAuthMo; }, "entityAuthMo", 100);
 
         var authdata;
         runs(function() {
-            factory.createData(ctx, entityAuthJO, {
+            factory.createData(ctx, entityAuthMo, {
                 result: function(x) { authdata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
         waitsFor(function() { return authdata; }, "authdata", 100);
-        
+
+        var dataMo, authdataMo;
         runs(function() {
             expect(authdata).not.toBeNull();
             expect(authdata instanceof PresharedProfileAuthenticationData).toBeTruthy();
             
-            var dataJo = JSON.parse(JSON.stringify(data));
-            var authdataJo = JSON.parse(JSON.stringify(authdata));
-            expect(authdataJo).toEqual(dataJo);
+            MslTestUtils.toMslObject(encoder, data, {
+                result: function(x) { dataMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            MslTestUtils.toMslObject(encoder, authdata, {
+                result: function(x) { authdataMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return dataMo && authdataMo; }, "dataMo && authdataMo", 100);
+
+        runs(function() {
+            expect(MslEncoderUtils$equalObjects(dataMo, authdataMo)).toBeTruthy();
         });
     });
     
     it("encode exception", function() {
-        var exception;
+        var entityAuthMo;
         runs(function() {
             var data = new PresharedProfileAuthenticationData(MockPresharedProfileAuthenticationFactory.PSK_ESN, MockPresharedProfileAuthenticationFactory.PROFILE);
-            var entityAuthJO = data.getAuthData();
-            delete entityAuthJO[KEY_PSKID];
-            factory.createData(ctx, entityAuthJO, {
+            data.getAuthData(encoder, ENCODER_FORMAT, {
+                result: function(x) { entityAuthMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return entityAuthMo; }, "entityAuthMo", 100);
+        
+        var exception;
+        runs(function() {
+            entityAuthMo.remove(KEY_PSKID);
+            factory.createData(ctx, entityAuthMo, {
                 result: function() {},
                 error: function(e) { exception = e; },
             });
@@ -92,7 +124,7 @@ describe("PresharedProfileAuthenticationFactory", function() {
         
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     

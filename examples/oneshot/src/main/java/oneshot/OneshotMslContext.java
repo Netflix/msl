@@ -32,6 +32,7 @@ import com.netflix.msl.entityauth.RsaAuthenticationFactory;
 import com.netflix.msl.entityauth.RsaStore;
 import com.netflix.msl.entityauth.UnauthenticatedAuthenticationData;
 import com.netflix.msl.entityauth.UnauthenticatedAuthenticationFactory;
+import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.keyx.AsymmetricWrappedExchange;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeScheme;
@@ -62,6 +63,8 @@ public class OneshotMslContext extends MslContext {
 	private static final ICryptoContext mslCryptoContext = new ClientMslCryptoContext();
 	/** Token factory. */
 	private static final TokenFactory tokenFactory = new ClientTokenFactory();
+	/** Encoder factory. */
+	private static final MslEncoderFactory encoderFactory = new MslEncoderFactory();
 	
 	/**
 	 * <p>Create a new oneshot MSL context.</p>
@@ -204,6 +207,14 @@ public class OneshotMslContext extends MslContext {
 	public MslStore getMslStore() {
 		return store;
 	}
+    
+    /* (non-Javadoc)
+     * @see com.netflix.msl.util.MslContext#getMslEncoderFactory()
+     */
+	@Override
+    public MslEncoderFactory getMslEncoderFactory() {
+        return encoderFactory;
+    }
 	
 	/** Entity authentication data. */
 	private final EntityAuthenticationData entityAuthData;

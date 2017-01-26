@@ -25,7 +25,6 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.json.JSONObject;
 
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
@@ -35,6 +34,7 @@ import com.netflix.msl.MslInternalException;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.crypto.RsaCryptoContext;
 import com.netflix.msl.crypto.RsaCryptoContext.Mode;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 
@@ -95,11 +95,11 @@ public class MockRsaAuthenticationFactory extends EntityAuthenticationFactory {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.entityauth.EntityAuthenticationFactory#createData(com.netflix.msl.util.MslContext, org.json.JSONObject)
+     * @see com.netflix.msl.entityauth.EntityAuthenticationFactory#createData(com.netflix.msl.util.MslContext, com.netflix.msl.io.MslObject)
      */
     @Override
-    public EntityAuthenticationData createData(final MslContext ctx, final JSONObject entityAuthJO) throws MslEncodingException, MslCryptoException {
-        return new RsaAuthenticationData(entityAuthJO);
+    public EntityAuthenticationData createData(final MslContext ctx, final MslObject entityAuthMo) throws MslEncodingException, MslCryptoException {
+        return new RsaAuthenticationData(entityAuthMo);
     }
 
     /* (non-Javadoc)

@@ -15,10 +15,17 @@
  */
 package com.netflix.msl.msg;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -28,16 +35,13 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.json.JSONTokener;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslConstants.CompressionAlgorithm;
+import com.netflix.msl.MslConstants.ResponseCode;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
@@ -47,10 +51,14 @@ import com.netflix.msl.MslKeyExchangeException;
 import com.netflix.msl.MslMasterTokenException;
 import com.netflix.msl.MslMessageException;
 import com.netflix.msl.MslUserAuthException;
-import com.netflix.msl.MslConstants.ResponseCode;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
+import com.netflix.msl.io.MslTokenizer;
 import com.netflix.msl.msg.MessageHeader.HeaderData;
 import com.netflix.msl.msg.MessageHeader.HeaderPeerData;
 import com.netflix.msl.util.MockMslContext;
@@ -66,6 +74,9 @@ import com.netflix.msl.util.MslContext;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class MessageOutputStreamTest {
+	/** MSL encoder format. */
+	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
+
     /** Maximum number of payload chunks to generate. */
     private static final int MAX_PAYLOAD_CHUNKS = 10;
     /** Maximum payload chunk data size in bytes. */
@@ -76,11 +87,15 @@ public class MessageOutputStreamTest {
         "Kiba and Nami immortalized in code. I will never forget you. I'm sorry and I love you. Forgive me." +
         "Kiba and Nami immortalized in code. I will never forget you. I'm sorry and I love you. Forgive me."
     ).getBytes();
+    /** I/O operation timeout in milliseconds. */
+    private static final int TIMEOUT = 20;
     
     /** Random. */
     private static Random random = new Random();
     /** MSL context. */
     private static MslContext ctx;
+    /** MSL encoder factory. */
+    private static MslEncoderFactory encoder;
     /** Destination output stream. */
     private static ByteArrayOutputStream destination = new ByteArrayOutputStream();
     /** Payload crypto context. */
@@ -95,6 +110,7 @@ public class MessageOutputStreamTest {
     @BeforeClass
     public static void setup() throws MslMasterTokenException, MslEntityAuthException, MslException {
         ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
+        encoder = ctx.getMslEncoderFactory();
         
         final HeaderData headerData = new HeaderData(null, 1, null, false, false, ctx.getMessageCapabilities(), null, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
@@ -110,6 +126,7 @@ public class MessageOutputStreamTest {
         PAYLOAD_CRYPTO_CONTEXT = null;
         ERROR_HEADER = null;
         MESSAGE_HEADER = null;
+        encoder = null;
         ctx = null;
     }
     
@@ -119,42 +136,42 @@ public class MessageOutputStreamTest {
     }
     
     @Test
-    public void messageHeader() throws IOException, JSONException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
-        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, MslConstants.DEFAULT_CHARSET, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT);
+    public void messageHeader() throws IOException, MslEncoderException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
+        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT);
         mos.close();
         
-        final String mslMessage = destination.toString(MslConstants.DEFAULT_CHARSET.name());
-        final JSONTokener tokener = new JSONTokener(mslMessage);
+        final InputStream mslMessage = new ByteArrayInputStream(destination.toByteArray());
+        final MslTokenizer tokenizer = encoder.createTokenizer(mslMessage);
         
         // There should be one header.
-        assertTrue(tokener.more());
-        final Object first = tokener.nextValue();
-        assertTrue(first instanceof JSONObject);
-        final JSONObject headerJo = (JSONObject)first;
+        assertTrue(tokenizer.more(TIMEOUT));
+        final Object first = tokenizer.nextObject(TIMEOUT);
+        assertTrue(first instanceof MslObject);
+        final MslObject headerMo = (MslObject)first;
         
         // The reconstructed header should be equal to the original.
-        final Header header = Header.parseHeader(ctx, headerJo, cryptoContexts);
+        final Header header = Header.parseHeader(ctx, headerMo, cryptoContexts);
         assertTrue(header instanceof MessageHeader);
         final MessageHeader messageHeader = (MessageHeader)header;
         assertEquals(MESSAGE_HEADER, messageHeader);
         
         // There should be one payload with no data indicating end of message.
-        assertTrue(tokener.more());
-        final Object second = tokener.nextValue();
-        assertTrue(second instanceof JSONObject);
-        final JSONObject payloadJo = (JSONObject)second;
+        assertTrue(tokenizer.more(TIMEOUT));
+        final Object second = tokenizer.nextObject(TIMEOUT);
+        assertTrue(second instanceof MslObject);
+        final MslObject payloadMo = (MslObject)second;
         
         // Verify the payload.
         final ICryptoContext cryptoContext = messageHeader.getCryptoContext();
         assertNotNull(cryptoContext);
-        final PayloadChunk payload = new PayloadChunk(payloadJo, cryptoContext);
+        final PayloadChunk payload = new PayloadChunk(ctx, payloadMo, cryptoContext);
         assertTrue(payload.isEndOfMessage());
         assertEquals(1, payload.getSequenceNumber());
         assertEquals(MESSAGE_HEADER.getMessageId(), payload.getMessageId());
         assertEquals(0, payload.getData().length);
         
         // There should be nothing else.
-        assertFalse(tokener.more());
+        assertFalse(tokenizer.more(TIMEOUT));
         
         // Verify cached payloads.
         final List<PayloadChunk> payloads = mos.getPayloads();
@@ -163,26 +180,26 @@ public class MessageOutputStreamTest {
     }
     
     @Test
-    public void errorHeader() throws IOException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException, JSONException {
-        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, MslConstants.DEFAULT_CHARSET, ERROR_HEADER);
+    public void errorHeader() throws IOException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
+        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, ERROR_HEADER, ENCODER_FORMAT);
         mos.close();
-        
-        final String mslMessage = destination.toString(MslConstants.DEFAULT_CHARSET.name());
-        final JSONTokener tokener = new JSONTokener(mslMessage);
+
+        final InputStream mslMessage = new ByteArrayInputStream(destination.toByteArray());
+        final MslTokenizer tokenizer = encoder.createTokenizer(mslMessage);
         
         // There should be one header.
-        assertTrue(tokener.more());
-        final Object first = tokener.nextValue();
-        assertTrue(first instanceof JSONObject);
-        final JSONObject headerJo = (JSONObject)first;
+        assertTrue(tokenizer.more(TIMEOUT));
+        final Object first = tokenizer.nextObject(TIMEOUT);
+        assertTrue(first instanceof MslObject);
+        final MslObject headerMo = (MslObject)first;
 
         // The reconstructed header should be equal to the original.
-        final Header header = Header.parseHeader(ctx, headerJo, cryptoContexts);
+        final Header header = Header.parseHeader(ctx, headerMo, cryptoContexts);
         assertTrue(header instanceof ErrorHeader);
         assertEquals(ERROR_HEADER, header);
         
         // There should be no payloads.
-        assertFalse(tokener.more());
+        assertFalse(tokenizer.more(TIMEOUT));
         
         // Verify cached payloads.
         final List<PayloadChunk> payloads = mos.getPayloads();
@@ -190,47 +207,47 @@ public class MessageOutputStreamTest {
     }
     
     @Test
-    public void writeOffsets() throws IOException, JSONException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
+    public void writeOffsets() throws IOException, MslEncoderException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
         final byte[] data = new byte[32];
         random.nextBytes(data);
         final int from = 8;
         final int length = 8;
         final int to = from + length; // exclusive
-        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, MslConstants.DEFAULT_CHARSET, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT);
+        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT);
         mos.write(data, from, length);
         mos.close();
-        
-        final String mslMessage = destination.toString(MslConstants.DEFAULT_CHARSET.name());
-        final JSONTokener tokener = new JSONTokener(mslMessage);
+
+        final InputStream mslMessage = new ByteArrayInputStream(destination.toByteArray());
+        final MslTokenizer tokenizer = encoder.createTokenizer(mslMessage);
         
         // There should be one header.
-        assertTrue(tokener.more());
-        final Object first = tokener.nextValue();
-        assertTrue(first instanceof JSONObject);
-        final JSONObject headerJo = (JSONObject)first;
+        assertTrue(tokenizer.more(TIMEOUT));
+        final Object first = tokenizer.nextObject(TIMEOUT);
+        assertTrue(first instanceof MslObject);
+        final MslObject headerMo = (MslObject)first;
         
         // We assume the reconstructed header is equal to the original.
-        final Header header = Header.parseHeader(ctx, headerJo, cryptoContexts);
+        final Header header = Header.parseHeader(ctx, headerMo, cryptoContexts);
         assertTrue(header instanceof MessageHeader);
         final MessageHeader messageHeader = (MessageHeader)header;
         
         // There should be one payload.
-        assertTrue(tokener.more());
-        final Object second = tokener.nextValue();
-        assertTrue(second instanceof JSONObject);
-        final JSONObject payloadJo = (JSONObject)second;
+        assertTrue(tokenizer.more(TIMEOUT));
+        final Object second = tokenizer.nextObject(TIMEOUT);
+        assertTrue(second instanceof MslObject);
+        final MslObject payloadMo = (MslObject)second;
         
         // Verify the payload.
         final ICryptoContext cryptoContext = messageHeader.getCryptoContext();
         assertNotNull(cryptoContext);
-        final PayloadChunk payload = new PayloadChunk(payloadJo, cryptoContext);
+        final PayloadChunk payload = new PayloadChunk(ctx, payloadMo, cryptoContext);
         assertTrue(payload.isEndOfMessage());
         assertEquals(1, payload.getSequenceNumber());
         assertEquals(MESSAGE_HEADER.getMessageId(), payload.getMessageId());
         assertArrayEquals(Arrays.copyOfRange(data, from, to), payload.getData());
         
         // There should be nothing else.
-        assertFalse(tokener.more());
+        assertFalse(tokenizer.more(TIMEOUT));
         
         // Verify cached payloads.
         final List<PayloadChunk> payloads = mos.getPayloads();
@@ -239,44 +256,44 @@ public class MessageOutputStreamTest {
     }
     
     @Test
-    public void writeBytes() throws IOException, JSONException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
+    public void writeBytes() throws IOException, MslEncoderException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
         final byte[] data = new byte[32];
         random.nextBytes(data);
-        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, MslConstants.DEFAULT_CHARSET, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT);
+        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT);
         mos.write(data);
         mos.close();
-        
-        final String mslMessage = destination.toString(MslConstants.DEFAULT_CHARSET.name());
-        final JSONTokener tokener = new JSONTokener(mslMessage);
+
+        final InputStream mslMessage = new ByteArrayInputStream(destination.toByteArray());
+        final MslTokenizer tokenizer = encoder.createTokenizer(mslMessage);
         
         // There should be one header.
-        assertTrue(tokener.more());
-        final Object first = tokener.nextValue();
-        assertTrue(first instanceof JSONObject);
-        final JSONObject headerJo = (JSONObject)first;
+        assertTrue(tokenizer.more(TIMEOUT));
+        final Object first = tokenizer.nextObject(TIMEOUT);
+        assertTrue(first instanceof MslObject);
+        final MslObject headerMo = (MslObject)first;
         
         // We assume the reconstructed header is equal to the original.
-        final Header header = Header.parseHeader(ctx, headerJo, cryptoContexts);
+        final Header header = Header.parseHeader(ctx, headerMo, cryptoContexts);
         assertTrue(header instanceof MessageHeader);
         final MessageHeader messageHeader = (MessageHeader)header;
         
         // There should be one payload.
-        assertTrue(tokener.more());
-        final Object second = tokener.nextValue();
-        assertTrue(second instanceof JSONObject);
-        final JSONObject payloadJo = (JSONObject)second;
+        assertTrue(tokenizer.more(TIMEOUT));
+        final Object second = tokenizer.nextObject(TIMEOUT);
+        assertTrue(second instanceof MslObject);
+        final MslObject payloadMo = (MslObject)second;
         
         // Verify the payload.
         final ICryptoContext cryptoContext = messageHeader.getCryptoContext();
         assertNotNull(cryptoContext);
-        final PayloadChunk payload = new PayloadChunk(payloadJo, cryptoContext);
+        final PayloadChunk payload = new PayloadChunk(ctx, payloadMo, cryptoContext);
         assertTrue(payload.isEndOfMessage());
         assertEquals(1, payload.getSequenceNumber());
         assertEquals(MESSAGE_HEADER.getMessageId(), payload.getMessageId());
         assertArrayEquals(data, payload.getData());
         
         // There should be nothing else.
-        assertFalse(tokener.more());
+        assertFalse(tokenizer.more(TIMEOUT));
         
         // Verify cached payloads.
         final List<PayloadChunk> payloads = mos.getPayloads();
@@ -285,43 +302,43 @@ public class MessageOutputStreamTest {
     }
     
     @Test
-    public void writeInt() throws IOException, JSONException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
+    public void writeInt() throws IOException, MslEncoderException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
         final int value = 1;
-        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, MslConstants.DEFAULT_CHARSET, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT);
+        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT);
         mos.write(value);
         mos.close();
-        
-        final String mslMessage = destination.toString(MslConstants.DEFAULT_CHARSET.name());
-        final JSONTokener tokener = new JSONTokener(mslMessage);
+
+        final InputStream mslMessage = new ByteArrayInputStream(destination.toByteArray());
+        final MslTokenizer tokenizer = encoder.createTokenizer(mslMessage);
         
         // There should be one header.
-        assertTrue(tokener.more());
-        final Object first = tokener.nextValue();
-        assertTrue(first instanceof JSONObject);
-        final JSONObject headerJo = (JSONObject)first;
+        assertTrue(tokenizer.more(TIMEOUT));
+        final Object first = tokenizer.nextObject(TIMEOUT);
+        assertTrue(first instanceof MslObject);
+        final MslObject headerMo = (MslObject)first;
         
         // We assume the reconstructed header is equal to the original.
-        final Header header = Header.parseHeader(ctx, headerJo, cryptoContexts);
+        final Header header = Header.parseHeader(ctx, headerMo, cryptoContexts);
         assertTrue(header instanceof MessageHeader);
         final MessageHeader messageHeader = (MessageHeader)header;
         
         // There should be one payload.
-        assertTrue(tokener.more());
-        final Object second = tokener.nextValue();
-        assertTrue(second instanceof JSONObject);
-        final JSONObject payloadJo = (JSONObject)second;
+        assertTrue(tokenizer.more(TIMEOUT));
+        final Object second = tokenizer.nextObject(TIMEOUT);
+        assertTrue(second instanceof MslObject);
+        final MslObject payloadMo = (MslObject)second;
         
         // Verify the payload.
         final ICryptoContext cryptoContext = messageHeader.getCryptoContext();
         assertNotNull(cryptoContext);
-        final PayloadChunk payload = new PayloadChunk(payloadJo, cryptoContext);
+        final PayloadChunk payload = new PayloadChunk(ctx, payloadMo, cryptoContext);
         assertTrue(payload.isEndOfMessage());
         assertEquals(1, payload.getSequenceNumber());
         assertEquals(MESSAGE_HEADER.getMessageId(), payload.getMessageId());
         assertArrayEquals(new byte[] { value }, payload.getData());
         
         // There should be nothing else.
-        assertFalse(tokener.more());
+        assertFalse(tokenizer.more(TIMEOUT));
         
         // Verify cached payloads.
         final List<PayloadChunk> payloads = mos.getPayloads();
@@ -330,8 +347,8 @@ public class MessageOutputStreamTest {
     }
     
     @Test
-    public void compressed() throws IOException, JSONException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
-        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, MslConstants.DEFAULT_CHARSET, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT);
+    public void compressed() throws IOException, MslEncoderException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
+        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT);
         
         // Write the first payload.
         assertTrue(mos.setCompressionAlgorithm(null));
@@ -361,38 +378,38 @@ public class MessageOutputStreamTest {
         // Closing should create a final end-of-message payload.
         mos.close();
         
-        // Grab the JSON objects.
-        final String mslMessage = destination.toString(MslConstants.DEFAULT_CHARSET.name());
-        final JSONTokener tokener = new JSONTokener(mslMessage);
-        final JSONObject headerJo = (JSONObject)tokener.nextValue();
-        final List<JSONObject> payloadJos = new ArrayList<JSONObject>();
-        while (tokener.more())
-            payloadJos.add((JSONObject)tokener.nextValue());
+        // Grab the MSL objects.
+        final InputStream mslMessage = new ByteArrayInputStream(destination.toByteArray());
+        final MslTokenizer tokenizer = encoder.createTokenizer(mslMessage);
+        final MslObject headerMo = tokenizer.nextObject(TIMEOUT);
+        final List<MslObject> payloadMos = new ArrayList<MslObject>();
+        while (tokenizer.more(TIMEOUT))
+            payloadMos.add(tokenizer.nextObject(TIMEOUT));
         
         // Verify the number and contents of the payloads.
-        final MessageHeader messageHeader = (MessageHeader)Header.parseHeader(ctx, headerJo, cryptoContexts);
+        final MessageHeader messageHeader = (MessageHeader)Header.parseHeader(ctx, headerMo, cryptoContexts);
         final ICryptoContext cryptoContext = messageHeader.getCryptoContext();
-        assertEquals(3, payloadJos.size());
-        final PayloadChunk firstPayload = new PayloadChunk(payloadJos.get(0), cryptoContext);
+        assertEquals(3, payloadMos.size());
+        final PayloadChunk firstPayload = new PayloadChunk(ctx, payloadMos.get(0), cryptoContext);
         assertArrayEquals(first, firstPayload.getData());
-        final PayloadChunk secondPayload = new PayloadChunk(payloadJos.get(1), cryptoContext);
+        final PayloadChunk secondPayload = new PayloadChunk(ctx, payloadMos.get(1), cryptoContext);
         assertArrayEquals(secondA, Arrays.copyOfRange(secondPayload.getData(), 0, secondA.length));
         assertArrayEquals(secondB, Arrays.copyOfRange(secondPayload.getData(), secondA.length, secondA.length + secondB.length));
-        final PayloadChunk thirdPayload = new PayloadChunk(payloadJos.get(2), cryptoContext);
+        final PayloadChunk thirdPayload = new PayloadChunk(ctx, payloadMos.get(2), cryptoContext);
         assertEquals(0, thirdPayload.getData().length);
         assertTrue(thirdPayload.isEndOfMessage());
         
         // Verify cached payloads.
         final List<PayloadChunk> payloads = mos.getPayloads();
-        assertEquals(payloadJos.size(), payloads.size());
+        assertEquals(payloadMos.size(), payloads.size());
         assertEquals(firstPayload, payloads.get(0));
         assertEquals(secondPayload, payloads.get(1));
         assertEquals(thirdPayload, payloads.get(2));
     }
     
     @Test
-    public void flush() throws IOException, JSONException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
-        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, MslConstants.DEFAULT_CHARSET, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT);
+    public void flush() throws IOException, MslEncoderException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
+        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT);
         
         // Write the first payload.
         final byte[] first = new byte[10];
@@ -416,30 +433,30 @@ public class MessageOutputStreamTest {
         // Closing should create a final end-of-message payload.
         mos.close();
         
-        // Grab the JSON objects.
-        final String mslMessage = destination.toString(MslConstants.DEFAULT_CHARSET.name());
-        final JSONTokener tokener = new JSONTokener(mslMessage);
-        final JSONObject headerJo = (JSONObject)tokener.nextValue();
-        final List<JSONObject> payloadJos = new ArrayList<JSONObject>();
-        while (tokener.more())
-            payloadJos.add((JSONObject)tokener.nextValue());
+        // Grab the MSL objects.
+        final InputStream mslMessage = new ByteArrayInputStream(destination.toByteArray());
+        final MslTokenizer tokenizer = encoder.createTokenizer(mslMessage);
+        final MslObject headerMo = tokenizer.nextObject(TIMEOUT);
+        final List<MslObject> payloadMos = new ArrayList<MslObject>();
+        while (tokenizer.more(TIMEOUT))
+            payloadMos.add(tokenizer.nextObject(TIMEOUT));
         
         // Verify the number and contents of the payloads.
-        final MessageHeader messageHeader = (MessageHeader)Header.parseHeader(ctx, headerJo, cryptoContexts);
+        final MessageHeader messageHeader = (MessageHeader)Header.parseHeader(ctx, headerMo, cryptoContexts);
         final ICryptoContext cryptoContext = messageHeader.getCryptoContext();
-        assertEquals(3, payloadJos.size());
-        final PayloadChunk firstPayload = new PayloadChunk(payloadJos.get(0), cryptoContext);
+        assertEquals(3, payloadMos.size());
+        final PayloadChunk firstPayload = new PayloadChunk(ctx, payloadMos.get(0), cryptoContext);
         assertArrayEquals(first, firstPayload.getData());
-        final PayloadChunk secondPayload = new PayloadChunk(payloadJos.get(1), cryptoContext);
+        final PayloadChunk secondPayload = new PayloadChunk(ctx, payloadMos.get(1), cryptoContext);
         assertArrayEquals(secondA, Arrays.copyOfRange(secondPayload.getData(), 0, secondA.length));
         assertArrayEquals(secondB, Arrays.copyOfRange(secondPayload.getData(), secondA.length, secondA.length + secondB.length));
-        final PayloadChunk thirdPayload = new PayloadChunk(payloadJos.get(2), cryptoContext);
+        final PayloadChunk thirdPayload = new PayloadChunk(ctx, payloadMos.get(2), cryptoContext);
         assertEquals(0, thirdPayload.getData().length);
         assertTrue(thirdPayload.isEndOfMessage());
         
         // Verify cached payloads.
         final List<PayloadChunk> payloads = mos.getPayloads();
-        assertEquals(payloadJos.size(), payloads.size());
+        assertEquals(payloadMos.size(), payloads.size());
         assertEquals(firstPayload, payloads.get(0));
         assertEquals(secondPayload, payloads.get(1));
         assertEquals(thirdPayload, payloads.get(2));
@@ -447,7 +464,7 @@ public class MessageOutputStreamTest {
     
     @Test(expected = MslInternalException.class)
     public void writeErrorHeader() throws MslMasterTokenException, MslCryptoException, IOException {
-        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, MslConstants.DEFAULT_CHARSET, ERROR_HEADER);
+        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, ERROR_HEADER, ENCODER_FORMAT);
         try {
             mos.write(new byte[0]);
         } finally {
@@ -461,7 +478,7 @@ public class MessageOutputStreamTest {
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(ctx, ENTITY_AUTH_DATA, null, headerData, peerData);
         
-        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, MslConstants.DEFAULT_CHARSET, messageHeader, messageHeader.getCryptoContext());
+        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, messageHeader, messageHeader.getCryptoContext());
         try {
             mos.write(new byte[0]);
         } finally {
@@ -471,14 +488,14 @@ public class MessageOutputStreamTest {
     
     @Test(expected = IOException.class)
     public void closed() throws MslMasterTokenException, MslCryptoException, IOException {
-        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, MslConstants.DEFAULT_CHARSET, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT);
+        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT);
         mos.close();
         mos.write(new byte[0]);
     }
     
     @Test
     public void flushErrorHeader() throws IOException, MslMasterTokenException, MslCryptoException {
-        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, MslConstants.DEFAULT_CHARSET, ERROR_HEADER);
+        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, ERROR_HEADER, ENCODER_FORMAT);
         try {
             // No data so this should be a no-op.
             mos.flush();
@@ -489,7 +506,7 @@ public class MessageOutputStreamTest {
     
     @Test
     public void stopCaching() throws IOException {
-        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, MslConstants.DEFAULT_CHARSET, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT);
+        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT);
         
         // Write the first payload.
         final byte[] first = new byte[10];
@@ -520,42 +537,42 @@ public class MessageOutputStreamTest {
     }
     
     @Test
-    public void multiClose() throws IOException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException, JSONException {
-        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, MslConstants.DEFAULT_CHARSET, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT);
+    public void multiClose() throws IOException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
+        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT);
         mos.close();
         mos.close();
-        
-        final String mslMessage = destination.toString(MslConstants.DEFAULT_CHARSET.name());
-        final JSONTokener tokener = new JSONTokener(mslMessage);
+
+        final InputStream mslMessage = new ByteArrayInputStream(destination.toByteArray());
+        final MslTokenizer tokenizer = encoder.createTokenizer(mslMessage);
         
         // There should be one header.
-        assertTrue(tokener.more());
-        final Object first = tokener.nextValue();
-        assertTrue(first instanceof JSONObject);
-        final JSONObject headerJo = (JSONObject)first;
+        assertTrue(tokenizer.more(TIMEOUT));
+        final Object first = tokenizer.nextObject(TIMEOUT);
+        assertTrue(first instanceof MslObject);
+        final MslObject headerMo = (MslObject)first;
         
         // We assume the reconstructed header is equal to the original.
-        final Header header = Header.parseHeader(ctx, headerJo, cryptoContexts);
+        final Header header = Header.parseHeader(ctx, headerMo, cryptoContexts);
         assertTrue(header instanceof MessageHeader);
         final MessageHeader messageHeader = (MessageHeader)header;
         
         // There should be one payload with no data indicating end of message.
-        assertTrue(tokener.more());
-        final Object second = tokener.nextValue();
-        assertTrue(second instanceof JSONObject);
-        final JSONObject payloadJo = (JSONObject)second;
+        assertTrue(tokenizer.more(TIMEOUT));
+        final Object second = tokenizer.nextObject(TIMEOUT);
+        assertTrue(second instanceof MslObject);
+        final MslObject payloadMo = (MslObject)second;
         
         // Verify the payload.
         final ICryptoContext cryptoContext = messageHeader.getCryptoContext();
         assertNotNull(cryptoContext);
-        final PayloadChunk payload = new PayloadChunk(payloadJo, cryptoContext);
+        final PayloadChunk payload = new PayloadChunk(ctx, payloadMo, cryptoContext);
         assertTrue(payload.isEndOfMessage());
         assertEquals(1, payload.getSequenceNumber());
         assertEquals(MESSAGE_HEADER.getMessageId(), payload.getMessageId());
         assertEquals(0, payload.getData().length);
         
         // There should be nothing else.
-        assertFalse(tokener.more());
+        assertFalse(tokenizer.more(TIMEOUT));
         
         // Verify cached payloads.
         final List<PayloadChunk> payloads = mos.getPayloads();
@@ -564,8 +581,8 @@ public class MessageOutputStreamTest {
     }
     
     @Test
-    public void stressWrite() throws IOException, JSONException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
-        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, MslConstants.DEFAULT_CHARSET, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT);
+    public void stressWrite() throws IOException, MslEncoderException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
+        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT);
         mos.setCompressionAlgorithm(null);
         
         // Generate some payload chunks, keeping track of what we're writing.
@@ -584,14 +601,14 @@ public class MessageOutputStreamTest {
         
         // The destination should have received the message header followed by
         // one or more payload chunks.
-        final String mslMessage = destination.toString(MslConstants.DEFAULT_CHARSET.name());
-        final JSONTokener tokener = new JSONTokener(mslMessage);
-        final JSONObject headerJo = (JSONObject)tokener.nextValue();
-        final List<JSONObject> payloadJos = new ArrayList<JSONObject>();
-        while (tokener.more())
-            payloadJos.add((JSONObject)tokener.nextValue());
+        final InputStream mslMessage = new ByteArrayInputStream(destination.toByteArray());
+        final MslTokenizer tokenizer = encoder.createTokenizer(mslMessage);
+        final MslObject headerMo = tokenizer.nextObject(TIMEOUT);
+        final List<MslObject> payloadMos = new ArrayList<MslObject>();
+        while (tokenizer.more(TIMEOUT))
+            payloadMos.add(tokenizer.nextObject(TIMEOUT));
         
-        final Header header = Header.parseHeader(ctx, headerJo, cryptoContexts);
+        final Header header = Header.parseHeader(ctx, headerMo, cryptoContexts);
         assertTrue(header instanceof MessageHeader);
         final MessageHeader messageHeader = (MessageHeader)header;
         
@@ -600,12 +617,12 @@ public class MessageOutputStreamTest {
         final ByteArrayOutputStream data = new ByteArrayOutputStream();
         final ICryptoContext cryptoContext = messageHeader.getCryptoContext();
         final List<PayloadChunk> payloads = mos.getPayloads();
-        assertEquals(payloadJos.size(), payloads.size());
-        for (int i = 0; i < payloadJos.size(); ++i) {
-            final PayloadChunk payload = new PayloadChunk(payloadJos.get(i), cryptoContext);
+        assertEquals(payloadMos.size(), payloads.size());
+        for (int i = 0; i < payloadMos.size(); ++i) {
+            final PayloadChunk payload = new PayloadChunk(ctx, payloadMos.get(i), cryptoContext);
             assertEquals(sequenceNumber++, payload.getSequenceNumber());
             assertEquals(messageHeader.getMessageId(), payload.getMessageId());
-            assertEquals(i == payloadJos.size() - 1, payload.isEndOfMessage());
+            assertEquals(i == payloadMos.size() - 1, payload.isEndOfMessage());
             data.write(payload.getData());
             assertEquals(payload, payloads.get(i));
         }
@@ -613,11 +630,15 @@ public class MessageOutputStreamTest {
     }
     
     @Test
-    public void noCtxCompressionAlgorithm() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, IOException {
+    public void noCtxCompressionAlgorithm() throws IOException, MslKeyExchangeException, MslUserAuthException, MslException {
         final MockMslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
         ctx.setMessageCapabilities(null);
+        
+        // The intersection of compression algorithms is computed when a
+        // response header is generated.
+        final MessageHeader responseHeader = MessageBuilder.createResponse(ctx, MESSAGE_HEADER).getHeader();
 
-        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, MslConstants.DEFAULT_CHARSET, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT);
+        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, responseHeader, PAYLOAD_CRYPTO_CONTEXT);
         assertFalse(mos.setCompressionAlgorithm(CompressionAlgorithm.GZIP));
         assertFalse(mos.setCompressionAlgorithm(CompressionAlgorithm.LZW));
         mos.write(COMPRESSIBLE_DATA);
@@ -634,7 +655,7 @@ public class MessageOutputStreamTest {
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(ctx, ENTITY_AUTH_DATA, null, headerData, peerData);
         
-        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, MslConstants.DEFAULT_CHARSET, messageHeader, PAYLOAD_CRYPTO_CONTEXT);
+        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, messageHeader, PAYLOAD_CRYPTO_CONTEXT);
         assertFalse(mos.setCompressionAlgorithm(CompressionAlgorithm.GZIP));
         assertFalse(mos.setCompressionAlgorithm(CompressionAlgorithm.LZW));
         mos.write(COMPRESSIBLE_DATA);
@@ -647,7 +668,7 @@ public class MessageOutputStreamTest {
     
     @Test
     public void bestCompressionAlgorithm() throws IOException, MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException {
-        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, MslConstants.DEFAULT_CHARSET, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT);
+        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT);
         mos.write(COMPRESSIBLE_DATA);
         mos.close();
         
@@ -662,7 +683,7 @@ public class MessageOutputStreamTest {
     
     @Test
     public void setCompressionAlgorithm() throws IOException, MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException {
-        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, MslConstants.DEFAULT_CHARSET, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT);
+        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT);
         assertTrue(mos.setCompressionAlgorithm(CompressionAlgorithm.GZIP));
         mos.write(COMPRESSIBLE_DATA);
         assertTrue(mos.setCompressionAlgorithm(CompressionAlgorithm.LZW));
@@ -679,13 +700,13 @@ public class MessageOutputStreamTest {
     public void oneCompressionAlgorithm() throws IOException, MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException {
         final Set<CompressionAlgorithm> algos = new HashSet<CompressionAlgorithm>();
         algos.add(CompressionAlgorithm.GZIP);
-        final MessageCapabilities capabilities = new MessageCapabilities(algos, null);
+        final MessageCapabilities capabilities = new MessageCapabilities(algos, null, null);
 
         final HeaderData headerData = new HeaderData(null, 1, null, false, false, capabilities, null, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(ctx, ENTITY_AUTH_DATA, null, headerData, peerData);
 
-        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, MslConstants.DEFAULT_CHARSET, messageHeader, PAYLOAD_CRYPTO_CONTEXT);
+        final MessageOutputStream mos = new MessageOutputStream(ctx, destination, messageHeader, PAYLOAD_CRYPTO_CONTEXT);
         assertFalse(mos.setCompressionAlgorithm(CompressionAlgorithm.LZW));
         mos.write(COMPRESSIBLE_DATA);
         mos.close();

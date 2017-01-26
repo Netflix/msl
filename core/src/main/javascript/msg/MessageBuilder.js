@@ -67,6 +67,7 @@ var MessageBuilder$createErrorResponse;
      * master token.
      *
      * @param {MslContext} ctx MSL context.
+     * @param {MslEncoderFormat} format MSL encoder format.
      * @param {Array.<KeyRequestData>} keyRequestData available key request data.
      * @param {MasterToken} masterToken master token to renew. Null if the identity is
      *        provided.
@@ -88,7 +89,7 @@ var MessageBuilder$createErrorResponse;
      * @throws MslException if there is an error creating or renewing the
      *         master token.
      */
-    function issueMasterToken(ctx, keyRequestData, masterToken, entityAuthData, callback) {
+    function issueMasterToken(ctx, format, keyRequestData, masterToken, entityAuthData, callback) {
         var factoryIndex = 0, requestIndex = 0;
         var factories = ctx.getKeyExchangeFactories();
         var keyxException;
@@ -112,7 +113,7 @@ var MessageBuilder$createErrorResponse;
                         throw keyxException;
 
                     // If we didn't find any then we're unable to perform key exchange.
-                    throw new MslKeyExchangeException(MslError.KEYX_FACTORY_NOT_FOUND, JSON.stringify(keyRequestData));
+                    throw new MslKeyExchangeException(MslError.KEYX_FACTORY_NOT_FOUND, keyRequestData);
                 }
 
                 // Grab this iteration's factory and request.
@@ -126,7 +127,7 @@ var MessageBuilder$createErrorResponse;
                 }
 
                 // Attempt the key exchange.
-                factory.generateResponse(ctx, request, entityToken, {
+                factory.generateResponse(ctx, format, request, entityToken, {
                     result: function(keyExchangeData) {
                         // Deliver the result.
                         callback.result(keyExchangeData);
@@ -156,6 +157,7 @@ var MessageBuilder$createErrorResponse;
      * should occur.
      *
      * @param {MslContext} ctx MSL context.
+     * @param {MslEncoderFormat} format MSL encoder format.
      * @param {MessageHeader} requestHeader message with which to attempt key exchange.
      * @param {?EntityAuthenticationData} entityAuthData message header entity authentication data.
      * @param {?MasterToken} message header master token.
@@ -174,7 +176,7 @@ var MessageBuilder$createErrorResponse;
      * @throws MslException if there is an error creating or renewing the
      *         master token.
      */
-    function performKeyExchange(ctx, requestHeader, entityAuthData, masterToken, callback) {
+    function performKeyExchange(ctx, format, requestHeader, entityAuthData, masterToken, callback) {
         AsyncExecutor(callback, function() {
             // If the message contains key request data and is renewable...
             var keyRequestData = requestHeader.keyRequestData;
@@ -184,7 +186,7 @@ var MessageBuilder$createErrorResponse;
                     // If the master token is renewable or expired then renew
                     // the master token.
                     if (masterToken.isRenewable(null) || masterToken.isExpired(null)) {
-                        issueMasterToken(ctx, keyRequestData, masterToken, null, callback);
+                        issueMasterToken(ctx, format, keyRequestData, masterToken, null, callback);
                     } else {
                         return null;
                     }
@@ -196,7 +198,7 @@ var MessageBuilder$createErrorResponse;
                     // The message header is already authenticated via the
                     // entity authentication data's crypto context so we can
                     // simply proceed with the master token issuance.
-                    issueMasterToken(ctx, keyRequestData, null, entityAuthData, callback);
+                    issueMasterToken(ctx, format, keyRequestData, null, entityAuthData, callback);
                 }
             }
 
@@ -352,9 +354,18 @@ var MessageBuilder$createErrorResponse;
             // The response message ID must be equal to the request message ID + 1.
             var requestMessageId = requestHeader.messageId;
             var messageId = incrementMessageId(requestMessageId);
+            
+            // Compute the intersection of the request and response message
+            // capabilities.
+            var capabilities = MessageCapabilities$intersection(requestHeader.messageCapabilities, ctx.getMessageCapabilities());
+            
+            // Identify the response format.
+            var encoder = ctx.getMslEncoderFactory();
+            var formats = (capabilities) ? capabilities.encoderFormats : null;
+            var format = encoder.getPreferredFormat(formats);
 
             // Perform key exchange.
-            performKeyExchange(ctx, requestHeader, entityAuthData, masterToken, {
+            performKeyExchange(ctx, format, requestHeader, entityAuthData, masterToken, {
                 result: function(keyExchangeData) {
                     AsyncExecutor(callback, function() {
                         // If we successfully performed key exchange, use the new master
@@ -372,11 +383,7 @@ var MessageBuilder$createErrorResponse;
                                         result: function(token) {
                                             AsyncExecutor(callback, function() {
                                                 userIdToken = token;
-
-                                                // Compute the intersection of the request and response message
-                                                // capabilities.
-                                                var capabilities = MessageCapabilities$intersection(requestHeader.messageCapabilities, ctx.getMessageCapabilities());
-
+                                                
                                                 // Create the message builder.
                                                 //
                                                 // Peer-to-peer responses swap the tokens.
@@ -432,12 +439,12 @@ var MessageBuilder$createErrorResponse;
      * @param {{result: function(ErrorHeader), error: function(Error)}}
      *        callback the callback that will receive the error header or any
      *        thrown exceptions.
-     * @throws MslEncodingException if there is an error encoding the JSON
-     *         data.
      * @throws MslCryptoException if there is an error encrypting or signing
      *         the message.
      * @throws MslEntityAuthException if there is an error with the entity
      *         authentication data.
+     * @throws MslMessageException if no entity authentication data was
+     *         returned by the MSL context.
      */
     MessageBuilder$createErrorResponse = function MessageBuilder$createErrorResponse(ctx, recipient, requestMessageId, error, userMessage, callback) {
         AsyncExecutor(callback, function() {
@@ -688,8 +695,6 @@ var MessageBuilder$createErrorResponse;
          * @param {{result: function(MessageHeader), error: function(Error)}}
          *        callback the callback that will receive the message header or
          *        any thrown exceptions.
-         * @throws MslEncodingException if there is an error encoding the JSON
-         *         data.
          * @throws MslCryptoException if there is an error encrypting or signing
          *         the message.
          * @throws MslMasterTokenException if the header master token is not
@@ -888,8 +893,6 @@ var MessageBuilder$createErrorResponse;
          * @param {{result: function(boolean), error: function(Error)}} callback
          *        the callback will receive true on completion or any thrown
          *        exceptions.
-         * @throws MslEncodingException if there is an error encoding the JSON
-         *         data.
          * @throws MslCryptoException if there is an error encrypting or signing
          *         the token data.
          * @throws MslException if there is an error creating the user ID token.
@@ -987,9 +990,9 @@ var MessageBuilder$createErrorResponse;
 
             // Make sure the service token is properly bound.
             if (serviceToken.isMasterTokenBound() && !serviceToken.isBoundTo(serviceMasterToken))
-                throw new MslMessageException(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH, "st " + JSON.stringify(serviceToken) + "; mt " + JSON.stringify(serviceMasterToken)).setMasterToken(serviceMasterToken);
+                throw new MslMessageException(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH, "st " + serviceToken + "; mt " + serviceMasterToken).setMasterToken(serviceMasterToken);
             if (serviceToken.isUserIdTokenBound() && !serviceToken.isBoundTo(this._userIdToken))
-                throw new MslMessageException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH, "st " + JSON.stringify(serviceToken) + "; uit " + JSON.stringify(this._userIdToken)).setMasterToken(serviceMasterToken).setUserIdToken(this._userIdToken);
+                throw new MslMessageException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH, "st " + serviceToken + "; uit " + this._userIdToken).setMasterToken(serviceMasterToken).setUserIdToken(this._userIdToken);
 
             // Add the service token.
             this._serviceTokens[serviceToken.name] = serviceToken;
@@ -1172,9 +1175,9 @@ var MessageBuilder$createErrorResponse;
             if (!this._ctx.isPeerToPeer())
                 throw new MslInternalException("Cannot set peer service tokens when not in peer-to-peer mode.");
             if (serviceToken.isMasterTokenBound() && !serviceToken.isBoundTo(this._peerMasterToken))
-                throw new MslMessageException(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH, "st " + JSON.stringify(serviceToken) + "; mt " + JSON.stringify(this._peerMasterToken)).setMasterToken(this._peerMasterToken);
+                throw new MslMessageException(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH, "st " + serviceToken + "; mt " + this._peerMasterToken).setMasterToken(this._peerMasterToken);
             if (serviceToken.isUserIdTokenBound() && !serviceToken.isBoundTo(this._peerUserIdToken))
-                throw new MslMessageException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH, "st " + JSON.stringify(serviceToken) + "; uit " + JSON.stringify(this._peerUserIdToken)).setMasterToken(this._peerMasterToken).setUserIdToken(this._peerUserIdToken);
+                throw new MslMessageException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH, "st " + serviceToken + "; uit " + this._peerUserIdToken).setMasterToken(this._peerMasterToken).setUserIdToken(this._peerUserIdToken);
 
             // Add the peer service token.
             this._peerServiceTokens[serviceToken.name] = serviceToken;

@@ -36,9 +36,6 @@ import javax.crypto.spec.DHParameterSpec;
 import javax.crypto.spec.DHPublicKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
@@ -51,10 +48,13 @@ import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.crypto.JcaAlgorithm;
 import com.netflix.msl.crypto.SessionCryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.util.AuthenticationUtils;
-import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -63,9 +63,9 @@ import com.netflix.msl.util.MslContext;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class DiffieHellmanExchange extends KeyExchangeFactory {
-    /** JSON key Diffie-Hellman parameters ID. */
+    /** Key Diffie-Hellman parameters ID. */
     private static final String KEY_PARAMETERS_ID = "parametersid";
-    /** JSON key Diffie-Hellman public key. */
+    /** Key Diffie-Hellman public key. */
     private static final String KEY_PUBLIC_KEY = "publickey";
     
     /**
@@ -106,11 +106,11 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
      * {@code {
      *   "#mandatory" : [ "parametersid", "publickey" ],
      *   "parametersid" : "string",
-     *   "publickey" : "base64",
+     *   "publickey" : "binary",
      * }} where:
      * <ul>
      * <li>{@code parametersid} identifies the Diffie-Hellman paramters to use</li>
-     * <li>{@code publickey} the Base64-encoded public key used to generate the shared secret</li>
+     * <li>{@code publickey} the public key used to generate the shared secret</li>
      * </ul>
      * </p>
      */
@@ -133,37 +133,38 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
 
         /**
          * Create a new Diffie-Hellman request data repository from the
-         * provided JSON object. The private key will be unknown.
+         * provided MSL object. The private key will be unknown.
          * 
-         * @param keyDataJO the JSON object.
-         * @throws MslEncodingException if there is an error parsing the JSON.
+         * @param keyDataMo the MSL object.
+         * @throws MslEncodingException if there is an error parsing the data.
          * @throws MslKeyExchangeException if the public key is invalid.
          */
-        public RequestData(final JSONObject keyDataJO) throws MslEncodingException, MslKeyExchangeException {
+        public RequestData(final MslObject keyDataMo) throws MslEncodingException, MslKeyExchangeException {
             super(KeyExchangeScheme.DIFFIE_HELLMAN);
             try {
-                parametersId = keyDataJO.getString(KEY_PARAMETERS_ID);
-                final byte[] publicKeyY = Base64.decode(keyDataJO.getString(KEY_PUBLIC_KEY));
+                parametersId = keyDataMo.getString(KEY_PARAMETERS_ID);
+                final byte[] publicKeyY = keyDataMo.getBytes(KEY_PUBLIC_KEY);
+                if (publicKeyY.length == 0)
+                    throw new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY, "keydata " + keyDataMo.toString());
                 publicKey = new BigInteger(correctNullBytes(publicKeyY));
-            } catch (final JSONException e) {
-                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + keyDataJO.toString(), e);
-            } catch (final NullPointerException e) {
-                throw new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY, "keydata " + keyDataJO.toString(), e);
+            } catch (final MslEncoderException e) {
+                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "keydata " + keyDataMo.toString(), e);
             } catch (final NumberFormatException e) {
-                throw new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY, "keydata " + keyDataJO.toString(), e);
-            } catch (final IllegalArgumentException e) {
-                throw new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY, "keydata " + keyDataJO.toString(), e);
+                throw new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY, "keydata " + keyDataMo.toString(), e);
             }
             privateKey = null;
         }
 
+        /* (non-Javadoc)
+         * @see com.netflix.msl.keyx.KeyRequestData#getKeydata(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
+         */
         @Override
-        protected JSONObject getKeydata() throws JSONException {
-            final JSONObject jsonObj = new JSONObject();
-            jsonObj.put(KEY_PARAMETERS_ID, parametersId);
+        protected MslObject getKeydata(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException {
+            final MslObject mo = encoder.createObject();
+            mo.put(KEY_PARAMETERS_ID, parametersId);
             final byte[] publicKeyY = publicKey.toByteArray();
-            jsonObj.put(KEY_PUBLIC_KEY, Base64.encode(correctNullBytes(publicKeyY)));
-            return jsonObj;
+            mo.put(KEY_PUBLIC_KEY, correctNullBytes(publicKeyY));
+            return mo;
         }
 
         /**
@@ -182,7 +183,7 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
 
         /**
          * @return the private key or null if unknown (reconstructed from a
-         *         JSON object).
+         *         MSL object).
          */
         public DHPrivateKey getPrivateKey() {
             return privateKey;
@@ -236,11 +237,11 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
      * {@code {
      *   "#mandatory" : [ "parametersid", "publickey" ],
      *   "parametersid" : "string",
-     *   "publickey" : "base64",
+     *   "publickey" : "binary",
      * }} where:
      * <ul>
      * <li>{@code parametersid} identifies the Diffie-Hellman paramters to use</li>
-     * <li>{@code publickey} the Base64-encoded public key used to generate the shared secret</li>
+     * <li>{@code publickey} the public key used to generate the shared secret</li>
      * </ul>
      * </p>
      */
@@ -261,27 +262,25 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
 
         /**
          * Create a new Diffie-Hellman response data repository with the
-         * provided master token from the provided JSON object.
+         * provided master token from the provided MSL object.
          * 
          * @param masterToken the master token.
-         * @param keyDataJO the JSON object.
-         * @throws MslEncodingException if there is an error parsing the JSON.
+         * @param keyDataMo the MSL object.
+         * @throws MslEncodingException if there is an error parsing the data.
          * @throws MslKeyExchangeException if the public key is invalid.
          */
-        public ResponseData(final MasterToken masterToken, final JSONObject keyDataJO) throws MslEncodingException, MslKeyExchangeException {
+        public ResponseData(final MasterToken masterToken, final MslObject keyDataMo) throws MslEncodingException, MslKeyExchangeException {
             super(masterToken, KeyExchangeScheme.DIFFIE_HELLMAN);
             try {
-                parametersId = keyDataJO.getString(KEY_PARAMETERS_ID);
-                final byte[] publicKeyY = Base64.decode(keyDataJO.getString(KEY_PUBLIC_KEY));
+                parametersId = keyDataMo.getString(KEY_PARAMETERS_ID);
+                final byte[] publicKeyY = keyDataMo.getBytes(KEY_PUBLIC_KEY);
+                if (publicKeyY.length == 0)
+                    throw new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY, "keydata " + keyDataMo);
                 publicKey = new BigInteger(correctNullBytes(publicKeyY));
-            } catch (final JSONException e) {
-                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + keyDataJO.toString(), e);
-            } catch (final NullPointerException e) {
-                throw new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY, "keydata " + keyDataJO.toString(), e);
+            } catch (final MslEncoderException e) {
+                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "keydata " + keyDataMo, e);
             } catch (final NumberFormatException e) {
-                throw new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY, "keydata " + keyDataJO.toString(), e);
-            } catch (final IllegalArgumentException e) {
-                throw new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY, "keydata " + keyDataJO.toString(), e);
+                throw new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY, "keydata " + keyDataMo, e);
             }
         }
 
@@ -299,13 +298,16 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
             return publicKey;
         }
 
+        /* (non-Javadoc)
+         * @see com.netflix.msl.keyx.KeyResponseData#getKeydata(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
+         */
         @Override
-        protected JSONObject getKeydata() throws JSONException {
-            final JSONObject jsonObj = new JSONObject();
-            jsonObj.put(KEY_PARAMETERS_ID, parametersId);
+        protected MslObject getKeydata(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException {
+            final MslObject mo = encoder.createObject();
+            mo.put(KEY_PARAMETERS_ID, parametersId);
             final byte[] publicKeyY = publicKey.toByteArray();
-            jsonObj.put(KEY_PUBLIC_KEY, Base64.encode(correctNullBytes(publicKeyY)));
-            return jsonObj;
+            mo.put(KEY_PUBLIC_KEY, correctNullBytes(publicKeyY));
+            return mo;
         }
 
         /*
@@ -417,26 +419,26 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.keyx.KeyExchangeFactory#createRequestData(com.netflix.msl.util.MslContext, org.json.JSONObject)
+     * @see com.netflix.msl.keyx.KeyExchangeFactory#createRequestData(com.netflix.msl.util.MslContext, com.netflix.msl.io.MslObject)
      */
     @Override
-    protected KeyRequestData createRequestData(final MslContext ctx, final JSONObject keyRequestJO) throws MslEncodingException, MslKeyExchangeException, MslCryptoException {
-        return new RequestData(keyRequestJO);
+    protected KeyRequestData createRequestData(final MslContext ctx, final MslObject keyRequestMo) throws MslEncodingException, MslKeyExchangeException, MslCryptoException {
+        return new RequestData(keyRequestMo);
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.keyx.KeyExchangeFactory#createResponseData(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, org.json.JSONObject)
+     * @see com.netflix.msl.keyx.KeyExchangeFactory#createResponseData(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, com.netflix.msl.io.MslObject)
      */
     @Override
-    protected KeyResponseData createResponseData(final MslContext ctx, final MasterToken masterToken, final JSONObject keyDataJO) throws MslEncodingException, MslKeyExchangeException {
-        return new ResponseData(masterToken, keyDataJO);
+    protected KeyResponseData createResponseData(final MslContext ctx, final MasterToken masterToken, final MslObject keyDataMo) throws MslEncodingException, MslKeyExchangeException {
+        return new ResponseData(masterToken, keyDataMo);
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.keyx.KeyExchangeFactory#generateResponse(com.netflix.msl.util.MslContext, com.netflix.msl.keyx.KeyRequestData, com.netflix.msl.tokens.MasterToken)
+     * @see com.netflix.msl.keyx.KeyExchangeFactory#generateResponse(com.netflix.msl.util.MslContext, com.netflix.msl.io.MslEncoderFormat, com.netflix.msl.keyx.KeyRequestData, com.netflix.msl.tokens.MasterToken)
      */
     @Override
-    public KeyExchangeData generateResponse(final MslContext ctx, final KeyRequestData keyRequestData, final MasterToken masterToken) throws MslException {
+    public KeyExchangeData generateResponse(final MslContext ctx, final MslEncoderFormat format, final KeyRequestData keyRequestData, final MasterToken masterToken) throws MslException {
         if (!(keyRequestData instanceof RequestData))
             throw new MslInternalException("Key request data " + keyRequestData.getClass().getName() + " was not created by this factory.");
         final RequestData request = (RequestData) keyRequestData;
@@ -501,10 +503,10 @@ public class DiffieHellmanExchange extends KeyExchangeFactory {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.keyx.KeyExchangeFactory#generateResponse(com.netflix.msl.util.MslContext, com.netflix.msl.keyx.KeyRequestData, com.netflix.msl.entityauth.EntityAuthenticationData)
+     * @see com.netflix.msl.keyx.KeyExchangeFactory#generateResponse(com.netflix.msl.util.MslContext, com.netflix.msl.io.MslEncoderFormat, com.netflix.msl.keyx.KeyRequestData, com.netflix.msl.entityauth.EntityAuthenticationData)
      */
     @Override
-    public KeyExchangeData generateResponse(final MslContext ctx, final KeyRequestData keyRequestData, final EntityAuthenticationData entityAuthData) throws MslException {
+    public KeyExchangeData generateResponse(final MslContext ctx, final MslEncoderFormat format, final KeyRequestData keyRequestData, final EntityAuthenticationData entityAuthData) throws MslException {
         if (!(keyRequestData instanceof RequestData))
             throw new MslInternalException("Key request data " + keyRequestData.getClass().getName() + " was not created by this factory.");
         final RequestData request = (RequestData)keyRequestData;

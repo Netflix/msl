@@ -157,7 +157,7 @@ var MockMslContext$create;
 		            };
 
 		            // Set message capabilities.
-		            var capabilities = new MessageCapabilities([MslConstants$CompressionAlgorithm.LZW], [ "en-US" ]);
+		            var capabilities = new MessageCapabilities([MslConstants$CompressionAlgorithm.LZW], [ "en-US" ], [MslEncoderFormat.JSON]);
 
 		            // Set the MSL crypto context.
 		            var mslCryptoContext = new SymmetricCryptoContext(this, "TestMslKeys", mslEncryptionKey, mslHmacKey, mslWrapKey);
@@ -176,6 +176,9 @@ var MockMslContext$create;
 
 		            // Set up the MSL store.
 		            var store = new SimpleMslStore();
+		            
+		            // Set up the MSL encoder factory.
+		            var encoderFactory = new MslEncoderFactory();
 
 		            // The properties.
 		            var props = {
@@ -188,7 +191,8 @@ var MockMslContext$create;
 		                _tokenFactory: { value: tokenFactory, writable: true, enumerable: false, configurable: false },
 		                _paramSpecs: { value: paramSpecs, writable: false, enumerable: false, configurable: false },
 		                _keyxFactories: { value: keyxFactories, writable: false, enumerable: false, configurable: false },
-		                _store: { value: store, writable: false, enumerable: false, configurable: false },
+		                _store: { value: store, writable: true, enumerable: false, configurable: false },
+		                _encoderFactory: { value: encoderFactory, writable: true, enumerable: false, configurable: false },
 		            };
 		            Object.defineProperties(this, props);
 
@@ -377,10 +381,33 @@ var MockMslContext$create;
 		getKeyExchangeFactories: function getKeyExchangeFactories(scheme) {
 			return this._keyxFactories;
 		},
+		
+		/**
+		 * Sets the MSL store.
+		 * 
+		 * @param {MslStore} store the MSL store.
+		 */
+		setMslStore: function setMslStore(store) {
+		    this._store = store;
+		},
 
 		/** @inheritDoc */
 		getMslStore: function getMslStore() {
 			return this._store;
+		},
+		
+		/**
+		 * Sets the MSL encoder factory.
+		 * 
+		 * @param {MslEncoderFactory} encoderFactory the MSL encoder factory.
+		 */
+		setMslEncoderFactory: function setMslEncoderFactory(encoderFactory) {
+		    this._encoderFactory = encoderFactory;
+		},
+		
+		/** @inheritDoc */
+		getMslEncoderFactory: function getMslEncoderFactory() {
+		    return this._encoderFactory;
 		},
 	});
 	

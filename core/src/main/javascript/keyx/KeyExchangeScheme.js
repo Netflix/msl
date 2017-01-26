@@ -23,7 +23,6 @@
  */
 var KeyExchangeScheme;
 var KeyExchangeScheme$getScheme;
-var KeyExchangeScheme$values;
 
 (function() {
     "use strict";

@@ -15,6 +15,7 @@
  */
 package com.netflix.msl.entityauth;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -22,8 +23,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -33,10 +32,15 @@ import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
 import com.netflix.msl.MslError;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslEncoderUtils;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.test.ExpectedMslException;
-import com.netflix.msl.util.JsonUtils;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslContext;
+import com.netflix.msl.util.MslTestUtils;
 
 /**
  * Unauthenticated entity authentication data unit tests.
@@ -44,11 +48,14 @@ import com.netflix.msl.util.MslContext;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class UnauthenticatedAuthenticationDataTest {
-    /** JSON key entity authentication scheme. */
+	/** MSL encoder format. */
+	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
+
+    /** Key entity authentication scheme. */
     private static final String KEY_SCHEME = "scheme";
-    /** JSON key entity authentication data. */
+    /** Key entity authentication data. */
     private static final String KEY_AUTHDATA = "authdata";
-    /** JSON key entity identity. */
+    /** Key entity identity. */
     private static final String KEY_IDENTITY = "identity";
 
     @Rule
@@ -59,79 +66,81 @@ public class UnauthenticatedAuthenticationDataTest {
     @BeforeClass
     public static void setup() throws IOException, MslEncodingException, MslCryptoException {
         ctx = new MockMslContext(EntityAuthenticationScheme.X509, false);
+        encoder = ctx.getMslEncoderFactory();
     }
     
     @AfterClass
     public static void teardown() {
+        encoder = null;
         ctx = null;
     }
     
     @Test
-    public void ctors() throws MslEncodingException, JSONException {
+    public void ctors() throws MslEncodingException, MslEncoderException {
         final UnauthenticatedAuthenticationData data = new UnauthenticatedAuthenticationData(IDENTITY);
         assertEquals(IDENTITY, data.getIdentity());
         assertEquals(EntityAuthenticationScheme.NONE, data.getScheme());
-        final JSONObject authdata = data.getAuthData();
+        final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
         assertNotNull(authdata);
-        final String jsonString = data.toJSONString();
-        assertNotNull(jsonString);
+        final byte[] encode = data.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(encode);
         
-        final UnauthenticatedAuthenticationData joData = new UnauthenticatedAuthenticationData(authdata);
-        assertEquals(data.getIdentity(), joData.getIdentity());
-        assertEquals(data.getScheme(), joData.getScheme());
-        final JSONObject joAuthdata = joData.getAuthData();
-        assertNotNull(joAuthdata);
-        assertTrue(JsonUtils.equals(authdata, joAuthdata));
-        final String joJsonString = joData.toJSONString();
-        assertNotNull(joJsonString);
-        assertEquals(jsonString, joJsonString);
+        final UnauthenticatedAuthenticationData moData = new UnauthenticatedAuthenticationData(authdata);
+        assertEquals(data.getIdentity(), moData.getIdentity());
+        assertEquals(data.getScheme(), moData.getScheme());
+        final MslObject moAuthdata = moData.getAuthData(encoder, ENCODER_FORMAT);
+        assertNotNull(moAuthdata);
+        assertTrue(MslEncoderUtils.equalObjects(authdata, moAuthdata));
+        final byte[] moEncode = moData.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
+        assertArrayEquals(encode, moEncode);
     }
     
     @Test
-    public void jsonString() throws JSONException {
+    public void encode() throws MslEncoderException {
         final UnauthenticatedAuthenticationData data = new UnauthenticatedAuthenticationData(IDENTITY);
-        final JSONObject jo = new JSONObject(data.toJSONString());
-        assertEquals(EntityAuthenticationScheme.NONE.toString(), jo.getString(KEY_SCHEME));
-        final JSONObject authdata = jo.getJSONObject(KEY_AUTHDATA);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, data);
+        assertEquals(EntityAuthenticationScheme.NONE.toString(), mo.getString(KEY_SCHEME));
+        final MslObject authdata = mo.getMslObject(KEY_AUTHDATA, encoder);
         assertEquals(IDENTITY, authdata.getString(KEY_IDENTITY));
     }
     
     @Test
-    public void create() throws JSONException, MslEntityAuthException, MslEncodingException, MslCryptoException {
+    public void create() throws MslEncoderException, MslEntityAuthException, MslEncodingException, MslCryptoException {
         final UnauthenticatedAuthenticationData data = new UnauthenticatedAuthenticationData(IDENTITY);
-        final String jsonString = data.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
-        final EntityAuthenticationData entitydata = EntityAuthenticationData.create(ctx, jo);
+        final byte[] encode = data.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, data);
+        final EntityAuthenticationData entitydata = EntityAuthenticationData.create(ctx, mo);
         assertNotNull(entitydata);
         assertTrue(entitydata instanceof UnauthenticatedAuthenticationData);
         
-        final UnauthenticatedAuthenticationData joData = (UnauthenticatedAuthenticationData)entitydata;
-        assertEquals(data.getIdentity(), joData.getIdentity());
-        assertEquals(data.getScheme(), joData.getScheme());
-        final JSONObject joAuthdata = joData.getAuthData();
-        assertNotNull(joAuthdata);
-        assertTrue(JsonUtils.equals(data.getAuthData(), joAuthdata));
-        final String joJsonString = joData.toJSONString();
-        assertNotNull(joJsonString);
-        assertEquals(jsonString, joJsonString);
+        final UnauthenticatedAuthenticationData moData = (UnauthenticatedAuthenticationData)entitydata;
+        assertEquals(data.getIdentity(), moData.getIdentity());
+        assertEquals(data.getScheme(), moData.getScheme());
+        final MslObject moAuthdata = moData.getAuthData(encoder, ENCODER_FORMAT);
+        assertNotNull(moAuthdata);
+        assertTrue(MslEncoderUtils.equalObjects(data.getAuthData(encoder, ENCODER_FORMAT), moAuthdata));
+        final byte[] moEncode = moData.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
+        assertArrayEquals(encode, moEncode);
     }
     
     @Test
     public void missingIdentity() throws MslEncodingException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final UnauthenticatedAuthenticationData data = new UnauthenticatedAuthenticationData(IDENTITY);
-        final JSONObject authdata = data.getAuthData();
+        final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
         authdata.remove(KEY_IDENTITY);
         new UnauthenticatedAuthenticationData(authdata);
     }
     
     @Test
-    public void equalsIdentity() throws MslEncodingException, JSONException, MslEntityAuthException, MslCryptoException {
+    public void equalsIdentity() throws MslEncodingException, MslEncoderException, MslEntityAuthException, MslCryptoException {
         final UnauthenticatedAuthenticationData dataA = new UnauthenticatedAuthenticationData(IDENTITY + "A");
         final UnauthenticatedAuthenticationData dataB = new UnauthenticatedAuthenticationData(IDENTITY + "B");
-        final EntityAuthenticationData dataA2 = EntityAuthenticationData.create(ctx, new JSONObject(dataA.toJSONString()));
+        final EntityAuthenticationData dataA2 = EntityAuthenticationData.create(ctx, MslTestUtils.toMslObject(encoder, dataA));
         
         assertTrue(dataA.equals(dataA));
         assertEquals(dataA.hashCode(), dataA.hashCode());
@@ -155,4 +164,6 @@ public class UnauthenticatedAuthenticationDataTest {
 
     /** MSL context. */
     private static MslContext ctx;
+    /** MSL encoder factory. */
+    private static MslEncoderFactory encoder;
 }

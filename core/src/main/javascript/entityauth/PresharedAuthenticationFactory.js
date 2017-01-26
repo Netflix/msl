@@ -39,9 +39,9 @@ PresharedAuthenticationFactory = EntityAuthenticationFactory.extend({
     },
 
     /** @inheritDoc */
-    createData: function createData(ctx, entityAuthJO, callback) {
+    createData: function createData(ctx, entityAuthMo, callback) {
         AsyncExecutor(callback, function() {
-            return PresharedAuthenticationData$parse(entityAuthJO);
+            return PresharedAuthenticationData$parse(entityAuthMo);
         });
     },
 
@@ -49,7 +49,7 @@ PresharedAuthenticationFactory = EntityAuthenticationFactory.extend({
     getCryptoContext: function getCryptoContext(ctx, authdata) {
         // Make sure we have the right kind of entity authentication data.
         if (!(authdata instanceof PresharedAuthenticationData))
-            throw new MslInternalException("Incorrect authentication data type " + JSON.stringify(authdata) + ".");
+            throw new MslInternalException("Incorrect authentication data type " + authdata + ".");
         var pad = authdata;
      
         // Check for revocation.

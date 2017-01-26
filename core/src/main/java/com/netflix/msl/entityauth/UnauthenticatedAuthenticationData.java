@@ -15,11 +15,12 @@
  */
 package com.netflix.msl.entityauth;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 
 /**
  * <p>Unauthenticated entity authentication data. This form of authentication
@@ -39,7 +40,7 @@ import com.netflix.msl.MslError;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class UnauthenticatedAuthenticationData extends EntityAuthenticationData {
-    /** JSON key entity identity. */
+    /** Key entity identity. */
     private static final String KEY_IDENTITY = "identity";
     
     /**
@@ -55,18 +56,17 @@ public class UnauthenticatedAuthenticationData extends EntityAuthenticationData 
     
     /**
      * Construct a new unauthenticated entity authentication data instance from
-     * the provided JSON object.
+     * the provided MSL object.
      * 
-     * @param unauthenticatedAuthJO the authentication data JSON object.
-     * @throws MslEncodingException if there is an error parsing the JSON
-     *         representation.
+     * @param unauthenticatedAuthMo the authentication data MSL object.
+     * @throws MslEncodingException if there is an error parsing the MSL data.
      */
-    UnauthenticatedAuthenticationData(final JSONObject unauthenticatedAuthJO) throws MslEncodingException {
+    UnauthenticatedAuthenticationData(final MslObject unauthenticatedAuthMo) throws MslEncodingException {
         super(EntityAuthenticationScheme.NONE);
         try {
-            identity = unauthenticatedAuthJO.getString(KEY_IDENTITY);
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "unauthenticated authdata " + unauthenticatedAuthJO.toString(), e);
+            identity = unauthenticatedAuthMo.getString(KEY_IDENTITY);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "unauthenticated authdata " + unauthenticatedAuthMo, e);
         }
     }
     
@@ -79,17 +79,13 @@ public class UnauthenticatedAuthenticationData extends EntityAuthenticationData 
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.entityauth.EntityAuthenticationData#getAuthData()
+     * @see com.netflix.msl.entityauth.EntityAuthenticationData#getAuthData(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public JSONObject getAuthData() throws MslEncodingException {
-        try {
-            final JSONObject jsonObj = new JSONObject();
-            jsonObj.put(KEY_IDENTITY, identity);
-            return jsonObj;
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, "unauthenticated authdata", e);
-        }
+    public MslObject getAuthData(final MslEncoderFactory encoder, final MslEncoderFormat format) {
+        final MslObject mo = encoder.createObject();
+        mo.put(KEY_IDENTITY, identity);
+        return mo;
     }
 
     /** Entity identity. */

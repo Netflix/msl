@@ -27,6 +27,7 @@ import com.netflix.msl.MslException;
 import com.netflix.msl.MslMasterTokenException;
 import com.netflix.msl.MslUserIdTokenException;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -119,14 +120,13 @@ public interface TokenFactory {
      * @param issuerData optional master token issuer data that should be
      *        included in the master token. May be {@code null}.
      * @return the new master token.
-     * @throws MslEncodingException if there is an error encoding the JSON
-     *         data.
+     * @throws MslEncodingException if there is an error encoding the data.
      * @throws MslCryptoException if there is an error encrypting or signing
      *         the token data.
      * @throws MslException if there is an error creating the master token.
      * @see #acceptNonReplayableId(MslContext, MasterToken, long)
      */
-    public MasterToken createMasterToken(final MslContext ctx, final EntityAuthenticationData entityAuthData, final SecretKey encryptionKey, final SecretKey hmacKey, final JSONObject issuerData) throws MslEncodingException, MslCryptoException, MslException;
+    public MasterToken createMasterToken(final MslContext ctx, final EntityAuthenticationData entityAuthData, final SecretKey encryptionKey, final SecretKey hmacKey, final MslObject issuerData) throws MslEncodingException, MslCryptoException, MslException;
 
     /**
      * <p>Check if the master token would be renewed by a call to
@@ -160,8 +160,7 @@ public interface TokenFactory {
      *        merged into or overwrite any existing issuer data. May be
      *        {@code null}.
      * @return the new master token.
-     * @throws MslEncodingException if there is an error encoding the JSON
-     *         data.
+     * @throws MslEncodingException if there is an error encoding the data.
      * @throws MslCryptoException if there is an error encrypting or signing
      *         the token data.
      * @throws MslMasterTokenException if the master token is not trusted or
@@ -169,7 +168,7 @@ public interface TokenFactory {
      * @throws MslException if there is an error renewing the master token.
      * @see #isMasterTokenRenewable(MslContext, MasterToken)
      */
-    public MasterToken renewMasterToken(final MslContext ctx, final MasterToken masterToken, final SecretKey encryptionKey, final SecretKey hmacKey, final JSONObject issuerData) throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslException;
+    public MasterToken renewMasterToken(final MslContext ctx, final MasterToken masterToken, final SecretKey encryptionKey, final SecretKey hmacKey, final MslObject issuerData) throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslException;
     
     /**
      * <p>Return false if the user ID token has been revoked.</p>
@@ -201,8 +200,7 @@ public interface TokenFactory {
      * @param user MSL user.
      * @param masterToken the master token to bind the user token against.
      * @return the new user ID token.
-     * @throws MslEncodingException if there is an error encoding the JSON
-     *         data.
+     * @throws MslEncodingException if there is an error encoding the data.
      * @throws MslCryptoException if there is an error encrypting or signing
      *         the token data.
      * @throws MslMasterTokenException if the master token is not trusted.
@@ -220,8 +218,7 @@ public interface TokenFactory {
      * @param userIdToken the user ID token to renew.
      * @param masterToken the master token to bind the user token against.
      * @return the new user ID token.
-     * @throws MslEncodingException if there is an error encoding the JSON
-     *         data.
+     * @throws MslEncodingException if there is an error encoding the data.
      * @throws MslCryptoException if there is an error encrypting or signing
      *         the token data.
      * @throws MslUserIdTokenException if the user ID token is not decrypted or

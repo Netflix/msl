@@ -17,6 +17,7 @@ var MockEccAuthenticationFactory;
 var MockEccAuthenticationFactory$create;
 
 (function() {
+    "use strict";
 
     /** ECC keypair */
     var ECDSA_KEYPAIR = {

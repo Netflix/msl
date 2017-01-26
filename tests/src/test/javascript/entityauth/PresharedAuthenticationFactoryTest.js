@@ -20,7 +20,10 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("PresharedAuthenticationFactory", function() {
-    /** JSON key entity identity. */
+    /** MSL encoder format. */
+    var ENCODER_FORMAT = MslEncoderFormat.JSON;
+    
+    /** Key entity identity. */
     var KEY_IDENTITY = "identity";
 
     /** Authentication utilities. */
@@ -29,6 +32,8 @@ describe("PresharedAuthenticationFactory", function() {
     var factory;
     /** MSL context. */
     var ctx;
+    /** MSL encoder factory. */
+    var encoder;
     
     var initialized = false;
     beforeEach(function() {
@@ -41,6 +46,7 @@ describe("PresharedAuthenticationFactory", function() {
             });
             waitsFor(function() { return ctx; }, "ctx", 100);
             runs(function() {
+                encoder = ctx.getMslEncoderFactory();
                 var store = new MockPresharedKeyStore();
                 store.addKeys(MockPresharedAuthenticationFactory.PSK_ESN, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH, MockPresharedAuthenticationFactory.KPW);
                 factory = new PresharedAuthenticationFactory(store, authutils);
@@ -56,34 +62,60 @@ describe("PresharedAuthenticationFactory", function() {
     
     it("createData", function () {
         var data = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN);
-        var entityAuthJO = data.getAuthData();
+        var entityAuthMo;
+        runs(function() {
+            data.getAuthData(encoder, ENCODER_FORMAT, {
+                result: function(x) { entityAuthMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return entityAuthMo; }, "entityAuthMo", 100);
         
         var authdata;
         runs(function() {
-            factory.createData(ctx, entityAuthJO, {
+            factory.createData(ctx, entityAuthMo, {
                 result: function(x) { authdata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
         waitsFor(function() { return authdata; }, "authdata", 100);
 
+        var dataMo, authdataMo;
         runs(function() {
             expect(authdata).not.toBeNull();
             expect(authdata instanceof PresharedAuthenticationData).toBeTruthy();
             
-            var dataJo = JSON.parse(JSON.stringify(data));
-            var authdataJo = JSON.parse(JSON.stringify(authdata));
-            expect(authdataJo).toEqual(dataJo);
+            MslTestUtils.toMslObject(encoder, data, {
+                result: function(x) { dataMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            MslTestUtils.toMslObject(encoder, authdata, {
+                result: function(x) { authdataMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return dataMo && authdataMo; }, "dataMo && authdataMo", 100);
+
+        runs(function() {
+            expect(MslEncoderUtils$equalObjects(dataMo, authdataMo)).toBeTruthy();
         });
     });
     
     it("encode exception", function() {
-        var exception;
+        var entityAuthMo;
         runs(function() {
 	        var data = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN);
-	        var entityAuthJO = data.getAuthData();
-	        delete entityAuthJO[KEY_IDENTITY];
-	        factory.createData(ctx, entityAuthJO, {
+	        data.getAuthData(encoder, ENCODER_FORMAT, {
+	            result: function(x) { entityAuthMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return entityAuthMo; }, "entityAuthMo", 100);
+        
+        var exception;
+        runs(function() {
+	        entityAuthMo.remove(KEY_IDENTITY);
+	        factory.createData(ctx, entityAuthMo, {
                 result: function() {},
                 error: function(e) { exception = e; },
 	        });
@@ -92,7 +124,7 @@ describe("PresharedAuthenticationFactory", function() {
     	
     	runs(function() {
     	    var f = function() { throw exception; };
-    	    expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+    	    expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
     	});
     });
     

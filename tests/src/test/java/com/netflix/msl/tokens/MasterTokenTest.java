@@ -27,8 +27,6 @@ import java.util.Date;
 
 import javax.crypto.SecretKey;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -44,11 +42,15 @@ import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.crypto.JcaAlgorithm;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.entityauth.MockPresharedAuthenticationFactory;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslEncoderUtils;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.test.ExpectedMslException;
-import com.netflix.msl.util.Base64;
-import com.netflix.msl.util.JsonUtils;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslContext;
+import com.netflix.msl.util.MslTestUtils;
 
 /**
  * Master token unit tests.
@@ -56,47 +58,50 @@ import com.netflix.msl.util.MslContext;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class MasterTokenTest {
+	/** MSL encoder format. */
+	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
+
     /** Milliseconds per second. */
     private static final long MILLISECONDS_PER_SECOND = 1000;
     
-    /** JSON key token data. */
+    /** Key token data. */
     private static final String KEY_TOKENDATA = "tokendata";
-    /** JSON key signature. */
+    /** Key signature. */
     private static final String KEY_SIGNATURE = "signature";
 
     // tokendata
-    /** JSON key renewal window timestamp. */
+    /** Key renewal window timestamp. */
     private static final String KEY_RENEWAL_WINDOW = "renewalwindow";
-    /** JSON key expiration timestamp. */
+    /** Key expiration timestamp. */
     private static final String KEY_EXPIRATION = "expiration";
-    /** JSON key sequence number. */
+    /** Key sequence number. */
     private static final String KEY_SEQUENCE_NUMBER = "sequencenumber";
-    /** JSON key serial number. */
+    /** Key serial number. */
     private static final String KEY_SERIAL_NUMBER = "serialnumber";
-    /** JSON key session data. */
+    /** Key session data. */
     private static final String KEY_SESSIONDATA = "sessiondata";
     
     // sessiondata
-    /** JSON key issuer data. */
+    /** Key issuer data. */
     private static final String KEY_ISSUER_DATA = "issuerdata";
-    /** JSON key identity. */
+    /** Key identity. */
     private static final String KEY_IDENTITY = "identity";
-    /** JSON key symmetric encryption key. */
+    /** Key symmetric encryption key. */
     private static final String KEY_ENCRYPTION_KEY = "encryptionkey";
-    /** JSON key encryption algorithm. */
+    /** Key encryption algorithm. */
     private static final String KEY_ENCRYPTION_ALGORITHM = "encryptionalgorithm";
-    /** JSON key symmetric HMAC key. */
+    /** Key symmetric HMAC key. */
     private static final String KEY_HMAC_KEY = "hmackey";
-    /** JSON key signature key. */
+    /** Key signature key. */
     private static final String KEY_SIGNATURE_KEY = "signaturekey";
-    /** JSON key signature algorithm. */
+    /** Key signature algorithm. */
     private static final String KEY_SIGNATURE_ALGORITHM = "signaturealgorithm";
     
     private static final Date RENEWAL_WINDOW = new Date(System.currentTimeMillis() + 60000);
     private static final Date EXPIRATION = new Date(System.currentTimeMillis() + 120000);
     private static final long SEQUENCE_NUMBER = 1;
     private static final long SERIAL_NUMBER = 42;
-    private static JSONObject ISSUER_DATA;
+    private static MslObject ISSUER_DATA;
     private static final String IDENTITY = MockPresharedAuthenticationFactory.PSK_ESN;
     private static final SecretKey ENCRYPTION_KEY = MockPresharedAuthenticationFactory.KPE;
     private static final SecretKey SIGNATURE_KEY = MockPresharedAuthenticationFactory.KPH;
@@ -117,18 +122,20 @@ public class MasterTokenTest {
     public ExpectedMslException thrown = ExpectedMslException.none();
     
     @BeforeClass
-    public static void setup() throws MslEncodingException, MslCryptoException, JSONException {
+    public static void setup() throws MslEncodingException, MslCryptoException, MslEncoderException {
         ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
-        ISSUER_DATA = new JSONObject("{ 'issuerid' : 17 }");
+        encoder = ctx.getMslEncoderFactory();
+        ISSUER_DATA = encoder.parseObject("{ 'issuerid' : 17 }".getBytes());
     }
     
     @AfterClass
     public static void teardown() {
+        encoder = null;
         ctx = null;
     }
     
     @Test
-    public void ctors() throws JSONException, MslException {
+    public void ctors() throws MslEncoderException, MslException {
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
         assertTrue(masterToken.isDecrypted());
         assertTrue(masterToken.isVerified());
@@ -139,32 +146,32 @@ public class MasterTokenTest {
         assertEquals(EXPIRATION.getTime() / MILLISECONDS_PER_SECOND, masterToken.getExpiration().getTime() / MILLISECONDS_PER_SECOND);
         assertArrayEquals(SIGNATURE_KEY.getEncoded(), masterToken.getSignatureKey().getEncoded());
         assertEquals(IDENTITY, masterToken.getIdentity());
-        assertTrue(JsonUtils.equals(ISSUER_DATA, masterToken.getIssuerData()));
+        assertTrue(MslEncoderUtils.equalObjects(ISSUER_DATA, masterToken.getIssuerData()));
         assertEquals(RENEWAL_WINDOW.getTime() / MILLISECONDS_PER_SECOND, masterToken.getRenewalWindow().getTime() / MILLISECONDS_PER_SECOND);
         assertEquals(SEQUENCE_NUMBER, masterToken.getSequenceNumber());
         assertEquals(SERIAL_NUMBER, masterToken.getSerialNumber());
-        final String jsonString = masterToken.toJSONString();
-        assertNotNull(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(encode);
         
-        final JSONObject jo = new JSONObject(jsonString);
-        final MasterToken joMasterToken = new MasterToken(ctx, jo);
-        assertEquals(masterToken.isDecrypted(), joMasterToken.isDecrypted());
-        assertEquals(masterToken.isVerified(), joMasterToken.isVerified());
-        assertEquals(masterToken.isRenewable(null), joMasterToken.isRenewable(null));
-        assertEquals(masterToken.isExpired(null), joMasterToken.isExpired(null));
-        assertFalse(joMasterToken.isNewerThan(masterToken));
-        assertFalse(masterToken.isNewerThan(joMasterToken));
-        assertArrayEquals(masterToken.getEncryptionKey().getEncoded(), joMasterToken.getEncryptionKey().getEncoded());
-        assertEquals(masterToken.getExpiration().getTime() / MILLISECONDS_PER_SECOND, joMasterToken.getExpiration().getTime() / MILLISECONDS_PER_SECOND);
-        assertArrayEquals(masterToken.getSignatureKey().getEncoded(), joMasterToken.getSignatureKey().getEncoded());
-        assertEquals(masterToken.getIdentity(), joMasterToken.getIdentity());
-        assertTrue(JsonUtils.equals(masterToken.getIssuerData(), joMasterToken.getIssuerData()));
-        assertEquals(masterToken.getRenewalWindow().getTime() / MILLISECONDS_PER_SECOND, joMasterToken.getRenewalWindow().getTime() / MILLISECONDS_PER_SECOND);
-        assertEquals(masterToken.getSequenceNumber(), joMasterToken.getSequenceNumber());
-        assertEquals(masterToken.getSerialNumber(), joMasterToken.getSerialNumber());
-        final String joJsonString = joMasterToken.toJSONString();
-        assertNotNull(joJsonString);
-        assertEquals(jsonString, joJsonString);
+        final MslObject mo = encoder.parseObject(encode);
+        final MasterToken moMasterToken = new MasterToken(ctx, mo);
+        assertEquals(masterToken.isDecrypted(), moMasterToken.isDecrypted());
+        assertEquals(masterToken.isVerified(), moMasterToken.isVerified());
+        assertEquals(masterToken.isRenewable(null), moMasterToken.isRenewable(null));
+        assertEquals(masterToken.isExpired(null), moMasterToken.isExpired(null));
+        assertFalse(moMasterToken.isNewerThan(masterToken));
+        assertFalse(masterToken.isNewerThan(moMasterToken));
+        assertArrayEquals(masterToken.getEncryptionKey().getEncoded(), moMasterToken.getEncryptionKey().getEncoded());
+        assertEquals(masterToken.getExpiration().getTime() / MILLISECONDS_PER_SECOND, moMasterToken.getExpiration().getTime() / MILLISECONDS_PER_SECOND);
+        assertArrayEquals(masterToken.getSignatureKey().getEncoded(), moMasterToken.getSignatureKey().getEncoded());
+        assertEquals(masterToken.getIdentity(), moMasterToken.getIdentity());
+        assertTrue(MslEncoderUtils.equalObjects(masterToken.getIssuerData(), moMasterToken.getIssuerData()));
+        assertEquals(masterToken.getRenewalWindow().getTime() / MILLISECONDS_PER_SECOND, moMasterToken.getRenewalWindow().getTime() / MILLISECONDS_PER_SECOND);
+        assertEquals(masterToken.getSequenceNumber(), moMasterToken.getSequenceNumber());
+        assertEquals(masterToken.getSerialNumber(), moMasterToken.getSerialNumber());
+        final byte[] moEncode = moMasterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
+        assertArrayEquals(encode, moEncode);
     }
     
     @Test(expected = MslInternalException.class)
@@ -192,7 +199,7 @@ public class MasterTokenTest {
     }
     
     @Test(expected = MslInternalException.class)
-    public void inconsistentExpiration() throws MslException, JSONException {
+    public void inconsistentExpiration() throws MslException, MslEncoderException {
         final Date expiration = new Date(System.currentTimeMillis() - 1);
         final Date renewalWindow = new Date();
         assertTrue(expiration.before(renewalWindow));
@@ -200,790 +207,789 @@ public class MasterTokenTest {
     }
     
     @Test
-    public void inconsistentExpirationJson() throws MslException, JSONException, UnsupportedEncodingException {
+    public void inconsistentExpirationParse() throws MslException, MslEncoderException, UnsupportedEncodingException {
         thrown.expect(MslException.class);
         thrown.expectMslError(MslError.MASTERTOKEN_EXPIRES_BEFORE_RENEWAL);
 
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
-        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_EXPIRATION, System.currentTimeMillis() / MILLISECONDS_PER_SECOND - 1);
-        tokendataJo.put(KEY_RENEWAL_WINDOW, System.currentTimeMillis() / MILLISECONDS_PER_SECOND);
-        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        tokendataMo.put(KEY_EXPIRATION, System.currentTimeMillis() / MILLISECONDS_PER_SECOND - 1);
+        tokendataMo.put(KEY_RENEWAL_WINDOW, System.currentTimeMillis() / MILLISECONDS_PER_SECOND);
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
-        new MasterToken(ctx, jo);
+        new MasterToken(ctx, mo);
     }
     
     @Test
-    public void nullIssuerData() throws JSONException, MslException {
+    public void nullIssuerData() throws MslEncoderException, MslException {
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, null, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
         assertNull(masterToken.getIssuerData());
         
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
-        final MasterToken joMasterToken = new MasterToken(ctx, jo);
-        assertNull(joMasterToken.getIssuerData());
+        final MasterToken moMasterToken = new MasterToken(ctx, mo);
+        assertNull(moMasterToken.getIssuerData());
     }
     
     @Test
-    public void missingTokendata() throws JSONException, MslException {
+    public void missingTokendata() throws MslEncoderException, MslException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
 
-        assertNotNull(jo.remove(KEY_TOKENDATA));
+        assertNotNull(mo.remove(KEY_TOKENDATA));
 
-        new MasterToken(ctx, jo);
+        new MasterToken(ctx, mo);
     }
     
     @Test(expected = MslEncodingException.class)
-    public void invalidTokendata() throws JSONException, MslException {
+    public void invalidTokendata() throws MslEncoderException, MslException {
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
-        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
         ++tokendata[0];
-        jo.put(KEY_TOKENDATA, Base64.encode(tokendata));
+        mo.put(KEY_TOKENDATA, tokendata);
         
-        new MasterToken(ctx, jo);
+        new MasterToken(ctx, mo);
     }
     
     @Test
-    public void missingSignature() throws JSONException, MslException {
+    public void missingSignature() throws MslEncoderException, MslException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
-        assertNotNull(jo.remove(KEY_SIGNATURE));
+        assertNotNull(mo.remove(KEY_SIGNATURE));
         
-        new MasterToken(ctx, jo);
+        new MasterToken(ctx, mo);
     }
     
     @Test
-    public void missingRenewalWindow() throws JSONException, MslException, UnsupportedEncodingException {
-        thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.MASTERTOKEN_TOKENDATA_PARSE_ERROR);
-
-        final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
-        
-        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        assertNotNull(tokendataJo.remove(KEY_RENEWAL_WINDOW));
-        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
-        
-        new MasterToken(ctx, jo);
-    }
-    
-    @Test
-    public void invalidRenewalWindow() throws JSONException, MslException, UnsupportedEncodingException {
+    public void missingRenewalWindow() throws MslEncoderException, MslException, UnsupportedEncodingException {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.MASTERTOKEN_TOKENDATA_PARSE_ERROR);
 
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
-        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_RENEWAL_WINDOW, "x");
-        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        assertNotNull(tokendataMo.remove(KEY_RENEWAL_WINDOW));
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
-        new MasterToken(ctx, jo);
+        new MasterToken(ctx, mo);
     }
     
     @Test
-    public void missingExpiration() throws JSONException, MslException, UnsupportedEncodingException {
+    public void invalidRenewalWindow() throws MslEncoderException, MslException, UnsupportedEncodingException {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.MASTERTOKEN_TOKENDATA_PARSE_ERROR);
 
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
-        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        assertNotNull(tokendataJo.remove(KEY_EXPIRATION));
-        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        tokendataMo.put(KEY_RENEWAL_WINDOW, "x");
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
-        new MasterToken(ctx, jo);
+        new MasterToken(ctx, mo);
     }
     
     @Test
-    public void invalidExpiration() throws JSONException, MslException, UnsupportedEncodingException {
+    public void missingExpiration() throws MslEncoderException, MslException, UnsupportedEncodingException {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.MASTERTOKEN_TOKENDATA_PARSE_ERROR);
 
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
-        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_EXPIRATION, "x");
-        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        assertNotNull(tokendataMo.remove(KEY_EXPIRATION));
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
-        new MasterToken(ctx, jo);
+        new MasterToken(ctx, mo);
     }
     
     @Test
-    public void missingSequenceNumber() throws JSONException, MslException, UnsupportedEncodingException {
+    public void invalidExpiration() throws MslEncoderException, MslException, UnsupportedEncodingException {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.MASTERTOKEN_TOKENDATA_PARSE_ERROR);
 
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
-        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        assertNotNull(tokendataJo.remove(KEY_SEQUENCE_NUMBER));
-        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        tokendataMo.put(KEY_EXPIRATION, "x");
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
-        new MasterToken(ctx, jo);
+        new MasterToken(ctx, mo);
     }
     
     @Test
-    public void invalidSequenceNumber() throws JSONException, MslException, UnsupportedEncodingException {
+    public void missingSequenceNumber() throws MslEncoderException, MslException, UnsupportedEncodingException {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.MASTERTOKEN_TOKENDATA_PARSE_ERROR);
 
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
-        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SEQUENCE_NUMBER, "x");
-        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        assertNotNull(tokendataMo.remove(KEY_SEQUENCE_NUMBER));
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
-        new MasterToken(ctx, jo);
+        new MasterToken(ctx, mo);
     }
     
     @Test
-    public void negativeSequenceNumber() throws MslEncodingException, MslCryptoException, JSONException, MslException {
+    public void invalidSequenceNumber() throws MslEncoderException, MslException, UnsupportedEncodingException {
+        thrown.expect(MslEncodingException.class);
+        thrown.expectMslError(MslError.MASTERTOKEN_TOKENDATA_PARSE_ERROR);
+
+        final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
+        
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        tokendataMo.put(KEY_SEQUENCE_NUMBER, "x");
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
+        
+        new MasterToken(ctx, mo);
+    }
+    
+    @Test
+    public void negativeSequenceNumber() throws MslEncodingException, MslCryptoException, MslEncoderException, MslException {
         thrown.expect(MslException.class);
         thrown.expectMslError(MslError.MASTERTOKEN_SEQUENCE_NUMBER_OUT_OF_RANGE);
 
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
-        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SEQUENCE_NUMBER, -1);
-        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        tokendataMo.put(KEY_SEQUENCE_NUMBER, -1);
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
-        new MasterToken(ctx, jo);
+        new MasterToken(ctx, mo);
     }
     
     @Test
-    public void tooLargeSequenceNumber() throws MslEncodingException, MslCryptoException, JSONException, MslException {
+    public void tooLargeSequenceNumber() throws MslEncodingException, MslCryptoException, MslEncoderException, MslException {
         thrown.expect(MslException.class);
         thrown.expectMslError(MslError.MASTERTOKEN_SEQUENCE_NUMBER_OUT_OF_RANGE);
 
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
-        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SEQUENCE_NUMBER, MslConstants.MAX_LONG_VALUE + 1);
-        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        tokendataMo.put(KEY_SEQUENCE_NUMBER, MslConstants.MAX_LONG_VALUE + 1);
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
-        new MasterToken(ctx, jo);
+        new MasterToken(ctx, mo);
     }
     
     @Test
-    public void missingSerialNumber() throws JSONException, MslException, UnsupportedEncodingException {
+    public void missingSerialNumber() throws MslEncoderException, MslException, UnsupportedEncodingException {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.MASTERTOKEN_TOKENDATA_PARSE_ERROR);
 
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
-        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        assertNotNull(tokendataJo.remove(KEY_SERIAL_NUMBER));
-        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        assertNotNull(tokendataMo.remove(KEY_SERIAL_NUMBER));
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
-        new MasterToken(ctx, jo);
+        new MasterToken(ctx, mo);
     }
     
     @Test
-    public void invalidSerialNumber() throws JSONException, MslException, UnsupportedEncodingException {
+    public void invalidSerialNumber() throws MslEncoderException, MslException, UnsupportedEncodingException {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.MASTERTOKEN_TOKENDATA_PARSE_ERROR);
 
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
-        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SERIAL_NUMBER, "x");
-        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        tokendataMo.put(KEY_SERIAL_NUMBER, "x");
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
-        new MasterToken(ctx, jo);
+        new MasterToken(ctx, mo);
     }
     
     @Test
-    public void negativeSerialNumber() throws MslEncodingException, MslCryptoException, JSONException, MslException {
+    public void negativeSerialNumber() throws MslEncodingException, MslCryptoException, MslEncoderException, MslException {
         thrown.expect(MslException.class);
         thrown.expectMslError(MslError.MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE);
 
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
-        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SERIAL_NUMBER, -1);
-        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        tokendataMo.put(KEY_SERIAL_NUMBER, -1);
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
-        new MasterToken(ctx, jo);
+        new MasterToken(ctx, mo);
     }
     
     @Test
-    public void tooLargeSerialNumber() throws MslEncodingException, MslCryptoException, JSONException, MslException {
+    public void tooLargeSerialNumber() throws MslEncodingException, MslCryptoException, MslEncoderException, MslException {
         thrown.expect(MslException.class);
         thrown.expectMslError(MslError.MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE);
 
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
-        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SERIAL_NUMBER, MslConstants.MAX_LONG_VALUE + 1);
-        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        tokendataMo.put(KEY_SERIAL_NUMBER, MslConstants.MAX_LONG_VALUE + 1);
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
-        new MasterToken(ctx, jo);
+        new MasterToken(ctx, mo);
     }
     
     @Test
-    public void missingSessiondata() throws JSONException, MslException, UnsupportedEncodingException {
+    public void missingSessiondata() throws MslEncoderException, MslException, UnsupportedEncodingException {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.MASTERTOKEN_TOKENDATA_PARSE_ERROR);
 
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
-        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        assertNotNull(tokendataJo.remove(KEY_SESSIONDATA));
-        jo.put(KEY_TOKENDATA, Base64.encode(tokendataJo.toString().getBytes()));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        assertNotNull(tokendataMo.remove(KEY_SESSIONDATA));
+        mo.put(KEY_TOKENDATA, encoder.encodeObject(tokendataMo, ENCODER_FORMAT));
         
-        new MasterToken(ctx, jo);
+        new MasterToken(ctx, mo);
     }
     
     @Test
-    public void invalidSessiondata() throws UnsupportedEncodingException, JSONException, MslException {
-        thrown.expect(MslException.class);
-        thrown.expectMslError(MslError.MASTERTOKEN_SESSIONDATA_INVALID);
+    public void invalidSessiondata() throws UnsupportedEncodingException, MslEncoderException, MslException {
+        thrown.expect(MslEncodingException.class);
+        thrown.expectMslError(MslError.MASTERTOKEN_TOKENDATA_PARSE_ERROR);
 
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
-        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SESSIONDATA, "x");
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        tokendataMo.put(KEY_SESSIONDATA, "x");
         
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
-        final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
+        mo.put(KEY_TOKENDATA, modifiedTokendata);
+        mo.put(KEY_SIGNATURE, signature);
         
-        new MasterToken(ctx, jo);
+        new MasterToken(ctx, mo);
     }
     
     @Test
-    public void emptySessiondata() throws UnsupportedEncodingException, JSONException, MslException {
+    public void emptySessiondata() throws UnsupportedEncodingException, MslEncoderException, MslException {
         thrown.expect(MslException.class);
         thrown.expectMslError(MslError.MASTERTOKEN_SESSIONDATA_MISSING);
 
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
-        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
         
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
         final byte[] ciphertext = new byte[0];
-        tokendataJo.put(KEY_SESSIONDATA, Base64.encode(ciphertext));
-        final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, Base64.encode(signature));
+        tokendataMo.put(KEY_SESSIONDATA, ciphertext);
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
+        mo.put(KEY_TOKENDATA, modifiedTokendata);
+        mo.put(KEY_SIGNATURE, signature);
         
-        new MasterToken(ctx, jo);
+        new MasterToken(ctx, mo);
     }
     
     @Test(expected = MslCryptoException.class)
-    public void corruptSessiondata() throws JSONException, MslException, UnsupportedEncodingException {
+    public void corruptSessiondata() throws MslEncoderException, MslException, UnsupportedEncodingException {
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
         // This is testing session data that is verified but corrupt.
-        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] sessiondata = Base64.decode(tokendataJo.getString(KEY_SESSIONDATA));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        final byte[] sessiondata = tokendataMo.getBytes(KEY_SESSIONDATA);
         ++sessiondata[sessiondata.length-1];
-        tokendataJo.put(KEY_SESSIONDATA, Base64.encode(sessiondata));
+        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
         
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
-        final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
+        mo.put(KEY_TOKENDATA, modifiedTokendata);
+        mo.put(KEY_SIGNATURE, signature);
         
-        new MasterToken(ctx, jo);
+        new MasterToken(ctx, mo);
     }
     
     @Test
-    public void notVerified() throws JSONException, MslException {
+    public void notVerified() throws MslEncoderException, MslException {
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
-        final byte[] signature = Base64.decode(jo.getString(KEY_SIGNATURE));
+        final byte[] signature = mo.getBytes(KEY_SIGNATURE);
         ++signature[0];
-        jo.put(KEY_SIGNATURE, Base64.encode(signature));
+        mo.put(KEY_SIGNATURE, signature);
         
-        final MasterToken joMasterToken = new MasterToken(ctx, jo);
-        assertFalse(joMasterToken.isDecrypted());
-        assertFalse(joMasterToken.isVerified());
-        assertTrue(joMasterToken.isRenewable(null));
-        assertFalse(joMasterToken.isExpired(null));
-        assertFalse(joMasterToken.isNewerThan(masterToken));
-        assertFalse(masterToken.isNewerThan(joMasterToken));
-        assertNull(joMasterToken.getEncryptionKey());
-        assertEquals(masterToken.getExpiration().getTime() / MILLISECONDS_PER_SECOND, joMasterToken.getExpiration().getTime() / MILLISECONDS_PER_SECOND);
-        assertNull(joMasterToken.getSignatureKey());
-        assertNull(joMasterToken.getIdentity());
-        assertNull(joMasterToken.getIssuerData());
-        assertEquals(masterToken.getRenewalWindow().getTime() / MILLISECONDS_PER_SECOND, joMasterToken.getRenewalWindow().getTime() / MILLISECONDS_PER_SECOND);
-        assertEquals(masterToken.getSequenceNumber(), joMasterToken.getSequenceNumber());
-        assertEquals(masterToken.getSerialNumber(), joMasterToken.getSerialNumber());
-        final String joJsonString = joMasterToken.toJSONString();
-        assertNotNull(joJsonString);
-        assertFalse(jsonString.equals(joJsonString));   
+        final MasterToken moMasterToken = new MasterToken(ctx, mo);
+        assertFalse(moMasterToken.isDecrypted());
+        assertFalse(moMasterToken.isVerified());
+        assertTrue(moMasterToken.isRenewable(null));
+        assertFalse(moMasterToken.isExpired(null));
+        assertFalse(moMasterToken.isNewerThan(masterToken));
+        assertFalse(masterToken.isNewerThan(moMasterToken));
+        assertNull(moMasterToken.getEncryptionKey());
+        assertEquals(masterToken.getExpiration().getTime() / MILLISECONDS_PER_SECOND, moMasterToken.getExpiration().getTime() / MILLISECONDS_PER_SECOND);
+        assertNull(moMasterToken.getSignatureKey());
+        assertNull(moMasterToken.getIdentity());
+        assertNull(moMasterToken.getIssuerData());
+        assertEquals(masterToken.getRenewalWindow().getTime() / MILLISECONDS_PER_SECOND, moMasterToken.getRenewalWindow().getTime() / MILLISECONDS_PER_SECOND);
+        assertEquals(masterToken.getSequenceNumber(), moMasterToken.getSequenceNumber());
+        assertEquals(masterToken.getSerialNumber(), moMasterToken.getSerialNumber());
+        final byte[] moEncode = moMasterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
+        assertFalse(encode.equals(moEncode));
     }
     
     @Test
-    public void invalidIssuerData() throws JSONException, MslException, UnsupportedEncodingException {
+    public void invalidIssuerData() throws MslEncoderException, MslException, UnsupportedEncodingException {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.MASTERTOKEN_SESSIONDATA_PARSE_ERROR);
 
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
         
         // Before modifying the session data we need to decrypt it.
-        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] ciphertext = Base64.decode(tokendataJo.getString(KEY_SESSIONDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject sessiondataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        final byte[] ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject sessiondataMo = encoder.parseObject(plaintext);
         
         // After modifying the session data we need to encrypt it.
-        sessiondataJo.put(KEY_ISSUER_DATA, "x");
-        final byte[] sessiondata = cryptoContext.encrypt(sessiondataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SESSIONDATA, Base64.encode(sessiondata));
+        sessiondataMo.put(KEY_ISSUER_DATA, "x");
+        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
-        final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
+        mo.put(KEY_TOKENDATA, modifiedTokendata);
+        mo.put(KEY_SIGNATURE, signature);
         
-        new MasterToken(ctx, jo);
+        new MasterToken(ctx, mo);
     }
     
     @Test
-    public void missingIdentity() throws JSONException, MslException, UnsupportedEncodingException {
+    public void missingIdentity() throws MslEncoderException, MslException, UnsupportedEncodingException {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.MASTERTOKEN_SESSIONDATA_PARSE_ERROR);
 
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
         
         // Before modifying the session data we need to decrypt it.
-        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] ciphertext = Base64.decode(tokendataJo.getString(KEY_SESSIONDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject sessiondataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        final byte[] ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject sessiondataMo = encoder.parseObject(plaintext);
         
         // After modifying the session data we need to encrypt it.
-        assertNotNull(sessiondataJo.remove(KEY_IDENTITY));
-        final byte[] sessiondata = cryptoContext.encrypt(sessiondataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SESSIONDATA, Base64.encode(sessiondata));
+        assertNotNull(sessiondataMo.remove(KEY_IDENTITY));
+        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
-        final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
+        mo.put(KEY_TOKENDATA, modifiedTokendata);
+        mo.put(KEY_SIGNATURE, signature);
         
-        new MasterToken(ctx, jo);
+        new MasterToken(ctx, mo);
     }
     
     @Test
-    public void missingEncryptionKey() throws JSONException, MslException, UnsupportedEncodingException {
+    public void missingEncryptionKey() throws MslEncoderException, MslException, UnsupportedEncodingException {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.MASTERTOKEN_SESSIONDATA_PARSE_ERROR);
 
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
         
         // Before modifying the session data we need to decrypt it.
-        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] ciphertext = Base64.decode(tokendataJo.getString(KEY_SESSIONDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject sessiondataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        final byte[] ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject sessiondataMo = encoder.parseObject(plaintext);
         
         // After modifying the session data we need to encrypt it.
-        assertNotNull(sessiondataJo.remove(KEY_ENCRYPTION_KEY));
-        final byte[] sessiondata = cryptoContext.encrypt(sessiondataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SESSIONDATA, Base64.encode(sessiondata));
+        assertNotNull(sessiondataMo.remove(KEY_ENCRYPTION_KEY));
+        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
-        final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
+        mo.put(KEY_TOKENDATA, modifiedTokendata);
+        mo.put(KEY_SIGNATURE, signature);
         
-        new MasterToken(ctx, jo);
+        new MasterToken(ctx, mo);
     }
 
     @Test
-    public void invalidEncryptionKey() throws JSONException, MslException, UnsupportedEncodingException {
+    public void invalidEncryptionKey() throws MslEncoderException, MslException, UnsupportedEncodingException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.MASTERTOKEN_KEY_CREATION_ERROR);
 
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
         
         // Before modifying the session data we need to decrypt it.
-        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] ciphertext = Base64.decode(tokendataJo.getString(KEY_SESSIONDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject sessiondataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        final byte[] ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject sessiondataMo = encoder.parseObject(plaintext);
         
         // After modifying the session data we need to encrypt it.
-        sessiondataJo.put(KEY_ENCRYPTION_KEY, "");
-        final byte[] sessiondata = cryptoContext.encrypt(sessiondataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SESSIONDATA, Base64.encode(sessiondata));
+        sessiondataMo.put(KEY_ENCRYPTION_KEY, "");
+        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
-        final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
+        mo.put(KEY_TOKENDATA, modifiedTokendata);
+        mo.put(KEY_SIGNATURE, signature);
         
-        new MasterToken(ctx, jo);
+        new MasterToken(ctx, mo);
     }
     
     @Test
-    public void missingEncryptionAlgorithm() throws MslEncodingException, MslCryptoException, MslException {
+    public void missingEncryptionAlgorithm() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
         
         // Before modifying the session data we need to decrypt it.
-        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] ciphertext = Base64.decode(tokendataJo.getString(KEY_SESSIONDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject sessiondataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        final byte[] ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject sessiondataMo = encoder.parseObject(plaintext);
         
         // After modifying the session data we need to encrypt it.
-        assertNotNull(sessiondataJo.remove(KEY_ENCRYPTION_ALGORITHM));
-        final byte[] sessiondata = cryptoContext.encrypt(sessiondataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SESSIONDATA, Base64.encode(sessiondata));
+        assertNotNull(sessiondataMo.remove(KEY_ENCRYPTION_ALGORITHM));
+        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
-        final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
+        mo.put(KEY_TOKENDATA, modifiedTokendata);
+        mo.put(KEY_SIGNATURE, signature);
         
         // Confirm default algorithm.
-        final MasterToken joMasterToken = new MasterToken(ctx, jo);
-        final SecretKey joEncryptionKey = joMasterToken.getEncryptionKey();
-        assertEquals(JcaAlgorithm.AES, joEncryptionKey.getAlgorithm());
+        final MasterToken moMasterToken = new MasterToken(ctx, mo);
+        final SecretKey moEncryptionKey = moMasterToken.getEncryptionKey();
+        assertEquals(JcaAlgorithm.AES, moEncryptionKey.getAlgorithm());
     }
     
     @Test
-    public void invalidEncryptionAlgorithm() throws MslEncodingException, MslCryptoException, MslException {
+    public void invalidEncryptionAlgorithm() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.UNIDENTIFIED_ALGORITHM);
         
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
         
         // Before modifying the session data we need to decrypt it.
-        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] ciphertext = Base64.decode(tokendataJo.getString(KEY_SESSIONDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject sessiondataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        final byte[] ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject sessiondataMo = encoder.parseObject(plaintext);
         
         // After modifying the session data we need to encrypt it.
-        sessiondataJo.put(KEY_ENCRYPTION_ALGORITHM, "x");
-        final byte[] sessiondata = cryptoContext.encrypt(sessiondataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SESSIONDATA, Base64.encode(sessiondata));
+        sessiondataMo.put(KEY_ENCRYPTION_ALGORITHM, "x");
+        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
-        final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
+        mo.put(KEY_TOKENDATA, modifiedTokendata);
+        mo.put(KEY_SIGNATURE, signature);
         
-        new MasterToken(ctx, jo);
+        new MasterToken(ctx, mo);
     }
     
     @Test
-    public void missingHmacKey() throws MslEncodingException, MslCryptoException, MslException {
+    public void missingHmacKey() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
         
         // Before modifying the session data we need to decrypt it.
-        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] ciphertext = Base64.decode(tokendataJo.getString(KEY_SESSIONDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject sessiondataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        final byte[] ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject sessiondataMo = encoder.parseObject(plaintext);
         
         // After modifying the session data we need to encrypt it.
-        assertNotNull(sessiondataJo.remove(KEY_HMAC_KEY));
-        final byte[] sessiondata = cryptoContext.encrypt(sessiondataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SESSIONDATA, Base64.encode(sessiondata));
+        assertNotNull(sessiondataMo.remove(KEY_HMAC_KEY));
+        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
-        final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
+        mo.put(KEY_TOKENDATA, modifiedTokendata);
+        mo.put(KEY_SIGNATURE, signature);
         
         // Confirm signature key.
-        final MasterToken joMasterToken = new MasterToken(ctx, jo);
-        final SecretKey joSignatureKey = joMasterToken.getSignatureKey();
-        assertArrayEquals(masterToken.getSignatureKey().getEncoded(), joSignatureKey.getEncoded());
+        final MasterToken moMasterToken = new MasterToken(ctx, mo);
+        final SecretKey moSignatureKey = moMasterToken.getSignatureKey();
+        assertArrayEquals(masterToken.getSignatureKey().getEncoded(), moSignatureKey.getEncoded());
     }
     
     @Test
-    public void missingSignatureKey() throws MslEncodingException, MslCryptoException, MslException {
+    public void missingSignatureKey() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
         
         // Before modifying the session data we need to decrypt it.
-        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] ciphertext = Base64.decode(tokendataJo.getString(KEY_SESSIONDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject sessiondataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        final byte[] ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject sessiondataMo = encoder.parseObject(plaintext);
         
         // After modifying the session data we need to encrypt it.
-        assertNotNull(sessiondataJo.remove(KEY_SIGNATURE_KEY));
-        final byte[] sessiondata = cryptoContext.encrypt(sessiondataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SESSIONDATA, Base64.encode(sessiondata));
+        assertNotNull(sessiondataMo.remove(KEY_SIGNATURE_KEY));
+        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
-        final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
+        mo.put(KEY_TOKENDATA, modifiedTokendata);
+        mo.put(KEY_SIGNATURE, signature);
         
         // Confirm signature key.
-        final MasterToken joMasterToken = new MasterToken(ctx, jo);
-        final SecretKey joSignatureKey = joMasterToken.getSignatureKey();
-        assertArrayEquals(masterToken.getSignatureKey().getEncoded(), joSignatureKey.getEncoded());
+        final MasterToken moMasterToken = new MasterToken(ctx, mo);
+        final SecretKey moSignatureKey = moMasterToken.getSignatureKey();
+        assertArrayEquals(masterToken.getSignatureKey().getEncoded(), moSignatureKey.getEncoded());
     }
     
     @Test
-    public void missingSignatureAlgorithm() throws MslEncodingException, MslCryptoException, MslException {
+    public void missingSignatureAlgorithm() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
         
         // Before modifying the session data we need to decrypt it.
-        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] ciphertext = Base64.decode(tokendataJo.getString(KEY_SESSIONDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject sessiondataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        final byte[] ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject sessiondataMo = encoder.parseObject(plaintext);
         
         // After modifying the session data we need to encrypt it.
-        assertNotNull(sessiondataJo.remove(KEY_SIGNATURE_ALGORITHM));
-        final byte[] sessiondata = cryptoContext.encrypt(sessiondataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SESSIONDATA, Base64.encode(sessiondata));
+        assertNotNull(sessiondataMo.remove(KEY_SIGNATURE_ALGORITHM));
+        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
-        final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
+        mo.put(KEY_TOKENDATA, modifiedTokendata);
+        mo.put(KEY_SIGNATURE, signature);
         
         // Confirm default algorithm.
-        final MasterToken joMasterToken = new MasterToken(ctx, jo);
-        final SecretKey joSignatureKey = joMasterToken.getSignatureKey();
-        assertEquals(JcaAlgorithm.HMAC_SHA256, joSignatureKey.getAlgorithm());
+        final MasterToken moMasterToken = new MasterToken(ctx, mo);
+        final SecretKey moSignatureKey = moMasterToken.getSignatureKey();
+        assertEquals(JcaAlgorithm.HMAC_SHA256, moSignatureKey.getAlgorithm());
     }
     
     @Test
-    public void invalidSignatureAlgorithm() throws MslEncodingException, MslCryptoException, MslException {
+    public void invalidSignatureAlgorithm() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.UNIDENTIFIED_ALGORITHM);
         
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
         
         // Before modifying the session data we need to decrypt it.
-        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] ciphertext = Base64.decode(tokendataJo.getString(KEY_SESSIONDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject sessiondataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        final byte[] ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject sessiondataMo = encoder.parseObject(plaintext);
         
         // After modifying the session data we need to encrypt it.
-        sessiondataJo.put(KEY_SIGNATURE_ALGORITHM, "x");
-        final byte[] sessiondata = cryptoContext.encrypt(sessiondataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SESSIONDATA, Base64.encode(sessiondata));
+        sessiondataMo.put(KEY_SIGNATURE_ALGORITHM, "x");
+        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
-        final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
+        mo.put(KEY_TOKENDATA, modifiedTokendata);
+        mo.put(KEY_SIGNATURE, signature);
         
-        new MasterToken(ctx, jo);
+        new MasterToken(ctx, mo);
     }
     
     @Test
-    public void missingHmacAndSignatureKey() throws JSONException, MslException, UnsupportedEncodingException {
+    public void missingHmacAndSignatureKey() throws MslEncoderException, MslException, UnsupportedEncodingException {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.MASTERTOKEN_SESSIONDATA_PARSE_ERROR);
 
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final byte[] encode = masterToken.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = encoder.parseObject(encode);
         
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
         
         // Before modifying the session data we need to decrypt it.
-        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] ciphertext = Base64.decode(tokendataJo.getString(KEY_SESSIONDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject sessiondataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        final byte[] ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject sessiondataMo = encoder.parseObject(plaintext);
         
         // After modifying the session data we need to encrypt it.
-        assertNotNull(sessiondataJo.remove(KEY_HMAC_KEY));
-        assertNotNull(sessiondataJo.remove(KEY_SIGNATURE_KEY));
-        final byte[] sessiondata = cryptoContext.encrypt(sessiondataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SESSIONDATA, Base64.encode(sessiondata));
+        assertNotNull(sessiondataMo.remove(KEY_HMAC_KEY));
+        assertNotNull(sessiondataMo.remove(KEY_SIGNATURE_KEY));
+        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
-        final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
+        mo.put(KEY_TOKENDATA, modifiedTokendata);
+        mo.put(KEY_SIGNATURE, signature);
         
-        new MasterToken(ctx, jo);
+        new MasterToken(ctx, mo);
     }
     
     @Test
-    public void invalidHmacAndSignatureKey() throws JSONException, MslException, UnsupportedEncodingException {
+    public void invalidHmacAndSignatureKey() throws MslEncoderException, MslException, UnsupportedEncodingException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.MASTERTOKEN_KEY_CREATION_ERROR);
 
         final MasterToken masterToken = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final String jsonString = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, masterToken);
         
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
         
         // Before modifying the session data we need to decrypt it.
-        final byte[] tokendata = Base64.decode(jo.getString(KEY_TOKENDATA));
-        final JSONObject tokendataJo = new JSONObject(new String(tokendata, MslConstants.DEFAULT_CHARSET));
-        final byte[] ciphertext = Base64.decode(tokendataJo.getString(KEY_SESSIONDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject sessiondataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] tokendata = mo.getBytes(KEY_TOKENDATA);
+        final MslObject tokendataMo = encoder.parseObject(tokendata);
+        final byte[] ciphertext = tokendataMo.getBytes(KEY_SESSIONDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject sessiondataMo = encoder.parseObject(plaintext);
         
         // After modifying the session data we need to encrypt it.
-        sessiondataJo.put(KEY_HMAC_KEY, "");
-        sessiondataJo.put(KEY_SIGNATURE_KEY, "");
-        final byte[] sessiondata = cryptoContext.encrypt(sessiondataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        tokendataJo.put(KEY_SESSIONDATA, Base64.encode(sessiondata));
+        sessiondataMo.put(KEY_HMAC_KEY, "");
+        sessiondataMo.put(KEY_SIGNATURE_KEY, "");
+        final byte[] sessiondata = cryptoContext.encrypt(encoder.encodeObject(sessiondataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        tokendataMo.put(KEY_SESSIONDATA, sessiondata);
         
         // The tokendata must be signed otherwise the session data will not be
         // processed.
-        final byte[] modifiedTokendata = tokendataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        final byte[] signature = cryptoContext.sign(modifiedTokendata);
-        jo.put(KEY_TOKENDATA, Base64.encode(modifiedTokendata));
-        jo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] modifiedTokendata = encoder.encodeObject(tokendataMo, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(modifiedTokendata, encoder, ENCODER_FORMAT);
+        mo.put(KEY_TOKENDATA, modifiedTokendata);
+        mo.put(KEY_SIGNATURE, signature);
         
-        new MasterToken(ctx, jo);
+        new MasterToken(ctx, mo);
     }
     
     @Test
@@ -1113,7 +1119,7 @@ public class MasterTokenTest {
     }
     
     @Test
-    public void equalsTrustedUntrusted() throws JSONException, MslException {
+    public void equalsTrustedUntrusted() throws MslException, MslEncoderException {
         final Date renewalWindow = new Date(System.currentTimeMillis() + 1000);
         final Date expiration = new Date(System.currentTimeMillis() + 2000);
         final String identity = MockPresharedAuthenticationFactory.PSK_ESN;
@@ -1121,24 +1127,23 @@ public class MasterTokenTest {
         final SecretKey hmacKey = MockPresharedAuthenticationFactory.KPH;
         final MasterToken masterToken = new MasterToken(ctx, renewalWindow, expiration, 1L, 1L, null, identity, encryptionKey, hmacKey);
         
-        final String json = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(json);
-        final byte[] signature = Base64.decode(jo.getString("signature"));
+        final MslObject mo = MslTestUtils.toMslObject(encoder, masterToken);
+        final byte[] signature = mo.getBytes("signature");
         ++signature[1];
-        jo.put("signature", Base64.encode(signature));
-        final MasterToken untrustedMasterToken = new MasterToken(ctx, jo);
+        mo.put("signature", signature);
+        final MasterToken untrustedMasterToken = new MasterToken(ctx, mo);
         
         assertTrue(masterToken.equals(untrustedMasterToken));
         assertEquals(masterToken.hashCode(), untrustedMasterToken.hashCode());
     }
     
     @Test
-    public void equalsSerialNumber() throws MslException, JSONException {
+    public void equalsSerialNumber() throws MslException, MslEncoderException {
         final long serialNumberA = 1;
         final long serialNumberB = 2;
         final MasterToken masterTokenA = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, serialNumberA, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
         final MasterToken masterTokenB = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, serialNumberB, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final MasterToken masterTokenA2 = new MasterToken(ctx, new JSONObject(masterTokenA.toJSONString()));
+        final MasterToken masterTokenA2 = new MasterToken(ctx, MslTestUtils.toMslObject(encoder, masterTokenA));
         
         assertTrue(masterTokenA.equals(masterTokenA));
         assertEquals(masterTokenA.hashCode(), masterTokenA.hashCode());
@@ -1153,12 +1158,12 @@ public class MasterTokenTest {
     }
     
     @Test
-    public void equalsSequenceNumber() throws MslEncodingException, MslCryptoException, MslException, JSONException {
+    public void equalsSequenceNumber() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         final long sequenceNumberA = 1;
         final long sequenceNumberB = 2;
         final MasterToken masterTokenA = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, sequenceNumberA, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
         final MasterToken masterTokenB = new MasterToken(ctx, RENEWAL_WINDOW, EXPIRATION, sequenceNumberB, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final MasterToken masterTokenA2 = new MasterToken(ctx, new JSONObject(masterTokenA.toJSONString()));
+        final MasterToken masterTokenA2 = new MasterToken(ctx, MslTestUtils.toMslObject(encoder, masterTokenA));
         
         assertTrue(masterTokenA.equals(masterTokenA));
         assertEquals(masterTokenA.hashCode(), masterTokenA.hashCode());
@@ -1173,12 +1178,12 @@ public class MasterTokenTest {
     }
     
     @Test
-    public void equalsExpiration() throws MslEncodingException, MslCryptoException, MslException, JSONException {
+    public void equalsExpiration() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         final Date expirationA = new Date(EXPIRATION.getTime());
         final Date expirationB = new Date(EXPIRATION.getTime() + 10000);
         final MasterToken masterTokenA = new MasterToken(ctx, RENEWAL_WINDOW, expirationA, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
         final MasterToken masterTokenB = new MasterToken(ctx, RENEWAL_WINDOW, expirationB, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
-        final MasterToken masterTokenA2 = new MasterToken(ctx, new JSONObject(masterTokenA.toJSONString()));
+        final MasterToken masterTokenA2 = new MasterToken(ctx, MslTestUtils.toMslObject(encoder, masterTokenA));
         
         assertTrue(masterTokenA.equals(masterTokenA));
         assertEquals(masterTokenA.hashCode(), masterTokenA.hashCode());
@@ -1202,4 +1207,6 @@ public class MasterTokenTest {
     
     /** MSL context. */
     private static MslContext ctx;
+    /** MSL encoder factory. */
+    private static MslEncoderFactory encoder;
 }

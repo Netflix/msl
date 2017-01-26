@@ -18,8 +18,6 @@ package com.netflix.msl.msg;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -27,10 +25,6 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.json.JSONTokener;
 
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
@@ -46,6 +40,9 @@ import com.netflix.msl.MslUserIdTokenException;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.crypto.SessionCryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslObject;
+import com.netflix.msl.io.MslTokenizer;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.keyx.KeyRequestData;
@@ -86,7 +83,7 @@ public class MessageInputStream extends InputStream {
      *         request data or key response data or the key exchange scheme is
      *         not supported.
      * @throws MslCryptoException if the crypto context cannot be created.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslMasterTokenException if the master token is not trusted and
      *         needs to be.
      * @throws MslEntityAuthException if there is a problem with the master
@@ -177,7 +174,6 @@ public class MessageInputStream extends InputStream {
      * 
      * @param ctx MSL context.
      * @param source MSL input stream.
-     * @param charset input stream character set encoding.
      * @param keyRequestData key request data to use when processing key
      *        response data.
      * @param cryptoContexts the map of service token names onto crypto
@@ -203,22 +199,20 @@ public class MessageInputStream extends InputStream {
      *         authentication data or a master token, or a token is improperly
      *         bound to another token.
      */
-    public MessageInputStream(final MslContext ctx, final InputStream source, final Charset charset, final Set<KeyRequestData> keyRequestData, final Map<String,ICryptoContext> cryptoContexts) throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslUserAuthException, MslMessageException, MslKeyExchangeException, MslMasterTokenException, MslUserIdTokenException, MslMessageException, MslException {
+    public MessageInputStream(final MslContext ctx, final InputStream source, final Set<KeyRequestData> keyRequestData, final Map<String,ICryptoContext> cryptoContexts) throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslUserAuthException, MslMessageException, MslKeyExchangeException, MslMasterTokenException, MslUserIdTokenException, MslMessageException, MslException {
         // Parse the header.
+        this.ctx = ctx;
         this.source = source;
-        this.tokener = new JSONTokener(new InputStreamReader(source, charset));
-        final JSONObject jo;
+        final MslObject mo;
         try {
-            if (!this.tokener.more())
+            this.tokenizer = this.ctx.getMslEncoderFactory().createTokenizer(source);
+            if (!this.tokenizer.more(-1))
                 throw new MslEncodingException(MslError.MESSAGE_DATA_MISSING);
-            final Object o = this.tokener.nextValue();
-            if (!(o instanceof JSONObject))
-                throw new MslEncodingException(MslError.MESSAGE_FORMAT_ERROR);
-            jo = (JSONObject)o;
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "header", e);
+            mo = this.tokenizer.nextObject(-1);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "header", e);
         }
-        this.header = Header.parseHeader(ctx, jo, cryptoContexts);
+        this.header = Header.parseHeader(ctx, mo, cryptoContexts);
         
         try {
             // For error messages there are no key exchange or payload crypto
@@ -249,7 +243,7 @@ public class MessageInputStream extends InputStream {
             if (messageHeader.isHandshake() &&
                 (!messageHeader.isRenewable() || messageHeader.getKeyRequestData().isEmpty()))
             {
-                throw new MslMessageException(MslError.HANDSHAKE_DATA_MISSING, messageHeader.toJSONString());
+                throw new MslMessageException(MslError.HANDSHAKE_DATA_MISSING, messageHeader.toString());
             }
             
             // If I am in peer-to-peer mode or the master token is verified
@@ -279,7 +273,7 @@ public class MessageInputStream extends InputStream {
                     // If the message is not renewable or does not contain key
                     // request data then reject the message.
                     if (!messageHeader.isRenewable() || messageHeader.getKeyRequestData().isEmpty())
-                        throw new MslMessageException(MslError.MESSAGE_EXPIRED, messageHeader.toJSONString());
+                        throw new MslMessageException(MslError.MESSAGE_EXPIRED, messageHeader.toString());
                     
                     // If the master token will not be renewed by the token
                     // factory then reject the message.
@@ -299,14 +293,14 @@ public class MessageInputStream extends InputStream {
                 // ...and does not include a master token then reject the
                 // message.
                 if (masterToken == null)
-                    throw new MslMessageException(MslError.INCOMPLETE_NONREPLAYABLE_MESSAGE, messageHeader.toJSONString());
+                    throw new MslMessageException(MslError.INCOMPLETE_NONREPLAYABLE_MESSAGE, messageHeader.toString());
                 
                 // If the non-replayable ID is not accepted then notify the
                 // sender.
                 final TokenFactory factory = ctx.getTokenFactory();
                 final MslError replayed = factory.acceptNonReplayableId(ctx, masterToken, nonReplayableId);
                 if (replayed != null)
-                    throw new MslMessageException(replayed, messageHeader.toJSONString());
+                    throw new MslMessageException(replayed, messageHeader.toString());
             }
         } catch (final MslException e) {
             if (this.header instanceof MessageHeader) {
@@ -335,12 +329,12 @@ public class MessageInputStream extends InputStream {
     }
 
     /**
-     * Retrieve the next JSON object.
+     * Retrieve the next MSL object.
      * 
-     * @return the next JSON object or null if none remaining.
-     * @throws MslEncodingException if there is a problem parsing the JSON.
+     * @return the next MSL object or null if none remaining.
+     * @throws MslEncodingException if there is a problem parsing the data.
      */
-    protected JSONObject nextJsonObject() throws MslEncodingException {
+    protected MslObject nextMslObject() throws MslEncodingException {
         // Make sure this message is allowed to have payload chunks.
         final MessageHeader messageHeader = getMessageHeader();
         if (messageHeader == null)
@@ -351,18 +345,15 @@ public class MessageInputStream extends InputStream {
         if (eom)
             return null;
         
-        // Otherwise read the next JSON object.
+        // Otherwise read the next MSL object.
         try {
-            if (!tokener.more()) {
+            if (!tokenizer.more(-1)) {
                 eom = true;
                 return null;
             }
-            final Object o = tokener.nextValue();
-            if (!(o instanceof JSONObject))
-                throw new MslEncodingException(MslError.MESSAGE_FORMAT_ERROR);
-            return (JSONObject)o;
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "payloadchunk", e);
+            return tokenizer.nextObject(-1);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "payloadchunk", e);
         }
     }
 
@@ -372,7 +363,7 @@ public class MessageInputStream extends InputStream {
      * @return the next payload chunk data or null if none remaining.
      * @throws MslCryptoException if there is a problem decrypting or verifying
      *         the payload chunk.
-     * @throws MslEncodingException if there is a problem parsing the JSON.
+     * @throws MslEncodingException if there is a problem parsing the data.
      * @throws MslMessageException if the payload verification failed.
      * @throws MslInternalException if attempting to access payloads of an
      *         error message.
@@ -389,9 +380,9 @@ public class MessageInputStream extends InputStream {
             return payloadIterator.next();
         
         // Otherwise read the next payload.
-        final JSONObject jo = nextJsonObject();
-        if (jo == null) return null;
-        final PayloadChunk payload = new PayloadChunk(jo, cryptoContext);
+        final MslObject mo = nextMslObject();
+        if (mo == null) return null;
+        final PayloadChunk payload = new PayloadChunk(ctx, mo, cryptoContext);
         
         // Make sure the payload belongs to this message and is the one we are
         // expecting.
@@ -446,7 +437,7 @@ public class MessageInputStream extends InputStream {
      * @return true if the message is a handshake message.
      * @throws MslCryptoException if there is a problem decrypting or verifying
      *         the payload chunk.
-     * @throws MslEncodingException if there is a problem parsing the JSON.
+     * @throws MslEncodingException if there is a problem parsing the data.
      * @throws MslMessageException if the payload verification failed.
      * @throws MslInternalException if attempting to access payloads of an
      *         error message.
@@ -775,11 +766,13 @@ public class MessageInputStream extends InputStream {
         }
         return bytesSkipped;
     }
-
+    
+    /** MSL context. */
+    private final MslContext ctx;
     /** MSL input stream. */
     private final InputStream source;
-    /** JSON tokener. */
-    private final JSONTokener tokener;
+    /** MSL tokenizer. */
+    private final MslTokenizer tokenizer;
     
     /** Header. */
     private final Header header;

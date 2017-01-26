@@ -19,11 +19,16 @@
  *
  */
 describe("EccAuthenticationFactory", function() {
-    /** JSON key entity identity. */
+    /** MSL encoder format. */
+    var ENCODER_FORMAT = MslEncoderFormat.JSON;
+    
+    /** Key entity identity. */
     var KEY_IDENTITY = "identity";
 
     /** MSL context. */
     var ctx;
+    /** MSL encoder factory. */
+    var encoder;
     /** Entity authentication factory. */
     var factory;
 
@@ -36,8 +41,9 @@ describe("EccAuthenticationFactory", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 100);
+            waitsFor(function() { return ctx; }, "ctx", 1500);
             runs(function() {
+                encoder = ctx.getMslEncoderFactory();
                 var keyStore = new EccStore();
                 keyStore.addPublicKey(MockEccAuthenticationFactory.ECC_PUBKEY_ID, MockEccAuthenticationFactory.ECC_PUBKEY);
                 factory = new EccAuthenticationFactory(null, keyStore);
@@ -50,11 +56,18 @@ describe("EccAuthenticationFactory", function() {
 
     it("createData", function() {
         var data = new EccAuthenticationData(MockEccAuthenticationFactory.ECC_ESN, MockEccAuthenticationFactory.ECC_PUBKEY_ID);
-        var entityAuthJO = data.getAuthData();
+        var entityAuthMo;
+        runs(function() {
+            data.getAuthData(encoder, ENCODER_FORMAT, {
+                result: function(x) { entityAuthMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return entityAuthMo; }, "entityAuthMo", 100);
 
         var authdata;
         runs(function() {
-            factory.createData(ctx, entityAuthJO, {
+            factory.createData(ctx, entityAuthMo, {
                 result: function(x) { authdata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -64,20 +77,38 @@ describe("EccAuthenticationFactory", function() {
         runs(function() {
             expect(authdata).not.toBeNull();
             expect(authdata instanceof EccAuthenticationData).toBeTruthy();
+            
+            MslTestUtils.toMslObject(encoder, data, {
+                result: function(x) { dataMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            MslTestUtils.toMslObject(encoder, authdata, {
+                result: function(x) { authdataMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return dataMo && authdataMo; }, "dataMo && authdataMo", 100);
 
-            var dataJo = JSON.parse(JSON.stringify(data));
-            var authdataJo = JSON.parse(JSON.stringify(authdata));
-            expect(authdataJo).toEqual(dataJo);
+        runs(function() {
+            expect(MslEncoderUtils$equalObjects(dataMo, authdataMo)).toBeTruthy();
         });
     });
 
     it("encode exception", function() {
+        var entityAuthMo;
+        runs(function() {
+            var data = new EccAuthenticationData(MockEccAuthenticationFactory.ECC_ESN, MockEccAuthenticationFactory.ECC_PUBKEY_ID);
+            data.getAuthData(encoder, ENCODER_FORMAT, {
+                result: function(x) { entityAuthMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return entityAuthMo; }, "entityAuthMo", 100);
+        
         var exception;
         runs(function() {
-	        var data = new EccAuthenticationData(MockEccAuthenticationFactory.ECC_ESN, MockEccAuthenticationFactory.ECC_PUBKEY_ID);
-	        var entityAuthJO = data.getAuthData();
-	        delete entityAuthJO[KEY_IDENTITY];
-            factory.createData(ctx, entityAuthJO, {
+            entityAuthMo.remove(KEY_IDENTITY);
+            factory.createData(ctx, entityAuthMo, {
                 result: function() {},
                 error: function(e) { exception = e; },
             });
@@ -86,7 +117,7 @@ describe("EccAuthenticationFactory", function() {
 
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
 
@@ -115,7 +146,7 @@ describe("EccAuthenticationFactory", function() {
 
         var plaintext = new Uint8Array(16);
         ctx.getRandom().nextBytes(plaintext);
-        cryptoContext.sign(plaintext, {
+        cryptoContext.sign(plaintext, encoder, ENCODER_FORMAT, {
             result: function(ciphertext) {},
             error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         });

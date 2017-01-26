@@ -20,26 +20,37 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("EmailPasswordAuthenticationData", function() {
-    /** JSON key user authentication scheme. */
+    /** MSL encoder format. */
+    var ENCODER_FORMAT = MslEncoderFormat.JSON;
+    
+    /** Key user authentication scheme. */
     var KEY_SCHEME = "scheme";
-    /** JSON key user authentication data. */
+    /** Key user authentication data. */
     var KEY_AUTHDATA = "authdata";
-    /** JSON email key. */
+    /** Key email. */
     var KEY_EMAIL = "email";
-    /** JSON password key. */
+    /** Key password. */
     var KEY_PASSWORD = "password";
 
     /** MSL context. */
     var ctx;
+    /** MSL encoder factory. */
+    var encoder;
+    
+    var initialized = false;
     beforeEach(function() {
-        if (!ctx) {
+        if (!initialized) {
             runs(function() {
                 MockMslContext$create(EntityAuthenticationScheme.X509, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 100);
+            waitsFor(function() { return ctx; }, "ctx", 900);
+            runs(function() {
+                encoder = ctx.getMslEncoderFactory();
+                initialized = true;
+            });
         }
     });
     
@@ -48,107 +59,230 @@ describe("EmailPasswordAuthenticationData", function() {
         expect(data.scheme).toEqual(UserAuthenticationScheme.EMAIL_PASSWORD);
         expect(data.email).toEqual(MockEmailPasswordAuthenticationFactory.EMAIL);
         expect(data.password).toEqual(MockEmailPasswordAuthenticationFactory.PASSWORD);
-        var authdata = data.getAuthData();
-        expect(authdata).not.toBeNull();
-        var jsonString = JSON.stringify(data);
         
-        var joData = EmailPasswordAuthenticationData$parse(authdata);
-        expect(joData.scheme).toEqual(data.scheme);
-        expect(joData.email).toEqual(data.email);
-        expect(joData.password).toEqual(data.password);
-        var joAuthdata = joData.getAuthData();
-        expect(joAuthdata).not.toBeNull();
-        expect(joAuthdata).toEqual(authdata);
-        var joJsonString = JSON.stringify(joData);
-        expect(joJsonString).not.toBeNull();
-        expect(joJsonString).toEqual(jsonString);
+        var authdata;
+        runs(function() {
+            data.getAuthData(encoder, ENCODER_FORMAT, {
+                result: function(x) { authdata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return authdata; }, "authdata", 100);
+        
+        var encode;
+        runs(function() {
+            expect(authdata).not.toBeNull();
+            data.toMslEncoding(encoder, ENCODER_FORMAT, {
+                result: function(x) { encode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return encode; }, "encode", 100);
+        
+        var moData, moAuthdata;
+        runs(function() {
+            moData = EmailPasswordAuthenticationData$parse(authdata);
+            expect(moData.scheme).toEqual(data.scheme);
+            expect(moData.email).toEqual(data.email);
+            expect(moData.password).toEqual(data.password);
+            moData.getAuthData(encoder, ENCODER_FORMAT, {
+                result: function(x) { moAuthdata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return moAuthdata; }, "moAuthdata", 100);
+        
+        var moEncode;
+        runs(function() {
+            expect(moAuthdata).not.toBeNull();
+            expect(moAuthdata).toEqual(authdata);
+            moData.toMslEncoding(encoder, ENCODER_FORMAT, {
+                result: function(x) { moEncode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return moEncode; }, "moEncode", 100);
+        
+        runs(function() {
+            expect(moEncode).not.toBeNull();
+            expect(moEncode).toEqual(encode);
+        });
     });
     
-    it("json is correct", function() {
+    it("mslobject is correct", function() {
         var data = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL, MockEmailPasswordAuthenticationFactory.PASSWORD);
-        var jo = JSON.parse(JSON.stringify(data));
-        expect(jo[KEY_SCHEME]).toEqual(UserAuthenticationScheme.EMAIL_PASSWORD.name);
-        var authdata = jo[KEY_AUTHDATA];
-        expect(authdata[KEY_EMAIL]).toEqual(MockEmailPasswordAuthenticationFactory.EMAIL);
-        expect(authdata[KEY_PASSWORD]).toEqual(MockEmailPasswordAuthenticationFactory.PASSWORD);
+        
+        var mo;
+        runs(function() {
+            MslTestUtils.toMslObject(encoder, data, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        runs(function() {
+            expect(mo.getString(KEY_SCHEME)).toEqual(UserAuthenticationScheme.EMAIL_PASSWORD.name);
+            var authdata = mo.getMslObject(KEY_AUTHDATA);
+            expect(authdata.getString(KEY_EMAIL)).toEqual(MockEmailPasswordAuthenticationFactory.EMAIL);
+            expect(authdata.getString(KEY_PASSWORD)).toEqual(MockEmailPasswordAuthenticationFactory.PASSWORD);
+        });
     });
     
     it("create", function() {
         var data = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL, MockEmailPasswordAuthenticationFactory.PASSWORD);
-        var jsonString = JSON.stringify(data);
-        var jo = JSON.parse(jsonString);
+
+        var encode;
+        runs(function() {
+            data.toMslEncoding(encoder, ENCODER_FORMAT, {
+                result: function(x) { encode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return encode; }, "encode", 100);
+        
         var userdata;
         runs(function() {
-            UserAuthenticationData$parse(ctx, null, jo, {
+            var mo = encoder.parseObject(encode);
+            UserAuthenticationData$parse(ctx, null, mo, {
                 result: function(x) { userdata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
         waitsFor(function() { return userdata; }, "userdata", 100);
 
+        var moData, moAuthdata;
         runs(function() {
             expect(userdata).not.toBeNull();
             expect(userdata instanceof EmailPasswordAuthenticationData).toBeTruthy();
 
-            var joData = userdata;
-            expect(joData.scheme).toEqual(data.scheme);
-            expect(joData.email).toEqual(data.email);
-            expect(joData.password).toEqual(data.password);
-            var joAuthdata = joData.getAuthData();
-            expect(joAuthdata).not.toBeNull();
-            expect(joAuthdata).toEqual(data.getAuthData());
-            var joJsonString = JSON.stringify(joData);
-            expect(joJsonString).not.toBeNull();
-            expect(joJsonString).toEqual(jsonString);
+            moData = userdata;
+            expect(moData.scheme).toEqual(data.scheme);
+            expect(moData.email).toEqual(data.email);
+            expect(moData.password).toEqual(data.password);
+            moData.getAuthData(encoder, ENCODER_FORMAT, {
+                result: function(x) { moAuthdata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return moAuthdata; }, "moAuthdata", 100);
+        
+        var authdata;
+        runs(function() {
+        	data.getAuthData(encoder, ENCODER_FORMAT, {
+        		result: function(x) { authdata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return authdata; }, "authdata", 100);
+        
+        var moEncode;
+        runs(function() {
+            expect(moAuthdata).not.toBeNull();
+            expect(moAuthdata).toEqual(authdata);
+            moData.toMslEncoding(encoder, ENCODER_FORMAT, {
+                result: function(x) { moEncode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return moEncode; }, "moEncode", 100);
+        
+        runs(function() {
+            expect(moEncode).not.toBeNull();
+            expect(moEncode).toEqual(encode);
         });
     });
     
     it("missing email", function() {
-    	var f = function() {
-	        var data = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL, MockEmailPasswordAuthenticationFactory.PASSWORD);
-	        var authdata = data.getAuthData();
-	        delete authdata[KEY_EMAIL];
-	        EmailPasswordAuthenticationData$parse(authdata);
-    	};
-    	expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+        var data = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL, MockEmailPasswordAuthenticationFactory.PASSWORD);
+        
+        var authdata;
+        runs(function() {
+            data.getAuthData(encoder, ENCODER_FORMAT, {
+                result: function(x) { authdata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return authdata; }, "authdata", 100);
+        
+        runs(function() {
+            authdata.remove(KEY_EMAIL);
+            var f = function() {
+                EmailPasswordAuthenticationData$parse(authdata);
+            };
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
+        });
     });
     
     it("missing password", function() {
-    	var f = function() {
-	        var data = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL, MockEmailPasswordAuthenticationFactory.PASSWORD);
-	        var authdata = data.getAuthData();
-	        delete authdata[KEY_PASSWORD];
-	        EmailPasswordAuthenticationData$parse(authdata);
-	    };
-	    expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+        var data = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL, MockEmailPasswordAuthenticationFactory.PASSWORD);
+
+        var authdata;
+        runs(function() {
+            data.getAuthData(encoder, ENCODER_FORMAT, {
+                result: function(x) { authdata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return authdata; }, "authdata", 100);
+        
+        runs(function() {
+            authdata.remove(KEY_PASSWORD);
+            var f = function() {
+                EmailPasswordAuthenticationData$parse(authdata);
+            };
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
+        });
     });
     
     it("equals email", function() {
         var dataA = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL + "A", MockEmailPasswordAuthenticationFactory.PASSWORD);
         var dataB = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL + "B", MockEmailPasswordAuthenticationFactory.PASSWORD);
-        var dataA2 = EmailPasswordAuthenticationData$parse(dataA.getAuthData());
+        var dataA2;
+        runs(function() {
+            dataA.getAuthData(encoder, ENCODER_FORMAT, {
+                result: function(authdata) {
+                    dataA2 = EmailPasswordAuthenticationData$parse(authdata);
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return dataA2; }, "dataA2", 100);
         
-        expect(dataA.equals(dataA)).toBeTruthy();
-        
-        expect(dataA.equals(dataB)).toBeFalsy();
-        expect(dataB.equals(dataA)).toBeFalsy();
-        
-        expect(dataA.equals(dataA2)).toBeTruthy();
-        expect(dataA2.equals(dataA)).toBeTruthy();
+        runs(function() {
+            expect(dataA.equals(dataA)).toBeTruthy();
+            
+            expect(dataA.equals(dataB)).toBeFalsy();
+            expect(dataB.equals(dataA)).toBeFalsy();
+            
+            expect(dataA.equals(dataA2)).toBeTruthy();
+            expect(dataA2.equals(dataA)).toBeTruthy();
+        });
     });
     
     it("equals password", function() {
         var dataA = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL, MockEmailPasswordAuthenticationFactory.PASSWORD + "A");
         var dataB = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL, MockEmailPasswordAuthenticationFactory.PASSWORD + "B");
-        var dataA2 = EmailPasswordAuthenticationData$parse(dataA.getAuthData());
+        var dataA2;
+        runs(function() {
+            dataA.getAuthData(encoder, ENCODER_FORMAT, {
+                result: function(authdata) {
+                    dataA2 = EmailPasswordAuthenticationData$parse(authdata);
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return dataA2; }, "dataA2", 100);
         
-        expect(dataA.equals(dataA)).toBeTruthy();
-        
-        expect(dataA.equals(dataB)).toBeFalsy();
-        expect(dataB.equals(dataA)).toBeFalsy();
-        
-        expect(dataA.equals(dataA2)).toBeTruthy();
-        expect(dataA2.equals(dataA)).toBeTruthy();
+        runs(function() {
+            expect(dataA.equals(dataA)).toBeTruthy();
+            
+            expect(dataA.equals(dataB)).toBeFalsy();
+            expect(dataB.equals(dataA)).toBeFalsy();
+            
+            expect(dataA.equals(dataA2)).toBeTruthy();
+            expect(dataA2.equals(dataA)).toBeTruthy();
+        });
     });
     
     it("equals object", function() {

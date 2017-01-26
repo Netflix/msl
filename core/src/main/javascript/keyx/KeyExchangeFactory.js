@@ -59,32 +59,32 @@ var KeyExchangeFactory;
         },
 
         /**
-         * Construct a new key request data instance from the provided JSON.
+         * Construct a new key request data instance from the provided MSL object.
          *
          * @param {MslContext} ctx MSL context.
-         * @param {Object} keyRequestJO the JSON object.
+         * @param {MslObject} keyRequestMo the JSON object.
          * @param {{result: function(KeyRequestData), error: function(Error)}}
          *        callback the callback will receive the key request data or
          *        any thrown exceptions.
-         * @throws MslEncodingException if there is an error parsing the JSON.
+         * @throws MslEncodingException if there is an error parsing the data.
          * @throws MslKeyExchangeException if there is an error creating the key
          *         request data.
          * @throws MslCryptoException if the keying material cannot be created.
          */
-        createRequestData: function(ctx, keyRequestJO, callback) {},
+        createRequestData: function(ctx, keyRequestMo, callback) {},
 
         /**
-         * Construct a new key response data instance from the provided JSON.
+         * Construct a new key response data instance from the provided MSL object.
          *
          * @param {MslContext} ctx MSL context.
          * @param {MasterToken} masterToken the master token for the new key response data.
-         * @param {Object} keyDataJO the JSON object.
+         * @param {MslObject} keyDataMo the MSL object.
          * @return {KeyResponseData} the key response data.
-         * @throws MslEncodingException if there is an error parsing the JSON.
+         * @throws MslEncodingException if there is an error parsing the data.
          * @throws MslKeyExchangeException if there is an error creating the key
          *         response data.
          */
-        createResponseData: function(ctx, masterToken, keyDataJO) {},
+        createResponseData: function(ctx, masterToken, keyDataMo) {},
 
         /**
          * <p>Generate a new key response data instance and crypto context in
@@ -96,6 +96,7 @@ var KeyExchangeFactory;
          * by using the MSL context's token factory.</p>
          *
          * @param {MslContext} ctx MSL context.
+         * @param {MslEncoderFormat} format MSL encoder format.
          * @param {KeyRequestData} keyRequestData the key request data.
          * @param {MasterToken|EntityAuthenticationData} entityToken the master token to renew or
          *        the entity authentication data.
@@ -114,7 +115,7 @@ var KeyExchangeFactory;
          * @throws MslEntityAuthException if there is a problem with the master
          *         token identity.
          */
-        generateResponse: function(ctx, keyRequestData, entityToken, callback) {},
+        generateResponse: function(ctx, format, keyRequestData, entityToken, callback) {},
 
         /**
          * Create a crypto context from the provided key request data and key

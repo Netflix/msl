@@ -43,6 +43,7 @@ import com.netflix.msl.MslKeyExchangeException;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
+import com.netflix.msl.io.MslEncoderException;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.keyx.KeyRequestData;
@@ -421,6 +422,8 @@ public abstract class MslConfig {
             try {
                 SharedUtil.saveToFile(mslStorePath, SharedUtil.marshalMslStore((SimpleMslStore)mslStoreWrapper.getMslStore()), true /*overwrite*/);
             } catch (final MslEncodingException e) {
+                throw new IOException("Error Saving MslStore file " + mslStorePath, e);
+            } catch (final MslEncoderException e) {
                 throw new IOException("Error Saving MslStore file " + mslStorePath, e);
             }
             appCtx.info(String.format("%s: MSL Store %s Updated", this, mslStorePath));

@@ -31,13 +31,11 @@ import java.util.Random;
 
 import javax.crypto.SecretKey;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
-import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
@@ -45,11 +43,15 @@ import com.netflix.msl.MslException;
 import com.netflix.msl.MslMasterTokenException;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.entityauth.MockPresharedAuthenticationFactory;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.test.ExpectedMslException;
 import com.netflix.msl.tokens.MasterToken;
-import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslContext;
+import com.netflix.msl.util.MslTestUtils;
 
 /**
  * Session crypto context unit tests.
@@ -57,14 +59,15 @@ import com.netflix.msl.util.MslContext;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class SessionCryptoContextTest {
-    /** JSON key ciphertext. */
+    /** Key ciphertext. */
     private final static String KEY_CIPHERTEXT = "ciphertext";
+    /** MSL encoder format. */
+    private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
     
     /**
      * @param ctx MSL context.
      * @return a new master token.
-     * @throws MslEncodingException if there is an error encoding the JSON
-     *         data.
+     * @throws MslEncodingException if there is an error encoding the data.
      * @throws MslCryptoException if there is an error encrypting or signing
      *         the token data.
      */
@@ -83,24 +86,22 @@ public class SessionCryptoContextTest {
      * @param encryptionKey master token encryption key.
      * @param signatureKey master token signature key.
      * @return a new master token.
-     * @throws MslEncodingException if there is an error encoding the JSON
-     *         data.
+     * @throws MslEncodingException if there is an error encoding the data.
      * @throws MslCryptoException if there is an error encrypting or signing
      *         the token data.
      * @throws MslException if the master token is constructed incorrectly.
-     * @throws JSONException if there is an error editing the JSON data.
+     * @throws MslEncoderException if there is an error editing the data.
      */
-    private static MasterToken getUntrustedMasterToken(final MslContext ctx, final SecretKey encryptionKey, final SecretKey signatureKey) throws MslEncodingException, MslCryptoException, JSONException, MslException {
+    private static MasterToken getUntrustedMasterToken(final MslContext ctx, final SecretKey encryptionKey, final SecretKey signatureKey) throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         final Date renewalWindow = new Date(System.currentTimeMillis() + 1000);
         final Date expiration = new Date(System.currentTimeMillis() + 2000);
         final String identity = MockPresharedAuthenticationFactory.PSK_ESN;
         final MasterToken masterToken = new MasterToken(ctx, renewalWindow, expiration, 1L, 1L, null, identity, encryptionKey, signatureKey);
-        final String json = masterToken.toJSONString();
-        final JSONObject jo = new JSONObject(json);
-        final byte[] signature = Base64.decode(jo.getString("signature"));
+        final MslObject mo = MslTestUtils.toMslObject(encoder, masterToken);
+        final byte[] signature = mo.getBytes("signature");
         ++signature[1];
-        jo.put("signature", Base64.encode(signature));
-        final MasterToken untrustedMasterToken = new MasterToken(ctx, jo);
+        mo.put("signature", signature);
+        final MasterToken untrustedMasterToken = new MasterToken(ctx, mo);
         return untrustedMasterToken;
     }
     
@@ -109,17 +110,27 @@ public class SessionCryptoContextTest {
     
     /** MSL context. */
     private static MslContext ctx;
+    /** MSL encoder factory. */
+    private static MslEncoderFactory encoder;
     /** Random. */
     private static Random random;
     
     @BeforeClass
-    public static void setup() throws MslEncodingException, MslCryptoException { 
+    public static void setup() throws MslEncodingException, MslCryptoException {
         ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
+        encoder = ctx.getMslEncoderFactory();
         random = new Random();
     }
     
+    @AfterClass
+    public static void teardown() {
+        random = null;
+        encoder = null;
+        ctx = null;
+    }
+    
     @Test
-    public void untrusted() throws JSONException, MslException {
+    public void untrusted() throws MslEncoderException, MslException {
         thrown.expect(MslMasterTokenException.class);
         thrown.expectMslError(MslError.MASTERTOKEN_UNTRUSTED);
 
@@ -137,29 +148,29 @@ public class SessionCryptoContextTest {
         final byte[] messageA = new byte[32];
         random.nextBytes(messageA);
         
-        final byte[] ciphertextA = cryptoContext.encrypt(messageA);
+        final byte[] ciphertextA = cryptoContext.encrypt(messageA, encoder, ENCODER_FORMAT);
         assertNotNull(ciphertextA);
         assertThat(messageA, is(not(ciphertextA)));
         
-        final byte[] plaintextA = cryptoContext.decrypt(ciphertextA);
+        final byte[] plaintextA = cryptoContext.decrypt(ciphertextA, encoder);
         assertNotNull(plaintextA);
         assertArrayEquals(messageA, plaintextA);
         
         final byte[] messageB = new byte[32];
         random.nextBytes(messageB);
         
-        final byte[] ciphertextB = cryptoContext.encrypt(messageB);
+        final byte[] ciphertextB = cryptoContext.encrypt(messageB, encoder, ENCODER_FORMAT);
         assertNotNull(ciphertextB);
         assertThat(messageB, is(not(ciphertextB)));
         assertThat(ciphertextB, is(not(ciphertextA)));
         
-        final byte[] plaintextB = cryptoContext.decrypt(ciphertextB);
+        final byte[] plaintextB = cryptoContext.decrypt(ciphertextB, encoder);
         assertNotNull(plaintextB);
         assertArrayEquals(messageB, plaintextB);
     }
     
     @Test
-    public void encryptDecryptKeys() throws JSONException, MslException {
+    public void encryptDecryptKeys() throws MslEncoderException, MslException {
         final String identity = MockPresharedAuthenticationFactory.PSK_ESN;
         final SecretKey encryptionKey = MockPresharedAuthenticationFactory.KPE;
         final SecretKey signatureKey = MockPresharedAuthenticationFactory.KPH;
@@ -169,29 +180,29 @@ public class SessionCryptoContextTest {
         final byte[] messageA = new byte[32];
         random.nextBytes(messageA);
         
-        final byte[] ciphertextA = cryptoContext.encrypt(messageA);
+        final byte[] ciphertextA = cryptoContext.encrypt(messageA, encoder, ENCODER_FORMAT);
         assertNotNull(ciphertextA);
         assertThat(messageA, is(not(ciphertextA)));
         
-        final byte[] plaintextA = cryptoContext.decrypt(ciphertextA);
+        final byte[] plaintextA = cryptoContext.decrypt(ciphertextA, encoder);
         assertNotNull(plaintextA);
         assertArrayEquals(messageA, plaintextA);
         
         final byte[] messageB = new byte[32];
         random.nextBytes(messageB);
         
-        final byte[] ciphertextB = cryptoContext.encrypt(messageB);
+        final byte[] ciphertextB = cryptoContext.encrypt(messageB, encoder, ENCODER_FORMAT);
         assertNotNull(ciphertextB);
         assertThat(messageB, is(not(ciphertextB)));
         assertThat(ciphertextB, is(not(ciphertextA)));
         
-        final byte[] plaintextB = cryptoContext.decrypt(ciphertextB);
+        final byte[] plaintextB = cryptoContext.decrypt(ciphertextB, encoder);
         assertNotNull(plaintextB);
         assertArrayEquals(messageB, plaintextB);
     }
     
     @Test
-    public void invalidCiphertext() throws MslEncodingException, MslCryptoException, JSONException, MslMasterTokenException, UnsupportedEncodingException {
+    public void invalidCiphertext() throws MslEncodingException, MslCryptoException, MslEncoderException, MslMasterTokenException, UnsupportedEncodingException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.CIPHERTEXT_BAD_PADDING);
 
@@ -201,20 +212,20 @@ public class SessionCryptoContextTest {
         final byte[] message = new byte[32];
         random.nextBytes(message);
 
-        final byte[] data = cryptoContext.encrypt(message);
-        final JSONObject envelopeJo = new JSONObject(new String(data, MslConstants.DEFAULT_CHARSET));
-        final MslCiphertextEnvelope envelope = new MslCiphertextEnvelope(envelopeJo);
+        final byte[] data = cryptoContext.encrypt(message, encoder, ENCODER_FORMAT);
+        final MslObject envelopeMo = encoder.parseObject(data);
+        final MslCiphertextEnvelope envelope = new MslCiphertextEnvelope(envelopeMo);
         final byte[] ciphertext = envelope.getCiphertext();
         ++ciphertext[ciphertext.length - 1];
         final MslCiphertextEnvelope shortEnvelope = new MslCiphertextEnvelope(envelope.getKeyId(), envelope.getIv(), ciphertext);
-        cryptoContext.decrypt(shortEnvelope.toJSONString().getBytes(MslConstants.DEFAULT_CHARSET));
+        cryptoContext.decrypt(shortEnvelope.toMslEncoding(encoder, ENCODER_FORMAT), encoder);
     }
     
     // I want this to catch the ArrayIndexOutOfBounds
     // MslError.INSUFFICIENT_CIPHERTEXT but I'm not sure how to trigger it
     // anymore.
     @Test
-    public void insufficientCiphertext() throws MslCryptoException, JSONException, MslEncodingException, MslMasterTokenException, UnsupportedEncodingException {
+    public void insufficientCiphertext() throws MslCryptoException, MslEncoderException, MslEncodingException, MslMasterTokenException, UnsupportedEncodingException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.CIPHERTEXT_ILLEGAL_BLOCK_SIZE);
 
@@ -224,18 +235,18 @@ public class SessionCryptoContextTest {
         final byte[] message = new byte[32];
         random.nextBytes(message);
 
-        final byte[] data = cryptoContext.encrypt(message);
-        final JSONObject envelopeJo = new JSONObject(new String(data, MslConstants.DEFAULT_CHARSET));
-        final MslCiphertextEnvelope envelope = new MslCiphertextEnvelope(envelopeJo);
+        final byte[] data = cryptoContext.encrypt(message, encoder, ENCODER_FORMAT);
+        final MslObject envelopeMo = encoder.parseObject(data);
+        final MslCiphertextEnvelope envelope = new MslCiphertextEnvelope(envelopeMo);
         final byte[] ciphertext = envelope.getCiphertext();
         
         final byte[] shortCiphertext = Arrays.copyOf(ciphertext, ciphertext.length - 1);
         final MslCiphertextEnvelope shortEnvelope = new MslCiphertextEnvelope(envelope.getKeyId(), envelope.getIv(), shortCiphertext);
-        cryptoContext.decrypt(shortEnvelope.toJSONString().getBytes(MslConstants.DEFAULT_CHARSET));
+        cryptoContext.decrypt(shortEnvelope.toMslEncoding(encoder, ENCODER_FORMAT), encoder);
     }
     
     @Test
-    public void notEnvelope() throws MslCryptoException, JSONException, MslEncodingException, MslMasterTokenException, UnsupportedEncodingException {
+    public void notEnvelope() throws MslCryptoException, MslEncoderException, MslEncodingException, MslMasterTokenException, UnsupportedEncodingException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.CIPHERTEXT_ENVELOPE_PARSE_ERROR);
 
@@ -245,10 +256,10 @@ public class SessionCryptoContextTest {
         final byte[] message = new byte[32];
         random.nextBytes(message);
 
-        final byte[] data = cryptoContext.encrypt(message);
-        final JSONObject envelopeJo = new JSONObject(new String(data, MslConstants.DEFAULT_CHARSET));
-        envelopeJo.remove(KEY_CIPHERTEXT);
-        cryptoContext.decrypt(envelopeJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
+        final byte[] data = cryptoContext.encrypt(message, encoder, ENCODER_FORMAT);
+        final MslObject envelopeMo = encoder.parseObject(data);
+        envelopeMo.remove(KEY_CIPHERTEXT);
+        cryptoContext.decrypt(encoder.encodeObject(envelopeMo, ENCODER_FORMAT), encoder);
     }
     
     @Test
@@ -262,13 +273,13 @@ public class SessionCryptoContextTest {
         final byte[] message = new byte[32];
         random.nextBytes(message);
         
-        final byte[] data = cryptoContext.encrypt(message);
+        final byte[] data = cryptoContext.encrypt(message, encoder, ENCODER_FORMAT);
         data[0] = 0;
-        cryptoContext.decrypt(data);
+        cryptoContext.decrypt(data, encoder);
     }
     
     @Test
-    public void encryptDecryptNullEncryption() throws JSONException, MslException {
+    public void encryptDecryptNullEncryption() throws MslEncoderException, MslException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.ENCRYPT_NOT_SUPPORTED);
 
@@ -287,11 +298,11 @@ public class SessionCryptoContextTest {
         final byte[] messageA = new byte[32];
         random.nextBytes(messageA);
         
-        cryptoContext.encrypt(messageA);
+        cryptoContext.encrypt(messageA, encoder, ENCODER_FORMAT);
     }
     
     @Test
-    public void encryptDecryptNullSignature() throws JSONException, MslException {
+    public void encryptDecryptNullSignature() throws MslEncoderException, MslException {
         final String identity = MockPresharedAuthenticationFactory.PSK_ESN;
         final SecretKey encryptionKey = MockPresharedAuthenticationFactory.KPE;
         final SecretKey signatureKey = MockPresharedAuthenticationFactory.KPH;
@@ -301,29 +312,29 @@ public class SessionCryptoContextTest {
         final byte[] messageA = new byte[32];
         random.nextBytes(messageA);
         
-        final byte[] ciphertextA = cryptoContext.encrypt(messageA);
+        final byte[] ciphertextA = cryptoContext.encrypt(messageA, encoder, ENCODER_FORMAT);
         assertNotNull(ciphertextA);
         assertThat(messageA, is(not(ciphertextA)));
         
-        final byte[] plaintextA = cryptoContext.decrypt(ciphertextA);
+        final byte[] plaintextA = cryptoContext.decrypt(ciphertextA, encoder);
         assertNotNull(plaintextA);
         assertArrayEquals(messageA, plaintextA);
         
         final byte[] messageB = new byte[32];
         random.nextBytes(messageB);
         
-        final byte[] ciphertextB = cryptoContext.encrypt(messageB);
+        final byte[] ciphertextB = cryptoContext.encrypt(messageB, encoder, ENCODER_FORMAT);
         assertNotNull(ciphertextB);
         assertThat(messageB, is(not(ciphertextB)));
         assertThat(ciphertextB, is(not(ciphertextA)));
         
-        final byte[] plaintextB = cryptoContext.decrypt(ciphertextB);
+        final byte[] plaintextB = cryptoContext.decrypt(ciphertextB, encoder);
         assertNotNull(plaintextB);
         assertArrayEquals(messageB, plaintextB);
     }
     
     @Test
-    public void encryptDecryptIdMismatch() throws JSONException, MslException {
+    public void encryptDecryptIdMismatch() throws MslEncoderException, MslException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.ENVELOPE_KEY_ID_MISMATCH);
 
@@ -350,17 +361,17 @@ public class SessionCryptoContextTest {
         
         final byte[] ciphertext;
         try {
-            ciphertext = cryptoContextA.encrypt(message);
+            ciphertext = cryptoContextA.encrypt(message, encoder, ENCODER_FORMAT);
         } catch (final MslCryptoException e) {
             fail(e.getMessage());
             return;
         }
         
-        cryptoContextB.decrypt(ciphertext);
+        cryptoContextB.decrypt(ciphertext, encoder);
     }
     
     @Test
-    public void encryptDecryptKeysMismatch() throws JSONException, MslException {
+    public void encryptDecryptKeysMismatch() throws MslEncoderException, MslException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.CIPHERTEXT_BAD_PADDING);
 
@@ -386,13 +397,13 @@ public class SessionCryptoContextTest {
         
         final byte[] ciphertext;
         try {
-            ciphertext = cryptoContextA.encrypt(message);
+            ciphertext = cryptoContextA.encrypt(message, encoder, ENCODER_FORMAT);
         } catch (final MslCryptoException e) {
             fail(e.getMessage());
             return;
         }
         
-        cryptoContextB.decrypt(ciphertext);
+        cryptoContextB.decrypt(ciphertext, encoder);
     }
     
     @Test
@@ -403,26 +414,26 @@ public class SessionCryptoContextTest {
         final byte[] messageA = new byte[32];
         random.nextBytes(messageA);
         
-        final byte[] signatureA = cryptoContext.sign(messageA);
+        final byte[] signatureA = cryptoContext.sign(messageA, encoder, ENCODER_FORMAT);
         assertNotNull(signatureA);
         assertTrue(signatureA.length > 0);
         assertThat(messageA, is(not(signatureA)));
         
-        assertTrue(cryptoContext.verify(messageA, signatureA));
+        assertTrue(cryptoContext.verify(messageA, signatureA, encoder));
         
         final byte[] messageB = new byte[32];
         random.nextBytes(messageB);
         
-        final byte[] signatureB = cryptoContext.sign(messageB);
+        final byte[] signatureB = cryptoContext.sign(messageB, encoder, ENCODER_FORMAT);
         assertTrue(signatureB.length > 0);
         assertThat(signatureA, is(not(signatureB)));
         
-        assertTrue(cryptoContext.verify(messageB, signatureB));
-        assertFalse(cryptoContext.verify(messageB, signatureA));
+        assertTrue(cryptoContext.verify(messageB, signatureB, encoder));
+        assertFalse(cryptoContext.verify(messageB, signatureA, encoder));
     }
     
     @Test
-    public void signVerifyContextMismatch() throws JSONException, MslException {
+    public void signVerifyContextMismatch() throws MslEncoderException, MslException {
         final String identity = MockPresharedAuthenticationFactory.PSK_ESN;
         final SecretKey encryptionKeyA = MockPresharedAuthenticationFactory.KPE;
         final SecretKey signatureKeyA = MockPresharedAuthenticationFactory.KPH;
@@ -442,12 +453,12 @@ public class SessionCryptoContextTest {
 
         final byte[] message = new byte[32];
         random.nextBytes(message);
-        final byte[] signature = cryptoContextA.sign(message);
-        assertFalse(cryptoContextB.verify(message, signature));
+        final byte[] signature = cryptoContextA.sign(message, encoder, ENCODER_FORMAT);
+        assertFalse(cryptoContextB.verify(message, signature, encoder));
     }
     
     @Test
-    public void signVerifyKeys() throws JSONException, MslException {
+    public void signVerifyKeys() throws MslEncoderException, MslException {
         final String identity = MockPresharedAuthenticationFactory.PSK_ESN;
         final SecretKey encryptionKey = MockPresharedAuthenticationFactory.KPE;
         final SecretKey signatureKey = MockPresharedAuthenticationFactory.KPH;
@@ -457,26 +468,26 @@ public class SessionCryptoContextTest {
         final byte[] messageA = new byte[32];
         random.nextBytes(messageA);
         
-        final byte[] signatureA = cryptoContext.sign(messageA);
+        final byte[] signatureA = cryptoContext.sign(messageA, encoder, ENCODER_FORMAT);
         assertNotNull(signatureA);
         assertTrue(signatureA.length > 0);
         assertThat(messageA, is(not(signatureA)));
         
-        assertTrue(cryptoContext.verify(messageA, signatureA));
+        assertTrue(cryptoContext.verify(messageA, signatureA, encoder));
         
         final byte[] messageB = new byte[32];
         random.nextBytes(messageB);
         
-        final byte[] signatureB = cryptoContext.sign(messageB);
+        final byte[] signatureB = cryptoContext.sign(messageB, encoder, ENCODER_FORMAT);
         assertTrue(signatureB.length > 0);
         assertThat(signatureA, is(not(signatureB)));
         
-        assertTrue(cryptoContext.verify(messageB, signatureB));
-        assertFalse(cryptoContext.verify(messageB, signatureA));
+        assertTrue(cryptoContext.verify(messageB, signatureB, encoder));
+        assertFalse(cryptoContext.verify(messageB, signatureA, encoder));
     }
     
     @Test
-    public void signVerifyNullEncryption() throws JSONException, MslException {
+    public void signVerifyNullEncryption() throws MslEncoderException, MslException {
         final String identity = MockPresharedAuthenticationFactory.PSK_ESN;
         final SecretKey encryptionKey = MockPresharedAuthenticationFactory.KPE;
         final SecretKey signatureKey = MockPresharedAuthenticationFactory.KPH;
@@ -486,26 +497,26 @@ public class SessionCryptoContextTest {
         final byte[] messageA = new byte[32];
         random.nextBytes(messageA);
         
-        final byte[] signatureA = cryptoContext.sign(messageA);
+        final byte[] signatureA = cryptoContext.sign(messageA, encoder, ENCODER_FORMAT);
         assertNotNull(signatureA);
         assertTrue(signatureA.length > 0);
         assertThat(messageA, is(not(signatureA)));
         
-        assertTrue(cryptoContext.verify(messageA, signatureA));
+        assertTrue(cryptoContext.verify(messageA, signatureA, encoder));
         
         final byte[] messageB = new byte[32];
         random.nextBytes(messageB);
         
-        final byte[] signatureB = cryptoContext.sign(messageB);
+        final byte[] signatureB = cryptoContext.sign(messageB, encoder, ENCODER_FORMAT);
         assertTrue(signatureB.length > 0);
         assertThat(signatureA, is(not(signatureB)));
         
-        assertTrue(cryptoContext.verify(messageB, signatureB));
-        assertFalse(cryptoContext.verify(messageB, signatureA));
+        assertTrue(cryptoContext.verify(messageB, signatureB, encoder));
+        assertFalse(cryptoContext.verify(messageB, signatureA, encoder));
     }
     
     @Test
-    public void verifyNullSignature() throws JSONException, MslException {
+    public void verifyNullSignature() throws MslEncoderException, MslException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.SIGN_NOT_SUPPORTED);
 
@@ -523,6 +534,6 @@ public class SessionCryptoContextTest {
         
         final byte[] messageA = new byte[32];
         random.nextBytes(messageA);
-        cryptoContext.sign(messageA);
+        cryptoContext.sign(messageA, encoder, ENCODER_FORMAT);
     }
 }

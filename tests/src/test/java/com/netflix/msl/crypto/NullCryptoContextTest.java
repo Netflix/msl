@@ -22,9 +22,17 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Random;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.netflix.msl.MslCryptoException;
+import com.netflix.msl.MslEncodingException;
+import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.util.MockMslContext;
+import com.netflix.msl.util.MslContext;
 
 /**
  * Null crypto context unit tests.
@@ -32,6 +40,23 @@ import com.netflix.msl.MslCryptoException;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class NullCryptoContextTest {
+    /** MSL encoder format. */
+    private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
+    
+    /** MSL encoder factory. */
+    private static MslEncoderFactory encoder;
+    
+    @BeforeClass
+    public static void setup() throws MslEncodingException, MslCryptoException {
+        final MslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
+        encoder = ctx.getMslEncoderFactory();
+    }
+    
+    @AfterClass
+    public static void teardown() {
+        encoder = null;
+    }
+    
     @Test
     public void encryptDecrypt() throws MslCryptoException {
         final Random random = new Random();
@@ -39,11 +64,11 @@ public class NullCryptoContextTest {
         random.nextBytes(message);
         
         final NullCryptoContext cryptoContext = new NullCryptoContext();
-        final byte[] ciphertext = cryptoContext.encrypt(message);
+        final byte[] ciphertext = cryptoContext.encrypt(message, encoder, ENCODER_FORMAT);
         assertNotNull(ciphertext);
         assertArrayEquals(message, ciphertext);
         
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
         assertNotNull(plaintext);
         assertArrayEquals(message, plaintext);
     }
@@ -55,11 +80,11 @@ public class NullCryptoContextTest {
         random.nextBytes(message);
         
         final NullCryptoContext cryptoContext = new NullCryptoContext();
-        final byte[] ciphertext = cryptoContext.wrap(message);
+        final byte[] ciphertext = cryptoContext.wrap(message, encoder, ENCODER_FORMAT);
         assertNotNull(ciphertext);
         assertArrayEquals(message, ciphertext);
         
-        final byte[] plaintext = cryptoContext.unwrap(ciphertext);
+        final byte[] plaintext = cryptoContext.unwrap(ciphertext, encoder);
         assertNotNull(plaintext);
         assertArrayEquals(message, plaintext);
     }
@@ -71,19 +96,19 @@ public class NullCryptoContextTest {
         random.nextBytes(messageA);
 
         final NullCryptoContext cryptoContext = new NullCryptoContext();
-        final byte[] signatureA = cryptoContext.sign(messageA);
+        final byte[] signatureA = cryptoContext.sign(messageA, encoder, ENCODER_FORMAT);
         assertNotNull(signatureA);
         assertEquals(0, signatureA.length);
         
-        assertTrue(cryptoContext.verify(messageA, signatureA));
+        assertTrue(cryptoContext.verify(messageA, signatureA, encoder));
         
         final byte[] messageB = new byte[32];
         random.nextBytes(messageB);
         
-        final byte[] signatureB = cryptoContext.sign(messageB);
+        final byte[] signatureB = cryptoContext.sign(messageB, encoder, ENCODER_FORMAT);
         assertArrayEquals(signatureA, signatureB);
         
-        assertTrue(cryptoContext.verify(messageB, signatureB));
-        assertTrue(cryptoContext.verify(messageB, signatureA));
+        assertTrue(cryptoContext.verify(messageB, signatureB, encoder));
+        assertTrue(cryptoContext.verify(messageB, signatureA, encoder));
     }
 }

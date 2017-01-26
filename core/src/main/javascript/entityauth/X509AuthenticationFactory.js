@@ -39,9 +39,9 @@ var X509AuthenticationFactory = EntityAuthenticationFactory.extend({
     },
 
     /** @inheritDoc */
-    createData: function createData(ctx, entityAuthJO, callback) {
+    createData: function createData(ctx, entityAuthMo, callback) {
         AsyncExecutor(callback, function() {
-            return X509AuthenticationData$parse(entityAuthJO);
+            return X509AuthenticationData$parse(entityAuthMo);
         });
     },
 
@@ -49,7 +49,7 @@ var X509AuthenticationFactory = EntityAuthenticationFactory.extend({
     getCryptoContext: function getCryptoContext(ctx, authdata) {
         // Make sure we have the right kind of entity authentication data.
         if (!(authdata instanceof X509AuthenticationData))
-            throw new MslInternalException("Incorrect authentication data type " + JSON.stringify(authdata) + ".");
+            throw new MslInternalException("Incorrect authentication data type " + authdata + ".");
 
         // Extract X.509 authentication data.
         var cert = authdata.x509cert;

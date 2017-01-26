@@ -40,19 +40,19 @@ var KeyRequestData$parse;
 
 (function() {
     /**
-     * JSON key key exchange scheme.
+     * Key key exchange scheme.
      * @const
      * @type {string}
      */
     var KEY_SCHEME = "scheme";
     /**
-     * JSON key key request data.
+     * Key key request data.
      * @const
      * @type {string}
      */
     var KEY_KEYDATA = "keydata";
 
-    KeyRequestData = util.Class.create({
+    KeyRequestData = MslEncodable.extend({
         /**
          * Create a new key request data object with the specified key exchange
          * scheme.
@@ -68,18 +68,31 @@ var KeyRequestData$parse;
         },
 
         /**
-         * @return {object} the key data JSON representation.
-         * @throws JSONException if there was an error constructing the JSON
+         * @param {MslEncoderFactory} encoder MSL encoder factory.
+         * @param {MslEncoderFormat} format MSL encoder format.
+         * @param {{result: function(MslObject), error: function(Error)}}
+         *        callback the callback that will receive the key data MSL
+         *        representation or any thrown exceptions.
+         * @throws MslEncoderException if there was an error constructing the MSL
          *         representation.
          */
-        getKeydata: function() {},
-
+        getKeydata: function(encoder, format, callback) {},
+        
         /** @inheritDoc */
-        toJSON: function toJSON() {
-            var result = {};
-            result[KEY_SCHEME] = this.keyExchangeScheme.name;
-            result[KEY_KEYDATA] = this.getKeydata();
-            return result;
+        toMslEncoding: function toMslEncoding(encoder, format, callback) {
+            var self = this;
+            
+            this.getKeydata(encoder, format, {
+                result: function(keydata) {
+                    AsyncExecutor(callback, function() {
+                        var mo = encoder.createObject();
+                        mo.put(KEY_SCHEME, this.keyExchangeScheme.name);
+                        mo.put(KEY_KEYDATA, keydata);
+                        encoder.encodeObject(mo, format, callback);
+                    }, self);
+                },
+                error: callback.error,
+            }, this);
         },
 
         /**
@@ -106,14 +119,14 @@ var KeyRequestData$parse;
 
     /**
      * Construct a new key request data instance of the correct type from the
-     * provided JSON object.
+     * provided MSL object.
      *
      * @param {MslContext} ctx MSL context.
-     * @param {Object} keyRequestDataJO the JSON object.
+     * @param {MslObject} keyRequestDataMo the MSL object.
      * @param {{result: function(KeyRequestData), error: function(Error)}}
      *        callback the callback will receive the key request data concrete
      *        instance or any thrown exceptions.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslCryptoException if there is an error verifying the key
      *         request data.
      * @throws MslEntityAuthException if the entity authentication data could
@@ -121,29 +134,27 @@ var KeyRequestData$parse;
      * @throws MslKeyExchangeException if unable to create the key request
      *         data.
      */
-    KeyRequestData$parse = function KeyRequestData$parse(ctx, keyRequestDataJO, callback) {
+    KeyRequestData$parse = function KeyRequestData$parse(ctx, keyRequestDataMo, callback) {
         AsyncExecutor(callback, function() {
-            // Pull the key data.
-            var schemeName = keyRequestDataJO[KEY_SCHEME];
-            var keyDataJo = keyRequestDataJO[KEY_KEYDATA];
+            try {
+                // Pull the key data.
+                var schemeName = keyRequestDataMo.getString(KEY_SCHEME);
+                var scheme = ctx.getKeyExchangeScheme(schemeName);
+                if (!scheme)
+                    throw new MslKeyExchangeException(MslError.UNIDENTIFIED_KEYX_SCHEME, schemeName);
+                var encoder = ctx.getMslEncoderFactory();
+                var keyData = keyRequestDataMo.getMslObject(KEY_KEYDATA, encoder);
 
-            // Verify key data.
-            if (typeof schemeName !== 'string' ||
-                typeof keyDataJo !== 'object')
-            {
-                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keyrequestdata " + JSON.stringify(keyRequestDataJO));
+                // Construct an instance of the concrete subclass.
+                var keyFactory = ctx.getKeyExchangeFactory(scheme);
+                if (!keyFactory)
+                    throw new MslKeyExchangeException(MslError.KEYX_FACTORY_NOT_FOUND, scheme.name);
+                keyFactory.createRequestData(ctx, keyData, callback);
+            } catch (e) {
+                if (e instanceof MslEncoderException)
+                    throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "keyrequestdata " + keyRequestDataMo, e);
+                throw e;
             }
-
-            // Verify scheme.
-            var scheme = ctx.getKeyExchangeScheme(schemeName);
-            if (!scheme)
-                throw new MslKeyExchangeException(MslError.UNIDENTIFIED_KEYX_SCHEME, schemeName);
-
-            // Construct an instance of the concrete subclass.
-            var keyFactory = ctx.getKeyExchangeFactory(scheme);
-            if (!keyFactory)
-                throw new MslKeyExchangeException(MslError.KEYX_FACTORY_NOT_FOUND, scheme.name);
-            keyFactory.createRequestData(ctx, keyDataJo, callback);
         });
     };
 })();

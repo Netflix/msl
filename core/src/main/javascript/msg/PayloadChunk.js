@@ -29,12 +29,12 @@
  * {@code
  * payloadchunk = {
  *   "#mandatory" : [ "payload", "signature" ],
- *   "payload" : "base64",
- *   "signature" : "base64"
+ *   "payload" : "binary",
+ *   "signature" : "binary"
  * }} where:
  * <ul>
- * <li>{@code payload} is the Base64-encoded encrypted payload (payload)</li>
- * <li>{@code signature} is the Base64-encoded verification data of the payload</li>
+ * <li>{@code payload} is the encrypted payload (payload)</li>
+ * <li>{@code signature} is the verification data of the payload</li>
  * </ul></p>
  *
  * <p>The payload is represented as
@@ -45,14 +45,14 @@
  *   "messageid" : "int64(0,2^53^)",
  *   "endofmsg" : "boolean",
  *   "compressionalgo" : "enum(GZIP\LZW)",
- *   "data" : "base64"
+ *   "data" : "binary"
  * }} where:
  * <ul>
  * <li>{@code sequencenumber} is the chunk sequence number</li>
  * <li>{@code messageid} is the message ID</li>
  * <li>{@code endofmsg} indicates this is the last payload of the message</li>
  * <li>{@code compressionalgo} indicates the algorithm used to compress the data</li>
- * <li>{@code data} is the Base64-encoded optionally compressed application data</li>
+ * <li>{@code data} is the optionally compressed application data</li>
  * </ul></p>
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
@@ -64,13 +64,13 @@ var PayloadChunk$parse;
 (function() {
     "use strict";
     /**
-     * JSON key payload.
+     * Key payload.
      * @const
      * @type {string}
      */
     var KEY_PAYLOAD = "payload";
     /**
-     * JSON key signature.
+     * Key signature.
      * @const
      * @type {string}
      */
@@ -78,31 +78,31 @@ var PayloadChunk$parse;
 
     // payload
     /**
-     * JSON key sequence number.
+     * Key sequence number.
      * @const
      * @type {string}
      */
     var KEY_SEQUENCE_NUMBER = "sequencenumber";
     /**
-     * JSON key message ID.
+     * Key message ID.
      * @const
      * @type {string}
      */
     var KEY_MESSAGE_ID = "messageid";
     /**
-     * JSON key end of message.
+     * Key end of message.
      * @const
      * @type {string}
      */
     var KEY_END_OF_MESSAGE = "endofmsg";
     /**
-     * JSON key compression algorithm.
+     * Key compression algorithm.
      * @const
      * @type {string}
      */
     var KEY_COMPRESSION_ALGORITHM = "compressionalgo";
     /**
-     * JSON key encrypted data.
+     * Key encrypted data.
      * @const
      * @type {string}
      */
@@ -111,21 +111,20 @@ var PayloadChunk$parse;
     /**
      * Create a new payload container object.
      *
-     * @param {Uint8Array} payload raw payload data.
-     * @param {Uint8Array} signature raw signature.
+     * @param {MslObject} payload payload MSL object.
      * @constructor
      */
     function CreationData(payload, signature) {
         this.payload = payload;
-        this.signature = signature;
     }
 
-    PayloadChunk = util.Class.create({
+    PayloadChunk = MslEncodable.extend({
         /**
          * Construct a new payload chunk with the given message ID, data and
          * provided crypto context. If requested, the data will be compressed
          * before encrypting.
          *
+         * @param {MslContext} ctx the MSL context.
          * @param {number} sequenceNumber sequence number.
          * @param {number} messageId the message ID.
          * @param {boolean} endofmsg true if this is the last payload chunk of the message.
@@ -134,96 +133,71 @@ var PayloadChunk$parse;
          * @param {Uint8Array} data the payload chunk application data.
          * @param {ICryptoContext} cryptoContext the crypto context.
          * @param {?CreationData} optional creation data.
-         * @param {{result: function(PayloadChunk), error: function(Error)}}
-         *        callback the callback that will receive the payload chunk or
-         *        any thrown exceptions.
-         * @throws MslEncodingException if there is an error encoding the JSON
-         *         data.
+         * @throws MslEncodingException if there is an error encoding the data.
          * @throws MslCryptoException if there is an error encrypting or signing
          *         the payload chunk.
          * @throws MslException if there is an error compressing the data.
          */
-        init: function init(sequenceNumber, messageId, endofmsg, compressionAlgo, data, cryptoContext, creationData, callback) {
-            var self = this;
-            AsyncExecutor(callback, function() {
-                // Verify sequence number and message ID.
-                if (sequenceNumber < 0 || sequenceNumber > MslConstants$MAX_LONG_VALUE)
-                    throw new MslInternalException("Sequence number " + sequenceNumber + " is outside the valid range.");
-                if (messageId < 0 || messageId > MslConstants$MAX_LONG_VALUE)
-                    throw new MslInternalException("Message ID " + messageId + " is outside the valid range.");
+        init: function init(ctx, sequenceNumber, messageId, endofmsg, compressionAlgo, data, cryptoContext, creationData) {
+            // Verify sequence number and message ID.
+            if (sequenceNumber < 0 || sequenceNumber > MslConstants$MAX_LONG_VALUE)
+                throw new MslInternalException("Sequence number " + sequenceNumber + " is outside the valid range.");
+            if (messageId < 0 || messageId > MslConstants$MAX_LONG_VALUE)
+                throw new MslInternalException("Message ID " + messageId + " is outside the valid range.");
 
-                // Construct the payload.
-                if (!creationData) {
-                    // Optionally compress the application data.
-                    var payloadData;
-                    if (compressionAlgo) {
-                        var compressed = MslUtils$compress(compressionAlgo, data);
+            // Construct the payload.
+            var payload;
+            if (!creationData) {
+                // Optionally compress the application data.
+                var payloadData;
+                if (compressionAlgo) {
+                    var compressed = MslUtils$compress(compressionAlgo, data);
 
-                        // Only use compression if the compressed data is smaller than the
-                        // uncompressed data.
-                        if (compressed) {
-                            payloadData = compressed;
-                        } else {
-                            compressionAlgo = null;
-                            payloadData = data;
-                        }
+                    // Only use compression if the compressed data is smaller than the
+                    // uncompressed data.
+                    if (compressed) {
+                        payloadData = compressed;
                     } else {
                         compressionAlgo = null;
                         payloadData = data;
                     }
-
-                    // Construct the payload.
-                    var payloadJO = {};
-                    payloadJO[KEY_SEQUENCE_NUMBER] = sequenceNumber;
-                    payloadJO[KEY_MESSAGE_ID] = messageId;
-                    if (endofmsg) payloadJO[KEY_END_OF_MESSAGE] = endofmsg;
-                    if (compressionAlgo) payloadJO[KEY_COMPRESSION_ALGORITHM] = compressionAlgo;
-                    payloadJO[KEY_DATA] = base64$encode(payloadData);
-                    var plaintext = textEncoding$getBytes(JSON.stringify(payloadJO), MslConstants$DEFAULT_CHARSET);
-                    cryptoContext.encrypt(plaintext, {
-                        result: function(payload) {
-                            AsyncExecutor(callback, function() {
-                                cryptoContext.sign(payload, {
-                                    result: function(signature) {
-                                        AsyncExecutor(callback, function() {
-                                            // The properties.
-                                            var props = {
-                                                sequenceNumber: { value: sequenceNumber, writable: false, configurable: false },
-                                                messageId: { value: messageId, writable: false, configurable: false },
-                                                compressionAlgo: { value: compressionAlgo, writable: false, configurable: false },
-                                                data: { value: data, writable: false, configurable: false },
-                                                endofmsg: { value: endofmsg, writable: false, enumerable: false, configurable: false },
-                                                payload: { value: payload, writable: false, enumerable: false, configurable: false },
-                                                signature: { value: signature, writable: false, enumerable: false, configurable: false },
-                                            };
-                                            Object.defineProperties(this, props);
-                                            return this;
-                                        }, self);
-                                    },
-                                    error: function(e) { callback.error(e); }
-                                });
-                            }, self);
-                        },
-                        error: function(e) { callback.error(e); }
-                    });
                 } else {
-                    var payload = creationData.payload;
-                    var signature = creationData.signature;
-
-                    // The properties.
-                    var props = {
-                        sequenceNumber: { value: sequenceNumber, writable: false, configurable: false },
-                        messageId: { value: messageId, writable: false, configurable: false },
-                        compressionAlgo: { value: compressionAlgo, writable: false, configurable: false },
-                        data: { value: data, writable: false, configurable: false },
-                        endofmsg: { value: endofmsg, writable: false, enumerable: false, configurable: false },
-                        payload: { value: payload, writable: false, enumerable: false, configurable: false },
-                        signature: { value: signature, writable: false, enumerable: false, configurable: false },
-                    };
-                    Object.defineProperties(this, props);
-                    return this;
+                    compressionAlgo = null;
+                    payloadData = data;
                 }
-            }, self);
+
+                // Construct the payload.
+                var encoder = ctx.getMslEncoderFactory();
+                payload = encoder.createObject();
+                payload.put(KEY_SEQUENCE_NUMBER, sequenceNumber);
+                payload.put(KEY_MESSAGE_ID, messageId);
+                if (endofmsg) payload.put(KEY_END_OF_MESSAGE, endofmsg);
+                if (compressionAlgo != null) payload.put(KEY_COMPRESSION_ALGORITHM, compressionAlgo);
+                payload.put(KEY_DATA, payloadData);
+            } else {
+                payload = creationData.payload;
+            }
+
+            // The properties.
+            var props = {
+                /** @type {MslObject} */
+                payload: { value: payload, writable: false, enumerable: false, configurable: false },
+                /** @type {number} */
+                sequenceNumber: { value: sequenceNumber, writable: false, configurable: false },
+                /** @type {number} */
+                messageId: { value: messageId, writable: false, configurable: false },
+                /** @type {boolean} */
+                endofmsg: { value: endofmsg, writable: false, enumerable: false, configurable: false },
+                /** @type {MslConstants$CompressionAlgorithm} */
+                compressionAlgo: { value: compressionAlgo, writable: false, configurable: false },
+                /** @type {Uint8Array} */
+                data: { value: data, writable: false, configurable: false },
+                /** @type {ICryptoContext} */
+                cryptoContext: { value: cryptoContext, writable: false, enumerable: false, configurable: false },
+                /** @type {Object<MslEncoderFormat,Uint8Array>} */
+                encodings: { value: {}, writable: false, enumerable: false, configurable: false },
+            }
+            Object.defineProperties(this, props);
         },
 
         /**
@@ -232,13 +206,65 @@ var PayloadChunk$parse;
         isEndOfMessage: function isEndOfMessage() {
             return this.endofmsg;
         },
-
+        
         /** @inheritDoc */
-        toJSON: function toJSON() {
-            var jsonObj = {};
-            jsonObj[KEY_PAYLOAD] = base64$encode(this.payload);
-            jsonObj[KEY_SIGNATURE] = base64$encode(this.signature);
-            return jsonObj;
+        toMslEncoding: function toMslEncoding(encoder, format, callback) {
+            var self = this;
+            AsyncExecutor(callback, function() {
+                // Return any cached encoding.
+                if (this.encodings[format])
+                    return this.encodings[format];
+                
+                // Encrypt the payload.
+                encoder.encodeObject(this.payload, format, {
+                	result: function(plaintext) {
+                		AsyncExecutor(callback, function() {
+                			this.cryptoContext.encrypt(plaintext, encoder, format, {
+                				result: function(ciphertext) {
+                					AsyncExecutor(callback, function() {
+                						// Sign the payload.
+                						this.cryptoContext.sign(ciphertext, encoder, format, {
+                							result: function(signature) {
+                								AsyncExecutor(callback, function() {
+                									// Encode the payload chunk.
+                									var mo = encoder.createObject();
+                									mo.put(KEY_PAYLOAD, ciphertext);
+                									mo.put(KEY_SIGNATURE, signature);
+                									encoder.encodeObject(mo, format, {
+                										result: function(encoding) {
+                											AsyncExecutor(callback, function() {
+                												// Cache and return the encoding.
+                												this.encodings[format] = encoding;
+                												return encoding;
+                											}, self);
+                										},
+                										error: callback.error,
+                									});
+                								}, self);
+                							},
+                							error: function(e) {
+                								AsyncExecutor(callback, function() {
+                									if (e instanceof MslCryptoException)
+                										throw new MslEncoderException("Error signing the payload.", e);
+                									throw e;
+                								}, self);
+                							}
+                						});
+                					}, self);
+                				},
+                				error: function(e) {
+                					AsyncExecutor(callback, function() {
+                						if (e instanceof MslCryptoException)
+                							throw new MslEncoderException("Error encrypting the payload.", e);
+                						throw e;
+                					}, self);
+                				}
+                			});
+                		}, self);
+                	},
+                	error: callback.error,
+                });
+            }, self);
         },
     });
 
@@ -247,6 +273,7 @@ var PayloadChunk$parse;
      * provided crypto context. If requested, the data will be compressed
      * before encrypting.
      *
+     * @param {MslContext} ctx the MSL context.
      * @param {number} sequenceNumber sequence number.
      * @param {number} messageId the message ID.
      * @param {boolean} endofmsg true if this is the last payload chunk of the message.
@@ -263,132 +290,104 @@ var PayloadChunk$parse;
      *         the payload chunk.
      * @throws MslException if there is an error compressing the data.
      */
-    PayloadChunk$create = function PayloadChunk$create(sequenceNumber, messageId, endofmsg, compressionAlgo, data, cryptoContext, callback) {
-        new PayloadChunk(sequenceNumber, messageId, endofmsg, compressionAlgo, data, cryptoContext, null, callback);
+    PayloadChunk$create = function PayloadChunk$create(ctx, sequenceNumber, messageId, endofmsg, compressionAlgo, data, cryptoContext, callback) {
+        AsyncExecutor(callback, function() {
+            return new PayloadChunk(ctx, sequenceNumber, messageId, endofmsg, compressionAlgo, data, cryptoContext, null);
+        });
     };
 
     /**
-     * <p>Construct a new payload chunk from the provided JSON object.</p>
+     * <p>Construct a new payload chunk from the provided MSL object.</p>
      *
      * <p>The provided crypto context will be used to decrypt and verify the
      * data signature.</p>
      *
-     * @param {Object} payloadChunkJO the JSON object.
+     * @param {MslContext} ctx the MSL context.
+     * @param {MslObject} payloadChunkMo the MSL object.
      * @param {ICryptoContext} cryptoContext the crypto context.
      * @param {{result: function(PayloadChunk), error: function(Error)}}
      *        callback the callback that will receive the payload chunk or
      *        any thrown exceptions.
      * @throws MslCryptoException if there is a problem decrypting or verifying
      *         the payload chunk.
-     * @throws MslEncodingException if there is a problem parsing the JSON.
+     * @throws MslEncodingException if there is a problem parsing the data.
      * @throws MslMessageException if the compression algorithm is not known,
      *         or the payload data is corrupt or missing.
      * @throws MslException if there is an error uncompressing the data.
      */
-    PayloadChunk$parse = function PayloadChunk$parse(payloadChunkJO, cryptoContext, callback) {
+    PayloadChunk$parse = function PayloadChunk$parse(ctx, payloadChunkMo, cryptoContext, callback) {
         AsyncExecutor(callback, function() {
-            // Pull the payload and signature.
-            var payloadB64 = payloadChunkJO[KEY_PAYLOAD];
-            var signatureB64 = payloadChunkJO[KEY_SIGNATURE];
-            if (typeof payloadB64 !== 'string' ||
-                typeof signatureB64 !== 'string')
-            {
-                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "payload chunk " + JSON.stringify(payloadChunkJO));
-            }
-
-            // Verify the payload.
-            var payload, signature;
+            var encoder = ctx.getMslEncoderFactory();
+            
+            // Verify the data.
+            var ciphertext, signature;
             try {
-                payload = base64$decode(payloadB64);
+                ciphertext = payloadChunkMo.getBytes(KEY_PAYLOAD);
+                signature = payloadChunkMo.getBytes(KEY_SIGNATURE);
             } catch (e) {
-                throw new MslMessageException(MslError.PAYLOAD_INVALID, "payload chunk " + JSON.stringify(payloadChunkJO), e);
+                if (e instanceof MslEncoderException)
+                    throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "payload chunk " + payloadChunkMo, e);
+                throw e;
             }
-            try {
-                signature = base64$decode(signatureB64);
-            } catch (e) {
-                throw new MslMessageException(MslError.PAYLOAD_SIGNATURE_INVALID, "payload chunk " + JSON.stringify(payloadChunkJO), e);
-            }
-            cryptoContext.verify(payload, signature, {
+            cryptoContext.verify(ciphertext, signature, encoder, {
                 result: function(verified) {
                     AsyncExecutor(callback, function() {
                         if (!verified)
                             throw new MslCryptoException(MslError.PAYLOAD_VERIFICATION_FAILED);
-
-                        // Decrypt the payload.
-                        cryptoContext.decrypt(payload, {
+                        
+                        // Pull the payload data.
+                        cryptoContext.decrypt(ciphertext, encoder, {
                             result: function(plaintext) {
-                                AsyncExecutor(callback, function() {
-                                    // Reconstruct the payload object.
-                                    var payloadJson = textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET);
-                                    var payloadJO;
-                                    try {
-                                        payloadJO = JSON.parse(payloadJson);
-                                    } catch (e) {
-                                        if (e instanceof SyntaxError)
-                                            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "payload chunk payload " + payloadJson, e);
-                                        throw e;
-                                    }
-
-                                    // Pull payload information.
-                                    var sequenceNumber = parseInt(payloadJO[KEY_SEQUENCE_NUMBER]);
-                                    var messageId = parseInt(payloadJO[KEY_MESSAGE_ID]);
-                                    var endofmsg = payloadJO[KEY_END_OF_MESSAGE];
-                                    var compressionAlgo = payloadJO[KEY_COMPRESSION_ALGORITHM];
-                                    var payloadData = payloadJO[KEY_DATA];
-
-                                    // Verify payload information.
-                                    if (!sequenceNumber || sequenceNumber != sequenceNumber ||
-                                        !messageId || messageId != messageId ||
-                                        (endofmsg && typeof endofmsg !== 'boolean') ||
-                                        (compressionAlgo && typeof compressionAlgo !== 'string') ||
-                                        typeof payloadData !== 'string')
-                                    {
-                                        throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "payload chunk payload " + payloadJson);
-                                    }
-
-                                    // Verify sequence number and message ID values.
-                                    if (sequenceNumber < 0 || sequenceNumber > MslConstants$MAX_LONG_VALUE)
-                                        throw new MslException(MslError.PAYLOAD_SEQUENCE_NUMBER_OUT_OF_RANGE, "payload chunk payload " + payloadJson);
-                                    if (messageId < 0 || messageId > MslConstants$MAX_LONG_VALUE)
-                                        throw new MslException(MslError.PAYLOAD_MESSAGE_ID_OUT_OF_RANGE, "payload chunk payload " + payloadJson);
-
-                                    // Default end of message to false.
-                                    if (!endofmsg) endofmsg = false;
-
-                                    // Verify compression algorithm.
-                                    if (compressionAlgo && !MslConstants$CompressionAlgorithm[compressionAlgo])
-                                        throw new MslMessageException(MslError.UNIDENTIFIED_COMPRESSION, compressionAlgo);
-
-                                    // Decompress the data if it is compressed.
-                                    var data;
-                                    var compressedData;
-                                    try {
-                                        compressedData = base64$decode(payloadData);
-                                    } catch (e) {
-                                        throw new MslMessageException(MslError.PAYLOAD_DATA_CORRUPT, payloadData, e);
-                                    }
-                                    if (!compressedData || compressedData.length == 0) {
-                                        if (payloadData.length > 0)
-                                            throw new MslMessageException(MslError.PAYLOAD_DATA_CORRUPT, payloadData);
-                                        else if (!endofmsg)
-                                            throw new MslMessageException(MslError.PAYLOAD_DATA_MISSING, payloadData);
-                                        else
-                                            data = new Uint8Array(0);
-                                    } else {
-                                        data = (compressionAlgo) ? MslUtils$uncompress(compressionAlgo, compressedData) : compressedData;
-                                    }
-
-                                    // Return the payload chunk.
-                                    var creationData = new CreationData(payload, signature);
-                                    new PayloadChunk(sequenceNumber, messageId, endofmsg, compressionAlgo, data, cryptoContext, creationData, callback);
-                                });
+                                parsePayload(encoder, plaintext);
                             },
-                            error: function(e) { callback.error(e); }
+                            error: callback.error,
                         });
                     });
                 },
-                error: function(e) { callback.error(e); }
+                error: callback.error,
             });
         });
+            
+        function parsePayload(encoder, plaintext) {
+            AsyncExecutor(callback, function() {
+                try {
+                    var payload = encoder.parseObject(plaintext);
+                    var sequenceNumber = payload.getLong(KEY_SEQUENCE_NUMBER);
+                    if (sequenceNumber < 0 || sequenceNumber > MslConstants$MAX_LONG_VALUE)
+                        throw new MslException(MslError.PAYLOAD_SEQUENCE_NUMBER_OUT_OF_RANGE, "payload chunk payload " + payload);
+                    var messageId = payload.getLong(KEY_MESSAGE_ID);
+                    if (messageId < 0 || messageId > MslConstants$MAX_LONG_VALUE)
+                        throw new MslException(MslError.PAYLOAD_MESSAGE_ID_OUT_OF_RANGE, "payload chunk payload " + payload);
+                    var endofmsg = (payload.has(KEY_END_OF_MESSAGE)) ? payload.getBoolean(KEY_END_OF_MESSAGE) : false;
+                    var compressionAlgo;
+                    if (payload.has(KEY_COMPRESSION_ALGORITHM)) {
+                        compressionAlgo = payload.getString(KEY_COMPRESSION_ALGORITHM);
+                        if (!MslConstants$CompressionAlgorithm[compressionAlgo])
+                            throw new MslMessageException(MslError.UNIDENTIFIED_COMPRESSION, compressionAlgo);
+                    } else {
+                        compressionAlgo = null;
+                    }
+                    var data;
+                    var compressedData = payload.getBytes(KEY_DATA);
+                    if (compressedData.length == 0) {
+                        if (!endofmsg)
+                            throw new MslMessageException(MslError.PAYLOAD_DATA_MISSING);
+                        data = new Uint8Array(0);
+                    } else if (compressionAlgo == null) {
+                        data = compressedData;
+                    } else {
+                        data = MslUtils$uncompress(compressionAlgo, compressedData);
+                    }
+                    
+                    // Return the payload chunk.
+                    var creationData = new CreationData(payload);
+                    return new PayloadChunk(ctx, sequenceNumber, messageId, endofmsg, compressionAlgo, data, cryptoContext, creationData);
+                } catch (e) {
+                    if (e instanceof MslEncoderException)
+                        throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "payload chunk payload " + base64$encode(plaintext), e);
+                    throw e;
+                }
+            });
+        }
     };
 })();

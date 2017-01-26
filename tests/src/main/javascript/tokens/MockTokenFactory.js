@@ -143,7 +143,15 @@ var MockTokenFactory;
                 if (!masterToken.isDecrypted())
                     throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, masterToken);
                 
-                var mergedIssuerData = JsonUtils$merge(masterToken.issuerData, issuerData);
+                var mtIssuerData = masterToken.issuerData;
+                var mergedIssuerData;
+                try {
+                    mergedIssuerData = MslEncoderUtils$merge(masterToken.issuerData, issuerData);
+                } catch (e) {
+                    if (e instanceof MslEncoderException)
+                        throw new MslEncodingException(MslError.MASTERTOKEN_ISSUERDATA_ENCODE_ERROR, "mt issuerdata " + mtIssuerData + "; issuerdata " + issuerData, e);
+                    throw e;
+                }
                 var renewalWindow = new Date(ctx.getTime() + RENEWAL_OFFSET);
                 var expiration = new Date(ctx.getTime() + EXPIRATION_OFFSET);
                 var oldSequenceNumber = masterToken.sequenceNumber;

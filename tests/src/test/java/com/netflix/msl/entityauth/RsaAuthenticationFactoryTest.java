@@ -18,8 +18,6 @@ package com.netflix.msl.entityauth;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -31,10 +29,15 @@ import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.crypto.ICryptoContext;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslEncoderUtils;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.test.ExpectedMslException;
-import com.netflix.msl.util.JsonUtils;
 import com.netflix.msl.util.MockAuthenticationUtils;
 import com.netflix.msl.util.MockMslContext;
+import com.netflix.msl.util.MslTestUtils;
 
 /**
  * RSA asymmetric keys entity authentication factory unit tests.
@@ -42,18 +45,19 @@ import com.netflix.msl.util.MockMslContext;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class RsaAuthenticationFactoryTest {
-    /** JSON key entity identity. */
+	/** MSL encoder format. */
+	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
+
+    /** Key entity identity. */
     private static final String KEY_IDENTITY = "identity";
 
     @Rule
     public ExpectedMslException thrown = ExpectedMslException.none();
-
-    /** Authentication utilities. */
-    private static MockAuthenticationUtils authutils;
     
     @BeforeClass
     public static void setup() throws MslEncodingException, MslCryptoException {
         ctx = new MockMslContext(EntityAuthenticationScheme.RSA, false);
+        encoder = ctx.getMslEncoderFactory();
         final MockRsaStore rsaStore = new MockRsaStore();
         rsaStore.addPublicKey(MockRsaAuthenticationFactory.RSA_PUBKEY_ID, MockRsaAuthenticationFactory.RSA_PUBKEY);
         authutils = new MockAuthenticationUtils();
@@ -65,6 +69,7 @@ public class RsaAuthenticationFactoryTest {
     public static void teardown() {
         factory = null;
         authutils = null;
+        encoder = null;
         ctx = null;
     }
     
@@ -74,28 +79,28 @@ public class RsaAuthenticationFactoryTest {
     }
     
     @Test
-    public void createData() throws MslEncodingException, MslEntityAuthException, JSONException, MslCryptoException {
+    public void createData() throws MslEncodingException, MslEntityAuthException, MslEncoderException, MslCryptoException {
         final RsaAuthenticationData data = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
-        final JSONObject entityAuthJO = data.getAuthData();
+        final MslObject entityAuthMo = data.getAuthData(encoder, ENCODER_FORMAT);
         
-        final EntityAuthenticationData authdata = factory.createData(ctx, entityAuthJO);
+        final EntityAuthenticationData authdata = factory.createData(ctx, entityAuthMo);
         assertNotNull(authdata);
         assertTrue(authdata instanceof RsaAuthenticationData);
         
-        final JSONObject dataJo = new JSONObject(data.toJSONString());
-        final JSONObject authdataJo = new JSONObject(authdata.toJSONString());
-        assertTrue(JsonUtils.equals(dataJo, authdataJo));
+        final MslObject dataMo = MslTestUtils.toMslObject(encoder, data);
+        final MslObject authdataMo = MslTestUtils.toMslObject(encoder, authdata);
+        assertTrue(MslEncoderUtils.equalObjects(dataMo, authdataMo));
     }
     
     @Test
     public void encodeException() throws MslEncodingException, MslEntityAuthException, MslCryptoException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final RsaAuthenticationData data = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
-        final JSONObject entityAuthJO = data.getAuthData();
-        entityAuthJO.remove(KEY_IDENTITY);
-        factory.createData(ctx, entityAuthJO);
+        final MslObject entityAuthMo = data.getAuthData(encoder, ENCODER_FORMAT);
+        entityAuthMo.remove(KEY_IDENTITY);
+        factory.createData(ctx, entityAuthMo);
     }
     
     @Test
@@ -125,7 +130,7 @@ public class RsaAuthenticationFactoryTest {
         
         final byte[] plaintext = new byte[16];
         ctx.getRandom().nextBytes(plaintext);
-        cryptoContext.sign(plaintext);
+        cryptoContext.sign(plaintext, encoder, ENCODER_FORMAT);
     }
     
     @Test
@@ -153,6 +158,10 @@ public class RsaAuthenticationFactoryTest {
     
     /** MSL context. */
     private static MockMslContext ctx;
+    /** MSL encoder factory. */
+    private static MslEncoderFactory encoder;
+    /** Authentication utilities. */
+    private static MockAuthenticationUtils authutils;
     /** Entity authentication factory. */
     private static EntityAuthenticationFactory factory;
 }

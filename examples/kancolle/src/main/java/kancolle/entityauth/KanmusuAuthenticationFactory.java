@@ -19,8 +19,6 @@ import kancolle.KanColleMslError;
 import kancolle.crypto.KanColleCryptoContext;
 import kancolle.entityauth.KanmusuDatabase.Status;
 
-import org.json.JSONObject;
-
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
 import com.netflix.msl.MslError;
@@ -28,6 +26,7 @@ import com.netflix.msl.MslInternalException;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -48,11 +47,11 @@ public class KanmusuAuthenticationFactory extends EntityAuthenticationFactory {
     }
     
     /* (non-Javadoc)
-     * @see com.netflix.msl.entityauth.EntityAuthenticationFactory#createData(com.netflix.msl.util.MslContext, org.json.JSONObject)
+     * @see com.netflix.msl.entityauth.EntityAuthenticationFactory#createData(com.netflix.msl.util.MslContext, com.netflix.msl.io.MslObject)
      */
     @Override
-    public EntityAuthenticationData createData(final MslContext ctx, final JSONObject entityAuthJO) throws MslEncodingException, MslEntityAuthException {
-        return new KanmusuAuthenticationData(entityAuthJO);
+    public EntityAuthenticationData createData(final MslContext ctx, final MslObject entityAuthMo) throws MslEncodingException, MslEntityAuthException {
+        return new KanmusuAuthenticationData(entityAuthMo);
     }
 
     /* (non-Javadoc)

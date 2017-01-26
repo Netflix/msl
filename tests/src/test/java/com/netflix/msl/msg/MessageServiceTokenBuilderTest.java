@@ -15,7 +15,12 @@
  */
 package com.netflix.msl.msg;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyPair;
@@ -40,9 +45,9 @@ import com.netflix.msl.MslKeyExchangeException;
 import com.netflix.msl.MslMessageException;
 import com.netflix.msl.crypto.NullCryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
-import com.netflix.msl.keyx.KeyRequestData;
 import com.netflix.msl.keyx.AsymmetricWrappedExchange;
 import com.netflix.msl.keyx.AsymmetricWrappedExchange.RequestData.Mechanism;
+import com.netflix.msl.keyx.KeyRequestData;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.ServiceToken;
 import com.netflix.msl.tokens.UserIdToken;

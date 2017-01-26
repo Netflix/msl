@@ -38,21 +38,22 @@ import org.bouncycastle.crypto.engines.AESEngine;
 import org.bouncycastle.crypto.modes.GCMBlockCipher;
 import org.bouncycastle.crypto.params.AEADParameters;
 import org.bouncycastle.crypto.params.KeyParameter;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.json.JSONStringer;
 
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslInternalException;
-import com.netflix.msl.util.JsonUtils;
+import com.netflix.msl.io.MslArray;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslEncoderUtils;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.util.MslContext;
 
 /**
  * <p>This key exchange crypto context provides an implementation of the JSON
  * web encryption algorithm as defined in
- * <a href="http://tools.ietf.org/html/draft-ietf-jose-json-web-encryption-08">JSON Web Encryption</a>.
+ * <a href="http://tools.ietf.org/html/draft-ietf-mose-json-web-encryption-08">JSON Web Encryption</a>.
  * It supports a limited subset of the algorithms.</p>
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
@@ -148,34 +149,34 @@ public class JsonWebEncryptionCryptoContext implements ICryptoContext {
         }
         
         /* (non-Javadoc)
-         * @see com.netflix.msl.crypto.ICryptoContext#wrap(byte[])
+         * @see com.netflix.msl.crypto.ICryptoContext#wrap(byte[], com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
          */
         @Override
-        public byte[] wrap(byte[] data) throws MslCryptoException {
+        public byte[] wrap(final byte[] data, final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslCryptoException {
             throw new MslCryptoException(MslError.WRAP_NOT_SUPPORTED);
         }
 
         /* (non-Javadoc)
-         * @see com.netflix.msl.crypto.ICryptoContext#unwrap(byte[])
+         * @see com.netflix.msl.crypto.ICryptoContext#unwrap(byte[], com.netflix.msl.io.MslEncoderFactory)
          */
         @Override
-        public byte[] unwrap(byte[] data) throws MslCryptoException {
+        public byte[] unwrap(final byte[] data, final MslEncoderFactory encoder) throws MslCryptoException {
             throw new MslCryptoException(MslError.UNWRAP_NOT_SUPPORTED);
         }
 
         /* (non-Javadoc)
-         * @see com.netflix.msl.crypto.ICryptoContext#sign(byte[])
+         * @see com.netflix.msl.crypto.ICryptoContext#sign(byte[], com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
          */
         @Override
-        public byte[] sign(byte[] data) throws MslCryptoException {
+        public byte[] sign(final byte[] data, final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslCryptoException {
             throw new MslCryptoException(MslError.SIGN_NOT_SUPPORTED);
         }
 
         /* (non-Javadoc)
-         * @see com.netflix.msl.crypto.ICryptoContext#verify(byte[], byte[])
+         * @see com.netflix.msl.crypto.ICryptoContext#verify(byte[], byte[], com.netflix.msl.io.MslEncoderFactory)
          */
         @Override
-        public boolean verify(byte[] data, byte[] signature) throws MslCryptoException {
+        public boolean verify(final byte[] data, final byte[] signature, final MslEncoderFactory encoder) throws MslCryptoException {
             throw new MslCryptoException(MslError.VERIFY_NOT_SUPPORTED);
         }
         
@@ -216,10 +217,10 @@ public class JsonWebEncryptionCryptoContext implements ICryptoContext {
         }
         
         /* (non-Javadoc)
-         * @see com.netflix.msl.crypto.ICryptoContext#encrypt(byte[])
+         * @see com.netflix.msl.crypto.ICryptoContext#encrypt(byte[], com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
          */
         @Override
-        public byte[] encrypt(byte[] data) throws MslCryptoException {
+        public byte[] encrypt(final byte[] data, final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslCryptoException {
             if (publicKey == null)
                 throw new MslCryptoException(MslError.ENCRYPT_NOT_SUPPORTED, "no public key");
             Throwable reset = null;
@@ -257,10 +258,10 @@ public class JsonWebEncryptionCryptoContext implements ICryptoContext {
         }
 
         /* (non-Javadoc)
-         * @see com.netflix.msl.crypto.ICryptoContext#decrypt(byte[])
+         * @see com.netflix.msl.crypto.ICryptoContext#decrypt(byte[], com.netflix.msl.io.MslEncoderFactory)
          */
         @Override
-        public byte[] decrypt(byte[] data) throws MslCryptoException {
+        public byte[] decrypt(final byte[] data, final MslEncoderFactory encoder) throws MslCryptoException {
             if (privateKey == null)
                 throw new MslCryptoException(MslError.DECRYPT_NOT_SUPPORTED, "no private key");
             Throwable reset = null;
@@ -337,10 +338,10 @@ public class JsonWebEncryptionCryptoContext implements ICryptoContext {
         }
         
         /* (non-Javadoc)
-         * @see com.netflix.msl.crypto.ICryptoContext#encrypt(byte[])
+         * @see com.netflix.msl.crypto.ICryptoContext#encrypt(byte[], com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
          */
         @Override
-        public byte[] encrypt(final byte[] data) throws MslCryptoException {
+        public byte[] encrypt(final byte[] data, final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslCryptoException {
             // If a secret key is provided use it.
             if (key != null) {
                 try {
@@ -365,14 +366,14 @@ public class JsonWebEncryptionCryptoContext implements ICryptoContext {
             }
 
             // Otherwise use the backing crypto context.
-            return cryptoContext.wrap(data);
+            return cryptoContext.wrap(data, encoder, format);
         }
 
         /* (non-Javadoc)
-         * @see com.netflix.msl.crypto.ICryptoContext#decrypt(byte[])
+         * @see com.netflix.msl.crypto.ICryptoContext#decrypt(byte[], com.netflix.msl.io.MslEncoderFactory)
          */
         @Override
-        public byte[] decrypt(final byte[] data) throws MslCryptoException {
+        public byte[] decrypt(final byte[] data, final MslEncoderFactory encoder) throws MslCryptoException {
             // If a secret key is provided use it.
             if (key != null) {
                 try {
@@ -390,7 +391,7 @@ public class JsonWebEncryptionCryptoContext implements ICryptoContext {
             }
             
             // Otherwise use the backing crypto context.
-            return cryptoContext.unwrap(data);
+            return cryptoContext.unwrap(data, encoder);
         }
         
         /** AES secret key. */
@@ -410,11 +411,11 @@ public class JsonWebEncryptionCryptoContext implements ICryptoContext {
     /** Support serialization formats. */
     public static enum Format {
         /**
-         * <a href="http://tools.ietf.org/html/draft-jones-jose-jwe-json-serialization-04">JSON Web Encryption JSON Serialization (JWE-JS)</a>
+         * <a href="http://tools.ietf.org/html/draft-mones-mose-jwe-json-serialization-04">JSON Web Encryption JSON Serialization (JWE-JS)</a>
          */
         JWE_JS,
         /**
-         * <a href="http://tools.ietf.org/html/draft-ietf-jose-json-web-encryption-08">JSON Web Encryption Compact Serialization</a>
+         * <a href="http://tools.ietf.org/html/draft-ietf-mose-json-web-encryption-08">JSON Web Encryption Compact Serialization</a>
          */
         JWE_CS
     }
@@ -438,36 +439,34 @@ public class JsonWebEncryptionCryptoContext implements ICryptoContext {
     }
     
     /* (non-Javadoc)
-     * @see com.netflix.msl.crypto.ICryptoContext#encrypt(byte[])
+     * @see com.netflix.msl.crypto.ICryptoContext#encrypt(byte[], com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public byte[] encrypt(final byte[] data) throws MslCryptoException {
+    public byte[] encrypt(final byte[] data, final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslCryptoException {
         throw new MslCryptoException(MslError.ENCRYPT_NOT_SUPPORTED);
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.crypto.ICryptoContext#decrypt(byte[])
+     * @see com.netflix.msl.crypto.ICryptoContext#decrypt(byte[], com.netflix.msl.io.MslEncoderFactory)
      */
     @Override
-    public byte[] decrypt(final byte[] data) throws MslCryptoException {
+    public byte[] decrypt(final byte[] data, final MslEncoderFactory encoder) throws MslCryptoException {
         throw new MslCryptoException(MslError.DECRYPT_NOT_SUPPORTED);
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.crypto.ICryptoContext#wrap(byte[])
+     * @see com.netflix.msl.crypto.ICryptoContext#wrap(byte[], com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public byte[] wrap(final byte[] data) throws MslCryptoException {
+    public byte[] wrap(final byte[] data, final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslCryptoException {
         // Create the header.
-        final String header;
+        final byte[] header;
         try {
-            header = new JSONStringer()
-            .object()
-                .key(KEY_ALGORITHM).value(algo.toString())
-                .key(KEY_ENCRYPTION).value(enc.name())
-            .endObject()
-            .toString();
-        } catch (final JSONException e) {
+            final MslObject headerMo = encoder.createObject();
+            headerMo.put(KEY_ALGORITHM, algo.toString());
+            headerMo.put(KEY_ENCRYPTION, enc.name());
+            header = encoder.encodeObject(headerMo, MslEncoderFormat.JSON);
+        } catch (final MslEncoderException e) {
             throw new MslCryptoException(MslError.JWE_ENCODE_ERROR, e);
         }
 
@@ -494,12 +493,12 @@ public class JsonWebEncryptionCryptoContext implements ICryptoContext {
         random.nextBytes(iv);
 
         // Encrypt the CEK.
-        final byte[] ecek = cekCryptoContext.encrypt(cek.getKey());
+        final byte[] ecek = cekCryptoContext.encrypt(cek.getKey(), encoder, MslEncoderFormat.JSON);
 
         // Base64-encode the data.
-        final String headerB64 = JsonUtils.b64urlEncode(header.getBytes(UTF_8));
-        final String ecekB64 = JsonUtils.b64urlEncode(ecek);
-        final String ivB64 = JsonUtils.b64urlEncode(iv);
+        final String headerB64 = MslEncoderUtils.b64urlEncode(header);
+        final String ecekB64 = MslEncoderUtils.b64urlEncode(ecek);
+        final String ivB64 = MslEncoderUtils.b64urlEncode(iv);
 
         // Create additional authenticated data.
         final String aad = headerB64 + "." + ecekB64 + "." + ivB64;
@@ -532,11 +531,11 @@ public class JsonWebEncryptionCryptoContext implements ICryptoContext {
         final byte[] at = Arrays.copyOfRange(ciphertextATag, ciphertext.length, ciphertextATag.length);
         
         // Base64-encode the ciphertext and authentication tag.
-        final String ciphertextB64 = JsonUtils.b64urlEncode(ciphertext);
-        final String atB64 = JsonUtils.b64urlEncode(at);
+        final String ciphertextB64 = MslEncoderUtils.b64urlEncode(ciphertext);
+        final String atB64 = MslEncoderUtils.b64urlEncode(at);
         
         // Envelope the data.
-        switch (format) {
+        switch (this.format) {
             case JWE_CS:
             {
                 final String serialization = aad + "." + ciphertextB64 + "." + atB64;
@@ -546,20 +545,20 @@ public class JsonWebEncryptionCryptoContext implements ICryptoContext {
             {
                 try {
                     // Create recipients array.
-                    final JSONArray recipients = new JSONArray();
-                    final JSONObject recipient = new JSONObject();
+                    final MslArray recipients = encoder.createArray();
+                    final MslObject recipient = encoder.createObject();
                     recipient.put(KEY_HEADER, headerB64);
                     recipient.put(KEY_ENCRYPTED_KEY, ecekB64);
                     recipient.put(KEY_INTEGRITY_VALUE, atB64);
-                    recipients.put(recipient);
+                    recipients.put(-1, recipient);
 
                     // Create JSON serialization.
-                    final JSONObject serialization = new JSONObject();
+                    final MslObject serialization = encoder.createObject();
                     serialization.put(KEY_RECIPIENTS, recipients);
                     serialization.put(KEY_INITIALIZATION_VECTOR, ivB64);
                     serialization.put(KEY_CIPHERTEXT, ciphertextB64);
-                    return serialization.toString().getBytes(UTF_8);
-                } catch (final JSONException e) {
+                    return encoder.encodeObject(serialization, MslEncoderFormat.JSON);
+                } catch (final MslEncoderException e) {
                     throw new MslCryptoException(MslError.JWE_ENCODE_ERROR, e);
                 }
             }
@@ -569,27 +568,29 @@ public class JsonWebEncryptionCryptoContext implements ICryptoContext {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.crypto.ICryptoContext#unwrap(byte[])
+     * @see com.netflix.msl.crypto.ICryptoContext#unwrap(byte[], com.netflix.msl.io.MslEncoderFactory)
      */
     @Override
-    public byte[] unwrap(final byte[] data) throws MslCryptoException {
+    public byte[] unwrap(final byte[] data, final MslEncoderFactory encoder) throws MslCryptoException {
         // Parse the serialization.
         final String serialization = new String(data, UTF_8);
         final String headerB64, ecekB64, ivB64;
         final byte[] ciphertext, at;
         if (data[0] == '{') {
             try {
-                final JSONObject serializationJo = new JSONObject(serialization);
-                ivB64 = serializationJo.getString(KEY_INITIALIZATION_VECTOR);
-                ciphertext = JsonUtils.b64urlDecode(serializationJo.getString(KEY_CIPHERTEXT));
+                final MslObject serializationMo = encoder.parseObject(data);
+                ivB64 = serializationMo.getString(KEY_INITIALIZATION_VECTOR);
+                ciphertext = MslEncoderUtils.b64urlDecode(serializationMo.getString(KEY_CIPHERTEXT));
                 
                 // TODO: For now, we only support one recipient.
-                final JSONArray recipients = serializationJo.getJSONArray(KEY_RECIPIENTS);
-                final JSONObject recipient = recipients.getJSONObject(0);
+                final MslArray recipients = serializationMo.getMslArray(KEY_RECIPIENTS);
+                if (recipients.size() < 1)
+                    throw new MslCryptoException(MslError.JWE_PARSE_ERROR, serialization);
+                final MslObject recipient = recipients.getMslObject(0, encoder);
                 headerB64 = recipient.getString(KEY_HEADER);
                 ecekB64 = recipient.getString(KEY_ENCRYPTED_KEY);
-                at = JsonUtils.b64urlDecode(recipient.getString(KEY_INTEGRITY_VALUE));
-            } catch (final JSONException e) {
+                at = MslEncoderUtils.b64urlDecode(recipient.getString(KEY_INTEGRITY_VALUE));
+            } catch (final MslEncoderException e) {
                 throw new MslCryptoException(MslError.JWE_PARSE_ERROR, serialization, e);
             }
         } else {
@@ -602,14 +603,14 @@ public class JsonWebEncryptionCryptoContext implements ICryptoContext {
             headerB64 = parts[0];
             ecekB64 = parts[1];
             ivB64 = parts[2];
-            ciphertext = JsonUtils.b64urlDecode(parts[3]);
-            at = JsonUtils.b64urlDecode(parts[4]);
+            ciphertext = MslEncoderUtils.b64urlDecode(parts[3]);
+            at = MslEncoderUtils.b64urlDecode(parts[4]);
         }
         
         // Decode header, encrypted content encryption key, and IV.
-        final byte[] headerBytes = JsonUtils.b64urlDecode(headerB64);
-        final byte[] ecek = JsonUtils.b64urlDecode(ecekB64);
-        final byte[] iv = JsonUtils.b64urlDecode(ivB64);
+        final byte[] headerBytes = MslEncoderUtils.b64urlDecode(headerB64);
+        final byte[] ecek = MslEncoderUtils.b64urlDecode(ecekB64);
+        final byte[] iv = MslEncoderUtils.b64urlDecode(ivB64);
         
         // Verify data.
         if (headerBytes == null || headerBytes.length == 0 ||
@@ -626,20 +627,20 @@ public class JsonWebEncryptionCryptoContext implements ICryptoContext {
         final Algorithm algo;
         final Encryption enc;
         try {
-            final JSONObject headerJo = new JSONObject(header);
-            final String algoName = headerJo.getString(KEY_ALGORITHM);
+            final MslObject headerMo = encoder.parseObject(headerBytes);
+            final String algoName = headerMo.getString(KEY_ALGORITHM);
             try {
                 algo = Algorithm.fromString(algoName);
             } catch (final IllegalArgumentException e) {
                 throw new MslCryptoException(MslError.JWE_PARSE_ERROR, algoName, e);
             }
-            final String encName = headerJo.getString(KEY_ENCRYPTION);
+            final String encName = headerMo.getString(KEY_ENCRYPTION);
             try {
                 enc = Encryption.valueOf(encName);
             } catch (final IllegalArgumentException e) {
                 throw new MslCryptoException(MslError.JWE_PARSE_ERROR, encName, e);
             }
-        } catch (final JSONException e) {
+        } catch (final MslEncoderException e) {
             throw new MslCryptoException(MslError.JWE_PARSE_ERROR, header, e);
         }
         
@@ -650,7 +651,7 @@ public class JsonWebEncryptionCryptoContext implements ICryptoContext {
         // Decrypt the CEK.
         final KeyParameter cek;
         try {
-            final byte[] cekBytes = cekCryptoContext.decrypt(ecek);
+            final byte[] cekBytes = cekCryptoContext.decrypt(ecek, encoder);
             cek = new KeyParameter(cekBytes);
         } catch (final ArrayIndexOutOfBoundsException e) {
             // Thrown if the encrypted content encryption key is an invalid
@@ -691,11 +692,11 @@ public class JsonWebEncryptionCryptoContext implements ICryptoContext {
             // Reconstruct the ciphertext and authentication tag.
             final byte[] ciphertextAtag = Arrays.copyOf(ciphertext, ciphertext.length + at.length);
             System.arraycopy(at, 0, ciphertextAtag, ciphertext.length, at.length);
-            int plen = plaintextCipher.getOutputSize(ciphertextAtag.length);
-            byte[] plaintext = new byte[plen];
+            final int plen = plaintextCipher.getOutputSize(ciphertextAtag.length);
+            final byte[] plaintext = new byte[plen];
             // Decrypt the ciphertext and get the resulting plaintext length
             // which will be used for the authentication tag offset.
-            int offset = plaintextCipher.processBytes(ciphertextAtag, 0, ciphertextAtag.length, plaintext, 0);
+            final int offset = plaintextCipher.processBytes(ciphertextAtag, 0, ciphertextAtag.length, plaintext, 0);
             // Verify the authentication tag.
             plaintextCipher.doFinal(plaintext, offset);
             return plaintext;
@@ -710,18 +711,18 @@ public class JsonWebEncryptionCryptoContext implements ICryptoContext {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.crypto.ICryptoContext#sign(byte[])
+     * @see com.netflix.msl.crypto.ICryptoContext#sign(byte[], com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public byte[] sign(final byte[] data) throws MslCryptoException {
+    public byte[] sign(final byte[] data, final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslCryptoException {
         throw new MslCryptoException(MslError.SIGN_NOT_SUPPORTED);
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.crypto.ICryptoContext#verify(byte[], byte[])
+     * @see com.netflix.msl.crypto.ICryptoContext#verify(byte[], byte[], com.netflix.msl.io.MslEncoderFactory)
      */
     @Override
-    public boolean verify(final byte[] data, final byte[] signature) throws MslCryptoException {
+    public boolean verify(final byte[] data, final byte[] signature, final MslEncoderFactory encoder) throws MslCryptoException {
         throw new MslCryptoException(MslError.VERIFY_NOT_SUPPORTED);
     }
     

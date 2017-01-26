@@ -16,14 +16,9 @@
 package burp.msl.msg;
 
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.Set;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
@@ -35,6 +30,9 @@ import com.netflix.msl.MslMessageException;
 import com.netflix.msl.MslUserAuthException;
 import com.netflix.msl.MslUserIdTokenException;
 import com.netflix.msl.crypto.ICryptoContext;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.keyx.KeyRequestData;
 import com.netflix.msl.msg.MessageInputStream;
 import com.netflix.msl.util.Base64;
@@ -45,9 +43,9 @@ import com.netflix.msl.util.MslContext;
  * Date: 9/24/14
  */
 public class WiretapMessageInputStream extends MessageInputStream {
-    /** JSON key payload. */
+    /** Key payload. */
     private static final String KEY_PAYLOAD = "payload";
-    /** JSON key signature. */
+    /** Key signature. */
     private static final String KEY_SIGNATURE = "signature";
 
     /**
@@ -65,7 +63,6 @@ public class WiretapMessageInputStream extends MessageInputStream {
      * 
      * @param ctx MSL context.
      * @param source MSL input stream.
-     * @param charset input stream character set encoding.
      * @param keyRequestData key request data to use when processing key
      *        response data.
      * @param cryptoContexts the map of service token names onto crypto
@@ -91,56 +88,51 @@ public class WiretapMessageInputStream extends MessageInputStream {
      *         authentication data or a master token, or a token is improperly
      *         bound to another token.
      */
-    public WiretapMessageInputStream(final MslContext ctx, final InputStream source, final Charset charset, final Set<KeyRequestData> keyRequestData, final Map<String, ICryptoContext> cryptoContexts) throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslUserAuthException, MslMessageException, MslKeyExchangeException, MslMasterTokenException, MslUserIdTokenException, MslMessageException, MslException {
-        super(ctx, source, charset, keyRequestData, cryptoContexts);
+    public WiretapMessageInputStream(final MslContext ctx, final InputStream source, final Set<KeyRequestData> keyRequestData, final Map<String, ICryptoContext> cryptoContexts) throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslUserAuthException, MslMessageException, MslKeyExchangeException, MslMasterTokenException, MslUserIdTokenException, MslMessageException, MslException {
+        super(ctx, source, keyRequestData, cryptoContexts);
+        this.ctx = ctx;
     }
     
     /**
-     * <p>Retrieve the next payload chunk as a decrypted JSON object.</p>
+     * <p>Retrieve the next payload chunk as a decrypted MSL object.</p>
      * 
      * @return the next payload chunk or {@code null} if none remaining.
-     * @throws MslEncodingException if there is a problem parsing the JSON.
+     * @throws MslEncodingException if there is a problem parsing the data.
      * @throws MslMessageException if the payload verification failed.
      * @throws MslCryptoException if there is a problem decrypting or verifying
      *         the payload chunk.
      */
-    public JSONObject nextPayload() throws MslEncodingException, MslMessageException, MslCryptoException {
-        // Grab the next payload chunk JSON object.
-        final JSONObject payloadChunk = nextJsonObject();
+    public MslObject nextPayload() throws MslEncodingException, MslMessageException, MslCryptoException {
+        // Grab the next payload chunk MSL object.
+        final MslObject payloadChunk = nextMslObject();
         if (payloadChunk == null)
             return null;
         
         // Verify the payload chunk and pull the payload ciphertext.
+        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
         final ICryptoContext cryptoContext = getPayloadCryptoContext();
         byte[] payload;
         try {
-            try {
-                payload = Base64.decode(payloadChunk.getString(KEY_PAYLOAD));
-            } catch (final IllegalArgumentException e) {
-                throw new MslMessageException(MslError.PAYLOAD_INVALID, "payload chunk " + payloadChunk.toString(), e);
-            }
-            final byte[] signature;
-            try {
-                signature = Base64.decode(payloadChunk.getString(KEY_SIGNATURE));
-            } catch (final IllegalArgumentException e) {
-                throw new MslMessageException(MslError.PAYLOAD_SIGNATURE_INVALID, "payload chunk " + payloadChunk.toString(), e);
-            }
-            if (!cryptoContext.verify(payload, signature))
+            payload = payloadChunk.getBytes(KEY_PAYLOAD);
+            final byte[] signature = payloadChunk.getBytes(KEY_SIGNATURE);
+            if (!cryptoContext.verify(payload, signature, encoder))
                 throw new MslCryptoException(MslError.PAYLOAD_VERIFICATION_FAILED);
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "payload chunk " + payloadChunk.toString(), e);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "payload chunk " + payloadChunk.toString(), e);
         }
 
         // Decrypt the payload.
-        final byte[] plaintext = cryptoContext.decrypt(payload);
+        final byte[] plaintext = cryptoContext.decrypt(payload, encoder);
         
-        // Parse the decrypted payload as JSON.
-        final String payloadJson = new String(plaintext, MslConstants.DEFAULT_CHARSET);
+        // Parse the decrypted payload.
         try {
-            final JSONObject payloadJO = new JSONObject(payloadJson);
-            return payloadJO;
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "payload chunk payload " + payloadJson, e);
+            final MslObject payloadMo = encoder.parseObject(plaintext);
+            return payloadMo;
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "payload chunk payload " + Base64.encode(plaintext), e);
         }
     }
+
+    /** MSL context. */
+    private final MslContext ctx;
 }

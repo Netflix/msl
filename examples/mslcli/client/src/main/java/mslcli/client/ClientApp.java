@@ -16,17 +16,11 @@
 
 package mslcli.client;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.ConnectException;
 import java.security.Security;
 import java.util.concurrent.ExecutionException;
-
-import com.netflix.msl.MslConstants;
-import com.netflix.msl.MslException;
-import com.netflix.msl.msg.ConsoleFilterStreamFactory;
 
 import mslcli.common.CmdArguments;
 import mslcli.common.IllegalCmdArgumentException;
@@ -37,6 +31,12 @@ import mslcli.common.util.ConfigurationException;
 import mslcli.common.util.ConfigurationRuntimeException;
 import mslcli.common.util.MslProperties;
 import mslcli.common.util.SharedUtil;
+
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
+import com.netflix.msl.MslConstants;
+import com.netflix.msl.MslException;
+import com.netflix.msl.msg.ConsoleFilterStreamFactory;
 
 /**
  * <p>
@@ -121,7 +121,7 @@ public final class ClientApp {
      * Launcher of MSL CLI client. See user manual in HELP_FILE.
      * @param args command line arguments
      */
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         Status status = Status.OK;
         try {
             if (args.length == 0) {
@@ -141,17 +141,17 @@ public final class ClientApp {
                 }
                 clientApp.shutdown();
             }
-        } catch (ConfigurationException e) {
+        } catch (final ConfigurationException e) {
             err(e.getMessage());
             status = Status.CFG_ERROR;
-        } catch (IllegalCmdArgumentException e) {
+        } catch (final IllegalCmdArgumentException e) {
             err(e.getMessage());
             status = Status.ARG_ERROR;
-        } catch (IOException e) {
+        } catch (final IOException e) {
             err(e.getMessage());
             status = Status.EXE_ERROR;
             SharedUtil.getRootCause(e).printStackTrace(System.err);
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             err(e.getMessage());
             status = Status.EXE_ERROR;
             SharedUtil.getRootCause(e).printStackTrace(System.err);
@@ -188,7 +188,7 @@ public final class ClientApp {
             final Triplet<String,String,String> pskEntry;
             try {
                 pskEntry = SharedUtil.readPskFile(pskFile);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new ConfigurationException(e.getMessage());
             }
             cmdParam.merge(new CmdArguments(new String[] { CmdArguments.P_EID, pskEntry.x }));
@@ -201,7 +201,7 @@ public final class ClientApp {
             final Triplet<String,String,String> mgkEntry;
             try {
                 mgkEntry = SharedUtil.readPskFile(mgkFile);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new ConfigurationException(e.getMessage());
             }
             cmdParam.merge(new CmdArguments(new String[] { CmdArguments.P_EID, mgkEntry.x }));
@@ -262,9 +262,9 @@ public final class ClientApp {
                 if (status != Status.OK) {
                     out("Status: " + status.toString());
                 }
-            } catch (IllegalCmdArgumentException e) {
+            } catch (final IllegalCmdArgumentException e) {
                 err(e.getMessage());
-            } catch (RuntimeException e) {
+            } catch (final RuntimeException e) {
                 err(e.getMessage());
             }
         }
@@ -362,7 +362,7 @@ public final class ClientApp {
                             response.getErrorHeader().getErrorCode().intValue(),
                             response.getErrorHeader().getErrorMessage()));
                     } else {
-                        err(String.format("ERROR: %s" + response.getErrorHeader().toJSONString()));
+                        err(String.format("ERROR: %s" + response.getErrorHeader()));
                     }
                     status = Status.MSL_ERROR;
                 // NULL payload, NULL error header - should never happen
@@ -375,26 +375,26 @@ public final class ClientApp {
             if (count != 0) {
                 out(String.format("Messages Sent: %d, Total Time: %d msec, Per Message: %d msec", count, t_total, t_total/count));
             }
-        } catch (MslException e) {
+        } catch (final MslException e) {
             err(SharedUtil.getMslExceptionInfo(e));
             status = Status.MSL_EXC_ERROR;
             SharedUtil.getRootCause(e).printStackTrace(System.err);
-        } catch (ConfigurationException e) {
+        } catch (final ConfigurationException e) {
             err("Error: " + e.getMessage());
             status = Status.CFG_ERROR;
-        } catch (ConfigurationRuntimeException e) {
+        } catch (final ConfigurationRuntimeException e) {
             err("Error: " + e.getCause().getMessage());
             status = Status.CFG_ERROR;
-        } catch (IllegalCmdArgumentException e) {
+        } catch (final IllegalCmdArgumentException e) {
             err("Error: " + e.getMessage());
             status = Status.ARG_ERROR;
-        } catch (IllegalCmdArgumentRuntimeException e) {
+        } catch (final IllegalCmdArgumentRuntimeException e) {
             err("Error: " + e.getCause().getMessage());
             status = Status.ARG_ERROR;
-        } catch (ConnectException e) {
+        } catch (final ConnectException e) {
             err("Error: " + e.getMessage());
             status = Status.COMM_ERROR;
-        } catch (ExecutionException e) {
+        } catch (final ExecutionException e) {
             final Throwable thr = SharedUtil.getRootCause(e);
             if (thr instanceof ConfigurationException) {
                 err("Error: " + thr.getMessage());
@@ -414,15 +414,15 @@ public final class ClientApp {
                 thr.printStackTrace(System.err);
                 status = Status.EXE_ERROR;
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             err("Error: " + e.getMessage());
             SharedUtil.getRootCause(e).printStackTrace(System.err);
             status = Status.EXE_ERROR;
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
             err("Error: " + e.getMessage());
             SharedUtil.getRootCause(e).printStackTrace(System.err);
             status = Status.EXE_ERROR;
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             err("Error: " + e.getMessage());
             SharedUtil.getRootCause(e).printStackTrace(System.err);
             status = Status.EXE_ERROR;
@@ -449,10 +449,10 @@ public final class ClientApp {
             input = ClientApp.class.getResourceAsStream(HELP_FILE);
             final String helpInfo = new String(SharedUtil.readIntoArray(input), MslConstants.DEFAULT_CHARSET);
             out(helpInfo);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             err(String.format("Cannot read help file %s: %s", HELP_FILE, e.getMessage()));
         } finally {
-            if (input != null) try { input.close(); } catch (Exception ignore) {}
+            if (input != null) try { input.close(); } catch (final Exception ignore) {}
         }
     }
 

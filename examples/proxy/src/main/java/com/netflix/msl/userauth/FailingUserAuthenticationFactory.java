@@ -3,10 +3,9 @@
  */
 package com.netflix.msl.userauth;
 
-import org.json.JSONObject;
-
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslUserAuthException;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.tokens.UserIdToken;
@@ -34,10 +33,10 @@ public class FailingUserAuthenticationFactory extends UserAuthenticationFactory 
     }
     
     /* (non-Javadoc)
-     * @see com.netflix.msl.userauth.UserAuthenticationFactory#createData(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, org.json.JSONObject)
+     * @see com.netflix.msl.userauth.UserAuthenticationFactory#createData(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, com.netflix.msl.io.MslObject)
      */
     @Override
-    public UserAuthenticationData createData(MslContext ctx, MasterToken masterToken, JSONObject userAuthJO) throws MslUserAuthException {
+    public UserAuthenticationData createData(final MslContext ctx, final MasterToken masterToken, final MslObject userAuthMo) throws MslUserAuthException {
         throw new MslUserAuthException(error);
     }
 
@@ -45,7 +44,7 @@ public class FailingUserAuthenticationFactory extends UserAuthenticationFactory 
      * @see com.netflix.msl.userauth.UserAuthenticationFactory#authenticate(com.netflix.msl.util.MslContext, java.lang.String, com.netflix.msl.userauth.UserAuthenticationData, com.netflix.msl.tokens.UserIdToken)
      */
     @Override
-    public MslUser authenticate(final MslContext ctx, final String identity, final UserAuthenticationData data, UserIdToken userIdToken) throws MslUserAuthException {
+    public MslUser authenticate(final MslContext ctx, final String identity, final UserAuthenticationData data, final UserIdToken userIdToken) throws MslUserAuthException {
         throw new MslUserAuthException(error);
     }
 

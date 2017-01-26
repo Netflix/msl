@@ -16,19 +16,19 @@
 package com.netflix.msl.msg;
 
 /**
- * <p>Common header JSON keys.</p>
+ * <p>Common header keys.</p>
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 class HeaderKeys {
-    /** JSON key entity authentication data. */
+    /** Key entity authentication data. */
     public static final String KEY_ENTITY_AUTHENTICATION_DATA = "entityauthdata";
-    /** JSON key master token. */
+    /** Key master token. */
     public static final String KEY_MASTER_TOKEN = "mastertoken";
-    /** JSON key header data. */
+    /** Key header data. */
     public static final String KEY_HEADERDATA = "headerdata";
-    /** JSON key error data. */
+    /** Key error data. */
     public static final String KEY_ERRORDATA = "errordata";
-    /** JSON key signature. */
+    /** Key signature. */
     public static final String KEY_SIGNATURE = "signature";
 }

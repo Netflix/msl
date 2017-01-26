@@ -84,6 +84,9 @@ describe("RsaCryptoContext", function() {
     var HMAC_256_KEY;
     /** AES-128 HMAC-SHA256 AES-KW symmetric crypto context. */
     var SYMMETRIC_CRYPTO_CONTEXT;
+
+    /** MSL encoder format. */
+    var ENCODER_FORMAT = MslEncoderFormat.JSON;
     
     /** Random. */
     var random = new Random();
@@ -92,6 +95,8 @@ describe("RsaCryptoContext", function() {
     random.nextBytes(message);
     /** MSL context. */
     var ctx;
+    /** MSL encoder factory. */
+    var encoder;
     
     var initialized = false;
     beforeEach(function() {
@@ -117,6 +122,7 @@ describe("RsaCryptoContext", function() {
             });
             waitsFor(function() { return ctx && AES_128_KEY && HMAC_256_KEY; }, "static initialization", 600);
             runs(function() {
+                encoder = ctx.getMslEncoderFactory();
                 SYMMETRIC_CRYPTO_CONTEXT = new SymmetricCryptoContext(ctx, KEY_ID, AES_128_KEY, HMAC_256_KEY, null);
                 initialized = true;
             });
@@ -180,11 +186,11 @@ describe("RsaCryptoContext", function() {
     		var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, mode);
     		var ciphertextA = undefined, ciphertextB;
     		runs(function() {
-    			cryptoContext.encrypt(messageA, {
+    			cryptoContext.encrypt(messageA, encoder, ENCODER_FORMAT, {
     				result: function(c) { ciphertextA = c; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
-    			cryptoContext.encrypt(messageB, {
+    			cryptoContext.encrypt(messageB, encoder, ENCODER_FORMAT, {
     				result: function(c) { ciphertextB = c; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
@@ -202,11 +208,11 @@ describe("RsaCryptoContext", function() {
     		
     		var plaintextA = undefined, plaintextB;
     		runs(function() {
-    			cryptoContext.decrypt(ciphertextA, {
+    			cryptoContext.decrypt(ciphertextA, encoder, {
     				result: function(p) { plaintextA = p; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     			});
-    			cryptoContext.decrypt(ciphertextB, {
+    			cryptoContext.decrypt(ciphertextB, encoder, {
     				result: function(p) { plaintextB = p; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     			});
@@ -244,7 +250,7 @@ describe("RsaCryptoContext", function() {
     		var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, null, publicKeyA, mode);
     		var ciphertext;
     		runs(function() {
-    			cryptoContext.encrypt(message, {
+    			cryptoContext.encrypt(message, encoder, ENCODER_FORMAT, {
     				result: function(c) { ciphertext = c; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});;
@@ -253,7 +259,7 @@ describe("RsaCryptoContext", function() {
     		
     		var exception;
     		runs(function() {
-	    		cryptoContext.decrypt(ciphertext, {
+	    		cryptoContext.decrypt(ciphertext, encoder, {
 	    			result: function() {},
 	    			error: function(err) { exception = err; }
 	    		});
@@ -272,7 +278,7 @@ describe("RsaCryptoContext", function() {
     			
     		var ciphertext;
     		runs(function() {
-    			cryptoContextA.encrypt(message, {
+    			cryptoContextA.encrypt(message, encoder, ENCODER_FORMAT, {
     				result: function(c) { ciphertext = c; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
@@ -281,7 +287,7 @@ describe("RsaCryptoContext", function() {
     		
     		var exception;
     		runs(function() {
-    			cryptoContextB.decrypt(ciphertext, {
+    			cryptoContextB.decrypt(ciphertext, encoder, {
     				result: function() {},
     				error: function(err) { exception = err; }
     			});
@@ -300,7 +306,7 @@ describe("RsaCryptoContext", function() {
 
     		var ciphertext;
     		runs(function() {
-    			cryptoContextA.encrypt(message, {
+    			cryptoContextA.encrypt(message, encoder, ENCODER_FORMAT, {
     				result: function(c) { ciphertext = c; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
@@ -309,7 +315,7 @@ describe("RsaCryptoContext", function() {
     		
     		var exception;
     		runs(function() {
-    			cryptoContextB.decrypt(ciphertext, {
+    			cryptoContextB.decrypt(ciphertext, encoder, {
     				result: function() {},
     				error: function(err) { exception = err; }
     			});
@@ -338,7 +344,7 @@ describe("RsaCryptoContext", function() {
             
             var exception;
             runs(function() {
-                cryptoContext.wrap(keyA, {
+                cryptoContext.wrap(keyA, encoder, ENCODER_FORMAT, {
                     result: function() {},
                     error: function(e) { exception = e; }
                 });
@@ -355,7 +361,7 @@ describe("RsaCryptoContext", function() {
             
             var exception;
             runs(function() {
-                cryptoContext.unwrap(message, null, null, {
+                cryptoContext.unwrap(message, null, null, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
                 });
@@ -371,7 +377,7 @@ describe("RsaCryptoContext", function() {
     		var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, mode);
     		var signature;
     		runs(function() {
-    			cryptoContext.sign(message, {
+    			cryptoContext.sign(message, encoder, ENCODER_FORMAT, {
     				result: function(s) { signature = s; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
@@ -385,7 +391,7 @@ describe("RsaCryptoContext", function() {
     		
     		var verified;
     		runs(function() {
-    			cryptoContext.verify(message, signature, {
+    			cryptoContext.verify(message, signature, encoder, {
     				result: function(v) { verified = v; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
@@ -402,7 +408,7 @@ describe("RsaCryptoContext", function() {
     		var cryptoContextB = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyB, publicKeyB, mode);
     		var signature;
     		runs(function() {
-    			cryptoContextA.sign(message, {
+    			cryptoContextA.sign(message, encoder, ENCODER_FORMAT, {
     				result: function(s) { signature = s; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     			});
@@ -410,7 +416,7 @@ describe("RsaCryptoContext", function() {
     		waitsFor(function() { return signature; }, "signature", 300);
     		var verified;
     		runs(function() {
-    			cryptoContextB.verify(message, signature, {
+    			cryptoContextB.verify(message, signature, encoder, {
     				result: function(v) { verified = v; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
@@ -425,7 +431,7 @@ describe("RsaCryptoContext", function() {
     		var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, null, publicKeyA, mode);
     		var signature;
     		runs(function() {
-    			cryptoContext.sign(message, {
+    			cryptoContext.sign(message, encoder, ENCODER_FORMAT, {
     				result: function(s) { signature = s; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     			});
@@ -437,7 +443,7 @@ describe("RsaCryptoContext", function() {
     		});
     		var verified;
     		runs(function() {
-    			cryptoContext.verify(message, signature, {
+    			cryptoContext.verify(message, signature, encoder, {
     				result: function(v) { verified = v; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     			});
@@ -452,7 +458,7 @@ describe("RsaCryptoContext", function() {
     		var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, null, mode);
     		var signature;
     		runs(function() {
-    			cryptoContext.sign(message, {
+    			cryptoContext.sign(message, encoder, ENCODER_FORMAT, {
     				result: function(s) { signature = s; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     			});
@@ -464,7 +470,7 @@ describe("RsaCryptoContext", function() {
     		});
     		var verified;
     		runs(function() {
-    			cryptoContext.verify(message, signature, {
+    			cryptoContext.verify(message, signature, encoder, {
     				result: function(v) { verified = v; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     			});
@@ -532,7 +538,7 @@ describe("RsaCryptoContext", function() {
             var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, mode);
             var ciphertext;
             runs(function() {
-                cryptoContext.encrypt(message, {
+                cryptoContext.encrypt(message, encoder, ENCODER_FORMAT, {
                     result: function(c) { ciphertext = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -545,7 +551,7 @@ describe("RsaCryptoContext", function() {
 
             var plaintext;
             runs(function() {
-                cryptoContext.decrypt(ciphertext, {
+                cryptoContext.decrypt(ciphertext, encoder, {
                     result: function(p) { plaintext = p; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -561,7 +567,7 @@ describe("RsaCryptoContext", function() {
             var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, null, mode);
             var ciphertext;
             runs(function() {
-                cryptoContext.encrypt(message, {
+                cryptoContext.encrypt(message, encoder, ENCODER_FORMAT, {
                     result: function(c) { ciphertext = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -574,7 +580,7 @@ describe("RsaCryptoContext", function() {
 
             var plaintext;
             runs(function() {
-                cryptoContext.decrypt(ciphertext, {
+                cryptoContext.decrypt(ciphertext, encoder, {
                     result: function(p) { plaintext = p; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -590,7 +596,7 @@ describe("RsaCryptoContext", function() {
             var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, null, publicKeyA, mode);
             var ciphertext;
             runs(function() {
-                cryptoContext.encrypt(message, {
+                cryptoContext.encrypt(message, encoder, ENCODER_FORMAT, {
                     result: function(c) { ciphertext = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -603,7 +609,7 @@ describe("RsaCryptoContext", function() {
 
             var plaintext;
             runs(function() {
-                cryptoContext.decrypt(ciphertext, {
+                cryptoContext.decrypt(ciphertext, encoder, {
                     result: function(p) { plaintext = p; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -621,7 +627,7 @@ describe("RsaCryptoContext", function() {
 
             var ciphertext;
             runs(function() {
-                cryptoContextA.encrypt(message, {
+                cryptoContextA.encrypt(message, encoder, ENCODER_FORMAT, {
                     result: function(c) { ciphertext = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -634,7 +640,7 @@ describe("RsaCryptoContext", function() {
 
             var plaintext;
             runs(function() {
-                cryptoContextB.decrypt(ciphertext, {
+                cryptoContextB.decrypt(ciphertext, encoder, {
                     result: function(p) { plaintext = p; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -652,7 +658,7 @@ describe("RsaCryptoContext", function() {
 
             var ciphertext;
             runs(function() {
-                cryptoContextA.encrypt(message, {
+                cryptoContextA.encrypt(message, encoder, ENCODER_FORMAT, {
                     result: function(c) { ciphertext = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -665,7 +671,7 @@ describe("RsaCryptoContext", function() {
 
             var plaintext;
             runs(function() {
-                cryptoContextB.decrypt(ciphertext, {
+                cryptoContextB.decrypt(ciphertext, encoder, {
                     result: function(p) { plaintext = p; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -682,7 +688,7 @@ describe("RsaCryptoContext", function() {
 
             var wrapped;
             runs(function() {
-                cryptoContext.wrap(AES_128_KEY, {
+                cryptoContext.wrap(AES_128_KEY, encoder, ENCODER_FORMAT, {
                     result: function(data) { wrapped = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -693,7 +699,7 @@ describe("RsaCryptoContext", function() {
             runs(function() {
                 expect(wrapped).not.toBeNull();
                 expect(wrapped).not.toEqual(AES_128_KEY.toByteArray());
-                cryptoContext.unwrap(wrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+                cryptoContext.unwrap(wrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, encoder, {
                     result: function(key) { unwrapped = key; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -705,11 +711,11 @@ describe("RsaCryptoContext", function() {
             var wrapCryptoContext, refCiphertext, wrapCiphertext;
             runs(function() {
                 wrapCryptoContext = new SymmetricCryptoContext(ctx, KEY_ID, unwrapped, null, null);
-                SYMMETRIC_CRYPTO_CONTEXT.encrypt(message, {
+                SYMMETRIC_CRYPTO_CONTEXT.encrypt(message, encoder, ENCODER_FORMAT, {
                     result: function(x) { refCiphertext = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                wrapCryptoContext.encrypt(message, {
+                wrapCryptoContext.encrypt(message, encoder, ENCODER_FORMAT, {
                     result: function(x) { wrapCiphertext = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -717,11 +723,11 @@ describe("RsaCryptoContext", function() {
             waitsFor(function() { return refCiphertext && wrapCiphertext; }, "ciphertexts", 300);
             var refPlaintext, wrapPlaintext;
             runs(function() {
-                SYMMETRIC_CRYPTO_CONTEXT.decrypt(wrapCiphertext, {
+                SYMMETRIC_CRYPTO_CONTEXT.decrypt(wrapCiphertext, encoder, {
                     result: function(x) { refPlaintext = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                wrapCryptoContext.decrypt(refCiphertext, {
+                wrapCryptoContext.decrypt(refCiphertext, encoder, {
                     result: function(x) { wrapPlaintext = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -737,7 +743,7 @@ describe("RsaCryptoContext", function() {
 
             var wrapped;
             runs(function() {
-                cryptoContext.wrap(HMAC_256_KEY, {
+                cryptoContext.wrap(HMAC_256_KEY, encoder, ENCODER_FORMAT, {
                     result: function(data) { wrapped = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -747,7 +753,7 @@ describe("RsaCryptoContext", function() {
             runs(function() {
                 expect(wrapped).not.toBeNull();
                 expect(wrapped).not.toEqual(HMAC_256_KEY.toByteArray());
-                cryptoContext.unwrap(wrapped, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
+                cryptoContext.unwrap(wrapped, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, encoder, {
                     result: function(key) { unwrapped = key; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -758,12 +764,12 @@ describe("RsaCryptoContext", function() {
             // operation as the wrapped key is not exportable.
             var refHmac, wrapHmac;
             runs(function() {
-                SYMMETRIC_CRYPTO_CONTEXT.sign(message, {
+                SYMMETRIC_CRYPTO_CONTEXT.sign(message, encoder, ENCODER_FORMAT, {
                     result: function(x) { refHmac = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
                 var wrapCryptoContext = new SymmetricCryptoContext(ctx, KEY_ID, null, unwrapped, null);
-                wrapCryptoContext.sign(message, {
+                wrapCryptoContext.sign(message, encoder, ENCODER_FORMAT, {
                     result: function(x) { wrapHmac = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -778,7 +784,7 @@ describe("RsaCryptoContext", function() {
             var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, mode);
             var signature;
             runs(function() {
-                cryptoContext.sign(message, {
+                cryptoContext.sign(message, encoder, ENCODER_FORMAT, {
                     result: function(s) { signature = s; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -792,7 +798,7 @@ describe("RsaCryptoContext", function() {
 
             var verified;
             runs(function() {
-                cryptoContext.verify(message, signature, {
+                cryptoContext.verify(message, signature, encoder, {
                     result: function(v) { verified = v; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -809,7 +815,7 @@ describe("RsaCryptoContext", function() {
             var cryptoContextB = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyB, publicKeyB, mode);
             var signature;
             runs(function() {
-                cryptoContextA.sign(message, {
+                cryptoContextA.sign(message, encoder, ENCODER_FORMAT, {
                     result: function(s) { signature = s; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
@@ -817,7 +823,7 @@ describe("RsaCryptoContext", function() {
             waitsFor(function() { return signature; }, "signature", 300);
             var verified;
             runs(function() {
-                cryptoContextB.verify(message, signature, {
+                cryptoContextB.verify(message, signature, encoder, {
                     result: function(v) { verified = v; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -832,7 +838,7 @@ describe("RsaCryptoContext", function() {
             var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, null, publicKeyA, mode);
             var signature;
             runs(function() {
-                cryptoContext.sign(message, {
+                cryptoContext.sign(message, encoder, ENCODER_FORMAT, {
                     result: function(s) { signature = s; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
@@ -844,7 +850,7 @@ describe("RsaCryptoContext", function() {
             });
             var verified;
             runs(function() {
-                cryptoContext.verify(message, signature, {
+                cryptoContext.verify(message, signature, encoder, {
                     result: function(v) { verified = v; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
@@ -859,7 +865,7 @@ describe("RsaCryptoContext", function() {
             var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, null, mode);
             var signature;
             runs(function() {
-                cryptoContext.sign(message, {
+                cryptoContext.sign(message, encoder, ENCODER_FORMAT, {
                     result: function(s) { signature = s; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
@@ -871,7 +877,7 @@ describe("RsaCryptoContext", function() {
             });
             var verified;
             runs(function() {
-                cryptoContext.verify(message, signature, {
+                cryptoContext.verify(message, signature, encoder, {
                     result: function(v) { verified = v; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
@@ -905,7 +911,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return publicKeyA && privateKeyA; }, "publicKeyA && privateKeyA", 900);
+            waitsFor(function() { return publicKeyA && privateKeyA; }, "publicKeyA && privateKeyA", 1200);
 
             runs(function() {
                 // TODO: read from RSA_KEYPAIR_B.publicKey
@@ -918,7 +924,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function () { return publicKeyB && privateKeyB; }, "publicKeyB && privateKeyB", 900);
+            waitsFor(function () { return publicKeyB && privateKeyB; }, "publicKeyB && privateKeyB", 1200);
             
             runs(function() { initialized = true; });
         });
@@ -927,7 +933,7 @@ describe("RsaCryptoContext", function() {
     		var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, RsaCryptoContext$Mode.SIGN_VERIFY);
     		var ciphertext;
     		runs(function() {
-    			cryptoContext.encrypt(message, {
+    			cryptoContext.encrypt(message, encoder, ENCODER_FORMAT, {
     				result: function(c) { ciphertext = c; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
@@ -940,7 +946,7 @@ describe("RsaCryptoContext", function() {
     		
     		var plaintext;
     		runs(function() {
-    			cryptoContext.decrypt(ciphertext, {
+    			cryptoContext.decrypt(ciphertext, encoder, {
     				result: function(p) { plaintext = p; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
@@ -956,7 +962,7 @@ describe("RsaCryptoContext", function() {
     		var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, null, RsaCryptoContext$Mode.SIGN_VERIFY);
     		var ciphertext;
     		runs(function() {
-    			cryptoContext.encrypt(message, {
+    			cryptoContext.encrypt(message, encoder, ENCODER_FORMAT, {
     				result: function(c) { ciphertext = c; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
@@ -969,7 +975,7 @@ describe("RsaCryptoContext", function() {
     		
     		var plaintext;
     		runs(function() {
-    			cryptoContext.decrypt(ciphertext, {
+    			cryptoContext.decrypt(ciphertext, encoder, {
     				result: function(p) { plaintext = p; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
@@ -985,7 +991,7 @@ describe("RsaCryptoContext", function() {
     		var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, null, publicKeyA, RsaCryptoContext$Mode.SIGN_VERIFY);
     		var ciphertext;
     		runs(function() {
-    			cryptoContext.encrypt(message, {
+    			cryptoContext.encrypt(message, encoder, ENCODER_FORMAT, {
     				result: function(c) { ciphertext = c; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
@@ -998,7 +1004,7 @@ describe("RsaCryptoContext", function() {
     		
     		var plaintext;
     		runs(function() {
-    			cryptoContext.decrypt(ciphertext, {
+    			cryptoContext.decrypt(ciphertext, encoder, {
     				result: function(p) { plaintext = p; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
@@ -1016,7 +1022,7 @@ describe("RsaCryptoContext", function() {
     			
     		var ciphertext;
     		runs(function() {
-    			cryptoContextA.encrypt(message, {
+    			cryptoContextA.encrypt(message, encoder, ENCODER_FORMAT, {
     				result: function(c) { ciphertext = c; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
@@ -1029,7 +1035,7 @@ describe("RsaCryptoContext", function() {
     		
     		var plaintext;
     		runs(function() {
-    			cryptoContextB.decrypt(ciphertext, {
+    			cryptoContextB.decrypt(ciphertext, encoder, {
     				result: function(p) { plaintext = p; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
@@ -1047,7 +1053,7 @@ describe("RsaCryptoContext", function() {
     			
     		var ciphertext;
     		runs(function() {
-    			cryptoContextA.encrypt(message, {
+    			cryptoContextA.encrypt(message, encoder, ENCODER_FORMAT, {
     				result: function(c) { ciphertext = c; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
@@ -1060,7 +1066,7 @@ describe("RsaCryptoContext", function() {
 
     		var plaintext;
     		runs(function() {
-    			cryptoContextB.decrypt(ciphertext, {
+    			cryptoContextB.decrypt(ciphertext, encoder, {
     				result: function(p) { plaintext = p; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
@@ -1088,7 +1094,7 @@ describe("RsaCryptoContext", function() {
             
             var exception;
             runs(function() {
-                cryptoContext.wrap(keyA, {
+                cryptoContext.wrap(keyA, encoder, ENCODER_FORMAT, {
                     result: function() {},
                     error: function(e) { exception = e; }
                 });
@@ -1105,7 +1111,7 @@ describe("RsaCryptoContext", function() {
             
             var exception;
             runs(function() {
-                cryptoContext.unwrap(message, null, null, {
+                cryptoContext.unwrap(message, null, null, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
                 });
@@ -1127,11 +1133,11 @@ describe("RsaCryptoContext", function() {
     		var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, RsaCryptoContext$Mode.SIGN_VERIFY);
     		var signatureA = undefined, signatureB;
     		runs(function() {
-    			cryptoContext.sign(messageA, {
+    			cryptoContext.sign(messageA, encoder, ENCODER_FORMAT, {
     				result: function(s) { signatureA = s; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     			});
-    			cryptoContext.sign(messageB, {
+    			cryptoContext.sign(messageB, encoder, ENCODER_FORMAT, {
     				result: function(s) { signatureB = s; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     			});
@@ -1148,15 +1154,15 @@ describe("RsaCryptoContext", function() {
     		
     		var verifiedAA = undefined, verifiedBB = undefined, verifiedBA;
     		runs(function() {
-    			cryptoContext.verify(messageA, signatureA, {
+    			cryptoContext.verify(messageA, signatureA, encoder, {
     				result: function(v) { verifiedAA = v; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
-    			cryptoContext.verify(messageB, signatureB, {
+    			cryptoContext.verify(messageB, signatureB, encoder, {
     				result: function(v) { verifiedBB = v; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
-    			cryptoContext.verify(messageB, signatureA, {
+    			cryptoContext.verify(messageB, signatureA, encoder, {
     				result: function(v) { verifiedBA = v; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
@@ -1174,7 +1180,7 @@ describe("RsaCryptoContext", function() {
     		var cryptoContextB = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyB, publicKeyB, RsaCryptoContext$Mode.SIGN_VERIFY);
     		var signature;
     		runs(function() {
-    			cryptoContextA.sign(message, {
+    			cryptoContextA.sign(message, encoder, ENCODER_FORMAT, {
     				result: function(s) { signature = s; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
@@ -1182,7 +1188,7 @@ describe("RsaCryptoContext", function() {
     		waitsFor(function() { return signature; }, "signature", 300);
     		var verified;
     		runs(function() {
-    			cryptoContextB.verify(message, signature, {
+    			cryptoContextB.verify(message, signature, encoder, {
     				result: function(v) { verified = v; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
@@ -1197,7 +1203,7 @@ describe("RsaCryptoContext", function() {
     		var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, null, publicKeyA, RsaCryptoContext$Mode.SIGN_VERIFY);
 	    	var exception;
 	    	runs(function() {
-	    		cryptoContext.sign(message, {
+	    		cryptoContext.sign(message, encoder, ENCODER_FORMAT, {
 	    			result: function() {},
 	    			error: function(err) { exception = err; }
 	    		});
@@ -1214,7 +1220,7 @@ describe("RsaCryptoContext", function() {
     		
     		var signature;
     		runs(function() {
-    			cryptoContext.sign(message, {
+    			cryptoContext.sign(message, encoder, ENCODER_FORMAT, {
     				result: function(s) { signature = s; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     			});
@@ -1223,7 +1229,7 @@ describe("RsaCryptoContext", function() {
     		
     		var exception;
     		runs(function() {
-    			cryptoContext.verify(message, signature, {
+    			cryptoContext.verify(message, signature, encoder, {
     				result: function() {},
     				error: function(err) { exception = err; }
     			});

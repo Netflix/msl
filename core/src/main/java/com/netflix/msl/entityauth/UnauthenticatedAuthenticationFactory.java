@@ -15,14 +15,13 @@
  */
 package com.netflix.msl.entityauth;
 
-import org.json.JSONObject;
-
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslInternalException;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.crypto.NullCryptoContext;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.util.AuthenticationUtils;
 import com.netflix.msl.util.MslContext;
 
@@ -43,11 +42,11 @@ public class UnauthenticatedAuthenticationFactory extends EntityAuthenticationFa
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.entityauth.EntityAuthenticationFactory#createData(com.netflix.msl.util.MslContext, org.json.JSONObject)
+     * @see com.netflix.msl.entityauth.EntityAuthenticationFactory#createData(com.netflix.msl.util.MslContext, com.netflix.msl.io.MslObject)
      */
     @Override
-    public EntityAuthenticationData createData(final MslContext ctx, final JSONObject entityAuthJO) throws MslEncodingException {
-        return new UnauthenticatedAuthenticationData(entityAuthJO);
+    public EntityAuthenticationData createData(final MslContext ctx, final MslObject entityAuthMo) throws MslEncodingException {
+        return new UnauthenticatedAuthenticationData(entityAuthMo);
     }
 
     /* (non-Javadoc)

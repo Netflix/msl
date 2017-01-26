@@ -15,7 +15,10 @@
  */
 package com.netflix.msl.test;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.both;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.is;
 
 import org.hamcrest.Matcher;
 import org.hamcrest.StringDescription;
@@ -189,9 +192,9 @@ public class ExpectedMslException implements TestRule {
      * Adds to the list of requirements for any thrown exception that it should
      * be an instance of {@code type}.
      * 
-     * @param type the specific MslException type.
+     * @param type the specific Exception type.
      */
-    public void expect(final Class<? extends MslException> type) {
+    public void expect(final Class<? extends Exception> type) {
         expect(instanceOf(type));
     }
     

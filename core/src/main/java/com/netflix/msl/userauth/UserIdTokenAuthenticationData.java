@@ -15,14 +15,15 @@
  */
 package com.netflix.msl.userauth;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslException;
 import com.netflix.msl.MslInternalException;
 import com.netflix.msl.MslUserAuthException;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.util.MslContext;
@@ -44,9 +45,9 @@ import com.netflix.msl.util.MslContext;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class UserIdTokenAuthenticationData extends UserAuthenticationData {
-    /** JSON master token key. */
+    /** Key master token. */
     private static final String KEY_MASTER_TOKEN = "mastertoken";
-    /** JSON user ID token key. */
+    /** Key user ID token. */
     private static final String KEY_USER_ID_TOKEN = "useridtoken";
     
     /**
@@ -66,32 +67,38 @@ public class UserIdTokenAuthenticationData extends UserAuthenticationData {
     
     /**
      * Construct a new user ID token authentication data instance from the
-     * provided JSON representation.
+     * provided MSL object.
      * 
      * @param ctx MSl context.
-     * @param userIdTokenAuthJO the JSON object.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @param userIdTokenAuthMo the MSL object.
+     * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslUserAuthException if the token data is invalid or the user ID
      *         token is not bound to the master token.
      */
-    public UserIdTokenAuthenticationData(final MslContext ctx, final JSONObject userIdTokenAuthJO) throws MslEncodingException, MslUserAuthException {
+    public UserIdTokenAuthenticationData(final MslContext ctx, final MslObject userIdTokenAuthMo) throws MslEncodingException, MslUserAuthException {
         super(UserAuthenticationScheme.USER_ID_TOKEN);
+
+        // Extract master token and user ID token representations.
+        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+        final MslObject masterTokenMo, userIdTokenMo;
+        try {
+            masterTokenMo = userIdTokenAuthMo.getMslObject(KEY_MASTER_TOKEN, encoder);
+            userIdTokenMo = userIdTokenAuthMo.getMslObject(KEY_USER_ID_TOKEN, encoder);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "user ID token authdata " + userIdTokenAuthMo, e);
+        }
         
         // Convert any MslExceptions into MslUserAuthException because we don't
         // want to trigger entity or user re-authentication incorrectly.
         try {
-            masterToken = new MasterToken(ctx, userIdTokenAuthJO.getJSONObject(KEY_MASTER_TOKEN));
+            masterToken = new MasterToken(ctx, masterTokenMo);
         } catch (final MslException e) {
-            throw new MslUserAuthException(MslError.USERAUTH_MASTERTOKEN_INVALID, "user ID token authdata " + userIdTokenAuthJO.toString(), e);
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "user ID token authdata " + userIdTokenAuthJO.toString(), e);
+            throw new MslUserAuthException(MslError.USERAUTH_MASTERTOKEN_INVALID, "user ID token authdata " + userIdTokenAuthMo, e);
         }
         try {
-            userIdToken = new UserIdToken(ctx, userIdTokenAuthJO.getJSONObject(KEY_USER_ID_TOKEN), masterToken);
+            userIdToken = new UserIdToken(ctx, userIdTokenMo, masterToken);
         } catch (final MslException e) {
-            throw new MslUserAuthException(MslError.USERAUTH_USERIDTOKEN_INVALID, "user ID token authdata " + userIdTokenAuthJO.toString(), e);
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "user ID token authdata " + userIdTokenAuthJO.toString(), e);
+            throw new MslUserAuthException(MslError.USERAUTH_USERIDTOKEN_INVALID, "user ID token authdata " + userIdTokenAuthMo, e);
         }
     }
     
@@ -110,18 +117,14 @@ public class UserIdTokenAuthenticationData extends UserAuthenticationData {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.userauth.UserAuthenticationData#getAuthData()
+     * @see com.netflix.msl.userauth.UserAuthenticationData#getAuthData(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public JSONObject getAuthData() throws MslEncodingException {
-        try {
-            final JSONObject jsonObj = new JSONObject();
-            jsonObj.put(KEY_MASTER_TOKEN, new JSONObject(masterToken.toJSONString()));
-            jsonObj.put(KEY_USER_ID_TOKEN, new JSONObject(userIdToken.toJSONString()));
-            return jsonObj;
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, "user ID token authdata", e);
-        }
+    public MslObject getAuthData(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException {
+        final MslObject authdata = encoder.createObject();
+        authdata.put(KEY_MASTER_TOKEN, masterToken);
+        authdata.put(KEY_USER_ID_TOKEN, userIdToken);
+        return encoder.parseObject(encoder.encodeObject(authdata, format));
     }
 
     /* (non-Javadoc)

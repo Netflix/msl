@@ -35,14 +35,15 @@ import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.engines.AESEngine;
 import org.bouncycastle.crypto.macs.CMac;
 import org.bouncycastle.crypto.params.KeyParameter;
-import org.json.JSONException;
-import org.json.JSONObject;
 
-import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslInternalException;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslUtils;
 
@@ -152,10 +153,10 @@ public class SymmetricCryptoContext implements ICryptoContext {
     }
     
     /* (non-Javadoc)
-     * @see com.netflix.msl.crypto.MslCryptoContext#encrypt(byte[])
+     * @see com.netflix.msl.crypto.ICryptoContext#encrypt(byte[], com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public byte[] encrypt(final byte[] data) throws MslCryptoException {
+    public byte[] encrypt(final byte[] data, final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslCryptoException {
         if (encryptionKey == null)
             throw new MslCryptoException(MslError.ENCRYPT_NOT_SUPPORTED, "no encryption/decryption key");
         try {
@@ -176,7 +177,8 @@ public class SymmetricCryptoContext implements ICryptoContext {
             }
             
             // Return encryption envelope byte representation.
-            return new MslCiphertextEnvelope(id, iv, ciphertext).toJSONString().getBytes(MslConstants.DEFAULT_CHARSET);
+            final MslCiphertextEnvelope envelope = new MslCiphertextEnvelope(id, iv, ciphertext);
+            return envelope.toMslEncoding(encoder, format);
         } catch (final NoSuchPaddingException e) {
             throw new MslInternalException("Unsupported padding exception.", e);
         } catch (final NoSuchAlgorithmException e) {
@@ -189,20 +191,22 @@ public class SymmetricCryptoContext implements ICryptoContext {
             throw new MslCryptoException(MslError.PLAINTEXT_ILLEGAL_BLOCK_SIZE, "not expected when padding is specified", e);
         } catch (final BadPaddingException e) {
             throw new MslCryptoException(MslError.PLAINTEXT_BAD_PADDING, "not expected when encrypting", e);
+        } catch (final MslEncoderException e) {
+            throw new MslCryptoException(MslError.CIPHERTEXT_ENVELOPE_ENCODE_ERROR, e);
         }
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.crypto.MslCryptoContext#decrypt(byte[])
+     * @see com.netflix.msl.crypto.ICryptoContext#decrypt(byte[], com.netflix.msl.io.MslEncoderFactory)
      */
     @Override
-    public byte[] decrypt(final byte[] data) throws MslCryptoException {
+    public byte[] decrypt(final byte[] data, final MslEncoderFactory encoder) throws MslCryptoException {
         if (encryptionKey == null)
             throw new MslCryptoException(MslError.DECRYPT_NOT_SUPPORTED, "no encryption/decryption key");
         try {
             // Reconstitute encryption envelope.
-            final JSONObject encryptionEnvelopeJsonObj = new JSONObject(new String(data, MslConstants.DEFAULT_CHARSET));
-            final MslCiphertextEnvelope encryptionEnvelope = new MslCiphertextEnvelope(encryptionEnvelopeJsonObj, MslCiphertextEnvelope.Version.V1);
+            final MslObject encryptionEnvelopeMo = encoder.parseObject(data);
+            final MslCiphertextEnvelope encryptionEnvelope = new MslCiphertextEnvelope(encryptionEnvelopeMo, MslCiphertextEnvelope.Version.V1);
             
             // Verify key ID.
             if (!encryptionEnvelope.getKeyId().equals(id))
@@ -219,13 +223,13 @@ public class SymmetricCryptoContext implements ICryptoContext {
             return cipher.doFinal(ciphertext);
         } catch (final ArrayIndexOutOfBoundsException e) {
             throw new MslCryptoException(MslError.INSUFFICIENT_CIPHERTEXT, e);
-        } catch (final JSONException e) {
+        } catch (final MslEncoderException e) {
             throw new MslCryptoException(MslError.CIPHERTEXT_ENVELOPE_PARSE_ERROR, e);
         } catch (final MslEncodingException e) {
             throw new MslCryptoException(MslError.CIPHERTEXT_ENVELOPE_PARSE_ERROR, e);
         } catch (final NoSuchAlgorithmException e) {
             throw new MslInternalException("Invalid cipher algorithm specified.", e);
-        } catch (NoSuchPaddingException e) {
+        } catch (final NoSuchPaddingException e) {
             throw new MslInternalException("Unsupported padding exception.", e);
         } catch (final InvalidKeyException e) {
             throw new MslCryptoException(MslError.INVALID_ENCRYPTION_KEY, e);
@@ -239,10 +243,10 @@ public class SymmetricCryptoContext implements ICryptoContext {
     }
     
     /* (non-Javadoc)
-     * @see com.netflix.msl.crypto.ICryptoContext#wrap(byte[])
+     * @see com.netflix.msl.crypto.ICryptoContext#wrap(byte[], com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public byte[] wrap(final byte[] data) throws MslCryptoException {
+    public byte[] wrap(final byte[] data, final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslCryptoException {
         if (wrappingKey == null)
             throw new MslCryptoException(MslError.WRAP_NOT_SUPPORTED, "no wrap/unwrap key");
         if (data.length % 8 != 0)
@@ -292,10 +296,10 @@ public class SymmetricCryptoContext implements ICryptoContext {
     }
     
     /* (non-Javadoc)
-     * @see com.netflix.msl.crypto.ICryptoContext#unwrap(byte[])
+     * @see com.netflix.msl.crypto.ICryptoContext#unwrap(byte[], com.netflix.msl.io.MslEncoderFactory)
      */
     @Override
-    public byte[] unwrap(final byte[] data) throws MslCryptoException {
+    public byte[] unwrap(final byte[] data, final MslEncoderFactory encoder) throws MslCryptoException {
         if (wrappingKey == null)
             throw new MslCryptoException(MslError.UNWRAP_NOT_SUPPORTED, "no wrap/unwrap key");
         if (data.length % 8 != 0)
@@ -342,10 +346,10 @@ public class SymmetricCryptoContext implements ICryptoContext {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.crypto.MslCryptoContext#sign(byte[])
+     * @see com.netflix.msl.crypto.ICryptoContext#sign(byte[], com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public byte[] sign(final byte[] data) throws MslCryptoException {
+    public byte[] sign(final byte[] data, final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslCryptoException {
         if (signatureKey == null)
             throw new MslCryptoException(MslError.SIGN_NOT_SUPPORTED, "No signature key.");
         try {
@@ -368,24 +372,23 @@ public class SymmetricCryptoContext implements ICryptoContext {
             }
             
             // Return the signature envelope byte representation.
-            return new MslSignatureEnvelope(xmac).getBytes();
+            return new MslSignatureEnvelope(xmac).getBytes(encoder, format);
         } catch (final NoSuchAlgorithmException e) {
             throw new MslInternalException("Invalid MAC algorithm specified.", e);
         } catch (final InvalidKeyException e) {
             throw new MslCryptoException(MslError.INVALID_HMAC_KEY, e);
+        } catch (final MslEncoderException e) {
+            throw new MslCryptoException(MslError.SIGNATURE_ENVELOPE_ENCODE_ERROR, e);
         }
     }
 
-    /* (non-Javadoc)
-     * @see com.netflix.msl.crypto.MslCryptoContext#verify(byte[], byte[])
-     */
     @Override
-    public boolean verify(final byte[] data, final byte[] signature) throws MslCryptoException {
+    public boolean verify(final byte[] data, final byte[] signature, final MslEncoderFactory encoder) throws MslCryptoException {
         if (signatureKey == null)
             throw new MslCryptoException(MslError.VERIFY_NOT_SUPPORTED, "No signature key.");
         try {
             // Reconstitute the signature envelope.
-            final MslSignatureEnvelope envelope = MslSignatureEnvelope.parse(signature);
+            final MslSignatureEnvelope envelope = MslSignatureEnvelope.parse(signature, encoder);
             
             // Compute the xMac.
             final byte[] xmac;

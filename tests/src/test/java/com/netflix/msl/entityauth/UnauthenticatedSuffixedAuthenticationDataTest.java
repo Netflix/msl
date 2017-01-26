@@ -15,6 +15,7 @@
  */
 package com.netflix.msl.entityauth;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -22,8 +23,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -33,10 +32,15 @@ import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
 import com.netflix.msl.MslError;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslEncoderUtils;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.test.ExpectedMslException;
-import com.netflix.msl.util.JsonUtils;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslContext;
+import com.netflix.msl.util.MslTestUtils;
 
 /**
  * Unauthenticated suffixed entity authentication data unit tests.
@@ -44,14 +48,17 @@ import com.netflix.msl.util.MslContext;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class UnauthenticatedSuffixedAuthenticationDataTest {
-    /** JSON key entity authentication scheme. */
+	/** MSL encoder format. */
+	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
+
+    /** Key entity authentication scheme. */
     private static final String KEY_SCHEME = "scheme";
-    /** JSON key entity authentication data. */
+    /** Key entity authentication data. */
     private static final String KEY_AUTHDATA = "authdata";
     
-    /** JSON key entity root. */
+    /** Key entity root. */
     private static final String KEY_ROOT = "root";
-    /** JSON key entity suffix. */
+    /** Key entity suffix. */
     private static final String KEY_SUFFIX = "suffix";
     
     /** Identity concatenation character. */
@@ -66,77 +73,79 @@ public class UnauthenticatedSuffixedAuthenticationDataTest {
     @BeforeClass
     public static void setup() throws IOException, MslEncodingException, MslCryptoException {
         ctx = new MockMslContext(EntityAuthenticationScheme.NONE_SUFFIXED, false);
+        encoder = ctx.getMslEncoderFactory();
     }
     
     @AfterClass
     public static void teardown() {
+        encoder = null;
         ctx = null;
     }
     
     @Test
-    public void ctors() throws MslEncodingException, JSONException {
+    public void ctors() throws MslEncodingException, MslEncoderException {
         final UnauthenticatedSuffixedAuthenticationData data = new UnauthenticatedSuffixedAuthenticationData(ROOT, SUFFIX);
         assertEquals(ROOT + CONCAT_CHAR + SUFFIX, data.getIdentity());
         assertEquals(ROOT, data.getRoot());
         assertEquals(SUFFIX, data.getSuffix());
         assertEquals(EntityAuthenticationScheme.NONE_SUFFIXED, data.getScheme());
-        final JSONObject authdata = data.getAuthData();
+        final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
         assertNotNull(authdata);
-        final String jsonString = data.toJSONString();
-        assertNotNull(jsonString);
+        final byte[] encode = data.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(encode);
         
-        final UnauthenticatedSuffixedAuthenticationData joData = new UnauthenticatedSuffixedAuthenticationData(authdata);
-        assertEquals(data.getIdentity(), joData.getIdentity());
-        assertEquals(data.getRoot(), joData.getRoot());
-        assertEquals(data.getSuffix(), joData.getSuffix());
-        assertEquals(data.getScheme(), joData.getScheme());
-        final JSONObject joAuthdata = joData.getAuthData();
-        assertNotNull(joAuthdata);
-        assertTrue(JsonUtils.equals(authdata, joAuthdata));
-        final String joJsonString = joData.toJSONString();
-        assertNotNull(joJsonString);
-        assertEquals(jsonString, joJsonString);
+        final UnauthenticatedSuffixedAuthenticationData moData = new UnauthenticatedSuffixedAuthenticationData(authdata);
+        assertEquals(data.getIdentity(), moData.getIdentity());
+        assertEquals(data.getRoot(), moData.getRoot());
+        assertEquals(data.getSuffix(), moData.getSuffix());
+        assertEquals(data.getScheme(), moData.getScheme());
+        final MslObject moAuthdata = moData.getAuthData(encoder, ENCODER_FORMAT);
+        assertNotNull(moAuthdata);
+        assertTrue(MslEncoderUtils.equalObjects(authdata, moAuthdata));
+        final byte[] moEncode = moData.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
+        assertArrayEquals(encode, moEncode);
     }
     
     @Test
-    public void jsonString() throws JSONException {
+    public void encode() throws MslEncoderException {
         final UnauthenticatedSuffixedAuthenticationData data = new UnauthenticatedSuffixedAuthenticationData(ROOT, SUFFIX);
-        final JSONObject jo = new JSONObject(data.toJSONString());
-        assertEquals(EntityAuthenticationScheme.NONE_SUFFIXED.toString(), jo.getString(KEY_SCHEME));
-        final JSONObject authdata = jo.getJSONObject(KEY_AUTHDATA);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, data);
+        assertEquals(EntityAuthenticationScheme.NONE_SUFFIXED.toString(), mo.getString(KEY_SCHEME));
+        final MslObject authdata = mo.getMslObject(KEY_AUTHDATA, encoder);
         assertEquals(ROOT, authdata.getString(KEY_ROOT));
         assertEquals(SUFFIX, authdata.getString(KEY_SUFFIX));
     }
     
     @Test
-    public void create() throws JSONException, MslEntityAuthException, MslEncodingException, MslCryptoException {
+    public void create() throws MslEncoderException, MslEntityAuthException, MslEncodingException, MslCryptoException {
         final UnauthenticatedSuffixedAuthenticationData data = new UnauthenticatedSuffixedAuthenticationData(ROOT, SUFFIX);
-        final String jsonString = data.toJSONString();
-        final JSONObject jo = new JSONObject(jsonString);
-        final EntityAuthenticationData entitydata = EntityAuthenticationData.create(ctx, jo);
+        final byte[] encode = data.toMslEncoding(encoder, ENCODER_FORMAT);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, data);
+        final EntityAuthenticationData entitydata = EntityAuthenticationData.create(ctx, mo);
         assertNotNull(entitydata);
         assertTrue(entitydata instanceof UnauthenticatedSuffixedAuthenticationData);
         
-        final UnauthenticatedSuffixedAuthenticationData joData = (UnauthenticatedSuffixedAuthenticationData)entitydata;
-        assertEquals(data.getIdentity(), joData.getIdentity());
-        assertEquals(data.getRoot(), joData.getRoot());
-        assertEquals(data.getSuffix(), joData.getSuffix());
-        assertEquals(data.getScheme(), joData.getScheme());
-        final JSONObject joAuthdata = joData.getAuthData();
-        assertNotNull(joAuthdata);
-        assertTrue(JsonUtils.equals(data.getAuthData(), joAuthdata));
-        final String joJsonString = joData.toJSONString();
-        assertNotNull(joJsonString);
-        assertEquals(jsonString, joJsonString);
+        final UnauthenticatedSuffixedAuthenticationData moData = (UnauthenticatedSuffixedAuthenticationData)entitydata;
+        assertEquals(data.getIdentity(), moData.getIdentity());
+        assertEquals(data.getRoot(), moData.getRoot());
+        assertEquals(data.getSuffix(), moData.getSuffix());
+        assertEquals(data.getScheme(), moData.getScheme());
+        final MslObject moAuthdata = moData.getAuthData(encoder, ENCODER_FORMAT);
+        assertNotNull(moAuthdata);
+        assertTrue(MslEncoderUtils.equalObjects(data.getAuthData(encoder, ENCODER_FORMAT), moAuthdata));
+        final byte[] moEncode = moData.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
+        assertArrayEquals(encode, moEncode);
     }
     
     @Test
     public void missingRoot() throws MslEncodingException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final UnauthenticatedSuffixedAuthenticationData data = new UnauthenticatedSuffixedAuthenticationData(ROOT, SUFFIX);
-        final JSONObject authdata = data.getAuthData();
+        final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
         authdata.remove(KEY_ROOT);
         new UnauthenticatedSuffixedAuthenticationData(authdata);
     }
@@ -144,19 +153,19 @@ public class UnauthenticatedSuffixedAuthenticationDataTest {
     @Test
     public void missingSuffix() throws MslEncodingException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final UnauthenticatedSuffixedAuthenticationData data = new UnauthenticatedSuffixedAuthenticationData(ROOT, SUFFIX);
-        final JSONObject authdata = data.getAuthData();
+        final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
         authdata.remove(KEY_SUFFIX);
         new UnauthenticatedSuffixedAuthenticationData(authdata);
     }
     
     @Test
-    public void equalsRoot() throws MslEncodingException, JSONException, MslEntityAuthException, MslCryptoException {
+    public void equalsRoot() throws MslEncodingException, MslEncoderException, MslEntityAuthException, MslCryptoException {
         final UnauthenticatedSuffixedAuthenticationData dataA = new UnauthenticatedSuffixedAuthenticationData(ROOT + "A", SUFFIX);
         final UnauthenticatedSuffixedAuthenticationData dataB = new UnauthenticatedSuffixedAuthenticationData(ROOT + "B", SUFFIX);
-        final EntityAuthenticationData dataA2 = EntityAuthenticationData.create(ctx, new JSONObject(dataA.toJSONString()));
+        final EntityAuthenticationData dataA2 = EntityAuthenticationData.create(ctx, MslTestUtils.toMslObject(encoder, dataA));
         
         assertTrue(dataA.equals(dataA));
         assertEquals(dataA.hashCode(), dataA.hashCode());
@@ -171,10 +180,10 @@ public class UnauthenticatedSuffixedAuthenticationDataTest {
     }
     
     @Test
-    public void equalsSuffix() throws MslEncodingException, JSONException, MslEntityAuthException, MslCryptoException {
+    public void equalsSuffix() throws MslEncodingException, MslEncoderException, MslEntityAuthException, MslCryptoException {
         final UnauthenticatedSuffixedAuthenticationData dataA = new UnauthenticatedSuffixedAuthenticationData(ROOT, SUFFIX + "A");
         final UnauthenticatedSuffixedAuthenticationData dataB = new UnauthenticatedSuffixedAuthenticationData(ROOT, SUFFIX + "B");
-        final EntityAuthenticationData dataA2 = EntityAuthenticationData.create(ctx, new JSONObject(dataA.toJSONString()));
+        final EntityAuthenticationData dataA2 = EntityAuthenticationData.create(ctx, MslTestUtils.toMslObject(encoder, dataA));
         
         assertTrue(dataA.equals(dataA));
         assertEquals(dataA.hashCode(), dataA.hashCode());
@@ -198,4 +207,6 @@ public class UnauthenticatedSuffixedAuthenticationDataTest {
 
     /** MSL context. */
     private static MslContext ctx;
+    /** MSL encoder factory. */
+    private static MslEncoderFactory encoder;
 }

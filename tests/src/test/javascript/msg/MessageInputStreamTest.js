@@ -20,6 +20,9 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("MessageInputStream", function() {
+    /** MSL encoder format. */
+    var ENCODER_FORMAT = MslEncoderFormat.JSON;
+    
 	/** Maximum number of payload chunks to generate. */
     var MAX_PAYLOAD_CHUNKS = 12;
     /** Maximum payload chunk data size in bytes. */
@@ -37,6 +40,8 @@ describe("MessageInputStream", function() {
     var trustedNetCtx;
     /** Peer-to-peer MSL context. */
     var p2pCtx;
+    /** MSL encoder factory. */
+    var encoder;
     /** Header service token crypto contexts. */
     var cryptoContexts = new Array();
     /** Message payloads (initially empty). */
@@ -65,7 +70,7 @@ describe("MessageInputStream", function() {
      */
     var RejectingCryptoContext = NullCryptoContext.extend({
         /** @inheritDoc */
-        verify: function verify(data, signature, callback) {
+        verify: function verify(data, signature, encoder, callback) {
             callback.result(false);
         },
     });
@@ -95,30 +100,41 @@ describe("MessageInputStream", function() {
      *        the callback that will receive the input stream containing the
      *        MSL message.
      * @throws IOException if there is an error creating the input stream.
+     * @throws MslEncoderException if there is an error encoding the data.
      */
     function generateInputStream(header, payloads, callback) {
-    	var baos = new ByteArrayOutputStream();
-    	var headerBytes = textEncoding$getBytes(JSON.stringify(header), MslConstants$DEFAULT_CHARSET);
-        baos.write(headerBytes, 0, headerBytes.length, TIMEOUT, {
-        	result: function(numWritten) { writePayload(0, callback); },
-        	timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        AsyncExecutor(callback, function() {
+            var baos = new ByteArrayOutputStream();
+            header.toMslEncoding(encoder, ENCODER_FORMAT, {
+                result: function(headerBytes) {
+                    baos.write(headerBytes, 0, headerBytes.length, TIMEOUT, {
+                        result: function(numWritten) { writePayload(baos, 0, callback); },
+                        timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
         });
-        function writePayload(index, callback) {
-        	if (index == payloads.length) {
-        		callback.result(new ByteArrayInputStream(baos.toByteArray()));
-        		return;
-        	}
-        	
-        	var payload = payloads[index];
-        	var payloadBytes = textEncoding$getBytes(JSON.stringify(payload), MslConstants$DEFAULT_CHARSET);
-        	baos.write(payloadBytes, 0, payloadBytes.length, TIMEOUT, {
-        		result: function(numWritten) {
-        			writePayload(++index, callback);
-        		},
-        		timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        	});
+        function writePayload(baos, index, callback) {
+            AsyncExecutor(callback, function() {
+            	if (index == payloads.length)
+            		return new ByteArrayInputStream(baos.toByteArray());
+            	
+            	var payload = payloads[index];
+            	payload.toMslEncoding(encoder, ENCODER_FORMAT, {
+            	    result: function(payloadBytes) {
+            	        baos.write(payloadBytes, 0, payloadBytes.length, TIMEOUT, {
+                            result: function(numWritten) {
+                                writePayload(baos, ++index, callback);
+                            },
+                            timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                            error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                        });
+            	    },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            	});
+            });
         }
     }
     
@@ -137,9 +153,10 @@ describe("MessageInputStream", function() {
     	            error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     	        });
     	    });
-    	    waitsFor(function() { return trustedNetCtx && p2pCtx; }, "trustedNetCtx and p2pCtx", 100);
+    	    waitsFor(function() { return trustedNetCtx && p2pCtx; }, "trustedNetCtx and p2pCtx", 1200);
     	    
     		runs(function() {
+    		    encoder = trustedNetCtx.getMslEncoderFactory();
     			trustedNetCtx.getEntityAuthenticationData(null, {
     				result: function(x) { ENTITY_AUTH_DATA = x; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -166,7 +183,7 @@ describe("MessageInputStream", function() {
     			var keyRequest = new SymmetricWrappedExchange$RequestData(SymmetricWrappedExchange$KeyId.PSK);
     			KEY_REQUEST_DATA.push(keyRequest);
     			var factory = trustedNetCtx.getKeyExchangeFactory(keyRequest.keyExchangeScheme);
-    			factory.generateResponse(trustedNetCtx, keyRequest, ENTITY_AUTH_DATA, {
+    			factory.generateResponse(trustedNetCtx, ENCODER_FORMAT, keyRequest, ENTITY_AUTH_DATA, {
     				result: function(x) { keyxData = x; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
@@ -208,7 +225,7 @@ describe("MessageInputStream", function() {
     	var chunk;
     	runs(function() {
             var cryptoContext = MESSAGE_HEADER.cryptoContext;
-    		PayloadChunk$create(SEQ_NO, MSG_ID, END_OF_MSG, null, new Uint8Array(0), cryptoContext, {
+    		PayloadChunk$create(trustedNetCtx, SEQ_NO, MSG_ID, END_OF_MSG, null, new Uint8Array(0), cryptoContext, {
     			result: function(x) { chunk = x; },
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
@@ -227,7 +244,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(trustedNetCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -267,7 +284,7 @@ describe("MessageInputStream", function() {
     	var chunk;
     	runs(function() {
     		var cryptoContext = MESSAGE_HEADER.cryptoContext;
-    		PayloadChunk$create(SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, cryptoContext, {
+    		PayloadChunk$create(trustedNetCtx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, cryptoContext, {
     			result: function(x) { chunk = x; },
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
@@ -286,7 +303,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(trustedNetCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -350,7 +367,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(trustedNetCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -413,7 +430,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(trustedNetCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -474,7 +491,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(trustedNetCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -550,7 +567,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(ctx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(ctx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -619,7 +636,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(ctx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(ctx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -655,7 +672,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(trustedNetCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -727,7 +744,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(trustedNetCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -812,7 +829,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(ctx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(ctx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -890,7 +907,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(ctx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(ctx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -938,7 +955,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(trustedNetCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -991,7 +1008,7 @@ describe("MessageInputStream", function() {
         var chunk;
         runs(function() {
             var cryptoContext = MESSAGE_HEADER.cryptoContext;
-            PayloadChunk$create(SEQ_NO, MSG_ID, END_OF_MSG, null, new Uint8Array(0), cryptoContext, {
+            PayloadChunk$create(trustedNetCtx, SEQ_NO, MSG_ID, END_OF_MSG, null, new Uint8Array(0), cryptoContext, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1010,7 +1027,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(trustedNetCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1063,7 +1080,7 @@ describe("MessageInputStream", function() {
         var chunk;
         runs(function() {
             var cryptoContext = MESSAGE_HEADER.cryptoContext;
-            PayloadChunk$create(SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, cryptoContext, {
+            PayloadChunk$create(trustedNetCtx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, cryptoContext, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1082,7 +1099,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(trustedNetCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1143,7 +1160,7 @@ describe("MessageInputStream", function() {
         // Encrypt the payload with the key exchange crypto context.
         var chunk;
         runs(function() {
-        	PayloadChunk$create(SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, KEYX_CRYPTO_CONTEXT, {
+        	PayloadChunk$create(trustedNetCtx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, KEYX_CRYPTO_CONTEXT, {
         		result: function(x) { chunk = x; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
@@ -1162,7 +1179,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(trustedNetCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1220,7 +1237,7 @@ describe("MessageInputStream", function() {
         var chunk;
         runs(function() {
         	var cryptoContext = messageHeader.cryptoContext;
-        	PayloadChunk$create(SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, cryptoContext, {
+        	PayloadChunk$create(p2pCtx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, cryptoContext, {
         		result: function(x) { chunk = x; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
@@ -1238,7 +1255,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(p2pCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(p2pCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1314,7 +1331,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(ctx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(ctx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1383,7 +1400,7 @@ describe("MessageInputStream", function() {
         var mis;
         runs(function() {
             var keyRequestData = new Array();
-            MessageInputStream$create(ctx, is, MslConstants$DEFAULT_CHARSET, keyRequestData, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(ctx, is, keyRequestData, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1436,7 +1453,7 @@ describe("MessageInputStream", function() {
         runs(function() {
             var keyRequest = new SymmetricWrappedExchange$RequestData(SymmetricWrappedExchange$KeyId.PSK);
             var factory = ctx.getKeyExchangeFactory(keyRequest.keyExchangeScheme);
-            factory.generateResponse(ctx, keyRequest, entityAuthData, {
+            factory.generateResponse(ctx, ENCODER_FORMAT, keyRequest, entityAuthData, {
                 result: function(x) { keyExchangeData = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1467,7 +1484,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(ctx, is, MslConstants$DEFAULT_CHARSET, keyRequestData, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(ctx, is, keyRequestData, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1512,7 +1529,7 @@ describe("MessageInputStream", function() {
         var keyExchangeData;
         runs(function() {
             var factory = trustedNetCtx.getKeyExchangeFactory(keyRequest.keyExchangeScheme);
-            factory.generateResponse(trustedNetCtx, keyRequest, entityAuthData, {
+            factory.generateResponse(trustedNetCtx, ENCODER_FORMAT, keyRequest, entityAuthData, {
                 result: function(x) { keyExchangeData = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1542,7 +1559,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(trustedNetCtx, is, MslConstants$DEFAULT_CHARSET, keyRequestData, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(trustedNetCtx, is, keyRequestData, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1595,7 +1612,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(trustedNetCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1648,7 +1665,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(p2pCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(p2pCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1703,7 +1720,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(trustedNetCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
             	result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1763,7 +1780,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(trustedNetCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
             	result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1828,12 +1845,7 @@ describe("MessageInputStream", function() {
             var cryptoContext = new SessionCryptoContext(ctx, masterToken);
             ctx.getMslStore().setCryptoContext(masterToken, cryptoContext);
             
-            // Change the MSL crypto context so the master token can no longer be
-            // verified or decrypted.
-            ctx.setMslCryptoContext(ALT_MSL_CRYPTO_CONTEXT);
-            
-            // Now "receive" the message with a master token that we cannot verify
-            // or decrypt, but for which a cached crypto context exists.
+            // Generate the input stream. This will encode the message.
             generateInputStream(messageHeader, payloads, {
                 result: function(x) { is = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1843,7 +1855,13 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(ctx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            // Change the MSL crypto context so the master token can no longer be
+            // verified or decrypted.
+            ctx.setMslCryptoContext(ALT_MSL_CRYPTO_CONTEXT);
+
+            // Now "receive" the message with a master token that we cannot verify
+            // or decrypt, but for which a cached crypto context exists.
+            MessageInputStream$create(ctx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1896,7 +1914,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(p2pCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(p2pCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
             	result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1954,7 +1972,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(p2pCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(p2pCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
             	result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -2001,7 +2019,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(trustedNetCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -2048,7 +2066,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(trustedNetCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -2095,7 +2113,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(trustedNetCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
             	result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -2142,7 +2160,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(p2pCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(p2pCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
             	result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -2211,7 +2229,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(ctx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(ctx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -2280,7 +2298,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(ctx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(ctx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { exception = e; }
@@ -2356,7 +2374,7 @@ describe("MessageInputStream", function() {
             });
         }
         function create(is) {
-            MessageInputStream$create(ctx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(ctx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(mis) { ready(mis); },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(exception) { check(exception); }
@@ -2440,7 +2458,7 @@ describe("MessageInputStream", function() {
             });
         }
         function create(is, i, nonReplayableId, largestNonReplayableId) {
-            MessageInputStream$create(ctx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(ctx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(mis) { ready(mis, i, nonReplayableId, largestNonReplayableId); },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -2507,7 +2525,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(ctx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(ctx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
             	result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -2576,7 +2594,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(ctx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(ctx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
             	result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -2612,7 +2630,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(trustedNetCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -2659,7 +2677,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(trustedNetCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -2716,7 +2734,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(trustedNetCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -2761,7 +2779,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(trustedNetCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -2807,7 +2825,7 @@ describe("MessageInputStream", function() {
     			var data = new Uint8Array(random.nextInt(MAX_DATA_SIZE) + 1);
     			random.nextBytes(data);
     			if (i < extraPayloads) {
-    				PayloadChunk$create(SEQ_NO + i, MSG_ID, (i == extraPayloads - 1), null, data, cryptoContext, {
+    				PayloadChunk$create(trustedNetCtx, SEQ_NO + i, MSG_ID, (i == extraPayloads - 1), null, data, cryptoContext, {
     					result: function(chunk) {
     						payloads.push(chunk);
     						baos.write(data, 0, data.length, TIMEOUT, {
@@ -2822,7 +2840,7 @@ describe("MessageInputStream", function() {
     					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     				});
     			} else {
-    				PayloadChunk$create(SEQ_NO + i, MSG_ID, null, null, data, cryptoContext, {
+    				PayloadChunk$create(trustedNetCtx, SEQ_NO + i, MSG_ID, null, null, data, cryptoContext, {
     					result: function(chunk) {
     						payloads.push(chunk);
     						++i;
@@ -2847,7 +2865,7 @@ describe("MessageInputStream", function() {
     	
     	var mis;
     	runs(function() {
-    		MessageInputStream$create(trustedNetCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+    		MessageInputStream$create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
     			result: function(x) { mis = x; },
     			timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -2896,7 +2914,7 @@ describe("MessageInputStream", function() {
     			var data = new Uint8Array(random.nextInt(MAX_DATA_SIZE) + 1);
     			random.nextBytes(data);
     			if (random.nextBoolean()) {
-    				PayloadChunk$create(sequenceNumber++, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext, {
+    				PayloadChunk$create(trustedNetCtx, sequenceNumber++, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext, {
     					result: function(chunk) {
     						payloads.push(chunk);
     						baos.write(data, 0, data.length, TIMEOUT, {
@@ -2911,7 +2929,7 @@ describe("MessageInputStream", function() {
     					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     				});
     			} else {
-    				PayloadChunk$create(sequenceNumber, 2 * MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext, {
+    				PayloadChunk$create(trustedNetCtx, sequenceNumber, 2 * MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext, {
     					result: function(chunk) {
     						payloads.push(chunk);
     						++badPayloads;
@@ -2937,7 +2955,7 @@ describe("MessageInputStream", function() {
     	
     	var mis;
     	runs(function() {
-    		MessageInputStream$create(trustedNetCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+    		MessageInputStream$create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
     			result: function(x) { mis = x; },
     			timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -3006,7 +3024,7 @@ describe("MessageInputStream", function() {
     			var data = new Uint8Array(random.nextInt(MAX_DATA_SIZE) + 1);
     			random.nextBytes(data);
     			if (random.nextBoolean()) {
-    				PayloadChunk$create(sequenceNumber++, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext, {
+    				PayloadChunk$create(trustedNetCtx, sequenceNumber++, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext, {
     					result: function(chunk) {
     						payloads.push(chunk);
     						baos.write(data, 0, data.length, TIMEOUT, {
@@ -3021,7 +3039,7 @@ describe("MessageInputStream", function() {
     					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     				});
     			} else {
-    				PayloadChunk$create(2 * sequenceNumber + i, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext, {
+    				PayloadChunk$create(trustedNetCtx, 2 * sequenceNumber + i, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext, {
     					result: function(chunk) {
     						payloads.push(chunk);
     						++badPayloads;
@@ -3047,7 +3065,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(trustedNetCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -3113,7 +3131,7 @@ describe("MessageInputStream", function() {
 
                var data = new Uint8Array(random.nextInt(MAX_DATA_SIZE) + 1);
                random.nextBytes(data);
-               PayloadChunk$create(SEQ_NO + i, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext, {
+               PayloadChunk$create(trustedNetCtx, SEQ_NO + i, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext, {
                    result: function(chunk) {
                        payloads.push(chunk);
                        baos.write(data, 0, data.length, TIMEOUT, {
@@ -3143,7 +3161,7 @@ describe("MessageInputStream", function() {
 
        var mis;
        runs(function() {
-           MessageInputStream$create(trustedNetCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+           MessageInputStream$create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                result: function(x) { mis = x; },
                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -3190,7 +3208,7 @@ describe("MessageInputStream", function() {
 
     			var data = new Uint8Array(random.nextInt(MAX_DATA_SIZE) + 1);
     			random.nextBytes(data);
-    			PayloadChunk$create(SEQ_NO + i, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext, {
+    			PayloadChunk$create(trustedNetCtx, SEQ_NO + i, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext, {
     				result: function(chunk) {
     					payloads.push(chunk);
     					baos.write(data, 0, data.length, TIMEOUT, {
@@ -3220,7 +3238,7 @@ describe("MessageInputStream", function() {
 
     	var mis;
     	runs(function() {
-    		MessageInputStream$create(trustedNetCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+    		MessageInputStream$create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
     			result: function(x) { mis = x; },
     			timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -3400,7 +3418,7 @@ describe("MessageInputStream", function() {
         		
         		var data = new Uint8Array(random.nextInt(MAX_DATA_SIZE) + 1);
         		random.nextBytes(data);
-        		PayloadChunk$create(SEQ_NO + i, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext, {
+        		PayloadChunk$create(trustedNetCtx, SEQ_NO + i, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext, {
         			result: function(chunk) {
         				payloads.push(chunk);
     					baos.write(data, 0, data.length, TIMEOUT, {
@@ -3430,7 +3448,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            MessageInputStream$create(trustedNetCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+            MessageInputStream$create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -3547,7 +3565,7 @@ describe("MessageInputStream", function() {
     	var chunk;
     	runs(function() {
         	var cryptoContext = MESSAGE_HEADER.cryptoContext;
-    		PayloadChunk$create(SEQ_NO, MSG_ID, true, null, data, cryptoContext, {
+    		PayloadChunk$create(trustedNetCtx, SEQ_NO, MSG_ID, true, null, data, cryptoContext, {
     			result: function(x) { chunk = x; },
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
@@ -3566,7 +3584,7 @@ describe("MessageInputStream", function() {
     	
     	var mis;
     	runs(function() {
-    		MessageInputStream$create(trustedNetCtx, is, MslConstants$DEFAULT_CHARSET, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+    		MessageInputStream$create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
     			result: function(x) { mis = x; },
     			timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }

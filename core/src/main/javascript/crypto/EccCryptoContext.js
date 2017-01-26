@@ -15,8 +15,8 @@
  */
 
 /**
- * <p>An ECC crypto context performs ECDSA sign/verify using a
- *    public/private ECC key pair.</p>
+ * <p>An ECC crypto context performs SHA-1 with ECDSA sign/verify using a
+ * public/private ECC key pair.</p>
  *
  * @author Pablo Pissanetzky <ppissanetzky@netflix.com>
  * @implements {ICryptoContext}
@@ -58,35 +58,35 @@ var EccCryptoContext;
         },
 
         /** @inheritDoc */
-        encrypt: function encrypt(data, callback) {
+        encrypt: function encrypt(data, encoder, format, callback) {
             AsyncExecutor(callback, function() {
                 return data;
             }, this);
         },
 
         /** @inheritDoc */
-        decrypt: function decrypt(data, callback) {
+        decrypt: function decrypt(data, encoder, callback) {
             AsyncExecutor(callback, function() {
                 return data;
             }, this);
         },
 
         /** @inheritDoc */
-        wrap: function wrap(key, callback) {
+        wrap: function wrap(key, encoder, format, callback) {
             AsyncExecutor(callback, function() {
                 throw new MslCryptoException(MslError.WRAP_NOT_SUPPORTED, "ECC does not wrap");
             }, this);
         },
 
         /** @inheritDoc */
-        unwrap: function unwrap(data, algo, usages, callback) {
+        unwrap: function unwrap(data, algo, usages, encoder, callback) {
             AsyncExecutor(callback, function() {
                 throw new MslCryptoException(MslError.UNWRAP_NOT_SUPPORTED, "ECC does not unwrap");
             }, this);
         },
 
         /** @inheritDoc */
-        sign: function sign(data, callback) {
+        sign: function sign(data, encoder, format, callback) {
             AsyncExecutor(callback, function() {
                 if (!this.privateKey)
                     throw new MslCryptoException(MslError.SIGN_NOT_SUPPORTED, "no private key");
@@ -94,7 +94,14 @@ var EccCryptoContext;
                     // Return the signature envelope byte representation.
                     MslSignatureEnvelope$create(new Uint8Array(hash), {
                         result: function(envelope) {
-                            callback.result(envelope.bytes);
+                            envelope.getBytes(encoder, format, {
+                                result: callback.result,
+                                error: function(e) {
+                                    if (e instanceof MslEncoderException)
+                                        e = new MslCryptoException(MslError.SIGNATURE_ENVELOPE_ENCODE_ERROR, e);
+                                    callback.error(e);
+                                },
+                            });
                         },
                         error: callback.error
                     });
@@ -108,14 +115,14 @@ var EccCryptoContext;
         },
 
         /** @inheritDoc */
-        verify: function verify(data, signature, callback) {
+        verify: function verify(data, signature, encoder, callback) {
             var self = this;
             AsyncExecutor(callback, function() {
                 if (!this.publicKey)
                     throw new MslCryptoException(MslError.VERIFY_NOT_SUPPORTED, "no public key");
 
                 // Reconstitute the signature envelope.
-                MslSignatureEnvelope$parse(signature, MslSignatureEnvelope$Version.V1, {
+                MslSignatureEnvelope$parse(signature, MslSignatureEnvelope$Version.V1, encoder, {
                     result: function(envelope) {
                         AsyncExecutor(callback, function() {
                             var oncomplete = callback.result;

@@ -15,29 +15,7 @@
  */
 package com.netflix.msl.client.tests;
 
-import com.netflix.msl.MslCryptoException;
-import com.netflix.msl.MslEncodingException;
-import com.netflix.msl.MslException;
-import com.netflix.msl.MslKeyExchangeException;
-import com.netflix.msl.client.common.BaseTestClass;
-import com.netflix.msl.client.configuration.ClientConfiguration;
-import com.netflix.msl.client.configuration.ServerConfiguration;
-import com.netflix.msl.entityauth.EntityAuthenticationScheme;
-import com.netflix.msl.io.Url;
-import com.netflix.msl.io.Url.Connection;
-import com.netflix.msl.keyx.KeyExchangeScheme;
-import com.netflix.msl.msg.MessageInputStream;
-import com.netflix.msl.tokens.MasterToken;
-import com.netflix.msl.tokens.ServiceToken;
-import com.netflix.msl.tokens.UserIdToken;
-import com.netflix.msl.userauth.UserAuthenticationScheme;
-import com.netflix.msl.util.MslStore;
-
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -48,7 +26,30 @@ import java.util.Date;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
-import static org.testng.Assert.assertEquals;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+
+import com.netflix.msl.MslCryptoException;
+import com.netflix.msl.MslEncodingException;
+import com.netflix.msl.MslException;
+import com.netflix.msl.MslKeyExchangeException;
+import com.netflix.msl.client.common.BaseTestClass;
+import com.netflix.msl.client.configuration.ClientConfiguration;
+import com.netflix.msl.client.configuration.ServerConfiguration;
+import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.Url;
+import com.netflix.msl.io.Url.Connection;
+import com.netflix.msl.keyx.KeyExchangeScheme;
+import com.netflix.msl.msg.MessageInputStream;
+import com.netflix.msl.tokens.MasterToken;
+import com.netflix.msl.tokens.ServiceToken;
+import com.netflix.msl.tokens.UserIdToken;
+import com.netflix.msl.userauth.UserAuthenticationScheme;
+import com.netflix.msl.util.MslStore;
 
 /**
  * User: skommidi
@@ -85,7 +86,7 @@ public class ServiceTokenTests extends BaseTestClass {
     public void afterTest() throws IOException {
         if(out != null) { out.close(); out = null;}
         if(in != null) { in.close(); out = null; }
-        MslStore store = clientConfig.getMslContext().getMslStore();
+        final MslStore store = clientConfig.getMslContext().getMslStore();
         store.clearCryptoContexts();
         store.clearServiceTokens();
         store.clearUserIdTokens();
@@ -121,7 +122,7 @@ public class ServiceTokenTests extends BaseTestClass {
 
 
     @Test(groups = "UnboundServiceTokenTests")
-    public void unboudServiceTokenWithData() throws InterruptedException, ExecutionException, MslException, IOException {
+    public void unboudServiceTokenWithData() throws InterruptedException, ExecutionException, MslException, IOException, MslEncoderException {
         final MasterToken masterToken = getMasterToken(new Date(System.currentTimeMillis() + 10000) /*renewableWindow*/,
                 new Date(System.currentTimeMillis() + 20000) /*expiration*/, TIME_OUT, 0  /*sequenceNumberOffset*/);
 
@@ -131,7 +132,7 @@ public class ServiceTokenTests extends BaseTestClass {
 
         final Set<ServiceToken> serviceTokens = getServiceToken(masterToken, userIdToken, ServiceTokenType.NONE, true);
 
-        MessageInputStream message = sendReceive(out, in, masterToken, userIdToken, serviceTokens, false /*isRenewable*/, false /*addKeyRequestData*/);
+        final MessageInputStream message = sendReceive(out, in, masterToken, userIdToken, serviceTokens, false /*isRenewable*/, false /*addKeyRequestData*/);
 
         thenThe(message)
                 .shouldHave().validBuffer();
@@ -143,7 +144,7 @@ public class ServiceTokenTests extends BaseTestClass {
     }
 
     @Test(dependsOnMethods = "unboudServiceTokenWithData", groups = "UnboundServiceTokenTests")
-    public void testUnboundServiceTokenWithoutData() throws InterruptedException, ExecutionException, MslException, IOException {
+    public void testUnboundServiceTokenWithoutData() throws InterruptedException, ExecutionException, MslException, IOException, MslEncoderException {
         final MasterToken masterToken = getMasterToken(new Date(System.currentTimeMillis() + 10000) /*renewableWindow*/,
                 new Date(System.currentTimeMillis() + 20000) /*expiration*/, TIME_OUT, 0  /*sequenceNumberOffset*/);
 
@@ -153,7 +154,7 @@ public class ServiceTokenTests extends BaseTestClass {
 
         final Set<ServiceToken> serviceTokens = getServiceToken(masterToken, userIdToken, ServiceTokenType.NONE, false);
 
-        MessageInputStream message = sendReceive(out, in, masterToken, userIdToken, serviceTokens, false /*isRenewable*/, false /*addKeyRequestData*/);
+        final MessageInputStream message = sendReceive(out, in, masterToken, userIdToken, serviceTokens, false /*isRenewable*/, false /*addKeyRequestData*/);
 
         thenThe(message)
                 .shouldHave().validBuffer();
@@ -165,7 +166,7 @@ public class ServiceTokenTests extends BaseTestClass {
     }
 
     @Test(testName = "service token test", dataProvider = "ServiceTokenTypes", dependsOnGroups = "UnboundServiceTokenTests")
-    public void boundServiceToken(ServiceTokenType serviceTokenType, boolean withData) throws InterruptedException, ExecutionException, MslException, IOException {
+    public void boundServiceToken(final ServiceTokenType serviceTokenType, final boolean withData) throws InterruptedException, ExecutionException, MslException, IOException, MslEncoderException {
 
         final MasterToken masterToken = getMasterToken(new Date(System.currentTimeMillis() + 10000) /*renewableWindow*/,
                 new Date(System.currentTimeMillis() + 20000) /*expiration*/, TIME_OUT, 0  /*sequenceNumberOffset*/);
@@ -176,7 +177,7 @@ public class ServiceTokenTests extends BaseTestClass {
 
         final Set<ServiceToken> serviceTokens = getServiceToken(masterToken, userIdToken, serviceTokenType, withData);
 
-        MessageInputStream message = sendReceive(out, in, masterToken, userIdToken, serviceTokens, false /*isRenewable*/, false /*addKeyRequestData*/);
+        final MessageInputStream message = sendReceive(out, in, masterToken, userIdToken, serviceTokens, false /*isRenewable*/, false /*addKeyRequestData*/);
 
         thenThe(message)
                 .shouldHave().validBuffer();
@@ -188,7 +189,7 @@ public class ServiceTokenTests extends BaseTestClass {
     }
 
     private ServerConfiguration serverConfig;
-    private int numThreads = 0;
+    private final int numThreads = 0;
     private OutputStream out;
     private DelayedInputStream in;
 }

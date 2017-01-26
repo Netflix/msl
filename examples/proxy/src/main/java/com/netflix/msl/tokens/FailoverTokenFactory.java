@@ -5,14 +5,13 @@ package com.netflix.msl.tokens;
 
 import javax.crypto.SecretKey;
 
-import org.json.JSONObject;
-
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslException;
 import com.netflix.msl.ProxyMslError;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.userauth.ProxyMslUser;
 import com.netflix.msl.util.MslContext;
 
@@ -40,10 +39,10 @@ public class FailoverTokenFactory implements TokenFactory {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.tokens.TokenFactory#createMasterToken(com.netflix.msl.util.MslContext, com.netflix.msl.entityauth.EntityAuthenticationData, javax.crypto.SecretKey, javax.crypto.SecretKey, org.json.JSONObject)
+     * @see com.netflix.msl.tokens.TokenFactory#createMasterToken(com.netflix.msl.util.MslContext, com.netflix.msl.entityauth.EntityAuthenticationData, javax.crypto.SecretKey, javax.crypto.SecretKey, com.netflix.msl.io.MslObject)
      */
     @Override
-    public MasterToken createMasterToken(final MslContext ctx, final EntityAuthenticationData entityAuthData, final SecretKey encryptionKey, final SecretKey hmacKey, final JSONObject issuerData) throws MslEncodingException, MslCryptoException, MslException {
+    public MasterToken createMasterToken(final MslContext ctx, final EntityAuthenticationData entityAuthData, final SecretKey encryptionKey, final SecretKey hmacKey, final MslObject issuerData) throws MslEncodingException, MslCryptoException, MslException {
         // This method should not get called. If it does then throw an
         // exception to trigger processing by the proxied MSL service.
         throw new MslException(ProxyMslError.MASTERTOKEN_CREATION_REQUIRED);
@@ -58,10 +57,10 @@ public class FailoverTokenFactory implements TokenFactory {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.tokens.TokenFactory#renewMasterToken(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, javax.crypto.SecretKey, javax.crypto.SecretKey, org.json.JSONObject)
+     * @see com.netflix.msl.tokens.TokenFactory#renewMasterToken(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, javax.crypto.SecretKey, javax.crypto.SecretKey, com.netflix.msl.io.MslObject)
      */
     @Override
-    public MasterToken renewMasterToken(final MslContext ctx, final MasterToken masterToken, final SecretKey encryptionKey, final SecretKey hmacKey, final JSONObject issuerData) throws MslException {
+    public MasterToken renewMasterToken(final MslContext ctx, final MasterToken masterToken, final SecretKey encryptionKey, final SecretKey hmacKey, final MslObject issuerData) throws MslException {
         return masterToken;
     }
 

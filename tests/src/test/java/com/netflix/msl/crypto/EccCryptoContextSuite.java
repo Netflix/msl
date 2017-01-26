@@ -38,9 +38,15 @@ import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
 import com.netflix.msl.MslCryptoException;
+import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.crypto.EccCryptoContext.Mode;
+import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.test.ExpectedMslException;
+import com.netflix.msl.util.MockMslContext;
+import com.netflix.msl.util.MslContext;
 
 /**
  * ECC crypto context unit tests.
@@ -51,6 +57,9 @@ import com.netflix.msl.test.ExpectedMslException;
 @SuiteClasses({EccCryptoContextSuite.EncryptDecrypt.class,
                EccCryptoContextSuite.SignVerify.class})
 public class EccCryptoContextSuite {
+    /** MSL encoder format. */
+    private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
+    
     /** Key pair ID. */
     private static final String KEYPAIR_ID = "keypairid";
 
@@ -76,17 +85,18 @@ public class EccCryptoContextSuite {
 
     /** Encrypt/decrypt mode unit tests. */
     @Ignore // Cannot perform ECIES encryption/decryption at the moment.
-        public static class EncryptDecrypt {
+    public static class EncryptDecrypt {
 
     }
 
     /** Sign/verify mode unit tests. */
     public static class SignVerify {
-
         @BeforeClass
-        public static synchronized void setup() throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidParameterSpecException, NoSuchProviderException {
+        public static synchronized void setup() throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidParameterSpecException, NoSuchProviderException, MslEncodingException, MslCryptoException {
             if (random == null) {
                 Security.addProvider(new BouncyCastleProvider());
+                final MslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
+                encoder = ctx.getMslEncoderFactory();
 
                 final ECCurve curve = new ECCurve.Fp(EC_Q, EC_A, EC_B);
                 final AlgorithmParameterSpec paramSpec = new ECParameterSpec(curve, curve.decodePoint(EC_G.toByteArray()), EC_N);
@@ -113,11 +123,11 @@ public class EccCryptoContextSuite {
             random.nextBytes(message);
 
             final EccCryptoContext cryptoContext = new EccCryptoContext(KEYPAIR_ID, privateKeyA, publicKeyA, Mode.SIGN_VERIFY);
-            final byte[] ciphertext = cryptoContext.encrypt(message);
+            final byte[] ciphertext = cryptoContext.encrypt(message, encoder, ENCODER_FORMAT);
             assertNotNull(ciphertext);
             assertArrayEquals(message, ciphertext);
 
-            final byte[] plaintext = cryptoContext.decrypt(ciphertext);
+            final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
             assertNotNull(plaintext);
             assertArrayEquals(message, plaintext);
         }
@@ -128,11 +138,11 @@ public class EccCryptoContextSuite {
             random.nextBytes(message);
 
             final EccCryptoContext cryptoContext = new EccCryptoContext(KEYPAIR_ID, privateKeyA, null, Mode.SIGN_VERIFY);
-            final byte[] ciphertext = cryptoContext.encrypt(message);
+            final byte[] ciphertext = cryptoContext.encrypt(message, encoder, ENCODER_FORMAT);
             assertNotNull(ciphertext);
             assertArrayEquals(message, ciphertext);
 
-            final byte[] plaintext = cryptoContext.decrypt(ciphertext);
+            final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
             assertNotNull(plaintext);
             assertArrayEquals(message, plaintext);
         }
@@ -143,11 +153,11 @@ public class EccCryptoContextSuite {
             random.nextBytes(message);
 
             final EccCryptoContext cryptoContext = new EccCryptoContext(KEYPAIR_ID, null, publicKeyA, Mode.SIGN_VERIFY);
-            final byte[] ciphertext = cryptoContext.encrypt(message);
+            final byte[] ciphertext = cryptoContext.encrypt(message, encoder, ENCODER_FORMAT);
             assertNotNull(ciphertext);
             assertArrayEquals(message, ciphertext);
 
-            final byte[] plaintext = cryptoContext.decrypt(ciphertext);
+            final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
             assertNotNull(plaintext);
             assertArrayEquals(message, plaintext);
         }
@@ -158,12 +168,12 @@ public class EccCryptoContextSuite {
             random.nextBytes(message);
 
             final EccCryptoContext cryptoContextA = new EccCryptoContext(KEYPAIR_ID + "A", privateKeyA, publicKeyA, Mode.SIGN_VERIFY);
-            final byte[] ciphertext = cryptoContextA.encrypt(message);
+            final byte[] ciphertext = cryptoContextA.encrypt(message, encoder, ENCODER_FORMAT);
             assertNotNull(ciphertext);
             assertArrayEquals(message, ciphertext);
 
             final EccCryptoContext cryptoContextB = new EccCryptoContext(KEYPAIR_ID + "B", privateKeyB, publicKeyB, Mode.SIGN_VERIFY);
-            final byte[] plaintext = cryptoContextB.decrypt(ciphertext);
+            final byte[] plaintext = cryptoContextB.decrypt(ciphertext, encoder);
             assertNotNull(plaintext);
             assertArrayEquals(message, plaintext);
         }
@@ -174,12 +184,12 @@ public class EccCryptoContextSuite {
             random.nextBytes(message);
 
             final EccCryptoContext cryptoContextA = new EccCryptoContext(KEYPAIR_ID, privateKeyA, publicKeyA, Mode.SIGN_VERIFY);
-            final byte[] ciphertext = cryptoContextA.encrypt(message);
+            final byte[] ciphertext = cryptoContextA.encrypt(message, encoder, ENCODER_FORMAT);
             assertNotNull(ciphertext);
             assertArrayEquals(message, ciphertext);
 
             final EccCryptoContext cryptoContextB = new EccCryptoContext(KEYPAIR_ID, privateKeyB, publicKeyB, Mode.SIGN_VERIFY);
-            final byte[] plaintext = cryptoContextB.decrypt(ciphertext);
+            final byte[] plaintext = cryptoContextB.decrypt(ciphertext, encoder);
             assertNotNull(plaintext);
             assertArrayEquals(message, plaintext);
         }
@@ -190,22 +200,22 @@ public class EccCryptoContextSuite {
             random.nextBytes(messageA);
 
             final EccCryptoContext cryptoContext = new EccCryptoContext(KEYPAIR_ID, privateKeyA, publicKeyA, Mode.SIGN_VERIFY);
-            final byte[] signatureA = cryptoContext.sign(messageA);
+            final byte[] signatureA = cryptoContext.sign(messageA, encoder, ENCODER_FORMAT);
             assertNotNull(signatureA);
             assertTrue(signatureA.length > 0);
             assertThat(messageA, is(not(signatureA)));
 
-            assertTrue(cryptoContext.verify(messageA, signatureA));
+            assertTrue(cryptoContext.verify(messageA, signatureA, encoder));
 
             final byte[] messageB = new byte[32];
             random.nextBytes(messageB);
 
-            final byte[] signatureB = cryptoContext.sign(messageB);
+            final byte[] signatureB = cryptoContext.sign(messageB, encoder, ENCODER_FORMAT);
             assertTrue(signatureB.length > 0);
             assertThat(signatureA, is(not(signatureB)));
 
-            assertTrue(cryptoContext.verify(messageB, signatureB));
-            assertFalse(cryptoContext.verify(messageB, signatureA));
+            assertTrue(cryptoContext.verify(messageB, signatureB, encoder));
+            assertFalse(cryptoContext.verify(messageB, signatureA, encoder));
         }
 
         @Test
@@ -214,10 +224,10 @@ public class EccCryptoContextSuite {
             random.nextBytes(message);
 
             final EccCryptoContext cryptoContextA = new EccCryptoContext(KEYPAIR_ID, privateKeyA, publicKeyA, Mode.SIGN_VERIFY);
-            final byte[] signature = cryptoContextA.sign(message);
+            final byte[] signature = cryptoContextA.sign(message, encoder, ENCODER_FORMAT);
 
             final EccCryptoContext cryptoContextB = new EccCryptoContext(KEYPAIR_ID, privateKeyB, publicKeyB, Mode.SIGN_VERIFY);
-            assertFalse(cryptoContextB.verify(message, signature));
+            assertFalse(cryptoContextB.verify(message, signature, encoder));
         }
 
         @Test
@@ -229,7 +239,7 @@ public class EccCryptoContextSuite {
             random.nextBytes(message);
 
             final EccCryptoContext cryptoContext = new EccCryptoContext(KEYPAIR_ID, null, publicKeyA, Mode.SIGN_VERIFY);
-            cryptoContext.sign(message);
+            cryptoContext.sign(message, encoder, ENCODER_FORMAT);
         }
 
         @Test
@@ -243,12 +253,12 @@ public class EccCryptoContextSuite {
             final EccCryptoContext cryptoContext = new EccCryptoContext(KEYPAIR_ID, privateKeyA, null, Mode.SIGN_VERIFY);
             final byte[] signature;
             try {
-                signature = cryptoContext.sign(message);
+                signature = cryptoContext.sign(message, encoder, ENCODER_FORMAT);
             } catch (final MslCryptoException e) {
                 fail(e.getMessage());
                 return;
             }
-            cryptoContext.verify(message, signature);
+            cryptoContext.verify(message, signature, encoder);
         }
     }
 
@@ -262,4 +272,6 @@ public class EccCryptoContextSuite {
     private static PrivateKey privateKeyB;
     /** Random. */
     private static Random random;
+    /** MSL encoder factory. */
+    private static MslEncoderFactory encoder;
 }

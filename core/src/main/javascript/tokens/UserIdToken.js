@@ -30,12 +30,12 @@
  * {@code
  * useridtoken = {
  *   "#mandatory" : [ "tokendata", "signature" ],
- *   "tokendata" : "base64",
- *   "signature" : "base64"
+ *   "tokendata" : "binary",
+ *   "signature" : "binary"
  * }} where:
  * <ul>
- * <li>{@code tokendata} is the Base64-encoded user ID token data (usertokendata)</li>
- * <li>{@code signature} is the Base64-encoded verification data of the user ID token data</li>
+ * <li>{@code tokendata} is the user ID token data (usertokendata)</li>
+ * <li>{@code signature} is the verification data of the user ID token data</li>
  * </ul>
  *
  * <p>The token data is represented as
@@ -46,14 +46,14 @@
  *   "expiration" : "int64(0,-)",
  *   "mtserialnumber" : "int64(0,2^53^)",
  *   "serialnumber" : "int64(0,2^53^)",
- *   "userdata" : "base64"
+ *   "userdata" : "binary"
  * }} where:
  * <ul>
  * <li>{@code renewalwindow} is when the renewal window opens in seconds since the epoch</li>
  * <li>{@code expiration} is the expiration timestamp in seconds since the epoch</li>
  * <li>{@code mtserialnumber} is the master token serial number</li>
  * <li>{@code serialnumber} is the user ID token serial number</li>
- * <li>{@code userdata} is the Base64-encoded encrypted user data (userdata)</li>
+ * <li>{@code userdata} is the encrypted user data (userdata)</li>
  * </ul></p>
  *
  * <p>The decrypted user data is represented as
@@ -76,6 +76,8 @@ var UserIdToken$create;
 var UserIdToken$parse;
 
 (function() {
+	"use strict";
+	
     /** Milliseconds per second.
      * @const
      * @type {number}
@@ -83,13 +85,13 @@ var UserIdToken$parse;
     var MILLISECONDS_PER_SECOND = 1000;
 
     /**
-     * JSON key token data.
+     * Key token data.
      * @const
      * @type {string}
      */
     var KEY_TOKENDATA = "tokendata";
     /**
-     * JSON key signature.
+     * Key signature.
      * @const
      * @type {string}
      */
@@ -97,31 +99,31 @@ var UserIdToken$parse;
 
     // tokendata
     /**
-     * JSON key renewal window timestamp.
+     * Key renewal window timestamp.
      * @const
      * @type {string}
      */
     var KEY_RENEWAL_WINDOW = "renewalwindow";
     /**
-     * JSON key expiration timestamp.
+     * Key expiration timestamp.
      * @const
      * @type {string}
      */
     var KEY_EXPIRATION = "expiration";
     /**
-     * JSON key master token serial number.
+     * Key master token serial number.
      * @const
      * @type {string}
      */
     var KEY_MASTER_TOKEN_SERIAL_NUMBER = "mtserialnumber";
     /**
-     * JSON key user ID token serial number.
+     * Key user ID token serial number.
      * @const
      * @type {string}
      */
     var KEY_SERIAL_NUMBER = "serialnumber";
     /**
-     * JSON key token user data.
+     * Key token user data.
      * @const
      * @type {string}
      */
@@ -129,13 +131,13 @@ var UserIdToken$parse;
 
     // userdata
     /**
-     * JSON key issuer data.
+     * Key issuer data.
      * @const
      * @type {string}
      */
     var KEY_ISSUER_DATA = "issuerdata";
     /**
-     * JSON key identity.
+     * Key identity.
      * @const
      * @type {string}
      */
@@ -144,18 +146,20 @@ var UserIdToken$parse;
     /**
      * Create a new token data container object.
      *
-     * @param {Uint8Array} tokendata raw token data.
-     * @param {Uint8Array} signature raw signature.
+     * @param {MslObject} userdata user data.
+     * @param {Uint8Array} tokendataBytes raw token data.
+     * @param {Uint8Array} signatureBytes raw signature.
      * @param {boolean} verified true if verified.
      * @constructor
      */
-    function CreationData(tokendata, signature, verified) {
-        this.tokendata = tokendata;
-        this.signature = signature;
+    function CreationData(userdata, tokendataBytes, signatureBytes, verified) {
+        this.userdata = userdata;
+        this.tokendataBytes = tokendataBytes;
+        this.signatureBytes = signatureBytes;
         this.verified = verified;
     };
 
-    UserIdToken = util.Class.create({
+    UserIdToken = MslEncodable.extend({
         /**
          * Create a new user ID token with the specified user.
          *
@@ -164,139 +168,123 @@ var UserIdToken$parse;
          * @param {Date} expiration the expiration.
          * @param {MasterToken} masterToken the master token.
          * @param {number} serialNumber the user ID token serial number.
-         * @param {?Object} the issuer data. May be null.
+         * @param {?MslObject} the issuer data. May be null.
          * @param {MslUser} user the MSL user.
          * @param {?CreationData} creationData optional creation data.
-         * @param {{result: function(UserIdToken), error: function(Error)}}
-         *        callback the callback functions that will receive the user ID token
-         *        or any thrown exceptions.
-         * @throws MslEncodingException if there is an error encoding the JSON
-         *         data.
+         * @throws MslEncodingException if there is an error encoding the data.
          * @throws MslCryptoException if there is an error encrypting or signing
          *         the token data.
          */
-        init: function init(ctx, renewalWindow, expiration, masterToken, serialNumber, issuerData, user, creationData, callback) {
-            var self = this;
-            AsyncExecutor(callback, function() {
-                // The expiration must appear after the renewal window.
-                if (expiration.getTime() < renewalWindow.getTime())
-                    throw new MslInternalException("Cannot construct a user ID token that expires before its renewal window opens.");
-                // A master token must be provided.
-                if (!masterToken)
-                    throw new MslInternalException("Cannot construct a user ID token without a master token.");
-                // The serial number must be within range.
-                if (serialNumber < 0 || serialNumber > MslConstants$MAX_LONG_VALUE)
-                    throw new MslInternalException("Serial number " + serialNumber + " is outside the valid range.");
+        init: function init(ctx, renewalWindow, expiration, masterToken, serialNumber, issuerData, user, creationData) {
+            // The expiration must appear after the renewal window.
+            if (expiration.getTime() < renewalWindow.getTime())
+                throw new MslInternalException("Cannot construct a user ID token that expires before its renewal window opens.");
+            // A master token must be provided.
+            if (!masterToken)
+                throw new MslInternalException("Cannot construct a user ID token without a master token.");
+            // The serial number must be within range.
+            if (serialNumber < 0 || serialNumber > MslConstants$MAX_LONG_VALUE)
+                throw new MslInternalException("Serial number " + serialNumber + " is outside the valid range.");
 
-                // Renewal window and expiration are in seconds, not milliseconds.
-                var renewalWindowSeconds = Math.floor(renewalWindow.getTime() / MILLISECONDS_PER_SECOND);
-                var expirationSeconds = Math.floor(expiration.getTime() / MILLISECONDS_PER_SECOND);
+            // Renewal window and expiration are in seconds, not milliseconds.
+            var renewalWindowSeconds = Math.floor(renewalWindow.getTime() / MILLISECONDS_PER_SECOND);
+            var expirationSeconds = Math.floor(expiration.getTime() / MILLISECONDS_PER_SECOND);
 
-                // Extract master token serial number.
-                var mtSerialNumber = masterToken.serialNumber;
+            // Extract master token serial number.
+            var mtSerialNumber = masterToken.serialNumber;
 
-                // Construct the token data.
-                if (!creationData) {
-                    // Construct the user data.
-                    var userData = {};
-                    if (issuerData)
-                        userData[KEY_ISSUER_DATA] = issuerData;
-                    userData[KEY_IDENTITY] = user.getEncoded();
-                    var userdata = textEncoding$getBytes(JSON.stringify(userData), MslConstants$DEFAULT_CHARSET);
+            // Construct the token data.
+            var userdata, tokendataBytes, signatureBytes, verified;
+            if (!creationData) {
+                // Construct the user data.
+                var encoder = ctx.getMslEncoderFactory();
+                var userdata = encoder.createObject();
+                if (issuerData)
+                    userdata.put(KEY_ISSUER_DATA, issuerData);
+                userdata.put(KEY_IDENTITY, user.getEncoded());
+                
+                tokendataBytes = null;
+                signatureBytes = null;
+                verified = true;
+            } else {
+                userdata = creationData.userdata;
+                tokendataBytes = creationData.tokendataBytes;
+                signatureBytes = creationData.signatureBytes;
+                verified = creationData.verified;
+            }
 
-                    // Encrypt the user data.
-                    var cryptoContext = ctx.getMslCryptoContext();
-                    cryptoContext.encrypt(userdata, {
-                        result: function(ciphertext) {
-                            AsyncExecutor(callback, function() {
-                                // Construct the token data.
-                                var tokenDataJO = {};
-                                tokenDataJO[KEY_RENEWAL_WINDOW] = renewalWindowSeconds;
-                                tokenDataJO[KEY_EXPIRATION] = expirationSeconds;
-                                tokenDataJO[KEY_MASTER_TOKEN_SERIAL_NUMBER] = mtSerialNumber;
-                                tokenDataJO[KEY_SERIAL_NUMBER] = serialNumber;
-                                tokenDataJO[KEY_USERDATA] = base64$encode(ciphertext);
-                                var tokendata = textEncoding$getBytes(JSON.stringify(tokenDataJO), MslConstants$DEFAULT_CHARSET);
-
-                                // Sign the token data.
-                                cryptoContext.sign(tokendata, {
-                                    result: function(signature) {
-                                        AsyncExecutor(callback, function() {
-                                            var verified = true;
-
-                                            // The properties.
-                                            var mtSerialNumber = masterToken.serialNumber;
-                                            var props = {
-                                                ctx: { value: ctx, writable: false, enumerable: false, configurable: false },
-                                                renewalWindowSeconds: { value: renewalWindowSeconds, writable: false, enumerable: false, configurable: false },
-                                                expirationSeconds: { value: expirationSeconds, writable: false, enumerable: false, configurable: false },
-                                                mtSerialNumber: { value: mtSerialNumber, writable: false, configurable: false },
-                                                serialNumber: { value: serialNumber, writable: false, configurable: false },
-                                                issuerData: { value: issuerData, writable: false, configurable: false },
-                                                user: { value: user, writable: false, configurable: false },
-                                                verified: { value: verified, writable: false, enumerable: false, configurable: false },
-                                                tokendata: { value: tokendata, writable: false, enumerable: false, configurable: false },
-                                                signature: { value: signature, writable: false, enumerable: false, configurable: false }
-                                            };
-                                            Object.defineProperties(this, props);
-                                            return this;
-                                        }, self);
-                                    },
-                                    error: function(e) {
-                                        AsyncExecutor(callback, function() {
-                                            if (e instanceof MslException)
-                                                e.setMasterToken(masterToken);
-                                            throw e;
-                                        }, self);
-                                    },
-                                });
-                            }, self);
-                        },
-                        error: function(e) {
-                            AsyncExecutor(callback, function() {
-                                if (e instanceof MslException)
-                                    e.setMasterToken(masterToken);
-                                throw e;
-                            }, self);
-                        },
-                    });
-                } else {
-                    var tokendata = creationData.tokendata;
-                    var signature = creationData.signature;
-                    var verified = creationData.verified;
-
-                    // The properties.
-                    var mtSerialNumber = masterToken.serialNumber;
-                    var props = {
-                        ctx: { value: ctx, writable: false, enumerable: false, configurable: false },
-                        renewalWindowSeconds: { value: renewalWindowSeconds, writable: false, enumerable: false, configurable: false },
-                        expirationSeconds: { value: expirationSeconds, writable: false, enumerable: false, configurable: false },
-                        mtSerialNumber: { value: mtSerialNumber, writable: false, configurable: false },
-                        serialNumber: { value: serialNumber, writable: false, configurable: false },
-                        issuerData: { value: issuerData, writable: false, configurable: false },
-                        user: { value: user, writable: false, configurable: false },
-                        verified: { value: verified, writable: false, enumerable: false, configurable: false },
-                        tokendata: { value: tokendata, writable: false, enumerable: false, configurable: false },
-                        signature: { value: signature, writable: false, enumerable: false, configurable: false }
-                    };
-                    Object.defineProperties(this, props);
-                    return this;
-                }
-            }, this);
+            // The properties.
+            var mtSerialNumber = masterToken.serialNumber;
+            var props = {
+                /**
+                 * MSL context.
+                 * @type {MslContext}
+                 */
+                ctx: { value: ctx, writable: false, enumerable: false, configurable: false },
+                /**
+                 * User ID token renewal window in seconds since the epoch.
+                 * @type {number}
+                 */
+                renewalWindowSeconds: { value: renewalWindowSeconds, writable: false, enumerable: false, configurable: false },
+                /**
+                 * User ID token expiration in seconds since the epoch.
+                 * @type {number}
+                 */
+                expirationSeconds: { value: expirationSeconds, writable: false, enumerable: false, configurable: false },
+                /**
+                 * Master token serial number.
+                 * @type {number}
+                 */
+                mtSerialNumber: { value: mtSerialNumber, writable: false, configurable: false },
+                /**
+                 * Serial number.
+                 * @type {number}
+                 */
+                serialNumber: { value: serialNumber, writable: false, configurable: false },
+                /**
+                 * User data.
+                 * @type {MslObject}
+                 */
+                userdata: { value: userdata, writable: false, enumerable: false, configurable: false },
+                /**
+                 * Issuer data.
+                 * @type {MslObject}
+                 */
+                issuerData: { value: issuerData, writable: false, configurable: false },
+                /**
+                 * MSL user.
+                 * @type {MslUser}
+                 */
+                user: { value: user, writable: false, configurable: false },
+                /**
+                 * Token data bytes.
+                 * @type {Uint8Array}
+                 */
+                tokendataBytes: { value: tokendataBytes, writable: false, enumerable: false, configurable: false },
+                /**
+                 * Signature bytes.
+                 * @type {Uint8Array}
+                 */
+                signatureBytes: { value: signatureBytes, writable: false, enumerable: false, configurable: false },
+                /**
+                 * Token is verified.
+                 * @type {boolean}
+                 */
+                verified: { value: verified, writable: false, enumerable: false, configurable: false },
+                /**
+                 * Cached encodings.
+                 * @type {Object<MslEncoderFormat,Uint8Array>}
+                 */
+                encodings: { value: {}, writable: false, enumerable: false, configurable: false },
+            };
+            Object.defineProperties(this, props);
         },
 
         /**
-        * @return {Date} gets the renewal window.
-        */
-        get renewalWindow() {
-            return new Date(this.renewalWindowSeconds * MILLISECONDS_PER_SECOND);
-        },
-
-        /**
-        * @return {Date} gets the expiration.
-        */
-        get expiration() {
-            return new Date(this.expirationSeconds * MILLISECONDS_PER_SECOND);
+         * @return {boolean} true if the decrypted content is available. (Implies verified.)
+         */
+        isDecrypted: function isDecrypted() {
+            return (this.user) ? true : false;
         },
 
         /**
@@ -307,10 +295,10 @@ var UserIdToken$parse;
         },
 
         /**
-         * @return {boolean} true if the decrypted content is available. (Implies verified.)
-         */
-        isDecrypted: function isDecrypted() {
-            return (this.user) ? true : false;
+        * @return {Date} gets the renewal window.
+        */
+        get renewalWindow() {
+            return new Date(this.renewalWindowSeconds * MILLISECONDS_PER_SECOND);
         },
 
         /**
@@ -336,6 +324,13 @@ var UserIdToken$parse;
             if (this.isVerified())
                 return this.renewalWindow.getTime() <= this.ctx.getTime();
             return true;
+        },
+
+        /**
+        * @return {Date} gets the expiration.
+        */
+        get expiration() {
+            return new Date(this.expirationSeconds * MILLISECONDS_PER_SECOND);
         },
 
         /**
@@ -372,11 +367,116 @@ var UserIdToken$parse;
         },
 
         /** @inheritDoc */
-        toJSON: function toJSON() {
-            var jsonObj = {};
-            jsonObj[KEY_TOKENDATA] = base64$encode(this.tokendata);
-            jsonObj[KEY_SIGNATURE] = base64$encode(this.signature);
-            return jsonObj;
+        toMslEncoding: function toMslEncoding(encoder, format, callback) {
+            var self = this;
+            AsyncExecutor(callback, function() {
+                // Return any cached encoding.
+                if (this.encodings[format])
+                    return this.encodings[format];
+                
+                // If we parsed this token (i.e. did not create it from scratch) then
+                // we should not re-encrypt or re-sign as there is no guarantee out MSL
+                // crypto context is capable of encrypting and signing with the same
+                // keys, even if it is capable of decrypting and verifying.
+                if (this.tokendataBytes != null || this.signatureBytes != null) {
+                    encodeToken(this.tokendataBytes, this.signatureBytes)
+                }
+                // 
+                // Otherwise create the token data and signature.
+                else {
+                    // Grab the MSL token crypto context.
+                    var cryptoContext;
+                    try {
+                        cryptoContext = this.ctx.getMslCryptoContext();
+                    } catch (e) {
+                        if (e instanceof MslCryptoException)
+                            throw new MslEncoderException("Error creating the MSL crypto context.", e);
+                        throw e;
+                    }
+                    
+                    // Encrypt the user data.
+                    encoder.encodeObject(this.userdata, format, {
+                    	result: function(plaintext) {
+		                    cryptoContext.encrypt(plaintext, encoder, format, {
+		                        result: function(ciphertext) {
+		                            AsyncExecutor(callback, function() {
+		                                // Construct the token data.
+		                                var tokendata = encoder.createObject();
+		                                tokendata.put(KEY_RENEWAL_WINDOW, this.renewalWindowSeconds);
+		                                tokendata.put(KEY_EXPIRATION, this.expirationSeconds);
+		                                tokendata.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, this.mtSerialNumber);
+		                                tokendata.put(KEY_SERIAL_NUMBER, this.serialNumber);
+		                                tokendata.put(KEY_USERDATA, ciphertext);
+		                                
+		                                // Sign the token data.
+		                                encoder.encodeObject(tokendata, format, {
+		                                	result: function(data) {
+				                                cryptoContext.sign(data, encoder, format, {
+				                                    result: function(signature) {
+				                                        encodeToken(data, signature);
+				                                    },
+				                                    error: function(e) {
+				                                        AsyncExecutor(callback, function() {
+				                                            if (e instanceof MslCryptoException)
+				                                                throw new MslEncoderException("Error signing the token data.", e);
+				                                            throw e;
+				                                        }, self);
+				                                    }
+				                                });
+		                                	},
+		                                	error: callback.error,
+		                                });
+		                            }, self);
+		                        },
+		                        error: function(e) {
+		                            AsyncExecutor(callback, function() {
+		                                if (e instanceof MslCryptoException)
+		                                    throw new MslEncoderException("Error encrypting the user data.", e);
+		                                throw e;
+		                            }, self);
+		                        }
+		                    });
+                    	},
+                    	error: callback.error,
+                    });
+                }
+            }, self);
+            
+            function encodeToken(data, signature) {
+                AsyncExecutor(callback, function() {
+                    // Encode the token.
+                    var token = encoder.createObject();
+                    token.put(KEY_TOKENDATA, data);
+                    token.put(KEY_SIGNATURE, signature);
+                    encoder.encodeObject(token, format, {
+                    	result: function(encoding) {
+                    		AsyncExecutor(callback, function() {
+	                    		// Cache and return the encoding.
+	                    		this.encodings[format] = encoding;
+	                    		return encoding;
+                    		}, self);
+                    	},
+                    	error: callback.error,
+                    });
+                }, self);
+            }
+        },
+        
+        /** @inheritDoc */
+        toString: function toString() {
+            var encoder = this.ctx.getMslEncoderFactory();
+            
+            var tokendataMo = encoder.createObject();
+            tokendataMo.put(KEY_RENEWAL_WINDOW, this.renewalWindowSeconds);
+            tokendataMo.put(KEY_EXPIRATION, this.expirationSeconds);
+            tokendataMo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, this.mtSerialNumber);
+            tokendataMo.put(KEY_SERIAL_NUMBER, this.serialNumber);
+            tokendataMo.put(KEY_USERDATA, "(redacted)");
+
+            var mslObj = encoder.createObject();
+            mslObj.put(KEY_TOKENDATA, tokendataMo);
+            mslObj.put(KEY_SIGNATURE, (this.signatureBytes) ? this.signatureBytes : "(null)");
+            return mslObj.toString();
         },
 
         /**
@@ -419,20 +519,22 @@ var UserIdToken$parse;
      *         the token data.
      */
     UserIdToken$create = function UserIdToken$create(ctx, renewalWindow, expiration, masterToken, serialNumber, issuerData, user, callback) {
-        new UserIdToken(ctx, renewalWindow, expiration, masterToken, serialNumber, issuerData, user, null, callback);
+    	AsyncExecutor(callback, function() {
+    		return new UserIdToken(ctx, renewalWindow, expiration, masterToken, serialNumber, issuerData, user, null);
+    	});
     };
 
     /**
-     * Create a new user ID token from the provided JSON object. The associated
+     * Create a new user ID token from the provided MSL object. The associated
      * master token must be provided to verify the user ID token.
      *
      * @param {MslContext} ctx MSL context.
-     * @param {Object} userIdTokenJO user ID token JSON object.
+     * @param {MslObject} userIdTokenMo user ID token MSL object.
      * @param {MasterToken} masterToken the master token.
      * @param {{result: function(UserIdToken), error: function(Error)}}
      *        callback the callback functions that will receive the user ID token
      *        or any thrown exceptions.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslCryptoException if there is an error verifying the token
      *         data.
      * @throws MslException if the user ID token master token serial number
@@ -440,159 +542,131 @@ var UserIdToken$parse;
      *         timestamp occurs before the renewal window, or the user data is
      *         missing.
      */
-    UserIdToken$parse = function UserIdToken$parse(ctx, userIdTokenJO, masterToken, callback) {
+    UserIdToken$parse = function UserIdToken$parse(ctx, userIdTokenMo, masterToken, callback) {
         AsyncExecutor(callback, function() {
-            // Grab the crypto context.
+            // Grab the crypto context and encoder.
             var cryptoContext = ctx.getMslCryptoContext();
+            var encoder = ctx.getMslEncoderFactory();
 
-            // Verify the JSON representation.
-            var tokendataB64 = userIdTokenJO[KEY_TOKENDATA];
-            var signatureB64 = userIdTokenJO[KEY_SIGNATURE];
-            if (typeof tokendataB64 !== 'string' || typeof signatureB64 !== 'string')
-                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "useridtoken " + JSON.stringify(userIdTokenJO)).setMasterToken(masterToken);
-            var tokendata, signature;
+            // Verify the encoding.
+            var tokendataBytes, signatureBytes, verified;
             try {
-                tokendata = base64$decode(tokendataB64);
+                tokendataBytes = userIdTokenMo.getBytes(KEY_TOKENDATA);
+                if (tokendataBytes.length == 0)
+                    throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_MISSING, "useridtoken " + userIdTokenMo).setMasterToken(masterToken);
+                signatureBytes = userIdTokenMo.getBytes(KEY_SIGNATURE);
             } catch (e) {
-                throw new MslException(MslError.USERIDTOKEN_TOKENDATA_INVALID, "useridtoken " + JSON.stringify(userIdTokenJO), e).setMasterToken(masterToken);
+                if (e instanceof MslEncoderException)
+                    throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "useridtoken " + userIdTokenMo, e).setMasterToken(masterToken);
+                throw e;
             }
-            if (!tokendata || tokendata.length == 0)
-                throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_MISSING, "useridtoken " + JSON.stringify(userIdTokenJO)).setMasterToken(masterToken);
-            try {
-                signature = base64$decode(signatureB64);
-            } catch (e) {
-                throw new MslException(MslError.USERIDTOKEN_TOKENDATA_INVALID, "useridtoken " + JSON.stringify(userIdTokenJO), e).setMasterToken(masterToken);
-            }
-            cryptoContext.verify(tokendata, signature, {
+            cryptoContext.verify(tokendataBytes, signatureBytes, encoder, {
                 result: function(verified) {
-                    AsyncExecutor(callback, function() {
-                        // Pull the token data.
-                        var renewalWindowSeconds, expirationSeconds, mtSerialNumber, serialNumber, ciphertextB64;
-                        var tokenDataJson = textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET);
-                        try {
-                            var tokenDataJO = JSON.parse(tokenDataJson);
-                            renewalWindowSeconds = parseInt(tokenDataJO[KEY_RENEWAL_WINDOW]);
-                            expirationSeconds = parseInt(tokenDataJO[KEY_EXPIRATION]);
-                            mtSerialNumber = parseInt(tokenDataJO[KEY_MASTER_TOKEN_SERIAL_NUMBER]);
-                            serialNumber = parseInt(tokenDataJO[KEY_SERIAL_NUMBER]);
-                            ciphertextB64 = tokenDataJO[KEY_USERDATA];
-                        } catch (e) {
-                            if (e instanceof SyntaxError)
-                                throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR, "usertokendata " + tokenDataJson, e).setMasterToken(masterToken);
-                            throw e;
-                        }
-
-                        // Verify token data.
-                        if (!renewalWindowSeconds || renewalWindowSeconds != renewalWindowSeconds ||
-                            !expirationSeconds || expirationSeconds != expirationSeconds ||
-                            typeof mtSerialNumber !== 'number' || mtSerialNumber != mtSerialNumber ||
-                            typeof serialNumber !== 'number' || serialNumber != serialNumber ||
-                            typeof ciphertextB64 !== 'string')
-                        {
-                            throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR, "usertokendata " + tokenDataJson).setMasterToken(masterToken);
-                        }
-                        if (expirationSeconds < renewalWindowSeconds)
-                            throw new MslException(MslError.USERIDTOKEN_EXPIRES_BEFORE_RENEWAL, "mastertokendata " + tokenDataJson).setMasterToken(masterToken);
-
-                        // Verify serial number values.
-                        if (mtSerialNumber < 0 || mtSerialNumber > MslConstants$MAX_LONG_VALUE)
-                            throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokenDataJson).setMasterToken(masterToken);
-                        if (serialNumber < 0 || serialNumber > MslConstants$MAX_LONG_VALUE)
-                            throw new MslException(MslError.USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokenDataJson).setMasterToken(masterToken);
-
-                        // Convert dates.
-                        var renewalWindow = new Date(renewalWindowSeconds * MILLISECONDS_PER_SECOND);
-                        var expiration = new Date(expirationSeconds * MILLISECONDS_PER_SECOND);
-
-                        // Verify serial numbers.
-                        if (!masterToken || mtSerialNumber != masterToken.serialNumber)
-                            throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH, "uit mtserialnumber " + mtSerialNumber + "; mt " + JSON.stringify(masterToken)).setMasterToken(masterToken);
-
-                        // Construct user data.
-                        var ciphertext;
-                        try {
-                            ciphertext = base64$decode(ciphertextB64);
-                        } catch (e) {
-                            throw new MslException(MslError.USERIDTOKEN_USERDATA_INVALID, ciphertextB64, e).setMasterToken(masterToken);
-                        }
-                        if (!ciphertext || ciphertext.length == 0)
-                            throw new MslException(MslError.USERIDTOKEN_USERDATA_MISSING, ciphertextB64).setMasterToken(masterToken);
-                        if (verified) {
-                            cryptoContext.decrypt(ciphertext, {
-                                result: function(userdata) {
-                                    AsyncExecutor(callback, function() {
-                                        // Pull the user data.
-                                        var issuerData, identity;
-                                        var userdataJson = textEncoding$getString(userdata, MslConstants$DEFAULT_CHARSET);
-                                        try {
-                                            var userdataJO = JSON.parse(userdataJson);
-                                            issuerData = userdataJO[KEY_ISSUER_DATA];
-                                            identity = userdataJO[KEY_IDENTITY];
-                                        } catch (e) {
-                                            if (e instanceof SyntaxError)
-                                                throw new MslEncodingException(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR, "userdata " + userdataJson).setMasterToken(masterToken);
-                                            throw e;
-                                        }
-
-                                        // Verify user data.
-                                        if (issuerData && typeof issuerData !== 'object' ||
-                                            typeof identity !== 'string')
-                                        {
-                                            throw new MslEncodingException(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR, "userdata " + userdataJson).setMasterToken(masterToken);
-                                        }
-                                        if (!identity || identity.length == 0)
-                                            throw new MslException(MslError.USERIDTOKEN_IDENTITY_INVALID, "userdata " + userdataJson).setMasterToken(masterToken);
-                                        
-                                        // Reconstruct the user.
-                                        var factory = ctx.getTokenFactory();
-                                        factory.createUser(ctx, identity, {
-                                            result: function(user) {
-                                                AsyncExecutor(callback, function() {
-                                                    if (!user)
-                                                        throw new MslInternalException("TokenFactory.createUser() returned null in violation of the interface contract.");
-                                                    
-                                                    // Return the new user ID token.
-                                                    var creationData = new CreationData(tokendata, signature, verified);
-                                                    new UserIdToken(ctx, renewalWindow, expiration, masterToken, serialNumber, issuerData, user, creationData, callback);
-                                                });
-                                            },
-                                            error: function(e) {
-                                                AsyncExecutor(callback, function() {
-                                                    if (e instanceof MslException)
-                                                        e.setMasterToken(masterToken);
-                                                    throw e;
-                                                });
-                                            },
-                                        });
-                                    });
-                                },
-                                error: function(e) {
-                                    AsyncExecutor(callback, function() {
-                                        if (e instanceof MslException)
-                                            e.setMasterToken(masterToken);
-                                        throw e;
-                                    });
-                                },
-                            });
-                        } else {
-                            var issuerData = null;
-                            var user = null;
-
-                            // Return the new user ID token.
-                            var creationData = new CreationData(tokendata, signature, verified);
-                            new UserIdToken(ctx, renewalWindow, expiration, masterToken, serialNumber, issuerData, user, creationData, callback);
-                        }
-                    });
+                    parseToken(encoder, cryptoContext, tokendataBytes, signatureBytes, verified);
                 },
-                error: function(e) {
-                    AsyncExecutor(callback, function() {
-                        if (e instanceof MslException)
-                            e.setMasterToken(masterToken);
-                        throw e;
-                    });
-                },
+                error: callback.error,
             });
         });
+        
+        function parseToken(encoder, cryptoContext, tokendataBytes, signatureBytes, verified) {
+            AsyncExecutor(callback, function() {
+                // Pull the token data.
+                var renewalWindowSeconds, expirationSeconds, mtSerialNumber, serialNumber, ciphertext;
+                try {
+                    var tokendata = encoder.parseObject(tokendataBytes);
+                    renewalWindowSeconds = tokendata.getLong(KEY_RENEWAL_WINDOW);
+                    expirationSeconds = tokendata.getLong(KEY_EXPIRATION);
+                    if (expirationSeconds < renewalWindowSeconds)
+                        throw new MslException(MslError.USERIDTOKEN_EXPIRES_BEFORE_RENEWAL, "usertokendata " + tokendata).setMasterToken(masterToken);
+                    mtSerialNumber = tokendata.getLong(KEY_MASTER_TOKEN_SERIAL_NUMBER);
+                    if (mtSerialNumber < 0 || mtSerialNumber > MslConstants$MAX_LONG_VALUE)
+                        throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokendata).setMasterToken(masterToken);
+                    serialNumber = tokendata.getLong(KEY_SERIAL_NUMBER);
+                    if (serialNumber < 0 || serialNumber > MslConstants$MAX_LONG_VALUE)
+                        throw new MslException(MslError.USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokendata).setMasterToken(masterToken);
+                    ciphertext = tokendata.getBytes(KEY_USERDATA);
+                    if (ciphertext.length == 0)
+                        throw new MslException(MslError.USERIDTOKEN_USERDATA_MISSING).setMasterToken(masterToken);
+                } catch (e) {
+                    if (e instanceof MslEncoderException)
+                        throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR, "usertokendata " + base64$encode(tokendataBytes), e).setMasterToken(masterToken);
+                    throw e;
+                }
+                if (verified) {
+                    cryptoContext.decrypt(ciphertext, encoder, {
+                        result: function(plaintext) {
+                            parseUserdata(encoder, tokendataBytes, signatureBytes, verified,
+                                renewalWindowSeconds, expirationSeconds, mtSerialNumber, serialNumber,
+                                plaintext);
+                        },
+                        error: function(e) {
+                            AsyncExecutor(callback, function() {
+                                if (e instanceof MslCryptoException)
+                                    e.setMasterToken(masterToken);
+                                throw e;
+                            });
+                        }
+                    });
+                } else {
+                    createToken(tokendataBytes, signatureBytes, verified,
+                       renewalWindowSeconds, expirationSeconds, mtSerialNumber, serialNumber,
+                       null, null, null);
+                }
+            });
+        }
+        
+        function parseUserdata(encoder, tokendataBytes, signatureBytes, verified,
+                               renewalWindowSeconds, expirationSeconds, mtSerialNumber, serialNumber,
+                               plaintext)
+        {
+            AsyncExecutor(callback, function() {
+                // Pull the user data.
+                var userdata, issuerdata, identity;
+                try {
+                    userdata = encoder.parseObject(plaintext);
+                    issuerdata = (userdata.has(KEY_ISSUER_DATA)) ? userdata.getMslObject(KEY_ISSUER_DATA, encoder) : null;
+                    identity = userdata.getString(KEY_IDENTITY);
+                    if (!identity || identity.length == 0)
+                        throw new MslException(MslError.USERIDTOKEN_IDENTITY_INVALID, "userdata " + userdata).setMasterToken(masterToken);
+                } catch (e) {
+                    if (e instanceof MslEncoderException)
+                        throw new MslEncodingException(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR, "userdata " + base64$encode(plaintext), e).setMasterToken(masterToken);
+                    throw e;
+                }
+                var factory = ctx.getTokenFactory();
+                factory.createUser(ctx, identity, {
+                    result: function(user) {
+                        AsyncExecutor(callback, function() {
+                            if (!user)
+                                throw new MslInternalException("TokenFactory.createUser() returned null in violation of the interface contract.");
+                            createToken(tokendataBytes, signatureBytes, verified,
+                                renewalWindowSeconds, expirationSeconds, mtSerialNumber, serialNumber,
+                                userdata, issuerdata, user);
+                        });
+                    },
+                    error: callback.error,
+                })
+            });
+        }
+        
+        function createToken(tokendataBytes, signatureBytes, verified,
+                             renewalWindowSeconds, expirationSeconds, mtSerialNumber, serialNumber,
+                             userdata, issuerdata, user)
+        {
+            AsyncExecutor(callback, function() {
+                // Convert dates.
+                var renewalWindow = new Date(renewalWindowSeconds * MILLISECONDS_PER_SECOND);
+                var expiration = new Date(expirationSeconds * MILLISECONDS_PER_SECOND);
+                
+                // Verify serial numbers.
+                if (!masterToken || mtSerialNumber != masterToken.serialNumber)
+                    throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH, "uit mtserialnumber " + mtSerialNumber + "; mt " + masterToken).setMasterToken(masterToken);
+
+                // Return the new user ID token.
+                var creationData = new CreationData(userdata, tokendataBytes, signatureBytes, verified);
+                return new UserIdToken(ctx, renewalWindow, expiration, masterToken, serialNumber, issuerdata, user, creationData);
+            });
+        }
     };
 })();
 

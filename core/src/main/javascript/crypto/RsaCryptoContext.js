@@ -118,7 +118,7 @@ var RsaCryptoContext$Mode;
         },
 
         /** @inheritDoc */
-        encrypt: function encrypt(data, callback) {
+        encrypt: function encrypt(data, encoder, format, callback) {
             var self = this;
             AsyncExecutor(callback, function() {
                 if (this.transform == NULL_OP)
@@ -132,12 +132,14 @@ var RsaCryptoContext$Mode;
                     // Return ciphertext envelope byte representation.
                     MslCiphertextEnvelope$create(self.id, null, new Uint8Array(ciphertext), {
                         result: function (envelope) {
-                            try {
-                                var json = JSON.stringify(envelope);
-                                callback.result(textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET));
-                            } catch (e) {
-                                callback.error(new MslCryptoException(MslError.ENCRYPT_ERROR, null, e));
-                            }
+                            envelope.toMslEncoding(encoder, format, {
+                                result: callback.result,
+                                error: function(e) {
+                                    if (e instanceof MslEncoderException)
+                                        e = new MslCryptoException(MslError.CIPHERTEXT_ENVELOPE_ENCODE_ERROR, e);
+                                    callback.error(e);
+                                }
+                            });
                         },
                         error: function(e) {
                             if (!(e instanceof MslException))
@@ -155,7 +157,7 @@ var RsaCryptoContext$Mode;
         },
 
         /** @inheritDoc */
-        decrypt: function decrypt(data, callback) {
+        decrypt: function decrypt(data, encoder, callback) {
             var self = this;
             AsyncExecutor(callback, function() {
                 if (this.transform == NULL_OP)
@@ -166,17 +168,16 @@ var RsaCryptoContext$Mode;
                     return data;
 
                 // Reconstitute ciphertext envelope.
-                var jo;
+                var encryptionEnvelopeMo;
                 try {
-                    var json = textEncoding$getString(data, MslConstants$DEFAULT_CHARSET);
-                    jo = JSON.parse(json);
+                    encryptionEnvelopeMo = encoder.parseObject(data);
                 } catch (e) {
-                    if (e instanceof SyntaxError)
+                    if (e instanceof MslEncoderException)
                         throw new MslCryptoException(MslError.CIPHERTEXT_ENVELOPE_PARSE_ERROR, null, e);
                     throw new MslCryptoException(MslError.DECRYPT_ERROR, null, e);
                 }
 
-                MslCiphertextEnvelope$parse(jo, MslCiphertextEnvelope$Version.V1, {
+                MslCiphertextEnvelope$parse(encryptionEnvelopeMo, MslCiphertextEnvelope$Version.V1, {
                     result: function(envelope) {
                         try {
                             // Verify key ID.
@@ -211,7 +212,7 @@ var RsaCryptoContext$Mode;
         },
 
         /** @inheritDoc */
-        wrap: function wrap(key, callback) {
+        wrap: function wrap(key, encoder, format, callback) {
             AsyncExecutor(callback, function() {
                 if (this.wrapTransform == NULL_OP || !this.publicKey)
                     throw new MslCryptoException(MslError.WRAP_NOT_SUPPORTED, "no public key");
@@ -230,7 +231,7 @@ var RsaCryptoContext$Mode;
         },
 
         /** @inheritDoc */
-        unwrap: function unwrap(data, algo, usages, callback) {
+        unwrap: function unwrap(data, algo, usages, encoder, callback) {
             AsyncExecutor(callback, function() {
                 if (this.wrapTransform == NULL_OP || !this.privateKey)
                     throw new MslCryptoException(MslError.UNWRAP_NOT_SUPPORTED, "no private key");
@@ -265,7 +266,7 @@ var RsaCryptoContext$Mode;
         },
 
         /** @inheritDoc */
-        sign: function sign(data, callback) {
+        sign: function sign(data, encoder, format, callback) {
             AsyncExecutor(callback, function() {
                 if (this.algo == NULL_OP)
                     return new Uint8Array(0);
@@ -276,7 +277,14 @@ var RsaCryptoContext$Mode;
                     // Return the signature envelope byte representation.
                     MslSignatureEnvelope$create(new Uint8Array(hash), {
                         result: function(envelope) {
-                            callback.result(envelope.bytes);
+                        	envelope.getBytes(encoder, format, {
+                        		result: callback.result,
+                        		error: function(e) {
+                                    if (e instanceof MslEncoderException)
+                                        e = new MslCryptoException(MslError.SIGNATURE_ENVELOPE_ENCODE_ERROR, e);
+                                    callback.error(e);
+                        		},
+                        	});
                         },
                         error: callback.error
                     });
@@ -290,7 +298,7 @@ var RsaCryptoContext$Mode;
         },
 
         /** @inheritDoc */
-        verify: function verify(data, signature, callback) {
+        verify: function verify(data, signature, encoder, callback) {
             var self = this;
             AsyncExecutor(callback, function() {
                 if (this.algo == NULL_OP)
@@ -299,7 +307,7 @@ var RsaCryptoContext$Mode;
                     throw new MslCryptoException(MslError.VERIFY_NOT_SUPPORTED, "no public key");
 
                 // Reconstitute the signature envelope.
-                MslSignatureEnvelope$parse(signature, MslSignatureEnvelope$Version.V1, {
+                MslSignatureEnvelope$parse(signature, MslSignatureEnvelope$Version.V1, encoder, {
                     result: function(envelope) {
                         AsyncExecutor(callback, function() {
                             var oncomplete = callback.result;

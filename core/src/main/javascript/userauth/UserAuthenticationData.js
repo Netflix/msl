@@ -39,19 +39,19 @@ var UserAuthenticationData$parse;
 
 (function() {
     /**
-     * JSON key user authentication scheme.
+     * Key user authentication scheme.
      * @const
      * @type {string}
      */
     var KEY_SCHEME = "scheme";
     /**
-     * JSON key user authentication data.
+     * Key user authentication data.
      * @const
      * @type {string}
      */
     var KEY_AUTHDATA = "authdata";
 
-    UserAuthenticationData = util.Class.create({
+    UserAuthenticationData = MslEncodable.extend({
         /**
          * Create a new user authentication data object with the specified user
          * authentication scheme.
@@ -63,7 +63,16 @@ var UserAuthenticationData$parse;
         init: function init(scheme) {
             // The properties.
             var props = {
+                /**
+                 * User authentication scheme.
+                 * @type {UserAuthenticationScheme}
+                 */
                 scheme: { value: scheme, writable: false, configurable: false },
+                /**
+                 * Cached encodings.
+                 * @type {Object<MslEncoderFormat,Uint8Array>}
+                 */
+                encodings: { value: {}, writable: false, enumerable: false, configurable: false },
             };
             Object.defineProperties(this, props);
         },
@@ -71,12 +80,16 @@ var UserAuthenticationData$parse;
         /**
          * Returns the scheme-specific user authentication data. This method is
          * expected to succeed unless there is an internal error.
-         *
-         * @return {Object} the authentication data JSON representation.
-         * @throws MslEncodingException if there was an error constructing the
-         *         JSON representation.
+         * 
+         * @param {MslEncoderFactory} encoder the encoder factory.
+         * @param {MslEncoderFormat} format the encoder format.
+         * @param {{result: function(MslObject}, error: function(Error)}
+         *        callback the callback that will receive the authentication
+         *        data MSL object or any thrown exceptions.
+         * @throws MslEncoderException if there was an error constructing the
+         *         MSL object.
          */
-        getAuthData: function() {},
+        getAuthData: function(encoder, format, callback) {},
 
         /**
          * @param {Object} that the object with which to compare.
@@ -87,19 +100,43 @@ var UserAuthenticationData$parse;
             if (!(that instanceof UserAuthenticationData)) return false;
             return this.scheme == that.scheme;
         },
-
+        
         /** @inheritDoc */
-        toJSON: function toJSON() {
-            var result = {};
-            result[KEY_SCHEME] = this.scheme.name;
-            result[KEY_AUTHDATA] = this.getAuthData();
-            return result;
+        toMslEncoding: function toMslEncoding(encoder, format, callback) {
+            var self = this;
+            AsyncExecutor(callback, function() {
+                // Return any cached encoding.
+                if (this.encodings[format])
+                    return this.encodings[format];
+                
+                this.getAuthData(encoder, format, {
+                    result: function(authdata) {
+                        AsyncExecutor(callback, function() {
+                            // Encode the user authentication data.
+                            var mo = encoder.createObject();
+                            mo.put(KEY_SCHEME, this.scheme.name);
+                            mo.put(KEY_AUTHDATA, authdata);
+                            encoder.encodeObject(mo, format, {
+                            	result: function(encoding) {
+                            		AsyncExecutor(callback, function() {
+                            			// Cache and return the encoding.
+                            			this.encodings[format] = encoding;
+                            			return encoding;
+                            		}, self);
+                            	},
+                            	error: callback.error
+                            });
+                        }, self);
+                    },
+                    error: callback.error,
+                })
+            }, self);
         },
     });
 
     /**
      * <p>Construct a new user authentication data instance of the correct type
-     * from the provided JSON object.</p>
+     * from the provided MSL object.</p>
      * 
      * <p>A master token may be required for certain user authentication
      * schemes.</p>
@@ -107,39 +144,37 @@ var UserAuthenticationData$parse;
      * @param {MslContext} ctx MSL context.
      * @param {MasterToken} masterToken the master token associated with the user
      *        authentication data. May be {@code null}.
-     * @param {Object} userAuthJO the JSON object.
+     * @param {MslObject} userAuthMo the MSL object.
      * @param {{result: function(UserAuthenticationData), error: function(Error)}}
      *        callback the callback functions that will receive the user
      *        authentication data or any thrown exceptions.
      * @return {UserAuthenticationData} the user authentication data concrete instance.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslUserAuthException if there is an error instantiating the user
      *         authentication data.
      * @throws MslCryptoException if there is an error with the entity
      *         authentication data cryptography.
      */
-    UserAuthenticationData$parse = function UserAuthenticationData$parse(ctx, masterToken, userAuthJO, callback) {
+    UserAuthenticationData$parse = function UserAuthenticationData$parse(ctx, masterToken, userAuthMo, callback) {
         AsyncExecutor(callback, function() {
-            var schemeName = userAuthJO[KEY_SCHEME];
-            var authdata = userAuthJO[KEY_AUTHDATA];
+            try {
+                // Pull the scheme.
+                var schemeName = userAuthMo.getString(KEY_SCHEME);
+                var scheme = ctx.getUserAuthenticationScheme(schemeName);
+                if (!scheme)
+                    throw new MslUserAuthException(MslError.UNIDENTIFIED_USERAUTH_SCHEME, schemeName);
 
-            // Verify user authentication data.
-            if (typeof schemeName !== 'string' ||
-                typeof authdata !== 'object')
-            {
-                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "userauthdata " + JSON.stringify(userAuthJO));
+                // Construct an instance of the concrete subclass.
+                var factory = ctx.getUserAuthenticationFactory(scheme);
+                if (!factory)
+                    throw new MslUserAuthException(MslError.USERAUTH_FACTORY_NOT_FOUND, scheme.name);
+                var encoder = ctx.getMslEncoderFactory();
+                factory.createData(ctx, masterToken, userAuthMo.getMslObject(KEY_AUTHDATA, encoder), callback);
+            } catch (e) {
+                if (e instanceof MslEncoderException)
+                    throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "userauthdata " + userAuthMo, e);
+                throw e;
             }
-
-            // Verify user authentication scheme.
-            var scheme = ctx.getUserAuthenticationScheme(schemeName);
-            if (!scheme)
-                throw new MslUserAuthException(MslError.UNIDENTIFIED_USERAUTH_SCHEME, schemeName);
-
-            // Construct an instance of the concrete subclass.
-            var factory = ctx.getUserAuthenticationFactory(scheme);
-            if (!factory)
-                throw new MslUserAuthException(MslError.USERAUTH_FACTORY_NOT_FOUND, scheme.name);
-            factory.createData(ctx, masterToken, authdata, callback);
         });
     };
 })();

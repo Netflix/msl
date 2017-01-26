@@ -15,12 +15,11 @@
  */
 package com.netflix.msl.entityauth;
 
-import org.json.JSONObject;
-
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
 import com.netflix.msl.crypto.ICryptoContext;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -48,18 +47,18 @@ public abstract class EntityAuthenticationFactory {
     
     /**
      * Construct a new entity authentication data instance from the provided
-     * JSON.
+     * MSL object.
      * 
      * @param ctx MSL context.
-     * @param entityAuthJO the JSON object.
+     * @param entityAuthMo the MSL object.
      * @return the entity authentication data.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslCryptoException if there is an error with the entity
      *         authentication data cryptography.
      * @throws MslEntityAuthException if there is an error creating the entity
      *         authentication data.
      */
-    public abstract EntityAuthenticationData createData(final MslContext ctx, final JSONObject entityAuthJO) throws MslEncodingException, MslCryptoException, MslEntityAuthException;
+    public abstract EntityAuthenticationData createData(final MslContext ctx, final MslObject entityAuthMo) throws MslEncodingException, MslCryptoException, MslEntityAuthException;
     
     /**
      * Create a crypto context that can be used to encrypt/decrypt and

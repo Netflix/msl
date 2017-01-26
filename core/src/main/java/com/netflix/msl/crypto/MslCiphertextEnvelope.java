@@ -15,15 +15,16 @@
  */
 package com.netflix.msl.crypto;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.json.JSONString;
-
 import com.netflix.msl.MslConstants.CipherSpec;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslInternalException;
+import com.netflix.msl.io.MslEncodable;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.util.Base64;
 
 /**
@@ -32,18 +33,18 @@ import com.netflix.msl.util.Base64;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-public class MslCiphertextEnvelope implements JSONString {
-    /** JSON key version. */
+public class MslCiphertextEnvelope implements MslEncodable {
+    /** Key version. */
     private final static String KEY_VERSION = "version";
-    /** JSON key key ID. */
+    /** Key key ID. */
     private final static String KEY_KEY_ID = "keyid";
-    /** JSON key cipherspec. */
+    /** Key cipherspec. */
     private final static String KEY_CIPHERSPEC = "cipherspec";
-    /** JSON key initialization vector. */
+    /** Key initialization vector. */
     private final static String KEY_IV = "iv";
-    /** JSON key ciphertext. */
+    /** Key ciphertext. */
     private final static String KEY_CIPHERTEXT = "ciphertext";
-    /** JSON key SHA-256. */
+    /** Key SHA-256. */
     private final static String KEY_SHA256 = "sha256";
     
     /** Versions. */
@@ -54,15 +55,15 @@ public class MslCiphertextEnvelope implements JSONString {
          * {@code {
          *   "#mandatory" : [ "keyid", "iv", "ciphertext", "sha256" ],
          *   "keyid" : "string",
-         *   "iv" : "base64",
-         *   "ciphertext" : "base64",
-         *   "sha256" : "base64",
+         *   "iv" : "binary",
+         *   "ciphertext" : "binary",
+         *   "sha256" : "binary",
          * }} where:
          * <ul>
          * <li>{@code keyid} is the encryption key ID</li>
-         * <li>{@code iv} is the Base64-encoded initialization vector</li>
-         * <li>{@code ciphertext} is the Base64-encoded ciphertext</li>
-         * <li>{@code sha256} is the Base64-encoded SHA-256 of the encryption envelope</li>
+         * <li>{@code iv} is the initialization vector</li>
+         * <li>{@code ciphertext} is the ciphertext</li>
+         * <li>{@code sha256} is the SHA-256 of the encryption envelope</li>
          * </ul>
          * 
          * <p>The SHA-256 is computed over the concatenation of {@code key ID ||
@@ -76,14 +77,14 @@ public class MslCiphertextEnvelope implements JSONString {
          *   "#mandatory" : [ "version", "cipherspec", "ciphertext" ],
          *   "version" : "number",
          *   "cipherspec" : "string",
-         *   "iv" : "base64",
-         *   "ciphertext" : "base64",
+         *   "iv" : "binary",
+         *   "ciphertext" : "binary",
          * }} where:
          * <ul>
          * <li>{@code version} is the number '2'</li>
          * <li>{@code cipherspec} is one of the recognized cipher specifications</li>
-         * <li>{@code iv} is the optional Base64-encoded initialization vector</li>
-         * <li>{@code ciphertext} is the Base64-encoded ciphertext</li>
+         * <li>{@code iv} is the optional initialization vector</li>
+         * <li>{@code ciphertext} is the ciphertext</li>
          * </ul>
          * 
          * <p>Supported cipher specifications:
@@ -120,21 +121,21 @@ public class MslCiphertextEnvelope implements JSONString {
     }
     
     /**
-     * Determines the envelope version of the given JSON object.
+     * Determines the envelope version of the given MSL object.
      * 
-     * @param jo the JSON object.
+     * @param mo the MSL object.
      * @return the envelope version.
      * @throws MslCryptoException if the envelope version is not recognized.
      */
-    private static Version getVersion(final JSONObject jo) throws MslCryptoException {
+    private static Version getVersion(final MslObject mo) throws MslCryptoException {
         try {
-            final int v = jo.getInt(KEY_VERSION);
+            final int v = mo.getInt(KEY_VERSION);
             return Version.valueOf(v);
-        } catch (final JSONException e) {
+        } catch (final MslEncoderException e) {
             // If anything fails to parse, treat this as a version 1 envelope.
             return Version.V1;
         } catch (final IllegalArgumentException e) {
-            throw new MslCryptoException(MslError.UNIDENTIFIED_CIPHERTEXT_ENVELOPE, "ciphertext envelope " + jo.toString(), e);
+            throw new MslCryptoException(MslError.UNIDENTIFIED_CIPHERTEXT_ENVELOPE, "ciphertext envelope " + mo, e);
         }
     }
     
@@ -169,72 +170,58 @@ public class MslCiphertextEnvelope implements JSONString {
     }
     
     /**
-     * Create a new encryption envelope from the provided JSON object.
+     * Create a new encryption envelope from the provided MSL object.
      * 
-     * @param jsonObj the JSON object.
+     * @param mo the MSL object.
      * @throws MslCryptoException if there is an error processing the
      *         encryption envelope.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @throws MslEncodingException if there is an error parsing the data.
      */
-    public MslCiphertextEnvelope(final JSONObject jsonObj) throws MslCryptoException, MslEncodingException {
-        this(jsonObj, getVersion(jsonObj));
+    public MslCiphertextEnvelope(final MslObject mo) throws MslCryptoException, MslEncodingException {
+        this(mo, getVersion(mo));
     }
 
     /**
      * Create a new encryption envelope of the specified version from the
-     * provided JSON object.
+     * provided MSL object.
      * 
-     * @param jsonObj the JSON object.
+     * @param mo the MSL object.
      * @param version the envelope version.
      * @throws MslCryptoException if there is an error processing the
      *         encryption envelope.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @throws MslEncodingException if there is an error parsing the data.
      */
-    public MslCiphertextEnvelope(final JSONObject jsonObj, final Version version) throws MslCryptoException, MslEncodingException {
+    public MslCiphertextEnvelope(final MslObject mo, final Version version) throws MslCryptoException, MslEncodingException {
         // Parse envelope.
         switch (version) {
             case V1:
                 try {
                     this.version = Version.V1;
-                    this.keyId = jsonObj.getString(KEY_KEY_ID);
+                    this.keyId = mo.getString(KEY_KEY_ID);
                     this.cipherSpec = null;
-                    try {
-                        this.iv = (jsonObj.has(KEY_IV)) ? Base64.decode(jsonObj.getString(KEY_IV)) : null;
-                    } catch (final IllegalArgumentException e) {
-                        throw new MslCryptoException(MslError.INVALID_IV, "ciphertext envelope " + jsonObj.toString(), e);
-                    }
-                    try {
-                        this.ciphertext = Base64.decode(jsonObj.getString(KEY_CIPHERTEXT));
-                    } catch (final IllegalArgumentException e) {
-                        throw new MslCryptoException(MslError.INVALID_CIPHERTEXT, "ciphertext envelope " + jsonObj.toString(), e);
-                    }
-                    jsonObj.getString(KEY_SHA256);
-                } catch (final JSONException e) {
-                    throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "ciphertext envelope " + jsonObj.toString(), e);
+                    this.iv = (mo.has(KEY_IV)) ? mo.getBytes(KEY_IV) : null;
+                    this.ciphertext = mo.getBytes(KEY_CIPHERTEXT);
+                    mo.getBytes(KEY_SHA256);
+                } catch (final MslEncoderException e) {
+                    throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "ciphertext envelope " + mo, e);
                 }
                 break;
             case V2:
                 try {
-                    final int v = jsonObj.getInt(KEY_VERSION);
+                    final int v = mo.getInt(KEY_VERSION);
                     this.version = Version.valueOf(v);
                     if (!Version.V2.equals(this.version))
-                        throw new MslCryptoException(MslError.UNIDENTIFIED_CIPHERTEXT_ENVELOPE, "ciphertext envelope " + jsonObj.toString());
+                        throw new MslCryptoException(MslError.UNIDENTIFIED_CIPHERTEXT_ENVELOPE, "ciphertext envelope " + mo.toString());
                     this.keyId = null;
-                    this.cipherSpec = CipherSpec.fromString(jsonObj.getString(KEY_CIPHERSPEC));
                     try {
-                        this.iv = (jsonObj.has(KEY_IV)) ? Base64.decode(jsonObj.getString(KEY_IV)) : null;
+                        this.cipherSpec = CipherSpec.fromString(mo.getString(KEY_CIPHERSPEC));
                     } catch (final IllegalArgumentException e) {
-                        throw new MslCryptoException(MslError.INVALID_IV, "ciphertext envelope " + jsonObj.toString(), e);
+                        throw new MslCryptoException(MslError.UNIDENTIFIED_CIPHERSPEC, "ciphertext envelope " + mo, e);
                     }
-                    try {
-                        this.ciphertext = Base64.decode(jsonObj.getString(KEY_CIPHERTEXT));
-                    } catch (final IllegalArgumentException e) {
-                        throw new MslCryptoException(MslError.INVALID_CIPHERTEXT, "ciphertext envelope " + jsonObj.toString(), e);
-                    }
-                } catch (final IllegalArgumentException e) {
-                    throw new MslCryptoException(MslError.UNIDENTIFIED_CIPHERSPEC, "ciphertext envelope " + jsonObj.toString(), e);
-                } catch (final JSONException e) {
-                    throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "ciphertext envelope " + jsonObj.toString(), e);
+                    this.iv = (mo.has(KEY_IV)) ? mo.getBytes(KEY_IV) : null;
+                    this.ciphertext = mo.getBytes(KEY_CIPHERTEXT);
+                } catch (final MslEncoderException e) {
+                    throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "ciphertext envelope " + mo, e);
                 }
                 break;
             default:
@@ -280,33 +267,29 @@ public class MslCiphertextEnvelope implements JSONString {
     private final byte[] iv;
     /** Ciphertext. */
     private final byte[] ciphertext;
-
+    
     /* (non-Javadoc)
-     * @see org.json.JSONString#toJSONString()
+     * @see com.netflix.msl.io.MslEncodable#toMslEncoding(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public String toJSONString() {
-        try {
-            final JSONObject jsonObj = new JSONObject();
-            switch (version) {
-                case V1:
-                    jsonObj.put(KEY_KEY_ID, keyId);
-                    if (iv != null) jsonObj.put(KEY_IV, Base64.encode(iv));
-                    jsonObj.put(KEY_CIPHERTEXT, Base64.encode(ciphertext));
-                    jsonObj.put(KEY_SHA256, "AA==");
-                    break;
-                case V2:
-                    jsonObj.put(KEY_VERSION, version.intValue());
-                    jsonObj.put(KEY_CIPHERSPEC, cipherSpec.toString());
-                    if (iv != null) jsonObj.put(KEY_IV, Base64.encode(iv));
-                    jsonObj.put(KEY_CIPHERTEXT, Base64.encode(ciphertext));
-                    break;
-                default:
-                    throw new MslInternalException("Ciphertext envelope version " + version + " encoding unsupported.");
-            }
-            return jsonObj.toString();
-        } catch (final JSONException e) {
-            throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);
+    public byte[] toMslEncoding(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException {
+        final MslObject mo = encoder.createObject();
+        switch (version) {
+            case V1:
+                mo.put(KEY_KEY_ID, keyId);
+                if (iv != null) mo.put(KEY_IV, iv);
+                mo.put(KEY_CIPHERTEXT, ciphertext);
+                mo.put(KEY_SHA256, Base64.decode("AA=="));
+                break;
+            case V2:
+                mo.put(KEY_VERSION, version.intValue());
+                mo.put(KEY_CIPHERSPEC, cipherSpec.toString());
+                if (iv != null) mo.put(KEY_IV, iv);
+                mo.put(KEY_CIPHERTEXT, ciphertext);
+                break;
+            default:
+                throw new MslEncoderException("Ciphertext envelope version " + version + " encoding unsupported.");
         }
+        return encoder.encodeObject(mo, format);
     }
 }

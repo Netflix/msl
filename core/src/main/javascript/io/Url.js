@@ -222,7 +222,7 @@ var IHttpLocation = util.Class.create({
 
         /** @inheritDoc */
         mark: function mark() {
-            if (!this._buffer)
+            if (this._buffer)
                 this._buffer.mark();
         },
 

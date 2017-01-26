@@ -34,13 +34,13 @@ var EccAuthenticationData$parse;
 
 (function() {
     /**
-     * JSON key entity identity.
+     * Key entity identity.
      * @const
      * @type {string}
      */
     var KEY_IDENTITY = "identity";
     /**
-     * JSON key public key ID.
+     * Key public key ID.
      * @const
      * @type {string}
      */
@@ -71,11 +71,13 @@ var EccAuthenticationData$parse;
         },
 
         /** @inheritDoc */
-        getAuthData: function getAuthData() {
-            var authdata = {};
-            authdata[KEY_IDENTITY] = this.identity;
-            authdata[KEY_PUBKEY_ID] = this.publicKeyId;
-            return authdata;
+        getAuthData: function getAuthData(encoder, format, callback) {
+            AsyncExecutor(callback, function() {
+                var mo = encoder.createObject();
+                mo.put(KEY_IDENTITY, this.identity);
+                mo.put(KEY_PUBKEY_ID, this.publicKeyId);
+                return mo;
+            }, this);
         },
 
         /** @inheritDoc */
@@ -88,19 +90,22 @@ var EccAuthenticationData$parse;
 
     /**
      * Construct a new ECC asymmetric keys authentication data instance from the
-     * provided JSON object.
+     * provided MSL object.
      *
-     * @param {Object} eccAuthJO the authentication data JSON object.
+     * @param {MslObject} eccAuthMo the authentication data MSL object.
      * @return the authentication data.
      * @throws MslEncodingException if there is an error parsing the entity
      *         authentication data.
      */
-    EccAuthenticationData$parse = function EccAuthenticationData$parse(eccAuthJO) {
-        var identity = eccAuthJO[KEY_IDENTITY];
-        var pubkeyid = eccAuthJO[KEY_PUBKEY_ID];
-        if (typeof identity !== 'string' || typeof pubkeyid !== 'string') {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "ECC authdata" + JSON.stringify(eccAuthJO));
+    EccAuthenticationData$parse = function EccAuthenticationData$parse(eccAuthMo) {
+        try {
+            var identity = eccAuthMo.getString(KEY_IDENTITY);
+            var pubkeyid = eccAuthMo.getString(KEY_PUBKEY_ID);
+            return new EccAuthenticationData(identity, pubkeyid);
+        } catch (e) {
+            if (e instanceof MslEncoderException)
+                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "ECC authdata" + eccAuthMo);
+            throw e;
         }
-        return new EccAuthenticationData(identity, pubkeyid);
     };
 })();

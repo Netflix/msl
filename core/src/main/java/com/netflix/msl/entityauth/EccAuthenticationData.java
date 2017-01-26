@@ -15,12 +15,13 @@
  */
 package com.netflix.msl.entityauth;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 
 /**
  * <p>ECC asymmetric keys entity authentication data.</p>
@@ -35,12 +36,11 @@ import com.netflix.msl.MslError;
  * <li>{@code identity} is the entity identity</li>
  * <li>{@code pubkeyid} is the identity of the ECC public key associated with this identity</li>
  * </ul></p>
- * 
  */
 public class EccAuthenticationData extends EntityAuthenticationData {
-    /** JSON key entity identity. */
+    /** Key entity identity. */
     private static final String KEY_IDENTITY = "identity";
-    /** JSON key public key ID. */
+    /** Key public key ID. */
     private static final String KEY_PUBKEY_ID = "pubkeyid";
     
     /**
@@ -58,20 +58,19 @@ public class EccAuthenticationData extends EntityAuthenticationData {
     
     /**
      * Construct a new ECC asymmetric keys authentication data instance from
-     * the provided JSON object.
+     * the provided MSL object.
      * 
-     * @param eccAuthJO the authentication data JSON object.
-     * @throws MslEncodingException if there is an error parsing the JSON
-     *         representation.
+     * @param eccAuthMo the authentication data MSL object.
+     * @throws MslEncodingException if there is an error parsing the data.
      */
-    EccAuthenticationData(final JSONObject eccAuthJO) throws MslCryptoException, MslEncodingException {
+    EccAuthenticationData(final MslObject eccAuthMo) throws MslCryptoException, MslEncodingException {
         super(EntityAuthenticationScheme.ECC);
         try {
             // Extract ECC authentication data.
-            identity = eccAuthJO.getString(KEY_IDENTITY);
-            pubkeyid = eccAuthJO.getString(KEY_PUBKEY_ID);
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "ECC authdata " + eccAuthJO.toString(), e);
+            identity = eccAuthMo.getString(KEY_IDENTITY);
+            pubkeyid = eccAuthMo.getString(KEY_PUBKEY_ID);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "ECC authdata " + eccAuthMo, e);
         }
     }
     
@@ -91,18 +90,14 @@ public class EccAuthenticationData extends EntityAuthenticationData {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.entityauth.EntityAuthenticationData#getAuthData()
+     * @see com.netflix.msl.entityauth.EntityAuthenticationData#getAuthData(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public JSONObject getAuthData() throws MslEncodingException {
-        try {
-            final JSONObject jsonObj = new JSONObject();
-            jsonObj.put(KEY_IDENTITY, identity);
-            jsonObj.put(KEY_PUBKEY_ID, pubkeyid);
-            return jsonObj;
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, "psk authdata", e);
-        }
+    public MslObject getAuthData(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException {
+        final MslObject mo = encoder.createObject();
+        mo.put(KEY_IDENTITY, identity);
+        mo.put(KEY_PUBKEY_ID, pubkeyid);
+        return mo;
     }
 
     /** Entity identity. */

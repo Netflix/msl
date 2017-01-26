@@ -16,9 +16,8 @@
 package com.netflix.msl.msg;
 
 import java.util.Date;
-
-import org.json.JSONException;
-import org.json.JSONObject;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslConstants.ResponseCode;
@@ -32,6 +31,10 @@ import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 
@@ -65,26 +68,23 @@ public class ErrorHeader extends Header {
     private static final long MILLISECONDS_PER_SECOND = 1000;
     
     // Message error data.
-    /** JSON key recipient. */
+    /** Key recipient. */
     private static final String KEY_RECIPIENT = "recipient";
-    /** JSON key timestamp. */
+    /** Key timestamp. */
     private static final String KEY_TIMESTAMP = "timestamp";
-    /** JSON key message ID. */
+    /** Key message ID. */
     private static final String KEY_MESSAGE_ID = "messageid";
-    /** JSON key error code. */
+    /** Key error code. */
     private static final String KEY_ERROR_CODE = "errorcode";
-    /** JSON key internal code. */
+    /** Key internal code. */
     private static final String KEY_INTERNAL_CODE = "internalcode";
-    /** JSON key error message. */
+    /** Key error message. */
     private static final String KEY_ERROR_MESSAGE = "errormsg";
-    /** JSON key user message. */
+    /** Key user message. */
     private static final String KEY_USER_MESSAGE = "usermsg";
     
     /**
      * <p>Construct a new error header with the provided error data.</p>
-     * 
-     * <p>Headers are encrypted and signed using the crypto context appropriate
-     * for the entity authentication scheme.</p>
      * 
      * @param ctx MSL context.
      * @param entityAuthData the entity authentication data.
@@ -94,16 +94,10 @@ public class ErrorHeader extends Header {
      * @param internalCode the internal code. Negative to indicate no code.
      * @param errorMsg the error message. May be null.
      * @param userMsg the user message. May be null.
-     * @throws MslEncodingException if there is an error encoding the JSON
-     *         data.
-     * @throws MslCryptoException if there is an error encrypting or signing
-     *         the message.
-     * @throws MslEntityAuthException if there is an error with the entity
-     *         authentication data.
      * @throws MslMessageException if no entity authentication data is
      *         provided.
      */
-    public ErrorHeader(final MslContext ctx, final EntityAuthenticationData entityAuthData, final String recipient, final long messageId, final ResponseCode errorCode, final int internalCode, final String errorMsg, final String userMsg) throws MslEncodingException, MslCryptoException, MslEntityAuthException, MslMessageException {
+    public ErrorHeader(final MslContext ctx, final EntityAuthenticationData entityAuthData, final String recipient, final long messageId, final ResponseCode errorCode, final int internalCode, final String errorMsg, final String userMsg) throws MslMessageException {
         // Message ID must be within range.
         if (messageId < 0 || messageId > MslConstants.MAX_LONG_VALUE)
             throw new MslInternalException("Message ID " + messageId + " is out of range.");
@@ -116,6 +110,7 @@ public class ErrorHeader extends Header {
         final EntityAuthenticationScheme scheme = entityAuthData.getScheme();
         final boolean encrypted = scheme.encrypts();
         
+        this.ctx = ctx;
         this.entityAuthData = entityAuthData;
         this.recipient = (encrypted) ?  recipient : null;
         this.timestamp = ctx.getTime() / MILLISECONDS_PER_SECOND;
@@ -125,53 +120,26 @@ public class ErrorHeader extends Header {
         this.errorMsg = errorMsg;
         this.userMsg = userMsg;
         
-        // Construct the JSON.
-        final JSONObject errorJO = new JSONObject();
-        try {
-            if (this.recipient != null) errorJO.put(KEY_RECIPIENT, this.recipient);
-            errorJO.put(KEY_TIMESTAMP, this.timestamp);
-            errorJO.put(KEY_MESSAGE_ID, this.messageId);
-            errorJO.put(KEY_ERROR_CODE, this.errorCode.intValue());
-            if (this.internalCode > 0) errorJO.put(KEY_INTERNAL_CODE, this.internalCode);
-            if (this.errorMsg != null) errorJO.put(KEY_ERROR_MESSAGE, this.errorMsg);
-            if (this.userMsg != null) errorJO.put(KEY_USER_MESSAGE, this.userMsg);
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, "errordata", e).setEntityAuthenticationData(entityAuthData).setMessageId(messageId);
-        }
-
-        try {
-            // Create the crypto context.
-            final EntityAuthenticationFactory factory = ctx.getEntityAuthenticationFactory(scheme);
-            if (factory == null)
-                throw new MslEntityAuthException(MslError.ENTITYAUTH_FACTORY_NOT_FOUND, scheme.name());
-            final ICryptoContext cryptoContext = factory.getCryptoContext(ctx, entityAuthData);
-        
-            // Encrypt and sign the error data.
-            final byte[] plaintext = errorJO.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-            this.errordata = cryptoContext.encrypt(plaintext);
-            this.signature = cryptoContext.sign(this.errordata);
-        } catch (final MslCryptoException e) {
-            e.setEntityAuthenticationData(entityAuthData);
-            e.setMessageId(messageId);
-            throw e;
-        } catch (final MslEntityAuthException e) {
-            e.setEntityAuthenticationData(entityAuthData);
-            e.setMessageId(messageId);
-            throw e;
-        }
+        // Construct the error data.
+        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+        errordata = encoder.createObject();
+        if (this.recipient != null) errordata.put(KEY_RECIPIENT, this.recipient);
+        errordata.put(KEY_TIMESTAMP, this.timestamp);
+        errordata.put(KEY_MESSAGE_ID, this.messageId);
+        errordata.put(KEY_ERROR_CODE, this.errorCode.intValue());
+        if (this.internalCode > 0) errordata.put(KEY_INTERNAL_CODE, this.internalCode);
+        if (this.errorMsg != null) errordata.put(KEY_ERROR_MESSAGE, this.errorMsg);
+        if (this.userMsg != null) errordata.put(KEY_USER_MESSAGE, this.userMsg);
     }
     
     /**
-     * <p>Construct a new error header from the provided JSON object.</p>
-     * 
-     * <p>Headers are encrypted and signed using the crypto context appropriate
-     * for the entity authentication scheme.</p>
+     * <p>Construct a new error header from the provided MSL object.</p>
      * 
      * @param ctx MSL context.
-     * @param errordata error data JSON representation.
+     * @param errordataBytes error data MSL encoding.
      * @param entityAuthData the entity authentication data.
      * @param signature the header signature.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslCryptoException if there is an error decrypting or verifying
      *         the header.
      * @throws MslEntityAuthException if the entity authentication data is not
@@ -180,14 +148,19 @@ public class ErrorHeader extends Header {
      *         (null), the error data is missing or invalid, the message ID is
      *         negative, or the internal code is negative.
      */
-    protected ErrorHeader(final MslContext ctx, final String errordata, final EntityAuthenticationData entityAuthData, final byte[] signature) throws MslEncodingException, MslCryptoException, MslEntityAuthException, MslMessageException {
+    protected ErrorHeader(final MslContext ctx, final byte[] errordataBytes, final EntityAuthenticationData entityAuthData, final byte[] signature) throws MslEncodingException, MslCryptoException, MslEntityAuthException, MslMessageException {
+        this.ctx = ctx;
+        
+        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+        
         final byte[] plaintext;
         try {
+            // Validate the entity authentication data.
             this.entityAuthData = entityAuthData;
-            this.signature = signature;
             if (entityAuthData == null)
                 throw new MslMessageException(MslError.MESSAGE_ENTITY_NOT_FOUND);
         
+            // Grab the entity crypto context.
             final EntityAuthenticationScheme scheme = entityAuthData.getScheme();
             final EntityAuthenticationFactory factory = ctx.getEntityAuthenticationFactory(scheme);
             if (factory == null)
@@ -195,16 +168,9 @@ public class ErrorHeader extends Header {
             final ICryptoContext cryptoContext = factory.getCryptoContext(ctx, entityAuthData);
             
             // Verify and decrypt the error data.
-            try {
-                this.errordata = Base64.decode(errordata);
-            } catch (final IllegalArgumentException e) {
-                throw new MslMessageException(MslError.HEADER_DATA_INVALID, errordata, e).setEntityAuthenticationData(entityAuthData);
-            }
-            if (this.errordata == null || this.errordata.length == 0)
-                throw new MslMessageException(MslError.HEADER_DATA_MISSING, errordata).setEntityAuthenticationData(entityAuthData);
-            if (!cryptoContext.verify(this.errordata, this.signature))
+            if (!cryptoContext.verify(errordataBytes, signature, encoder))
                 throw new MslCryptoException(MslError.MESSAGE_VERIFICATION_FAILED).setEntityAuthenticationData(entityAuthData);
-            plaintext = cryptoContext.decrypt(this.errordata);
+            plaintext = cryptoContext.decrypt(errordataBytes, encoder);
         } catch (final MslCryptoException e) {
             e.setEntityAuthenticationData(entityAuthData);
             throw e;
@@ -213,41 +179,39 @@ public class ErrorHeader extends Header {
             throw e;
         }
         
-        final String errordataJson = new String(plaintext, MslConstants.DEFAULT_CHARSET);
-        final JSONObject errordataJO;
         try {
-            errordataJO = new JSONObject(errordataJson);
-            messageId = errordataJO.getLong(KEY_MESSAGE_ID);
+            errordata = encoder.parseObject(plaintext);
+            messageId = errordata.getLong(KEY_MESSAGE_ID);
             if (this.messageId < 0 || this.messageId > MslConstants.MAX_LONG_VALUE)
-                throw new MslMessageException(MslError.MESSAGE_ID_OUT_OF_RANGE, "errordata " + errordataJson).setEntityAuthenticationData(entityAuthData);
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "errordata " + errordataJson, e).setEntityAuthenticationData(entityAuthData);
+                throw new MslMessageException(MslError.MESSAGE_ID_OUT_OF_RANGE, "errordata " + errordata).setEntityAuthenticationData(entityAuthData);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "errordata " + Base64.encode(plaintext), e).setEntityAuthenticationData(entityAuthData);
         }
         
         try {
-            recipient = (errordataJO.has(KEY_RECIPIENT)) ? errordataJO.getString(KEY_RECIPIENT) : null;
-            timestamp = (errordataJO.has(KEY_TIMESTAMP)) ? errordataJO.getLong(KEY_TIMESTAMP) : null;
+            recipient = (errordata.has(KEY_RECIPIENT)) ? errordata.getString(KEY_RECIPIENT) : null;
+            timestamp = (errordata.has(KEY_TIMESTAMP)) ? errordata.getLong(KEY_TIMESTAMP) : null;
             
             // If we do not recognize the error code then default to fail.
             ResponseCode code = ResponseCode.FAIL;
             try {
-                code = ResponseCode.valueOf(errordataJO.getInt(KEY_ERROR_CODE));
+                code = ResponseCode.valueOf(errordata.getInt(KEY_ERROR_CODE));
             } catch (final IllegalArgumentException e) {
                 code = ResponseCode.FAIL;
             }
             errorCode = code;
             
-            if (errordataJO.has(KEY_INTERNAL_CODE)) {
-                internalCode = errordataJO.getInt(KEY_INTERNAL_CODE);
+            if (errordata.has(KEY_INTERNAL_CODE)) {
+                internalCode = errordata.getInt(KEY_INTERNAL_CODE);
                 if (this.internalCode < 0)
-                    throw new MslMessageException(MslError.INTERNAL_CODE_NEGATIVE, "errordata " + errordataJO.toString()).setEntityAuthenticationData(entityAuthData).setMessageId(messageId);
+                    throw new MslMessageException(MslError.INTERNAL_CODE_NEGATIVE, "errordata " + errordata).setEntityAuthenticationData(entityAuthData).setMessageId(messageId);
             } else {
                 internalCode = -1;
             }
-            errorMsg = errordataJO.optString(KEY_ERROR_MESSAGE, null);
-            userMsg = errordataJO.optString(KEY_USER_MESSAGE, null);
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "errordata " + errordataJO.toString(), e).setEntityAuthenticationData(entityAuthData).setMessageId(messageId);
+            errorMsg = errordata.optString(KEY_ERROR_MESSAGE, null);
+            userMsg = errordata.optString(KEY_USER_MESSAGE, null);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "errordata " + errordata, e).setEntityAuthenticationData(entityAuthData).setMessageId(messageId);
         }
     }
     
@@ -313,19 +277,54 @@ public class ErrorHeader extends Header {
     }
     
     /* (non-Javadoc)
-     * @see org.json.JSONString#toJSONString()
+     * @see com.netflix.msl.io.MslEncodable#toMslEncoding(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public String toJSONString() {
+    public byte[] toMslEncoding(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException {
+        // Return any cached encoding.
+        if (encodings.containsKey(format))
+            return encodings.get(format);
+        
+        // Create the crypto context.
+        final EntityAuthenticationScheme scheme = entityAuthData.getScheme();
+        final EntityAuthenticationFactory factory = ctx.getEntityAuthenticationFactory(scheme);
+        if (factory == null)
+            throw new MslEncoderException("No entity authentication factory found for entity.");
+        final ICryptoContext cryptoContext;
         try {
-            final JSONObject jsonObj = new JSONObject();
-            jsonObj.put(HeaderKeys.KEY_ENTITY_AUTHENTICATION_DATA, entityAuthData);
-            jsonObj.put(HeaderKeys.KEY_ERRORDATA, Base64.encode(errordata));
-            jsonObj.put(HeaderKeys.KEY_SIGNATURE, Base64.encode(signature));
-            return jsonObj.toString();
-        } catch (final JSONException e) {
-            throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);
+            cryptoContext = factory.getCryptoContext(ctx, entityAuthData);
+        } catch (final MslEntityAuthException e) {
+            throw new MslEncoderException("Error creating the entity crypto context.", e);
+        } catch (final MslCryptoException e) {
+            throw new MslEncoderException("Error creating the entity crypto context.", e);
         }
+
+        // Encrypt and sign the error data.
+        final byte[] plaintext = encoder.encodeObject(errordata, format);
+        final byte[] ciphertext;
+        try {
+            ciphertext = cryptoContext.encrypt(plaintext, encoder, format);
+        } catch (final MslCryptoException e) {
+            throw new MslEncoderException("Error encrypting the error data.", e);
+        }
+        final byte[] signature;
+        try {
+            signature = cryptoContext.sign(ciphertext, encoder, format);
+        } catch (final MslCryptoException e) {
+            throw new MslEncoderException("Error signing the error data.", e);
+        }
+        
+        // Create the encoding.
+        final MslObject header = encoder.createObject();
+        header.put(HeaderKeys.KEY_ENTITY_AUTHENTICATION_DATA, entityAuthData);
+        header.put(HeaderKeys.KEY_ERRORDATA, ciphertext);
+        header.put(HeaderKeys.KEY_SIGNATURE, signature);
+        final byte[] encoding = encoder.encodeObject(header, format);
+        
+        // Cache and return the encoding.
+        encodings.put(format, encoding);
+        return encoding;
+        
     }
     
     /* (non-Javadoc)
@@ -362,12 +361,13 @@ public class ErrorHeader extends Header {
             ((userMsg != null) ? userMsg.hashCode() : 0);
     }
 
+    /** MSL context. */
+    private final MslContext ctx;
+    
     /** Entity authentication data. */
     private final EntityAuthenticationData entityAuthData;
-    /** Error data (ciphertext). */
-    private final byte[] errordata;
-    /** Signature. */
-    private final byte[] signature;
+    /** Error data. */
+    private final MslObject errordata;
     
     /** Recipient. */
     private final String recipient;
@@ -383,4 +383,7 @@ public class ErrorHeader extends Header {
     private final String errorMsg;
     /** User message. */
     private final String userMsg;
+    
+    /** Cached encodings. */
+    private final Map<MslEncoderFormat,byte[]> encodings = new HashMap<MslEncoderFormat,byte[]>();
 }

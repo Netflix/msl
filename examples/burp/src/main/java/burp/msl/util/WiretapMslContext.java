@@ -44,6 +44,7 @@ import com.netflix.msl.entityauth.PresharedAuthenticationData;
 import com.netflix.msl.entityauth.RsaAuthenticationData;
 import com.netflix.msl.entityauth.UnauthenticatedAuthenticationData;
 import com.netflix.msl.entityauth.X509AuthenticationData;
+import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.keyx.AsymmetricWrappedExchange;
 import com.netflix.msl.keyx.DiffieHellmanExchange;
 import com.netflix.msl.keyx.KeyExchangeFactory;
@@ -65,7 +66,6 @@ import com.netflix.msl.util.NullMslStore;
  * Date: 9/22/14
  */
 public class WiretapMslContext extends MslContext {
-
     /**
      * Key exchange factory comparator.
      */
@@ -271,6 +271,14 @@ public class WiretapMslContext extends MslContext {
         return mslStore;
     }
 
+    /* (non-Javadoc)
+     * @see com.netflix.msl.util.MslContext#getMslEncoderFactory()
+     */
+    @Override
+    public MslEncoderFactory getMslEncoderFactory() {
+        return encoderFactory;
+    }
+
     /** MSL encryption key. */
     private static final byte[] MSL_ENCRYPTION_KEY = {
             (byte)0x1d, (byte)0x58, (byte)0xf3, (byte)0xb8, (byte)0xf7, (byte)0x47, (byte)0xd1, (byte)0x6a,
@@ -291,7 +299,7 @@ public class WiretapMslContext extends MslContext {
     /** Secure random. */
     private final Random random = new SecureRandom();
     /** Message capabilities. */
-    private final MessageCapabilities capabilities = new MessageCapabilities(null, null);
+    private final MessageCapabilities capabilities = new MessageCapabilities(null, null, null);
     /** Entity authentication data. */
     private EntityAuthenticationData entityAuthData = new UnauthenticatedAuthenticationData("WireTap");
     /** MSL token crypto context. */
@@ -306,4 +314,6 @@ public class WiretapMslContext extends MslContext {
     private final SortedSet<KeyExchangeFactory> keyExchangeFactories;
     /** MSL store. */
     private final MslStore mslStore = new NullMslStore();
+    /** MSL encoder factory. */
+    private final MslEncoderFactory encoderFactory = new MslEncoderFactory();
 }

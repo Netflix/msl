@@ -48,13 +48,13 @@ var UnauthenticatedSuffixedAuthenticationData$parse;
     "use strict";
     
     /**
-     * JSON key entity root.
+     * Key entity root.
      * @const
      * @type {string}
      */
     var KEY_ROOT = "root";
     /**
-     * JSON key entity suffix.
+     * Key entity suffix.
      * @const
      * @type {string}
      */
@@ -97,11 +97,13 @@ var UnauthenticatedSuffixedAuthenticationData$parse;
         },
 
         /** @inheritDoc */
-        getAuthData: function getAuthData() {
-            var result = {};
-            result[KEY_ROOT] = this.root;
-            result[KEY_SUFFIX] = this.suffix;
-            return result;
+        getAuthData: function getAuthData(encoder, format, callback) {
+            AsyncExecutor(callback, function() {
+                var mo = encoder.createObject();
+                mo.put(KEY_ROOT, this.root);
+                mo.put(KEY_SUFFIX, this.suffix);
+                return mo;
+            }, this);
         },
 
         /** @inheritDoc */
@@ -114,17 +116,21 @@ var UnauthenticatedSuffixedAuthenticationData$parse;
     
     /**
      * Construct a new unauthenticated suffixed entity authentication data
-     * instance from the provided JSON object.
+     * instance from the provided MSL object.
      * 
-     * @param {object} unauthSuffixedAuthJO the authentication data JSON object.
+     * @param {MslObject} unauthSuffixedAuthMo the authentication data MSL object.
      * @throws MslEncodingException if there is an error parsing the JSON
      *         representation.
      */
-    UnauthenticatedSuffixedAuthenticationData$parse = function UnauthenticatedSuffixedAuthenticationData$parse(unauthSuffixedAuthJO) {
-        var root = unauthSuffixedAuthJO[KEY_ROOT];
-        var suffix = unauthSuffixedAuthJO[KEY_SUFFIX];
-        if (typeof root !== 'string' || typeof suffix !== 'string')
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "Unauthenticated suffixed authdata" + JSON.stringify(unauthSuffixedAuthJO));
-        return new UnauthenticatedSuffixedAuthenticationData(root, suffix);
+    UnauthenticatedSuffixedAuthenticationData$parse = function UnauthenticatedSuffixedAuthenticationData$parse(unauthSuffixedAuthMo) {
+        try {
+            var root = unauthSuffixedAuthMo.getString(KEY_ROOT);
+            var suffix = unauthSuffixedAuthMo.getString(KEY_SUFFIX);
+            return new UnauthenticatedSuffixedAuthenticationData(root, suffix);
+        } catch (e) {
+            if (e instanceof MslEncoderException)
+                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "Unauthenticated suffixed authdata" + unauthSuffixedAuthMo);
+            throw e;
+        }
     };
 })();

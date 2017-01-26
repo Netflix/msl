@@ -24,32 +24,40 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("UserAuthenticationData", function() {
-    /** JSON key user authentication scheme. */
+    /** Key user authentication scheme. */
     var KEY_SCHEME = "scheme";
-    /** JSON key user authentication data. */
+    /** Key user authentication data. */
     var KEY_AUTHDATA = "authdata";
 	
     /** MSL context. */
     var ctx;
+    /** MSL encoder factory. */
+    var encoder;
+    
+    var initialized = false;
     beforeEach(function() {
-        if (!ctx) {
+        if (!initialized) {
             runs(function() {
                 MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 100);
+            waitsFor(function() { return ctx; }, "ctx", 900);
+            runs(function() {
+            	encoder = ctx.getMslEncoderFactory();
+            	initialized = true;
+            });
         }
     });
     
     it("no scheme", function() {
         var exception;
         runs(function() {
-            var jo = {};
-            jo[KEY_SCHEME + "x"] = UserAuthenticationScheme.EMAIL_PASSWORD;
-            jo[KEY_AUTHDATA] = {};
-            UserAuthenticationData$parse(ctx, null, jo, {
+            var mo = encoder.createObject();
+            mo.put(KEY_SCHEME + "x", UserAuthenticationScheme.EMAIL_PASSWORD.name);
+            mo.put(KEY_AUTHDATA, encoder.createObject());
+            UserAuthenticationData$parse(ctx, null, mo, {
                 result: function() {},
                 error: function(e) { exception = e; }
             });
@@ -58,17 +66,17 @@ describe("UserAuthenticationData", function() {
         
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
     it("no authdata", function() {
         var exception;
         runs(function() {
-	        var jo = {};
-	        jo[KEY_SCHEME] = UserAuthenticationScheme.EMAIL_PASSWORD;
-	        jo[KEY_AUTHDATA + "x"] = {};
-	        UserAuthenticationData$parse(ctx, null, jo, {
+	        var mo = encoder.createObject();
+	        mo.put(KEY_SCHEME, UserAuthenticationScheme.EMAIL_PASSWORD.name);
+	        mo.put(KEY_AUTHDATA + "x", encoder.createObject());
+	        UserAuthenticationData$parse(ctx, null, mo, {
                 result: function() {},
                 error: function(e) { exception = e; }
             });
@@ -77,17 +85,17 @@ describe("UserAuthenticationData", function() {
         
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
     it("unidentified scheme", function() {
         var exception;
         runs(function() {
-	        var jo = {};
-	        jo[KEY_SCHEME] = "x";
-	        jo[KEY_AUTHDATA] = {};
-	        UserAuthenticationData$parse(ctx, null, jo, {
+	        var mo = encoder.createObject();
+	        mo.put(KEY_SCHEME, "x");
+	        mo.put(KEY_AUTHDATA, encoder.createObject());
+	        UserAuthenticationData$parse(ctx, null, mo, {
                 result: function() {},
                 error: function(e) { exception = e; }
             });
@@ -113,10 +121,10 @@ describe("UserAuthenticationData", function() {
         var exception;
         runs(function() {
             ctx.removeUserAuthenticationFactory(UserAuthenticationScheme.EMAIL_PASSWORD);
-            var jo = {};
-            jo[KEY_SCHEME] = UserAuthenticationScheme.EMAIL_PASSWORD.name;
-            jo[KEY_AUTHDATA] = {};
-            UserAuthenticationData$parse(ctx, null, jo, {
+            var mo = encoder.createObject();
+            mo.put(KEY_SCHEME, UserAuthenticationScheme.EMAIL_PASSWORD.name);
+            mo.put(KEY_AUTHDATA, encoder.createObject());
+            UserAuthenticationData$parse(ctx, null, mo, {
                 result: function() {},
                 error: function(e) { exception = e; }
             });

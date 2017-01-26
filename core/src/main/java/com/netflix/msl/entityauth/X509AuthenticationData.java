@@ -21,13 +21,14 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslInternalException;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.util.Base64;
 
 /**
@@ -41,22 +42,23 @@ import com.netflix.msl.util.Base64;
  * <p>
  * {@code {
  *   "#mandatory" : [ "x509certificate" ],
- *   "x509certificate" : "base64"
+ *   "x509certificate" : "string"
  * }} where:
  * <ul>
- * <li>{@code x509certificate} is Base64-encoded X.509 certificate</li>
+ * <li>{@code x509certificate} is the Base64-encoded X.509 certificate</li>
  * </ul></p>
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class X509AuthenticationData extends EntityAuthenticationData {
-    /** JSON key entity X.509 certificate. */
+    /** Key entity X.509 certificate. */
     private static final String KEY_X509_CERT = "x509certificate";
     
     /**
      * Construct a new X.509 asymmetric keys authentication data instance from
      * the provided X.509 certificate.
      * 
+     * @param ctx MSL context.
      * @param x509cert entity X.509 certificate.
      * @throws MslCryptoException if the X.509 certificate data cannot be
      *         parsed.
@@ -69,22 +71,23 @@ public class X509AuthenticationData extends EntityAuthenticationData {
     
     /**
      * Construct a new X.509 asymmetric keys authentication data instance from
-     * the provided JSON object.
+     * the provided MSL object.
      * 
-     * @param x509AuthJO the authentication data JSON object.
+     * @param ctx MSL context.
+     * @param x509AuthMo the authentication data MSL object.
      * @throws MslCryptoException if the X.509 certificate data cannot be
      *         parsed.
      * @throws MslEncodingException if the X.509 certificate cannot be found.
      */
-    X509AuthenticationData(final JSONObject x509AuthJO) throws MslCryptoException, MslEncodingException {
+    public X509AuthenticationData(final MslObject x509AuthMo) throws MslCryptoException, MslEncodingException {
         super(EntityAuthenticationScheme.X509);
         
         // Extract X.509 certificate representation.
         final String x509;
         try {
-            x509 = x509AuthJO.getString(KEY_X509_CERT);
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "X.509 authdata " + x509AuthJO.toString(), e);
+            x509 = x509AuthMo.getString(KEY_X509_CERT);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "X.509 authdata " + x509AuthMo, e);
         }
         
         // Get the X.509 certificate factory.
@@ -107,7 +110,7 @@ public class X509AuthenticationData extends EntityAuthenticationData {
             x509cert = (X509Certificate)factory.generateCertificate(bais);
             identity = x509cert.getSubjectX500Principal().getName();
         } catch (final CertificateException e) {
-            throw new MslCryptoException(MslError.X509CERT_PARSE_ERROR, x509, e);
+            throw new MslCryptoException(MslError.X509CERT_PARSE_ERROR, Base64.encode(x509bytes), e);
         }
     }
     
@@ -126,20 +129,15 @@ public class X509AuthenticationData extends EntityAuthenticationData {
         return identity;
     }
     
-    /* (non-Javadoc)
-     * @see com.netflix.msl.entityauth.EntityAuthenticationData#getAuthData()
-     */
     @Override
-    public JSONObject getAuthData() throws MslEncodingException {
-        final JSONObject jsonObj = new JSONObject();
+    public MslObject getAuthData(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException {
+        final MslObject mo = encoder.createObject();
         try {
-            jsonObj.put(KEY_X509_CERT, Base64.encode(x509cert.getEncoded()));
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, "X.509 authdata", e);
-        } catch (final CertificateEncodingException e) {
-            throw new MslEncodingException(MslError.X509CERT_ENCODE_ERROR, "X.509 authdata", e);
+            mo.put(KEY_X509_CERT, Base64.encode(x509cert.getEncoded()));
+        } catch (final CertificateEncodingException | IllegalArgumentException e) {
+            throw new MslEncoderException("Error encoding X.509 authdata", e);
         }
-        return jsonObj;
+        return mo;
     }
     
     /* (non-Javadoc)

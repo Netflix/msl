@@ -15,16 +15,18 @@
  */
 package com.netflix.msl.userauth;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.json.JSONString;
-import org.json.JSONStringer;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
-import com.netflix.msl.MslInternalException;
 import com.netflix.msl.MslUserAuthException;
+import com.netflix.msl.io.MslEncodable;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.util.MslContext;
 
@@ -47,10 +49,10 @@ import com.netflix.msl.util.MslContext;
  * <li>{@code authdata} is the scheme-specific authentication data</li>
  * </ul></p>
  */
-public abstract class UserAuthenticationData implements JSONString {
-    /** JSON key user authentication scheme. */
+public abstract class UserAuthenticationData implements MslEncodable {
+    /** Key user authentication scheme. */
     private static final String KEY_SCHEME = "scheme";
-    /** JSON key user authentication data. */
+    /** Key user authentication data. */
     private static final String KEY_AUTHDATA = "authdata";
     
     /**
@@ -65,7 +67,7 @@ public abstract class UserAuthenticationData implements JSONString {
 
     /**
      * <p>Construct a new user authentication data instance of the correct type
-     * from the provided JSON object.</p>
+     * from the provided MSL object.</p>
      * 
      * <p>A master token may be required for certain user authentication
      * schemes.</p>
@@ -73,18 +75,18 @@ public abstract class UserAuthenticationData implements JSONString {
      * @param ctx MSL context.
      * @param masterToken the master token associated with the user
      *        authentication data. May be {@code null}.
-     * @param userAuthJO the JSON object.
+     * @param userAuthMo the MSL object.
      * @return the user authentication data concrete instance.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslUserAuthException if there is an error instantiating the user
      *         authentication data.
      * @throws MslCryptoException if there is an error with the entity
      *         authentication data cryptography.
      */
-    public static UserAuthenticationData create(final MslContext ctx, final MasterToken masterToken, final JSONObject userAuthJO) throws MslUserAuthException, MslEncodingException, MslCryptoException {
+    public static UserAuthenticationData create(final MslContext ctx, final MasterToken masterToken, final MslObject userAuthMo) throws MslUserAuthException, MslEncodingException, MslCryptoException {
         try {
             // Pull the scheme.
-            final String schemeName = userAuthJO.getString(KEY_SCHEME);
+            final String schemeName = userAuthMo.getString(KEY_SCHEME);
             final UserAuthenticationScheme scheme = ctx.getUserAuthenticationScheme(schemeName);
             if (scheme == null)
                 throw new MslUserAuthException(MslError.UNIDENTIFIED_USERAUTH_SCHEME, schemeName);
@@ -93,9 +95,10 @@ public abstract class UserAuthenticationData implements JSONString {
             final UserAuthenticationFactory factory = ctx.getUserAuthenticationFactory(scheme);
             if (factory == null)
                 throw new MslUserAuthException(MslError.USERAUTH_FACTORY_NOT_FOUND, scheme.name());
-            return factory.createData(ctx, masterToken, userAuthJO.getJSONObject(KEY_AUTHDATA));
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "userauthdata " + userAuthJO.toString(), e);
+            final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+            return factory.createData(ctx, masterToken, userAuthMo.getMslObject(KEY_AUTHDATA, encoder));
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "userauthdata " + userAuthMo, e);
         }
     }
     
@@ -110,32 +113,38 @@ public abstract class UserAuthenticationData implements JSONString {
      * Returns the scheme-specific user authentication data. This method is
      * expected to succeed unless there is an internal error.
      * 
-     * @return the authentication data JSON representation.
-     * @throws MslEncodingException if there was an error constructing the
-     *         JSON representation.
+     * @param encoder the encoder factory.
+     * @param format the encoder format.
+     * @return the authentication data MSL object.
+     * @throws MslEncoderException if there was an error constructing the
+     *         MSL object.
      */
-    public abstract JSONObject getAuthData() throws MslEncodingException;
+    public abstract MslObject getAuthData(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException;
     
     /** User authentication scheme. */
     private final UserAuthenticationScheme scheme;
-
+    
+    /** Cached encodings. */
+    private final Map<MslEncoderFormat,byte[]> encodings = new HashMap<MslEncoderFormat,byte[]>();
+    
     /* (non-Javadoc)
-     * @see org.json.JSONString#toJSONString()
+     * @see com.netflix.msl.io.MslEncodable#toMslEncoding(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public final String toJSONString() {
-        try {
-            return new JSONStringer()
-                .object()
-                    .key(KEY_SCHEME).value(scheme.name())
-                    .key(KEY_AUTHDATA).value(getAuthData())
-                .endObject()
-                .toString();
-        } catch (final JSONException e) {
-            throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);
-        } catch (final MslEncodingException e) {
-            throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);
-        }
+    public byte[] toMslEncoding(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException {
+        // Return any cached encoding.
+        if (encodings.containsKey(format))
+            return encodings.get(format);
+        
+        // Encode the user authentication data.
+        final MslObject mo = encoder.createObject();
+        mo.put(KEY_SCHEME, scheme.name());
+        mo.put(KEY_AUTHDATA, getAuthData(encoder, format));
+        final byte[] encoding = encoder.encodeObject(mo, format);
+        
+        // Cache and return the encoding.
+        encodings.put(format, encoding);
+        return encoding;
     }
 
     /* (non-Javadoc)

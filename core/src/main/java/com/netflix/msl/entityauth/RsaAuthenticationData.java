@@ -15,12 +15,13 @@
  */
 package com.netflix.msl.entityauth;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 
 /**
  * <p>RSA asymmetric keys entity authentication data.</p>
@@ -39,9 +40,9 @@ import com.netflix.msl.MslError;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class RsaAuthenticationData extends EntityAuthenticationData {
-    /** JSON key entity identity. */
+    /** Key entity identity. */
     private static final String KEY_IDENTITY = "identity";
-    /** JSON key public key ID. */
+    /** Key public key ID. */
     private static final String KEY_PUBKEY_ID = "pubkeyid";
     
     /**
@@ -59,20 +60,19 @@ public class RsaAuthenticationData extends EntityAuthenticationData {
     
     /**
      * Construct a new RSA asymmetric keys authentication data instance from
-     * the provided JSON object.
+     * the provided MSL object.
      * 
-     * @param rsaAuthJO the authentication data JSON object.
-     * @throws MslEncodingException if there is an error parsing the JSON
-     *         representation.
+     * @param rsaAuthMo the authentication data MSL object.
+     * @throws MslEncodingException if there is an error parsing the MSL data.
      */
-    RsaAuthenticationData(final JSONObject rsaAuthJO) throws MslCryptoException, MslEncodingException {
+    public RsaAuthenticationData(final MslObject rsaAuthMo) throws MslCryptoException, MslEncodingException {
         super(EntityAuthenticationScheme.RSA);
         try {
             // Extract RSA authentication data.
-            identity = rsaAuthJO.getString(KEY_IDENTITY);
-            pubkeyid = rsaAuthJO.getString(KEY_PUBKEY_ID);
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "RSA authdata " + rsaAuthJO.toString(), e);
+            identity = rsaAuthMo.getString(KEY_IDENTITY);
+            pubkeyid = rsaAuthMo.getString(KEY_PUBKEY_ID);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "RSA authdata " + rsaAuthMo, e);
         }
     }
     
@@ -92,18 +92,14 @@ public class RsaAuthenticationData extends EntityAuthenticationData {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.entityauth.EntityAuthenticationData#getAuthData()
+     * @see com.netflix.msl.entityauth.EntityAuthenticationData#getAuthData(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public JSONObject getAuthData() throws MslEncodingException {
-        try {
-            final JSONObject jsonObj = new JSONObject();
-            jsonObj.put(KEY_IDENTITY, identity);
-            jsonObj.put(KEY_PUBKEY_ID, pubkeyid);
-            return jsonObj;
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, "psk authdata", e);
-        }
+    public MslObject getAuthData(final MslEncoderFactory encoder, final MslEncoderFormat format) {
+        final MslObject mo = encoder.createObject();
+        mo.put(KEY_IDENTITY, identity);
+        mo.put(KEY_PUBKEY_ID, pubkeyid);
+        return mo;
     }
 
     /** Entity identity. */

@@ -258,6 +258,13 @@ var MslContext;
          * @return {MslStore} the MSL store.
          */
         getMslStore: function() {},
+        
+        /**
+         * Returns the MSL encoder factory specific to this MSL context.
+         * 
+         * @return {MslEncoderFactory} the MSL encoder factory.
+         */
+        getMslEncoderFactory: function() {},
 
         /**
          * <p>Update the remote entity time.</p>

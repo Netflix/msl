@@ -20,7 +20,30 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("NullCryptoContext", function() {
+    /** MSL encoder format. */
+    var ENCODER_FORMAT = MslEncoderFormat.JSON;
+    
 	var random = new Random();
+
+    /** MSL encoder factory. */
+    var encoder;
+
+    var initialized = false;
+    beforeEach(function() {
+        if (!initialized) {
+            var ctx;
+            MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+                result: function(c) { ctx = c; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            waitsFor(function() { return ctx; }, "ctx", 900);
+            
+            runs(function() {
+                encoder = ctx.getMslEncoderFactory();
+                initialized = true;
+            });
+        }
+    });
 	
 	it("encrypt/decrypt", function() {
 		var message = new Uint8Array(32);
@@ -29,7 +52,7 @@ describe("NullCryptoContext", function() {
 		var cryptoContext = new NullCryptoContext();
 		var ciphertext;
 		runs(function() {
-			cryptoContext.encrypt(message, {
+			cryptoContext.encrypt(message, encoder, ENCODER_FORMAT, {
 				result: function(c) { ciphertext = c; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 			});
@@ -43,7 +66,7 @@ describe("NullCryptoContext", function() {
 		
 		var plaintext;
 		runs(function() {
-			cryptoContext.decrypt(ciphertext, {
+			cryptoContext.decrypt(ciphertext, encoder, {
 				result: function(p) { plaintext = p; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 			});
@@ -56,6 +79,40 @@ describe("NullCryptoContext", function() {
 		});
 	});
 	
+	it("wrap/unwrap", function() {
+        var message = new Uint8Array(32);
+        random.nextBytes(message);
+        
+        var cryptoContext = new NullCryptoContext();
+        var ciphertext;
+        runs(function() {
+            cryptoContext.wrap(message, encoder, ENCODER_FORMAT, {
+                result: function(c) { ciphertext = c; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return ciphertext; }, "ciphertext not received", 100);
+        
+        runs(function() {
+            expect(ciphertext).not.toBeNull();
+            expect(ciphertext).toEqual(message);
+        });
+        
+        var plaintext;
+        runs(function() {
+            cryptoContext.unwrap(ciphertext, null, null, encoder, {
+                result: function(p) { plaintext = p; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return plaintext; }, "plaintext not received", 100);
+        
+        runs(function() {
+            expect(plaintext).not.toBeNull();
+            expect(plaintext).toEqual(message);
+        });
+	});
+	
 	it("sign/verify", function() {
 		var messageA = new Uint8Array(32);
 		random.nextBytes(messageA);
@@ -63,7 +120,7 @@ describe("NullCryptoContext", function() {
 		var cryptoContext = new NullCryptoContext();
 		var signatureA;
 		runs(function() {
-			cryptoContext.sign(messageA, {
+			cryptoContext.sign(messageA, encoder, ENCODER_FORMAT, {
 				result: function(s) { signatureA = s; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 			});
@@ -77,7 +134,7 @@ describe("NullCryptoContext", function() {
 		
 		var verified;
 		runs(function() {
-			cryptoContext.verify(messageA, signatureA, {
+			cryptoContext.verify(messageA, signatureA, encoder, {
 				result: function(v) { verified = v; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 			});
@@ -93,7 +150,7 @@ describe("NullCryptoContext", function() {
 		
 		var signatureB;
 		runs(function() {
-			cryptoContext.sign(messageB, {
+			cryptoContext.sign(messageB, encoder, ENCODER_FORMAT, {
 				result: function(s) { signatureB = s; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -106,11 +163,11 @@ describe("NullCryptoContext", function() {
 		
 		var verifiedB = undefined, verifiedA;
 		runs(function() {
-			cryptoContext.verify(messageB, signatureB, {
+			cryptoContext.verify(messageB, signatureB, encoder, {
 				result: function(v) { verifiedB = v; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 			});
-			cryptoContext.verify(messageB, signatureA, {
+			cryptoContext.verify(messageB, signatureA, encoder, {
 				result: function(v) { verifiedA = v; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});

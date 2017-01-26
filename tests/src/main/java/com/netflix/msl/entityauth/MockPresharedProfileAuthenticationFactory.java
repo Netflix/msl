@@ -18,8 +18,6 @@ package com.netflix.msl.entityauth;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.json.JSONObject;
-
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
 import com.netflix.msl.MslError;
@@ -27,6 +25,7 @@ import com.netflix.msl.MslInternalException;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.crypto.JcaAlgorithm;
 import com.netflix.msl.crypto.SymmetricCryptoContext;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslTestUtils;
@@ -77,11 +76,11 @@ public class MockPresharedProfileAuthenticationFactory extends EntityAuthenticat
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.entityauth.EntityAuthenticationFactory#createData(com.netflix.msl.util.MslContext, org.json.JSONObject)
+     * @see com.netflix.msl.entityauth.EntityAuthenticationFactory#createData(com.netflix.msl.util.MslContext, com.netflix.msl.io.MslObject)
      */
     @Override
-    public EntityAuthenticationData createData(final MslContext ctx, final JSONObject entityAuthJO) throws MslEncodingException {
-        return new PresharedProfileAuthenticationData(entityAuthJO);
+    public EntityAuthenticationData createData(final MslContext ctx, final MslObject entityAuthMo) throws MslEncodingException {
+        return new PresharedProfileAuthenticationData(entityAuthMo);
     }
 
     /* (non-Javadoc)

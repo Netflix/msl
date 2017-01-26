@@ -20,8 +20,11 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("MasterTokenProtectedAuthenticationFactory", function() {
+    /** MSL encoder format. */
+    var ENCODER_FORMAT = MslEncoderFormat.JSON;
+    
     /**
-     * JSON key master token.
+     * Key master token.
      * 
      * @const
      * @type {string}
@@ -32,6 +35,8 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
     
     /** MSL context. */
     var ctx;
+    /** MSL encoder factory. */
+    var encoder;
     /** Authentication utilities. */
     var authutils;
     /** Entity authentication factory. */
@@ -54,6 +59,7 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
             waitsFor(function() { return ctx; }, "ctx", 100);
             
             runs(function() {
+                encoder = ctx.getMslEncoderFactory();
                 authutils = new MockAuthenticationUtils();
                 factory = new MasterTokenProtectedAuthenticationFactory(authutils);
                 ctx.addEntityAuthenticationFactory(factory);
@@ -84,22 +90,29 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
         
         var authdata;
         runs(function() {
-            var entityAuthJO = data.getAuthData();
-            
-            factory.createData(ctx, entityAuthJO, {
+            data.getAuthData(encoder, ENCODER_FORMAT, {
                 result: function(x) { authdata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
         waitsFor(function() { return authdata; }, "authdata", 100);
         
+        var moAuthdata;
         runs(function() {
-            expect(authdata).not.toBeNull();
-            expect(authdata instanceof MasterTokenProtectedAuthenticationData).toBeTruthy();
-            
-            var dataJo = JSON.parse(JSON.stringify(data));
-            var authdataJo = JSON.parse(JSON.stringify(authdata));
-            expect(authdataJo).toEqual(dataJo);
+            factory.createData(ctx, authdata, {
+                result: function(x) { moAuthdata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return moAuthdata; }, "moAuthdata", 100);
+        
+        runs(function() {
+            expect(moAuthdata).not.toBeNull();
+            expect(moAuthdata instanceof MasterTokenProtectedAuthenticationData).toBeTruthy();
+            var moData = moAuthdata;
+            expect(moData.getIdentity()).toEqual(data.getIdentity());
+            expect(moData.scheme).toEqual(data.scheme);
+            expect(moData.encapsulatedAuthdata).toEqual(data.encapsulatedAuthdata);
         });
     });
     
@@ -113,11 +126,19 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
         });
         waitsFor(function() { return data; }, "data", 100);
         
+        var authdata;
+        runs(function() {
+            data.getAuthData(encoder, ENCODER_FORMAT, {
+                result: function(x) { authdata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return authdata; }, "authdata", 100);
+        
         var exception;
         runs(function() {
-            var entityAuthJO = data.getAuthData();
-            delete entityAuthJO[KEY_MASTER_TOKEN];
-            factory.createData(ctx, entityAuthJO, {
+            authdata.remove(KEY_MASTER_TOKEN);
+            factory.createData(ctx, authdata, {
                 result: function() {},
                 error: function(e) { exception = e; },
             });
@@ -126,7 +147,7 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
         
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     

@@ -33,6 +33,8 @@ import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.msg.MessageCapabilities;
@@ -74,7 +76,8 @@ public abstract class CommonMslContext extends MslContext {
         // Message capabilities.
         final Set<CompressionAlgorithm> compressionAlgos = new HashSet<CompressionAlgorithm>(Arrays.asList(CompressionAlgorithm.GZIP, CompressionAlgorithm.LZW));
         final List<String> languages = Arrays.asList("en-US");
-        this.messageCaps = new MessageCapabilities(compressionAlgos, languages);
+        final Set<MslEncoderFormat> encoderFormats = new HashSet<MslEncoderFormat>(Arrays.asList(MslEncoderFormat.JSON));
+        this.messageCaps = new MessageCapabilities(compressionAlgos, languages, encoderFormats);
         
         // Entity authentication factories.
         this.entityAuthFactories = mslCfg.getEntityAuthenticationFactories();
@@ -214,6 +217,14 @@ public abstract class CommonMslContext extends MslContext {
         return mslCfg.getMslStore();
     }
 
+    /* (non-Javadoc)
+     * @see com.netflix.msl.util.MslContext#getMslEncoderFactory()
+     */
+    @Override
+    public MslEncoderFactory getMslEncoderFactory() {
+        return encoderFactory;
+    }
+
     @Override
     public final String toString() {
         return SharedUtil.toString(this);
@@ -231,4 +242,6 @@ public abstract class CommonMslContext extends MslContext {
     private final Set<UserAuthenticationFactory> userAuthFactories;
     /** key exchange factories */
     private final SortedSet<KeyExchangeFactory> keyxFactories;
+    /** MSL encoder factory. */
+    private final MslEncoderFactory encoderFactory = new MslEncoderFactory();
 }

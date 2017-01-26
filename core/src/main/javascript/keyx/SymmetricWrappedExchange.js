@@ -37,19 +37,19 @@ var SymmetricWrappedExchange$ResponseData$parse;
     };
 
     /**
-     * JSON key symmetric key ID.
+     * Key symmetric key ID.
      * @const
      * @type {string}
      */
     var KEY_KEY_ID = "keyid";
     /**
-     * JSON key wrapped encryption key.
+     * Key wrapped encryption key.
      * @const
      * @type {string}
      */
     var KEY_ENCRYPTION_KEY = "encryptionkey";
     /**
-     * JSON key wrapped HMAC key.
+     * Key wrapped HMAC key.
      * @const
      * @type {string}
      */
@@ -85,10 +85,12 @@ var SymmetricWrappedExchange$ResponseData$parse;
         },
 
         /** @inheritDoc */
-        getKeydata: function getKeydata() {
-            var keydata = {};
-            keydata[KEY_KEY_ID] = this.keyId;
-            return keydata;
+        getKeydata: function getKeydata(encoder, format, callback) {
+            AsyncExecutor(callback, function() {
+                var mo = encoder.createObject();
+                mo.put(KEY_KEY_ID, this.keyId);
+                return mo;
+            }, this);
         },
 
         /** @inheritDoc */
@@ -106,27 +108,24 @@ var SymmetricWrappedExchange$ResponseData$parse;
 
     /**
      * Create a new symmetric key wrapped key request data instance from
-     * the provided JSON object.
+     * the provided MSL object.
      *
-     * @param {Object} keyDataJO the JSON object.
+     * @param {MslObject} keyDataMo the MSL object.
      * @return {RequestData} the request data.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslKeyExchangeException if the key ID is not recognized.
      */
-    var RequestData$parse = SymmetricWrappedExchange$RequestData$parse = function RequestData$parse(keyDataJO) {
-        // Pull key data.
-        var keyId = keyDataJO[KEY_KEY_ID];
-
-        // Verify key data.
-        if (typeof keyId !== 'string')
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + JSON.stringify(keyDataJO));
-
-        // Verify key ID.
-        if (!KeyId[keyId])
-            throw new MslKeyExchangeException(MslError.UNIDENTIFIED_KEYX_KEY_ID, keyId);
-
-        // Return request data.
-        return new RequestData(keyId);
+    var RequestData$parse = SymmetricWrappedExchange$RequestData$parse = function RequestData$parse(keyDataMo) {
+        try {
+            var keyId = keyDataMo.getString(KEY_KEY_ID);
+            if (!KeyId[keyId])
+                throw new MslKeyExchangeException(MslError.UNIDENTIFIED_KEYX_KEY_ID, keyId);
+            return new RequestData(keyId);
+        } catch (e) {
+            if (e instanceof MslEncoderException)
+                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "keydata " + keyDataMo, e);
+            throw e;
+        }
     };
 
     /**
@@ -136,13 +135,13 @@ var SymmetricWrappedExchange$ResponseData$parse;
      * {@code {
      *   "#mandatory" : [ "keyid", "encryptionkey", "hmackey" ],
      *   "keyid" : "string",
-     *   "encryptionkey" : "base64",
-     *   "hmackey" : "base64"
+     *   "encryptionkey" : "binary",
+     *   "hmackey" : "binary"
      * }} where:
      * <ul>
      * <li>{@code keyid} identifies the key that was used to wrap the session keys</li>
-     * <li>{@code encryptionkey} the Base64-encoded wrapped session encryption key</li>
-     * <li>{@code hmackey} the Base64-encoded wrapped session HMAC key</li>
+     * <li>{@code encryptionkey} the wrapped session encryption key</li>
+     * <li>{@code hmackey} the wrapped session HMAC key</li>
      * </ul></p>
      */
     var ResponseData = SymmetricWrappedExchange$ResponseData = KeyResponseData.extend({
@@ -169,12 +168,14 @@ var SymmetricWrappedExchange$ResponseData$parse;
         },
 
         /** @inheritDoc */
-        getKeydata: function getKeydata() {
-            var keydata = {};
-            keydata[KEY_KEY_ID] = this.keyId;
-            keydata[KEY_ENCRYPTION_KEY] = base64$encode(this.encryptionKey);
-            keydata[KEY_HMAC_KEY] = base64$encode(this.hmacKey);
-            return keydata;
+        getKeydata: function getKeydata(encoder, format, callback) {
+            AsyncExecutor(callback, function() {
+                var mo = encoder.createObject();
+                mo.put(KEY_KEY_ID, this.keyId);
+                mo.put(KEY_ENCRYPTION_KEY, this.encryptionKey);
+                mo.put(KEY_HMAC_KEY, this.hmacKey);
+                return mo;
+            }, this);
         },
 
         /** @inheritDoc */
@@ -196,49 +197,28 @@ var SymmetricWrappedExchange$ResponseData$parse;
 
     /**
      * Create a new symmetric key wrapped key response data instance with
-     * the provided master token from the provided JSON object.
+     * the provided master token from the provided MSL object.
      *
      * @param {MasterToken} masterToken the master token.
-     * @param {Object} keyDataJO the JSON object.
+     * @param {MslObject} keyDataMo the MSL object.
      * @return {ResponseData} the response data.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslCryptoException if an encoded key is invalid.
      * @throws MslKeyExchangeException if the key ID is not recognized.
      */
-    var ResponseData$parse = SymmetricWrappedExchange$ResponseData$parse = function ResponseData$parse(masterToken, keyDataJO) {
-        // Pull key response data.
-        var keyId = keyDataJO[KEY_KEY_ID];
-        var encryptionKeyB64 = keyDataJO[KEY_ENCRYPTION_KEY];
-        var hmacKeyB64 = keyDataJO[KEY_HMAC_KEY];
-
-        // Verify key response data.
-        if (typeof keyId !== 'string' ||
-            typeof encryptionKeyB64 !== 'string' ||
-            typeof hmacKeyB64 !== 'string')
-        {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + JSON.stringify(keyDataJO));
-        }
-
-        // Verify key ID.
-        if (!KeyId[keyId])
-            throw new MslKeyExchangeException(MslError.UNIDENTIFIED_KEYX_KEY_ID, keyId);
-
-        // Decode keys.
-        var encryptionKey;
+    var ResponseData$parse = SymmetricWrappedExchange$ResponseData$parse = function ResponseData$parse(masterToken, keyDataMo) {
         try {
-            encryptionKey = base64$decode(encryptionKeyB64);
+            var keyId = keyDataMo.getString(KEY_KEY_ID);
+            if (!KeyId[keyId])
+                throw new MslKeyExchangeException(MslError.UNIDENTIFIED_KEYX_KEY_ID, keyId);
+            var encryptionKey = keyDataMo.getBytes(KEY_ENCRYPTION_KEY);
+            var hmacKey = keyDataMo.getBytes(KEY_HMAC_KEY);
+            return new ResponseData(masterToken, keyId, encryptionKey, hmacKey);
         } catch (e) {
-            throw new MslCryptoException(MslError.INVALID_ENCRYPTION_KEY, "keydata " + JSON.stringify(keyDataJO), e);
+            if (e instanceof MslEncoderException)
+                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "keydata " + keyDataMo, e);
+            throw e;
         }
-        var hmacKey;
-        try {
-            hmacKey = base64$decode(hmacKeyB64);
-        } catch (e) {
-            throw new MslCryptoException(MslError.INVALID_HMAC_KEY, "keydata " + JSON.stringify(keyDataJO), e);
-        }
-
-        // Return the response data.
-        return new ResponseData(masterToken, keyId, encryptionKey, hmacKey);
     };
 
     /**
@@ -311,24 +291,24 @@ var SymmetricWrappedExchange$ResponseData$parse;
         },
 
         /** @inheritDoc */
-        createRequestData: function createRequestData(ctx, keyRequestJO, callback) {
+        createRequestData: function createRequestData(ctx, keyRequestMo, callback) {
             AsyncExecutor(callback, function() {
-                return RequestData$parse(keyRequestJO);
+                return RequestData$parse(keyRequestMo);
             }, this);
         },
 
         /** @inheritDoc */
-        createResponseData: function createResponseData(ctx, masterToken, keyDataJO) {
-            return ResponseData$parse(masterToken, keyDataJO);
+        createResponseData: function createResponseData(ctx, masterToken, keyDataMo) {
+            return ResponseData$parse(masterToken, keyDataMo);
         },
 
         /** @inheritDoc */
-        generateResponse: function generateResponse(ctx, keyRequestData, entityToken, callback) {
+        generateResponse: function generateResponse(ctx, format, keyRequestData, entityToken, callback) {
             var self = this;
 
             AsyncExecutor(callback, function() {
                 if (!(keyRequestData instanceof RequestData))
-                    throw new MslInternalException("Key request data " + JSON.stringify(keyRequestData) + " was not created by this factory.");
+                    throw new MslInternalException("Key request data " + keyRequestData + " was not created by this factory.");
 
                 var masterToken, entityAuthData, identity;
                 if (entityToken instanceof MasterToken) {
@@ -376,12 +356,12 @@ var SymmetricWrappedExchange$ResponseData$parse;
 
                     // Wrap session keys with identified key.
                     var keyId = request.keyId;
-                    var masterToken = (entityToken instanceof MasterToken) ? entityToken : null;
+                    var encoder = ctx.getMslEncoderFactory();
                     createCryptoContext(ctx, keyId, masterToken, identity, {
                         result: function(wrapCryptoContext) {
-                            wrapCryptoContext.wrap(encryptionKey, {
+                            wrapCryptoContext.wrap(encryptionKey, encoder, format, {
                                 result: function(wrappedEncryptionKey) {
-                                    wrapCryptoContext.wrap(hmacKey, {
+                                    wrapCryptoContext.wrap(hmacKey, encoder, format, {
                                         result: function(wrappedHmacKey) {
                                             createMasterToken(encryptionKey, wrappedEncryptionKey, hmacKey, wrappedHmacKey);
                                         },
@@ -494,10 +474,10 @@ var SymmetricWrappedExchange$ResponseData$parse;
 
             AsyncExecutor(callback, function() {
                 if (!(keyRequestData instanceof RequestData))
-                    throw new MslInternalException("Key request data " + JSON.stringify(keyRequestData) + " was not created by this factory.");
+                    throw new MslInternalException("Key request data " + keyRequestData + " was not created by this factory.");
                 var request = keyRequestData;
                 if (!(keyResponseData instanceof ResponseData))
-                    throw new MslInternalException("Key response data " + JSON.stringify(keyResponseData) + " was not created by this factory.");
+                    throw new MslInternalException("Key response data " + keyResponseData + " was not created by this factory.");
                 var response = keyResponseData;
 
                 // Verify response matches request.
@@ -512,11 +492,12 @@ var SymmetricWrappedExchange$ResponseData$parse;
                         AsyncExecutor(callback, function() {
                             entityAuthData = ead;
                             var identity = entityAuthData.getIdentity();
+                            var encoder = ctx.getMslEncoderFactory();
                             createCryptoContext(ctx, responseKeyId, masterToken, identity, {
                                 result: function(unwrapCryptoContext) {
-                                    unwrapCryptoContext.unwrap(response.encryptionKey, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+                                    unwrapCryptoContext.unwrap(response.encryptionKey, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, encoder, {
                                         result: function(encryptionKey) {
-                                            unwrapCryptoContext.unwrap(response.hmacKey, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
+                                            unwrapCryptoContext.unwrap(response.hmacKey, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, encoder, {
                                                 result: function(hmacKey) {
                                                     // Create crypto context.
                                                     ctx.getEntityAuthenticationData(null, {

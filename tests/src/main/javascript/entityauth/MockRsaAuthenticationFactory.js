@@ -17,6 +17,8 @@ var MockRsaAuthenticationFactory;
 var MockRsaAuthenticationFactory$create;
 
 (function() {
+    "use strict";
+    
 	// PKCS#1 RSA Public Key Format
 	var publicKeyData =
     	"-----BEGIN PUBLIC KEY-----\n" +

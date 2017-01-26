@@ -20,13 +20,16 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("PresharedProfileAuthenticationData", function() {
-    /** JSON key entity authentication scheme. */
+    /** MSL encoder format. */
+    var ENCODER_FORMAT = MslEncoderFormat.JSON;
+    
+    /** Key entity authentication scheme. */
     var KEY_SCHEME = "scheme";
-    /** JSON key entity authentication data. */
+    /** Key entity authentication data. */
     var KEY_AUTHDATA = "authdata";
-    /** JSON key entity preshared keys identity. */
+    /** Key entity preshared keys identity. */
     var KEY_PSKID = "pskid";
-    /** JSON key entity profile. */
+    /** Key entity profile. */
     var KEY_PROFILE = "profile";
     
     /** Identity concatenation character. */
@@ -34,8 +37,12 @@ describe("PresharedProfileAuthenticationData", function() {
 
     /** MSL context. */
     var ctx;
+    /** MSL encoder factory. */
+    var encoder;
+    
+    var initialized = false;
     beforeEach(function() {
-        if (!ctx) {
+        if (!initialized) {
             runs(function() {
                 MockMslContext$create(EntityAuthenticationScheme.X509, false, {
                     result: function(c) { ctx = c; },
@@ -43,6 +50,11 @@ describe("PresharedProfileAuthenticationData", function() {
                 });
             });
             waitsFor(function() { return ctx; }, "ctx", 100);
+            
+            runs(function() {
+                encoder = ctx.getMslEncoderFactory();
+                initialized = true;
+            });
         }
     });
 
@@ -52,83 +64,190 @@ describe("PresharedProfileAuthenticationData", function() {
         expect(data.presharedKeysId).toEqual(MockPresharedProfileAuthenticationFactory.PSK_ESN);
         expect(data.profile).toEqual(MockPresharedProfileAuthenticationFactory.PROFILE);
         expect(data.scheme).toEqual(EntityAuthenticationScheme.PSK_PROFILE);
-        var authdata = data.getAuthData();
-        expect(authdata).not.toBeNull();
-        var jsonString = JSON.stringify(data);
-        expect(jsonString).not.toBeNull();
         
-        var joData = PresharedProfileAuthenticationData$parse(authdata);
-        expect(joData.identity).toEqual(data.identity);
-        expect(joData.presharedKeysId).toEqual(data.presharedKeysId);
-        expect(joData.profile).toEqual(data.profile);
-        expect(joData.scheme).toEqual(data.scheme);
-        var joAuthdata = joData.getAuthData();
-        expect(joAuthdata).not.toBeNull();
-        expect(joAuthdata).toEqual(authdata);
-        var joJsonString = JSON.stringify(joData);
-        expect(joJsonString).not.toBeNull();
-        expect(joJsonString).toEqual(jsonString);
+        var authdata;
+        runs(function() {
+            data.getAuthData(encoder, ENCODER_FORMAT, {
+                result: function(x) { authdata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return authdata; }, "authdata", 100);
+        
+        var encode;
+        runs(function() {
+            expect(authdata).not.toBeNull();
+            data.toMslEncoding(encoder, ENCODER_FORMAT, {
+                result: function(x) { encode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return encode; }, "encode", 100);
+        
+        var moData, moAuthdata;
+        runs(function() {
+            expect(encode).not.toBeNull();
+            
+            moData = PresharedProfileAuthenticationData$parse(authdata);
+            expect(moData.getIdentity()).toEqual(data.getIdentity());
+            expect(moData.presharedKeysId).toEqual(data.presharedKeysId);
+            expect(moData.profile).toEqual(data.profile);
+            expect(moData.scheme).toEqual(data.scheme);
+            moData.getAuthData(encoder, ENCODER_FORMAT, {
+                result: function(x) { moAuthdata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return moAuthdata; }, "moAuthdata", 100);
+
+        var moEncode;
+        runs(function() {
+            expect(moAuthdata).not.toBeNull();
+            expect(moAuthdata).toEqual(authdata);
+            moData.toMslEncoding(encoder, ENCODER_FORMAT, {
+                result: function(x) { moEncode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return moEncode; }, "moEncode", 100);
+        
+        runs(function() {
+            expect(moEncode).not.toBeNull();
+            expect(moEncode).toEqual(encode);
+        });
     });
     
-    it("json is correct", function() {
+    it("mslobject is correct", function() {
         var data = new PresharedProfileAuthenticationData(MockPresharedProfileAuthenticationFactory.PSK_ESN, MockPresharedProfileAuthenticationFactory.PROFILE);
-        var jo = JSON.parse(JSON.stringify(data));
-        expect(jo[KEY_SCHEME]).toEqual(EntityAuthenticationScheme.PSK_PROFILE.name);
-        var authdata = jo[KEY_AUTHDATA];
-        expect(authdata[KEY_PSKID]).toEqual(MockPresharedProfileAuthenticationFactory.PSK_ESN);
-        expect(authdata[KEY_PROFILE]).toEqual(MockPresharedProfileAuthenticationFactory.PROFILE);
+
+        var mo;
+        runs(function() {
+            MslTestUtils.toMslObject(encoder, data, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        runs(function() {
+            expect(mo.getString(KEY_SCHEME)).toEqual(EntityAuthenticationScheme.PSK_PROFILE.name);
+            var authdata = mo.getMslObject(KEY_AUTHDATA, encoder);
+            expect(authdata.getString(KEY_PSKID)).toEqual(MockPresharedProfileAuthenticationFactory.PSK_ESN);
+            expect(authdata.getString(KEY_PROFILE)).toEqual(MockPresharedProfileAuthenticationFactory.PROFILE);
+        });
     });
     
     it("create", function() {
         var data = new PresharedProfileAuthenticationData(MockPresharedProfileAuthenticationFactory.PSK_ESN, MockPresharedProfileAuthenticationFactory.PROFILE);
-        var jsonString = JSON.stringify(data);
-        var jo = JSON.parse(jsonString);
+
+        var encode;
+        runs(function() {
+            data.toMslEncoding(encoder, ENCODER_FORMAT, {
+                result: function(x) { encode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return encode; }, "encode", 100);
+        
+        var mo;
+        runs(function() {
+            MslTestUtils.toMslObject(encoder, data, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var entitydata;
         runs(function() {
-            EntityAuthenticationData$parse(ctx, jo, {
+            EntityAuthenticationData$parse(ctx, mo, {
                 result: function(x) { entitydata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
         waitsFor(function() { return entitydata; }, "entitydata", 100);
         
+        var moData, moAuthdata;
         runs(function() {
             expect(entitydata).not.toBeNull();
             expect(entitydata instanceof PresharedProfileAuthenticationData).toBeTruthy();
             
-            var joData = entitydata;
-            expect(joData.getIdentity()).toEqual(data.getIdentity());
-            expect(joData.presharedKeysId).toEqual(data.presharedKeysId);
-            expect(joData.profile).toEqual(data.profile);
-            expect(joData.scheme).toEqual(data.scheme);
-            var joAuthdata = joData.getAuthData();
-            expect(joAuthdata).not.toBeNull();
-            expect(joAuthdata).toEqual(data.getAuthData());
-            var joJsonString = JSON.stringify(joData);
-            expect(joJsonString).not.toBeNull();
-            expect(joJsonString).toEqual(jsonString);
+            moData = entitydata;
+            expect(moData.getIdentity()).toEqual(data.getIdentity());
+            expect(moData.presharedKeysId).toEqual(data.presharedKeysId);
+            expect(moData.profile).toEqual(data.profile);
+            expect(moData.scheme).toEqual(data.scheme);
+            moData.getAuthData(encoder, ENCODER_FORMAT, {
+                result: function(x) { moAuthdata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return moAuthdata; }, "moAuthdata", 100);
+        
+        var authdata;
+        runs(function() {
+            data.getAuthData(encoder, ENCODER_FORMAT, {
+                result: function(x) { authdata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return authdata; }, "authdata", 100);
+        
+        var moEncode;
+        runs(function() {
+            expect(moAuthdata).not.toBeNull();
+            expect(moAuthdata).toEqual(authdata);
+            moData.toMslEncoding(encoder, ENCODER_FORMAT, {
+                result: function(x) { moEncode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return moEncode; }, "moEncode", 100);
+        
+        runs(function() {
+            expect(moEncode).not.toBeNull();
+            expect(moEncode).toEqual(encode);
         });
     });
     
     it("missing preshared keys ID", function() {
-        var f = function() {
+        var authdata;
+        runs(function() {
             var data = new PresharedProfileAuthenticationData(MockPresharedProfileAuthenticationFactory.PSK_ESN, MockPresharedProfileAuthenticationFactory.PROFILE);
-            var authdata = data.getAuthData();
-            delete authdata[KEY_PSKID];
-            PresharedProfileAuthenticationData$parse(authdata);
-        };
-        expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            data.getAuthData(encoder, ENCODER_FORMAT, {
+                result: function(x) { authdata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return authdata; }, "authdata", 100);
+        
+        runs(function() {
+            authdata.remove(KEY_PSKID);
+            var f = function() {
+                PresharedProfileAuthenticationData$parse(authdata);
+            };
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
+        });
     });
     
     it("missing profile", function() {
-        var f = function() {
+        var authdata;
+        runs(function() {
             var data = new PresharedProfileAuthenticationData(MockPresharedProfileAuthenticationFactory.PSK_ESN, MockPresharedProfileAuthenticationFactory.PROFILE);
-            var authdata = data.getAuthData();
-            delete authdata[KEY_PROFILE];
-            PresharedProfileAuthenticationData$parse(authdata);
-        };
-        expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            data.getAuthData(encoder, ENCODER_FORMAT, {
+                result: function(x) { authdata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return authdata; }, "authdata", 100);
+        
+        runs(function() {
+            authdata.remove(KEY_PROFILE);
+            var f = function() {
+                PresharedProfileAuthenticationData$parse(authdata);
+            };
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
+        });
     });
 
     it("equals preshared keys ID", function() {
@@ -138,9 +257,14 @@ describe("PresharedProfileAuthenticationData", function() {
             var pskIdB = MockPresharedProfileAuthenticationFactory.PSK_ESN + "B";
             dataA = new PresharedProfileAuthenticationData(pskIdA, MockPresharedProfileAuthenticationFactory.PROFILE);
             dataB = new PresharedProfileAuthenticationData(pskIdB, MockPresharedProfileAuthenticationFactory.PROFILE);
-            EntityAuthenticationData$parse(ctx, JSON.parse(JSON.stringify(dataA)), {
-                result: function(x) { dataA2 = x; },
-                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            MslTestUtils.toMslObject(encoder, dataA, {
+                result: function(mo) {
+                    EntityAuthenticationData$parse(ctx, mo, {
+                        result: function(x) { dataA2 = x; },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
         waitsFor(function() { return dataA && dataB && dataA2; }, "data", 100);
@@ -163,9 +287,14 @@ describe("PresharedProfileAuthenticationData", function() {
             var profileB = MockPresharedProfileAuthenticationFactory.PROFILE + "B";
             dataA = new PresharedProfileAuthenticationData(MockPresharedProfileAuthenticationFactory.PSK_ESN, profileA);
             dataB = new PresharedProfileAuthenticationData(MockPresharedProfileAuthenticationFactory.PSK_ESN, profileB);
-            EntityAuthenticationData$parse(ctx, JSON.parse(JSON.stringify(dataA)), {
-                result: function(x) { dataA2 = x; },
-                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            MslTestUtils.toMslObject(encoder, dataA, {
+                result: function(mo) {
+                    EntityAuthenticationData$parse(ctx, mo, {
+                        result: function(x) { dataA2 = x; },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
         waitsFor(function() { return dataA && dataB && dataA2; }, "data", 100);

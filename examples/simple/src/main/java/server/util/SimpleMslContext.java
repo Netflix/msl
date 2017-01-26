@@ -43,6 +43,8 @@ import com.netflix.msl.entityauth.RsaAuthenticationData;
 import com.netflix.msl.entityauth.RsaAuthenticationFactory;
 import com.netflix.msl.entityauth.RsaStore;
 import com.netflix.msl.entityauth.UnauthenticatedAuthenticationFactory;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.keyx.AsymmetricWrappedExchange;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeScheme;
@@ -123,7 +125,8 @@ public class SimpleMslContext extends MslContext {
         // Message capabilities.
         final Set<CompressionAlgorithm> compressionAlgos = new HashSet<CompressionAlgorithm>(Arrays.asList(CompressionAlgorithm.GZIP, CompressionAlgorithm.LZW));
         final List<String> languages = Arrays.asList("en-US");
-        this.messageCaps = new MessageCapabilities(compressionAlgos, languages);
+        final Set<MslEncoderFormat> encoderFormats = new HashSet<MslEncoderFormat>(Arrays.asList(MslEncoderFormat.JSON));
+        this.messageCaps = new MessageCapabilities(compressionAlgos, languages, encoderFormats);
         
         // MSL crypto context.
         final SecretKey encryptionKey = new SecretKeySpec(MSL_ENCRYPTION_KEY, "AES");
@@ -281,6 +284,14 @@ public class SimpleMslContext extends MslContext {
     public MslStore getMslStore() {
         return store;
     }
+    
+    /* (non-Javadoc)
+     * @see com.netflix.msl.util.MslContext#getMslEncoderFactory()
+     */
+    @Override
+    public MslEncoderFactory getMslEncoderFactory() {
+        return encoderFactory;
+    }
 
     private final MessageCapabilities messageCaps;
     private final EntityAuthenticationData entityAuthData;
@@ -290,4 +301,5 @@ public class SimpleMslContext extends MslContext {
     private final TokenFactory tokenFactory = new SimpleTokenFactory();
     private final SortedSet<KeyExchangeFactory> keyxFactories;
     private final MslStore store = new NullMslStore();
+    private final MslEncoderFactory encoderFactory = new MslEncoderFactory();;
 }

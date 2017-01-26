@@ -23,31 +23,35 @@ parameterize("ServiceToken", function data() {
     return [
         [ null ],
         [ MslConstants$CompressionAlgorithm.LZW ],
-        [ MslConstants$CompressionAlgorithm.LZW ]
     ];
 },
 function(encoding, compressionAlgo) {
-    /** JSON key token data. */
+	/** MSL encoder format. */
+	var ENCODER_FORMAT = MslEncoderFormat.JSON;
+	
+    /** Key token data. */
     var KEY_TOKENDATA = "tokendata";
-    /** JSON key signature. */
+    /** Key signature. */
     var KEY_SIGNATURE = "signature";
     
     // tokendata
-    /** JSON key token name. */
+    /** Key token name. */
     var KEY_NAME = "name";
-    /** JSON key master token serial number. */
+    /** Key master token serial number. */
     var KEY_MASTER_TOKEN_SERIAL_NUMBER = "mtserialnumber";
-    /** JSON key user ID token serial number. */
+    /** Key user ID token serial number. */
     var KEY_USER_ID_TOKEN_SERIAL_NUMBER = "uitserialnumber";
-    /** JSON key encrypted. */
+    /** Key encrypted. */
     var KEY_ENCRYPTED = "encrypted";
-    /** JSON key compression algorithm. */
+    /** Key compression algorithm. */
     var KEY_COMPRESSION_ALGORITHM = "compressionalgo";
-    /** JSON key service data. */
+    /** Key service data. */
     var KEY_SERVICEDATA = "servicedata";
 
     /** MSL context. */
     var ctx;
+    /** MSL encoder factory. */
+    var encoder;
    /** Random. */
     var random = new Random();
     
@@ -99,8 +103,9 @@ function(encoding, compressionAlgo) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 100);
+            waitsFor(function() { return ctx; }, "ctx", 900);
 	    	runs(function() {
+	    		encoder = ctx.getMslEncoderFactory();
 	    	    getCryptoContext(ctx, {
 	    	        result: function(x) { CRYPTO_CONTEXT = x; },
 	    	        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -110,14 +115,14 @@ function(encoding, compressionAlgo) {
 	    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	    		});
 	    	});
-	    	waitsFor(function() { return CRYPTO_CONTEXT && MASTER_TOKEN; }, "crypto context and master token not received", 100);
+	    	waitsFor(function() { return CRYPTO_CONTEXT && MASTER_TOKEN; }, "crypto context and master token", 100);
 	    	runs(function() {
 	    		MslTestUtils.getUserIdToken(ctx, MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory.USER, {
 	    			result: function(token) { USER_ID_TOKEN = token; },
 	    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	    		});
 	    	});
-	    	waitsFor(function() { return USER_ID_TOKEN; }, "user ID token not received", 100);
+	    	waitsFor(function() { return USER_ID_TOKEN; }, "user ID token", 100);
 	    	runs(function() { initialized = true; });
     	}
     });
@@ -130,9 +135,9 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+        waitsFor(function() { return serviceToken; }, "serviceToken", 100);
         
-        var jsonString;
+        var encode;
         runs(function() {
 	        expect(serviceToken.isDecrypted()).toBeTruthy();
 	        expect(serviceToken.isDeleted()).toBeFalsy();
@@ -147,38 +152,51 @@ function(encoding, compressionAlgo) {
 	        expect(serviceToken.name).toEqual(NAME);
 	        expect(serviceToken.compressionAlgo).toEqual(compressionAlgo);
 	        expect(new Uint8Array(serviceToken.data)).toEqual(DATA);
-	        jsonString = JSON.stringify(serviceToken);
-	        expect(jsonString).not.toBeNull();
+	        
+	        serviceToken.toMslEncoding(encoder, ENCODER_FORMAT, {
+	        	result: function(x) { encode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
         });
-        waitsFor(function() { return jsonString; }, "json string not received", 100);
+        waitsFor(function() { return encode; }, "encode", 100);
 
-        var joServiceToken;
+        var moServiceToken;
         runs(function() {
-	        var jo = JSON.parse(jsonString);
-            ServiceToken$parse(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
-                result: function(token) { joServiceToken = token; },
+	        expect(encode).not.toBeNull();
+	        
+	        var mo = encoder.parseObject(encode);
+            ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+                result: function(token) { moServiceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return joServiceToken; }, "joServiceToken not received", 100);
+        waitsFor(function() { return moServiceToken; }, "moServiceToken", 100);
+        
+        var moEncode;
+        runs(function() {
+	        expect(moServiceToken.isDecrypted()).toEqual(serviceToken.isDecrypted());
+	        expect(moServiceToken.isDeleted()).toEqual(serviceToken.isDeleted());
+	        expect(moServiceToken.isVerified()).toEqual(serviceToken.isVerified());
+	        expect(moServiceToken.isBoundTo(MASTER_TOKEN)).toEqual(serviceToken.isBoundTo(MASTER_TOKEN));
+	        expect(moServiceToken.isBoundTo(USER_ID_TOKEN)).toEqual(serviceToken.isBoundTo(USER_ID_TOKEN));
+	        expect(moServiceToken.isMasterTokenBound()).toEqual(serviceToken.isMasterTokenBound());
+	        expect(moServiceToken.isUserIdTokenBound()).toEqual(serviceToken.isUserIdTokenBound());
+	        expect(moServiceToken.isUnbound()).toEqual(serviceToken.isUnbound());
+	        expect(moServiceToken.mtSerialNumber).toEqual(serviceToken.mtSerialNumber);
+	        expect(moServiceToken.uitSerialNumber).toEqual(serviceToken.uitSerialNumber);
+	        expect(moServiceToken.name).toEqual(serviceToken.name);
+	        expect(moServiceToken.compressionAlgo).toEqual(serviceToken.compressionAlgo);
+	        expect(new Uint8Array(moServiceToken.data)).toEqual(new Uint8Array(serviceToken.data));
+	        moServiceToken.toMslEncoding(encoder, ENCODER_FORMAT, {
+	        	result: function(x) { moEncode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return moEncode; }, "moEncode", 100);
         
         runs(function() {
-	        expect(joServiceToken.isDecrypted()).toEqual(serviceToken.isDecrypted());
-	        expect(joServiceToken.isDeleted()).toEqual(serviceToken.isDeleted());
-	        expect(joServiceToken.isVerified()).toEqual(serviceToken.isVerified());
-	        expect(joServiceToken.isBoundTo(MASTER_TOKEN)).toEqual(serviceToken.isBoundTo(MASTER_TOKEN));
-	        expect(joServiceToken.isBoundTo(USER_ID_TOKEN)).toEqual(serviceToken.isBoundTo(USER_ID_TOKEN));
-	        expect(joServiceToken.isMasterTokenBound()).toEqual(serviceToken.isMasterTokenBound());
-	        expect(joServiceToken.isUserIdTokenBound()).toEqual(serviceToken.isUserIdTokenBound());
-	        expect(joServiceToken.isUnbound()).toEqual(serviceToken.isUnbound());
-	        expect(joServiceToken.mtSerialNumber).toEqual(serviceToken.mtSerialNumber);
-	        expect(joServiceToken.uitSerialNumber).toEqual(serviceToken.uitSerialNumber);
-	        expect(joServiceToken.name).toEqual(serviceToken.name);
-	        expect(joServiceToken.compressionAlgo).toEqual(serviceToken.compressionAlgo);
-	        expect(new Uint8Array(joServiceToken.data)).toEqual(new Uint8Array(serviceToken.data));
-	        var joJsonString = JSON.stringify(joServiceToken);
-	        expect(joJsonString).not.toBeNull();
-	        expect(joJsonString).toEqual(jsonString);
+	        expect(moEncode).not.toBeNull();
+	        expect(moEncode).toEqual(encode);
         });
     });
     
@@ -194,37 +212,53 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken && joCryptoContext; }, "serviceToken and joCryptoContext not received", 100);
-
-        var jsonString = undefined, joServiceToken;
+        waitsFor(function() { return serviceToken && joCryptoContext; }, "serviceToken and joCryptoContext", 100);
+        
+        var encode;
         runs(function() {
-            jsonString = JSON.stringify(serviceToken);
-            var jo = JSON.parse(jsonString);
+        	serviceToken.toMslEncoding(encoder, ENCODER_FORMAT, {
+        		result: function(x) { encode = x; },
+        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return encode; }, "encode", 100);
+
+        var moServiceToken;
+        runs(function() {
+            var mo = encoder.parseObject(encode);
             
-            ServiceToken$parse(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, joCryptoContext, {
-                result: function(token) { joServiceToken = token; },
+            ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, joCryptoContext, {
+                result: function(token) { moServiceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return jsonString && joServiceToken; }, "json string and joServiceToken not received", 100);
+        waitsFor(function() { return moServiceToken; }, "moServiceToken", 100);
+        
+        var moEncode;
+        runs(function() {
+	        expect(moServiceToken.isDecrypted()).toBeFalsy();
+	        expect(serviceToken.isDeleted()).toBeFalsy();
+	        expect(moServiceToken.isVerified()).toBeFalsy();
+	        expect(moServiceToken.data).toBeNull();
+	        expect(moServiceToken.isBoundTo(MASTER_TOKEN)).toEqual(serviceToken.isBoundTo(MASTER_TOKEN));
+	        expect(moServiceToken.isBoundTo(USER_ID_TOKEN)).toEqual(serviceToken.isBoundTo(USER_ID_TOKEN));
+	        expect(moServiceToken.isMasterTokenBound()).toEqual(serviceToken.isMasterTokenBound());
+	        expect(moServiceToken.isUserIdTokenBound()).toEqual(serviceToken.isUserIdTokenBound());
+	        expect(moServiceToken.isUnbound()).toEqual(serviceToken.isUnbound());
+	        expect(moServiceToken.mtSerialNumber).toEqual(serviceToken.mtSerialNumber);
+	        expect(moServiceToken.uitSerialNumber).toEqual(serviceToken.uitSerialNumber);
+	        expect(moServiceToken.name).toEqual(serviceToken.name);
+	        expect(moServiceToken.compressionAlgo).toEqual(serviceToken.compressionAlgo);
+	        moServiceToken.toMslEncoding(encoder, ENCODER_FORMAT, {
+        		result: function(x) { moEncode = x; },
+        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return moEncode; }, "moEncode", 100);
         
         runs(function() {
-	        expect(joServiceToken.isDecrypted()).toBeFalsy();
-	        expect(serviceToken.isDeleted()).toBeFalsy();
-	        expect(joServiceToken.isVerified()).toBeFalsy();
-	        expect(joServiceToken.data).toBeNull();
-	        expect(joServiceToken.isBoundTo(MASTER_TOKEN)).toEqual(serviceToken.isBoundTo(MASTER_TOKEN));
-	        expect(joServiceToken.isBoundTo(USER_ID_TOKEN)).toEqual(serviceToken.isBoundTo(USER_ID_TOKEN));
-	        expect(joServiceToken.isMasterTokenBound()).toEqual(serviceToken.isMasterTokenBound());
-	        expect(joServiceToken.isUserIdTokenBound()).toEqual(serviceToken.isUserIdTokenBound());
-	        expect(joServiceToken.isUnbound()).toEqual(serviceToken.isUnbound());
-	        expect(joServiceToken.mtSerialNumber).toEqual(serviceToken.mtSerialNumber);
-	        expect(joServiceToken.uitSerialNumber).toEqual(serviceToken.uitSerialNumber);
-	        expect(joServiceToken.name).toEqual(serviceToken.name);
-	        expect(joServiceToken.compressionAlgo).toEqual(serviceToken.compressionAlgo);
-	        var joJsonString = JSON.stringify(joServiceToken);
-	        expect(joJsonString).not.toBeNull();
-	        expect(joJsonString).toEqual(jsonString);
+	        expect(moEncode).not.toBeNull();
+	        expect(moEncode).toEqual(encode);
         });
     });
     
@@ -246,37 +280,53 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken && Object.keys(cryptoContexts).length == 3; }, "serviceToken and cryptoContexts not received", 100);
+        waitsFor(function() { return serviceToken && Object.keys(cryptoContexts).length == 3; }, "serviceToken and cryptoContexts", 100);
        
-        var jsonString = undefined, joServiceToken;
+        var encode;
         runs(function() {
-            jsonString = JSON.stringify(serviceToken);
-            var jo = JSON.parse(jsonString);
+	        serviceToken.toMslEncoding(encoder, ENCODER_FORMAT, {
+	        	result: function(x) { encode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return encode; }, "encode", 100);
 
-            ServiceToken$parse(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, cryptoContexts, {
-                result: function(token) { joServiceToken = token; },
+        var moServiceToken;
+        runs(function() {
+            var mo = encoder.parseObject(encode);
+
+            ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, cryptoContexts, {
+                result: function(token) { moServiceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return jsonString && joServiceToken; }, "json string and joServiceToken not received", 100);
+        waitsFor(function() { return moServiceToken; }, "moServiceToken", 100);
+        
+        var moEncode;
+        runs(function() {
+	        expect(moServiceToken.isDecrypted()).toEqual(serviceToken.isDecrypted());
+	        expect(moServiceToken.isDeleted()).toEqual(serviceToken.isDeleted());
+	        expect(moServiceToken.isVerified()).toEqual(serviceToken.isVerified());
+	        expect(moServiceToken.isBoundTo(MASTER_TOKEN)).toEqual(serviceToken.isBoundTo(MASTER_TOKEN));
+	        expect(moServiceToken.isBoundTo(USER_ID_TOKEN)).toEqual(serviceToken.isBoundTo(USER_ID_TOKEN));
+	        expect(moServiceToken.isMasterTokenBound()).toEqual(serviceToken.isMasterTokenBound());
+	        expect(moServiceToken.isUserIdTokenBound()).toEqual(serviceToken.isUserIdTokenBound());
+	        expect(moServiceToken.isUnbound()).toEqual(serviceToken.isUnbound());
+	        expect(moServiceToken.mtSerialNumber).toEqual(serviceToken.mtSerialNumber);
+	        expect(moServiceToken.uitSerialNumber).toEqual(serviceToken.uitSerialNumber);
+	        expect(moServiceToken.name).toEqual(serviceToken.name);
+            expect(moServiceToken.compressionAlgo).toEqual(serviceToken.compressionAlgo);
+	        expect(new Uint8Array(moServiceToken.data)).toEqual(new Uint8Array(serviceToken.data));
+	        moServiceToken.toMslEncoding(encoder, ENCODER_FORMAT, {
+	        	result: function(x) { moEncode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return moEncode; }, "moEncode", 100);
         
         runs(function() {
-	        expect(joServiceToken.isDecrypted()).toEqual(serviceToken.isDecrypted());
-	        expect(joServiceToken.isDeleted()).toEqual(serviceToken.isDeleted());
-	        expect(joServiceToken.isVerified()).toEqual(serviceToken.isVerified());
-	        expect(joServiceToken.isBoundTo(MASTER_TOKEN)).toEqual(serviceToken.isBoundTo(MASTER_TOKEN));
-	        expect(joServiceToken.isBoundTo(USER_ID_TOKEN)).toEqual(serviceToken.isBoundTo(USER_ID_TOKEN));
-	        expect(joServiceToken.isMasterTokenBound()).toEqual(serviceToken.isMasterTokenBound());
-	        expect(joServiceToken.isUserIdTokenBound()).toEqual(serviceToken.isUserIdTokenBound());
-	        expect(joServiceToken.isUnbound()).toEqual(serviceToken.isUnbound());
-	        expect(joServiceToken.mtSerialNumber).toEqual(serviceToken.mtSerialNumber);
-	        expect(joServiceToken.uitSerialNumber).toEqual(serviceToken.uitSerialNumber);
-	        expect(joServiceToken.name).toEqual(serviceToken.name);
-            expect(joServiceToken.compressionAlgo).toEqual(serviceToken.compressionAlgo);
-	        expect(new Uint8Array(joServiceToken.data)).toEqual(new Uint8Array(serviceToken.data));
-	        var joJsonString = JSON.stringify(joServiceToken);
-	        expect(joJsonString).not.toBeNull();
-	        expect(joJsonString).toEqual(jsonString);
+	        expect(moEncode).not.toBeNull();
+	        expect(moEncode).toEqual(encode);
 	    });
     });
     
@@ -298,37 +348,53 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken && Object.keys(cryptoContexts).length == 3; }, "serviceToken and cryptoContexts not received", 100);
-        
-        var jsonString = undefined, joServiceToken;
-        runs(function() {
-        	jsonString = JSON.stringify(serviceToken);
-        	var jo = JSON.parse(jsonString);
+        waitsFor(function() { return serviceToken && Object.keys(cryptoContexts).length == 3; }, "serviceToken and cryptoContexts", 100);
 
-        	ServiceToken$parse(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, cryptoContexts, {
-        		result: function(token) { joServiceToken = token; },
+        var encode;
+        runs(function() {
+        	serviceToken.toMslEncoding(encoder, ENCODER_FORMAT, {
+        		result: function(x) { encode = x; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return jsonString && joServiceToken; }, "json string and joServiceToken not received", 100);
+        waitsFor(function() { return encode; }, "encode", 100);
+
+        var moServiceToken;
+        runs(function() {
+        	var mo = encoder.parseObject(encode);
+
+        	ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, cryptoContexts, {
+        		result: function(token) { moServiceToken = token; },
+        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return encode && moServiceToken; }, "json string and moServiceToken", 100);
+
+        var moEncode;
+        runs(function() {
+	        expect(moServiceToken.isDecrypted()).toBeFalsy();
+	        expect(moServiceToken.isDeleted()).toBeFalsy();
+	        expect(moServiceToken.isVerified()).toBeFalsy();
+	        expect(moServiceToken.data).toBeNull();
+	        expect(moServiceToken.isBoundTo(MASTER_TOKEN)).toEqual(serviceToken.isBoundTo(MASTER_TOKEN));
+	        expect(moServiceToken.isBoundTo(USER_ID_TOKEN)).toEqual(serviceToken.isBoundTo(USER_ID_TOKEN));
+	        expect(moServiceToken.isMasterTokenBound()).toEqual(serviceToken.isMasterTokenBound());
+	        expect(moServiceToken.isUserIdTokenBound()).toEqual(serviceToken.isUserIdTokenBound());
+	        expect(moServiceToken.isUnbound()).toEqual(serviceToken.isUnbound());
+	        expect(moServiceToken.mtSerialNumber).toEqual(serviceToken.mtSerialNumber);
+	        expect(moServiceToken.uitSerialNumber).toEqual(serviceToken.uitSerialNumber);
+	        expect(moServiceToken.name).toEqual(serviceToken.name);
+            expect(moServiceToken.compressionAlgo).toEqual(serviceToken.compressionAlgo);
+	        moServiceToken.toMslEncoding(encoder, ENCODER_FORMAT, {
+        		result: function(x) { moEncode = x; },
+        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return moEncode; }, "moEncode", 100);
         
         runs(function() {
-	        expect(joServiceToken.isDecrypted()).toBeFalsy();
-	        expect(joServiceToken.isDeleted()).toBeFalsy();
-	        expect(joServiceToken.isVerified()).toBeFalsy();
-	        expect(joServiceToken.data).toBeNull();
-	        expect(joServiceToken.isBoundTo(MASTER_TOKEN)).toEqual(serviceToken.isBoundTo(MASTER_TOKEN));
-	        expect(joServiceToken.isBoundTo(USER_ID_TOKEN)).toEqual(serviceToken.isBoundTo(USER_ID_TOKEN));
-	        expect(joServiceToken.isMasterTokenBound()).toEqual(serviceToken.isMasterTokenBound());
-	        expect(joServiceToken.isUserIdTokenBound()).toEqual(serviceToken.isUserIdTokenBound());
-	        expect(joServiceToken.isUnbound()).toEqual(serviceToken.isUnbound());
-	        expect(joServiceToken.mtSerialNumber).toEqual(serviceToken.mtSerialNumber);
-	        expect(joServiceToken.uitSerialNumber).toEqual(serviceToken.uitSerialNumber);
-	        expect(joServiceToken.name).toEqual(serviceToken.name);
-            expect(joServiceToken.compressionAlgo).toEqual(serviceToken.compressionAlgo);
-	        var joJsonString = JSON.stringify(joServiceToken);
-	        expect(joJsonString).not.toBeNull();
-	        expect(joJsonString).toEqual(jsonString);
+	        expect(moEncode).not.toBeNull();
+	        expect(moEncode).toEqual(encode);
         });
     });
     
@@ -344,7 +410,7 @@ function(encoding, compressionAlgo) {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
         	});
         });
-        waitsFor(function() { return masterToken && joMasterToken; }, "master tokens not received", 100);
+        waitsFor(function() { return masterToken && joMasterToken; }, "master tokens", 100);
         
         var serviceToken;
         runs(function() {
@@ -353,19 +419,26 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+        waitsFor(function() { return serviceToken; }, "serviceToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, serviceToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(serviceToken);
-	        var jo = JSON.parse(jsonString);
-	        
-	        ServiceToken$parse(ctx, jo, joMasterToken, null, CRYPTO_CONTEXT, {
+	        ServiceToken$parse(ctx, mo, joMasterToken, null, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslException(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH));
@@ -380,19 +453,26 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+        waitsFor(function() { return serviceToken; }, "serviceToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, serviceToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(serviceToken);
-	        var jo = JSON.parse(jsonString);
-	        
-	        ServiceToken$parse(ctx, jo, null, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	        ServiceToken$parse(ctx, mo, null, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslException(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH));
@@ -411,7 +491,7 @@ function(encoding, compressionAlgo) {
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
     	});
-    	waitsFor(function() { return userIdToken && joUserIdToken; }, "user ID tokens not received", 100);
+    	waitsFor(function() { return userIdToken && joUserIdToken; }, "user ID tokens", 100);
     	
         var serviceToken;
         runs(function() {
@@ -420,19 +500,26 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+        waitsFor(function() { return serviceToken; }, "serviceToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, serviceToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(serviceToken);
-	        var jo = JSON.parse(jsonString);
-	        
-	        ServiceToken$parse(ctx, jo, MASTER_TOKEN, joUserIdToken, CRYPTO_CONTEXT, {
+	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, joUserIdToken, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH));
@@ -447,19 +534,26 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+        waitsFor(function() { return serviceToken; }, "serviceToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, serviceToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(serviceToken);
-	        var jo = JSON.parse(jsonString);
-	        
-	        ServiceToken$parse(ctx, jo, MASTER_TOKEN, null, CRYPTO_CONTEXT, {
+	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, null, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH));
@@ -478,7 +572,7 @@ function(encoding, compressionAlgo) {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
         	});
         });
-        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens not received", 100);
+        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens", 100);
         
         var userIdToken;
         runs(function() {
@@ -487,16 +581,17 @@ function(encoding, compressionAlgo) {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return userIdToken; }, "user ID token not received", 100);
+        waitsFor(function() { return userIdToken; }, "user ID token", 100);
 
     	var exception;
     	runs(function() {
     		ServiceToken$create(ctx, NAME, DATA, masterTokenA, userIdToken, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
     			result: function() {},
-    			error: function(err) { exception = err; }
+    			error: function(e) { exception = e; }
     		});
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception", 100);
+    	
     	runs(function() {
     	    var f = function() { throw exception; };
     	    expect(f).toThrow(new MslInternalException());
@@ -511,25 +606,31 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+        waitsFor(function() { return serviceToken; }, "serviceToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, serviceToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(serviceToken);
-	        var jo = JSON.parse(jsonString);
+        	mo.remove(KEY_TOKENDATA);
 	        
-	        expect([KEY_TOKENDATA]).not.toBeNull();
-	        delete jo[KEY_TOKENDATA];
-	        
-	        ServiceToken$parse(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
@@ -541,25 +642,33 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+        waitsFor(function() { return serviceToken; }, "serviceToken", 100);
         
+        var mo;
         runs(function() {
-	        var jsonString = JSON.stringify(serviceToken);
-	        var jo = JSON.parse(jsonString);
-	
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
+        	MslTestUtils.toMslObject(encoder, serviceToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var exception;
+        runs(function() {
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        ++tokendata[0];
-	        jo[KEY_TOKENDATA] = base64$encode(tokendata);
+	        mo.put(KEY_TOKENDATA, tokendata);
 	        
-	        ServiceToken$parse(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
@@ -571,25 +680,31 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+        waitsFor(function() { return serviceToken; }, "serviceToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, serviceToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(serviceToken);
-	        var jo = JSON.parse(jsonString);
+        	mo.remove(KEY_SIGNATURE);
 	        
-	        expect(jo[KEY_SIGNATURE]).not.toBeNull();
-	        delete jo[KEY_SIGNATURE];
-	        
-	        ServiceToken$parse(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
@@ -601,27 +716,43 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+        waitsFor(function() { return serviceToken; }, "serviceToken", 100);
         
+        var mo;
         runs(function() {
-	        var jsonString = JSON.stringify(serviceToken);
-	        var jo = JSON.parse(jsonString);
+        	MslTestUtils.toMslObject(encoder, serviceToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var modifiedTokendata;
+        runs(function() {
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        tokendataMo.remove(KEY_NAME);
+        	encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+        		result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        
+        var exception;
+        runs(function() {
+	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        expect([KEY_NAME]).not.toBeNull();
-	        delete tokendataJo[KEY_NAME];
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
-	        
-	        ServiceToken$parse(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
@@ -633,28 +764,43 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+        waitsFor(function() { return serviceToken; }, "serviceToken", 100);
         
-        var joServiceToken;
+        var mo;
         runs(function() {
-        	var jsonString = JSON.stringify(serviceToken);
-            var jo = JSON.parse(jsonString);
-            
-            var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-            var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-            expect([KEY_MASTER_TOKEN_SERIAL_NUMBER]).not.toBeNull();
-            delete tokendataJo[KEY_MASTER_TOKEN_SERIAL_NUMBER];
-            jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
-            
-            ServiceToken$parse(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
-                result: function(token) { joServiceToken = token; },
+        	MslTestUtils.toMslObject(encoder, serviceToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var modifiedTokendata;
+        runs(function() {
+            var tokendata = mo.getBytes(KEY_TOKENDATA);
+            var tokendataMo = encoder.parseObject(tokendata);
+            tokendataMo.remove(KEY_MASTER_TOKEN_SERIAL_NUMBER);
+            encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+            	result: function(x) { modifiedTokendata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return joServiceToken; }, "joServiceToken not received", 100);
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        
+        var moServiceToken;
         runs(function() {
-	        expect(joServiceToken.mtSerialNumber).toEqual(-1);
-	        expect(joServiceToken.isBoundTo(MASTER_TOKEN)).toBeFalsy();
+            mo.put(KEY_TOKENDATA, modifiedTokendata);
+            
+            ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+                result: function(token) { moServiceToken = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return moServiceToken; }, "moServiceToken", 100);
+        
+        runs(function() {
+	        expect(moServiceToken.mtSerialNumber).toEqual(-1);
+	        expect(moServiceToken.isBoundTo(MASTER_TOKEN)).toBeFalsy();
         });
     });
     
@@ -666,27 +812,43 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+        waitsFor(function() { return serviceToken; }, "serviceToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, serviceToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(serviceToken);
-	        var jo = JSON.parse(jsonString);
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        tokendataMo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, "x");
+            encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+            	result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        
+        var exception;
+        runs(function() {
+	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        tokendataJo[KEY_MASTER_TOKEN_SERIAL_NUMBER] = "x";
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
-	        
-	        ServiceToken$parse(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
@@ -698,23 +860,40 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+        waitsFor(function() { return serviceToken; }, "serviceToken", 100);
         
+        var mo;
         runs(function() {
-	        var jsonString = JSON.stringify(serviceToken);
-	        var jo = JSON.parse(jsonString);
+        	MslTestUtils.toMslObject(encoder, serviceToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var modifiedTokendata;
+        runs(function() {
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        tokendataMo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, -1);
+            encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+            	result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        
+        var exception;
+        runs(function() {
+	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        tokendataJo[KEY_MASTER_TOKEN_SERIAL_NUMBER] = -1;
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
-	        
-	        ServiceToken$parse(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslException(MslError.SERVICETOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE));
@@ -729,24 +908,40 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+        waitsFor(function() { return serviceToken; }, "serviceToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, serviceToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var modifiedTokendata;
+        runs(function() {
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        tokendataMo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, MslConstants$MAX_LONG_VALUE + 2);
+            encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+            	result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(serviceToken);
-	        var jo = JSON.parse(jsonString);
+	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        tokendataJo[KEY_MASTER_TOKEN_SERIAL_NUMBER] = MslConstants$MAX_LONG_VALUE + 2;
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
-	        
-	        ServiceToken$parse(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslException(MslError.SERVICETOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE));
@@ -761,28 +956,43 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+        waitsFor(function() { return serviceToken; }, "serviceToken", 100);
         
-        var joServiceToken;
+        var mo;
         runs(function() {
-        	var jsonString = JSON.stringify(serviceToken);
-            var jo = JSON.parse(jsonString);
-            
-            var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-            var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-            expect([KEY_USER_ID_TOKEN_SERIAL_NUMBER]).not.toBeNull();
-            delete tokendataJo[KEY_USER_ID_TOKEN_SERIAL_NUMBER];
-            jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
-            
-            ServiceToken$parse(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
-                result: function(token) { joServiceToken = token; },
+        	MslTestUtils.toMslObject(encoder, serviceToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var modifiedTokendata;
+        runs(function() {
+            var tokendata = mo.getBytes(KEY_TOKENDATA);
+            var tokendataMo = encoder.parseObject(tokendata);
+            tokendataMo.remove(KEY_USER_ID_TOKEN_SERIAL_NUMBER);
+            encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+            	result: function(x) { modifiedTokendata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return joServiceToken; }, "joServiceToken not received", 100);
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        
+        var moServiceToken;
         runs(function() {
-	        expect(joServiceToken.uitSerialNumber).toEqual(-1);
-	        expect(joServiceToken.isBoundTo(USER_ID_TOKEN)).toBeFalsy();
+            mo.put(KEY_TOKENDATA, modifiedTokendata);
+            
+            ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+                result: function(token) { moServiceToken = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return moServiceToken; }, "moServiceToken", 100);
+        
+        runs(function() {
+	        expect(moServiceToken.uitSerialNumber).toEqual(-1);
+	        expect(moServiceToken.isBoundTo(USER_ID_TOKEN)).toBeFalsy();
         });
     });
     
@@ -794,27 +1004,43 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+        waitsFor(function() { return serviceToken; }, "serviceToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, serviceToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var modifiedTokendata;
+        runs(function() {
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        tokendataMo.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, "x");
+            encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+            	result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(serviceToken);
-	        var jo = JSON.parse(jsonString);
+	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        tokendataJo[KEY_USER_ID_TOKEN_SERIAL_NUMBER] = "x";
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
-	        
-	        ServiceToken$parse(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
@@ -826,24 +1052,40 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+        waitsFor(function() { return serviceToken; }, "serviceToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, serviceToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var modifiedTokendata;
+        runs(function() {
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        tokendataMo.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, -1);
+            encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+            	result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(serviceToken);
-	        var jo = JSON.parse(jsonString);
+	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        tokendataJo[KEY_USER_ID_TOKEN_SERIAL_NUMBER] = -1;
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
-	        
-	        ServiceToken$parse(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);;
+        waitsFor(function() { return exception; }, "exception", 100);;
+        
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslException(MslError.SERVICETOKEN_USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE));
@@ -858,24 +1100,40 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+        waitsFor(function() { return serviceToken; }, "serviceToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, serviceToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var modifiedTokendata;
+        runs(function() {
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        tokendataMo.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, MslConstants$MAX_LONG_VALUE + 2);
+            encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+            	result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(serviceToken);
-	        var jo = JSON.parse(jsonString);
+	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        tokendataJo[KEY_USER_ID_TOKEN_SERIAL_NUMBER] = MslConstants$MAX_LONG_VALUE + 2;
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
-	        
-	        ServiceToken$parse(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);;
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslException(MslError.SERVICETOKEN_USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE));
@@ -890,28 +1148,43 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+        waitsFor(function() { return serviceToken; }, "serviceToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, serviceToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var modifiedTokendata;
+        runs(function() {
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        tokendataMo.remove(KEY_ENCRYPTED);
+            encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+            	result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(serviceToken);
-	        var jo = JSON.parse(jsonString);
+	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        expect([KEY_ENCRYPTED]).not.toBeNull();
-	        delete tokendataJo[KEY_ENCRYPTED];
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
-	        
-	        ServiceToken$parse(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
         	var f = function() { throw exception; };
-        	expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+        	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
@@ -923,27 +1196,43 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+        waitsFor(function() { return serviceToken; }, "serviceToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, serviceToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var modifiedTokendata;
+        runs(function() {
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        tokendataMo.put(KEY_ENCRYPTED, "x");
+            encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+            	result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(serviceToken);
-	        var jo = JSON.parse(jsonString);
+	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        tokendataJo[KEY_ENCRYPTED] = "x";
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
-	        
-	        ServiceToken$parse(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
         	var f = function() { throw exception; };
-        	expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+        	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
@@ -955,24 +1244,40 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+        waitsFor(function() { return serviceToken; }, "serviceToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, serviceToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var modifiedTokendata;
+        runs(function() {
+            var tokendata = mo.getBytes(KEY_TOKENDATA);
+            var tokendataMo = encoder.parseObject(tokendata);
+            tokendataMo.put(KEY_COMPRESSION_ALGORITHM, "x");
+            encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+            	result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
         
         var exception;
         runs(function() {
-            var jsonString = JSON.stringify(serviceToken);
-            var jo = JSON.parse(jsonString);
+            mo.put(KEY_TOKENDATA, modifiedTokendata);
             
-            var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-            var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-            tokendataJo[KEY_COMPRESSION_ALGORITHM] = "x";
-            jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
-            
-            ServiceToken$parse(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+            ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
                 result: function() {},
-                error: function(err) { exception = err; }
+                error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslException(MslError.UNIDENTIFIED_COMPRESSION));
@@ -987,28 +1292,43 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+        waitsFor(function() { return serviceToken; }, "serviceToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, serviceToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var modifiedTokendata;
+        runs(function() {
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        tokendataMo.remove(KEY_SERVICEDATA);
+            encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+            	result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(serviceToken);
-	        var jo = JSON.parse(jsonString);
+	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        expect([KEY_SERVICEDATA]).not.toBeNull();
-	        delete tokendataJo[KEY_SERVICEDATA];
-	        jo[KEY_TOKENDATA] = base64$encode(textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET));
-	        
-	        ServiceToken$parse(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
-	        	error: function(err) { exception = err; }
+	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
         	var f = function() { throw exception; };
-        	expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+        	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
@@ -1020,35 +1340,50 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+        waitsFor(function() { return serviceToken; }, "serviceToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, serviceToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var modifiedTokendata;
+        runs(function() {
+        	var tokendata = mo.getBytes(KEY_TOKENDATA);
+        	var tokendataMo = encoder.parseObject(tokendata);
+        	tokendataMo.put(KEY_SERVICEDATA, "x");
+
+            encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+            	result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
         
         var exception;
         runs(function() {
-        	var jsonString = JSON.stringify(serviceToken);
-        	var jo = JSON.parse(jsonString);
-
-        	var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-        	var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-        	tokendataJo[KEY_SERVICEDATA] = "x";
-
-        	var modifiedTokendata = textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET);
-        	CRYPTO_CONTEXT.sign(modifiedTokendata, {
+        	CRYPTO_CONTEXT.sign(modifiedTokendata, encoder, ENCODER_FORMAT, {
         		result: function(signature) {
-                	jo[KEY_TOKENDATA] = base64$encode(modifiedTokendata);
-                	jo[KEY_SIGNATURE] = base64$encode(signature);
+                	mo.put(KEY_TOKENDATA, modifiedTokendata);
+                	mo.put(KEY_SIGNATURE, signature);
 
-                	ServiceToken$parse(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+                	ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
                 		result: function() {},
-                		error: function(err) { exception = err; }
+                		error: function(e) { exception = e; }
                 	});
         		},
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
+        
         runs(function() {
         	var f = function() { throw exception; };
-        	expect(f).toThrow(new MslException(MslError.SERVICETOKEN_SERVICEDATA_INVALID));
+        	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
@@ -1060,24 +1395,30 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
-
-        var joServiceToken;
+        waitsFor(function() { return serviceToken; }, "serviceToken", 100);
+        
+        var mo;
         runs(function() {
 	        expect(serviceToken.isDeleted()).toBeTruthy();
-	        var jsonString = JSON.stringify(serviceToken);
-	        var jo = JSON.parse(jsonString);
-        
-            ServiceToken$parse(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
-                result: function(token) { joServiceToken = token; },
+        	MslTestUtils.toMslObject(encoder, serviceToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+
+        var moServiceToken;
+        runs(function() {
+            ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+                result: function(token) { moServiceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return joServiceToken; }, "joServiceToken not received", 100);
+        waitsFor(function() { return moServiceToken; }, "moServiceToken", 100);
         
         runs(function() {
-	        expect(joServiceToken.isDeleted()).toBeTruthy();
-	        expect(joServiceToken.data.length).toEqual(0);
+	        expect(moServiceToken.isDeleted()).toBeTruthy();
+	        expect(moServiceToken.data.length).toEqual(0);
         });
     });
     
@@ -1089,27 +1430,33 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
-
-        var joServiceToken;
+        waitsFor(function() { return serviceToken; }, "serviceToken", 100);
+        
+        var mo;
         runs(function() {
-	        var jsonString = JSON.stringify(serviceToken);
-	        var jo = JSON.parse(jsonString);
-	        
-	        var signature = base64$decode(jo[KEY_SIGNATURE]);
+        	MslTestUtils.toMslObject(encoder, serviceToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+
+        var moServiceToken;
+        runs(function() {
+	        var signature = mo.getBytes(KEY_SIGNATURE);
 	        ++signature[0];
-	        jo[KEY_SIGNATURE] = base64$encode(signature);
+	        mo.put(KEY_SIGNATURE, signature);
 	        
-	        ServiceToken$parse(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
-	        	result: function(token) { joServiceToken = token; },
+	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	        	result: function(token) { moServiceToken = token; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return joServiceToken; }, "joServiceToken not received", 100);
+        waitsFor(function() { return moServiceToken; }, "moServiceToken", 100);
         
         runs(function() {
-	        expect(joServiceToken.isDeleted()).toBeTruthy();
-	        expect(joServiceToken.data.length).toEqual(0);
+	        expect(moServiceToken.isDeleted()).toBeTruthy();
+	        expect(moServiceToken.data.length).toEqual(0);
         });
     });
     
@@ -1121,35 +1468,49 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+        waitsFor(function() { return serviceToken; }, "serviceToken", 100);
+        
+        var mo;
+        runs(function() {
+        	MslTestUtils.toMslObject(encoder, serviceToken, {
+        		result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var modifiedTokendata;
+        runs(function() {
+	        // This is testing service data that is verified but corrupt.
+	        var tokendata = mo.getBytes(KEY_TOKENDATA);
+	        var tokendataMo = encoder.parseObject(tokendata);
+	        var servicedata = tokendataMo.getBytes(KEY_SERVICEDATA);
+	        ++servicedata[servicedata.length-1];
+	        tokendataMo.put(KEY_SERVICEDATA, servicedata);
+	        
+	        encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
+	        	result: function(x) { modifiedTokendata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
         
         var exception;
         runs(function() {
-	        var jsonString = JSON.stringify(serviceToken);
-	        var jo = JSON.parse(jsonString);
-	        
-	        // This is testing service data that is verified but corrupt.
-	        var tokendata = base64$decode(jo[KEY_TOKENDATA]);
-	        var tokendataJo = JSON.parse(textEncoding$getString(tokendata, MslConstants$DEFAULT_CHARSET));
-	        var servicedata = base64$decode(tokendataJo[KEY_SERVICEDATA]);
-	        ++servicedata[servicedata.length-1];
-	        tokendataJo[KEY_SERVICEDATA] = base64$encode(servicedata);
-	        
-	        var modifiedTokendata = textEncoding$getBytes(JSON.stringify(tokendataJo), MslConstants$DEFAULT_CHARSET);
-	        CRYPTO_CONTEXT.sign(modifiedTokendata, {
+	        CRYPTO_CONTEXT.sign(modifiedTokendata, encoder, ENCODER_FORMAT, {
 	        	result: function(signature) {
-	    	        jo[KEY_TOKENDATA] = base64$encode(modifiedTokendata);
-	    	        jo[KEY_SIGNATURE] = base64$encode(signature);
+	    	        mo.put(KEY_TOKENDATA, modifiedTokendata);
+	    	        mo.put(KEY_SIGNATURE, signature);
 	    	        
-	    	        ServiceToken$parse(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	    	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	    	        	result: function() {},
-	    	        	error: function(err) { exception = err; }
+	    	        	error: function(e) { exception = e; }
 	    	        });
 	        	},
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
     	});
-        waitsFor(function() { return exception; }, "exception not received", 100);
+        waitsFor(function() { return exception; }, "exception", 100);
         
         runs(function() {
         	var f = function() { throw exception; };
@@ -1165,40 +1526,56 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+        waitsFor(function() { return serviceToken; }, "serviceToken", 100);
         
-        var jsonString = undefined, joServiceToken;
+        var encode;
         runs(function() {
-	        jsonString = JSON.stringify(serviceToken);
-	        var jo = JSON.parse(jsonString);
-	        
-	        var signature = base64$decode(jo[KEY_SIGNATURE]);
-	        ++signature[0];
-	        jo[KEY_SIGNATURE] = base64$encode(signature);
+        	serviceToken.toMslEncoding(encoder, ENCODER_FORMAT, {
+        		result: function(x) { encode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return encode; }, "encode", 100);
         
-            ServiceToken$parse(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
-                result: function(token) { joServiceToken = token; },
+        var moServiceToken;
+        runs(function() {
+	        var mo = encoder.parseObject(encode);
+	        
+	        var signature = mo.getBytes(KEY_SIGNATURE);
+	        ++signature[0];
+	        mo.put(KEY_SIGNATURE, signature);
+        
+            ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+                result: function(token) { moServiceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return jsonString && joServiceToken; }, "json string and joServiceToken not received", 100);
+        waitsFor(function() { return moServiceToken; }, "moServiceToken", 100);
+        
+        var moEncode;
+        runs(function() {
+	        expect(moServiceToken.isDecrypted()).toBeFalsy();
+	        expect(moServiceToken.isDeleted()).toBeFalsy();
+	        expect(moServiceToken.isVerified()).toBeFalsy();
+	        expect(moServiceToken.data).toBeNull();
+	        expect(moServiceToken.isBoundTo(MASTER_TOKEN)).toEqual(serviceToken.isBoundTo(MASTER_TOKEN));
+	        expect(moServiceToken.isBoundTo(USER_ID_TOKEN)).toEqual(serviceToken.isBoundTo(USER_ID_TOKEN));
+	        expect(moServiceToken.isMasterTokenBound()).toEqual(serviceToken.isMasterTokenBound());
+	        expect(moServiceToken.isUserIdTokenBound()).toEqual(serviceToken.isUserIdTokenBound());
+	        expect(moServiceToken.isUnbound()).toEqual(serviceToken.isUnbound());
+	        expect(moServiceToken.mtSerialNumber).toEqual(serviceToken.mtSerialNumber);
+	        expect(moServiceToken.uitSerialNumber).toEqual(serviceToken.uitSerialNumber);
+	        expect(moServiceToken.name).toEqual(serviceToken.name);
+	        moServiceToken.toMslEncoding(encoder, ENCODER_FORMAT, {
+	        	result: function(x) { moEncode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return moEncode; }, "moEncode", 100);
         
         runs(function() {
-	        expect(joServiceToken.isDecrypted()).toBeFalsy();
-	        expect(joServiceToken.isDeleted()).toBeFalsy();
-	        expect(joServiceToken.isVerified()).toBeFalsy();
-	        expect(joServiceToken.data).toBeNull();
-	        expect(joServiceToken.isBoundTo(MASTER_TOKEN)).toEqual(serviceToken.isBoundTo(MASTER_TOKEN));
-	        expect(joServiceToken.isBoundTo(USER_ID_TOKEN)).toEqual(serviceToken.isBoundTo(USER_ID_TOKEN));
-	        expect(joServiceToken.isMasterTokenBound()).toEqual(serviceToken.isMasterTokenBound());
-	        expect(joServiceToken.isUserIdTokenBound()).toEqual(serviceToken.isUserIdTokenBound());
-	        expect(joServiceToken.isUnbound()).toEqual(serviceToken.isUnbound());
-	        expect(joServiceToken.mtSerialNumber).toEqual(serviceToken.mtSerialNumber);
-	        expect(joServiceToken.uitSerialNumber).toEqual(serviceToken.uitSerialNumber);
-	        expect(joServiceToken.name).toEqual(serviceToken.name);
-	        var joJsonString = JSON.stringify(joServiceToken);
-	        expect(joJsonString).not.toBeNull();
-	        expect(joJsonString).not.toEqual(jsonString);
+	        expect(moEncode).not.toBeNull();
+	        expect(moEncode).not.toEqual(encode);
         });
     });
     
@@ -1210,37 +1587,53 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+        waitsFor(function() { return serviceToken; }, "serviceToken", 100);
         
-        var jsonString = undefined, joServiceToken;
+        var encode;
         runs(function() {
         	expect(new Uint8Array(serviceToken.data)).toEqual(DATA);
-        	jsonString = JSON.stringify(serviceToken);
-        	var jo = JSON.parse(jsonString);
+        	serviceToken.toMslEncoding(encoder, ENCODER_FORMAT, {
+        		result: function(x) { encode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return encode; }, "encode", 100);
+        
+        var moServiceToken;
+        runs(function() {
+        	var mo = encoder.parseObject(encode);
 
-            ServiceToken$parse(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
-                result: function(token) { joServiceToken = token; },
+            ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+                result: function(token) { moServiceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return jsonString && joServiceToken; }, "json string and joServiceToken not received", 100);
+        waitsFor(function() { return moServiceToken; }, "moServiceToken", 100);
+
+        var moEncode;
+        runs(function() {
+	        expect(moServiceToken.isVerified()).toBeTruthy();
+	        expect(moServiceToken.isDeleted()).toBeFalsy();
+	        expect(moServiceToken.isDecrypted()).toBeTruthy();
+	        expect(new Uint8Array(moServiceToken.data)).toEqual(new Uint8Array(serviceToken.data));
+	        expect(moServiceToken.isBoundTo(MASTER_TOKEN)).toEqual(serviceToken.isBoundTo(MASTER_TOKEN));
+	        expect(moServiceToken.isBoundTo(USER_ID_TOKEN)).toEqual(serviceToken.isBoundTo(USER_ID_TOKEN));
+	        expect(moServiceToken.isMasterTokenBound()).toEqual(serviceToken.isMasterTokenBound());
+	        expect(moServiceToken.isUserIdTokenBound()).toEqual(serviceToken.isUserIdTokenBound());
+	        expect(moServiceToken.isUnbound()).toEqual(serviceToken.isUnbound());
+	        expect(moServiceToken.mtSerialNumber).toEqual(serviceToken.mtSerialNumber);
+	        expect(moServiceToken.uitSerialNumber).toEqual(serviceToken.uitSerialNumber);
+	        expect(moServiceToken.name).toEqual(serviceToken.name);
+	        moServiceToken.toMslEncoding(encoder, ENCODER_FORMAT, {
+	        	result: function(x) { moEncode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return moEncode; }, "moEncode", 100);
         
         runs(function() {
-	        expect(joServiceToken.isVerified()).toBeTruthy();
-	        expect(joServiceToken.isDeleted()).toBeFalsy();
-	        expect(joServiceToken.isDecrypted()).toBeTruthy();
-	        expect(new Uint8Array(joServiceToken.data)).toEqual(new Uint8Array(serviceToken.data));
-	        expect(joServiceToken.isBoundTo(MASTER_TOKEN)).toEqual(serviceToken.isBoundTo(MASTER_TOKEN));
-	        expect(joServiceToken.isBoundTo(USER_ID_TOKEN)).toEqual(serviceToken.isBoundTo(USER_ID_TOKEN));
-	        expect(joServiceToken.isMasterTokenBound()).toEqual(serviceToken.isMasterTokenBound());
-	        expect(joServiceToken.isUserIdTokenBound()).toEqual(serviceToken.isUserIdTokenBound());
-	        expect(joServiceToken.isUnbound()).toEqual(serviceToken.isUnbound());
-	        expect(joServiceToken.mtSerialNumber).toEqual(serviceToken.mtSerialNumber);
-	        expect(joServiceToken.uitSerialNumber).toEqual(serviceToken.uitSerialNumber);
-	        expect(joServiceToken.name).toEqual(serviceToken.name);
-	        var joJsonString = JSON.stringify(joServiceToken);
-	        expect(joJsonString).not.toBeNull();
-	        expect(joJsonString).toEqual(jsonString);
+	        expect(moEncode).not.toBeNull();
+	        expect(moEncode).toEqual(encode);
         });
     });
     
@@ -1252,36 +1645,52 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+        waitsFor(function() { return serviceToken; }, "serviceToken", 100);
         
-        var jsonString = undefined, joServiceToken;
+        var encode;
         runs(function() {
-        	jsonString = JSON.stringify(serviceToken);
-        	var jo = JSON.parse(jsonString);
+        	serviceToken.toMslEncoding(encoder, ENCODER_FORMAT, {
+        		result: function(x) { encode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return encode; }, "encode", 100);
         
-            ServiceToken$parse(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, null, {
-                result: function(token) { joServiceToken = token; },
+        var moServiceToken;
+        runs(function() {
+        	var mo = encoder.parseObject(encode);
+        
+            ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, null, {
+                result: function(token) { moServiceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return joServiceToken; }, "joServiceToken not received", 100);
+        waitsFor(function() { return moServiceToken; }, "moServiceToken", 100);
+
+        var moEncode;
+        runs(function() {
+	        expect(moServiceToken.isDecrypted()).toBeFalsy();
+	        expect(moServiceToken.isDeleted()).toBeFalsy();
+	        expect(moServiceToken.isVerified()).toBeFalsy();
+	        expect(moServiceToken.data).toBeNull();
+	        expect(moServiceToken.isBoundTo(MASTER_TOKEN)).toEqual(serviceToken.isBoundTo(MASTER_TOKEN));
+	        expect(moServiceToken.isBoundTo(USER_ID_TOKEN)).toEqual(serviceToken.isBoundTo(USER_ID_TOKEN));
+	        expect(moServiceToken.isMasterTokenBound()).toEqual(serviceToken.isMasterTokenBound());
+	        expect(moServiceToken.isUserIdTokenBound()).toEqual(serviceToken.isUserIdTokenBound());
+	        expect(moServiceToken.isUnbound()).toEqual(serviceToken.isUnbound());
+	        expect(moServiceToken.mtSerialNumber).toEqual(serviceToken.mtSerialNumber);
+	        expect(moServiceToken.uitSerialNumber).toEqual(serviceToken.uitSerialNumber);
+	        expect(moServiceToken.name).toEqual(serviceToken.name);
+	        moServiceToken.toMslEncoding(encoder, ENCODER_FORMAT, {
+	        	result: function(x) { moEncode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return moEncode; }, "moEncode", 100);
         
         runs(function() {
-	        expect(joServiceToken.isDecrypted()).toBeFalsy();
-	        expect(joServiceToken.isDeleted()).toBeFalsy();
-	        expect(joServiceToken.isVerified()).toBeFalsy();
-	        expect(joServiceToken.data).toBeNull();
-	        expect(joServiceToken.isBoundTo(MASTER_TOKEN)).toEqual(serviceToken.isBoundTo(MASTER_TOKEN));
-	        expect(joServiceToken.isBoundTo(USER_ID_TOKEN)).toEqual(serviceToken.isBoundTo(USER_ID_TOKEN));
-	        expect(joServiceToken.isMasterTokenBound()).toEqual(serviceToken.isMasterTokenBound());
-	        expect(joServiceToken.isUserIdTokenBound()).toEqual(serviceToken.isUserIdTokenBound());
-	        expect(joServiceToken.isUnbound()).toEqual(serviceToken.isUnbound());
-	        expect(joServiceToken.mtSerialNumber).toEqual(serviceToken.mtSerialNumber);
-	        expect(joServiceToken.uitSerialNumber).toEqual(serviceToken.uitSerialNumber);
-	        expect(joServiceToken.name).toEqual(serviceToken.name);
-	        var joJsonString = JSON.stringify(joServiceToken);
-	        expect(joJsonString).not.toBeNull();
-	        expect(joJsonString).toEqual(jsonString);
+	        expect(moEncode).not.toBeNull();
+	        expect(moEncode).toEqual(encode);
         });
     });
     
@@ -1293,42 +1702,57 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+        waitsFor(function() { return serviceToken; }, "serviceToken", 100);
         
-        var jsonString = undefined, joServiceToken;
+        var encode;
         runs(function() {
-        	jsonString = JSON.stringify(serviceToken);
-        	var jo = JSON.parse(jsonString);
+        	serviceToken.toMslEncoding(encoder, ENCODER_FORMAT, {
+        		result: function(x) { encode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+        	});
+        });
+        waitsFor(function() { return encode; }, "encode", 100);
+        
+        var moServiceToken;
+        runs(function() {
+        	var mo = encoder.parseObject(encode);
 
-        	joServiceToken = undefined;
-            ServiceToken$parse(ctx, jo, MASTER_TOKEN, USER_ID_TOKEN, null, {
-                result: function(token) { joServiceToken = token; },
+            ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, null, {
+                result: function(token) { moServiceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return jsonString && joServiceToken; }, "json string and joServiceToken not received", 100);
+        waitsFor(function() { return moServiceToken; }, "moServiceToken", 100);
+
+        var moEncode;
+        runs(function() {
+	        expect(moServiceToken.isDecrypted()).toBeFalsy();
+	        expect(moServiceToken.isDeleted()).toBeFalsy();
+	        expect(moServiceToken.isVerified()).toBeFalsy();
+	        expect(moServiceToken.data).toBeNull();
+	        expect(moServiceToken.isBoundTo(MASTER_TOKEN)).toEqual(serviceToken.isBoundTo(MASTER_TOKEN));
+	        expect(moServiceToken.isBoundTo(USER_ID_TOKEN)).toEqual(serviceToken.isBoundTo(USER_ID_TOKEN));
+	        expect(moServiceToken.isMasterTokenBound()).toEqual(serviceToken.isMasterTokenBound());
+	        expect(moServiceToken.isUserIdTokenBound()).toEqual(serviceToken.isUserIdTokenBound());
+	        expect(moServiceToken.isUnbound()).toEqual(serviceToken.isUnbound());
+	        expect(moServiceToken.mtSerialNumber).toEqual(serviceToken.mtSerialNumber);
+	        expect(moServiceToken.uitSerialNumber).toEqual(serviceToken.uitSerialNumber);
+	        expect(moServiceToken.name).toEqual(serviceToken.name);
+	        moServiceToken.toMslEncoding(encoder, ENCODER_FORMAT, {
+	        	result: function(x) { moEncode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return moEncode; }, "moEncode", 100);
         
         runs(function() {
-	        expect(joServiceToken.isDecrypted()).toBeFalsy();
-	        expect(joServiceToken.isDeleted()).toBeFalsy();
-	        expect(joServiceToken.isVerified()).toBeFalsy();
-	        expect(joServiceToken.data).toBeNull();
-	        expect(joServiceToken.isBoundTo(MASTER_TOKEN)).toEqual(serviceToken.isBoundTo(MASTER_TOKEN));
-	        expect(joServiceToken.isBoundTo(USER_ID_TOKEN)).toEqual(serviceToken.isBoundTo(USER_ID_TOKEN));
-	        expect(joServiceToken.isMasterTokenBound()).toEqual(serviceToken.isMasterTokenBound());
-	        expect(joServiceToken.isUserIdTokenBound()).toEqual(serviceToken.isUserIdTokenBound());
-	        expect(joServiceToken.isUnbound()).toEqual(serviceToken.isUnbound());
-	        expect(joServiceToken.mtSerialNumber).toEqual(serviceToken.mtSerialNumber);
-	        expect(joServiceToken.uitSerialNumber).toEqual(serviceToken.uitSerialNumber);
-	        expect(joServiceToken.name).toEqual(serviceToken.name);
-	        var joJsonString = JSON.stringify(joServiceToken);
-	        expect(joJsonString).not.toBeNull();
-	        expect(joJsonString).toEqual(jsonString);
+	        expect(moEncode).not.toBeNull();
+	        expect(moEncode).toEqual(encode);
         });
     });
     
     it("isBoundTo(masterToken)", function() {
-        var masterTokenA = undefined, masterTokenB;
+        var masterTokenA, masterTokenB;
         runs(function() {
         	MslTestUtils.getMasterToken(ctx, 1, 1, {
         		result: function(token) { masterTokenA = token; },
@@ -1339,9 +1763,9 @@ function(encoding, compressionAlgo) {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
         	});
         });
-        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens not received", 100);
+        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens", 100);
         
-        var serviceTokenA = undefined, serviceTokenB;
+        var serviceTokenA, serviceTokenB;
         runs(function() {
             ServiceToken$create(ctx, NAME, DATA, masterTokenA, null, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceTokenA = token; },
@@ -1352,7 +1776,7 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceTokenA && serviceTokenB; }, "service tokens not received", 100);
+        waitsFor(function() { return serviceTokenA && serviceTokenB; }, "service tokens", 100);
         
         runs(function() {
 	        expect(serviceTokenA.isBoundTo(masterTokenA)).toBeTruthy();
@@ -1365,7 +1789,7 @@ function(encoding, compressionAlgo) {
     });
     
     it("isBoundTo(userIdToken)", function() {
-        var userIdTokenA = undefined, userIdTokenB;
+        var userIdTokenA, userIdTokenB;
         runs(function() {
         	MslTestUtils.getUserIdToken(ctx, MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory.USER, {
         		result: function(token) { userIdTokenA = token; },
@@ -1376,9 +1800,9 @@ function(encoding, compressionAlgo) {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
         	});
         });
-        waitsFor(function() { return userIdTokenA && userIdTokenB; }, "user ID tokens not received", 100);
+        waitsFor(function() { return userIdTokenA && userIdTokenB; }, "user ID tokens", 100);
         
-        var serviceTokenA = undefined, serviceTokenB;
+        var serviceTokenA, serviceTokenB;
         runs(function() {
             ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, userIdTokenA, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceTokenA = token; },
@@ -1389,7 +1813,7 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceTokenA && serviceTokenB; }, "service tokens not received", 100);
+        waitsFor(function() { return serviceTokenA && serviceTokenB; }, "service tokens", 100);
         
         runs(function() {
 	        expect(serviceTokenA.isBoundTo(userIdTokenA)).toBeTruthy();
@@ -1409,7 +1833,7 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+        waitsFor(function() { return serviceToken; }, "serviceToken", 100);
         runs(function() {
 	        expect(serviceToken.isUnbound()).toBeTruthy();
 	        expect(serviceToken.isBoundTo(MASTER_TOKEN)).toBeFalsy();
@@ -1432,16 +1856,21 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceTokenA && serviceTokenB; }, "service tokens A and B not received", 100);
+        waitsFor(function() { return serviceTokenA && serviceTokenB; }, "service tokens A and B", 100);
         
         var serviceTokenA2;
         runs(function() {
-            ServiceToken$parse(ctx, JSON.parse(JSON.stringify(serviceTokenA)), MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
-                result: function(token) { serviceTokenA2 = token; },
+        	MslTestUtils.toMslObject(encoder, serviceTokenA, {
+        		result: function(mo) {
+		            ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+		                result: function(token) { serviceTokenA2 = token; },
+		                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		            });
+        		},
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            });
+        	});
         });
-        waitsFor(function() { return serviceTokenA2; }, "service token A2 not received", 100);
+        waitsFor(function() { return serviceTokenA2; }, "service token A2", 100);
 
         runs(function() {
 	        expect(serviceTokenA.equals(serviceTokenA)).toBeTruthy();
@@ -1458,7 +1887,7 @@ function(encoding, compressionAlgo) {
     });
     
     it("equals master token serial number", function() {
-        var masterTokenA = undefined, masterTokenB;
+        var masterTokenA, masterTokenB;
         runs(function() {
         	MslTestUtils.getMasterToken(ctx, 1, 1, {
         		result: function(token) { masterTokenA = token; },
@@ -1469,9 +1898,9 @@ function(encoding, compressionAlgo) {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
         	});
         });
-        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens not received", 100);
+        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens", 100);
         
-        var serviceTokenA = undefined, serviceTokenB;
+        var serviceTokenA, serviceTokenB;
         runs(function() {
             ServiceToken$create(ctx, NAME, DATA, masterTokenA, null, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceTokenA = token; },
@@ -1482,16 +1911,21 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceTokenA && serviceTokenB; }, "service tokens A and B not received", 100);
-        
+        waitsFor(function() { return serviceTokenA && serviceTokenB; }, "service tokens A and B", 100);
+
         var serviceTokenA2;
         runs(function() {
-            ServiceToken$parse(ctx, JSON.parse(JSON.stringify(serviceTokenA)), masterTokenA, null, CRYPTO_CONTEXT, {
-                result: function(token) { serviceTokenA2 = token; },
+        	MslTestUtils.toMslObject(encoder, serviceTokenA, {
+        		result: function(mo) {
+		            ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+		                result: function(token) { serviceTokenA2 = token; },
+		                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		            });
+        		},
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            });
+        	});
         });
-        waitsFor(function() { return serviceTokenA2; }, "service token A2 not received", 100);
+        waitsFor(function() { return serviceTokenA2; }, "service token A2", 100);
 
         runs(function() {
 	        expect(serviceTokenA.equals(serviceTokenA)).toBeTruthy();
@@ -1508,7 +1942,7 @@ function(encoding, compressionAlgo) {
     });
     
     it("equals user ID token serial number", function() {
-        var userIdTokenA = undefined, userIdTokenB;
+        var userIdTokenA, userIdTokenB;
         runs(function() {
         	MslTestUtils.getUserIdToken(ctx, MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory.USER, {
         		result: function(token) { userIdTokenA = token; },
@@ -1519,9 +1953,9 @@ function(encoding, compressionAlgo) {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
         	});
         });
-        waitsFor(function() { return userIdTokenA && userIdTokenB; }, "user ID tokens not received", 100);
+        waitsFor(function() { return userIdTokenA && userIdTokenB; }, "user ID tokens", 100);
         
-        var serviceTokenA = undefined, serviceTokenB;
+        var serviceTokenA, serviceTokenB;
         runs(function() {
             ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, userIdTokenA, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceTokenA = token; },
@@ -1532,16 +1966,21 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceTokenA && serviceTokenB; }, "service tokens A and B not received", 100);
-        
+        waitsFor(function() { return serviceTokenA && serviceTokenB; }, "service tokens A and B", 100);
+
         var serviceTokenA2;
         runs(function() {
-            ServiceToken$parse(ctx, JSON.parse(JSON.stringify(serviceTokenA)), MASTER_TOKEN, userIdTokenA, CRYPTO_CONTEXT, {
-                result: function(token) { serviceTokenA2 = token; },
+        	MslTestUtils.toMslObject(encoder, serviceTokenA, {
+        		result: function(mo) {
+		            ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+		                result: function(token) { serviceTokenA2 = token; },
+		                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+		            });
+        		},
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            });
+        	});
         });
-        waitsFor(function() { return serviceTokenA2; }, "service token A2 not received", 100);
+        waitsFor(function() { return serviceTokenA2; }, "service token A2", 100);
 
         runs(function() {
 	        expect(serviceTokenA.equals(serviceTokenA)).toBeTruthy();
@@ -1565,7 +2004,7 @@ function(encoding, compressionAlgo) {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+        waitsFor(function() { return serviceToken; }, "serviceToken", 100);
         runs(function() {
 	        expect(serviceToken.equals(null)).toBeFalsy();
 	        expect(serviceToken.equals(DATA)).toBeFalsy();

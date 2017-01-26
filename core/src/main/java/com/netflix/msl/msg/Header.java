@@ -17,10 +17,6 @@ package com.netflix.msl.msg;
 
 import java.util.Map;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.json.JSONString;
-
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
@@ -31,8 +27,11 @@ import com.netflix.msl.MslMessageException;
 import com.netflix.msl.MslUserAuthException;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
+import com.netflix.msl.io.MslEncodable;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.tokens.MasterToken;
-import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -47,14 +46,14 @@ import com.netflix.msl.util.MslContext;
  *   "#conditions" : [ "entityauthdata xor mastertoken" ],
  *   "entityauthdata" : entityauthdata,
  *   "mastertoken" : mastertoken,
- *   "headerdata" : "base64",
- *   "signature" : "base64"
+ *   "headerdata" : "binary",
+ *   "signature" : "binary"
  * }} where:
  * <ul>
  * <li>{@code entityauthdata} is the entity authentication data (mutually exclusive with mastertoken)</li>
  * <li>{@code mastertoken} is the master token (mutually exclusive with entityauthdata)</li>
- * <li>{@code headerdata} is the Base64-encoded encrypted header data (headerdata)</li>
- * <li>{@code signature} is the Base64-encoded verification data of the header data</li>
+ * <li>{@code headerdata} is the encrypted header data (headerdata)</li>
+ * <li>{@code signature} is the verification data of the header data</li>
  * </ul></p>
  * 
  * <p>An error header is represented as
@@ -62,20 +61,20 @@ import com.netflix.msl.util.MslContext;
  * errorheader = {
  *   "#mandatory" : [ "entityauthdata", "errordata", "signature" ],
  *   "entityauthdata" : entityauthdata,
- *   "errordata" : "base64",
- *   "signature" : "base64"
+ *   "errordata" : "binary",
+ *   "signature" : "binary"
  * }} where:
  * <ul>
  * <li>{@code entityauthdata} is the entity authentication data</li>
- * <li>{@code errordata} is the Base64-encoded encrypted error data (errordata)</li>
- * <li>{@code signature} is the Base64-encoded verification data of the error data</li>
+ * <li>{@code errordata} is the encrypted error data (errordata)</li>
+ * <li>{@code signature} is the verification data of the error data</li>
  * </ul></p>
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-public abstract class Header implements JSONString {
+public abstract class Header implements MslEncodable {
     /**
-     * <p>Construct a new header from the provided JSON object.</p>
+     * <p>Construct a new header from the provided MSL object.</p>
      * 
      * <p>Headers are encrypted and signed. If a master token is found, it will
      * be used for this purpose. Otherwise the crypto context appropriate for
@@ -92,11 +91,11 @@ public abstract class Header implements JSONString {
      * will be used.</p>
      * 
      * @param ctx MSL context.
-     * @param headerJO header JSON object.
+     * @param headerMo header MSL object.
      * @param cryptoContexts the map of service token names onto crypto
      *        contexts used to decrypt and verify service tokens.
      * @return the header.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslCryptoException if there is an error decrypting or verifying
      *         the message.
      * @throws MslEntityAuthException if unable to create the entity
@@ -105,66 +104,53 @@ public abstract class Header implements JSONString {
      *         or key response data.
      * @throws MslUserAuthException if unable to create the user authentication
      *         data.
-     * @throws MslMessageException if the header signature is invalid.
+     * @throws MslMessageException if the message does not contain an entity
+     *         authentication data or a master token, the header data is
+     *         missing or invalid, or the message ID is negative.
      * @throws MslException if the message does not contain an entity
      *         authentication data or a master token or a token is improperly
      *         bound to another token.
      */
-    public static Header parseHeader(final MslContext ctx, final JSONObject headerJO, final Map<String,ICryptoContext> cryptoContexts) throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslMessageException, MslException {
+    public static Header parseHeader(final MslContext ctx, final MslObject headerMo, final Map<String,ICryptoContext> cryptoContexts) throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslMessageException, MslException {
         // Pull authentication data.
         final EntityAuthenticationData entityAuthData;
         final MasterToken masterToken;
         final byte[] signature;
         try {
             // Pull message data.
-            entityAuthData = (headerJO.has(HeaderKeys.KEY_ENTITY_AUTHENTICATION_DATA))
-                ? EntityAuthenticationData.create(ctx, headerJO.getJSONObject(HeaderKeys.KEY_ENTITY_AUTHENTICATION_DATA))
+            final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+            entityAuthData = (headerMo.has(HeaderKeys.KEY_ENTITY_AUTHENTICATION_DATA))
+                ? EntityAuthenticationData.create(ctx, headerMo.getMslObject(HeaderKeys.KEY_ENTITY_AUTHENTICATION_DATA, encoder))
                 : null;
-            masterToken = (headerJO.has(HeaderKeys.KEY_MASTER_TOKEN))
-                ? new MasterToken(ctx, headerJO.getJSONObject(HeaderKeys.KEY_MASTER_TOKEN))
+            masterToken = (headerMo.has(HeaderKeys.KEY_MASTER_TOKEN))
+                ? new MasterToken(ctx, headerMo.getMslObject(HeaderKeys.KEY_MASTER_TOKEN, encoder))
                 : null;
-            try {
-                signature = Base64.decode(headerJO.getString(HeaderKeys.KEY_SIGNATURE));
-            } catch (final IllegalArgumentException e) {
-                throw new MslMessageException(MslError.HEADER_SIGNATURE_INVALID, "header/errormsg " + headerJO.toString());
-            }
-            if (signature == null)
-                throw new MslMessageException(MslError.HEADER_SIGNATURE_INVALID, "header/errormsg " + headerJO.toString());
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "header/errormsg " + headerJO.toString(), e);
+            signature = headerMo.getBytes(HeaderKeys.KEY_SIGNATURE);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "header/errormsg " + headerMo, e);
         }
 
         try {
             // Process message headers.
-            if (headerJO.has(HeaderKeys.KEY_HEADERDATA)) {
-                final String headerdata = headerJO.getString(HeaderKeys.KEY_HEADERDATA);
-                final MessageHeader messageHeader = new MessageHeader(ctx, headerdata, entityAuthData, masterToken, signature, cryptoContexts);
-                
-                // Make sure the header was verified and decrypted.
-                //
-                // Throw different errors depending on whether or not a master
-                // token was used.
-                if (!messageHeader.isDecrypted()) {
-                    if (masterToken != null)
-                        throw new MslCryptoException(MslError.MESSAGE_MASTERTOKENBASED_VERIFICATION_FAILED).setMasterToken(masterToken);
-                    else
-                        throw new MslCryptoException(MslError.MESSAGE_ENTITYDATABASED_VERIFICATION_FAILED).setEntityAuthenticationData(entityAuthData);
-                }
-                
-                // Return the header.
-                return messageHeader;
+            if (headerMo.has(HeaderKeys.KEY_HEADERDATA)) {
+                final byte[] headerdata = headerMo.getBytes(HeaderKeys.KEY_HEADERDATA);
+                if (headerdata.length == 0)
+                    throw new MslMessageException(MslError.HEADER_DATA_MISSING).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData);
+                return new MessageHeader(ctx, headerdata, entityAuthData, masterToken, signature, cryptoContexts);
             }
             
             // Process error headers.
-            else if (headerJO.has(HeaderKeys.KEY_ERRORDATA)) {
-                final String errordata = headerJO.getString(HeaderKeys.KEY_ERRORDATA);
+            else if (headerMo.has(HeaderKeys.KEY_ERRORDATA)) {
+                final byte[] errordata = headerMo.getBytes(HeaderKeys.KEY_ERRORDATA);
+                if (errordata.length == 0)
+                    throw new MslMessageException(MslError.HEADER_DATA_MISSING).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData);
                 return new ErrorHeader(ctx, errordata, entityAuthData, signature);
             }
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "header/errormsg " + headerJO.toString(), e);
+            
+            // Unknown header.
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, headerMo.toString());
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "header/errormsg " + headerMo, e);
         }
-        
-        // Unknown header.
-        throw new MslEncodingException(MslError.JSON_PARSE_ERROR, headerJO.toString());
     }
 }

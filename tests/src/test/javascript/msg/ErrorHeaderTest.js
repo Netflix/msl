@@ -20,30 +20,33 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("ErrorHeader", function() {
+    /** MSL encoder format. */
+    var ENCODER_FORMAT = MslEncoderFormat.JSON;
+    
     /** Milliseconds per second. */
     var MILLISECONDS_PER_SECOND = 1000;
     
-    /** JSON key entity authentication data. */
+    /** Key entity authentication data. */
     var KEY_ENTITY_AUTHENTICATION_DATA = "entityauthdata";
-    /** JSON key error data. */
+    /** Key error data. */
     var KEY_ERRORDATA = "errordata";
-    /** JSON key error data signature. */
+    /** Key error data signature. */
     var KEY_SIGNATURE = "signature";
     
     // Message error data.
-    /** JSON key recipient. */
+    /** Key recipient. */
     var KEY_RECIPIENT = "recipient";
-    /** JSON key timestamp. */
+    /** Key timestamp. */
     var KEY_TIMESTAMP = "timestamp";
-    /** JSON key message ID. */
+    /** Key message ID. */
     var KEY_MESSAGE_ID = "messageid";
-    /** JSON key error code. */
+    /** Key error code. */
     var KEY_ERROR_CODE = "errorcode";
-    /** JSON key internal code. */
+    /** Key internal code. */
     var KEY_INTERNAL_CODE = "internalcode";
-    /** JSON key error message. */
+    /** Key error message. */
     var KEY_ERROR_MESSAGE = "errormsg";
-    /** JSON key user message. */
+    /** Key user message. */
     var KEY_USER_MESSAGE = "usermsg";
     
     /**
@@ -67,13 +70,18 @@ describe("ErrorHeader", function() {
     function isAboutNowSeconds(seconds) {
         var now = Date.now();
         var time = seconds * MILLISECONDS_PER_SECOND;
-        return (now - 1000 <= time && time <= now + 1000);
+        return (now - 2000 <= time && time <= now + 2000);
     }
     
     /** MSL context. */
     var ctx;
+    /** MSL encoder factory. */
+    var encoder;
+    /** Header crypto context. */
+    var cryptoContext;
     
     var ENTITY_AUTH_DATA;
+    var ENTITY_AUTH_DATA_MO;
     var RECIPIENT = "recipient";
     var MESSAGE_ID = 17;
     var ERROR_CODE = MslConstants$ResponseCode.FAIL;
@@ -81,9 +89,6 @@ describe("ErrorHeader", function() {
     var ERROR_MSG = "Error message.";
     var USER_MSG = "User message.";
     var CRYPTO_CONTEXTS = {};
-    
-    /** Header crypto context. */
-    var cryptoContext;
     
     var initialized = false;
     beforeEach(function() {
@@ -94,14 +99,22 @@ describe("ErrorHeader", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 300);
+            waitsFor(function() { return ctx; }, "ctx", 900);
     		runs(function() {
+    		    encoder = ctx.getMslEncoderFactory();
     			ctx.getEntityAuthenticationData(null, {
     				result: function(entityAuthData) { ENTITY_AUTH_DATA = entityAuthData; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
     		});
     		waitsFor(function() { return ENTITY_AUTH_DATA; }, "entity authentication data", 100);
+    		runs(function() {
+    		    MslTestUtils.toMslObject(encoder, ENTITY_AUTH_DATA, {
+    		        result: function(x) { ENTITY_AUTH_DATA_MO = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+    		    });
+    		});
+    		waitsFor(function() { return ENTITY_AUTH_DATA_MO; }, "ENTITY_AUTH_DATA_MO", 100);
     		runs(function() {
     		    var scheme = ENTITY_AUTH_DATA.scheme;
     		    var factory = ctx.getEntityAuthenticationFactory(scheme);
@@ -132,7 +145,7 @@ describe("ErrorHeader", function() {
         });
     });
     
-    it("json is correct", function() {
+    it("mslobject is correct", function() {
         var errorHeader;
         runs(function() {
             ErrorHeader$create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
@@ -142,26 +155,31 @@ describe("ErrorHeader", function() {
         });
         waitsFor(function() { return errorHeader; }, "errorHeader", 100);
         
-        var ciphertext = undefined, plaintext = undefined, signature;
+        var mo;
         runs(function() {
-	        var jsonString = JSON.stringify(errorHeader);
-	        expect(jsonString).not.toBeNull();
-	        
-	        var jo = JSON.parse(jsonString);
-	        var entityAuthDataJo = jo[KEY_ENTITY_AUTHENTICATION_DATA];
-	        expect(entityAuthDataJo).toEqual(JSON.parse(JSON.stringify(ENTITY_AUTH_DATA)));
-	        ciphertext = base64$decode(jo[KEY_ERRORDATA]);
-	        cryptoContext.decrypt(ciphertext, {
+            MslTestUtils.toMslObject(encoder, errorHeader, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var ciphertext, plaintext, signature;
+        runs(function() {
+	        var entityAuthDataMo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA);
+	        expect(entityAuthDataMo).toEqual(ENTITY_AUTH_DATA_MO);
+	        ciphertext = mo.getBytes(KEY_ERRORDATA);
+	        cryptoContext.decrypt(ciphertext, encoder, {
 	        	result: function(p) { plaintext = p; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
-	        signature = base64$decode(jo[KEY_SIGNATURE]);
+	        signature = mo.getBytes(KEY_SIGNATURE);
         });
         waitsFor(function() { return ciphertext && plaintext && signature; }, "ciphertext, plaintext, and signature", 100);
         
         var verified;
         runs(function() {
-	        cryptoContext.verify(ciphertext, signature, {
+	        cryptoContext.verify(ciphertext, signature, encoder, {
 	        	result: function(v) { verified = v; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
@@ -171,18 +189,18 @@ describe("ErrorHeader", function() {
         runs(function() {
 	        expect(verified).toBeTruthy();
 	        
-	        var errordata = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
-	        expect(errordata[KEY_RECIPIENT]).toEqual(RECIPIENT);
-	        expect(parseInt(errordata[KEY_MESSAGE_ID])).toEqual(MESSAGE_ID);
-	        expect(parseInt(errordata[KEY_ERROR_CODE])).toEqual(ERROR_CODE);
-	        expect(parseInt(errordata[KEY_INTERNAL_CODE])).toEqual(INTERNAL_CODE);
-	        expect(errordata[KEY_ERROR_MESSAGE]).toEqual(ERROR_MSG);
-	        expect(errordata[KEY_USER_MESSAGE]).toEqual(USER_MSG);
-            expect(isAboutNowSeconds(errordata[KEY_TIMESTAMP])).toBeTruthy();
+	        var errordata = encoder.parseObject(plaintext);
+	        expect(errordata.getString(KEY_RECIPIENT)).toEqual(RECIPIENT);
+	        expect(errordata.getLong(KEY_MESSAGE_ID)).toEqual(MESSAGE_ID);
+	        expect(errordata.getInt(KEY_ERROR_CODE)).toEqual(ERROR_CODE);
+	        expect(errordata.getInt(KEY_INTERNAL_CODE)).toEqual(INTERNAL_CODE);
+	        expect(errordata.getString(KEY_ERROR_MESSAGE)).toEqual(ERROR_MSG);
+	        expect(errordata.getString(KEY_USER_MESSAGE)).toEqual(USER_MSG);
+            expect(isAboutNowSeconds(errordata.getLong(KEY_TIMESTAMP))).toBeTruthy();
         });
     });
     
-    it("json is correct for negative internal code", function() {
+    it("mslobject is correct for negative internal code", function() {
         var errorHeader;
         runs(function() {
             ErrorHeader$create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, -17, ERROR_MSG, USER_MSG, {
@@ -191,28 +209,33 @@ describe("ErrorHeader", function() {
             });
         });
         waitsFor(function() { return errorHeader; }, "errorHeader", 100);
-
-        var ciphertext = undefined, plaintext = undefined, signature;
+        
+        var mo;
         runs(function() {
-	        expect(errorHeader.internalCode).toEqual(-1);
-	        var jsonString = JSON.stringify(errorHeader);
-	        expect(jsonString).not.toBeNull();
-	        
-	        var jo = JSON.parse(jsonString);
-	        var entityAuthDataJo = jo[KEY_ENTITY_AUTHENTICATION_DATA];
-	        expect(entityAuthDataJo).toEqual(JSON.parse(JSON.stringify(ENTITY_AUTH_DATA)));
-	        ciphertext = base64$decode(jo[KEY_ERRORDATA]);
-	        cryptoContext.decrypt(ciphertext, {
+            expect(errorHeader.internalCode).toEqual(-1);
+            MslTestUtils.toMslObject(encoder, errorHeader, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+
+        var ciphertext, plaintext, signature;
+        runs(function() {
+	        var entityAuthDataMo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA);
+	        expect(entityAuthDataMo).toEqual(ENTITY_AUTH_DATA_MO);
+	        ciphertext = mo.getBytes(KEY_ERRORDATA);
+	        cryptoContext.decrypt(ciphertext, encoder, {
 	        	result: function(p) { plaintext = p; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
-	        signature = base64$decode(jo[KEY_SIGNATURE]);
+	        signature = mo.getBytes(KEY_SIGNATURE);
         });
         waitsFor(function() { return ciphertext && plaintext && signature; }, "ciphertext, plaintext, and signature", 100);
 
         var verified;
         runs(function() {
-	        cryptoContext.verify(ciphertext, signature, {
+	        cryptoContext.verify(ciphertext, signature, encoder, {
 	        	result: function(v) { verified = v; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
@@ -222,19 +245,18 @@ describe("ErrorHeader", function() {
         runs(function() {
 	        expect(verified).toBeTruthy();
 	        
-	        var errordata = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
-	
-	        expect(errordata[KEY_RECIPIENT]).toEqual(RECIPIENT);
-            expect(isAboutNowSeconds(errordata[KEY_TIMESTAMP])).toBeTruthy();
-	        expect(parseInt(errordata[KEY_MESSAGE_ID])).toEqual(MESSAGE_ID);
-	        expect(parseInt(errordata[KEY_ERROR_CODE])).toEqual(ERROR_CODE);
-	        expect(errordata[KEY_INTERNAL_CODE]).toBeUndefined();
-	        expect(errordata[KEY_ERROR_MESSAGE]).toEqual(ERROR_MSG);
-            expect(errordata[KEY_USER_MESSAGE]).toEqual(USER_MSG);
+	        var errordata = encoder.parseObject(plaintext);
+	        expect(errordata.getString(KEY_RECIPIENT)).toEqual(RECIPIENT);
+            expect(isAboutNowSeconds(errordata.getLong(KEY_TIMESTAMP))).toBeTruthy();
+	        expect(errordata.getLong(KEY_MESSAGE_ID)).toEqual(MESSAGE_ID);
+	        expect(errordata.getInt(KEY_ERROR_CODE)).toEqual(ERROR_CODE);
+	        expect(errordata.has(KEY_INTERNAL_CODE)).toBeFalsy();
+	        expect(errordata.getString(KEY_ERROR_MESSAGE)).toEqual(ERROR_MSG);
+            expect(errordata.getString(KEY_USER_MESSAGE)).toEqual(USER_MSG);
         });
     });
     
-    it("json is correct with null recipient", function() {
+    it("mslobject is correct with null recipient", function() {
         var errorHeader;
         runs(function() {
             ErrorHeader$create(ctx, ENTITY_AUTH_DATA, null, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
@@ -243,28 +265,33 @@ describe("ErrorHeader", function() {
             });
         });
         waitsFor(function() { return errorHeader; }, "errorHeader", 100);
-
-        var ciphertext = undefined, plaintext = undefined, signature;
+        
+        var mo;
         runs(function() {
             expect(errorHeader.recipient).toBeNull();
-            var jsonString = JSON.stringify(errorHeader);
-            expect(jsonString).not.toBeNull();
-            
-            var jo = JSON.parse(jsonString);
-            var entityAuthDataJo = jo[KEY_ENTITY_AUTHENTICATION_DATA];
-            expect(entityAuthDataJo).toEqual(JSON.parse(JSON.stringify(ENTITY_AUTH_DATA)));
-            ciphertext = base64$decode(jo[KEY_ERRORDATA]);
-            cryptoContext.decrypt(ciphertext, {
+            MslTestUtils.toMslObject(encoder, errorHeader, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+
+        var ciphertext, plaintext, signature;
+        runs(function() {
+            var entityAuthDataMo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA);
+            expect(entityAuthDataMo).toEqual(ENTITY_AUTH_DATA_MO);
+            ciphertext = mo.getBytes(KEY_ERRORDATA);
+            cryptoContext.decrypt(ciphertext, encoder, {
                 result: function(p) { plaintext = p; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            signature = base64$decode(jo[KEY_SIGNATURE]);
+            signature = mo.getBytes(KEY_SIGNATURE);
         });
         waitsFor(function() { return ciphertext && plaintext && signature; }, "ciphertext, plaintext, and signature", 100);
 
         var verified;
         runs(function() {
-            cryptoContext.verify(ciphertext, signature, {
+            cryptoContext.verify(ciphertext, signature, encoder, {
                 result: function(v) { verified = v; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -274,19 +301,18 @@ describe("ErrorHeader", function() {
         runs(function() {
             expect(verified).toBeTruthy();
             
-            var errordata = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
-    
-            expect(errordata[KEY_RECIPIENT]).toBeUndefined();
-            expect(isAboutNowSeconds(errordata[KEY_TIMESTAMP])).toBeTruthy();
-            expect(parseInt(errordata[KEY_MESSAGE_ID])).toEqual(MESSAGE_ID);
-            expect(parseInt(errordata[KEY_ERROR_CODE])).toEqual(ERROR_CODE);
-            expect(errordata[KEY_INTERNAL_CODE]).toEqual(INTERNAL_CODE);
-            expect(errordata[KEY_ERROR_MESSAGE]).toEqual(ERROR_MSG);
-            expect(errordata[KEY_USER_MESSAGE]).toEqual(USER_MSG);
+            var errordata = encoder.parseObject(plaintext);
+            expect(errordata.has(KEY_RECIPIENT)).toBeFalsy();
+            expect(isAboutNowSeconds(errordata.getLong(KEY_TIMESTAMP))).toBeTruthy();
+            expect(errordata.getLong(KEY_MESSAGE_ID)).toEqual(MESSAGE_ID);
+            expect(errordata.getInt(KEY_ERROR_CODE)).toEqual(ERROR_CODE);
+            expect(errordata.getInt(KEY_INTERNAL_CODE)).toEqual(INTERNAL_CODE);
+            expect(errordata.getString(KEY_ERROR_MESSAGE)).toEqual(ERROR_MSG);
+            expect(errordata.getString(KEY_USER_MESSAGE)).toEqual(USER_MSG);
         });
     });
     
-    it("json is correct with null error message", function() {
+    it("mslobject is correct with null error message", function() {
         var errorHeader;
         runs(function() {
             ErrorHeader$create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, null, USER_MSG, {
@@ -295,28 +321,33 @@ describe("ErrorHeader", function() {
             });
         });
         waitsFor(function() { return errorHeader; }, "errorHeader", 100);
-
-        var ciphertext = undefined, plaintext = undefined, signature;
+        
+        var mo;
         runs(function() {
-	        expect(errorHeader.errorMessage).toBeNull();
-	        var jsonString = JSON.stringify(errorHeader);
-	        expect(jsonString).not.toBeNull();
-	        
-	        var jo = JSON.parse(jsonString);
-	        var entityAuthDataJo = jo[KEY_ENTITY_AUTHENTICATION_DATA];
-	        expect(entityAuthDataJo).toEqual(JSON.parse(JSON.stringify(ENTITY_AUTH_DATA)));
-	        ciphertext = base64$decode(jo[KEY_ERRORDATA]);
-	        cryptoContext.decrypt(ciphertext, {
+            expect(errorHeader.errorMessage).toBeNull();
+            MslTestUtils.toMslObject(encoder, errorHeader, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+
+        var ciphertext, plaintext, signature;
+        runs(function() {
+	        var entityAuthDataMo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA);
+	        expect(entityAuthDataMo).toEqual(ENTITY_AUTH_DATA_MO);
+	        ciphertext = mo.getBytes(KEY_ERRORDATA);
+	        cryptoContext.decrypt(ciphertext, encoder, {
 	        	result: function(p) { plaintext = p; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
-	        signature = base64$decode(jo[KEY_SIGNATURE]);
+	        signature = mo.getBytes(KEY_SIGNATURE);
         });
         waitsFor(function() { return ciphertext && plaintext && signature; }, "ciphertext, plaintext, and signature", 100);
 
         var verified;
         runs(function() {
-	        cryptoContext.verify(ciphertext, signature, {
+	        cryptoContext.verify(ciphertext, signature, encoder, {
 	        	result: function(v) { verified = v; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
@@ -326,19 +357,18 @@ describe("ErrorHeader", function() {
         runs(function() {
 	        expect(verified).toBeTruthy();
 	        
-	        var errordata = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
-	
-	        expect(errordata[KEY_RECIPIENT]).toEqual(RECIPIENT);
-            expect(isAboutNowSeconds(errordata[KEY_TIMESTAMP])).toBeTruthy();
-	        expect(parseInt(errordata[KEY_MESSAGE_ID])).toEqual(MESSAGE_ID);
-	        expect(parseInt(errordata[KEY_ERROR_CODE])).toEqual(ERROR_CODE);
-	        expect(parseInt(errordata[KEY_INTERNAL_CODE])).toEqual(INTERNAL_CODE);
-	        expect(errordata[KEY_ERROR_MESSAGE]).toBeUndefined();
-	        expect(errordata[KEY_USER_MESSAGE]).toEqual(USER_MSG);
+	        var errordata = encoder.parseObject(plaintext);
+	        expect(errordata.getString(KEY_RECIPIENT)).toEqual(RECIPIENT);
+            expect(isAboutNowSeconds(errordata.getLong(KEY_TIMESTAMP))).toBeTruthy();
+	        expect(errordata.getLong(KEY_MESSAGE_ID)).toEqual(MESSAGE_ID);
+	        expect(errordata.getInt(KEY_ERROR_CODE)).toEqual(ERROR_CODE);
+	        expect(errordata.getInt(KEY_INTERNAL_CODE)).toEqual(INTERNAL_CODE);
+	        expect(errordata.has(KEY_ERROR_MESSAGE)).toBeFalsy();
+	        expect(errordata.getString(KEY_USER_MESSAGE)).toEqual(USER_MSG);
         });
     });
     
-    it("json is correct with null user message", function() {
+    it("mslobject is correct with null user message", function() {
         var errorHeader;
         runs(function() {
             ErrorHeader$create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, null, {
@@ -347,28 +377,33 @@ describe("ErrorHeader", function() {
             });
         });
         waitsFor(function() { return errorHeader; }, "errorHeader", 100);
-
-        var ciphertext = undefined, plaintext = undefined, signature;
+        
+        var mo;
         runs(function() {
             expect(errorHeader.userMessage).toBeNull();
-            var jsonString = JSON.stringify(errorHeader);
-            expect(jsonString).not.toBeNull();
-            
-            var jo = JSON.parse(jsonString);
-            var entityAuthDataJo = jo[KEY_ENTITY_AUTHENTICATION_DATA];
-            expect(entityAuthDataJo).toEqual(JSON.parse(JSON.stringify(ENTITY_AUTH_DATA)));
-            ciphertext = base64$decode(jo[KEY_ERRORDATA]);
-            cryptoContext.decrypt(ciphertext, {
+            MslTestUtils.toMslObject(encoder, errorHeader, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+
+        var ciphertext, plaintext, signature;
+        runs(function() {
+            var entityAuthDataMo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA);
+            expect(entityAuthDataMo).toEqual(ENTITY_AUTH_DATA_MO);
+            ciphertext = mo.getBytes(KEY_ERRORDATA);
+            cryptoContext.decrypt(ciphertext, encoder, {
                 result: function(p) { plaintext = p; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            signature = base64$decode(jo[KEY_SIGNATURE]);
+            signature = mo.getBytes(KEY_SIGNATURE);
         });
         waitsFor(function() { return ciphertext && plaintext && signature; }, "ciphertext, plaintext, and signature", 100);
 
         var verified;
         runs(function() {
-            cryptoContext.verify(ciphertext, signature, {
+            cryptoContext.verify(ciphertext, signature, encoder, {
                 result: function(v) { verified = v; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -378,15 +413,14 @@ describe("ErrorHeader", function() {
         runs(function() {
             expect(verified).toBeTruthy();
             
-            var errordata = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
-    
-            expect(errordata[KEY_RECIPIENT]).toEqual(RECIPIENT);
-            expect(isAboutNowSeconds(errordata[KEY_TIMESTAMP])).toBeTruthy();
-            expect(parseInt(errordata[KEY_MESSAGE_ID])).toEqual(MESSAGE_ID);
-            expect(parseInt(errordata[KEY_ERROR_CODE])).toEqual(ERROR_CODE);
-            expect(parseInt(errordata[KEY_INTERNAL_CODE])).toEqual(INTERNAL_CODE);
-            expect(errordata[KEY_ERROR_MESSAGE]).toEqual(ERROR_MSG);
-            expect(errordata[KEY_USER_MESSAGE]).toBeUndefined();
+            var errordata = encoder.parseObject(plaintext);
+            expect(errordata.getString(KEY_RECIPIENT)).toEqual(RECIPIENT);
+            expect(isAboutNowSeconds(errordata.getLong(KEY_TIMESTAMP))).toBeTruthy();
+            expect(errordata.getLong(KEY_MESSAGE_ID)).toEqual(MESSAGE_ID);
+            expect(errordata.getInt(KEY_ERROR_CODE)).toEqual(ERROR_CODE);
+            expect(errordata.getInt(KEY_INTERNAL_CODE)).toEqual(INTERNAL_CODE);
+            expect(errordata.getString(KEY_ERROR_MESSAGE)).toEqual(ERROR_MSG);
+            expect(errordata.has(KEY_USER_MESSAGE)).toBeFalsy();
         });
     });
     
@@ -400,10 +434,18 @@ describe("ErrorHeader", function() {
         });
         waitsFor(function() { return errorHeader; }, "errorHeader", 100);
         
+        var errorHeaderMo;
+        runs(function() {
+            MslTestUtils.toMslObject(encoder, errorHeader, {
+                result: function(x) { errorHeaderMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
+        
         var header;
         runs(function() {
-	        var errorHeaderJo = JSON.parse(JSON.stringify(errorHeader));
-	        Header$parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS, {
+	        Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
 	        	result: function(hdr) { header = hdr; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
@@ -413,16 +455,16 @@ describe("ErrorHeader", function() {
         runs(function() {
 	        expect(header).not.toBeNull();
 	        expect(header instanceof ErrorHeader).toBeTruthy();
-	        var joErrorHeader = header;
+	        var moErrorHeader = header;
 	        
-	        expect(joErrorHeader.entityAuthenticationData).toEqual(errorHeader.entityAuthenticationData);
-	        expect(joErrorHeader.timestamp).toEqual(errorHeader.timestamp);
-	        expect(joErrorHeader.errorCode).toEqual(errorHeader.errorCode);
-	        expect(joErrorHeader.errorMessage).toEqual(errorHeader.errorMessage);
-	        expect(joErrorHeader.internalCode).toEqual(errorHeader.internalCode);
-	        expect(joErrorHeader.messageId).toEqual(errorHeader.messageId);
-	        expect(joErrorHeader.recipient).toEqual(errorHeader.recipient);
-	        expect(joErrorHeader.userMessage).toEqual(errorHeader.userMessage);
+	        expect(moErrorHeader.entityAuthenticationData).toEqual(errorHeader.entityAuthenticationData);
+	        expect(moErrorHeader.timestamp).toEqual(errorHeader.timestamp);
+	        expect(moErrorHeader.errorCode).toEqual(errorHeader.errorCode);
+	        expect(moErrorHeader.errorMessage).toEqual(errorHeader.errorMessage);
+	        expect(moErrorHeader.internalCode).toEqual(errorHeader.internalCode);
+	        expect(moErrorHeader.messageId).toEqual(errorHeader.messageId);
+	        expect(moErrorHeader.recipient).toEqual(errorHeader.recipient);
+	        expect(moErrorHeader.userMessage).toEqual(errorHeader.userMessage);
         });
     });
 
@@ -452,14 +494,20 @@ describe("ErrorHeader", function() {
         });
         waitsFor(function() { return errorHeader; }, "errorHeader", 100);
         
+        var errorHeaderMo;
+        runs(function() {
+            MslTestUtils.toMslObject(encoder, errorHeader, {
+                result: function(x) { errorHeaderMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
+        
         var exception;
         runs(function() {
-	        var errorHeaderJo = JSON.parse(JSON.stringify(errorHeader));
+            errorHeaderMo.remove(KEY_ENTITY_AUTHENTICATION_DATA);
 	        
-	        expect(errorHeaderJo[KEY_ENTITY_AUTHENTICATION_DATA]).not.toBeNull();
-	        delete errorHeaderJo[KEY_ENTITY_AUTHENTICATION_DATA];
-	        
-	        Header$parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS, {
+	        Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
 	        	result: function() {},
 	        	error: function(err) { exception = err; }
 	        });
@@ -480,14 +528,21 @@ describe("ErrorHeader", function() {
             });
         });
         waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        
+        var errorHeaderMo;
+        runs(function() {
+            MslTestUtils.toMslObject(encoder, errorHeader, {
+                result: function(x) { errorHeaderMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
 
         var exception;
         runs(function() {
-	        var errorHeaderJo = JSON.parse(JSON.stringify(errorHeader));
-	        
-	        errorHeaderJo[KEY_ENTITY_AUTHENTICATION_DATA] = "x";
+	        errorHeaderMo.put(KEY_ENTITY_AUTHENTICATION_DATA, "x");
 	
-	        Header$parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS, {
+	        Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
 	        	result: function() {},
 	        	error: function(err) { exception = err; },
 	        });
@@ -495,7 +550,7 @@ describe("ErrorHeader", function() {
         waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
         	var f = function() { throw exception; };
-        	expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+        	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
@@ -508,15 +563,21 @@ describe("ErrorHeader", function() {
             });
         });
         waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        
+        var errorHeaderMo;
+        runs(function() {
+            MslTestUtils.toMslObject(encoder, errorHeader, {
+                result: function(x) { errorHeaderMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
 
         var exception;
         runs(function() {
-	        var errorHeaderJo = JSON.parse(JSON.stringify(errorHeader));
-	        
-	        expect(errorHeaderJo[KEY_SIGNATURE]).not.toBeNull();
-	        delete errorHeaderJo[KEY_SIGNATURE];
+            errorHeaderMo.remove(KEY_SIGNATURE);
 	
-	        Header$parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS, {
+	        Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
 	        	result: function() {},
 	        	error: function(err) { exception = err; },
 	        });
@@ -524,7 +585,7 @@ describe("ErrorHeader", function() {
         waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
         	var f = function() { throw exception; };
-        	expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+        	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
@@ -537,14 +598,21 @@ describe("ErrorHeader", function() {
             });
         });
         waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        
+        var errorHeaderMo;
+        runs(function() {
+            MslTestUtils.toMslObject(encoder, errorHeader, {
+                result: function(x) { errorHeaderMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
 
         var exception;
         runs(function() {
-            var errorHeaderJo = JSON.parse(JSON.stringify(errorHeader));
-            
-            errorHeaderJo[KEY_SIGNATURE] = "x";
+            errorHeaderMo.put(KEY_SIGNATURE, "x");
     
-            Header$parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS, {
+            Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
                 result: function() {},
                 error: function(err) { exception = err; },
             });
@@ -552,7 +620,7 @@ describe("ErrorHeader", function() {
         waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslMessageException(MslError.HEADER_SIGNATURE_INVALID));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
@@ -565,14 +633,21 @@ describe("ErrorHeader", function() {
             });
         });
         waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        
+        var errorHeaderMo;
+        runs(function() {
+            MslTestUtils.toMslObject(encoder, errorHeader, {
+                result: function(x) { errorHeaderMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
 
         var exception;
         runs(function() {
-	        var errorHeaderJo = JSON.parse(JSON.stringify(errorHeader));
-	        
-	        errorHeaderJo[KEY_SIGNATURE] = "AAA=";
+	        errorHeaderMo.put(KEY_SIGNATURE, base64$decode("AAA="));
 	
-	        Header$parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS, {
+	        Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
 	        	result: function() {},
 	        	error: function(err) { exception = err; },
 	        });
@@ -593,15 +668,21 @@ describe("ErrorHeader", function() {
             });
         });
         waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        
+        var errorHeaderMo;
+        runs(function() {
+            MslTestUtils.toMslObject(encoder, errorHeader, {
+                result: function(x) { errorHeaderMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
 
         var exception;
         runs(function() {
-	        var errorHeaderJo = JSON.parse(JSON.stringify(errorHeader));
+            errorHeaderMo.remove(KEY_ERRORDATA);
 	        
-	        expect(errorHeaderJo[KEY_ERRORDATA]).not.toBeNull();
-	        delete errorHeaderJo[KEY_ERRORDATA];
-	        
-	        Header$parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS, {
+	        Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
 	        	result: function() {},
 	        	error: function(err) { exception = err; },
 	        });
@@ -609,7 +690,7 @@ describe("ErrorHeader", function() {
         waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
         	var f = function() { throw exception; };
-        	expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+        	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
@@ -622,22 +703,27 @@ describe("ErrorHeader", function() {
             });
         });
         waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        
+        var errorHeaderMo;
+        runs(function() {
+            MslTestUtils.toMslObject(encoder, errorHeader, {
+                result: function(x) { errorHeaderMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
 
         var exception;
         runs(function() {
-	        var errorHeaderJo = JSON.parse(JSON.stringify(errorHeader));
-	        
 	        // This tests invalid but trusted error data so we must sign it.
-	        //
-	        // This differs from the Java unit tests because we cannot sign
-	        // empty ciphertext.
-	        errorHeaderJo[KEY_ERRORDATA] = "AA==";
-	        var ciphertext = base64$decode(errorHeaderJo[KEY_ERRORDATA]);
-	        cryptoContext.sign(ciphertext, {
+            var errordata = new Uint8Array(1);
+            errordata[0] = 'x';
+	        errorHeaderMo.put(KEY_ERRORDATA, errordata);
+	        cryptoContext.sign(errordata, encoder, ENCODER_FORMAT, {
 	        	result: function(signature) {
-	        		errorHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+	        		errorHeaderMo.put(KEY_SIGNATURE, signature);
 	    	        
-	    	        Header$parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS, {
+	    	        Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
 	    	        	result: function() {},
 	    	        	error: function(e) { exception = e; },
 	    	        });	
@@ -648,13 +734,11 @@ describe("ErrorHeader", function() {
         waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
         	var f = function() { throw exception; };
-        	expect(f).toThrow(new MslCryptoException(MslError.NONE));
+        	expect(f).toThrow(new MslCryptoException(MslError.CIPHERTEXT_ENVELOPE_PARSE_ERROR));
         });
     });
     
-    // Not applicable because we cannot sign empty ciphertext with
-    // Web Crypto.
-    xit("empty errordata", function() {
+    it("empty errordata", function() {
         var errorHeader;
         runs(function() {
         	ErrorHeader$create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
@@ -663,19 +747,26 @@ describe("ErrorHeader", function() {
             });
         });
         waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        
+        var errorHeaderMo;
+        runs(function() {
+            MslTestUtils.toMslObject(encoder, errorHeader, {
+                result: function(x) { errorHeaderMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
     	
         var exception;
         runs(function() {
-        	var errorHeaderJo = JSON.parse(JSON.stringify(errorHeader));
-
         	// This tests empty but trusted error data so we must sign it.
         	var ciphertext = new Uint8Array(0);
-        	errorHeaderJo[KEY_ERRORDATA] = base64$encode(ciphertext);
-        	cryptoContext.sign(ciphertext, {
+        	errorHeaderMo.put(KEY_ERRORDATA, ciphertext);
+        	cryptoContext.sign(ciphertext, encoder, ENCODER_FORMAT, {
         		result: function(signature) {
-        			errorHeaderJo[KEY_SIGNATURE] = base64$encode(signature);
+        			errorHeaderMo.put(KEY_SIGNATURE, signature);
 
-                	Header$parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS, {
+                	Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
         	        	result: function() {},
         	        	error: function(err) { exception = err; },
         	        });
@@ -699,42 +790,68 @@ describe("ErrorHeader", function() {
             });
         });
         waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        
+        var errorHeaderMo;
+        runs(function() {
+            MslTestUtils.toMslObject(encoder, errorHeader, {
+                result: function(x) { errorHeaderMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
 
+        var plaintext;
+        runs(function() {
+            // Before modifying the error data we need to decrypt it.
+            var ciphertext = errorHeaderMo.getBytes(KEY_ERRORDATA);
+            cryptoContext.decrypt(ciphertext, encoder, {
+                result: function(x) { plaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        
+        var modifiedPlaintext;
+        runs(function() {
+            var errordata = encoder.parseObject(plaintext);
+                    
+            // After modifying the error data we need to encrypt it.
+            errordata.remove(KEY_TIMESTAMP);
+            encoder.encodeObject(errordata, ENCODER_FORMAT, {
+            	result: function(x) { modifiedPlaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        
+        var modifiedCiphertext;
+        runs(function() {
+            cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT, {
+                result: function(x) { modifiedCiphertext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", 100);
+        
+        var modifiedSignature;
+        runs(function() {
+            errorHeaderMo.put(KEY_ERRORDATA, modifiedCiphertext);
+                            
+            // The error data must be signed otherwise the error data will not be
+            // processed.
+            cryptoContext.sign(modifiedCiphertext, encoder, ENCODER_FORMAT, {
+                result: function(x) { modifiedSignature = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedSignature; }, 100);
+        
         var header;
         runs(function() {
-            var errorHeaderJo = JSON.parse(JSON.stringify(errorHeader));
-            
-            // Before modifying the error data we need to decrypt it.
-            var ciphertext = base64$decode(errorHeaderJo[KEY_ERRORDATA]);
-            cryptoContext.decrypt(ciphertext, {
-                result: function(plaintext) {
-                    var errordata = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
-                    
-                    // After modifying the error data we need to encrypt it.
-                    expect(errordata[KEY_TIMESTAMP]).not.toBeNull();
-                    delete errordata[KEY_TIMESTAMP];
-                    var modifiedPlaintext = textEncoding$getBytes(JSON.stringify(errordata), MslConstants$DEFAULT_CHARSET);
-                    cryptoContext.encrypt(modifiedPlaintext, {
-                        result: function(modifiedCiphertext) {
-                            errorHeaderJo[KEY_ERRORDATA] = base64$encode(modifiedCiphertext);
-                            
-                            // The error data must be signed otherwise the error data will not be
-                            // processed.
-                            cryptoContext.sign(modifiedCiphertext, {
-                                result: function(modifiedSignature) {
-                                    errorHeaderJo[KEY_SIGNATURE] = base64$encode(modifiedSignature);
-                                    
-                                    Header$parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS, {
-                                        result: function(x) { header = x; },
-                                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
-                        },
-                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                    });
-                },
+            errorHeaderMo.put(KEY_SIGNATURE, modifiedSignature);
+
+            Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
+                result: function(x) { header = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
@@ -750,48 +867,75 @@ describe("ErrorHeader", function() {
             });
         });
         waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        
+        var errorHeaderMo;
+        runs(function() {
+            MslTestUtils.toMslObject(encoder, errorHeader, {
+                result: function(x) { errorHeaderMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
 
+        var plaintext;
+        runs(function() {
+            // Before modifying the error data we need to decrypt it.
+            var ciphertext = errorHeaderMo.getBytes(KEY_ERRORDATA);
+            cryptoContext.decrypt(ciphertext, encoder, {
+                result: function(x) { plaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        
+        var modifiedPlaintext;
+        runs(function() {
+            var errordata = encoder.parseObject(plaintext);
+                    
+            // After modifying the error data we need to encrypt it.
+            errordata.put(KEY_TIMESTAMP, "x");
+            encoder.encodeObject(errordata, ENCODER_FORMAT, {
+            	result: function(x) { modifiedPlaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        
+        var modifiedCiphertext;
+        runs(function() {
+            cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT, {
+                result: function(x) { modifiedCiphertext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", 100);
+        
+        var modifiedSignature;
+        runs(function() {
+            errorHeaderMo.put(KEY_ERRORDATA, modifiedCiphertext);
+                            
+            // The error data must be signed otherwise the error data will not be
+            // processed.
+            cryptoContext.sign(modifiedCiphertext, encoder, ENCODER_FORMAT, {
+                result: function(x) { modifiedSignature = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedSignature; }, 100);
+        
         var exception;
         runs(function() {
-            var errorHeaderJo = JSON.parse(JSON.stringify(errorHeader));
-    
-            // Before modifying the error data we need to decrypt it.
-            var ciphertext = base64$decode(errorHeaderJo[KEY_ERRORDATA]);
-            cryptoContext.decrypt(ciphertext, {
-                result: function(plaintext) {
-                    var errordata = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
-                    
-                    // After modifying the error data we need to encrypt it.
-                    errordata[KEY_TIMESTAMP] = "x";
-                    var modifiedPlaintext = textEncoding$getBytes(JSON.stringify(errordata), MslConstants$DEFAULT_CHARSET);
-                    cryptoContext.encrypt(modifiedPlaintext, {
-                        result: function(modifiedCiphertext) {
-                            errorHeaderJo[KEY_ERRORDATA] = base64$encode(modifiedCiphertext);
-                            
-                            // The error data must be signed otherwise the error data will not be
-                            // processed.
-                            cryptoContext.sign(modifiedCiphertext, {
-                                result: function(modifiedSignature) {
-                                    errorHeaderJo[KEY_SIGNATURE] = base64$encode(modifiedSignature);
-                                    
-                                    Header$parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS, {
-                                        result: function() {},
-                                        error: function(err) { exception = err; },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
-                        },
-                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                    });
-                },
-                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            errorHeaderMo.put(KEY_SIGNATURE, modifiedSignature);
+
+            Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
+                result: function() {},
+                error: function(e) { exception = e; },
             });
         });
         waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
@@ -804,49 +948,75 @@ describe("ErrorHeader", function() {
             });
         });
         waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        
+        var errorHeaderMo;
+        runs(function() {
+            MslTestUtils.toMslObject(encoder, errorHeader, {
+                result: function(x) { errorHeaderMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
 
+        var plaintext;
+        runs(function() {
+            // Before modifying the error data we need to decrypt it.
+            var ciphertext = errorHeaderMo.getBytes(KEY_ERRORDATA);
+            cryptoContext.decrypt(ciphertext, encoder, {
+                result: function(x) { plaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        
+        var modifiedPlaintext;
+        runs(function() {
+            var errordata = encoder.parseObject(plaintext);
+                    
+            // After modifying the error data we need to encrypt it.
+            errordata.remove(KEY_MESSAGE_ID);
+            encoder.encodeObject(errordata, ENCODER_FORMAT, {
+            	result: function(x) { modifiedPlaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        
+        var modifiedCiphertext;
+        runs(function() {
+            cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT, {
+                result: function(x) { modifiedCiphertext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", 100);
+        
+        var modifiedSignature;
+        runs(function() {
+            errorHeaderMo.put(KEY_ERRORDATA, modifiedCiphertext);
+                            
+            // The error data must be signed otherwise the error data will not be
+            // processed.
+            cryptoContext.sign(modifiedCiphertext, encoder, ENCODER_FORMAT, {
+                result: function(x) { modifiedSignature = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedSignature; }, 100);
+        
         var exception;
         runs(function() {
-	        var errorHeaderJo = JSON.parse(JSON.stringify(errorHeader));
-	        
-	        // Before modifying the error data we need to decrypt it.
-	        var ciphertext = base64$decode(errorHeaderJo[KEY_ERRORDATA]);
-	        cryptoContext.decrypt(ciphertext, {
-	        	result: function(plaintext) {
-	        		var errordata = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
-	    	        
-	    	        // After modifying the error data we need to encrypt it.
-	    	        expect(errordata[KEY_MESSAGE_ID]).not.toBeNull();
-	    	        delete errordata[KEY_MESSAGE_ID];
-	    	        var modifiedPlaintext = textEncoding$getBytes(JSON.stringify(errordata), MslConstants$DEFAULT_CHARSET);
-	    	        cryptoContext.encrypt(modifiedPlaintext, {
-	    	        	result: function(modifiedCiphertext) {
-	    	        		errorHeaderJo[KEY_ERRORDATA] = base64$encode(modifiedCiphertext);
-	    	    	        
-	    	    	        // The error data must be signed otherwise the error data will not be
-	    	    	        // processed.
-	    	    	        cryptoContext.sign(modifiedCiphertext, {
-	    	    	        	result: function(modifiedSignature) {
-	    	    	        		errorHeaderJo[KEY_SIGNATURE] = base64$encode(modifiedSignature);
-	    	    	    	        
-	    	    	    	        Header$parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS, {
-	    	    	    	        	result: function() {},
-	    	    	    	        	error: function(err) { exception = err; },
-	    	    	    	        });
-	    	    	        	},
-	    	    	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-	    	    	        });
-	    	        	},
-	    	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-	    	        });
-	        	},
-	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-	        });
+            errorHeaderMo.put(KEY_SIGNATURE, modifiedSignature);
+
+            Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
+                result: function() {},
+                error: function(e) { exception = e; },
+            });
         });
         waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
-        	var f = function() { throw exception; };
-        	expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            var f = function() { throw exception; };
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
@@ -859,48 +1029,75 @@ describe("ErrorHeader", function() {
             });
         });
         waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        
+        var errorHeaderMo;
+        runs(function() {
+            MslTestUtils.toMslObject(encoder, errorHeader, {
+                result: function(x) { errorHeaderMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
 
+        var plaintext;
+        runs(function() {
+            // Before modifying the error data we need to decrypt it.
+            var ciphertext = errorHeaderMo.getBytes(KEY_ERRORDATA);
+            cryptoContext.decrypt(ciphertext, encoder, {
+                result: function(x) { plaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        
+        var modifiedPlaintext;
+        runs(function() {
+            var errordata = encoder.parseObject(plaintext);
+                    
+            // After modifying the error data we need to encrypt it.
+            errordata.put(KEY_MESSAGE_ID, "x");
+            encoder.encodeObject(errordata, ENCODER_FORMAT, {
+            	result: function(x) { modifiedPlaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        
+        var modifiedCiphertext;
+        runs(function() {
+            cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT, {
+                result: function(x) { modifiedCiphertext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", 100);
+        
+        var modifiedSignature;
+        runs(function() {
+            errorHeaderMo.put(KEY_ERRORDATA, modifiedCiphertext);
+                            
+            // The error data must be signed otherwise the error data will not be
+            // processed.
+            cryptoContext.sign(modifiedCiphertext, encoder, ENCODER_FORMAT, {
+                result: function(x) { modifiedSignature = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedSignature; }, 100);
+        
         var exception;
         runs(function() {
-	        var errorHeaderJo = JSON.parse(JSON.stringify(errorHeader));
-	
-	        // Before modifying the error data we need to decrypt it.
-	        var ciphertext = base64$decode(errorHeaderJo[KEY_ERRORDATA]);
-	        cryptoContext.decrypt(ciphertext, {
-	        	result: function(plaintext) {
-	    	        var errordata = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
-	    	    	
-	    	        // After modifying the error data we need to encrypt it.
-	    	        errordata[KEY_MESSAGE_ID] = "x";
-	    	        var modifiedPlaintext = textEncoding$getBytes(JSON.stringify(errordata), MslConstants$DEFAULT_CHARSET);
-	    	        cryptoContext.encrypt(modifiedPlaintext, {
-	    	        	result: function(modifiedCiphertext) {
-	    	    	        errorHeaderJo[KEY_ERRORDATA] = base64$encode(modifiedCiphertext);
-	    	    	    	
-	    	    	        // The error data must be signed otherwise the error data will not be
-	    	    	        // processed.
-	    	    	        cryptoContext.sign(modifiedCiphertext, {
-	    	    	        	result: function(modifiedSignature) {
-	    	    	    	        errorHeaderJo[KEY_SIGNATURE] = base64$encode(modifiedSignature);
-	    	    	    	        
-	    	    	    	        Header$parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS, {
-	    	    	    	        	result: function() {},
-	    	    	    	        	error: function(err) { exception = err; },
-	    	    	    	        });
-	    	    	        	},
-	    	    	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-	    	    	        });
-	    	        	},
-	    	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-	    	        });
-	        	},
-	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
-	        });
+            errorHeaderMo.put(KEY_SIGNATURE, modifiedSignature);
+
+            Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
+                result: function() {},
+                error: function(e) { exception = e; },
+            });
         });
         waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
-        	var f = function() { throw exception; };
-        	expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            var f = function() { throw exception; };
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
     
@@ -943,43 +1140,70 @@ describe("ErrorHeader", function() {
             });
         });
         waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        
+        var errorHeaderMo;
+        runs(function() {
+            MslTestUtils.toMslObject(encoder, errorHeader, {
+                result: function(x) { errorHeaderMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
 
+        var plaintext;
+        runs(function() {
+            // Before modifying the error data we need to decrypt it.
+            var ciphertext = errorHeaderMo.getBytes(KEY_ERRORDATA);
+            cryptoContext.decrypt(ciphertext, encoder, {
+                result: function(x) { plaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        
+        var modifiedPlaintext;
+        runs(function() {
+            var errordata = encoder.parseObject(plaintext);
+                    
+            // After modifying the error data we need to encrypt it.
+            errordata.put(KEY_MESSAGE_ID, -1);
+            encoder.encodeObject(errordata, ENCODER_FORMAT, {
+            	result: function(x) { modifiedPlaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        
+        var modifiedCiphertext;
+        runs(function() {
+            cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT, {
+                result: function(x) { modifiedCiphertext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", 100);
+        
+        var modifiedSignature;
+        runs(function() {
+            errorHeaderMo.put(KEY_ERRORDATA, modifiedCiphertext);
+                            
+            // The error data must be signed otherwise the error data will not be
+            // processed.
+            cryptoContext.sign(modifiedCiphertext, encoder, ENCODER_FORMAT, {
+                result: function(x) { modifiedSignature = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedSignature; }, 100);
+        
         var exception;
         runs(function() {
-        	var errorHeaderJo = JSON.parse(JSON.stringify(errorHeader));
+            errorHeaderMo.put(KEY_SIGNATURE, modifiedSignature);
 
-        	// Before modifying the error data we need to decrypt it.
-        	var ciphertext = base64$decode(errorHeaderJo[KEY_ERRORDATA]);
-        	cryptoContext.decrypt(ciphertext, {
-        		result: function(plaintext) {
-        			var errordata = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
-
-        			// After modifying the error data we need to encrypt it.
-        			errordata[KEY_MESSAGE_ID] = -1;
-        			var modifiedPlaintext = textEncoding$getBytes(JSON.stringify(errordata), MslConstants$DEFAULT_CHARSET);
-        			cryptoContext.encrypt(modifiedPlaintext, {
-        				result: function(modifiedCiphertext) {
-        					errorHeaderJo[KEY_ERRORDATA] = base64$encode(modifiedCiphertext);
-
-        					// The error data must be signed otherwise the error data will not be
-        					// processed.
-        					cryptoContext.sign(modifiedCiphertext, {
-        						result: function(modifiedSignature) {
-        							errorHeaderJo[KEY_SIGNATURE] = base64$encode(modifiedSignature);
-
-        							Header$parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS, {
-        								result: function() {},
-        								error: function(err) { exception = err; },
-        							});
-        						},
-        						error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        					});
-        				},
-        				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        			});
-        		},
-        		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
-        	});
+            Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
+                result: function() {},
+                error: function(e) { exception = e; },
+            });
         });
         waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
@@ -997,43 +1221,70 @@ describe("ErrorHeader", function() {
             });
         });
         waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        
+        var errorHeaderMo;
+        runs(function() {
+            MslTestUtils.toMslObject(encoder, errorHeader, {
+                result: function(x) { errorHeaderMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
+
+        var plaintext;
+        runs(function() {
+            // Before modifying the error data we need to decrypt it.
+            var ciphertext = errorHeaderMo.getBytes(KEY_ERRORDATA);
+            cryptoContext.decrypt(ciphertext, encoder, {
+                result: function(x) { plaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return plaintext; }, "plaintext", 100);
+
+        var modifiedPlaintext;
+        runs(function() {
+            var errordata = encoder.parseObject(plaintext);
+
+            // After modifying the error data we need to encrypt it.
+            errordata.put(KEY_MESSAGE_ID, MslConstants$MAX_LONG_VALUE + 2);
+            encoder.encodeObject(errordata, ENCODER_FORMAT, {
+            	result: function(x) { modifiedPlaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        
+        var modifiedCiphertext;
+        runs(function() {
+            cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT, {
+                result: function(x) { modifiedCiphertext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", 100);
+
+        var modifiedSignature;
+        runs(function() {
+            errorHeaderMo.put(KEY_ERRORDATA, modifiedCiphertext);
+
+            // The error data must be signed otherwise the error data will not be
+            // processed.
+            cryptoContext.sign(modifiedCiphertext, encoder, ENCODER_FORMAT, {
+                result: function(x) { modifiedSignature = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedSignature; }, 100);
 
         var exception;
         runs(function() {
-        	var errorHeaderJo = JSON.parse(JSON.stringify(errorHeader));
+            errorHeaderMo.put(KEY_SIGNATURE, modifiedSignature);
 
-        	// Before modifying the error data we need to decrypt it.
-        	var ciphertext = base64$decode(errorHeaderJo[KEY_ERRORDATA]);
-        	cryptoContext.decrypt(ciphertext, {
-        		result: function(plaintext) {
-        			var errordata = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
-
-        			// After modifying the error data we need to encrypt it.
-        			errordata[KEY_MESSAGE_ID] = MslConstants$MAX_LONG_VALUE + 2;
-        			var modifiedPlaintext = textEncoding$getBytes(JSON.stringify(errordata), MslConstants$DEFAULT_CHARSET);
-        			cryptoContext.encrypt(modifiedPlaintext, {
-        				result: function(modifiedCiphertext) {
-        					errorHeaderJo[KEY_ERRORDATA] = base64$encode(modifiedCiphertext);
-
-        					// The error data must be signed otherwise the error data will not be
-        					// processed.
-        					cryptoContext.sign(modifiedCiphertext, {
-        						result: function(modifiedSignature) {
-        							errorHeaderJo[KEY_SIGNATURE] = base64$encode(modifiedSignature);
-
-        							Header$parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS, {
-        								result: function() {},
-        								error: function(err) { exception = err; },
-        							});
-        						},
-        						error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        					});
-        				},
-        				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        			});
-        		},
-        		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
-        	});
+            Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
+                result: function() {},
+                error: function(e) { exception = e; },
+            });
         });
         waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
@@ -1051,49 +1302,75 @@ describe("ErrorHeader", function() {
             });
         });
         waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        
+        var errorHeaderMo;
+        runs(function() {
+            MslTestUtils.toMslObject(encoder, errorHeader, {
+                result: function(x) { errorHeaderMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
 
+        var plaintext;
+        runs(function() {
+            // Before modifying the error data we need to decrypt it.
+            var ciphertext = errorHeaderMo.getBytes(KEY_ERRORDATA);
+            cryptoContext.decrypt(ciphertext, encoder, {
+                result: function(x) { plaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        
+        var modifiedPlaintext;
+        runs(function() {
+            var errordata = encoder.parseObject(plaintext);
+                    
+            // After modifying the error data we need to encrypt it.
+            errordata.remove(KEY_ERROR_CODE);
+            encoder.encodeObject(errordata, ENCODER_FORMAT, {
+            	result: function(x) { modifiedPlaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        
+        var modifiedCiphertext;
+        runs(function() {
+            cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT, {
+                result: function(x) { modifiedCiphertext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", 100);
+        
+        var modifiedSignature;
+        runs(function() {
+            errorHeaderMo.put(KEY_ERRORDATA, modifiedCiphertext);
+                            
+            // The error data must be signed otherwise the error data will not be
+            // processed.
+            cryptoContext.sign(modifiedCiphertext, encoder, ENCODER_FORMAT, {
+                result: function(x) { modifiedSignature = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedSignature; }, 100);
+        
         var exception;
         runs(function() {
-        	var errorHeaderJo = JSON.parse(JSON.stringify(errorHeader));
+            errorHeaderMo.put(KEY_SIGNATURE, modifiedSignature);
 
-        	// Before modifying the error data we need to decrypt it.
-        	var ciphertext = base64$decode(errorHeaderJo[KEY_ERRORDATA]);
-        	cryptoContext.decrypt(ciphertext, {
-        		result: function(plaintext) {
-        			var errordata = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
-
-        			// After modifying the error data we need to encrypt it.
-        			expect(errordata[KEY_ERROR_CODE]).not.toBeNull();
-        			delete errordata[KEY_ERROR_CODE];
-        			var modifiedPlaintext = textEncoding$getBytes(JSON.stringify(errordata), MslConstants$DEFAULT_CHARSET);
-        			cryptoContext.encrypt(modifiedPlaintext, {
-        				result: function(modifiedCiphertext) {
-        					errorHeaderJo[KEY_ERRORDATA] = base64$encode(modifiedCiphertext);
-
-        					// The error data must be signed otherwise the error data will not be
-        					// processed.
-        					cryptoContext.sign(modifiedCiphertext, {
-        						result: function(modifiedSignature) {
-        							errorHeaderJo[KEY_SIGNATURE] = base64$encode(modifiedSignature);
-
-        							Header$parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS, {
-        								result: function() {},
-        								error: function(err) { exception = err; },
-        							});
-        						},
-        						error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        					});
-        				},
-        				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        			});
-        		},
-        		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
-        	});
+            Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
+                result: function() {},
+                error: function(e) { exception = e; },
+            });
         });
         waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
         	var f = function() { throw exception; };
-        	expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR, messageid = MESSAGE_ID));
+        	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR, MESSAGE_ID));
         });
     });
 
@@ -1106,49 +1383,75 @@ describe("ErrorHeader", function() {
             });
         });
         waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        
+        var errorHeaderMo;
+        runs(function() {
+            MslTestUtils.toMslObject(encoder, errorHeader, {
+                result: function(x) { errorHeaderMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
 
+        var plaintext;
+        runs(function() {
+            // Before modifying the error data we need to decrypt it.
+            var ciphertext = errorHeaderMo.getBytes(KEY_ERRORDATA);
+            cryptoContext.decrypt(ciphertext, encoder, {
+                result: function(x) { plaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        
+        var modifiedPlaintext;
+        runs(function() {
+            var errordata = encoder.parseObject(plaintext);
+                    
+            // After modifying the error data we need to encrypt it.
+            errordata.put(KEY_ERROR_CODE, "x");
+            encoder.encodeObject(errordata, ENCODER_FORMAT, {
+            	result: function(x) { modifiedPlaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        
+        var modifiedCiphertext;
+        runs(function() {
+            cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT, {
+                result: function(x) { modifiedCiphertext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", 100);
+        
+        var modifiedSignature;
+        runs(function() {
+            errorHeaderMo.put(KEY_ERRORDATA, modifiedCiphertext);
+                            
+            // The error data must be signed otherwise the error data will not be
+            // processed.
+            cryptoContext.sign(modifiedCiphertext, encoder, ENCODER_FORMAT, {
+                result: function(x) { modifiedSignature = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedSignature; }, 100);
+        
         var exception;
         runs(function() {
-        	var errorHeaderJo = JSON.parse(JSON.stringify(errorHeader));
+            errorHeaderMo.put(KEY_SIGNATURE, modifiedSignature);
 
-        	// Before modifying the error data we need to decrypt it.
-        	var ciphertext = base64$decode(errorHeaderJo[KEY_ERRORDATA]);
-        	cryptoContext.decrypt(ciphertext, {
-        		result: function(plaintext) {
-        			var errordata = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
-
-        			// After modifying the error data we need to encrypt it.
-        			expect(errordata[KEY_ERROR_CODE]).not.toBeNull();
-        			errordata[KEY_ERROR_CODE] = "AAA=";
-        			var modifiedPlaintext = textEncoding$getBytes(JSON.stringify(errordata), MslConstants$DEFAULT_CHARSET);
-        			cryptoContext.encrypt(modifiedPlaintext, {
-        				result: function(modifiedCiphertext) {
-        					errorHeaderJo[KEY_ERRORDATA] = base64$encode(modifiedCiphertext);
-
-        					// The error data must be signed otherwise the error data will not be
-        					// processed.
-        					cryptoContext.sign(modifiedCiphertext, {
-        						result: function(modifiedSignature) {
-        							errorHeaderJo[KEY_SIGNATURE] = base64$encode(modifiedSignature);
-
-        							Header$parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS, {
-        								result: function() {},
-        								error: function(err) { exception = err; },
-        							});
-        						},
-        						error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        					});
-        				},
-        				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        			});
-        		},
-        		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
-        	});
+            Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
+                result: function() {},
+                error: function(e) { exception = e; },
+            });
         });
         waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
         	var f = function() { throw exception; };
-        	expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR, messageid = MESSAGE_ID));
+        	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR, MESSAGE_ID));
         });
     });
     
@@ -1162,47 +1465,73 @@ describe("ErrorHeader", function() {
         });
         waitsFor(function() { return errorHeader; }, "errorHeader", 100);
         
-        var joErrorHeader;
+        var errorHeaderMo;
         runs(function() {
-	        var errorHeaderJo = JSON.parse(JSON.stringify(errorHeader));
-	        
-	        // Before modifying the error data we need to decrypt it.
-	        var ciphertext = base64$decode(errorHeaderJo[KEY_ERRORDATA]);
-	        cryptoContext.decrypt(ciphertext, {
-	        	result: function(plaintext) {
-	    	        var errordata = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
-	    	        
-	    	        // After modifying the error data we need to encrypt it.
-	    	        expect(errordata[KEY_INTERNAL_CODE]).not.toBeNull();
-	    	        delete errordata[KEY_INTERNAL_CODE];
-	    	        var modifiedPlaintext = textEncoding$getBytes(JSON.stringify(errordata), MslConstants$DEFAULT_CHARSET);
-	    	        cryptoContext.encrypt(modifiedPlaintext, {
-	    	        	result: function(modifiedCiphertext) {
-	    	        		errorHeaderJo[KEY_ERRORDATA] = base64$encode(modifiedCiphertext);
-	    	    	        
-	    	    	        // The error data must be signed otherwise the error data will not be
-	    	    	        // processed.
-	    	    	        cryptoContext.sign(modifiedCiphertext, {
-	    	    	        	result: function(modifiedSignature) {
-	    	    	    	        errorHeaderJo[KEY_SIGNATURE] = base64$encode(modifiedSignature);
-	    	    	    	        
-	    	    	    	        Header$parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS, {
-	    	    	    	        	result: function(hdr) { joErrorHeader = hdr; },
-	    	    	    	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-	    	    	    	        });
-	    	    	        	},
-	    	    	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-	    	    	        });
-	    	        	},
-	    	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-	    	        });
-	        	},
-	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-	        });
+            MslTestUtils.toMslObject(encoder, errorHeader, {
+                result: function(x) { errorHeaderMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
         });
-        waitsFor(function() { return joErrorHeader; }, "joErrorHeader", 100);
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
+
+        var plaintext;
         runs(function() {
-	        expect(joErrorHeader.internalCode).toEqual(-1);
+            // Before modifying the error data we need to decrypt it.
+            var ciphertext = errorHeaderMo.getBytes(KEY_ERRORDATA);
+            cryptoContext.decrypt(ciphertext, encoder, {
+                result: function(x) { plaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        
+        var modifiedPlaintext;
+        runs(function() {
+            var errordata = encoder.parseObject(plaintext);
+                    
+            // After modifying the error data we need to encrypt it.
+            errordata.remove(KEY_INTERNAL_CODE);
+            encoder.encodeObject(errordata, ENCODER_FORMAT, {
+            	result: function(x) { modifiedPlaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        
+        var modifiedCiphertext;
+        runs(function() {
+            cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT, {
+                result: function(x) { modifiedCiphertext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", 100);
+        
+        var modifiedSignature;
+        runs(function() {
+            errorHeaderMo.put(KEY_ERRORDATA, modifiedCiphertext);
+                            
+            // The error data must be signed otherwise the error data will not be
+            // processed.
+            cryptoContext.sign(modifiedCiphertext, encoder, ENCODER_FORMAT, {
+                result: function(x) { modifiedSignature = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedSignature; }, 100);
+        
+        var moErrorHeader;
+        runs(function() {
+            errorHeaderMo.put(KEY_SIGNATURE, modifiedSignature);
+
+            Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
+                result: function(x) { moErrorHeader = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return moErrorHeader; }, "moErrorHeader", 100);
+        runs(function() {
+	        expect(moErrorHeader.internalCode).toEqual(-1);
         });
     });
     
@@ -1215,49 +1544,75 @@ describe("ErrorHeader", function() {
             });
         });
         waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        
+        var errorHeaderMo;
+        runs(function() {
+            MslTestUtils.toMslObject(encoder, errorHeader, {
+                result: function(x) { errorHeaderMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
 
+        var plaintext;
+        runs(function() {
+            // Before modifying the error data we need to decrypt it.
+            var ciphertext = errorHeaderMo.getBytes(KEY_ERRORDATA);
+            cryptoContext.decrypt(ciphertext, encoder, {
+                result: function(x) { plaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        
+        var modifiedPlaintext;
+        runs(function() {
+            var errordata = encoder.parseObject(plaintext);
+                    
+            // After modifying the error data we need to encrypt it.
+            errordata.put(KEY_INTERNAL_CODE, "x");
+            encoder.encodeObject(errordata, ENCODER_FORMAT, {
+            	result: function(x) { modifiedPlaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        
+        var modifiedCiphertext;
+        runs(function() {
+            cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT, {
+                result: function(x) { modifiedCiphertext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", 100);
+        
+        var modifiedSignature;
+        runs(function() {
+            errorHeaderMo.put(KEY_ERRORDATA, modifiedCiphertext);
+                            
+            // The error data must be signed otherwise the error data will not be
+            // processed.
+            cryptoContext.sign(modifiedCiphertext, encoder, ENCODER_FORMAT, {
+                result: function(x) { modifiedSignature = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedSignature; }, 100);
+        
         var exception;
         runs(function() {
-        	var errorHeaderJo = JSON.parse(JSON.stringify(errorHeader));
+            errorHeaderMo.put(KEY_SIGNATURE, modifiedSignature);
 
-        	// Before modifying the error data we need to decrypt it.
-        	var ciphertext = base64$decode(errorHeaderJo[KEY_ERRORDATA]);
-        	cryptoContext.decrypt(ciphertext, {
-        		result: function(plaintext) {
-        			var errordata = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
-
-        			// After modifying the error data we need to encrypt it.
-        			expect(errordata[KEY_INTERNAL_CODE]).not.toBeNull();
-        			errordata[KEY_INTERNAL_CODE] = "x";
-        			var modifiedPlaintext = textEncoding$getBytes(JSON.stringify(errordata), MslConstants$DEFAULT_CHARSET);
-        			cryptoContext.encrypt(modifiedPlaintext, {
-        				result: function(modifiedCiphertext) {
-        					errorHeaderJo[KEY_ERRORDATA] = base64$encode(modifiedCiphertext);
-
-        					// The error data must be signed otherwise the error data will not be
-        					// processed.
-        					cryptoContext.sign(modifiedCiphertext, {
-        						result: function(modifiedSignature) {
-        							errorHeaderJo[KEY_SIGNATURE] = base64$encode(modifiedSignature);
-
-        							Header$parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS, {
-        								result: function() {},
-        								error: function(err) { exception = err; },
-        							});
-        						},
-        						error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        					});
-        				},
-        				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        			});
-        		},
-        		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
-        	});
+            Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
+                result: function() {},
+                error: function(e) { exception = e; },
+            });
         });
         waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
         	var f = function() { throw exception; };
-        	expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR, messageid = MESSAGE_ID));
+        	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR, MESSAGE_ID));
         });
     });
     
@@ -1270,49 +1625,75 @@ describe("ErrorHeader", function() {
             });
         });
         waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        
+        var errorHeaderMo;
+        runs(function() {
+            MslTestUtils.toMslObject(encoder, errorHeader, {
+                result: function(x) { errorHeaderMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
 
+        var plaintext;
+        runs(function() {
+            // Before modifying the error data we need to decrypt it.
+            var ciphertext = errorHeaderMo.getBytes(KEY_ERRORDATA);
+            cryptoContext.decrypt(ciphertext, encoder, {
+                result: function(x) { plaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        
+        var modifiedPlaintext;
+        runs(function() {
+            var errordata = encoder.parseObject(plaintext);
+                    
+            // After modifying the error data we need to encrypt it.
+            errordata.put(KEY_INTERNAL_CODE, -1);
+            encoder.encodeObject(errordata, ENCODER_FORMAT, {
+            	result: function(x) { modifiedPlaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        
+        var modifiedCiphertext;
+        runs(function() {
+            cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT, {
+                result: function(x) { modifiedCiphertext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", 100);
+        
+        var modifiedSignature;
+        runs(function() {
+            errorHeaderMo.put(KEY_ERRORDATA, modifiedCiphertext);
+                            
+            // The error data must be signed otherwise the error data will not be
+            // processed.
+            cryptoContext.sign(modifiedCiphertext, encoder, ENCODER_FORMAT, {
+                result: function(x) { modifiedSignature = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedSignature; }, 100);
+        
         var exception;
         runs(function() {
-        	var errorHeaderJo = JSON.parse(JSON.stringify(errorHeader));
+            errorHeaderMo.put(KEY_SIGNATURE, modifiedSignature);
 
-        	// Before modifying the error data we need to decrypt it.
-        	var ciphertext = base64$decode(errorHeaderJo[KEY_ERRORDATA]);
-        	cryptoContext.decrypt(ciphertext, {
-        		result: function(plaintext) {
-        			var errordata = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
-
-        			// After modifying the error data we need to encrypt it.
-        			expect(errordata[KEY_INTERNAL_CODE]).not.toBeNull();
-        			errordata[KEY_INTERNAL_CODE] = -1;
-        			var modifiedPlaintext = textEncoding$getBytes(JSON.stringify(errordata), MslConstants$DEFAULT_CHARSET);
-        			cryptoContext.encrypt(modifiedPlaintext, {
-        				result: function(modifiedCiphertext) {
-        					errorHeaderJo[KEY_ERRORDATA] = base64$encode(modifiedCiphertext);
-
-        					// The error data must be signed otherwise the error data will not be
-        					// processed.
-        					cryptoContext.sign(modifiedCiphertext, {
-        						result: function(modifiedSignature) {
-        							errorHeaderJo[KEY_SIGNATURE] = base64$encode(modifiedSignature);
-
-        							Header$parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS, {
-        								result: function() {},
-        								error: function(err) { exception = err; },
-        							});
-        						},
-        						error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        					});
-        				},
-        				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        			});
-        		},
-        		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
-        	});
+            Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
+                result: function() {},
+                error: function(e) { exception = e; },
+            });
         });
         waitsFor(function() { return exception; }, "exception", 100);
         runs(function() {
         	var f = function() { throw exception; };
-        	expect(f).toThrow(new MslMessageException(MslError.INTERNAL_CODE_NEGATIVE, messageid = MESSAGE_ID));
+        	expect(f).toThrow(new MslMessageException(MslError.INTERNAL_CODE_NEGATIVE, MESSAGE_ID));
         });
     });
     
@@ -1326,47 +1707,73 @@ describe("ErrorHeader", function() {
         });
         waitsFor(function() { return errorHeader; }, "errorHeader", 100);
         
-        var joErrorHeader;
+        var errorHeaderMo;
         runs(function() {
-        	var errorHeaderJo = JSON.parse(JSON.stringify(errorHeader));
-
-        	// Before modifying the error data we need to decrypt it.
-        	var ciphertext = base64$decode(errorHeaderJo[KEY_ERRORDATA]);
-        	cryptoContext.decrypt(ciphertext, {
-        		result: function(plaintext) {
-        			var errordata = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
-
-        			// After modifying the error data we need to encrypt it.
-        			expect(errordata[KEY_ERROR_MESSAGE]).not.toBeNull();
-        			delete errordata[KEY_ERROR_MESSAGE];
-        			var modifiedPlaintext = textEncoding$getBytes(JSON.stringify(errordata), MslConstants$DEFAULT_CHARSET);
-        			cryptoContext.encrypt(modifiedPlaintext, {
-        				result: function(modifiedCiphertext) {
-        					errorHeaderJo[KEY_ERRORDATA] = base64$encode(modifiedCiphertext);
-
-        					// The error data must be signed otherwise the error data will not be
-        					// processed.
-        					cryptoContext.sign(modifiedCiphertext, {
-        						result: function(modifiedSignature) {
-        							errorHeaderJo[KEY_SIGNATURE] = base64$encode(modifiedSignature);
-
-        							Header$parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS, {
-        								result: function(hdr) { joErrorHeader = hdr; },
-        								error: function(e) { expect(function() { throw e; }).not.toThrow(); },
-        							});
-        						},
-        						error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        					});
-        				},
-        				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        			});
-        		},
-        		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
-        	});
+            MslTestUtils.toMslObject(encoder, errorHeader, {
+                result: function(x) { errorHeaderMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
         });
-        waitsFor(function() { return joErrorHeader; }, "joErrorHeader", 100);
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
+
+        var plaintext;
         runs(function() {
-        	expect(joErrorHeader.errorMessage).toBeUndefined();
+            // Before modifying the error data we need to decrypt it.
+            var ciphertext = errorHeaderMo.getBytes(KEY_ERRORDATA);
+            cryptoContext.decrypt(ciphertext, encoder, {
+                result: function(x) { plaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        
+        var modifiedPlaintext;
+        runs(function() {
+            var errordata = encoder.parseObject(plaintext);
+                    
+            // After modifying the error data we need to encrypt it.
+            errordata.remove(KEY_ERROR_MESSAGE);
+            encoder.encodeObject(errordata, ENCODER_FORMAT, {
+            	result: function(x) { modifiedPlaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        
+        var modifiedCiphertext;
+        runs(function() {
+            cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT, {
+                result: function(x) { modifiedCiphertext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", 100);
+        
+        var modifiedSignature;
+        runs(function() {
+            errorHeaderMo.put(KEY_ERRORDATA, modifiedCiphertext);
+                            
+            // The error data must be signed otherwise the error data will not be
+            // processed.
+            cryptoContext.sign(modifiedCiphertext, encoder, ENCODER_FORMAT, {
+                result: function(x) { modifiedSignature = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedSignature; }, 100);
+        
+        var moErrorHeader;
+        runs(function() {
+            errorHeaderMo.put(KEY_SIGNATURE, modifiedSignature);
+
+            Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
+                result: function(x) { moErrorHeader = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return moErrorHeader; }, "moErrorHeader", 100);
+        runs(function() {
+        	expect(moErrorHeader.errorMessage).toBeNull();
         });
     });
     
@@ -1380,47 +1787,73 @@ describe("ErrorHeader", function() {
         });
         waitsFor(function() { return errorHeader; }, "errorHeader", 100);
         
-        var joErrorHeader;
+        var errorHeaderMo;
         runs(function() {
-            var errorHeaderJo = JSON.parse(JSON.stringify(errorHeader));
-
-            // Before modifying the error data we need to decrypt it.
-            var ciphertext = base64$decode(errorHeaderJo[KEY_ERRORDATA]);
-            cryptoContext.decrypt(ciphertext, {
-                result: function(plaintext) {
-                    var errordata = JSON.parse(textEncoding$getString(plaintext, MslConstants$DEFAULT_CHARSET));
-
-                    // After modifying the error data we need to encrypt it.
-                    expect(errordata[KEY_USER_MESSAGE]).not.toBeNull();
-                    delete errordata[KEY_USER_MESSAGE];
-                    var modifiedPlaintext = textEncoding$getBytes(JSON.stringify(errordata), MslConstants$DEFAULT_CHARSET);
-                    cryptoContext.encrypt(modifiedPlaintext, {
-                        result: function(modifiedCiphertext) {
-                            errorHeaderJo[KEY_ERRORDATA] = base64$encode(modifiedCiphertext);
-
-                            // The error data must be signed otherwise the error data will not be
-                            // processed.
-                            cryptoContext.sign(modifiedCiphertext, {
-                                result: function(modifiedSignature) {
-                                    errorHeaderJo[KEY_SIGNATURE] = base64$encode(modifiedSignature);
-
-                                    Header$parseHeader(ctx, errorHeaderJo, CRYPTO_CONTEXTS, {
-                                        result: function(hdr) { joErrorHeader = hdr; },
-                                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
-                                    });
-                                },
-                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                            });
-                        },
-                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                    });
-                },
-                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            MslTestUtils.toMslObject(encoder, errorHeader, {
+                result: function(x) { errorHeaderMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return joErrorHeader; }, "joErrorHeader", 100);
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
+
+        var plaintext;
         runs(function() {
-            expect(joErrorHeader.userMessage).toBeUndefined();
+            // Before modifying the error data we need to decrypt it.
+            var ciphertext = errorHeaderMo.getBytes(KEY_ERRORDATA);
+            cryptoContext.decrypt(ciphertext, encoder, {
+                result: function(x) { plaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        
+        var modifiedPlaintext;
+        runs(function() {
+            var errordata = encoder.parseObject(plaintext);
+                    
+            // After modifying the error data we need to encrypt it.
+            errordata.remove(KEY_USER_MESSAGE);
+            encoder.encodeObject(errordata, ENCODER_FORMAT, {
+            	result: function(x) { modifiedPlaintext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        
+        var modifiedCiphertext;
+        runs(function() {
+            cryptoContext.encrypt(modifiedPlaintext, encoder, ENCODER_FORMAT, {
+                result: function(x) { modifiedCiphertext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", 100);
+        
+        var modifiedSignature;
+        runs(function() {
+            errorHeaderMo.put(KEY_ERRORDATA, modifiedCiphertext);
+                            
+            // The error data must be signed otherwise the error data will not be
+            // processed.
+            cryptoContext.sign(modifiedCiphertext, encoder, ENCODER_FORMAT, {
+                result: function(x) { modifiedSignature = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return modifiedSignature; }, 100);
+        
+        var moErrorHeader;
+        runs(function() {
+            errorHeaderMo.put(KEY_SIGNATURE, modifiedSignature);
+
+            Header$parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
+                result: function(x) { moErrorHeader = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return moErrorHeader; }, "moErrorHeader", 100);
+        runs(function() {
+            expect(moErrorHeader.userMessage).toBeNull();
         });
     });
     
@@ -1441,8 +1874,13 @@ describe("ErrorHeader", function() {
         waitsFor(function() { return errorHeaderA && errorHeaderB; }, "error headers", 100);
         var errorHeaderA2;
         runs(function() {
-            Header$parseHeader(ctx, JSON.parse(JSON.stringify(errorHeaderA)), CRYPTO_CONTEXTS, {
-                result: function(hdr) { errorHeaderA2 = hdr; },
+            MslTestUtils.toMslObject(encoder, errorHeaderA, {
+                result: function(mo) {
+                    Header$parseHeader(ctx, JSON.parse(JSON.stringify(errorHeaderA)), CRYPTO_CONTEXTS, {
+                        result: function(hdr) { errorHeaderA2 = hdr; },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
@@ -1479,8 +1917,13 @@ describe("ErrorHeader", function() {
         waitsFor(function() { return errorHeaderA && errorHeaderB; }, "error headers", 2000);
         var errorHeaderA2;
         runs(function() {
-            Header$parseHeader(ctx, JSON.parse(JSON.stringify(errorHeaderA)), CRYPTO_CONTEXTS, {
-                result: function(hdr) { errorHeaderA2 = hdr; },
+            MslTestUtils.toMslObject(encoder, errorHeaderA, {
+                result: function(mo) {
+                    Header$parseHeader(ctx, JSON.parse(JSON.stringify(errorHeaderA)), CRYPTO_CONTEXTS, {
+                        result: function(hdr) { errorHeaderA2 = hdr; },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
@@ -1517,10 +1960,15 @@ describe("ErrorHeader", function() {
         waitsFor(function() { return errorHeaderA && errorHeaderB; }, "error headers", 100);
         var errorHeaderA2;
         runs(function() {
-        	Header$parseHeader(ctx, JSON.parse(JSON.stringify(errorHeaderA)), CRYPTO_CONTEXTS, {
-        		result: function(hdr) { errorHeaderA2 = hdr; },
-        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        	});
+            MslTestUtils.toMslObject(encoder, errorHeaderA, {
+                result: function(mo) {
+                    Header$parseHeader(ctx, JSON.parse(JSON.stringify(errorHeaderA)), CRYPTO_CONTEXTS, {
+                        result: function(hdr) { errorHeaderA2 = hdr; },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
         });
         waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2", 100);
 
@@ -1555,10 +2003,15 @@ describe("ErrorHeader", function() {
         waitsFor(function() { return errorHeaderA && errorHeaderB; }, "error headers", 100);
         var errorHeaderA2;
         runs(function() {
-        	Header$parseHeader(ctx, JSON.parse(JSON.stringify(errorHeaderA)), CRYPTO_CONTEXTS, {
-        		result: function(hdr) { errorHeaderA2 = hdr; },
-        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        	});
+            MslTestUtils.toMslObject(encoder, errorHeaderA, {
+                result: function(mo) {
+                    Header$parseHeader(ctx, JSON.parse(JSON.stringify(errorHeaderA)), CRYPTO_CONTEXTS, {
+                        result: function(hdr) { errorHeaderA2 = hdr; },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
         });
         waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2", 100);
 
@@ -1593,10 +2046,15 @@ describe("ErrorHeader", function() {
         waitsFor(function() { return errorHeaderA && errorHeaderB; }, "error headers", 100);
         var errorHeaderA2;
         runs(function() {
-        	Header$parseHeader(ctx, JSON.parse(JSON.stringify(errorHeaderA)), CRYPTO_CONTEXTS, {
-        		result: function(hdr) { errorHeaderA2 = hdr; },
-        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        	});
+            MslTestUtils.toMslObject(encoder, errorHeaderA, {
+                result: function(mo) {
+                    Header$parseHeader(ctx, JSON.parse(JSON.stringify(errorHeaderA)), CRYPTO_CONTEXTS, {
+                        result: function(hdr) { errorHeaderA2 = hdr; },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
         });
         waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2", 100);
 
@@ -1635,10 +2093,15 @@ describe("ErrorHeader", function() {
         waitsFor(function() { return errorHeaderA && errorHeaderB && errorHeaderC; }, "error headers", 100);
         var errorHeaderA2;
         runs(function() {
-        	Header$parseHeader(ctx, JSON.parse(JSON.stringify(errorHeaderA)), CRYPTO_CONTEXTS, {
-        		result: function(hdr) { errorHeaderA2 = hdr; },
-        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        	});
+            MslTestUtils.toMslObject(encoder, errorHeaderA, {
+                result: function(mo) {
+                    Header$parseHeader(ctx, JSON.parse(JSON.stringify(errorHeaderA)), CRYPTO_CONTEXTS, {
+                        result: function(hdr) { errorHeaderA2 = hdr; },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
         });
         waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2", 100);
 
@@ -1677,8 +2140,13 @@ describe("ErrorHeader", function() {
         waitsFor(function() { return errorHeaderA && errorHeaderB && errorHeaderC; }, "error headers", 100);
         var errorHeaderA2;
         runs(function() {
-            Header$parseHeader(ctx, JSON.parse(JSON.stringify(errorHeaderA)), CRYPTO_CONTEXTS, {
-                result: function(hdr) { errorHeaderA2 = hdr; },
+            MslTestUtils.toMslObject(encoder, errorHeaderA, {
+                result: function(mo) {
+                    Header$parseHeader(ctx, JSON.parse(JSON.stringify(errorHeaderA)), CRYPTO_CONTEXTS, {
+                        result: function(hdr) { errorHeaderA2 = hdr; },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });

@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 describe("X509AuthenticationData", function() {
+    /** MSL encoder format. */
+    var ENCODER_FORMAT = MslEncoderFormat.JSON;
+    
     /** X.509 expired resource certificate. */
     var X509_EXPIRED_CERT =
     	"-----BEGIN CERTIFICATE-----\n" +
@@ -40,11 +43,11 @@ describe("X509AuthenticationData", function() {
     	"dvvz\n" +
     	"-----END CERTIFICATE-----";
     
-    /** JSON key entity authentication scheme. */
+    /** Key entity authentication scheme. */
     var KEY_SCHEME = "scheme";
-    /** JSON key entity authentication data. */
+    /** Key entity authentication data. */
     var KEY_AUTHDATA = "authdata";
-    /** JSON key entity X.509 certificate. */
+    /** Key entity X.509 certificate. */
     var KEY_X509_CERT = "x509certificate";
 
     /** Expired X.509 certificate. */
@@ -53,15 +56,24 @@ describe("X509AuthenticationData", function() {
     
     /** MSL context. */
     var ctx;
+    /** MSL encoder factory. */
+    var encoder;
+    
+    var initialized = false;
     beforeEach(function() {
-        if (!ctx) {
+        if (!initialized) {
             runs(function() {
                 MockMslContext$create(EntityAuthenticationScheme.X509, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 100);
+            waitsFor(function() { return ctx; }, "ctx", 900);
+            
+            runs(function() {
+                encoder = ctx.getMslEncoderFactory();
+                initialized = true;
+            });
         }
     });
     
@@ -70,87 +82,192 @@ describe("X509AuthenticationData", function() {
     	expect(data.scheme).toBe(EntityAuthenticationScheme.X509);
     	expect(data.x509cert).toEqual(MockX509AuthenticationFactory.X509_CERT);
     	expect(data.identity).toEqual(MockX509AuthenticationFactory.X509_CERT.getSubjectString());
+        
+        var authdata;
+        runs(function() {
+            data.getAuthData(encoder, ENCODER_FORMAT, {
+                result: function(x) { authdata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return authdata; }, "authdata", 100);
+        
+        var encode;
+        runs(function() {
+            expect(authdata).not.toBeNull();
+            data.toMslEncoding(encoder, ENCODER_FORMAT, {
+                result: function(x) { encode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return encode; }, "encode", 100);
+        
+        var moData, moAuthdata;
+        runs(function() {
+            expect(encode).not.toBeNull();
+            
+            moData = new X509AuthenticationData$parse(authdata);
+            expect(moData.scheme).toEqual(data.scheme);
+            expect(moData.x509cert.hex).toEqual(data.x509cert.hex);
+            expect(moData.getIdentity()).toEqual(data.getIdentity());
+            moData.getAuthData(encoder, ENCODER_FORMAT, {
+                result: function(x) { moAuthdata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return moAuthdata; }, "moAuthdata", 100);
+
+        var moEncode;
+        runs(function() {
+            expect(moAuthdata).not.toBeNull();
+            expect(moAuthdata).toEqual(authdata);
+            moData.toMslEncoding(encoder, ENCODER_FORMAT, {
+                result: function(x) { moEncode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return moEncode; }, "moEncode", 100);
+
+        runs(function() {
+            expect(moEncode).not.toBeNull();
+            expect(moEncode).toEqual(encode);
+        });
     });
 	
-	it("json is correct", function() {
+	it("mslobject is correct", function() {
 		var data = new X509AuthenticationData(MockX509AuthenticationFactory.X509_CERT);
-		var json = JSON.stringify(data);
-		var certB64 = hex2b64(MockX509AuthenticationFactory.X509_CERT.hex);
-		expect(json).toEqual('{"scheme":"' + EntityAuthenticationScheme.X509.name + '","authdata":{"x509certificate":"' + certB64 + '"}}');
+        var mo;
+        runs(function() {
+            MslTestUtils.toMslObject(encoder, data, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        runs(function() {
+            expect(mo.getString(KEY_SCHEME)).toEqual(EntityAuthenticationScheme.X509.name);
+            var authdata = mo.getMslObject(KEY_AUTHDATA, encoder);
+            var x509certificate = authdata.getString(KEY_X509_CERT);
+            var certB64 = hex2b64(MockX509AuthenticationFactory.X509_CERT.hex);
+            expect(x509certificate).toEqual(certB64);
+        });
 	});
 	
-	it("X509AuthenticationData.create", function() {
+	it("create", function() {
 		var data = new X509AuthenticationData(MockX509AuthenticationFactory.X509_CERT);
-		var authdata = data.getAuthData();
-    	expect(authdata).not.toBeNull();
-    	var json = JSON.stringify(data);
-    	expect(json).not.toBeNull();
-    	
-    	var joData = new X509AuthenticationData$parse(authdata);
-    	expect(joData.scheme).toEqual(data.scheme);
-    	expect(joData.x509cert.hex).toEqual(data.x509cert.hex);
-    	expect(joData.identity).toEqual(data.identity);
-    	var joAuthdata = joData.getAuthData();
-    	expect(joAuthdata).not.toBeNull();
-    	expect(joAuthdata).toEqual(authdata);
-    	var joJson = JSON.stringify(joData);
-    	expect(joJson).not.toBeNull();
-    	expect(joJson).toEqual(json);
-	});
-	
-	it("EntityAuthenticationData.create", function() {
-		var data = new X509AuthenticationData(MockX509AuthenticationFactory.X509_CERT);
-    	var json = JSON.stringify(data);
-    	var jo = JSON.parse(json);
-    	
-    	var entitydata;
-    	runs(function() {
-    	    EntityAuthenticationData$parse(ctx, jo, {
-    	        result: function(x) { entitydata = x; },
-    	        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
-    	    });
-    	});
-    	waitsFor(function() { return entitydata; }, "entitydata", 100);
-    	
-    	runs(function() {
-        	expect(entitydata).not.toBeNull();
+        
+        var encode;
+        runs(function() {
+            data.toMslEncoding(encoder, ENCODER_FORMAT, {
+                result: function(x) { encode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return encode; }, "encode", 100);
+        
+        var mo;
+        runs(function() {
+            MslTestUtils.toMslObject(encoder, data, {
+                result: function(x) { mo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return mo; }, "mo", 100);
+        
+        var entitydata;
+        runs(function() {
+            EntityAuthenticationData$parse(ctx, mo, {
+                result: function(x) { entitydata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return entitydata }, "entitydata", 100);
+
+        var moData, moAuthdata;
+        runs(function() {
+            expect(entitydata).not.toBeNull();
         	expect(entitydata instanceof X509AuthenticationData).toBeTruthy();
         	
-        	var joData = entitydata;
-        	expect(joData.scheme).toEqual(data.scheme);
-        	expect(joData.x509cert.hex).toEqual(data.x509cert.hex);
-        	expect(joData.identity).toEqual(data.identity);
-        	var joAuthdata = joData.getAuthData();
-        	expect(joAuthdata).not.toBeNull();
-        	expect(joAuthdata).toEqual(data.getAuthData());
-        	var joJson = JSON.stringify(joData);
-        	expect(joJson).not.toBeNull();
-        	expect(joJson).toEqual(json);
-    	});
+        	moData = entitydata;
+        	expect(moData.scheme).toEqual(data.scheme);
+        	expect(moData.x509cert.hex).toEqual(data.x509cert.hex);
+        	expect(moData.getIdentity()).toEqual(data.getIdentity());
+            moData.getAuthData(encoder, ENCODER_FORMAT, {
+                result: function(x) { moAuthdata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return moAuthdata; }, "moAuthdata", 100);
+        
+        var authdata;
+        runs(function() {
+            data.getAuthData(encoder, ENCODER_FORMAT, {
+                result: function(x) { authdata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return authdata; }, "authdata", 100);
+        
+        var moEncode;
+        runs(function() {
+            expect(moAuthdata).not.toBeNull();
+            expect(moAuthdata).toEqual(authdata);
+            moData.toMslEncoding(encoder, ENCODER_FORMAT, {
+                result: function(x) { moEncode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return moEncode; }, "moEncode", 100);
+        
+        runs(function() {
+            expect(moEncode).not.toBeNull();
+            expect(moEncode).toEqual(encode);
+        });
 	});
 	
 	it("missing X.509 cert", function() {
-		var f = function() {
+        var authdata;
+        runs(function() {
 			var data = new X509AuthenticationData(MockX509AuthenticationFactory.X509_CERT);
-			var authdata = data.getAuthData();
-			delete authdata[KEY_X509_CERT];
-			X509AuthenticationData$parse(authdata);
-		};
-		expect(f).toThrow(new MslEncodingException(MslError.JSON_PARSE_ERROR));
+            data.getAuthData(encoder, ENCODER_FORMAT, {
+                result: function(x) { authdata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return authdata; }, "authdata", 100);
+        
+        runs(function() {
+			authdata.remove(KEY_X509_CERT);
+			var f = function() {
+			    X509AuthenticationData$parse(authdata);
+			};
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
+		});
 	});
 
 	// the jsrsasign X.509 parser does not validate
 	xit("corrupt X.509 cert", function() {
-		var f = function() {
+        var authdata;
+        runs(function() {
 			var data = new X509AuthenticationData(MockX509AuthenticationFactory.X509_CERT);
-			var authdata = data.getAuthData();
-			var x509b64 = authdata[KEY_X509_CERT];
+            data.getAuthData(encoder, ENCODER_FORMAT, {
+                result: function(x) { authdata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return authdata; }, "authdata", 100);
+        
+        runs(function() {
+			var x509b64 = authdata.getString(KEY_X509_CERT);
 			var x509raw = base64$decode(x509b64);
 			++x509raw[0];
-			authdata[KEY_X509_CERT] = base64$encode(x509b64);
-			X509AuthenticationData$parse(authdata);
-		};
-		expect(f).toThrow(new MslCryptoException(MslError.X509CERT_PARSE_ERROR));
+			authdata.put(KEY_X509_CERT, base64$encode(x509b64));
+			var f = function() {
+			    X509AuthenticationData$parse(authdata);
+			};
+			expect(f).toThrow(new MslCryptoException(MslError.X509CERT_PARSE_ERROR));
+        });
 	});
     
 	it("equals identity", function() {
@@ -158,9 +275,14 @@ describe("X509AuthenticationData", function() {
 	    runs(function() {
     		dataA = new X509AuthenticationData(MockX509AuthenticationFactory.X509_CERT);
             dataB = new X509AuthenticationData(expiredCert);
-            EntityAuthenticationData$parse(ctx, JSON.parse(JSON.stringify(dataA)), {
-                result: function(x) { dataA2 = x; },
-                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            MslTestUtils.toMslObject(encoder, dataA, {
+                result: function(mo) {
+                    EntityAuthenticationData$parse(ctx, mo, {
+                        result: function(x) { dataA2 = x; },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
 	    });
 	    waitsFor(function() { return dataA && dataB && dataA2; }, "data", 100);

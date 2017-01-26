@@ -44,9 +44,9 @@ var RsaAuthenticationFactory = EntityAuthenticationFactory.extend({
     },
 
     /** @inheritDoc */
-    createData: function createData(ctx, entityAuthJO, callback) {
+    createData: function createData(ctx, entityAuthMo, callback) {
         AsyncExecutor(callback, function() {
-            return RsaAuthenticationData$parse(entityAuthJO);
+            return RsaAuthenticationData$parse(entityAuthMo);
         });
     },
 

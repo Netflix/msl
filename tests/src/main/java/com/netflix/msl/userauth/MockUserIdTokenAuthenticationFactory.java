@@ -15,12 +15,11 @@
  */
 package com.netflix.msl.userauth;
 
-import org.json.JSONObject;
-
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslInternalException;
 import com.netflix.msl.MslUserAuthException;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.tokens.UserIdToken;
@@ -69,11 +68,11 @@ public class MockUserIdTokenAuthenticationFactory extends UserAuthenticationFact
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.userauth.UserAuthenticationFactory#createData(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, org.json.JSONObject)
+     * @see com.netflix.msl.userauth.UserAuthenticationFactory#createData(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, com.netflix.msl.io.MslObject)
      */
     @Override
-    public UserAuthenticationData createData(final MslContext ctx, final MasterToken masterToken, final JSONObject userAuthJO) throws MslEncodingException, MslUserAuthException {
-        return new UserIdTokenAuthenticationData(ctx, userAuthJO);
+    public UserAuthenticationData createData(final MslContext ctx, final MasterToken masterToken, final MslObject userAuthMo) throws MslEncodingException, MslUserAuthException {
+        return new UserIdTokenAuthenticationData(ctx, userAuthMo);
     }
 
     /* (non-Javadoc)

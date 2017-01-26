@@ -28,13 +28,13 @@ var DiffieHellmanExchange$ResponseData$parse;
 
 (function() {
     /**
-     * JSON key Diffie-Hellman parameters ID.
+     * Key Diffie-Hellman parameters ID.
      * @const
      * @type {string}
      */
     var KEY_PARAMETERS_ID = "parametersid";
     /**
-     * JSON key Diffie-Hellman public key.
+     * Key Diffie-Hellman public key.
      * @const
      * @type {string}
      */
@@ -47,11 +47,11 @@ var DiffieHellmanExchange$ResponseData$parse;
      * {@code {
      *   "#mandatory" : [ "parametersid", "publickey" ],
      *   "parametersid" : "string",
-     *   "publickey" : "base64",
+     *   "publickey" : "binary",
      * } where:
      * <ul>
      * <li>{@code parametersid} identifies the Diffie-Hellman paramters to use</li>
-     * <li>{@code publickey} the Base64-encoded public key used to generate the shared secret</li>
+     * <li>{@code publickey} the public key used to generate the shared secret</li>
      * </ul></p>
      *
      */
@@ -78,11 +78,14 @@ var DiffieHellmanExchange$ResponseData$parse;
         },
 
         /** @inheritDoc */
-        getKeydata: function getKeydata() {
-            var keydata = {};
-            keydata[KEY_PARAMETERS_ID] = this.parametersId;
-            keydata[KEY_PUBLIC_KEY] = base64$encode(this.publicKey.getEncoded());
-            return keydata;
+        getKeydata: function getKeydata(encoder, format, callback) {
+            AsyncExecutor(callback, function() {
+                var mo = encoder.createObject();
+                mo.put(KEY_PARAMETERS_ID, this.parametersId);
+                var publicKeyY = this.publicKey.getEncoded();
+                mo.put(KEY_PUBLIC_KEY, correctNullBytes(publicKeyY));
+                return mo;
+            }, this);
         },
 
         /** @inheritDoc */
@@ -110,52 +113,37 @@ var DiffieHellmanExchange$ResponseData$parse;
 
     /**
      * Create a new Diffie-Hellman request data repository from the provided
-     * JSON object. The private key will be unknown.
+     * MSL object. The private key will be unknown.
      *
-     * @param {Object} keyDataJO the JSON object.
+     * @param {MslObject} keyDataMo the JSON object.
      * @param {{result: function(RequestData), error: function(Error)}}
      *        callback the callback will receive the request data or any
      *        thrown exceptions.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslKeyExchangeException if the public key is invalid.
      */
-    var RequestData$parse = DiffieHellmanExchange$RequestData$parse = function RequestData$parse(keyDataJO, callback) {
+    var RequestData$parse = DiffieHellmanExchange$RequestData$parse = function RequestData$parse(keyDataMo, callback) {
         AsyncExecutor(callback, function() {
-            // Pull key data.
-            var parametersId = keyDataJO[KEY_PARAMETERS_ID];
-            var publicKeyB64 = keyDataJO[KEY_PUBLIC_KEY];
-
-            // Verify key data.
-            if (typeof parametersId !== 'string' ||
-                typeof publicKeyB64 !== 'string')
-            {
-                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + JSON.stringify(keyDataJO));
-            }
-
-            // Reconstruct public key.
-            var publicKeyBytes;
             try {
-                publicKeyBytes = base64$decode(publicKeyB64);
+                var parametersId = keyDataMo.getString(KEY_PARAMETERS_ID);
+                var publicKeyY = keyDataMo.getBytes(KEY_PUBLIC_KEY);
+                if (publicKeyY.length == 0)
+                    throw new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY, "keydata " + keyDataMo);
+                PublicKey$import(publicKeyY, WebCryptoAlgorithm.DIFFIE_HELLMAN, WebCryptoUsage.DERIVE_KEY, KeyFormat.SPKI, {
+                    result: function(publicKey) {
+                        var privateKey = null;
+                        callback.result(new RequestData(parametersId, publicKey, privateKey));
+                    },
+                    error: function(e) {
+                        callback.error(new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY, "keydata " + keyDataMo, e));
+                    }
+                });
             } catch (e) {
-                throw new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY, "keydata " + JSON.stringify(keyDataJO), e);
+                if (e instanceof MslEncoderException)
+                    throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "keydata " + keyDataMo, e);
+                throw e;
             }
-            if (!publicKeyBytes || publicKeyBytes.length == 0)
-                throw new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY, "keydata " + JSON.stringify(keyDataJO));
-            PublicKey$import(publicKeyBytes, WebCryptoAlgorithm.DIFFIE_HELLMAN, WebCryptoUsage.DERIVE_KEY, KeyFormat.SPKI, {
-                result: function(publicKey) {
-                    constructRequestData(parametersId, publicKey);
-                },
-                error: function(e) {
-                    callback.error(new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY, "keydata " + JSON.stringify(keyDataJO), e));
-                }
-            });
         });
-
-        function constructRequestData(parametersId, publicKey) {
-            // Return the request data. The private key is null.
-            var privateKey = null;
-            callback.result(new RequestData(parametersId, publicKey, privateKey));
-        }
     };
 
     /**
@@ -165,11 +153,11 @@ var DiffieHellmanExchange$ResponseData$parse;
      * {@code {
      *   "#mandatory" : [ "parametersid", "publickey" ],
      *   "parametersid" : "string",
-     *   "publickey" : "base64",
+     *   "publickey" : "binary",
      * } where:
      * <ul>
      * <li>{@code parametersid} identifies the Diffie-Hellman paramters to use</li>
-     * <li>{@code publickey} the Base64-encoded public key used to generate the shared secret</li>
+     * <li>{@code publickey} the public key used to generate the shared secret</li>
      * </ul></p>
      */
     var ResponseData = DiffieHellmanExchange$ResponseData = KeyResponseData.extend({
@@ -193,11 +181,14 @@ var DiffieHellmanExchange$ResponseData$parse;
         },
 
         /** @inheritDoc */
-        getKeydata: function getKeydata() {
-            var keydata = {};
-            keydata[KEY_PARAMETERS_ID] = this.parametersId;
-            keydata[KEY_PUBLIC_KEY] = base64$encode(this.publicKey.getEncoded());
-            return keydata;
+        getKeydata: function getKeydata(encoder, format, callback) {
+            AsyncExecutor(callback, function() {
+                var mo = encoder.createObject();
+                mo.put(KEY_PARAMETERS_ID, this.parametersId);
+                var publicKeyY = this.publicKey.getEncoded();
+                mo.put(KEY_PUBLIC_KEY, correctNullBytes(publicKeyY));
+                return mo;
+            }, this);
         },
 
         /** @inheritDoc */
@@ -217,45 +208,33 @@ var DiffieHellmanExchange$ResponseData$parse;
 
     /**
      * Create a new Diffie-Hellman response data repository with the provided
-     * master token from the provided JSON object.
+     * master token from the provided MSL object.
      *
      * @param {MasterToken} masterToken the master token.
-     * @param {Object} keyDataJO the JSON object.
+     * @param {MslObject} keyDataMo the MSL object.
      * @return {ResponseData} the response data.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslKeyExchangeException if the public key is invalid.
      */
-    var ResponseData$parse = DiffieHellmanExchange$ResponseData$parse = function ResponseData$parse(masterToken, keyDataJO) {
-        // Pull key response data.
-        var parametersId = keyDataJO[KEY_PARAMETERS_ID];
-        var publicKeyB64 = keyDataJO[KEY_PUBLIC_KEY];
-
-        // Verify key data.
-        if (typeof parametersId !== 'string' ||
-            typeof publicKeyB64 !== 'string')
-        {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + JSON.stringify(keyDataJO));
-        }
-
-        // Reconstruct public key.
-        var publicKeyBytes;
+    var ResponseData$parse = DiffieHellmanExchange$ResponseData$parse = function ResponseData$parse(masterToken, keyDataMo) {
         try {
-            publicKeyBytes = base64$decode(publicKeyB64);
+            var parametersId = keyDataMo.getString(KEY_PARAMETERS_ID);
+            var publicKeyY = keyDataMo.getBytes(KEY_PUBLIC_KEY);
+            if (publicKeyY.length == 0)
+                throw new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY, "keydata " + keyDataMo);
+            PublicKey$import(publicKeyY, WebCryptoAlgorithm.DIFFIE_HELLMAN, WebCryptoUsage.DERIVE_KEY, {
+                result: function(publicKey) {
+                    callback.result(new ResponseData(masterToken, parametersId, publicKey));
+                },
+                error: function(e) {
+                    callback.error(new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY, "keydata " + keyDataMo, e));
+                }
+            });
         } catch (e) {
-            throw new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY, "keydata " + JSON.stringify(keyDataJO), e);
+            if (e instanceof MslEncoderException)
+                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "keydata " + keyDataMo, e);
+            throw e;
         }
-        if (!publicKeyBytes || publicKeyBytes.length == 0)
-            throw new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY, "keydata " + JSON.stringify(keyDataJO));
-        var publicKey;
-        try {
-            var y = new BigInteger(publicKeyBytes);
-            publicKey = new PublicKey(y);
-        } catch (e) {
-            throw new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY, "keydata " + JSON.stringify(keyDataJO), e);
-        }
-
-        // Return the response data.
-        return new ResponseData(masterToken, parametersId, publicKey);
     };
 
     /**
@@ -319,13 +298,13 @@ var DiffieHellmanExchange$ResponseData$parse;
         },
 
         /** @inheritDoc */
-        createRequestData: function createRequestData(ctx, keyRequestJO, callback) {
-            RequestData$parse(keyRequestJO, callback);
+        createRequestData: function createRequestData(ctx, keyRequestMo, callback) {
+            RequestData$parse(keyRequestMo, callback);
         },
 
         /** @inheritDoc */
-        createResponseData: function createResponseData(ctx, masterToken, keyDataJO) {
-            return ResponseData$parse(masterToken, keyDataJO);
+        createResponseData: function createResponseData(ctx, masterToken, keyDataMo) {
+            return ResponseData$parse(masterToken, keyDataMo);
         },
 
         /**
@@ -376,12 +355,12 @@ var DiffieHellmanExchange$ResponseData$parse;
         },
 
         /** @inheritDoc */
-        generateResponse: function generateResponse(ctx, keyRequestData, entityToken, callback) {
+        generateResponse: function generateResponse(ctx, format, keyRequestData, entityToken, callback) {
             var self = this;
             
             AsyncExecutor(callback, function() {
                 if (!(keyRequestData instanceof RequestData))
-                    throw new MslInternalException("Key request data " + JSON.stringify(keyRequestData) + " was not created by this factory.");
+                    throw new MslInternalException("Key request data " + keyRequestData + " was not created by this factory.");
                 var request = keyRequestData;
 
                 var identity;
@@ -490,10 +469,10 @@ var DiffieHellmanExchange$ResponseData$parse;
             var self = this;
             AsyncExecutor(callback, function() {
                 if (!(keyRequestData instanceof RequestData))
-                    throw new MslInternalException("Key request data " + JSON.stringify(keyRequestData) + " was not created by this factory.");
+                    throw new MslInternalException("Key request data " + keyRequestData + " was not created by this factory.");
                 var request = keyRequestData;
                 if (!(keyResponseData instanceof ResponseData))
-                    throw new MslInternalException("Key response data " + JSON.stringify(keyResponseData) + " was not created by this factory.");
+                    throw new MslInternalException("Key response data " + keyResponseData + " was not created by this factory.");
                 var response = keyResponseData;
 
                 // Verify response matches request.

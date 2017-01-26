@@ -15,64 +15,64 @@
  */
 describe("MslCryptoException", function() {
 	it("error as expected", function() {
-		var e = new MslCryptoException(MslError.JSON_PARSE_ERROR);
-		expect(e.error).toBe(MslError.JSON_PARSE_ERROR);
-		expect(e.message).toEqual(MslError.JSON_PARSE_ERROR.message);
+		var e = new MslCryptoException(MslError.MSL_PARSE_ERROR);
+		expect(e.error).toBe(MslError.MSL_PARSE_ERROR);
+		expect(e.message).toEqual(MslError.MSL_PARSE_ERROR.message);
 		expect(e.cause).toBeUndefined();
 		expect(e.messageId).toBeUndefined();
 	});
 	
 	it("error details as expected", function() {
-		var e = new MslCryptoException(MslError.JSON_PARSE_ERROR, "details");
-		expect(e.error).toBe(MslError.JSON_PARSE_ERROR);
-		expect(e.message).toEqual(MslError.JSON_PARSE_ERROR.message + " [details]");
+		var e = new MslCryptoException(MslError.MSL_PARSE_ERROR, "details");
+		expect(e.error).toBe(MslError.MSL_PARSE_ERROR);
+		expect(e.message).toEqual(MslError.MSL_PARSE_ERROR.message + " [details]");
 		expect(e.cause).toBeUndefined();
 		expect(e.messageId).toBeUndefined();
 	});
 	
 	it("error details and cause as expected", function() {
-		var e = new MslCryptoException(MslError.JSON_PARSE_ERROR, "details", new Error("cause"));
-		expect(e.error).toBe(MslError.JSON_PARSE_ERROR);
-		expect(e.message).toEqual(MslError.JSON_PARSE_ERROR.message + " [details]");
+		var e = new MslCryptoException(MslError.MSL_PARSE_ERROR, "details", new Error("cause"));
+		expect(e.error).toBe(MslError.MSL_PARSE_ERROR);
+		expect(e.message).toEqual(MslError.MSL_PARSE_ERROR.message + " [details]");
 		expect(e.cause).not.toBeNull();
 		expect(e.cause.message).toBe("cause");
 	});
 	
 	it("message ID can be set", function() {
-		var e = new MslCryptoException(MslError.JSON_PARSE_ERROR);
+		var e = new MslCryptoException(MslError.MSL_PARSE_ERROR);
 		e.xmessageId = 1;
 		expect(e.xmessageId).toEqual(1);
 	});
 	
 	it("name is correct", function() {
-		var e = new MslCryptoException(MslError.JSON_PARSE_ERROR);
+		var e = new MslCryptoException(MslError.MSL_PARSE_ERROR);
 		expect(e.name).toEqual("MslCryptoException");
 	});
 	
 	it("exception properties are not writable", function() {
-		var e = new MslCryptoException(MslError.JSON_PARSE_ERROR, "details", new Error("cause"));
+		var e = new MslCryptoException(MslError.MSL_PARSE_ERROR, "details", new Error("cause"));
 		e.message = "x";
 		e.error = "x";
 		e.cause = "x";
 		e.name = "x";
-		expect(e.error).toBe(MslError.JSON_PARSE_ERROR);
-		expect(e.message).toEqual(MslError.JSON_PARSE_ERROR.message + " [details]");
+		expect(e.error).toBe(MslError.MSL_PARSE_ERROR);
+		expect(e.message).toEqual(MslError.MSL_PARSE_ERROR.message + " [details]");
 		expect(e.cause).not.toBeNull();
 		expect(e.cause.message).toBe("cause");
 	});
 	
 	it("instanceof MslCryptoException", function() {
-		var e = new MslCryptoException(MslError.JSON_PARSE_ERROR);
+		var e = new MslCryptoException(MslError.MSL_PARSE_ERROR);
 		expect(e instanceof MslCryptoException).toBeTruthy();
 	});
 	
 	it("instanceof MslException", function() {
-		var e = new MslCryptoException(MslError.JSON_PARSE_ERROR);
+		var e = new MslCryptoException(MslError.MSL_PARSE_ERROR);
 		expect(e instanceof MslException).toBeTruthy();
 	});
 	
 	it("instanceof Error", function() {
-		var e = new MslCryptoException(MslError.JSON_PARSE_ERROR);
+		var e = new MslCryptoException(MslError.MSL_PARSE_ERROR);
 		expect(e instanceof Error).toBeTruthy(); 
 	});
 	

@@ -35,9 +35,6 @@ import java.util.Set;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -66,6 +63,12 @@ import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.entityauth.MockPresharedAuthenticationFactory;
 import com.netflix.msl.entityauth.PresharedAuthenticationData;
+import com.netflix.msl.io.MslArray;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslEncoderUtils;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeFactory.KeyExchangeData;
 import com.netflix.msl.keyx.KeyRequestData;
@@ -82,7 +85,6 @@ import com.netflix.msl.userauth.EmailPasswordAuthenticationData;
 import com.netflix.msl.userauth.MockEmailPasswordAuthenticationFactory;
 import com.netflix.msl.userauth.UserAuthenticationData;
 import com.netflix.msl.util.Base64;
-import com.netflix.msl.util.JsonUtils;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslTestUtils;
@@ -93,52 +95,55 @@ import com.netflix.msl.util.MslTestUtils;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class MessageHeaderTest {
+	/** MSL encoder format. */
+	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
+
     /** Milliseconds per second. */
     private static final long MILLISECONDS_PER_SECOND = 1000;
     
-    /** JSON key entity authentication data. */
+    /** Key entity authentication data. */
     private static final String KEY_ENTITY_AUTHENTICATION_DATA = "entityauthdata";
-    /** JSON key master token. */
+    /** Key master token. */
     private static final String KEY_MASTER_TOKEN = "mastertoken";
-    /** JSON key header data. */
+    /** Key header data. */
     private static final String KEY_HEADERDATA = "headerdata";
-    /** JSON key error data signature. */
+    /** Key error data signature. */
     private static final String KEY_SIGNATURE = "signature";
 
     // Message header data.
-    /** JSON key sender. */
+    /** Key sender. */
     private static final String KEY_SENDER = "sender";
-    /** JSON key recipient. */
+    /** Key recipient. */
     private static final String KEY_RECIPIENT = "recipient";
-    /** JSON key timestamp. */
+    /** Key timestamp. */
     private static final String KEY_TIMESTAMP = "timestamp";
-    /** JSON key message ID. */
+    /** Key message ID. */
     private static final String KEY_MESSAGE_ID = "messageid";
-    /** JSON key non-replayable ID. */
+    /** Key non-replayable ID. */
     private static final String KEY_NON_REPLAYABLE_ID = "nonreplayableid";
-    /** JSON key renewable flag. */
+    /** Key renewable flag. */
     private static final String KEY_RENEWABLE = "renewable";
-    /** JSON key handshake flag */
+    /** Key handshake flag */
     private static final String KEY_HANDSHAKE = "handshake";
-    /** JSON key capabilities. */
+    /** Key capabilities. */
     private static final String KEY_CAPABILITIES = "capabilities";
-    /** JSON key key negotiation request. */
+    /** Key key negotiation request. */
     private static final String KEY_KEY_REQUEST_DATA = "keyrequestdata";
-    /** JSON key key negotiation response. */
+    /** Key key negotiation response. */
     private static final String KEY_KEY_RESPONSE_DATA = "keyresponsedata";
-    /** JSON key user authentication data. */
+    /** Key user authentication data. */
     private static final String KEY_USER_AUTHENTICATION_DATA = "userauthdata";
-    /** JSON key user ID token. */
+    /** Key user ID token. */
     private static final String KEY_USER_ID_TOKEN = "useridtoken";
-    /** JSON key service tokens. */
+    /** Key service tokens. */
     private static final String KEY_SERVICE_TOKENS = "servicetokens";
     
     // Message header peer data.
-    /** JSON key peer master token. */
+    /** Key peer master token. */
     private static final String KEY_PEER_MASTER_TOKEN = "peermastertoken";
-    /** JSON key peer user ID token. */
+    /** Key peer user ID token. */
     private static final String KEY_PEER_USER_ID_TOKEN = "peeruseridtoken";
-    /** JSON key peer service tokens. */
+    /** Key peer service tokens. */
     private static final String KEY_PEER_SERVICE_TOKENS = "peerservicetokens";
     
     /**
@@ -167,6 +172,7 @@ public class MessageHeaderTest {
     
     private static final Set<CompressionAlgorithm> ALGOS = new HashSet<CompressionAlgorithm>();
     private static final List<String> LANGUAGES = Arrays.asList(new String[] {"en-US"});
+    private static final Set<MslEncoderFormat> FORMATS = new HashSet<MslEncoderFormat>();
     
     private static MasterToken MASTER_TOKEN;
     private static final String RECIPIENT = "recipient";
@@ -189,6 +195,8 @@ public class MessageHeaderTest {
     private static MslContext trustedNetCtx;
     /** MSL peer-to-peer context. */
     private static MslContext p2pCtx;
+    /** MSL encoder factory. */
+    private static MslEncoderFactory encoder;
     
     /**
      * A helper class for building message header data.
@@ -299,16 +307,18 @@ public class MessageHeaderTest {
     public static void setup() throws MslException {
         trustedNetCtx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
         p2pCtx = new MockMslContext(EntityAuthenticationScheme.PSK, true);
+        encoder = trustedNetCtx.getMslEncoderFactory();
         
         ALGOS.add(CompressionAlgorithm.GZIP);
         ALGOS.add(CompressionAlgorithm.LZW);
-        CAPABILITIES = new MessageCapabilities(ALGOS, LANGUAGES);
+        FORMATS.add(MslEncoderFormat.JSON);
+        CAPABILITIES = new MessageCapabilities(ALGOS, LANGUAGES, FORMATS);
         
         MASTER_TOKEN = MslTestUtils.getMasterToken(trustedNetCtx, 1, 1);
         
         final KeyRequestData keyRequestData = new SymmetricWrappedExchange.RequestData(KeyId.PSK);
         final KeyExchangeFactory factory = trustedNetCtx.getKeyExchangeFactory(keyRequestData.getKeyExchangeScheme());
-        final KeyExchangeData keyxData = factory.generateResponse(trustedNetCtx, keyRequestData, MASTER_TOKEN);
+        final KeyExchangeData keyxData = factory.generateResponse(trustedNetCtx, ENCODER_FORMAT, keyRequestData, MASTER_TOKEN);
         KEY_REQUEST_DATA.add(keyRequestData);
         KEY_RESPONSE_DATA = keyxData.keyResponseData;
         
@@ -320,13 +330,14 @@ public class MessageHeaderTest {
         
         final KeyRequestData peerKeyRequestData = new SymmetricWrappedExchange.RequestData(KeyId.PSK);
         final KeyExchangeFactory peerFactory = p2pCtx.getKeyExchangeFactory(peerKeyRequestData.getKeyExchangeScheme());
-        final KeyExchangeData peerKeyxData = peerFactory.generateResponse(p2pCtx, peerKeyRequestData, PEER_MASTER_TOKEN);
+        final KeyExchangeData peerKeyxData = peerFactory.generateResponse(p2pCtx, ENCODER_FORMAT, peerKeyRequestData, PEER_MASTER_TOKEN);
         PEER_KEY_REQUEST_DATA.add(peerKeyRequestData);
         PEER_KEY_RESPONSE_DATA = peerKeyxData.keyResponseData;
     }
     
     @AfterClass
     public static void teardown() {
+        encoder = null;
         p2pCtx = null;
         trustedNetCtx = null;
     }
@@ -415,7 +426,7 @@ public class MessageHeaderTest {
     }
     
     @Test
-    public void entityAuthDataJsonString() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException, JSONException, UnsupportedEncodingException {
+    public void entityAuthDataMslObject() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException, MslEncoderException, UnsupportedEncodingException {
         // Service tokens may be created with the key response data tokens. The
         // key response data master token has the same serial number as the
         // original master token so we can use the same user ID token.
@@ -425,29 +436,27 @@ public class MessageHeaderTest {
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
-        final String jsonString = messageHeader.toJSONString();
-        assertNotNull(jsonString);
         
         final EntityAuthenticationScheme scheme = entityAuthData.getScheme();
         final EntityAuthenticationFactory factory = trustedNetCtx.getEntityAuthenticationFactory(scheme);
         final ICryptoContext cryptoContext = factory.getCryptoContext(trustedNetCtx, entityAuthData);
         
-        final JSONObject jo = new JSONObject(jsonString);
-        final JSONObject entityAuthDataJo = jo.getJSONObject(KEY_ENTITY_AUTHENTICATION_DATA);
-        assertTrue(JsonUtils.equals(new JSONObject(entityAuthData.toJSONString()), entityAuthDataJo));
-        assertFalse(jo.has(KEY_MASTER_TOKEN));
-        final byte[] ciphertext = Base64.decode(jo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdata = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
-        final byte[] signature = Base64.decode(jo.getString(KEY_SIGNATURE));
-        assertTrue(cryptoContext.verify(ciphertext, signature));
+        final MslObject mo = MslTestUtils.toMslObject(encoder, messageHeader);
+        final MslObject entityAuthDataMo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, entityAuthData), entityAuthDataMo));
+        assertFalse(mo.has(KEY_MASTER_TOKEN));
+        final byte[] ciphertext = mo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdata = encoder.parseObject(plaintext);
+        final byte[] signature = mo.getBytes(KEY_SIGNATURE);
+        assertTrue(cryptoContext.verify(ciphertext, signature, encoder));
         
         assertEquals(NON_REPLAYABLE_ID, (Long)headerdata.getLong(KEY_NON_REPLAYABLE_ID));
         assertEquals(RENEWABLE, headerdata.getBoolean(KEY_RENEWABLE));
         assertEquals(HANDSHAKE, headerdata.getBoolean(KEY_HANDSHAKE));
-        assertTrue(JsonUtils.equals(new JSONObject(CAPABILITIES.toJSONString()), headerdata.getJSONObject(KEY_CAPABILITIES)));
-        assertTrue(JsonUtils.equals(JsonUtils.createArray(KEY_REQUEST_DATA), headerdata.getJSONArray(KEY_KEY_REQUEST_DATA)));
-        assertTrue(JsonUtils.equals(new JSONObject(KEY_RESPONSE_DATA.toJSONString()), headerdata.getJSONObject(KEY_KEY_RESPONSE_DATA)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, CAPABILITIES), headerdata.getMslObject(KEY_CAPABILITIES, encoder)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(trustedNetCtx, KEY_REQUEST_DATA), headerdata.getMslArray(KEY_KEY_REQUEST_DATA)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, KEY_RESPONSE_DATA), headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder)));
         assertFalse(headerdata.has(KEY_SENDER));
         assertEquals(RECIPIENT, headerdata.getString(KEY_RECIPIENT));
         assertTrue(isAboutNowSeconds(headerdata.getLong(KEY_TIMESTAMP)));
@@ -456,13 +465,13 @@ public class MessageHeaderTest {
         assertFalse(headerdata.has(KEY_PEER_SERVICE_TOKENS));
         assertFalse(headerdata.has(KEY_PEER_USER_ID_TOKEN));
         final Set<ServiceToken> serviceTokens = builder.getServiceTokens();
-        assertTrue(JsonUtils.equals(JsonUtils.createArray(serviceTokens), headerdata.getJSONArray(KEY_SERVICE_TOKENS)));
-        assertTrue(JsonUtils.equals(new JSONObject(USER_AUTH_DATA.toJSONString()), headerdata.getJSONObject(KEY_USER_AUTHENTICATION_DATA)));
-        assertTrue(JsonUtils.equals(new JSONObject(USER_ID_TOKEN.toJSONString()), headerdata.getJSONObject(KEY_USER_ID_TOKEN)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(trustedNetCtx, serviceTokens), headerdata.getMslArray(KEY_SERVICE_TOKENS)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, USER_AUTH_DATA), headerdata.getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, USER_ID_TOKEN), headerdata.getMslObject(KEY_USER_ID_TOKEN, encoder)));
     }
     
     @Test
-    public void entityAuthDataReplayableJsonString() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException, JSONException, UnsupportedEncodingException {
+    public void entityAuthDataReplayableMslObject() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException, MslEncoderException, UnsupportedEncodingException {
         // Service tokens may be created with the key response data tokens. The
         // key response data master token has the same serial number as the
         // original master token so we can use the same user ID token.
@@ -473,29 +482,27 @@ public class MessageHeaderTest {
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
-        final String jsonString = messageHeader.toJSONString();
-        assertNotNull(jsonString);
         
         final EntityAuthenticationScheme scheme = entityAuthData.getScheme();
         final EntityAuthenticationFactory factory = trustedNetCtx.getEntityAuthenticationFactory(scheme);
         final ICryptoContext cryptoContext = factory.getCryptoContext(trustedNetCtx, entityAuthData);
         
-        final JSONObject jo = new JSONObject(jsonString);
-        final JSONObject entityAuthDataJo = jo.getJSONObject(KEY_ENTITY_AUTHENTICATION_DATA);
-        assertTrue(JsonUtils.equals(new JSONObject(entityAuthData.toJSONString()), entityAuthDataJo));
-        assertFalse(jo.has(KEY_MASTER_TOKEN));
-        final byte[] ciphertext = Base64.decode(jo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdata = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
-        final byte[] signature = Base64.decode(jo.getString(KEY_SIGNATURE));
-        assertTrue(cryptoContext.verify(ciphertext, signature));
+        final MslObject mo = MslTestUtils.toMslObject(encoder, messageHeader);
+        final MslObject entityAuthDataMo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, entityAuthData), entityAuthDataMo));
+        assertFalse(mo.has(KEY_MASTER_TOKEN));
+        final byte[] ciphertext = mo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdata = encoder.parseObject(plaintext);
+        final byte[] signature = mo.getBytes(KEY_SIGNATURE);
+        assertTrue(cryptoContext.verify(ciphertext, signature, encoder));
         
         assertFalse(headerdata.has(KEY_NON_REPLAYABLE_ID));
         assertEquals(RENEWABLE, headerdata.getBoolean(KEY_RENEWABLE));
         assertEquals(HANDSHAKE, headerdata.getBoolean(KEY_HANDSHAKE));
-        assertTrue(JsonUtils.equals(new JSONObject(CAPABILITIES.toJSONString()), headerdata.getJSONObject(KEY_CAPABILITIES)));
-        assertTrue(JsonUtils.equals(JsonUtils.createArray(KEY_REQUEST_DATA), headerdata.getJSONArray(KEY_KEY_REQUEST_DATA)));
-        assertTrue(JsonUtils.equals(new JSONObject(KEY_RESPONSE_DATA.toJSONString()), headerdata.getJSONObject(KEY_KEY_RESPONSE_DATA)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, CAPABILITIES), headerdata.getMslObject(KEY_CAPABILITIES, encoder)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(trustedNetCtx, KEY_REQUEST_DATA), headerdata.getMslArray(KEY_KEY_REQUEST_DATA)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, KEY_RESPONSE_DATA), headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder)));
         assertFalse(headerdata.has(KEY_SENDER));
         assertEquals(RECIPIENT, headerdata.getString(KEY_RECIPIENT));
         assertTrue(isAboutNowSeconds(headerdata.getLong(KEY_TIMESTAMP)));
@@ -504,9 +511,9 @@ public class MessageHeaderTest {
         assertFalse(headerdata.has(KEY_PEER_SERVICE_TOKENS));
         assertFalse(headerdata.has(KEY_PEER_USER_ID_TOKEN));
         final Set<ServiceToken> serviceTokens = builder.getServiceTokens();
-        assertTrue(JsonUtils.equals(JsonUtils.createArray(serviceTokens), headerdata.getJSONArray(KEY_SERVICE_TOKENS)));
-        assertTrue(JsonUtils.equals(new JSONObject(USER_AUTH_DATA.toJSONString()), headerdata.getJSONObject(KEY_USER_AUTHENTICATION_DATA)));
-        assertTrue(JsonUtils.equals(new JSONObject(USER_ID_TOKEN.toJSONString()), headerdata.getJSONObject(KEY_USER_ID_TOKEN)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(trustedNetCtx, serviceTokens), headerdata.getMslArray(KEY_SERVICE_TOKENS)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, USER_AUTH_DATA), headerdata.getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, USER_ID_TOKEN), headerdata.getMslObject(KEY_USER_ID_TOKEN, encoder)));
     }
     
     @Test
@@ -587,7 +594,7 @@ public class MessageHeaderTest {
     }
     
     @Test
-    public void entityAuthDataPeerJsonString() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException, JSONException, UnsupportedEncodingException {
+    public void entityAuthDataPeerMslObject() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException, MslEncoderException, UnsupportedEncodingException {
         final HeaderDataBuilder builder = new HeaderDataBuilder(p2pCtx, null, null, true);
         final HeaderData headerData = builder.build();
         // Peer service tokens may be created with the key response data master
@@ -598,44 +605,42 @@ public class MessageHeaderTest {
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
         final EntityAuthenticationData entityAuthData = p2pCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, entityAuthData, null, headerData, peerData);
-        final String jsonString = messageHeader.toJSONString();
-        assertNotNull(jsonString);
         
         final EntityAuthenticationScheme scheme = entityAuthData.getScheme();
         final EntityAuthenticationFactory factory = p2pCtx.getEntityAuthenticationFactory(scheme);
         final ICryptoContext cryptoContext = factory.getCryptoContext(p2pCtx, entityAuthData);
         
-        final JSONObject jo = new JSONObject(jsonString);
-        final JSONObject entityAuthDataJo = jo.getJSONObject(KEY_ENTITY_AUTHENTICATION_DATA);
-        assertTrue(JsonUtils.equals(new JSONObject(entityAuthData.toJSONString()), entityAuthDataJo));
-        assertFalse(jo.has(KEY_MASTER_TOKEN));
-        final byte[] ciphertext = Base64.decode(jo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdata = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
-        final byte[] signature = Base64.decode(jo.getString(KEY_SIGNATURE));
-        assertTrue(cryptoContext.verify(ciphertext, signature));
+        final MslObject mo = MslTestUtils.toMslObject(encoder, messageHeader);
+        final MslObject entityAuthDataMo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, entityAuthData), entityAuthDataMo));
+        assertFalse(mo.has(KEY_MASTER_TOKEN));
+        final byte[] ciphertext = mo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdata = encoder.parseObject(plaintext);
+        final byte[] signature = mo.getBytes(KEY_SIGNATURE);
+        assertTrue(cryptoContext.verify(ciphertext, signature, encoder));
         
         assertEquals(NON_REPLAYABLE_ID, (Long)headerdata.getLong(KEY_NON_REPLAYABLE_ID));
         assertEquals(RENEWABLE, headerdata.getBoolean(KEY_RENEWABLE));
         assertEquals(HANDSHAKE, headerdata.getBoolean(KEY_HANDSHAKE));
-        assertTrue(JsonUtils.equals(new JSONObject(CAPABILITIES.toJSONString()), headerdata.getJSONObject(KEY_CAPABILITIES)));
-        assertTrue(JsonUtils.equals(JsonUtils.createArray(PEER_KEY_REQUEST_DATA), headerdata.getJSONArray(KEY_KEY_REQUEST_DATA)));
-        assertTrue(JsonUtils.equals(new JSONObject(PEER_KEY_RESPONSE_DATA.toJSONString()), headerdata.getJSONObject(KEY_KEY_RESPONSE_DATA)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, CAPABILITIES), headerdata.getMslObject(KEY_CAPABILITIES, encoder)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, PEER_KEY_REQUEST_DATA), headerdata.getMslArray(KEY_KEY_REQUEST_DATA)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, PEER_KEY_RESPONSE_DATA), headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder)));
         assertFalse(headerdata.has(KEY_SENDER));
         assertEquals(RECIPIENT, headerdata.getString(KEY_RECIPIENT));
         assertTrue(isAboutNowSeconds(headerdata.getLong(KEY_TIMESTAMP)));
         assertEquals(MESSAGE_ID, headerdata.getLong(KEY_MESSAGE_ID));
-        assertTrue(JsonUtils.equals(new JSONObject(PEER_MASTER_TOKEN.toJSONString()), headerdata.getJSONObject(KEY_PEER_MASTER_TOKEN)));
-        assertTrue(JsonUtils.equals(JsonUtils.createArray(peerServiceTokens), headerdata.getJSONArray(KEY_PEER_SERVICE_TOKENS)));
-        assertTrue(JsonUtils.equals(new JSONObject(PEER_USER_ID_TOKEN.toJSONString()), headerdata.getJSONObject(KEY_PEER_USER_ID_TOKEN)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, PEER_MASTER_TOKEN), headerdata.getMslObject(KEY_PEER_MASTER_TOKEN, encoder)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, peerServiceTokens), headerdata.getMslArray(KEY_PEER_SERVICE_TOKENS)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, PEER_USER_ID_TOKEN), headerdata.getMslObject(KEY_PEER_USER_ID_TOKEN, encoder)));
         final Set<ServiceToken> serviceTokens = builder.getServiceTokens();
-        assertTrue(JsonUtils.equals(JsonUtils.createArray(serviceTokens), headerdata.getJSONArray(KEY_SERVICE_TOKENS)));
-        assertTrue(JsonUtils.equals(new JSONObject(USER_AUTH_DATA.toJSONString()), headerdata.getJSONObject(KEY_USER_AUTHENTICATION_DATA)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, serviceTokens), headerdata.getMslArray(KEY_SERVICE_TOKENS)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, USER_AUTH_DATA), headerdata.getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder)));
         assertFalse(headerdata.has(KEY_USER_ID_TOKEN));
     }
     
     @Test
-    public void entityAuthDataReplayablePeerJsonString() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException, JSONException, UnsupportedEncodingException {
+    public void entityAuthDataReplayablePeerMslObject() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException, MslEncoderException, UnsupportedEncodingException {
         final HeaderDataBuilder builder = new HeaderDataBuilder(p2pCtx, null, null, true);
         builder.set(KEY_NON_REPLAYABLE_ID, null);
         final HeaderData headerData = builder.build();
@@ -647,39 +652,37 @@ public class MessageHeaderTest {
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
         final EntityAuthenticationData entityAuthData = p2pCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, entityAuthData, null, headerData, peerData);
-        final String jsonString = messageHeader.toJSONString();
-        assertNotNull(jsonString);
         
         final EntityAuthenticationScheme scheme = entityAuthData.getScheme();
         final EntityAuthenticationFactory factory = p2pCtx.getEntityAuthenticationFactory(scheme);
         final ICryptoContext cryptoContext = factory.getCryptoContext(p2pCtx, entityAuthData);
         
-        final JSONObject jo = new JSONObject(jsonString);
-        final JSONObject entityAuthDataJo = jo.getJSONObject(KEY_ENTITY_AUTHENTICATION_DATA);
-        assertTrue(JsonUtils.equals(new JSONObject(entityAuthData.toJSONString()), entityAuthDataJo));
-        assertFalse(jo.has(KEY_MASTER_TOKEN));
-        final byte[] ciphertext = Base64.decode(jo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdata = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
-        final byte[] signature = Base64.decode(jo.getString(KEY_SIGNATURE));
-        assertTrue(cryptoContext.verify(ciphertext, signature));
+        final MslObject mo = MslTestUtils.toMslObject(encoder, messageHeader);
+        final MslObject entityAuthDataMo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, entityAuthData), entityAuthDataMo));
+        assertFalse(mo.has(KEY_MASTER_TOKEN));
+        final byte[] ciphertext = mo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdata = encoder.parseObject(plaintext);
+        final byte[] signature = mo.getBytes(KEY_SIGNATURE);
+        assertTrue(cryptoContext.verify(ciphertext, signature, encoder));
         
         assertFalse(headerdata.has(KEY_NON_REPLAYABLE_ID));
         assertEquals(RENEWABLE, headerdata.getBoolean(KEY_RENEWABLE));
         assertEquals(HANDSHAKE, headerdata.getBoolean(KEY_HANDSHAKE));
-        assertTrue(JsonUtils.equals(new JSONObject(CAPABILITIES.toJSONString()), headerdata.getJSONObject(KEY_CAPABILITIES)));
-        assertTrue(JsonUtils.equals(JsonUtils.createArray(PEER_KEY_REQUEST_DATA), headerdata.getJSONArray(KEY_KEY_REQUEST_DATA)));
-        assertTrue(JsonUtils.equals(new JSONObject(PEER_KEY_RESPONSE_DATA.toJSONString()), headerdata.getJSONObject(KEY_KEY_RESPONSE_DATA)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, CAPABILITIES), headerdata.getMslObject(KEY_CAPABILITIES, encoder)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, PEER_KEY_REQUEST_DATA), headerdata.getMslArray(KEY_KEY_REQUEST_DATA)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, PEER_KEY_RESPONSE_DATA), headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder)));
         assertFalse(headerdata.has(KEY_SENDER));
         assertEquals(RECIPIENT, headerdata.getString(KEY_RECIPIENT));
         assertTrue(isAboutNowSeconds(headerdata.getLong(KEY_TIMESTAMP)));
         assertEquals(MESSAGE_ID, headerdata.getLong(KEY_MESSAGE_ID));
-        assertTrue(JsonUtils.equals(new JSONObject(PEER_MASTER_TOKEN.toJSONString()), headerdata.getJSONObject(KEY_PEER_MASTER_TOKEN)));
-        assertTrue(JsonUtils.equals(JsonUtils.createArray(peerServiceTokens), headerdata.getJSONArray(KEY_PEER_SERVICE_TOKENS)));
-        assertTrue(JsonUtils.equals(new JSONObject(PEER_USER_ID_TOKEN.toJSONString()), headerdata.getJSONObject(KEY_PEER_USER_ID_TOKEN)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, PEER_MASTER_TOKEN), headerdata.getMslObject(KEY_PEER_MASTER_TOKEN, encoder)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, peerServiceTokens), headerdata.getMslArray(KEY_PEER_SERVICE_TOKENS)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, PEER_USER_ID_TOKEN), headerdata.getMslObject(KEY_PEER_USER_ID_TOKEN, encoder)));
         final Set<ServiceToken> serviceTokens = builder.getServiceTokens();
-        assertTrue(JsonUtils.equals(JsonUtils.createArray(serviceTokens), headerdata.getJSONArray(KEY_SERVICE_TOKENS)));
-        assertTrue(JsonUtils.equals(new JSONObject(USER_AUTH_DATA.toJSONString()), headerdata.getJSONObject(KEY_USER_AUTHENTICATION_DATA)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, serviceTokens), headerdata.getMslArray(KEY_SERVICE_TOKENS)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, USER_AUTH_DATA), headerdata.getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder)));
         assertFalse(headerdata.has(KEY_USER_ID_TOKEN));
     }
     
@@ -721,7 +724,7 @@ public class MessageHeaderTest {
     }
     
     @Test
-    public void masterTokenJsonString() throws MslEntityAuthException, MslException, JSONException, UnsupportedEncodingException {
+    public void masterTokenMslObject() throws MslEntityAuthException, MslException, MslEncoderException, UnsupportedEncodingException {
         // Service tokens may be created with the key response data tokens. The
         // key response data master token has the same serial number as the
         // original master token so we can use the same user ID token.
@@ -731,27 +734,25 @@ public class MessageHeaderTest {
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, MASTER_TOKEN, headerData, peerData);
-        final String jsonString = messageHeader.toJSONString();
-        assertNotNull(jsonString);
         
         final ICryptoContext cryptoContext = new SessionCryptoContext(trustedNetCtx, MASTER_TOKEN);
         
-        final JSONObject jo = new JSONObject(jsonString);
-        assertFalse(jo.has(KEY_ENTITY_AUTHENTICATION_DATA));
-        final JSONObject masterToken = jo.getJSONObject(KEY_MASTER_TOKEN);
-        assertTrue(JsonUtils.equals(new JSONObject(MASTER_TOKEN.toJSONString()), masterToken));
-        final byte[] ciphertext = Base64.decode(jo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdata = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
-        final byte[] signature = Base64.decode(jo.getString(KEY_SIGNATURE));
-        assertTrue(cryptoContext.verify(ciphertext, signature));
+        final MslObject mo = MslTestUtils.toMslObject(encoder, messageHeader);
+        assertFalse(mo.has(KEY_ENTITY_AUTHENTICATION_DATA));
+        final MslObject masterToken = mo.getMslObject(KEY_MASTER_TOKEN, encoder);
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, MASTER_TOKEN), masterToken));
+        final byte[] ciphertext = mo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdata = encoder.parseObject(plaintext);
+        final byte[] signature = mo.getBytes(KEY_SIGNATURE);
+        assertTrue(cryptoContext.verify(ciphertext, signature, encoder));
         
         assertEquals(NON_REPLAYABLE_ID, (Long)headerdata.getLong(KEY_NON_REPLAYABLE_ID));
         assertEquals(RENEWABLE, headerdata.getBoolean(KEY_RENEWABLE));
         assertEquals(HANDSHAKE, headerdata.getBoolean(KEY_HANDSHAKE));
-        assertTrue(JsonUtils.equals(new JSONObject(CAPABILITIES.toJSONString()), headerdata.getJSONObject(KEY_CAPABILITIES)));
-        assertTrue(JsonUtils.equals(JsonUtils.createArray(KEY_REQUEST_DATA), headerdata.getJSONArray(KEY_KEY_REQUEST_DATA)));
-        assertTrue(JsonUtils.equals(new JSONObject(KEY_RESPONSE_DATA.toJSONString()), headerdata.getJSONObject(KEY_KEY_RESPONSE_DATA)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, CAPABILITIES), headerdata.getMslObject(KEY_CAPABILITIES, encoder)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(trustedNetCtx, KEY_REQUEST_DATA), headerdata.getMslArray(KEY_KEY_REQUEST_DATA)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, KEY_RESPONSE_DATA), headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder)));
         assertEquals(entityAuthData.getIdentity(), headerdata.getString(KEY_SENDER));
         assertEquals(RECIPIENT, headerdata.getString(KEY_RECIPIENT));
         assertTrue(isAboutNowSeconds(headerdata.getLong(KEY_TIMESTAMP)));
@@ -760,9 +761,9 @@ public class MessageHeaderTest {
         assertFalse(headerdata.has(KEY_PEER_SERVICE_TOKENS));
         assertFalse(headerdata.has(KEY_PEER_USER_ID_TOKEN));
         final Set<ServiceToken> serviceTokens = builder.getServiceTokens();
-        assertTrue(JsonUtils.equals(JsonUtils.createArray(serviceTokens), headerdata.getJSONArray(KEY_SERVICE_TOKENS)));
-        assertTrue(JsonUtils.equals(new JSONObject(USER_AUTH_DATA.toJSONString()), headerdata.getJSONObject(KEY_USER_AUTHENTICATION_DATA)));
-        assertTrue(JsonUtils.equals(new JSONObject(USER_ID_TOKEN.toJSONString()), headerdata.getJSONObject(KEY_USER_ID_TOKEN)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(trustedNetCtx, serviceTokens), headerdata.getMslArray(KEY_SERVICE_TOKENS)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, USER_AUTH_DATA), headerdata.getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, USER_ID_TOKEN), headerdata.getMslObject(KEY_USER_ID_TOKEN, encoder)));
     }
     
     @Test
@@ -807,7 +808,7 @@ public class MessageHeaderTest {
     }
     
     @Test
-    public void masterTokenPeerJsonString() throws MslMasterTokenException, MslEntityAuthException, MslException, JSONException, UnsupportedEncodingException {
+    public void masterTokenPeerMslObject() throws MslMasterTokenException, MslEntityAuthException, MslException, MslEncoderException, UnsupportedEncodingException {
         // The key response data master token has the same serial number as
         // the original master token so we can use the same service tokens and
         // user ID token.
@@ -821,38 +822,36 @@ public class MessageHeaderTest {
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
         final EntityAuthenticationData entityAuthData = p2pCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, entityAuthData, MASTER_TOKEN, headerData, peerData);
-        final String jsonString = messageHeader.toJSONString();
-        assertNotNull(jsonString);
         
         final ICryptoContext cryptoContext = new SessionCryptoContext(trustedNetCtx, MASTER_TOKEN);
         
-        final JSONObject jo = new JSONObject(jsonString);
-        assertFalse(jo.has(KEY_ENTITY_AUTHENTICATION_DATA));
-        final JSONObject masterToken = jo.getJSONObject(KEY_MASTER_TOKEN);
-        assertTrue(JsonUtils.equals(new JSONObject(MASTER_TOKEN.toJSONString()), masterToken));
-        final byte[] ciphertext = Base64.decode(jo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdata = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
-        final byte[] signature = Base64.decode(jo.getString(KEY_SIGNATURE));
-        assertTrue(cryptoContext.verify(ciphertext, signature));
+        final MslObject mo = MslTestUtils.toMslObject(encoder, messageHeader);
+        assertFalse(mo.has(KEY_ENTITY_AUTHENTICATION_DATA));
+        final MslObject masterToken = mo.getMslObject(KEY_MASTER_TOKEN, encoder);
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, MASTER_TOKEN), masterToken));
+        final byte[] ciphertext = mo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdata = encoder.parseObject(plaintext);
+        final byte[] signature = mo.getBytes(KEY_SIGNATURE);
+        assertTrue(cryptoContext.verify(ciphertext, signature, encoder));
         
         assertEquals(NON_REPLAYABLE_ID, (Long)headerdata.getLong(KEY_NON_REPLAYABLE_ID));
         assertEquals(RENEWABLE, headerdata.getBoolean(KEY_RENEWABLE));
         assertEquals(HANDSHAKE, headerdata.getBoolean(KEY_HANDSHAKE));
-        assertTrue(JsonUtils.equals(new JSONObject(CAPABILITIES.toJSONString()), headerdata.getJSONObject(KEY_CAPABILITIES)));
-        assertTrue(JsonUtils.equals(JsonUtils.createArray(PEER_KEY_REQUEST_DATA), headerdata.getJSONArray(KEY_KEY_REQUEST_DATA)));
-        assertTrue(JsonUtils.equals(new JSONObject(PEER_KEY_RESPONSE_DATA.toJSONString()), headerdata.getJSONObject(KEY_KEY_RESPONSE_DATA)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, CAPABILITIES), headerdata.getMslObject(KEY_CAPABILITIES, encoder)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, PEER_KEY_REQUEST_DATA), headerdata.getMslArray(KEY_KEY_REQUEST_DATA)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, PEER_KEY_RESPONSE_DATA), headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder)));
         assertEquals(entityAuthData.getIdentity(), headerdata.getString(KEY_SENDER));
         assertEquals(RECIPIENT, headerdata.getString(KEY_RECIPIENT));
         assertTrue(isAboutNowSeconds(headerdata.getLong(KEY_TIMESTAMP)));
         assertEquals(MESSAGE_ID, headerdata.getLong(KEY_MESSAGE_ID));
-        assertTrue(JsonUtils.equals(new JSONObject(PEER_MASTER_TOKEN.toJSONString()), headerdata.getJSONObject(KEY_PEER_MASTER_TOKEN)));
-        assertTrue(JsonUtils.equals(JsonUtils.createArray(peerServiceTokens), headerdata.getJSONArray(KEY_PEER_SERVICE_TOKENS)));
-        assertTrue(JsonUtils.equals(new JSONObject(PEER_USER_ID_TOKEN.toJSONString()), headerdata.getJSONObject(KEY_PEER_USER_ID_TOKEN)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, PEER_MASTER_TOKEN), headerdata.getMslObject(KEY_PEER_MASTER_TOKEN, encoder)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, peerServiceTokens), headerdata.getMslArray(KEY_PEER_SERVICE_TOKENS)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, PEER_USER_ID_TOKEN), headerdata.getMslObject(KEY_PEER_USER_ID_TOKEN, encoder)));
         final Set<ServiceToken> serviceTokens = builder.getServiceTokens();
-        assertTrue(JsonUtils.equals(JsonUtils.createArray(serviceTokens), headerdata.getJSONArray(KEY_SERVICE_TOKENS)));
-        assertTrue(JsonUtils.equals(new JSONObject(USER_AUTH_DATA.toJSONString()), headerdata.getJSONObject(KEY_USER_AUTHENTICATION_DATA)));
-        assertTrue(JsonUtils.equals(new JSONObject(USER_ID_TOKEN.toJSONString()), headerdata.getJSONObject(KEY_USER_ID_TOKEN)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, serviceTokens), headerdata.getMslArray(KEY_SERVICE_TOKENS)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, USER_AUTH_DATA), headerdata.getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder)));
+        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, USER_ID_TOKEN), headerdata.getMslObject(KEY_USER_ID_TOKEN, encoder)));
     }
     
     @Test
@@ -1176,7 +1175,7 @@ public class MessageHeaderTest {
     }
     
     @Test
-    public void untrustedMasterTokenCtor() throws MslEncodingException, MslCryptoException, JSONException, MslException {
+    public void untrustedMasterTokenCtor() throws MslEncodingException, MslCryptoException, MslEncoderException, MslException {
         thrown.expect(MslMasterTokenException.class);
         thrown.expectMslError(MslError.MASTERTOKEN_UNTRUSTED);
         thrown.expectMessageId(MESSAGE_ID);
@@ -1209,7 +1208,7 @@ public class MessageHeaderTest {
     }
     
     @Test
-    public void cachedCryptoContextMasterTokenCtor() throws MslEncodingException, MslCryptoException, JSONException, MslException {
+    public void cachedCryptoContextMasterTokenCtor() throws MslEncodingException, MslCryptoException, MslEncoderException, MslException {
         // We should be okay with an untrusted master token if a crypto context
         // is associated with it.
         final MasterToken masterToken = MslTestUtils.getUntrustedMasterToken(p2pCtx);
@@ -1245,7 +1244,7 @@ public class MessageHeaderTest {
     }
     
     @Test
-    public void entityAuthDataParseHeader() throws MslMasterTokenException, MslEntityAuthException, MslException, JSONException {
+    public void entityAuthDataParseHeader() throws MslMasterTokenException, MslEntityAuthException, MslException, MslEncoderException {
         // Service tokens may be created with the key response data tokens. The
         // key response data master token has the same serial number as the
         // original master token so we can use the same user ID token.
@@ -1256,37 +1255,37 @@ public class MessageHeaderTest {
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
         
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
-        final Header header = Header.parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
+        final Header header = Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
         assertNotNull(header);
         assertTrue(header instanceof MessageHeader);
-        final MessageHeader joMessageHeader = (MessageHeader)header;
+        final MessageHeader moMessageHeader = (MessageHeader)header;
         
-        assertEquals(messageHeader.getNonReplayableId(), joMessageHeader.getNonReplayableId());
-        assertEquals(messageHeader.isRenewable(), joMessageHeader.isRenewable());
+        assertEquals(messageHeader.getNonReplayableId(), moMessageHeader.getNonReplayableId());
+        assertEquals(messageHeader.isRenewable(), moMessageHeader.isRenewable());
         assertNotNull(messageHeader.getCryptoContext());
-        assertEquals(messageHeader.getEntityAuthenticationData(), joMessageHeader.getEntityAuthenticationData());
+        assertEquals(messageHeader.getEntityAuthenticationData(), moMessageHeader.getEntityAuthenticationData());
         final Set<KeyRequestData> keyRequestData = messageHeader.getKeyRequestData();
-        final Set<KeyRequestData> joKeyRequestData = joMessageHeader.getKeyRequestData();
-        assertTrue(keyRequestData.containsAll(joKeyRequestData));
-        assertTrue(joKeyRequestData.containsAll(keyRequestData));
-        assertEquals(messageHeader.getKeyResponseData(), joMessageHeader.getKeyResponseData());
-        assertEquals(messageHeader.getMasterToken(), joMessageHeader.getMasterToken());
-        assertEquals(messageHeader.getMessageId(), joMessageHeader.getMessageId());
+        final Set<KeyRequestData> moKeyRequestData = moMessageHeader.getKeyRequestData();
+        assertTrue(keyRequestData.containsAll(moKeyRequestData));
+        assertTrue(moKeyRequestData.containsAll(keyRequestData));
+        assertEquals(messageHeader.getKeyResponseData(), moMessageHeader.getKeyResponseData());
+        assertEquals(messageHeader.getMasterToken(), moMessageHeader.getMasterToken());
+        assertEquals(messageHeader.getMessageId(), moMessageHeader.getMessageId());
         assertNull(messageHeader.getPeerMasterToken());
         assertTrue(messageHeader.getPeerServiceTokens().isEmpty());
         assertNull(messageHeader.getPeerUserIdToken());
         final Set<ServiceToken> serviceTokens = messageHeader.getServiceTokens();
-        final Set<ServiceToken> joServiceTokens = joMessageHeader.getServiceTokens();
-        assertTrue(serviceTokens.containsAll(joServiceTokens));
-        assertTrue(joServiceTokens.containsAll(serviceTokens));
-        assertEquals(messageHeader.getUserAuthenticationData(), joMessageHeader.getUserAuthenticationData());
-        assertEquals(messageHeader.getUserIdToken(), joMessageHeader.getUserIdToken());
-        assertEquals(messageHeader.getUser(), joMessageHeader.getUser());
+        final Set<ServiceToken> moServiceTokens = moMessageHeader.getServiceTokens();
+        assertTrue(serviceTokens.containsAll(moServiceTokens));
+        assertTrue(moServiceTokens.containsAll(serviceTokens));
+        assertEquals(messageHeader.getUserAuthenticationData(), moMessageHeader.getUserAuthenticationData());
+        assertEquals(messageHeader.getUserIdToken(), moMessageHeader.getUserIdToken());
+        assertEquals(messageHeader.getUser(), moMessageHeader.getUser());
     }
     
     @Test
-    public void entityAuthDataPeerParseHeader() throws MslMasterTokenException, MslEntityAuthException, MslException, JSONException {
+    public void entityAuthDataPeerParseHeader() throws MslMasterTokenException, MslEntityAuthException, MslException, MslEncoderException {
         // Service tokens may be created with the key response data tokens. The
         // key response data master token has the same serial number as the
         // original master token so we can use the same user ID token.
@@ -1297,39 +1296,39 @@ public class MessageHeaderTest {
         final EntityAuthenticationData entityAuthData = p2pCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, entityAuthData, null, headerData, peerData);
         
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
-        final Header header = Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
+        final Header header = Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
         assertNotNull(header);
         assertTrue(header instanceof MessageHeader);
-        final MessageHeader joMessageHeader = (MessageHeader)header;
+        final MessageHeader moMessageHeader = (MessageHeader)header;
         
-        assertEquals(messageHeader.getNonReplayableId(), joMessageHeader.getNonReplayableId());
-        assertEquals(messageHeader.isRenewable(), joMessageHeader.isRenewable());
+        assertEquals(messageHeader.getNonReplayableId(), moMessageHeader.getNonReplayableId());
+        assertEquals(messageHeader.isRenewable(), moMessageHeader.isRenewable());
         assertNotNull(messageHeader.getCryptoContext());
-        assertEquals(messageHeader.getEntityAuthenticationData(), joMessageHeader.getEntityAuthenticationData());
+        assertEquals(messageHeader.getEntityAuthenticationData(), moMessageHeader.getEntityAuthenticationData());
         final Set<KeyRequestData> keyRequestData = messageHeader.getKeyRequestData();
-        final Set<KeyRequestData> joKeyRequestData = joMessageHeader.getKeyRequestData();
-        assertTrue(keyRequestData.containsAll(joKeyRequestData));
-        assertTrue(joKeyRequestData.containsAll(keyRequestData));
-        assertEquals(messageHeader.getKeyResponseData(), joMessageHeader.getKeyResponseData());
-        assertEquals(messageHeader.getMasterToken(), joMessageHeader.getMasterToken());
-        assertEquals(messageHeader.getMessageId(), joMessageHeader.getMessageId());
-        assertEquals(messageHeader.getPeerMasterToken(), joMessageHeader.getPeerMasterToken());
-        final Set<ServiceToken> joPeerServiceTokens = joMessageHeader.getPeerServiceTokens();
-        assertTrue(peerServiceTokens.containsAll(joPeerServiceTokens));
-        assertTrue(joPeerServiceTokens.containsAll(peerServiceTokens));
-        assertEquals(messageHeader.getPeerUserIdToken(), joMessageHeader.getPeerUserIdToken());
+        final Set<KeyRequestData> moKeyRequestData = moMessageHeader.getKeyRequestData();
+        assertTrue(keyRequestData.containsAll(moKeyRequestData));
+        assertTrue(moKeyRequestData.containsAll(keyRequestData));
+        assertEquals(messageHeader.getKeyResponseData(), moMessageHeader.getKeyResponseData());
+        assertEquals(messageHeader.getMasterToken(), moMessageHeader.getMasterToken());
+        assertEquals(messageHeader.getMessageId(), moMessageHeader.getMessageId());
+        assertEquals(messageHeader.getPeerMasterToken(), moMessageHeader.getPeerMasterToken());
+        final Set<ServiceToken> moPeerServiceTokens = moMessageHeader.getPeerServiceTokens();
+        assertTrue(peerServiceTokens.containsAll(moPeerServiceTokens));
+        assertTrue(moPeerServiceTokens.containsAll(peerServiceTokens));
+        assertEquals(messageHeader.getPeerUserIdToken(), moMessageHeader.getPeerUserIdToken());
         final Set<ServiceToken> serviceTokens = messageHeader.getServiceTokens();
-        final Set<ServiceToken> joServiceTokens = joMessageHeader.getServiceTokens();
-        assertTrue(serviceTokens.containsAll(joServiceTokens));
-        assertTrue(joServiceTokens.containsAll(serviceTokens));
-        assertEquals(messageHeader.getUserAuthenticationData(), joMessageHeader.getUserAuthenticationData());
-        assertEquals(messageHeader.getUserIdToken(), joMessageHeader.getUserIdToken());
-        assertNotNull(joMessageHeader.getUser());
+        final Set<ServiceToken> moServiceTokens = moMessageHeader.getServiceTokens();
+        assertTrue(serviceTokens.containsAll(moServiceTokens));
+        assertTrue(moServiceTokens.containsAll(serviceTokens));
+        assertEquals(messageHeader.getUserAuthenticationData(), moMessageHeader.getUserAuthenticationData());
+        assertEquals(messageHeader.getUserIdToken(), moMessageHeader.getUserIdToken());
+        assertNotNull(moMessageHeader.getUser());
     }
     
     @Test
-    public void masterTokenParseHeader() throws MslMasterTokenException, MslEntityAuthException, MslException, JSONException {
+    public void masterTokenParseHeader() throws MslMasterTokenException, MslEntityAuthException, MslException, MslEncoderException {
         final HeaderDataBuilder builder = new HeaderDataBuilder(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, true);
         final HeaderData headerData = builder.build();
         final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(trustedNetCtx,PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
@@ -1337,37 +1336,37 @@ public class MessageHeaderTest {
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, MASTER_TOKEN, headerData, peerData);
         
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
-        final Header header = Header.parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
+        final Header header = Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
         assertNotNull(header);
         assertTrue(header instanceof MessageHeader);
-        final MessageHeader joMessageHeader = (MessageHeader)header;
+        final MessageHeader moMessageHeader = (MessageHeader)header;
         
-        assertEquals(messageHeader.getNonReplayableId(), joMessageHeader.getNonReplayableId());
-        assertEquals(messageHeader.isRenewable(), joMessageHeader.isRenewable());
+        assertEquals(messageHeader.getNonReplayableId(), moMessageHeader.getNonReplayableId());
+        assertEquals(messageHeader.isRenewable(), moMessageHeader.isRenewable());
         assertNotNull(messageHeader.getCryptoContext());
-        assertEquals(messageHeader.getEntityAuthenticationData(), joMessageHeader.getEntityAuthenticationData());
+        assertEquals(messageHeader.getEntityAuthenticationData(), moMessageHeader.getEntityAuthenticationData());
         final Set<KeyRequestData> keyRequestData = messageHeader.getKeyRequestData();
-        final Set<KeyRequestData> joKeyRequestData = joMessageHeader.getKeyRequestData();
-        assertTrue(keyRequestData.containsAll(joKeyRequestData));
-        assertTrue(joKeyRequestData.containsAll(keyRequestData));
-        assertEquals(messageHeader.getKeyResponseData(), joMessageHeader.getKeyResponseData());
-        assertEquals(messageHeader.getMasterToken(), joMessageHeader.getMasterToken());
-        assertEquals(messageHeader.getMessageId(), joMessageHeader.getMessageId());
-        assertNull(joMessageHeader.getPeerMasterToken());
-        assertTrue(joMessageHeader.getPeerServiceTokens().isEmpty());
-        assertNull(joMessageHeader.getPeerUserIdToken());
+        final Set<KeyRequestData> moKeyRequestData = moMessageHeader.getKeyRequestData();
+        assertTrue(keyRequestData.containsAll(moKeyRequestData));
+        assertTrue(moKeyRequestData.containsAll(keyRequestData));
+        assertEquals(messageHeader.getKeyResponseData(), moMessageHeader.getKeyResponseData());
+        assertEquals(messageHeader.getMasterToken(), moMessageHeader.getMasterToken());
+        assertEquals(messageHeader.getMessageId(), moMessageHeader.getMessageId());
+        assertNull(moMessageHeader.getPeerMasterToken());
+        assertTrue(moMessageHeader.getPeerServiceTokens().isEmpty());
+        assertNull(moMessageHeader.getPeerUserIdToken());
         final Set<ServiceToken> serviceTokens = messageHeader.getServiceTokens();
-        final Set<ServiceToken> joServiceTokens = joMessageHeader.getServiceTokens();
-        assertTrue(serviceTokens.containsAll(joServiceTokens));
-        assertTrue(joServiceTokens.containsAll(serviceTokens));
-        assertEquals(messageHeader.getUserAuthenticationData(), joMessageHeader.getUserAuthenticationData());
-        assertEquals(messageHeader.getUserIdToken(), joMessageHeader.getUserIdToken());
-        assertEquals(messageHeader.getUser(), joMessageHeader.getUser());
+        final Set<ServiceToken> moServiceTokens = moMessageHeader.getServiceTokens();
+        assertTrue(serviceTokens.containsAll(moServiceTokens));
+        assertTrue(moServiceTokens.containsAll(serviceTokens));
+        assertEquals(messageHeader.getUserAuthenticationData(), moMessageHeader.getUserAuthenticationData());
+        assertEquals(messageHeader.getUserIdToken(), moMessageHeader.getUserIdToken());
+        assertEquals(messageHeader.getUser(), moMessageHeader.getUser());
     }
     
     @Test
-    public void masterTokenPeerParseHeader() throws MslMasterTokenException, MslEntityAuthException, MslException, JSONException {
+    public void masterTokenPeerParseHeader() throws MslMasterTokenException, MslEntityAuthException, MslException, MslEncoderException {
         final HeaderDataBuilder builder = new HeaderDataBuilder(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true);
         final HeaderData headerData = builder.build();
         final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
@@ -1375,39 +1374,39 @@ public class MessageHeaderTest {
         final EntityAuthenticationData entityAuthData = p2pCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, entityAuthData, MASTER_TOKEN, headerData, peerData);
         
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
-        final Header header = Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
+        final Header header = Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
         assertNotNull(header);
         assertTrue(header instanceof MessageHeader);
-        final MessageHeader joMessageHeader = (MessageHeader)header;
+        final MessageHeader moMessageHeader = (MessageHeader)header;
         
-        assertEquals(messageHeader.getNonReplayableId(), joMessageHeader.getNonReplayableId());
-        assertEquals(messageHeader.isRenewable(), joMessageHeader.isRenewable());
+        assertEquals(messageHeader.getNonReplayableId(), moMessageHeader.getNonReplayableId());
+        assertEquals(messageHeader.isRenewable(), moMessageHeader.isRenewable());
         assertNotNull(messageHeader.getCryptoContext());
-        assertEquals(messageHeader.getEntityAuthenticationData(), joMessageHeader.getEntityAuthenticationData());
+        assertEquals(messageHeader.getEntityAuthenticationData(), moMessageHeader.getEntityAuthenticationData());
         final Set<KeyRequestData> keyRequestData = messageHeader.getKeyRequestData();
-        final Set<KeyRequestData> joKeyRequestData = joMessageHeader.getKeyRequestData();
-        assertTrue(keyRequestData.containsAll(joKeyRequestData));
-        assertTrue(joKeyRequestData.containsAll(keyRequestData));
-        assertEquals(messageHeader.getKeyResponseData(), joMessageHeader.getKeyResponseData());
-        assertEquals(messageHeader.getMasterToken(), joMessageHeader.getMasterToken());
-        assertEquals(messageHeader.getMessageId(), joMessageHeader.getMessageId());
-        assertEquals(messageHeader.getPeerMasterToken(), joMessageHeader.getPeerMasterToken());
-        final Set<ServiceToken> joPeerServiceTokens = joMessageHeader.getPeerServiceTokens();
-        assertTrue(peerServiceTokens.containsAll(joPeerServiceTokens));
-        assertTrue(joPeerServiceTokens.containsAll(peerServiceTokens));
-        assertEquals(messageHeader.getPeerUserIdToken(), joMessageHeader.getPeerUserIdToken());
+        final Set<KeyRequestData> moKeyRequestData = moMessageHeader.getKeyRequestData();
+        assertTrue(keyRequestData.containsAll(moKeyRequestData));
+        assertTrue(moKeyRequestData.containsAll(keyRequestData));
+        assertEquals(messageHeader.getKeyResponseData(), moMessageHeader.getKeyResponseData());
+        assertEquals(messageHeader.getMasterToken(), moMessageHeader.getMasterToken());
+        assertEquals(messageHeader.getMessageId(), moMessageHeader.getMessageId());
+        assertEquals(messageHeader.getPeerMasterToken(), moMessageHeader.getPeerMasterToken());
+        final Set<ServiceToken> moPeerServiceTokens = moMessageHeader.getPeerServiceTokens();
+        assertTrue(peerServiceTokens.containsAll(moPeerServiceTokens));
+        assertTrue(moPeerServiceTokens.containsAll(peerServiceTokens));
+        assertEquals(messageHeader.getPeerUserIdToken(), moMessageHeader.getPeerUserIdToken());
         final Set<ServiceToken> serviceTokens = messageHeader.getServiceTokens();
-        final Set<ServiceToken> joServiceTokens = joMessageHeader.getServiceTokens();
-        assertTrue(serviceTokens.containsAll(joServiceTokens));
-        assertTrue(joServiceTokens.containsAll(serviceTokens));
-        assertEquals(messageHeader.getUserAuthenticationData(), joMessageHeader.getUserAuthenticationData());
-        assertEquals(messageHeader.getUserIdToken(), joMessageHeader.getUserIdToken());
-        assertEquals(messageHeader.getUser(), joMessageHeader.getUser());
+        final Set<ServiceToken> moServiceTokens = moMessageHeader.getServiceTokens();
+        assertTrue(serviceTokens.containsAll(moServiceTokens));
+        assertTrue(moServiceTokens.containsAll(serviceTokens));
+        assertEquals(messageHeader.getUserAuthenticationData(), moMessageHeader.getUserAuthenticationData());
+        assertEquals(messageHeader.getUserIdToken(), moMessageHeader.getUserIdToken());
+        assertEquals(messageHeader.getUser(), moMessageHeader.getUser());
     }
     
     @Test
-    public void userAuthDataParseHeader() throws JSONException, MslKeyExchangeException, MslUserAuthException, MslException {
+    public void userAuthDataParseHeader() throws MslEncoderException, MslKeyExchangeException, MslUserAuthException, MslException {
         final HeaderDataBuilder builder = new HeaderDataBuilder(trustedNetCtx, MASTER_TOKEN, null, true);
         final HeaderData headerData = builder.build();
         final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(trustedNetCtx,PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
@@ -1415,37 +1414,37 @@ public class MessageHeaderTest {
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, MASTER_TOKEN, headerData, peerData);
         
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
-        final Header header = Header.parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
+        final Header header = Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
         assertNotNull(header);
         assertTrue(header instanceof MessageHeader);
-        final MessageHeader joMessageHeader = (MessageHeader)header;
+        final MessageHeader moMessageHeader = (MessageHeader)header;
         
-        assertEquals(messageHeader.getNonReplayableId(), joMessageHeader.getNonReplayableId());
-        assertEquals(messageHeader.isRenewable(), joMessageHeader.isRenewable());
+        assertEquals(messageHeader.getNonReplayableId(), moMessageHeader.getNonReplayableId());
+        assertEquals(messageHeader.isRenewable(), moMessageHeader.isRenewable());
         assertNotNull(messageHeader.getCryptoContext());
-        assertEquals(messageHeader.getEntityAuthenticationData(), joMessageHeader.getEntityAuthenticationData());
+        assertEquals(messageHeader.getEntityAuthenticationData(), moMessageHeader.getEntityAuthenticationData());
         final Set<KeyRequestData> keyRequestData = messageHeader.getKeyRequestData();
-        final Set<KeyRequestData> joKeyRequestData = joMessageHeader.getKeyRequestData();
-        assertTrue(keyRequestData.containsAll(joKeyRequestData));
-        assertTrue(joKeyRequestData.containsAll(keyRequestData));
-        assertEquals(messageHeader.getKeyResponseData(), joMessageHeader.getKeyResponseData());
-        assertEquals(messageHeader.getMasterToken(), joMessageHeader.getMasterToken());
-        assertEquals(messageHeader.getMessageId(), joMessageHeader.getMessageId());
-        assertNull(joMessageHeader.getPeerMasterToken());
-        assertTrue(joMessageHeader.getPeerServiceTokens().isEmpty());
-        assertNull(joMessageHeader.getPeerUserIdToken());
+        final Set<KeyRequestData> moKeyRequestData = moMessageHeader.getKeyRequestData();
+        assertTrue(keyRequestData.containsAll(moKeyRequestData));
+        assertTrue(moKeyRequestData.containsAll(keyRequestData));
+        assertEquals(messageHeader.getKeyResponseData(), moMessageHeader.getKeyResponseData());
+        assertEquals(messageHeader.getMasterToken(), moMessageHeader.getMasterToken());
+        assertEquals(messageHeader.getMessageId(), moMessageHeader.getMessageId());
+        assertNull(moMessageHeader.getPeerMasterToken());
+        assertTrue(moMessageHeader.getPeerServiceTokens().isEmpty());
+        assertNull(moMessageHeader.getPeerUserIdToken());
         final Set<ServiceToken> serviceTokens = messageHeader.getServiceTokens();
-        final Set<ServiceToken> joServiceTokens = joMessageHeader.getServiceTokens();
-        assertTrue(serviceTokens.containsAll(joServiceTokens));
-        assertTrue(joServiceTokens.containsAll(serviceTokens));
-        assertEquals(messageHeader.getUserAuthenticationData(), joMessageHeader.getUserAuthenticationData());
-        assertEquals(messageHeader.getUserIdToken(), joMessageHeader.getUserIdToken());
-        assertNotNull(joMessageHeader.getUser());
+        final Set<ServiceToken> moServiceTokens = moMessageHeader.getServiceTokens();
+        assertTrue(serviceTokens.containsAll(moServiceTokens));
+        assertTrue(moServiceTokens.containsAll(serviceTokens));
+        assertEquals(messageHeader.getUserAuthenticationData(), moMessageHeader.getUserAuthenticationData());
+        assertEquals(messageHeader.getUserIdToken(), moMessageHeader.getUserIdToken());
+        assertNotNull(moMessageHeader.getUser());
     }
     
     @Test
-    public void userAuthDataPeerParseHeader() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslKeyExchangeException, MslUserAuthException, JSONException, MslException {
+    public void userAuthDataPeerParseHeader() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslKeyExchangeException, MslUserAuthException, MslEncoderException, MslException {
         final HeaderDataBuilder builder = new HeaderDataBuilder(p2pCtx, MASTER_TOKEN, null, true);
         final HeaderData headerData = builder.build();
         final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
@@ -1453,39 +1452,39 @@ public class MessageHeaderTest {
         final EntityAuthenticationData entityAuthData = p2pCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, entityAuthData, MASTER_TOKEN, headerData, peerData);
         
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
-        final Header header = Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
+        final Header header = Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
         assertNotNull(header);
         assertTrue(header instanceof MessageHeader);
-        final MessageHeader joMessageHeader = (MessageHeader)header;
+        final MessageHeader moMessageHeader = (MessageHeader)header;
         
-        assertEquals(messageHeader.getNonReplayableId(), joMessageHeader.getNonReplayableId());
-        assertEquals(messageHeader.isRenewable(), joMessageHeader.isRenewable());
+        assertEquals(messageHeader.getNonReplayableId(), moMessageHeader.getNonReplayableId());
+        assertEquals(messageHeader.isRenewable(), moMessageHeader.isRenewable());
         assertNotNull(messageHeader.getCryptoContext());
-        assertEquals(messageHeader.getEntityAuthenticationData(), joMessageHeader.getEntityAuthenticationData());
+        assertEquals(messageHeader.getEntityAuthenticationData(), moMessageHeader.getEntityAuthenticationData());
         final Set<KeyRequestData> keyRequestData = messageHeader.getKeyRequestData();
-        final Set<KeyRequestData> joKeyRequestData = joMessageHeader.getKeyRequestData();
-        assertTrue(keyRequestData.containsAll(joKeyRequestData));
-        assertTrue(joKeyRequestData.containsAll(keyRequestData));
-        assertEquals(messageHeader.getKeyResponseData(), joMessageHeader.getKeyResponseData());
-        assertEquals(messageHeader.getMasterToken(), joMessageHeader.getMasterToken());
-        assertEquals(messageHeader.getMessageId(), joMessageHeader.getMessageId());
-        assertEquals(messageHeader.getPeerMasterToken(), joMessageHeader.getPeerMasterToken());
-        final Set<ServiceToken> joPeerServiceTokens = joMessageHeader.getPeerServiceTokens();
-        assertTrue(peerServiceTokens.containsAll(joPeerServiceTokens));
-        assertTrue(joPeerServiceTokens.containsAll(peerServiceTokens));
-        assertEquals(messageHeader.getPeerUserIdToken(), joMessageHeader.getPeerUserIdToken());
+        final Set<KeyRequestData> moKeyRequestData = moMessageHeader.getKeyRequestData();
+        assertTrue(keyRequestData.containsAll(moKeyRequestData));
+        assertTrue(moKeyRequestData.containsAll(keyRequestData));
+        assertEquals(messageHeader.getKeyResponseData(), moMessageHeader.getKeyResponseData());
+        assertEquals(messageHeader.getMasterToken(), moMessageHeader.getMasterToken());
+        assertEquals(messageHeader.getMessageId(), moMessageHeader.getMessageId());
+        assertEquals(messageHeader.getPeerMasterToken(), moMessageHeader.getPeerMasterToken());
+        final Set<ServiceToken> moPeerServiceTokens = moMessageHeader.getPeerServiceTokens();
+        assertTrue(peerServiceTokens.containsAll(moPeerServiceTokens));
+        assertTrue(moPeerServiceTokens.containsAll(peerServiceTokens));
+        assertEquals(messageHeader.getPeerUserIdToken(), moMessageHeader.getPeerUserIdToken());
         final Set<ServiceToken> serviceTokens = messageHeader.getServiceTokens();
-        final Set<ServiceToken> joServiceTokens = joMessageHeader.getServiceTokens();
-        assertTrue(serviceTokens.containsAll(joServiceTokens));
-        assertTrue(joServiceTokens.containsAll(serviceTokens));
-        assertEquals(messageHeader.getUserAuthenticationData(), joMessageHeader.getUserAuthenticationData());
-        assertEquals(messageHeader.getUserIdToken(), joMessageHeader.getUserIdToken());
-        assertNotNull(joMessageHeader.getUser());
+        final Set<ServiceToken> moServiceTokens = moMessageHeader.getServiceTokens();
+        assertTrue(serviceTokens.containsAll(moServiceTokens));
+        assertTrue(moServiceTokens.containsAll(serviceTokens));
+        assertEquals(messageHeader.getUserAuthenticationData(), moMessageHeader.getUserAuthenticationData());
+        assertEquals(messageHeader.getUserIdToken(), moMessageHeader.getUserIdToken());
+        assertNotNull(moMessageHeader.getUser());
     }
     
     @Test
-    public void untrustedMasterTokenParseHeader() throws MslEncodingException, MslCryptoException, JSONException, MslException {
+    public void untrustedMasterTokenParseHeader() throws MslEncodingException, MslCryptoException, MslEncoderException, MslException {
         thrown.expect(MslMasterTokenException.class);
         thrown.expectMslError(MslError.MASTERTOKEN_UNTRUSTED);
 
@@ -1509,12 +1508,12 @@ public class MessageHeaderTest {
         // be trusted when parsing a message header.
         p2pCtx.getMslStore().clearCryptoContexts();
         
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
-        Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
+        Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void unsupportedEntityAuthSchemeParseHeader() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, JSONException {
+    public void unsupportedEntityAuthSchemeParseHeader() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
         thrown.expect(MslEntityAuthException.class);
         thrown.expectMslError(MslError.ENTITYAUTH_FACTORY_NOT_FOUND);
 
@@ -1533,12 +1532,12 @@ public class MessageHeaderTest {
         // parsing of message headers.
         ctx.removeEntityAuthenticationFactory(entityAuthData.getScheme());
         
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
-        Header.parseHeader(ctx, messageHeaderJo, CRYPTO_CONTEXTS);
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
+        Header.parseHeader(ctx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void unsupportedUserAuthSchemeParseHeader() throws MslKeyExchangeException, MslUserAuthException, JSONException, MslException {
+    public void unsupportedUserAuthSchemeParseHeader() throws MslKeyExchangeException, MslUserAuthException, MslEncoderException, MslException {
         thrown.expect(MslUserAuthException.class);
         thrown.expectMslError(MslError.USERAUTH_FACTORY_NOT_FOUND);
         thrown.expectMessageId(MESSAGE_ID);
@@ -1557,12 +1556,12 @@ public class MessageHeaderTest {
         // user authentication.
         ctx.removeUserAuthenticationFactory(USER_AUTH_DATA.getScheme());
         
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
-        Header.parseHeader(ctx, messageHeaderJo, CRYPTO_CONTEXTS);
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
+        Header.parseHeader(ctx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void cachedCryptoContextMasterTokenParseHeader() throws MslEncodingException, MslCryptoException, JSONException, MslException {
+    public void cachedCryptoContextMasterTokenParseHeader() throws MslEncodingException, MslCryptoException, MslEncoderException, MslException {
         // We should be okay with an untrusted master token if a crypto context
         // is associated with it.
         final MasterToken masterToken = MslTestUtils.getUntrustedMasterToken(p2pCtx);
@@ -1577,43 +1576,43 @@ public class MessageHeaderTest {
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, masterToken, headerData, peerData);
         
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
-        final Header header = Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
+        final Header header = Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
         assertNotNull(header);
         assertTrue(header instanceof MessageHeader);
-        final MessageHeader joMessageHeader = (MessageHeader)header;
+        final MessageHeader moMessageHeader = (MessageHeader)header;
         
-        assertEquals(messageHeader.getNonReplayableId(), joMessageHeader.getNonReplayableId());
-        assertEquals(messageHeader.isRenewable(), joMessageHeader.isRenewable());
+        assertEquals(messageHeader.getNonReplayableId(), moMessageHeader.getNonReplayableId());
+        assertEquals(messageHeader.isRenewable(), moMessageHeader.isRenewable());
         assertNotNull(messageHeader.getCryptoContext());
-        assertEquals(messageHeader.getEntityAuthenticationData(), joMessageHeader.getEntityAuthenticationData());
+        assertEquals(messageHeader.getEntityAuthenticationData(), moMessageHeader.getEntityAuthenticationData());
         final Set<KeyRequestData> keyRequestData = messageHeader.getKeyRequestData();
-        final Set<KeyRequestData> joKeyRequestData = joMessageHeader.getKeyRequestData();
-        assertTrue(keyRequestData.containsAll(joKeyRequestData));
-        assertTrue(joKeyRequestData.containsAll(keyRequestData));
-        assertEquals(messageHeader.getKeyResponseData(), joMessageHeader.getKeyResponseData());
+        final Set<KeyRequestData> moKeyRequestData = moMessageHeader.getKeyRequestData();
+        assertTrue(keyRequestData.containsAll(moKeyRequestData));
+        assertTrue(moKeyRequestData.containsAll(keyRequestData));
+        assertEquals(messageHeader.getKeyResponseData(), moMessageHeader.getKeyResponseData());
         // The reconstructed untrusted service token won't pass tests for
         // equality.
-        assertNotNull(joMessageHeader.getMasterToken());
-        assertEquals(messageHeader.getMessageId(), joMessageHeader.getMessageId());
-        assertEquals(messageHeader.getPeerMasterToken(), joMessageHeader.getPeerMasterToken());
-        final Set<ServiceToken> joPeerServiceTokens = joMessageHeader.getPeerServiceTokens();
-        assertTrue(peerServiceTokens.containsAll(joPeerServiceTokens));
-        assertTrue(joPeerServiceTokens.containsAll(peerServiceTokens));
-        assertEquals(messageHeader.getPeerUserIdToken(), joMessageHeader.getPeerUserIdToken());
+        assertNotNull(moMessageHeader.getMasterToken());
+        assertEquals(messageHeader.getMessageId(), moMessageHeader.getMessageId());
+        assertEquals(messageHeader.getPeerMasterToken(), moMessageHeader.getPeerMasterToken());
+        final Set<ServiceToken> moPeerServiceTokens = moMessageHeader.getPeerServiceTokens();
+        assertTrue(peerServiceTokens.containsAll(moPeerServiceTokens));
+        assertTrue(moPeerServiceTokens.containsAll(peerServiceTokens));
+        assertEquals(messageHeader.getPeerUserIdToken(), moMessageHeader.getPeerUserIdToken());
         final Set<ServiceToken> serviceTokens = messageHeader.getServiceTokens();
-        final Set<ServiceToken> joServiceTokens = joMessageHeader.getServiceTokens();
-        assertTrue(serviceTokens.containsAll(joServiceTokens));
-        assertTrue(joServiceTokens.containsAll(serviceTokens));
-        assertEquals(messageHeader.getUserAuthenticationData(), joMessageHeader.getUserAuthenticationData());
-        assertEquals(messageHeader.getUserIdToken(), joMessageHeader.getUserIdToken());
-        assertEquals(messageHeader.getUser(), joMessageHeader.getUser());
+        final Set<ServiceToken> moServiceTokens = moMessageHeader.getServiceTokens();
+        assertTrue(serviceTokens.containsAll(moServiceTokens));
+        assertTrue(moServiceTokens.containsAll(serviceTokens));
+        assertEquals(messageHeader.getUserAuthenticationData(), moMessageHeader.getUserAuthenticationData());
+        assertEquals(messageHeader.getUserIdToken(), moMessageHeader.getUserIdToken());
+        assertEquals(messageHeader.getUser(), moMessageHeader.getUser());
     }
     
     @Test
-    public void invalidEntityAuthDataParseHeader() throws MslMasterTokenException, MslEntityAuthException, MslException, JSONException {
+    public void invalidEntityAuthDataParseHeader() throws MslMasterTokenException, MslEntityAuthException, MslException, MslEncoderException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final HeaderDataBuilder builder = new HeaderDataBuilder(trustedNetCtx, null, null, false);
         builder.set(KEY_USER_ID_TOKEN, USER_ID_TOKEN);
@@ -1621,15 +1620,15 @@ public class MessageHeaderTest {
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, null);
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
-        messageHeaderJo.put(KEY_ENTITY_AUTHENTICATION_DATA, "x");
+        messageHeaderMo.put(KEY_ENTITY_AUTHENTICATION_DATA, "x");
         
-        Header.parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void missingBothAuthDataParseHeader() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, JSONException {
+    public void missingBothAuthDataParseHeader() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
         thrown.expect(MslMessageException.class);
         thrown.expectMslError(MslError.MESSAGE_ENTITY_NOT_FOUND);
 
@@ -1638,70 +1637,67 @@ public class MessageHeaderTest {
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, null);
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
 
-        messageHeaderJo.remove(KEY_ENTITY_AUTHENTICATION_DATA);
-        messageHeaderJo.remove(KEY_MASTER_TOKEN);
+        messageHeaderMo.remove(KEY_ENTITY_AUTHENTICATION_DATA);
+        messageHeaderMo.remove(KEY_MASTER_TOKEN);
         
-        Header.parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void invalidMasterTokenParseHeader() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, JSONException {
+    public void invalidMasterTokenParseHeader() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final HeaderDataBuilder builder = new HeaderDataBuilder(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, false);
         final HeaderData headerData = builder.build();
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, null);
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
-        messageHeaderJo.put(KEY_MASTER_TOKEN, "x");
+        messageHeaderMo.put(KEY_MASTER_TOKEN, "x");
         
-        Header.parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void missingSignatureParseHeader() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException, JSONException {
+    public void missingSignatureParseHeader() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException, MslEncoderException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final HeaderDataBuilder builder = new HeaderDataBuilder(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, false);
         final HeaderData headerData = builder.build();
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, null);
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
-        assertNotNull(messageHeaderJo.remove(KEY_SIGNATURE));
+        assertNotNull(messageHeaderMo.remove(KEY_SIGNATURE));
         
-        Header.parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
-    // This test no longer passes because DataConverter.parseBase64Binary()
-    // does not error when given invalid Base64-encoded data.
-    @Ignore
     @Test
-    public void invalidSignatureParseHeader() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException, JSONException {
-        thrown.expect(MslMessageException.class);
-        thrown.expectMslError(MslError.HEADER_SIGNATURE_INVALID);
+    public void invalidSignatureParseHeader() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException, MslEncoderException {
+        thrown.expect(MslEncodingException.class);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final HeaderDataBuilder builder = new HeaderDataBuilder(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, false);
         final HeaderData headerData = builder.build();
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, null);
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
-        messageHeaderJo.put(KEY_SIGNATURE, "x");
+        messageHeaderMo.put(KEY_SIGNATURE, "x");
         
-        Header.parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void incorrectSignatureParseHeader() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException, JSONException {
+    public void incorrectSignatureParseHeader() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException, MslEncoderException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.MESSAGE_ENTITYDATABASED_VERIFICATION_FAILED);
 
@@ -1710,49 +1706,49 @@ public class MessageHeaderTest {
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
-        messageHeaderJo.put(KEY_SIGNATURE, "AAA=");
+        messageHeaderMo.put(KEY_SIGNATURE, Base64.decode("AAA="));
         
-        Header.parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void missingHeaderdataParseHeader() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException, JSONException {
+    public void missingHeaderdataParseHeader() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException, MslEncoderException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final HeaderDataBuilder builder = new HeaderDataBuilder(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, false);
         final HeaderData headerData = builder.build();
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, null);
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
-        assertNotNull(messageHeaderJo.remove(KEY_HEADERDATA));
+        assertNotNull(messageHeaderMo.remove(KEY_HEADERDATA));
         
-        Header.parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void invalidHeaderDataParseHeader() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, JSONException {
-        thrown.expect(MslMessageException.class);
-        thrown.expectMslError(MslError.HEADER_DATA_INVALID);
+    public void invalidHeaderDataParseHeader() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
+        thrown.expect(MslEncodingException.class);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final HeaderDataBuilder builder = new HeaderDataBuilder(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, false);
         final HeaderData headerData = builder.build();
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, null);
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
-        messageHeaderJo.put(KEY_HEADERDATA, "x");
+        messageHeaderMo.put(KEY_HEADERDATA, "x");
         
-        Header.parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void corruptHeaderDataParseHeader() throws MslEncodingException, MslEntityAuthException, MslException, JSONException, UnsupportedEncodingException {
+    public void corruptHeaderDataParseHeader() throws MslEncodingException, MslEntityAuthException, MslException, MslEncoderException, UnsupportedEncodingException {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.MESSAGE_MASTERTOKENBASED_VERIFICATION_FAILED);
 
@@ -1761,17 +1757,17 @@ public class MessageHeaderTest {
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, null);
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         ++ciphertext[0];
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(ciphertext));
+        messageHeaderMo.put(KEY_HEADERDATA, ciphertext);
         
-        Header.parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void missingPairsEntityAuthParseHeader() throws JSONException, MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException {
+    public void missingPairsEntityAuthParseHeader() throws MslEncoderException, MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException {
         final HeaderDataBuilder builder = new HeaderDataBuilder(p2pCtx, null, null, false);
         builder.set(KEY_KEY_REQUEST_DATA, null);
         builder.set(KEY_KEY_RESPONSE_DATA, null);
@@ -1781,40 +1777,40 @@ public class MessageHeaderTest {
         final EntityAuthenticationData entityAuthData = p2pCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, entityAuthData, null, headerData, peerData);
         
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
-        final Header header = Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
+        final Header header = Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
         assertNotNull(header);
         assertTrue(header instanceof MessageHeader);
-        final MessageHeader joMessageHeader = (MessageHeader)header;
+        final MessageHeader moMessageHeader = (MessageHeader)header;
         
-        assertEquals(messageHeader.getNonReplayableId(), joMessageHeader.getNonReplayableId());
-        assertEquals(messageHeader.isRenewable(), joMessageHeader.isRenewable());
+        assertEquals(messageHeader.getNonReplayableId(), moMessageHeader.getNonReplayableId());
+        assertEquals(messageHeader.isRenewable(), moMessageHeader.isRenewable());
         assertNotNull(messageHeader.getCryptoContext());
-        assertEquals(messageHeader.getEntityAuthenticationData(), joMessageHeader.getEntityAuthenticationData());
+        assertEquals(messageHeader.getEntityAuthenticationData(), moMessageHeader.getEntityAuthenticationData());
         final Set<KeyRequestData> keyRequestData = messageHeader.getKeyRequestData();
-        final Set<KeyRequestData> joKeyRequestData = joMessageHeader.getKeyRequestData();
-        assertTrue(keyRequestData.containsAll(joKeyRequestData));
-        assertTrue(joKeyRequestData.containsAll(keyRequestData));
-        assertEquals(messageHeader.getKeyResponseData(), joMessageHeader.getKeyResponseData());
-        assertEquals(messageHeader.getMasterToken(), joMessageHeader.getMasterToken());
-        assertEquals(messageHeader.getMessageId(), joMessageHeader.getMessageId());
-        assertEquals(messageHeader.getPeerMasterToken(), joMessageHeader.getPeerMasterToken());
+        final Set<KeyRequestData> moKeyRequestData = moMessageHeader.getKeyRequestData();
+        assertTrue(keyRequestData.containsAll(moKeyRequestData));
+        assertTrue(moKeyRequestData.containsAll(keyRequestData));
+        assertEquals(messageHeader.getKeyResponseData(), moMessageHeader.getKeyResponseData());
+        assertEquals(messageHeader.getMasterToken(), moMessageHeader.getMasterToken());
+        assertEquals(messageHeader.getMessageId(), moMessageHeader.getMessageId());
+        assertEquals(messageHeader.getPeerMasterToken(), moMessageHeader.getPeerMasterToken());
         final Set<ServiceToken> peerServiceTokens = messageHeader.getPeerServiceTokens();
-        final Set<ServiceToken> joPeerServiceTokens = joMessageHeader.getPeerServiceTokens();
-        assertTrue(peerServiceTokens.containsAll(joPeerServiceTokens));
-        assertTrue(joPeerServiceTokens.containsAll(peerServiceTokens));
-        assertEquals(messageHeader.getPeerUserIdToken(), joMessageHeader.getPeerUserIdToken());
+        final Set<ServiceToken> moPeerServiceTokens = moMessageHeader.getPeerServiceTokens();
+        assertTrue(peerServiceTokens.containsAll(moPeerServiceTokens));
+        assertTrue(moPeerServiceTokens.containsAll(peerServiceTokens));
+        assertEquals(messageHeader.getPeerUserIdToken(), moMessageHeader.getPeerUserIdToken());
         final Set<ServiceToken> serviceTokens = messageHeader.getServiceTokens();
-        final Set<ServiceToken> joServiceTokens = joMessageHeader.getServiceTokens();
-        assertTrue(serviceTokens.containsAll(joServiceTokens));
-        assertTrue(joServiceTokens.containsAll(serviceTokens));
-        assertEquals(messageHeader.getUserAuthenticationData(), joMessageHeader.getUserAuthenticationData());
-        assertEquals(messageHeader.getUserIdToken(), joMessageHeader.getUserIdToken());
-        assertEquals(messageHeader.getUser(), joMessageHeader.getUser());
+        final Set<ServiceToken> moServiceTokens = moMessageHeader.getServiceTokens();
+        assertTrue(serviceTokens.containsAll(moServiceTokens));
+        assertTrue(moServiceTokens.containsAll(serviceTokens));
+        assertEquals(messageHeader.getUserAuthenticationData(), moMessageHeader.getUserAuthenticationData());
+        assertEquals(messageHeader.getUserIdToken(), moMessageHeader.getUserIdToken());
+        assertEquals(messageHeader.getUser(), moMessageHeader.getUser());
     }
     
     @Test
-    public void emptyArraysEntityAuthParseHeader() throws MslEncodingException, MslKeyExchangeException, MslUserAuthException, MslException, JSONException, UnsupportedEncodingException {
+    public void emptyArraysEntityAuthParseHeader() throws MslEncodingException, MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException, UnsupportedEncodingException {
         final HeaderDataBuilder builder = new HeaderDataBuilder(p2pCtx, null, null, false);
         builder.set(KEY_KEY_REQUEST_DATA, null);
         builder.set(KEY_KEY_RESPONSE_DATA, null);
@@ -1823,60 +1819,60 @@ public class MessageHeaderTest {
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final EntityAuthenticationData entityAuthData = p2pCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, entityAuthData, null, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final EntityAuthenticationScheme scheme = entityAuthData.getScheme();
         final EntityAuthenticationFactory factory = p2pCtx.getEntityAuthenticationFactory(scheme);
         final ICryptoContext cryptoContext = factory.getCryptoContext(p2pCtx, entityAuthData);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
-        headerdataJo.put(KEY_KEY_REQUEST_DATA, new JSONArray());
-        headerdataJo.put(KEY_SERVICE_TOKENS, new JSONArray());
-        headerdataJo.put(KEY_PEER_SERVICE_TOKENS, new JSONArray());
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        headerdataMo.put(KEY_KEY_REQUEST_DATA, encoder.createArray());
+        headerdataMo.put(KEY_SERVICE_TOKENS, encoder.createArray());
+        headerdataMo.put(KEY_PEER_SERVICE_TOKENS, encoder.createArray());
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        final Header header = Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        final Header header = Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
         assertNotNull(header);
         assertTrue(header instanceof MessageHeader);
-        final MessageHeader joMessageHeader = (MessageHeader)header;
+        final MessageHeader moMessageHeader = (MessageHeader)header;
         
-        assertEquals(messageHeader.getNonReplayableId(), joMessageHeader.getNonReplayableId());
-        assertEquals(messageHeader.isRenewable(), joMessageHeader.isRenewable());
+        assertEquals(messageHeader.getNonReplayableId(), moMessageHeader.getNonReplayableId());
+        assertEquals(messageHeader.isRenewable(), moMessageHeader.isRenewable());
         assertNotNull(messageHeader.getCryptoContext());
-        assertEquals(messageHeader.getEntityAuthenticationData(), joMessageHeader.getEntityAuthenticationData());
+        assertEquals(messageHeader.getEntityAuthenticationData(), moMessageHeader.getEntityAuthenticationData());
         final Set<KeyRequestData> keyRequestData = messageHeader.getKeyRequestData();
-        final Set<KeyRequestData> joKeyRequestData = joMessageHeader.getKeyRequestData();
-        assertTrue(keyRequestData.containsAll(joKeyRequestData));
-        assertTrue(joKeyRequestData.containsAll(keyRequestData));
-        assertEquals(messageHeader.getKeyResponseData(), joMessageHeader.getKeyResponseData());
-        assertEquals(messageHeader.getMasterToken(), joMessageHeader.getMasterToken());
-        assertEquals(messageHeader.getMessageId(), joMessageHeader.getMessageId());
-        assertEquals(messageHeader.getPeerMasterToken(), joMessageHeader.getPeerMasterToken());
+        final Set<KeyRequestData> moKeyRequestData = moMessageHeader.getKeyRequestData();
+        assertTrue(keyRequestData.containsAll(moKeyRequestData));
+        assertTrue(moKeyRequestData.containsAll(keyRequestData));
+        assertEquals(messageHeader.getKeyResponseData(), moMessageHeader.getKeyResponseData());
+        assertEquals(messageHeader.getMasterToken(), moMessageHeader.getMasterToken());
+        assertEquals(messageHeader.getMessageId(), moMessageHeader.getMessageId());
+        assertEquals(messageHeader.getPeerMasterToken(), moMessageHeader.getPeerMasterToken());
         final Set<ServiceToken> peerServiceTokens = messageHeader.getPeerServiceTokens();
-        final Set<ServiceToken> joPeerServiceTokens = joMessageHeader.getPeerServiceTokens();
-        assertTrue(peerServiceTokens.containsAll(joPeerServiceTokens));
-        assertTrue(joPeerServiceTokens.containsAll(peerServiceTokens));
-        assertEquals(messageHeader.getPeerUserIdToken(), joMessageHeader.getPeerUserIdToken());
+        final Set<ServiceToken> moPeerServiceTokens = moMessageHeader.getPeerServiceTokens();
+        assertTrue(peerServiceTokens.containsAll(moPeerServiceTokens));
+        assertTrue(moPeerServiceTokens.containsAll(peerServiceTokens));
+        assertEquals(messageHeader.getPeerUserIdToken(), moMessageHeader.getPeerUserIdToken());
         final Set<ServiceToken> serviceTokens = messageHeader.getServiceTokens();
-        final Set<ServiceToken> joServiceTokens = joMessageHeader.getServiceTokens();
-        assertTrue(serviceTokens.containsAll(joServiceTokens));
-        assertTrue(joServiceTokens.containsAll(serviceTokens));
-        assertEquals(messageHeader.getUserAuthenticationData(), joMessageHeader.getUserAuthenticationData());
-        assertEquals(messageHeader.getUserIdToken(), joMessageHeader.getUserIdToken());
-        assertEquals(messageHeader.getUser(), joMessageHeader.getUser());
+        final Set<ServiceToken> moServiceTokens = moMessageHeader.getServiceTokens();
+        assertTrue(serviceTokens.containsAll(moServiceTokens));
+        assertTrue(moServiceTokens.containsAll(serviceTokens));
+        assertEquals(messageHeader.getUserAuthenticationData(), moMessageHeader.getUserAuthenticationData());
+        assertEquals(messageHeader.getUserIdToken(), moMessageHeader.getUserIdToken());
+        assertEquals(messageHeader.getUser(), moMessageHeader.getUser());
     }
     
     @Test
-    public void missingPairsMasterTokenParseHeader() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException, JSONException {
+    public void missingPairsMasterTokenParseHeader() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException, MslEncoderException {
         final HeaderDataBuilder builder = new HeaderDataBuilder(p2pCtx, null, null, false);
         builder.set(KEY_KEY_REQUEST_DATA, null);
         builder.set(KEY_KEY_RESPONSE_DATA, null);
@@ -1885,40 +1881,40 @@ public class MessageHeaderTest {
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerData);
         
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
-        final Header header = Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
+        final Header header = Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
         assertNotNull(header);
         assertTrue(header instanceof MessageHeader);
-        final MessageHeader joMessageHeader = (MessageHeader)header;
+        final MessageHeader moMessageHeader = (MessageHeader)header;
         
-        assertEquals(messageHeader.getNonReplayableId(), joMessageHeader.getNonReplayableId());
-        assertEquals(messageHeader.isRenewable(), joMessageHeader.isRenewable());
+        assertEquals(messageHeader.getNonReplayableId(), moMessageHeader.getNonReplayableId());
+        assertEquals(messageHeader.isRenewable(), moMessageHeader.isRenewable());
         assertNotNull(messageHeader.getCryptoContext());
-        assertEquals(messageHeader.getEntityAuthenticationData(), joMessageHeader.getEntityAuthenticationData());
+        assertEquals(messageHeader.getEntityAuthenticationData(), moMessageHeader.getEntityAuthenticationData());
         final Set<KeyRequestData> keyRequestData = messageHeader.getKeyRequestData();
-        final Set<KeyRequestData> joKeyRequestData = joMessageHeader.getKeyRequestData();
-        assertTrue(keyRequestData.containsAll(joKeyRequestData));
-        assertTrue(joKeyRequestData.containsAll(keyRequestData));
-        assertEquals(messageHeader.getKeyResponseData(), joMessageHeader.getKeyResponseData());
-        assertEquals(messageHeader.getMasterToken(), joMessageHeader.getMasterToken());
-        assertEquals(messageHeader.getMessageId(), joMessageHeader.getMessageId());
-        assertEquals(messageHeader.getPeerMasterToken(), joMessageHeader.getPeerMasterToken());
+        final Set<KeyRequestData> moKeyRequestData = moMessageHeader.getKeyRequestData();
+        assertTrue(keyRequestData.containsAll(moKeyRequestData));
+        assertTrue(moKeyRequestData.containsAll(keyRequestData));
+        assertEquals(messageHeader.getKeyResponseData(), moMessageHeader.getKeyResponseData());
+        assertEquals(messageHeader.getMasterToken(), moMessageHeader.getMasterToken());
+        assertEquals(messageHeader.getMessageId(), moMessageHeader.getMessageId());
+        assertEquals(messageHeader.getPeerMasterToken(), moMessageHeader.getPeerMasterToken());
         final Set<ServiceToken> peerServiceTokens = messageHeader.getPeerServiceTokens();
-        final Set<ServiceToken> joPeerServiceTokens = joMessageHeader.getPeerServiceTokens();
-        assertTrue(peerServiceTokens.containsAll(joPeerServiceTokens));
-        assertTrue(joPeerServiceTokens.containsAll(peerServiceTokens));
-        assertEquals(messageHeader.getPeerUserIdToken(), joMessageHeader.getPeerUserIdToken());
+        final Set<ServiceToken> moPeerServiceTokens = moMessageHeader.getPeerServiceTokens();
+        assertTrue(peerServiceTokens.containsAll(moPeerServiceTokens));
+        assertTrue(moPeerServiceTokens.containsAll(peerServiceTokens));
+        assertEquals(messageHeader.getPeerUserIdToken(), moMessageHeader.getPeerUserIdToken());
         final Set<ServiceToken> serviceTokens = messageHeader.getServiceTokens();
-        final Set<ServiceToken> joServiceTokens = joMessageHeader.getServiceTokens();
-        assertTrue(serviceTokens.containsAll(joServiceTokens));
-        assertTrue(joServiceTokens.containsAll(serviceTokens));
-        assertEquals(messageHeader.getUserAuthenticationData(), joMessageHeader.getUserAuthenticationData());
-        assertEquals(messageHeader.getUserIdToken(), joMessageHeader.getUserIdToken());
-        assertEquals(messageHeader.getUser(), joMessageHeader.getUser());
+        final Set<ServiceToken> moServiceTokens = moMessageHeader.getServiceTokens();
+        assertTrue(serviceTokens.containsAll(moServiceTokens));
+        assertTrue(moServiceTokens.containsAll(serviceTokens));
+        assertEquals(messageHeader.getUserAuthenticationData(), moMessageHeader.getUserAuthenticationData());
+        assertEquals(messageHeader.getUserIdToken(), moMessageHeader.getUserIdToken());
+        assertEquals(messageHeader.getUser(), moMessageHeader.getUser());
     }
     
     @Test
-    public void emptyArraysMasterTokenParseHeader() throws JSONException, UnsupportedEncodingException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
+    public void emptyArraysMasterTokenParseHeader() throws MslEncoderException, UnsupportedEncodingException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
         final HeaderDataBuilder builder = new HeaderDataBuilder(p2pCtx, null, null, false);
         builder.set(KEY_KEY_REQUEST_DATA, null);
         builder.set(KEY_KEY_RESPONSE_DATA, null);
@@ -1926,58 +1922,58 @@ public class MessageHeaderTest {
         final HeaderData headerData = builder.build();
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
-        headerdataJo.put(KEY_KEY_REQUEST_DATA, new JSONArray());
-        headerdataJo.put(KEY_SERVICE_TOKENS, new JSONArray());
-        headerdataJo.put(KEY_PEER_SERVICE_TOKENS, new JSONArray());
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        headerdataMo.put(KEY_KEY_REQUEST_DATA, encoder.createArray());
+        headerdataMo.put(KEY_SERVICE_TOKENS, encoder.createArray());
+        headerdataMo.put(KEY_PEER_SERVICE_TOKENS, encoder.createArray());
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        final Header header = Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        final Header header = Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
         assertNotNull(header);
         assertTrue(header instanceof MessageHeader);
-        final MessageHeader joMessageHeader = (MessageHeader)header;
+        final MessageHeader moMessageHeader = (MessageHeader)header;
         
-        assertEquals(messageHeader.getNonReplayableId(), joMessageHeader.getNonReplayableId());
-        assertEquals(messageHeader.isRenewable(), joMessageHeader.isRenewable());
+        assertEquals(messageHeader.getNonReplayableId(), moMessageHeader.getNonReplayableId());
+        assertEquals(messageHeader.isRenewable(), moMessageHeader.isRenewable());
         assertNotNull(messageHeader.getCryptoContext());
-        assertEquals(messageHeader.getEntityAuthenticationData(), joMessageHeader.getEntityAuthenticationData());
+        assertEquals(messageHeader.getEntityAuthenticationData(), moMessageHeader.getEntityAuthenticationData());
         final Set<KeyRequestData> keyRequestData = messageHeader.getKeyRequestData();
-        final Set<KeyRequestData> joKeyRequestData = joMessageHeader.getKeyRequestData();
-        assertTrue(keyRequestData.containsAll(joKeyRequestData));
-        assertTrue(joKeyRequestData.containsAll(keyRequestData));
-        assertEquals(messageHeader.getKeyResponseData(), joMessageHeader.getKeyResponseData());
-        assertEquals(messageHeader.getMasterToken(), joMessageHeader.getMasterToken());
-        assertEquals(messageHeader.getMessageId(), joMessageHeader.getMessageId());
-        assertEquals(messageHeader.getPeerMasterToken(), joMessageHeader.getPeerMasterToken());
+        final Set<KeyRequestData> moKeyRequestData = moMessageHeader.getKeyRequestData();
+        assertTrue(keyRequestData.containsAll(moKeyRequestData));
+        assertTrue(moKeyRequestData.containsAll(keyRequestData));
+        assertEquals(messageHeader.getKeyResponseData(), moMessageHeader.getKeyResponseData());
+        assertEquals(messageHeader.getMasterToken(), moMessageHeader.getMasterToken());
+        assertEquals(messageHeader.getMessageId(), moMessageHeader.getMessageId());
+        assertEquals(messageHeader.getPeerMasterToken(), moMessageHeader.getPeerMasterToken());
         final Set<ServiceToken> peerServiceTokens = messageHeader.getPeerServiceTokens();
-        final Set<ServiceToken> joPeerServiceTokens = joMessageHeader.getPeerServiceTokens();
-        assertTrue(peerServiceTokens.containsAll(joPeerServiceTokens));
-        assertTrue(joPeerServiceTokens.containsAll(peerServiceTokens));
-        assertEquals(messageHeader.getPeerUserIdToken(), joMessageHeader.getPeerUserIdToken());
+        final Set<ServiceToken> moPeerServiceTokens = moMessageHeader.getPeerServiceTokens();
+        assertTrue(peerServiceTokens.containsAll(moPeerServiceTokens));
+        assertTrue(moPeerServiceTokens.containsAll(peerServiceTokens));
+        assertEquals(messageHeader.getPeerUserIdToken(), moMessageHeader.getPeerUserIdToken());
         final Set<ServiceToken> serviceTokens = messageHeader.getServiceTokens();
-        final Set<ServiceToken> joServiceTokens = joMessageHeader.getServiceTokens();
-        assertTrue(serviceTokens.containsAll(joServiceTokens));
-        assertTrue(joServiceTokens.containsAll(serviceTokens));
-        assertEquals(messageHeader.getUserAuthenticationData(), joMessageHeader.getUserAuthenticationData());
-        assertEquals(messageHeader.getUserIdToken(), joMessageHeader.getUserIdToken());
-        assertEquals(messageHeader.getUser(), joMessageHeader.getUser());
+        final Set<ServiceToken> moServiceTokens = moMessageHeader.getServiceTokens();
+        assertTrue(serviceTokens.containsAll(moServiceTokens));
+        assertTrue(moServiceTokens.containsAll(serviceTokens));
+        assertEquals(messageHeader.getUserAuthenticationData(), moMessageHeader.getUserAuthenticationData());
+        assertEquals(messageHeader.getUserIdToken(), moMessageHeader.getUserIdToken());
+        assertEquals(messageHeader.getUser(), moMessageHeader.getUser());
     }
 
     @Test
-    public void userIdTokenNullMasterTokenParseHeader() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, JSONException, UnsupportedEncodingException {
+    public void userIdTokenNullMasterTokenParseHeader() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException, UnsupportedEncodingException {
         thrown.expect(MslException.class);
         thrown.expectMessageId(MESSAGE_ID);
 
@@ -1993,31 +1989,31 @@ public class MessageHeaderTest {
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final EntityAuthenticationScheme scheme = entityAuthData.getScheme();
         final EntityAuthenticationFactory factory = trustedNetCtx.getEntityAuthenticationFactory(scheme);
         final ICryptoContext cryptoContext = factory.getCryptoContext(trustedNetCtx, entityAuthData);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
         final UserIdToken userIdToken = MslTestUtils.getUserIdToken(trustedNetCtx, MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory.USER);
-        headerdataJo.put(KEY_USER_ID_TOKEN, userIdToken);
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        headerdataMo.put(KEY_USER_ID_TOKEN, userIdToken);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void userIdTokenMismatchedMasterTokenParseHeader() throws MslMasterTokenException, MslEntityAuthException, MslException, JSONException, UnsupportedEncodingException {
+    public void userIdTokenMismatchedMasterTokenParseHeader() throws MslMasterTokenException, MslEntityAuthException, MslException, MslEncoderException, UnsupportedEncodingException {
         thrown.expect(MslException.class);
         thrown.expectMessageId(MESSAGE_ID);
 
@@ -2027,29 +2023,29 @@ public class MessageHeaderTest {
         final HeaderData headerData = builder.build();
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(trustedNetCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
         final UserIdToken userIdToken = MslTestUtils.getUserIdToken(trustedNetCtx, PEER_MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory.USER);
-        headerdataJo.put(KEY_USER_ID_TOKEN, userIdToken);
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        headerdataMo.put(KEY_USER_ID_TOKEN, userIdToken);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void userIdTokenMismatchedUserAuthDataParseHeader() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslKeyExchangeException, MslUserAuthException, JSONException, MslException {
+    public void userIdTokenMismatchedUserAuthDataParseHeader() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslKeyExchangeException, MslUserAuthException, MslEncoderException, MslException {
         thrown.expect(MslUserAuthException.class);
         thrown.expectMslError(MslError.USERIDTOKEN_USERAUTH_DATA_MISMATCH);
         thrown.expectMessageId(MESSAGE_ID);
@@ -2061,29 +2057,29 @@ public class MessageHeaderTest {
         final HeaderData headerData = builder.build();
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(trustedNetCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
         final UserAuthenticationData userAuthData = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL_2, MockEmailPasswordAuthenticationFactory.PASSWORD_2);
-        headerdataJo.put(KEY_USER_AUTHENTICATION_DATA, userAuthData);
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        headerdataMo.put(KEY_USER_AUTHENTICATION_DATA, userAuthData);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void peerUserIdTokenMissingPeerMasterTokenParseHeader() throws MslEncodingException, MslEntityAuthException, MslException, UnsupportedEncodingException, JSONException {
+    public void peerUserIdTokenMissingPeerMasterTokenParseHeader() throws MslEncodingException, MslEntityAuthException, MslException, UnsupportedEncodingException, MslEncoderException {
         thrown.expect(MslException.class);
         thrown.expectMessageId(MESSAGE_ID);
 
@@ -2094,28 +2090,28 @@ public class MessageHeaderTest {
         final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
-        assertNotNull(headerdataJo.remove(KEY_PEER_MASTER_TOKEN));
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        assertNotNull(headerdataMo.remove(KEY_PEER_MASTER_TOKEN));
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test(expected = MslException.class)
-    public void peerUserIdTokenMismatchedPeerMasterTokenParseHeader() throws JSONException, UnsupportedEncodingException, MslEntityAuthException, MslException {
+    public void peerUserIdTokenMismatchedPeerMasterTokenParseHeader() throws MslEncoderException, UnsupportedEncodingException, MslEntityAuthException, MslException {
         final HeaderDataBuilder builder = new HeaderDataBuilder(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true);
         builder.set(KEY_KEY_REQUEST_DATA, null);
         builder.set(KEY_KEY_RESPONSE_DATA, null);
@@ -2123,28 +2119,28 @@ public class MessageHeaderTest {
         final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
-        headerdataJo.put(KEY_PEER_MASTER_TOKEN, MASTER_TOKEN);
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        headerdataMo.put(KEY_PEER_MASTER_TOKEN, MASTER_TOKEN);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void serviceTokenMismatchedMasterTokenParseHeader() throws JSONException, UnsupportedEncodingException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
+    public void serviceTokenMismatchedMasterTokenParseHeader() throws MslEncoderException, UnsupportedEncodingException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
         thrown.expect(MslException.class);
         thrown.expectMessageId(MESSAGE_ID);
 
@@ -2154,30 +2150,30 @@ public class MessageHeaderTest {
         final HeaderData headerData = builder.build();
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(trustedNetCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
         final Set<ServiceToken> serviceTokens = builder.getServiceTokens();
         serviceTokens.addAll(MslTestUtils.getServiceTokens(trustedNetCtx, PEER_MASTER_TOKEN, null));
-        headerdataJo.put(KEY_SERVICE_TOKENS, JsonUtils.createArray(serviceTokens));
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        headerdataMo.put(KEY_SERVICE_TOKENS, MslEncoderUtils.createArray(trustedNetCtx, serviceTokens));
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void serviceTokenMismatchedUserIdTokenParseHeader() throws UnsupportedEncodingException, MslMasterTokenException, MslEntityAuthException, MslException, JSONException {
+    public void serviceTokenMismatchedUserIdTokenParseHeader() throws UnsupportedEncodingException, MslMasterTokenException, MslEntityAuthException, MslException, MslEncoderException {
         thrown.expect(MslException.class);
         thrown.expectMessageId(MESSAGE_ID);
 
@@ -2187,31 +2183,31 @@ public class MessageHeaderTest {
         final HeaderData headerData = builder.build();
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(trustedNetCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
         final Set<ServiceToken> serviceTokens = builder.getServiceTokens();
         final UserIdToken userIdToken = MslTestUtils.getUserIdToken(trustedNetCtx, MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory.USER);
         serviceTokens.addAll(MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, userIdToken));
-        headerdataJo.put(KEY_SERVICE_TOKENS, JsonUtils.createArray(serviceTokens));
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        headerdataMo.put(KEY_SERVICE_TOKENS, MslEncoderUtils.createArray(trustedNetCtx, serviceTokens));
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void peerServiceTokenMissingPeerMasterTokenParseHeader() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException, UnsupportedEncodingException, JSONException {
+    public void peerServiceTokenMissingPeerMasterTokenParseHeader() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException, UnsupportedEncodingException, MslEncoderException {
         thrown.expect(MslException.class);
         thrown.expectMessageId(MESSAGE_ID);
 
@@ -2222,28 +2218,28 @@ public class MessageHeaderTest {
         final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, null);
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, null, peerServiceTokens);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
-        assertNotNull(headerdataJo.remove(KEY_PEER_MASTER_TOKEN));
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        assertNotNull(headerdataMo.remove(KEY_PEER_MASTER_TOKEN));
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void peerServiceTokenMismatchedPeerMasterTokenParseHeader() throws MslMasterTokenException, MslEntityAuthException, MslException, UnsupportedEncodingException, JSONException {
+    public void peerServiceTokenMismatchedPeerMasterTokenParseHeader() throws MslMasterTokenException, MslEntityAuthException, MslException, UnsupportedEncodingException, MslEncoderException {
         thrown.expect(MslException.class);
         thrown.expectMessageId(MESSAGE_ID);
 
@@ -2254,28 +2250,28 @@ public class MessageHeaderTest {
         final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, null);
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, null, peerServiceTokens);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
-        headerdataJo.put(KEY_PEER_MASTER_TOKEN, MASTER_TOKEN);
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        headerdataMo.put(KEY_PEER_MASTER_TOKEN, MASTER_TOKEN);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void peerServiceTokenMismatchedPeerUserIdTokenParseHeader() throws UnsupportedEncodingException, MslEncodingException, MslMasterTokenException, MslEntityAuthException, MslException, JSONException {
+    public void peerServiceTokenMismatchedPeerUserIdTokenParseHeader() throws UnsupportedEncodingException, MslEncodingException, MslMasterTokenException, MslEntityAuthException, MslException, MslEncoderException {
         thrown.expect(MslException.class);
         thrown.expectMessageId(MESSAGE_ID);
 
@@ -2286,29 +2282,29 @@ public class MessageHeaderTest {
         final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
         final UserIdToken userIdToken = MslTestUtils.getUserIdToken(p2pCtx, PEER_MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory.USER);
-        headerdataJo.put(KEY_PEER_USER_ID_TOKEN, userIdToken);
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        headerdataMo.put(KEY_PEER_USER_ID_TOKEN, userIdToken);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void differentMasterTokenSender() throws JSONException, MslKeyExchangeException, MslUserAuthException, MslException {
+    public void differentMasterTokenSender() throws MslEncoderException, MslKeyExchangeException, MslUserAuthException, MslException {
         final Date renewalWindow = new Date(System.currentTimeMillis() - 10000);
         final Date expiration = new Date(System.currentTimeMillis() + 10000);
         final SecretKey encryptionKey = new SecretKeySpec(new byte[16], JcaAlgorithm.AES);
@@ -2324,18 +2320,18 @@ public class MessageHeaderTest {
         
         assertEquals(trustedNetCtx.getEntityAuthenticationData(null).getIdentity(), messageHeader.getSender());
         
-        final JSONObject jo = new JSONObject(messageHeader.toJSONString());
-        final Header header = Header.parseHeader(trustedNetCtx, jo, null);
+        final MslObject mo = MslTestUtils.toMslObject(encoder, messageHeader);
+        final Header header = Header.parseHeader(trustedNetCtx, mo, null);
         assertTrue(header instanceof MessageHeader);
         
-        final MessageHeader joMessageHeader = (MessageHeader)header;
-        assertEquals(messageHeader.getSender(), joMessageHeader.getSender());
+        final MessageHeader moMessageHeader = (MessageHeader)header;
+        assertEquals(messageHeader.getSender(), moMessageHeader.getSender());
     }
     
     @Test
-    public void missingSender() throws JSONException, MslKeyExchangeException, MslUserAuthException, MslException {
+    public void missingSender() throws MslEncoderException, MslKeyExchangeException, MslUserAuthException, MslException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final HeaderDataBuilder builder = new HeaderDataBuilder(trustedNetCtx, null, null, false);
         builder.set(KEY_KEY_REQUEST_DATA, null);
@@ -2344,28 +2340,28 @@ public class MessageHeaderTest {
         final HeaderData headerData = builder.build();
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(trustedNetCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
-        assertNotNull(headerdataJo.remove(KEY_SENDER));
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        assertNotNull(headerdataMo.remove(KEY_SENDER));
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void missingTimestamp() throws JSONException, MslKeyExchangeException, MslUserAuthException, MslException {
+    public void missingTimestamp() throws MslEncoderException, MslKeyExchangeException, MslUserAuthException, MslException {
         final HeaderDataBuilder builder = new HeaderDataBuilder(trustedNetCtx, null, null, false);
         builder.set(KEY_KEY_REQUEST_DATA, null);
         builder.set(KEY_KEY_RESPONSE_DATA, null);
@@ -2373,30 +2369,30 @@ public class MessageHeaderTest {
         final HeaderData headerData = builder.build();
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(trustedNetCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
-        assertNotNull(headerdataJo.remove(KEY_TIMESTAMP));
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        assertNotNull(headerdataMo.remove(KEY_TIMESTAMP));
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void invalidTimestamp() throws JSONException, MslKeyExchangeException, MslUserAuthException, MslException {
+    public void invalidTimestamp() throws MslEncoderException, MslKeyExchangeException, MslUserAuthException, MslException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final HeaderDataBuilder builder = new HeaderDataBuilder(trustedNetCtx, null, null, false);
         builder.set(KEY_KEY_REQUEST_DATA, null);
@@ -2405,30 +2401,30 @@ public class MessageHeaderTest {
         final HeaderData headerData = builder.build();
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(trustedNetCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
-        headerdataJo.put(KEY_TIMESTAMP, "x");
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        headerdataMo.put(KEY_TIMESTAMP, "x");
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(trustedNetCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void missingMessageIdParseHeader() throws UnsupportedEncodingException, JSONException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
+    public void missingMessageIdParseHeader() throws UnsupportedEncodingException, MslEncoderException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final HeaderDataBuilder builder = new HeaderDataBuilder(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true);
         builder.set(KEY_KEY_REQUEST_DATA, null);
@@ -2437,30 +2433,30 @@ public class MessageHeaderTest {
         final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
-        assertNotNull(headerdataJo.remove(KEY_MESSAGE_ID));
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        assertNotNull(headerdataMo.remove(KEY_MESSAGE_ID));
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void invalidMessageIdParseHeader() throws JSONException, MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, UnsupportedEncodingException {
+    public void invalidMessageIdParseHeader() throws MslEncoderException, MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, UnsupportedEncodingException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final HeaderDataBuilder builder = new HeaderDataBuilder(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true);
         builder.set(KEY_KEY_REQUEST_DATA, null);
@@ -2469,24 +2465,24 @@ public class MessageHeaderTest {
         final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
-        headerdataJo.put(KEY_MESSAGE_ID, "x");
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        headerdataMo.put(KEY_MESSAGE_ID, "x");
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test(expected = MslInternalException.class)
@@ -2512,7 +2508,7 @@ public class MessageHeaderTest {
     }
     
     @Test
-    public void negativeMessageIdParseHeader() throws JSONException, MslKeyExchangeException, MslUserAuthException, MslException {
+    public void negativeMessageIdParseHeader() throws MslEncoderException, MslKeyExchangeException, MslUserAuthException, MslException {
         thrown.expect(MslMessageException.class);
         thrown.expectMslError(MslError.MESSAGE_ID_OUT_OF_RANGE);
 
@@ -2523,28 +2519,28 @@ public class MessageHeaderTest {
         final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
-        headerdataJo.put(KEY_MESSAGE_ID, -1);
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        headerdataMo.put(KEY_MESSAGE_ID, -1);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void tooLargeMessageIdParseHeader() throws JSONException, MslKeyExchangeException, MslUserAuthException, MslException {
+    public void tooLargeMessageIdParseHeader() throws MslEncoderException, MslKeyExchangeException, MslUserAuthException, MslException {
         thrown.expect(MslMessageException.class);
         thrown.expectMslError(MslError.MESSAGE_ID_OUT_OF_RANGE);
 
@@ -2555,30 +2551,30 @@ public class MessageHeaderTest {
         final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
-        headerdataJo.put(KEY_MESSAGE_ID, MslConstants.MAX_LONG_VALUE + 1);
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        headerdataMo.put(KEY_MESSAGE_ID, MslConstants.MAX_LONG_VALUE + 1);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void invalidNonReplayableParseHeader() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, UnsupportedEncodingException, JSONException {
+    public void invalidNonReplayableParseHeader() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, UnsupportedEncodingException, MslEncoderException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
         thrown.expectMessageId(MESSAGE_ID);
 
         final HeaderDataBuilder builder = new HeaderDataBuilder(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true);
@@ -2588,30 +2584,30 @@ public class MessageHeaderTest {
         final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
-        headerdataJo.put(KEY_NON_REPLAYABLE_ID, "x");
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        headerdataMo.put(KEY_NON_REPLAYABLE_ID, "x");
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void missingRenewableParseHeader() throws UnsupportedEncodingException, JSONException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
+    public void missingRenewableParseHeader() throws UnsupportedEncodingException, MslEncoderException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
         thrown.expectMessageId(MESSAGE_ID);
 
         final HeaderDataBuilder builder = new HeaderDataBuilder(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true);
@@ -2621,30 +2617,30 @@ public class MessageHeaderTest {
         final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
-        assertNotNull(headerdataJo.remove(KEY_RENEWABLE));
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        assertNotNull(headerdataMo.remove(KEY_RENEWABLE));
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void invalidRenewableParseHeader() throws UnsupportedEncodingException, JSONException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
+    public void invalidRenewableParseHeader() throws UnsupportedEncodingException, MslEncoderException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
         thrown.expectMessageId(MESSAGE_ID);
 
         final HeaderDataBuilder builder = new HeaderDataBuilder(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true);
@@ -2654,32 +2650,32 @@ public class MessageHeaderTest {
         final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
-        headerdataJo.put(KEY_RENEWABLE, "x");
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        headerdataMo.put(KEY_RENEWABLE, "x");
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     
     @Test
-    public void missingHandshakeParseHeader() throws UnsupportedEncodingException, JSONException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
+    public void missingHandshakeParseHeader() throws UnsupportedEncodingException, MslEncoderException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
         // FIXME It is okay for the handshake flag to be missing for now.
 //        thrown.expect(MslEncodingException.class);
-//        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+//        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 //        thrown.expectMessageId(MESSAGE_ID);
         
         final HeaderDataBuilder builder = new HeaderDataBuilder(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true);
@@ -2689,34 +2685,34 @@ public class MessageHeaderTest {
         final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
-        assertNotNull(headerdataJo.remove(KEY_HANDSHAKE));
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        assertNotNull(headerdataMo.remove(KEY_HANDSHAKE));
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         // FIXME For now a missing handshake flag will result in a false value.
-        final Header header = Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        final Header header = Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
         assertTrue(header instanceof MessageHeader);
-        final MessageHeader joMessageHeader = (MessageHeader)header;
-        assertFalse(joMessageHeader.isHandshake());
+        final MessageHeader moMessageHeader = (MessageHeader)header;
+        assertFalse(moMessageHeader.isHandshake());
     }
     
     @Test
-    public void invalidHandshakeParseHeader() throws UnsupportedEncodingException, JSONException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
+    public void invalidHandshakeParseHeader() throws UnsupportedEncodingException, MslEncoderException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
         thrown.expectMessageId(MESSAGE_ID);
 
         final HeaderDataBuilder builder = new HeaderDataBuilder(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true);
@@ -2726,30 +2722,30 @@ public class MessageHeaderTest {
         final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
-        headerdataJo.put(KEY_HANDSHAKE, "x");
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        headerdataMo.put(KEY_HANDSHAKE, "x");
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void invalidCapabilities() throws JSONException, MslKeyExchangeException, MslUserAuthException, MslException {
+    public void invalidCapabilities() throws MslEncoderException, MslKeyExchangeException, MslUserAuthException, MslException {
         thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.JSON_PARSE_ERROR);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
         thrown.expectMessageId(MESSAGE_ID);
 
         final HeaderDataBuilder builder = new HeaderDataBuilder(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true);
@@ -2759,28 +2755,28 @@ public class MessageHeaderTest {
         final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
-        headerdataJo.put(KEY_CAPABILITIES, "x");
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        headerdataMo.put(KEY_CAPABILITIES, "x");
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void invalidKeyRequestDataArrayParseHeader() throws JSONException, UnsupportedEncodingException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
+    public void invalidKeyRequestDataArrayParseHeader() throws MslEncoderException, UnsupportedEncodingException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
         thrown.expect(MslException.class);
         thrown.expectMessageId(MESSAGE_ID);
 
@@ -2791,28 +2787,28 @@ public class MessageHeaderTest {
         final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
-        headerdataJo.put(KEY_KEY_REQUEST_DATA, "x");
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        headerdataMo.put(KEY_KEY_REQUEST_DATA, "x");
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void invalidKeyRequestDataParseHeader() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, UnsupportedEncodingException, JSONException {
+    public void invalidKeyRequestDataParseHeader() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, UnsupportedEncodingException, MslEncoderException {
         thrown.expect(MslException.class);
         thrown.expectMessageId(MESSAGE_ID);
 
@@ -2823,30 +2819,30 @@ public class MessageHeaderTest {
         final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
-        final JSONArray a = new JSONArray();
-        a.put("x");
-        headerdataJo.put(KEY_PEER_SERVICE_TOKENS, a);
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        final MslArray a = encoder.createArray();
+        a.put(-1, "x");
+        headerdataMo.put(KEY_PEER_SERVICE_TOKENS, a);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void invalidServiceTokensArrayParseHeader() throws JSONException, UnsupportedEncodingException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
+    public void invalidServiceTokensArrayParseHeader() throws MslEncoderException, UnsupportedEncodingException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
         thrown.expect(MslException.class);
         thrown.expectMessageId(MESSAGE_ID);
 
@@ -2857,28 +2853,28 @@ public class MessageHeaderTest {
         final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
-        headerdataJo.put(KEY_SERVICE_TOKENS, "x");
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        headerdataMo.put(KEY_SERVICE_TOKENS, "x");
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void invalidServiceTokenParseHeader() throws UnsupportedEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException, JSONException {
+    public void invalidServiceTokenParseHeader() throws UnsupportedEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
         thrown.expect(MslException.class);
         thrown.expectMessageId(MESSAGE_ID);
 
@@ -2889,30 +2885,30 @@ public class MessageHeaderTest {
         final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
-        final JSONArray a = new JSONArray();
-        a.put("x");
-        headerdataJo.put(KEY_SERVICE_TOKENS, a);
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        final MslArray a = encoder.createArray();
+        a.put(-1, "x");
+        headerdataMo.put(KEY_SERVICE_TOKENS, a);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void invalidPeerServiceTokensArrayParseHeader() throws JSONException, UnsupportedEncodingException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
+    public void invalidPeerServiceTokensArrayParseHeader() throws MslEncoderException, UnsupportedEncodingException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
         thrown.expect(MslException.class);
         thrown.expectMessageId(MESSAGE_ID);
 
@@ -2923,28 +2919,28 @@ public class MessageHeaderTest {
         final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
-        headerdataJo.put(KEY_PEER_SERVICE_TOKENS, "x");
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        headerdataMo.put(KEY_PEER_SERVICE_TOKENS, "x");
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void invalidPeerServiceTokenParseHeader() throws JSONException, UnsupportedEncodingException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
+    public void invalidPeerServiceTokenParseHeader() throws MslEncoderException, UnsupportedEncodingException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
         thrown.expect(MslException.class);
         thrown.expectMessageId(MESSAGE_ID);
 
@@ -2955,30 +2951,30 @@ public class MessageHeaderTest {
         final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
-        final JSONArray a = new JSONArray();
-        a.put("x");
-        headerdataJo.put(KEY_PEER_SERVICE_TOKENS, a);
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        final MslArray a = encoder.createArray();
+        a.put(-1, "x");
+        headerdataMo.put(KEY_PEER_SERVICE_TOKENS, a);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void invalidPeerMasterTokenParseHeader() throws JSONException, UnsupportedEncodingException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
+    public void invalidPeerMasterTokenParseHeader() throws MslEncoderException, UnsupportedEncodingException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
         thrown.expect(MslException.class);
         thrown.expectMessageId(MESSAGE_ID);
 
@@ -2989,28 +2985,28 @@ public class MessageHeaderTest {
         final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
-        headerdataJo.put(KEY_PEER_MASTER_TOKEN, "x");
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        headerdataMo.put(KEY_PEER_MASTER_TOKEN, "x");
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void invalidPeerUserIdTokenParseHeader() throws JSONException, UnsupportedEncodingException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
+    public void invalidPeerUserIdTokenParseHeader() throws MslEncoderException, UnsupportedEncodingException, MslEncodingException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
         thrown.expect(MslException.class);
         thrown.expectMessageId(MESSAGE_ID);
 
@@ -3021,28 +3017,28 @@ public class MessageHeaderTest {
         final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
-        headerdataJo.put(KEY_PEER_USER_ID_TOKEN, "x");
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        headerdataMo.put(KEY_PEER_USER_ID_TOKEN, "x");
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test
-    public void invalidUserAuthParseHeader() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslKeyExchangeException, MslUserAuthException, JSONException, MslException {
+    public void invalidUserAuthParseHeader() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslKeyExchangeException, MslUserAuthException, MslEncoderException, MslException {
         thrown.expect(MslEncodingException.class);
         thrown.expectMessageId(MESSAGE_ID);
 
@@ -3053,24 +3049,24 @@ public class MessageHeaderTest {
         final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
         final HeaderPeerData peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerData);
-        final JSONObject messageHeaderJo = new JSONObject(messageHeader.toJSONString());
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
         
         // Before modifying the header data we need to decrypt it.
         final ICryptoContext cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
-        final byte[] ciphertext = Base64.decode(messageHeaderJo.getString(KEY_HEADERDATA));
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext);
-        final JSONObject headerdataJo = new JSONObject(new String(plaintext, MslConstants.DEFAULT_CHARSET));
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
         
         // After modifying the header data we need to encrypt it.
-        headerdataJo.put(KEY_USER_AUTHENTICATION_DATA, "x");
-        final byte[] headerdata = cryptoContext.encrypt(headerdataJo.toString().getBytes(MslConstants.DEFAULT_CHARSET));
-        messageHeaderJo.put(KEY_HEADERDATA, Base64.encode(headerdata));
+        headerdataMo.put(KEY_USER_AUTHENTICATION_DATA, "x");
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata);
-        messageHeaderJo.put(KEY_SIGNATURE, Base64.encode(signature));
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(p2pCtx, messageHeaderJo, CRYPTO_CONTEXTS);
+        Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test(expected = UnsupportedOperationException.class)
@@ -3105,7 +3101,7 @@ public class MessageHeaderTest {
     }
     
     @Test
-    public void equalsMasterToken() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException, JSONException {
+    public void equalsMasterToken() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException, MslEncoderException {
         final HeaderDataBuilder builder = new HeaderDataBuilder(trustedNetCtx, null, null, false);
         final HeaderData headerData = builder.build();
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
@@ -3114,7 +3110,7 @@ public class MessageHeaderTest {
         final MasterToken masterTokenB = MslTestUtils.getMasterToken(trustedNetCtx, 1, 2);
         final MessageHeader messageHeaderA = new MessageHeader(trustedNetCtx, null, masterTokenA, headerData, peerData);
         final MessageHeader messageHeaderB = new MessageHeader(trustedNetCtx, null, masterTokenB, headerData, peerData);
-        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, new JSONObject(messageHeaderA.toJSONString()), CRYPTO_CONTEXTS);
+        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, MslTestUtils.toMslObject(encoder, messageHeaderA), CRYPTO_CONTEXTS);
         
         assertTrue(messageHeaderA.equals(messageHeaderA));
         assertEquals(messageHeaderA.hashCode(), messageHeaderA.hashCode());
@@ -3129,7 +3125,7 @@ public class MessageHeaderTest {
     }
     
     @Test
-    public void equalsEntityAuthData() throws MslMasterTokenException, MslEntityAuthException, MslException, JSONException {
+    public void equalsEntityAuthData() throws MslMasterTokenException, MslEntityAuthException, MslException, MslEncoderException {
         final HeaderDataBuilder builder = new HeaderDataBuilder(trustedNetCtx, null, null, false);
         final HeaderData headerData = builder.build();
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
@@ -3138,7 +3134,7 @@ public class MessageHeaderTest {
         final EntityAuthenticationData entityAuthDataB = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN2);
         final MessageHeader messageHeaderA = new MessageHeader(trustedNetCtx, entityAuthDataA, null, headerData, peerData);
         final MessageHeader messageHeaderB = new MessageHeader(trustedNetCtx, entityAuthDataB, null, headerData, peerData);
-        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, new JSONObject(messageHeaderA.toJSONString()), CRYPTO_CONTEXTS);
+        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, MslTestUtils.toMslObject(encoder, messageHeaderA), CRYPTO_CONTEXTS);
         
         assertTrue(messageHeaderA.equals(messageHeaderA));
         assertEquals(messageHeaderA.hashCode(), messageHeaderA.hashCode());
@@ -3153,7 +3149,7 @@ public class MessageHeaderTest {
     }
     
     @Test
-    public void equalsMasterTokenEntityAuthData() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException, JSONException {
+    public void equalsMasterTokenEntityAuthData() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException, MslEncoderException {
         final HeaderDataBuilder builder = new HeaderDataBuilder(trustedNetCtx, null, null, false);
         final HeaderData headerData = builder.build();
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
@@ -3161,7 +3157,7 @@ public class MessageHeaderTest {
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeaderA = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData);
         final MessageHeader messageHeaderB = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
-        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, new JSONObject(messageHeaderA.toJSONString()), CRYPTO_CONTEXTS);
+        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, MslTestUtils.toMslObject(encoder, messageHeaderA), CRYPTO_CONTEXTS);
         
         assertTrue(messageHeaderA.equals(messageHeaderA));
         assertEquals(messageHeaderA.hashCode(), messageHeaderA.hashCode());
@@ -3176,7 +3172,7 @@ public class MessageHeaderTest {
     }
     
     @Test
-    public void equalsSender() throws MslKeyExchangeException, MslUserAuthException, MslException, JSONException {
+    public void equalsSender() throws MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
         final MslContext ctx = new MockMslContext(EntityAuthenticationScheme.RSA, false);
         
         final HeaderDataBuilder builder = new HeaderDataBuilder(trustedNetCtx, null, null, false);
@@ -3184,7 +3180,7 @@ public class MessageHeaderTest {
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeaderA = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData);
         final MessageHeader messageHeaderB = new MessageHeader(ctx, null, MASTER_TOKEN, headerData, peerData);
-        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, new JSONObject(messageHeaderA.toJSONString()), CRYPTO_CONTEXTS);
+        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, MslTestUtils.toMslObject(encoder, messageHeaderA), CRYPTO_CONTEXTS);
         
         assertTrue(messageHeaderA.equals(messageHeaderA));
         assertEquals(messageHeaderA.hashCode(), messageHeaderA.hashCode());
@@ -3199,7 +3195,7 @@ public class MessageHeaderTest {
     }
     
     @Test
-    public void equalsRecipient() throws MslEncodingException, MslCryptoException, MslException {
+    public void equalsRecipient() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         final Set<ServiceToken> serviceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
         final HeaderData headerDataA = new HeaderDataBuilder(trustedNetCtx, USER_ID_TOKEN, serviceTokens).set(KEY_RECIPIENT, "recipientA").build();
         final HeaderData headerDataB = new HeaderDataBuilder(trustedNetCtx, USER_ID_TOKEN, serviceTokens).set(KEY_RECIPIENT, "recipientB").build();
@@ -3207,7 +3203,7 @@ public class MessageHeaderTest {
         
         final MessageHeader messageHeaderA = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData);
         final MessageHeader messageHeaderB = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData);
-        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, new JSONObject(messageHeaderA.toJSONString()), CRYPTO_CONTEXTS);
+        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, MslTestUtils.toMslObject(encoder, messageHeaderA), CRYPTO_CONTEXTS);
         
         assertTrue(messageHeaderA.equals(messageHeaderA));
         assertEquals(messageHeaderA.hashCode(), messageHeaderA.hashCode());
@@ -3222,7 +3218,7 @@ public class MessageHeaderTest {
     }
     
     @Test
-    public void equalsTimestamp() throws MslEncodingException, MslCryptoException, MslException, InterruptedException {
+    public void equalsTimestamp() throws MslEncodingException, MslCryptoException, MslException, InterruptedException, MslEncoderException {
         final HeaderDataBuilder builder = new HeaderDataBuilder(trustedNetCtx, null, null, false);
         final HeaderData headerData = builder.build();
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
@@ -3230,7 +3226,7 @@ public class MessageHeaderTest {
         final MessageHeader messageHeaderA = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData);
         Thread.sleep(MILLISECONDS_PER_SECOND);
         final MessageHeader messageHeaderB = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData);
-        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, new JSONObject(messageHeaderA.toJSONString()), CRYPTO_CONTEXTS);
+        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, MslTestUtils.toMslObject(encoder, messageHeaderA), CRYPTO_CONTEXTS);
         
         assertTrue(messageHeaderA.equals(messageHeaderA));
         assertEquals(messageHeaderA.hashCode(), messageHeaderA.hashCode());
@@ -3245,7 +3241,7 @@ public class MessageHeaderTest {
     }
     
     @Test
-    public void equalsMessageId() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException, JSONException {
+    public void equalsMessageId() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException, MslEncoderException {
         final Set<ServiceToken> serviceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
         final HeaderData headerDataA = new HeaderDataBuilder(trustedNetCtx, USER_ID_TOKEN, serviceTokens).set(KEY_MESSAGE_ID, 1L).build();
         final HeaderData headerDataB = new HeaderDataBuilder(trustedNetCtx, USER_ID_TOKEN, serviceTokens).set(KEY_MESSAGE_ID, 2L).build();
@@ -3253,7 +3249,7 @@ public class MessageHeaderTest {
         
         final MessageHeader messageHeaderA = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData);
         final MessageHeader messageHeaderB = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData);
-        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, new JSONObject(messageHeaderA.toJSONString()), CRYPTO_CONTEXTS);
+        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, MslTestUtils.toMslObject(encoder, messageHeaderA), CRYPTO_CONTEXTS);
         
         assertTrue(messageHeaderA.equals(messageHeaderA));
         assertEquals(messageHeaderA.hashCode(), messageHeaderA.hashCode());
@@ -3268,7 +3264,7 @@ public class MessageHeaderTest {
     }
     
     @Test
-    public void equalsNonReplayable() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException, JSONException {
+    public void equalsNonReplayable() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
         final Set<ServiceToken> serviceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
         final HeaderData headerDataA = new HeaderDataBuilder(trustedNetCtx, USER_ID_TOKEN, serviceTokens).set(KEY_NON_REPLAYABLE_ID, 1L).build();
         final HeaderData headerDataB = new HeaderDataBuilder(trustedNetCtx, USER_ID_TOKEN, serviceTokens).set(KEY_NON_REPLAYABLE_ID, 2L).build();
@@ -3276,7 +3272,7 @@ public class MessageHeaderTest {
         
         final MessageHeader messageHeaderA = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData);
         final MessageHeader messageHeaderB = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData);
-        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, new JSONObject(messageHeaderA.toJSONString()), CRYPTO_CONTEXTS);
+        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, MslTestUtils.toMslObject(encoder, messageHeaderA), CRYPTO_CONTEXTS);
         
         assertTrue(messageHeaderA.equals(messageHeaderA));
         assertEquals(messageHeaderA.hashCode(), messageHeaderA.hashCode());
@@ -3291,7 +3287,7 @@ public class MessageHeaderTest {
     }
     
     @Test
-    public void equalsRenewable() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException, JSONException {
+    public void equalsRenewable() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException, MslEncoderException {
         final Set<ServiceToken> serviceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
         final HeaderData headerDataA = new HeaderDataBuilder(trustedNetCtx, USER_ID_TOKEN, serviceTokens).set(KEY_RENEWABLE, true).build();
         final HeaderData headerDataB = new HeaderDataBuilder(trustedNetCtx, USER_ID_TOKEN, serviceTokens).set(KEY_RENEWABLE, false).build();
@@ -3299,7 +3295,7 @@ public class MessageHeaderTest {
         
         final MessageHeader messageHeaderA = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData);
         final MessageHeader messageHeaderB = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData);
-        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, new JSONObject(messageHeaderA.toJSONString()), CRYPTO_CONTEXTS);
+        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, MslTestUtils.toMslObject(encoder, messageHeaderA), CRYPTO_CONTEXTS);
         
         assertTrue(messageHeaderA.equals(messageHeaderA));
         assertEquals(messageHeaderA.hashCode(), messageHeaderA.hashCode());
@@ -3314,7 +3310,7 @@ public class MessageHeaderTest {
     }
     
     @Test
-    public void equalsHandshake() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException, JSONException {
+    public void equalsHandshake() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException, MslEncoderException {
         final Set<ServiceToken> serviceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
         final HeaderData headerDataA = new HeaderDataBuilder(trustedNetCtx, USER_ID_TOKEN, serviceTokens).set(KEY_HANDSHAKE, true).build();
         final HeaderData headerDataB = new HeaderDataBuilder(trustedNetCtx, USER_ID_TOKEN, serviceTokens).set(KEY_HANDSHAKE, false).build();
@@ -3322,7 +3318,7 @@ public class MessageHeaderTest {
         
         final MessageHeader messageHeaderA = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData);
         final MessageHeader messageHeaderB = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData);
-        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, new JSONObject(messageHeaderA.toJSONString()), CRYPTO_CONTEXTS);
+        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, MslTestUtils.toMslObject(encoder, messageHeaderA), CRYPTO_CONTEXTS);
         
         assertTrue(messageHeaderA.equals(messageHeaderA));
         assertEquals(messageHeaderA.hashCode(), messageHeaderA.hashCode());
@@ -3337,16 +3333,16 @@ public class MessageHeaderTest {
     }
     
     @Test
-    public void equalsCapabilities() throws MslKeyExchangeException, MslUserAuthException, MslException, JSONException {
-        final MessageCapabilities capsA = new MessageCapabilities(ALGOS, LANGUAGES);
-        final MessageCapabilities capsB = new MessageCapabilities(new HashSet<CompressionAlgorithm>(), new ArrayList<String>());
+    public void equalsCapabilities() throws MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
+        final MessageCapabilities capsA = new MessageCapabilities(ALGOS, LANGUAGES, FORMATS);
+        final MessageCapabilities capsB = new MessageCapabilities(new HashSet<CompressionAlgorithm>(), new ArrayList<String>(), new HashSet<MslEncoderFormat>());
         final HeaderData headerDataA = new HeaderDataBuilder(trustedNetCtx, USER_ID_TOKEN, null).set(KEY_CAPABILITIES, capsA).build();
         final HeaderData headerDataB = new HeaderDataBuilder(trustedNetCtx, USER_ID_TOKEN, null).set(KEY_CAPABILITIES, capsB).build();
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         
         final MessageHeader messageHeaderA = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData);
         final MessageHeader messageHeaderB = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData);
-        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, new JSONObject(messageHeaderA.toJSONString()), CRYPTO_CONTEXTS);
+        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, MslTestUtils.toMslObject(encoder, messageHeaderA), CRYPTO_CONTEXTS);
         
         assertTrue(messageHeaderA.equals(messageHeaderA));
         assertEquals(messageHeaderA.hashCode(), messageHeaderA.hashCode());
@@ -3361,7 +3357,7 @@ public class MessageHeaderTest {
     }
     
     @Test
-    public void equalsKeyRequestData() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, JSONException {
+    public void equalsKeyRequestData() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
         final Set<ServiceToken> serviceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
         final Set<KeyRequestData> keyRequestDataA = new HashSet<KeyRequestData>();
         keyRequestDataA.add(new SymmetricWrappedExchange.RequestData(KeyId.SESSION));
@@ -3375,7 +3371,7 @@ public class MessageHeaderTest {
         final MessageHeader messageHeaderA = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData);
         final MessageHeader messageHeaderB = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData);
         final MessageHeader messageHeaderC = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerDataC, peerData);
-        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, new JSONObject(messageHeaderA.toJSONString()), CRYPTO_CONTEXTS);
+        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, MslTestUtils.toMslObject(encoder, messageHeaderA), CRYPTO_CONTEXTS);
         
         assertTrue(messageHeaderA.equals(messageHeaderA));
         assertEquals(messageHeaderA.hashCode(), messageHeaderA.hashCode());
@@ -3394,13 +3390,13 @@ public class MessageHeaderTest {
     }
     
     @Test
-    public void equalsKeyResponseData() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, JSONException {
+    public void equalsKeyResponseData() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
         final Set<ServiceToken> serviceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
         final KeyRequestData keyRequestData = KEY_REQUEST_DATA.toArray(new KeyRequestData[0])[0];
         final KeyExchangeFactory factory = trustedNetCtx.getKeyExchangeFactory(keyRequestData.getKeyExchangeScheme());
-        final KeyExchangeData keyxDataA = factory.generateResponse(trustedNetCtx, keyRequestData, MASTER_TOKEN);
+        final KeyExchangeData keyxDataA = factory.generateResponse(trustedNetCtx, ENCODER_FORMAT, keyRequestData, MASTER_TOKEN);
         final KeyResponseData keyResponseDataA = keyxDataA.keyResponseData;
-        final KeyExchangeData keyxDataB = factory.generateResponse(trustedNetCtx, keyRequestData, MASTER_TOKEN);
+        final KeyExchangeData keyxDataB = factory.generateResponse(trustedNetCtx, ENCODER_FORMAT, keyRequestData, MASTER_TOKEN);
         final KeyResponseData keyResponseDataB = keyxDataB.keyResponseData;
         final HeaderData headerDataA = new HeaderDataBuilder(trustedNetCtx, USER_ID_TOKEN, serviceTokens).set(KEY_KEY_RESPONSE_DATA, keyResponseDataA).build();
         final HeaderData headerDataB = new HeaderDataBuilder(trustedNetCtx, USER_ID_TOKEN, serviceTokens).set(KEY_KEY_RESPONSE_DATA, keyResponseDataB).build();
@@ -3410,7 +3406,7 @@ public class MessageHeaderTest {
         final MessageHeader messageHeaderA = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData);
         final MessageHeader messageHeaderB = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData);
         final MessageHeader messageHeaderC = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerDataC, peerData);
-        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, new JSONObject(messageHeaderA.toJSONString()), CRYPTO_CONTEXTS);
+        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, MslTestUtils.toMslObject(encoder, messageHeaderA), CRYPTO_CONTEXTS);
         
         assertTrue(messageHeaderA.equals(messageHeaderA));
         assertEquals(messageHeaderA.hashCode(), messageHeaderA.hashCode());
@@ -3429,7 +3425,7 @@ public class MessageHeaderTest {
     }
     
     @Test
-    public void equalsUserAuthData() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException, JSONException {
+    public void equalsUserAuthData() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
         final Set<ServiceToken> serviceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, null);
         final UserAuthenticationData userAuthDataA = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL + "A", MockEmailPasswordAuthenticationFactory.PASSWORD);
         final UserAuthenticationData userAuthDataB = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL + "B", MockEmailPasswordAuthenticationFactory.PASSWORD);
@@ -3458,7 +3454,7 @@ public class MessageHeaderTest {
     }
     
     @Test
-    public void equalsUserIdToken() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, JSONException {
+    public void equalsUserIdToken() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
         final UserIdToken userIdTokenA = MslTestUtils.getUserIdToken(trustedNetCtx, MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory.USER);
         final UserIdToken userIdTokenB = MslTestUtils.getUserIdToken(trustedNetCtx, MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory.USER);
         final HeaderData headerDataA = new HeaderDataBuilder(trustedNetCtx, userIdTokenA, null).build();
@@ -3469,7 +3465,7 @@ public class MessageHeaderTest {
         final MessageHeader messageHeaderA = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData);
         final MessageHeader messageHeaderB = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData);
         final MessageHeader messageHeaderC = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerDataC, peerData);
-        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, new JSONObject(messageHeaderA.toJSONString()), CRYPTO_CONTEXTS);
+        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, MslTestUtils.toMslObject(encoder, messageHeaderA), CRYPTO_CONTEXTS);
         
         assertTrue(messageHeaderA.equals(messageHeaderA));
         assertEquals(messageHeaderA.hashCode(), messageHeaderA.hashCode());
@@ -3488,7 +3484,7 @@ public class MessageHeaderTest {
     }
     
     @Test
-    public void equalsServiceTokens() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, JSONException {
+    public void equalsServiceTokens() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
         final Set<ServiceToken> serviceTokensA = MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
         final Set<ServiceToken> serviceTokensB = MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
         final HeaderData headerDataA = new HeaderDataBuilder(trustedNetCtx, USER_ID_TOKEN, serviceTokensA).build();
@@ -3499,7 +3495,7 @@ public class MessageHeaderTest {
         final MessageHeader messageHeaderA = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData);
         final MessageHeader messageHeaderB = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData);
         final MessageHeader messageHeaderC = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerDataC, peerData);
-        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, new JSONObject(messageHeaderA.toJSONString()), CRYPTO_CONTEXTS);
+        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(trustedNetCtx, MslTestUtils.toMslObject(encoder, messageHeaderA), CRYPTO_CONTEXTS);
         
         assertTrue(messageHeaderA.equals(messageHeaderA));
         assertEquals(messageHeaderA.hashCode(), messageHeaderA.hashCode());
@@ -3518,7 +3514,7 @@ public class MessageHeaderTest {
     }
     
     @Test
-    public void equalsPeerMasterToken() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, JSONException {
+    public void equalsPeerMasterToken() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
         final HeaderDataBuilder builder = new HeaderDataBuilder(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true);
         final HeaderData headerData = builder.build();
         final MasterToken peerMasterTokenA = MslTestUtils.getMasterToken(p2pCtx, 1, 1);
@@ -3530,7 +3526,7 @@ public class MessageHeaderTest {
         final MessageHeader messageHeaderA = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerDataA);
         final MessageHeader messageHeaderB = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerDataB);
         final MessageHeader messageHeaderC = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerDataC);
-        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(p2pCtx, new JSONObject(messageHeaderA.toJSONString()), CRYPTO_CONTEXTS);
+        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(p2pCtx, MslTestUtils.toMslObject(encoder, messageHeaderA), CRYPTO_CONTEXTS);
         
         assertTrue(messageHeaderA.equals(messageHeaderA));
         assertEquals(messageHeaderA.hashCode(), messageHeaderA.hashCode());
@@ -3549,7 +3545,7 @@ public class MessageHeaderTest {
     }
     
     @Test
-    public void equalsPeerUserIdToken() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, JSONException {
+    public void equalsPeerUserIdToken() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
         final HeaderDataBuilder builder = new HeaderDataBuilder(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true);
         final HeaderData headerData = builder.build();
         final UserIdToken peerUserIdTokenA = MslTestUtils.getUserIdToken(p2pCtx, PEER_MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory.USER);
@@ -3561,7 +3557,7 @@ public class MessageHeaderTest {
         final MessageHeader messageHeaderA = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerDataA);
         final MessageHeader messageHeaderB = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerDataB);
         final MessageHeader messageHeaderC = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerDataC);
-        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(p2pCtx, new JSONObject(messageHeaderA.toJSONString()), CRYPTO_CONTEXTS);
+        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(p2pCtx, MslTestUtils.toMslObject(encoder, messageHeaderA), CRYPTO_CONTEXTS);
         
         assertTrue(messageHeaderA.equals(messageHeaderA));
         assertEquals(messageHeaderA.hashCode(), messageHeaderA.hashCode());
@@ -3580,7 +3576,7 @@ public class MessageHeaderTest {
     }
     
     @Test
-    public void equalsPeerServiceTokens() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, JSONException {
+    public void equalsPeerServiceTokens() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
         final HeaderDataBuilder builder = new HeaderDataBuilder(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true);
         final HeaderData headerData = builder.build();
         final Set<ServiceToken> peerServiceTokensA = MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
@@ -3592,7 +3588,7 @@ public class MessageHeaderTest {
         final MessageHeader messageHeaderA = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerDataA);
         final MessageHeader messageHeaderB = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerDataB);
         final MessageHeader messageHeaderC = new MessageHeader(p2pCtx, null, MASTER_TOKEN, headerData, peerDataC);
-        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(p2pCtx, new JSONObject(messageHeaderA.toJSONString()), CRYPTO_CONTEXTS);
+        final MessageHeader messageHeaderA2 = (MessageHeader)Header.parseHeader(p2pCtx, MslTestUtils.toMslObject(encoder, messageHeaderA), CRYPTO_CONTEXTS);
         
         assertTrue(messageHeaderA.equals(messageHeaderA));
         assertEquals(messageHeaderA.hashCode(), messageHeaderA.hashCode());

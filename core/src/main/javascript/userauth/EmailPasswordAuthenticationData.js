@@ -37,13 +37,13 @@ var EmailPasswordAuthenticationData$parse;
     "use strict";
     
     /**
-     * JSON email key.
+     * Key email key.
      * @const
      * @type {string}
      */
     var KEY_EMAIL = "email";
     /**
-     * JSON password key.
+     * Key password key.
      * @const
      * @type {string}
      */
@@ -69,11 +69,13 @@ var EmailPasswordAuthenticationData$parse;
         },
 
         /** @inheritDoc */
-        getAuthData: function getAuthData() {
-            var result = {};
-            result[KEY_EMAIL] = this.email;
-            result[KEY_PASSWORD] = this.password;
-            return result;
+        getAuthData: function getAuthData(encoder, format, callback) {
+            AsyncExecutor(callback, function() {
+                var mo = encoder.createObject();
+                mo.put(KEY_EMAIL, this.email);
+                mo.put(KEY_PASSWORD, this.password);
+                return mo;
+            }, this);
         },
 
         /** @inheritDoc */
@@ -86,20 +88,22 @@ var EmailPasswordAuthenticationData$parse;
 
     /**
      * Construct a new email/password authentication data instance from the
-     * provided JSON representation.
+     * provided MSL representation.
      *
-     * @param {Object} emailPasswordAuthJO the JSON object.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @param {MslObject} emailPasswordAuthMo the MSL object.
+     * @throws MslEncodingException if there is an error parsing the data.
      */
-    EmailPasswordAuthenticationData$parse = function EmailPasswordAuthenticationData$parse(emailPasswordAuthJO) {
-        var email = emailPasswordAuthJO[KEY_EMAIL];
-        var password = emailPasswordAuthJO[KEY_PASSWORD];
+    EmailPasswordAuthenticationData$parse = function EmailPasswordAuthenticationData$parse(emailPasswordAuthMo) {
+        try {
+            var email = emailPasswordAuthMo.getString(KEY_EMAIL);
+            var password = emailPasswordAuthMo.getString(KEY_PASSWORD);
 
-        // Verify authentication data.
-        if (typeof email !== 'string' || typeof password !== 'string')
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "email/password authdata " + JSON.stringify(emailPasswordAuthJO));
-
-        // Return the authentication data.
-        return new EmailPasswordAuthenticationData(email, password);
+            // Return the authentication data.
+            return new EmailPasswordAuthenticationData(email, password);
+        } catch (e) {
+            if (e instanceof MslEncoderException)
+                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "email/password authdata " + emailPasswordAuthMo, e);
+            throw e;
+        }
     };
 })();

@@ -50,8 +50,8 @@ var MockUserIdTokenAuthenticationFactory = UserAuthenticationFactory.extend({
     },
 
     /** @inheritDoc */
-    createData: function createData(ctx, masterToken, userAuthJO, callback) {
-        UserIdTokenAuthenticationData$parse(ctx, userAuthJO, callback);
+    createData: function createData(ctx, masterToken, userAuthMo, callback) {
+        UserIdTokenAuthenticationData$parse(ctx, userAuthMo, callback);
     },
 
     /** @inheritDoc */

@@ -20,8 +20,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.crypto.SecretKey;
 
-import org.json.JSONObject;
-
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
@@ -30,11 +28,13 @@ import com.netflix.msl.MslException;
 import com.netflix.msl.MslMasterTokenException;
 import com.netflix.msl.MslUserIdTokenException;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderUtils;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.tokens.UserIdToken;
-import com.netflix.msl.util.JsonUtils;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -126,10 +126,10 @@ public class SimpleTokenFactory implements TokenFactory {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.tokens.TokenFactory#createMasterToken(com.netflix.msl.util.MslContext, com.netflix.msl.entityauth.EntityAuthenticationData, javax.crypto.SecretKey, javax.crypto.SecretKey, org.json.JSONObject)
+     * @see com.netflix.msl.tokens.TokenFactory#createMasterToken(com.netflix.msl.util.MslContext, com.netflix.msl.entityauth.EntityAuthenticationData, javax.crypto.SecretKey, javax.crypto.SecretKey, com.netflix.msl.io.MslObject)
      */
     @Override
-    public MasterToken createMasterToken(final MslContext ctx, final EntityAuthenticationData entityAuthData, final SecretKey encryptionKey, final SecretKey hmacKey, final JSONObject issuerData) throws MslEncodingException, MslCryptoException {
+    public MasterToken createMasterToken(final MslContext ctx, final EntityAuthenticationData entityAuthData, final SecretKey encryptionKey, final SecretKey hmacKey, final MslObject issuerData) throws MslEncodingException, MslCryptoException {
         final Date renewalWindow = new Date(ctx.getTime() + RENEWAL_OFFSET);
         final Date expiration = new Date(ctx.getTime() + EXPIRATION_OFFSET);
         final long sequenceNumber = 0;
@@ -161,15 +161,21 @@ public class SimpleTokenFactory implements TokenFactory {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.tokens.TokenFactory#renewMasterToken(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, javax.crypto.SecretKey, javax.crypto.SecretKey, org.json.JSONObject)
+     * @see com.netflix.msl.tokens.TokenFactory#renewMasterToken(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, javax.crypto.SecretKey, javax.crypto.SecretKey, com.netflix.msl.io.MslObject)
      */
     @Override
-    public MasterToken renewMasterToken(final MslContext ctx, final MasterToken masterToken, final SecretKey encryptionKey, final SecretKey hmacKey, final JSONObject issuerData) throws MslEncodingException, MslCryptoException, MslMasterTokenException {
+    public MasterToken renewMasterToken(final MslContext ctx, final MasterToken masterToken, final SecretKey encryptionKey, final SecretKey hmacKey, final MslObject issuerData) throws MslEncodingException, MslCryptoException, MslMasterTokenException {
         if (!isNewestMasterToken(masterToken))
             throw new MslMasterTokenException(MslError.MASTERTOKEN_SEQUENCE_NUMBER_OUT_OF_SYNC, masterToken);
         
         // Renew master token.
-        final JSONObject mergedIssuerData = JsonUtils.merge(masterToken.getIssuerData(), issuerData);
+        final MslObject mtIssuerData = masterToken.getIssuerData();
+        final MslObject mergedIssuerData;
+        try {
+            mergedIssuerData = MslEncoderUtils.merge(mtIssuerData, issuerData);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MASTERTOKEN_ISSUERDATA_ENCODE_ERROR, "mt issuerdata " + mtIssuerData + "; issuerdata " + issuerData, e);
+        }
         final Date renewalWindow = new Date(ctx.getTime() + RENEWAL_OFFSET);
         final Date expiration = new Date(ctx.getTime() + EXPIRATION_OFFSET);
         final long oldSequenceNumber = masterToken.getSequenceNumber();
@@ -202,7 +208,7 @@ public class SimpleTokenFactory implements TokenFactory {
      */
     @Override
     public UserIdToken createUserIdToken(final MslContext ctx, final MslUser user, final MasterToken masterToken) throws MslEncodingException, MslCryptoException {
-        final JSONObject issuerData = null;
+        final MslObject issuerData = null;
         final Date renewalWindow = new Date(ctx.getTime() + RENEWAL_OFFSET);
         final Date expiration = new Date(ctx.getTime() + EXPIRATION_OFFSET);
         long serialNumber = -1;
@@ -220,7 +226,7 @@ public class SimpleTokenFactory implements TokenFactory {
         if (!userIdToken.isDecrypted())
             throw new MslUserIdTokenException(MslError.USERIDTOKEN_NOT_DECRYPTED, userIdToken).setMasterToken(masterToken);
 
-        final JSONObject issuerData = null;
+        final MslObject issuerData = null;
         final Date renewalWindow = new Date(ctx.getTime() + RENEWAL_OFFSET);
         final Date expiration = new Date(ctx.getTime() + EXPIRATION_OFFSET);
         final long serialNumber = userIdToken.getSerialNumber();

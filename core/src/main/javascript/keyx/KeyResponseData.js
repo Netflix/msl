@@ -42,25 +42,25 @@ var KeyResponseData$parse;
 
 (function() {
     /**
-     * JSON key master token.
+     * Key master token.
      * @const
      * @type {string}
      */
     var KEY_MASTER_TOKEN = "mastertoken";
     /**
-     * JSON key key exchange scheme.
+     * Key key exchange scheme.
      * @const
      * @type {string}
      */
     var KEY_SCHEME = "scheme";
     /**
-     * JSON key key data.
+     * Key key data.
      * @const
      * @type {string}
      */
     var KEY_KEYDATA = "keydata";
 
-    KeyResponseData = util.Class.create({
+    KeyResponseData = MslEncodable.extend({
         /**
          * Create a new key response data object with the specified key exchange
          * scheme and associated master token.
@@ -78,19 +78,32 @@ var KeyResponseData$parse;
         },
 
         /**
-         * @return {object} the key data JSON representation.
-         * @throws JSONException if there was an error constructing the JSON
+         * @param {MslEncoderFactory} encoder MSL encoder factory.
+         * @param {MslEncoderFormat} format MSL encoder format.
+         * @param {{result: function(MslObject), error: function(Error)}}
+         *        callback the callback that will receive the key data MSL
+         *        representation or any thrown exceptions.
+         * @throws MslEncoderException if there was an error constructing the MSL
          *         representation.
          */
-        getKeydata: function() {},
+        getKeydata: function(encoder, format, callback) {},
 
         /** @inheritDoc */
-        toJSON: function toJSON() {
-            var result = {};
-            result[KEY_MASTER_TOKEN] = this.masterToken;
-            result[KEY_SCHEME] = this.keyExchangeScheme.name;
-            result[KEY_KEYDATA] = this.getKeydata();
-            return result;
+        toMslEncoding(encoder, format, callback) {
+            var self = this;
+            
+            this.getKeydata(encoder, format, {
+                result: function(keydata) {
+                    AsyncExecutor(callback, function() {
+                        var mo = encoder.createObject();
+                        mo.put(KEY_MASTER_TOKEN, this.masterToken);
+                        mo.put(KEY_SCHEME, this.keyExchangeScheme.name);
+                        mo.put(KEY_KEYDATA, keydata);
+                        encoder.encodeObject(mo, format, callback);
+                    }, self);
+                },
+                error: callback.error,
+            }, this);
         },
 
         /**
@@ -117,14 +130,14 @@ var KeyResponseData$parse;
 
     /**
      * Construct a new key response data instance of the correct type from the
-     * provided JSON object.
+     * provided MSL object.
      *
      * @param {MslContext} ctx MSL context.
-     * @param {Object} keyResponseDataJO the JSON object.
+     * @param {MslObject} keyResponseDataMo the MSL object.
      * @param {{result: function(KeyResponseData), error: function(Error)}}
      *        callback the callback that will receive the key response data
      *        concrete instances or any thrown exceptions.
-     * @throws MslEncodingException if there is an error parsing the JSON.
+     * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslKeyExchangeException if unable to create the key response
      *         data.
      * @throws MslCryptoException if there is an error verifying the they key
@@ -132,39 +145,37 @@ var KeyResponseData$parse;
      * @throws MslException if the key response master token expiration
      *         timestamp occurs before the renewal window.
      */
-    KeyResponseData$parse = function KeyResponseData$parse(ctx, keyResponseDataJO, callback) {
+    KeyResponseData$parse = function KeyResponseData$parse(ctx, keyResponseDataMo, callback) {
         AsyncExecutor(callback, function() {
-            // Pull the key data.
-            var masterTokenJo = keyResponseDataJO[KEY_MASTER_TOKEN];
-            var schemeName = keyResponseDataJO[KEY_SCHEME];
-            var keyDataJo = keyResponseDataJO[KEY_KEYDATA];
+            var encoder = ctx.getMslEncoderFactory();
+            
+            try {
+                // Pull the key data.
+                var masterTokenMo = keyResponseDataMo.getMslObject(KEY_MASTER_TOKEN, encoder);
+                var schemeName = keyResponseDataMo.getString(KEY_SCHEME);
+                var scheme = ctx.getKeyExchangeScheme(schemeName);
+                if (!scheme)
+                    throw new MslKeyExchangeException(MslError.UNIDENTIFIED_KEYX_SCHEME, schemeName);
+                var keyData = keyResponseDataMo.getMslObject(KEY_KEYDATA, encoder);
 
-            // Verify key data.
-            if (typeof schemeName !== 'string' ||
-                typeof masterTokenJo !== 'object' ||
-                typeof keyDataJo !== 'object')
-            {
-                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keyresponsedata " + JSON.stringify(keyResponseDataJO));
+                // Rebuild master token.
+                MasterToken$parse(ctx, masterTokenMo, {
+                    result: function(masterToken) {
+                        AsyncExecutor(callback, function() {
+                            // Construct an instance of the concrete subclass.
+                            var factory = ctx.getKeyExchangeFactory(scheme);
+                            if (!factory)
+                                throw new MslKeyExchangeException(MslError.KEYX_FACTORY_NOT_FOUND, scheme.name);
+                            return factory.createResponseData(ctx, masterToken, keyData);
+                        });
+                    },
+                    error: function(err) { callback.error(err); }
+                });
+            } catch (e) {
+                if (e instanceof MslEncoderException)
+                    throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "keyresponsedata " + keyResponseDataMo, e);
+                throw e;
             }
-
-            // Verify scheme.
-            var scheme = ctx.getKeyExchangeScheme(schemeName);
-            if (!scheme)
-                throw new MslKeyExchangeException(MslError.UNIDENTIFIED_KEYX_SCHEME, schemeName);
-
-            // Rebuild master token.
-            MasterToken$parse(ctx, masterTokenJo, {
-                result: function(masterToken) {
-                    AsyncExecutor(callback, function() {
-                        // Construct an instance of the concrete subclass.
-                        var factory = ctx.getKeyExchangeFactory(scheme);
-                        if (!factory)
-                            throw new MslKeyExchangeException(MslError.KEYX_FACTORY_NOT_FOUND, scheme.name);
-                        return factory.createResponseData(ctx, masterToken, keyDataJo);
-                    });
-                },
-                error: function(err) { callback.error(err); }
-            });
         });
     };
 })();

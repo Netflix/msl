@@ -52,6 +52,8 @@ import com.netflix.msl.crypto.JcaAlgorithm;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.keyx.KeyExchangeFactory;
 import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.msg.MessageCapabilities;
@@ -400,9 +402,10 @@ public final class SharedUtil {
      * @return serialized MslStore
      * @throws IOException
      * @throws MslEncodingException
+     * @throws MslEncoderException 
      */
-    public static byte[] marshalMslStore(final SimpleMslStore mslStore) throws IOException, MslEncodingException {
-        return MslStoreData.serialize(mslStore);
+    public static byte[] marshalMslStore(final SimpleMslStore mslStore) throws IOException, MslEncodingException, MslEncoderException {
+        return MslStoreData.serialize(mslStore, new DummyMslContext());
     }
 
     /**
@@ -413,8 +416,9 @@ public final class SharedUtil {
      * @throws IOException
      * @throws MslEncodingException
      * @throws MslException
+     * @throws MslEncoderException 
      */
-    public static MslStore unmarshalMslStore(final byte[] mslStoreData) throws IOException, MslEncodingException, MslException {
+    public static MslStore unmarshalMslStore(final byte[] mslStoreData) throws IOException, MslEncodingException, MslException, MslEncoderException {
         return MslStoreData.deserialize(mslStoreData, new DummyMslContext());
     }
 
@@ -482,8 +486,14 @@ public final class SharedUtil {
         public MslStore getMslStore() {
             throw new UnsupportedOperationException();
         }
+        @Override
+        public MslEncoderFactory getMslEncoderFactory() {
+            return encoderFactory;
+        }
         /** MSL crypto context */
         private final ICryptoContext mslCryptoContext = new ClientMslCryptoContext();
+        /** MSL encoder factory. */
+        private final MslEncoderFactory encoderFactory = new MslEncoderFactory();
     }
 
     /** Base64 utilities */

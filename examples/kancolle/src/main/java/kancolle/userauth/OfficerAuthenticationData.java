@@ -15,13 +15,13 @@
  */
 package kancolle.userauth;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.userauth.UserAuthenticationData;
-import com.netflix.msl.util.Base64;
 
 /**
  * <p>Officers are identified by their name and fingerprint hash.</p>
@@ -30,19 +30,19 @@ import com.netflix.msl.util.Base64;
  * {@code {
  *   "#mandatory" : [ "name", "fingerprint" ],
  *   "name" : "string",
- *   "fingerprint" : "base64"
+ *   "fingerprint" : "binary"
  * }} where:
  * <ul>
  * <li>{@code name} is the officer's name</li>
- * <li>{@code fingerprint} is the Base64-encoded SHA-256 hash of the officer's fingerprint</li>
+ * <li>{@code fingerprint} is the SHA-256 hash of the officer's fingerprint</li>
  * </ul></p>
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class OfficerAuthenticationData extends UserAuthenticationData {
-    /** JSON key name. */
+    /** Key name. */
     private static final String KEY_NAME = "name";
-    /** JSON key fingerprint hash. */
+    /** Key fingerprint hash. */
     private static final String KEY_FINGERPRINT = "fingerprint";
     
     /**
@@ -60,19 +60,19 @@ public class OfficerAuthenticationData extends UserAuthenticationData {
     
     /**
      * Construct a new officer authentication data instance from the provided
-     * JSON object.
+     * MSL object.
      * 
-     * @param officerJo the authentication data JSON object.
+     * @param officerMo the authentication data MSL object.
      * @throws MslEncodingException if there is an error parsing the user
      *         authentication data.
      */
-    public OfficerAuthenticationData(final JSONObject officerJo) throws MslEncodingException {
+    public OfficerAuthenticationData(final MslObject officerMo) throws MslEncodingException {
         super(KanColleUserAuthenticationScheme.OFFICER);
         try {
-            this.name = officerJo.getString(KEY_NAME);
-            this.fingerprint = Base64.decode(officerJo.getString(KEY_FINGERPRINT));
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "officer authdata " + officerJo.toString(), e);
+            this.name = officerMo.getString(KEY_NAME);
+            this.fingerprint = officerMo.getBytes(KEY_FINGERPRINT);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "officer authdata " + officerMo.toString(), e);
         }
     }
     
@@ -91,18 +91,14 @@ public class OfficerAuthenticationData extends UserAuthenticationData {
     }
     
     /* (non-Javadoc)
-     * @see com.netflix.msl.userauth.UserAuthenticationData#getAuthData()
+     * @see com.netflix.msl.userauth.UserAuthenticationData#getAuthData(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public JSONObject getAuthData() throws MslEncodingException {
-        try {
-            final JSONObject jo = new JSONObject();
-            jo.put(KEY_NAME, name);
-            jo.put(KEY_FINGERPRINT, Base64.encode(fingerprint));
-            return jo;
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, this.getClass().getName(), e);
-        }
+    public MslObject getAuthData(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException {
+        final MslObject mo = encoder.createObject();
+        mo.put(KEY_NAME, name);
+        mo.put(KEY_FINGERPRINT, fingerprint);
+        return mo;
     }
 
     /** Officer name. */

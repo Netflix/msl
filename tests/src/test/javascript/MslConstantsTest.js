@@ -35,4 +35,19 @@ describe("MslConstants$ResponseCode", function() {
 	it("keyx required equals 5", function() {
 		expect(MslConstants$ResponseCode.KEYX_REQUIRED).toEqual(5);
 	});
+	it("entity data reauth equals 6", function() {
+		expect(MslConstants$ResponseCode.ENTITYDATA_REAUTH).toEqual(6);
+	});
+	it("user data reauth equals 7", function() {
+		expect(MslConstants$ResponseCode.USERDATA_REAUTH).toEqual(7);
+	});
+	it("expired equals 8", function() {
+		expect(MslConstants$ResponseCode.EXPIRED).toEqual(8);
+	});
+	it("replayed equals 9", function() {
+		expect(MslConstants$ResponseCode.REPLAYED).toEqual(9);
+	});
+	it("sso token rejected equals 10", function() {
+		expect(MslConstants$ResponseCode.SSOTOKEN_REJECTED).toEqual(10);
+	});
 });

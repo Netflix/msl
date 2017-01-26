@@ -20,9 +20,6 @@ import java.util.Arrays;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
@@ -38,10 +35,13 @@ import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.entityauth.PresharedAuthenticationData;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.util.AuthenticationUtils;
-import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -69,7 +69,7 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
      * </ul></p>
      */
     public static class RequestData extends KeyRequestData {
-        /** JSON key symmetric key ID. */
+        /** Key symmetric key ID. */
         private static final String KEY_KEY_ID = "keyid";
         
         /**
@@ -85,23 +85,23 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
         
         /**
          * Create a new symmetric key wrapped key request data instance from
-         * the provided JSON object.
+         * the provided MSL object.
          * 
-         * @param keyDataJO the JSON object.
-         * @throws MslEncodingException if there is an error parsing the JSON.
+         * @param keyDataMo the MSL object.
+         * @throws MslEncodingException if there is an error parsing the data.
          * @throws MslKeyExchangeException if the key ID is not recognized.
          */
-        public RequestData(final JSONObject keyDataJO) throws MslEncodingException, MslKeyExchangeException {
+        public RequestData(final MslObject keyDataMo) throws MslEncodingException, MslKeyExchangeException {
             super(KeyExchangeScheme.SYMMETRIC_WRAPPED);
             try {
-                final String keyIdName = keyDataJO.getString(KEY_KEY_ID);
+                final String keyIdName = keyDataMo.getString(KEY_KEY_ID);
                 try {
                     keyId = KeyId.valueOf(keyIdName);
                 } catch (final IllegalArgumentException e) {
                     throw new MslKeyExchangeException(MslError.UNIDENTIFIED_KEYX_KEY_ID, keyIdName, e);
                 }
-            } catch (final JSONException e) {
-                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + keyDataJO.toString(), e);
+            } catch (final MslEncoderException e) {
+                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "keydata " + keyDataMo, e);
             }
         }
         
@@ -113,13 +113,13 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
         }
 
         /* (non-Javadoc)
-         * @see com.netflix.msl.keyx.KeyRequestData#getRequestData()
+         * @see com.netflix.msl.keyx.KeyRequestData#getKeydata(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
          */
         @Override
-        protected JSONObject getKeydata() throws JSONException {
-            final JSONObject jsonObj = new JSONObject();
-            jsonObj.put(KEY_KEY_ID, keyId.name());
-            return jsonObj;
+        protected MslObject getKeydata(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException {
+            final MslObject mo = encoder.createObject();
+            mo.put(KEY_KEY_ID, keyId.name());
+            return mo;
         }
         
         /* (non-Javadoc)
@@ -152,21 +152,21 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
      * {@code {
      *   "#mandatory" : [ "keyid", "encryptionkey", "hmackey" ],
      *   "keyid" : "string",
-     *   "encryptionkey" : "base64",
-     *   "hmackey" : "base64"
+     *   "encryptionkey" : "binary",
+     *   "hmackey" : "binary"
      * }} where:
      * <ul>
      * <li>{@code keyid} identifies the key that was used to wrap the session keys</li>
-     * <li>{@code encryptionkey} the Base64-encoded wrapped session encryption key</li>
-     * <li>{@code hmackey} the Base64-encoded wrapped session HMAC key</li>
+     * <li>{@code encryptionkey} the wrapped session encryption key</li>
+     * <li>{@code hmackey} the wrapped session HMAC key</li>
      * </ul></p>
      */
     public static class ResponseData extends KeyResponseData {
-        /** JSON key symmetric key ID. */
+        /** Key symmetric key ID. */
         private static final String KEY_KEY_ID = "keyid";
-        /** JSON key wrapped encryption key. */
+        /** Key wrapped encryption key. */
         private static final String KEY_ENCRYPTION_KEY = "encryptionkey";
-        /** JSON key wrapped HMAC key. */
+        /** Key wrapped HMAC key. */
         private static final String KEY_HMAC_KEY = "hmackey";
         
         /**
@@ -188,35 +188,27 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
         
         /**
          * Create a new symmetric key wrapped key response data instance with
-         * the provided master token from the provided JSON object.
+         * the provided master token from the provided MSL object.
          * 
          * @param masterToken the master token.
-         * @param keyDataJO the JSON object.
-         * @throws MslEncodingException if there is an error parsing the JSON.
+         * @param keyDataMo the MSL object.
+         * @throws MslEncodingException if there is an error parsing the data.
          * @throws MslKeyExchangeException if the key ID is not recognized or
          *         a session key is invalid.
          */
-        public ResponseData(final MasterToken masterToken, final JSONObject keyDataJO) throws MslEncodingException, MslKeyExchangeException {
+        public ResponseData(final MasterToken masterToken, final MslObject keyDataMo) throws MslEncodingException, MslKeyExchangeException {
             super(masterToken, KeyExchangeScheme.SYMMETRIC_WRAPPED);
             try {
-                final String keyIdName = keyDataJO.getString(KEY_KEY_ID);
+                final String keyIdName = keyDataMo.getString(KEY_KEY_ID);
                 try {
                     keyId = KeyId.valueOf(keyIdName);
-                    try {
-                        encryptionKey = Base64.decode(keyDataJO.getString(KEY_ENCRYPTION_KEY));
-                    } catch (final IllegalArgumentException e) {
-                        throw new MslKeyExchangeException(MslError.KEYX_INVALID_ENCRYPTION_KEY, "keydata " + keyDataJO.toString(), e);
-                    }
-                    try {
-                        hmacKey = Base64.decode(keyDataJO.getString(KEY_HMAC_KEY));
-                    } catch (final IllegalArgumentException e) {
-                        throw new MslKeyExchangeException(MslError.KEYX_INVALID_HMAC_KEY, "keydata " + keyDataJO.toString(), e);
-                    }
                 } catch (final IllegalArgumentException e) {
                     throw new MslKeyExchangeException(MslError.UNIDENTIFIED_KEYX_KEY_ID, keyIdName, e);
                 }
-            } catch (final JSONException e) {
-                throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "keydata " + keyDataJO.toString(), e);
+                encryptionKey = keyDataMo.getBytes(KEY_ENCRYPTION_KEY);
+                hmacKey = keyDataMo.getBytes(KEY_HMAC_KEY);
+            } catch (final MslEncoderException e) {
+                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "keydata " + keyDataMo, e);
             }
         }
         
@@ -242,15 +234,15 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
         }
         
         /* (non-Javadoc)
-         * @see com.netflix.msl.keyx.KeyResponseData#getKeydata()
+         * @see com.netflix.msl.keyx.KeyResponseData#getKeydata(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
          */
         @Override
-        protected JSONObject getKeydata() throws JSONException {
-            final JSONObject jsonObj = new JSONObject();
-            jsonObj.put(KEY_KEY_ID, keyId.name());
-            jsonObj.put(KEY_ENCRYPTION_KEY, Base64.encode(encryptionKey));
-            jsonObj.put(KEY_HMAC_KEY, Base64.encode(hmacKey));
-            return jsonObj;
+        protected MslObject getKeydata(final MslEncoderFactory encoder, final MslEncoderFormat format) {
+            final MslObject mo = encoder.createObject();
+            mo.put(KEY_KEY_ID, keyId.name());
+            mo.put(KEY_ENCRYPTION_KEY, encryptionKey);
+            mo.put(KEY_HMAC_KEY, hmacKey);
+            return mo;
         }
         
         /* (non-Javadoc)
@@ -345,26 +337,26 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.keyx.KeyExchangeFactory#createRequestData(com.netflix.msl.util.MslContext, org.json.JSONObject)
+     * @see com.netflix.msl.keyx.KeyExchangeFactory#createRequestData(com.netflix.msl.util.MslContext, com.netflix.msl.io.MslObject)
      */
     @Override
-    protected KeyRequestData createRequestData(final MslContext ctx, final JSONObject keyRequestJO) throws MslEncodingException, MslKeyExchangeException {
-        return new RequestData(keyRequestJO);
+    protected KeyRequestData createRequestData(final MslContext ctx, final MslObject keyRequestMo) throws MslEncodingException, MslKeyExchangeException {
+        return new RequestData(keyRequestMo);
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.keyx.KeyExchangeFactory#createResponseData(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, org.json.JSONObject)
+     * @see com.netflix.msl.keyx.KeyExchangeFactory#createResponseData(com.netflix.msl.util.MslContext, com.netflix.msl.tokens.MasterToken, com.netflix.msl.io.MslObject)
      */
     @Override
-    protected KeyResponseData createResponseData(final MslContext ctx, final MasterToken masterToken, final JSONObject keyDataJO) throws MslEncodingException, MslKeyExchangeException {
-        return new ResponseData(masterToken, keyDataJO);
+    protected KeyResponseData createResponseData(final MslContext ctx, final MasterToken masterToken, final MslObject keyDataMo) throws MslEncodingException, MslKeyExchangeException {
+        return new ResponseData(masterToken, keyDataMo);
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.keyx.KeyExchangeFactory#generateResponse(com.netflix.msl.util.MslContext, com.netflix.msl.keyx.KeyRequestData, com.netflix.msl.tokens.MasterToken)
+     * @see com.netflix.msl.keyx.KeyExchangeFactory#generateResponse(com.netflix.msl.util.MslContext, com.netflix.msl.io.MslEncoderFormat, com.netflix.msl.keyx.KeyRequestData, com.netflix.msl.tokens.MasterToken)
      */
     @Override
-    public KeyExchangeData generateResponse(final MslContext ctx, final KeyRequestData keyRequestData, final MasterToken masterToken) throws MslException {
+    public KeyExchangeData generateResponse(final MslContext ctx, final MslEncoderFormat format, final KeyRequestData keyRequestData, final MasterToken masterToken) throws MslException {
         if (!(keyRequestData instanceof RequestData))
             throw new MslInternalException("Key request data " + keyRequestData.getClass().getName() + " was not created by this factory.");
         final RequestData request = (RequestData)keyRequestData;
@@ -389,9 +381,10 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
         
         // Wrap session keys with identified key...
         final KeyId keyId = request.getKeyId();
+        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
         final ICryptoContext wrapCryptoContext = createCryptoContext(ctx, keyId, masterToken, masterToken.getIdentity());
-        final byte[] wrappedEncryptionKey = wrapCryptoContext.wrap(encryptionBytes);
-        final byte[] wrappedHmacKey = wrapCryptoContext.wrap(hmacBytes);
+        final byte[] wrappedEncryptionKey = wrapCryptoContext.wrap(encryptionBytes, encoder, format);
+        final byte[] wrappedHmacKey = wrapCryptoContext.wrap(hmacBytes, encoder, format);
         
         // Create the master token.
         final TokenFactory tokenFactory = ctx.getTokenFactory();
@@ -406,10 +399,10 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.keyx.KeyExchangeFactory#generateResponse(com.netflix.msl.util.MslContext, com.netflix.msl.keyx.KeyRequestData, com.netflix.msl.entityauth.EntityAuthenticationData)
+     * @see com.netflix.msl.keyx.KeyExchangeFactory#generateResponse(com.netflix.msl.util.MslContext, com.netflix.msl.io.MslEncoderFormat, com.netflix.msl.keyx.KeyRequestData, com.netflix.msl.entityauth.EntityAuthenticationData)
      */
     @Override
-    public KeyExchangeData generateResponse(final MslContext ctx, final KeyRequestData keyRequestData, final EntityAuthenticationData entityAuthData) throws MslException {
+    public KeyExchangeData generateResponse(final MslContext ctx, final MslEncoderFormat format, final KeyRequestData keyRequestData, final EntityAuthenticationData entityAuthData) throws MslException {
         if (!(keyRequestData instanceof RequestData))
             throw new MslInternalException("Key request data " + keyRequestData.getClass().getName() + " was not created by this factory.");
         final RequestData request = (RequestData)keyRequestData;
@@ -429,14 +422,15 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
         
         // Wrap session keys with identified key.
         final KeyId keyId = request.getKeyId();
+        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
         final ICryptoContext wrapCryptoContext;
         try {
             wrapCryptoContext = createCryptoContext(ctx, keyId, null, identity);
         } catch (final MslMasterTokenException e) {
             throw new MslInternalException("Master token exception thrown when the master token is null.", e);
         }
-        final byte[] wrappedEncryptionKey = wrapCryptoContext.wrap(encryptionBytes);
-        final byte[] wrappedHmacKey = wrapCryptoContext.wrap(hmacBytes);
+        final byte[] wrappedEncryptionKey = wrapCryptoContext.wrap(encryptionBytes, encoder, format);
+        final byte[] wrappedHmacKey = wrapCryptoContext.wrap(hmacBytes, encoder, format);
         
         // Create the master token.
         final TokenFactory tokenFactory = ctx.getTokenFactory();
@@ -476,10 +470,10 @@ public class SymmetricWrappedExchange extends KeyExchangeFactory {
         // Unwrap session keys with identified key.
         final EntityAuthenticationData entityAuthData = ctx.getEntityAuthenticationData(null);
         final String identity = entityAuthData.getIdentity();
-
+        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
         final ICryptoContext unwrapCryptoContext = createCryptoContext(ctx, responseKeyId, masterToken, identity);
-        final byte[] unwrappedEncryptionKey = unwrapCryptoContext.unwrap(response.getEncryptionKey());
-        final byte[] unwrappedHmacKey = unwrapCryptoContext.unwrap(response.getHmacKey());
+        final byte[] unwrappedEncryptionKey = unwrapCryptoContext.unwrap(response.getEncryptionKey(), encoder);
+        final byte[] unwrappedHmacKey = unwrapCryptoContext.unwrap(response.getHmacKey(), encoder);
         
         // Create crypto context.
         final SecretKey encryptionKey = new SecretKeySpec(unwrappedEncryptionKey, JcaAlgorithm.AES);

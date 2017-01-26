@@ -16,10 +16,8 @@
 package com.netflix.msl.tokens;
 
 import java.util.Date;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.json.JSONString;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
@@ -28,6 +26,11 @@ import com.netflix.msl.MslError;
 import com.netflix.msl.MslException;
 import com.netflix.msl.MslInternalException;
 import com.netflix.msl.crypto.ICryptoContext;
+import com.netflix.msl.io.MslEncodable;
+import com.netflix.msl.io.MslEncoderException;
+import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MslContext;
 
@@ -47,12 +50,12 @@ import com.netflix.msl.util.MslContext;
  * {@code
  * useridtoken = {
  *   "#mandatory" : [ "tokendata", "signature" ],
- *   "tokendata" : "base64",
- *   "signature" : "base64"
+ *   "tokendata" : "binary",
+ *   "signature" : "binary"
  * }} where:
  * <ul>
- * <li>{@code tokendata} is the Base64-encoded user ID token data (usertokendata)</li>
- * <li>{@code signature} is the Base64-encoded verification data of the user ID token data</li>
+ * <li>{@code tokendata} is the user ID token data (usertokendata)</li>
+ * <li>{@code signature} is the verification data of the user ID token data</li>
  * </ul>
  * 
  * <p>The token data is represented as
@@ -63,14 +66,14 @@ import com.netflix.msl.util.MslContext;
  *   "expiration" : "int64(0,-)",
  *   "mtserialnumber" : "int64(0,2^53^)",
  *   "serialnumber" : "int64(0,2^53^)",
- *   "userdata" : "base64"
+ *   "userdata" : "binary"
  * }} where:
  * <ul>
  * <li>{@code renewalwindow} is when the renewal window opens in seconds since the epoch</li>
  * <li>{@code expiration} is the expiration timestamp in seconds since the epoch</li>
  * <li>{@code mtserialnumber} is the master token serial number</li>
  * <li>{@code serialnumber} is the user ID token serial number</li>
- * <li>{@code userdata} is the Base64-encoded encrypted user data (userdata)</li>
+ * <li>{@code userdata} is the encrypted user data (userdata)</li>
  * </ul></p>
  * 
  * <p>The decrypted user data is represented as
@@ -88,31 +91,31 @@ import com.netflix.msl.util.MslContext;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-public class UserIdToken implements JSONString {
+public class UserIdToken implements MslEncodable {
     /** Milliseconds per second. */
     private static final long MILLISECONDS_PER_SECOND = 1000;
     
-    /** JSON key token data. */
+    /** Key token data. */
     private static final String KEY_TOKENDATA = "tokendata";
-    /** JSON key signature. */
+    /** Key signature. */
     private static final String KEY_SIGNATURE = "signature";
     
     // tokendata
-    /** JSON key renewal window timestamp. */
+    /** Key renewal window timestamp. */
     private static final String KEY_RENEWAL_WINDOW = "renewalwindow";
-    /** JSON key expiration timestamp. */
+    /** Key expiration timestamp. */
     private static final String KEY_EXPIRATION = "expiration";
-    /** JSON key master token serial number. */
+    /** Key master token serial number. */
     private static final String KEY_MASTER_TOKEN_SERIAL_NUMBER = "mtserialnumber";
-    /** JSON key user ID token serial number. */
+    /** Key user ID token serial number. */
     private static final String KEY_SERIAL_NUMBER = "serialnumber";
-    /** JSON key token user data. */
+    /** Key token user data. */
     private static final String KEY_USERDATA = "userdata";
     
     // userdata
-    /** JSON key issuer data. */
+    /** Key issuer data. */
     private static final String KEY_ISSUER_DATA = "issuerdata";
-    /** JSON key identity. */
+    /** Key identity. */
     private static final String KEY_IDENTITY = "identity";
 
     /**
@@ -125,12 +128,11 @@ public class UserIdToken implements JSONString {
      * @param serialNumber the user ID token serial number.
      * @param issuerData the issuer data. May be null.
      * @param user the MSL user.
-     * @throws MslEncodingException if there is an error encoding the JSON
-     *         data.
+     * @throws MslEncodingException if there is an error encoding the data.
      * @throws MslCryptoException if there is an error encrypting or signing
      *         the token data.
      */
-    public UserIdToken(final MslContext ctx, final Date renewalWindow, final Date expiration, final MasterToken masterToken, final long serialNumber, final JSONObject issuerData, final MslUser user) throws MslEncodingException, MslCryptoException {
+    public UserIdToken(final MslContext ctx, final Date renewalWindow, final Date expiration, final MasterToken masterToken, final long serialNumber, final MslObject issuerData, final MslUser user) throws MslEncodingException, MslCryptoException {
         // The expiration must appear after the renewal window.
         if (expiration.before(renewalWindow))
             throw new MslInternalException("Cannot construct a user ID token that expires before its renewal window opens.");
@@ -146,55 +148,29 @@ public class UserIdToken implements JSONString {
         this.expiration = expiration.getTime() / MILLISECONDS_PER_SECOND;
         this.mtSerialNumber = masterToken.getSerialNumber();
         this.serialNumber = serialNumber;
-        this.issuerData = issuerData;
+        this.issuerdata = issuerData;
         this.user = user;
         
         // Construct the user data.
-        final JSONObject userData = new JSONObject();
-        try {
-            if (this.issuerData != null)
-                userData.put(KEY_ISSUER_DATA, this.issuerData);
-            userData.put(KEY_IDENTITY, user.getEncoded());
-            this.userdata = userData.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, "userdata", e);
-        }
-        
-        try {
-            // Encrypt the user data.
-            final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
-            final byte[] ciphertext = cryptoContext.encrypt(this.userdata);
-        
-            // Construct the token data.
-            try {
-                final JSONObject tokenDataJO = new JSONObject();
-                tokenDataJO.put(KEY_RENEWAL_WINDOW, this.renewalWindow);
-                tokenDataJO.put(KEY_EXPIRATION, this.expiration);
-                tokenDataJO.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, this.mtSerialNumber);
-                tokenDataJO.put(KEY_SERIAL_NUMBER, this.serialNumber);
-                tokenDataJO.put(KEY_USERDATA, Base64.encode(ciphertext));
-                this.tokendata = tokenDataJO.toString().getBytes(MslConstants.DEFAULT_CHARSET);
-            } catch (final JSONException e) {
-                throw new MslEncodingException(MslError.JSON_ENCODE_ERROR, "usertokendata", e).setMasterToken(masterToken);
-            }
-        
-            // Sign the token data.
-            this.signature = cryptoContext.sign(this.tokendata);
-            this.verified = true;
-        } catch (final MslCryptoException e) {
-            e.setMasterToken(masterToken);
-            throw e;
-        }
+        final MslEncoderFactory encoder = this.ctx.getMslEncoderFactory();
+        this.userdata = encoder.createObject();
+        if (this.issuerdata != null)
+            this.userdata.put(KEY_ISSUER_DATA, this.issuerdata);
+        this.userdata.put(KEY_IDENTITY, user.getEncoded());
+
+        this.tokendataBytes = null;
+        this.signatureBytes = null;
+        this.verified = true;
     }
     
     /**
-     * Create a new user ID token from the provided JSON object. The associated
+     * Create a new user ID token from the provided MSL object. The associated
      * master token must be provided to verify the user ID token.
      * 
      * @param ctx MSL context.
-     * @param userIdTokenJO user ID token JSON object.
+     * @param userIdTokenMo user ID token MSL object.
      * @param masterToken the master token.
-     * @throws MslEncodingException if there is an error parsing the JSON, the
+     * @throws MslEncodingException if there is an error parsing the data, the
      *         token data is missing or invalid, or the signature is invalid.
      * @throws MslCryptoException if there is an error verifying the token
      *         data.
@@ -205,79 +181,67 @@ public class UserIdToken implements JSONString {
      *         number is out of range, or the user ID token serial number is
      *         out of range.
      */
-    public UserIdToken(final MslContext ctx, final JSONObject userIdTokenJO, final MasterToken masterToken) throws MslEncodingException, MslCryptoException, MslException {
+    public UserIdToken(final MslContext ctx, final MslObject userIdTokenMo, final MasterToken masterToken) throws MslEncodingException, MslCryptoException, MslException {
         this.ctx = ctx;
         
-        // Grab the crypto context.
+        // Grab the crypto context and encoder.
         final ICryptoContext cryptoContext = ctx.getMslCryptoContext();
+        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
         
-        // Verify the JSON representation.
+        // Verify the encoding.
         try {
-            try {
-                tokendata = Base64.decode(userIdTokenJO.getString(KEY_TOKENDATA));
-            } catch (final IllegalArgumentException e) {
-                throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_INVALID, "useridtoken " + userIdTokenJO.toString(), e).setMasterToken(masterToken);
-            }
-            if (tokendata == null || tokendata.length == 0)
-                throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_MISSING, "useridtoken " + userIdTokenJO.toString()).setMasterToken(masterToken);
-            try {
-                signature = Base64.decode(userIdTokenJO.getString(KEY_SIGNATURE));
-            } catch (final IllegalArgumentException e) {
-                throw new MslEncodingException(MslError.USERIDTOKEN_SIGNATURE_INVALID, "useridtoken " + userIdTokenJO.toString(), e).setMasterToken(masterToken);
-            }
-            verified = cryptoContext.verify(tokendata, signature);
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.JSON_PARSE_ERROR, "useridtoken " + userIdTokenJO.toString(), e).setMasterToken(masterToken);
+            tokendataBytes = userIdTokenMo.getBytes(KEY_TOKENDATA);
+            if (tokendataBytes.length == 0)
+                throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_MISSING, "useridtoken " + userIdTokenMo).setMasterToken(masterToken);
+            signatureBytes = userIdTokenMo.getBytes(KEY_SIGNATURE);
+            verified = cryptoContext.verify(tokendataBytes, signatureBytes, encoder);
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "useridtoken " + userIdTokenMo, e).setMasterToken(masterToken);
         }
         
         // Pull the token data.
-        final String tokenDataJson = new String(tokendata, MslConstants.DEFAULT_CHARSET);
+        final byte[] plaintext;
         try {
-            final JSONObject tokenDataJO = new JSONObject(tokenDataJson);
-            renewalWindow = tokenDataJO.getLong(KEY_RENEWAL_WINDOW);
-            expiration = tokenDataJO.getLong(KEY_EXPIRATION);
+            final MslObject tokendata = encoder.parseObject(tokendataBytes);
+            renewalWindow = tokendata.getLong(KEY_RENEWAL_WINDOW);
+            expiration = tokendata.getLong(KEY_EXPIRATION);
             if (expiration < renewalWindow)
-                throw new MslException(MslError.USERIDTOKEN_EXPIRES_BEFORE_RENEWAL, "usertokendata " + tokenDataJson).setMasterToken(masterToken);
-            mtSerialNumber = tokenDataJO.getLong(KEY_MASTER_TOKEN_SERIAL_NUMBER);
+                throw new MslException(MslError.USERIDTOKEN_EXPIRES_BEFORE_RENEWAL, "usertokendata " + tokendata).setMasterToken(masterToken);
+            mtSerialNumber = tokendata.getLong(KEY_MASTER_TOKEN_SERIAL_NUMBER);
             if (mtSerialNumber < 0 || mtSerialNumber > MslConstants.MAX_LONG_VALUE)
-                throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokenDataJson).setMasterToken(masterToken);
-            serialNumber = tokenDataJO.getLong(KEY_SERIAL_NUMBER);
+                throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokendata).setMasterToken(masterToken);
+            serialNumber = tokendata.getLong(KEY_SERIAL_NUMBER);
             if (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE)
-                throw new MslException(MslError.USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokenDataJson).setMasterToken(masterToken);
-            final byte[] ciphertext;
-            try {
-                ciphertext = Base64.decode(tokenDataJO.getString(KEY_USERDATA));
-            } catch (final IllegalArgumentException e) {
-                throw new MslException(MslError.USERIDTOKEN_USERDATA_INVALID, tokenDataJO.getString(KEY_USERDATA)).setMasterToken(masterToken);
-            }
-            if (ciphertext == null || ciphertext.length == 0)
-                throw new MslException(MslError.USERIDTOKEN_USERDATA_MISSING, tokenDataJO.getString(KEY_USERDATA)).setMasterToken(masterToken);
-            userdata = (verified) ? cryptoContext.decrypt(ciphertext) : null;
-        } catch (final JSONException e) {
-            throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR, "usertokendata " + tokenDataJson, e).setMasterToken(masterToken);
+                throw new MslException(MslError.USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokendata).setMasterToken(masterToken);
+            final byte[] ciphertext = tokendata.getBytes(KEY_USERDATA);
+            if (ciphertext.length == 0)
+                throw new MslException(MslError.USERIDTOKEN_USERDATA_MISSING).setMasterToken(masterToken);
+            plaintext = (verified) ? cryptoContext.decrypt(ciphertext, encoder) : null;
+        } catch (final MslEncoderException e) {
+            throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR, "usertokendata " + Base64.encode(tokendataBytes), e).setMasterToken(masterToken);
         } catch (final MslCryptoException e) {
             e.setMasterToken(masterToken);
             throw e;
         }
         
         // Pull the user data.
-        if (userdata != null) {
-            final String userDataJson = new String(userdata, MslConstants.DEFAULT_CHARSET);
+        if (plaintext != null) {
             try {
-                final JSONObject userDataJO = new JSONObject(userDataJson);
-                issuerData = (userDataJO.has(KEY_ISSUER_DATA)) ? userDataJO.getJSONObject(KEY_ISSUER_DATA) : null;
-                final String identity = userDataJO.getString(KEY_IDENTITY);
+                userdata = encoder.parseObject(plaintext);
+                issuerdata = (userdata.has(KEY_ISSUER_DATA)) ? userdata.getMslObject(KEY_ISSUER_DATA, encoder) : null;
+                final String identity = userdata.getString(KEY_IDENTITY);
                 if (identity == null || identity.length() == 0)
-                    throw new MslException(MslError.USERIDTOKEN_IDENTITY_INVALID, "userdata " + userDataJson).setMasterToken(masterToken);
+                    throw new MslException(MslError.USERIDTOKEN_IDENTITY_INVALID, "userdata " + userdata).setMasterToken(masterToken);
                 final TokenFactory factory = ctx.getTokenFactory();
                 user = factory.createUser(ctx, identity);
                 if (user == null)
                     throw new MslInternalException("TokenFactory.createUser() returned null in violation of the interface contract.");
-            } catch (final JSONException e) {
-                throw new MslEncodingException(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR, "userdata " + userDataJson, e).setMasterToken(masterToken);
+            } catch (final MslEncoderException e) {
+                throw new MslEncodingException(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR, "userdata " + Base64.encode(plaintext), e).setMasterToken(masterToken);
             }
         } else {
-            issuerData = null;
+            userdata = null;
+            issuerdata = null;
             user = null;
         }
         
@@ -368,8 +332,8 @@ public class UserIdToken implements JSONString {
      * @return the user ID token issuer data or null if there is none or it is
      *         unknown (user data could not be decrypted).
      */
-    public JSONObject getIssuerData() {
-        return issuerData;
+    public MslObject getIssuerData() {
+        return issuerdata;
     }
 
     /**
@@ -408,11 +372,6 @@ public class UserIdToken implements JSONString {
     /** MSL context. */
     private final MslContext ctx;
 
-    /** Token data. */
-    private final byte[] tokendata;
-    /** Encrypted token data signature. */
-    private final byte[] signature;
-
     /** User ID token renewal window in seconds since the epoch. */
     private final long renewalWindow;
     /** User ID token expiration in seconds since the epoch. */
@@ -422,51 +381,108 @@ public class UserIdToken implements JSONString {
     /** Serial number. */
     private final long serialNumber;
     /** User data. */
-    private final byte[] userdata;
+    private final MslObject userdata;
 
     /** Issuer data. */
-    private final JSONObject issuerData;
+    private final MslObject issuerdata;
     /** MSL user. */
     private final MslUser user;
     
+    /** Token data bytes. */
+    private final byte[] tokendataBytes;
+    /** Signature bytes. */
+    private final byte[] signatureBytes;
+    
     /** Token is verified. */
     private final boolean verified;
-
+    
+    /** Cached encodings. */
+    private final Map<MslEncoderFormat,byte[]> encodings = new HashMap<MslEncoderFormat,byte[]>();
+    
     /* (non-Javadoc)
-     * @see org.json.JSONString#toJSONString()
+     * @see com.netflix.msl.io.MslEncodable#toMslEncoding(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
     @Override
-    public final String toJSONString() {
-        try {
-            final JSONObject jsonObj = new JSONObject();
-            jsonObj.put(KEY_TOKENDATA, Base64.encode(tokendata));
-            jsonObj.put(KEY_SIGNATURE, Base64.encode(signature));
-            return jsonObj.toString();
-        } catch (final JSONException e) {
-            throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);
+    public byte[] toMslEncoding(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException {
+        // Return any cached encoding.
+        if (encodings.containsKey(format))
+            return encodings.get(format);
+
+        // If we parsed this token (i.e. did not create it from scratch) then
+        // we should not re-encrypt or re-sign as there is no guarantee out MSL
+        // crypto context is capable of encrypting and signing with the same
+        // keys, even if it is capable of decrypting and verifying.
+        final byte[] data, signature;
+        if (tokendataBytes != null || signatureBytes != null) {
+            data = tokendataBytes;
+            signature = signatureBytes;
         }
-    }
+        //
+        // Otherwise create the token data and signature.
+        else {
+            // Grab the MSL token crypto context.
+            final ICryptoContext cryptoContext;
+            try {
+                cryptoContext = ctx.getMslCryptoContext();
+            } catch (final MslCryptoException e) {
+                throw new MslEncoderException("Error creating the MSL crypto context.", e);
+            }
+        
+            // Encrypt the user data.
+            final byte[] plaintext = encoder.encodeObject(userdata, format);
+            final byte[] ciphertext;
+            try {
+                ciphertext = cryptoContext.encrypt(plaintext, encoder, format);
+            } catch (final MslCryptoException e) {
+                throw new MslEncoderException("Error encrypting the user data.", e);
+            }
     
+            // Construct the token data.
+            final MslObject tokendata = encoder.createObject();
+            tokendata.put(KEY_RENEWAL_WINDOW, this.renewalWindow);
+            tokendata.put(KEY_EXPIRATION, this.expiration);
+            tokendata.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, this.mtSerialNumber);
+            tokendata.put(KEY_SERIAL_NUMBER, this.serialNumber);
+            tokendata.put(KEY_USERDATA, ciphertext);
+    
+            // Sign the token data.
+            data = encoder.encodeObject(tokendata, format);
+            try {
+                signature = cryptoContext.sign(data, encoder, format);
+            } catch (final MslCryptoException e) {
+                throw new MslEncoderException("Error signing the token data.", e);
+            }
+        }
+        
+        // Encode the token.
+        final MslObject token = encoder.createObject();
+        token.put(KEY_TOKENDATA, data);
+        token.put(KEY_SIGNATURE, signature);
+        final byte[] encoding = encoder.encodeObject(token, format);
+
+        // Cache and return the encoding.
+        encodings.put(format, encoding);
+        return encoding;
+    }
+
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
      */
     @Override
     public String toString() {
-        try {
-            final JSONObject tokendataJO = new JSONObject();
-            tokendataJO.put(KEY_RENEWAL_WINDOW, renewalWindow);
-            tokendataJO.put(KEY_EXPIRATION, expiration);
-            tokendataJO.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, mtSerialNumber);
-            tokendataJO.put(KEY_SERIAL_NUMBER, serialNumber);
-            tokendataJO.put(KEY_USERDATA, "(redacted)");
-            
-            final JSONObject jsonObj = new JSONObject();
-            jsonObj.put(KEY_TOKENDATA, tokendataJO);
-            jsonObj.put(KEY_SIGNATURE, Base64.encode(signature));
-            return jsonObj.toString();
-        } catch (final JSONException e) {
-            throw new MslInternalException("Error encoding " + this.getClass().getName() + " JSON.", e);
-        }
+        final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+
+        final MslObject tokendataMo = encoder.createObject();
+        tokendataMo.put(KEY_RENEWAL_WINDOW, renewalWindow);
+        tokendataMo.put(KEY_EXPIRATION, expiration);
+        tokendataMo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, mtSerialNumber);
+        tokendataMo.put(KEY_SERIAL_NUMBER, serialNumber);
+        tokendataMo.put(KEY_USERDATA, "(redacted)");
+
+        final MslObject mslObj = encoder.createObject();
+        mslObj.put(KEY_TOKENDATA, tokendataMo);
+        mslObj.put(KEY_SIGNATURE, (signatureBytes != null) ? signatureBytes : "(null)");
+        return mslObj.toString();
     }
 
     /**
