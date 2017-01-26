@@ -72,7 +72,7 @@ public class MslEncoderUtilsTest {
      * @return a random string of random length.
      */
     private static final String randomString(final Random random) {
-        final byte[] raw = new byte[random.nextInt(MAX_STRING_CHARS) + 1];
+        final byte[] raw = new byte[1 + random.nextInt(MAX_STRING_CHARS - 1)];
         return Base64.encode(raw);
     }
     
@@ -83,7 +83,7 @@ public class MslEncoderUtilsTest {
      */
     private static MslObject createFlatMslObject(final Random random) throws MslEncoderException {
         final MslObject mo = new MslObject();
-        for (int i = random.nextInt(MAX_ELEMENTS); i > 0; --i) {
+        for (int i = 1 + random.nextInt(MAX_ELEMENTS - 1); i > 0; --i) {
             switch (random.nextInt(4)) {
                 case 0:
                     mo.put(KEY_BOOLEAN + i, random.nextBoolean());
@@ -111,7 +111,7 @@ public class MslEncoderUtilsTest {
      */
     private static MslObject createDeepMslObject(final Random random, final int depth) throws MslEncoderException {
         final MslObject mo = new MslObject();
-        for (int i = random.nextInt(MAX_ELEMENTS); i > 0; --i) {
+        for (int i = 1 + random.nextInt(MAX_ELEMENTS - 1); i > 0; --i) {
             switch (random.nextInt(6)) {
                 case 0:
                     mo.put(KEY_BOOLEAN + i, random.nextBoolean());
@@ -143,7 +143,7 @@ public class MslEncoderUtilsTest {
      */
     private static MslArray createFlatMslArray(final Random random) throws MslEncoderException {
         final MslArray ma = new MslArray();
-        for (int i = random.nextInt(MAX_ELEMENTS); i > 0; --i) {
+        for (int i = 1 + random.nextInt(MAX_ELEMENTS - 1); i > 0; --i) {
             switch (random.nextInt(4)) {
                 case 0:
                     ma.put(-1, random.nextBoolean());
@@ -172,7 +172,7 @@ public class MslEncoderUtilsTest {
      */
     private static MslArray createDeepMslArray(final Random random, final int depth) throws MslEncoderException {
         final MslArray ma = new MslArray();
-        for (int i = random.nextInt(MAX_ELEMENTS); i > 0; --i) {
+        for (int i = 1 + random.nextInt(MAX_ELEMENTS - 1); i > 0; --i) {
             switch (random.nextInt(4)) {
                 case 0:
                     ma.put(-1, random.nextBoolean());
