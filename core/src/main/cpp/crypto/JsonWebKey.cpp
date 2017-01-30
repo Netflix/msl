@@ -21,6 +21,7 @@
 #include <io/MslEncoderFormat.h>
 #include <io/MslObject.h>
 #include <io/MslEncoderUtils.h>
+#include <util/Base64.h>
 #include <MslCryptoException.h>
 #include <MslEncodingException.h>
 #include <MslError.h>
@@ -30,6 +31,7 @@
 using namespace std;
 using namespace netflix::msl;
 using namespace netflix::msl::io;
+using namespace netflix::msl::util;
 
 namespace netflix {
 namespace msl {
@@ -382,10 +384,10 @@ shared_ptr<ByteArray> JsonWebKey::toMslEncoding(shared_ptr<MslEncoderFactory> en
             if (!keyPair)
                 throw MslInternalException("No key pair to encode.");
             shared_ptr<PublicKey> publicKey = keyPair->publicKey;
-            if (publicKey || publicKey->getFormat() != PublicKey::DEFAULT_FORMAT)
+            if (publicKey && publicKey->getFormat() != PublicKey::DEFAULT_FORMAT)
                 throw MslInternalException("Bad RSA public key format.");
             shared_ptr<PrivateKey> privateKey = keyPair->privateKey;
-            if (privateKey || privateKey->getFormat() != PrivateKey::DEFAULT_FORMAT)
+            if (privateKey && privateKey->getFormat() != PrivateKey::DEFAULT_FORMAT)
                 throw MslInternalException("Bad RSA private key format.");
 
             shared_ptr<ByteArray> mod, pubExp, privExp;
@@ -393,7 +395,7 @@ shared_ptr<ByteArray> JsonWebKey::toMslEncoding(shared_ptr<MslEncoderFactory> en
                 RsaEvpKey::fromSpki(publicKey->getEncoded())->toRaw(mod, pubExp, privExp);
             shared_ptr<ByteArray> mod2, pubExp2, privExp2;
             if (privateKey)
-                RsaEvpKey::fromSpki(privateKey->getEncoded())->toRaw(mod2, pubExp2, privExp2);
+                RsaEvpKey::fromPkcs8(privateKey->getEncoded())->toRaw(mod2, pubExp2, privExp2);
 
             // Encode modulus.
             shared_ptr<ByteArray> modulus = (publicKey) ? mod : mod2;
