@@ -34,6 +34,8 @@ static const std::string AESKW = "AES";
 static const std::string AES_CMAC = "AESCmac";
 /** SHA256 w/RSA. */
 static const std::string SHA256withRSA = "SHA256withRSA";
+/** ECDSA. */
+static const std::string ECDSA = "ECDSA";
 
 }}}} // namespace netflix::msl::crypto::JcaAlgorithm
 

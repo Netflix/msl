@@ -167,6 +167,9 @@ const MslError MslError::ENTITYAUTH_SIGNATURE_INVALID(4033, ResponseCode::ENTITY
 const MslError MslError::ENTITYAUTH_CIPHERTEXT_INVALID(4034, ResponseCode::ENTITYDATA_REAUTH, "Invalid entity authentication data ciphertext.");
 const MslError MslError::ENTITYAUTH_VERIFICATION_FAILED(4035, ResponseCode::ENTITYDATA_REAUTH, "Entity authentication data signature verification failed.");
 const MslError MslError::ENTITYAUTH_MASTERTOKEN_INVALID(4036, ResponseCode::FAIL, "Invalid entity authentication data master token.");
+const MslError MslError::ECC_PUBLICKEY_NOT_FOUND(4037, ResponseCode::ENTITYDATA_REAUTH, "ECC public key not found.");
+const MslError MslError::ECC_PRIVATEKEY_NOT_FOUND(4038, ResponseCode::ENTITYDATA_REAUTH, "ECC private key not found.");
+
 
 // 5 User Authentication
 const MslError MslError::UNIDENTIFIED_USERAUTH_SCHEME(5003, ResponseCode::FAIL, "Unable to identify user authentication scheme.");

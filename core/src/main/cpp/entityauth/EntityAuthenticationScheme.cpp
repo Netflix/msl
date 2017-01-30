@@ -28,6 +28,7 @@ EntityAuthenticationScheme EntityAuthenticationScheme::PSK("PSK", true, true);
 EntityAuthenticationScheme EntityAuthenticationScheme::PSK_PROFILE("PSK_PROFILE", true, true);
 EntityAuthenticationScheme EntityAuthenticationScheme::X509("X509", false, true);
 EntityAuthenticationScheme EntityAuthenticationScheme::RSA("RSA", false, true);
+EntityAuthenticationScheme EntityAuthenticationScheme::ECC("ECC", false, true);
 EntityAuthenticationScheme EntityAuthenticationScheme::NONE("NONE", false, false);
 EntityAuthenticationScheme EntityAuthenticationScheme::NONE_SUFFIXED("NONE_SUFFIXED", false, false);
 EntityAuthenticationScheme EntityAuthenticationScheme::MT_PROTECTED("MT_PROTECTED", false, false);
