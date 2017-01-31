@@ -25,6 +25,7 @@
 #include <openssl/rand.h>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
+#include <rsaconverter/librsaconverter.h>
 #include <algorithm>
 #include <cassert>
 #include <iostream>
@@ -333,29 +334,39 @@ shared_ptr<RsaEvpKey> RsaEvpKey::fromRaw(const shared_ptr<ByteArray>& pubMod,
     }
 
     // Make OpenSSL bignums from input parameters
-    ScopedDisposer<BIGNUM, void, BN_free> pubModBn(BN_bin2bn(&(*pubMod)[0], (int)pubMod->size(), NULL));
-    if (!pubModBn.get())
+    ScopedDisposer<BIGNUM, void, BN_free> nBn(BN_bin2bn(&(*pubMod)[0], (int)pubMod->size(), NULL));
+    if (!nBn)
         throw MslCryptoException(MslError::KEY_IMPORT_ERROR, "RSA key parameter invalid");
-    ScopedDisposer<BIGNUM, void, BN_free> pubExpBn(BN_bin2bn(&(*pubExp)[0], (int)pubExp->size(), NULL));
-    if (!pubExpBn.get())
+    ScopedDisposer<BIGNUM, void, BN_free> eBn(BN_bin2bn(&(*pubExp)[0], (int)pubExp->size(), NULL));
+    if (!eBn)
         throw MslCryptoException(MslError::KEY_IMPORT_ERROR, "RSA key parameter invalid");
-    ScopedDisposer<BIGNUM, void, BN_free> privExpBn;
+    ScopedDisposer<BIGNUM, void, BN_free> dBn;
     bool isPrivate = false;
+    ScopedDisposer<BIGNUM, void, BN_free> pBn(BN_new());
+    ScopedDisposer<BIGNUM, void, BN_free> qBn(BN_new());
+    ScopedDisposer<BIGNUM, void, BN_free> dpBn(BN_new());
+    ScopedDisposer<BIGNUM, void, BN_free> dqBn(BN_new());
+    ScopedDisposer<BIGNUM, void, BN_free> uBn(BN_new());
     if (privExp) {
-        privExpBn.reset(BN_bin2bn(&(*privExp)[0], (int)privExp->size(), NULL));
-        if (!privExpBn.get())
+        dBn.reset(BN_bin2bn(&(*privExp)[0], (int)privExp->size(), NULL));
+        if (!dBn.get())
             throw MslCryptoException(MslError::KEY_IMPORT_ERROR, "RSA key parameter invalid");
         isPrivate = true;
+        int result = SfmToCrt(nBn.get(), eBn.get(), dBn.get(), pBn.get(), qBn.get(), dpBn.get(), dqBn.get(), uBn.get());
+        if (result != 1)
+            throw MslCryptoException(MslError::KEY_IMPORT_ERROR, "RSA key CRT conversion failure");
     }
 
-    // Compose an OpenSSL RSA key from the bignums. The RSA struct takes
-    // ownership of the bignums, so we need to BN_dup them.
+    // Compose an OpenSSL RSA key from the bignums.
     ScopedDisposer<RSA, void, RSA_free> rsa(RSA_new());
-    rsa.get()->n = BN_dup(pubModBn.get());
-    rsa.get()->e = BN_dup(pubExpBn.get());
-    rsa.get()->d = (privExpBn.get()) ? BN_dup(privExpBn.get()) : NULL;
-    rsa.get()->p = NULL;
-    rsa.get()->q = NULL;
+    rsa.get()->n = nBn.release();
+    rsa.get()->e = eBn.release();
+    rsa.get()->d = (dBn) ? dBn.release() : NULL;
+    rsa.get()->p = (pBn) ? pBn.release() : NULL;
+    rsa.get()->q = (qBn) ? qBn.release() : NULL;
+    rsa.get()->dmp1 = (dpBn) ? dpBn.release() : NULL;
+    rsa.get()->dmq1 = (dqBn) ? dqBn.release() : NULL;
+    rsa.get()->iqmp = (uBn) ? uBn.release() : NULL;
 
     // Convert the RSA key to an EVP_PKEY
     ScopedDisposer<EVP_PKEY, void, EVP_PKEY_free> pkey(EVP_PKEY_new());
