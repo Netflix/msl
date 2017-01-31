@@ -322,7 +322,7 @@ JsonWebKey::JsonWebKey(shared_ptr<MslObject> jsonMo)
                 shared_ptr<ByteArray> privateExponent = MslEncoderUtils::b64urlDecode(make_shared<string>(jsonMo->getString(KEY_PRIVATE_EXPONENT)));
                 if (!privateExponent || privateExponent->size() == 0)
                     throw MslCryptoException(MslError::INVALID_JWK_KEYDATA, "private exponent is empty");
-                shared_ptr<ByteArray> pkcs8 = RsaEvpKey::fromRaw(modulus, publicExponent, privateExponent)->toSpki();
+                shared_ptr<ByteArray> pkcs8 = RsaEvpKey::fromRaw(modulus, publicExponent, privateExponent)->toPkcs8();
                 privateKey = make_shared<PrivateKey>(pkcs8, "RSA", PrivateKey::DEFAULT_FORMAT);
             }
 
@@ -382,30 +382,30 @@ shared_ptr<ByteArray> JsonWebKey::toMslEncoding(shared_ptr<MslEncoderFactory> en
             if (!keyPair)
                 throw MslInternalException("No key pair to encode.");
             shared_ptr<PublicKey> publicKey = keyPair->publicKey;
-            if (publicKey || publicKey->getFormat() != PublicKey::DEFAULT_FORMAT)
-                throw MslInternalException("Bad RSA public key format.");
+            if (!publicKey || publicKey->getFormat() != PublicKey::DEFAULT_FORMAT)
+                throw MslInternalException("Bad RSA public key format. (" + string(publicKey->getFormat()) + ")");
             shared_ptr<PrivateKey> privateKey = keyPair->privateKey;
-            if (privateKey || privateKey->getFormat() != PrivateKey::DEFAULT_FORMAT)
-                throw MslInternalException("Bad RSA private key format.");
+            if (!privateKey || privateKey->getFormat() != PrivateKey::DEFAULT_FORMAT)
+                throw MslInternalException("Bad RSA private key format. (" + string(privateKey->getFormat()) + ")");
 
             shared_ptr<ByteArray> mod, pubExp, privExp;
             if (publicKey)
                 RsaEvpKey::fromSpki(publicKey->getEncoded())->toRaw(mod, pubExp, privExp);
             shared_ptr<ByteArray> mod2, pubExp2, privExp2;
             if (privateKey)
-                RsaEvpKey::fromSpki(privateKey->getEncoded())->toRaw(mod2, pubExp2, privExp2);
+                RsaEvpKey::fromPkcs8(privateKey->getEncoded())->toRaw(mod2, pubExp2, privExp2);
 
             // Encode modulus.
             shared_ptr<ByteArray> modulus = (publicKey) ? mod : mod2;
             if (modulus)
                 mo->put(KEY_MODULUS, *MslEncoderUtils::b64urlEncode(modulus));
 
-            // Encode public key.
+            // Encode public exponent.
             shared_ptr<ByteArray> publicExponent = (publicKey) ? pubExp : pubExp2;
             if (publicExponent)
                 mo->put(KEY_PUBLIC_EXPONENT, *MslEncoderUtils::b64urlEncode(publicExponent));
 
-            // Encode private key.
+            // Encode private exponent.
             if (privateKey && privExp2) {
                 mo->put(KEY_PRIVATE_EXPONENT, *MslEncoderUtils::b64urlEncode(privExp2));
             }
