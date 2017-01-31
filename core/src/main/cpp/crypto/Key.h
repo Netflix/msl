@@ -104,6 +104,6 @@ struct KeyPair
 bool operator==(const IKey& a, const IKey& b);
 inline bool operator!=(const IKey& a, const IKey& b) { return !(a == b); }
 
-}}} // namespace neetflix::msl::crypto
+}}} // namespace netflix::msl::crypto
 
 #endif /* SRC_CRYPTO_KEY_H_ */
