@@ -164,7 +164,8 @@ public:
       * @param secretKey symmetric key.
       * @throws MslInternalException if the usage or algorithm is incompatible.
       */
-     JsonWebKey(const Usage& usage, const Algorithm& algo, bool extractable, const std::string& id, std::shared_ptr<SecretKey> secretKey);
+     JsonWebKey(const Usage& usage, const Algorithm& algo, bool extractable,
+         const std::string& id, std::shared_ptr<SecretKey> secretKey);
 
      /**
        * Create a new JSON web key for an RSA public/private key pair with the
@@ -183,6 +184,20 @@ public:
       JsonWebKey(const std::set<KeyOp>& keyOps, const Algorithm& algo, bool extractable,
           const std::string& id, std::shared_ptr<PublicKey> publicKey,
           std::shared_ptr<PrivateKey> privateKey);
+
+      /**
+       * Create a new JSON web key for a symmetric key with the specified
+       * attributes.
+       *
+       * @param keyOps key operations. May be null.
+       * @param algo key algorithm. May be null.
+       * @param extractable true if the key is extractable.
+       * @param id key ID. May be null.
+       * @param secretKey symmetric key.
+       * @throws MslInternalException if the usage or algorithm is incompatible.
+       */
+      JsonWebKey(const std::set<KeyOp>& keyOps, const Algorithm& algo, bool extractable,
+          const std::string& id, std::shared_ptr<SecretKey> secretKey);
 
       /**
        * Create a new JSON web key from the provided MSL object.

@@ -54,7 +54,7 @@ protected:
     Key operator=(const Key& rhs);
 private:
     bool isNull_;
-    std::shared_ptr<ByteArray> key_;
+    std::shared_ptr<ByteArray> key_; // holds the default encoding of the key
     std::string algorithm_;
     std::string format_;
 };

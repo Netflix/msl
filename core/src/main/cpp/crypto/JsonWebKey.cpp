@@ -21,6 +21,7 @@
 #include <io/MslEncoderFormat.h>
 #include <io/MslObject.h>
 #include <io/MslEncoderUtils.h>
+#include <IllegalArgumentException.h>
 #include <MslCryptoException.h>
 #include <MslEncodingException.h>
 #include <MslError.h>
@@ -174,7 +175,7 @@ string JsonWebKey::Algorithm::getJcaAlgorithmName() const
 
 // ---- JsonWebKey
 
-JsonWebKey::JsonWebKey(const JsonWebKey::Usage& usage, const JsonWebKey::Algorithm& algo, bool extractable,
+JsonWebKey::JsonWebKey(const Usage& usage, const Algorithm& algo, bool extractable,
         const string& id, shared_ptr<PublicKey> publicKey, shared_ptr<PrivateKey> privateKey)
 : type(JsonWebKey::Type::rsa)
 , usage(usage)
@@ -236,6 +237,28 @@ JsonWebKey::JsonWebKey(const set<KeyOp>& keyOps, const Algorithm& algo, bool ext
                 break;
             default:
                 throw MslInternalException("The algorithm must be an RSA algorithm.");
+        }
+    }
+}
+
+JsonWebKey::JsonWebKey(const set<KeyOp>& keyOps, const Algorithm& algo, bool extractable,
+    const string& id, shared_ptr<SecretKey> secretKey)
+: type(JsonWebKey::Type::oct)
+, keyOps(keyOps)
+, algo(algo)
+, extractable(extractable)
+, id(make_shared<string>(id))
+, key(secretKey->getEncoded())
+, secretKey(secretKey)
+{
+    if (algo != Algorithm::INVALID) {
+        switch (algo) {
+            case Algorithm::hs256_:
+            case Algorithm::a128kw_:
+            case Algorithm::a128cbc_:
+                break;
+            default:
+                throw new MslInternalException("The algorithm must be a symmetric key algorithm.");
         }
     }
 }
@@ -305,6 +328,8 @@ JsonWebKey::JsonWebKey(shared_ptr<MslObject> jsonMo)
             if (!modulus || modulus->size() == 0)
                 throw MslCryptoException(MslError::INVALID_JWK_KEYDATA, "modulus is empty");
 
+            shared_ptr<ByteArray> nullBa;
+
             // Reconstruct the public key if it exists.
             shared_ptr<PublicKey> publicKey;
             shared_ptr<ByteArray> publicExponent;
@@ -312,7 +337,7 @@ JsonWebKey::JsonWebKey(shared_ptr<MslObject> jsonMo)
                 publicExponent = MslEncoderUtils::b64urlDecode(make_shared<string>(jsonMo->getString(KEY_PUBLIC_EXPONENT)));
                 if (!publicExponent || publicExponent->size() == 0)
                     throw MslCryptoException(MslError::INVALID_JWK_KEYDATA, "public exponent is empty");
-                shared_ptr<ByteArray> spki = RsaEvpKey::fromRaw(modulus, publicExponent, shared_ptr<ByteArray>())->toSpki();
+                shared_ptr<ByteArray> spki = RsaEvpKey::fromRaw(modulus, publicExponent, nullBa)->toSpki();
                 publicKey = make_shared<PublicKey>(spki, "RSA", PublicKey::DEFAULT_FORMAT);
             }
 
@@ -322,7 +347,7 @@ JsonWebKey::JsonWebKey(shared_ptr<MslObject> jsonMo)
                 shared_ptr<ByteArray> privateExponent = MslEncoderUtils::b64urlDecode(make_shared<string>(jsonMo->getString(KEY_PRIVATE_EXPONENT)));
                 if (!privateExponent || privateExponent->size() == 0)
                     throw MslCryptoException(MslError::INVALID_JWK_KEYDATA, "private exponent is empty");
-                shared_ptr<ByteArray> pkcs8 = RsaEvpKey::fromRaw(modulus, publicExponent, privateExponent)->toPkcs8();
+                shared_ptr<ByteArray> pkcs8 = RsaEvpKey::fromRaw(modulus, nullBa, privateExponent)->toPkcs8();
                 privateKey = make_shared<PrivateKey>(pkcs8, "RSA", PrivateKey::DEFAULT_FORMAT);
             }
 
@@ -334,6 +359,8 @@ JsonWebKey::JsonWebKey(shared_ptr<MslObject> jsonMo)
         }
     } catch (const MslEncoderException& e) {
         throw MslEncodingException(MslError::MSL_PARSE_ERROR, e);
+    } catch (const IllegalArgumentException& e) {
+        throw MslCryptoException(MslError::INVALID_JWK_KEYDATA, "b64 encoding error");
     }
 }
 
@@ -382,33 +409,33 @@ shared_ptr<ByteArray> JsonWebKey::toMslEncoding(shared_ptr<MslEncoderFactory> en
             if (!keyPair)
                 throw MslInternalException("No key pair to encode.");
             shared_ptr<PublicKey> publicKey = keyPair->publicKey;
-            if (!publicKey || publicKey->getFormat() != PublicKey::DEFAULT_FORMAT)
-                throw MslInternalException("Bad RSA public key format. (" + string(publicKey->getFormat()) + ")");
+            if (publicKey && publicKey->getFormat() != PublicKey::DEFAULT_FORMAT)
+                throw MslInternalException("Bad RSA public key format. (" + publicKey->getFormat() + ")");
             shared_ptr<PrivateKey> privateKey = keyPair->privateKey;
-            if (!privateKey || privateKey->getFormat() != PrivateKey::DEFAULT_FORMAT)
-                throw MslInternalException("Bad RSA private key format. (" + string(privateKey->getFormat()) + ")");
+            if (privateKey && privateKey->getFormat() != PrivateKey::DEFAULT_FORMAT)
+                throw MslInternalException("Bad RSA private key format. (" + privateKey->getFormat() + ")");
 
-            shared_ptr<ByteArray> mod, pubExp, privExp;
+            shared_ptr<ByteArray> mod1, mod2, pubExp, privExp, ignore;
             if (publicKey)
-                RsaEvpKey::fromSpki(publicKey->getEncoded())->toRaw(mod, pubExp, privExp);
-            shared_ptr<ByteArray> mod2, pubExp2, privExp2;
+                RsaEvpKey::fromSpki(publicKey->getEncoded())->toRaw(mod1, pubExp, ignore);
             if (privateKey)
-                RsaEvpKey::fromPkcs8(privateKey->getEncoded())->toRaw(mod2, pubExp2, privExp2);
+                RsaEvpKey::fromPkcs8(privateKey->getEncoded())->toRaw(mod2, ignore, privExp);
+
+            if ((!mod1 && !mod2) || (!pubExp && !privExp))
+                throw MslInternalException("Inconsistent RSA key content.");
+            if ((mod1 && mod2) && (*mod1 != *mod2))
+                throw MslInternalException("Inconsistent RSA modulus.");
 
             // Encode modulus.
-            shared_ptr<ByteArray> modulus = (publicKey) ? mod : mod2;
-            if (modulus)
-                mo->put(KEY_MODULUS, *MslEncoderUtils::b64urlEncode(modulus));
+            mo->put(KEY_MODULUS, *MslEncoderUtils::b64urlEncode(mod1 ? mod1 : mod2));
 
             // Encode public exponent.
-            shared_ptr<ByteArray> publicExponent = (publicKey) ? pubExp : pubExp2;
-            if (publicExponent)
-                mo->put(KEY_PUBLIC_EXPONENT, *MslEncoderUtils::b64urlEncode(publicExponent));
+            if (pubExp)
+                mo->put(KEY_PUBLIC_EXPONENT, *MslEncoderUtils::b64urlEncode(pubExp));
 
             // Encode private exponent.
-            if (privateKey && privExp2) {
-                mo->put(KEY_PRIVATE_EXPONENT, *MslEncoderUtils::b64urlEncode(privExp2));
-            }
+            if (privExp)
+                mo->put(KEY_PRIVATE_EXPONENT, *MslEncoderUtils::b64urlEncode(privExp));
         }
 
         // Return the result.

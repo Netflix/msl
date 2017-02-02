@@ -23,6 +23,8 @@
 #include <util/MockMslContext.h>
 #include <util/ScopedDisposer.h>
 #include <io/MslEncoderUtils.h>
+#include <MslCryptoException.h>
+#include <MslEncodingException.h>
 #include <openssl/x509.h>
 #include <openssl/bn.h>
 #include <memory>
@@ -159,7 +161,7 @@ shared_ptr<RsaKey> getRsaKey()
     return rsaKey;
 }
 
-shared_ptr<ByteArray> getModulus(shared_ptr<PublicKey> key)
+RSA * getRsaKeyFromSpki(shared_ptr<PublicKey> key)
 {
     assert(key->getFormat() == "SPKI");
     shared_ptr<ByteArray> spki = key->getEncoded();
@@ -168,22 +170,24 @@ shared_ptr<ByteArray> getModulus(shared_ptr<PublicKey> key)
     ScopedDisposer<RSA, void, RSA_free> rsa(d2i_RSA_PUBKEY(NULL, &buf, (long)spki->size()));
     assert(rsa);
 
+    return rsa.release();
+}
+
+shared_ptr<ByteArray> getModulus(shared_ptr<PublicKey> key)
+{
+    ScopedDisposer<RSA, void, RSA_free> rsa(getRsaKeyFromSpki(key));
+    assert(rsa);
     return BigNumToByteArray(rsa.get()->n);
 }
 
 shared_ptr<ByteArray> getPublicExponent(shared_ptr<PublicKey> key)
 {
-    assert(key->getFormat() == "SPKI");
-    shared_ptr<ByteArray> spki = key->getEncoded();
-
-    const unsigned char * buf = &(*spki)[0];
-    ScopedDisposer<RSA, void, RSA_free> rsa(d2i_RSA_PUBKEY(NULL, &buf, (long)spki->size()));
+    ScopedDisposer<RSA, void, RSA_free> rsa(getRsaKeyFromSpki(key));
     assert(rsa);
-
     return BigNumToByteArray(rsa.get()->e);
 }
 
-shared_ptr<ByteArray> getPrivateExponent(shared_ptr<PrivateKey> key)
+EVP_PKEY * getEvpPkeyFromPkcs8(shared_ptr<PrivateKey> key)
 {
     assert(key->getFormat() == "PKCS8");
     shared_ptr<ByteArray> pkcs8 = key->getEncoded();
@@ -202,6 +206,38 @@ shared_ptr<ByteArray> getPrivateExponent(shared_ptr<PrivateKey> key)
 
     // create a EVP_PKEY from the PKCS8_PRIV_KEY_INFO
     ScopedDisposer<EVP_PKEY, void, EVP_PKEY_free> pkey(EVP_PKCS82PKEY(p8inf.get()));
+    assert(pkey.get());
+
+    return pkey.release();
+}
+
+shared_ptr<ByteArray> getModulus(shared_ptr<PrivateKey> key)
+{
+    ScopedDisposer<EVP_PKEY, void, EVP_PKEY_free> pkey(getEvpPkeyFromPkcs8(key));
+    assert(pkey.get());
+
+    // get the RSA struct from the EVP_PKEY
+    const RSA * const rsa = EVP_PKEY_get1_RSA(pkey.get());
+    assert(rsa);
+
+    return BigNumToByteArray(rsa->n);
+}
+
+shared_ptr<ByteArray> getPublicExponent(shared_ptr<PrivateKey> key)
+{
+    ScopedDisposer<EVP_PKEY, void, EVP_PKEY_free> pkey(getEvpPkeyFromPkcs8(key));
+    assert(pkey.get());
+
+    // get the RSA struct from the EVP_PKEY
+    const RSA * const rsa = EVP_PKEY_get1_RSA(pkey.get());
+    assert(rsa);
+
+    return BigNumToByteArray(rsa->e);
+}
+
+shared_ptr<ByteArray> getPrivateExponent(shared_ptr<PrivateKey> key)
+{
+    ScopedDisposer<EVP_PKEY, void, EVP_PKEY_free> pkey(getEvpPkeyFromPkcs8(key));
     assert(pkey.get());
 
     // get the RSA struct from the EVP_PKEY
@@ -241,7 +277,7 @@ public:
 
         MA_ENCRYPT_DECRYPT = make_shared<MslArray>();
         MA_ENCRYPT_DECRYPT->put(-1, JsonWebKey::KeyOp::encrypt.name());
-        MA_ENCRYPT_DECRYPT->put(-1, JsonWebKey::KeyOp::verify.name());
+        MA_ENCRYPT_DECRYPT->put(-1, JsonWebKey::KeyOp::decrypt.name());
 
         MA_WRAP_UNWRAP = make_shared<MslArray>();
         MA_WRAP_UNWRAP->put(-1, JsonWebKey::KeyOp::wrapKey.name());
@@ -436,14 +472,13 @@ TEST_F(JsonWebKeyTest, rsaNullCtorPublic)
     EXPECT_EQ(JsonWebKey::Type::rsa, jwk->getType());
     EXPECT_EQ(NULL_USAGE, jwk->getUsage());
     EXPECT_EQ(0u, jwk->getKeyOps().size());
-#if 0
-    shared_ptr<ByteArray> encode = jwk->toMslEncoding(encoder, ENCODER_FORMAT);  // FIXME segfault
+    shared_ptr<ByteArray> encode = jwk->toMslEncoding(encoder, ENCODER_FORMAT);
     EXPECT_TRUE(encode);
 
     const JsonWebKey moJwk(encoder->parseObject(encode));
     EXPECT_EQ(jwk->isExtractable(), moJwk.isExtractable());
     EXPECT_EQ(jwk->getAlgorithm(), moJwk.getAlgorithm());
-    EXPECT_EQ(jwk->getId(), moJwk.getId());
+    EXPECT_EQ(*jwk->getId(), *moJwk.getId());
     std::shared_ptr<KeyPair> moKeypair = moJwk.getRsaKeyPair();
     EXPECT_TRUE(moKeypair);
     EXPECT_EQ(*getModulus(keypair->publicKey), *getModulus(moKeypair->publicKey));
@@ -455,173 +490,168 @@ TEST_F(JsonWebKeyTest, rsaNullCtorPublic)
     EXPECT_EQ(jwk->getKeyOps(), moJwk.getKeyOps());
     shared_ptr<ByteArray> moEncode = moJwk.toMslEncoding(encoder, ENCODER_FORMAT);
     EXPECT_TRUE(moEncode);
-    EXPECT_EQ(encode, moEncode);
-#endif
+    EXPECT_EQ(*encode, *moEncode);
 }
 
-#if 0
-@Test
-public void rsaNullCtorPrivate() throws MslCryptoException, MslEncodingException, MslEncoderException {
-    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, null, false, null, null, PRIVATE_KEY);
+TEST_F(JsonWebKeyTest, rsaNullCtorPrivate)
+{
+    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, JsonWebKey::Algorithm::INVALID, false, "", shared_ptr<PublicKey>(), PRIVATE_KEY);
     EXPECT_FALSE(jwk->isExtractable());
-    assertNull(jwk->getAlgorithm());
-    assertNull(jwk->getId());
+    EXPECT_EQ(JsonWebKey::Algorithm::INVALID, jwk->getAlgorithm());
+    EXPECT_EQ(JsonWebKey::Algorithm::INVALID, jwk->getAlgorithm());
     std::shared_ptr<KeyPair> keypair = jwk->getRsaKeyPair();
-    EXPECT_TRUE(keypair);
-    final RSAPublicKey pubkey = (RSAPublicKey)keypair.getPublic();
-    assertNull(pubkey);
-    final RSAPrivateKey privkey = (RSAPrivateKey)keypair.getPrivate();
-    EXPECT_EQ(PRIVATE_KEY.getModulus(), privkey.getModulus());
-    EXPECT_EQ(PRIVATE_KEY.getPrivateExponent(), privkey.getPrivateExponent());
-    assertNull(jwk->getSecretKey());
+    EXPECT_TRUE(keypair.get());
+    EXPECT_FALSE(keypair->publicKey);
+    EXPECT_EQ(*getModulus(PRIVATE_KEY), *getModulus(keypair->privateKey));
+    EXPECT_EQ(*getPublicExponent(PRIVATE_KEY), *getPublicExponent(keypair->privateKey));
+    EXPECT_FALSE(jwk->getSecretKey());
     EXPECT_EQ(JsonWebKey::Type::rsa, jwk->getType());
-    assertNull(jwk->getUsage());
-    assertNull(jwk->getKeyOps());
+    EXPECT_EQ(NULL_USAGE, jwk->getUsage());
+    EXPECT_EQ(0u, jwk->getKeyOps().size());
     shared_ptr<ByteArray> encode = jwk->toMslEncoding(encoder, ENCODER_FORMAT);
     EXPECT_TRUE(encode);
 
-    shared_ptr<JsonWebKey> moJwk = new JsonWebKey(encoder.parseObject(encode));
+    shared_ptr<JsonWebKey> moJwk = make_shared<JsonWebKey>(encoder->parseObject(encode));
     EXPECT_EQ(jwk->isExtractable(), moJwk->isExtractable());
     EXPECT_EQ(jwk->getAlgorithm(), moJwk->getAlgorithm());
-    EXPECT_EQ(jwk->getId(), moJwk->getId());
+    EXPECT_EQ(*jwk->getId(), *moJwk->getId());
     std::shared_ptr<KeyPair> moKeypair = moJwk->getRsaKeyPair();
     EXPECT_TRUE(moKeypair);
-    final RSAPublicKey moPubkey = (RSAPublicKey)moKeypair.getPublic();
-    assertNull(moPubkey);
-    final RSAPrivateKey moPrivkey = (RSAPrivateKey)moKeypair.getPrivate();
-    EXPECT_EQ(privkey.getModulus(), moPrivkey.getModulus());
-    EXPECT_EQ(privkey.getPrivateExponent(), moPrivkey.getPrivateExponent());
-    assertNull(moJwk->getSecretKey());
+    EXPECT_FALSE(moKeypair->publicKey);
+    EXPECT_TRUE(moKeypair->privateKey);
+    EXPECT_EQ(*getModulus(keypair->privateKey), *getModulus(moKeypair->privateKey));
+    EXPECT_EQ(*getPrivateExponent(keypair->privateKey), *getPrivateExponent(moKeypair->privateKey));
+    EXPECT_FALSE(moJwk->getSecretKey());
     EXPECT_EQ(jwk->getType(), moJwk->getType());
     EXPECT_EQ(jwk->getUsage(), moJwk->getUsage());
     EXPECT_EQ(jwk->getKeyOps(), moJwk->getKeyOps());
     shared_ptr<ByteArray> moEncode = moJwk->toMslEncoding(encoder, ENCODER_FORMAT);
     EXPECT_TRUE(moEncode);
-    assertArrayEquals(encode, moEncode);
+    EXPECT_EQ(*encode, *moEncode);
 }
 
-@Test
-public void rsaNullJsonPublic() throws MslEncoderException {
-    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, null, false, null, PUBLIC_KEY, null);
+TEST_F(JsonWebKeyTest, rsaNullJsonPublic)
+{
+    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, JsonWebKey::Algorithm::INVALID, false, "", PUBLIC_KEY, shared_ptr<PrivateKey>());
     shared_ptr<ByteArray> encode = jwk->toMslEncoding(encoder, ENCODER_FORMAT);
-    final MslObject mo = encoder.parseObject(encode);
+    shared_ptr<MslObject> mo = encoder->parseObject(encode);
 
     EXPECT_FALSE(mo->getBoolean(KEY_EXTRACTABLE));
     EXPECT_FALSE(mo->has(KEY_ALGORITHM));
-    EXPECT_FALSE(mo->has(KEY_KEY_ID));
+    EXPECT_EQ("", mo->getString(KEY_KEY_ID));
     EXPECT_EQ(JsonWebKey::Type::rsa.name(), mo->getString(KEY_TYPE));
     EXPECT_FALSE(mo->has(KEY_USAGE));
     EXPECT_FALSE(mo->has(KEY_KEY_OPS));
 
-    final String modulus = MslEncoderUtils::b64urlEncode(bi2bytes(PUBLIC_KEY.getModulus()));
-    final String pubexp = MslEncoderUtils::b64urlEncode(bi2bytes(PUBLIC_KEY.getPublicExponent()));
+    shared_ptr<string> modulus = MslEncoderUtils::b64urlEncode(getModulus(PUBLIC_KEY));
+    shared_ptr<string> pubexp = MslEncoderUtils::b64urlEncode(getPublicExponent(PUBLIC_KEY));
 
-    EXPECT_EQ(modulus, mo->getString(KEY_MODULUS));
-    EXPECT_EQ(pubexp, mo->getString(KEY_PUBLIC_EXPONENT));
+    EXPECT_EQ(*modulus, mo->getString(KEY_MODULUS));
+    EXPECT_EQ(*pubexp, mo->getString(KEY_PUBLIC_EXPONENT));
     EXPECT_FALSE(mo->has(KEY_PRIVATE_EXPONENT));
 
     EXPECT_FALSE(mo->has(KEY_KEY));
 }
 
-@Test
-public void rsaNullJsonPrivate() throws MslEncoderException {
-    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, null, false, null, null, PRIVATE_KEY);
+TEST_F(JsonWebKeyTest, rsaNullJsonPrivate)
+{
+    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, JsonWebKey::Algorithm::INVALID, false, "", shared_ptr<PublicKey>(), PRIVATE_KEY);
     shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, jwk);
 
     EXPECT_FALSE(mo->getBoolean(KEY_EXTRACTABLE));
     EXPECT_FALSE(mo->has(KEY_ALGORITHM));
-    EXPECT_FALSE(mo->has(KEY_KEY_ID));
+    EXPECT_EQ("", mo->getString(KEY_KEY_ID));
     EXPECT_EQ(JsonWebKey::Type::rsa.name(), mo->getString(KEY_TYPE));
     EXPECT_FALSE(mo->has(KEY_USAGE));
     EXPECT_FALSE(mo->has(KEY_KEY_OPS));
 
-    final String modulus = MslEncoderUtils::b64urlEncode(bi2bytes(PUBLIC_KEY.getModulus()));
-    final String privexp = MslEncoderUtils::b64urlEncode(bi2bytes(PRIVATE_KEY.getPrivateExponent()));
+    shared_ptr<string> modulus = MslEncoderUtils::b64urlEncode(getModulus(PUBLIC_KEY));
+    shared_ptr<string> privexp = MslEncoderUtils::b64urlEncode(getPrivateExponent(PRIVATE_KEY));
 
-    EXPECT_EQ(modulus, mo->getString(KEY_MODULUS));
+    EXPECT_EQ(*modulus, mo->getString(KEY_MODULUS));
     EXPECT_FALSE(mo->has(KEY_PUBLIC_EXPONENT));
-    EXPECT_EQ(privexp, mo->getString(KEY_PRIVATE_EXPONENT));
+    EXPECT_EQ(*privexp, mo->getString(KEY_PRIVATE_EXPONENT));
 
     EXPECT_FALSE(mo->has(KEY_KEY));
 }
 
-@Test(expected = MslInternalException.class)
-public void rsaCtorNullKeys() {
-    new JsonWebKey(NULL_USAGE, null, false, null, null, null);
+//@Test(expected = MslInternalException.class)
+TEST_F(JsonWebKeyTest, rsaCtorNullKeys)
+{
+    EXPECT_THROW(new JsonWebKey(NULL_USAGE, JsonWebKey::Algorithm::INVALID, false, "", shared_ptr<PublicKey>(), shared_ptr<PrivateKey>()), MslInternalException);
 }
 
-@Test(expected = MslInternalException.class)
-public void rsaCtorMismatchedAlgorithm() {
-    new JsonWebKey(NULL_USAGE, Algorithm.A128CBC, false, null, PUBLIC_KEY, PRIVATE_KEY);
+//@Test(expected = MslInternalException.class)
+TEST_F(JsonWebKeyTest, rsaCtorMismatchedAlgorithm)
+{
+    EXPECT_THROW(new JsonWebKey(NULL_USAGE, JsonWebKey::Algorithm::A128CBC, false, "", PUBLIC_KEY, PRIVATE_KEY), MslInternalException);
 }
 
-@Test
-public void octUsageCtor() throws MslCryptoException, MslEncodingException, MslEncoderException {
-    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(JsonWebKey::Usage::enc, Algorithm.A128CBC, EXTRACTABLE, KEY_ID, SECRET_KEY);
+TEST_F(JsonWebKeyTest, octUsageCtor)
+{
+    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(JsonWebKey::Usage::enc, JsonWebKey::Algorithm::A128CBC, EXTRACTABLE, KEY_ID, SECRET_KEY);
     EXPECT_EQ(EXTRACTABLE, jwk->isExtractable());
-    EXPECT_EQ(Algorithm.A128CBC, jwk->getAlgorithm());
-    EXPECT_EQ(KEY_ID, jwk->getId());
-    assertNull(jwk->getRsaKeyPair());
-    assertArrayEquals(SECRET_KEY.getEncoded(), jwk->getSecretKey().getEncoded());
-    EXPECT_EQ(Type.oct, jwk->getType());
+    EXPECT_EQ(JsonWebKey::Algorithm::A128CBC, jwk->getAlgorithm());
+    EXPECT_EQ(KEY_ID, *jwk->getId());
+    EXPECT_FALSE(jwk->getRsaKeyPair());
+    EXPECT_EQ(SECRET_KEY->getEncoded(), jwk->getSecretKey()->getEncoded());
+    EXPECT_EQ(JsonWebKey::Type::oct, jwk->getType());
     EXPECT_EQ(JsonWebKey::Usage::enc, jwk->getUsage());
-    assertNull(jwk->getKeyOps());
+    EXPECT_EQ(0u, jwk->getKeyOps().size());
     shared_ptr<ByteArray> encode = jwk->toMslEncoding(encoder, ENCODER_FORMAT);
     EXPECT_TRUE(encode);
 
-    shared_ptr<JsonWebKey> moJwk = new JsonWebKey(encoder.parseObject(encode));
+    shared_ptr<JsonWebKey> moJwk = make_shared<JsonWebKey>(encoder->parseObject(encode));
     EXPECT_EQ(jwk->isExtractable(), moJwk->isExtractable());
     EXPECT_EQ(jwk->getAlgorithm(), moJwk->getAlgorithm());
-    EXPECT_EQ(jwk->getId(), moJwk->getId());
-    assertNull(moJwk->getRsaKeyPair());
-    assertArrayEquals(jwk->getSecretKey().getEncoded(), moJwk->getSecretKey().getEncoded());
+    EXPECT_EQ(*jwk->getId(), *moJwk->getId());
+    EXPECT_FALSE(moJwk->getRsaKeyPair());
+    EXPECT_EQ(*jwk->getSecretKey()->getEncoded(), *moJwk->getSecretKey()->getEncoded());
     EXPECT_EQ(jwk->getType(), moJwk->getType());
     EXPECT_EQ(jwk->getUsage(), moJwk->getUsage());
     EXPECT_EQ(jwk->getKeyOps(), moJwk->getKeyOps());
     shared_ptr<ByteArray> moEncode = moJwk->toMslEncoding(encoder, ENCODER_FORMAT);
     EXPECT_TRUE(moEncode);
-    assertArrayEquals(encode, moEncode);
+    EXPECT_EQ(*encode, *moEncode);
 }
 
-@Test
-public void octKeyOpsCtor() throws MslCryptoException, MslEncodingException, MslEncoderException {
-    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(ENCRYPT_DECRYPT, Algorithm.A128CBC, EXTRACTABLE, KEY_ID, SECRET_KEY);
+TEST_F(JsonWebKeyTest, octKeyOpsCtor)
+{
+    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(ENCRYPT_DECRYPT, JsonWebKey::Algorithm::A128CBC, EXTRACTABLE, KEY_ID, SECRET_KEY);
     EXPECT_EQ(EXTRACTABLE, jwk->isExtractable());
-    EXPECT_EQ(Algorithm.A128CBC, jwk->getAlgorithm());
-    EXPECT_EQ(KEY_ID, jwk->getId());
-    assertNull(jwk->getRsaKeyPair());
-    assertArrayEquals(SECRET_KEY.getEncoded(), jwk->getSecretKey().getEncoded());
-    EXPECT_EQ(Type.oct, jwk->getType());
-    assertNull(jwk->getUsage());
+    EXPECT_EQ(JsonWebKey::Algorithm::A128CBC, jwk->getAlgorithm());
+    EXPECT_EQ(KEY_ID, *jwk->getId());
+    EXPECT_FALSE(jwk->getRsaKeyPair());
+    EXPECT_EQ(SECRET_KEY->getEncoded(), jwk->getSecretKey()->getEncoded());
+    EXPECT_EQ(JsonWebKey::Type::oct, jwk->getType());
+    EXPECT_EQ(JsonWebKey::Usage::invalid, jwk->getUsage());
     EXPECT_EQ(ENCRYPT_DECRYPT, jwk->getKeyOps());
     shared_ptr<ByteArray> encode = jwk->toMslEncoding(encoder, ENCODER_FORMAT);
     EXPECT_TRUE(encode);
 
-    shared_ptr<JsonWebKey> moJwk = new JsonWebKey(encoder.parseObject(encode));
+    shared_ptr<JsonWebKey> moJwk = make_shared<JsonWebKey>(encoder->parseObject(encode));
     EXPECT_EQ(jwk->isExtractable(), moJwk->isExtractable());
     EXPECT_EQ(jwk->getAlgorithm(), moJwk->getAlgorithm());
-    EXPECT_EQ(jwk->getId(), moJwk->getId());
-    assertNull(moJwk->getRsaKeyPair());
-    assertArrayEquals(jwk->getSecretKey().getEncoded(), moJwk->getSecretKey().getEncoded());
+    EXPECT_EQ(*jwk->getId(), *moJwk->getId());
+    EXPECT_FALSE(moJwk->getRsaKeyPair());
+    EXPECT_EQ(*jwk->getSecretKey()->getEncoded(), *moJwk->getSecretKey()->getEncoded());
     EXPECT_EQ(jwk->getType(), moJwk->getType());
     EXPECT_EQ(jwk->getUsage(), moJwk->getUsage());
     EXPECT_EQ(jwk->getKeyOps(), moJwk->getKeyOps());
     shared_ptr<ByteArray> moEncode = moJwk->toMslEncoding(encoder, ENCODER_FORMAT);
     EXPECT_TRUE(moEncode);
-    // This test will not always pass since the key operations are
-    // unordered.
-    //assertArrayEquals(encode, moEncode);
+    EXPECT_EQ(*encode, *moEncode);
 }
 
-@Test
-public void octUsageJson() throws MslEncoderException {
-    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(JsonWebKey::Usage::wrap, Algorithm.A128KW, EXTRACTABLE, KEY_ID, SECRET_KEY);
+TEST_F(JsonWebKeyTest, octUsageJson)
+{
+    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(JsonWebKey::Usage::wrap, JsonWebKey::Algorithm::A128KW, EXTRACTABLE, KEY_ID, SECRET_KEY);
     shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, jwk);
 
     EXPECT_EQ(EXTRACTABLE, mo->optBoolean(KEY_EXTRACTABLE));
-    EXPECT_EQ(Algorithm.A128KW.name(), mo->getString(KEY_ALGORITHM));
+    EXPECT_EQ(JsonWebKey::Algorithm::A128KW.name(), mo->getString(KEY_ALGORITHM));
     EXPECT_EQ(KEY_ID, mo->getString(KEY_KEY_ID));
-    EXPECT_EQ(Type.oct.name(), mo->getString(KEY_TYPE));
+    EXPECT_EQ(JsonWebKey::Type::oct.name(), mo->getString(KEY_TYPE));
     EXPECT_EQ(JsonWebKey::Usage::wrap.name(), mo->getString(KEY_USAGE));
     EXPECT_FALSE(mo->has(KEY_KEY_OPS));
 
@@ -629,332 +659,424 @@ public void octUsageJson() throws MslEncoderException {
     EXPECT_FALSE(mo->has(KEY_PUBLIC_EXPONENT));
     EXPECT_FALSE(mo->has(KEY_PRIVATE_EXPONENT));
 
-    final String key = MslEncoderUtils::b64urlEncode(SECRET_KEY.getEncoded());
+    shared_ptr<string> key = MslEncoderUtils::b64urlEncode(SECRET_KEY->getEncoded());
 
-    EXPECT_EQ(key, mo->getString(KEY_KEY));
+    EXPECT_EQ(*key, mo->getString(KEY_KEY));
 }
 
-@Test
-public void octKeyOpsJson() throws MslEncoderException {
-    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(WRAP_UNWRAP, Algorithm.A128KW, EXTRACTABLE, KEY_ID, SECRET_KEY);
+TEST_F(JsonWebKeyTest, octKeyOpsJson)
+{
+    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(WRAP_UNWRAP, JsonWebKey::Algorithm::A128KW, EXTRACTABLE, KEY_ID, SECRET_KEY);
     shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, jwk);
 
     EXPECT_EQ(EXTRACTABLE, mo->optBoolean(KEY_EXTRACTABLE));
-    EXPECT_EQ(Algorithm.A128KW.name(), mo->getString(KEY_ALGORITHM));
+    EXPECT_EQ(JsonWebKey::Algorithm::A128KW.name(), mo->getString(KEY_ALGORITHM));
     EXPECT_EQ(KEY_ID, mo->getString(KEY_KEY_ID));
-    EXPECT_EQ(Type.oct.name(), mo->getString(KEY_TYPE));
+    EXPECT_EQ(JsonWebKey::Type::oct.name(), mo->getString(KEY_TYPE));
     EXPECT_FALSE(mo->has(KEY_USAGE));
-    assertTrue(MslEncoderUtils::equalSets(MA_WRAP_UNWRAP, mo->getMslArray(KEY_KEY_OPS)));
+    EXPECT_EQ(MA_WRAP_UNWRAP, mo->getMslArray(KEY_KEY_OPS));
 
     EXPECT_FALSE(mo->has(KEY_MODULUS));
     EXPECT_FALSE(mo->has(KEY_PUBLIC_EXPONENT));
     EXPECT_FALSE(mo->has(KEY_PRIVATE_EXPONENT));
 
-    final String key = MslEncoderUtils::b64urlEncode(SECRET_KEY.getEncoded());
+    shared_ptr<string> key = MslEncoderUtils::b64urlEncode(SECRET_KEY->getEncoded());
 
-    EXPECT_EQ(key, mo->getString(KEY_KEY));
+    EXPECT_EQ(*key, mo->getString(KEY_KEY));
 }
 
-@Test
-public void octNullCtor() throws MslCryptoException, MslEncodingException, MslEncoderException {
-    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, null, false, null, SECRET_KEY);
+TEST_F(JsonWebKeyTest, octNullCtor)
+{
+    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, JsonWebKey::Algorithm::INVALID, false, "", SECRET_KEY);
     EXPECT_FALSE(jwk->isExtractable());
-    assertNull(jwk->getAlgorithm());
-    assertNull(jwk->getId());
-    assertNull(jwk->getRsaKeyPair());
-    assertArrayEquals(SECRET_KEY.getEncoded(), jwk->getSecretKey().getEncoded());
-    EXPECT_EQ(Type.oct, jwk->getType());
-    assertNull(jwk->getUsage());
-    assertNull(jwk->getKeyOps());
+    EXPECT_EQ(JsonWebKey::Algorithm::INVALID, jwk->getAlgorithm());
+    EXPECT_EQ("", *jwk->getId());
+    EXPECT_FALSE(jwk->getRsaKeyPair());
+    EXPECT_EQ(SECRET_KEY->getEncoded(), jwk->getSecretKey()->getEncoded());
+    EXPECT_EQ(JsonWebKey::Type::oct, jwk->getType());
+    EXPECT_EQ(NULL_USAGE, jwk->getUsage());
+    EXPECT_EQ(0u, jwk->getKeyOps().size());
     shared_ptr<ByteArray> encode = jwk->toMslEncoding(encoder, ENCODER_FORMAT);
     EXPECT_TRUE(encode);
 
-    shared_ptr<JsonWebKey> moJwk = new JsonWebKey(encoder.parseObject(encode));
+    shared_ptr<JsonWebKey> moJwk = make_shared<JsonWebKey>(encoder->parseObject(encode));
     EXPECT_EQ(jwk->isExtractable(), moJwk->isExtractable());
     EXPECT_EQ(jwk->getAlgorithm(), moJwk->getAlgorithm());
-    EXPECT_EQ(jwk->getId(), moJwk->getId());
-    assertNull(moJwk->getRsaKeyPair());
-    assertArrayEquals(jwk->getSecretKey(SECRET_KEY.getAlgorithm()).getEncoded(), moJwk->getSecretKey(SECRET_KEY.getAlgorithm()).getEncoded());
+    EXPECT_EQ(*jwk->getId(), *moJwk->getId());
+    EXPECT_FALSE(moJwk->getRsaKeyPair());
+    EXPECT_EQ(*jwk->getSecretKey(SECRET_KEY->getAlgorithm())->getEncoded(), *moJwk->getSecretKey(SECRET_KEY->getAlgorithm())->getEncoded());
     EXPECT_EQ(jwk->getType(), moJwk->getType());
     EXPECT_EQ(jwk->getUsage(), moJwk->getUsage());
     EXPECT_EQ(jwk->getKeyOps(), moJwk->getKeyOps());
     shared_ptr<ByteArray> moEncode = moJwk->toMslEncoding(encoder, ENCODER_FORMAT);
     EXPECT_TRUE(moEncode);
-    assertArrayEquals(encode, moEncode);
+    EXPECT_EQ(*encode, *moEncode);
 }
 
-@Test
-public void octNullJson() throws MslEncoderException {
-    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, null, false, null, SECRET_KEY);
+TEST_F(JsonWebKeyTest, octNullJson)
+{
+    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, JsonWebKey::Algorithm::INVALID, false, "", SECRET_KEY);
     shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, jwk);
 
     EXPECT_FALSE(mo->getBoolean(KEY_EXTRACTABLE));
     EXPECT_FALSE(mo->has(KEY_ALGORITHM));
-    EXPECT_FALSE(mo->has(KEY_KEY_ID));
-    EXPECT_EQ(Type.oct.name(), mo->getString(KEY_TYPE));
-    EXPECT_FALSE(mo->has(KEY_USAGE));
-    EXPECT_FALSE(mo->has(KEY_KEY_OPS));
+    EXPECT_EQ("", *jwk->getId());
+    EXPECT_EQ(JsonWebKey::Type::oct.name(), mo->getString(KEY_TYPE));
+    EXPECT_EQ(NULL_USAGE, jwk->getUsage());
+    EXPECT_EQ(0u, jwk->getKeyOps().size());
 
     EXPECT_FALSE(mo->has(KEY_MODULUS));
     EXPECT_FALSE(mo->has(KEY_PUBLIC_EXPONENT));
     EXPECT_FALSE(mo->has(KEY_PRIVATE_EXPONENT));
 
-    final String key = MslEncoderUtils::b64urlEncode(SECRET_KEY.getEncoded());
+    shared_ptr<string> key = MslEncoderUtils::b64urlEncode(SECRET_KEY->getEncoded());
 
-    EXPECT_EQ(key, mo->getString(KEY_KEY));
+    EXPECT_EQ(*key, mo->getString(KEY_KEY));
 }
 
-public void usageOnly() throws MslEncoderException, MslCryptoException, MslEncodingException {
-    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, null, false, null, SECRET_KEY);
+TEST_F(JsonWebKeyTest, usageOnly)
+{
+    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, JsonWebKey::Algorithm::INVALID, false, "", SECRET_KEY);
     shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, jwk);
 
     mo->put(KEY_USAGE, JsonWebKey::Usage::enc.name());
 
-    shared_ptr<JsonWebKey> moJwk = new JsonWebKey(mo);
+    shared_ptr<JsonWebKey> moJwk = make_shared<JsonWebKey>(mo);
     EXPECT_EQ(JsonWebKey::Usage::enc, moJwk->getUsage());
-    assertNull(moJwk->getKeyOps());
+    EXPECT_EQ(0u, moJwk->getKeyOps().size());
 }
 
-public void keyOpsOnly() throws MslEncoderException, MslCryptoException, MslEncodingException {
-    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_KEYOPS, null, false, null, SECRET_KEY);
+TEST_F(JsonWebKeyTest, keyOpsOnly)
+{
+    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, JsonWebKey::Algorithm::INVALID, false, "", SECRET_KEY);
     shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, jwk);
 
     mo->put(KEY_KEY_OPS, MA_ENCRYPT_DECRYPT);
 
-    shared_ptr<JsonWebKey> moJwk = new JsonWebKey(mo);
-    assertNull(moJwk->getUsage());
-    EXPECT_EQ(new HashSet<KeyOp>(Arrays.asList(KeyOp.encrypt, KeyOp.decrypt)), moJwk->getKeyOps());
+    shared_ptr<JsonWebKey> moJwk = make_shared<JsonWebKey>(mo);
+    EXPECT_EQ(NULL_USAGE, moJwk->getUsage());
+    set<JsonWebKey::KeyOp> keyOps;
+    keyOps.insert(JsonWebKey::KeyOp::encrypt);
+    keyOps.insert(JsonWebKey::KeyOp::decrypt);
+    EXPECT_EQ(keyOps, moJwk->getKeyOps());
 }
 
-@Test(expected = MslInternalException.class)
-public void octCtorMismatchedAlgo() {
-    new JsonWebKey(NULL_USAGE, JsonWebKey::Algorithm::RSA1_5, false, null, SECRET_KEY);
+TEST_F(JsonWebKeyTest, octCtorMismatchedAlgo)
+{
+//@Test(expected = MslInternalException.class)
+    EXPECT_THROW(JsonWebKey(NULL_USAGE, JsonWebKey::Algorithm::RSA1_5, false, "", SECRET_KEY), MslInternalException);
 }
 
-@Test
-public void missingType() throws MslEncoderException, MslCryptoException, MslEncodingException {
-    thrown.expect(MslEncodingException.class);
-    thrown.expectMslError(MslError.MSL_PARSE_ERROR);
+TEST_F(JsonWebKeyTest, missingType)
+{
+//    thrown.expect(MslEncodingException.class);
+//    thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
-    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, null, false, null, SECRET_KEY);
+    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, JsonWebKey::Algorithm::INVALID, false, "", SECRET_KEY);
     shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, jwk);
 
     mo->remove(KEY_TYPE);
 
-    new JsonWebKey(mo);
+    try {
+        new JsonWebKey(mo);
+        ADD_FAILURE() << "Should have thrown";
+    }
+    catch (const MslEncodingException& e) {
+        EXPECT_EQ(MslError::MSL_PARSE_ERROR, e.getError());
+    }
 }
 
-@Test
-public void invalidType() throws MslCryptoException, MslEncodingException, MslEncoderException {
-    thrown.expect(MslCryptoException.class);
-    thrown.expectMslError(MslError.UNIDENTIFIED_JWK_TYPE);
+TEST_F(JsonWebKeyTest, invalidType)
+{
+//    thrown.expect(MslCryptoException.class);
+//    thrown.expectMslError(MslError.UNIDENTIFIED_JWK_TYPE);
 
-    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, null, false, null, SECRET_KEY);
+    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, JsonWebKey::Algorithm::INVALID, false, "", SECRET_KEY);
     shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, jwk);
 
-    mo->put(KEY_TYPE, "x");
+    mo->put<string>(KEY_TYPE, "x");
 
-    new JsonWebKey(mo);
+    try {
+        new JsonWebKey(mo);
+        ADD_FAILURE() << "Should have thrown";
+    }
+    catch (const MslCryptoException& e) {
+        EXPECT_EQ(MslError::UNIDENTIFIED_JWK_TYPE, e.getError());
+    }
 }
 
-@Test
-public void invalidUsage() throws MslCryptoException, MslEncodingException, MslEncoderException {
-    thrown.expect(MslCryptoException.class);
-    thrown.expectMslError(MslError.UNIDENTIFIED_JWK_USAGE);
+TEST_F(JsonWebKeyTest, invalidUsage)
+{
+//    thrown.expect(MslCryptoException.class);
+//    thrown.expectMslError(MslError.UNIDENTIFIED_JWK_USAGE);
 
-    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, null, false, null, SECRET_KEY);
+    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, JsonWebKey::Algorithm::INVALID, false, "", SECRET_KEY);
     shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, jwk);
 
-    mo->put(KEY_USAGE, "x");
+    mo->put<string>(KEY_USAGE, "x");
 
-    new JsonWebKey(mo);
+    try {
+        new JsonWebKey(mo);
+        ADD_FAILURE() << "Should have thrown";
+    }
+    catch (const MslCryptoException& e) {
+        EXPECT_EQ(MslError::UNIDENTIFIED_JWK_USAGE, e.getError());
+    }
 }
 
-@Test
-public void invalidKeyOp() throws MslEncoderException, MslCryptoException, MslEncodingException {
-    thrown.expect(MslCryptoException.class);
-    thrown.expectMslError(MslError.UNIDENTIFIED_JWK_KEYOP);
+TEST_F(JsonWebKeyTest, invalidKeyOp)
+{
+//    thrown.expect(MslCryptoException.class);
+//    thrown.expectMslError(MslError.UNIDENTIFIED_JWK_KEYOP);
 
-    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_KEYOPS, null, false, null, SECRET_KEY);
+    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, JsonWebKey::Algorithm::INVALID, false, "", SECRET_KEY);
     shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, jwk);
 
-    mo->put(KEY_KEY_OPS, new JSONArray(Arrays.asList(KeyOp.encrypt.name(), "x", KeyOp.decrypt.name()).toArray()));
+    shared_ptr<MslArray> keyOps = make_shared<MslArray>();
+    keyOps->put(-1, JsonWebKey::KeyOp::encrypt.name());
+    keyOps->put<string>(-1, "x");
+    keyOps->put(-1, JsonWebKey::KeyOp::decrypt.name());
 
-    new JsonWebKey(mo);
+    mo->put(KEY_KEY_OPS, keyOps);
+
+    try {
+        new JsonWebKey(mo);
+        ADD_FAILURE() << "Should have thrown";
+    }
+    catch (const MslCryptoException& e) {
+        EXPECT_EQ(MslError::UNIDENTIFIED_JWK_KEYOP, e.getError());
+    }
 }
 
-@Test
-public void invalidAlgorithm() throws MslCryptoException, MslEncodingException, MslEncoderException {
-    thrown.expect(MslCryptoException.class);
-    thrown.expectMslError(MslError.UNIDENTIFIED_JWK_ALGORITHM);
+TEST_F(JsonWebKeyTest, invalidAlgorithm)
+{
+//    thrown.expect(MslCryptoException.class);
+//    thrown.expectMslError(MslError.UNIDENTIFIED_JWK_ALGORITHM);
 
-    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, null, false, null, SECRET_KEY);
+    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, JsonWebKey::Algorithm::INVALID, false, "", SECRET_KEY);
     shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, jwk);
 
-    mo->put(KEY_ALGORITHM, "x");
+    mo->put<string>(KEY_ALGORITHM, "x");
 
-    new JsonWebKey(mo);
+    try {
+        new JsonWebKey(mo);
+        ADD_FAILURE() << "Should have thrown";
+    }
+    catch (const MslCryptoException& e) {
+        EXPECT_EQ(MslError::UNIDENTIFIED_JWK_ALGORITHM, e.getError());
+    }
 }
 
-@Test
-public void missingExtractable() throws MslEncoderException, MslCryptoException, MslEncodingException {
-    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, null, false, null, SECRET_KEY);
+TEST_F(JsonWebKeyTest, missingExtractable)
+{
+    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, JsonWebKey::Algorithm::INVALID, false, "", SECRET_KEY);
     shared_ptr<ByteArray> encode = jwk->toMslEncoding(encoder, ENCODER_FORMAT);
-    final MslObject mo = encoder.parseObject(encode);
+    shared_ptr<MslObject> mo = encoder->parseObject(encode);
 
-    EXPECT_TRUE(mo->remove(KEY_EXTRACTABLE));
+    EXPECT_FALSE(mo->remove(KEY_EXTRACTABLE).isNull());
 
-    shared_ptr<JsonWebKey> moJwk = new JsonWebKey(mo);
+    shared_ptr<JsonWebKey> moJwk = make_shared<JsonWebKey>(mo);
     EXPECT_EQ(jwk->isExtractable(), moJwk->isExtractable());
     EXPECT_EQ(jwk->getAlgorithm(), moJwk->getAlgorithm());
-    EXPECT_EQ(jwk->getId(), moJwk->getId());
-    assertNull(moJwk->getRsaKeyPair());
-    assertArrayEquals(jwk->getSecretKey(SECRET_KEY.getAlgorithm()).getEncoded(), moJwk->getSecretKey(SECRET_KEY.getAlgorithm()).getEncoded());
+    EXPECT_EQ(*jwk->getId(), *moJwk->getId());
+    EXPECT_FALSE(moJwk->getRsaKeyPair());
+    EXPECT_EQ(*jwk->getSecretKey(SECRET_KEY->getAlgorithm())->getEncoded(), *moJwk->getSecretKey(SECRET_KEY->getAlgorithm())->getEncoded());
     EXPECT_EQ(jwk->getType(), moJwk->getType());
     EXPECT_EQ(jwk->getUsage(), moJwk->getUsage());
     shared_ptr<ByteArray> moEncode = moJwk->toMslEncoding(encoder, ENCODER_FORMAT);
     EXPECT_TRUE(moEncode);
-    assertArrayEquals(encode, moEncode);
+    EXPECT_EQ(*encode, *moEncode);
 }
 
-@Test
-public void invalidExtractable() throws MslEncodingException, MslEncoderException, MslCryptoException {
-    thrown.expect(MslEncodingException.class);
-    thrown.expectMslError(MslError.MSL_PARSE_ERROR);
+TEST_F(JsonWebKeyTest, invalidExtractable)
+{
+//    thrown.expect(MslEncodingException.class);
+//    thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
-    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, null, false, null, SECRET_KEY);
+    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, JsonWebKey::Algorithm::INVALID, false, "", SECRET_KEY);
     shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, jwk);
 
-    mo->put(KEY_EXTRACTABLE, "x");
+    mo->put<string>(KEY_EXTRACTABLE, "x");
 
-    new JsonWebKey(mo);
+    try {
+        new JsonWebKey(mo);
+        ADD_FAILURE() << "Should have thrown";
+    }
+    catch (const MslEncodingException& e) {
+        EXPECT_EQ(MslError::MSL_PARSE_ERROR, e.getError());
+    }
 }
 
-@Test
-public void missingKey() throws MslCryptoException, MslEncodingException, MslEncoderException {
-    thrown.expect(MslEncodingException.class);
-    thrown.expectMslError(MslError.MSL_PARSE_ERROR);
+TEST_F(JsonWebKeyTest, missingKey)
+{
+//    thrown.expect(MslEncodingException.class);
+//    thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
-    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, null, false, null, SECRET_KEY);
+    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, JsonWebKey::Algorithm::INVALID, false, "", SECRET_KEY);
     shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, jwk);
 
     mo->remove(KEY_KEY);
 
-    new JsonWebKey(mo);
+    try {
+        new JsonWebKey(mo);
+        ADD_FAILURE() << "Should have thrown";
+    }
+    catch (const MslEncodingException& e) {
+        EXPECT_EQ(MslError::MSL_PARSE_ERROR, e.getError());
+    }
 }
 
-@Test
-public void emptyKey() throws MslCryptoException, MslEncodingException, MslEncoderException {
-    thrown.expect(MslCryptoException.class);
-    thrown.expectMslError(MslError.INVALID_JWK_KEYDATA);
+TEST_F(JsonWebKeyTest, emptyKey)
+{
+//    thrown.expect(MslCryptoException.class);
+//    thrown.expectMslError(MslError.INVALID_JWK_KEYDATA);
 
-    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, null, false, null, SECRET_KEY);
+    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, JsonWebKey::Algorithm::INVALID, false, "", SECRET_KEY);
     shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, jwk);
 
-    mo->put(KEY_KEY, "");
+    mo->put<string>(KEY_KEY, "");
 
-    new JsonWebKey(mo);
+    try {
+        new JsonWebKey(mo);
+        ADD_FAILURE() << "Should have thrown";
+    }
+    catch (const MslCryptoException& e) {
+        EXPECT_EQ(MslError::INVALID_JWK_KEYDATA, e.getError());
+    }
 }
 
-@Test
-public void missingModulus() throws MslCryptoException, MslEncodingException, MslEncoderException {
-    thrown.expect(MslEncodingException.class);
-    thrown.expectMslError(MslError.MSL_PARSE_ERROR);
+TEST_F(JsonWebKeyTest, missingModulus)
+{
+//    thrown.expect(MslEncodingException.class);
+//    thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
-    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, null, false, null, PUBLIC_KEY, PRIVATE_KEY);
+    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, JsonWebKey::Algorithm::INVALID, false, "", PUBLIC_KEY, PRIVATE_KEY);
     shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, jwk);
 
     mo->remove(KEY_MODULUS);
 
-    new JsonWebKey(mo);
+    try {
+        new JsonWebKey(mo);
+        ADD_FAILURE() << "Should have thrown";
+    }
+    catch (const MslEncodingException& e) {
+        EXPECT_EQ(MslError::MSL_PARSE_ERROR, e.getError());
+    }
 }
 
-@Test
-public void emptyModulus() throws MslCryptoException, MslEncodingException, MslEncoderException {
-    thrown.expect(MslCryptoException.class);
-    thrown.expectMslError(MslError.INVALID_JWK_KEYDATA);
+TEST_F(JsonWebKeyTest, emptyModulus)
+{
+//    thrown.expect(MslCryptoException.class);
+//    thrown.expectMslError(MslError.INVALID_JWK_KEYDATA);
 
-    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, null, false, null, PUBLIC_KEY, PRIVATE_KEY);
+    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, JsonWebKey::Algorithm::INVALID, false, "", PUBLIC_KEY, PRIVATE_KEY);
     shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, jwk);
 
-    mo->put(KEY_MODULUS, "");
+    mo->put<string>(KEY_MODULUS, "");
 
-    new JsonWebKey(mo);
+    try {
+        new JsonWebKey(mo);
+        ADD_FAILURE() << "Should have thrown";
+    }
+    catch (const MslCryptoException& e) {
+        EXPECT_EQ(MslError::INVALID_JWK_KEYDATA, e.getError());
+    }
 }
 
-@Test
-public void missingExponents() throws MslCryptoException, MslEncodingException, MslEncoderException {
-    thrown.expect(MslEncodingException.class);
-    thrown.expectMslError(MslError.MSL_PARSE_ERROR);
+TEST_F(JsonWebKeyTest, missingExponents)
+{
+//    thrown.expect(MslEncodingException.class);
+//    thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
-    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, null, false, null, PUBLIC_KEY, PRIVATE_KEY);
+    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, JsonWebKey::Algorithm::INVALID, false, "", PUBLIC_KEY, PRIVATE_KEY);
     shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, jwk);
 
     mo->remove(KEY_PUBLIC_EXPONENT);
     mo->remove(KEY_PRIVATE_EXPONENT);
 
-    new JsonWebKey(mo);
+    try {
+        new JsonWebKey(mo);
+        ADD_FAILURE() << "Should have thrown";
+    }
+    catch (const MslEncodingException& e) {
+        EXPECT_EQ(MslError::MSL_PARSE_ERROR, e.getError());
+    }
 }
 
-@Test
-public void emptyPublicExponent() throws MslCryptoException, MslEncodingException, MslEncoderException {
-    thrown.expect(MslCryptoException.class);
-    thrown.expectMslError(MslError.INVALID_JWK_KEYDATA);
+TEST_F(JsonWebKeyTest, emptyPublicExponent)
+{
+//    thrown.expect(MslCryptoException.class);
+//    thrown.expectMslError(MslError.INVALID_JWK_KEYDATA);
 
-    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, null, false, null, PUBLIC_KEY, PRIVATE_KEY);
+    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, JsonWebKey::Algorithm::INVALID, false, "", PUBLIC_KEY, PRIVATE_KEY);
     shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, jwk);
 
-    mo->put(KEY_PUBLIC_EXPONENT, "");
+    mo->put<string>(KEY_PUBLIC_EXPONENT, "");
 
-    new JsonWebKey(mo);
+    try {
+        new JsonWebKey(mo);
+        ADD_FAILURE() << "Should have thrown";
+    }
+    catch (const MslCryptoException& e) {
+        EXPECT_EQ(MslError::INVALID_JWK_KEYDATA, e.getError());
+    }
 }
 
-// This unit test no longer passes because
-// Base64.decode() does not error when given invalid
-// Base64 encoded data.
-@Ignore
-@Test
-public void invalidPublicExpontent() throws MslCryptoException, MslEncodingException, MslEncoderException {
-    thrown.expect(MslCryptoException.class);
-    thrown.expectMslError(MslError.INVALID_JWK_KEYDATA);
+TEST_F(JsonWebKeyTest, invalidPublicExpontent)
+{
+//    thrown.expect(MslCryptoException.class);
+//    thrown.expectMslError(MslError.INVALID_JWK_KEYDATA);
 
-    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, null, false, null, PUBLIC_KEY, PRIVATE_KEY);
+    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, JsonWebKey::Algorithm::INVALID, false, "", PUBLIC_KEY, PRIVATE_KEY);
     shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, jwk);
 
-    mo->put(KEY_PUBLIC_EXPONENT, "x");
+    mo->put<string>(KEY_PUBLIC_EXPONENT, "x");
 
-    new JsonWebKey(mo);
+    try {
+        new JsonWebKey(mo);
+        ADD_FAILURE() << "Should have thrown";
+    }
+    catch (const MslCryptoException& e) {
+        EXPECT_EQ(MslError::INVALID_JWK_KEYDATA, e.getError());
+    }
 }
 
-@Test
-public void emptyPrivateExponent() throws MslCryptoException, MslEncodingException, MslEncoderException {
-    thrown.expect(MslCryptoException.class);
-    thrown.expectMslError(MslError.INVALID_JWK_KEYDATA);
+TEST_F(JsonWebKeyTest, emptyPrivateExponent)
+{
+//    thrown.expect(MslCryptoException.class);
+//    thrown.expectMslError(MslError.INVALID_JWK_KEYDATA);
 
-    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, null, false, null, PUBLIC_KEY, PRIVATE_KEY);
+    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, JsonWebKey::Algorithm::INVALID, false, "", PUBLIC_KEY, PRIVATE_KEY);
     shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, jwk);
 
-    mo->put(KEY_PRIVATE_EXPONENT, "");
+    mo->put<string>(KEY_PRIVATE_EXPONENT, "");
 
-    new JsonWebKey(mo);
+    try {
+        new JsonWebKey(mo);
+        ADD_FAILURE() << "Should have thrown";
+    }
+    catch (const MslCryptoException& e) {
+        EXPECT_EQ(MslError::INVALID_JWK_KEYDATA, e.getError());
+    }
 }
 
-// This unit test no longer passes because
-// Base64.decode() does not error when given invalid
-// Base64 encoded data.
-@Ignore
-@Test
-public void invalidPrivateExponent() throws MslCryptoException, MslEncodingException, MslEncoderException {
-    thrown.expect(MslCryptoException.class);
-    thrown.expectMslError(MslError.INVALID_JWK_KEYDATA);
+TEST_F(JsonWebKeyTest, invalidPrivateExponent)
+{
+//    thrown.expect(MslCryptoException.class);
+//    thrown.expectMslError(MslError.INVALID_JWK_KEYDATA);
 
-    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, null, false, null, PUBLIC_KEY, PRIVATE_KEY);
+    shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(NULL_USAGE, JsonWebKey::Algorithm::INVALID, false, "", PUBLIC_KEY, PRIVATE_KEY);
     shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, jwk);
 
-    mo->put(KEY_PRIVATE_EXPONENT, "x");
+    mo->put<string>(KEY_PRIVATE_EXPONENT, "x");
 
-    new JsonWebKey(mo);
+    try {
+        new JsonWebKey(mo);
+        ADD_FAILURE() << "Should have thrown";
+    }
+    catch (const MslCryptoException& e) {
+        EXPECT_EQ(MslError::INVALID_JWK_KEYDATA, e.getError());
+    }
 }
-#endif
 
 }}} // namespace netflix::msl::crypto
