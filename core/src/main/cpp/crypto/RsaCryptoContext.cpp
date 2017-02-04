@@ -48,9 +48,9 @@ static const string NULL_OP = "nullOp";
 
 RsaCryptoContext::RsaCryptoContext(shared_ptr<MslContext>, const string& id,
     const PrivateKey& privateKey, const PublicKey& publicKey, const Mode& mode)
-    : id(id)
-	, privateKey(privateKey)
-    , publicKey(publicKey)
+: id(id)
+, privateKey(privateKey)
+, publicKey(publicKey)
 {
 	if (mode == Mode::ENCRYPT_DECRYPT_PKCS1) {
 		transform = RSAPKCS1;

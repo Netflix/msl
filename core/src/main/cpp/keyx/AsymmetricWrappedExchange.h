@@ -19,6 +19,7 @@
 
 #include <Enum.h>
 #include <Macros.h>
+#include <crypto/ICryptoContext.h>
 #include <crypto/Key.h>
 #include <io/MslEncoderFormat.h>
 #include <keyx/KeyExchangeFactory.h>
@@ -30,7 +31,7 @@
 namespace netflix {
 namespace msl {
 typedef std::vector<uint8_t> ByteArray;
-namespace crypto { class ICryptoContext; }
+namespace crypto { class RsaEvpKey; }
 namespace entityauth { class EntityAuthenticationData; }
 namespace io { class MslEncoderFactory; class MslObject; }
 namespace tokens { class MasterToken; }
@@ -39,8 +40,6 @@ namespace keyx {
 
 /**
  * <p>Asymmetric key wrapped key exchange.</p>
- *
- * @author Wesley Miaw <wmiaw@netflix.com>
  */
 class AsymmetricWrappedExchange : public KeyExchangeFactory
 {
@@ -258,6 +257,99 @@ public:
 
     /** @inheritDoc */
     virtual std::shared_ptr<crypto::ICryptoContext> getCryptoContext(std::shared_ptr<util::MslContext> ctx, std::shared_ptr<KeyRequestData> keyRequestData, std::shared_ptr<KeyResponseData> keyResponseData, std::shared_ptr<tokens::MasterToken> masterToken);
+
+private:
+    /**
+     * <p>An RSA wrapping crypto context is unique in that it treats its wrap/
+     * unwrap operations as encrypt/decrypt respectively. This is compatible
+     * with the Web Crypto API.</p>
+     */
+    class RsaWrappingCryptoContext : public crypto::ICryptoContext
+    {
+    public:
+        virtual ~RsaWrappingCryptoContext() {}
+
+        /** JWK RSA crypto context mode. */
+        enum Mode {
+            /** RSA-OAEP wrap/unwrap */
+            WRAP_UNWRAP_OAEP,
+            /** RSA PKCS#1 wrap/unwrap */
+            WRAP_UNWRAP_PKCS1,
+            /** Null cipher **/
+            NULL_OP
+        };
+
+        /**
+         * <p>Create a new RSA wrapping crypto context for the specified mode
+         * using the provided public and private keys. The mode identifies the
+         * operations to enable. All other operations are no-ops and return the
+         * data unmodified.</p>
+         *
+         * @param ctx MSL context.
+         * @param id key pair identity.
+         * @param privateKey the private key. May be null.
+         * @param publicKey the public key. May be null.
+         * @param mode crypto context mode.
+         */
+        RsaWrappingCryptoContext(const std::string& id, const crypto::PrivateKey& privateKey,
+                const crypto::PublicKey& publicKey, const Mode& mode);
+
+        /* (non-Javadoc)
+         * @see com.netflix.msl.crypto.ICryptoContext#wrap(byte[], com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
+         */
+        virtual std::shared_ptr<ByteArray> encrypt(std::shared_ptr<ByteArray> data, std::shared_ptr<io::MslEncoderFactory> encoder, const io::MslEncoderFormat& format);
+
+        /* (non-Javadoc)
+         * @see com.netflix.msl.crypto.ICryptoContext#wrap(byte[], com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
+         */
+        virtual std::shared_ptr<ByteArray> decrypt(std::shared_ptr<ByteArray> data, std::shared_ptr<io::MslEncoderFactory> encoder);
+
+        /* (non-Javadoc)
+         * @see com.netflix.msl.crypto.ICryptoContext#wrap(byte[], com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
+         */
+        virtual std::shared_ptr<ByteArray> wrap(std::shared_ptr<ByteArray> data, std::shared_ptr<io::MslEncoderFactory> encoder, const io::MslEncoderFormat& format);
+
+        /* (non-Javadoc)
+         * @see com.netflix.msl.crypto.ICryptoContext#wrap(byte[], com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
+         */
+        virtual std::shared_ptr<ByteArray> unwrap(std::shared_ptr<ByteArray> data, std::shared_ptr<io::MslEncoderFactory> encoder);
+
+        /* (non-Javadoc)
+         * @see com.netflix.msl.crypto.ICryptoContext#wrap(byte[], com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
+         */
+        virtual std::shared_ptr<ByteArray> sign(std::shared_ptr<ByteArray> data, std::shared_ptr<io::MslEncoderFactory> encoder, const io::MslEncoderFormat& format);
+
+        /* (non-Javadoc)
+         * @see com.netflix.msl.crypto.ICryptoContext#wrap(byte[], com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
+         */
+        virtual bool verify(std::shared_ptr<ByteArray> data, std::shared_ptr<ByteArray> signature, std::shared_ptr<io::MslEncoderFactory> encoder);
+
+    private:
+        /** Key pair identity. */
+        const std::string id;
+        const crypto::PrivateKey privateKey;
+        const crypto::PublicKey publicKey;
+        /** Wrap/unwrap transform. */
+        const Mode mode;
+        // OpenSSL key structures stored here as an optimization
+        std::shared_ptr<crypto::RsaEvpKey> privateKeyEvp;
+        std::shared_ptr<crypto::RsaEvpKey> publicKeyEvp;
+    };
+
+    /**
+     * Create the crypto context identified by the key ID, mechanism, and
+     * provided keys.
+     *
+     * @param ctx MSL context.
+     * @param keyPairId the key pair ID.
+     * @param mechanism the key mechanism.
+     * @param privateKey the private key. May be null.
+     * @param publicKey the public key. May be null.
+     * @return the crypto context.
+     * @throws MslCryptoException if the key mechanism is unsupported.
+     */
+    std::shared_ptr<crypto::ICryptoContext> createCryptoContext(std::shared_ptr<util::MslContext> ctx, const std::string& keyPairId,
+            const RequestData::Mechanism& mechanism, const crypto::PrivateKey& privateKey, const crypto::PublicKey& publicKey);
 
 private:
     /** Authentication utilities. */
