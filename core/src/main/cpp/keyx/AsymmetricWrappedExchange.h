@@ -21,6 +21,7 @@
 #include <Macros.h>
 #include <crypto/ICryptoContext.h>
 #include <crypto/Key.h>
+#include <crypto/JsonWebKey.h>
 #include <io/MslEncoderFormat.h>
 #include <keyx/KeyExchangeFactory.h>
 #include <keyx/KeyRequestData.h>
@@ -122,22 +123,22 @@ public:
         /**
          * @return the key pair ID.
          */
-        std::string getKeyPairId() { return keyPairId_; }
+        std::string getKeyPairId() const { return keyPairId_; }
 
         /**
          * @return the key mechanism.
          */
-        Mechanism getMechanism() { return mechanism_; }
+        Mechanism getMechanism() const { return mechanism_; }
 
         /**
          * @return the public key.
          */
-        crypto::PublicKey getPublicKey() { return publicKey_; }
+        crypto::PublicKey getPublicKey() const { return publicKey_; }
 
         /**
          * @return the private key.
          */
-        crypto::PrivateKey getPrivateKey() { return privateKey_; }
+        crypto::PrivateKey getPrivateKey() const { return privateKey_; }
 
         /** @inheritDoc */
         virtual std::shared_ptr<io::MslObject> getKeydata(std::shared_ptr<io::MslEncoderFactory> encoder, const io::MslEncoderFormat& format) const;
@@ -354,6 +355,12 @@ private:
 private:
     /** Authentication utilities. */
     std::shared_ptr<util::AuthenticationUtils> authutils_;
+
+    /** Encrypt/decrypt key operations. */
+    const std::set<crypto::JsonWebKey::KeyOp> ENCRYPT_DECRYPT;
+    /** Sign/verify key operations. */
+    const std::set<crypto::JsonWebKey::KeyOp> SIGN_VERIFY;
+
 };
 
 bool operator==(const AsymmetricWrappedExchange::RequestData& a, const AsymmetricWrappedExchange::RequestData& b);

@@ -24,8 +24,6 @@
 #include <crypto/ICryptoContext.h>
 #include <crypto/IRandom.h>
 #include <crypto/JcaAlgorithm.h>
-#include <crypto/JsonWebKey.h>
-#include <crypto/Key.h>
 #include <crypto/OpenSslLib.h>
 #include <crypto/SessionCryptoContext.h>
 #include <entityauth/EntityAuthenticationData.h>
@@ -64,13 +62,6 @@ const string KEY_PUBLIC_KEY = "publickey";
 const string KEY_ENCRYPTION_KEY = "encryptionkey";
 /** Key encrypted HMAC key. */
 const string KEY_HMAC_KEY = "hmackey";
-
-/** Encrypt/decrypt key operations. */
-// FIXME: Is it OK to statically init these non-pods?
-const set<JsonWebKey::KeyOp> ENCRYPT_DECRYPT = {JsonWebKey::KeyOp::encrypt, JsonWebKey::KeyOp::decrypt};
-/** Sign/verify key operations. */
-const set<JsonWebKey::KeyOp> SIGN_VERIFY = {JsonWebKey::KeyOp::sign, JsonWebKey::KeyOp::verify};
-
 } // namespace anonymous
 
 // -------- AsymmetricWrappedExchange::RsaWrappingCryptoContext -------- //
@@ -83,9 +74,9 @@ AsymmetricWrappedExchange::RsaWrappingCryptoContext::RsaWrappingCryptoContext(co
 , mode(mode)
 {
     if (mode != WRAP_UNWRAP_OAEP && mode != WRAP_UNWRAP_PKCS1)
-        throw new MslInternalException("RSA wrapping crypto context mode not supported.");
+        throw MslInternalException("RSA wrapping crypto context mode not supported.");
 
-    // As an optimization, convert any incoming key into their OpenSSL EVP_PKEY version
+    // As an optimization, convert any incoming key into its OpenSSL EVP_PKEY version
     if (!privateKey.isNull() && privateKey.getFormat() == PrivateKey::DEFAULT_FORMAT)
         privateKeyEvp = RsaEvpKey::fromPkcs8(privateKey.getEncoded());
     if (!publicKey.isNull() && publicKey.getFormat() == PublicKey::DEFAULT_FORMAT)
@@ -215,21 +206,24 @@ RequestData::RequestData(shared_ptr<MslObject> keyRequestMo)
 		encodedKey = keyRequestMo->getBytes(KEY_PUBLIC_KEY);
 	} catch (const MslEncoderException& e) {
 		stringstream ss;
-		ss << "keydata " << keyRequestMo;
-		throw new MslEncodingException(MslError::MSL_PARSE_ERROR, ss.str(), e);
+		ss << "keydata " << keyRequestMo->toString();
+		throw MslEncodingException(MslError::MSL_PARSE_ERROR, ss.str(), e);
 	}
 
-	// FIXME
-//	switch (mechanism_) {
-//	case Mechanism::RSA:
-//	case Mechanism::JWE_RSA:
-//	case Mechanism::JWEJS_RSA:
-//	case Mechanism::JWK_RSA:
-//	case Mechanism::Jjwk_rsaes:
-//	case Mechanism::ECC:
-//	default:
-//  }
-	throw MslCryptoException(MslError::UNSUPPORTED_KEYX_MECHANISM, mechanism_.name());
+	if (!encodedKey || !encodedKey->size())
+	    throw MslCryptoException(MslError::INVALID_PUBLIC_KEY, "empty public key");
+
+	switch (mechanism_) {
+        case Mechanism::rsa:
+        case Mechanism::jwe_rsa:
+        case Mechanism::jwejs_rsa:
+        case Mechanism::jwk_rsa:
+        case Mechanism::jwk_rsaes:
+            publicKey_ = PublicKey(encodedKey, "RSA");  // assumes key encoding is SPKI
+            break;
+        default:
+            throw MslCryptoException(MslError::UNSUPPORTED_KEYX_MECHANISM, mechanism_.name());
+  }
 }
 
 shared_ptr<MslObject> RequestData::getKeydata(shared_ptr<MslEncoderFactory> encoder,
@@ -324,6 +318,8 @@ namespace {
 AsymmetricWrappedExchange::AsymmetricWrappedExchange(shared_ptr<AuthenticationUtils> authutils)
 	: KeyExchangeFactory(KeyExchangeScheme::ASYMMETRIC_WRAPPED)
 	, authutils_(authutils)
+    , ENCRYPT_DECRYPT({JsonWebKey::KeyOp::encrypt, JsonWebKey::KeyOp::decrypt})
+    , SIGN_VERIFY({JsonWebKey::KeyOp::sign, JsonWebKey::KeyOp::verify})
 {
 }
 
@@ -353,22 +349,24 @@ shared_ptr<ICryptoContext> AsymmetricWrappedExchange::createCryptoContext(shared
                     AsymmetricWrappedExchange::RsaWrappingCryptoContext::Mode::WRAP_UNWRAP_PKCS1);
         }
         default:
-            throw new MslCryptoException(MslError::UNSUPPORTED_KEYX_MECHANISM, mechanism.name());
+            throw MslCryptoException(MslError::UNSUPPORTED_KEYX_MECHANISM, mechanism.name());
     }
 }
 
-shared_ptr<KeyRequestData> AsymmetricWrappedExchange::createRequestData(shared_ptr<MslContext> /*ctx*/, shared_ptr<MslObject> keyRequestMo)
+shared_ptr<KeyRequestData> AsymmetricWrappedExchange::createRequestData(shared_ptr<MslContext> /*ctx*/,
+        shared_ptr<MslObject> keyRequestMo)
 {
 	return make_shared<RequestData>(keyRequestMo);
 }
 
-shared_ptr<KeyResponseData> AsymmetricWrappedExchange::createResponseData(shared_ptr<MslContext> /*ctx*/, shared_ptr<MasterToken> masterToken, shared_ptr<MslObject> keyDataMo)
+shared_ptr<KeyResponseData> AsymmetricWrappedExchange::createResponseData(shared_ptr<MslContext> /*ctx*/,
+        shared_ptr<MasterToken> masterToken, shared_ptr<MslObject> keyDataMo)
 {
 	return make_shared<ResponseData>(masterToken, keyDataMo);
 }
 
-shared_ptr<KeyExchangeData> AsymmetricWrappedExchange::generateResponse(shared_ptr<MslContext> ctx, const MslEncoderFormat& format,
-        shared_ptr<KeyRequestData> keyRequestData, shared_ptr<MasterToken> masterToken)
+shared_ptr<KeyExchangeData> AsymmetricWrappedExchange::generateResponse(shared_ptr<MslContext> ctx,
+        const MslEncoderFormat& format, shared_ptr<KeyRequestData> keyRequestData, shared_ptr<MasterToken> masterToken)
 {
 	if (!instanceof<RequestData>(keyRequestData)) {
 		const KeyRequestData& krd = *keyRequestData;
@@ -410,17 +408,17 @@ shared_ptr<KeyExchangeData> AsymmetricWrappedExchange::generateResponse(shared_p
 	shared_ptr<ICryptoContext> wrapCryptoContext = createCryptoContext(ctx, keyPairId, mechanism, PrivateKey(), publicKey);
 	shared_ptr<ByteArray> wrappedEncryptionKey, wrappedHmacKey;
 	switch (mechanism) {
-//        case Mechanism::JWE_RSA:
-//        case Mechanism::JWEJS_RSA:
-//        {
-//            final JsonWebKey encryptionJwk = new JsonWebKey(Usage.enc, JsonWebKey.Algorithm.A128CBC, false, null, encryptionKey);
-//            final JsonWebKey hmacJwk = new JsonWebKey(Usage.sig, JsonWebKey.Algorithm.HS256, false, null, hmacKey);
-//            shared_ptr<ByteArray> encryptionJwkBytes = encryptionJwk->toMslEncoding(encoder, MslEncoderFormat::JSON);
-//            shared_ptr<ByteArray> hmacJwkBytes = hmacJwk.toMslEncoding(encoder, MslEncoderFormat::JSON);
-//            wrappedEncryptionKey = wrapCryptoContext.wrap(encryptionJwkBytes, encoder, format);
-//            wrappedHmacKey = wrapCryptoContext.wrap(hmacJwkBytes, encoder, format);
-//            break;
-//        }
+        case Mechanism::jwe_rsa:
+        case Mechanism::jwejs_rsa:
+        {
+            shared_ptr<JsonWebKey> encryptionJwk = make_shared<JsonWebKey>(JsonWebKey::Usage::enc, JsonWebKey::Algorithm::A128CBC, false, "", encryptionKey);
+            shared_ptr<JsonWebKey> hmacJwk = make_shared<JsonWebKey>(JsonWebKey::Usage::sig, JsonWebKey::Algorithm::HS256, false, "", hmacKey);
+            shared_ptr<ByteArray> encryptionJwkBytes = encryptionJwk->toMslEncoding(encoder, MslEncoderFormat::JSON);
+            shared_ptr<ByteArray> hmacJwkBytes = hmacJwk->toMslEncoding(encoder, MslEncoderFormat::JSON);
+            wrappedEncryptionKey = wrapCryptoContext->wrap(encryptionJwkBytes, encoder, format);
+            wrappedHmacKey = wrapCryptoContext->wrap(hmacJwkBytes, encoder, format);
+            break;
+        }
         case Mechanism::jwk_rsa:
         case Mechanism::jwk_rsaes:
         {
@@ -491,17 +489,17 @@ shared_ptr<KeyExchangeData> AsymmetricWrappedExchange::generateResponse(shared_p
 	shared_ptr<ICryptoContext> wrapCryptoContext = createCryptoContext(ctx, keyPairId, mechanism, PrivateKey(), publicKey);
 	shared_ptr<ByteArray> wrappedEncryptionKey, wrappedHmacKey;
 	switch (mechanism) {
-//        case Mechanism::JWE_RSA:  FIXME TODO
-//        case Mechanism::JWEJS_RSA:
-//        {
-//            final JsonWebKey encryptionJwk = new JsonWebKey(Usage.enc, JsonWebKey.Algorithm.A128CBC, false, null, encryptionKey);
-//            final JsonWebKey hmacJwk = new JsonWebKey(Usage.sig, JsonWebKey.Algorithm.HS256, false, null, hmacKey);
-//            shared_ptr<ByteArray> encryptionJwkBytes = encryptionJwk->toMslEncoding(encoder, MslEncoderFormat::JSON);
-//            shared_ptr<ByteArray> hmacJwkBytes = hmacJwk.toMslEncoding(encoder, MslEncoderFormat::JSON);
-//            wrappedEncryptionKey = wrapCryptoContext.wrap(encryptionJwkBytes, encoder, format);
-//            wrappedHmacKey = wrapCryptoContext.wrap(hmacJwkBytes, encoder, format);
-//            break;
-//        }
+        case Mechanism::jwe_rsa:
+        case Mechanism::jwejs_rsa:
+        {
+            shared_ptr<JsonWebKey> encryptionJwk = make_shared<JsonWebKey>(JsonWebKey::Usage::enc, JsonWebKey::Algorithm::A128CBC, false, "", encryptionKey);
+            shared_ptr<JsonWebKey> hmacJwk = make_shared<JsonWebKey>(JsonWebKey::Usage::sig, JsonWebKey::Algorithm::HS256, false, "", hmacKey);
+            shared_ptr<ByteArray> encryptionJwkBytes = encryptionJwk->toMslEncoding(encoder, MslEncoderFormat::JSON);
+            shared_ptr<ByteArray> hmacJwkBytes = hmacJwk->toMslEncoding(encoder, MslEncoderFormat::JSON);
+            wrappedEncryptionKey = wrapCryptoContext->wrap(encryptionJwkBytes, encoder, format);
+            wrappedHmacKey = wrapCryptoContext->wrap(hmacJwkBytes, encoder, format);
+            break;
+        }
         case Mechanism::jwk_rsa:
         case Mechanism::jwk_rsaes:
         {
@@ -565,8 +563,8 @@ shared_ptr<ICryptoContext> AsymmetricWrappedExchange::getCryptoContext(shared_pt
 	shared_ptr<ICryptoContext> unwrapCryptoContext = createCryptoContext(ctx, requestKeyPairId, mechanism, privateKey, PublicKey());
 	shared_ptr<SecretKey> encryptionKey, hmacKey;
 	switch (mechanism) {
-//        case Mechanism::JWE_RSA:
-//        case Mechanism::JWEJS_RSA:
+        case Mechanism::jwe_rsa:
+        case Mechanism::jwejs_rsa:
         case Mechanism::jwk_rsa:
         case Mechanism::jwk_rsaes:
         {
