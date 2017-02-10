@@ -105,7 +105,9 @@ public:
          * @param publicKey the public key.
          * @param privateKey the private key.
          */
-        RequestData(const std::string& keyPairId, const Mechanism& mechanism, const crypto::PublicKey& publicKey, const crypto::PrivateKey& privateKey);
+        RequestData(const std::string& keyPairId, const Mechanism& mechanism,
+                std::shared_ptr<crypto::PublicKey> publicKey,
+                std::shared_ptr<crypto::PrivateKey> privateKey);
 
         /**
          * Create a new asymmetric key wrapped key request data instance from
@@ -133,12 +135,12 @@ public:
         /**
          * @return the public key.
          */
-        crypto::PublicKey getPublicKey() const { return publicKey_; }
+        std::shared_ptr<crypto::PublicKey> getPublicKey() const { return publicKey_; }
 
         /**
          * @return the private key.
          */
-        crypto::PrivateKey getPrivateKey() const { return privateKey_; }
+        std::shared_ptr<crypto::PrivateKey> getPrivateKey() const { return privateKey_; }
 
         /** @inheritDoc */
         virtual std::shared_ptr<io::MslObject> getKeydata(std::shared_ptr<io::MslEncoderFactory> encoder, const io::MslEncoderFormat& format) const;
@@ -154,9 +156,9 @@ public:
         /** Key mechanism. */
         Mechanism mechanism_;
         /** Public key. */
-        crypto::PublicKey publicKey_;
+        std::shared_ptr<crypto::PublicKey> publicKey_;
         /** Private key. */
-        crypto::PrivateKey privateKey_;
+        std::shared_ptr<crypto::PrivateKey> privateKey_;
     };
 
     /**
@@ -190,7 +192,8 @@ public:
          * @param encryptionKey the public key-encrypted encryption key.
          * @param hmacKey the public key-encrypted HMAC key.
          */
-        ResponseData(std::shared_ptr<tokens::MasterToken> masterToken, const std::string& keyPairId, std::shared_ptr<ByteArray> encryptionKey, std::shared_ptr<ByteArray> hmacKey);
+        ResponseData(std::shared_ptr<tokens::MasterToken> masterToken, const std::string& keyPairId,
+                std::shared_ptr<ByteArray> encryptionKey, std::shared_ptr<ByteArray> hmacKey);
 
         /**
          * Create a new asymmetric key wrapped key response data instance with
@@ -206,17 +209,17 @@ public:
         /**
          * @return the key pair ID.
          */
-        std::string getKeyPairId() { return keyPairId_; }
+        std::string getKeyPairId() const { return keyPairId_; }
 
         /**
          * @return the public key-encrypted encryption key.
          */
-        std::shared_ptr<ByteArray> getEncryptionKey() { return encryptionKey_; }
+        std::shared_ptr<ByteArray> getEncryptionKey() const { return encryptionKey_; }
 
         /**
          * @return the public key-encrypted HMAC key.
          */
-        std::shared_ptr<ByteArray> getHmacKey() { return hmacKey_; }
+        std::shared_ptr<ByteArray> getHmacKey() const { return hmacKey_; }
 
         /** @inheritDoc */
         virtual std::shared_ptr<io::MslObject> getKeydata(std::shared_ptr<io::MslEncoderFactory> encoder, const io::MslEncoderFormat& format) const;
@@ -292,8 +295,8 @@ private:
          * @param publicKey the public key. May be null.
          * @param mode crypto context mode.
          */
-        RsaWrappingCryptoContext(const std::string& id, const crypto::PrivateKey& privateKey,
-                const crypto::PublicKey& publicKey, const Mode& mode);
+        RsaWrappingCryptoContext(const std::string& id, std::shared_ptr<crypto::PrivateKey> privateKey,
+                std::shared_ptr<crypto::PublicKey> publicKey, const Mode& mode);
 
         /* (non-Javadoc)
          * @see com.netflix.msl.crypto.ICryptoContext#wrap(byte[], com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
@@ -328,8 +331,8 @@ private:
     private:
         /** Key pair identity. */
         const std::string id;
-        const crypto::PrivateKey privateKey;
-        const crypto::PublicKey publicKey;
+        std::shared_ptr<crypto::PrivateKey> privateKey;
+        std::shared_ptr<crypto::PublicKey> publicKey;
         /** Wrap/unwrap transform. */
         const Mode mode;
         // OpenSSL key structures stored here as an optimization
@@ -350,7 +353,7 @@ private:
      * @throws MslCryptoException if the key mechanism is unsupported.
      */
     std::shared_ptr<crypto::ICryptoContext> createCryptoContext(std::shared_ptr<util::MslContext> ctx, const std::string& keyPairId,
-            const RequestData::Mechanism& mechanism, const crypto::PrivateKey& privateKey, const crypto::PublicKey& publicKey);
+            const RequestData::Mechanism& mechanism, std::shared_ptr<crypto::PrivateKey> privateKey, std::shared_ptr<crypto::PublicKey> publicKey);
 
 private:
     /** Authentication utilities. */

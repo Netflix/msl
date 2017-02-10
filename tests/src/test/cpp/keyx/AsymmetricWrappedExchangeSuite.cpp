@@ -32,6 +32,7 @@
 #include <tokens/MasterToken.h>
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "../entityauth/MockPresharedAuthenticationFactory.h"
 #include "../util/MockMslContext.h"
@@ -52,6 +53,8 @@ namespace msl {
 namespace keyx {
 
 using RequestData = AsymmetricWrappedExchange::RequestData;
+using ResponseData = AsymmetricWrappedExchange::ResponseData;
+using KeyExchangeData = KeyExchangeFactory::KeyExchangeData;
 
 /**
  * Asymmetric wrapped key exchange unit tests.
@@ -89,13 +92,15 @@ public:
             theInstance = make_shared<MockMslContext>(EntityAuthenticationScheme::PSK, false);
         return theInstance;
     }
-    static PublicKey getPublicKey() { return keyInstance().first; }
-    static PrivateKey getPrivateKey() { return keyInstance().second; }
+    static shared_ptr<PublicKey> getPublicKey() { return keyInstance().first; }
+    static shared_ptr<PrivateKey> getPrivateKey() { return keyInstance().second; }
 private:
-    static pair<PublicKey,PrivateKey> keyInstance() {
-        static pair<PublicKey,PrivateKey> theInstance;
-        if (theInstance.first.isNull())
-            theInstance = MslTestUtils::generateRsaKeys("RSA", 512);
+    static pair<shared_ptr<PublicKey>,shared_ptr<PrivateKey>> keyInstance() {
+        static pair<shared_ptr<PublicKey>, shared_ptr<PrivateKey>> theInstance;
+        if (!theInstance.first) {
+            pair<PublicKey,PrivateKey> keypair = MslTestUtils::generateRsaKeys("RSA", 2048);
+            theInstance = make_pair(make_shared<PublicKey>(keypair.first), make_shared<PrivateKey>(keypair.second));
+        }
         return theInstance;
     }
 };
@@ -111,8 +116,8 @@ public:
     , MASTER_TOKEN(MslTestUtils::getMasterToken(ctx, 1, 1))
     , ENCRYPTION_KEY(MASTER_TOKEN->getEncryptionKey().getEncoded())
     , HMAC_KEY(MASTER_TOKEN->getSignatureKey().getEncoded())
-    , RSA_PUBLIC_KEY(make_shared<PublicKey>(TestSingleton::getPublicKey()))
-    , RSA_PRIVATE_KEY(make_shared<PrivateKey>(TestSingleton::getPrivateKey()))
+    , RSA_PUBLIC_KEY(TestSingleton::getPublicKey())
+    , RSA_PRIVATE_KEY(TestSingleton::getPrivateKey())
     , IDENTITY(MockPresharedAuthenticationFactory::PSK_ESN)
     {
     }
@@ -132,25 +137,15 @@ protected:
     shared_ptr<PrivateKey> RSA_PRIVATE_KEY;
 
     const string IDENTITY;
-
-//    /** Authentication utilities. */
-//    private static MockAuthenticationUtils authutils;
-//    /** Random. */
-//    shared_ptr<IRandom> random;
-//    /** Key exchange factory. */
-//    private static KeyExchangeFactory factory;
-//    /** Entity authentication data. */
-//    private static EntityAuthenticationData entityAuthData;
 };
 
 struct TestParameters
 {
     const RequestData::Mechanism mechanism;
-    PublicKey publicKey;
-    PrivateKey privateKey;
-    TestParameters(const RequestData::Mechanism& m,
-        PublicKey pubk, PrivateKey privk)
-    : mechanism(m), publicKey(pubk), privateKey(privk) {}
+    shared_ptr<PublicKey> publicKey;
+    shared_ptr<PrivateKey> privateKey;
+    TestParameters(const RequestData::Mechanism& m, shared_ptr<PublicKey> pubk, shared_ptr<PrivateKey> privk)
+        : mechanism(m), publicKey(pubk), privateKey(privk) {}
     friend ostream & operator<<(ostream &os, const TestParameters& tp);
 };
 ostream & operator<<(ostream& os, const TestParameters& tp) {
@@ -166,7 +161,6 @@ string sufx(testing::TestParamInfo<struct TestParameters> tpi) {
 
 class RequestDataTest : public ::testing::TestWithParam<TestParameters>, protected BaseTest
 {
-
 };
 
 INSTANTIATE_TEST_CASE_P(AsymmetricWrappedExchange, RequestDataTest,
@@ -184,8 +178,8 @@ TEST_P(RequestDataTest, ctors)
     EXPECT_EQ(KeyExchangeScheme::ASYMMETRIC_WRAPPED, req.getKeyExchangeScheme());
     EXPECT_EQ(KEYPAIR_ID, req.getKeyPairId());
     EXPECT_EQ(GetParam().mechanism, req.getMechanism());
-    EXPECT_EQ(*GetParam().privateKey.getEncoded(), *req.getPrivateKey().getEncoded());
-    EXPECT_EQ(*GetParam().publicKey.getEncoded(), *req.getPublicKey().getEncoded());
+    EXPECT_EQ(*GetParam().privateKey->getEncoded(), *req.getPrivateKey()->getEncoded());
+    EXPECT_EQ(*GetParam().publicKey->getEncoded(), *req.getPublicKey()->getEncoded());
     shared_ptr<MslObject> keydata = req.getKeydata(encoder, ENCODER_FORMAT);
     EXPECT_TRUE(keydata);
 
@@ -193,8 +187,8 @@ TEST_P(RequestDataTest, ctors)
     EXPECT_EQ(req.getKeyExchangeScheme(), moReq.getKeyExchangeScheme());
     EXPECT_EQ(req.getKeyPairId(), moReq.getKeyPairId());
     EXPECT_EQ(req.getMechanism(), moReq.getMechanism());
-    EXPECT_TRUE(moReq.getPrivateKey().isNull());
-    EXPECT_EQ(*req.getPublicKey().getEncoded(), *moReq.getPublicKey().getEncoded());
+    EXPECT_FALSE(moReq.getPrivateKey());
+    EXPECT_EQ(*req.getPublicKey()->getEncoded(), *moReq.getPublicKey()->getEncoded());
     shared_ptr<MslObject> moKeydata = moReq.getKeydata(encoder, ENCODER_FORMAT);
     EXPECT_TRUE(moKeydata);
     EXPECT_TRUE(MslEncoderUtils::equalObjects(keydata, moKeydata));
@@ -208,7 +202,7 @@ TEST_P(RequestDataTest, mslObject)
     shared_ptr<MslObject> keydata = mo->getMslObject(KEY_KEYDATA, encoder);
     EXPECT_EQ(KEYPAIR_ID, keydata->getString(KEY_KEY_PAIR_ID));
     EXPECT_EQ(GetParam().mechanism.toString(), keydata->getString(KEY_MECHANISM));
-    EXPECT_EQ(*GetParam().publicKey.getEncoded(), *keydata->getBytes(KEY_PUBLIC_KEY));
+    EXPECT_EQ(*GetParam().publicKey->getEncoded(), *keydata->getBytes(KEY_PUBLIC_KEY));
 }
 
 
@@ -224,8 +218,8 @@ TEST_P(RequestDataTest, create)
     EXPECT_EQ(data->getKeyExchangeScheme(), moData->getKeyExchangeScheme());
     EXPECT_EQ(data->getKeyPairId(), moData->getKeyPairId());
     EXPECT_EQ(data->getMechanism(), moData->getMechanism());
-    EXPECT_TRUE(moData->getPrivateKey().isNull());
-    EXPECT_EQ(*data->getPublicKey().getEncoded(), *moData->getPublicKey().getEncoded());
+    EXPECT_FALSE(moData->getPrivateKey());
+    EXPECT_EQ(*data->getPublicKey()->getEncoded(), *moData->getPublicKey()->getEncoded());
 }
 
 TEST_P(RequestDataTest, missingKeypairId)
@@ -308,7 +302,7 @@ TEST_P(RequestDataTest, invalidPublicKey)
     const RequestData req(KEYPAIR_ID, GetParam().mechanism, GetParam().publicKey, GetParam().privateKey);
     shared_ptr<MslObject> keydata = req.getKeydata(encoder, ENCODER_FORMAT);
 
-    shared_ptr<ByteArray> encodedKey = GetParam().publicKey.getEncoded();
+    shared_ptr<ByteArray> encodedKey = GetParam().publicKey->getEncoded();
     shared_ptr<ByteArray> shortKey = make_shared<ByteArray>();
     keydata->put(KEY_PUBLIC_KEY, shortKey);
 
@@ -320,592 +314,611 @@ TEST_P(RequestDataTest, invalidPublicKey)
     }
 }
 
-#if 0
-        @Test
-        public void equalsKeyPairId() throws MslEncodingException, MslCryptoException, MslKeyExchangeException, MslException {
-            final RequestData dataA = new RequestData(KEYPAIR_ID + "A", Mechanism.JWE_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY);
-            final RequestData dataB = new RequestData(KEYPAIR_ID + "B", Mechanism.JWE_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY);
-            final RequestData dataA2 = new RequestData(dataA.getKeydata(encoder, ENCODER_FORMAT));
-
-            assertTrue(dataA.equals(dataA));
-            EXPECT_EQ(dataA.hashCode(), dataA.hashCode());
-
-            assertFalse(dataA.equals(dataB));
-            assertFalse(dataB.equals(dataA));
-            assertTrue(dataA.hashCode() != dataB.hashCode());
-
-            // The private keys don't transfer via the parse constructor.
-            assertFalse(dataA.equals(dataA2));
-            assertFalse(dataA2.equals(dataA));
-            assertTrue(dataA.hashCode() != dataA2.hashCode());
-        }
-
-        @Test
-        public void equalsMechanism() throws MslEncodingException, MslCryptoException, MslKeyExchangeException, MslException {
-            final RequestData dataA = new RequestData(KEYPAIR_ID, Mechanism.JWE_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY);
-            final RequestData dataB = new RequestData(KEYPAIR_ID, Mechanism.ECC, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY);
-            final RequestData dataA2 = new RequestData(dataA.getKeydata(encoder, ENCODER_FORMAT));
-
-            assertTrue(dataA.equals(dataA));
-            EXPECT_EQ(dataA.hashCode(), dataA.hashCode());
-
-            assertFalse(dataA.equals(dataB));
-            assertFalse(dataB.equals(dataA));
-            assertTrue(dataA.hashCode() != dataB.hashCode());
-
-            // The private keys don't transfer via the parse constructor.
-            assertFalse(dataA.equals(dataA2));
-            assertFalse(dataA2.equals(dataA));
-            assertTrue(dataA.hashCode() != dataA2.hashCode());
-        }
-
-        @Test
-        public void equalsPublicKey() throws MslEncodingException, MslCryptoException, MslKeyExchangeException, MslException {
-            final RequestData dataA = new RequestData(KEYPAIR_ID, Mechanism.JWE_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY);
-            final RequestData dataB = new RequestData(KEYPAIR_ID, Mechanism.JWE_RSA, ECC_PUBLIC_KEY, RSA_PRIVATE_KEY);
-            final RequestData dataA2 = new RequestData(dataA.getKeydata(encoder, ENCODER_FORMAT));
-
-            assertTrue(dataA.equals(dataA));
-            EXPECT_EQ(dataA.hashCode(), dataA.hashCode());
-
-            assertFalse(dataA.equals(dataB));
-            assertFalse(dataB.equals(dataA));
-            assertTrue(dataA.hashCode() != dataB.hashCode());
-
-            // The private keys don't transfer via the parse constructor.
-            assertFalse(dataA.equals(dataA2));
-            assertFalse(dataA2.equals(dataA));
-            assertTrue(dataA.hashCode() != dataA2.hashCode());
-        }
-
-        @Test
-        public void equalsPrivateKey() throws MslEncodingException, MslCryptoException, MslKeyExchangeException, MslException {
-            final RequestData dataA = new RequestData(KEYPAIR_ID, Mechanism.JWE_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY);
-            final RequestData dataB = new RequestData(KEYPAIR_ID, Mechanism.JWE_RSA, RSA_PUBLIC_KEY, ECC_PRIVATE_KEY);
-            final RequestData dataA2 = new RequestData(dataA.getKeydata(encoder, ENCODER_FORMAT));
-
-            assertTrue(dataA.equals(dataA));
-            EXPECT_EQ(dataA.hashCode(), dataA.hashCode());
-
-            assertFalse(dataA.equals(dataB));
-            assertFalse(dataB.equals(dataA));
-            assertTrue(dataA.hashCode() != dataB.hashCode());
-
-            // The private keys don't transfer via the parse constructor.
-            assertFalse(dataA.equals(dataA2));
-            assertFalse(dataA2.equals(dataA));
-            assertTrue(dataA.hashCode() != dataA2.hashCode());
-        }
-
-        @Test
-        public void equalsObject() {
-            final RequestData data = new RequestData(KEYPAIR_ID, Mechanism.JWE_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY);
-            assertFalse(data.equals(null));
-            assertFalse(data.equals(IDENTITY));
-            assertTrue(data.hashCode() != IDENTITY.hashCode());
-        }
-    }
-
-    /** Response data unit tests. */
-    public static class ResponseDataTest {
-        /** Key master token. */
-        private static final String KEY_MASTER_TOKEN = "mastertoken";
-
-        @Rule
-        public ExpectedMslException thrown = ExpectedMslException.none();
-
-        @Test
-        public void ctors() throws MslEncodingException, MslException, MslKeyExchangeException, MslEncoderException {
-            final ResponseData resp = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
-            EXPECT_EQ(ENCRYPTION_KEY, resp.getEncryptionKey());
-            EXPECT_EQ(HMAC_KEY, resp.getHmacKey());
-            EXPECT_EQ(KeyExchangeScheme::ASYMMETRIC_WRAPPED, resp.getKeyExchangeScheme());
-            EXPECT_EQ(KEYPAIR_ID, resp.getKeyPairId());
-            EXPECT_EQ(MASTER_TOKEN, resp.getMasterToken());
-            final MslObject keydata = resp.getKeydata(encoder, ENCODER_FORMAT);
-            EXPECT_TRUE(keydata);
-
-            final ResponseData moResp = new ResponseData(MASTER_TOKEN, keydata);
-            EXPECT_EQ(resp.getEncryptionKey(), moResp.getEncryptionKey());
-            EXPECT_EQ(resp.getHmacKey(), moResp.getHmacKey());
-            EXPECT_EQ(resp.getKeyExchangeScheme(), moResp.getKeyExchangeScheme());
-            EXPECT_EQ(resp.getKeyPairId(), moResp.getKeyPairId());
-            EXPECT_EQ(resp.getMasterToken(), moResp.getMasterToken());
-            final MslObject moKeydata = moResp.getKeydata(encoder, ENCODER_FORMAT);
-            EXPECT_TRUE(moKeydata);
-            assertTrue(MslEncoderUtils.equalObjects(keydata, moKeydata));
-        }
-
-        @Test
-        public void mslObject() throws MslException, MslEncodingException, MslCryptoException, MslException, MslEncoderException {
-            final ResponseData resp = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
-            final MslObject mo = MslTestUtils.toMslObject(encoder, resp);
-            EXPECT_EQ(KeyExchangeScheme::ASYMMETRIC_WRAPPED.toString(), mo.getString(KEY_SCHEME));
-            final MasterToken masterToken = new MasterToken(ctx, mo.getMslObject(KEY_MASTER_TOKEN, encoder));
-            EXPECT_EQ(MASTER_TOKEN, masterToken);
-            final MslObject keydata = mo.getMslObject(KEY_KEYDATA, encoder);
-            EXPECT_EQ(KEYPAIR_ID, keydata.getString(KEY_KEY_PAIR_ID));
-            EXPECT_EQ(ENCRYPTION_KEY, keydata.getBytes(KEY_ENCRYPTION_KEY));
-            EXPECT_EQ(HMAC_KEY, keydata.getBytes(KEY_HMAC_KEY));
-        }
-
-        @Test
-        public void create() throws MslException, MslException, MslEncoderException {
-            final ResponseData data = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
-            shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, data);
-            final KeyResponseData keyResponseData = KeyResponseData.create(ctx, mo);
-            EXPECT_TRUE(keyResponseData);
-            assertTrue(keyResponseData instanceof ResponseData);
-
-            final ResponseData moData = (ResponseData)keyResponseData;
-            EXPECT_EQ(data.getEncryptionKey(), moData->getEncryptionKey());
-            EXPECT_EQ(data.getHmacKey(), moData->getHmacKey());
-            EXPECT_EQ(data.getKeyExchangeScheme(), moData->getKeyExchangeScheme());
-            EXPECT_EQ(data.getKeyPairId(), moData->getKeyPairId());
-            EXPECT_EQ(data.getMasterToken(), moData->getMasterToken());
-        }
-
-        @Test
-        public void missingKeyPairId() throws MslEncodingException, MslException, MslKeyExchangeException, MslEncoderException {
-            thrown.expect(MslEncodingException.class);
-            thrown.expectMslError(MslError.MSL_PARSE_ERROR);
-
-            final ResponseData resp = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
-            final MslObject keydata = resp.getKeydata(encoder, ENCODER_FORMAT);
-
-            EXPECT_TRUE(keydata.remove(KEY_KEY_PAIR_ID));
-
-            new ResponseData(MASTER_TOKEN, keydata);
-        }
-
-        @Test
-        public void missingEncryptionKey() throws MslException, MslEncodingException, MslKeyExchangeException, MslEncoderException {
-            thrown.expect(MslEncodingException.class);
-            thrown.expectMslError(MslError.MSL_PARSE_ERROR);
-
-            final ResponseData resp = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
-            final MslObject keydata = resp.getKeydata(encoder, ENCODER_FORMAT);
-
-            EXPECT_TRUE(keydata.remove(KEY_ENCRYPTION_KEY));
-
-            new ResponseData(MASTER_TOKEN, keydata);
-        }
-
-        @Test
-        public void missingHmacKey() throws MslException, MslEncodingException, MslKeyExchangeException, MslEncoderException {
-            thrown.expect(MslEncodingException.class);
-            thrown.expectMslError(MslError.MSL_PARSE_ERROR);
-
-            final ResponseData resp = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
-            final MslObject keydata = resp.getKeydata(encoder, ENCODER_FORMAT);
-
-            EXPECT_TRUE(keydata.remove(KEY_HMAC_KEY));
-
-            new ResponseData(MASTER_TOKEN, keydata);
-        }
-
-        @Test
-        public void equalsMasterToken() throws MslEncodingException, MslException, MslCryptoException, MslKeyExchangeException, MslEncoderException {
-            final MasterToken masterTokenA = MslTestUtils.getMasterToken(ctx, 1, 1);
-            final MasterToken masterTokenB = MslTestUtils.getMasterToken(ctx, 1, 2);
-            final ResponseData dataA = new ResponseData(masterTokenA, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
-            final ResponseData dataB = new ResponseData(masterTokenB, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
-            final ResponseData dataA2 = new ResponseData(masterTokenA, dataA.getKeydata(encoder, ENCODER_FORMAT));
-
-            assertTrue(dataA.equals(dataA));
-            EXPECT_EQ(dataA.hashCode(), dataA.hashCode());
-
-            assertFalse(dataA.equals(dataB));
-            assertFalse(dataB.equals(dataA));
-            assertTrue(dataA.hashCode() != dataB.hashCode());
-
-            assertTrue(dataA.equals(dataA2));
-            assertTrue(dataA2.equals(dataA));
-            EXPECT_EQ(dataA.hashCode(), dataA2.hashCode());
-        }
-
-        @Test
-        public void equalsKeyPairId() throws MslEncodingException, MslException, MslKeyExchangeException, MslEncoderException {
-            final ResponseData dataA = new ResponseData(MASTER_TOKEN, KEYPAIR_ID + "A", ENCRYPTION_KEY, HMAC_KEY);
-            final ResponseData dataB = new ResponseData(MASTER_TOKEN, KEYPAIR_ID + "B", ENCRYPTION_KEY, HMAC_KEY);
-            final ResponseData dataA2 = new ResponseData(MASTER_TOKEN, dataA.getKeydata(encoder, ENCODER_FORMAT));
-
-            assertTrue(dataA.equals(dataA));
-            EXPECT_EQ(dataA.hashCode(), dataA.hashCode());
-
-            assertFalse(dataA.equals(dataB));
-            assertFalse(dataB.equals(dataA));
-            assertTrue(dataA.hashCode() != dataB.hashCode());
-
-            assertTrue(dataA.equals(dataA2));
-            assertTrue(dataA2.equals(dataA));
-            EXPECT_EQ(dataA.hashCode(), dataA2.hashCode());
-        }
-
-        @Test
-        public void equalsEncryptionKey() throws MslEncodingException, MslException, MslKeyExchangeException, MslEncoderException {
-            shared_ptr<ByteArray> encryptionKeyA = Arrays.copyOf(ENCRYPTION_KEY, ENCRYPTION_KEY.length);
-            shared_ptr<ByteArray> encryptionKeyB = Arrays.copyOf(ENCRYPTION_KEY, ENCRYPTION_KEY.length);
-            ++encryptionKeyB[0];
-            final ResponseData dataA = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, encryptionKeyA, HMAC_KEY);
-            final ResponseData dataB = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, encryptionKeyB, HMAC_KEY);
-            final ResponseData dataA2 = new ResponseData(MASTER_TOKEN, dataA.getKeydata(encoder, ENCODER_FORMAT));
-
-            assertTrue(dataA.equals(dataA));
-            EXPECT_EQ(dataA.hashCode(), dataA.hashCode());
-
-            assertFalse(dataA.equals(dataB));
-            assertFalse(dataB.equals(dataA));
-            assertTrue(dataA.hashCode() != dataB.hashCode());
-
-            assertTrue(dataA.equals(dataA2));
-            assertTrue(dataA2.equals(dataA));
-            EXPECT_EQ(dataA.hashCode(), dataA2.hashCode());
-        }
-
-        @Test
-        public void equalsHmacKey() throws MslEncodingException, MslException, MslKeyExchangeException, MslEncoderException {
-            shared_ptr<ByteArray> hmacKeyA = Arrays.copyOf(HMAC_KEY, HMAC_KEY.length);
-            shared_ptr<ByteArray> hmacKeyB = Arrays.copyOf(HMAC_KEY, HMAC_KEY.length);
-            ++hmacKeyB[0];
-            final ResponseData dataA = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, hmacKeyA);
-            final ResponseData dataB = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, hmacKeyB);
-            final ResponseData dataA2 = new ResponseData(MASTER_TOKEN, dataA.getKeydata(encoder, ENCODER_FORMAT));
-
-            assertTrue(dataA.equals(dataA));
-            EXPECT_EQ(dataA.hashCode(), dataA.hashCode());
-
-            assertFalse(dataA.equals(dataB));
-            assertFalse(dataB.equals(dataA));
-            assertTrue(dataA.hashCode() != dataB.hashCode());
-
-            assertTrue(dataA.equals(dataA2));
-            assertTrue(dataA2.equals(dataA));
-            EXPECT_EQ(dataA.hashCode(), dataA2.hashCode());
-        }
-
-        @Test
-        public void equalsObject() {
-            final ResponseData data = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
-            assertFalse(data.equals(null));
-            assertFalse(data.equals(IDENTITY));
-            assertTrue(data.hashCode() != IDENTITY.hashCode());
-        }
-    }
-
-    /** Key exchange factory unit tests. */
-    public static class KeyExchangeFactoryTest {
-        /**
-         * Fake key request data for the asymmetric wrapped key exchange
-         * scheme.
-         */
-        private static class FakeKeyRequestData extends KeyRequestData {
-            /** Create a new fake key request data. */
-            protected FakeKeyRequestData() {
-                super(KeyExchangeScheme::ASYMMETRIC_WRAPPED);
-            }
-
-            /* (non-Javadoc)
-             * @see com.netflix.msl.keyx.KeyRequestData#getKeydata(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
-             */
-            @Override
-            protected MslObject getKeydata(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException {
-                return null;
-            }
-        }
-
-        /**
-         * Fake key response data for the asymmetric wrapped key exchange
-         * scheme.
-         */
-        private static class FakeKeyResponseData extends KeyResponseData {
-            /** Create a new fake key response data. */
-            protected FakeKeyResponseData() {
-                super(MASTER_TOKEN, KeyExchangeScheme::ASYMMETRIC_WRAPPED);
-            }
-
-            /* (non-Javadoc)
-             * @see com.netflix.msl.keyx.KeyResponseData#getKeydata(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
-             */
-            @Override
-            protected MslObject getKeydata(final MslEncoderFactory encoder, final MslEncoderFormat format) throws MslEncoderException {
-                return null;
-            }
-        }
-
-        /**
-         * @param ctx MSL context.
-         * @param encryptionKey master token encryption key.
-         * @param hmacKey master token HMAC key.
-         * @return a new master token.
-         * @throws MslEncodingException if there is an error encoding the data.
-         * @throws MslCryptoException if there is an error encrypting or signing
-         *         the token data.
-         * @throws MslException if the master token is constructed incorrectly.
-         * @throws MslException if there is an error editing the data.
-         * @throws MslEncoderException if there is an error modifying the data.
-         */
-        private static MasterToken getUntrustedMasterToken(final MslContext ctx, final SecretKey encryptionKey, final SecretKey hmacKey) throws MslEncodingException, MslCryptoException, MslException, MslException, MslEncoderException {
-            final Date renewalWindow = new Date(System.currentTimeMillis() + 1000);
-            final Date expiration = new Date(System.currentTimeMillis() + 2000);
-            final String identity = MockPresharedAuthenticationFactory.PSK_ESN;
-            final MasterToken masterToken = new MasterToken(ctx, renewalWindow, expiration, 1L, 1L, null, identity, encryptionKey, hmacKey);
-            final MslObject mo = MslTestUtils.toMslObject(encoder, masterToken);
-            shared_ptr<ByteArray> signature = mo.getBytes("signature");
-            ++signature[1];
-            mo.put("signature", signature);
-            final MasterToken untrustedMasterToken = new MasterToken(ctx, mo);
-            return untrustedMasterToken;
-        }
-
-        @Rule
-        public ExpectedMslException thrown = ExpectedMslException.none();
-
-        @BeforeClass
-        public static synchronized void setup() {
-            Security.addProvider(new BouncyCastleProvider());
-            random = new Random();
-            authutils = new MockAuthenticationUtils();
-            factory = new AsymmetricWrappedExchange(authutils);
-            entityAuthData = new PresharedAuthenticationData(IDENTITY);
-        }
-
-        @AfterClass
-        public static void teardown() {
-            // Do not cleanup so the static instances are available to
-            // subclasses.
-        }
-
-        @Before
-        public void reset() {
-            authutils.reset();
-            ctx.getMslStore().clearCryptoContexts();
-            ctx.getMslStore().clearServiceTokens();
-        }
-
-        @RunWith(Parameterized.class)
-        public static class Params {
-            @Rule
-            public ExpectedMslException thrown = ExpectedMslException.none();
-
-            @Parameters
-            public static Collection<Object[]> data() throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, MslEncodingException, MslCryptoException {
-                AsymmetricWrappedExchangeSuite.setup();
-                return Arrays.asList(new Object[][] {
-                    { Mechanism.RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY },
-                    { Mechanism.JWE_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY },
-                    { Mechanism.JWEJS_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY },
-                    { Mechanism.JWK_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY },
-                    { Mechanism.JWK_RSAES, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY },
-                });
-            }
-
-            /** Key exchange mechanism. */
-            private final Mechanism mechanism;
-            /** Public key. */
-            private final PublicKey publicKey;
-            /** Private key. */
-            private final PrivateKey privateKey;
-
-            /**
-             * Create a new request data test instance with the specified key
-             * exchange parameters.
-             *
-             * @param mechanism key exchange mechanism.
-             * @param publicKey public key.
-             * @param privateKey private key.
-             */
-            public Params(final Mechanism mechanism, final PublicKey publicKey, final PrivateKey privateKey) {
-                this.mechanism = mechanism;
-                this.publicKey = publicKey;
-                this.privateKey = privateKey;
-            }
-
-            @Test
-            public void generateInitialResponse() throws MslException, MslException {
-                final KeyRequestData keyRequestData = new RequestData(KEYPAIR_ID, mechanism, publicKey, privateKey);
-                final KeyExchangeData keyxData = factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData);
-                EXPECT_TRUE(keyxData);
-                EXPECT_TRUE(keyxData.cryptoContext);
-                EXPECT_TRUE(keyxData.keyResponseData);
-
-                final KeyResponseData keyResponseData = keyxData.keyResponseData;
-                EXPECT_EQ(KeyExchangeScheme::ASYMMETRIC_WRAPPED, keyResponseData.getKeyExchangeScheme());
-                final MasterToken masterToken = keyResponseData.getMasterToken();
-                EXPECT_TRUE(masterToken);
-                EXPECT_EQ(IDENTITY, masterToken.getIdentity());
-            }
-
-            @Test
-            public void generateSubsequentResponse() throws MslException {
-                final KeyRequestData keyRequestData = new RequestData(KEYPAIR_ID, mechanism, publicKey, privateKey);
-                final KeyExchangeData keyxData = factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, MASTER_TOKEN);
-                EXPECT_TRUE(keyxData);
-                EXPECT_TRUE(keyxData.cryptoContext);
-                EXPECT_TRUE(keyxData.keyResponseData);
-
-                final KeyResponseData keyResponseData = keyxData.keyResponseData;
-                EXPECT_EQ(KeyExchangeScheme::ASYMMETRIC_WRAPPED, keyResponseData.getKeyExchangeScheme());
-                final MasterToken masterToken = keyResponseData.getMasterToken();
-                EXPECT_TRUE(masterToken);
-                EXPECT_EQ(MASTER_TOKEN.getIdentity(), masterToken.getIdentity());
-                EXPECT_EQ(MASTER_TOKEN.getSerialNumber(), masterToken.getSerialNumber());
-                EXPECT_EQ(MASTER_TOKEN.getSequenceNumber() + 1, masterToken.getSequenceNumber());
-            }
-
-            @Test
-            public void untrustedMasterTokenSubsequentResponse() throws MslEncodingException, MslCryptoException, MslException, MslException, MslEncoderException {
-                thrown.expect(MslMasterTokenException.class);
-
-                final KeyRequestData keyRequestData = new RequestData(KEYPAIR_ID, mechanism, publicKey, privateKey);
-                final SecretKey encryptionKey = MockPresharedAuthenticationFactory.KPE;
-                final SecretKey hmacKey = MockPresharedAuthenticationFactory.KPH;
-                final MasterToken masterToken = getUntrustedMasterToken(ctx, encryptionKey, hmacKey);
-                factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, masterToken);
-            }
-
-            @Test
-            public void getCryptoContext() throws MslException {
-                final KeyRequestData keyRequestData = new RequestData(KEYPAIR_ID, mechanism, publicKey, privateKey);
-                final KeyExchangeData keyxData = factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData);
-                final ICryptoContext requestCryptoContext = keyxData.cryptoContext;
-                final KeyResponseData keyResponseData = keyxData.keyResponseData;
-                final ICryptoContext responseCryptoContext = factory.getCryptoContext(ctx, keyRequestData, keyResponseData, null);
-                EXPECT_TRUE(responseCryptoContext);
-
-                shared_ptr<ByteArray> data = new byte[32];
-                random.nextBytes(data);
-
-                // Ciphertext won't always be equal depending on how it was
-                // enveloped. So we cannot check for equality or inequality.
-                shared_ptr<ByteArray> requestCiphertext = requestCryptoContext.encrypt(data, encoder, ENCODER_FORMAT);
-                shared_ptr<ByteArray> responseCiphertext = responseCryptoContext.encrypt(data, encoder, ENCODER_FORMAT);
-                assertFalse(Arrays.equals(data, requestCiphertext));
-                assertFalse(Arrays.equals(data, responseCiphertext));
-
-                // Signatures should always be equal.
-                shared_ptr<ByteArray> requestSignature = requestCryptoContext.sign(data, encoder, ENCODER_FORMAT);
-                shared_ptr<ByteArray> responseSignature = responseCryptoContext.sign(data, encoder, ENCODER_FORMAT);
-                assertFalse(Arrays.equals(data, requestSignature));
-                assertFalse(Arrays.equals(data, responseSignature));
-                EXPECT_EQ(requestSignature, responseSignature);
-
-                // Plaintext should always be equal to the original message.
-                shared_ptr<ByteArray> requestPlaintext = requestCryptoContext.decrypt(responseCiphertext, encoder);
-                shared_ptr<ByteArray> responsePlaintext = responseCryptoContext.decrypt(requestCiphertext, encoder);
-                EXPECT_TRUE(requestPlaintext);
-                EXPECT_EQ(data, requestPlaintext);
-                EXPECT_EQ(requestPlaintext, responsePlaintext);
-
-                // Verification should always succeed.
-                assertTrue(requestCryptoContext.verify(data, responseSignature, encoder));
-                assertTrue(responseCryptoContext.verify(data, requestSignature, encoder));
-            }
-
-            @Test
-            public void invalidWrappedEncryptionKeyCryptoContext() throws MslException, MslException, MslEncoderException {
-                thrown.expect(MslCryptoException.class);
-
-                final KeyRequestData keyRequestData = new RequestData(KEYPAIR_ID, mechanism, publicKey, privateKey);
-                final KeyExchangeData keyxData = factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData);
-                final KeyResponseData keyResponseData = keyxData.keyResponseData;
-                final MasterToken masterToken = keyResponseData.getMasterToken();
-
-                final MslObject keydata = keyResponseData.getKeydata(encoder, ENCODER_FORMAT);
-                shared_ptr<ByteArray> wrappedEncryptionKey = keydata.getBytes(KEY_ENCRYPTION_KEY);
-                // I think I have to change length - 2 because of padding.
-                ++wrappedEncryptionKey[wrappedEncryptionKey.length-2];
-                keydata.put(KEY_ENCRYPTION_KEY, wrappedEncryptionKey);
-                shared_ptr<ByteArray> wrappedHmacKey = keydata.getBytes(KEY_HMAC_KEY);
-
-                final KeyResponseData invalidKeyResponseData = new ResponseData(masterToken, KEYPAIR_ID, wrappedEncryptionKey, wrappedHmacKey);
-                factory.getCryptoContext(ctx, keyRequestData, invalidKeyResponseData, null);
-            }
-
-            @Test
-            public void invalidWrappedHmacKeyCryptoContext() throws MslException, MslException, MslEncoderException {
-                thrown.expect(MslCryptoException.class);
-
-                final KeyRequestData keyRequestData = new RequestData(KEYPAIR_ID, mechanism, publicKey, privateKey);
-                final KeyExchangeData keyxData = factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData);
-                final KeyResponseData keyResponseData = keyxData.keyResponseData;
-                final MasterToken masterToken = keyResponseData.getMasterToken();
-
-                final MslObject keydata = keyResponseData.getKeydata(encoder, ENCODER_FORMAT);
-                shared_ptr<ByteArray> wrappedHmacKey = keydata.getBytes(KEY_HMAC_KEY);
-                // I think I have to change length - 2 because of padding.
-                ++wrappedHmacKey[wrappedHmacKey.length-2];
-                keydata.put(KEY_HMAC_KEY, wrappedHmacKey);
-                shared_ptr<ByteArray> wrappedEncryptionKey = keydata.getBytes(KEY_ENCRYPTION_KEY);
-
-                final KeyResponseData invalidKeyResponseData = new ResponseData(masterToken, KEYPAIR_ID, wrappedEncryptionKey, wrappedHmacKey);
-                factory.getCryptoContext(ctx, keyRequestData, invalidKeyResponseData, null);
-            }
-        }
-
-        @Test
-        public void factory() {
-            EXPECT_EQ(KeyExchangeScheme::ASYMMETRIC_WRAPPED, factory.getScheme());
-        }
-
-        @Test(expected = MslInternalException.class)
-        public void wrongRequestInitialResponse() throws MslInternalException, MslException {
-            final KeyRequestData keyRequestData = new FakeKeyRequestData();
-            factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData);
-        }
-
-        @Test(expected = MslInternalException.class)
-        public void wrongRequestSubsequentResponse() throws MslInternalException, MslException {
-            final KeyRequestData keyRequestData = new FakeKeyRequestData();
-            factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, MASTER_TOKEN);
-        }
-
-        @Test(expected = MslInternalException.class)
-        public void wrongRequestCryptoContext() throws MslException {
-            final KeyRequestData keyRequestData = new RequestData(KEYPAIR_ID, Mechanism.JWE_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY);
-            final KeyExchangeData keyxData = factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData);
-            final KeyResponseData keyResponseData = keyxData.keyResponseData;
-
-            final KeyRequestData fakeKeyRequestData = new FakeKeyRequestData();
-            factory.getCryptoContext(ctx, fakeKeyRequestData, keyResponseData, null);
-        }
-
-        @Test(expected = MslInternalException.class)
-        public void wrongResponseCryptoContext() throws MslKeyExchangeException, MslCryptoException, MslEncodingException, MslMasterTokenException, MslEntityAuthException {
-            final KeyRequestData keyRequestData = new RequestData(KEYPAIR_ID, Mechanism.JWE_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY);
-            final KeyResponseData fakeKeyResponseData = new FakeKeyResponseData();
-            factory.getCryptoContext(ctx, keyRequestData, fakeKeyResponseData, null);
-        }
-
-        @Test
-        public void keyIdMismatchCryptoContext() throws MslException {
-            thrown.expect(MslKeyExchangeException.class);
-            thrown.expectMslError(MslError.KEYX_RESPONSE_REQUEST_MISMATCH);
-
-            final KeyRequestData keyRequestData = new RequestData(KEYPAIR_ID + "A", Mechanism.JWE_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY);
-            final KeyExchangeData keyxData = factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData);
-            final KeyResponseData keyResponseData = keyxData.keyResponseData;
-            final MasterToken masterToken = keyResponseData.getMasterToken();
-
-            final KeyResponseData mismatchedKeyResponseData = new ResponseData(masterToken, KEYPAIR_ID + "B", ENCRYPTION_KEY, HMAC_KEY);
-
-            factory.getCryptoContext(ctx, keyRequestData, mismatchedKeyResponseData, null);
-        }
-
-        @Test
-        public void missingPrivateKeyCryptoContext() throws MslException {
-            thrown.expect(MslKeyExchangeException.class);
-            thrown.expectMslError(MslError.KEYX_PRIVATE_KEY_MISSING);
-
-            final KeyRequestData keyRequestData = new RequestData(KEYPAIR_ID + "B", Mechanism.JWE_RSA, RSA_PUBLIC_KEY, null);
-            final KeyExchangeData keyxData = factory.generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData);
-            final KeyResponseData keyResponseData = keyxData.keyResponseData;
-
-            factory.getCryptoContext(ctx, keyRequestData, keyResponseData, null);
-        }
-
+TEST_P(RequestDataTest, equalsKeyPairId)
+{
+    shared_ptr<RequestData> dataA  = make_shared<RequestData>(KEYPAIR_ID + "A", AsymmetricWrappedExchange::RequestData::Mechanism::JWE_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY);
+    shared_ptr<RequestData> dataB  = make_shared<RequestData>(KEYPAIR_ID + "B", AsymmetricWrappedExchange::RequestData::Mechanism::JWE_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY);
+    shared_ptr<RequestData> dataA2 = make_shared<RequestData>(dataA->getKeydata(encoder, ENCODER_FORMAT));
+
+    EXPECT_TRUE(dataA->equals(dataA));
+
+    EXPECT_FALSE(dataA->equals(dataB));
+    EXPECT_FALSE(dataB->equals(dataA));
+
+    // The private keys don't transfer via the parse constructor.
+    EXPECT_FALSE(dataA->equals(dataA2));
+    EXPECT_FALSE(dataA2->equals(dataA));
+}
+
+TEST_P(RequestDataTest, operatorEqualsKeyPairId)
+{
+    shared_ptr<RequestData> dataA  = make_shared<RequestData>(KEYPAIR_ID + "A", AsymmetricWrappedExchange::RequestData::Mechanism::JWE_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY);
+    shared_ptr<RequestData> dataB  = make_shared<RequestData>(KEYPAIR_ID + "B", AsymmetricWrappedExchange::RequestData::Mechanism::JWE_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY);
+    shared_ptr<RequestData> dataA2 = make_shared<RequestData>(dataA->getKeydata(encoder, ENCODER_FORMAT));
+
+    EXPECT_TRUE(*dataA == *dataA);
+
+    EXPECT_FALSE(*dataA == *dataB);
+    EXPECT_FALSE(*dataB == *dataA);
+
+    // The private keys don't transfer via the parse constructor.
+    EXPECT_FALSE(*dataA == *dataA2);
+    EXPECT_FALSE(*dataA2 == *dataA);
+}
+
+TEST_P(RequestDataTest, equalsMechanism)
+{
+    shared_ptr<RequestData> dataA  = make_shared<RequestData>(KEYPAIR_ID, AsymmetricWrappedExchange::RequestData::Mechanism::JWE_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY);
+    shared_ptr<RequestData> dataB  = make_shared<RequestData>(KEYPAIR_ID, AsymmetricWrappedExchange::RequestData::Mechanism::ECC, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY);
+    shared_ptr<RequestData> dataA2 = make_shared<RequestData>(dataA->getKeydata(encoder, ENCODER_FORMAT));
+
+    EXPECT_TRUE(dataA->equals(dataA));
+
+    EXPECT_FALSE(dataA->equals(dataB));
+    EXPECT_FALSE(dataB->equals(dataA));
+
+    // The private keys don't transfer via the parse constructor.
+    EXPECT_FALSE(dataA->equals(dataA2));
+    EXPECT_FALSE(dataA2->equals(dataA));
+}
+
+TEST_P(RequestDataTest, equalsPublicKey)
+{
+    pair<PublicKey,PrivateKey> otherkeyPair = MslTestUtils::generateRsaKeys("RSA", 512);
+    shared_ptr<PublicKey> otherPublicKey = make_shared<PublicKey>(otherkeyPair.first);
+    shared_ptr<RequestData> dataA  = make_shared<RequestData>(KEYPAIR_ID, AsymmetricWrappedExchange::RequestData::Mechanism::JWE_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY);
+    shared_ptr<RequestData> dataB  = make_shared<RequestData>(KEYPAIR_ID, AsymmetricWrappedExchange::RequestData::Mechanism::JWE_RSA, otherPublicKey, RSA_PRIVATE_KEY);
+    shared_ptr<RequestData> dataA2 = make_shared<RequestData>(dataA->getKeydata(encoder, ENCODER_FORMAT));
+
+    EXPECT_TRUE(dataA->equals(dataA));
+
+    EXPECT_FALSE(dataA->equals(dataB));
+    EXPECT_FALSE(dataB->equals(dataA));
+
+    // The private keys don't transfer via the parse constructor.
+    EXPECT_FALSE(dataA->equals(dataA2));
+    EXPECT_FALSE(dataA2->equals(dataA));
+}
+
+TEST_P(RequestDataTest, equalsPrivateKey)
+{
+    pair<PublicKey,PrivateKey> otherkeyPair = MslTestUtils::generateRsaKeys("RSA", 512);
+    shared_ptr<PrivateKey> otherPrivateKey = make_shared<PrivateKey>(otherkeyPair.second);
+    shared_ptr<RequestData> dataA  = make_shared<RequestData>(KEYPAIR_ID, AsymmetricWrappedExchange::RequestData::Mechanism::JWE_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY);
+    shared_ptr<RequestData> dataB  = make_shared<RequestData>(KEYPAIR_ID, AsymmetricWrappedExchange::RequestData::Mechanism::JWE_RSA, RSA_PUBLIC_KEY, otherPrivateKey);
+    shared_ptr<RequestData> dataA2 = make_shared<RequestData>(dataA->getKeydata(encoder, ENCODER_FORMAT));
+
+    EXPECT_TRUE(dataA->equals(dataA));
+
+    EXPECT_FALSE(dataA->equals(dataB));
+    EXPECT_FALSE(dataB->equals(dataA));
+
+    // The private keys don't transfer via the parse constructor.
+    EXPECT_FALSE(dataA->equals(dataA2));
+    EXPECT_FALSE(dataA2->equals(dataA));
+}
+
+TEST_P(RequestDataTest, equalsObject)
+{
+    shared_ptr<RequestData> data = make_shared<RequestData>(KEYPAIR_ID, AsymmetricWrappedExchange::RequestData::Mechanism::JWE_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY);
+    EXPECT_FALSE(data->equals(shared_ptr<RequestData>()));
+}
+
+/** Response data unit tests. */
+
+class AsymmetricWrappedExchange_ResponseDataTest : public ::testing::Test, protected BaseTest
+{
+public:
+    const string KEY_MASTER_TOKEN = "mastertoken";
+};
+
+TEST_F(AsymmetricWrappedExchange_ResponseDataTest, ctors)
+{
+    const ResponseData resp(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
+    EXPECT_EQ(*ENCRYPTION_KEY, *resp.getEncryptionKey());
+    EXPECT_EQ(*HMAC_KEY, *resp.getHmacKey());
+    EXPECT_EQ(KeyExchangeScheme::ASYMMETRIC_WRAPPED, resp.getKeyExchangeScheme());
+    EXPECT_EQ(KEYPAIR_ID, resp.getKeyPairId());
+    EXPECT_EQ(MASTER_TOKEN, resp.getMasterToken());
+    shared_ptr<MslObject> keydata = resp.getKeydata(encoder, ENCODER_FORMAT);
+    EXPECT_TRUE(keydata);
+
+    const ResponseData moResp(MASTER_TOKEN, keydata);
+    EXPECT_EQ(*resp.getEncryptionKey(), *moResp.getEncryptionKey());
+    EXPECT_EQ(*resp.getHmacKey(), *moResp.getHmacKey());
+    EXPECT_EQ(resp.getKeyExchangeScheme(), moResp.getKeyExchangeScheme());
+    EXPECT_EQ(resp.getKeyPairId(), moResp.getKeyPairId());
+    EXPECT_EQ(*resp.getMasterToken(), *moResp.getMasterToken());
+    shared_ptr<MslObject> moKeydata = moResp.getKeydata(encoder, ENCODER_FORMAT);
+    EXPECT_TRUE(moKeydata);
+    EXPECT_TRUE(MslEncoderUtils::equalObjects(keydata, moKeydata));
+}
+
+TEST_F(AsymmetricWrappedExchange_ResponseDataTest, mslObject)
+{
+    shared_ptr<ResponseData> resp = make_shared<ResponseData>(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
+    shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, resp);
+    EXPECT_EQ(KeyExchangeScheme::ASYMMETRIC_WRAPPED.toString(), mo->getString(KEY_SCHEME));
+    shared_ptr<MasterToken> masterToken = make_shared<MasterToken>(ctx, mo->getMslObject(KEY_MASTER_TOKEN, encoder));
+    EXPECT_EQ(*MASTER_TOKEN, *masterToken);
+    shared_ptr<MslObject> keydata = mo->getMslObject(KEY_KEYDATA, encoder);
+    EXPECT_EQ(KEYPAIR_ID, keydata->getString(KEY_KEY_PAIR_ID));
+    EXPECT_EQ(*ENCRYPTION_KEY, *keydata->getBytes(KEY_ENCRYPTION_KEY));
+    EXPECT_EQ(*HMAC_KEY, *keydata->getBytes(KEY_HMAC_KEY));
+}
+
+TEST_F(AsymmetricWrappedExchange_ResponseDataTest, create)
+{
+    shared_ptr<ResponseData> data = make_shared<ResponseData>(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
+    shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, data);
+    shared_ptr<KeyResponseData> keyResponseData = KeyResponseData::create(ctx, mo);
+    EXPECT_TRUE(keyResponseData);
+    EXPECT_TRUE(instanceof<ResponseData>(keyResponseData));
+
+    shared_ptr<ResponseData> moData = dynamic_pointer_cast<ResponseData>(keyResponseData);
+    EXPECT_EQ(*data->getEncryptionKey(), *moData->getEncryptionKey());
+    EXPECT_EQ(*data->getHmacKey(), *moData->getHmacKey());
+    EXPECT_EQ(data->getKeyExchangeScheme(), moData->getKeyExchangeScheme());
+    EXPECT_EQ(data->getKeyPairId(), moData->getKeyPairId());
+    EXPECT_EQ(*data->getMasterToken(), *moData->getMasterToken());
+}
+
+TEST_F(AsymmetricWrappedExchange_ResponseDataTest, missingKeyPairId)
+{
+//    thrown.expect(MslEncodingException.class);
+//    thrown.expectMslError(MslError.MSL_PARSE_ERROR);
+
+    const ResponseData resp(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
+    shared_ptr<MslObject> keydata = resp.getKeydata(encoder, ENCODER_FORMAT);
+
+    EXPECT_FALSE(keydata->remove(KEY_KEY_PAIR_ID).isNull());
+
+    try {
+        ResponseData responseData(MASTER_TOKEN, keydata);
+        ADD_FAILURE() << "Should have thrown";
+    } catch(const MslEncodingException& e) {
+        EXPECT_EQ(MslError::MSL_PARSE_ERROR, e.getError());
     }
 }
-#endif
+
+TEST_F(AsymmetricWrappedExchange_ResponseDataTest, missingEncryptionKey)
+{
+//    thrown.expect(MslEncodingException.class);
+//    thrown.expectMslError(MslError.MSL_PARSE_ERROR);
+
+    const ResponseData resp(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
+    shared_ptr<MslObject> keydata = resp.getKeydata(encoder, ENCODER_FORMAT);
+
+    EXPECT_FALSE(keydata->remove(KEY_ENCRYPTION_KEY).isNull());
+
+    try {
+        ResponseData responseData(MASTER_TOKEN, keydata);
+        ADD_FAILURE() << "Should have thrown";
+    } catch(const MslEncodingException& e) {
+        EXPECT_EQ(MslError::MSL_PARSE_ERROR, e.getError());
+    }
+}
+
+TEST_F(AsymmetricWrappedExchange_ResponseDataTest, missingHmacKey)
+{
+//    thrown.expect(MslEncodingException.class);
+//    thrown.expectMslError(MslError.MSL_PARSE_ERROR);
+
+    const ResponseData resp(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
+    shared_ptr<MslObject> keydata = resp.getKeydata(encoder, ENCODER_FORMAT);
+
+    EXPECT_FALSE(keydata->remove(KEY_HMAC_KEY).isNull());
+
+    try {
+        ResponseData responseData(MASTER_TOKEN, keydata);
+        ADD_FAILURE() << "Should have thrown";
+    } catch(const MslEncodingException& e) {
+        EXPECT_EQ(MslError::MSL_PARSE_ERROR, e.getError());
+    }
+}
+
+TEST_F(AsymmetricWrappedExchange_ResponseDataTest, equalsMasterToken)
+{
+    shared_ptr<MasterToken>masterTokenA = MslTestUtils::getMasterToken(ctx, 1, 1);
+    shared_ptr<MasterToken>masterTokenB = MslTestUtils::getMasterToken(ctx, 1, 2);
+    shared_ptr<ResponseData> dataA = make_shared<ResponseData>(masterTokenA, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
+    shared_ptr<ResponseData> dataB = make_shared<ResponseData>(masterTokenB, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
+    shared_ptr<ResponseData> dataA2 = make_shared<ResponseData>(masterTokenA, dataA->getKeydata(encoder, ENCODER_FORMAT));
+
+    EXPECT_TRUE(dataA->equals(dataA));
+
+    EXPECT_FALSE(dataA->equals(dataB));
+    EXPECT_FALSE(dataB->equals(dataA));
+
+    EXPECT_TRUE(dataA->equals(dataA2));
+    EXPECT_TRUE(dataA2->equals(dataA));
+}
+
+TEST_F(AsymmetricWrappedExchange_ResponseDataTest, equalsKeyPairId)
+{
+    shared_ptr<ResponseData> dataA = make_shared<ResponseData>(MASTER_TOKEN, KEYPAIR_ID + "A", ENCRYPTION_KEY, HMAC_KEY);
+    shared_ptr<ResponseData> dataB = make_shared<ResponseData>(MASTER_TOKEN, KEYPAIR_ID + "B", ENCRYPTION_KEY, HMAC_KEY);
+    shared_ptr<ResponseData> dataA2 = make_shared<ResponseData>(MASTER_TOKEN, dataA->getKeydata(encoder, ENCODER_FORMAT));
+
+    EXPECT_TRUE(dataA->equals(dataA));
+
+    EXPECT_FALSE(dataA->equals(dataB));
+    EXPECT_FALSE(dataB->equals(dataA));
+
+    EXPECT_TRUE(dataA->equals(dataA2));
+    EXPECT_TRUE(dataA2->equals(dataA));
+}
+
+TEST_F(AsymmetricWrappedExchange_ResponseDataTest, operatorEqualsKeyPairId)
+{
+    shared_ptr<ResponseData> dataA = make_shared<ResponseData>(MASTER_TOKEN, KEYPAIR_ID + "A", ENCRYPTION_KEY, HMAC_KEY);
+    shared_ptr<ResponseData> dataB = make_shared<ResponseData>(MASTER_TOKEN, KEYPAIR_ID + "B", ENCRYPTION_KEY, HMAC_KEY);
+    shared_ptr<ResponseData> dataA2 = make_shared<ResponseData>(MASTER_TOKEN, dataA->getKeydata(encoder, ENCODER_FORMAT));
+
+    EXPECT_TRUE(*dataA == *dataA);
+
+    EXPECT_FALSE(*dataA == *dataB);
+    EXPECT_FALSE(*dataB == *dataA);
+
+    EXPECT_TRUE(*dataA == *dataA2);
+    EXPECT_TRUE(*dataA2 == *dataA);
+}
+
+TEST_F(AsymmetricWrappedExchange_ResponseDataTest, equalsEncryptionKey)
+{
+    shared_ptr<ByteArray> encryptionKeyA = make_shared<ByteArray>(*ENCRYPTION_KEY);
+    shared_ptr<ByteArray> encryptionKeyB = make_shared<ByteArray>(*ENCRYPTION_KEY);
+    ++(*encryptionKeyB)[0];
+    shared_ptr<ResponseData> dataA = make_shared<ResponseData>(MASTER_TOKEN, KEYPAIR_ID, encryptionKeyA, HMAC_KEY);
+    shared_ptr<ResponseData> dataB = make_shared<ResponseData>(MASTER_TOKEN, KEYPAIR_ID, encryptionKeyB, HMAC_KEY);
+    shared_ptr<ResponseData> dataA2 = make_shared<ResponseData>(MASTER_TOKEN, dataA->getKeydata(encoder, ENCODER_FORMAT));
+
+    EXPECT_TRUE(dataA->equals(dataA));
+
+    EXPECT_FALSE(dataA->equals(dataB));
+    EXPECT_FALSE(dataB->equals(dataA));
+
+    EXPECT_TRUE(dataA->equals(dataA2));
+    EXPECT_TRUE(dataA2->equals(dataA));
+}
+
+TEST_F(AsymmetricWrappedExchange_ResponseDataTest, equalsHmacKey)
+{
+    shared_ptr<ByteArray> hmacKeyA = make_shared<ByteArray>(*HMAC_KEY);
+    shared_ptr<ByteArray> hmacKeyB = make_shared<ByteArray>(*HMAC_KEY);
+    ++(*hmacKeyB)[0];
+    shared_ptr<ResponseData> dataA = make_shared<ResponseData>(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, hmacKeyA);
+    shared_ptr<ResponseData> dataB = make_shared<ResponseData>(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, hmacKeyB);
+    shared_ptr<ResponseData> dataA2 = make_shared<ResponseData>(MASTER_TOKEN, dataA->getKeydata(encoder, ENCODER_FORMAT));
+
+    EXPECT_TRUE(dataA->equals(dataA));
+
+    EXPECT_FALSE(dataA->equals(dataB));
+    EXPECT_FALSE(dataB->equals(dataA));
+
+    EXPECT_TRUE(dataA->equals(dataA2));
+    EXPECT_TRUE(dataA2->equals(dataA));
+}
+
+TEST_F(AsymmetricWrappedExchange_ResponseDataTest, equalsObject)
+{
+    shared_ptr<ResponseData> data = make_shared<ResponseData>(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
+    EXPECT_FALSE(data->equals(shared_ptr<ResponseData>()));
+}
+
+/** Key exchange factory unit tests. */
+
+class KeyExchangeFactoryTest : public ::testing::TestWithParam<TestParameters>, protected BaseTest
+{
+public:
+    KeyExchangeFactoryTest()
+    : authutils(make_shared<MockAuthenticationUtils>())
+    , random(ctx->getRandom())
+    , factory(make_shared<AsymmetricWrappedExchange>(authutils))
+    , entityAuthData(make_shared<PresharedAuthenticationData>(IDENTITY))
+    {}
+
+protected:
+    virtual void SetUp()
+    {
+        authutils.reset();
+        ctx->getMslStore()->clearCryptoContexts();
+        ctx->getMslStore()->clearServiceTokens();
+    }
+
+    /**
+     * @param ctx MSL context.
+     * @param encryptionKey master token encryption key.
+     * @param hmacKey master token HMAC key.
+     * @return a new master token.
+     * @throws MslEncodingException if there is an error encoding the data.
+     * @throws MslCryptoException if there is an error encrypting or signing
+     *         the token data.
+     * @throws MslException if the master token is constructed incorrectly.
+     * @throws MslException if there is an error editing the data.
+     * @throws MslEncoderException if there is an error modifying the data.
+     */
+    shared_ptr<MasterToken> getUntrustedMasterToken(shared_ptr<MslContext> ctx, const SecretKey& encryptionKey, const SecretKey& hmacKey)
+    {
+        const Date renewalWindow(Date::now().getTime() + 1000);
+        const Date expiration(Date::now().getTime() + 2000);
+        const string identity = MockPresharedAuthenticationFactory::PSK_ESN;
+        shared_ptr<MasterToken>masterToken = make_shared<MasterToken>(ctx, renewalWindow, expiration, 1L, 1L, shared_ptr<MslObject>(), identity, encryptionKey, hmacKey);
+        shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, masterToken);
+        shared_ptr<ByteArray> signature = mo->getBytes("signature");
+        ++(*signature)[1];
+        mo->put("signature", signature);
+        shared_ptr<MasterToken> untrustedMasterToken = make_shared<MasterToken>(ctx, mo);
+        return untrustedMasterToken;
+    }
+
+    /** Authentication utilities. */
+    shared_ptr<MockAuthenticationUtils> authutils;
+    /** Random. */
+    shared_ptr<IRandom> random;
+    /** Key exchange factory-> */
+    shared_ptr<KeyExchangeFactory> factory;
+    /** Entity authentication data */
+    shared_ptr<EntityAuthenticationData> entityAuthData;
+};
+
+INSTANTIATE_TEST_CASE_P(AsymmetricWrappedExchange, KeyExchangeFactoryTest,
+    ::testing::Values(
+            TestParameters(RequestData::Mechanism::RSA,       TestSingleton::getPublicKey(), TestSingleton::getPrivateKey()),
+//            TestParameters(RequestData::Mechanism::JWE_RSA,   TestSingleton::getPublicKey(), TestSingleton::getPrivateKey()),  FIXME TODO
+//            TestParameters(RequestData::Mechanism::JWEJS_RSA, TestSingleton::getPublicKey(), TestSingleton::getPrivateKey()),  FIXME TODO
+            TestParameters(RequestData::Mechanism::JWK_RSA,   TestSingleton::getPublicKey(), TestSingleton::getPrivateKey()),
+            TestParameters(RequestData::Mechanism::JWK_RSAES, TestSingleton::getPublicKey(), TestSingleton::getPrivateKey())
+    ), &sufx);
+
+
+TEST_P(KeyExchangeFactoryTest, generateInitialResponse)
+{
+    shared_ptr<KeyRequestData> keyRequestData = make_shared<RequestData>(KEYPAIR_ID, GetParam().mechanism, GetParam().publicKey, GetParam().privateKey);
+    shared_ptr<KeyExchangeData> keyxData = factory->generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData);
+    EXPECT_TRUE(keyxData);
+    EXPECT_TRUE(keyxData->cryptoContext);
+    EXPECT_TRUE(keyxData->keyResponseData);
+
+    shared_ptr<KeyResponseData> keyResponseData = keyxData->keyResponseData;
+    EXPECT_EQ(KeyExchangeScheme::ASYMMETRIC_WRAPPED, keyResponseData->getKeyExchangeScheme());
+    shared_ptr<MasterToken>masterToken = keyResponseData->getMasterToken();
+    EXPECT_TRUE(masterToken);
+    EXPECT_EQ(IDENTITY, masterToken->getIdentity());
+}
+
+TEST_P(KeyExchangeFactoryTest, generateSubsequentResponse)
+{
+    shared_ptr<KeyRequestData> keyRequestData = make_shared<RequestData>(KEYPAIR_ID, GetParam().mechanism, GetParam().publicKey, GetParam().privateKey);
+    shared_ptr<KeyExchangeData> keyxData = factory->generateResponse(ctx, ENCODER_FORMAT, keyRequestData, MASTER_TOKEN);
+    EXPECT_TRUE(keyxData);
+    EXPECT_TRUE(keyxData->cryptoContext);
+    EXPECT_TRUE(keyxData->keyResponseData);
+
+    shared_ptr<KeyResponseData> keyResponseData = keyxData->keyResponseData;
+    EXPECT_EQ(KeyExchangeScheme::ASYMMETRIC_WRAPPED, keyResponseData->getKeyExchangeScheme());
+    shared_ptr<MasterToken>masterToken = keyResponseData->getMasterToken();
+    EXPECT_TRUE(masterToken);
+    EXPECT_EQ(MASTER_TOKEN->getIdentity(), masterToken->getIdentity());
+    EXPECT_EQ(MASTER_TOKEN->getSerialNumber(), masterToken->getSerialNumber());
+    EXPECT_EQ(MASTER_TOKEN->getSequenceNumber() + 1, masterToken->getSequenceNumber());
+}
+
+TEST_P(KeyExchangeFactoryTest, untrustedMasterTokenSubsequentResponse)
+{
+//    thrown.expect(MslMasterTokenException.class);
+
+    shared_ptr<KeyRequestData> keyRequestData = make_shared<RequestData>(KEYPAIR_ID, GetParam().mechanism, GetParam().publicKey, GetParam().privateKey);
+    const SecretKey encryptionKey = MockPresharedAuthenticationFactory::KPE;
+    const SecretKey hmacKey = MockPresharedAuthenticationFactory::KPH;
+    shared_ptr<MasterToken>masterToken = getUntrustedMasterToken(ctx, encryptionKey, hmacKey);
+    EXPECT_THROW(factory->generateResponse(ctx, ENCODER_FORMAT, keyRequestData, masterToken), MslMasterTokenException);
+}
+
+TEST_P(KeyExchangeFactoryTest, getCryptoContext)
+{
+    shared_ptr<KeyRequestData> keyRequestData = make_shared<RequestData>(KEYPAIR_ID, GetParam().mechanism, GetParam().publicKey, GetParam().privateKey);
+    shared_ptr<KeyExchangeData> keyxData = factory->generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData);
+    shared_ptr<ICryptoContext> requestCryptoContext = keyxData->cryptoContext;
+    shared_ptr<KeyResponseData> keyResponseData = keyxData->keyResponseData;
+    shared_ptr<ICryptoContext> responseCryptoContext = factory->getCryptoContext(ctx, keyRequestData, keyResponseData, shared_ptr<MasterToken>());
+    EXPECT_TRUE(responseCryptoContext);
+
+    shared_ptr<ByteArray> data = make_shared<ByteArray>(32);
+    random->nextBytes(*data);
+
+    // Ciphertext won't always be equal depending on how it was
+    // enveloped. So we cannot check for equality or inequality.
+    shared_ptr<ByteArray> requestCiphertext = requestCryptoContext->encrypt(data, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> responseCiphertext = responseCryptoContext->encrypt(data, encoder, ENCODER_FORMAT);
+    EXPECT_NE(*data, *requestCiphertext);
+    EXPECT_NE(*data, *responseCiphertext);
+
+    // Signatures should always be equal.
+    shared_ptr<ByteArray> requestSignature = requestCryptoContext->sign(data, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> responseSignature = responseCryptoContext->sign(data, encoder, ENCODER_FORMAT);
+    EXPECT_NE(*data, *requestSignature);
+    EXPECT_NE(*data, *responseSignature);
+    EXPECT_EQ(*requestSignature, *responseSignature);
+
+    // Plaintext should always be equal to the original message.
+    shared_ptr<ByteArray> requestPlaintext = requestCryptoContext->decrypt(responseCiphertext, encoder);
+    shared_ptr<ByteArray> responsePlaintext = responseCryptoContext->decrypt(requestCiphertext, encoder);
+    EXPECT_TRUE(requestPlaintext);
+    EXPECT_EQ(*data, *requestPlaintext);
+    EXPECT_EQ(*requestPlaintext, *responsePlaintext);
+
+    // Verification should always succeed.
+    EXPECT_TRUE(requestCryptoContext->verify(data, responseSignature, encoder));
+    EXPECT_TRUE(responseCryptoContext->verify(data, requestSignature, encoder));
+}
+
+TEST_P(KeyExchangeFactoryTest, invalidWrappedEncryptionKeyCryptoContext)
+{
+//    thrown.expect(MslCryptoException.class);
+
+    shared_ptr<KeyRequestData> keyRequestData = make_shared<RequestData>(KEYPAIR_ID, GetParam().mechanism, GetParam().publicKey, GetParam().privateKey);
+    shared_ptr<KeyExchangeData> keyxData = factory->generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData);
+    shared_ptr<KeyResponseData> keyResponseData = keyxData->keyResponseData;
+    shared_ptr<MasterToken>masterToken = keyResponseData->getMasterToken();
+
+    shared_ptr<MslObject> keydata = keyResponseData->getKeydata(encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> wrappedEncryptionKey = keydata->getBytes(KEY_ENCRYPTION_KEY);
+    // I think I have to change length - 2 because of padding.
+    ++(*wrappedEncryptionKey)[wrappedEncryptionKey->size()-2];
+    keydata->put(KEY_ENCRYPTION_KEY, wrappedEncryptionKey);
+    shared_ptr<ByteArray> wrappedHmacKey = keydata->getBytes(KEY_HMAC_KEY);
+
+    shared_ptr<KeyResponseData> invalidKeyResponseData = make_shared<ResponseData>(masterToken, KEYPAIR_ID, wrappedEncryptionKey, wrappedHmacKey);
+    EXPECT_THROW(factory->getCryptoContext(ctx, keyRequestData, invalidKeyResponseData, shared_ptr<MasterToken>()), MslCryptoException);
+}
+
+TEST_P(KeyExchangeFactoryTest, invalidWrappedHmacKeyCryptoContext)
+{
+//    thrown.expect(MslCryptoException.class);
+
+    shared_ptr<KeyRequestData> keyRequestData = make_shared<RequestData>(KEYPAIR_ID, GetParam().mechanism, GetParam().publicKey, GetParam().privateKey);
+    shared_ptr<KeyExchangeData> keyxData = factory->generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData);
+    shared_ptr<KeyResponseData> keyResponseData = keyxData->keyResponseData;
+    shared_ptr<MasterToken>masterToken = keyResponseData->getMasterToken();
+
+    shared_ptr<MslObject> keydata = keyResponseData->getKeydata(encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> wrappedHmacKey = keydata->getBytes(KEY_HMAC_KEY);
+    // I think I have to change length - 2 because of padding.
+    ++(*wrappedHmacKey)[wrappedHmacKey->size()-2];
+    keydata->put(KEY_HMAC_KEY, wrappedHmacKey);
+    shared_ptr<ByteArray> wrappedEncryptionKey = keydata->getBytes(KEY_ENCRYPTION_KEY);
+
+    shared_ptr<KeyResponseData> invalidKeyResponseData = make_shared<ResponseData>(masterToken, KEYPAIR_ID, wrappedEncryptionKey, wrappedHmacKey);
+    EXPECT_THROW(factory->getCryptoContext(ctx, keyRequestData, invalidKeyResponseData, shared_ptr<MasterToken>()), MslCryptoException);
+}
+
+class AsymmetricWrappedExchange_KeyExchangeFactoryTest : public ::testing::Test, protected BaseTest
+{
+public:
+    AsymmetricWrappedExchange_KeyExchangeFactoryTest()
+    : authutils(make_shared<MockAuthenticationUtils>())
+    , random(ctx->getRandom())
+    , factory(make_shared<AsymmetricWrappedExchange>(authutils))
+    , entityAuthData(make_shared<PresharedAuthenticationData>(IDENTITY))
+    {}
+
+protected:
+    virtual void SetUp()
+    {
+        authutils.reset();
+        ctx->getMslStore()->clearCryptoContexts();
+        ctx->getMslStore()->clearServiceTokens();
+    }
+
+    /**
+     * Fake key request data for the asymmetric wrapped key exchange scheme.
+     */
+    class FakeKeyRequestData : public KeyRequestData
+    {
+    public:
+        FakeKeyRequestData() : KeyRequestData(KeyExchangeScheme::ASYMMETRIC_WRAPPED) {}
+        virtual shared_ptr<MslObject> getKeydata(shared_ptr<io::MslEncoderFactory>, const MslEncoderFormat&) const {
+            return shared_ptr<MslObject>();
+        }
+    };
+
+    /**
+     * Fake key response data for the asymmetric wrapped key exchange
+     * scheme.
+     */
+    class FakeKeyResponseData : public KeyResponseData
+    {
+    public:
+        FakeKeyResponseData(shared_ptr<MasterToken> mt) : KeyResponseData(mt, KeyExchangeScheme::ASYMMETRIC_WRAPPED) {}
+        virtual shared_ptr<MslObject> getKeydata(shared_ptr<MslEncoderFactory>, const MslEncoderFormat&) const {
+            return shared_ptr<MslObject>();
+        }
+    };
+
+    /** Authentication utilities. */
+    shared_ptr<MockAuthenticationUtils> authutils;
+    /** Random. */
+    shared_ptr<IRandom> random;
+    /** Key exchange factory-> */
+    shared_ptr<KeyExchangeFactory> factory;
+    /** Entity authentication data */
+    shared_ptr<EntityAuthenticationData> entityAuthData;
+};
+
+TEST_F(AsymmetricWrappedExchange_KeyExchangeFactoryTest, factory)
+{
+    EXPECT_EQ(KeyExchangeScheme::ASYMMETRIC_WRAPPED, factory->getScheme());
+}
+
+//@Test(expected = MslInternalException.class)
+TEST_F(AsymmetricWrappedExchange_KeyExchangeFactoryTest, wrongRequestInitialResponse)
+{
+    shared_ptr<KeyRequestData> keyRequestData = make_shared<FakeKeyRequestData>();
+    EXPECT_THROW(factory->generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData), MslInternalException);
+}
+
+//@Test(expected = MslInternalException.class)
+TEST_F(AsymmetricWrappedExchange_KeyExchangeFactoryTest, wrongRequestSubsequentResponse)
+{
+    shared_ptr<KeyRequestData> keyRequestData = make_shared<FakeKeyRequestData>();
+    EXPECT_THROW(factory->generateResponse(ctx, ENCODER_FORMAT, keyRequestData, MASTER_TOKEN), MslInternalException);
+}
+
+//@Test(expected = MslInternalException.class)
+TEST_F(AsymmetricWrappedExchange_KeyExchangeFactoryTest, wrongRequestCryptoContext)
+{
+    shared_ptr<KeyRequestData> keyRequestData = make_shared<RequestData>(KEYPAIR_ID, AsymmetricWrappedExchange::RequestData::Mechanism::JWK_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY);
+    shared_ptr<KeyExchangeData> keyxData = factory->generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData);
+    shared_ptr<KeyResponseData> keyResponseData = keyxData->keyResponseData;
+
+    shared_ptr<KeyRequestData> fakeKeyRequestData = make_shared<FakeKeyRequestData>();
+    EXPECT_THROW(factory->getCryptoContext(ctx, fakeKeyRequestData, keyResponseData, shared_ptr<MasterToken>()), MslInternalException);
+}
+
+//@Test(expected = MslInternalException.class)
+TEST_F(AsymmetricWrappedExchange_KeyExchangeFactoryTest, wrongResponseCryptoContext)
+{
+    shared_ptr<KeyRequestData> keyRequestData = make_shared<RequestData>(KEYPAIR_ID, AsymmetricWrappedExchange::RequestData::Mechanism::JWK_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY);
+    shared_ptr<KeyResponseData> fakeKeyResponseData = make_shared<FakeKeyResponseData>(MASTER_TOKEN);
+    EXPECT_THROW(factory->getCryptoContext(ctx, keyRequestData, fakeKeyResponseData, shared_ptr<MasterToken>()), MslInternalException);
+}
+
+TEST_F(AsymmetricWrappedExchange_KeyExchangeFactoryTest, keyIdMismatchCryptoContext)
+{
+//    thrown.expect(MslKeyExchangeException.class);
+//    thrown.expectMslError(MslError.KEYX_RESPONSE_REQUEST_MISMATCH);
+
+    shared_ptr<KeyRequestData> keyRequestData = make_shared<RequestData>(KEYPAIR_ID + "A", AsymmetricWrappedExchange::RequestData::Mechanism::JWK_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY);
+    shared_ptr<KeyExchangeData> keyxData = factory->generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData);
+    shared_ptr<KeyResponseData> keyResponseData = keyxData->keyResponseData;
+    shared_ptr<MasterToken>masterToken = keyResponseData->getMasterToken();
+
+    shared_ptr<KeyResponseData> mismatchedKeyResponseData = make_shared<ResponseData>(masterToken, KEYPAIR_ID + "B", ENCRYPTION_KEY, HMAC_KEY);
+
+    try {
+        factory->getCryptoContext(ctx, keyRequestData, mismatchedKeyResponseData, shared_ptr<MasterToken>());
+        ADD_FAILURE() << "Should have thrown.";
+    } catch (const MslKeyExchangeException& e) {
+        EXPECT_EQ(MslError::KEYX_RESPONSE_REQUEST_MISMATCH, e.getError());
+    }
+}
+
+TEST_F(AsymmetricWrappedExchange_KeyExchangeFactoryTest, missingPrivateKeyCryptoContext)
+{
+//    thrown.expect(MslKeyExchangeException.class);
+//    thrown.expectMslError(MslError.KEYX_PRIVATE_KEY_MISSING);
+
+    shared_ptr<KeyRequestData> keyRequestData = make_shared<RequestData>(KEYPAIR_ID + "B", RequestData::Mechanism::JWK_RSA, RSA_PUBLIC_KEY, std::shared_ptr<crypto::PrivateKey>());
+    shared_ptr<KeyExchangeData> keyxData = factory->generateResponse(ctx, ENCODER_FORMAT, keyRequestData, entityAuthData);
+    shared_ptr<KeyResponseData> keyResponseData = keyxData->keyResponseData;
+
+    try {
+        factory->getCryptoContext(ctx, keyRequestData, keyResponseData, shared_ptr<tokens::MasterToken>());
+        ADD_FAILURE() << "Should have thrown.";
+    } catch (const MslKeyExchangeException& e) {
+        EXPECT_EQ(MslError::KEYX_PRIVATE_KEY_MISSING, e.getError());
+    }
+}
 
 }}} // namespace netflix::msl::keyx

@@ -67,7 +67,8 @@ const string KEY_HMAC_KEY = "hmackey";
 // -------- AsymmetricWrappedExchange::RsaWrappingCryptoContext -------- //
 
 AsymmetricWrappedExchange::RsaWrappingCryptoContext::RsaWrappingCryptoContext(const string& id,
-        const PrivateKey& privateKey, const PublicKey& publicKey, const AsymmetricWrappedExchange::RsaWrappingCryptoContext::Mode& mode)
+    std::shared_ptr<PrivateKey> privateKey, std::shared_ptr<PublicKey> publicKey,
+    const AsymmetricWrappedExchange::RsaWrappingCryptoContext::Mode& mode)
 : id(id)
 , privateKey(privateKey)
 , publicKey(publicKey)
@@ -77,10 +78,10 @@ AsymmetricWrappedExchange::RsaWrappingCryptoContext::RsaWrappingCryptoContext(co
         throw MslInternalException("RSA wrapping crypto context mode not supported.");
 
     // As an optimization, convert any incoming key into its OpenSSL EVP_PKEY version
-    if (!privateKey.isNull() && privateKey.getFormat() == PrivateKey::DEFAULT_FORMAT)
-        privateKeyEvp = RsaEvpKey::fromPkcs8(privateKey.getEncoded());
-    if (!publicKey.isNull() && publicKey.getFormat() == PublicKey::DEFAULT_FORMAT)
-        publicKeyEvp = RsaEvpKey::fromSpki(publicKey.getEncoded());
+    if (privateKey && privateKey->getFormat() == PrivateKey::DEFAULT_FORMAT)
+        privateKeyEvp = RsaEvpKey::fromPkcs8(privateKey->getEncoded());
+    if (publicKey && publicKey->getFormat() == PublicKey::DEFAULT_FORMAT)
+        publicKeyEvp = RsaEvpKey::fromSpki(publicKey->getEncoded());
 }
 
 shared_ptr<ByteArray> AsymmetricWrappedExchange::RsaWrappingCryptoContext::encrypt(shared_ptr<ByteArray>,
@@ -100,9 +101,9 @@ shared_ptr<ByteArray> AsymmetricWrappedExchange::RsaWrappingCryptoContext::wrap(
 {
     if (mode == RsaWrappingCryptoContext::Mode::NULL_OP)
         return data;
-    if (publicKey.isNull() || !publicKeyEvp)
+    if (!publicKey || !publicKeyEvp)
         throw MslCryptoException(MslError::WRAP_NOT_SUPPORTED, "no public key");
-    if (publicKey.getFormat() != PublicKey::DEFAULT_FORMAT)
+    if (publicKey->getFormat() != PublicKey::DEFAULT_FORMAT)
         throw MslCryptoException(MslError::WRAP_ERROR, "bad key format");
     try {
         shared_ptr<ByteArray> result = make_shared<ByteArray>();
@@ -124,16 +125,16 @@ shared_ptr<ByteArray> AsymmetricWrappedExchange::RsaWrappingCryptoContext::unwra
 {
     if (mode == RsaWrappingCryptoContext::Mode::NULL_OP)
         return data;
-    if (privateKey.isNull() || !privateKeyEvp)
+    if (!privateKey || !privateKeyEvp)
         throw MslCryptoException(MslError::WRAP_NOT_SUPPORTED, "no private key");
-    if (privateKey.getFormat() != PrivateKey::DEFAULT_FORMAT)
+    if (privateKey->getFormat() != PrivateKey::DEFAULT_FORMAT)
         throw MslCryptoException(MslError::UNWRAP_ERROR, "bad key format");
     try {
         shared_ptr<ByteArray> result = make_shared<ByteArray>();
         if (mode == Mode::WRAP_UNWRAP_PKCS1) {
-            rsaDecrypt(publicKeyEvp->getEvpPkey(), *data, false, *result);
+            rsaDecrypt(privateKeyEvp->getEvpPkey(), *data, false, *result);
         } else if (mode == Mode::WRAP_UNWRAP_OAEP) {
-            rsaDecrypt(publicKeyEvp->getEvpPkey(), *data, true, *result);
+            rsaDecrypt(privateKeyEvp->getEvpPkey(), *data, true, *result);
         } else {
             throw MslInternalException("Invalid cipher algorithm specified.");
         }
@@ -183,7 +184,7 @@ const vector<Mechanism>& Mechanism::getValues()
 // -------- AsymmetricWrappedExchange::RequestData -------- //
 
 RequestData::RequestData(const string& keyPairId, const Mechanism& mechanism,
-        const PublicKey& publicKey, const PrivateKey& privateKey)
+        shared_ptr<PublicKey> publicKey, shared_ptr<PrivateKey> privateKey)
 	: KeyRequestData(KeyExchangeScheme::ASYMMETRIC_WRAPPED)
 	, keyPairId_(keyPairId)
 	, mechanism_(mechanism)
@@ -219,7 +220,7 @@ RequestData::RequestData(shared_ptr<MslObject> keyRequestMo)
         case Mechanism::jwejs_rsa:
         case Mechanism::jwk_rsa:
         case Mechanism::jwk_rsaes:
-            publicKey_ = PublicKey(encodedKey, "RSA");  // assumes key encoding is SPKI
+            publicKey_ = make_shared<PublicKey>(encodedKey, "RSA");  // assumes key encoding is SPKI
             break;
         default:
             throw MslCryptoException(MslError::UNSUPPORTED_KEYX_MECHANISM, mechanism_.name());
@@ -232,7 +233,7 @@ shared_ptr<MslObject> RequestData::getKeydata(shared_ptr<MslEncoderFactory> enco
 	shared_ptr<MslObject> mo = encoder->createObject();
 	mo->put(KEY_KEY_PAIR_ID, keyPairId_);
 	mo->put(KEY_MECHANISM, mechanism_.name());
-	mo->put(KEY_PUBLIC_KEY, publicKey_.getEncoded());
+	mo->put(KEY_PUBLIC_KEY, publicKey_->getEncoded());
 	return mo;
 }
 
@@ -244,12 +245,13 @@ bool RequestData::equals(shared_ptr<const KeyRequestData> obj) const
 	shared_ptr<const RequestData> that = dynamic_pointer_cast<const RequestData>(obj);
 	// Private keys are optional but must be considered.
 	const bool privateKeysEqual =
-			privateKey_ == that->privateKey_ ||
-			privateKey_.getEncoded() == that->privateKey_.getEncoded();
+	        (privateKey_ && that->privateKey_) &&
+			((privateKey_ == that->privateKey_) ||
+			(*privateKey_->getEncoded() == *that->privateKey_->getEncoded()));
 	return KeyRequestData::equals(that) &&
 			keyPairId_ == that->keyPairId_ &&
 			mechanism_ == that->mechanism_ &&
-			publicKey_.getEncoded() == that->publicKey_.getEncoded() &&
+			*publicKey_->getEncoded() == *that->publicKey_->getEncoded() &&
 			privateKeysEqual;
 }
 
@@ -324,7 +326,7 @@ AsymmetricWrappedExchange::AsymmetricWrappedExchange(shared_ptr<AuthenticationUt
 }
 
 shared_ptr<ICryptoContext> AsymmetricWrappedExchange::createCryptoContext(shared_ptr<MslContext>, const string& keyPairId,
-        const RequestData::Mechanism& mechanism, const PrivateKey& privateKey, const PublicKey& publicKey)
+        const RequestData::Mechanism& mechanism, shared_ptr<PrivateKey> privateKey, shared_ptr<PublicKey> publicKey)
 {
     switch (mechanism) {
 //        case Mechanism::jwe_rsa:  FIXME TODO
@@ -404,8 +406,8 @@ shared_ptr<KeyExchangeData> AsymmetricWrappedExchange::generateResponse(shared_p
 	shared_ptr<MslEncoderFactory> encoder = ctx->getMslEncoderFactory();
 	const string keyPairId = request->getKeyPairId();
 	const RequestData::Mechanism mechanism = request->getMechanism();
-	const PublicKey publicKey = request->getPublicKey();
-	shared_ptr<ICryptoContext> wrapCryptoContext = createCryptoContext(ctx, keyPairId, mechanism, PrivateKey(), publicKey);
+	shared_ptr<PublicKey> publicKey = request->getPublicKey();
+	shared_ptr<ICryptoContext> wrapCryptoContext = createCryptoContext(ctx, keyPairId, mechanism, shared_ptr<PrivateKey>(), publicKey);
 	shared_ptr<ByteArray> wrappedEncryptionKey, wrappedHmacKey;
 	switch (mechanism) {
         case Mechanism::jwe_rsa:
@@ -485,8 +487,8 @@ shared_ptr<KeyExchangeData> AsymmetricWrappedExchange::generateResponse(shared_p
 	shared_ptr<MslEncoderFactory> encoder = ctx->getMslEncoderFactory();
 	const string keyPairId = request->getKeyPairId();
 	const RequestData::Mechanism mechanism = request->getMechanism();
-	const PublicKey publicKey = request->getPublicKey();
-	shared_ptr<ICryptoContext> wrapCryptoContext = createCryptoContext(ctx, keyPairId, mechanism, PrivateKey(), publicKey);
+	shared_ptr<PublicKey> publicKey = request->getPublicKey();
+	shared_ptr<ICryptoContext> wrapCryptoContext = createCryptoContext(ctx, keyPairId, mechanism, shared_ptr<PrivateKey>(), publicKey);
 	shared_ptr<ByteArray> wrappedEncryptionKey, wrappedHmacKey;
 	switch (mechanism) {
         case Mechanism::jwe_rsa:
@@ -556,11 +558,11 @@ shared_ptr<ICryptoContext> AsymmetricWrappedExchange::getCryptoContext(shared_pt
 
 	// Unwrap session keys with identified key.
 	shared_ptr<MslEncoderFactory> encoder = ctx->getMslEncoderFactory();
-	const PrivateKey privateKey = request->getPrivateKey();
-	if (privateKey.isNull())
+	shared_ptr<PrivateKey> privateKey = request->getPrivateKey();
+	if (!privateKey)
 		throw MslKeyExchangeException(MslError::KEYX_PRIVATE_KEY_MISSING, "request Asymmetric private key");
 	const RequestData::Mechanism mechanism = request->getMechanism();
-	shared_ptr<ICryptoContext> unwrapCryptoContext = createCryptoContext(ctx, requestKeyPairId, mechanism, privateKey, PublicKey());
+	shared_ptr<ICryptoContext> unwrapCryptoContext = createCryptoContext(ctx, requestKeyPairId, mechanism, privateKey, shared_ptr<PublicKey>());
 	shared_ptr<SecretKey> encryptionKey, hmacKey;
 	switch (mechanism) {
         case Mechanism::jwe_rsa:

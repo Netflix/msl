@@ -1475,16 +1475,16 @@ public:
 
 	MessageBuilderTest_CreateResponse()
 	{
-		RSA_PUBLIC_KEY = TestSingleton::getPublicKey();
-		RSA_PRIVATE_KEY = TestSingleton::getPrivateKey();
+		RSA_PUBLIC_KEY = make_shared<PublicKey>(TestSingleton::getPublicKey());
+		RSA_PRIVATE_KEY = make_shared<PrivateKey>(TestSingleton::getPrivateKey());
 		string json = "{ \"issuerid\" : 17 }";
 		ISSUER_DATA = encoder->parseObject(make_shared<ByteArray>(json.begin(), json.end()));
 		USER = MockEmailPasswordAuthenticationFactory::USER;
 	}
 
 protected:
-	PublicKey RSA_PUBLIC_KEY;
-	PrivateKey RSA_PRIVATE_KEY;
+	shared_ptr<PublicKey> RSA_PUBLIC_KEY;
+	shared_ptr<PrivateKey> RSA_PRIVATE_KEY;
 	map<string,shared_ptr<ICryptoContext>> CRYPTO_CONTEXTS;
 	shared_ptr<MslObject> ISSUER_DATA;
 	shared_ptr<MslUser> USER;
