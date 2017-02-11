@@ -258,7 +258,7 @@ JsonWebKey::JsonWebKey(const set<KeyOp>& keyOps, const Algorithm& algo, bool ext
             case Algorithm::a128cbc_:
                 break;
             default:
-                throw new MslInternalException("The algorithm must be a symmetric key algorithm.");
+                throw MslInternalException("The algorithm must be a symmetric key algorithm.");
         }
     }
 }
