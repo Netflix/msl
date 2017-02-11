@@ -114,9 +114,11 @@ shared_ptr<KeyExchangeData> issueMasterToken(shared_ptr<MslContext> ctx,
 		shared_ptr<KeyExchangeFactory> factory = *factories;
 		set<shared_ptr<KeyRequestData>>::iterator requests = keyRequestData.begin();
 		while (requests != keyRequestData.end()) {
-			shared_ptr<KeyRequestData> request = *requests++;
-			if (factory->getScheme() != request->getKeyExchangeScheme())
+			shared_ptr<KeyRequestData> request = *requests;
+			if (factory->getScheme() != request->getKeyExchangeScheme()) {
+			    requests++;
 				continue;
+			}
 
 			// Attempt the key exchange, but if it fails try with the next
 			// combination before giving up.
@@ -141,6 +143,8 @@ shared_ptr<KeyExchangeData> issueMasterToken(shared_ptr<MslContext> ctx,
 				if (requests == keyRequestData.end()) throw e;
 				keyxException = e.clone();
 			}
+
+			requests++;
 		}
 	}
 
