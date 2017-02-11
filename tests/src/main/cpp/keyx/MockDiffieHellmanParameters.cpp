@@ -34,14 +34,18 @@ const string gHex = "02";
 
 } // namespace anonymous
 
-const string MockDiffieHellmanParameters::DEFAULT_ID = "default1";
+// static
+std::string MockDiffieHellmanParameters::DEFAULT_ID()
+{
+    return "default1";
+}
 
 // static
 shared_ptr<MockDiffieHellmanParameters> MockDiffieHellmanParameters::getDefaultParameters()
 {
     shared_ptr<MockDiffieHellmanParameters> params = make_shared<MockDiffieHellmanParameters>();
     const DHParameterSpec paramSpec(util::fromHex(pHex), util::fromHex(gHex));
-    params->addParameterSpec(DEFAULT_ID, paramSpec);
+    params->addParameterSpec(DEFAULT_ID(), paramSpec);
     return params;
 }
 

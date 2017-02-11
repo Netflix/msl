@@ -86,7 +86,7 @@ MockMessageContext::MockMessageContext(shared_ptr<MslContext> ctx, const string&
 
     {
         shared_ptr<DiffieHellmanParameters> params = MockDiffieHellmanParameters::getDefaultParameters();
-        const DHParameterSpec paramSpec = params->getParameterSpec(MockDiffieHellmanParameters::DEFAULT_ID);
+        const DHParameterSpec paramSpec = params->getParameterSpec(MockDiffieHellmanParameters::DEFAULT_ID());
         ByteArray tmp1, tmp2;
         dhGenKeyPair(*paramSpec.getP(), *paramSpec.getG(), tmp1, tmp2);
         shared_ptr<ByteArray> publicKey = make_shared<ByteArray>(tmp1);
