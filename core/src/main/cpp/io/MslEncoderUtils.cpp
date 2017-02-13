@@ -113,7 +113,7 @@ shared_ptr<MslArray> createArray(shared_ptr<MslContext> ctx, const vector<Varian
 			// FIXME: This should list the variant value type.
 			stringstream ss;
 			ss << "Class " << "<variant>" << " is not MSL encoding-compatible.";
-			throw new MslEncoderException(ss.str());
+			throw MslEncoderException(ss.str());
 		}
 	}
 	return array;

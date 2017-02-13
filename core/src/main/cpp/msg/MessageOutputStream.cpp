@@ -102,7 +102,7 @@ MessageOutputStream::MessageOutputStream(shared_ptr<MslContext> ctx,
 	try {
 		encoding = header->toMslEncoding(encoder, encoderFormat_);
 	} catch (const MslEncoderException& e) {
-		throw new IOException("Error encoding the message header.", e);
+		throw IOException("Error encoding the message header.", e);
 	}
 
 	size_t numWritten = destination_->write(*encoding);

@@ -30,6 +30,7 @@
 #include <crypto/ICryptoContext.h>
 #include <crypto/JcaAlgorithm.h>
 #include <crypto/NullCryptoContext.h>
+#include <crypto/OpenSslLib.h>
 #include <crypto/Random.h>
 #include <crypto/SessionCryptoContext.h>
 #include <crypto/SymmetricCryptoContext.h>
@@ -39,8 +40,8 @@
 #include <io/MslEncoderFactory.h>
 #include <io/MslObject.h>
 #include <keyx/AsymmetricWrappedExchange.h>
-//#include <keyx/DiffieHellmanExchange.h>
-//#include <keyx/DiffieHellmanParameters.h>
+#include <keyx/DiffieHellmanExchange.h>
+#include <keyx/DiffieHellmanParameters.h>
 #include <keyx/KeyExchangeScheme.h>
 #include <keyx/KeyRequestData.h>
 #include <keyx/KeyResponseData.h>
@@ -62,7 +63,7 @@
 #include <memory>
 
 #include "../entityauth/MockPresharedAuthenticationFactory.h"
-//#include "../keyx/MockDiffieHellmanParameters.h"
+#include "../keyx/MockDiffieHellmanParameters.h"
 #include "../userauth/MockEmailPasswordAuthenticationFactory.h"
 #include "../util/MockAuthenticationUtils.h"
 #include "../util/MockMslContext.h"
@@ -86,11 +87,12 @@ namespace msl {
 namespace msg {
 
 namespace {
+
 const string RECIPIENT = "recipient";
 const string SERVICE_TOKEN_NAME = "serviceTokenName";
 const string USER_ID = "userid";
 const string PEER_USER_ID = "peeruserid";
-//const string PARAMETERS_ID = MockDiffieHellmanParameters.DEFAULT_ID;
+const string PARAMETERS_ID = MockDiffieHellmanParameters::DEFAULT_ID();
 
 shared_ptr<MasterToken> NULL_MASTER_TOKEN;
 shared_ptr<UserIdToken> NULL_USER_ID_TOKEN;
@@ -105,6 +107,7 @@ const set<shared_ptr<KeyRequestData>> EMPTY_KEYX_REQUESTS;
 const shared_ptr<KeyResponseData> NULL_KEYX_RESPONSE;
 const set<shared_ptr<ServiceToken>> EMPTY_SERVICE_TOKENS;
 const int64_t REPLAYABLE_ID = -1;
+
 } // namespace anonymous
 
 /**
@@ -127,18 +130,16 @@ public:
 		MASTER_TOKEN = MslTestUtils::getMasterToken(trustedNetCtx, 1, 1);
 		USER_ID_TOKEN = MslTestUtils::getUserIdToken(trustedNetCtx, MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory::USER);
 		CRYPTO_CONTEXT = make_shared<NullCryptoContext>();
-		/*
-		shared_ptr<DiffieHellmanParameters> params = MockDiffieHellmanParameters.getDefaultParameters();
-		shared_ptr<DHParameterSpec> paramSpec = params.getParameterSpec(MockDiffieHellmanParameters.DEFAULT_ID);
-		shared_ptr<KeyPairGenerator> generator = KeyPairGenerator.getInstance("DH");
+		shared_ptr<DiffieHellmanParameters> params = MockDiffieHellmanParameters::getDefaultParameters();
+		DHParameterSpec paramSpec = params->getParameterSpec(MockDiffieHellmanParameters::DEFAULT_ID());
 
-		generator.initialize(paramSpec);
-		shared_ptr<KeyPair> requestKeyPair = generator.generateKeyPair();
-		shared_ptr<BigInteger> publicKey = ((DHPublicKey)requestKeyPair.getPublic()).getY();
-		shared_ptr<DHPrivateKey> privateKey = (DHPrivateKey)requestKeyPair.getPrivate();
+		// FIXME: DH interface is clunky
+		ByteArray pubKey, privKey;
+		dhGenKeyPair(*paramSpec.getP(), *paramSpec.getG(), pubKey, privKey);
+		shared_ptr<ByteArray> publicKey = make_shared<ByteArray>(pubKey);
+		shared_ptr<PrivateKey> privateKey = make_shared<PrivateKey>(make_shared<ByteArray>(privKey), "DH");
 
 		KEY_REQUEST_DATA.insert(make_shared<DiffieHellmanExchange::RequestData>(PARAMETERS_ID, publicKey, privateKey));
-		 */
 		KEY_REQUEST_DATA.insert(make_shared<SymmetricWrappedExchange::RequestData>(SymmetricWrappedExchange::KeyId::SESSION));
 		KEY_REQUEST_DATA.insert(make_shared<SymmetricWrappedExchange::RequestData>(SymmetricWrappedExchange::KeyId::PSK));
 
@@ -1461,7 +1462,7 @@ private:
     static pair<PublicKey,PrivateKey> keyInstance() {
         static pair<PublicKey,PrivateKey> theInstance;
         if (theInstance.first.isNull())
-            theInstance = MslTestUtils::generateRsaKeys(JcaAlgorithm::SHA256withRSA, 512);
+            theInstance = MslTestUtils::generateRsaKeys(JcaAlgorithm::SHA256withRSA, 2048); // Note 2048 keysize required to accomodate test data size
         return theInstance;
     }
 };
@@ -1475,16 +1476,16 @@ public:
 
 	MessageBuilderTest_CreateResponse()
 	{
-		RSA_PUBLIC_KEY = TestSingleton::getPublicKey();
-		RSA_PRIVATE_KEY = TestSingleton::getPrivateKey();
+		RSA_PUBLIC_KEY = make_shared<PublicKey>(TestSingleton::getPublicKey());
+		RSA_PRIVATE_KEY = make_shared<PrivateKey>(TestSingleton::getPrivateKey());
 		string json = "{ \"issuerid\" : 17 }";
 		ISSUER_DATA = encoder->parseObject(make_shared<ByteArray>(json.begin(), json.end()));
 		USER = MockEmailPasswordAuthenticationFactory::USER;
 	}
 
 protected:
-	PublicKey RSA_PUBLIC_KEY;
-	PrivateKey RSA_PRIVATE_KEY;
+	shared_ptr<PublicKey> RSA_PUBLIC_KEY;
+	shared_ptr<PrivateKey> RSA_PRIVATE_KEY;
 	map<string,shared_ptr<ICryptoContext>> CRYPTO_CONTEXTS;
 	shared_ptr<MslObject> ISSUER_DATA;
 	shared_ptr<MslUser> USER;
@@ -1870,7 +1871,6 @@ TEST_F(MessageBuilderTest_CreateResponse, willEncryptRsaEntityAuth)
 	EXPECT_FALSE(responseBuilder->willEncryptPayloads());
 }
 
-// FIXME Requires DiffieHellman or AsymmetricWrapped keyx
 TEST_F(MessageBuilderTest_CreateResponse, willEncryptRsaEntityAuthKeyExchange)
 {
 	shared_ptr<MslContext> rsaCtx = make_shared<MockMslContext>(EntityAuthenticationScheme::RSA, false);
@@ -2517,7 +2517,6 @@ TEST_F(MessageBuilderTest_CreateResponse, unsupportedKeyExchangeEntityAuthData)
 	}
 }
 
-// FIXME Requires AsymmetricWrapped keyx
 TEST_F(MessageBuilderTest_CreateResponse, oneSupportedKeyExchangeEntityAuthData)
 {
 	shared_ptr<MockMslContext> ctx = make_shared<MockMslContext>(EntityAuthenticationScheme::PSK, false);
@@ -2536,7 +2535,7 @@ TEST_F(MessageBuilderTest_CreateResponse, oneSupportedKeyExchangeEntityAuthData)
 	// middle, guaranteeing that we will have to skip one unsupported
 	// scheme.
 	requestBuilder->addKeyRequestData(make_shared<SymmetricWrappedExchange::RequestData>(SymmetricWrappedExchange::KeyId::SESSION));
-	requestBuilder->addKeyRequestData(make_shared<AsymmetricWrappedExchange::RequestData>(KEY_PAIR_ID, AsymmetricWrappedExchange::RequestData::Mechanism::JWE_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY));
+	requestBuilder->addKeyRequestData(make_shared<AsymmetricWrappedExchange::RequestData>(KEY_PAIR_ID, AsymmetricWrappedExchange::RequestData::Mechanism::JWK_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY));
 	requestBuilder->addKeyRequestData(make_shared<SymmetricWrappedExchange::RequestData>(SymmetricWrappedExchange::KeyId::PSK));
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
 

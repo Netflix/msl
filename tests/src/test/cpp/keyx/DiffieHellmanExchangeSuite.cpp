@@ -109,7 +109,7 @@ public:
     , encoder(ctx->getMslEncoderFactory())
     , ENCODER_FORMAT(MslEncoderFormat::JSON)
     , MASTER_TOKEN(MslTestUtils::getMasterToken(ctx, 1, 1))
-    , PARAMETERS_ID(MockDiffieHellmanParameters::DEFAULT_ID)
+    , PARAMETERS_ID(MockDiffieHellmanParameters::DEFAULT_ID())
     {
         shared_ptr<DiffieHellmanParameters> params = MockDiffieHellmanParameters::getDefaultParameters();
         const DHParameterSpec paramSpec = params->getParameterSpec(PARAMETERS_ID);

@@ -44,6 +44,7 @@ add_subdirectory(msg)
 add_subdirectory(tokens)
 add_subdirectory(userauth)
 add_subdirectory(util)
+add_subdirectory(lib)
 
 #set (CMAKE_SHARED_LINKER_FLAGS "-stdlib=libc++")
 
@@ -61,6 +62,7 @@ add_library(${PROJECT_NAME} SHARED
     $<TARGET_OBJECTS:tokens>
     $<TARGET_OBJECTS:userauth>
     $<TARGET_OBJECTS:util>
+    $<TARGET_OBJECTS:lib>
     ${THISDIR_SRC}
 )
 

@@ -163,30 +163,57 @@ TEST_F(RsaEvpKeyTest, raw)
     shared_ptr<ByteArray> pubMod, pubExp, privExp;
     rsaKey->getKeyRaw(pubMod, pubExp, privExp);
     shared_ptr<RsaEvpKey> rsaEvpKey;
-    shared_ptr<ByteArray> spki;
+    shared_ptr<ByteArray> spki, pkcs8;
+    shared_ptr<ByteArray> pubMod2, pubExp2, privExp2;
 
-    // private key
+    // fully-specified key (n,e,d)
     EXPECT_NO_THROW({rsaEvpKey = RsaEvpKey::fromRaw(pubMod, pubExp, privExp);});
     EXPECT_TRUE(rsaEvpKey);
     EXPECT_NO_THROW({spki = rsaEvpKey->toSpki();});
-    EXPECT_NO_THROW(rsaEvpKey->toPkcs8());
-
-    // check private key (raw)
-    shared_ptr<ByteArray> pubMod2, pubExp2, privExp2;
+    EXPECT_EQ(*rsaKey->getPublicKeySpki(), *spki);
+    EXPECT_NO_THROW({pkcs8 = rsaEvpKey->toPkcs8();});
+    EXPECT_EQ(*rsaKey->getPrivateKeyPkcs8(), *pkcs8);
     EXPECT_NO_THROW(rsaEvpKey->toRaw(pubMod2, pubExp2, privExp2));
     EXPECT_EQ(*pubMod, *pubMod2);
     EXPECT_EQ(*pubExp, *pubExp2);
     EXPECT_EQ(*privExp, *privExp2);
 
-    // public key
-    privExp.reset();
-    EXPECT_NO_THROW({rsaEvpKey = RsaEvpKey::fromRaw(pubMod, pubExp, privExp);});
+    // public (n,e) key
+    EXPECT_NO_THROW({rsaEvpKey = RsaEvpKey::fromRaw(pubMod, pubExp, shared_ptr<ByteArray>());});
     EXPECT_TRUE(rsaEvpKey);
     EXPECT_NO_THROW({spki = rsaEvpKey->toSpki();});
     EXPECT_THROW(rsaEvpKey->toPkcs8(), MslCryptoException);
-
-    // check public key (spki)
     EXPECT_EQ(*rsaKey->getPublicKeySpki(), *spki);
+    EXPECT_NO_THROW(rsaEvpKey->toRaw(pubMod2, pubExp2, privExp2));
+    EXPECT_EQ(*pubMod, *pubMod2);
+    EXPECT_EQ(*pubExp, *pubExp2);
+    EXPECT_FALSE(privExp2);
+
+    // private (n,d) key
+    // Note: e/pubExp is deduced to satisfy openssl RSA key requirements
+    EXPECT_NO_THROW({rsaEvpKey = RsaEvpKey::fromRaw(pubMod, shared_ptr<ByteArray>(), privExp);});
+    EXPECT_TRUE(rsaEvpKey);
+    EXPECT_NO_THROW({spki = rsaEvpKey->toSpki();});
+    EXPECT_EQ(*rsaKey->getPublicKeySpki(), *spki);
+    EXPECT_NO_THROW({pkcs8 = rsaEvpKey->toPkcs8();});
+    EXPECT_EQ(*rsaKey->getPrivateKeyPkcs8(), *pkcs8);
+    EXPECT_NO_THROW(rsaEvpKey->toRaw(pubMod2, pubExp2, privExp2));
+    EXPECT_EQ(*pubMod, *pubMod2);
+    EXPECT_EQ(*pubExp, *pubExp2);
+    EXPECT_EQ(*privExp, *privExp2);
+}
+
+TEST_F(RsaEvpKeyTest, erawImportErrors)
+{
+    shared_ptr<ByteArray> pubMod, pubExp, privExp;
+    rsaKey->getKeyRaw(pubMod, pubExp, privExp);
+    shared_ptr<ByteArray> nullBa;
+    EXPECT_THROW({RsaEvpKey::fromRaw(nullBa, nullBa, nullBa);}, MslCryptoException);
+    EXPECT_THROW({RsaEvpKey::fromRaw(nullBa, pubExp, privExp);}, MslCryptoException);
+    EXPECT_THROW({RsaEvpKey::fromRaw(pubMod, nullBa, nullBa);}, MslCryptoException);
+    EXPECT_NO_THROW({RsaEvpKey::fromRaw(pubMod, pubExp, nullBa);});
+    EXPECT_NO_THROW({RsaEvpKey::fromRaw(pubMod, nullBa, privExp);});
+    EXPECT_NO_THROW({RsaEvpKey::fromRaw(pubMod, pubExp, privExp);});
 }
 
 }}} // namespace netflix::msl::crypto

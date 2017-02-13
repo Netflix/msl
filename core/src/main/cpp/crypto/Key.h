@@ -54,7 +54,7 @@ protected:
     Key operator=(const Key& rhs);
 private:
     bool isNull_;
-    std::shared_ptr<ByteArray> key_;
+    std::shared_ptr<ByteArray> key_; // holds the default encoding of the key
     std::string algorithm_;
     std::string format_;
 };
@@ -104,6 +104,6 @@ struct KeyPair
 bool operator==(const IKey& a, const IKey& b);
 inline bool operator!=(const IKey& a, const IKey& b) { return !(a == b); }
 
-}}} // namespace neetflix::msl::crypto
+}}} // namespace netflix::msl::crypto
 
 #endif /* SRC_CRYPTO_KEY_H_ */

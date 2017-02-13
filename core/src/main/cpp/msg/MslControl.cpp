@@ -1187,7 +1187,7 @@ shared_ptr<MessageInputStream> MslControl::receive(shared_ptr<MslContext> ctx,
             {
             	stringstream ss;
             	ss << "sender " << sender << "; master token " << masterToken->getIdentity();
-            	throw new MslMessageException(MslError::UNEXPECTED_MESSAGE_SENDER, ss.str());
+            	throw MslMessageException(MslError::UNEXPECTED_MESSAGE_SENDER, ss.str());
             }
             if (localIdentity == sender)
             {

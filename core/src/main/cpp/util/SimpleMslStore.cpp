@@ -245,7 +245,7 @@ void SimpleMslStore::clearUserIdTokens() {
 			// token.
 			//
 			// FIXME Have to recast the exception otherwise the type is lost.
-			throw new MslInternalException("Unexpected exception while removing user ID token bound service tokens.", e);
+			throw MslInternalException("Unexpected exception while removing user ID token bound service tokens.", e);
 		}
 	}
 	userIdTokens_.clear();

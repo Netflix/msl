@@ -20,7 +20,9 @@
 #include <crypto/IRandom.h>
 #include <crypto/JcaAlgorithm.h>
 #include <crypto/Key.h>
+#include <crypto/OpenSslLib.h>
 #include <crypto/SymmetricCryptoContext.h>
+#include <keyx/DiffieHellmanExchange.h>
 #include <keyx/AsymmetricWrappedExchange.h>
 #include <keyx/KeyRequestData.h>
 #include <keyx/SymmetricWrappedExchange.h>
@@ -37,6 +39,7 @@
 #include <string>
 #include <vector>
 
+#include "../keyx/MockDiffieHellmanParameters.h"
 #include "../userauth/MockEmailPasswordAuthenticationFactory.h"
 #include "../util/MslTestUtils.h"
 
@@ -81,23 +84,22 @@ MockMessageContext::MockMessageContext(shared_ptr<MslContext> ctx, const string&
 		throw IllegalArgumentException("Unsupported authentication type: " + scheme.name());
 	}
 
-	/* FIXME Needs DiffieHellman keyx
-        {
-            final DiffieHellmanParameters params = MockDiffieHellmanParameters.getDefaultParameters();
-            final DHParameterSpec paramSpec = params.getParameterSpec(MockDiffieHellmanParameters.DEFAULT_ID);
-            final KeyPairGenerator generator = KeyPairGenerator.getInstance("DH");
-            generator.initialize(paramSpec);
-            final KeyPair requestKeyPair = generator.generateKeyPair();
-            final BigInteger publicKey = ((DHPublicKey)requestKeyPair.getPublic()).getY();
-            final DHPrivateKey privateKey = (DHPrivateKey)requestKeyPair.getPrivate();
-            keyRequestData.add(new DiffieHellmanExchange.RequestData(DH_PARAMETERS_ID, publicKey, privateKey));
-        }
-	 */
+    {
+        shared_ptr<DiffieHellmanParameters> params = MockDiffieHellmanParameters::getDefaultParameters();
+        const DHParameterSpec paramSpec = params->getParameterSpec(MockDiffieHellmanParameters::DEFAULT_ID());
+        ByteArray tmp1, tmp2;
+        dhGenKeyPair(*paramSpec.getP(), *paramSpec.getG(), tmp1, tmp2);
+        shared_ptr<ByteArray> publicKey = make_shared<ByteArray>(tmp1);
+        shared_ptr<PrivateKey> privateKey = make_shared<PrivateKey>(make_shared<ByteArray>(tmp2), "DH");
+        keyRequestData_.insert(make_shared<DiffieHellmanExchange::RequestData>(DH_PARAMETERS_ID, publicKey, privateKey));
+    }
+
 	{
 		pair<PublicKey,PrivateKey> rsaKeyPair = MslTestUtils::generateRsaKeys("RSA", 512);
-		PublicKey publicKey = rsaKeyPair.first;
-		PrivateKey privateKey = rsaKeyPair.second;
-		keyRequestData_.insert(make_shared<AsymmetricWrappedExchange::RequestData>(RSA_KEYPAIR_ID, AsymmetricWrappedExchange::RequestData::Mechanism::RSA, publicKey, privateKey));
+		shared_ptr<PublicKey> publicKey = make_shared<PublicKey>(rsaKeyPair.first);
+		shared_ptr<PrivateKey> privateKey = make_shared<PrivateKey>(rsaKeyPair.second);
+		keyRequestData_.insert(make_shared<AsymmetricWrappedExchange::RequestData>(RSA_KEYPAIR_ID,AsymmetricWrappedExchange::RequestData::Mechanism::RSA,
+		        publicKey, privateKey));
 	}
 	{
 		keyRequestData_.insert(make_shared<SymmetricWrappedExchange::RequestData>(SymmetricWrappedExchange::KeyId::PSK));

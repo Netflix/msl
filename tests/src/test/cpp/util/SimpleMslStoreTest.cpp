@@ -268,11 +268,11 @@ TEST_F(SimpleMslStoreTest, removeTwoCryptoContexts)
 //				}
 //			}
 //		} catch (final MslMasterTokenException e) {
-//			throw new MslInternalException("Unexpected master token exception.", e);
+//			throw MslInternalException("Unexpected master token exception.", e);
 //		} catch (final MslEncodingException e) {
-//			throw new MslInternalException("Unexpected master token encoding exception.", e);
+//			throw MslInternalException("Unexpected master token encoding exception.", e);
 //		} catch (final MslCryptoException e) {
-//			throw new MslInternalException("Unexpected master token creation exception.", e);
+//			throw MslInternalException("Unexpected master token creation exception.", e);
 //		}
 //	}
 //
@@ -582,13 +582,13 @@ TEST_F(SimpleMslStoreTest, clearCryptoContextsUserIdTokens)
 //				}
 //			}
 //		} catch (final MslMasterTokenException e) {
-//			throw new MslInternalException("Unexpected master token exception.", e);
+//			throw MslInternalException("Unexpected master token exception.", e);
 //		} catch (final MslEncodingException e) {
-//			throw new MslInternalException("Unexpected master token encoding exception.", e);
+//			throw MslInternalException("Unexpected master token encoding exception.", e);
 //		} catch (final MslCryptoException e) {
-//			throw new MslInternalException("Unexpected master token creation exception.", e);
+//			throw MslInternalException("Unexpected master token creation exception.", e);
 //		} catch (final MslException e) {
-//			throw new MslInternalException("Master token / user ID token service token query mismatch.", e);
+//			throw MslInternalException("Master token / user ID token service token query mismatch.", e);
 //		}
 //	}
 //
@@ -1127,13 +1127,13 @@ TEST_F(SimpleMslStoreTest, clearUserIdTokensServiceTokens)
 //				}
 //			}
 //		} catch (final MslMasterTokenException e) {
-//			throw new MslInternalException("Unexpected master token exception.", e);
+//			throw MslInternalException("Unexpected master token exception.", e);
 //		} catch (final MslEncodingException e) {
-//			throw new MslInternalException("Unexpected master token encoding exception.", e);
+//			throw MslInternalException("Unexpected master token encoding exception.", e);
 //		} catch (final MslCryptoException e) {
-//			throw new MslInternalException("Unexpected master token creation exception.", e);
+//			throw MslInternalException("Unexpected master token creation exception.", e);
 //		} catch (final MslException e) {
-//			throw new MslInternalException("Master token / user ID token service token query mismatch.", e);
+//			throw MslInternalException("Master token / user ID token service token query mismatch.", e);
 //		}
 //	}
 //

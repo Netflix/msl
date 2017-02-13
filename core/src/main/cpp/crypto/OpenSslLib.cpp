@@ -25,6 +25,7 @@
 #include <openssl/rand.h>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
+#include <rsaconverter/librsaconverter.h>
 #include <algorithm>
 #include <cassert>
 #include <iostream>
@@ -238,6 +239,47 @@ shared_ptr<ByteArray> bignumToByteArray(const BIGNUM * const bn)
     return result;
 }
 
+BIGNUM * byteArrayToBignum(shared_ptr<ByteArray> ba)
+{
+    if (!ba || ba->empty())
+        return NULL;
+    ScopedDisposer<BIGNUM, void, BN_clear_free> bn(BN_bin2bn(&(*ba)[0], (int)ba->size(), NULL));
+    return bn.release();
+}
+
+shared_ptr<ByteArray> computeRsaPublicExponent(shared_ptr<ByteArray> n, shared_ptr<ByteArray> d)
+{
+    /*
+     * Try the values 65537 (hex 0x010001, the fourth number of Fermat), 3, 5, 7,
+     * 13 and 17 (in that order). Then simply sign with the private key and
+     * verify with the public key to see if the public key is correct.
+     */
+    const vector<unsigned long> exps = {65537, 3, 5, 7, 13, 17};
+    shared_ptr<ByteArray> e = make_shared<ByteArray>();
+    ScopedDisposer<BIGNUM, void, BN_clear_free> eBn(BN_new());
+    assert(eBn);
+    static const ByteArray data = {1,2,3,4,5,6,7,8,9};
+    for (vector<unsigned long>::const_iterator it = exps.begin(); it != exps.end(); ++it)
+    {
+        // fill e with *it
+        BN_set_word(eBn, *it);
+        e->clear();
+        e->resize(BN_num_bytes(eBn));
+        unsigned char * buf = &(*e)[0];
+        BN_bn2bin(eBn, &buf[0]);
+
+        // make a key with n, d, and our candidate e
+        shared_ptr<RsaEvpKey> pkey = RsaEvpKey::fromRaw(n, e, d);
+
+        // sign some data with this key, if it verifies we found the e
+        ByteArray signature;
+        rsaSign(pkey->getEvpPkey(), data, signature);
+        if (rsaVerify(pkey->getEvpPkey(), data, signature))
+            break;
+    }
+    return e;
+}
+
 } // namespace anonymous
 
 void ensureOpenSslInit()
@@ -325,37 +367,79 @@ shared_ptr<RsaEvpKey> RsaEvpKey::fromRaw(const shared_ptr<ByteArray>& pubMod,
 {
     // Sanity check sizes so the C-Style cast to int in the bignum conversion
     // below is safe.
-    if (pubMod->size() > numeric_limits<int>::max() ||
-        pubExp->size() > numeric_limits<int>::max() ||
+    if ((pubMod && pubMod->size() > numeric_limits<int>::max()) ||
+        (pubExp && pubExp->size() > numeric_limits<int>::max()) ||
         (privExp && privExp->size() > numeric_limits<int>::max()))
     {
         throw MslCryptoException(MslError::KEY_IMPORT_ERROR, "RSA key parameter invalid");
     }
 
     // Make OpenSSL bignums from input parameters
-    ScopedDisposer<BIGNUM, void, BN_free> pubModBn(BN_bin2bn(&(*pubMod)[0], (int)pubMod->size(), NULL));
-    if (!pubModBn.get())
-        throw MslCryptoException(MslError::KEY_IMPORT_ERROR, "RSA key parameter invalid");
-    ScopedDisposer<BIGNUM, void, BN_free> pubExpBn(BN_bin2bn(&(*pubExp)[0], (int)pubExp->size(), NULL));
-    if (!pubExpBn.get())
-        throw MslCryptoException(MslError::KEY_IMPORT_ERROR, "RSA key parameter invalid");
-    ScopedDisposer<BIGNUM, void, BN_free> privExpBn;
+
     bool isPrivate = false;
-    if (privExp) {
-        privExpBn.reset(BN_bin2bn(&(*privExp)[0], (int)privExp->size(), NULL));
-        if (!privExpBn.get())
-            throw MslCryptoException(MslError::KEY_IMPORT_ERROR, "RSA key parameter invalid");
-        isPrivate = true;
+
+    // n (modulus) is required in all cases
+    ScopedDisposer<BIGNUM, void, BN_clear_free> nBn(byteArrayToBignum(pubMod));
+    if (!nBn)
+        throw MslCryptoException(MslError::KEY_IMPORT_ERROR, "RSA key parameter invalid, missing modulus");
+
+    // Check for e (public exp); missing e (public exp) is ok as long as you have d (private exp)
+    if (!pubExp && !privExp)
+        throw MslCryptoException(MslError::KEY_IMPORT_ERROR, "RSA key parameter invalid, missing public exponent");
+    ScopedDisposer<BIGNUM, void, BN_clear_free> eBn;
+    if (pubExp) {
+        eBn.reset(byteArrayToBignum(pubExp));
     }
 
-    // Compose an OpenSSL RSA key from the bignums. The RSA struct takes
-    // ownership of the bignums, so we need to BN_dup them.
+    // The openssl RSA struct needs other intermediate values
+    ScopedDisposer<BIGNUM, void, BN_clear_free> pBn;
+    ScopedDisposer<BIGNUM, void, BN_clear_free> qBn;
+    ScopedDisposer<BIGNUM, void, BN_clear_free> dpBn;
+    ScopedDisposer<BIGNUM, void, BN_clear_free> dqBn;
+    ScopedDisposer<BIGNUM, void, BN_clear_free> uBn;
+
+    // Check for d (private exp)
+    ScopedDisposer<BIGNUM, void, BN_clear_free> dBn;
+    if (privExp) {
+        assert(nBn); // at least n (modulus) is required along with d (already checked above)
+        dBn.reset(byteArrayToBignum(privExp));
+        if (!dBn.get())
+            throw MslCryptoException(MslError::KEY_IMPORT_ERROR, "RSA key parameter invalid, invalid private exponent");
+
+        isPrivate = true;
+
+        // OpenSSL RSA private key operations also require the public exponent
+        // to support blinding. If we don't have it we need to compute it.
+        if (!eBn) {
+            shared_ptr<ByteArray> e = computeRsaPublicExponent(pubMod, privExp);
+            if (!e)
+                throw MslCryptoException(MslError::KEY_IMPORT_ERROR, "RSA key parameter invalid, could not compute public exponent");
+            eBn.reset(byteArrayToBignum(e));
+        }
+
+        // Compute the reset of the parameters needed for the RSA struct
+        pBn.reset(BN_new());
+        qBn.reset(BN_new());
+        dpBn.reset(BN_new());
+        dqBn.reset(BN_new());
+        uBn.reset(BN_new());
+        int result = SfmToCrt(nBn.get(), eBn.get(), dBn.get(), pBn.get(), qBn.get(), dpBn.get(), dqBn.get(), uBn.get());
+        if (result != 1)
+            throw MslCryptoException(MslError::KEY_IMPORT_ERROR, "RSA key CRT conversion failure");
+    }
+
+    // Now compose an OpenSSL RSA key from these bignums.
     ScopedDisposer<RSA, void, RSA_free> rsa(RSA_new());
-    rsa.get()->n = BN_dup(pubModBn.get());
-    rsa.get()->e = BN_dup(pubExpBn.get());
-    rsa.get()->d = (privExpBn.get()) ? BN_dup(privExpBn.get()) : NULL;
-    rsa.get()->p = NULL;
-    rsa.get()->q = NULL;
+    assert(nBn);  // must always have n
+    assert(eBn);  // must always have e
+    rsa.get()->n = nBn.release();
+    rsa.get()->e = eBn.release();
+    rsa.get()->d = (dBn) ? dBn.release() : NULL;
+    rsa.get()->p = (pBn) ? pBn.release() : NULL;
+    rsa.get()->q = (qBn) ? qBn.release() : NULL;
+    rsa.get()->dmp1 = (dpBn) ? dpBn.release() : NULL;
+    rsa.get()->dmq1 = (dqBn) ? dqBn.release() : NULL;
+    rsa.get()->iqmp = (uBn) ? uBn.release() : NULL;
 
     // Convert the RSA key to an EVP_PKEY
     ScopedDisposer<EVP_PKEY, void, EVP_PKEY_free> pkey(EVP_PKEY_new());
@@ -397,7 +481,7 @@ void RsaEvpKey::toRaw(shared_ptr<ByteArray>& pubMod, shared_ptr<ByteArray>& pubE
             throw MslCryptoException(MslError::KEY_EXPORT_ERROR, "Invalid RSA private key.");
         privExp = privateExponent;
     } else {
-        privExp = make_shared<ByteArray>();
+        privExp.reset();
     }
 }
 

@@ -37,7 +37,7 @@ public:
     virtual ~MockDiffieHellmanParameters() {}
 
     /** Default parameter ID. */
-    static const std::string DEFAULT_ID;
+    static std::string DEFAULT_ID();
 
     /**
      * Returns the default test parameters containing a single set of Diffie-
