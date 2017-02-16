@@ -17,6 +17,7 @@
 #include <gtest/gtest.h>
 #include <crypto/JcaAlgorithm.h>
 #include <crypto/JsonWebKey.h>
+#include <crypto/OpenSslLib.h>
 #include <crypto/Random.h>
 #include <crypto/OpenSslLib.h>
 #include <io/MslArray.h>
@@ -148,6 +149,41 @@ public:
     }
 private:
     ScopedDisposer<RSA, void, RSA_free> rsa;
+};
+
+class MyRsaPublicKey : public PublicKey
+{
+public:
+    MyRsaPublicKey(shared_ptr<ByteArray> spki)
+    : PublicKey(spki, "RSA")
+    {
+        shared_ptr<RsaEvpKey> rsaEvpKey = RsaEvpKey::fromSpki(spki);
+        shared_ptr<ByteArray> ignore;
+        rsaEvpKey->toRaw(publicModulus, publicExponent, ignore);
+    }
+    shared_ptr<ByteArray> getModulus() const { return publicModulus; }
+    shared_ptr<ByteArray> getPublicExponent() const { return publicExponent; }
+private:
+    shared_ptr<ByteArray> publicModulus;
+    shared_ptr<ByteArray> publicExponent;
+};
+
+class MyRsaPrivateKey : public PrivateKey
+{
+public:
+    MyRsaPrivateKey(shared_ptr<ByteArray> pkcs8)
+    : PrivateKey(pkcs8, "RSA")
+    {
+        shared_ptr<RsaEvpKey> rsaEvpKey = RsaEvpKey::fromPkcs8(pkcs8);
+        rsaEvpKey->toRaw(publicModulus, publicExponent, privateExponent);
+    }
+    shared_ptr<ByteArray> getModulus() const { return publicModulus; }
+    shared_ptr<ByteArray> getPublicExponent() const { return publicExponent; }
+    shared_ptr<ByteArray> getPrivateExponent() const { return privateExponent; }
+private:
+    shared_ptr<ByteArray> publicModulus;
+    shared_ptr<ByteArray> publicExponent;
+    shared_ptr<ByteArray> privateExponent;
 };
 
 // poor-man's singleton to make sure we only do keygen once for all tests
@@ -284,8 +320,8 @@ public:
         MA_WRAP_UNWRAP->put(-1, JsonWebKey::KeyOp::unwrapKey.name());
 
         shared_ptr<RsaKey> rsaKey = getRsaKey();
-        PUBLIC_KEY = make_shared<PublicKey>(rsaKey->getPublicKeySpki(), "RSA");
-        PRIVATE_KEY = make_shared<PrivateKey>(rsaKey->getPrivateKeyPkcs8(), "RSA");
+        PUBLIC_KEY = make_shared<MyRsaPublicKey>(rsaKey->getPublicKeySpki());
+        PRIVATE_KEY = make_shared<MyRsaPrivateKey>(rsaKey->getPrivateKeyPkcs8());
 
         shared_ptr<ByteArray> keydata = make_shared<ByteArray>(16);
         random->nextBytes(*keydata);
@@ -415,7 +451,6 @@ TEST_F(JsonWebKeyTest, rsaUsageJson)
 {
     shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(JsonWebKey::Usage::sig, JsonWebKey::Algorithm::RSA1_5, EXTRACTABLE, KEY_ID, PUBLIC_KEY, PRIVATE_KEY);
     shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, jwk);
-
     EXPECT_EQ(EXTRACTABLE, mo->optBoolean(KEY_EXTRACTABLE));
     EXPECT_EQ(JsonWebKey::Algorithm::RSA1_5.name(), mo->getString(KEY_ALGORITHM));
     EXPECT_EQ(KEY_ID, mo->getString(KEY_KEY_ID));
@@ -438,7 +473,6 @@ TEST_F(JsonWebKeyTest, rsaKeyOpsJson)
 {
     shared_ptr<JsonWebKey> jwk = make_shared<JsonWebKey>(SIGN_VERIFY, JsonWebKey::Algorithm::RSA1_5, EXTRACTABLE, KEY_ID, PUBLIC_KEY, PRIVATE_KEY);
     shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, jwk);
-
     EXPECT_EQ(EXTRACTABLE, mo->optBoolean(KEY_EXTRACTABLE));
     EXPECT_EQ(JsonWebKey::Algorithm::RSA1_5.name(), mo->getString(KEY_ALGORITHM));
     EXPECT_EQ(KEY_ID, mo->getString(KEY_KEY_ID));
@@ -454,7 +488,7 @@ TEST_F(JsonWebKeyTest, rsaKeyOpsJson)
     EXPECT_EQ(*pubexp, mo->getString(KEY_PUBLIC_EXPONENT));
     EXPECT_EQ(*privexp, mo->getString(KEY_PRIVATE_EXPONENT));
 
-    EXPECT_FALSE(mo->has(KEY_KEY));
+    EXPECT_EQ(key, mo.getString(KEY_KEY));
 }
 
 TEST_F(JsonWebKeyTest, rsaNullCtorPublic)

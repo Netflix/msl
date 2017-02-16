@@ -46,6 +46,8 @@ public:
     static EntityAuthenticationScheme X509;
     /** RSA public/private key pair. */
     static EntityAuthenticationScheme RSA;
+    /** ECC public/private key pair. */
+    static EntityAuthenticationScheme ECC;
     /** Unauthenticated. */
     static EntityAuthenticationScheme NONE;
     /** Unauthenticated suffixed. */

@@ -554,6 +554,7 @@ void MslControl::shutdown()
 
 shared_ptr<MasterToken> MslControl::getNewestMasterToken(shared_ptr<MslContext> ctx)
 {
+	// FIXME: This can get stuck forever if there's no way to interrupt/abort.
     do {
         // Get the newest master token. If there is none then immediately
         // return.
