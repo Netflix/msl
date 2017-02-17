@@ -18,6 +18,7 @@
 
 #include <crypto/ICryptoContext.h>
 #include <MslCryptoException.h>
+#include <MslError.h>
 #include <crypto/Key.h>
 #include <memory>
 
@@ -47,9 +48,11 @@ private:
 			/** RSAES-OAEP */
 			RSA_OAEP,
 			/** AES-128 Key Wrap */
-			A128KW;
+			A128KW,
+			INVALID;
 
-	    enum Value { rsa_oaep, a128kw };
+	    enum Value { rsa_oaep, a128kw, invalid };
+	    Algorithm() : Enum(invalid, "INVALID") {}
 	    operator Value() const { return static_cast<Value>(value()); }
 	    static const std::vector<Algorithm>& getValues();
 
@@ -63,7 +66,7 @@ public:
      * The Content Encryption Key crypto context is used to encrypt/decrypt the
      * randomly generated content encryption key.
      */
-    static class CekCryptoContext : public ICryptoContext
+    class CekCryptoContext : public ICryptoContext
 	{
 	protected:
         /**
@@ -78,22 +81,22 @@ public:
         virtual ~CekCryptoContext() {}
 
         /** @inheritDoc */
-        virtual std::shared_ptr<ByteArray> wrap(std::shared_ptr<ByteArray> data, std::shared_ptr<io::MslEncoderFactory> encoder, const io::MslEncoderFormat& format) {
+        virtual std::shared_ptr<ByteArray> wrap(std::shared_ptr<ByteArray>, std::shared_ptr<io::MslEncoderFactory>, const io::MslEncoderFormat&) {
         	throw MslCryptoException(MslError::WRAP_NOT_SUPPORTED);
         }
 
         /** @inheritDoc */
-        virtual std::shared_ptr<ByteArray> unwrap(std::shared_ptr<ByteArray> data, std::shared_ptr<io::MslEncoderFactory> encoder) {
+        virtual std::shared_ptr<ByteArray> unwrap(std::shared_ptr<ByteArray>, std::shared_ptr<io::MslEncoderFactory>) {
         	throw MslCryptoException(MslError::UNWRAP_NOT_SUPPORTED);
         }
 
         /** @inheritDoc */
-        virtual std::shared_ptr<ByteArray> sign(std::shared_ptr<ByteArray> data, std::shared_ptr<io::MslEncoderFactory> encoder, const io::MslEncoderFormat& format) {
+        virtual std::shared_ptr<ByteArray> sign(std::shared_ptr<ByteArray>, std::shared_ptr<io::MslEncoderFactory>, const io::MslEncoderFormat&) {
         	throw MslCryptoException(MslError::SIGN_NOT_SUPPORTED);
         }
 
         /** @inheritDoc */
-        virtual bool verify(std::shared_ptr<ByteArray> data, std::shared_ptr<ByteArray> signature, std::shared_ptr<io::MslEncoderFactory> encoder) {
+        virtual bool verify(std::shared_ptr<ByteArray>, std::shared_ptr<ByteArray>, std::shared_ptr<io::MslEncoderFactory>) {
         	throw MslCryptoException(MslError::VERIFY_NOT_SUPPORTED);
         }
 
@@ -112,7 +115,7 @@ public:
     /**
      * RSA-OAEP encrypt/decrypt of the content encryption key.
      */
-    static class RsaOaepCryptoContext : public CekCryptoContext
+    class RsaOaepCryptoContext : public CekCryptoContext
 	{
 	public:
     	virtual ~RsaOaepCryptoContext() {}
@@ -151,7 +154,7 @@ public:
     /**
      * AES key wrap encrypt/decrypt of the content encryption key.
      */
-    static class AesKwCryptoContext : public CekCryptoContext
+    class AesKwCryptoContext : public CekCryptoContext
 	{
 	public:
     	virtual ~AesKwCryptoContext() {}
@@ -172,7 +175,7 @@ public:
          */
         AesKwCryptoContext(std::shared_ptr<ICryptoContext> cryptoContext)
         	: CekCryptoContext(Algorithm::A128KW)
-            , key(NULL)
+            , key(SecretKey())
         	, cryptoContext(cryptoContext)
         {}
 
@@ -197,9 +200,11 @@ public:
 			/** AES-128 GCM */
 			A128GCM,
 			/** AES-256 GCM */
-			A256GCM;
+			A256GCM,
+			INVALID;
 
-	    enum Value { a128gcm, a256gcm};
+	    enum Value { a128gcm, a256gcm, invalid};
+	    Encryption() : Enum(invalid, "INVALID") {}
 	    operator Value() const { return static_cast<Value>(value()); }
 	    static const std::vector<Encryption>& getValues();
 
@@ -241,12 +246,12 @@ public:
     {}
 
     /** @inheritDoc */
-    virtual std::shared_ptr<ByteArray> encrypt(std::shared_ptr<ByteArray> data, std::shared_ptr<io::MslEncoderFactory> encoder, const io::MslEncoderFormat& format) {
+    virtual std::shared_ptr<ByteArray> encrypt(std::shared_ptr<ByteArray>, std::shared_ptr<io::MslEncoderFactory>, const io::MslEncoderFormat&) {
     	throw MslCryptoException(MslError::ENCRYPT_NOT_SUPPORTED);
     }
 
     /** @inheritDoc */
-    virtual std::shared_ptr<ByteArray> decrypt(std::shared_ptr<ByteArray> data, std::shared_ptr<io::MslEncoderFactory> encoder) {
+    virtual std::shared_ptr<ByteArray> decrypt(std::shared_ptr<ByteArray>, std::shared_ptr<io::MslEncoderFactory>) {
     	throw MslCryptoException(MslError::DECRYPT_NOT_SUPPORTED);
     }
 
@@ -257,12 +262,12 @@ public:
     virtual std::shared_ptr<ByteArray> unwrap(std::shared_ptr<ByteArray> data, std::shared_ptr<io::MslEncoderFactory> encoder);
 
     /** @inheritDoc */
-    virtual std::shared_ptr<ByteArray> sign(std::shared_ptr<ByteArray> data, std::shared_ptr<io::MslEncoderFactory> encoder, const io::MslEncoderFormat& format) {
+    virtual std::shared_ptr<ByteArray> sign(std::shared_ptr<ByteArray>, std::shared_ptr<io::MslEncoderFactory>, const io::MslEncoderFormat&) {
     	throw MslCryptoException(MslError::SIGN_NOT_SUPPORTED);
     }
 
     /** @inheritDoc */
-    virtual bool verify(std::shared_ptr<ByteArray> data, std::shared_ptr<ByteArray> signature, std::shared_ptr<io::MslEncoderFactory> encoder) {
+    virtual bool verify(std::shared_ptr<ByteArray>, std::shared_ptr<ByteArray>, std::shared_ptr<io::MslEncoderFactory>) {
     	throw MslCryptoException(MslError::VERIFY_NOT_SUPPORTED);
     }
 

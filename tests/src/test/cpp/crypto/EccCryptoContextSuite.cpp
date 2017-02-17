@@ -13,20 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <memory>
+
 #include <gtest/gtest.h>
 #include <crypto/EccCryptoContext.h>
+#include <crypto/IRandom.h>
 #include <MslCryptoException.h>
 #include <MslEncodingException.h>
+#include <io/MslEncoderFormat.h>
+#include <util/MockMslContext.h>
+
+#include "../util/MslTestUtils.h"
 
 using namespace std;
+using namespace netflix::msl::crypto;
 using namespace netflix::msl::entityauth;
 using namespace netflix::msl::io;
 using namespace netflix::msl::util;
-using netflix::msl::crypto::EccCryptoContext::Mode;
+
+using Mode = EccCryptoContext::Mode;
 
 namespace netflix {
 namespace msl {
+typedef vector<uint8_t> ByteArray;
 namespace crypto {
+
 namespace {
 /** Key pair ID. */
 const string KEYPAIR_ID = "keypairid";
@@ -73,6 +84,7 @@ public:
 TEST_F(EccCryptoContextSuite_EncryptDecrypt, EncryptDecrypt)
 {
     // Cannot perform ECIES encryption/decryption at the moment.
+    EXPECT_TRUE(false) << "Test not yet implemented";   // FIXME TODO
 }
 
 /** Sign/verify mode unit tests. */
@@ -83,7 +95,7 @@ public:
 
 	EccCryptoContextSuite_SignVerify()
 	{
-		const shared_ptr<MslContext> ctx = make_shared<MockMslContext>(EntityAuthenticationScheme::PSK, false);
+		shared_ptr<MslContext> ctx = make_shared<MockMslContext>(EntityAuthenticationScheme::PSK, false);
 		encoder = ctx->getMslEncoderFactory();
 
 //		final ECCurve curve = new ECCurve.Fp(EC_Q, EC_A, EC_B);
@@ -118,7 +130,7 @@ protected:
 
 TEST_F(EccCryptoContextSuite_SignVerify, encryptDecrypt)
 {
-	shared_ptr<ByteArray> message(32);
+	shared_ptr<ByteArray> message = make_shared<ByteArray>(32);
 	random->nextBytes(*message);
 
 	shared_ptr<EccCryptoContext> cryptoContext = make_shared<EccCryptoContext>(KEYPAIR_ID, privateKeyA, publicKeyA, Mode::SIGN_VERIFY);
@@ -133,12 +145,12 @@ TEST_F(EccCryptoContextSuite_SignVerify, encryptDecrypt)
 
 TEST_F(EccCryptoContextSuite_SignVerify, encryptNullPublic)
 {
-	shared_ptr<ByteArray> message(32);
+	shared_ptr<ByteArray> message = make_shared<ByteArray>(32);
 	random->nextBytes(*message);
 
 	shared_ptr<EccCryptoContext> cryptoContext = make_shared<EccCryptoContext>(KEYPAIR_ID, privateKeyA, NULL_PUBKEY, Mode::SIGN_VERIFY);
 	shared_ptr<ByteArray> ciphertext = cryptoContext->encrypt(message, encoder, format);
-	EXPECT_TRUE(*ciphertext);
+	EXPECT_TRUE(ciphertext);
 	EXPECT_EQ(*message, *ciphertext);
 
 	shared_ptr<ByteArray> plaintext = cryptoContext->decrypt(ciphertext, encoder);
@@ -148,7 +160,7 @@ TEST_F(EccCryptoContextSuite_SignVerify, encryptNullPublic)
 
 TEST_F(EccCryptoContextSuite_SignVerify, decryptNullPrivate)
 {
-	shared_ptr<ByteArray> message(32);
+	shared_ptr<ByteArray> message = make_shared<ByteArray>(32);
 	random->nextBytes(*message);
 
 	shared_ptr<EccCryptoContext> cryptoContext = make_shared<EccCryptoContext>(KEYPAIR_ID, NULL_PRIVKEY, publicKeyA, Mode::SIGN_VERIFY);
@@ -163,7 +175,7 @@ TEST_F(EccCryptoContextSuite_SignVerify, decryptNullPrivate)
 
 TEST_F(EccCryptoContextSuite_SignVerify, encryptDecryptIdMismatch)
 {
-	shared_ptr<ByteArray> message(32);
+	shared_ptr<ByteArray> message = make_shared<ByteArray>(32);
 	random->nextBytes(*message);
 
 	shared_ptr<EccCryptoContext> cryptoContextA = make_shared<EccCryptoContext>(KEYPAIR_ID + "A", privateKeyA, publicKeyA, Mode::SIGN_VERIFY);
@@ -179,7 +191,7 @@ TEST_F(EccCryptoContextSuite_SignVerify, encryptDecryptIdMismatch)
 
 TEST_F(EccCryptoContextSuite_SignVerify, encryptDecryptKeyMismatch)
 {
-	shared_ptr<ByteArray> message(32);
+	shared_ptr<ByteArray> message = make_shared<ByteArray>(32);
 	random->nextBytes(*message);
 
 	shared_ptr<EccCryptoContext> cryptoContextA = make_shared<EccCryptoContext>(KEYPAIR_ID, privateKeyA, publicKeyA, Mode::SIGN_VERIFY);
@@ -195,7 +207,7 @@ TEST_F(EccCryptoContextSuite_SignVerify, encryptDecryptKeyMismatch)
 
 TEST_F(EccCryptoContextSuite_SignVerify, signVerify)
 {
-	shared_ptr<ByteArray> messageA(32);
+	shared_ptr<ByteArray> messageA = make_shared<ByteArray>(32);
 	random->nextBytes(*messageA);
 
 	shared_ptr<EccCryptoContext> cryptoContext = make_shared<EccCryptoContext>(KEYPAIR_ID, privateKeyA, publicKeyA, Mode::SIGN_VERIFY);
@@ -206,7 +218,7 @@ TEST_F(EccCryptoContextSuite_SignVerify, signVerify)
 
 	EXPECT_TRUE(cryptoContext->verify(messageA, signatureA, encoder));
 
-	shared_ptr<ByteArray> messageB(32);
+	shared_ptr<ByteArray> messageB = make_shared<ByteArray>(32);
 	random->nextBytes(*messageB);
 
 	shared_ptr<ByteArray> signatureB = cryptoContext->sign(messageB, encoder, format);
@@ -219,7 +231,7 @@ TEST_F(EccCryptoContextSuite_SignVerify, signVerify)
 
 TEST_F(EccCryptoContextSuite_SignVerify, signVerifyContextMismatch)
 {
-	shared_ptr<ByteArray> message(32);
+	shared_ptr<ByteArray> message = make_shared<ByteArray>(32);
 	random->nextBytes(*message);
 
 	shared_ptr<EccCryptoContext> cryptoContextA = make_shared<EccCryptoContext>(KEYPAIR_ID, privateKeyA, publicKeyA, Mode::SIGN_VERIFY);
@@ -231,7 +243,7 @@ TEST_F(EccCryptoContextSuite_SignVerify, signVerifyContextMismatch)
 
 TEST_F(EccCryptoContextSuite_SignVerify, signNullPrivate)
 {
-	shared_ptr<ByteArray> message(32);
+	shared_ptr<ByteArray> message = make_shared<ByteArray>(32);
 	random->nextBytes(*message);
 
 	shared_ptr<EccCryptoContext> cryptoContext = make_shared<EccCryptoContext>(KEYPAIR_ID, NULL_PRIVKEY, publicKeyA, Mode::SIGN_VERIFY);
@@ -245,7 +257,7 @@ TEST_F(EccCryptoContextSuite_SignVerify, signNullPrivate)
 
 TEST_F(EccCryptoContextSuite_SignVerify, verifyNullPublic)
 {
-	shared_ptr<ByteArray> message(32);
+	shared_ptr<ByteArray> message = make_shared<ByteArray>(32);
 	random->nextBytes(*message);
 
 	shared_ptr<EccCryptoContext> cryptoContext = make_shared<EccCryptoContext>(KEYPAIR_ID, privateKeyA, NULL_PUBKEY, Mode::SIGN_VERIFY);

@@ -29,17 +29,19 @@ namespace entityauth {
 namespace {
 
 /** ECC public key. */
-private static String ECC_PUBKEY_B64 =
+const string ECC_PUBKEY_B64 =
 	"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAExgY6uU5xZkvDLVlo5PpKjhRJnyqS"
 	"j4+LNcQ+x+kdPbZf1GwiJy2sRiJwghsXl9X8ffRpUqiLeNW0oOE/+dG2iw==";
 
 /** ECC private key. */
-private static String ECC_PRIVKEY_B64 =
+const string ECC_PRIVKEY_B64 =
 	"MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgrNqzpcZOpGRqlVGZ"
 	"nelA4i7N/E96nJ8Ntk1ZXhPzKcChRANCAATGBjq5TnFmS8MtWWjk+kqOFEmfKpKP"
 	"j4s1xD7H6R09tl/UbCInLaxGInCCGxeX1fx99GlSqIt41bSg4T/50baL";
 
 } // namespace anonymous
+
+#if 0 // FIXME
 
 const string MockEccAuthenticationFactory::ECC_ESN = "ECCPREFIX-ESN";
 const string MockEccAuthenticationFactory::ECC_PUBKEY_ID = "mockECCKeyId";
@@ -73,5 +75,7 @@ shared_ptr<ICryptoContext> MockEccAuthenticationFactory::getCryptoContext(shared
 	// Entity not found.
 	throw MslEntityAuthException(MslError::ECC_PUBLICKEY_NOT_FOUND, pubkeyid).setEntityAuthenticationData(ead);
 }
+
+#endif
 
 }}} // namespace netflix::msl::entityauth

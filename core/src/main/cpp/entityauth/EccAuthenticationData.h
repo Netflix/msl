@@ -54,7 +54,7 @@ public:
 	EccAuthenticationData(std::shared_ptr<io::MslObject> eccAuthMo);
 
 	/** @inheritDoc */
-	virtual const std::string getIdentity() const {
+	virtual std::string getIdentity() const {
 		return identity_;
 	}
 

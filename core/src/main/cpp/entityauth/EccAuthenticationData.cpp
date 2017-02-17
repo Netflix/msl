@@ -52,7 +52,7 @@ EccAuthenticationData::EccAuthenticationData(shared_ptr<MslObject> eccAuthMo)
 	}
 }
 
-shared_ptr<MslObject> EccAuthenticationData::getAuthData(shared_ptr<MslEncoderFactory> encoder, const MslEncoderFormat& format) const
+shared_ptr<MslObject> EccAuthenticationData::getAuthData(shared_ptr<MslEncoderFactory> encoder, const MslEncoderFormat&) const
 {
 	shared_ptr<MslObject> mo = encoder->createObject();
 	mo->put(KEY_IDENTITY, identity_);

@@ -14,13 +14,21 @@
  * limitations under the License.
  */
 #include <crypto/JsonWebEncryptionCryptoContext.h>
+
+#include <cassert>
+
+#include <crypto/IRandom.h>
 #include <crypto/JcaAlgorithm.h>
 #include <io/MslEncoderFactory.h>
 #include <io/MslEncoderFormat.h>
 #include <io/MslEncoderUtils.h>
+#include <util/MslContext.h>
 
 #include <cstring>
+#include <memory>
 #include <string>
+
+using std::__1::make_shared;
 
 using namespace std;
 using namespace netflix::msl::io;
@@ -32,7 +40,7 @@ namespace crypto {
 
 namespace {
     /** Encoding charset. */
-    const Charset UTF_8 = Charset.forName("UTF-8");
+    //const Charset UTF_8 = Charset.forName("UTF-8");  // FIXME whatfo?
 
     /** JSON key recipients. */
     const std::string KEY_RECIPIENTS = "recipients";
@@ -75,15 +83,46 @@ namespace {
     const uint8_t BYTE_SIZE = 8;
 } // namespace anonymous
 
-// ---- Algorithm
+// ---- JsonWebEncryptionCryptoContext::Algorithm
+
 const JsonWebEncryptionCryptoContext::Algorithm JsonWebEncryptionCryptoContext::Algorithm::RSA_OAEP(Algorithm::rsa_oaep, "RSA-OAEP");
 const JsonWebEncryptionCryptoContext::Algorithm JsonWebEncryptionCryptoContext::Algorithm::A128KW(Algorithm::a128kw, "AES128KW");
+const JsonWebEncryptionCryptoContext::Algorithm JsonWebEncryptionCryptoContext::Algorithm::INVALID(Algorithm::invalid, "INVALID");
 
-// --- Encryption
+// static
+const vector<JsonWebEncryptionCryptoContext::Algorithm>& JsonWebEncryptionCryptoContext::Algorithm::getValues()
+{
+    static vector<Algorithm> gValues;
+    if (gValues.empty()) {
+        gValues.push_back(RSA_OAEP);
+        gValues.push_back(A128KW);
+        gValues.push_back(INVALID);
+    }
+    return gValues;
+}
+
+// --- JsonWebEncryptionCryptoContext::Encryption
+
 const JsonWebEncryptionCryptoContext::Encryption JsonWebEncryptionCryptoContext::Encryption::A128GCM(Encryption::a128gcm, "A128GCM");
 const JsonWebEncryptionCryptoContext::Encryption JsonWebEncryptionCryptoContext::Encryption::A256GCM(Encryption::a256gcm, "A256GCM");
+const JsonWebEncryptionCryptoContext::Encryption JsonWebEncryptionCryptoContext::Encryption::INVALID(Encryption::invalid, "INVALID");
 
-shared_ptr<ByteArray> JsonWebEncryptionCryptoContext::RsaOaepCryptoContext::encrypt(shared_ptr<ByteArray> data, shared_ptr<MslEncoderFactory> encoder, const MslEncoderFormat& format)
+// static
+const vector<JsonWebEncryptionCryptoContext::Encryption>& JsonWebEncryptionCryptoContext::Encryption::getValues()
+{
+    static vector<Encryption> gValues;
+    if (gValues.empty()) {
+        gValues.push_back(A128GCM);
+        gValues.push_back(A256GCM);
+        gValues.push_back(INVALID);
+    }
+    return gValues;
+}
+
+// --- JsonWebEncryptionCryptoContext::RsaOaepCryptoContext
+
+shared_ptr<ByteArray> JsonWebEncryptionCryptoContext::RsaOaepCryptoContext::encrypt(shared_ptr<ByteArray> /*data*/,
+        shared_ptr<MslEncoderFactory> /*encoder*/, const MslEncoderFormat& /*format*/)
 {
 	if (publicKey.isNull())
 		throw MslCryptoException(MslError::ENCRYPT_NOT_SUPPORTED, "no public key");
@@ -95,21 +134,23 @@ shared_ptr<ByteArray> JsonWebEncryptionCryptoContext::RsaOaepCryptoContext::encr
 //    return cipher.doFinal(data);
 	/*
 	} catch (final NoSuchPaddingException e) {
-		throw new MslInternalException("Unsupported padding exception.", e);
+		throw MslInternalException("Unsupported padding exception.", e);
 	} catch (final NoSuchAlgorithmException e) {
-		throw new MslInternalException("Invalid cipher algorithm specified.", e);
+		throw MslInternalException("Invalid cipher algorithm specified.", e);
 	} catch (final InvalidKeyException e) {
-		throw new MslCryptoException(MslError.INVALID_PUBLIC_KEY, e);
+		throw MslCryptoException(MslError.INVALID_PUBLIC_KEY, e);
 	} catch (final IllegalBlockSizeException e) {
-		throw new MslCryptoException(MslError.PLAINTEXT_ILLEGAL_BLOCK_SIZE, "not expected when padding is specified", e);
+		throw MslCryptoException(MslError.PLAINTEXT_ILLEGAL_BLOCK_SIZE, "not expected when padding is specified", e);
 	} catch (final BadPaddingException e) {
-		throw new MslCryptoException(MslError.PLAINTEXT_BAD_PADDING, "not expected when encrypting", e);
+		throw MslCryptoException(MslError.PLAINTEXT_BAD_PADDING, "not expected when encrypting", e);
 	} catch (final InvalidAlgorithmParameterException e) {
-		throw new MslCryptoException(MslError.INVALID_ALGORITHM_PARAMS, e);
+		throw MslCryptoException(MslError.INVALID_ALGORITHM_PARAMS, e);
 	}*/
+
+	return make_shared<ByteArray>();  // FIXME TODO
 }
 
-shared_ptr<ByteArray> JsonWebEncryptionCryptoContext::RsaOaepCryptoContext::decrypt(shared_ptr<ByteArray> data, shared_ptr<MslEncoderFactory> encoder)
+shared_ptr<ByteArray> JsonWebEncryptionCryptoContext::RsaOaepCryptoContext::decrypt(shared_ptr<ByteArray> /*data*/, shared_ptr<MslEncoderFactory> /*encoder*/)
 {
 	if (privateKey.isNull())
 		throw MslCryptoException(MslError::DECRYPT_NOT_SUPPORTED, "no private key");
@@ -122,24 +163,25 @@ shared_ptr<ByteArray> JsonWebEncryptionCryptoContext::RsaOaepCryptoContext::decr
 	/*
             } catch (final NoSuchPaddingException e) {
                 reset = e;
-                throw new MslInternalException("Unsupported padding exception.", e);
+                throw MslInternalException("Unsupported padding exception.", e);
             } catch (final NoSuchAlgorithmException e) {
                 reset = e;
-                throw new MslInternalException("Invalid cipher algorithm specified.", e);
+                throw MslInternalException("Invalid cipher algorithm specified.", e);
             } catch (final InvalidKeyException e) {
                 reset = e;
-                throw new MslCryptoException(MslError.INVALID_PRIVATE_KEY, e);
+                throw MslCryptoException(MslError.INVALID_PRIVATE_KEY, e);
             } catch (final IllegalBlockSizeException e) {
                 reset = e;
-                throw new MslCryptoException(MslError.CIPHERTEXT_ILLEGAL_BLOCK_SIZE, e);
+                throw MslCryptoException(MslError.CIPHERTEXT_ILLEGAL_BLOCK_SIZE, e);
             } catch (final BadPaddingException e) {
                 reset = e;
-                throw new MslCryptoException(MslError.CIPHERTEXT_BAD_PADDING, e);
+                throw MslCryptoException(MslError.CIPHERTEXT_BAD_PADDING, e);
             } catch (final InvalidAlgorithmParameterException e) {
                 reset = e;
-                throw new MslCryptoException(MslError.INVALID_ALGORITHM_PARAMS, e);
+                throw MslCryptoException(MslError.INVALID_ALGORITHM_PARAMS, e);
             }
 	 */
+    return make_shared<ByteArray>();  // FIXME TODO
 }
 
 /**
@@ -151,13 +193,14 @@ shared_ptr<ByteArray> JsonWebEncryptionCryptoContext::RsaOaepCryptoContext::decr
 JsonWebEncryptionCryptoContext::AesKwCryptoContext::AesKwCryptoContext(const SecretKey& key)
 	: CekCryptoContext(Algorithm::A128KW)
 	, key(key)
-	, cryptoContext(cryptoContext)
+	//, cryptoContext(cryptoContext)  // FIXME TODO
 {
-	if (!key.getAlgorithm() == JcaAlgorithm::AESKW)
+	if (key.getAlgorithm() != JcaAlgorithm::AESKW)
 		throw IllegalArgumentException("Secret key must be an " + JcaAlgorithm::AESKW + " key.");
 }
 
-shared_ptr<ByteArray> JsonWebEncryptionCryptoContext::AesKwCryptoContext::encrypt(shared_ptr<ByteArray> data, shared_ptr<MslEncoderFactory> encoder, const MslEncoderFormat& format)
+shared_ptr<ByteArray> JsonWebEncryptionCryptoContext::AesKwCryptoContext::encrypt(shared_ptr<ByteArray> /*data*/,
+        shared_ptr<MslEncoderFactory> /*encoder*/, const MslEncoderFormat& /*format*/)
 {
 	// If a secret key is provided use it.
 	if (!key.isNull()) {
@@ -171,21 +214,22 @@ shared_ptr<ByteArray> JsonWebEncryptionCryptoContext::AesKwCryptoContext::encryp
 		//                    return cipher.wrap(secretKey);
 		/*
                 } catch (final NoSuchPaddingException e) {
-                    throw new MslInternalException("Unsupported padding exception.", e);
+                    throw MslInternalException("Unsupported padding exception.", e);
                 } catch (final NoSuchAlgorithmException e) {
-                    throw new MslInternalException("Invalid cipher algorithm specified.", e);
+                    throw MslInternalException("Invalid cipher algorithm specified.", e);
                 } catch (final IllegalArgumentException e) {
-                    throw new MslInternalException("Invalid content encryption key provided.", e);
+                    throw MslInternalException("Invalid content encryption key provided.", e);
                 } catch (final InvalidKeyException e) {
-                    throw new MslCryptoException(MslError.INVALID_SYMMETRIC_KEY, e);
+                    throw MslCryptoException(MslError.INVALID_SYMMETRIC_KEY, e);
                 } catch (final IllegalBlockSizeException e) {
-                    throw new MslCryptoException(MslError.PLAINTEXT_ILLEGAL_BLOCK_SIZE, "not expected when padding is specified", e);
+                    throw MslCryptoException(MslError.PLAINTEXT_ILLEGAL_BLOCK_SIZE, "not expected when padding is specified", e);
                 }
 		 */
 	}
 
 	// Otherwise use the backing crypto context.
-	return cryptoContext->wrap(data, encoder, format);
+	//return cryptoContext->wrap(data, encoder, format);
+	return make_shared<ByteArray>();  // FIXME remove
 }
 
 shared_ptr<ByteArray> JsonWebEncryptionCryptoContext::AesKwCryptoContext::decrypt(shared_ptr<ByteArray> data, shared_ptr<MslEncoderFactory> encoder)
@@ -199,11 +243,11 @@ shared_ptr<ByteArray> JsonWebEncryptionCryptoContext::AesKwCryptoContext::decryp
 		//			return cipher.unwrap(data, "AES", Cipher.SECRET_KEY).getEncoded();
 		/*
 		} catch (final NoSuchPaddingException e) {
-			throw new MslInternalException("Unsupported padding exception.", e);
+			throw MslInternalException("Unsupported padding exception.", e);
 		} catch (final NoSuchAlgorithmException e) {
-			throw new MslInternalException("Invalid cipher algorithm specified.", e);
+			throw MslInternalException("Invalid cipher algorithm specified.", e);
 		} catch (final InvalidKeyException e) {
-			throw new MslCryptoException(MslError.INVALID_SYMMETRIC_KEY, e);
+			throw MslCryptoException(MslError.INVALID_SYMMETRIC_KEY, e);
 		}
 		 */
 	}
@@ -212,7 +256,7 @@ shared_ptr<ByteArray> JsonWebEncryptionCryptoContext::AesKwCryptoContext::decryp
 	return cryptoContext->unwrap(data, encoder);
 }
 
-shared_ptr<ByteArray> JsonWebEncryptionCryptoContext::wrap(shared_ptr<ByteArray> data, shared_ptr<MslEncoderFactory> encoder, const MslEncoderFormat& format)
+shared_ptr<ByteArray> JsonWebEncryptionCryptoContext::wrap(shared_ptr<ByteArray> /*data*/, shared_ptr<MslEncoderFactory> encoder, const MslEncoderFormat& format)
 {
 	// Create the header.
 	shared_ptr<ByteArray> header;
@@ -236,7 +280,7 @@ shared_ptr<ByteArray> JsonWebEncryptionCryptoContext::wrap(shared_ptr<ByteArray>
 		ivlen = A256_GCM_IV_LENGTH;
 		atlen = A256_GCM_AT_LENGTH;
 	} else {
-		throw new MslCryptoException(MslError::UNSUPPORTED_JWE_ALGORITHM, enc.name());
+		throw MslCryptoException(MslError::UNSUPPORTED_JWE_ALGORITHM, enc.name());
 	}
 
 	// Generate the key and IV.
@@ -250,13 +294,13 @@ shared_ptr<ByteArray> JsonWebEncryptionCryptoContext::wrap(shared_ptr<ByteArray>
 	shared_ptr<ByteArray> ecek = cekCryptoContext->encrypt(cek, encoder, MslEncoderFormat::JSON);
 
 	// Base64-encode the data.
-	const string headerB64 = MslEncoderUtils::b64urlEncode(header);
-	const string ecekB64 = MslEncoderUtils::b64urlEncode(ecek);
-	const string ivB64 = MslEncoderUtils::b64urlEncode(iv);
+	shared_ptr<string> headerB64 = MslEncoderUtils::b64urlEncode(header);
+	shared_ptr<string> ecekB64 = MslEncoderUtils::b64urlEncode(ecek);
+	shared_ptr<string> ivB64 = MslEncoderUtils::b64urlEncode(iv);
 
 	// Create additional authenticated data.
 	stringstream aadss;
-	aadss << headerB64 << "." << ecekB64 << "." << ivB64;
+	aadss << *headerB64 << "." << *ecekB64 << "." << *ivB64;
 	const string aad = aadss.str();
 
 	// TODO: AES-GCM is not available via the JCE.
@@ -267,7 +311,8 @@ shared_ptr<ByteArray> JsonWebEncryptionCryptoContext::wrap(shared_ptr<ByteArray>
 	//        plaintextCipher.init(true, params);
 
 	// Encrypt the plaintext.
-	shared_ptr<ByteArray> ciphertextATag;
+    //shared_ptr<ByteArray> ciphertextATag;
+    shared_ptr<ByteArray> ciphertextATag = make_shared<ByteArray>(); // FIXME remove
 	//        try {
 	//            const uint8_t clen = plaintextCipher.getOutputSize(data.length);
 	//            ciphertextATag = make_shared<ByteArray>(clen);
@@ -277,9 +322,9 @@ shared_ptr<ByteArray> JsonWebEncryptionCryptoContext::wrap(shared_ptr<ByteArray>
 	//            // Append the authentication tag.
 	//            plaintextCipher.doFinal(ciphertextATag, offset);
 	//        } catch (final IllegalStateException e) {
-	//            throw new MslCryptoException(MslError.WRAP_ERROR, e);
+	//            throw MslCryptoException(MslError.WRAP_ERROR, e);
 	//        } catch (final InvalidCipherTextException e) {
-	//            throw new MslInternalException("Invalid ciphertext not expected when encrypting.", e);
+	//            throw MslInternalException("Invalid ciphertext not expected when encrypting.", e);
 	//        }
 
 	// Split the result into the ciphertext and authentication tag.
@@ -287,51 +332,50 @@ shared_ptr<ByteArray> JsonWebEncryptionCryptoContext::wrap(shared_ptr<ByteArray>
 	shared_ptr<ByteArray> at = make_shared<ByteArray>(ciphertextATag->begin() + ciphertext->size(), ciphertextATag->end());
 
 	// Base64-encode the ciphertext and authentication tag.
-	const string ciphertextB64 = MslEncoderUtils::b64urlEncode(ciphertext);
-	const string atB64 = MslEncoderUtils::b64urlEncode(at);
+	shared_ptr<string> ciphertextB64 = MslEncoderUtils::b64urlEncode(ciphertext);
+	shared_ptr<string> atB64 = MslEncoderUtils::b64urlEncode(at);
 
 	// Envelope the data.
 	switch (this->format) {
 	case JWE_CS:
 	{
-		const stringstream serializationss;
-		serializationss << aad << "." << ciphertextB64 << "." << atB64;
+		stringstream serializationss;
+		serializationss << aad << "." << *ciphertextB64 << "." << *atB64;
 		const string serialization = serializationss.str();
 		return make_shared<ByteArray>(serialization.begin(), serialization.end());
 	}
 	case JWE_JS:
-	{
 		try {
 			// Create recipients array.
 			shared_ptr<MslArray> recipients = encoder->createArray();
 			shared_ptr<MslObject> recipient = encoder->createObject();
-			recipient->put(KEY_HEADER, headerB64);
-			recipient->put(KEY_ENCRYPTED_KEY, ecekB64);
-			recipient->put(KEY_INTEGRITY_VALUE, atB64);
+			recipient->put(KEY_HEADER, *headerB64);
+			recipient->put(KEY_ENCRYPTED_KEY, *ecekB64);
+			recipient->put(KEY_INTEGRITY_VALUE, *atB64);
 			recipients->put(-1, recipient);
 
 			// Create JSON serialization.
 			shared_ptr<MslObject> serialization = encoder->createObject();
 			serialization->put(KEY_RECIPIENTS, recipients);
-			serialization->put(KEY_INITIALIZATION_VECTOR, ivB64);
-			serialization->put(KEY_CIPHERTEXT, ciphertextB64);
+			serialization->put(KEY_INITIALIZATION_VECTOR, *ivB64);
+			serialization->put(KEY_CIPHERTEXT, *ciphertextB64);
 			return encoder->encodeObject(serialization, MslEncoderFormat::JSON);
 		} catch (const MslEncoderException& e) {
 			throw MslCryptoException(MslError::JWE_ENCODE_ERROR, e);
 		}
-	}
+		break;
 	default:
 		throw MslCryptoException(MslError::UNSUPPORTED_JWE_SERIALIZATION, format.name());
 	}
 }
 
-virtual shared_ptr<ByteArray> JsonWebEncryptionCryptoContext::unwrap(shared_ptr<ByteArray> data, shared_ptr<MslEncoderFactory> encoder)
+shared_ptr<ByteArray> JsonWebEncryptionCryptoContext::unwrap(shared_ptr<ByteArray> data, shared_ptr<MslEncoderFactory> encoder)
 {
 	// Parse the serialization.
-	const string serialization(data->begin(), data->end());
+	string serialization(data->begin(), data->end());
 	string headerB64, ecekB64, ivB64;
 	shared_ptr<ByteArray> ciphertext, at;
-	if (data[0] == '{') {
+	if ((*data)[0] == '{') {
 		try {
 			shared_ptr<MslObject> serializationMo = encoder->parseObject(data);
 			ivB64 = serializationMo->getString(KEY_INITIALIZATION_VECTOR);
@@ -350,13 +394,14 @@ virtual shared_ptr<ByteArray> JsonWebEncryptionCryptoContext::unwrap(shared_ptr<
 		}
 	} else {
 		// Separate the compact serialization.
-		const vector<string> parts;
-		char *serialization_cstr = serialization.c_str();
-		char *part = strtok(serialization_cstr, ".");
-		while (part != NULL) {
-			parts.push_back(string(part));
-			part = strtok(NULL, ".");
-		}
+	    vector<string> parts;
+	    size_t pos = 0;
+	    string token;
+	    while ((pos = serialization.find(".")) != std::string::npos) {
+	        token = serialization.substr(0, pos);
+	        parts.push_back(token);
+	        serialization.erase(0, pos + 1);
+	    }
 		if (parts.size() != 5)
 			throw MslCryptoException(MslError::JWE_PARSE_ERROR, serialization);
 
@@ -364,8 +409,8 @@ virtual shared_ptr<ByteArray> JsonWebEncryptionCryptoContext::unwrap(shared_ptr<
 		headerB64 = parts[0];
 		ecekB64 = parts[1];
 		ivB64 = parts[2];
-		ciphertext = MslEncoderUtils::b64urlDecode(make_shared<string>(parts[3]));
-		at = MslEncoderUtils::b64urlDecode(make_shared<string>(parts[4]));
+		ciphertext = MslEncoderUtils::b64urlDecode(make_shared<string>(parts.at(3)));
+		at = MslEncoderUtils::b64urlDecode(make_shared<string>(parts.at(4)));
 	}
 
 	// Decode header, encrypted content encryption key, and IV.
@@ -417,7 +462,7 @@ virtual shared_ptr<ByteArray> JsonWebEncryptionCryptoContext::unwrap(shared_ptr<
 	//        } catch (final ArrayIndexOutOfBoundsException e) {
 	// Thrown if the encrypted content encryption key is an invalid
 	// length.
-	//            throw new MslCryptoException(MslError.INVALID_SYMMETRIC_KEY, e);
+	//            throw MslCryptoException(MslError.INVALID_SYMMETRIC_KEY, e);
 	//        }
 
 	// Create additional authenticated data.
@@ -434,7 +479,7 @@ virtual shared_ptr<ByteArray> JsonWebEncryptionCryptoContext::unwrap(shared_ptr<
 		keylen = A256_GCM_KEY_LENGTH;
 		atlen = A256_GCM_AT_LENGTH;
 	} else {
-		throw new MslCryptoException(MslError::UNSUPPORTED_JWE_ALGORITHM, enc.name());
+		throw MslCryptoException(MslError::UNSUPPORTED_JWE_ALGORITHM, enc.name());
 	}
 
 	// Verify algorithm parameters.
@@ -453,7 +498,7 @@ virtual shared_ptr<ByteArray> JsonWebEncryptionCryptoContext::unwrap(shared_ptr<
 	// Decrypt the ciphertext.
 	//        try {
 	// Reconstruct the ciphertext and authentication tag.
-	const shared_ptr<ByteArray> ciphertextAtag(ciphertext->begin(), ciphertext->end());
+	const shared_ptr<ByteArray> ciphertextAtag = make_shared<ByteArray>(ciphertext->begin(), ciphertext->end());
 	ciphertextAtag->insert(ciphertextAtag->end(), at->begin(), at->end());
 	//            const uint8_t plen = plaintextCipher.getOutputSize(ciphertextAtag.length);
 	//            shared_ptr<ByteArray> plaintext(plen);
@@ -462,13 +507,17 @@ virtual shared_ptr<ByteArray> JsonWebEncryptionCryptoContext::unwrap(shared_ptr<
 	//            const uint8_t offset = plaintextCipher.processBytes(ciphertextAtag, 0, ciphertextAtag.length, plaintext, 0);
 	//            // Verify the authentication tag.
 	//            plaintextCipher.doFinal(plaintext, offset);
-	return plaintext;
+	//return plaintext;
 	//        } catch (final IllegalStateException e) {
-	//            throw new MslCryptoException(MslError.UNWRAP_ERROR, e);
+	//            throw MslCryptoException(MslError.UNWRAP_ERROR, e);
 	//        } catch (final InvalidCipherTextException e) {
-	//            throw new MslCryptoException(MslError.UNWRAP_ERROR, e);
+	//            throw MslCryptoException(MslError.UNWRAP_ERROR, e);
 	//        } catch (final ArrayIndexOutOfBoundsException e) {
 	//            // Thrown if the ciphertext is an invalid length.
-	//            throw new MslCryptoException(MslError.UNWRAP_ERROR, e);
+	//            throw MslCryptoException(MslError.UNWRAP_ERROR, e);
 	//        }
+
+	return make_shared<ByteArray>(); // FIXME TODO
 }
+
+}}} // namespace neetflix::msl::crypto

@@ -71,6 +71,13 @@ protected:
 	shared_ptr<MslEncoderFactory> encoder;
 };
 
+// FIXME TODO
+TEST_F(EccAuthenticationDataTest, todo)
+{
+    EXPECT_TRUE(false) << "This test suite needs to be implemented";
+}
+
+#if 0
 TEST_F(EccAuthenticationDataTest, ctors)
 {
         shared_ptr<EccAuthenticationData> data = make_shared<EccAuthenticationData>(MockEccAuthenticationFactory::ECC_ESN, MockEccAuthenticationFactory::ECC_PUBKEY_ID);
@@ -185,6 +192,7 @@ TEST_F(EccAuthenticationDataTest, equalsPubKeyId)
         assertTrue(dataA.equals(dataA2));
         assertTrue(dataA2.equals(dataA));
         EXPECT_EQ(dataA.hashCode(), dataA2.hashCode());
-    }
+}
+#endif
 
 }}} // namespace netflix::msl::entityauth

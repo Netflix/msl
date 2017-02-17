@@ -14,4 +14,58 @@
  * limitations under the License.
  */
 #include <crypto/EccCryptoContext.h>
+#include <MslCryptoException.h>
+#include <MslError.h>
+#include <crypto/Key.h>
+#include <io/MslEncoderFactory.h>
+#include <io/MslEncoderFormat.h>
+#include <string>
 
+// FIXME TODO
+
+using namespace std;
+using namespace netflix::msl;
+using namespace netflix::msl::io;;
+
+namespace netflix {
+namespace msl {
+namespace crypto {
+
+EccCryptoContext::EccCryptoContext(const string& /*id*/, const PrivateKey& /*privateKey*/, const PublicKey& /*publicKey*/, const EccCryptoContext::Mode& /*mode*/)
+{
+    // FIXME TODO
+}
+
+shared_ptr<ByteArray> EccCryptoContext::encrypt(shared_ptr<ByteArray> /*data*/, shared_ptr<MslEncoderFactory> /*encoder*/, const MslEncoderFormat& /*format*/)
+{
+    // FIXME TODO
+    return make_shared<ByteArray>();
+}
+
+shared_ptr<ByteArray> EccCryptoContext::decrypt(shared_ptr<ByteArray> /*data*/, shared_ptr<MslEncoderFactory> /*encoder*/)
+{
+    // FIXME TODO
+    return make_shared<ByteArray>();
+}
+
+shared_ptr<ByteArray> EccCryptoContext::wrap(std::shared_ptr<ByteArray>, std::shared_ptr<io::MslEncoderFactory>, const io::MslEncoderFormat&) {
+    throw MslCryptoException(MslError::WRAP_NOT_SUPPORTED);
+}
+
+shared_ptr<ByteArray> EccCryptoContext::unwrap(std::shared_ptr<ByteArray>, std::shared_ptr<io::MslEncoderFactory>) {
+    throw MslCryptoException(MslError::UNWRAP_NOT_SUPPORTED);
+}
+
+shared_ptr<ByteArray> EccCryptoContext::sign(shared_ptr<ByteArray> /*data*/, shared_ptr<MslEncoderFactory> /*encoder*/, const MslEncoderFormat& /*format*/)
+{
+    // FIXME TODO
+    return make_shared<ByteArray>();
+}
+
+bool EccCryptoContext::verify(shared_ptr<ByteArray> /*data*/, shared_ptr<ByteArray> /*signature*/, shared_ptr<MslEncoderFactory> /*encoder*/)
+{
+    // FIXME TODO
+    return false;
+}
+
+}}} // namespace netflix::msl:;crypto

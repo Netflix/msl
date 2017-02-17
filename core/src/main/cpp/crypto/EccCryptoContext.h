@@ -18,7 +18,6 @@
 
 #include <crypto/ICryptoContext.h>
 #include <crypto/Key.h>
-#include <crypto/OpenSslLib.h>
 #include <memory>
 #include <string>
 #include <vector>
@@ -41,7 +40,7 @@ public:
 	virtual ~EccCryptoContext() {}
 
     /** ECC crypto context mode. .*/
-	static enum Mode {
+	enum Mode {
 		ENCRYPT_DECRYPT,
 		SIGN_VERIFY
 	};
@@ -60,7 +59,7 @@ public:
      * @param publicKey the public key used for verifying. May be null.
      * @param mode crypto context mode.
      */
-	EccCryptoContext(const std::string& id, const PrivateKey& privateKey, const PublicKey& publicKey, const Mode mode);
+	EccCryptoContext(const std::string& id, const PrivateKey& privateKey, const PublicKey& publicKey, const Mode& mode);
 
     /** @inheritDoc */
     virtual std::shared_ptr<ByteArray> encrypt(std::shared_ptr<ByteArray> data, std::shared_ptr<io::MslEncoderFactory> encoder, const io::MslEncoderFormat& format);
@@ -69,14 +68,10 @@ public:
     virtual std::shared_ptr<ByteArray> decrypt(std::shared_ptr<ByteArray> data, std::shared_ptr<io::MslEncoderFactory> encoder);
 
     /** @inheritDoc */
-    virtual std::shared_ptr<ByteArray> wrap(std::shared_ptr<ByteArray> data, std::shared_ptr<io::MslEncoderFactory> encoder, const io::MslEncoderFormat& format) {
-    	throw MslCryptoException(MslError::WRAP_NOT_SUPPORTED);
-    }
+    virtual std::shared_ptr<ByteArray> wrap(std::shared_ptr<ByteArray>, std::shared_ptr<io::MslEncoderFactory>, const io::MslEncoderFormat&);
 
     /** @inheritDoc */
-    virtual std::shared_ptr<ByteArray> unwrap(std::shared_ptr<ByteArray> data, std::shared_ptr<io::MslEncoderFactory> encoder) {
-    	throw MslCryptoException(MslError::UNWRAP_NOT_SUPPORTED);
-    }
+    virtual std::shared_ptr<ByteArray> unwrap(std::shared_ptr<ByteArray>, std::shared_ptr<io::MslEncoderFactory>);
 
     /** @inheritDoc */
     virtual std::shared_ptr<ByteArray> sign(std::shared_ptr<ByteArray> data, std::shared_ptr<io::MslEncoderFactory> encoder, const io::MslEncoderFormat& format);

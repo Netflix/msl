@@ -14,24 +14,34 @@
  * limitations under the License.
  */
 #include <gtest/gtest.h>
+#include <crypto/JcaAlgorithm.h>
 #include <crypto/JsonWebEncryptionCryptoContext.h>
+#include <entityauth/EntityAuthenticationScheme.h>
+#include <io/MslEncoderutils.h>
+#include <io/MslArray.h>
+#include <io/MslEncoderFactory.h>
+#include <io/MslObject.h>
+#include <util/MockMslContext.h>
 #include <MslCryptoException.h>
 #include <MslEncodingException.h>
 #include <memory>
 #include <vector>
 
+#include "../util/MslTestUtils.h"
+
 using namespace std;
 using namespace netflix::msl::entityauth;
 using namespace netflix::msl::io;
 using namespace netflix::msl::util;
-using netflix::msl::crypto::JsonWebEncryptionCryptoContext::CekCryptoContext;
-using netflix::msl::crypto::JsonWebEncryptionCryptoContext::Encryption;
-using netflix::msl::crypto::JsonWebEncryptionCryptoContext::Format;
 
 namespace netflix {
 namespace msl {
 typedef vector<uint8_t> ByteArray;
 namespace crypto {
+
+using CekCryptoContext = JsonWebEncryptionCryptoContext::CekCryptoContext;
+using Encryption = JsonWebEncryptionCryptoContext::Encryption;
+using Format = JsonWebEncryptionCryptoContext::Format;
 
 namespace {
 
@@ -65,7 +75,7 @@ const uint8_t CIPHERTEXT_INDEX = 3;
 const uint8_t AUTHENTICATION_TAG_INDEX = 4;
 
 /** String 'x' Base64 URL encoded. */
-const string XB64 = MslEncoderUtils::b64urlEncode(make_shared<string>("x"));
+const string XB64 = *MslEncoderUtils::b64urlEncode(make_shared<string>("x"));   // FIXME: static init won't work
 
 /**
  * Replace one part of the provided compact serialization with a specified
@@ -76,27 +86,29 @@ const string XB64 = MslEncoderUtils::b64urlEncode(make_shared<string>("x"));
  * @param value Base64-encoded replacement value.
  * @return the modified compact serialization.
  */
-shared_ptr<ByteArray> replace(shared_ptr<ByteArray> serialization, const uint8_t part, shared_ptr<string> value)
-{
-	return replace(serialization, part, *value);
-}
 shared_ptr<ByteArray> replace(shared_ptr<ByteArray> serialization, const uint8_t part, const string& value)
 {
-	const string s(serialization->begin(), serialization->end());
-	const vector<string> parts;
-	char *cstr = s.c_str();
-	char *p = strtok(cstr, ".");
-	while (p != NULL) {
-		parts.push_back(string(p));
-		p = strtok(NULL, ".");
-	}
+    string s(serialization->begin(), serialization->end()); // make a copy because we are being destructive
+    vector<string> parts;
+    size_t pos = 0;
+    string token;
+    while ((pos = s.find(".")) != std::string::npos) {
+        token = s.substr(0, pos);
+        parts.push_back(token);
+        s.erase(0, pos + 1);
+    }
+    assert(part < parts.size());
 	parts[part] = value;
-	stringstream ss;
-	ss << parts[0];
-	for (int i = 1; i < parts.size(); ++i)
+	stringstream ss(parts[0]);
+	for (size_t i = 1; i < parts.size(); ++i)
 		ss << "." << parts[i];
-	const string s = ss.str();
-	return make_shared<ByteArray>(s.begin(), s.end());
+	const string result = ss.str();
+	return make_shared<ByteArray>(result.begin(), result.end());
+}
+
+shared_ptr<ByteArray> replace(shared_ptr<ByteArray> serialization, const uint8_t part, shared_ptr<string> value)
+{
+    return replace(serialization, part, *value);
 }
 
 /**
@@ -141,16 +153,6 @@ shared_ptr<string> get(shared_ptr<MslEncoderFactory> encoder, shared_ptr<ByteArr
  * @throws MslEncoderException if there is an error modifying the JSON
  *         serialization.
  */
-template <typename T>
-shared_ptr<ByteArray> replace(shared_ptr<MslEncoderFactory> encoder, shared_ptr<ByteArray> serialization, const string& key, const T& value)
-{
-	Variant var = VariantFactory::create(value);
-	return replace(encoder, serialization, key, var);
-}
-shared_ptr<ByteArray> replace(shared_ptr<MslEncoderFactory> encoder, shared_ptr<ByteArray> serialization, const string& key, shared_ptr<string> value)
-{
-	return replace(encoder, serialization, key, *value);
-}
 shared_ptr<ByteArray> replace(shared_ptr<MslEncoderFactory> encoder, shared_ptr<ByteArray> serialization, const string& key, const Variant& value)
 {
     shared_ptr<MslObject> serializationMo = encoder->parseObject(serialization);
@@ -179,6 +181,16 @@ shared_ptr<ByteArray> replace(shared_ptr<MslEncoderFactory> encoder, shared_ptr<
     recipients->put(0, recipient);
     serializationMo->put(KEY_RECIPIENTS, recipients);
     return encoder->encodeObject(serializationMo, MslEncoderFormat::JSON);
+}
+template <typename T>
+shared_ptr<ByteArray> replace(shared_ptr<MslEncoderFactory> encoder, shared_ptr<ByteArray> serialization, const string& key, const T& value)
+{
+	Variant var = VariantFactory::create<T>(value);
+	return replace(encoder, serialization, key, var);
+}
+shared_ptr<ByteArray> replace(shared_ptr<MslEncoderFactory> encoder, shared_ptr<ByteArray> serialization, const string& key, shared_ptr<string> value)
+{
+	return replace(encoder, serialization, key, *value);
 }
 
 /**
@@ -300,16 +312,16 @@ public:
 	virtual ~RsaOaepCompactSerialization() {}
 
 	RsaOaepCompactSerialization() {
-		cryptoContext = make_shared<JsonWebEncryptionCryptoContext(ctx, rsaCryptoContext, Encryption::A128GCM, Format::JWE_CS);
+		cryptoContext = make_shared<JsonWebEncryptionCryptoContext>(ctx, rsaCryptoContext, Encryption::A128GCM, Format::JWE_CS);
 	}
 
 protected:
 	shared_ptr<ICryptoContext> cryptoContext;
-	static shared_ptr<ByteArray> RFC_MODULUS;
-	static shared_ptr<ByteArray> RFC_PUBLIC_EXPONENT;
-	static shared_ptr<ByteArray> RFC_PRIVATE_EXPONENT;
-	static shared_ptr<ByteArray> RFC_SERIALIZATION;
-	static shared_ptr<ByteArray> RFC_PLAINTEXT;
+//	static shared_ptr<ByteArray> RFC_MODULUS;  FIXME
+//	static shared_ptr<ByteArray> RFC_PUBLIC_EXPONENT;
+//	static shared_ptr<ByteArray> RFC_PRIVATE_EXPONENT;
+//	static shared_ptr<ByteArray> RFC_SERIALIZATION;
+//	static shared_ptr<ByteArray> RFC_PLAINTEXT;
 };
 
 namespace {
@@ -329,6 +341,7 @@ const string RFC_PLAINTEXT_STR = "Live long and prosper.";
 
 } // namespace anonymous
 
+#if 0  //FIXME
 /** RFC RSA-OAEP keypair modulus. */
 shared_ptr<ByteArray> RsaOaepCompactSerialization::RFC_MODULUS = make_shared<ByteArray>({
     161, 168, 84, 34, 133, 176, 208, 173,
@@ -409,6 +422,7 @@ shared_ptr<ByteArray> RsaOaepCompactSerialization::RFC_PLAINTEXT = make_shared<B
     76, 105, 118, 101, 32, 108, 111, 110,
     103, 32, 97, 110, 100, 32, 112, 114,
     111, 115, 112, 101, 114, 46 };*/
+#endif
 
 TEST_F(RsaOaepCompactSerialization, wrapUnwrap)
 {
@@ -421,7 +435,7 @@ TEST_F(RsaOaepCompactSerialization, wrapUnwrap)
 
 TEST_F(RsaOaepCompactSerialization, wrapUnwrapShort)
 {
-	shared_ptr<ByteArray> data(3);
+	shared_ptr<ByteArray> data = make_shared<ByteArray>(3);
 	random->nextBytes(*data);
 
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
@@ -433,6 +447,9 @@ TEST_F(RsaOaepCompactSerialization, wrapUnwrapShort)
 
 TEST_F(RsaOaepCompactSerialization, wrapUnwrapRfc)
 {
+    //FIXME
+    EXPECT_TRUE(false);
+#if 0
 	final BigInteger modulus = new BigInteger(1, RFC_MODULUS);
 	final BigInteger publicExponent = new BigInteger(1, RFC_PUBLIC_EXPONENT);
 	final BigInteger privateExponent = new BigInteger(1, RFC_PRIVATE_EXPONENT);
@@ -447,11 +464,13 @@ TEST_F(RsaOaepCompactSerialization, wrapUnwrapRfc)
 	shared_ptr<ByteArray> plaintext = cryptoContext->unwrap(RFC_SERIALIZATION, encoder);
 	EXPECT_TRUE(plaintext);
 	EXPECT_EQ(*RFC_PLAINTEXT, *plaintext);
+#endif
 }
 
 TEST_F(RsaOaepCompactSerialization, invalidSerialization)
 {
-	shared_ptr<ByteArray> wrapped = make_shared<ByteArray>({'x'});
+    shared_ptr<ByteArray> wrapped = make_shared<ByteArray>();
+    wrapped->push_back('x');
 	try {
 		cryptoContext->unwrap(wrapped, encoder);
 		ADD_FAILURE() << "should have thrown";
@@ -465,7 +484,7 @@ TEST_F(RsaOaepCompactSerialization, shortSerialization)
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
 	const string serialization(wrapped->begin(), wrapped->end());
 	const string shortSerialization = serialization.substr(0, serialization.find_last_of('.'));
-	shared_ptr<ByteArray> shortWrapped(shortSerialization.begin(), shortSerialization.end());
+	shared_ptr<ByteArray> shortWrapped = make_shared<ByteArray>(shortSerialization.begin(), shortSerialization.end());
 
 	try {
 		cryptoContext->unwrap(shortWrapped, encoder);
@@ -478,7 +497,7 @@ TEST_F(RsaOaepCompactSerialization, shortSerialization)
 TEST_F(RsaOaepCompactSerialization, longSerialization)
 {
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
-	shared_ptr<ByteArray> longWrapped = make_shared<ByteArray>(wrapped);
+	shared_ptr<ByteArray> longWrapped = make_shared<ByteArray>(wrapped->begin(), wrapped->end());
 	longWrapped->insert(longWrapped->end(), wrapped->begin(), wrapped->end());
 
 	try {
@@ -620,7 +639,7 @@ TEST_F(RsaOaepCompactSerialization, invalidAuthenticationTag)
 
 TEST_F(RsaOaepCompactSerialization, wrongAuthenticationTag)
 {
-	shared_ptr<ByteArray> at(16);
+	shared_ptr<ByteArray> at = make_shared<ByteArray>(16);
 	random->nextBytes(*at);
 
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
@@ -658,7 +677,7 @@ TEST_F(RsaOaepCompactSerialization, invalidAlgorithm)
 	shared_ptr<string> wrappedB64 = make_shared<string>(wrapped->begin(), wrapped->end());
 	shared_ptr<string> headerB64 = make_shared<string>(wrappedB64->substr(0, wrappedB64->find('.')));
 	shared_ptr<MslObject> header = encoder->parseObject(MslEncoderUtils::b64urlDecode(headerB64));
-	header->put(KEY_ALGORITHM, "x");
+	header->put<string>(KEY_ALGORITHM, "x");
 	shared_ptr<ByteArray> missingWrapped = replace(wrapped, HEADER_INDEX, MslEncoderUtils::b64urlEncode(encoder->encodeObject(header, MslEncoderFormat::JSON)));
 
 	try {
@@ -692,7 +711,7 @@ TEST_F(RsaOaepCompactSerialization, invalidEncryption)
 	shared_ptr<string> wrappedB64 = make_shared<string>(wrapped->begin(), wrapped->end());
 	shared_ptr<string> headerB64 = make_shared<string>(wrappedB64->substr(0, wrappedB64->find('.')));
 	shared_ptr<MslObject> header = encoder->parseObject(MslEncoderUtils::b64urlDecode(headerB64));
-	header->put(KEY_ENCRYPTION, "x");
+	header->put<string>(KEY_ENCRYPTION, "x");
 	shared_ptr<ByteArray> missingWrapped = replace(wrapped, HEADER_INDEX, MslEncoderUtils::b64urlEncode(encoder->encodeObject(header, MslEncoderFormat::JSON)));
 
 	try {
@@ -706,7 +725,7 @@ TEST_F(RsaOaepCompactSerialization, invalidEncryption)
 TEST_F(RsaOaepCompactSerialization, badCek)
 {
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
-	shared_ptr<ByteArray> ecek(137);
+	shared_ptr<ByteArray> ecek = make_shared<ByteArray>(137);
 	random->nextBytes(*ecek);
 	shared_ptr<ByteArray> badWrapped = replace(wrapped, ECEK_INDEX, MslEncoderUtils::b64urlEncode(ecek));
 
@@ -720,7 +739,7 @@ TEST_F(RsaOaepCompactSerialization, badCek)
 TEST_F(RsaOaepCompactSerialization, badIv)
 {
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
-	shared_ptr<ByteArray> iv(31);
+	shared_ptr<ByteArray> iv = make_shared<ByteArray>(31);
 	random->nextBytes(*iv);
 	shared_ptr<ByteArray> badWrapped = replace(wrapped, IV_INDEX, MslEncoderUtils::b64urlEncode(iv));
 
@@ -736,7 +755,7 @@ TEST_F(RsaOaepCompactSerialization, wrongCek)
 {
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
 
-	shared_ptr<ByteArray> cek(16);
+	shared_ptr<ByteArray> cek = make_shared<ByteArray>(16);
 	random->nextBytes(*cek);
 	shared_ptr<ByteArray> ecek = rsaCryptoContext->encrypt(cek, encoder, format);
 
@@ -753,7 +772,7 @@ TEST_F(RsaOaepCompactSerialization, wrongCek)
 TEST_F(RsaOaepCompactSerialization, wrongIv)
 {
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
-	shared_ptr<ByteArray> iv(16);
+	shared_ptr<ByteArray> iv = make_shared<ByteArray>(16);
 	random->nextBytes(*iv);
 	shared_ptr<ByteArray> wrongWrapped = replace(wrapped, IV_INDEX, MslEncoderUtils::b64urlEncode(iv));
 
@@ -790,7 +809,7 @@ TEST_F(RsaOaepJsonSerialization, wrapUnwrap)
 
 TEST_F(RsaOaepJsonSerialization, wrapUnwrapShort)
 {
-            shared_ptr<ByteArray> data(3);
+            shared_ptr<ByteArray> data = make_shared<ByteArray>(3);
             random->nextBytes(*data);
 
             shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
@@ -802,7 +821,8 @@ TEST_F(RsaOaepJsonSerialization, wrapUnwrapShort)
 
 TEST_F(RsaOaepJsonSerialization, invalidSerialization)
 {
-	shared_ptr<ByteArray> wrapped = make_shared<ByteArray>({'x'});
+	shared_ptr<ByteArray> wrapped = make_shared<ByteArray>();
+	wrapped->push_back('x');
 	try {
 		cryptoContext->unwrap(wrapped, encoder);
 		ADD_FAILURE() << "should have thrown";
@@ -827,7 +847,7 @@ TEST_F(RsaOaepJsonSerialization, missingRecipients)
 TEST_F(RsaOaepJsonSerialization, invalidRecipients)
 {
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
-	shared_ptr<ByteArray> missingWrapped = replace(encoder, wrapped, KEY_RECIPIENTS, "x");
+	shared_ptr<ByteArray> missingWrapped = replace(encoder, wrapped, KEY_RECIPIENTS, string("x"));
 
 	try {
 		cryptoContext->unwrap(missingWrapped, encoder);
@@ -853,7 +873,9 @@ TEST_F(RsaOaepJsonSerialization, missingRecipient)
 TEST_F(RsaOaepJsonSerialization, invalidRecipient)
 {
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
-	shared_ptr<ByteArray> missingWrapped = replace(encoder, wrapped, KEY_RECIPIENTS, encoder->createArray({VariantFactory::create("x")}));
+	vector<Variant> varvec;
+	varvec.push_back(VariantFactory::create<string>("x"));
+	shared_ptr<ByteArray> missingWrapped = replace(encoder, wrapped, KEY_RECIPIENTS, encoder->createArray(varvec));
 
 	try {
 		cryptoContext->unwrap(missingWrapped, encoder);
@@ -995,7 +1017,7 @@ TEST_F(RsaOaepJsonSerialization, invalidAuthenticationTag)
 
 TEST_F(RsaOaepJsonSerialization, wrongAuthenticationTag)
 {
-	shared_ptr<ByteArray> at(16);
+	shared_ptr<ByteArray> at = make_shared<ByteArray>(16);
 	random->nextBytes(*at);
 
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
@@ -1030,7 +1052,7 @@ TEST_F(RsaOaepJsonSerialization, invalidAlgorithm)
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
 	shared_ptr<string> headerB64 = get(encoder, wrapped, KEY_HEADER);
 	shared_ptr<MslObject> header = encoder->parseObject(MslEncoderUtils::b64urlDecode(headerB64));
-	header->put(KEY_ALGORITHM, "x");
+	header->put<string>(KEY_ALGORITHM, "x");
 	shared_ptr<ByteArray> missingWrapped = replace(encoder, wrapped, KEY_HEADER, MslEncoderUtils::b64urlEncode(encoder->encodeObject(header, MslEncoderFormat::JSON)));
 
 	try {
@@ -1062,7 +1084,7 @@ TEST_F(RsaOaepJsonSerialization, invalidEncryption)
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
 	shared_ptr<string> headerB64 = get(encoder, wrapped, KEY_HEADER);
 	shared_ptr<MslObject> header = encoder->parseObject(MslEncoderUtils::b64urlDecode(headerB64));
-	header->put(KEY_ENCRYPTION, "x");
+	header->put<string>(KEY_ENCRYPTION, "x");
 	shared_ptr<ByteArray> missingWrapped = replace(encoder, wrapped, KEY_HEADER, MslEncoderUtils::b64urlEncode(encoder->encodeObject(header, MslEncoderFormat::JSON)));
 
 	try {
@@ -1076,7 +1098,7 @@ TEST_F(RsaOaepJsonSerialization, invalidEncryption)
 TEST_F(RsaOaepJsonSerialization, badCek)
 {
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
-	shared_ptr<ByteArray> ecek(137);
+	shared_ptr<ByteArray> ecek = make_shared<ByteArray>(137);
 	random->nextBytes(*ecek);
 	shared_ptr<ByteArray> badWrapped = replace(encoder, wrapped, KEY_ENCRYPTED_KEY, MslEncoderUtils::b64urlEncode(ecek));
 
@@ -1090,7 +1112,7 @@ TEST_F(RsaOaepJsonSerialization, badCek)
 TEST_F(RsaOaepJsonSerialization, badIv)
 {
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
-	shared_ptr<ByteArray> iv(31);
+	shared_ptr<ByteArray> iv = make_shared<ByteArray>(31);
 	random->nextBytes(*iv);
 	shared_ptr<ByteArray> badWrapped = replace(encoder, wrapped, KEY_INITIALIZATION_VECTOR, MslEncoderUtils::b64urlEncode(iv));
 
@@ -1106,7 +1128,7 @@ TEST_F(RsaOaepJsonSerialization, wrongCek)
 {
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
 
-	shared_ptr<ByteArray> cek(16);
+	shared_ptr<ByteArray> cek = make_shared<ByteArray>(16);
 	random->nextBytes(*cek);
 	shared_ptr<ByteArray> ecek = rsaCryptoContext->encrypt(cek, encoder, format);
 
@@ -1123,7 +1145,7 @@ TEST_F(RsaOaepJsonSerialization, wrongCek)
 TEST_F(RsaOaepJsonSerialization, wrongIv)
 {
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
-	shared_ptr<ByteArray> iv(16);
+	shared_ptr<ByteArray> iv = make_shared<ByteArray>(16);
 	random->nextBytes(*iv);
 	shared_ptr<ByteArray> wrongWrapped = replace(encoder, wrapped, KEY_INITIALIZATION_VECTOR, MslEncoderUtils::b64urlEncode(iv));
 
@@ -1148,25 +1170,26 @@ public:
 
 protected:
 	shared_ptr<ICryptoContext> cryptoContext;
-	static shared_ptr<ByteArray> RFC_KEY;
-	static shared_ptr<ByteArray> RFC_SERIALIZATION;
-	static shared_ptr<ByteArray> RFC_PLAINTEXT;
+//	static shared_ptr<ByteArray> RFC_KEY;
+//	static shared_ptr<ByteArray> RFC_SERIALIZATION;
+//	static shared_ptr<ByteArray> RFC_PLAINTEXT;
 };
 
 namespace {
 
-const string RFC_SERIALIZATION_STR =
-	"eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4R0NNIn0."
-	"pP_7AUDIQcgixVGPK9PwJr-htXV3RCxQ."
-	"_dxQGaaYsqhhY0NZ."
-	"4wxZhLkQ-F2RVzWCX3M-aIpgbUd806VnymMVwQTiVOX-apDxJ1aUhKBoWOjkbVUH"
-	"VlCGaqYYXMfSvJm72kXj."
-	"miNQayWUUQZnBDzOq6VxQw";
-
-const string RFC_PLAINTEXT_STR = "The true sign of intelligence is not knowledge but imagination.";
+//const string RFC_SERIALIZATION_STR =   // FIXME
+//	"eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4R0NNIn0."
+//	"pP_7AUDIQcgixVGPK9PwJr-htXV3RCxQ."
+//	"_dxQGaaYsqhhY0NZ."
+//	"4wxZhLkQ-F2RVzWCX3M-aIpgbUd806VnymMVwQTiVOX-apDxJ1aUhKBoWOjkbVUH"
+//	"VlCGaqYYXMfSvJm72kXj."
+//	"miNQayWUUQZnBDzOq6VxQw";
+//
+//const string RFC_PLAINTEXT_STR = "The true sign of intelligence is not knowledge but imagination.";
 
 } // namespace anonymous
 
+#if 0 // FIXME
 /** RFC AES key wrap symmetric key. */
 shared_ptr<ByteArray> AesKwCompactSerialization::RFC_KEY = make_shared<ByteArray>({
 	25, 172, 32, 130, 225, 114, 26, 181,
@@ -1176,6 +1199,7 @@ shared_ptr<ByteArray> AesKwCompactSerialization::RFC_KEY = make_shared<ByteArray
 shared_ptr<ByteArray> AesKwCompactSerialization::RFC_SERIALIZATION = make_shared<ByteArray>(RFC_SERIALIZATION_STR.begin(), RFC_SERIALIZATION_STR.end());
 /** RFC AES key wrap plaintext. */
 shared_ptr<ByteArray> AesKwCompactSerialization::RFC_PLAINTEXT = make_shared<ByteArray>(RFC_PLAINTEXT_STR.begin(), RFC_PLAINTEXT_STR.end());
+#endif
 
 TEST_F(AesKwCompactSerialization, wrapUnwrap)
 {
@@ -1188,7 +1212,7 @@ TEST_F(AesKwCompactSerialization, wrapUnwrap)
 
 TEST_F(AesKwCompactSerialization, wrapUnwrapShort)
 {
-	shared_ptr<ByteArray> data(3);
+	shared_ptr<ByteArray> data = make_shared<ByteArray>(3);
 	random->nextBytes(*data);
 
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
@@ -1198,6 +1222,7 @@ TEST_F(AesKwCompactSerialization, wrapUnwrapShort)
 	EXPECT_EQ(*data, *unwrapped);
 }
 
+#if 0  // FIXME TODO
 TEST_F(AesKwCompactSerialization, wrapUnwrapRfc)
 {
 	const SecretKey key(RFC_KEY, JcaAlgorithm::AESKW);
@@ -1208,10 +1233,12 @@ TEST_F(AesKwCompactSerialization, wrapUnwrapRfc)
 	EXPECT_TRUE(plaintext);
 	EXPECT_EQ(*RFC_PLAINTEXT, *plaintext);
 }
+#endif
 
 TEST_F(AesKwCompactSerialization, invalidSerialization)
 {
-	shared_ptr<ByteArray> wrapped = make_shared<ByteArray>({'x'});
+	shared_ptr<ByteArray> wrapped = make_shared<ByteArray>();
+	wrapped->push_back('x');
 	try {
 		cryptoContext->unwrap(wrapped, encoder);
 		ADD_FAILURE() << "should have thrown";
@@ -1381,7 +1408,7 @@ TEST_F(AesKwCompactSerialization, invalidAuthenticationTag)
 
 TEST_F(AesKwCompactSerialization, wrongAuthenticationTag)
 {
-	shared_ptr<ByteArray> at(16);
+	shared_ptr<ByteArray> at = make_shared<ByteArray>(16);
 	random->nextBytes(*at);
 
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
@@ -1418,7 +1445,7 @@ TEST_F(AesKwCompactSerialization, invalidAlgorithm)
 	shared_ptr<string> wrappedB64 = make_shared<string>(wrapped->begin(), wrapped->end());
 	shared_ptr<string> headerB64 = make_shared<string>(wrappedB64->substr(0, wrappedB64->find('.')));
 	shared_ptr<MslObject> header = encoder->parseObject(MslEncoderUtils::b64urlDecode(headerB64));
-	header->put(KEY_ALGORITHM, "x");
+	header->put<string>(KEY_ALGORITHM, "x");
 	shared_ptr<ByteArray> missingWrapped = replace(wrapped, HEADER_INDEX, MslEncoderUtils::b64urlEncode(encoder->encodeObject(header, MslEncoderFormat::JSON)));
 
 	try {
@@ -1452,7 +1479,7 @@ TEST_F(AesKwCompactSerialization, invalidEncryption)
 	shared_ptr<string> wrappedB64 = make_shared<string>(wrapped->begin(), wrapped->end());
 	shared_ptr<string> headerB64 = make_shared<string>(wrappedB64->substr(0, wrappedB64->find('.')));
 	shared_ptr<MslObject> header = encoder->parseObject(MslEncoderUtils::b64urlDecode(headerB64));
-	header->put(KEY_ENCRYPTION, "x");
+	header->put<string>(KEY_ENCRYPTION, "x");
 	shared_ptr<ByteArray> missingWrapped = replace(wrapped, HEADER_INDEX, MslEncoderUtils::b64urlEncode(encoder->encodeObject(header, MslEncoderFormat::JSON)));
 
 	try {
@@ -1466,7 +1493,7 @@ TEST_F(AesKwCompactSerialization, invalidEncryption)
 TEST_F(AesKwCompactSerialization, badCek)
 {
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
-	shared_ptr<ByteArray> ecek(137);
+	shared_ptr<ByteArray> ecek = make_shared<ByteArray>(137);
 	random->nextBytes(*ecek);
 	shared_ptr<ByteArray> badWrapped = replace(wrapped, ECEK_INDEX, MslEncoderUtils::b64urlEncode(ecek));
 
@@ -1481,7 +1508,7 @@ TEST_F(AesKwCompactSerialization, badCek)
 TEST_F(AesKwCompactSerialization, badIv)
 {
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
-	shared_ptr<ByteArray> iv(31);
+	shared_ptr<ByteArray> iv = make_shared<ByteArray>(31);
 	random->nextBytes(*iv);
 	shared_ptr<ByteArray> badWrapped = replace(wrapped, IV_INDEX, MslEncoderUtils::b64urlEncode(iv));
 
@@ -1497,7 +1524,7 @@ TEST_F(AesKwCompactSerialization, wrongCek)
 {
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
 
-	shared_ptr<ByteArray> cek(16);
+	shared_ptr<ByteArray> cek = make_shared<ByteArray>(16);
 	random->nextBytes(*cek);
 	shared_ptr<ByteArray> ecek = aesCryptoContext->encrypt(cek, encoder, format);
 
@@ -1514,7 +1541,7 @@ TEST_F(AesKwCompactSerialization, wrongCek)
 TEST_F(AesKwCompactSerialization, wrongIv)
 {
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
-	shared_ptr<ByteArray> iv(16);
+	shared_ptr<ByteArray> iv = make_shared<ByteArray>(16);
 	random->nextBytes(*iv);
 	shared_ptr<ByteArray> wrongWrapped = replace(wrapped, IV_INDEX, MslEncoderUtils::b64urlEncode(iv));
 
@@ -1551,7 +1578,7 @@ TEST_F(AesKwJsonSerialization, wrapUnwrap)
 
 TEST_F(AesKwJsonSerialization, wrapUnwrapShort)
 {
-            shared_ptr<ByteArray> data(3);
+            shared_ptr<ByteArray> data = make_shared<ByteArray>(3);
             random->nextBytes(*data);
 
             shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
@@ -1563,7 +1590,8 @@ TEST_F(AesKwJsonSerialization, wrapUnwrapShort)
 
 TEST_F(AesKwJsonSerialization, invalidSerialization)
 {
-	shared_ptr<ByteArray> wrapped = make_shared<ByteArray>({'x'});
+	shared_ptr<ByteArray> wrapped = make_shared<ByteArray>();
+	wrapped->push_back('x');
 	try {
 		cryptoContext->unwrap(wrapped, encoder);
 		ADD_FAILURE() << "should have thrown";
@@ -1588,7 +1616,7 @@ TEST_F(AesKwJsonSerialization, missingRecipients)
 TEST_F(AesKwJsonSerialization, invalidRecipients)
 {
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
-	shared_ptr<ByteArray> missingWrapped = replace(encoder, wrapped, KEY_RECIPIENTS, "x");
+	shared_ptr<ByteArray> missingWrapped = replace(encoder, wrapped, KEY_RECIPIENTS, string("x"));
 
 	try {
 		cryptoContext->unwrap(missingWrapped, encoder);
@@ -1614,7 +1642,9 @@ TEST_F(AesKwJsonSerialization, missingRecipient)
 TEST_F(AesKwJsonSerialization, invalidRecipient)
 {
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
-	shared_ptr<ByteArray> missingWrapped = replace(encoder, wrapped, KEY_RECIPIENTS, encoder->createArray({VariantFactory::create("x")}));
+    vector<Variant> varvec;
+    varvec.push_back(VariantFactory::create<string>("x"));
+    shared_ptr<ByteArray> missingWrapped = replace(encoder, wrapped, KEY_RECIPIENTS, encoder->createArray(varvec));
 
 	try {
 		cryptoContext->unwrap(missingWrapped, encoder);
@@ -1756,7 +1786,7 @@ TEST_F(AesKwJsonSerialization, invalidAuthenticationTag)
 
 TEST_F(AesKwJsonSerialization, wrongAuthenticationTag)
 {
-	shared_ptr<ByteArray> at(16);
+	shared_ptr<ByteArray> at = make_shared<ByteArray>(16);
 	random->nextBytes(*at);
 
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
@@ -1791,7 +1821,7 @@ TEST_F(AesKwJsonSerialization, invalidAlgorithm)
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
 	shared_ptr<string> headerB64 = get(encoder, wrapped, KEY_HEADER);
 	shared_ptr<MslObject> header = encoder->parseObject(MslEncoderUtils::b64urlDecode(headerB64));
-	header->put(KEY_ALGORITHM, "x");
+	header->put<string>(KEY_ALGORITHM, "x");
 	shared_ptr<ByteArray> missingWrapped = replace(encoder, wrapped, KEY_HEADER, MslEncoderUtils::b64urlEncode(encoder->encodeObject(header, MslEncoderFormat::JSON)));
 
 	try {
@@ -1823,7 +1853,7 @@ TEST_F(AesKwJsonSerialization, invalidEncryption)
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
 	shared_ptr<string> headerB64 = get(encoder, wrapped, KEY_HEADER);
 	shared_ptr<MslObject> header = encoder->parseObject(MslEncoderUtils::b64urlDecode(headerB64));
-	header->put(KEY_ENCRYPTION, "x");
+	header->put<string>(KEY_ENCRYPTION, "x");
 	shared_ptr<ByteArray> missingWrapped = replace(encoder, wrapped, KEY_HEADER, MslEncoderUtils::b64urlEncode(encoder->encodeObject(header, MslEncoderFormat::JSON)));
 
 	try {
@@ -1837,7 +1867,7 @@ TEST_F(AesKwJsonSerialization, invalidEncryption)
 TEST_F(AesKwJsonSerialization, badCek)
 {
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
-	shared_ptr<ByteArray> ecek(137);
+	shared_ptr<ByteArray> ecek = make_shared<ByteArray>(137);
 	random->nextBytes(*ecek);
 	shared_ptr<ByteArray> badWrapped = replace(encoder, wrapped, KEY_ENCRYPTED_KEY, MslEncoderUtils::b64urlEncode(ecek));
 
@@ -1852,7 +1882,7 @@ TEST_F(AesKwJsonSerialization, badCek)
 TEST_F(AesKwJsonSerialization, badIv)
 {
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
-	shared_ptr<ByteArray> iv(31);
+	shared_ptr<ByteArray> iv = make_shared<ByteArray>(31);
 	random->nextBytes(*iv);
 	shared_ptr<ByteArray> badWrapped = replace(encoder, wrapped, KEY_INITIALIZATION_VECTOR, MslEncoderUtils::b64urlEncode(iv));
 
@@ -1868,7 +1898,7 @@ TEST_F(AesKwJsonSerialization, wrongCek)
 {
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
 
-	shared_ptr<ByteArray> cek(16);
+	shared_ptr<ByteArray> cek = make_shared<ByteArray>(16);
 	random->nextBytes(*cek);
 	shared_ptr<ByteArray> ecek = aesCryptoContext->encrypt(cek, encoder, format);
 
@@ -1885,7 +1915,7 @@ TEST_F(AesKwJsonSerialization, wrongCek)
 TEST_F(AesKwJsonSerialization, wrongIv)
 {
 	shared_ptr<ByteArray> wrapped = cryptoContext->wrap(data, encoder, format);
-	shared_ptr<ByteArray> iv(16);
+	shared_ptr<ByteArray> iv = make_shared<ByteArray>(16);
 	random->nextBytes(*iv);
 	shared_ptr<ByteArray> wrongWrapped = replace(encoder, wrapped, KEY_INITIALIZATION_VECTOR, MslEncoderUtils::b64urlEncode(iv));
 
@@ -1953,8 +1983,8 @@ TEST_F(JWE, verify)
 
 TEST_F(JWE, algorithmMismatch)
 {
-	shared_ptr<ICryptoContext> cryptoContextA = new JsonWebEncryptionCryptoContext(ctx, rsaCryptoContext, Encryption::A128GCM, Format::JWE_CS);
-	shared_ptr<ICryptoContext> cryptoContextB = new JsonWebEncryptionCryptoContext(ctx, aesCryptoContext, Encryption::A128GCM, Format::JWE_CS);
+	shared_ptr<ICryptoContext> cryptoContextA = make_shared<JsonWebEncryptionCryptoContext>(ctx, rsaCryptoContext, Encryption::A128GCM, Format::JWE_CS);
+	shared_ptr<ICryptoContext> cryptoContextB = make_shared<JsonWebEncryptionCryptoContext>(ctx, aesCryptoContext, Encryption::A128GCM, Format::JWE_CS);
 
 	shared_ptr<ByteArray> wrapped = cryptoContextA->wrap(data, encoder, format);
 	try {
@@ -1967,8 +1997,8 @@ TEST_F(JWE, algorithmMismatch)
 
 TEST_F(JWE, encryptionMismatch)
 {
-	shared_ptr<ICryptoContext> cryptoContextA = new JsonWebEncryptionCryptoContext(ctx, rsaCryptoContext, Encryption::A128GCM, Format::JWE_CS);
-	shared_ptr<ICryptoContext> cryptoContextB = new JsonWebEncryptionCryptoContext(ctx, rsaCryptoContext, Encryption::A256GCM, Format::JWE_CS);
+	shared_ptr<ICryptoContext> cryptoContextA = make_shared<JsonWebEncryptionCryptoContext>(ctx, rsaCryptoContext, Encryption::A128GCM, Format::JWE_CS);
+	shared_ptr<ICryptoContext> cryptoContextB = make_shared<JsonWebEncryptionCryptoContext>(ctx, rsaCryptoContext, Encryption::A256GCM, Format::JWE_CS);
 
 	shared_ptr<ByteArray> wrapped = cryptoContextA->wrap(data, encoder, format);
 	try {
