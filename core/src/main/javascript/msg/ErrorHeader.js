@@ -39,12 +39,21 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var ErrorHeader;
-var ErrorHeader$create;
-var ErrorHeader$parse;
-
-(function() {
-    "use strict";
+(function(require, module) {
+	"use strict";
+	
+	const Class = require('../util/Class.js');
+	const MslConstants = require('../MslConstants.js');
+	const MslInternalException = require('../MslInternalException.js');
+	const MslMessageException = require('../MslMessageException.js');
+	const MslError = require('../MslError.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const MslEntityAuthException = require('../MslEntityAuthException.js');
+	const MslCryptoException = require('../MslCryptoException.js');
+	const Header = require('../msg/Header.js');
+	const MslException = require('../MslException.js');
+	const MslEncodingException = require('../MslEncodingException.js');
     
     /** Milliseconds per second. */
     var MILLISECONDS_PER_SECOND = 1000;
@@ -105,7 +114,7 @@ var ErrorHeader$parse;
         this.timestampSeconds = timestampSeconds;
     }
 
-    ErrorHeader = util.Class.create({
+    var ErrorHeader = module.exports = Class.create({
         /**
          * <p>Construct a new error header with the provided error data.</p>
          *
@@ -132,7 +141,7 @@ var ErrorHeader$parse;
                 internalCode = -1;
 
             // Message ID must be within range.
-            if (messageId < 0 || messageId > MslConstants$MAX_LONG_VALUE)
+            if (messageId < 0 || messageId > MslConstants.MAX_LONG_VALUE)
                 throw new MslInternalException("Message ID " + messageId + " is out of range.");
 
             // Message entity must be provided.
@@ -267,9 +276,9 @@ var ErrorHeader$parse;
 		                                AsyncExecutor(callback, function() {
 		                                    // Create the encoding.
 		                                    var header = encoder.createObject();
-		                                    header.put(Header$KEY_ENTITY_AUTHENTICATION_DATA, this.entityAuthenticationData);
-		                                    header.put(Header$KEY_ERRORDATA, ciphertext);
-		                                    header.put(Header$KEY_SIGNATURE, signature);
+		                                    header.put(Header.KEY_ENTITY_AUTHENTICATION_DATA, this.entityAuthenticationData);
+		                                    header.put(Header.KEY_ERRORDATA, ciphertext);
+		                                    header.put(Header.KEY_SIGNATURE, signature);
 		                                    encoder.encodeObject(header, format, {
 		                                    	result: function(encoding) {
 		                                    		AsyncExecutor(callback, function() {
@@ -323,7 +332,7 @@ var ErrorHeader$parse;
      * @throws MslEntityAuthException if there is an error with the entity
      *         authentication data.
      */
-    ErrorHeader$create = function ErrorHeader$create(ctx, entityAuthData, recipient, messageId, errorCode, internalCode, errorMsg, userMsg, callback) {
+    var ErrorHeader$create = function ErrorHeader$create(ctx, entityAuthData, recipient, messageId, errorCode, internalCode, errorMsg, userMsg, callback) {
         AsyncExecutor(callback, function() {
             return new ErrorHeader(ctx, entityAuthData, recipient, messageId, errorCode, internalCode, errorMsg, userMsg, null);
         });
@@ -348,7 +357,7 @@ var ErrorHeader$parse;
      *         (null) or the error data is missing or the message ID is
      *         negative or the internal code is negative.
      */
-    ErrorHeader$parse = function ErrorHeader$parse(ctx, errordataBytes, entityAuthData, signature, callback) {
+    var ErrorHeader$parse = function ErrorHeader$parse(ctx, errordataBytes, entityAuthData, signature, callback) {
         AsyncExecutor(callback, function() {
             var encoder = ctx.getMslEncoderFactory();
             
@@ -383,11 +392,11 @@ var ErrorHeader$parse;
                                     try {
                                         errordata = encoder.parseObject(plaintext);
                                         messageId = errordata.getLong(KEY_MESSAGE_ID);
-                                        if (messageId < 0 || messageId > MslConstants$MAX_LONG_VALUE)
+                                        if (messageId < 0 || messageId > MslConstants.MAX_LONG_VALUE)
                                             throw new MslMessageException(MslError.MESSAGE_ID_OUT_OF_RANGE, "errordata " + errordata).setEntityAuthenticationData(entityAuthData);
                                     } catch (e) {
                                         if (e instanceof MslEncoderException)
-                                            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "errordata " + base64$encode(plaintext), e).setEntityAuthenticationData(entityAuthData);
+                                            throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "errordata " + Base64.encode(plaintext), e).setEntityAuthenticationData(entityAuthData);
                                         throw e;
                                     }
                                     
@@ -399,14 +408,14 @@ var ErrorHeader$parse;
                                         // If we do not recognize the error code then default to fail.
                                         errorCode = errordata.getInt(KEY_ERROR_CODE);
                                         var recognized = false;
-                                        for (var code in MslConstants$ResponseCode) {
-                                            if (MslConstants$ResponseCode[code] == errorCode) {
+                                        for (var code in MslConstants.ResponseCode) {
+                                            if (MslConstants.ResponseCode[code] == errorCode) {
                                                 recognized = true;
                                                 break;
                                             }
                                         }
                                         if (!recognized)
-                                            errorCode = MslConstants$ResponseCode.FAIL;
+                                            errorCode = MslConstants.ResponseCode.FAIL;
                                         
                                         if (errordata.has(KEY_INTERNAL_CODE)) {
                                             internalCode = errordata.getInt(KEY_INTERNAL_CODE);
@@ -448,4 +457,8 @@ var ErrorHeader$parse;
             });
         });
     };
-})();
+    
+    // Exports.
+    module.exports.create = ErrorHeader$create;
+    module.exports.parse = ErrorHeader$parse;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('ErrorHeader'));

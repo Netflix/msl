@@ -19,28 +19,39 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var UnauthenticatedSuffixedAuthenticationFactory = EntityAuthenticationFactory.extend({
-    /**
-     * Construct a new unauthenticated suffixed authentication factory instance.
-     */
-    init: function init() {
-        init.base.call(this, EntityAuthenticationScheme.NONE_SUFFIXED);
-    },
+(function(require, module) {
+    "use strict";
 
-    /** @inheritDoc */
-    createData: function createData(ctx, entityAuthMo, callback) {
-        AsyncExecutor(callback, function() {
-            return UnauthenticatedSuffixedAuthenticationData$parse(entityAuthMo);
-        });
-    },
-
-    /** @inheritDoc */
-    getCryptoContext: function getCryptoContext(ctx, authdata) {
-        // Make sure we have the right kind of entity authentication data.
-        if (!(authdata instanceof UnauthenticatedSuffixedAuthenticationData))
-            throw new MslInternalException("Incorrect authentication data type " + authdata + ".");
-
-        // Return the crypto context.
-        return new NullCryptoContext();
-    },
-});
+    const EntityAuthenticationFactory = require('../entityauth/EntityAuthenticationFactory.js');
+    const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+    const AsyncExecutor = require('../util/AsyncExecutor.js');
+    const UnauthenticatedSuffixedAuthenticationData = require('../entityauth/UnauthenticatedSuffixedAuthenticationData.js');
+    const MslInternalException = require('../MslInternalException.js');
+    const NullCryptoContext = require('../crypto/NullCryptoContext.js');
+	
+	var UnauthenticatedSuffixedAuthenticationFactory = EntityAuthenticationFactory.extend({
+	    /**
+	     * Construct a new unauthenticated suffixed authentication factory instance.
+	     */
+	    init: function init() {
+	        init.base.call(this, EntityAuthenticationScheme.NONE_SUFFIXED);
+	    },
+	
+	    /** @inheritDoc */
+	    createData: function createData(ctx, entityAuthMo, callback) {
+	        AsyncExecutor(callback, function() {
+	            return UnauthenticatedSuffixedAuthenticationData.parse(entityAuthMo);
+	        });
+	    },
+	
+	    /** @inheritDoc */
+	    getCryptoContext: function getCryptoContext(ctx, authdata) {
+	        // Make sure we have the right kind of entity authentication data.
+	        if (!(authdata instanceof UnauthenticatedSuffixedAuthenticationData))
+	            throw new MslInternalException("Incorrect authentication data type " + authdata + ".");
+	
+	        // Return the crypto context.
+	        return new NullCryptoContext();
+	    },
+	});
+})(require, (typeof module !== 'undefined') ? module : mkmodule('UnauthenticatedSuffixedAuthenticationFactory'));

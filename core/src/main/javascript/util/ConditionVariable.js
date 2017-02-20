@@ -17,16 +17,19 @@
 /**
  * <p>A condition variable.</p>
  */
-var ConditionVariable;
-(function() {
-    "use strict";
+(function(require, module) {
+	"use strict";
+	
+	const Class = require('../util/Class.js');
+	const MslConstants = require('../MslConstants.js');
+	const InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
 
     /**
      * @param {number} the ticket number.
      * @return the next larger ticket number, wrapped around.
      */
     function incrementTicket(number) {
-        return (number == MslConstants$MAX_LONG_VALUE) ? 1 : number + 1;
+        return (number == MslConstants.MAX_LONG_VALUE) ? 1 : number + 1;
     }
 
     /**
@@ -48,7 +51,7 @@ var ConditionVariable;
         return next;
     }
 
-    ConditionVariable = util.Class.create({
+    var ConditionVariable = module.exports = Class.create({
         /**
          * Create a new condition variable.
          */
@@ -176,4 +179,4 @@ var ConditionVariable;
                 this.signal();
         }
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('ConditionVariable'));

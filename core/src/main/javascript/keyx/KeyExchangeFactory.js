@@ -20,14 +20,21 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var KeyExchangeFactory;
-
-(function() {
+(function(require, module) {
+	"use strict";
+	
+	const Class = require('../util/Class.js');
+	const SecretKey = require('../crypto/SecretKey.js');
+	const WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');
+	const WebCryptoUsage = require('../crypto/WebCryptoUsage.js');
+	const MslCryptoException = require('../MslCryptoException.js');
+	const MslError = require('../MslError.js');
+	
     /**
      * The key exchange data struct contains key response data and a crypto
      * context for the exchanged keys.
      */
-    var KeyExchangeData = util.Class.create({
+    var KeyExchangeData = Class.create({
         /**
          * Create a new key key exhange data struct with the provided key
          * response data, master token, and crypto context.
@@ -45,7 +52,7 @@ var KeyExchangeFactory;
         },
     });
 
-    KeyExchangeFactory = util.Class.create({
+    var KeyExchangeFactory = module.exports = Class.create({
         /**
          * Create a new key exchange factory for the specified scheme.
          *
@@ -158,9 +165,9 @@ var KeyExchangeFactory;
                 var hmacBytes = new Uint8Array(32);
                 ctx.getRandom().nextBytes(encryptionBytes);
                 ctx.getRandom().nextBytes(hmacBytes);
-                SecretKey$import(encryptionBytes, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+                SecretKey.import(encryptionBytes, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
                     result: function(encryptionKey) {
-                        SecretKey$import(hmacBytes, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
+                        SecretKey.import(hmacBytes, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
                             result: function(hmacKey) {
                                 callback.result({encryptionKey: encryptionKey, hmacKey: hmacKey});
                             },
@@ -188,9 +195,9 @@ var KeyExchangeFactory;
          * @throws MslCryptoException if the key data is invalid.
          */
         importSessionKeys: function importSessionKeys(encryptionBytes, hmacBytes, callback) {
-            SecretKey$import(encryptionBytes, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+            SecretKey.import(encryptionBytes, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
                 result: function(encryptionKey) {
-                    SecretKey$import(hmacBytes, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
+                    SecretKey.import(hmacBytes, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
                         result: function(hmacKey) {
                             callback.result({ encryptionKey: encryptionKey, hmacKey: hmacKey });
                         },
@@ -203,5 +210,5 @@ var KeyExchangeFactory;
     });
 
     // Expose KeyExchangeData.
-    KeyExchangeFactory.KeyExchangeData = KeyExchangeData;
-})();
+    module.exports.KeyExchangeData = KeyExchangeData;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('KeyExchangeFactory'));

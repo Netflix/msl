@@ -15,18 +15,6 @@
  */
 
 /**
- * Re-authentication reason codes.
- * @enum
- */
-var MslContext$ReauthCode = {
-    /** The master token was rejected as bad or invalid. */
-    ENTITY_REAUTH: MslConstants$ResponseCode.ENTITY_REAUTH,
-    /** The entity authentication data failed to authenticate the entity. */
-    ENTITYDATA_REAUTH: MslConstants$ResponseCode.ENTITYDATA_REAUTH,
-};
-Object.freeze(MslContext$ReauthCode);
-
-/**
  * <p>The context provides access to all factories, builders, and containers
  * that are needed by the MSL library. There is expected to be one global
  * context per trusted services network or peer-to-peer network. By extension,
@@ -37,11 +25,25 @@ Object.freeze(MslContext$ReauthCode);
  * @author Wesley Miaw <wmiaw@netflix.com>
  * @interface
  */
-var MslContext;
+(function(require, module) {
+	"use strict";
+	
+	const Class = require('../util/Class.js');
+	const MslConstants = require('../MslConstants.js');
+	const MslInternalException = require('../MslInternalException.js');
+	
+	/**
+	 * Re-authentication reason codes.
+	 * @enum
+	 */
+	var MslContext$ReauthCode = {
+	    /** The master token was rejected as bad or invalid. */
+	    ENTITY_REAUTH: MslConstants.ResponseCode.ENTITY_REAUTH,
+	    /** The entity authentication data failed to authenticate the entity. */
+	    ENTITYDATA_REAUTH: MslConstants.ResponseCode.ENTITYDATA_REAUTH,
+	};
+	Object.freeze(MslContext$ReauthCode);
 
-(function() {
-    "use strict";
-    
     /** Milliseconds per second. */
     var MILLISECONDS_PER_SECOND = 1000;
     
@@ -55,7 +57,7 @@ var MslContext;
      */
     var uniqueId = 0;
     
-    MslContext = util.Class.create({
+    var MslContext = module.exports = Class.create({
         /**
          * Create a new MSL context without a synchronized remote clock.
          */
@@ -316,4 +318,7 @@ var MslContext;
             return this._uniqueId;
         },
     });
-})();
+    
+    // Exports.
+    module.exports.ReauthCode = MslContext$ReauthCode;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslContext'));

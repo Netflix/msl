@@ -72,13 +72,31 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MessageHeader;
-var MessageHeader$create;
-var MessageHeader$parse;
-var MessageHeader$HeaderData;
-var MessageHeader$HeaderPeerData;
-
-(function() {
+(function(require, module) {
+	"use strict";
+	
+	const Class = require('../util/Class.js');
+	const MslMasterTokenException = require('../MslMasterTokenException.js');
+	const MslError = require('../MslError.js');
+	const SessionCryptoContext = require('../crypto/SessionCryptoContext.js');
+	const MslEntityAuthException = require('../MslEntityAuthException.js');
+	const MslEncodable = require('../io/MslEncodable.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const MslConstants = require('../MslConstants.js');
+	const MslInternalException = require('../MslInternalException.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const MslEncodingException = require('../MslEncodingException.js');
+	const MslCryptoException = require('../MslCryptoException.js');
+	const UserAuthenticationData = require('../userauth/UserAuthenticationData.js');
+	const ServiceToken = require('../tokens/ServiceToken.js');
+	const MasterToken = require('../tokens/MasterToken.js');
+	const UserIdToken = require('../tokens/UserIdToken.js');
+	const KeyRequestData = require('../keyx/KeyRequestData.js');
+	const MslMessageException = require('../MslMessageException.js');
+	const MslException = require('../MslException.js');
+	const Base64 = require('../util/Base64.js');
+	const MessageCapabilities = require('../msg/MessageCapabilities.js');
+	
     /** Milliseconds per second. */
     var MILLISECONDS_PER_SECOND = 1000;
     
@@ -191,7 +209,7 @@ var MessageHeader$HeaderPeerData;
     /**
      * Container struct for message header data.
      */
-    var HeaderData = MessageHeader$HeaderData = util.Class.create({
+    var HeaderData = MessageHeader$HeaderData = Class.create({
         /**
          * @param {?string} recipient the message recipient's entity identity. May be
          *        null.
@@ -239,7 +257,7 @@ var MessageHeader$HeaderPeerData;
     /**
      * Container struct for header peer data.
      */
-    var HeaderPeerData = MessageHeader$HeaderPeerData = util.Class.create({
+    var HeaderPeerData = MessageHeader$HeaderPeerData = Class.create({
         /**
          * @param {MasterToken} peerMasterToken peer master token. May be null.
          * @param {UserIdToken} peerUserIdToken peer user ID token. May be null if there is
@@ -494,7 +512,7 @@ var MessageHeader$HeaderPeerData;
         }
     }
 
-    MessageHeader = MslEncodable.extend({
+    var MessageHeader = module.exports = MslEncodable.extend({
         /**
          * <p>Construct a new message header with the provided message data.</p>
          *
@@ -552,7 +570,7 @@ var MessageHeader$HeaderPeerData;
             function construct(sender) {
                 AsyncExecutor(callback, function() {
                     // Message ID must be within range.
-                    if (headerData.messageId < 0 || headerData.messageId > MslConstants$MAX_LONG_VALUE)
+                    if (headerData.messageId < 0 || headerData.messageId > MslConstants.MAX_LONG_VALUE)
                         throw new MslInternalException("Message ID " + headerData.messageId + " is out of range.");
 
                     // Message entity must be provided.
@@ -758,11 +776,11 @@ var MessageHeader$HeaderPeerData;
 			                                        // Create the encoding.
 			                                        var header = encoder.createObject();
 			                                        if (this.masterToken)
-			                                            header.put(Header$KEY_MASTER_TOKEN, this.masterToken);
+			                                            header.put(Header.KEY_MASTER_TOKEN, this.masterToken);
 			                                        else
-			                                            header.put(Header$KEY_ENTITY_AUTHENTICATION_DATA, this.entityAuthenticationData);
-			                                        header.put(Header$KEY_HEADERDATA, ciphertext);
-			                                        header.put(Header$KEY_SIGNATURE, signature);
+			                                            header.put(Header.KEY_ENTITY_AUTHENTICATION_DATA, this.entityAuthenticationData);
+			                                        header.put(Header.KEY_HEADERDATA, ciphertext);
+			                                        header.put(Header.KEY_SIGNATURE, signature);
 			                                        encoder.encodeObject(header, format, {
 			                                        	result: function(encoding) {
 					                                        AsyncExecutor(callback, function() {
@@ -832,7 +850,7 @@ var MessageHeader$HeaderPeerData;
      * @throws MslMessageException if no entity authentication data or master
      *         token is provided.
      */
-    MessageHeader$create = function MessageHeader$create(ctx, entityAuthData, masterToken, headerData, peerData, callback) {
+    var MessageHeader$create = function MessageHeader$create(ctx, entityAuthData, masterToken, headerData, peerData, callback) {
         new MessageHeader(ctx, entityAuthData, masterToken, headerData, peerData, null, callback);
     };
 
@@ -882,7 +900,7 @@ var MessageHeader$HeaderPeerData;
     function getUserAuthData(ctx, masterToken, userAuthDataMo, callback) {
         AsyncExecutor(callback, function() {
             if (userAuthDataMo) {
-                UserAuthenticationData$parse(ctx, masterToken, userAuthDataMo, callback);
+                UserAuthenticationData.parse(ctx, masterToken, userAuthDataMo, callback);
             } else {
                 return null;
             }
@@ -924,7 +942,7 @@ var MessageHeader$HeaderPeerData;
                         throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + headerdata, e);
                     throw e;
                 }
-                ServiceToken$parse(ctx, tokenMo, masterToken, userIdToken, cryptoContexts, {
+                ServiceToken.parse(ctx, tokenMo, masterToken, userIdToken, cryptoContexts, {
                     result: function(serviceToken) {
                         AsyncExecutor(callback, function() {
                             serviceTokensMap[serviceToken.uniqueKey()] = serviceToken;
@@ -965,7 +983,7 @@ var MessageHeader$HeaderPeerData;
                         return null;
                     var encoder = ctx.getMslEncoderFactory();
                     var peerMasterTokenMo = headerdataMo.getMslObject(KEY_PEER_MASTER_TOKEN, encoder);
-                    MasterToken$parse(ctx, peerMasterTokenMo, callback);
+                    MasterToken.parse(ctx, peerMasterTokenMo, callback);
                 } catch (e) {
                     if (e instanceof MslEncoderException)
                         throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + headerdataMo, e);
@@ -981,7 +999,7 @@ var MessageHeader$HeaderPeerData;
                         return null;
                     var encoder = ctx.getMslEncoderFactory();
                     var peerUserIdTokenMo = headerdataMo.getMslObject(KEY_PEER_USER_ID_TOKEN, encoder)
-                    UserIdToken$parse(ctx, peerUserIdTokenMo, masterToken, callback);
+                    UserIdToken.parse(ctx, peerUserIdTokenMo, masterToken, callback);
                 } catch (e) {
                     if (e instanceof MslEncoderException)
                         throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + headerdataMo, e);
@@ -1084,7 +1102,7 @@ var MessageHeader$HeaderPeerData;
                 
                 var encoder = ctx.getMslEncoderFactory();
                 var keyRequestDataMo = keyRequestDataMa.getMslObject(index, encoder);
-                KeyRequestData$parse(ctx, keyRequestDataMo, {
+                KeyRequestData.parse(ctx, keyRequestDataMo, {
                     result: function(data) {
                         AsyncExecutor(callback, function() {
                             keyRequestData.push(data);
@@ -1157,7 +1175,7 @@ var MessageHeader$HeaderPeerData;
      *         missing or the message ID is negative.
      * @throws MslException if a token is improperly bound to another token.
      */
-    MessageHeader$parse = function MessageHeader$parse(ctx, headerdataBytes, entityAuthData, masterToken, signature, cryptoContexts, callback) {
+    var MessageHeader$parse = function MessageHeader$parse(ctx, headerdataBytes, entityAuthData, masterToken, signature, cryptoContexts, callback) {
         AsyncExecutor(callback, function() {
             var encoder = ctx.getMslEncoderFactory();
             
@@ -1226,11 +1244,11 @@ var MessageHeader$HeaderPeerData;
                     // Pull the message ID first because any error responses need to
                     // use it.
                     messageId = headerdata.getLong(KEY_MESSAGE_ID);
-                    if (messageId < 0 || messageId > MslConstants$MAX_LONG_VALUE)
+                    if (messageId < 0 || messageId > MslConstants.MAX_LONG_VALUE)
                         throw new MslMessageException(MslError.MESSAGE_ID_OUT_OF_RANGE, "headerdata " + headerdata).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData);
                 } catch (e) {
                     if (e instanceof MslEncoderException)
-                        throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + base64$encode(plaintext), e).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData);
+                        throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + Base64.encode(plaintext), e).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData);
                     throw e;
                 }
 
@@ -1354,14 +1372,14 @@ var MessageHeader$HeaderPeerData;
                     handshake = (headerdata.has(KEY_HANDSHAKE)) ? headerdata.getBoolean(KEY_HANDSHAKE) : false;
 
                     // Verify values.
-                    if (nonReplayableId < 0 || nonReplayableId > MslConstants$MAX_LONG_VALUE)
+                    if (nonReplayableId < 0 || nonReplayableId > MslConstants.MAX_LONG_VALUE)
                         throw new MslMessageException(MslError.NONREPLAYABLE_ID_OUT_OF_RANGE, "headerdata " + headerdataJson);
 
                     // Pull message capabilities.
                     capabilities = null;
                     if (headerdata.has(KEY_CAPABILITIES)) {
                         var capabilitiesMo = headerdata.getMslObject(KEY_CAPABILITIES, encoder);
-                        capabilities = MessageCapabilities$parse(capabilitiesMo);
+                        capabilities = MessageCapabilities.parse(capabilitiesMo);
                     }
                 } catch (e) {
                     if (e instanceof MslEncoderException) {
@@ -1410,5 +1428,11 @@ var MessageHeader$HeaderPeerData;
                 });
             });
         }
-    };          
-})();
+    };
+    
+    // Exports.
+    module.exports.create = MessageHeader$create;
+    module.exports.parse = MessageHeader$parse;
+    module.exports.HeaderData = MessageHeader$HeaderData;
+    module.exports.HeaderPeerData = MessageHeader$HeaderPeerData;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MessageHeader'));

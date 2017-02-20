@@ -19,29 +19,16 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MslConstants$DEFAULT_CHARSET;
-var MslConstants$MAX_LONG_VALUE;
-var MslConstants$MAX_MESSAGES;
-var MslConstants$CompressionAlgorithm;
-var MslConstants$CompressionAlgorithm$getPreferredAlgorithm;
-var MslConstants$EncryptionAlgo;
-var MslConstants$EncryptionAlgo$fromString;
-var MslConstants$EncryptionAlgo$toWebCryptoAlgorithm
-var MslConstants$CipherSpec;
-var MslConstants$CipherSpec$fromString;
-var MslConstants$SignatureAlgo;
-var MslConstants$SignatureAlgo$fromString;
-var MslConstants$SignatureAlgo$toWebCryptoAlgorithm
-var MslConstants$ResponseCode;
-
-(function() {
-    "use strict";
+(function(require, module) {
+	"use strict";
+	
+	const WebCryptoAlgorithm = require('./crypto/WebCryptoAlgorithm.js');
 
     /** RFC-4327 defines UTF-8 as the default encoding. */
-    MslConstants$DEFAULT_CHARSET = "utf-8";
+    var MslConstants$DEFAULT_CHARSET = "utf-8";
 
     /** Maximum long integer value (2^53 limited by JavaScript). */
-    MslConstants$MAX_LONG_VALUE = 9007199254740992;
+    var MslConstants$MAX_LONG_VALUE = 9007199254740992;
 
     /**
      * The maximum number of MSL messages (requests sent or responses received)
@@ -52,7 +39,7 @@ var MslConstants$ResponseCode;
      * @type {number}
      * @const
      */
-    MslConstants$MAX_MESSAGES = 12;
+    var MslConstants$MAX_MESSAGES = 12;
 
     /**
      * Compression algorithm.
@@ -76,7 +63,7 @@ var MslConstants$ResponseCode;
      * @return {?MslConstants$CompressionAlgorithm>} the most preferred compression algorithm or {@code null} if
      *         the algorithm set is empty.
      */
-    MslConstants$CompressionAlgorithm$getPreferredAlgorithm = function MslConstants$CompressionAlgorithm$getPreferredAlgorithm(algos) {
+    var MslConstants$CompressionAlgorithm$getPreferredAlgorithm = function MslConstants$CompressionAlgorithm$getPreferredAlgorithm(algos) {
         var preferredAlgos = [ CompressionAlgorithm.GZIP, CompressionAlgorithm.LZW ];
         for (var i = 0; i < preferredAlgos.length && algos.length > 0; ++i) {
             var preferredAlgo = preferredAlgos[i];
@@ -101,7 +88,7 @@ var MslConstants$ResponseCode;
      * @return {?MslConstants$EncryptionAlgo} the associated encryption
      *         algorithm or undefined if there is none.
      */
-    MslConstants$EncryptionAlgo$fromString = function MslConstants$EncryptionAlgo$fromString(value) {
+    var MslConstants$EncryptionAlgo$fromString = function MslConstants$EncryptionAlgo$fromString(value) {
         // IE 11 uses lowercase algorithm names, contrary to spec.
         var algoName = value;
         if (typeof value === 'string')
@@ -122,7 +109,7 @@ var MslConstants$ResponseCode;
      * @return {?WebCryptoAlgorithm} the Web Crypto algorithm associated with
      *         the encryption algorithm or undefined if there is none.
      */
-    MslConstants$EncryptionAlgo$toWebCryptoAlgorithm = function MslConstants$EncryptionAlgo$toWebCryptoAlgorithm(value) {
+    var MslConstants$EncryptionAlgo$toWebCryptoAlgorithm = function MslConstants$EncryptionAlgo$toWebCryptoAlgorithm(value) {
         // Web Crypto does not define key types independent of cipher
         // specifications, so unfortunately the AES key type maps onto the
         // AES-CBC cipher specification.
@@ -147,7 +134,7 @@ var MslConstants$ResponseCode;
      * @return {?MslConstants$CipherSpec} the cipher specification associated
      *         with the string value or undefined if there is none.
      */
-    MslConstants$CipherSpec$fromString = function MslConstants$CipherSpec$fromString(value) {
+    var MslConstants$CipherSpec$fromString = function MslConstants$CipherSpec$fromString(value) {
         if (CipherSpec.AES_CBC_PKCS5Padding == value)
             return CipherSpec.AES_CBC_PKCS5Padding;
         if (CipherSpec.RSA_ECB_PKCS1Padding == value)
@@ -172,7 +159,7 @@ var MslConstants$ResponseCode;
      * @return {?MslConstants$SignatureAlgo} the associated signature algorithm
      *         or undefined if there is none.
      */
-    MslConstants$SignatureAlgo$fromString = function MslConstants$SignatureAlgo$fromString(value) {
+    var MslConstants$SignatureAlgo$fromString = function MslConstants$SignatureAlgo$fromString(value) {
         // IE 11 uses lowercase algorithm names, contrary to spec.
         var algoName = value;
         if (typeof value === 'string')
@@ -208,7 +195,7 @@ var MslConstants$ResponseCode;
      * @return {?WebCryptoAlgorithm} the Web Crypto algorithm associated with
      *         the signature algorithm or undefined if there is none.
      */
-    MslConstants$SignatureAlgo$toWebCryptoAlgorithm = function MslConstants$SignatureAlgo$toWebCryptoAlgorithm(value) {
+    var MslConstants$SignatureAlgo$toWebCryptoAlgorithm = function MslConstants$SignatureAlgo$toWebCryptoAlgorithm(value) {
         if (SignatureAlgo.HmacSHA256 == value)
             return WebCryptoAlgorithm.HMAC_SHA256;
         if (SignatureAlgo.SHA256withRSA == value)
@@ -222,7 +209,7 @@ var MslConstants$ResponseCode;
      * Error response codes.
      * @enum {number}
      */
-    MslConstants$ResponseCode = {
+    var MslConstants$ResponseCode = {
         /** The message is erroneous and will continue to fail if retried. */
         FAIL: 1,
         /** The message is expected to succeed if retried after a delay. */
@@ -245,4 +232,21 @@ var MslConstants$ResponseCode;
         SSOTOKEN_REJECTED: 10
     };
     Object.freeze(MslConstants$ResponseCode);
-})();
+    
+    // Exports.
+    module.exports = {};
+    module.exports.DEFAULT_CHARSET = MslConstants$DEFAULT_CHARSET;
+    module.exports.MAX_LONG_VALUE =  MslConstants$MAX_LONG_VALUE;
+    module.exports.MAX_MESSAGES = MslConstants$MAX_MESSAGES;
+    module.exports.CompressionAlgorithm = MslConstants$CompressionAlgorithm;
+    module.exports.CompressionAlgorithm.getPreferredAlgorithm = MslConstants$CompressionAlgorithm$getPreferredAlgorithm;
+    module.exports.EncryptionAlgo = MslConstants$EncryptionAlgo;
+    module.exports.EncryptionAlgo.fromString = MslConstants$EncryptionAlgo$fromString;
+    module.exports.EncryptionAlgo.toWebCryptoAlgorithm = MslConstants$EncryptionAlgo$toWebCryptoAlgorithm
+    module.exports.CipherSpec = MslConstants$CipherSpec;
+    module.exports.CipherSpec.fromString = MslConstants$CipherSpec$fromString;
+    module.exports.SignatureAlgo = MslConstants$SignatureAlgo;
+    module.exports.SignatureAlgo.fromString = MslConstants$SignatureAlgo$fromString;
+    module.exports.SignatureAlgo.toWebCryptoAlgorithm = MslConstants$SignatureAlgo$toWebCryptoAlgorithm
+    module.exports.ResponseCode = MslConstants$ResponseCode;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslConstants'));

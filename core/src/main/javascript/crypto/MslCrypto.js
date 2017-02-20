@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,11 @@
  * @author Kevin Gallagher <keving@netflix.com>
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var mslCrypto;
-var MslCrypto$WebCryptoVersion;
-var MslCrypto$setWebCryptoVersion;
-var MslCrypto$getWebCryptoVersion;
-var MslCrypto$setCryptoSubtle;
-
-(function(){
+(function(require, module) {
     "use strict";
+    
+    const KeyFormat = require('../crypto/KeyFormat.js');
+    const ASN1 = require('../lib/asnjwk.concat.js');
 
     /**
      * Web Crypto API version.
@@ -64,7 +61,7 @@ var MslCrypto$setCryptoSubtle;
      *
      * @param {MslCrypto$WebCryptoVersion} version Web Crypto version to use.
      */
-    MslCrypto$setWebCryptoVersion = function MslCrypto$setWebCryptoVersion(version) {
+    var MslCrypto$setWebCryptoVersion = function MslCrypto$setWebCryptoVersion(version) {
         mslCrypto$version = version;
     };
 
@@ -73,7 +70,7 @@ var MslCrypto$setCryptoSubtle;
      *
      * @return {MslCrypto$WebCryptoVersion} the Web Crypto version in use.
      */
-    MslCrypto$getWebCryptoVersion = function MslCrypto$getWebCryptoVersion() {
+    var MslCrypto$getWebCryptoVersion = function MslCrypto$getWebCryptoVersion() {
     	return mslCrypto$version;
     };
 
@@ -98,7 +95,7 @@ var MslCrypto$setCryptoSubtle;
      *
      * @param {object} the new crypto subtle interface.
      */
-    MslCrypto$setCryptoSubtle = function MslCrypto$setCryptoSubtle(cryptoSubtle) {
+    var MslCrypto$setCryptoSubtle = function MslCrypto$setCryptoSubtle(cryptoSubtle) {
     	nfCryptoSubtle = cryptoSubtle;
     };
 
@@ -153,7 +150,7 @@ var MslCrypto$setCryptoSubtle;
     	return op;
     }
 
-    mslCrypto = {
+    var MslCrypto = module.exports = {
         'encrypt': function(algorithm, key, buffer) {
             switch (mslCrypto$version) {
                 case WebCryptoVersion.LEGACY:
@@ -344,4 +341,10 @@ var MslCrypto$setCryptoSubtle;
             return promisedOperation(op);
         },
     };
-})();
+
+    // Exports.
+    module.exports.WebCryptoVersion = MslCrypto$WebCryptoVersion;
+    module.exports.setWebCryptoVersion = MslCrypto$setWebCryptoVersion;
+    module.exports.getWebCryptoVerison = MslCrypto$getWebCryptoVersion;
+    module.exports.setCryptoSubtle = MslCrypto$setCryptoSubtle;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslCrypto'));

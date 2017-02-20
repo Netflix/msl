@@ -22,11 +22,10 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var EntityAuthenticationScheme;
-var EntityAuthenticationScheme$getScheme;
-
-(function() {
+(function(require, module) {
     "use strict";
+    
+    const Class = require('../util/Class.js');
     
     /** Map of names onto schemes. */
     var schemes = {};
@@ -39,7 +38,7 @@ var EntityAuthenticationScheme$getScheme;
      * @param {boolean} encrypts true if the scheme encrypts message data.
      * @param {boolean} protects true if the scheme protects message integrity.
      */
-    EntityAuthenticationScheme = function EntityAuthenticationScheme(name, encrypts, protects) {
+    var EntityAuthenticationScheme = function EntityAuthenticationScheme(name, encrypts, protects) {
         // The properties.
         var props = {
             name: { value: name, writable: false, configurable: false },
@@ -52,7 +51,7 @@ var EntityAuthenticationScheme$getScheme;
         schemes[name] = this;
     };
 
-    util.Class.mixin(EntityAuthenticationScheme,
+    Class.mixin(EntityAuthenticationScheme,
     /** @lends {EntityAuthenticationScheme} */
     ({
         /** Pre-shared keys. */
@@ -81,7 +80,10 @@ var EntityAuthenticationScheme$getScheme;
      * @return {?EntityAuthenticationScheme} the scheme identified by the specified name or {@code null} if
      *         there is none.
      */
-    EntityAuthenticationScheme$getScheme = function EntityAuthenticationScheme$getScheme(name) {
+    var EntityAuthenticationScheme$getScheme = function EntityAuthenticationScheme$getScheme(name) {
         return (schemes[name]) ? schemes[name] : null;
     };
-})();
+    
+    // Exports.
+    module.exports.getScheme = EntityAuthenticationScheme$getScheme;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('EntityAuthenticationScheme'));

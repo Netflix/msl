@@ -19,14 +19,17 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MslUtils$compress;
-var MslUtils$uncompress;
-
-(function() {
-    "use strict";
+(function(require, module) {
+	"use strict";
+    
+    const MslConstants = require('../MslConstants.js');
+    const MslException = require('../MslException.js');
+    const MslError = require('../MslError.js');
+    const lzw = require('lzw');
+    const gzip = require('gzip');
 
     // Shortcuts
-    var CompressionAlgorithm = MslConstants$CompressionAlgorithm;
+    var CompressionAlgorithm = MslConstants.CompressionAlgorithm;
 
     /**
      * Compress the provided data using the specified compression algorithm.
@@ -37,13 +40,13 @@ var MslUtils$uncompress;
      *         would be larger than the uncompressed data.
      * @throws MslException if there is an error compressing the data.
      */
-    MslUtils$compress = function MslUtils$compress(compressionAlgo, data) {
+    var MslUtils$compress = function MslUtils$compress(compressionAlgo, data) {
         switch (compressionAlgo) {
         case CompressionAlgorithm.LZW:
-            return lzw$compress(data);
+            return lzw.compress(data);
         case CompressionAlgorithm.GZIP:
-            if (typeof gzip$compress === "function")
-                return gzip$compress(data);
+            if (typeof gzip.compress === "function")
+                return gzip.compress(data);
         default:
             throw new MslException(MslError.UNSUPPORTED_COMPRESSION, compressionAlgo);
         }
@@ -57,15 +60,20 @@ var MslUtils$uncompress;
      * @return {Uint8Array} the uncompressed data.
      * @throws MslException if there is an error uncompressing the data.
      */
-    MslUtils$uncompress = function MslUtils$uncompress(compressionAlgo, data, callback) {
+    var MslUtils$uncompress = function MslUtils$uncompress(compressionAlgo, data, callback) {
         switch (compressionAlgo) {
         case CompressionAlgorithm.LZW:
-            return lzw$uncompress(data);
+            return lzw.uncompress(data);
         case CompressionAlgorithm.GZIP:
-            if (typeof gzip$uncompress === "function")
-                return gzip$uncompress(data);
+            if (typeof gzip.uncompress === "function")
+                return gzip.uncompress(data);
         default:
             throw new MslException(MslError.UNSUPPORTED_COMPRESSION, compressionAlgo.name());
         }
     };
-})();
+    
+    // Exports.
+    module.exports = {};
+    module.exports.compress = MslUtils$compress;
+    module.exports.uncompress = MslUtils$uncompress;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslUtils'));

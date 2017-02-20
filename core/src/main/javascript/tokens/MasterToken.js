@@ -104,11 +104,18 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MasterToken;
-var MasterToken$create;
-var MasterToken$parse;
-
-(function() {
+(function(require, module) {
+	"use strict";
+	
+	const MslEncodable = require('../io/MslEncodable.js');
+	const MslInternalException = require('../MslInternalException.js');
+	const MslConstants = require('../MslConstants.js');
+	const MslCryptoException = require('../MslCryptoException.js');
+	const MslError = require('../MslError.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const MslEncoderException = require('../MslEncoderException.js');
+	const MslEncodingException = require('../MslEncodingException.js');
+	
     /**
      * Milliseconds per second.
      * @const
@@ -221,7 +228,7 @@ var MasterToken$parse;
         this.verified = verified;
     };
 
-    MasterToken = MslEncodable.extend({
+    var MasterToken = module.exports = MslEncodable.extend({
         /**
          * Create a new master token with the specified expiration, identity,
          * serial number, and encryption and signature keys.
@@ -247,9 +254,9 @@ var MasterToken$parse;
             if (expiration.getTime() < renewalWindow.getTime())
                 throw new MslInternalException("Cannot construct a master token that expires before its renewal window opens.");
             // The sequence number and serial number must be within range.
-            if (sequenceNumber < 0 || sequenceNumber > MslConstants$MAX_LONG_VALUE)
+            if (sequenceNumber < 0 || sequenceNumber > MslConstants.MAX_LONG_VALUE)
                 throw new MslInternalException("Sequence number " + sequenceNumber + " is outside the valid range.");
-            if (serialNumber < 0 || serialNumber > MslConstants$MAX_LONG_VALUE)
+            if (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE)
                 throw new MslInternalException("Serial number " + serialNumber + " is outside the valid range.");
 
             // Renewal window and expiration are in seconds, not milliseconds.
@@ -261,9 +268,9 @@ var MasterToken$parse;
             if (!creationData) {
                 // Encode session keys and algorithm names.
                 var encryptionKeyBytes = encryptionKey.toByteArray();
-                var encryptionAlgo = MslConstants$EncryptionAlgo$fromString(encryptionKey.algorithm);
+                var encryptionAlgo = MslConstants.EncryptionAlgo.fromString(encryptionKey.algorithm);
                 var signatureKeyBytes = signatureKey.toByteArray();
-                var signatureAlgo = MslConstants$SignatureAlgo$fromString(signatureKey.algorithm);
+                var signatureAlgo = MslConstants.SignatureAlgo.fromString(signatureKey.algorithm);
                 if (!encryptionAlgo || !signatureAlgo)
                     throw new MslCryptoException(MslError.UNIDENTIFIED_ALGORITHM, "encryption algorithm: " + encryptionKey.algorithm + "; signature algorithm: " + signatureKey.algorithm);
 
@@ -465,13 +472,13 @@ var MasterToken$parse;
             // If this sequence number is bigger than that sequence number, make
             // sure that sequence number is not less than the cutoff.
             if (this.sequenceNumber > that.sequenceNumber) {
-                var cutoff = this.sequenceNumber - MslConstants$MAX_LONG_VALUE + 127;
+                var cutoff = this.sequenceNumber - MslConstants.MAX_LONG_VALUE + 127;
                 return that.sequenceNumber >= cutoff;
             }
 
             // If this sequence number is smaller than that sequence number, make
             // sure this sequence number is less than the cutoff.
-            var cutoff = that.sequenceNumber - MslConstants$MAX_LONG_VALUE + 127;
+            var cutoff = that.sequenceNumber - MslConstants.MAX_LONG_VALUE + 127;
             return this.sequenceNumber < cutoff;
         },
         
@@ -633,7 +640,7 @@ var MasterToken$parse;
      * @throws MslCryptoException if there is an error encrypting or signing
      *         the token data.
      */
-    MasterToken$create = function MasterToken$create(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, signatureKey, callback) {
+    var MasterToken$create = function MasterToken$create(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, signatureKey, callback) {
         AsyncExecutor(callback, function() {
             return new MasterToken(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, signatureKey, null);
         });
@@ -655,7 +662,7 @@ var MasterToken$parse;
      *         serial number is out of range, or the token data or signature is
      *         invalid.
      */
-    MasterToken$parse = function MasterToken$parse(ctx, masterTokenMo, callback) {
+    var MasterToken$parse = function MasterToken$parse(ctx, masterTokenMo, callback) {
         AsyncExecutor(callback, function() {
             // Grab the crypto context.
             var cryptoContext = ctx.getMslCryptoContext();
@@ -691,10 +698,10 @@ var MasterToken$parse;
                     if (expirationSeconds < renewalWindowSeconds)
                         throw new MslException(MslError.MASTERTOKEN_EXPIRES_BEFORE_RENEWAL, "mastertokendata " + tokendata);
                     var sequenceNumber = tokendata.getLong(KEY_SEQUENCE_NUMBER);
-                    if (sequenceNumber < 0 || sequenceNumber > MslConstants$MAX_LONG_VALUE)
+                    if (sequenceNumber < 0 || sequenceNumber > MslConstants.MAX_LONG_VALUE)
                         throw new MslException(MslError.MASTERTOKEN_SEQUENCE_NUMBER_OUT_OF_RANGE, "mastertokendata " + tokendata);
                     var serialNumber = tokendata.getLong(KEY_SERIAL_NUMBER);
-                    if (serialNumber < 0 || serialNumber > MslConstants$MAX_LONG_VALUE)
+                    if (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE)
                         throw new MslException(MslError.MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "mastertokendata " + tokendata);
                     var ciphertext = tokendata.getBytes(KEY_SESSIONDATA);
                     if (ciphertext.length == 0)
@@ -740,11 +747,11 @@ var MasterToken$parse;
                     issuerdata = (sessiondata.has(KEY_ISSUER_DATA)) ? sessiondata.getMslObject(KEY_ISSUER_DATA, encoder) : null;
                     identity = sessiondata.getString(KEY_IDENTITY);
                     rawEncryptionKey = sessiondata.getBytes(KEY_ENCRYPTION_KEY);
-                    encryptionAlgo = sessiondata.optString(KEY_ENCRYPTION_ALGORITHM, MslConstants$EncryptionAlgo.AES);
+                    encryptionAlgo = sessiondata.optString(KEY_ENCRYPTION_ALGORITHM, MslConstants.EncryptionAlgo.AES);
                     rawSignatureKey = (sessiondata.has(KEY_SIGNATURE_KEY))
                         ? sessiondata.getBytes(KEY_SIGNATURE_KEY)
                         : sessiondata.getBytes(KEY_HMAC_KEY);
-                    signatureAlgo = sessiondata.optString(KEY_SIGNATURE_ALGORITHM, MslConstants$SignatureAlgo.HmacSHA256);
+                    signatureAlgo = sessiondata.optString(KEY_SIGNATURE_ALGORITHM, MslConstants.SignatureAlgo.HmacSHA256);
                 } catch (e) {
                     if (e instanceof MslEncoderException)
                         throw new MslEncodingException(MslError.MASTERTOKEN_SESSIONDATA_PARSE_ERROR, "sessiondata " + base64$encode(plaintext), e);
@@ -752,8 +759,8 @@ var MasterToken$parse;
                 }
                 
                 // Decode algorithm names.
-                var wcEncryptionAlgo = MslConstants$EncryptionAlgo$toWebCryptoAlgorithm(encryptionAlgo);
-                var wcSignatureAlgo = MslConstants$SignatureAlgo$toWebCryptoAlgorithm(signatureAlgo);
+                var wcEncryptionAlgo = MslConstants.EncryptionAlgo.toWebCryptoAlgorithm(encryptionAlgo);
+                var wcSignatureAlgo = MslConstants.SignatureAlgo.toWebCryptoAlgorithm(signatureAlgo);
                 if (!wcEncryptionAlgo || !wcSignatureAlgo)
                     throw new MslCryptoException(MslError.UNIDENTIFIED_ALGORITHM, "encryption algorithm: " + encryptionAlgo + "; signature algorithm: " + signatureAlgo);
                 
@@ -789,4 +796,8 @@ var MasterToken$parse;
             });
         }
     };
-})();
+    
+    // Exports.
+    module.exports.create = MasterToken$create;
+    module.exports.parse = MasterToken$parse;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('SecretMessageContext'));

@@ -20,10 +20,12 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MslErrorResponseException;
-
-(function() {
-    MslErrorResponseException = util.Class.create(new Error());
+(function(require, module) {
+	"use strict";
+	
+	const Class = require('./util/Class.js');
+	
+    var MslErrorResponseException = module.exports = Class.create(new Error());
 
     var proto = {
         /**
@@ -75,4 +77,4 @@ var MslErrorResponseException;
 
     // Attach methods.
     MslErrorResponseException.mixin(proto);
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslErrorResponseException'));

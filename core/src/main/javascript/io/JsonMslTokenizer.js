@@ -20,10 +20,15 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var JsonMslTokenizer;
-
-(function() {
-    "use strict";
+(function(require, module) {
+	"use strict";
+	
+	const MslTokenizer = require('../io/MslTokenizer.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const ClarinetParser = require('../msg/ClarinetParser.js');
+	const JsonMslObject = require('../io/JsonMslObject.js');
 
     /**
      * Delay time between read attempts in milliseconds.
@@ -41,7 +46,7 @@ var JsonMslTokenizer;
      */
     var MAX_CHARACTERS = 10 * 1024 * 1024;
     
-    JsonMslTokenizer = MslTokenizer.extend({
+    var JsonMslTokenizer = module.exports = MslTokenizer.extend({
         /**
          * <p>Create a new JSON MSL tokenizer that will read tokens off the
          * provided input stream.</p>
@@ -202,4 +207,4 @@ var JsonMslTokenizer;
             }, self);
         },
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('JsonMslTokenizer'));

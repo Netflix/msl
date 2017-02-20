@@ -20,22 +20,28 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MslMasterTokenException = MslException.extend({
-    /**
-     * Construct a new MSL master token exception with the specified error and
-     * master token.
-     *
-     * @param {MslError} error the error.
-     * @param {MasterToken} masterToken the master token. May be null or undefined.
-     */
-    init: function init(error, masterToken) {
-        init.base.call(this, error);
-
-        // The properties.
-        var props = {
-            masterToken: { value: masterToken, writable: false, configurable: false},
-            name: { value: "MslMasterTokenException", writable: false, configurable: true }
-        };
-        Object.defineProperties(this, props);
-    },
-});
+(function(require, module) {
+	"use strict";
+	
+	const MslException = require('./MslException.js');
+		
+	var MslMasterTokenException = module.exports = MslException.extend({
+	    /**
+	     * Construct a new MSL master token exception with the specified error and
+	     * master token.
+	     *
+	     * @param {MslError} error the error.
+	     * @param {MasterToken} masterToken the master token. May be null or undefined.
+	     */
+	    init: function init(error, masterToken) {
+	        init.base.call(this, error);
+	
+	        // The properties.
+	        var props = {
+	            masterToken: { value: masterToken, writable: false, configurable: false},
+	            name: { value: "MslMasterTokenException", writable: false, configurable: true }
+	        };
+	        Object.defineProperties(this, props);
+	    },
+	});
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslMasterTokenException'));

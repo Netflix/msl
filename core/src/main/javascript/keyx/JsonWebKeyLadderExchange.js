@@ -34,16 +34,33 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var JsonWebKeyLadderExchange;
-var JsonWebKeyLadderExchange$Mechanism;
-var JsonWebKeyLadderExchange$RequestData;
-var JsonWebKeyLadderExchange$RequestData$parse;
-var JsonWebKeyLadderExchange$ResponseData;
-var JsonWebKeyLadderExchange$ResponseData$parse;
-var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
+(function(require, module) {
+	"use strict";
 
-(function() {
-    "use strict";
+	const KeyRequestData = require('../keyx/KeyRequestData.js');
+	const KeyExchangeScheme = require('../keyx/KeyExchangeScheme.js');
+	const MslInternalException = require('../MslInternalException.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const Arrays = require('../util/Arrays.js');
+	const MslKeyExchangeException = require('../MslKeyExchangeException.js');
+	const MslError = require('../MslError.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const MslEncodingException = require('../MslEncodingException.js');
+	const PresharedAuthenticationData = require('../entityauth/PresharedAuthenticationData.js');
+	const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+	const JsonWebEncryptionCryptoContext = require('../crypto/JsonWebEncryptionCryptoContext.js');
+	const WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');
+	const KeyExchangeFactory = require('../keyx/KeyExchangeFactory.js');
+	const MasterToken = require('../tokens/MasterToken.js');
+	const WebCryptoUsage = require('../crypto/WebCryptoUsage.js');
+	const MslException = require('../MslException.js');
+	const MslCryptoException = require('../MslCryptoException.js');
+	const MslCrypto = require('../crypto/MslCrypto.js');
+	const SecretKey = require('../crypto/SecretKey.js');
+	const PublicKey = require('../crypto/PublicKey.js');
+	const PrivateKey = require('../crypto/PrivateKey.js');
+	const MslMasterTokenException = require('../tokens/MasterToken.js');
+	const SessionCryptoContext = require('../crypto/SessionCryptoContext.js');
 
     /**
      * Wrapping key wrap mechanism.
@@ -153,14 +170,14 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
             if (!(that instanceof JsonWebKeyLadderExchange$RequestData)) return false;
             return equals.base.call(this, that) &&
                 this.mechanism == that.mechanism &&
-                Arrays$equal(this.wrapdata, that.wrapdata);
+                Arrays.equal(this.wrapdata, that.wrapdata);
         },
 
         /** @inheritDoc */
         uniqueKey: function uniqueKey() {
             var key = uniqueKey.base.call(this) + ':' + this.mechanism;
             if (this.wrapdata)
-                key += ':' + Arrays$hashCode(this.wrapdata);
+                key += ':' + Arrays$.ashCode(this.wrapdata);
             return key;
         },
     });
@@ -275,19 +292,19 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
             if (this === that) return true;
             if (!(that instanceof JsonWebKeyLadderExchange$ResponseData)) return false;
             return equals.base.call(this, that) &&
-                Arrays$equal(this.wrapKey, that.wrapKey) &&
-                Arrays$equal(this.wrapdata, that.wrapdata) &&
-                Arrays$equal(this.encryptionKey, that.encryptionKey) &&
-                Arrays$equal(this.hmacKey, that.hmacKey);
+                Arrays.equal(this.wrapKey, that.wrapKey) &&
+                Arrays.equal(this.wrapdata, that.wrapdata) &&
+                Arrays.equal(this.encryptionKey, that.encryptionKey) &&
+                Arrays.equal(this.hmacKey, that.hmacKey);
         },
 
         /** @inheritDoc */
         uniqueKey: function uniqueKey() {
             var key = uniqueKey.base.call(this) +
-                ':' + Arrays$hashCode(this.wrapKey) +
-                ':' + Arrays$hashCode(this.wrapdata) +
-                ':' + Arrays$hashCode(this.encryptionKey) +
-                ':' + Arrays$hashCode(this.hmacKey);
+                ':' + Arrays.hashCode(this.wrapKey) +
+                ':' + Arrays.hashCode(this.wrapdata) +
+                ':' + Arrays.hashCode(this.encryptionKey) +
+                ':' + Arrays.hashCode(this.hmacKey);
             return key;
         }
     });
@@ -358,7 +375,7 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
                 var onerror = function(e) {
                     callback.error(new MslCryptoException(MslError.WRAP_ERROR));
                 };
-                mslCrypto['wrapKey']('jwk', key.rawKey, this._wrapKey, WebCryptoAlgorithm.A128KW)
+                MslCrypto['wrapKey']('jwk', key.rawKey, this._wrapKey, WebCryptoAlgorithm.A128KW)
                     .then(oncomplete, onerror);
             }, this);
         },
@@ -372,7 +389,7 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
                 var onerror = function(e) {
                     callback.error(new MslCryptoException(MslError.UNWRAP_ERROR));
                 };
-                mslCrypto['unwrapKey']('jwk', data, this._wrapKey, WebCryptoAlgorithm.A128KW, algo, false, usages)
+                MslCrypto['unwrapKey']('jwk', data, this._wrapKey, WebCryptoAlgorithm.A128KW, algo, false, usages)
                     .then(oncomplete, onerror);
             }, this);
 
@@ -380,13 +397,13 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
                 AsyncExecutor(callback, function() {
                     switch (rawKey["type"]) {
                         case "secret":
-                            SecretKey$create(rawKey, callback);
+                            SecretKey.create(rawKey, callback);
                             break;
                         case "public":
-                            PublicKey$create(rawKey, callback);
+                            PublicKey.create(rawKey, callback);
                             break;
                         case "private":
-                            PrivateKey$create(rawKey, callback);
+                            PrivateKey.create(rawKey, callback);
                             break;
                         default:
                             throw new MslCryptoException(MslError.UNSUPPORTED_KEY, "type: " + rawKey["type"]);
@@ -519,7 +536,7 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
                 // Create random AES-128 wrapping key.
                 var wrapBytes = new Uint8Array(16);
                 ctx.getRandom().nextBytes(wrapBytes);
-                SecretKey$import(wrapBytes, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
+                SecretKey.import(wrapBytes, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
                     result: function(wrapKey) {
                         AsyncExecutor(callback, function() {
                             var mslCryptoContext = ctx.getMslCryptoContext();
@@ -791,4 +808,12 @@ var JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
             }
         }
     });
-})();
+    
+    // Exports.
+    module.exports.Mechanism = JsonWebKeyLadderExchange$Mechanism;
+    module.exports.RequestData = JsonWebKeyLadderExchange$RequestData;
+    module.exports.RequestData.parse = JsonWebKeyLadderExchange$RequestData$parse;
+    module.exports.ResponseData = JsonWebKeyLadderExchange$ResponseData;
+    module.exports.ResponseData.parse = JsonWebKeyLadderExchange$ResponseData$parse;
+    module.exports.AesKwJwkCryptoContext = JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('JsonWebKeyLadderExchange'));

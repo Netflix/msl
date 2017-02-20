@@ -19,14 +19,17 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var PublicKey;
-var PublicKey$create;
-var PublicKey$import;
-
-(function () {
+(function (require, module) {
     "use strict";
+    
+    const Class = require('../util/Class.js');
+    const AsyncExecutor = require('../util/AsyncExecutor.js');
+    const MslCryptoException = require('../MslCryptoException.js');
+    const MslError = require('../MslError.js');
+    const KeyFormat = require('../crypto/KeyFormat.js');
+    const MslCrypto = require('../MslCrypto.js');
 
-    PublicKey = util.Class.create({
+    var PublicKey = module.exports = Class.create({
         /**
          * Create a new public key from an original public key.
          *
@@ -54,7 +57,7 @@ var PublicKey$import;
                     var onerror = function(e) {
                         callback.error(new MslCryptoException(MslError.KEY_EXPORT_ERROR, KeyFormat.SPKI));
                     };
-                    mslCrypto['exportKey'](KeyFormat.SPKI, rawKey)
+                    MslCrypto['exportKey'](KeyFormat.SPKI, rawKey)
                         .then(oncomplete, onerror);
                 } else {
                     createKey(encoded);
@@ -96,7 +99,7 @@ var PublicKey$import;
      *        callback the callback will receive the new public key
      *        or any thrown exceptions.
      */
-    PublicKey$create = function PublicKey$create(rawKey, callback) {
+    var PublicKey$create = function PublicKey$create(rawKey, callback) {
         new PublicKey(rawKey, callback);
     };
 
@@ -114,7 +117,7 @@ var PublicKey$import;
      *        or any thrown exceptions.
      * @throws MslCryptoException if the key data is invalid.
      */
-    PublicKey$import = function PublicKey$import(input, algo, usages, format, callback) {
+    var PublicKey$import = function PublicKey$import(input, algo, usages, format, callback) {
         AsyncExecutor(callback, function() {
             input = KeyFormat.normalizePubkeyInput(input, format);
             var oncomplete = function(result) {
@@ -123,8 +126,12 @@ var PublicKey$import;
             var onerror = function(e) {
                 callback.error(new MslCryptoException(MslError.INVALID_PUBLIC_KEY));
             };
-            mslCrypto['importKey'](format, input, algo, true, usages)
+            MslCrypto['importKey'](format, input, algo, true, usages)
                 .then(oncomplete, onerror);
         });
     };
-})();
+    
+    // Exports.
+    module.exports.create = PublicKey$create;
+    module.exports.import = PublicKey$import;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('PublicKey'));

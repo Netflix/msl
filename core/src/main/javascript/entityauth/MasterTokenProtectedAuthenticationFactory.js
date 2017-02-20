@@ -19,50 +19,62 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MasterTokenProtectedAuthenticationFactory = EntityAuthenticationFactory.extend({
-    /**
-     * <p>Construct a new master token protected entity authentication factory
-     * instance.</p>
-     * 
-     * @param {AuthenticationUtils} authutils authentication utilities.
-     */
-    init: function init(authutils) {
-        init.base.call(this, EntityAuthenticationScheme.MT_PROTECTED);
-        
-        // The properties.
-        var props = {
-            authutils: { value: authutils, writable: false, enumerable: false, configurable: false },
-        };
-        Object.defineProperties(this, props);
-    },
+(function(require, module) {
+    "use strict";
 
-    /** @inheritDoc */
-    createData: function createData(ctx, entityAuthMo, callback) {
-        MasterTokenProtectedAuthenticationData$parse(ctx, entityAuthMo, callback);
-    },
-
-    /** @inheritDoc */
-    getCryptoContext: function getCryptoContext(ctx, authdata) {
-        // Make sure we have the right kind of entity authentication data.
-        if (!(authdata instanceof MasterTokenProtectedAuthenticationData))
-            throw new MslInternalException("Incorrect authentication data type " + authdata + ".");
-        var mtpad = authdata;
-
-        // Check for revocation.
-        var identity = mtpad.getIdentity();
-        if (this.authutils.isEntityRevoked(identity))
-            throw new MslEntityAuthException(MslError.ENTITY_REVOKED, "mt protected " + identity).setEntityAuthenticationData(mtpad);
-
-        // Verify the scheme is permitted.
-        if (!this.authutils.isSchemePermitted(identity, this.scheme))
-            throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication scheme for entity " + identity + " not supported:" + this.scheme).setEntityAuthenticationData(mtpad);
-        
-        // Authenticate using the encapsulated authentication data.
-        var ead = mtpad.encapsulatedAuthdata;
-        var scheme = ead.scheme;
-        var factory = ctx.getEntityAuthenticationFactory(scheme);
-        if (!factory)
-            throw new MslEntityAuthException(MslError.ENTITYAUTH_FACTORY_NOT_FOUND, scheme.name).setEntityAuthenticationData(mtpad);
-        return factory.getCryptoContext(ctx, ead);
-    },
-});
+    const EntityAuthenticationFactory = require('../entityauth/EntityAuthenticationFactory.js');
+    const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+    const EntityAuthenticationData = require('../entityauth/EntityAuthenticationData.js');
+    const MasterTokenProtectedAuthenticationData = require('../entityauth/MasterTokenProtectedAuthenticationData.js');
+    const MslInternalException = require('../MslInternalException.js');
+    const MslEntityAuthException = require('../MslEntityAuthException.js');
+    const MslError = require('../MslError.js');
+	    
+	var MasterTokenProtectedAuthenticationFactory = module.exports = EntityAuthenticationFactory.extend({
+	    /**
+	     * <p>Construct a new master token protected entity authentication factory
+	     * instance.</p>
+	     * 
+	     * @param {AuthenticationUtils} authutils authentication utilities.
+	     */
+	    init: function init(authutils) {
+	        init.base.call(this, EntityAuthenticationScheme.MT_PROTECTED);
+	        
+	        // The properties.
+	        var props = {
+	            authutils: { value: authutils, writable: false, enumerable: false, configurable: false },
+	        };
+	        Object.defineProperties(this, props);
+	    },
+	
+	    /** @inheritDoc */
+	    createData: function createData(ctx, entityAuthMo, callback) {
+	        MasterTokenProtectedAuthenticationData.parse(ctx, entityAuthMo, callback);
+	    },
+	
+	    /** @inheritDoc */
+	    getCryptoContext: function getCryptoContext(ctx, authdata) {
+	        // Make sure we have the right kind of entity authentication data.
+	        if (!(authdata instanceof MasterTokenProtectedAuthenticationData))
+	            throw new MslInternalException("Incorrect authentication data type " + authdata + ".");
+	        var mtpad = authdata;
+	
+	        // Check for revocation.
+	        var identity = mtpad.getIdentity();
+	        if (this.authutils.isEntityRevoked(identity))
+	            throw new MslEntityAuthException(MslError.ENTITY_REVOKED, "mt protected " + identity).setEntityAuthenticationData(mtpad);
+	
+	        // Verify the scheme is permitted.
+	        if (!this.authutils.isSchemePermitted(identity, this.scheme))
+	            throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication scheme for entity " + identity + " not supported:" + this.scheme).setEntityAuthenticationData(mtpad);
+	        
+	        // Authenticate using the encapsulated authentication data.
+	        var ead = mtpad.encapsulatedAuthdata;
+	        var scheme = ead.scheme;
+	        var factory = ctx.getEntityAuthenticationFactory(scheme);
+	        if (!factory)
+	            throw new MslEntityAuthException(MslError.ENTITYAUTH_FACTORY_NOT_FOUND, scheme.name).setEntityAuthenticationData(mtpad);
+	        return factory.getCryptoContext(ctx, ead);
+	    },
+	});
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MasterTokenProtectedAuthenticationFactory'));

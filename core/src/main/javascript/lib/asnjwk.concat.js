@@ -1,4 +1,21 @@
-(function (global) {
+/**
+ * Copyright (c) 2012-2016 Netflix, Inc.  All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+(function(require, module) {
+"use strict";
+
 /** @const */
 var DEBUG=false;
 //================================================================================
@@ -43,8 +60,6 @@ function hexDump(abv, idx, len) {
 /** @type {{Util:Object}} */
 
 var AbvStream = (function () {
-"use strict";
-
 function My(input, position) {
     if (input instanceof AbvStream) {
         DEBUG && debugAssert(!position);
@@ -118,15 +133,9 @@ My.prototype = {
 };
 
 return My;
-
 }());
 //================================================================================
 // asn1.js
-
-var ASN1 = {};
-
-(function () {
-"use strict";
 
 /** @enum {number} */
 var tagClass = {
@@ -1119,40 +1128,30 @@ function webCryptoAlgorithmToJwkAlg(webCryptoAlgorithm) {
 
 // Debug builds include these named symbols plus the Release symbols below. The
 // symbols here get renamed in Release builds.
-ASN1.parse = function(abv) {
+module.exports.parse = function(abv) {
     asn1ParseRecursionDepth = 0;
     return asn1Parse(new Asn1Token(abv), 0, abv.length);
 };
-ASN1.show = asn1Show;
-ASN1.isRsaSpki = isRsaSpki;
-ASN1.isRsaPkcs8 = isRsaPkcs8;
-ASN1.NodeFactory = NodeFactory;
-ASN1.Builder = Builder;
-ASN1.tagVal = tagVal;
-ASN1.RsaPublicKey = RsaPublicKey;
-ASN1.RsaPrivateKey = RsaPrivateKey;
-ASN1.buildRsaSpki = buildRsaSpki;
-ASN1.parseRsaSpki = parseRsaSpki;
-ASN1.buildRsaPkcs8 = buildRsaPkcs8;
-ASN1.parseRsaPkcs8 = parseRsaPkcs8;
-ASN1.buildRsaJwk = buildRsaJwk;
-ASN1.parseRsaJwk = parseRsaJwk;
-ASN1.RsaDer = RsaDer;
+module.exports.show = asn1Show;
+module.exports.isRsaSpki = isRsaSpki;
+module.exports.isRsaPkcs8 = isRsaPkcs8;
+module.exports.NodeFactory = NodeFactory;
+module.exports.Builder = Builder;
+module.exports.tagVal = tagVal;
+module.exports.RsaPublicKey = RsaPublicKey;
+module.exports.RsaPrivateKey = RsaPrivateKey;
+module.exports.buildRsaSpki = buildRsaSpki;
+module.exports.parseRsaSpki = parseRsaSpki;
+module.exports.buildRsaPkcs8 = buildRsaPkcs8;
+module.exports.parseRsaPkcs8 = parseRsaPkcs8;
+module.exports.buildRsaJwk = buildRsaJwk;
+module.exports.parseRsaJwk = parseRsaJwk;
+module.exports.RsaDer = RsaDer;
 
 // Release builds export only these named symbols.
-ASN1['rsaDerToJwk'] = rsaDerToJwk;
-ASN1['jwkToRsaDer'] = jwkToRsaDer;
-ASN1['webCryptoAlgorithmToJwkAlg'] = webCryptoAlgorithmToJwkAlg;
-ASN1['webCryptoUsageToJwkKeyOps'] = webCryptoUsageToJwkKeyOps;
+module.exports['rsaDerToJwk'] = rsaDerToJwk;
+module.exports['jwkToRsaDer'] = jwkToRsaDer;
+module.exports['webCryptoAlgorithmToJwkAlg'] = webCryptoAlgorithmToJwkAlg;
+module.exports['webCryptoUsageToJwkKeyOps'] = webCryptoUsageToJwkKeyOps;
 
-}());
-//================================================================================
-// module.js
-
-(function (global) {
-"use strict";
-
-global['ASN1'] = ASN1;
-
-}(global));
-}(this));
+})(require, (typeof module !== 'undefined') ? module : mkmodule('ASN1'));

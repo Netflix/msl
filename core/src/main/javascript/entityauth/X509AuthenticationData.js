@@ -33,10 +33,18 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var X509AuthenticationData;
-var X509AuthenticationData$parse;
+(function(require, module) {
+    "use strict";
 
-(function() {
+    const EntityAuthenticationData = require('../entityauth/EntityAuthenticationData.js');
+    const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+    const AsyncExecutor = require("../util/AsyncExecutor.js");
+    const MslEncoderException = require('../io/MslEncoderException.js');
+    const MslEncodingException = require('../MslEncodingException.js');
+    const MslCryptoException = require('../MslCryptoException.js');
+    const MslError = require('../MslError.js');
+    const X509 = require('jsrassign').X509;
+    
     /**
      * Key entity X.509 certificate.
      * @const
@@ -44,7 +52,7 @@ var X509AuthenticationData$parse;
      */
     var KEY_X509_CERT = "x509certificate";
 
-    X509AuthenticationData = EntityAuthenticationData.extend({
+    var X509AuthenticationData = module.exports = EntityAuthenticationData.extend({
         /**
          * <p>Construct a new X.509 asymmetric keys authentication data instance from
          * the provided X.509 certificate.</p>
@@ -101,7 +109,7 @@ var X509AuthenticationData$parse;
      * @throws MslEncodingException if there is an error parsing the entity
      *         authentication data.
      */
-    X509AuthenticationData$parse = function X509AuthenticationData$parse(x509AuthMo) {
+    var X509AuthenticationData$parse = function X509AuthenticationData$parse(x509AuthMo) {
         var certB64;
         try {
             certB64 = x509AuthMo.getString(KEY_X509_CERT);
@@ -120,4 +128,7 @@ var X509AuthenticationData$parse;
         }
         return new X509AuthenticationData(x509);
     };
-})();
+    
+    // Exports.
+    module.exports.parse = X509AuthenticationData$parse;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('X509AuthenticationData'));

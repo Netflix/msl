@@ -19,10 +19,13 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MslException;
-
-(function() {
-    MslException = util.Class.create(new Error());
+(function(require, module) {
+	"use strict";
+	
+	const Class = require('./util/Class.js');
+	const MslConstants = require('./MslConstants.js');
+	
+    var MslException = module.exports = Class.create(new Error());
 
     var proto = {
         /**
@@ -53,7 +56,7 @@ var MslException;
              * @param id message ID of the message associated with this error.
              */
             function setMessageId(id) {
-                if (id < 0 || id > MslConstants$MAX_LONG_VALUE)
+                if (id < 0 || id > MslConstants.MAX_LONG_VALUE)
                     throw new RangeError("Message ID " + id + " is outside the valid range.");
                 if (!getMessageId())
                     messageId = id;
@@ -175,4 +178,4 @@ var MslException;
 
     // Attach methods.
     MslException.mixin(proto);
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslException'));

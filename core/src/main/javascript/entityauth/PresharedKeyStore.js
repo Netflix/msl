@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var KeySet;
-var PresharedKeyStore;
-
-(function() {
+(function(require, module) {
     "use strict";
+    
+    const Class = require('../util/Class.js');
     
     /**
      * A set of encryption, HMAC, and wrapping keys.
      * 
      * @author Wesley Miaw <wmiaw@netflix.com>
      */
-    KeySet = util.Class.create({
+    var KeySet = Class.create({
         /**
          * Create a new key set with the given keys.
          * 
@@ -48,7 +47,7 @@ var PresharedKeyStore;
      * @author Wesley Miaw <wmiaw@netflix.com>
      * @interface
      */
-    PresharedKeyStore = util.Class.create({
+    var PresharedKeyStore = module.exports = Class.create({
         /**
          * Return the encryption, HMAC, and wrapping keys for the given identity.
          * 
@@ -57,4 +56,7 @@ var PresharedKeyStore;
          */
         getKeys: function(identity) {},
     });
-})();
+    
+    // Exports.
+    module.exports.KeySet = KeySet;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('PresharedKeyStore'));

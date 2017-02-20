@@ -13,60 +13,71 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var PresharedAuthenticationFactory;
-
 /**
  * Preshared keys entity authentication factory.
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-PresharedAuthenticationFactory = EntityAuthenticationFactory.extend({
-    /**
-     * Construct a new preshared keys authentication factory instance.
-     *
-     * @param {PresharedKeyStore} store preshared key store.
-     * @param {AuthenticationUtils} authutils authentication utilities.
-     */
-    init: function init(store, authutils) {
-        init.base.call(this, EntityAuthenticationScheme.PSK);
+(function(require, module) {
+    "use strict";
+    
+    const EntityAuthenticationFactory = require('../entityauth/EntityAuthenticationFactory.js');
+    const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+    const AsyncExecutor = require('../util/AsyncExecutor.js');
+    const PresharedAuthenticationData = require('../entityauth/PresharedAuthenticationData.js');
+    const MslInternalException = require('../MslInternalException.js');
+    const MslEntityAuthException = require('../MslEntityAuthException.js');
+    const MslError = require('../MslError.js');
+    const SymmetricCryptoContext = require('../crypto/SymmetricCryptoContext.js');
 
-        // The properties.
-        var props = {
-            store: { value: store, writable: false, enumerable: false, configurable: false },
-            authutils: { value: authutils, writable: false, enumerable: false, configurable: false },
-        };
-        Object.defineProperties(this, props);
-    },
+    var PresharedAuthenticationFactory = module.exports = EntityAuthenticationFactory.extend({
+    	/**
+    	 * Construct a new preshared keys authentication factory instance.
+    	 *
+    	 * @param {PresharedKeyStore} store preshared key store.
+    	 * @param {AuthenticationUtils} authutils authentication utilities.
+    	 */
+    	init: function init(store, authutils) {
+    		init.base.call(this, EntityAuthenticationScheme.PSK);
 
-    /** @inheritDoc */
-    createData: function createData(ctx, entityAuthMo, callback) {
-        AsyncExecutor(callback, function() {
-            return PresharedAuthenticationData$parse(entityAuthMo);
-        });
-    },
+    		// The properties.
+    		var props = {
+    				store: { value: store, writable: false, enumerable: false, configurable: false },
+    				authutils: { value: authutils, writable: false, enumerable: false, configurable: false },
+    		};
+    		Object.defineProperties(this, props);
+    	},
 
-    /** @inheritDoc */
-    getCryptoContext: function getCryptoContext(ctx, authdata) {
-        // Make sure we have the right kind of entity authentication data.
-        if (!(authdata instanceof PresharedAuthenticationData))
-            throw new MslInternalException("Incorrect authentication data type " + authdata + ".");
-        var pad = authdata;
-     
-        // Check for revocation.
-        var identity = pad.getIdentity();
-        if (this.authutils.isEntityRevoked(identity))
-            throw new MslEntityAuthException(MslError.ENTITY_REVOKED, "psk " + identity).setEntityAuthenticationData(pad);
-        
-        // Verify the scheme is permitted.
-        if (!this.authutils.isSchemePermitted(identity, this.scheme))
-            throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication scheme for entity " + identity + " not supported:" + this.scheme).setEntityAuthenticationData(pad);
-        
-        // Load preshared keys authentication data.
-        var keys = this.store.getKeys(identity);
-        if (!keys)
-            throw new MslEntityAuthException(MslError.ENTITY_NOT_FOUND, "psk " + identity).setEntityAuthenticationData(pad);
-        
-        // Return the crypto context.
-        return new SymmetricCryptoContext(ctx, identity, keys.encryptionKey, keys.hmacKey, keys.wrappingKey);
-    },
-});
+    	/** @inheritDoc */
+    	createData: function createData(ctx, entityAuthMo, callback) {
+    		AsyncExecutor(callback, function() {
+    			return PresharedAuthenticationData.parse(entityAuthMo);
+    		});
+    	},
+
+    	/** @inheritDoc */
+    	getCryptoContext: function getCryptoContext(ctx, authdata) {
+    		// Make sure we have the right kind of entity authentication data.
+    		if (!(authdata instanceof PresharedAuthenticationData))
+    			throw new MslInternalException("Incorrect authentication data type " + authdata + ".");
+    		var pad = authdata;
+
+    		// Check for revocation.
+    		var identity = pad.getIdentity();
+    		if (this.authutils.isEntityRevoked(identity))
+    			throw new MslEntityAuthException(MslError.ENTITY_REVOKED, "psk " + identity).setEntityAuthenticationData(pad);
+
+    		// Verify the scheme is permitted.
+    		if (!this.authutils.isSchemePermitted(identity, this.scheme))
+    			throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication scheme for entity " + identity + " not supported:" + this.scheme).setEntityAuthenticationData(pad);
+
+    		// Load preshared keys authentication data.
+    		var keys = this.store.getKeys(identity);
+    		if (!keys)
+    			throw new MslEntityAuthException(MslError.ENTITY_NOT_FOUND, "psk " + identity).setEntityAuthenticationData(pad);
+
+    		// Return the crypto context.
+    		return new SymmetricCryptoContext(ctx, identity, keys.encryptionKey, keys.hmacKey, keys.wrappingKey);
+    	},
+    });
+})(require, (typeof module !== 'undefined') ? module : mkmodule('PresharedAuthenticationFactory'));

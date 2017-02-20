@@ -31,17 +31,12 @@
  *  Polyfills window.Promise (instead of window.chnobean.Promise)
  *  CONVERT_THENABLES = false
  *  ALWAYS_RESOLVE_SYNCHRONIOUSLY = true;
+ *  Module
  *
  */
 
-(function (global, exporter) {
-
-    if (!global.Promise) {
-        global.Promise = exporter();
-    }
-
-})(this, function () {
-    "use strict";
+(function(require, module) {
+	"use strict";
 
     /**
     * @const
@@ -66,7 +61,7 @@
     * @constructor
     * @param {function(function(*=), function(*=))} resolver
     */
-    function Promise(resolver) {
+    var Promise = module.exports = function Promise(resolver) {
         var promise = this;
         if (resolver) {
             try {
@@ -82,7 +77,7 @@
                 Promise_reject(this, e);
             }
         }
-    }
+    };
 
     /**
     * @param {function(*=)=} onFulfilled is executed when this promise is fulfilled
@@ -351,6 +346,4 @@
             Promise_reject(promise, e, true);
         }
     }
-
-    return Promise;
-});
+})(require, (typeof module !== 'undefined') ? module : mkmodule('Promise'));

@@ -20,12 +20,18 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MslCiphertextEnvelope;
-var MslCiphertextEnvelope$create;
-var MslCiphertextEnvelope$parse;
-var MslCiphertextEnvelope$Version;
-
-(function() {
+(function(require, module) {
+	"use strict";
+	
+	const MslEncodable = require('../io/MslEncodable.js');
+	const MslConstants = require('../MslConstants.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const Base64 = require('../util/Base64.js');
+	const MslCryptoException = require('../MslCryptoException.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const MslEncodingException = require('../MslEncodingException.js');
+	const MslError = require('../MslError.js');
+	
     /**
      * Key version.
      * @const
@@ -112,7 +118,7 @@ var MslCiphertextEnvelope$Version;
         V2 : 2
     };
     
-    MslCiphertextEnvelope = MslEncodable.extend({
+    var MslCiphertextEnvelope = module.exports = MslEncodable.extend({
         /**
          * <p>Create a new encryption envelope with the provided details.</p>
          *
@@ -156,7 +162,7 @@ var MslCiphertextEnvelope$Version;
                         mo.put(KEY_KEY_ID, this.keyId);
                         if (this.iv) mo.put(KEY_IV, this.iv);
                         mo.put(KEY_CIPHERTEXT, this.ciphertext);
-                        mo.put(KEY_SHA256, base64$decode("AA=="));
+                        mo.put(KEY_SHA256, Base64.decode("AA=="));
                         break;
                     case Version.V2:
                         mo.put(KEY_VERSION, this.version);
@@ -183,7 +189,7 @@ var MslCiphertextEnvelope$Version;
      *        callback the callback functions that will receive the envelope
      *        or any thrown exceptions.
      */
-    MslCiphertextEnvelope$create = function MslCiphertextEnvelope$create(keyIdOrCipherSpec, iv, ciphertext, callback) {
+    var MslCiphertextEnvelope$create = function MslCiphertextEnvelope$create(keyIdOrCipherSpec, iv, ciphertext, callback) {
     	AsyncExecutor(callback, function() {
     		return new MslCiphertextEnvelope(keyIdOrCipherSpec, iv, ciphertext);
     	});
@@ -203,7 +209,7 @@ var MslCiphertextEnvelope$Version;
      *         encryption envelope.
      * @throws MslEncodingException if there is an error parsing the data.
      */
-    MslCiphertextEnvelope$parse = function MslCiphertextEnvelope$parse(mo, version, callback) {
+    var MslCiphertextEnvelope$parse = function MslCiphertextEnvelope$parse(mo, version, callback) {
         AsyncExecutor(callback, function() {
             // If a version was not specified, determine the envelope version.
             if (!version) {
@@ -269,5 +275,9 @@ var MslCiphertextEnvelope$Version;
             return new MslCiphertextEnvelope(keyIdOrSpec, iv, ciphertext);
         });
     };
-})();
-
+    
+    // Exports.
+    module.exports.create = MslCiphertextEnvelope$create;
+    module.exports.parse = MslCiphertextEnvelope$parse;
+    module.exports.Version = MslCiphertextEnvelope$Version;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslCiphertextEnvelope'));

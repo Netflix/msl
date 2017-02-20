@@ -21,34 +21,40 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  * @implements {ICryptoContext}
  */
-var NullCryptoContext = ICryptoContext.extend({
-    /** @inheritDoc */
-    encrypt: function encrypt(data, encoder, format, callback) {
-        callback.result(data);
-    },
-
-    /** @inheritDoc */
-    decrypt: function decrypt(data, encoder, callback) {
-        callback.result(data);
-    },
-
-    /** @inheritDoc */
-    wrap: function wrap(key, encoder, format, callback) {
-        callback.result(key);
-    },
-
-    /** @inheritDoc */
-    unwrap: function unwrap(data, algo, usages, encoder, callback) {
-        callback.result(data);
-    },
-
-    /** @inheritDoc */
-    sign: function sign(data, encoder, format, callback) {
-        callback.result(new Uint8Array(0));
-    },
-
-    /** @inheritDoc */
-    verify: function verify(data, signature, encoder, callback) {
-        callback.result(true);
-    },
-});
+(function(require, module) {
+	"use strict";
+	
+	const ICryptoContext = require('../crypto/ICryptoContext.js');
+	
+	var NullCryptoContext = module.extend = ICryptoContext.extend({
+	    /** @inheritDoc */
+	    encrypt: function encrypt(data, encoder, format, callback) {
+	        callback.result(data);
+	    },
+	
+	    /** @inheritDoc */
+	    decrypt: function decrypt(data, encoder, callback) {
+	        callback.result(data);
+	    },
+	
+	    /** @inheritDoc */
+	    wrap: function wrap(key, encoder, format, callback) {
+	        callback.result(key);
+	    },
+	
+	    /** @inheritDoc */
+	    unwrap: function unwrap(data, algo, usages, encoder, callback) {
+	        callback.result(data);
+	    },
+	
+	    /** @inheritDoc */
+	    sign: function sign(data, encoder, format, callback) {
+	        callback.result(new Uint8Array(0));
+	    },
+	
+	    /** @inheritDoc */
+	    verify: function verify(data, signature, encoder, callback) {
+	        callback.result(true);
+	    },
+	});
+})(require, (typeof module !== 'undefined') ? module : mkmodule('NullCryptoContext'));

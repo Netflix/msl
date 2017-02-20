@@ -22,11 +22,10 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var UserAuthenticationScheme;
-var UserAuthenticationScheme$getScheme;
+(function(require, module) {
+	"use strict";
 
-(function() {
-    "use strict";
+	const Class = require('../util/Class.js');
     
     /** Map of names onto schemes. */
     var schemes = {};
@@ -36,7 +35,7 @@ var UserAuthenticationScheme$getScheme;
      * 
      * @param {string} name the user authentication scheme name.
      */
-    UserAuthenticationScheme = function UserAuthenticationScheme(name) {
+    var UserAuthenticationScheme = module.exports = function UserAuthenticationScheme(name) {
         // The properties.
         var props = {
             name: { value: name, writable: false, configurable: false },
@@ -47,7 +46,7 @@ var UserAuthenticationScheme$getScheme;
         schemes[name] = this;
     };
     
-    util.Class.mixin(UserAuthenticationScheme,
+    Class.mixin(UserAuthenticationScheme,
     /** @lends UserAuthenticationScheme */
     ({
         /** Email/password. */
@@ -61,7 +60,10 @@ var UserAuthenticationScheme$getScheme;
      * @return {?UserAuthenticationScheme} the scheme identified by the specified name or {@code null} if
      *         there is none.
      */
-    UserAuthenticationScheme$getScheme = function UserAuthenticationScheme$getScheme(name) {
+    var UserAuthenticationScheme$getScheme = function UserAuthenticationScheme$getScheme(name) {
         return (schemes[name]) ? schemes[name] : null;
     };
-})();
+    
+    // Exports.
+    module.exports.getScheme = UserAuthenticationScheme$getScheme;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('UserAuthenticationScheme'));

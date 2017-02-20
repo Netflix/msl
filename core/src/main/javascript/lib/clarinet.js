@@ -16,8 +16,10 @@
 
 /* global window: false, process: false, FastList: false, require: false */
 
-var clarinet = {};
-(function () {
+(function(require, module) {
+  "use strict";
+  
+  var clarinet = module.exports = {};
   var fastlist = Array;
 
   clarinet.parser            = function (opt) { return new CParser(opt);};
@@ -502,5 +504,4 @@ var clarinet = {};
       checkBufferLength(parser);
     return parser;
   }
-
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('clarinet'));

@@ -19,29 +19,33 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var WebCryptoAlgorithm = {
-    /** generate/wrap/unwrap */
-    A128KW: { 'name': 'AES-KW' },
-    /** generate/encrypt/decrypt */
-    AES_CBC: { 'name': 'AES-CBC' },
-    /** generate */
-    DIFFIE_HELLMAN: { 'name': 'DH' },
-    /** generate/sign/verify */
-    HMAC_SHA256: { 'name': 'HMAC', 'hash': { 'name': 'SHA-256' } },
-    /** generate/encrypt/decrypt/wrap/unwrap */
-    RSA_OAEP: { 'name': 'RSA-OAEP', 'hash': { 'name': 'SHA-1' } },
-    /** generate/encrypt/decrypt */
-    RSAES: { 'name': 'RSAES-PKCS1-v1_5' },
-    /** generate */
-    RSASSA: { 'name': 'RSASSA-PKCS1-v1_5', 'hash': { 'name': 'SHA-1' } },
-    /** sign/verify */
-    AES_CMAC: { 'name': 'AES-CMAC' },
-    ECDSA_SHA256: { 'name': 'ECDSA', 'hash': { 'name': 'SHA-256' } },
-    RSASSA_SHA1: { 'name': 'RSASSA-PKCS1-v1_5', 'hash': { 'name': 'SHA-1' } },
-    RSASSA_SHA256: { 'name': 'RSASSA-PKCS1-v1_5', 'hash': { 'name': 'SHA-256' } },
-    /** deriveKey */
-    AUTHENTICATED_DH: { 'name' : 'NFLX-DH' },
-    /** digest */
-    SHA_256: { 'name': 'SHA-256' },
-    SHA_384: { 'name': 'SHA-384' },
-};
+(function(require, module) {
+	"use strict";
+		
+	var WebCryptoAlgorithm = module.exports = {
+	    /** generate/wrap/unwrap */
+	    A128KW: { 'name': 'AES-KW' },
+	    /** generate/encrypt/decrypt */
+	    AES_CBC: { 'name': 'AES-CBC' },
+	    /** generate */
+	    DIFFIE_HELLMAN: { 'name': 'DH' },
+	    /** generate/sign/verify */
+	    HMAC_SHA256: { 'name': 'HMAC', 'hash': { 'name': 'SHA-256' } },
+	    /** generate/encrypt/decrypt/wrap/unwrap */
+	    RSA_OAEP: { 'name': 'RSA-OAEP', 'hash': { 'name': 'SHA-1' } },
+	    /** generate/encrypt/decrypt */
+	    RSAES: { 'name': 'RSAES-PKCS1-v1_5' },
+	    /** generate */
+	    RSASSA: { 'name': 'RSASSA-PKCS1-v1_5', 'hash': { 'name': 'SHA-1' } },
+	    /** sign/verify */
+	    AES_CMAC: { 'name': 'AES-CMAC' },
+	    ECDSA_SHA256: { 'name': 'ECDSA', 'hash': { 'name': 'SHA-256' } },
+	    RSASSA_SHA1: { 'name': 'RSASSA-PKCS1-v1_5', 'hash': { 'name': 'SHA-1' } },
+	    RSASSA_SHA256: { 'name': 'RSASSA-PKCS1-v1_5', 'hash': { 'name': 'SHA-256' } },
+	    /** deriveKey */
+	    AUTHENTICATED_DH: { 'name' : 'NFLX-DH' },
+	    /** digest */
+	    SHA_256: { 'name': 'SHA-256' },
+	    SHA_384: { 'name': 'SHA-384' },
+	};
+})(require, (typeof module !== 'undefined') ? module : mkmodule('WebCryptoAlgorithm'));

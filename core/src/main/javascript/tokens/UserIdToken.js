@@ -71,12 +71,18 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var UserIdToken;
-var UserIdToken$create;
-var UserIdToken$parse;
-
-(function() {
+(function(require, module) {
 	"use strict";
+	
+	const MslEncodable = require('../io/MslEncodable.js');
+	const MslInternalException = require('../MslInternalException.js');
+	const MslConstants = require('../MslConstants.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const MslCryptoException = require('../MslCryptoException.js');
+	const MslEncoderException = require('../MslEncoderException.js');
+	const MslException = require('../MslException.js');
+	const MslError = require('../MslError.js');
+	const Base64 = require('../util/Base64.js');
 	
     /** Milliseconds per second.
      * @const
@@ -159,7 +165,7 @@ var UserIdToken$parse;
         this.verified = verified;
     };
 
-    UserIdToken = MslEncodable.extend({
+    var UserIdToken = module.exports = MslEncodable.extend({
         /**
          * Create a new user ID token with the specified user.
          *
@@ -183,7 +189,7 @@ var UserIdToken$parse;
             if (!masterToken)
                 throw new MslInternalException("Cannot construct a user ID token without a master token.");
             // The serial number must be within range.
-            if (serialNumber < 0 || serialNumber > MslConstants$MAX_LONG_VALUE)
+            if (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE)
                 throw new MslInternalException("Serial number " + serialNumber + " is outside the valid range.");
 
             // Renewal window and expiration are in seconds, not milliseconds.
@@ -518,7 +524,7 @@ var UserIdToken$parse;
      * @throws MslCryptoException if there is an error encrypting or signing
      *         the token data.
      */
-    UserIdToken$create = function UserIdToken$create(ctx, renewalWindow, expiration, masterToken, serialNumber, issuerData, user, callback) {
+    var UserIdToken$create = function UserIdToken$create(ctx, renewalWindow, expiration, masterToken, serialNumber, issuerData, user, callback) {
     	AsyncExecutor(callback, function() {
     		return new UserIdToken(ctx, renewalWindow, expiration, masterToken, serialNumber, issuerData, user, null);
     	});
@@ -542,7 +548,7 @@ var UserIdToken$parse;
      *         timestamp occurs before the renewal window, or the user data is
      *         missing.
      */
-    UserIdToken$parse = function UserIdToken$parse(ctx, userIdTokenMo, masterToken, callback) {
+    var UserIdToken$parse = function UserIdToken$parse(ctx, userIdTokenMo, masterToken, callback) {
         AsyncExecutor(callback, function() {
             // Grab the crypto context and encoder.
             var cryptoContext = ctx.getMslCryptoContext();
@@ -579,17 +585,17 @@ var UserIdToken$parse;
                     if (expirationSeconds < renewalWindowSeconds)
                         throw new MslException(MslError.USERIDTOKEN_EXPIRES_BEFORE_RENEWAL, "usertokendata " + tokendata).setMasterToken(masterToken);
                     mtSerialNumber = tokendata.getLong(KEY_MASTER_TOKEN_SERIAL_NUMBER);
-                    if (mtSerialNumber < 0 || mtSerialNumber > MslConstants$MAX_LONG_VALUE)
+                    if (mtSerialNumber < 0 || mtSerialNumber > MslConstants.MAX_LONG_VALUE)
                         throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokendata).setMasterToken(masterToken);
                     serialNumber = tokendata.getLong(KEY_SERIAL_NUMBER);
-                    if (serialNumber < 0 || serialNumber > MslConstants$MAX_LONG_VALUE)
+                    if (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE)
                         throw new MslException(MslError.USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "usertokendata " + tokendata).setMasterToken(masterToken);
                     ciphertext = tokendata.getBytes(KEY_USERDATA);
                     if (ciphertext.length == 0)
                         throw new MslException(MslError.USERIDTOKEN_USERDATA_MISSING).setMasterToken(masterToken);
                 } catch (e) {
                     if (e instanceof MslEncoderException)
-                        throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR, "usertokendata " + base64$encode(tokendataBytes), e).setMasterToken(masterToken);
+                        throw new MslEncodingException(MslError.USERIDTOKEN_TOKENDATA_PARSE_ERROR, "usertokendata " + Base64.encode(tokendataBytes), e).setMasterToken(masterToken);
                     throw e;
                 }
                 if (verified) {
@@ -630,7 +636,7 @@ var UserIdToken$parse;
                         throw new MslException(MslError.USERIDTOKEN_IDENTITY_INVALID, "userdata " + userdata).setMasterToken(masterToken);
                 } catch (e) {
                     if (e instanceof MslEncoderException)
-                        throw new MslEncodingException(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR, "userdata " + base64$encode(plaintext), e).setMasterToken(masterToken);
+                        throw new MslEncodingException(MslError.USERIDTOKEN_USERDATA_PARSE_ERROR, "userdata " + Base64.encode(plaintext), e).setMasterToken(masterToken);
                     throw e;
                 }
                 var factory = ctx.getTokenFactory();
@@ -668,5 +674,8 @@ var UserIdToken$parse;
             });
         }
     };
-})();
-
+    
+    // Exports.
+    module.exports.create = UserIdToken$create;
+    module.exports.parse = UserIdToken$parse;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('UserIdToken'));

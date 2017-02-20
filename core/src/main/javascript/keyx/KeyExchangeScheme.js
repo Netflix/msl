@@ -21,11 +21,10 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var KeyExchangeScheme;
-var KeyExchangeScheme$getScheme;
-
-(function() {
-    "use strict";
+(function(require, module) {
+	"use strict";
+	
+	const Class = require('../util/Class.js');
     
     /** Map of names onto schemes. */
     var schemes = {};
@@ -35,7 +34,7 @@ var KeyExchangeScheme$getScheme;
      * 
      * @param {string} name the key exchange scheme name.
      */
-    KeyExchangeScheme = function KeyExchangeScheme(name) {
+    var KeyExchangeScheme = module.exports = function KeyExchangeScheme(name) {
         // The properties.
         var props = {
             name: { value: name, writable: false, configurable: false },
@@ -46,7 +45,7 @@ var KeyExchangeScheme$getScheme;
         schemes[name] = this;
     };
     
-    util.Class.mixin(KeyExchangeScheme,
+    Class.mixin(KeyExchangeScheme,
     /** @lends {KeyExchangeScheme} */
     ({
         /** Asymmetric key wrapped. */
@@ -67,7 +66,10 @@ var KeyExchangeScheme$getScheme;
      * @return {?KeyExchangeScheme} the scheme identified by the specified name or {@code null} if
      *         there is none.
      */
-    KeyExchangeScheme$getScheme = function KeyExchangeScheme$getScheme(name) {
+    var KeyExchangeScheme$getScheme = function KeyExchangeScheme$getScheme(name) {
         return (schemes[name]) ? schemes[name] : null;
     };
-})();
+    
+    // Exports.
+    module.exports.getScheme = KeyExchangeScheme$getScheme;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('KeyExchangeScheme'));

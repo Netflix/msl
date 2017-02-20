@@ -26,11 +26,25 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MessageInputStream;
-var MessageInputStream$create;
-
-(function() {
-    "use strict";
+(function(require, module) {
+	"use strict";
+	
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const SessionCryptoContext = require('../crypto/SessionCryptoContext.js');
+	const MslKeyExchangeException = require('../keyx/MslKeyExchangeException.js');
+	const MslError = require('../MslError.js');
+	const InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
+	const MslEncodingException = require('../MslEncodingException.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const Header = require('../msg/Header.js');
+	const ErrorHeader = require('../msg/ErrorHeader.js');
+	const MslException = require('../MslException.js');
+	const MslMessageException = require('../MslMessageException.js');
+	const MslUserIdTokenException = require('../MslUserIdTokenException.js');
+	const MslInternalException = require('../MslInternalException.js');
+	const PayloadChunk = require('../msg/PayloadChunk.js');
+	const MslIoException = require('../MslIoException.js');
+	const MessageHeader = require('../msg/MessageHeader.js');
 
     /**
      * <p>Return the crypto context resulting from key response data contained
@@ -131,7 +145,7 @@ var MessageInputStream$create;
         });
     }
 
-    MessageInputStream = InputStream.extend({
+    var MessageInputStream = module.exports = InputStream.extend({
         /**
          * <p>Construct a new message input stream. The header is parsed.</p>
          *
@@ -259,7 +273,7 @@ var MessageInputStream$create;
             function parseHeader() {
                 self._tokenizer.nextObject(-1, {
                     result: function(mo) {
-                        Header$parseHeader(ctx, mo, cryptoContexts, {
+                        Header.parseHeader(ctx, mo, cryptoContexts, {
                             result: processHeader,
                             error: function(e) {
                                 self._errored = e;
@@ -696,7 +710,7 @@ var MessageInputStream$create;
                     result: function(payloadMo) {
                         InterruptibleExecutor(callback, function() {
                             if (!payloadMo) return null;
-                            PayloadChunk$parse(this._ctx, payloadMo, this._cryptoContext, {
+                            PayloadChunk.parse(this._ctx, payloadMo, this._cryptoContext, {
                                 result: function(payload) {
                                     InterruptibleExecutor(callback, function() {
                                         // Make sure the payload belongs to this message and is the one
@@ -707,17 +721,17 @@ var MessageInputStream$create;
                                         var userAuthData = messageHeader.getUserAuthenticationData;
                                         if (payload.messageId != messageHeader.messageId) {
                                             throw new MslMessageException(MslError.PAYLOAD_MESSAGE_ID_MISMATCH, "payload mid " + payload.messageId + " header mid " + messageHeader.messageId)
-                                            .setMasterToken(masterToken)
-                                            .setEntityAuthenticationData(entityAuthData)
-                                            .setUserIdToken(userIdToken)
-                                            .setUserAuthenticationData(userAuthData);
+	                                            .setMasterToken(masterToken)
+	                                            .setEntityAuthenticationData(entityAuthData)
+	                                            .setUserIdToken(userIdToken)
+	                                            .setUserAuthenticationData(userAuthData);
                                         }
                                         if (payload.sequenceNumber != this._payloadSequenceNumber) {
                                             throw new MslMessageException(MslError.PAYLOAD_SEQUENCE_NUMBER_MISMATCH, "payload seqno " + payload.sequenceNumber + " expected seqno " + this._payloadSequenceNumber)
-                                            .setMasterToken(masterToken)
-                                            .setEntityAuthenticationData(entityAuthData)
-                                            .setUserIdToken(userIdToken)
-                                            .setUserAuthenticationData(userAuthData);
+	                                            .setMasterToken(masterToken)
+	                                            .setEntityAuthenticationData(entityAuthData)
+	                                            .setUserIdToken(userIdToken)
+	                                            .setUserAuthenticationData(userAuthData);
                                         }
                                         ++this._payloadSequenceNumber;
 
@@ -726,7 +740,7 @@ var MessageInputStream$create;
                                         // Check for a handshake if this is the first payload chunk.
                                         if (this._handshake == null) {
                                             this._handshake = (messageHeader.isRenewable() && messageHeader.keyRequestData.length > 0 &&
-                                                payload.isEndOfMessage() && payload.data.length == 0);
+                                            				   payload.isEndOfMessage() && payload.data.length == 0);
                                         }
 
                                         // Check for end of message.
@@ -1294,7 +1308,10 @@ var MessageInputStream$create;
      *         authentication data or a master token, or a token is improperly
      *         bound to another token.
      */
-    MessageInputStream$create = function MessageInputStream$create(ctx, source, keyRequestData, cryptoContexts, timeout, callback) {
+    var MessageInputStream$create = function MessageInputStream$create(ctx, source, keyRequestData, cryptoContexts, timeout, callback) {
         new MessageInputStream(ctx, source, keyRequestData, cryptoContexts, timeout, callback);
     };
-})();
+    
+    // Exports.
+    module.exports.create = MessageInputStream$create;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MessageInputStream'));

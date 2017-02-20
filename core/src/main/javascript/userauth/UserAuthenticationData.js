@@ -34,10 +34,16 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var UserAuthenticationData;
-var UserAuthenticationData$parse;
-
-(function() {
+(function(require, module) {
+	"use strict";
+	
+	const MslEncodable = require('../io/MslEncodable.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const MslUserAuthException = require('../userauth/MslUserAuthException.js');
+	const MslError = require('../MslError.js');
+	const MslEncoderException = require('../MslEncoderException.js');
+	const MslEncodingException = require('../MslEncodingException.js');
+	
     /**
      * Key user authentication scheme.
      * @const
@@ -51,7 +57,7 @@ var UserAuthenticationData$parse;
      */
     var KEY_AUTHDATA = "authdata";
 
-    UserAuthenticationData = MslEncodable.extend({
+    var UserAuthenticationData = module.exports = MslEncodable.extend({
         /**
          * Create a new user authentication data object with the specified user
          * authentication scheme.
@@ -155,7 +161,7 @@ var UserAuthenticationData$parse;
      * @throws MslCryptoException if there is an error with the entity
      *         authentication data cryptography.
      */
-    UserAuthenticationData$parse = function UserAuthenticationData$parse(ctx, masterToken, userAuthMo, callback) {
+    var UserAuthenticationData$parse = function UserAuthenticationData$parse(ctx, masterToken, userAuthMo, callback) {
         AsyncExecutor(callback, function() {
             try {
                 // Pull the scheme.
@@ -177,4 +183,7 @@ var UserAuthenticationData$parse;
             }
         });
     };
-})();
+    
+    // Exports.
+    module.exports.parse = UserAuthenticationData$parse;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('UserAuthenticationData'));

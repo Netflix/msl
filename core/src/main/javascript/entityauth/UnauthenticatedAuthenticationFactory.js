@@ -19,28 +19,39 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var UnauthenticatedAuthenticationFactory = EntityAuthenticationFactory.extend({
-    /**
-     * Construct a new unauthenticated authentication factory instance.
-     */
-    init: function init() {
-        init.base.call(this, EntityAuthenticationScheme.NONE);
-    },
+(function(require, module) {
+    "use strict";
+    
+    const EntityAuthenticationFactory = require('../entityauth/EntityAuthenticationFactory.js');
+    const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+    const AsyncExecutor = require('../util/AsyncExecutor.js');
+    const UnauthenticatedAuthenticationData = require('../entityauth/UnauthenticatedAuthenticationData.js');
+    const MslInternalException = require('../MslInternalException.js');
+    const NullCryptoContext = require('../crypto/NullCryptoContext.js');
 
-    /** @inheritDoc */
-    createData: function createData(ctx, entityAuthMo, callback) {
-        AsyncExecutor(callback, function() {
-            return UnauthenticatedAuthenticationData$parse(entityAuthMo);
-        });
-    },
+    var UnauthenticatedAuthenticationFactory = module.exports = EntityAuthenticationFactory.extend({
+    	/**
+    	 * Construct a new unauthenticated authentication factory instance.
+    	 */
+    	init: function init() {
+    		init.base.call(this, EntityAuthenticationScheme.NONE);
+    	},
 
-    /** @inheritDoc */
-    getCryptoContext: function getCryptoContext(ctx, authdata) {
-        // Make sure we have the right kind of entity authentication data.
-        if (!(authdata instanceof UnauthenticatedAuthenticationData))
-            throw new MslInternalException("Incorrect authentication data type " + authdata + ".");
+    	/** @inheritDoc */
+    	createData: function createData(ctx, entityAuthMo, callback) {
+    		AsyncExecutor(callback, function() {
+    			return UnauthenticatedAuthenticationData.parse(entityAuthMo);
+    		});
+    	},
 
-        // Return the crypto context.
-        return new NullCryptoContext();
-    },
-});
+    	/** @inheritDoc */
+    	getCryptoContext: function getCryptoContext(ctx, authdata) {
+    		// Make sure we have the right kind of entity authentication data.
+    		if (!(authdata instanceof UnauthenticatedAuthenticationData))
+    			throw new MslInternalException("Incorrect authentication data type " + authdata + ".");
+
+    		// Return the crypto context.
+    		return new NullCryptoContext();
+    	},
+    });
+})(require, (typeof module !== 'undefined') ? module : mkmodule('UnauthenticatedAuthenticationFactory'));

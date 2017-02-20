@@ -57,56 +57,36 @@
  * @param {Object=} thisArg object to use as this when executing the function.
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-function AsyncExecutor(callback, func, thisArg) {
-    var T;
-    if (thisArg)
-        T = thisArg;
-
-    // Make sure the callback is correct.
-    if (typeof callback !== 'object' ||
-        typeof callback.result !== 'function' ||
-        typeof callback.error !== 'function')
-    {
-        throw new TypeError("callback must be an object with function properties 'result' and 'error'.");
-    }
-
-    // Wrap the function in a try/catch block to catch any thrown errors.
-    try {
-        var result = func.call(T, callback);
-
-        // Only deliver the result if it was not undefined. It's possible the
-        // function is itself asynchronous and is not returning any result.
-        if (result !== undefined)
-            callback.result(result);
-    } catch (e) {
-        // Don't propagate exceptions from the callback
-        try {
-            callback.error(e);
-        } catch (f) {
-        }
-    }
-}
-
-/**
- * <p>Executes a function (synchronously) that may timeout.</p>
- *
- * <p>This is identical to AsyncExecutor except it also enforces the existence
- * of a timeout callback.</p>
- *
- * @param {{result: function(*), timeout: function(), error:function(Error)}}
- *        callback the callback functions that will receive the result, be
- *        notified of timeout, or any thrown errors.
- * @param {function({result: function(*), error: function(Error)}): *=} func
- *        the function to execute.
- * @param {Object=} thisArg object to use as this when executing the function.
- * @author Wesley Miaw <wmiaw@netflix.com>
- */
-function InterruptibleExecutor(callback, func, thisArg) {
-    // Make sure the callback is correct.
-    if (typeof callback !== 'object' ||
-        typeof callback.timeout !== 'function')
-    {
-        throw new TypeError("callback must be an object with function properties 'result', 'timeout', and 'error'.");
-    }
-    AsyncExecutor(callback, func, thisArg);
-}
+(function(require, module) {
+	"use strict";
+	
+	var AsyncExecutor = module.exports = function AsyncExecutor(callback, func, thisArg) {
+	    var T;
+	    if (thisArg)
+	        T = thisArg;
+	
+	    // Make sure the callback is correct.
+	    if (typeof callback !== 'object' ||
+	        typeof callback.result !== 'function' ||
+	        typeof callback.error !== 'function')
+	    {
+	        throw new TypeError("callback must be an object with function properties 'result' and 'error'.");
+	    }
+	
+	    // Wrap the function in a try/catch block to catch any thrown errors.
+	    try {
+	        var result = func.call(T, callback);
+	
+	        // Only deliver the result if it was not undefined. It's possible the
+	        // function is itself asynchronous and is not returning any result.
+	        if (result !== undefined)
+	            callback.result(result);
+	    } catch (e) {
+	        // Don't propagate exceptions from the callback
+	        try {
+	            callback.error(e);
+	        } catch (f) {
+	        }
+	    }
+	};
+})(require, (typeof module !== 'undefined') ? module : mkmodule('AsyncExecutor'));

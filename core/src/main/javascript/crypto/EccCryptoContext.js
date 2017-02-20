@@ -21,12 +21,19 @@
  * @author Pablo Pissanetzky <ppissanetzky@netflix.com>
  * @implements {ICryptoContext}
  */
-var EccCryptoContext;
-
-(function() {
+(function(require, module) {
     "use strict";
+    
+    const ICryptoContext = require('../crypto/ICryptoContext.js');
+    const MslSignatureEnvelope = require('../crypto/MslSignatureEnvelope.js');
+    const WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');
+    const MslCrypto = require('../crypto/MslCrypto.js');
+    const MslCryptoException = require('../MslCryptoException.js');
+    const MslError = require('../MslError.js');
+    const MslEncoderException = require('../io/MslEncoderException.js');
+    const AsyncExecutor = require('../util/AsyncExecutor.js');
 
-    EccCryptoContext = ICryptoContext.extend({
+    var EccCryptoContext = module.exports = ICryptoContext.extend({
         /**
          * <p>Create a new ECC crypto context with the provided public and
          * private keys.</p>
@@ -109,7 +116,7 @@ var EccCryptoContext;
                 var onerror = function(e) {
                     callback.error(new MslCryptoException(MslError.SIGNATURE_ERROR));
                 };
-                mslCrypto['sign'](WebCryptoAlgorithm.ECDSA_SHA256, this.privateKey, data)
+                MslCrypto['sign'](WebCryptoAlgorithm.ECDSA_SHA256, this.privateKey, data)
                     .then(oncomplete, onerror);
             }, this);
         },
@@ -129,7 +136,7 @@ var EccCryptoContext;
                             var onerror = function(e) {
                                 callback.error(new MslCryptoException(MslError.SIGNATURE_ERROR));
                             };
-                            mslCrypto['verify'](WebCryptoAlgorithm.ECDSA_SHA256, this.publicKey, envelope.signature, data)
+                            MslCrypto['verify'](WebCryptoAlgorithm.ECDSA_SHA256, this.publicKey, envelope.signature, data)
                                 .then(oncomplete, onerror);
                         }, self);
                     },
@@ -138,4 +145,4 @@ var EccCryptoContext;
             }, this);
         }
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('EccCryptoContext'));

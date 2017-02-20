@@ -19,14 +19,26 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var SymmetricWrappedExchange;
-var SymmetricWrappedExchange$KeyId;
-var SymmetricWrappedExchange$RequestData;
-var SymmetricWrappedExchange$RequestData$parse;
-var SymmetricWrappedExchange$ResponseData;
-var SymmetricWrappedExchange$ResponseData$parse;
-
-(function() {
+(function(require, module) {
+	"use strict";
+	
+	const KeyRequestData = require('../keyx/KeyRequestData.js');
+	const KeyExchangeScheme = require('../keyx/KeyExchangeScheme.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const MslKeyExchangeException = require('../MslKeyExchangeException.js');
+	const MslError = require('../MslError.js');
+	const MslEncoderException = require('../MslEncoderException.js');
+	const MslEncodingException = require('../MslEncodingException.js');
+	const KeyResponseData = require('../keyx/KeyResponseData.js');
+	const Arrays = require('../util/Arrays.js');
+	const MslMasterTokenException = require('../MslMasterTokenException.js');
+	const SessionCryptoContext = require('../crypto/SessionCryptoContext.js');
+	const PresharedAuthenticationData = require('../entityauth/PresharedAuthenticationData.js');
+	const MslInternalException = require('../MslInternalException.js');
+	const MslException = require('../MslException.js');
+	const WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');
+	const WebCryptoUsage = require('../crypto/WebCryptoUsage.js');
+	
     /**
      * Key ID.
      * @enum {string}
@@ -183,15 +195,15 @@ var SymmetricWrappedExchange$ResponseData$parse;
             if (this === that) return true;
             if (!(that instanceof SymmetricWrappedExchange$ResponseData)) return false;
             return equals.base.call(this, that) && this.keyId == that.keyId &&
-                Arrays$equal(this.encryptionKey, that.encryptionKey) &&
-                Arrays$equal(this.hmacKey, that.hmacKey);
+                Arrays.equal(this.encryptionKey, that.encryptionKey) &&
+                Arrays.equal(this.hmacKey, that.hmacKey);
         },
 
         /** @inheritDoc */
         uniqueKey: function uniqueKey() {
             return uniqueKey.base.call(this) + ':' + this.keyId +
-                ':' + Arrays$hashCode(this.encryptionKey) +
-                ':' + Arrays$hashCode(this.hmacKey);
+                ':' + Arrays.hashCode(this.encryptionKey) +
+                ':' + Arrays.hashCode(this.hmacKey);
         },
     });
 
@@ -274,7 +286,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
         });
     }
 
-    SymmetricWrappedExchange = KeyExchangeFactory.extend({
+    var SymmetricWrappedExchange = module.exports = KeyExchangeFactory.extend({
         /**
          * Create a new symmetric wrapped key exchange factory.
          * 
@@ -536,4 +548,11 @@ var SymmetricWrappedExchange$ResponseData$parse;
             }
         },
     });
-})();
+    
+    // Exports.
+    module.exports.KeyId = SymmetricWrappedExchange$KeyId;
+    module.exports.RequestData = SymmetricWrappedExchange$RequestData;
+    module.exports.RequestData.parse = SymmetricWrappedExchange$RequestData$parse;
+    module.exports.ResponseData = SymmetricWrappedExchange$ResponseData;
+    module.exports.ResponseData.parse = SymmetricWrappedExchange$ResponseData$parse;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('SymmetricWrappedExchange'));

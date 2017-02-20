@@ -19,15 +19,31 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var AsymmetricWrappedExchange;
-var AsymmetricWrappedExchange$Mechanism;
-var AsymmetricWrappedExchange$RequestData;
-var AsymmetricWrappedExchange$RequestData$parse;
-var AsymmetricWrappedExchange$ResponseData;
-var AsymmetricWrappedExchange$ResponseData$parse;
-
-(function() {
-    "use strict";
+(function(require, module) {
+	"use strict";
+	
+	const KeyRequestData = require('../keyx/KeyRequestData.js');
+	const KeyExchangeScheme = require('../keyx/KeyExchangeScheme.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const Arrays = require('../util/Arrays.js');
+	const MslKeyExchangeException = require('../MslKeyExchangeException.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const MslEncodingException = require('../MslEncodingException.js');
+	const MslError = require('../MslError.js');
+	const PublicKey = require('../crypto/PublicKey.js');
+	const WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');
+	const WebCryptoUsage = require('../crypto/WebCryptoUsage.js');
+	const KeyFormat = require('../crypto/KeyFormat.js');
+	const MslCryptoException = require('../MslCryptoException.js');
+	const KeyResponseData = require('../keyx/KeyResponseData.js');
+	const JsonWebEncryptionCryptoContext = require('../crypto/JsonWebEncryptionCryptoContext.js');
+	const RsaCryptoContext = require('../crypto/RsaCryptoContext.js');
+	const KeyExchangeFactory = require('../keyx/KeyExchangeFactory.js');
+	const MslInternalException = require('../MslInternalException.js');
+	const MasterToken = require('../tokens/MasterToken.js');
+	const MslMasterTokenException = require('../MslMasterTokenException.js');
+	const MslException = require('../MslException.js');
+	const SessionCryptoContext = require('../crypto/SessionCryptoContext.js');
 
     /**
      * Asymmetric key wrapped mechanism.
@@ -138,11 +154,11 @@ var AsymmetricWrappedExchange$ResponseData$parse;
             var privateKeysEqual =
                 this.privateKey === that.privateKey ||
                 (this.privateKey && that.privateKey &&
-                    Arrays$equal(this.privateKey.getEncoded(), that.privateKey.getEncoded()));
+                    Arrays.equal(this.privateKey.getEncoded(), that.privateKey.getEncoded()));
             return equals.base.call(this, that) &&
                 this.keyPairId == that.keyPairId &&
                 this.mechanism == that.mechanism &&
-                Arrays$equal(this.publicKey.getEncoded(), that.publicKey.getEncoded()) &&
+                Arrays.equal(this.publicKey.getEncoded(), that.publicKey.getEncoded()) &&
                 privateKeysEqual;
         },
 
@@ -151,9 +167,9 @@ var AsymmetricWrappedExchange$ResponseData$parse;
             var encodedPublicKey = this.publicKey.getEncoded();
             var encodedPrivateKey = this.privateKey && this.privateKey.getEncoded();
 
-            var key = uniqueKey.base.call(this) + ':' + this.keyPairId + ':' + this.mechanism + ':' + Arrays$hashCode(encodedPublicKey);
+            var key = uniqueKey.base.call(this) + ':' + this.keyPairId + ':' + this.mechanism + ':' + Arrays.hashCode(encodedPublicKey);
             if (encodedPrivateKey)
-                key += ':' + Arrays$hashCode(encodedPrivateKey);
+                key += ':' + Arrays.hashCode(encodedPrivateKey);
             return key;
         }
     });
@@ -198,7 +214,7 @@ var AsymmetricWrappedExchange$ResponseData$parse;
                     case Mechanism.JWEJS_RSA:
                     case Mechanism.JWK_RSA:
                     {
-                        PublicKey$import(encodedKey, WebCryptoAlgorithm.RSA_OAEP, WebCryptoUsage.WRAP, KeyFormat.SPKI, {
+                        PublicKey.import(encodedKey, WebCryptoAlgorithm.RSA_OAEP, WebCryptoUsage.WRAP, KeyFormat.SPKI, {
                             result: function(publicKey) {
                                 constructRequestData(keyPairId, mechanism, publicKey);
                             },
@@ -208,7 +224,7 @@ var AsymmetricWrappedExchange$ResponseData$parse;
                     }
                     case Mechanism.JWK_RSAES:
                     {
-                        PublicKey$import(encodedKey, WebCryptoAlgorithm.RSAES, WebCryptoUsage.WRAP, KeyFormat.SPKI, {
+                        PublicKey.import(encodedKey, WebCryptoAlgorithm.RSAES, WebCryptoUsage.WRAP, KeyFormat.SPKI, {
                             result: function(publicKey) {
                                 constructRequestData(keyPairId, mechanism, publicKey);
                             },
@@ -292,15 +308,15 @@ var AsymmetricWrappedExchange$ResponseData$parse;
             if (!(that instanceof AsymmetricWrappedExchange$ResponseData)) return false;
             return equals.base.call(this, that) &&
                 this.keyPairId == that.keyPairId &&
-                Arrays$equal(this.encryptionKey, that.encryptionKey) &&
-                Arrays$equal(this.hmacKey, that.hmacKey);
+                Arrays.equal(this.encryptionKey, that.encryptionKey) &&
+                Arrays.equal(this.hmacKey, that.hmacKey);
         },
 
         /** @inheritDoc */
         uniqueKey: function uniqueKey() {
             return uniqueKey.base.call(this) + ':' + this.keyPairId +
-                ':' + Arrays$hashCode(this.encryptionKey) +
-                ':' + Arrays$hashCode(this.hmacKey);
+                ':' + Arrays.hashCode(this.encryptionKey) +
+                ':' + Arrays.hashCode(this.hmacKey);
         },
     });
 
@@ -346,18 +362,18 @@ var AsymmetricWrappedExchange$ResponseData$parse;
         switch (mechanism) {
             case Mechanism.JWE_RSA:
             case Mechanism.JWEJS_RSA:
-                return new JsonWebEncryptionCryptoContext(ctx, JsonWebEncryptionCryptoContext$Algorithm.RSA_OAEP, JsonWebEncryptionCryptoContext$Encryption.A128GCM, privateKey, publicKey);
+                return new JsonWebEncryptionCryptoContext(ctx, JsonWebEncryptionCryptoContext.Algorithm.RSA_OAEP, JsonWebEncryptionCryptoContext.Encryption.A128GCM, privateKey, publicKey);
             case Mechanism.RSA:
             case Mechanism.JWK_RSA:
-                return new RsaCryptoContext(ctx, keyPairId, privateKey, publicKey, RsaCryptoContext$Mode.WRAP_UNWRAP_OAEP);
+                return new RsaCryptoContext(ctx, keyPairId, privateKey, publicKey, RsaCryptoContext.Mode.WRAP_UNWRAP_OAEP);
             case Mechanism.JWK_RSAES:
-                return new RsaCryptoContext(ctx, keyPairId, privateKey, publicKey, RsaCryptoContext$Mode.WRAP_UNWRAP_PKCS1);
+                return new RsaCryptoContext(ctx, keyPairId, privateKey, publicKey, RsaCryptoContext.Mode.WRAP_UNWRAP_PKCS1);
             default:
                 throw new MslCryptoException(MslError.UNSUPPORTED_KEYX_MECHANISM, mechanism);
         }
     }
 
-    AsymmetricWrappedExchange = KeyExchangeFactory.extend({
+    var AsymmetricWrappedExchange = module.exports = KeyExchangeFactory.extend({
         /**
          * Create a new asymmetric wrapped key exchange factory.
          * 
@@ -596,4 +612,11 @@ var AsymmetricWrappedExchange$ResponseData$parse;
             }, self);
         },
     });
-})();
+    
+    // Exports.
+    module.exports.Mechanism = AsymmetricWrappedExchange$Mechanism;
+    module.exports.RequestData = AsymmetricWrappedExchange$RequestData;
+    module.exports.RequestData.parse = AsymmetricWrappedExchange$RequestData$parse;
+    module.exports.ResponseData = AsymmetricWrappedExchange$ResponseData;
+    module.exports.ResponseData.parse = AsymmetricWrappedExchange$ResponseData$parse;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('AsymmetricWrappedExchange'));

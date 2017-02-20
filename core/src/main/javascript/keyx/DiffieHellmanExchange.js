@@ -19,15 +19,31 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var DiffieHellmanExchange;
-var DiffieHellmanExchange$DhParameterSpec;
-var DiffieHellmanExchange$RequestData;
-var DiffieHellmanExchange$RequestData$parse;
-var DiffieHellmanExchange$ResponseData;
-var DiffieHellmanExchange$ResponseData$parse;
+(function(require, module) {
+	"use strict";
+	
+	const KeyRequestData = require('../keyx/KeyRequestData.js');
+	const KeyExchangeScheme = require('../keyx/KeyExchangeScheme.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const Arrays = require('../util/Arrays.js');
+	const MslKeyExchangeException = require('../MslKeyExchangeException.js');
+	const MslError = require('../MslError.js');
+	const PublicKey = require('../crypto/PublicKey.js');
+	const WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');
+	const WebCryptoUsage = require('../crypto/WebCryptoUsage.js');
+	const KeyFormat = require('../crypto/KeyFormat.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const MslEncodingException = require('../MslEncodingException.js');
+	const KeyResponseData = require('../keyx/KeyResponseData.js');
+	const MslCryptoException = require('../MslCryptoException.js');
+	const MslInternalException = require('../MslInternalException.js');
+	const MasterToken = require('../tokens/MasterToken.js');
+	const MslMasterTokenException = require('../MslMasterTokenException.js');
+	const MslCrypto = require('../crypto/MslCrypto.js');
+	const KeyExchangeFactory = require('../keyx/KeyExchangeFactory.js');
+	const MslException = require('../MslException.js');
 
-(function() {
-    /**
+	/**
      * Key Diffie-Hellman parameters ID.
      * @const
      * @type {string}
@@ -95,18 +111,18 @@ var DiffieHellmanExchange$ResponseData$parse;
             var privateKeysEqual =
                 this.privateKey === that.privateKey ||
                 (this.privateKey && that.privateKey &&
-                    Arrays$equal(this.privateKey.getEncoded(), that.privateKey.getEncoded()));
+                    Arrays.equal(this.privateKey.getEncoded(), that.privateKey.getEncoded()));
             return equals.base.call(this, that) &&
                 this.parametersId == that.parametersId &&
-                Arrays$equal(this.publicKey.getEncoded(), that.publicKey.getEncoded()) &&
+                Arrays.equal(this.publicKey.getEncoded(), that.publicKey.getEncoded()) &&
                 privateKeysEqual;
         },
 
         /** @inheritDoc */
         uniqueKey: function uniqueKey() {
-            var key = uniqueKey.base.call(this) + ':' + this.parametersId + ':' + Arrays$hashCode(this.publicKey.getEncoded());
+            var key = uniqueKey.base.call(this) + ':' + this.parametersId + ':' + Arrays.hashCode(this.publicKey.getEncoded());
             if (this.privateKey)
-                key += ':' + Arrays$hashCode(this.privateKey.getEncoded());
+                key += ':' + Arrays.hashCode(this.privateKey.getEncoded());
             return key;
         },
     });
@@ -129,7 +145,7 @@ var DiffieHellmanExchange$ResponseData$parse;
                 var publicKeyY = keyDataMo.getBytes(KEY_PUBLIC_KEY);
                 if (publicKeyY.length == 0)
                     throw new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY, "keydata " + keyDataMo);
-                PublicKey$import(publicKeyY, WebCryptoAlgorithm.DIFFIE_HELLMAN, WebCryptoUsage.DERIVE_KEY, KeyFormat.SPKI, {
+                PublicKey.import(publicKeyY, WebCryptoAlgorithm.DIFFIE_HELLMAN, WebCryptoUsage.DERIVE_KEY, KeyFormat.SPKI, {
                     result: function(publicKey) {
                         var privateKey = null;
                         callback.result(new RequestData(parametersId, publicKey, privateKey));
@@ -197,12 +213,12 @@ var DiffieHellmanExchange$ResponseData$parse;
             if (!(that instanceof DiffieHellmanExchange$ResponseData)) return false;
             return equals.base.call(this, that) &&
                 this.parametersId == that.parametersId &&
-                Arrays$equal(this.publicKey.getEncoded(), that.publicKey.getEncoded());
+                Arrays.equal(this.publicKey.getEncoded(), that.publicKey.getEncoded());
         },
 
         /** @inheritDoc */
         uniqueKey: function uniqueKey() {
-            return uniqueKey.base.call(this) + ':' + this.parametersId + ':' + Arrays$hashCode(this.publicKey.getEncoded());
+            return uniqueKey.base.call(this) + ':' + this.parametersId + ':' + Arrays.hashCode(this.publicKey.getEncoded());
         },
     });
 
@@ -222,7 +238,7 @@ var DiffieHellmanExchange$ResponseData$parse;
             var publicKeyY = keyDataMo.getBytes(KEY_PUBLIC_KEY);
             if (publicKeyY.length == 0)
                 throw new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY, "keydata " + keyDataMo);
-            PublicKey$import(publicKeyY, WebCryptoAlgorithm.DIFFIE_HELLMAN, WebCryptoUsage.DERIVE_KEY, {
+            PublicKey.import(publicKeyY, WebCryptoAlgorithm.DIFFIE_HELLMAN, WebCryptoUsage.DERIVE_KEY, {
                 result: function(publicKey) {
                     callback.result(new ResponseData(masterToken, parametersId, publicKey));
                 },
@@ -235,17 +251,6 @@ var DiffieHellmanExchange$ResponseData$parse;
                 throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "keydata " + keyDataMo, e);
             throw e;
         }
-    };
-
-    /**
-     * Diffie-Hellman parameter specification.
-     *
-     * @param {BigInteger} p prime number.
-     * @param {BigInteger} g generator.
-     */
-    DiffieHellmanExchange$DhParameterSpec = function DhParameterSpec(p, g) {
-        this.p = p;
-        this.g = g;
     };
     
     /**
@@ -279,7 +284,7 @@ var DiffieHellmanExchange$ResponseData$parse;
         return result;
     }
 
-    DiffieHellmanExchange = KeyExchangeFactory.extend({
+    var DiffieHellmanExchange = module.exports = KeyExchangeFactory.extend({
         /**
          * Create a new Diffie-Hellman key exchange factory.
          *
@@ -398,7 +403,7 @@ var DiffieHellmanExchange$ResponseData$parse;
                 var onerror = function(e) {
                     callback.error(new MslCryptoException(MslError.GENERATEKEY_ERROR, "Error generating Diffie-Hellman key pair.", e).setMasterToken(entityToken));
                 };
-                mslCrypto['generateKey']({
+                MslCrypto['generateKey']({
                     'name': WebCryptoAlgorithm.DIFFIE_HELLMAN,
                     'prime': params.p,
                     'generator': params.g
@@ -525,4 +530,10 @@ var DiffieHellmanExchange$ResponseData$parse;
             }, self);
         },
     });
-})();
+    
+    // Exports.
+    module.exports.RequestData = DiffieHellmanExchange$RequestData;
+    module.exports.RequestData.parse = DiffieHellmanExchange$RequestData$parse;
+    module.exports.ResponseData = DiffieHellmanExchange$ResponseData;
+    module.exports.ResponseData.parse = DiffieHellmanExchange$ResponseData$parse;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('DiffieHellmanExchange'));

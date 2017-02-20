@@ -19,10 +19,12 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MslIoException;
-
-(function() {
-    MslIoException = util.Class.create(new Error());
+(function(require, module) {
+	"use strict";
+	
+	const Class = require('./util/Class.js');
+	
+    var MslIoException = module.exports = Class.create(new Error());
 
     var proto = {
         /**
@@ -69,4 +71,4 @@ var MslIoException;
 
     // Attach methods.
     MslIoException.mixin(proto);
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslIoException'));

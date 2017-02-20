@@ -34,15 +34,20 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MslObject;
-
-(function() {
-    "use strict";
+(function(require, module) {
+	"use strict";
+	
+	const Class = require('../util/Class.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const MslEncoderFactory = require('../io/MslEncoderFactory.js');
+	const MslArray = require('../io/MslArray.js');
+	const MslEncodable = require('../io/MslEncodable.js');
+	const MslEncoderUtils = require('../io/MslEncoderUtils.js');
 
     /**
      * @interface
      */
-    MslObject = util.Class.create({
+	var MslObject = module.exports = Class.create({
         /**
          * Create a new {@code MslObject} from the given optional object.
          * 
@@ -89,7 +94,7 @@ var MslObject;
                 throw new TypeError("Unsupported key.");
             var o = this.map[key];
             if (o === null || o === undefined)
-                throw new MslEncoderException("MslObject[" + MslEncoderFactory$quote(key) + "] not found.");
+                throw new MslEncoderException("MslObject[" + MslEncoderFactory.quote(key) + "] not found.");
             if (o instanceof Object && o.constructor === Object)
                 return new MslObject(o);
             if (o instanceof Array)
@@ -112,7 +117,7 @@ var MslObject;
                 return o.valueOf();
             if (typeof o === 'boolean')
                 return o;
-            throw new MslEncoderException("MslObject[" + MslEncoderFactory$quote(key) + "] is not a boolean.");
+            throw new MslEncoderException("MslObject[" + MslEncoderFactory.quote(key) + "] is not a boolean.");
         },
         
         /**
@@ -128,7 +133,7 @@ var MslObject;
             var o = this.get(key);
             if (o instanceof Uint8Array)
                 return o;
-            throw new MslEncoderException("MslObject[" + MslEncoderFactory$quote(key) + "] is not binary data.");
+            throw new MslEncoderException("MslObject[" + MslEncoderFactory.quote(key) + "] is not binary data.");
         },
         
         /**
@@ -146,7 +151,7 @@ var MslObject;
                 return o.valueOf();
             if (typeof o === 'number')
                 return o;
-            throw new MslEncoderException("MslObject[" + MslEncoderFactory$quote(key) + "] is not a number.");
+            throw new MslEncoderException("MslObject[" + MslEncoderFactory.quote(key) + "] is not a number.");
         },
         
         /**
@@ -165,7 +170,7 @@ var MslObject;
                 return o.valueOf() << 0;
             if (typeof o === 'number')
                 return o << 0;
-            throw new MslEncoderException("MslObject[" + MslEncoderFactory$quote(key) + "] is not a number.");
+            throw new MslEncoderException("MslObject[" + MslEncoderFactory.quote(key) + "] is not a number.");
         },
         
         /**
@@ -183,7 +188,7 @@ var MslObject;
                 return o;
             if (o instanceof Array)
                 return new MslArray(o);
-            throw new MslEncoderException("MslObject[" + MslEncoderFactory$quote(key) + "] is not a MslArray.");
+            throw new MslEncoderException("MslObject[" + MslEncoderFactory.quote(key) + "] is not a MslArray.");
         },
         
         /**
@@ -211,11 +216,11 @@ var MslObject;
                     return encoder.parseObject(o);
                 } catch (e) {
                     if (e instanceof MslEncoderException)
-                        throw new MslEncoderException("MslObject[" + MslEncoderFactory$quote(key) + "] is not a MslObject.");
+                        throw new MslEncoderException("MslObject[" + MslEncoderFactory.quote(key) + "] is not a MslObject.");
                     throw e;
                 }
             }
-            throw new MslEncoderException("MslObject[" + MslEncoderFactory$quote(key) + "] is not a MslObject.");
+            throw new MslEncoderException("MslObject[" + MslEncoderFactory.quote(key) + "] is not a MslObject.");
         },
         
         /**
@@ -234,7 +239,7 @@ var MslObject;
                 return parseInt(o.valueOf());
             if (typeof o === 'number')
                 return parseInt(o);
-            throw new MslEncoderException("MslObject[" + MslEncoderFactory$quote(key) + "] is not a number.");
+            throw new MslEncoderException("MslObject[" + MslEncoderFactory.quote(key) + "] is not a number.");
         },
         
         /**
@@ -252,7 +257,7 @@ var MslObject;
                 return o.valueOf();
             if (typeof o === 'string')
                 return o;
-            throw new MslEncoderException("MslObject[" + MslEncoderFactory$quote(key) + "] is not a string.");
+            throw new MslEncoderException("MslObject[" + MslEncoderFactory.quote(key) + "] is not a string.");
         },
     
         /**
@@ -732,7 +737,7 @@ var MslObject;
         	if (this == that) return true;
         	if (!(that instanceof MslObject)) return false;
         	try {
-        		return MslEncoderUtils$equalObjects(this, that);
+        		return MslEncoderUtils.equalObjects(this, that);
 	    	} catch (e) {
 	    		if (e instanceof MslEncoderException) return false;
 	    		throw e;
@@ -741,7 +746,7 @@ var MslObject;
         
         /** @inheritDoc */
         toString: function toString() {
-        	return MslEncoderFactory$stringify(this.map);
+        	return MslEncoderFactory.stringify(this.map);
         },
     });
 })();

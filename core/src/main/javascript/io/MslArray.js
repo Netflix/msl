@@ -31,15 +31,21 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MslArray;
-
-(function() {
-    "use strict";
+(function(require, module) {
+	"use strict";
+	
+	const Class = require('../util/Class.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const MslObject = require('../io/MslObject.js');
+	const MslArray = require('../io/MslArray.js');
+	const MslEncodable = require('../io/MslEncodable.js');
+	const MslEncoderUtils = require('../io/MslEncoderUtils.js');
+	const MslEncoderFactory = require('../io/MslEncoderFactory.js');
 
     /**
      * @interface
      */
-    MslArray = util.Class.create({
+    var MslArray = module.exports = Class.create({
         /**
          * Create a new {@code MslArray} from the given optional object array.
          * 
@@ -746,7 +752,7 @@ var MslArray;
         	if (this == that) return true;
         	if (!(that instanceof MslArray)) return false;
         	try {
-        		return MslEncoderUtils$equalArrays(this, that);
+        		return MslEncoderUtils.equalArrays(this, that);
         	} catch (e) {
         		if (e instanceof MslEncoderException) return false;
         		throw e;
@@ -755,7 +761,7 @@ var MslArray;
         
         /** @inheritDoc */
         toString: function toString() {
-        	return MslEncoderFactory$stringify(this.list);
+        	return MslEncoderFactory.stringify(this.list);
         },
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslArray'));

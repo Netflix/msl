@@ -19,14 +19,17 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var SecretKey;
-var SecretKey$create;
-var SecretKey$import;
-
-(function () {
+(function (require, module) {
     "use strict";
+    
+    const Class = require('../util/Class.js');
+    const AsyncExecutor = require('../util/AsyncExecutor.js');
+    const MslCryptoException = require('../MslCryptoException.js');
+    const MslError = require('../MslError.js');
+    const MslCrypto = require('../crypto/MslCrypto.js');
+    const Base64 = require('../util/Base64.js');
 
-    SecretKey = util.Class.create({
+    var SecretKey = module.exports = Class.create({
         /**
          * Create a new cipher key from an original symmetric key.
          *
@@ -55,7 +58,7 @@ var SecretKey$import;
                     var onerror = function(e) {
                         callback.error(new MslCryptoException(MslError.KEY_EXPORT_ERROR, "raw"));
                     };
-                    mslCrypto.exportKey("raw", rawKey)
+                    MslCrypto.exportKey("raw", rawKey)
                         .then(oncomplete, onerror);
 
                 } else {
@@ -65,7 +68,7 @@ var SecretKey$import;
 
             function createKey(keyData) {
                 AsyncExecutor(callback, function() {
-                    var keyDataB64 = (keyData) ? base64$encode(keyData) : undefined;
+                    var keyDataB64 = (keyData) ? Base64.encode(keyData) : undefined;
 
                     // The properties.
                     var props = {
@@ -118,7 +121,7 @@ var SecretKey$import;
      *        or any thrown exceptions.
      * @throws MslCryptoException if the rawKey is invalid.
      */
-    SecretKey$create = function SecretKey$create(rawKey, callback) {
+    var SecretKey$create = function SecretKey$create(rawKey, callback) {
         new SecretKey(rawKey, callback);
     };
 
@@ -134,10 +137,10 @@ var SecretKey$import;
      *        or any thrown exceptions.
      * @throws MslCryptoException if the key data is invalid.
      */
-    SecretKey$import = function SecretKey$import(keydata, algo, usages, callback) {
+    var SecretKey$import = function SecretKey$import(keydata, algo, usages, callback) {
         AsyncExecutor(callback, function() {
             try {
-                keydata = (typeof keydata == "string") ? base64$decode(keydata) : keydata;
+                keydata = (typeof keydata == "string") ? Base64.decode(keydata) : keydata;
             } catch (e) {
                 throw new MslCryptoException(MslError.INVALID_SYMMETRIC_KEY, "keydata " + keydata, e);
             }
@@ -148,8 +151,12 @@ var SecretKey$import;
             var onerror = function(e) {
                 callback.error(new MslCryptoException(MslError.INVALID_SYMMETRIC_KEY));
             };
-            mslCrypto.importKey("raw", keydata, algo, true, usages)
+            MslCrypto.importKey("raw", keydata, algo, true, usages)
                 .then(oncomplete, onerror);
         });
     };
-})();
+    
+    // Exports.
+    module.exports.create = SecretKey$create;
+    module.exports.import = SecretKey$import;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('SecretKey'));

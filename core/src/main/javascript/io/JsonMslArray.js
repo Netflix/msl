@@ -19,12 +19,20 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var JsonMslArray;
-
-(function() {
-    "use strict";
-    
-    JsonMslArray = MslArray.extend({
+(function(require, module) {
+	"use strict";
+	
+	const MslArray = require('../io/MslArray.js');
+	const MslObject = require('../io/MslObject.js');
+	const textEncoding = require('../lib/textEncoding.js');
+	const MslConstants = require('../MslConstants.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const MslException = require('../MslException.js');
+	const JsonMslObject = require('../io/JsonMslObject.js');
+	const Base64 = require('../util/Base64.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	
+	var JsonMslArray = module.exports = MslArray.extend({
         /**
          * <p>Create a new {@code MslArray}.</p>
          * 
@@ -56,7 +64,7 @@ var JsonMslArray;
             		ja.push(source.opt(i));
             } else if (source instanceof Uint8Array) {
                 try {
-                    var json = textEncoding$getString(source, MslConstants$DEFAULT_CHARSET);
+                    var json = textEncoding.getString(source, MslConstants.DEFAULT_CHARSET);
                     var decoded = JSON.parse(json);
                     if (!(decoded instanceof Array))
                         throw new MslEncoderException("Invalid JSON array encoding.");
@@ -111,9 +119,9 @@ var JsonMslArray;
                 return value;
             try {
 	            if (value instanceof String)
-	                return base64$decode(value.valueOf());
+	                return Base64.decode(value.valueOf());
 	            if (typeof value === 'string')
-	                return base64$decode(value);
+	                return Base64.decode(value);
             } catch (e) {
                 throw new MslEncoderException("MslArray[" + index + "] is not binary data.");
             }
@@ -131,9 +139,9 @@ var JsonMslArray;
         		return value;
             try {
 	            if (value instanceof String)
-	                return base64$decode(value.valueOf());
+	                return Base64.decode(value.valueOf());
 	            if (typeof value === 'string')
-	                return base64$decode(value);
+	                return Base64.decode(value);
             } catch (e) {
                 // Fall through.
             }
@@ -167,7 +175,7 @@ var JsonMslArray;
 	    			
 	    			var value = this.opt(i);
 	        		if (value instanceof Uint8Array) {
-	        			ja.push(base64$encode(value));
+	        			ja.push(Base64.encode(value));
 	        			next(ja, size, i+1);
 	        		} else if (value instanceof JsonMslObject) {
 	        			value.toJSONObject(encoder, {
@@ -237,4 +245,4 @@ var JsonMslArray;
         	}
         },
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('JsonMslArray'));

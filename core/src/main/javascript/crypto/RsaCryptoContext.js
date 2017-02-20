@@ -24,11 +24,23 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  * @implements {ICryptoContext}
  */
-var RsaCryptoContext;
-var RsaCryptoContext$Mode;
-
-(function() {
+(function(require, module) {
     "use strict";
+    
+    const ICryptoContext = require('../crypto/ICryptoContext.js');
+    const WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');
+    const AsyncExecutor = require('../util/AsyncExecutor.js');
+    const MslCryptoException = require('../MslCryptoException.js');
+    const MslEncoderException = require('../io/MslEncoderException.js');
+    const MslException = require('../MslException.js');
+    const MslError = require('../MslError.js');
+    const MslCrypto = require('../crypto/MslCrypto.js');
+    const MslSignatureEnvelope = require('../crypto/MslSignatureEnvelope.js');
+    const SecretKey = require('../crypto/SecretKey.js');
+    const PublicKey = require('../crypto/PublicKey.js');
+    const PrivateKey = require('../crypto/PrivateKey.js');
+    const MslEncodingException = require('../MslEncodingException.js');
+    const MslCiphertextEnvelope = require('../crypto/MslCiphertextEnvelope.js');
 
     /**
      * Null transform or algorithm.
@@ -41,7 +53,7 @@ var RsaCryptoContext$Mode;
      * RSA crypto context mode.
      * @enum
      */
-    RsaCryptoContext$Mode = {
+    var Mode = RsaCryptoContext$Mode = {
         /** RSA-OAEP encrypt/decrypt */
         ENCRYPT_DECRYPT_OAEP: 1,
         /** RSA PKCS#1 encrypt/decrypt */
@@ -54,9 +66,7 @@ var RsaCryptoContext$Mode;
         SIGN_VERIFY: 5
     };
 
-    var Mode = RsaCryptoContext$Mode;
-
-    RsaCryptoContext = ICryptoContext.extend({
+    var RsaCryptoContext = module.exports = ICryptoContext.extend({
         /**
          * <p>Create a new RSA crypto context for encrypt/decrypt and sign/verify
          * using the provided public and private keys. The crypto context mode
@@ -130,7 +140,7 @@ var RsaCryptoContext$Mode;
 
                 var oncomplete = function(ciphertext) {
                     // Return ciphertext envelope byte representation.
-                    MslCiphertextEnvelope$create(self.id, null, new Uint8Array(ciphertext), {
+                    MslCiphertextEnvelope.create(self.id, null, new Uint8Array(ciphertext), {
                         result: function (envelope) {
                             envelope.toMslEncoding(encoder, format, {
                                 result: callback.result,
@@ -151,7 +161,7 @@ var RsaCryptoContext$Mode;
                 var onerror = function(e) {
                     callback.error(new MslCryptoException(MslError.ENCRYPT_ERROR));
                 };
-                mslCrypto['encrypt'](self.transform, self.publicKey, data)
+                MslCrypto['encrypt'](self.transform, self.publicKey, data)
                     .then(oncomplete, onerror);
             }, this);
         },
@@ -177,7 +187,7 @@ var RsaCryptoContext$Mode;
                     throw new MslCryptoException(MslError.DECRYPT_ERROR, null, e);
                 }
 
-                MslCiphertextEnvelope$parse(encryptionEnvelopeMo, MslCiphertextEnvelope$Version.V1, {
+                MslCiphertextEnvelope.parse(encryptionEnvelopeMo, MslCiphertextEnvelope$Version.V1, {
                     result: function(envelope) {
                         try {
                             // Verify key ID.
@@ -225,7 +235,7 @@ var RsaCryptoContext$Mode;
                 };
                 // Use the transform instead of the wrap key algorithm in case
                 // the key algorithm is missing some fields.
-                mslCrypto['wrapKey']('jwk', key.rawKey, this.publicKey, this.wrapTransform)
+                MslCrypto['wrapKey']('jwk', key.rawKey, this.publicKey, this.wrapTransform)
                     .then(oncomplete, onerror);
             }, this);
         },
@@ -242,7 +252,7 @@ var RsaCryptoContext$Mode;
                 };
                 // Use the transform instead of the wrap key algorithm in case
                 // the key algorithm is missing some fields.
-                mslCrypto['unwrapKey']('jwk', data, this.privateKey, this.wrapTransform, algo, false, usages)
+                MslCrypto['unwrapKey']('jwk', data, this.privateKey, this.wrapTransform, algo, false, usages)
                     .then(oncomplete, onerror);
             }, this);
 
@@ -250,13 +260,13 @@ var RsaCryptoContext$Mode;
                 AsyncExecutor(callback, function() {
                     switch (rawKey["type"]) {
                         case "secret":
-                            SecretKey$create(rawKey, callback);
+                            SecretKey.create(rawKey, callback);
                             break;
                         case "public":
-                            PublicKey$create(rawKey, callback);
+                            PublicKey.create(rawKey, callback);
                             break;
                         case "private":
-                            PrivateKey$create(rawKey, callback);
+                            PrivateKey.create(rawKey, callback);
                             break;
                         default:
                             throw new MslCryptoException(MslError.UNSUPPORTED_KEY, "type: " + rawKey["type"]);
@@ -275,7 +285,7 @@ var RsaCryptoContext$Mode;
 
                 var oncomplete = function(hash) {
                     // Return the signature envelope byte representation.
-                    MslSignatureEnvelope$create(new Uint8Array(hash), {
+                    MslSignatureEnvelope.create(new Uint8Array(hash), {
                         result: function(envelope) {
                         	envelope.getBytes(encoder, format, {
                         		result: callback.result,
@@ -292,7 +302,7 @@ var RsaCryptoContext$Mode;
                 var onerror = function(e) {
                     callback.error(new MslCryptoException(MslError.SIGNATURE_ERROR));
                 };
-                mslCrypto['sign'](this.algo, this.privateKey, data)
+                MslCrypto['sign'](this.algo, this.privateKey, data)
                     .then(oncomplete, onerror);
             }, this);
         },
@@ -307,14 +317,14 @@ var RsaCryptoContext$Mode;
                     throw new MslCryptoException(MslError.VERIFY_NOT_SUPPORTED, "no public key");
 
                 // Reconstitute the signature envelope.
-                MslSignatureEnvelope$parse(signature, MslSignatureEnvelope$Version.V1, encoder, {
+                MslSignatureEnvelope.parse(signature, MslSignatureEnvelope.Version.V1, encoder, {
                     result: function(envelope) {
                         AsyncExecutor(callback, function() {
                             var oncomplete = callback.result;
                             var onerror = function(e) {
                                 callback.error(new MslCryptoException(MslError.SIGNATURE_ERROR));
                             };
-                            mslCrypto['verify'](this.algo, this.publicKey, envelope.signature, data)
+                            MslCrypto['verify'](this.algo, this.publicKey, envelope.signature, data)
                                 .then(oncomplete, onerror);
                         }, self);
                     },
@@ -323,4 +333,7 @@ var RsaCryptoContext$Mode;
             }, this);
         }
     });
-})();
+    
+    // Exports.
+    module.exports.Mode = RsaCryptoContext$Mode;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('RsaCryptoContext'));

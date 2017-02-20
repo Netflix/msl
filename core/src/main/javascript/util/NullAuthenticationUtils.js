@@ -20,14 +20,20 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var NullAuthenticationUtils = AuthenticationUtils.extend({
-	/** @inheritDoc */
-	isEntityRevoked: function isEntityRevoked(identity) {
-		return false;
-	},
-
-	/** @inheritDoc */
-	isSchemePermitted: function isSchemePermitted() {
-		return true;
-	},
-});
+(function(require, module) {
+	"use strict";
+	
+	const AuthenticationUtils = require('../util/AuthenticationUtils.js');
+		
+	var NullAuthenticationUtils = module.exports = AuthenticationUtils.extend({
+		/** @inheritDoc */
+		isEntityRevoked: function isEntityRevoked(identity) {
+			return false;
+		},
+	
+		/** @inheritDoc */
+		isSchemePermitted: function isSchemePermitted() {
+			return true;
+		},
+	});
+})(require, (typeof module !== 'undefined') ? module : mkmodule('NullAuthenticationUtils'));

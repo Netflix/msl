@@ -23,11 +23,8 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MslEncoderFormat;
-var MslEncoderFormat$getFormat;
-
-(function() {
-    "use strict";
+(function(require, module) {
+	"use strict";
     
     /**
      * Map of names onto formats.
@@ -55,7 +52,7 @@ var MslEncoderFormat$getFormat;
      * @param {string} name the encoder format name.
      * @param {Uint8Array} identifier the byte stream identifier.
      */
-    MslEncoderFormat = function MslEncoderFormat(name, identifier) {
+    var MslEncoderFormat = module.exports = function MslEncoderFormat(name, identifier) {
         // The properties.
         var props = {
             name: { value: name, writable: false, configurable: false },
@@ -68,7 +65,7 @@ var MslEncoderFormat$getFormat;
         formatsById[identifier] = this;
     };
     
-    util.Class.mixin(MslEncoderFormat,
+    Class.mixin(MslEncoderFormat,
     /** @lends {MslEncoderFormat} */
     ({
         /** JSON. */
@@ -81,11 +78,14 @@ var MslEncoderFormat$getFormat;
      * @return {MslEncoderFormat} the encoding format identified by the specified name or
      *         identifier, or {@code null} if there is none.
      */
-    MslEncoderFormat$getFormat = function MslEncoderFormat$getFormat(f) {
+    var MslEncoderFormat$getFormat = function MslEncoderFormat$getFormat(f) {
         if (typeof f === 'string' && formatsByName[f])
             return formatsByName[f];
         if (formatsById[f])
             return formatsById[f];
         return null;
     };
-})();
+    
+    // Exports.
+    module.exports.getFormat = MslEncoderFormat$getFormat;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslEncoderFormat'));

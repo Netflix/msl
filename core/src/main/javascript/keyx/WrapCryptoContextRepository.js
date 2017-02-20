@@ -23,34 +23,40 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var WrapCryptoContextRepository = util.Class.create({
-    /**
-     * Add a new wrapping key crypto context and wrap data. The wrap data
-     * should be used in key request data to request a new wrapping key
-     * wrapped with this wrapping key.
-     * 
-     * @param {Uint8Array} wrapdata wrapping key wrap data.
-     * @param {ICryptoContext} cryptoContext wrapping key crypto context.
-     */
-    addCryptoContext: function(wrapdata, cryptoContext) {},
-    
-    /**
-     * Return the wrapping key crypto context identified by the specified
-     * wrap data.
-     * 
-     * @param {Uint8Array} wrapdata wrapping key wrap data.
-     * @return {ICryptoContext} the wrapping key crypto context or null if none exists.
-     */
-    getCryptoContext: function(wrapdata) {},
-    
-    /**
-     * Remove the wrapping key crypto context identified by the specified
-     * key wrap data. This is called after calling
-     * {@link #addCryptoContext(byte[], ICryptoContext)} to
-     * indicate the old wrapping crypto context should no longer be
-     * necessary.
-     * 
-     * @param {Uint8Array} wrapdata wrapping key wrap data.
-     */
-    removeCryptoContext: function(wrapdata) {},
-});
+(function(require, module) {
+	"use strict";
+
+	const Class = require('../util/Class.js');
+	
+	var WrapCryptoContextRepository = module.exports = util.Class.create({
+	    /**
+	     * Add a new wrapping key crypto context and wrap data. The wrap data
+	     * should be used in key request data to request a new wrapping key
+	     * wrapped with this wrapping key.
+	     * 
+	     * @param {Uint8Array} wrapdata wrapping key wrap data.
+	     * @param {ICryptoContext} cryptoContext wrapping key crypto context.
+	     */
+	    addCryptoContext: function(wrapdata, cryptoContext) {},
+	    
+	    /**
+	     * Return the wrapping key crypto context identified by the specified
+	     * wrap data.
+	     * 
+	     * @param {Uint8Array} wrapdata wrapping key wrap data.
+	     * @return {ICryptoContext} the wrapping key crypto context or null if none exists.
+	     */
+	    getCryptoContext: function(wrapdata) {},
+	    
+	    /**
+	     * Remove the wrapping key crypto context identified by the specified
+	     * key wrap data. This is called after calling
+	     * {@link #addCryptoContext(byte[], ICryptoContext)} to
+	     * indicate the old wrapping crypto context should no longer be
+	     * necessary.
+	     * 
+	     * @param {Uint8Array} wrapdata wrapping key wrap data.
+	     */
+	    removeCryptoContext: function(wrapdata) {},
+	});
+})(require, (typeof module !== 'undefined') ? module : mkmodule('WrapCryptoContextRepository'));

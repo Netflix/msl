@@ -18,13 +18,14 @@
  * <p>Key Format constants and utility methods.</p>
  *
  */
-
-var KeyFormat;
-
-(function() {
+(function(require, module) {
     "use strict";
+    
+    require('../util/Base64.js');
+    require('../MslCryptoException.js');
+    require('../MslError.js');
 
-    KeyFormat = {
+    var KeyFormat = module.exports = {
         RAW : "raw",
         JWK : "jwk",
         SPKI: "spki",
@@ -41,7 +42,7 @@ var KeyFormat;
         normalizePubkeyInput: function normalizePubkeyInput(input, format) {
             if (format == KeyFormat.SPKI) {
                 try {
-                    input = (typeof input === "string") ? base64$decode(input) : input;
+                    input = (typeof input === "string") ? Base64.decode(input) : input;
                 } catch (e) {
                     throw new MslCryptoException(MslError.INVALID_PUBLIC_KEY, format + " " + input, e);
                 }
@@ -75,7 +76,7 @@ var KeyFormat;
         normalizePrivkeyInput: function normalizePrivkeyInput(input, format) {
             if (format == KeyFormat.PKCS8) {
                 try {
-                    input = (typeof input === "string") ? base64$decode(input) : input;
+                    input = (typeof input === "string") ? Base64.decode(input) : input;
                 } catch (e) {
                     throw new MslCryptoException(MslError.INVALID_PRIVATE_KEY, format + " " + input, e);
                 }
@@ -98,4 +99,4 @@ var KeyFormat;
             return input;
         }
     };
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('KeyFormat'));
