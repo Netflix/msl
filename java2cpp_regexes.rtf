@@ -38,13 +38,13 @@ assertNotSame\\((.+?), (.+?)\\)\
 EXPECT_NE(\\1.get(), \\2.get())\
 \
 final byte\\[\\] (encode|moEncode)\
-ByteArray \\1\
+shared_ptr<ByteArray> \\1\
 \
 final String \
 const string \
 \
 assertNotNull\\((encode|moEncode)\\)\
-EXPECT_TRUE(\\1.size() > 0)\
+EXPECT_TRUE(\\1)\
 \
 assertTrue\
 EXPECT_TRUE}
