@@ -213,7 +213,7 @@ TEST_F(BlockingQueueTest, manyWriters)
     EXPECT_EQ(NITEMS, nUniq);
     // the unique consumed items must be identical to the original items vector
     auto it = unique(consumedItems.begin(), consumedItems.end());
-    consumedItems.resize(std::distance(consumedItems.begin(), it));
+    consumedItems.resize(static_cast<size_t>(std::distance(consumedItems.begin(), it)));
     EXPECT_EQ(items, consumedItems);
 }
 

@@ -193,7 +193,7 @@ TEST_P(SignVerifyTest, RandomRoundTrip)
         // generate a random key
     	shared_ptr<ByteArray> key = getRandomBytes(GetParam().keyLen);
         // pick a random msg length (1..1024 bytes)
-        const unsigned int msgLen = 1 + rand->nextInt(1024);
+        const unsigned int msgLen = static_cast<unsigned int>(1 + rand->nextInt(1024));
         // signHmacSha256 random message
         shared_ptr<ByteArray> msg = getRandomBytes(msgLen);
         // sign msg with key

@@ -329,7 +329,7 @@ shared_ptr<ByteArray> JsonWebEncryptionCryptoContext::wrap(shared_ptr<ByteArray>
 
 	// Split the result into the ciphertext and authentication tag.
 	shared_ptr<ByteArray> ciphertext = make_shared<ByteArray>(ciphertextATag->begin(), ciphertextATag->end() - atlen/BYTE_SIZE);
-	shared_ptr<ByteArray> at = make_shared<ByteArray>(ciphertextATag->begin() + ciphertext->size(), ciphertextATag->end());
+	shared_ptr<ByteArray> at = make_shared<ByteArray>(ciphertextATag->begin() + static_cast<ptrdiff_t>(ciphertext->size()), ciphertextATag->end());
 
 	// Base64-encode the ciphertext and authentication tag.
 	shared_ptr<string> ciphertextB64 = MslEncoderUtils::b64urlEncode(ciphertext);

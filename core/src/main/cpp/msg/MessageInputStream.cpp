@@ -325,7 +325,7 @@ shared_ptr<ByteArrayInputStream> MessageInputStream::nextData()
 
 	// If reading buffered data return the next buffered payload data.
 	if (payloadIterator_ != -1 && payloadIterator_ < static_cast<int>(payloads_.size()))
-		return payloads_[payloadIterator_++];
+		return payloads_[static_cast<size_t>(payloadIterator_++)];
 
 	// Otherwise read the next payload.
 	shared_ptr<MslObject> mo = nextMslObject();
@@ -488,12 +488,12 @@ void MessageInputStream::mark()
 		size_t offset = 0;
 		while (offset < payloads_.size() && payloads_[offset] != currentPayload_)
 			++offset;
-		payloads_.erase(payloads_.begin(), payloads_.begin() + offset);
+		payloads_.erase(payloads_.begin(), payloads_.begin() + static_cast<ptrdiff_t>(offset));
 
 		// Reset the iterator to continue reading buffered data from the
 		// current payload.
 		payloadIterator_ = 0;
-		currentPayload_ = payloads_[payloadIterator_++];
+		currentPayload_ = payloads_[static_cast<size_t>(payloadIterator_++)];
 
 		// Set the new mark point on the current payload.
 		currentPayload_->mark();
@@ -539,7 +539,7 @@ int MessageInputStream::read(ByteArray& out, size_t offset, size_t len, int time
 
 		// If we read some data continue.
 		if (read != -1) {
-			bytesRead += read;
+			bytesRead += static_cast<size_t>(read);
 			continue;
 		}
 
@@ -579,7 +579,7 @@ void MessageInputStream::reset()
 		payloads_[i]->reset();
 	payloadIterator_ = 0;
 	if (payloads_.size() > 0) {
-		currentPayload_ = payloads_[payloadIterator_++];
+		currentPayload_ = payloads_[static_cast<size_t>(payloadIterator_++)];
 	} else {
 		currentPayload_.reset();
 	}

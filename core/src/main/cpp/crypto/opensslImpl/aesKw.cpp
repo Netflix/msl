@@ -55,9 +55,9 @@ void aesKwWrap(const ByteArray& wrappingKey, const ByteArray& keyToWrap, ByteArr
     wrappedKeySize += 8;
     if (!wrappedKeySize.IsValid())
         throw MslCryptoException(MslError::DATA_TOO_LARGE, "integer overflow when computing wrappedKey size");
-    ByteArray result(wrappedKeySize.ValueOrDie());
+    ByteArray result(static_cast<size_t>(wrappedKeySize.ValueOrDie()));
     // Note: the RFC default IV will be used if NULL is provided to the API.
-    ret = AES_wrap_key(&aes_key, NULL, &result[0], &keyToWrap[0], (int)keyToWrap.size());
+    ret = AES_wrap_key(&aes_key, NULL, &result[0], &keyToWrap[0], static_cast<unsigned int>(keyToWrap.size()));
     if (ret < 0 || ret != wrappedKeySize.ValueOrDie())
     {
         std::stringstream ss;
@@ -88,9 +88,9 @@ void aesKwUnwrap(const ByteArray& wrappingKey, const ByteArray& wrappedKey, Byte
 
     base::CheckedNumeric<int> unwrappedKeySize = wrappedKey.size();
     unwrappedKeySize -= 8;
-    ByteArray result(unwrappedKeySize.ValueOrDie());
+    ByteArray result(static_cast<size_t>(unwrappedKeySize.ValueOrDie()));
     // Note: the RFC default IV will be used if NULL is provided to the API.
-    ret = AES_unwrap_key(&aes_key, NULL, &result[0], &wrappedKey[0], (int)wrappedKey.size());
+    ret = AES_unwrap_key(&aes_key, NULL, &result[0], &wrappedKey[0], static_cast<unsigned int>(wrappedKey.size()));
     if (ret < 0 || ret != unwrappedKeySize.ValueOrDie())
     {
         std::stringstream ss;

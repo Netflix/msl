@@ -29,7 +29,7 @@ int64_t now()
 {
     struct timeval tp;
     gettimeofday(&tp, NULL);
-    return static_cast<int64_t>(tp.tv_sec * 1000ull + tp.tv_usec / 1000ull);
+    return static_cast<int64_t>(static_cast<uint64_t>(tp.tv_sec) * 1000ull + static_cast<uint64_t>(tp.tv_usec) / 1000ull);
 }
 }
 

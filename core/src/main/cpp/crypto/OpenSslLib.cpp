@@ -77,13 +77,13 @@ void lock_func(int mode, int n, const char *, int)
 
     if (mode & CRYPTO_LOCK)
     {
-        int ret = pthread_mutex_lock(mutex_array->at(n));
+        int ret = pthread_mutex_lock(mutex_array->at(static_cast<size_t>(n)));
         (void)ret;
         assert(ret == 0);
     }
     else
     {
-        int ret = pthread_mutex_unlock(mutex_array->at(n));
+        int ret = pthread_mutex_unlock(mutex_array->at(static_cast<size_t>(n)));
         (void)ret;
         assert(ret == 0);
     }
@@ -264,7 +264,7 @@ shared_ptr<ByteArray> computeRsaPublicExponent(shared_ptr<ByteArray> n, shared_p
         // fill e with *it
         BN_set_word(eBn, *it);
         e->clear();
-        e->resize(BN_num_bytes(eBn));
+        e->resize(static_cast<size_t>(BN_num_bytes(eBn)));
         unsigned char * buf = &(*e)[0];
         BN_bn2bin(eBn, &buf[0]);
 
@@ -323,7 +323,7 @@ shared_ptr<RsaEvpKey> RsaEvpKey::fromSpki(const shared_ptr<ByteArray>& spki)
 
     // Create an EVP_PKEY from the input SPKI-encoded key, via an RSA key
     const unsigned char * buf = &(*spki)[0];
-    ScopedDisposer<RSA, void, RSA_free> rsa(d2i_RSA_PUBKEY(NULL, &buf, spki->size()));
+    ScopedDisposer<RSA, void, RSA_free> rsa(d2i_RSA_PUBKEY(NULL, &buf, static_cast<long>(spki->size())));
     if (rsa.isEmpty())
         throw MslCryptoException(MslError::KEY_IMPORT_ERROR, "RSA SPKI parsing failed.");
     ScopedDisposer<EVP_PKEY, void, EVP_PKEY_free> pkey(EVP_PKEY_new());

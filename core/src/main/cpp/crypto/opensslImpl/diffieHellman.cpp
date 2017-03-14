@@ -63,14 +63,14 @@ void dhGenKeyPair(const ByteArray& p, const ByteArray& g, ByteArray& pubKey, Byt
 
     const BIGNUM * const pubBn = dh.get()->pub_key;
     const int pubSizeBytes = BN_num_bytes(pubBn);
-    ByteArray pubBuf(pubSizeBytes, 0);
+    ByteArray pubBuf(static_cast<const size_t>(pubSizeBytes), 0);
     int sizeResult = BN_bn2bin(pubBn, &pubBuf[0]); (void) sizeResult;
     if (sizeResult != pubSizeBytes)
         throw MslInternalException("dhGenKeyPair: BN_bn2bin() error converting public key");
 
     const BIGNUM * const privBn = dh.get()->priv_key;
     const int privSizeBytes = BN_num_bytes(privBn);
-    ByteArray privBuf(privSizeBytes, 0);
+    ByteArray privBuf(static_cast<const size_t>(privSizeBytes), 0);
     sizeResult = BN_bn2bin(privBn, &privBuf[0]); (void) sizeResult;
     if (sizeResult != privSizeBytes)
         throw MslInternalException("dhGenKeyPair: BN_bn2bin() error converting private key");
@@ -114,7 +114,7 @@ void dhComputeSharedSecret(const ByteArray& remotePublicKey, const ByteArray& p,
     // get size needed for shared secret
     int outLen = DH_size(dh.get());
     // allocate and zero space for the shared secret
-    ByteArray tmp = ByteArray(outLen, 0);
+    ByteArray tmp = ByteArray(static_cast<size_t>(outLen), 0);
 
     // compute the shared secret
     outLen = DH_compute_key(&tmp[0], remotePublicKeyBn.get(), dh.get());

@@ -43,14 +43,14 @@ void MslArray::put(int index, const Variant& value)
     // Fill with empty elements as necessary.
     if (index >= static_cast<int>(newList.size())) {
         const int nElms = index+1-static_cast<int>(newList.size());
-        newList.insert(newList.end(), nElms, VariantFactory::createNull());
+        newList.insert(newList.end(), static_cast<size_t>(nElms), VariantFactory::createNull());
     }
 
     // Append if requested, otherwise replace.
     if (index == -1 || index == static_cast<int>(newList.size())) {
         newList.push_back(value);
     } else {
-        newList.at(index) = value;
+        newList.at(static_cast<size_t>(index)) = value;
     }
 
     list_->swap(newList); // commit the change
@@ -63,7 +63,7 @@ bool MslArray::isNull(int index) const
     	ss << "MslArray[" << index << "] is negative or exceeds array length.";
         throw IllegalArgumentException(ss.str());
     }
-    return list_->at(index).isNull();
+    return list_->at(static_cast<size_t>(index)).isNull();
 }
 
 Variant MslArray::get(int index) const
@@ -73,7 +73,7 @@ Variant MslArray::get(int index) const
     	ss << "MslArray[" << index << "] is null.";
         throw MslEncoderException(ss.str());
     }
-    return list_->at(index);
+    return list_->at(static_cast<size_t>(index));
 }
 
 bool MslArray::getBoolean(int index) const
@@ -184,7 +184,7 @@ Variant MslArray::opt(int index) const
     	ss << "MslArray[" << index << "] is negative or exceeds array length.";
         throw IllegalArgumentException(ss.str());
     }
-    return list_->at(index);
+    return list_->at(static_cast<size_t>(index));
 }
 
 bool MslArray::optBoolean(int index, bool defaultValue) const

@@ -75,7 +75,7 @@ void aesCbcEncryptDecrypt(EncryptOrDecrypt operation, const ByteArray& key,
     outputMaxLen += AES_BLOCK_SIZE - 1;
     if (!outputMaxLen.IsValid())
         throw MslCryptoException(MslError::DATA_TOO_LARGE, "integer overflow when computing output size");
-    const unsigned remainder = outputMaxLen.ValueOrDie() % AES_BLOCK_SIZE;
+    const unsigned remainder = static_cast<unsigned>(outputMaxLen.ValueOrDie()) % AES_BLOCK_SIZE;
     if (remainder != 0)
         outputMaxLen += AES_BLOCK_SIZE - remainder;
     if (!outputMaxLen.IsValid())
@@ -91,7 +91,7 @@ void aesCbcEncryptDecrypt(EncryptOrDecrypt operation, const ByteArray& key,
         throw MslCryptoException(MslError::CRYPTO_ERROR, ss.str());
     }
 
-    ByteArray result(outputMaxLen.ValueOrDie());
+    ByteArray result(static_cast<size_t>(outputMaxLen.ValueOrDie()));
     int outputLen = 0;
     if (!EVP_CipherUpdate(context.get(), &result[0], &outputLen, &input[0], (int)input.size())) {
         std::stringstream ss;

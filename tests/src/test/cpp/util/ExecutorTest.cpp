@@ -71,7 +71,7 @@ TEST_F(ExecutorTest, async)
         result.push_back(executor.submit(Callable(i)));
 
     for (int i=0; i<NITS; ++i)
-        EXPECT_EQ(i, result[i].get());
+        EXPECT_EQ(i, result[static_cast<size_t>(i)].get());
 }
 
 }}} // namespace netflix::msl::util
