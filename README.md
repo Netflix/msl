@@ -68,7 +68,7 @@ The C++ MSL code base requires C++11 and CMake.
 
 The code base has been built and tested under the following environments:
 
-- Xcode 8 for Mac OS.  
+- Xcode 8 and Homebrew (gcc6, openssl) for Mac OS.  
 Compiler flags: <code>\-std=c\+\+0x \-DGTEST_DONT_DEFINE_FAIL=1 \-DRAPIDJSON_HAS_STDSTRING=1</code>.
 - Xcode 8 for iOS.  
 Compiler flags: <code>\-std=gnu\+\+11 \-DGTEST_DONT_DEFINE_FAIL=1 \-DRAPIDJSON_HAS_STDSTRING=1</code>.
