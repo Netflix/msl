@@ -28,7 +28,7 @@
 #include <memory>
 #include <string>
 
-using std::__1::make_shared;
+using std::make_shared;
 
 using namespace std;
 using namespace netflix::msl::io;
