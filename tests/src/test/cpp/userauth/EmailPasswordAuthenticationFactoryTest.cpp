@@ -67,7 +67,7 @@ public:
     , ENCODER_FORMAT(MslEncoderFormat::JSON)
     {
         shared_ptr<MockEmailPasswordStore> store = make_shared<MockEmailPasswordStore>();
-        store->addUser(MockEmailPasswordAuthenticationFactory::EMAIL, MockEmailPasswordAuthenticationFactory::PASSWORD, MockEmailPasswordAuthenticationFactory::USER);
+        store->addUser(MockEmailPasswordAuthenticationFactory::EMAIL, MockEmailPasswordAuthenticationFactory::PASSWORD, MockEmailPasswordAuthenticationFactory::USER());
         shared_ptr<AuthenticationUtils> authutils = make_shared<MockAuthenticationUtils>();
         factory = make_shared<EmailPasswordAuthenticationFactory>(store, authutils);
         ctx->addUserAuthenticationFactory(factory);
@@ -115,13 +115,13 @@ TEST_F(EmailPasswordAuthenticationFactoryTest, authenticate)
     shared_ptr<EmailPasswordAuthenticationData> data = make_shared<EmailPasswordAuthenticationData>(MockEmailPasswordAuthenticationFactory::EMAIL, MockEmailPasswordAuthenticationFactory::PASSWORD);
     shared_ptr<MslUser> user = factory->authenticate(ctx, string(), data, shared_ptr<UserIdToken>());
     EXPECT_TRUE(user);
-    EXPECT_EQ(MockEmailPasswordAuthenticationFactory::USER, user);
+    EXPECT_EQ(MockEmailPasswordAuthenticationFactory::USER(), user);
 }
 
 TEST_F(EmailPasswordAuthenticationFactoryTest, authenticateUserIdToken)
 {
     shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);
-    shared_ptr<MslUser> user = MockEmailPasswordAuthenticationFactory::USER;
+    shared_ptr<MslUser> user = MockEmailPasswordAuthenticationFactory::USER();
     shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, user);
     shared_ptr<EmailPasswordAuthenticationData> data = make_shared<EmailPasswordAuthenticationData>(MockEmailPasswordAuthenticationFactory::EMAIL, MockEmailPasswordAuthenticationFactory::PASSWORD);
     shared_ptr<MslUser> u = factory->authenticate(ctx, string(), data, userIdToken);
@@ -134,7 +134,7 @@ TEST_F(EmailPasswordAuthenticationFactoryTest, authenticateMismatchedUserIdToken
 //    thrown.expectMslError(MslError::USERIDTOKEN_USERAUTH_DATA_MISMATCH);
 
     shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);
-    shared_ptr<MslUser> user = MockEmailPasswordAuthenticationFactory::USER_2;
+    shared_ptr<MslUser> user = MockEmailPasswordAuthenticationFactory::USER_2();
     shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, user);
     shared_ptr<EmailPasswordAuthenticationData> data = make_shared<EmailPasswordAuthenticationData>(MockEmailPasswordAuthenticationFactory::EMAIL, MockEmailPasswordAuthenticationFactory::PASSWORD);
     try {

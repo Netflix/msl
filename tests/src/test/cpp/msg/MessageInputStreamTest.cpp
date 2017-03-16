@@ -371,7 +371,7 @@ TEST_F(MessageInputStreamTest, nullUser)
 TEST_F(MessageInputStreamTest, userIdTokenUser)
 {
 	shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(trustedNetCtx, 1, 1);
-	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(trustedNetCtx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(trustedNetCtx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
 	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, userIdToken, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(trustedNetCtx, NULL_ENTITYAUTH_DATA, masterToken, headerData, peerData);
@@ -391,7 +391,7 @@ TEST_F(MessageInputStreamTest, revokedUserIdToken)
 	ctx->setTokenFactory(factory);
 
 	shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);
-	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
 	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, userIdToken, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(ctx, NULL_ENTITYAUTH_DATA, masterToken, headerData, peerData);
@@ -413,7 +413,7 @@ TEST_F(MessageInputStreamTest, untrustedUserIdToken)
 	ctx->setTokenFactory(factory);
 
 	shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);
-	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUntrustedUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUntrustedUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
 	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, userIdToken, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(ctx, NULL_ENTITYAUTH_DATA, masterToken, headerData, peerData);

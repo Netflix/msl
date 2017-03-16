@@ -91,10 +91,10 @@ public:
 		p2pMsgCtx = make_shared<MockMessageContext>(p2pCtx, USER_ID, UserAuthenticationScheme::EMAIL_PASSWORD);
 
 		MASTER_TOKEN = MslTestUtils::getMasterToken(p2pCtx, 1, 1);
-		USER_ID_TOKEN = MslTestUtils::getUserIdToken(p2pCtx, MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory::USER);
+		USER_ID_TOKEN = MslTestUtils::getUserIdToken(p2pCtx, MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory::USER());
 
 		PEER_MASTER_TOKEN = MslTestUtils::getMasterToken(p2pCtx, 1, 2);
-		PEER_USER_ID_TOKEN = MslTestUtils::getUserIdToken(p2pCtx, PEER_MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory::USER);
+		PEER_USER_ID_TOKEN = MslTestUtils::getUserIdToken(p2pCtx, PEER_MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory::USER());
 
 		/* FIXME Needs AsymmetricWrapped keyx
 		pair<PublicKey,PrivateKey> rsaKeyPair = MslTestUtils::generateRsaKeys("RSA", 512);
@@ -289,7 +289,7 @@ TEST_F(MessageServiceTokenBuilderTest, mismatchedUserIdTokenAddPrimaryServiceTok
 	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
-	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(p2pCtx, MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(p2pCtx, MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory::USER());
 	shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, userIdToken, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
 	EXPECT_FALSE(tokenBuilder->addPrimaryServiceToken(serviceToken));
 	EXPECT_TRUE(tokenBuilder->getPrimaryServiceTokens().empty());
@@ -348,7 +348,7 @@ TEST_F(MessageServiceTokenBuilderTest, mismatchedUserIdTokenAddPeerServiceToken)
 	msgBuilder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
-	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(p2pCtx, PEER_MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(p2pCtx, PEER_MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory::USER());
 	shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, userIdToken, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
 	EXPECT_FALSE(tokenBuilder->addPeerServiceToken(serviceToken));
 	EXPECT_TRUE(tokenBuilder->getPeerServiceTokens().empty());

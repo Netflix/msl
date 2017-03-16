@@ -233,10 +233,10 @@ public:
         KEY_RESPONSE_DATA = keyxData->keyResponseData;
 
         USER_AUTH_DATA = make_shared<EmailPasswordAuthenticationData>(MockEmailPasswordAuthenticationFactory::EMAIL, MockEmailPasswordAuthenticationFactory::PASSWORD);
-        USER_ID_TOKEN = MslTestUtils::getUserIdToken(trustedNetCtx, MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory::USER);
+        USER_ID_TOKEN = MslTestUtils::getUserIdToken(trustedNetCtx, MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory::USER());
 
         PEER_MASTER_TOKEN = MslTestUtils::getMasterToken(p2pCtx, 1, 2);
-        PEER_USER_ID_TOKEN = MslTestUtils::getUserIdToken(p2pCtx, PEER_MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory::USER);
+        PEER_USER_ID_TOKEN = MslTestUtils::getUserIdToken(p2pCtx, PEER_MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory::USER());
 
         shared_ptr<KeyRequestData> peerKeyRequestData = make_shared<SymmetricWrappedExchange::RequestData>(SymmetricWrappedExchange::KeyId::PSK);
         shared_ptr<KeyExchangeFactory> peerFactory = p2pCtx->getKeyExchangeFactory(peerKeyRequestData->getKeyExchangeScheme());
@@ -1133,7 +1133,7 @@ TEST_F(MessageHeaderTest, userIdTokenNullMasterTokenCtor)
 TEST_F(MessageHeaderTest, userIdTokenMismatchedMasterTokenCtor)
 {
 //(expected = MslInternalException.class)
-    shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(trustedNetCtx, PEER_MASTER_TOKEN, 1ll, MockEmailPasswordAuthenticationFactory::USER);
+    shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(trustedNetCtx, PEER_MASTER_TOKEN, 1ll, MockEmailPasswordAuthenticationFactory::USER());
     HeaderDataBuilder builder(trustedNetCtx, MASTER_TOKEN, userIdToken, false);
     builder.setNull(KEY_KEY_REQUEST_DATA);
     builder.setNull(KEY_KEY_RESPONSE_DATA);
@@ -1215,7 +1215,7 @@ TEST_F(MessageHeaderTest, peerUserIdTokenMismatchedPeerMasterTokenCtor)
     builder.setNull(KEY_KEY_REQUEST_DATA);
     builder.setNull(KEY_KEY_RESPONSE_DATA);
     shared_ptr<MessageHeader::HeaderData> headerData = builder.build();
-    shared_ptr<UserIdToken> peerUserIdToken = MslTestUtils::getUserIdToken(p2pCtx, MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory::USER);
+    shared_ptr<UserIdToken> peerUserIdToken = MslTestUtils::getUserIdToken(p2pCtx, MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory::USER());
     shared_ptr<MessageHeader::HeaderPeerData> peerData = make_shared<MessageHeader::HeaderPeerData>(PEER_MASTER_TOKEN, peerUserIdToken, set<std::shared_ptr<ServiceToken>>());
     shared_ptr<EntityAuthenticationData> entityAuthData = p2pCtx->getEntityAuthenticationData(MslContext::ReauthCode::INVALID);
     EXPECT_THROW(MessageHeader(p2pCtx, entityAuthData, shared_ptr<MasterToken>(), headerData, peerData), MslInternalException);
@@ -1331,7 +1331,7 @@ TEST_F(MessageHeaderTest, cachedCryptoContextMasterTokenCtor)
     shared_ptr<ICryptoContext> cryptoContext = make_shared<NullCryptoContext>();
     p2pCtx->getMslStore()->setCryptoContext(masterToken, cryptoContext);
 
-    shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(p2pCtx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER);
+    shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(p2pCtx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
     HeaderDataBuilder builder(p2pCtx, masterToken, shared_ptr<UserIdToken>(), true);
     builder.setKEY_USER_ID_TOKEN(userIdToken);
     shared_ptr<MessageHeader::HeaderData> headerData = builder.build();
@@ -1609,7 +1609,7 @@ TEST_F(MessageHeaderTest, untrustedMasterTokenParseHeader)
     shared_ptr<ICryptoContext> cryptoContext = make_shared<NullCryptoContext>();
     p2pCtx->getMslStore()->setCryptoContext(masterToken, cryptoContext);
 
-    shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(p2pCtx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER);
+    shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(p2pCtx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
     HeaderDataBuilder builder(p2pCtx, masterToken, shared_ptr<UserIdToken>(), true);
     builder.setNull(KEY_KEY_REQUEST_DATA);
     builder.setNull(KEY_KEY_RESPONSE_DATA);
@@ -1699,7 +1699,7 @@ TEST_F(MessageHeaderTest, cachedCryptoContextMasterTokenParseHeader)
     shared_ptr<ICryptoContext> cryptoContext = make_shared<NullCryptoContext>();
     p2pCtx->getMslStore()->setCryptoContext(masterToken, cryptoContext);
 
-    shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(p2pCtx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER);
+    shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(p2pCtx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
     HeaderDataBuilder builder(p2pCtx, masterToken, shared_ptr<UserIdToken>(), true);
     builder.setKEY_USER_ID_TOKEN(userIdToken);
     shared_ptr<MessageHeader::HeaderData> headerData = builder.build();
@@ -2176,7 +2176,7 @@ TEST_F(MessageHeaderTest, userIdTokenNullMasterTokenParseHeader)
     shared_ptr<MslObject> headerdataMo = encoder->parseObject(plaintext);
 
     // After modifying the header data we need to encrypt it.
-    shared_ptr<MslEncodable> userIdToken = MslTestUtils::getUserIdToken(trustedNetCtx, MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory::USER);
+    shared_ptr<MslEncodable> userIdToken = MslTestUtils::getUserIdToken(trustedNetCtx, MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory::USER());
     headerdataMo->put(KEY_USER_ID_TOKEN, userIdToken);
     shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
@@ -2213,7 +2213,7 @@ TEST_F(MessageHeaderTest, userIdTokenMismatchedMasterTokenParseHeader)
     shared_ptr<MslObject> headerdataMo = encoder->parseObject(plaintext);
 
     // After modifying the header data we need to encrypt it.
-    shared_ptr<MslEncodable> userIdToken = MslTestUtils::getUserIdToken(trustedNetCtx, PEER_MASTER_TOKEN, 1ll, MockEmailPasswordAuthenticationFactory::USER);
+    shared_ptr<MslEncodable> userIdToken = MslTestUtils::getUserIdToken(trustedNetCtx, PEER_MASTER_TOKEN, 1ll, MockEmailPasswordAuthenticationFactory::USER());
     headerdataMo->put(KEY_USER_ID_TOKEN, userIdToken);
     shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
@@ -2397,7 +2397,7 @@ TEST_F(MessageHeaderTest, serviceTokenMismatchedUserIdTokenParseHeader)
 
     // After modifying the header data we need to encrypt it.
     set<shared_ptr<ServiceToken>> serviceTokens = builder.getServiceTokens();
-    shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(trustedNetCtx, MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory::USER);
+    shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(trustedNetCtx, MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory::USER());
     set<shared_ptr<ServiceToken>> st = MslTestUtils::getServiceTokens(trustedNetCtx, MASTER_TOKEN, userIdToken);
     serviceTokens.insert(st.begin(), st.end());
     headerdataMo->put(KEY_SERVICE_TOKENS, createArray(trustedNetCtx, serviceTokens));
@@ -2511,7 +2511,7 @@ TEST_F(MessageHeaderTest, peerServiceTokenMismatchedPeerUserIdTokenParseHeader)
     shared_ptr<MslObject> headerdataMo = encoder->parseObject(plaintext);
 
     // After modifying the header data we need to encrypt it.
-    shared_ptr<MslEncodable> userIdToken = MslTestUtils::getUserIdToken(p2pCtx, PEER_MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory::USER);
+    shared_ptr<MslEncodable> userIdToken = MslTestUtils::getUserIdToken(p2pCtx, PEER_MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory::USER());
     headerdataMo->put(KEY_PEER_USER_ID_TOKEN, userIdToken);
     shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
@@ -3749,8 +3749,8 @@ TEST_F(MessageHeaderTest, equalsUserAuthData)
 
 TEST_F(MessageHeaderTest, equalsUserIdToken)
 {
-    shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(trustedNetCtx, MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory::USER);
-    shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(trustedNetCtx, MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory::USER);
+    shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(trustedNetCtx, MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory::USER());
+    shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(trustedNetCtx, MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory::USER());
     shared_ptr<MessageHeader::HeaderData> headerDataA = HeaderDataBuilder(trustedNetCtx, userIdTokenA, set<shared_ptr<ServiceToken>>()).build();
     shared_ptr<MessageHeader::HeaderData> headerDataB = HeaderDataBuilder(trustedNetCtx, userIdTokenB, set<shared_ptr<ServiceToken>>()).build();
     shared_ptr<MessageHeader::HeaderData> headerDataC = HeaderDataBuilder(trustedNetCtx, shared_ptr<UserIdToken>(), set<shared_ptr<ServiceToken>>()).build();
@@ -3830,8 +3830,8 @@ TEST_F(MessageHeaderTest, equalsPeerUserIdToken)
 {
     HeaderDataBuilder builder(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, true);
     shared_ptr<MessageHeader::HeaderData> headerData = builder.build();
-    shared_ptr<UserIdToken> peerUserIdTokenA = MslTestUtils::getUserIdToken(p2pCtx, PEER_MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory::USER);
-    shared_ptr<UserIdToken> peerUserIdTokenB = MslTestUtils::getUserIdToken(p2pCtx, PEER_MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory::USER);
+    shared_ptr<UserIdToken> peerUserIdTokenA = MslTestUtils::getUserIdToken(p2pCtx, PEER_MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory::USER());
+    shared_ptr<UserIdToken> peerUserIdTokenB = MslTestUtils::getUserIdToken(p2pCtx, PEER_MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory::USER());
     shared_ptr<MessageHeader::HeaderPeerData> peerDataA = make_shared<MessageHeader::HeaderPeerData>(PEER_MASTER_TOKEN, peerUserIdTokenA, set<shared_ptr<ServiceToken>>());
     shared_ptr<MessageHeader::HeaderPeerData> peerDataB = make_shared<MessageHeader::HeaderPeerData>(PEER_MASTER_TOKEN, peerUserIdTokenB, set<shared_ptr<ServiceToken>>());
     shared_ptr<MessageHeader::HeaderPeerData> peerDataC = make_shared<MessageHeader::HeaderPeerData>(PEER_MASTER_TOKEN, shared_ptr<UserIdToken>(), set<shared_ptr<ServiceToken>>());

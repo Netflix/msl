@@ -40,14 +40,14 @@ public:
     /** Password. */
     static const std::string PASSWORD;
     /** User. */
-    static std::shared_ptr<tokens::MslUser> USER;
+    static std::shared_ptr<tokens::MslUser> USER();
 
     /** Email #2. */
     static const std::string EMAIL_2;
     /** Password #2. */
     static const std::string PASSWORD_2;
     /** User #2. */
-    static std::shared_ptr<tokens::MslUser> USER_2;
+    static std::shared_ptr<tokens::MslUser> USER_2();
 
     /**
      * Create a new test email/password authentication factory.

@@ -41,9 +41,17 @@ const string MockEmailPasswordAuthenticationFactory::PASSWORD = "password";
 const string MockEmailPasswordAuthenticationFactory::EMAIL_2 = "email2@domain.com";
 const string MockEmailPasswordAuthenticationFactory::PASSWORD_2 = "password2";
 
-shared_ptr<MslUser> MockEmailPasswordAuthenticationFactory::USER = make_shared<MockMslUser>(312204600);
+shared_ptr<MslUser> MockEmailPasswordAuthenticationFactory::USER()
+{
+	static shared_ptr<MslUser> user = make_shared<MockMslUser>(312204600);
+	return user;
+}
 
-shared_ptr<MslUser> MockEmailPasswordAuthenticationFactory::USER_2 = make_shared<MockMslUser>(880083944);
+shared_ptr<MslUser> MockEmailPasswordAuthenticationFactory::USER_2()
+{
+	static shared_ptr<MslUser> user2 = make_shared<MockMslUser>(880083944);
+	return user2;
+}
 
 shared_ptr<UserAuthenticationData> MockEmailPasswordAuthenticationFactory::createData(
         shared_ptr<MslContext> /*ctx*/, shared_ptr<MasterToken> /*masterToken*/,
@@ -73,9 +81,9 @@ shared_ptr<MslUser> MockEmailPasswordAuthenticationFactory::authenticate(shared_
      // Identify the user.
      shared_ptr<MslUser> user;
      if (EMAIL == email && PASSWORD == password)
-         user = USER;
+         user = USER();
      else if (EMAIL_2 == email && PASSWORD_2 == password)
-         user = USER_2;
+         user = USER_2();
      else
          throw MslUserAuthException(MslError::EMAILPASSWORD_INCORRECT).setUserAuthenticationData(epad);
 

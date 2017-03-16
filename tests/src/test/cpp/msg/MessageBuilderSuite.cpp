@@ -128,7 +128,7 @@ public:
 		USER_AUTH_DATA = make_shared<EmailPasswordAuthenticationData>(MockEmailPasswordAuthenticationFactory::EMAIL, MockEmailPasswordAuthenticationFactory::PASSWORD);
 
 		MASTER_TOKEN = MslTestUtils::getMasterToken(trustedNetCtx, 1, 1);
-		USER_ID_TOKEN = MslTestUtils::getUserIdToken(trustedNetCtx, MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory::USER);
+		USER_ID_TOKEN = MslTestUtils::getUserIdToken(trustedNetCtx, MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory::USER());
 		CRYPTO_CONTEXT = make_shared<NullCryptoContext>();
 		shared_ptr<DiffieHellmanParameters> params = MockDiffieHellmanParameters::getDefaultParameters();
 		DHParameterSpec paramSpec = params->getParameterSpec(MockDiffieHellmanParameters::DEFAULT_ID());
@@ -144,7 +144,7 @@ public:
 		KEY_REQUEST_DATA.insert(make_shared<SymmetricWrappedExchange::RequestData>(SymmetricWrappedExchange::KeyId::PSK));
 
 		PEER_MASTER_TOKEN = MslTestUtils::getMasterToken(p2pCtx, 1, 2);
-		PEER_USER_ID_TOKEN = MslTestUtils::getUserIdToken(p2pCtx, PEER_MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory::USER);
+		PEER_USER_ID_TOKEN = MslTestUtils::getUserIdToken(p2pCtx, PEER_MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory::USER());
 
 		shared_ptr<KeyRequestData> peerKeyRequestData = make_shared<SymmetricWrappedExchange::RequestData>(SymmetricWrappedExchange::KeyId::SESSION);
 		PEER_KEY_REQUEST_DATA.insert(peerKeyRequestData);
@@ -863,8 +863,8 @@ TEST_F(MessageBuilderTest_CreateRequest, nullMasterTokenAddServiceToken)
 
 TEST_F(MessageBuilderTest_CreateRequest, mismatchedUserIdTokenAddServiceToken)
 {
-	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(trustedNetCtx, MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory::USER);
-	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(trustedNetCtx, MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(trustedNetCtx, MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory::USER());
+	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(trustedNetCtx, MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory::USER());
 	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, userIdTokenA, NULL_RECIPIENT);
 	shared_ptr<ByteArray> data = make_shared<ByteArray>(1);
 	random.nextBytes(*data);
@@ -1036,8 +1036,8 @@ TEST_F(MessageBuilderTest_CreateRequest, missingPeerUserIdTokenAddPeerServiceTok
 
 TEST_F(MessageBuilderTest_CreateRequest, mismatchedPeerUserIdTokenAddPeerServiceToken)
 {
-	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(p2pCtx, PEER_MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory::USER);
-	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(p2pCtx, PEER_MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(p2pCtx, PEER_MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory::USER());
+	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(p2pCtx, PEER_MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory::USER());
 	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
 	builder->setPeerAuthTokens(PEER_MASTER_TOKEN, userIdTokenA);
 	shared_ptr<ServiceToken> peerServiceToken = make_shared<ServiceToken>(p2pCtx, SERVICE_TOKEN_NAME, make_shared<ByteArray>(), PEER_MASTER_TOKEN, userIdTokenB, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
@@ -1480,7 +1480,7 @@ public:
 		RSA_PRIVATE_KEY = make_shared<PrivateKey>(TestSingleton::getPrivateKey());
 		string json = "{ \"issuerid\" : 17 }";
 		ISSUER_DATA = encoder->parseObject(make_shared<ByteArray>(json.begin(), json.end()));
-		USER = MockEmailPasswordAuthenticationFactory::USER;
+		USER = MockEmailPasswordAuthenticationFactory::USER();
 	}
 
 protected:
@@ -2774,7 +2774,7 @@ TEST_F(MessageBuilderTest_CreateResponse, masterTokenUserAuthData)
 	shared_ptr<MessageHeader> response = responseBuilder->getHeader();
 	shared_ptr<UserIdToken> userIdToken = response->getUserIdToken();
 	EXPECT_TRUE(userIdToken);
-	EXPECT_EQ(*MockEmailPasswordAuthenticationFactory::USER, *userIdToken->getUser());
+	EXPECT_EQ(*MockEmailPasswordAuthenticationFactory::USER(), *userIdToken->getUser());
 }
 
 TEST_F(MessageBuilderTest_CreateResponse, masterTokenUserAuthenticated)
@@ -2798,7 +2798,7 @@ TEST_F(MessageBuilderTest_CreateResponse, masterTokenUserAuthenticated)
 	shared_ptr<MessageHeader> response = responseBuilder->getHeader();
 	shared_ptr<UserIdToken> userIdToken = response->getUserIdToken();
 	EXPECT_TRUE(userIdToken);
-	EXPECT_EQ(*MockEmailPasswordAuthenticationFactory::USER, *userIdToken->getUser());
+	EXPECT_EQ(*MockEmailPasswordAuthenticationFactory::USER(), *userIdToken->getUser());
 }
 
 TEST_F(MessageBuilderTest_CreateResponse, peerMasterTokenUserAuthData)
@@ -2813,7 +2813,7 @@ TEST_F(MessageBuilderTest_CreateResponse, peerMasterTokenUserAuthData)
 	EXPECT_FALSE(response->getUserIdToken());
 	shared_ptr<UserIdToken> userIdToken = response->getPeerUserIdToken();
 	EXPECT_TRUE(userIdToken);
-	EXPECT_EQ(*MockEmailPasswordAuthenticationFactory::USER, *userIdToken->getUser());
+	EXPECT_EQ(*MockEmailPasswordAuthenticationFactory::USER(), *userIdToken->getUser());
 }
 
 TEST_F(MessageBuilderTest_CreateResponse, peerMasterTokenUserAuthenticated)
@@ -2837,7 +2837,7 @@ TEST_F(MessageBuilderTest_CreateResponse, peerMasterTokenUserAuthenticated)
 	shared_ptr<MessageHeader> response = responseBuilder->getHeader();
 	shared_ptr<UserIdToken> userIdToken = response->getPeerUserIdToken();
 	EXPECT_TRUE(userIdToken);
-	EXPECT_EQ(*MockEmailPasswordAuthenticationFactory::USER, *userIdToken->getUser());
+	EXPECT_EQ(*MockEmailPasswordAuthenticationFactory::USER(), *userIdToken->getUser());
 }
 
 TEST_F(MessageBuilderTest_CreateResponse, entityAuthDataUserAuthData)
@@ -2862,7 +2862,7 @@ TEST_F(MessageBuilderTest_CreateResponse, entityAuthDataUserAuthData)
 	EXPECT_EQ(trustedNetCtx->getEntityAuthenticationData()->getIdentity(), keyxMasterToken->getIdentity());
 	shared_ptr<UserIdToken> userIdToken = response->getUserIdToken();
 	EXPECT_TRUE(userIdToken);
-	EXPECT_EQ(*MockEmailPasswordAuthenticationFactory::USER, *userIdToken->getUser());
+	EXPECT_EQ(*MockEmailPasswordAuthenticationFactory::USER(), *userIdToken->getUser());
 	EXPECT_TRUE(userIdToken->isBoundTo(keyxMasterToken));
 }
 
@@ -2898,7 +2898,7 @@ TEST_F(MessageBuilderTest_CreateResponse, entityAuthDataUserAuthenticatedData)
 	EXPECT_EQ(trustedNetCtx->getEntityAuthenticationData()->getIdentity(), keyxMasterToken->getIdentity());
 	shared_ptr<UserIdToken> userIdToken = response->getUserIdToken();
 	EXPECT_TRUE(userIdToken);
-	EXPECT_EQ(*MockEmailPasswordAuthenticationFactory::USER, *userIdToken->getUser());
+	EXPECT_EQ(*MockEmailPasswordAuthenticationFactory::USER(), *userIdToken->getUser());
 	EXPECT_TRUE(userIdToken->isBoundTo(keyxMasterToken));
 }
 
@@ -2940,7 +2940,7 @@ TEST_F(MessageBuilderTest_CreateResponse, peerEntityAuthDataUserAuthData)
 	EXPECT_FALSE(response->getUserIdToken());
 	shared_ptr<UserIdToken> userIdToken = response->getPeerUserIdToken();
 	EXPECT_TRUE(userIdToken);
-	EXPECT_EQ(*MockEmailPasswordAuthenticationFactory::USER, *userIdToken->getUser());
+	EXPECT_EQ(*MockEmailPasswordAuthenticationFactory::USER(), *userIdToken->getUser());
 }
 
 TEST_F(MessageBuilderTest_CreateResponse, peerEntityAuthDataUserAuthenticatedData)
@@ -2976,7 +2976,7 @@ TEST_F(MessageBuilderTest_CreateResponse, peerEntityAuthDataUserAuthenticatedDat
 	EXPECT_FALSE(response->getUserIdToken());
 	shared_ptr<UserIdToken> userIdToken = response->getPeerUserIdToken();
 	EXPECT_TRUE(userIdToken);
-	EXPECT_EQ(*MockEmailPasswordAuthenticationFactory::USER, *userIdToken->getUser());
+	EXPECT_EQ(*MockEmailPasswordAuthenticationFactory::USER(), *userIdToken->getUser());
 }
 
 TEST_F(MessageBuilderTest_CreateResponse, unsupportedUserAuthentication)

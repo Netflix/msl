@@ -329,7 +329,7 @@ TEST_F(SimpleMslStoreTest, twoNonReplayableIds)
 TEST_F(SimpleMslStoreTest, addUserIdToken)
 {
 	shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);
-	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
 	shared_ptr<ICryptoContext> cryptoContext = make_shared<NullCryptoContext>();
 
 	store->setCryptoContext(masterToken, cryptoContext);
@@ -342,7 +342,7 @@ TEST_F(SimpleMslStoreTest, addUserIdToken)
 TEST_F(SimpleMslStoreTest, removeUserIdToken)
 {
 	shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);
-	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
 	shared_ptr<ICryptoContext> cryptoContext = make_shared<NullCryptoContext>();
 
 	store->setCryptoContext(masterToken, cryptoContext);
@@ -356,8 +356,8 @@ TEST_F(SimpleMslStoreTest, replaceUserIdToken)
 {
 	shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);
 	shared_ptr<ICryptoContext> cryptoContext = make_shared<NullCryptoContext>();
-	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER);
-	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(ctx, masterToken, 2, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
+	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(ctx, masterToken, 2, MockEmailPasswordAuthenticationFactory::USER());
 
 	store->setCryptoContext(masterToken, cryptoContext);
 	store->addUserIdToken(USER_ID, userIdTokenA);
@@ -371,8 +371,8 @@ TEST_F(SimpleMslStoreTest, twoUserIdTokens)
 	shared_ptr<ICryptoContext> cryptoContext = make_shared<NullCryptoContext>();
 	const string userIdA = USER_ID + "A";
 	const string userIdB = USER_ID + "B";
-	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER);
-	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(ctx, masterToken, 2, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
+	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(ctx, masterToken, 2, MockEmailPasswordAuthenticationFactory::USER());
 
 	store->setCryptoContext(masterToken, cryptoContext);
 	store->addUserIdToken(userIdA, userIdTokenA);
@@ -388,14 +388,14 @@ TEST_F(SimpleMslStoreTest, replaceTwoUserIdTokens)
 	shared_ptr<ICryptoContext> cryptoContext = make_shared<NullCryptoContext>();
 	const string userIdA = USER_ID + "A";
 	const string userIdB = USER_ID + "B";
-	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER);
-	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(ctx, masterToken, 2, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
+	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(ctx, masterToken, 2, MockEmailPasswordAuthenticationFactory::USER());
 
 	store->setCryptoContext(masterToken, cryptoContext);
 	store->addUserIdToken(userIdA, userIdTokenA);
 	store->addUserIdToken(userIdB, userIdTokenB);
 
-	shared_ptr<UserIdToken> userIdTokenC = MslTestUtils::getUserIdToken(ctx, masterToken, 3, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdTokenC = MslTestUtils::getUserIdToken(ctx, masterToken, 3, MockEmailPasswordAuthenticationFactory::USER());
 	store->addUserIdToken(userIdA, userIdTokenC);
 	EXPECT_EQ(*userIdTokenC, *store->getUserIdToken(userIdA));
 	EXPECT_EQ(*userIdTokenB, *store->getUserIdToken(userIdB));
@@ -407,8 +407,8 @@ TEST_F(SimpleMslStoreTest, removeTwoUserIdTokens)
 	shared_ptr<ICryptoContext> cryptoContext = make_shared<NullCryptoContext>();
 	const string userIdA = USER_ID + "A";
 	const string userIdB = USER_ID + "B";
-	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER);
-	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(ctx, masterToken, 2, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
+	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(ctx, masterToken, 2, MockEmailPasswordAuthenticationFactory::USER());
 
 	store->setCryptoContext(masterToken, cryptoContext);
 	store->addUserIdToken(userIdA, userIdTokenA);
@@ -425,8 +425,8 @@ TEST_F(SimpleMslStoreTest, clearUserIdTokens)
 	shared_ptr<ICryptoContext> cryptoContext = make_shared<NullCryptoContext>();
 	const string userIdA = USER_ID + "A";
 	const string userIdB = USER_ID + "B";
-	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER);
-	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(ctx, masterToken, 2, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
+	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(ctx, masterToken, 2, MockEmailPasswordAuthenticationFactory::USER());
 
 	store->setCryptoContext(masterToken, cryptoContext);
 	store->addUserIdToken(userIdA, userIdTokenA);
@@ -440,7 +440,7 @@ TEST_F(SimpleMslStoreTest, clearUserIdTokens)
 TEST_F(SimpleMslStoreTest, unknownMasterTokenUserIdToken)
 {
 	shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);
-	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
 
 	try {
 		store->addUserIdToken(USER_ID, userIdToken);
@@ -458,9 +458,9 @@ TEST_F(SimpleMslStoreTest, removeMasterTokenSameSerialNumberUserIdTokens)
 	const string userIdA = USER_ID + "A";
 	const string userIdB = USER_ID + "B";
 	const string userIdC = USER_ID + "C";
-	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(ctx, masterTokenA, 1, MockEmailPasswordAuthenticationFactory::USER);
-	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(ctx, masterTokenA, 2, MockEmailPasswordAuthenticationFactory::USER);
-	shared_ptr<UserIdToken> userIdTokenC = MslTestUtils::getUserIdToken(ctx, masterTokenB, 1, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(ctx, masterTokenA, 1, MockEmailPasswordAuthenticationFactory::USER());
+	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(ctx, masterTokenA, 2, MockEmailPasswordAuthenticationFactory::USER());
+	shared_ptr<UserIdToken> userIdTokenC = MslTestUtils::getUserIdToken(ctx, masterTokenB, 1, MockEmailPasswordAuthenticationFactory::USER());
 
 	store->setCryptoContext(masterTokenA, cryptoContext);
 	store->setCryptoContext(masterTokenB, cryptoContext);
@@ -486,9 +486,9 @@ TEST_F(SimpleMslStoreTest, removeMasterTokenReissuedUserIdTokens)
 	const string userIdA = USER_ID + "A";
 	const string userIdB = USER_ID + "B";
 	const string userIdC = USER_ID + "C";
-	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(ctx, masterTokenA, 1, MockEmailPasswordAuthenticationFactory::USER);
-	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(ctx, masterTokenA, 2, MockEmailPasswordAuthenticationFactory::USER);
-	shared_ptr<UserIdToken> userIdTokenC = MslTestUtils::getUserIdToken(ctx, masterTokenB, 1, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(ctx, masterTokenA, 1, MockEmailPasswordAuthenticationFactory::USER());
+	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(ctx, masterTokenA, 2, MockEmailPasswordAuthenticationFactory::USER());
+	shared_ptr<UserIdToken> userIdTokenC = MslTestUtils::getUserIdToken(ctx, masterTokenB, 1, MockEmailPasswordAuthenticationFactory::USER());
 
 	store->setCryptoContext(masterTokenA, cryptoContext);
 	store->addUserIdToken(userIdA, userIdTokenA);
@@ -512,8 +512,8 @@ TEST_F(SimpleMslStoreTest, clearCryptoContextsUserIdTokens)
 	shared_ptr<ICryptoContext> cryptoContext = make_shared<NullCryptoContext>();
 	const string userIdA = USER_ID + "A";
 	const string userIdB = USER_ID + "B";
-	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(ctx, masterTokenA, 1, MockEmailPasswordAuthenticationFactory::USER);
-	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(ctx, masterTokenB, 2, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(ctx, masterTokenA, 1, MockEmailPasswordAuthenticationFactory::USER());
+	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(ctx, masterTokenB, 2, MockEmailPasswordAuthenticationFactory::USER());
 
 	store->setCryptoContext(masterTokenA, cryptoContext);
 	store->setCryptoContext(masterTokenB, cryptoContext);
@@ -559,7 +559,7 @@ TEST_F(SimpleMslStoreTest, clearCryptoContextsUserIdTokens)
 //				final int tokenIndex = r.nextInt(count);
 //				shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, tokenIndex, 1);
 //				final long userId = r.nextInt(count);
-//				shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, userId, MockEmailPasswordAuthenticationFactory::USER);
+//				shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, userId, MockEmailPasswordAuthenticationFactory::USER());
 //
 //				final int option = r.nextInt(3);
 //				switch (option) {
@@ -644,7 +644,7 @@ TEST_F(SimpleMslStoreTest, missingMasterTokenAddServiceTokens)
 TEST_F(SimpleMslStoreTest, userBoundServiceTokens)
 {
 	shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);
-	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
 	shared_ptr<ICryptoContext> cryptoContext = make_shared<NullCryptoContext>();
 	set<shared_ptr<ServiceToken>> tokens = MslTestUtils::getServiceTokens(ctx, masterToken, userIdToken);
 
@@ -662,7 +662,7 @@ TEST_F(SimpleMslStoreTest, userBoundServiceTokens)
 TEST_F(SimpleMslStoreTest, missingUserIdTokenAddServiceTokens)
 {
 	shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);
-	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
 	shared_ptr<ICryptoContext> cryptoContext = make_shared<NullCryptoContext>();
 	set<shared_ptr<ServiceToken>> tokens = MslTestUtils::getServiceTokens(ctx, masterToken, userIdToken);
 
@@ -693,7 +693,7 @@ TEST_F(SimpleMslStoreTest, unboundServiceTokens)
 TEST_F(SimpleMslStoreTest, removeMasterBoundServiceTokens)
 {
 	shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);
-	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
 	shared_ptr<ICryptoContext> cryptoContext = make_shared<NullCryptoContext>();
 	set<shared_ptr<ServiceToken>> masterBoundTokens = MslTestUtils::getMasterBoundServiceTokens(ctx, masterToken);
 	set<shared_ptr<ServiceToken>> userBoundTokens = MslTestUtils::getUserBoundServiceTokens(ctx, masterToken, userIdToken);
@@ -723,7 +723,7 @@ TEST_F(SimpleMslStoreTest, removeMasterBoundServiceTokens)
 TEST_F(SimpleMslStoreTest, removeUserBoundServiceTokens)
 {
 	shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);
-	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
 	shared_ptr<ICryptoContext> cryptoContext = make_shared<NullCryptoContext>();
 	set<shared_ptr<ServiceToken>> masterBoundTokens = MslTestUtils::getMasterBoundServiceTokens(ctx, masterToken);
 	set<shared_ptr<ServiceToken>> userBoundTokens = MslTestUtils::getUserBoundServiceTokens(ctx, masterToken, userIdToken);
@@ -756,7 +756,7 @@ TEST_F(SimpleMslStoreTest, removeUserBoundServiceTokens)
 TEST_F(SimpleMslStoreTest, removeNoServiceTokens)
 {
 	shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);
-	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
 	shared_ptr<ICryptoContext> cryptoContext = make_shared<NullCryptoContext>();
 	set<shared_ptr<ServiceToken>> masterBoundTokens = MslTestUtils::getMasterBoundServiceTokens(ctx, masterToken);
 	set<shared_ptr<ServiceToken>> userBoundTokens = MslTestUtils::getUserBoundServiceTokens(ctx, masterToken, userIdToken);
@@ -793,7 +793,7 @@ TEST_F(SimpleMslStoreTest, removeNoServiceTokens)
 TEST_F(SimpleMslStoreTest, removeNamedServiceTokens)
 {
 	shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);
-	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
 	shared_ptr<ICryptoContext> cryptoContext = make_shared<NullCryptoContext>();
 	set<shared_ptr<ServiceToken>> masterBoundTokens = MslTestUtils::getMasterBoundServiceTokens(ctx, masterToken);
 	set<shared_ptr<ServiceToken>> userBoundTokens = MslTestUtils::getUserBoundServiceTokens(ctx, masterToken, userIdToken);
@@ -839,7 +839,7 @@ TEST_F(SimpleMslStoreTest, removeNamedServiceTokens)
 TEST_F(SimpleMslStoreTest, clearServiceTokens)
 {
 	shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);
-	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
 	shared_ptr<ICryptoContext> cryptoContext = make_shared<NullCryptoContext>();
 	set<shared_ptr<ServiceToken>> masterBoundTokens = MslTestUtils::getMasterBoundServiceTokens(ctx, masterToken);
 	set<shared_ptr<ServiceToken>> userBoundTokens = MslTestUtils::getUserBoundServiceTokens(ctx, masterToken, userIdToken);
@@ -864,7 +864,7 @@ TEST_F(SimpleMslStoreTest, clearServiceTokens)
 TEST_F(SimpleMslStoreTest, mismatchedGetServiceTokens)
 {
 	shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);
-	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
 	shared_ptr<MasterToken> mismatchedMasterToken = MslTestUtils::getMasterToken(ctx, 2, 2);
 
 	try {
@@ -878,7 +878,7 @@ TEST_F(SimpleMslStoreTest, mismatchedGetServiceTokens)
 TEST_F(SimpleMslStoreTest, missingMasterTokenGetServiceTokens)
 {
 	shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);
-	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
 
 	try {
 		store->getServiceTokens(NULL_MASTER_TOKEN, userIdToken);
@@ -891,7 +891,7 @@ TEST_F(SimpleMslStoreTest, missingMasterTokenGetServiceTokens)
 TEST_F(SimpleMslStoreTest, mismatchedRemoveServiceTokens)
 {
 	shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);
-	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
 	shared_ptr<MasterToken> mismatchedMasterToken = MslTestUtils::getMasterToken(ctx, 2, 2);
 
 	try {
@@ -909,8 +909,8 @@ TEST_F(SimpleMslStoreTest, removeMasterTokenSameSerialNumberServiceTokens)
 	shared_ptr<ICryptoContext> cryptoContext = make_shared<NullCryptoContext>();
 	const string userIdA = USER_ID + "A";
 	const string userIdB = USER_ID + "B";
-	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(ctx, masterTokenA, 1, MockEmailPasswordAuthenticationFactory::USER);
-	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(ctx, masterTokenB, 2, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(ctx, masterTokenA, 1, MockEmailPasswordAuthenticationFactory::USER());
+	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(ctx, masterTokenB, 2, MockEmailPasswordAuthenticationFactory::USER());
 	set<shared_ptr<ServiceToken>> masterBoundServiceTokens = MslTestUtils::getMasterBoundServiceTokens(ctx, masterTokenA);
 	set<shared_ptr<ServiceToken>> serviceTokensA = MslTestUtils::getUserBoundServiceTokens(ctx, masterTokenA, userIdTokenA);
 	set<shared_ptr<ServiceToken>> serviceTokensB = MslTestUtils::getUserBoundServiceTokens(ctx, masterTokenB, userIdTokenB);
@@ -945,8 +945,8 @@ TEST_F(SimpleMslStoreTest, removeMasterTokenReissuedServiceTokens)
 	shared_ptr<ICryptoContext> cryptoContext = make_shared<NullCryptoContext>();
 	const string userIdA = USER_ID + "A";
 	const string userIdB = USER_ID + "B";
-	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(ctx, masterTokenA, 1, MockEmailPasswordAuthenticationFactory::USER);
-	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(ctx, masterTokenB, 2, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(ctx, masterTokenA, 1, MockEmailPasswordAuthenticationFactory::USER());
+	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(ctx, masterTokenB, 2, MockEmailPasswordAuthenticationFactory::USER());
 	set<shared_ptr<ServiceToken>> masterBoundServiceTokens = MslTestUtils::getMasterBoundServiceTokens(ctx, masterTokenA);
 	set<shared_ptr<ServiceToken>> serviceTokensA = MslTestUtils::getUserBoundServiceTokens(ctx, masterTokenA, userIdTokenA);
 	set<shared_ptr<ServiceToken>> serviceTokensB = MslTestUtils::getUserBoundServiceTokens(ctx, masterTokenB, userIdTokenB);
@@ -975,8 +975,8 @@ TEST_F(SimpleMslStoreTest, clearCryptoContextsServiceTokens)
 	shared_ptr<ICryptoContext> cryptoContext = make_shared<NullCryptoContext>();
 	const string userIdA = USER_ID + "A";
 	const string userIdB = USER_ID + "B";
-	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(ctx, masterTokenA, 1, MockEmailPasswordAuthenticationFactory::USER);
-	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(ctx, masterTokenB, 2, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(ctx, masterTokenA, 1, MockEmailPasswordAuthenticationFactory::USER());
+	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(ctx, masterTokenB, 2, MockEmailPasswordAuthenticationFactory::USER());
 	set<shared_ptr<ServiceToken>> unboundServiceTokens = MslTestUtils::getServiceTokens(ctx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	set<shared_ptr<ServiceToken>> serviceTokensA = MslTestUtils::getUserBoundServiceTokens(ctx, masterTokenA, userIdTokenA);
 	set<shared_ptr<ServiceToken>> serviceTokensB = MslTestUtils::getUserBoundServiceTokens(ctx, masterTokenB, userIdTokenB);
@@ -1003,8 +1003,8 @@ TEST_F(SimpleMslStoreTest, removeUserIdTokenServiceTokens)
 	shared_ptr<ICryptoContext> cryptoContext = make_shared<NullCryptoContext>();
 	const string userIdA = USER_ID + "A";
 	const string userIdB = USER_ID + "B";
-	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER);
-	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(ctx, masterToken, 2, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
+	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(ctx, masterToken, 2, MockEmailPasswordAuthenticationFactory::USER());
 	set<shared_ptr<ServiceToken>> masterBoundServiceTokens = MslTestUtils::getMasterBoundServiceTokens(ctx, masterToken);
 	set<shared_ptr<ServiceToken>> serviceTokensA = MslTestUtils::getUserBoundServiceTokens(ctx, masterToken, userIdTokenA);
 	set<shared_ptr<ServiceToken>> serviceTokensB = MslTestUtils::getUserBoundServiceTokens(ctx, masterToken, userIdTokenB);
@@ -1031,8 +1031,8 @@ TEST_F(SimpleMslStoreTest, clearUserIdTokensServiceTokens)
 	shared_ptr<ICryptoContext> cryptoContext = make_shared<NullCryptoContext>();
 	const string userIdA = USER_ID + "A";
 	const string userIdB = USER_ID + "B";
-	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER);
-	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(ctx, masterToken, 2, MockEmailPasswordAuthenticationFactory::USER);
+	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
+	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(ctx, masterToken, 2, MockEmailPasswordAuthenticationFactory::USER());
 	set<shared_ptr<ServiceToken>> masterBoundServiceTokens = MslTestUtils::getMasterBoundServiceTokens(ctx, masterToken);
 	set<shared_ptr<ServiceToken>> serviceTokensA = MslTestUtils::getUserBoundServiceTokens(ctx, masterToken, userIdTokenA);
 	set<shared_ptr<ServiceToken>> serviceTokensB = MslTestUtils::getUserBoundServiceTokens(ctx, masterToken, userIdTokenB);
@@ -1084,7 +1084,7 @@ TEST_F(SimpleMslStoreTest, clearUserIdTokensServiceTokens)
 //				final int tokenIndex = r.nextInt(count);
 //				shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, tokenIndex, 1);
 //				final long userId = r.nextInt(count);
-//				shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, userId, MockEmailPasswordAuthenticationFactory::USER);
+//				shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, userId, MockEmailPasswordAuthenticationFactory::USER());
 //
 //				final int option = r.nextInt(6);
 //				switch (option) {
