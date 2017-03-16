@@ -26,8 +26,16 @@ namespace msl {
 
 using namespace netflix::msl::MslConstants;
 
-StaticMslMutex MslError::internalCodesLock;
-std::set<int> MslError::internalCodes;
+StaticMslMutex& MslError::internalCodesLock()
+{
+	static StaticMslMutex internalCodesLock;
+	return internalCodesLock;
+}
+std::set<int>& MslError::internalCodes()
+{
+	static std::set<int> internalCodes;
+	return internalCodes;
+}
 
 // 0 Message Security Layer
 const MslError MslError::MSL_PARSE_ERROR(0, ResponseCode::FAIL, "Error parsing MSL encodable.");
@@ -272,14 +280,14 @@ MslError::MslError(int internalCode, const ResponseCode& responseCode, const std
     : internalCode_(internalCode), responseCode_(responseCode), msg_(msg)
 {
     // Check for duplicates.
-    synchronized (internalCodesLock,
+    synchronized (internalCodesLock(),
     {
-        if (internalCodes.count(internalCode)) {
+        if (internalCodes().count(internalCode)) {
             std::stringstream ss;
             ss << "Duplicate MSL error definition for error code " << internalCode << ".";
             throw MslInternalException(ss.str());
         }
-        internalCodes.insert(internalCode);
+        internalCodes().insert(internalCode);
     });
 
     internalCode_ = BASE + internalCode;

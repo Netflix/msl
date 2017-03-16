@@ -24,6 +24,16 @@
 namespace netflix {
 namespace msl {
 
+/**
+ * <p>Message Security Layer error codes and descriptions.</p>
+ *
+ * <p>Errors are defined with an internal and a response error code. The
+ * internal error code is specific to this implementation. The response error
+ * codes are sent in error messages to inform the remote entity, who should use
+ * it to decide on the correct error handling behavior.</p>
+ *
+ * @author Wesley Miaw <wmiaw@netflix.com>
+ */
 class MslError
 {
 public:
@@ -316,9 +326,9 @@ protected:
 
     static const int BASE = 100000;
     /** Mutex that protects internal error code set. */
-    static util::StaticMslMutex internalCodesLock;
+    static util::StaticMslMutex& internalCodesLock();
     /** Internal error code set. */
-    static std::set<int> internalCodes;
+    static std::set<int>& internalCodes();
 
     /** Internal error code. */
     int internalCode_;
