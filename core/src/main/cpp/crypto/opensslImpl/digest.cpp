@@ -42,7 +42,7 @@ void digest(const string& spec, const ByteArray& data, ByteArray& md)
         throw MslInternalException("digest: EVP_DigestInit_ex error");
 
     CheckedNumeric<size_t> dataSize(data.size());
-    if (EVP_DigestUpdate(evpMd.get(), &data[0], CheckedNumeric<int>::cast(dataSize).ValueOrDie()) != 1)
+    if (EVP_DigestUpdate(evpMd.get(), &data[0], CheckedNumeric<size_t>::cast(dataSize).ValueOrDie()) != 1)
         throw MslInternalException("digest: EVP_DigestUpdate error");
 
     ByteArray tmp(EVP_MAX_MD_SIZE);

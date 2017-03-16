@@ -41,7 +41,7 @@ Date::Date()
 {
     struct timeval tp;
     gettimeofday(&tp, NULL);
-    msSinceEpoch_ = static_cast<int64_t>(tp.tv_sec * 1000ull + tp.tv_usec / 1000ull);
+    msSinceEpoch_ = static_cast<int64_t>(static_cast<uint64_t>(tp.tv_sec) * 1000ull + static_cast<uint64_t>(tp.tv_usec) / 1000ull);
     isNull_ = false;
 }
 

@@ -50,7 +50,7 @@ void computeHmac(const std::string& shaAlg, const ByteArray& key, const ByteArra
 
     // Allocate the max possible space for the result, to ensure no overflow
     // even if there is a bug.
-    const size_t expectedLength = EVP_MD_size(digestAlgo);
+    const size_t expectedLength = static_cast<size_t>(EVP_MD_size(digestAlgo));
     ByteArray result(EVP_MAX_MD_SIZE);
 
     // Compute the HMAC

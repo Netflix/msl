@@ -99,12 +99,12 @@ int64_t Random::nextLong()
 
 int32_t Random::nextInt(uint32_t n)
 {
-    return nextIntegerBounded<int32_t>(n, this);
+    return nextIntegerBounded<int32_t>(static_cast<int32_t>(n), this);
 }
 
 int64_t Random::nextLong(uint64_t n)
 {
-    return nextIntegerBounded<int64_t>(n, this);
+    return nextIntegerBounded<int64_t>(static_cast<int64_t>(n), this);
 }
 
 }}} // namespace netflix::msl::crypto

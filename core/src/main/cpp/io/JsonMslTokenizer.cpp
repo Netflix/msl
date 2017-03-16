@@ -80,10 +80,10 @@ const MslStreamWrapper::Ch* MslStreamWrapper::Peek4() const
 {
 	int len = static_cast<int>(4 - cache_.size());
 	if (len > 0) {
-		ByteArray buf(len);
-		int count = stream_->read(buf, 0, len, TIMEOUT);
+		ByteArray buf(static_cast<size_t>(len));
+		int count = stream_->read(buf, 0, static_cast<size_t>(len), TIMEOUT);
 		for (int i = 0; i < count; ++i)
-			cache_.push_back(buf[i]);
+			cache_.push_back(buf[static_cast<size_t>(i)]);
 	}
 	if (cache_.size() >= 4)
 		return &cache_[0];

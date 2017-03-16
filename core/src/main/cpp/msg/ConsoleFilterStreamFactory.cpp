@@ -129,7 +129,7 @@ public:
     		ss << "offset " << off << " plus length " << len << " exceeds data size " << data.size();
     		throw RangeException(ss.str());
     	}
-    	cout.write(reinterpret_cast<const char*>(&data[off]), len);
+    	cout.write(reinterpret_cast<const char*>(&data[off]), static_cast<streamsize>(len));
     	cout.flush();
     	return out_->write(data, off, len, timeout);
     }

@@ -83,7 +83,7 @@ shared_ptr<ByteArray> correctNullBytes(shared_ptr<ByteArray> b)
     const size_t copyLength = b->size() - leadingNulls;
     shared_ptr<ByteArray> result = make_shared<ByteArray>(copyLength + 1);
     result->at(0) = 0x00;
-    copy(b->begin() + leadingNulls, b->end(), result->begin() + 1);
+    copy(b->begin() + static_cast<ptrdiff_t>(leadingNulls), b->end(), result->begin() + 1);
     return result;
 }
 

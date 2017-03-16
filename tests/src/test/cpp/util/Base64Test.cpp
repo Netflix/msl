@@ -46,7 +46,7 @@ inline std::shared_ptr<std::vector<std::uint8_t>> makevec(const std::string& s)
     return std::make_shared<std::vector<std::uint8_t>>(s.begin(), s.end());
 }
 
-inline size_t base64Len(size_t inlen) { return ((4 * inlen / 3) + 3) & ~3; }
+inline size_t base64Len(size_t inlen) { return ((4ul * inlen / 3ul) + 3ul) & ~3ul; }
 
 } // anonymous namespace
 

@@ -370,8 +370,8 @@ TEST_F(MessageOutputStreamTest, compressed)
 	EXPECT_EQ(*first, *firstPayload->getData());
 	shared_ptr<PayloadChunk> secondPayload = make_shared<PayloadChunk>(ctx, payloadMos[1], cryptoContext);
 	shared_ptr<ByteArray> secondData = secondPayload->getData();
-	EXPECT_EQ(*secondA, ByteArray(secondData->begin(), secondData->begin() + secondA->size()));
-	EXPECT_EQ(*secondB, ByteArray(secondData->begin() + secondA->size(), secondData->begin() + secondA->size() + secondB->size()));
+	EXPECT_EQ(*secondA, ByteArray(secondData->begin(), secondData->begin() + static_cast<ptrdiff_t>(secondA->size())));
+	EXPECT_EQ(*secondB, ByteArray(secondData->begin() + static_cast<ptrdiff_t>(secondA->size()), secondData->begin() + static_cast<ptrdiff_t>(secondA->size()) + static_cast<ptrdiff_t>(secondB->size())));
 	shared_ptr<PayloadChunk> thirdPayload = make_shared<PayloadChunk>(ctx, payloadMos[2], cryptoContext);
 	EXPECT_EQ(static_cast<size_t>(0), thirdPayload->getData()->size());
 	EXPECT_TRUE(thirdPayload->isEndOfMessage());
@@ -426,8 +426,8 @@ TEST_F(MessageOutputStreamTest, flush)
 	EXPECT_EQ(*first, *firstPayload->getData());
 	shared_ptr<PayloadChunk> secondPayload = make_shared<PayloadChunk>(ctx, payloadMos[1], cryptoContext);
 	shared_ptr<ByteArray> secondData = secondPayload->getData();
-	EXPECT_EQ(*secondA, ByteArray(secondData->begin(), secondData->begin() + secondA->size()));
-	EXPECT_EQ(*secondB, ByteArray(secondData->begin() + secondA->size(), secondData->begin() + secondA->size() + secondB->size()));
+	EXPECT_EQ(*secondA, ByteArray(secondData->begin(), secondData->begin() + static_cast<ptrdiff_t>(secondA->size())));
+	EXPECT_EQ(*secondB, ByteArray(secondData->begin() + static_cast<ptrdiff_t>(secondA->size()), secondData->begin() + static_cast<ptrdiff_t>(secondA->size()) + static_cast<ptrdiff_t>(secondB->size())));
 	shared_ptr<PayloadChunk> thirdPayload = make_shared<PayloadChunk>(ctx, payloadMos[2], cryptoContext);
 	EXPECT_EQ(static_cast<size_t>(0), thirdPayload->getData()->size());
 	EXPECT_TRUE(thirdPayload->isEndOfMessage());

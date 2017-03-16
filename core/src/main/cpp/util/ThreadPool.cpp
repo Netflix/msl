@@ -58,7 +58,7 @@ ThreadPool::ThreadPool(int threadCount) : done(false), joinThreads(threads)
 {
     assert(threadCount != 0); // for now
     if (threadCount < 0)
-        threadCount = thread::hardware_concurrency();
+        threadCount = static_cast<int>(thread::hardware_concurrency());
     myCout << "ThreadPool ctor: starting " << threadCount << " threads\n";
     try {
         for (int i=0; i<threadCount; ++i) {

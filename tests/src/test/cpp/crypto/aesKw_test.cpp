@@ -109,7 +109,7 @@ TEST_F(AesKwTest, RandomRoundTrip)
     for (int i = 0; i < nIterations; ++i)
     {
         // Generate random data of random length as the key to wrap
-        const unsigned int keyLenBytes = (2 + rand->nextInt(511)) * 8;
+        const unsigned int keyLenBytes = static_cast<unsigned int>((2 + rand->nextInt(511)) * 8);
         shared_ptr<ByteArray> plaintext = getRandomBytes(keyLenBytes);
         //const string dataHex = "data: " + toHex(plaintext);
 

@@ -107,8 +107,8 @@ public:
     virtual int64_t getTime() override {
         struct timeval tp;
         gettimeofday(&tp, NULL);
-        uint64_t ms = tp.tv_sec * 1000ull + tp.tv_usec / 1000ull;
-        return ms;
+        uint64_t ms = static_cast<uint64_t>(tp.tv_sec) * 1000ull + static_cast<uint64_t>(tp.tv_usec) / 1000ull;
+        return static_cast<int64_t>(ms);
     }
     /** @inheritDoc */
     virtual shared_ptr<IRandom> getRandom() override { return random; }

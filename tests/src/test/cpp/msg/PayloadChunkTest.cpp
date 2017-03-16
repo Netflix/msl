@@ -96,7 +96,7 @@ public:
 			raw.seekg(0, ios::end);
 			streampos length = raw.tellg();
 			raw.seekg(0, ios::beg);
-			rawdata->resize(length);
+			rawdata->resize(static_cast<size_t>(length));
 			raw.read(reinterpret_cast<char*>(&(*rawdata)[0]), length);
 			raw.close();
 		} else {

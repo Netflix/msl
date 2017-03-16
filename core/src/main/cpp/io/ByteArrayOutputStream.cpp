@@ -38,7 +38,7 @@ size_t ByteArrayOutputStream::write(const ByteArray& data, size_t off, size_t le
 	if (off + len > data.size())
 		throw IllegalArgumentException("Offset plus length cannot be greater than the array length.");
 
-	result_->insert(result_->end(), data.begin() + off, data.begin() + off + len);
+	result_->insert(result_->end(), data.begin() + static_cast<ptrdiff_t>(off), data.begin() + static_cast<ptrdiff_t>(off) + static_cast<ptrdiff_t>(len));
 	return len;
 }
 

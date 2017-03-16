@@ -204,7 +204,7 @@ protected:
 	    ByteArrayOutputStream baos;
 	    shared_ptr<ByteArray> headerBytes = header->toMslEncoding(encoder, format);
 	    baos.write(*headerBytes, 0, headerBytes->size());
-	    for (int i = 0; i < static_cast<int>(payloads.size()); ++i) {
+	    for (size_t i = 0; i < payloads.size(); ++i) {
 	    	shared_ptr<PayloadChunk> payload = payloads[i];
 	    	shared_ptr<ByteArray> payloadBytes = payload->toMslEncoding(encoder, format);
 	    	baos.write(*payloadBytes, 0, payloadBytes->size());
@@ -267,7 +267,7 @@ TEST_F(MessageInputStreamTest, messageHeaderData)
 	shared_ptr<MessageInputStream> mis = make_shared<MessageInputStream>(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
 
 	EXPECT_EQ(static_cast<int>(DATA->size()), mis->read(buffer));
-	EXPECT_EQ(*DATA, ByteArray(buffer.begin(), buffer.begin() + DATA->size()));
+	EXPECT_EQ(*DATA, ByteArray(buffer.begin(), buffer.begin() + static_cast<ptrdiff_t>(DATA->size())));
 
 	mis->close();
 }
@@ -491,7 +491,7 @@ TEST_F(MessageInputStreamTest, keyExchange)
 	shared_ptr<MessageInputStream> mis = make_shared<MessageInputStream>(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
 
 	EXPECT_EQ(static_cast<int>(DATA->size()), mis->read(buffer));
-	EXPECT_EQ(*DATA, ByteArray(buffer.begin(), buffer.begin() + DATA->size()));
+	EXPECT_EQ(*DATA, ByteArray(buffer.begin(), buffer.begin() + static_cast<ptrdiff_t>(DATA->size())));
 	EXPECT_EQ(mis->getPayloadCryptoContext(), mis->getKeyExchangeCryptoContext());
 
 	mis->close();
@@ -511,7 +511,7 @@ TEST_F(MessageInputStreamTest, peerKeyExchange)
 	shared_ptr<MessageInputStream> mis = make_shared<MessageInputStream>(p2pCtx, is, KEY_REQUEST_DATA, cryptoContexts);
 
 	EXPECT_EQ(static_cast<int>(DATA->size()), mis->read(buffer));
-	EXPECT_EQ(*DATA, ByteArray(buffer.begin(), buffer.begin() + DATA->size()));
+	EXPECT_EQ(*DATA, ByteArray(buffer.begin(), buffer.begin() + static_cast<ptrdiff_t>(DATA->size())));
 	EXPECT_NE(mis->getPayloadCryptoContext(), mis->getKeyExchangeCryptoContext());
 
 	mis->close();
@@ -1056,7 +1056,7 @@ TEST_F(MessageInputStreamTest, prematureEndOfMessage)
 
 	// Read everything. We shouldn't get any of the extra payloads.
 	EXPECT_EQ(static_cast<int>(appdata->size()), mis->read(buffer, 0, appdata->size() * 2));
-	EXPECT_EQ(*appdata, ByteArray(buffer.begin(), buffer.begin() + appdata->size()));
+	EXPECT_EQ(*appdata, ByteArray(buffer.begin(), buffer.begin() + static_cast<ptrdiff_t>(appdata->size())));
 
 	mis->close();
 }
@@ -1088,7 +1088,7 @@ TEST_F(MessageInputStreamTest, mismatchedMessageId)
 	int caughtExceptions = 0;
 	while (true) {
 		try {
-			const int bytesRead = mis->read(buffer, offset, buffer.size() - offset);
+			const int bytesRead = mis->read(buffer, static_cast<size_t>(offset), buffer.size() - static_cast<size_t>(offset));
 			if (bytesRead == -1) break;
 			offset += bytesRead;
 		} catch (const IOException& e) {
@@ -1096,7 +1096,7 @@ TEST_F(MessageInputStreamTest, mismatchedMessageId)
 		}
 	}
 	EXPECT_EQ(badPayloads, caughtExceptions);
-	EXPECT_EQ(*appdata, ByteArray(buffer.begin(), buffer.begin() + appdata->size()));
+	EXPECT_EQ(*appdata, ByteArray(buffer.begin(), buffer.begin() + static_cast<ptrdiff_t>(appdata->size())));
 
 	mis->close();
 }
@@ -1128,7 +1128,7 @@ TEST_F(MessageInputStreamTest, incorrectSequenceNumber)
 	int caughtExceptions = 0;
 	while (true) {
 		try {
-			const int bytesRead = mis->read(buffer, offset, buffer.size() - offset);
+			const int bytesRead = mis->read(buffer, static_cast<size_t>(offset), buffer.size() - static_cast<size_t>(offset));
 			if (bytesRead == -1) break;
 			offset += bytesRead;
 		} catch (const IOException& e) {
@@ -1136,7 +1136,7 @@ TEST_F(MessageInputStreamTest, incorrectSequenceNumber)
 		}
 	}
 	EXPECT_EQ(badPayloads, caughtExceptions);
-	EXPECT_EQ(*appdata, ByteArray(buffer.begin(), buffer.begin() + appdata->size()));
+	EXPECT_EQ(*appdata, ByteArray(buffer.begin(), buffer.begin() + static_cast<ptrdiff_t>(appdata->size())));
 
 	mis->close();
 }
@@ -1159,40 +1159,40 @@ TEST_F(MessageInputStreamTest, markReset)
 	const size_t beginningOffset = 0;
 	const size_t beginningLength = appdata->size() / 4;
 	const size_t beginningTo = beginningOffset + beginningLength;
-	ByteArray expectedBeginning(appdata->begin() + beginningOffset, appdata->begin() + beginningTo);
+	ByteArray expectedBeginning(appdata->begin() + beginningOffset, appdata->begin() + static_cast<ptrdiff_t>(beginningTo));
 	mis->mark();
 	EXPECT_EQ(static_cast<int>(expectedBeginning.size()), mis->read(buffer, beginningOffset, beginningLength));
-	EXPECT_EQ(expectedBeginning, ByteArray(buffer.begin() + beginningOffset, buffer.begin() + beginningTo));
+	EXPECT_EQ(expectedBeginning, ByteArray(buffer.begin() + beginningOffset, buffer.begin() + static_cast<ptrdiff_t>(beginningTo)));
 	mis->reset();
 	EXPECT_EQ(static_cast<int>(expectedBeginning.size()), mis->read(buffer, beginningOffset, beginningLength));
-	EXPECT_EQ(expectedBeginning, ByteArray(buffer.begin() + beginningOffset, buffer.begin() + beginningTo));
+	EXPECT_EQ(expectedBeginning, ByteArray(buffer.begin() + beginningOffset, buffer.begin() + static_cast<ptrdiff_t>(beginningTo)));
 
 	// Mark and reset from where we are.
 	const size_t middleOffset = beginningTo;
 	const size_t middleLength = appdata->size() / 4;
 	const size_t middleTo = middleOffset + middleLength;
-	ByteArray expectedMiddle(appdata->begin() + middleOffset, appdata->begin() + middleTo);
+	ByteArray expectedMiddle(appdata->begin() + static_cast<ptrdiff_t>(middleOffset), appdata->begin() + static_cast<ptrdiff_t>(middleTo));
 	mis->mark();
 	EXPECT_EQ(static_cast<int>(expectedMiddle.size()), mis->read(buffer, middleOffset, middleLength));
-	EXPECT_EQ(expectedMiddle, ByteArray(buffer.begin() + middleOffset, buffer.begin() + middleTo));
+	EXPECT_EQ(expectedMiddle, ByteArray(buffer.begin() + static_cast<ptrdiff_t>(middleOffset), buffer.begin() + static_cast<ptrdiff_t>(middleTo)));
 	mis->reset();
 	EXPECT_EQ(static_cast<int>(expectedMiddle.size()), mis->read(buffer, middleOffset, middleLength));
-	EXPECT_EQ(expectedMiddle, ByteArray(buffer.begin() + middleOffset, buffer.begin() + middleTo));
+	EXPECT_EQ(expectedMiddle, ByteArray(buffer.begin() + static_cast<ptrdiff_t>(middleOffset), buffer.begin() + static_cast<ptrdiff_t>(middleTo)));
 
 	// Mark and reset the remainder.
 	const size_t endingOffset = middleTo;
 	const size_t endingLength = appdata->size() - middleLength - beginningLength;
 	const size_t endingTo = endingOffset + endingLength;
-	ByteArray expectedEnding(appdata->begin() + endingOffset, appdata->begin() + endingTo);
+	ByteArray expectedEnding(appdata->begin() + static_cast<ptrdiff_t>(endingOffset), appdata->begin() + static_cast<ptrdiff_t>(endingTo));
 	mis->mark();
 	EXPECT_EQ(static_cast<int>(expectedEnding.size()), mis->read(buffer, endingOffset, endingLength));
-	EXPECT_EQ(expectedEnding, ByteArray(buffer.begin() + endingOffset, buffer.begin() + endingTo));
+	EXPECT_EQ(expectedEnding, ByteArray(buffer.begin() + static_cast<ptrdiff_t>(endingOffset), buffer.begin() + static_cast<ptrdiff_t>(endingTo)));
 	mis->reset();
 	EXPECT_EQ(static_cast<int>(expectedEnding.size()), mis->read(buffer, endingOffset, endingLength));
-	EXPECT_EQ(expectedEnding, ByteArray(buffer.begin() + endingOffset, buffer.begin() + endingTo));
+	EXPECT_EQ(expectedEnding, ByteArray(buffer.begin() + static_cast<ptrdiff_t>(endingOffset), buffer.begin() + static_cast<ptrdiff_t>(endingTo)));
 
 	// Confirm equality.
-	EXPECT_EQ(*appdata, ByteArray(buffer.begin(), buffer.begin() + appdata->size()));
+	EXPECT_EQ(*appdata, ByteArray(buffer.begin(), buffer.begin() + static_cast<ptrdiff_t>(appdata->size())));
 
 	mis->close();
 }
@@ -1215,10 +1215,10 @@ TEST_F(MessageInputStreamTest, markResetShortMark)
 	const size_t beginningOffset = 0;
 	const size_t beginningLength = appdata->size() / 2;
 	const size_t beginningTo = beginningOffset + beginningLength;
-	ByteArray expectedBeginning(appdata->begin() + beginningOffset, appdata->begin() + beginningLength);
+	ByteArray expectedBeginning(appdata->begin() + static_cast<ptrdiff_t>(beginningOffset), appdata->begin() + static_cast<ptrdiff_t>(beginningLength));
 	mis->mark();
 	EXPECT_EQ(static_cast<int>(expectedBeginning.size()), mis->read(buffer, beginningOffset, beginningLength));
-	EXPECT_EQ(expectedBeginning, ByteArray(buffer.begin() + beginningOffset, buffer.begin() + beginningTo));
+	EXPECT_EQ(expectedBeginning, ByteArray(buffer.begin() + static_cast<ptrdiff_t>(beginningOffset), buffer.begin() + static_cast<ptrdiff_t>(beginningTo)));
 	mis->reset();
 
 	// Read a little bit, and mark again so we drop one or more payloads
@@ -1231,15 +1231,15 @@ TEST_F(MessageInputStreamTest, markResetShortMark)
 	const size_t endingOffset = reread.size();
 	const size_t endingLength = appdata->size() - endingOffset;
 	const size_t endingTo = endingOffset + endingLength;
-	ByteArray expectedEnding(appdata->begin() + endingOffset, appdata->begin() + endingTo);
+	ByteArray expectedEnding(appdata->begin() + static_cast<ptrdiff_t>(endingOffset), appdata->begin() + static_cast<ptrdiff_t>(endingTo));
 	EXPECT_EQ(static_cast<int>(expectedEnding.size()), mis->read(buffer, endingOffset, endingLength));
-	EXPECT_EQ(expectedEnding, ByteArray(buffer.begin() + endingOffset, buffer.begin() + endingTo));
+	EXPECT_EQ(expectedEnding, ByteArray(buffer.begin() + static_cast<ptrdiff_t>(endingOffset), buffer.begin() + static_cast<ptrdiff_t>(endingTo)));
 	mis->reset();
 	EXPECT_EQ(static_cast<int>(expectedEnding.size()), mis->read(buffer, endingOffset, endingLength));
-	EXPECT_EQ(expectedEnding, ByteArray(buffer.begin() + endingOffset, buffer.begin() + endingTo));
+	EXPECT_EQ(expectedEnding, ByteArray(buffer.begin() + static_cast<ptrdiff_t>(endingOffset), buffer.begin() + static_cast<ptrdiff_t>(endingTo)));
 
 	// Confirm equality.
-	EXPECT_EQ(*appdata, ByteArray(buffer.begin(), buffer.begin() + appdata->size()));
+	EXPECT_EQ(*appdata, ByteArray(buffer.begin(), buffer.begin() + static_cast<ptrdiff_t>(appdata->size())));
 
 	mis->close();
 }

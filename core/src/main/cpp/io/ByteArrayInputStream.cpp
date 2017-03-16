@@ -36,7 +36,7 @@ int ByteArrayInputStream::read(ByteArray& out, size_t offset, size_t len, int /*
 		len = data_->size() - currentPosition_;
 	if (out.size() < offset + len)
 		out.resize(offset + len);
-	copy(data_->begin() + currentPosition_, data_->begin() + currentPosition_ + len, out.begin() + offset);
+	copy(data_->begin() + static_cast<ptrdiff_t>(currentPosition_), data_->begin() + static_cast<ptrdiff_t>(currentPosition_) + static_cast<ptrdiff_t>(len), out.begin() + static_cast<ptrdiff_t>(offset));
 	currentPosition_ += len;
 	return static_cast<int>(len);
 }

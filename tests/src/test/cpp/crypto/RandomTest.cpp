@@ -106,8 +106,7 @@ TEST_F(RandomTest, nextIntStats)
 
 TEST_F(RandomTest, nextIntRange)
 {
-    EXPECT_THROW(random->nextInt(-10), MslInternalException);
-    const int32_t rangeMax = abs(random->nextInt());
+    const uint32_t rangeMax = static_cast<uint32_t>(abs(random->nextInt()));
     set<int32_t> values;
     const int NITERATIONS = 65536;
     for (int i=0; i<NITERATIONS; ++i)
@@ -118,8 +117,7 @@ TEST_F(RandomTest, nextIntRange)
 
 TEST_F(RandomTest, nextLongRange)
 {
-    EXPECT_THROW(random->nextInt(-10), MslInternalException);
-    const int64_t rangeMax = abs(random->nextLong());
+    const uint64_t rangeMax = static_cast<uint64_t>(abs(random->nextLong()));
     set<int64_t> values;
     const int NITERATIONS = 65536;
     for (int i=0; i<NITERATIONS; ++i)
