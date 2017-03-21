@@ -208,7 +208,7 @@ public class MslError {
     public static final MslError PAYLOAD_DATA_MISSING = new MslError(6011, ResponseCode.FAIL, "No payload data found in non-EOM payload chunk.");
     public static final MslError PAYLOAD_DATA_CORRUPT = new MslError(6012, ResponseCode.FAIL, "Corrupt payload data found in non-EOM payload chunk.");
     public static final MslError UNIDENTIFIED_COMPRESSION = new MslError(6013, ResponseCode.FAIL, "Unidentified compression algorithm.");
-    public static final MslError MESSAGE_EXPIRED = new MslError(6014, ResponseCode.EXPIRED, "Message expired and not renewable. Rejected.");
+    public static final MslError MESSAGE_EXPIRED = new MslError(6014, ResponseCode.EXPIRED, "Message expired and not renewable or missing key request data. Rejected.");
     public static final MslError MESSAGE_ID_OUT_OF_RANGE = new MslError(6015, ResponseCode.FAIL, "Message ID is is out of range.");
     public static final MslError INTERNAL_CODE_NEGATIVE = new MslError(6016, ResponseCode.FAIL, "Error header internal code is negative.");
     public static final MslError UNEXPECTED_RESPONSE_MESSAGE_ID = new MslError(6017, ResponseCode.FAIL, "Unexpected response message ID. Possible replay.");
