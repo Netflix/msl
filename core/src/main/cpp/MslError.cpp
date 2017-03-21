@@ -214,7 +214,7 @@ const MslError MslError::HEADER_DATA_MISSING(6010, ResponseCode::FAIL, "No heade
 const MslError MslError::PAYLOAD_DATA_MISSING(6011, ResponseCode::FAIL, "No payload data found in non-EOM payload chunk.");
 const MslError MslError::PAYLOAD_DATA_CORRUPT(6012, ResponseCode::FAIL, "Corrupt payload data found in non-EOM payload chunk.");
 const MslError MslError::UNIDENTIFIED_COMPRESSION(6013, ResponseCode::FAIL, "Unidentified compression algorithm.");
-const MslError MslError::MESSAGE_EXPIRED(6014, ResponseCode::EXPIRED, "Message expired and not renewable. Rejected.");
+const MslError MslError::MESSAGE_EXPIRED(6014, ResponseCode::EXPIRED, "Message expired and not renewable or missing key request data. Rejected.");
 const MslError MslError::MESSAGE_ID_OUT_OF_RANGE(6015, ResponseCode::FAIL, "Message ID is is out of range.");
 const MslError MslError::INTERNAL_CODE_NEGATIVE(6016, ResponseCode::FAIL, "Error header internal code is negative.");
 const MslError MslError::UNEXPECTED_RESPONSE_MESSAGE_ID(6017, ResponseCode::FAIL, "Unexpected response message ID. Possible replay.");
