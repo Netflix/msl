@@ -113,8 +113,7 @@ var MslEncoderFactory$stringify;
             AsyncExecutor(callback, function() {
                 // Identify the encoding format.
                 if (!format) {
-                	//var bufferedSource = source.markSupported() ? source : new BufferedInputStream(source);
-                	var bufferedSource = new BufferedInputStream(source);
+                	var bufferedSource = source.markSupported() ? source : new BufferedInputStream(source);
                     bufferedSource.mark();
                     bufferedSource.read(1, timeout, {
                         result: function(bytes) {
