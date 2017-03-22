@@ -22,7 +22,7 @@
 #include <crypto/Key.h>
 #include <crypto/MslCiphertextEnvelope.h>
 #include <crypto/Random.h>
-#include <io/MslEncoderFactory.h>
+#include <io/DefaultMslEncoderFactory.h>
 #include <io/MslEncoderFormat.h>
 #include <IllegalArgumentException.h>
 #include <MslCryptoException.h>
@@ -99,7 +99,7 @@ protected:
     const SecretKey encryptionKey_;
     const SecretKey signatureKey_;
     const SecretKey wrappingKey_;
-    shared_ptr<MslEncoderFactory> encoder_ = make_shared<MslEncoderFactory>();
+    shared_ptr<MslEncoderFactory> encoder_ = make_shared<DefaultMslEncoderFactory>();
     const MslEncoderFormat encoderFormat_;
     const string KEY_CIPHERTEXT;
     const string KEYSET_ID;

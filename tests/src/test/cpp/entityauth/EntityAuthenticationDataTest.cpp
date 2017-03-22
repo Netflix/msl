@@ -48,10 +48,16 @@ const string KEY_AUTHDATA = "authdata";
 class EntityAuthenticationDataTest : public ::testing::Test
 {
 public:
-    EntityAuthenticationDataTest() {}
+	virtual ~EntityAuthenticationDataTest() {}
+
+    EntityAuthenticationDataTest()
+    	: ctx(make_shared<MockMslContext>(EntityAuthenticationScheme::PSK, false))
+		, encoder(ctx->getMslEncoderFactory())
+	{}
+
 protected:
-    shared_ptr<MslContext> ctx = make_shared<MockMslContext>(EntityAuthenticationScheme::PSK, false);
-    shared_ptr<MslEncoderFactory> encoder = make_shared<MslEncoderFactory>();
+    shared_ptr<MslContext> ctx;
+    shared_ptr<MslEncoderFactory> encoder;
 };
 
 TEST_F(EntityAuthenticationDataTest, noScheme)

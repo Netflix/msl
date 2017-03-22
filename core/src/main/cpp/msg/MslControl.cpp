@@ -94,6 +94,36 @@ namespace {
  */
 class DummyMslContext : public MslContext
 {
+private:
+	class DummyMslEncoderFactory : public MslEncoderFactory
+	{
+	public:
+		virtual ~DummyMslEncoderFactory() {}
+		DummyMslEncoderFactory() {}
+
+		/** @inheritDoc */
+		virtual MslEncoderFormat getPreferredFormat(const std::set<MslEncoderFormat>& formats = std::set<MslEncoderFormat>()) {
+			return MslEncoderFormat::JSON;
+		}
+
+	protected:
+		/** @inheritDoc */
+		virtual std::shared_ptr<MslTokenizer> generateTokenizer(std::shared_ptr<InputStream> source, const MslEncoderFormat& format) {
+			throw new MslInternalException("DummyMslEncoderFactory.createTokenizer() not supported.");
+		}
+
+	public:
+		/** @inheritDoc */
+		virtual std::shared_ptr<MslObject> parseObject(std::shared_ptr<ByteArray> encoding) {
+            throw new MslInternalException("DummyMslEncoderFactory.parseObject() not supported.");
+		}
+
+		/** @inheritDoc */
+		virtual std::shared_ptr<ByteArray> encodeObject(std::shared_ptr<MslObject> object, const MslEncoderFormat& format) {
+            throw new MslInternalException("DummyMslEncoderFactory.encodeObject() not supported.");
+		}
+	};
+
 public:
     virtual ~DummyMslContext() {}
     DummyMslContext()
@@ -101,7 +131,7 @@ public:
     , entityAuthData(make_shared<UnauthenticatedAuthenticationData>("dummy"))
     , mslCryptoContext(make_shared<NullCryptoContext>())
     , store(make_shared<SimpleMslStore>())
-    , encoderFactory(make_shared<MslEncoderFactory>())
+    , encoderFactory(make_shared<DummyMslEncoderFactory>())
     {}
     /** @inheritDoc */
     virtual int64_t getTime() override {

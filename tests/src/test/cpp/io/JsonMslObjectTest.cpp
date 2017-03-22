@@ -20,8 +20,10 @@
 #include <io/MslEncoderException.h>
 #include <io/MslEncoderFactory.h>
 #include <util/Base64.h>
+#include <util/MockMslContext.h>
 
 using namespace std;
+using namespace netflix::msl::util;
 
 namespace netflix {
 namespace msl {
@@ -35,8 +37,17 @@ shared_ptr<ByteArray> makeByteArray(const string s) {
 
 class JsonMslObjectTest : public ::testing::Test
 {
+public:
+	virtual ~JsonMslObjectTest() {}
+
+	JsonMslObjectTest()
+	{
+    	shared_ptr<MslContext> ctx = make_shared<MockMslContext>(EntityAuthenticationScheme::PSK, false);
+		encoder = ctx->getMslEncoderFactory();
+	}
+
 protected:
-    shared_ptr<MslEncoderFactory> encoder = make_shared<MslEncoderFactory>();
+    shared_ptr<MslEncoderFactory> encoder;
 };
 
 TEST_F(JsonMslObjectTest, ElementTypes)

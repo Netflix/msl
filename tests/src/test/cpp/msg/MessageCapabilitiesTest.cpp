@@ -17,7 +17,7 @@
 #include <gtest/gtest.h>
 #include <io/MslObject.h>
 #include <io/MslArray.h>
-#include <io/MslEncoderFactory.h>
+#include <io/DefaultMslEncoderFactory.h>
 #include <io/MslEncoderFormat.h>
 #include <msg/MessageCapabilities.h>
 #include <MslConstants.h>
@@ -123,8 +123,10 @@ TEST_F(MessageCapabilitiesTest, mslObjectCtor)
 
 TEST_F(MessageCapabilitiesTest, toMslEncoding)
 {
+	// FIXME: This is an error-prone test because there is no guarantee of how
+	// a JSON encoding might be constructed or formatted.
     shared_ptr<MessageCapabilities> mc1 = make_shared<MessageCapabilities>(compressionAlgos_, languages_, encoderFormats_);
-    shared_ptr<MslEncoderFactory> mef = make_shared<MslEncoderFactory>();
+    shared_ptr<MslEncoderFactory> mef = make_shared<DefaultMslEncoderFactory>();
     shared_ptr<ByteArray> ba1 = mc1->toMslEncoding(mef, MslEncoderFormat::JSON);
     EXPECT_EQ(
         "{\"compressionalgos\":[\"GZIP\",\"LZW\",\"NOCOMPRESSION\"],\"encoderformats\":[\"JSON\"],\"languages\":[\"aa\",\"cc\",\"bb\"]}",
