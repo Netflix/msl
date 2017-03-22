@@ -89,7 +89,7 @@ public class MslEncoderFactorySuite {
     /** MSL context. */
     private static MslContext ctx = null;
     /** MSL encoder factory. */
-    private static MslEncoderFactory encoder = new MslEncoderFactory();
+    private static MslEncoderFactory encoder;
     /** Random. */
     private static Random random = null;
     
@@ -473,13 +473,11 @@ public class MslEncoderFactorySuite {
             
             // Parameters.
             return Arrays.asList(new Object[][] {
-                { MslEncoderFormat.JSON, jsonMessageData, null },
-                { null, unsupportedMessageData, MslEncoderException.class },
+                { jsonMessageData, null },
+                { unsupportedMessageData, MslEncoderException.class },
             });
         }
         
-        /** MSL encoder format. */
-        private final MslEncoderFormat format;
         /** Encoded message. */
         private final byte[] messageData;
         /** Expected exception class. */
@@ -489,12 +487,10 @@ public class MslEncoderFactorySuite {
          * Create a new MSL encoder factory test instance with the specified
          * encoding format and provided message data.
          * 
-         * @param format MSL encoding format.
          * @param messageData encoded message.
          * @param exceptionClass expected exception class.
          */
-        public Tokenizer(final MslEncoderFormat format, final byte[] messageData, final Class<? extends Exception> exceptionClass) {
-            this.format = format;
+        public Tokenizer(final byte[] messageData, final Class<? extends Exception> exceptionClass) {
             this.messageData = messageData;
             this.exceptionClass = exceptionClass;
         }
@@ -507,45 +503,6 @@ public class MslEncoderFactorySuite {
             // Create the tokenizer.
             final InputStream source = new ByteArrayInputStream(messageData);
             final MslTokenizer tokenizer = encoder.createTokenizer(source);
-            assertNotNull(tokenizer);
-            
-            // Pull data off the tokenizer.
-            final List<MslObject> objects = new ArrayList<MslObject>();
-            while (tokenizer.more(-1)) {
-                final MslObject object = tokenizer.nextObject(-1);
-                assertNotNull(object);
-                objects.add(object);
-            }
-            // +1 for the header, +1 for the EOM payload.
-            assertEquals(PAYLOADS.length + 2, objects.size());
-            assertNull(tokenizer.nextObject(-1));
-            
-            // Pull message header.
-            final MslObject headerO = objects.get(0);
-            final Map<String,ICryptoContext> cryptoContexts = Collections.emptyMap();
-            final Header header = Header.parseHeader(ctx, headerO, cryptoContexts);
-            assertTrue(header instanceof MessageHeader);
-            final MessageHeader messageHeader = (MessageHeader)header;
-            
-            // Verify payloads.
-            final ICryptoContext payloadCryptoContext = messageHeader.getCryptoContext();
-            for (int i = 0; i < PAYLOADS.length; ++i) {
-                final byte[] expectedPayload = PAYLOADS[i];
-                final MslObject payloadMo = objects.get(i + 1);
-                final PayloadChunk payload = new PayloadChunk(ctx, payloadMo, payloadCryptoContext);
-                final byte[] data = payload.getData();
-                assertArrayEquals(expectedPayload, data);
-            }
-        }
-        
-        @Test
-        public void createTokenizer() throws MslEncoderException, MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslMessageException, MslException {
-            if (exceptionClass != null)
-                thrown.expect(exceptionClass);
-            
-            // Create the tokenizer.
-            final InputStream source = new ByteArrayInputStream(messageData);
-            final MslTokenizer tokenizer = encoder.createTokenizer(source, format);
             assertNotNull(tokenizer);
             
             // Pull data off the tokenizer.

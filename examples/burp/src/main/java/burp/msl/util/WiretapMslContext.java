@@ -44,6 +44,7 @@ import com.netflix.msl.entityauth.PresharedAuthenticationData;
 import com.netflix.msl.entityauth.RsaAuthenticationData;
 import com.netflix.msl.entityauth.UnauthenticatedAuthenticationData;
 import com.netflix.msl.entityauth.X509AuthenticationData;
+import com.netflix.msl.io.DefaultMslEncoderFactory;
 import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.keyx.AsymmetricWrappedExchange;
 import com.netflix.msl.keyx.DiffieHellmanExchange;
@@ -315,5 +316,5 @@ public class WiretapMslContext extends MslContext {
     /** MSL store. */
     private final MslStore mslStore = new NullMslStore();
     /** MSL encoder factory. */
-    private final MslEncoderFactory encoderFactory = new MslEncoderFactory();
+    private final MslEncoderFactory encoderFactory = new DefaultMslEncoderFactory();
 }
