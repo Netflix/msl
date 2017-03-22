@@ -19,7 +19,7 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-describe("MslEncoderFactory", function() {
+describe("DefaultMslEncoderFactory", function() {
     /** Maximum number of object fields or array elements. */
     var MAX_NUM_ELEMENTS = 20;
     /** MSL object base key name. */
@@ -44,7 +44,7 @@ describe("MslEncoderFactory", function() {
         	waitsFor(function() { return ctx; }, "ctx", 1200);
         	
         	runs(function() {
-        		encoder = ctx.getMslEncoderFactory();
+        		encoder = new DefaultMslEncoderFactory();
         		random = ctx.getRandom();
         		initialized = true;
         	});

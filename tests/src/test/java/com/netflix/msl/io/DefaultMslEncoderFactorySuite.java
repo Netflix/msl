@@ -76,11 +76,11 @@ import com.netflix.msl.util.MslContext;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 @RunWith(Suite.class)
-@SuiteClasses({MslEncoderFactorySuite.Tokenizer.class,
-               MslEncoderFactorySuite.Container.class,
-               MslEncoderFactorySuite.Accessor.class,
-               MslEncoderFactorySuite.Encoding.class})
-public class MslEncoderFactorySuite {
+@SuiteClasses({DefaultMslEncoderFactorySuite.Tokenizer.class,
+               DefaultMslEncoderFactorySuite.Container.class,
+               DefaultMslEncoderFactorySuite.Accessor.class,
+               DefaultMslEncoderFactorySuite.Encoding.class})
+public class DefaultMslEncoderFactorySuite {
     /** Maximum number of object fields or array elements. */
     private static final int MAX_NUM_ELEMENTS = 20;
     /** MSL object base key name. */
@@ -97,7 +97,7 @@ public class MslEncoderFactorySuite {
     public static void setup() throws MslEncodingException, MslCryptoException {
         if (ctx == null) {
             ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
-            encoder = ctx.getMslEncoderFactory();
+            encoder = new DefaultMslEncoderFactory();
             random = ctx.getRandom();
         }
     }
@@ -441,7 +441,7 @@ public class MslEncoderFactorySuite {
         
         @Parameters
         public static Collection<Object[]> data() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, IOException {
-            MslEncoderFactorySuite.setup();
+            DefaultMslEncoderFactorySuite.setup();
             
             // JSON encoder format.
             final Set<MslEncoderFormat> jsonFormat = new HashSet<MslEncoderFormat>();
@@ -563,7 +563,7 @@ public class MslEncoderFactorySuite {
         
         @BeforeClass
         public static void setup() throws MslEncodingException, MslCryptoException {
-            MslEncoderFactorySuite.setup();
+            DefaultMslEncoderFactorySuite.setup();
         }
 
         @Test
@@ -820,7 +820,7 @@ public class MslEncoderFactorySuite {
         
         @Parameters
         public static Collection<Object[]> data() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, IOException {
-            MslEncoderFactorySuite.setup();
+            DefaultMslEncoderFactorySuite.setup();
             
             // Parameters.
             return Arrays.asList(new Object[][] {
@@ -976,7 +976,7 @@ public class MslEncoderFactorySuite {
 
         @Parameters
         public static Collection<Object[]> data() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, IOException {
-            MslEncoderFactorySuite.setup();
+            DefaultMslEncoderFactorySuite.setup();
             
             // Parameters.
             return Arrays.asList(new Object[][] {

@@ -18,7 +18,7 @@
  * <p>Default {@link MslEncoderFactory} implementation that supports the
  * following encoder formats:
  * <ul>
- * <li>JSON: backed by {@code org.json}.</li>
+ * <li>JSON: backed by the Clarinet parser.</li>
  * </ul>
  * </p>
  * 
