@@ -336,7 +336,7 @@ public class MslControl {
 
             @Override
             protected MslTokenizer generateTokenizer(final InputStream source, MslEncoderFormat format) {
-                throw new MslInternalException("DummyMslEncoderFactory.createTokenizer() not supported.");
+                throw new MslInternalException("DummyMslEncoderFactory.generateTokenizer() not supported.");
             }
 
             @Override
