@@ -73,6 +73,7 @@ import com.netflix.msl.entityauth.UnauthenticatedAuthenticationData;
 import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.io.MslObject;
+import com.netflix.msl.io.MslTokenizer;
 import com.netflix.msl.io.Url;
 import com.netflix.msl.io.Url.Connection;
 import com.netflix.msl.keyx.KeyExchangeFactory;
@@ -326,6 +327,29 @@ public class MslControl {
      * {@link MslControl#NULL_MASTER_TOKEN}.
      */
     private static class DummyMslContext extends MslContext {
+        /** A dummy MSL encoder factory. */
+        private static class DummyMslEncoderFactory extends MslEncoderFactory {
+            @Override
+            public MslEncoderFormat getPreferredFormat(final Set<MslEncoderFormat> formats) {
+                return MslEncoderFormat.JSON;
+            }
+
+            @Override
+            protected MslTokenizer generateTokenizer(final InputStream source, MslEncoderFormat format) {
+                throw new MslInternalException("DummyMslEncoderFactory.createTokenizer() not supported.");
+            }
+
+            @Override
+            public MslObject parseObject(final byte[] encoding) {
+                throw new MslInternalException("DummyMslEncoderFactory.parseObject() not supported.");
+            }
+
+            @Override
+            public byte[] encodeObject(final MslObject object, final MslEncoderFormat format) {
+                throw new MslInternalException("DummyMslEncoderFactory.encodeObject() not supported.");
+            }
+        }
+        
         /* (non-Javadoc)
          * @see com.netflix.msl.util.MslContext#getTime()
          */
@@ -451,7 +475,7 @@ public class MslControl {
          */
         @Override
         public MslEncoderFactory getMslEncoderFactory() {
-            return new MslEncoderFactory();
+            return new DummyMslEncoderFactory();
         }
     }
     
@@ -1705,11 +1729,10 @@ public class MslControl {
                 // or if the remote entity identity is equal to this entity
                 // identity.
                 final String sender = (masterToken != null) ? responseHeader.getSender() : entityAuthData.getIdentity();
-                if ((masterToken != null && masterToken.isDecrypted() && !masterToken.getIdentity().equals(sender)) ||
-                    localIdentity.equals(sender))
-                {
-                    throw new MslMessageException(MslError.UNEXPECTED_MESSAGE_SENDER, sender);
-                }
+                if (masterToken != null && masterToken.isDecrypted() && !masterToken.getIdentity().equals(sender))
+                    throw new MslMessageException(MslError.UNEXPECTED_MESSAGE_SENDER, "sender " + sender + "; master token " + masterToken.getIdentity());
+                if (localIdentity.equals(sender))
+                    throw new MslMessageException(MslError.UNEXPECTED_LOCAL_MESSAGE_SENDER, sender + " == " + localIdentity);
 
                 // Reject messages if the message recipient is specified and not
                 // equal to the local entity.

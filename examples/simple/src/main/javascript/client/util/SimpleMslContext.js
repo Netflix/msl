@@ -56,7 +56,7 @@ var SimpleMslContext;
             var store = new SimpleKeyxMslStore(keyxMgr, errorCallback);
             
             // MSL encoder factory.
-            var encoder = new MslEncoderFactory();
+            var encoder = new DefaultMslEncoderFactory();
 
             // Set properties.
             var props = {

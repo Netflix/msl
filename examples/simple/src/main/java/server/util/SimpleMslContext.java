@@ -43,6 +43,7 @@ import com.netflix.msl.entityauth.RsaAuthenticationData;
 import com.netflix.msl.entityauth.RsaAuthenticationFactory;
 import com.netflix.msl.entityauth.RsaStore;
 import com.netflix.msl.entityauth.UnauthenticatedAuthenticationFactory;
+import com.netflix.msl.io.DefaultMslEncoderFactory;
 import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.keyx.AsymmetricWrappedExchange;
@@ -301,5 +302,5 @@ public class SimpleMslContext extends MslContext {
     private final TokenFactory tokenFactory = new SimpleTokenFactory();
     private final SortedSet<KeyExchangeFactory> keyxFactories;
     private final MslStore store = new NullMslStore();
-    private final MslEncoderFactory encoderFactory = new MslEncoderFactory();;
+    private final MslEncoderFactory encoderFactory = new DefaultMslEncoderFactory();;
 }

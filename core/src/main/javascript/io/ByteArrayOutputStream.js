@@ -46,7 +46,7 @@ var ByteArrayOutputStream = OutputStream.extend({
 
     /** @inheritDoc */
     write: function(data, off, len, timeout, callback) {
-        InterruptibleExecutor(callback, function() {
+    	try {
             if (this._closed)
                 throw new MslIoException("Stream is already closed.");
 
@@ -57,26 +57,33 @@ var ByteArrayOutputStream = OutputStream.extend({
             if (off + len > data.length)
                 throw new RangeError("Offset plus length cannot be greater than the array length.");
 
-            var segment = data.subarray(off, len);
+            var endpos = Math.min(data.length, off + len);
+            var segment = data.subarray(off, endpos);
             this._buffered.push(segment);
-            return segment.length;
-        }, this);
+            callback.result(segment.length);
+        } catch (e) {
+        	callback.error(e);
+        }
     },
 
     /** @inheritDoc */
     flush: function(timeout, callback) {
-        while (this._buffered.length > 0) {
-            var segment = this._buffered.shift();
-            if (!this._result) {
-                this._result = new Uint8Array(segment);
-            } else {
-                var newResult = new Uint8Array(this._result.length + segment.length);
-                newResult.set(this._result);
-                newResult.set(segment, this._result.length);
-                this._result = newResult;
-            }
-        }
-        callback.result(true);
+    	try {
+	        while (this._buffered.length > 0) {
+	            var segment = this._buffered.shift();
+	            if (!this._result) {
+	                this._result = new Uint8Array(segment);
+	            } else {
+	                var newResult = new Uint8Array(this._result.length + segment.length);
+	                newResult.set(this._result);
+	                newResult.set(segment, this._result.length);
+	                this._result = newResult;
+	            }
+	        }
+	        callback.result(true);
+    	} catch (e) {
+    		callback.error(e);
+    	}
     },
 
     /**

@@ -49,7 +49,7 @@ var PresharedProfileAuthenticationFactory = EntityAuthenticationFactory.extend({
     getCryptoContext: function getCryptoContext(ctx, authdata) {
         // Make sure we have the right kind of entity authentication data.
         if (!(authdata instanceof PresharedProfileAuthenticationData))
-            throw new MslInternalException("Incorrect authentication data type " + JSON.stringify(authdata) + ".");
+            throw new MslInternalException("Incorrect authentication data type " + authdata + ".");
         var ppad = authdata;
         
         // Check for revocation.
