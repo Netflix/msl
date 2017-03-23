@@ -60,3 +60,5 @@ public:
 };
 
 }}} // namespace netflix::msl::io
+
+#endif /* SRC_IO_DEFAULTMSLENCODERFACTORY_H_ */

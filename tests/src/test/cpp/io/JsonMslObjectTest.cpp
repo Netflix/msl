@@ -15,6 +15,7 @@
  */
 
 #include <gtest/gtest.h>
+#include <entityauth/EntityAuthenticationScheme.h>
 #include <io/JsonMslObject.h>
 #include <io/MslArray.h>
 #include <io/MslEncoderException.h>
@@ -23,6 +24,7 @@
 #include <util/MockMslContext.h>
 
 using namespace std;
+using namespace netflix::msl::entityauth;
 using namespace netflix::msl::util;
 
 namespace netflix {

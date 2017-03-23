@@ -16,6 +16,7 @@
 
 #include <gtest/gtest.h>
 #include <io/ByteArrayInputStream.h>
+#include <io/DefaultMslEncoderFactory.h>
 #include <io/JsonMslObject.h>
 #include <io/MslArray.h>
 #include <io/MslEncoderFactory.h>
@@ -219,8 +220,7 @@ TEST_F(DefaultMslEncoderFactoryTest, CreateTokenizer)
     shared_ptr<InputStream> is = make_shared<ByteArrayInputStream>(json);
 
     // explicit format
-    EXPECT_THROW(mef->createTokenizer(is, MslEncoderFormat::INVALID), MslEncoderException);
-    shared_ptr<MslTokenizer> mt = mef->createTokenizer(is, MslEncoderFormat::JSON);
+    shared_ptr<MslTokenizer> mt = mef->createTokenizer(is);
 
     // deduced format
     shared_ptr<InputStream> bad = make_shared<ByteArrayInputStream>("afkhadgfk");

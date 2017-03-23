@@ -134,7 +134,7 @@ shared_ptr<MslTokenizer> MslEncoderFactory::createTokenizer(shared_ptr<InputStre
     } catch (const MslEncoderException& e) {
         throw MslEncoderException("Failure reading the byte stream identifier.", e);
     }
-    return createTokenizer(source, format);
+    return generateTokenizer(source, format);
 }
 
 }}} // namespace netflix::msl::io

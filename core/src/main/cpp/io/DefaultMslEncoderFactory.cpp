@@ -21,6 +21,7 @@
 #include <io/MslEncoderFormat.h>
 #include <memory>
 #include <set>
+#include <sstream>
 #include <string>
 
 using namespace std;
