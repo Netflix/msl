@@ -25,12 +25,17 @@ import java.util.Set;
 import com.netflix.msl.util.Base64;
 
 /**
- * <p>A factory class for producing {@link MslTokener}, {@link MslObject},
- * and {@link MslArray} instances of various encoder formats.</p>
+ * <p>An abstract factory class for producing {@link MslTokener},
+ * {@link MslObject}, and {@link MslArray} instances of various encoder
+ * formats.</p>
+ * 
+ * <p>A concrete implementations must identify its supported and preferred
+ * encoder formats and provide implementations for encoding and decoding those
+ * formats.</p>
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-public class MslEncoderFactory {
+public abstract class MslEncoderFactory {
     /**
      * <p>Escape and quote a string for print purposes.</p>
      * 
@@ -137,10 +142,7 @@ public class MslEncoderFactory {
      * @return the preferred format from the provided set or the default format
      *         if format set is {@code null} or empty.
      */
-    public MslEncoderFormat getPreferredFormat(final Set<MslEncoderFormat> formats) {
-        // We don't know about any other formats right now.
-        return MslEncoderFormat.JSON;
-    }
+    public abstract MslEncoderFormat getPreferredFormat(final Set<MslEncoderFormat> formats);
     
     /**
      * Create a new {@link MslTokenizer}. The encoder format will be
@@ -165,7 +167,7 @@ public class MslEncoderFactory {
         } catch (final IOException e) {
             throw new MslEncoderException("Failure reading the byte stream identifier.", e);
         }
-        return createTokenizer(bufferedSource, format);
+        return generateTokenizer(bufferedSource, format);
     }
     
     /**
@@ -176,14 +178,7 @@ public class MslEncoderFactory {
      * @return the {@link MslTokenizer}.
      * @throws MslEncoderException if the encoder format is not supported.
      */
-    public MslTokenizer createTokenizer(final InputStream source, final MslEncoderFormat format) throws MslEncoderException {
-        // JSON.
-        if (MslEncoderFormat.JSON.equals(format))
-            return new JsonMslTokenizer(this, source);
-        
-        // Unsupported encoder format.
-        throw new MslEncoderException("Unsupported encoder format: " + format + ".");
-    }
+    protected abstract MslTokenizer generateTokenizer(final InputStream source, final MslEncoderFormat format) throws MslEncoderException;
     
     /**
      * Create a new {@link MslObject}.
@@ -240,17 +235,7 @@ public class MslEncoderFactory {
      * @throws MslEncoderException if the encoder format is not supported or
      *         there is an error parsing the encoded data.
      */
-    public MslObject parseObject(final byte[] encoding) throws MslEncoderException {
-        // Identify the encoder format.
-        final MslEncoderFormat format = parseFormat(encoding);
-        
-        // JSON.
-        if (MslEncoderFormat.JSON.equals(format))
-            return new JsonMslObject(this, encoding);
-        
-        // Unsupported encoder format.
-        throw new MslEncoderException("Unsupported encoder format: " + format + ".");
-    }
+    public abstract MslObject parseObject(final byte[] encoding) throws MslEncoderException;
     
     /**
      * Encode a {@link MslObject} into the specified encoder format.
@@ -261,14 +246,7 @@ public class MslEncoderFactory {
      * @throws MslEncoderException if the encoder format is not supported or
      *         there is an error encoding the object.
      */
-    public byte[] encodeObject(final MslObject object, final MslEncoderFormat format) throws MslEncoderException {
-        // JSON.
-        if (MslEncoderFormat.JSON.equals(format))
-            return JsonMslObject.getEncoded(this, object);
-        
-        // Unsupported encoder format.
-        throw new MslEncoderException("Unsupported encoder format: " + format + ".");
-    }
+    public abstract byte[] encodeObject(final MslObject object, final MslEncoderFormat format) throws MslEncoderException;
 
     /**
      * Create a new {@link MslArray}.

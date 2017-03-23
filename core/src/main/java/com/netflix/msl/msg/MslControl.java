@@ -73,6 +73,7 @@ import com.netflix.msl.entityauth.UnauthenticatedAuthenticationData;
 import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.io.MslObject;
+import com.netflix.msl.io.MslTokenizer;
 import com.netflix.msl.io.Url;
 import com.netflix.msl.io.Url.Connection;
 import com.netflix.msl.keyx.KeyExchangeFactory;
@@ -326,6 +327,29 @@ public class MslControl {
      * {@link MslControl#NULL_MASTER_TOKEN}.
      */
     private static class DummyMslContext extends MslContext {
+        /** A dummy MSL encoder factory. */
+        private static class DummyMslEncoderFactory extends MslEncoderFactory {
+            @Override
+            public MslEncoderFormat getPreferredFormat(final Set<MslEncoderFormat> formats) {
+                return MslEncoderFormat.JSON;
+            }
+
+            @Override
+            protected MslTokenizer generateTokenizer(final InputStream source, MslEncoderFormat format) {
+                throw new MslInternalException("DummyMslEncoderFactory.generateTokenizer() not supported.");
+            }
+
+            @Override
+            public MslObject parseObject(final byte[] encoding) {
+                throw new MslInternalException("DummyMslEncoderFactory.parseObject() not supported.");
+            }
+
+            @Override
+            public byte[] encodeObject(final MslObject object, final MslEncoderFormat format) {
+                throw new MslInternalException("DummyMslEncoderFactory.encodeObject() not supported.");
+            }
+        }
+        
         /* (non-Javadoc)
          * @see com.netflix.msl.util.MslContext#getTime()
          */
@@ -451,7 +475,7 @@ public class MslControl {
          */
         @Override
         public MslEncoderFactory getMslEncoderFactory() {
-            return new MslEncoderFactory();
+            return new DummyMslEncoderFactory();
         }
     }
     
