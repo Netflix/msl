@@ -22,6 +22,7 @@ import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.entityauth.FailingEntityAuthenticationFactory;
 import com.netflix.msl.entityauth.ProxyEntityAuthenticationFactory;
 import com.netflix.msl.entityauth.ProxyEntityAuthenticationScheme;
+import com.netflix.msl.io.DefaultMslEncoderFactory;
 import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.keyx.FailingKeyExchange;
@@ -256,5 +257,5 @@ public class ProxyMslContext extends MslContext {
     /** MSL store. */
     private final MslStore store = new NullMslStore();
     /** MSL encoder factory. */
-    private final MslEncoderFactory encoderFactory = new MslEncoderFactory();
+    private final MslEncoderFactory encoderFactory = new DefaultMslEncoderFactory();
 }
