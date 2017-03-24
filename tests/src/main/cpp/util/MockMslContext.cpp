@@ -25,7 +25,7 @@
 #include <entityauth/RsaAuthenticationData.h>
 #include <entityauth/UnauthenticatedAuthenticationData.h>
 #include <entityauth/UnauthenticatedAuthenticationFactory.h>
-#include <io/MslEncoderFactory.h>
+#include <io/DefaultMslEncoderFactory.h>
 #include <keyx/AsymmetricWrappedExchange.h>
 #include <keyx/DiffieHellmanExchange.h>
 #include <keyx/KeyExchangeScheme.h>
@@ -125,7 +125,7 @@ MockMslContext::MockMslContext(const EntityAuthenticationScheme& scheme, bool pe
 
     tokenFactory = make_shared<MockTokenFactory>();
     store = make_shared<SimpleMslStore>();
-    encoderFactory = make_shared<MslEncoderFactory>();
+    encoderFactory = make_shared<DefaultMslEncoderFactory>();
 
     shared_ptr<DiffieHellmanParameters> params = MockDiffieHellmanParameters::getDefaultParameters();
     authutils = make_shared<MockAuthenticationUtils>();

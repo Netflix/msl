@@ -15,8 +15,6 @@
  */
 
 #include <io/InputStream.h>
-#include <io/JsonMslObject.h>
-#include <io/JsonMslTokenizer.h>
 #include <io/MslArray.h>
 #include <io/MslEncoderFactory.h>
 #include <io/MslEncoderFormat.h>
@@ -103,12 +101,6 @@ string MslEncoderFactory::stringify(const Variant& value)
     }
 }
 
-MslEncoderFormat MslEncoderFactory::getPreferredFormat(const set<MslEncoderFormat>&)
-{
-    // We don't know about any other formats right now.
-    return MslEncoderFormat::JSON;
-}
-
 MslEncoderFormat MslEncoderFactory::parseFormat(shared_ptr<ByteArray> encoding)
 {
     // Fail if the encoding is too short.
@@ -127,33 +119,6 @@ MslEncoderFormat MslEncoderFactory::parseFormat(shared_ptr<ByteArray> encoding)
     return format;
 }
 
-shared_ptr<MslObject> MslEncoderFactory::parseObject(shared_ptr<ByteArray> encoding)
-{
-    // Identify the encoder format.
-    const MslEncoderFormat format = parseFormat(encoding);
-
-    // JSON.
-    if (format == MslEncoderFormat::JSON)
-        return make_shared<JsonMslObject>(encoding);
-
-    // Unsupported encoder format.
-    stringstream ss;
-    ss << "Unsupported encoder format: " << format << ".";
-    throw MslEncoderException(ss.str());
-}
-
-shared_ptr<ByteArray> MslEncoderFactory::encodeObject(shared_ptr<MslObject> object, const MslEncoderFormat& format)
-{
-    // JSON.
-    if (format == MslEncoderFormat::JSON)
-    	return JsonMslObject::getEncoded(shared_from_this(), object);
-
-    // Unsupported encoder format.
-    stringstream ss;
-    ss << "Unsupported encoder format: " << format << ".";
-    throw MslEncoderException(ss.str());
-}
-
 shared_ptr<MslTokenizer> MslEncoderFactory::createTokenizer(shared_ptr<InputStream> source)
 {
     // Identify the encoder format.
@@ -169,19 +134,7 @@ shared_ptr<MslTokenizer> MslEncoderFactory::createTokenizer(shared_ptr<InputStre
     } catch (const MslEncoderException& e) {
         throw MslEncoderException("Failure reading the byte stream identifier.", e);
     }
-    return createTokenizer(source, format);
-}
-
-shared_ptr<MslTokenizer> MslEncoderFactory::createTokenizer(shared_ptr<InputStream> source, const MslEncoderFormat& format)
-{
-    // JSON.
-    if (format == MslEncoderFormat::JSON)
-        return make_shared<JsonMslTokenizer>(source);
-
-    // Unsupported encoder format.
-    stringstream ss;
-    ss << "Unsupported encoder format: " << format << ".";
-    throw MslEncoderException(ss.str());
+    return generateTokenizer(source, format);
 }
 
 }}} // namespace netflix::msl::io

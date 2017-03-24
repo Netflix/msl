@@ -25,11 +25,11 @@
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.GNU_ELF" id="cdt.managedbuild.target.gnu.platform.base.1400965496" name="Debug Platform" osList="linux,hpux,aix,qnx" superClass="cdt.managedbuild.target.gnu.platform.base"/>
 							<builder buildPath="${workspace_loc:/msl-core}/Debug" id="cdt.managedbuild.target.gnu.builder.base.192413189" keepEnvironmentInBuildfile="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" superClass="cdt.managedbuild.target.gnu.builder.base"/>
 							<tool id="cdt.managedbuild.tool.gnu.archiver.base.2107711396" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.base"/>
-							<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.566882653" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base">
+							<tool command="/usr/local/bin/g++-6" id="cdt.managedbuild.tool.gnu.cpp.compiler.base.566882653" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base">
 								<option id="gnu.cpp.compiler.option.include.paths.1176293145" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/main/cpp}&quot;"/>
-									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2j/include"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/main/cpp/lib}&quot;"/>
+									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2k/include"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.248467956" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="GTEST_DONT_DEFINE_FAIL=1"/>
@@ -48,9 +48,12 @@
 								<option id="gnu.cpp.compiler.option.other.other.2089049824" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" useByScannerDiscovery="false" value="-c -fmessage-length=0 -Wpointer-arith -fno-omit-frame-pointer -Wformat -Werror=format-security -Werror=array-bounds -fstack-protector" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1568521198" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
-							<tool id="cdt.managedbuild.tool.gnu.c.compiler.base.1042528537" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.base">
+							<tool command="/usr/local/bin/gcc-6" id="cdt.managedbuild.tool.gnu.c.compiler.base.1042528537" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.base">
 								<option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.option.optimization.level.1731951814" name="Optimization Level" superClass="gnu.c.compiler.option.optimization.level" useByScannerDiscovery="false" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.debugging.level.463270755" name="Debug Level" superClass="gnu.c.compiler.option.debugging.level" useByScannerDiscovery="false" value="gnu.c.debugging.level.max" valueType="enumerated"/>
+								<option id="gnu.c.compiler.option.include.paths.662142595" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2k/include"/>
+								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.633297990" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.linker.base.594559233" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.base"/>
@@ -96,11 +99,11 @@
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.1540364342" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.archiver.macosx.base.2133422945" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.macosx.base"/>
-							<tool command="g++" id="cdt.managedbuild.tool.gnu.cpp.compiler.macosx.base.1119489500" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.macosx.base">
+							<tool command="/usr/local/bin/g++-6" id="cdt.managedbuild.tool.gnu.cpp.compiler.macosx.base.1119489500" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.macosx.base">
 								<option id="gnu.cpp.compiler.option.include.paths.1221189470" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/main/cpp}&quot;"/>
-									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2j/include"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/main/cpp/lib}&quot;"/>
+									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2k/include"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.1724244947" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="GTEST_DONT_DEFINE_FAIL=1"/>
@@ -119,10 +122,13 @@
 								<option id="gnu.cpp.compiler.option.other.other.388119371" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" useByScannerDiscovery="false" value="-c -fmessage-length=0 -Wpointer-arith -fno-omit-frame-pointer -Wformat -Werror=format-security -Werror=array-bounds -fstack-protector" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.2023418286" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
-							<tool command="gcc" id="cdt.managedbuild.tool.gnu.c.compiler.macosx.base.953879823" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.macosx.base">
+							<tool command="/usr/local/bin/gcc-6" id="cdt.managedbuild.tool.gnu.c.compiler.macosx.base.953879823" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.macosx.base">
 								<option defaultValue="gnu.c.optimization.level.most" id="gnu.c.compiler.option.optimization.level.193423605" name="Optimization Level" superClass="gnu.c.compiler.option.optimization.level" useByScannerDiscovery="false" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.debugging.level.1590413777" name="Debug Level" superClass="gnu.c.compiler.option.debugging.level" useByScannerDiscovery="false" value="gnu.c.debugging.level.none" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.dialect.std.1707864846" name="Language standard" superClass="gnu.c.compiler.option.dialect.std" useByScannerDiscovery="true" value="gnu.c.compiler.dialect.default" valueType="enumerated"/>
+								<option id="gnu.c.compiler.option.include.paths.1644780074" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2k/include"/>
+								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1011007670" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
 						</toolChain>

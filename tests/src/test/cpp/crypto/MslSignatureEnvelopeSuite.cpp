@@ -18,6 +18,7 @@
 #include <crypto/MslSignatureEnvelope.h>
 #include <crypto/OpenSslLib.h>
 #include <crypto/Random.h>
+#include <io/DefaultMslEncoderFactory.h>
 #include <io/MslEncoderFactory.h>
 #include <io/MslEncoderFormat.h>
 #include <io/MslObject.h>
@@ -33,7 +34,7 @@ namespace crypto {
 
 namespace {
 
-std::shared_ptr<io::MslEncoderFactory> encoder = std::make_shared<io::MslEncoderFactory>();
+std::shared_ptr<io::MslEncoderFactory> encoder = std::make_shared<io::DefaultMslEncoderFactory>();
 const std::string KEY_VERSION = "version";
 const std::string KEY_ALGORITHM = "algorithm";
 const std::string KEY_SIGNATURE = "signature";

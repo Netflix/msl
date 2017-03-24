@@ -32,6 +32,17 @@ namespace io {
 class InputStream;
 class Variant;
 
+/**
+ * <p>An abstract factory class for producing {@link MslTokener},
+ * {@link MslObject}, and {@link MslArray} instances of various encoder
+ * formats.</p>
+ *
+ * <p>A concrete implementations must identify its supported and preferred
+ * encoder formats and provide implementations for encoding and decoding those
+ * formats.</p>
+ *
+ * @author Wesley Miaw <wmiaw@netflix.com>
+ */
 class MslEncoderFactory : public std::enable_shared_from_this<MslEncoderFactory>
 {
 public:
@@ -65,7 +76,7 @@ public:
      * @return the preferred format from the provided set or the default format
      *         if format set is missing or empty.
      */
-    MslEncoderFormat getPreferredFormat(const std::set<MslEncoderFormat>& formats = std::set<MslEncoderFormat>());
+    virtual MslEncoderFormat getPreferredFormat(const std::set<MslEncoderFormat>& formats = std::set<MslEncoderFormat>()) = 0;
 
     /**
      * Create a new {@link MslTokenizer}. The encoder format will be
@@ -79,6 +90,7 @@ public:
      */
     std::shared_ptr<MslTokenizer> createTokenizer(std::shared_ptr<InputStream> source);
 
+protected:
     /**
      * Create a new {@link MslTokenizer} of the specified encoder format.
      *
@@ -87,8 +99,9 @@ public:
      * @return the {@link MslTokenizer}.
      * @throws MslEncoderException if the encoder format is not supported.
      */
-    std::shared_ptr<MslTokenizer> createTokenizer(std::shared_ptr<InputStream> source, const MslEncoderFormat& format);
+    virtual std::shared_ptr<MslTokenizer> generateTokenizer(std::shared_ptr<InputStream> source, const MslEncoderFormat& format) = 0;
 
+public:
     /**
      * Create a new {@link MslObject} populated with the provided map.
      *
@@ -122,7 +135,7 @@ public:
      * @throws MslEncoderException if the encoder format is not supported or
      *         there is an error parsing the encoded data.
      */
-    std::shared_ptr<MslObject> parseObject(std::shared_ptr<ByteArray> encoding);
+    virtual std::shared_ptr<MslObject> parseObject(std::shared_ptr<ByteArray> encoding) = 0;
 
     /**
      * Encode a {@link MslObject} into the specified encoder format.
@@ -133,7 +146,7 @@ public:
      * @throws MslEncoderException if the encoder format is not supported or
      *         there is an error encoding the object.
      */
-    std::shared_ptr<ByteArray> encodeObject(std::shared_ptr<MslObject> object, const MslEncoderFormat& format);
+    virtual std::shared_ptr<ByteArray> encodeObject(std::shared_ptr<MslObject> object, const MslEncoderFormat& format) = 0;
 
     /**
      * Create a new {@link MslArray} populated with the provided list.

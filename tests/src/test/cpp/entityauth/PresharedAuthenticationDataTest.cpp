@@ -17,7 +17,7 @@
 #include <entityauth/EntityAuthenticationScheme.h>
 #include <gtest/gtest.h>
 #include <entityauth/PresharedAuthenticationData.h>
-#include <io/MslEncoderFactory.h>
+#include <io/DefaultMslEncoderFactory.h>
 #include <io/MslEncoderFormat.h>
 #include <io/MslObject.h>
 #include <MslEncodingException.h>
@@ -39,7 +39,7 @@ class PresharedAuthenticationDataTest : public ::testing::Test
 public:
     PresharedAuthenticationDataTest() : format_(MslEncoderFormat::JSON) {}
 protected:
-    shared_ptr<MslEncoderFactory> encoder_ = make_shared<MslEncoderFactory>();
+    shared_ptr<MslEncoderFactory> encoder_ = make_shared<DefaultMslEncoderFactory>();
     const MslEncoderFormat format_;
 };
 

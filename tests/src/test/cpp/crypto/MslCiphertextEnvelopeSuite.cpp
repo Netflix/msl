@@ -16,7 +16,7 @@
 
 #include <gtest/gtest.h>
 #include <crypto/MslCiphertextEnvelope.h>
-#include <io/MslEncoderFactory.h>
+#include <io/DefaultMslEncoderFactory.h>
 #include <io/MslEncoderFormat.h>
 #include <io/MslObject.h>
 #include <MslCryptoException.h>
@@ -309,6 +309,8 @@ TEST_F(MslCiphertextEnvelopeTest, CreateMslCiphertextEnvelopebadVersion)
     }
 }
 
+// FIXME: This is an error-prone test because there is no guarantee of how
+// a JSON encoding might be constructed or formatted.
 TEST_F(MslCiphertextEnvelopeTest, ToMslEncoding)
 {
     shared_ptr<MslObject> mo1 = make_shared<MslObject>();
@@ -320,7 +322,7 @@ TEST_F(MslCiphertextEnvelopeTest, ToMslEncoding)
     mo1->put<shared_ptr<ByteArray>>(KEY_SHA256, sha);
 
     // V1 with IV
-    shared_ptr<MslEncoderFactory> mef = make_shared<MslEncoderFactory>();
+    shared_ptr<MslEncoderFactory> mef = make_shared<DefaultMslEncoderFactory>();
     shared_ptr<ByteArray> ba;
     ba = createMslCiphertextEnvelope(mo1).toMslEncoding(mef, io::MslEncoderFormat::JSON);
     EXPECT_EQ(

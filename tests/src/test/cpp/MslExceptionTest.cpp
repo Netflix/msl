@@ -18,7 +18,7 @@
 #include <gmock/gmock.h>
 #include <entityauth/EntityAuthenticationData.h>
 #include <entityauth/EntityAuthenticationScheme.h>
-#include <io/MslEncoderFactory.h>
+#include <io/DefaultMslEncoderFactory.h>
 #include <io/MslEncoderFormat.h>
 #include <io/MslObject.h>
 #include <MslException.h>
@@ -240,7 +240,7 @@ TEST_F(MslExceptionTest, UserAuthenticationData)
     shared_ptr<ByteArray> encoding1 = make_shared<ByteArray>(data1, data1 + sizeof(data1));
     const char data2[] = { 0x4, 0x5, 0x6 };
     shared_ptr<ByteArray> encoding2 = make_shared<ByteArray>(data2, data2 + sizeof(data2));
-    shared_ptr<MslEncoderFactory> mef = make_shared<MslEncoderFactory>();
+    shared_ptr<MslEncoderFactory> mef = make_shared<DefaultMslEncoderFactory>();
     MslEncoderFormat format = MslEncoderFormat::JSON;
 
     // set / get

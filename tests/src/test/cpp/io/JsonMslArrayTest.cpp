@@ -15,21 +15,34 @@
  */
 
 #include <gtest/gtest.h>
+#include <entityauth/EntityAuthenticationScheme.h>
 #include <io/JsonMslArray.h>
 #include <io/MslEncoderFactory.h>
 #include <io/MslObject.h>
 #include <util/Base64.h>
+#include <util/MockMslContext.h>
+
+using namespace std;
+using namespace netflix::msl::entityauth;
+using namespace netflix::msl::util;
 
 namespace netflix {
 namespace msl {
 namespace io {
 
-using namespace std;
-
 class JsonMslArrayTest : public ::testing::Test
 {
+public:
+	virtual ~JsonMslArrayTest() {}
+
+	JsonMslArrayTest()
+	{
+    	shared_ptr<MslContext> ctx = make_shared<MockMslContext>(EntityAuthenticationScheme::PSK, false);
+		encoder = ctx->getMslEncoderFactory();
+	}
+
 protected:
-    shared_ptr<MslEncoderFactory> encoder = make_shared<MslEncoderFactory>();
+    shared_ptr<MslEncoderFactory> encoder;
 };
 
 namespace

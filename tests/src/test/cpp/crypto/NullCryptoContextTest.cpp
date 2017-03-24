@@ -17,7 +17,7 @@
 #include <gtest/gtest.h>
 #include <crypto/NullCryptoContext.h>
 #include <crypto/Random.h>
-#include <io/MslEncoderFactory.h>
+#include <io/DefaultMslEncoderFactory.h>
 #include <io/MslEncoderFormat.h>
 
 using namespace std;
@@ -39,7 +39,7 @@ TEST_F(NullCryptoContextTest, Main)
     random.nextBytes(*dataA);
     EXPECT_EQ(128u, dataA->size());
     NullCryptoContext ctx;
-    shared_ptr<MslEncoderFactory> mef = make_shared<MslEncoderFactory>();
+    shared_ptr<MslEncoderFactory> mef = make_shared<DefaultMslEncoderFactory>();
     MslEncoderFormat fmt = MslEncoderFormat::JSON;
 
 

@@ -22,7 +22,7 @@
 #include <crypto/Key.h>
 #include <crypto/MslCiphertextEnvelope.h>
 #include <crypto/Random.h>
-#include <io/MslEncoderFactory.h>
+#include <io/DefaultMslEncoderFactory.h>
 #include <io/MslEncoderFormat.h>
 #include <IllegalArgumentException.h>
 #include <MslCryptoException.h>
@@ -99,7 +99,7 @@ protected:
     const SecretKey encryptionKey_;
     const SecretKey signatureKey_;
     const SecretKey wrappingKey_;
-    shared_ptr<MslEncoderFactory> encoder_ = make_shared<MslEncoderFactory>();
+    shared_ptr<MslEncoderFactory> encoder_ = make_shared<DefaultMslEncoderFactory>();
     const MslEncoderFormat encoderFormat_;
     const string KEY_CIPHERTEXT;
     const string KEYSET_ID;
@@ -150,7 +150,7 @@ TEST_P(SymmetricCryptoContextTest, EncryptDecrypt1)
     SecretKey encryptionKey(util::fromHex("000102030405060708090a0b0c0d0e0f"), JcaAlgorithm::AES);
     SymmetricCryptoContext scc(ctx_, "foobar", encryptionKey, nullKey, nullKey);
 
-    shared_ptr<MslEncoderFactory> mef = make_shared<MslEncoderFactory>();
+    shared_ptr<MslEncoderFactory> mef = make_shared<DefaultMslEncoderFactory>();
     const MslEncoderFormat fmt = MslEncoderFormat::JSON;
     shared_ptr<ByteArray> data = util::fromHex("00112233445566778899aa");
     shared_ptr<ByteArray> ciphertext = scc.encrypt(data, mef, fmt);

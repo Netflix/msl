@@ -16,6 +16,7 @@
 
 #include <gtest/gtest.h>
 #include <io/ByteArrayInputStream.h>
+#include <io/DefaultMslEncoderFactory.h>
 #include <io/JsonMslObject.h>
 #include <io/MslArray.h>
 #include <io/MslEncoderFactory.h>
@@ -32,13 +33,21 @@ namespace {
 shared_ptr<ByteArray> makeByteArray(const string s) {return make_shared<ByteArray>(s.begin(), s.end());}
 }
 
-class MslEncoderFactoryTest : public ::testing::Test
+class DefaultMslEncoderFactoryTest : public ::testing::Test
 {
+public:
+	virtual ~DefaultMslEncoderFactoryTest() {}
+
+	DefaultMslEncoderFactoryTest()
+		: mef(make_shared<DefaultMslEncoderFactory>())
+	{}
+
+protected:
+	shared_ptr<MslEncoderFactory> mef;
 };
 
-TEST_F(MslEncoderFactoryTest, Main)
+TEST_F(DefaultMslEncoderFactoryTest, Main)
 {
-    shared_ptr<MslEncoderFactory> mef = make_shared<MslEncoderFactory>();
     Variant nullVar = VariantFactory::createNull();
     EXPECT_EQ("null", mef->stringify(nullVar));
 
@@ -46,10 +55,8 @@ TEST_F(MslEncoderFactoryTest, Main)
     EXPECT_EQ("5", mef->stringify(intVar));
 }
 
-TEST_F(MslEncoderFactoryTest, StringifyPrimitives)
+TEST_F(DefaultMslEncoderFactoryTest, StringifyPrimitives)
 {
-    shared_ptr<MslEncoderFactory> mef = make_shared<MslEncoderFactory>();
-
     const Variant nullVar = VariantFactory::createNull();
     EXPECT_EQ("null", mef->stringify(nullVar));
 
@@ -85,12 +92,10 @@ TEST_F(MslEncoderFactoryTest, StringifyPrimitives)
     EXPECT_EQ("[]", mef->stringify(mslAryVar));
 }
 
-TEST_F(MslEncoderFactoryTest, StringifyObjects)
+TEST_F(DefaultMslEncoderFactoryTest, StringifyObjects)
 {
     // NOTE: To a large degree these are duplicates of the ToString tests in
     // MslObject_test and MslArray_test
-
-    shared_ptr<MslEncoderFactory> mef = make_shared<MslEncoderFactory>();
 
     shared_ptr<MslObject> mslObj1 = make_shared<MslObject>();
     mslObj1->put<int32_t>("one", 1);
@@ -131,14 +136,13 @@ TEST_F(MslEncoderFactoryTest, StringifyObjects)
     EXPECT_EQ("{\"a\":1,\"b\":[0,1.11,\"2\"],\"c\":3}", mef->stringify(mslObj4));
 }
 
-TEST_F(MslEncoderFactoryTest, Quote)
+TEST_F(DefaultMslEncoderFactoryTest, Quote)
 {
     // FIXME: TODO
 }
 
-TEST_F(MslEncoderFactoryTest, GetPreferredFormat)
+TEST_F(DefaultMslEncoderFactoryTest, GetPreferredFormat)
 {
-    shared_ptr<MslEncoderFactory> mef = make_shared<MslEncoderFactory>();
     MslEncoderFormat fmt = mef->getPreferredFormat();
     EXPECT_EQ(MslEncoderFormat::JSON, fmt);
     const std::set<MslEncoderFormat> formats; // empty
@@ -146,9 +150,8 @@ TEST_F(MslEncoderFactoryTest, GetPreferredFormat)
     EXPECT_EQ(MslEncoderFormat::JSON, fmt);
 }
 
-TEST_F(MslEncoderFactoryTest, CreateObject)
+TEST_F(DefaultMslEncoderFactoryTest, CreateObject)
 {
-    shared_ptr<MslEncoderFactory> mef = make_shared<MslEncoderFactory>();
     shared_ptr<MslObject> mo1 = mef->createObject();
     EXPECT_EQ(0u, mo1->size());
     MslObject::MapType map;
@@ -168,9 +171,8 @@ TEST_F(MslEncoderFactoryTest, CreateObject)
     EXPECT_NE(*mo1, *mo2);
 }
 
-TEST_F(MslEncoderFactoryTest, ParseFormat)
+TEST_F(DefaultMslEncoderFactoryTest, ParseFormat)
 {
-    shared_ptr<MslEncoderFactory> mef = make_shared<MslEncoderFactory>();
     EXPECT_THROW(mef->parseFormat(makeByteArray("")), MslEncoderException);
     EXPECT_THROW(mef->parseFormat(makeByteArray("sdkfgsaflkgd")), MslEncoderException);
     EXPECT_THROW(mef->parseFormat(makeByteArray("[]")), MslEncoderException);
@@ -178,9 +180,8 @@ TEST_F(MslEncoderFactoryTest, ParseFormat)
     EXPECT_EQ(MslEncoderFormat::JSON, format);
 }
 
-TEST_F(MslEncoderFactoryTest, ParseObject)
+TEST_F(DefaultMslEncoderFactoryTest, ParseObject)
 {
-    shared_ptr<MslEncoderFactory> mef = make_shared<MslEncoderFactory>();
     EXPECT_THROW(mef->parseObject(makeByteArray("sdkfgsaflkgd")), MslEncoderException);
 
     try {
@@ -195,12 +196,11 @@ TEST_F(MslEncoderFactoryTest, ParseObject)
     }
 }
 
-TEST_F(MslEncoderFactoryTest, EncodeObject)
+TEST_F(DefaultMslEncoderFactoryTest, EncodeObject)
 {
 	shared_ptr<ByteArray> json = makeByteArray(
         "{\"a\":[1,{\"aa\":[10,20,{\"ccc\":[100,200,300]},30]},2],\"b\":9.9}"
     );
-    shared_ptr<MslEncoderFactory> mef = make_shared<MslEncoderFactory>();
     shared_ptr<MslObject> jmo = make_shared<JsonMslObject>(json);
     EXPECT_THROW(mef->encodeObject(jmo, MslEncoderFormat::INVALID), MslEncoderException);
     try {
@@ -213,16 +213,14 @@ TEST_F(MslEncoderFactoryTest, EncodeObject)
     }
 }
 
-TEST_F(MslEncoderFactoryTest, CreateTokenizer)
+TEST_F(DefaultMslEncoderFactoryTest, CreateTokenizer)
 {
     const string json =
         "{\"a\":[1,{\"aa\":[10,20,{\"ccc\":[100,200,300]},30]},2],\"b\":9.9}";
     shared_ptr<InputStream> is = make_shared<ByteArrayInputStream>(json);
-    shared_ptr<MslEncoderFactory> mef = make_shared<MslEncoderFactory>();
 
     // explicit format
-    EXPECT_THROW(mef->createTokenizer(is, MslEncoderFormat::INVALID), MslEncoderException);
-    shared_ptr<MslTokenizer> mt = mef->createTokenizer(is, MslEncoderFormat::JSON);
+    shared_ptr<MslTokenizer> mt = mef->createTokenizer(is);
 
     // deduced format
     shared_ptr<InputStream> bad = make_shared<ByteArrayInputStream>("afkhadgfk");
