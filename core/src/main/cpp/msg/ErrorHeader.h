@@ -119,7 +119,7 @@ public:
     /**
      * @return the timestamp. May be null.
      */
-    Date getTimestamp() const;
+    std::shared_ptr<Date> getTimestamp() const;
 
     /**
      * @return the message ID.

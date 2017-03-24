@@ -18,6 +18,7 @@
 #include <Date.h>
 #include <sys/time.h>
 #include <ctime>
+#include <memory>
 #include <sstream>
 
 using namespace std;
@@ -26,39 +27,21 @@ namespace netflix {
 namespace msl {
 
 // static
-Date Date::now()
-{
-    return Date();
-}
-
-// static
-Date Date::null()
-{
-    return Date(-1, true);
-}
-
-Date::Date()
+shared_ptr<Date> Date::now()
 {
     struct timeval tp;
     gettimeofday(&tp, NULL);
-    msSinceEpoch_ = static_cast<int64_t>(static_cast<uint64_t>(tp.tv_sec) * 1000ull + static_cast<uint64_t>(tp.tv_usec) / 1000ull);
-    isNull_ = false;
-}
-
-Date& Date::operator=(const Date& rhs)
-{
-    msSinceEpoch_ = rhs.msSinceEpoch_;
-    isNull_ = rhs.isNull_;
-    return *this;
+    const int64_t msSinceEpoch = static_cast<int64_t>(static_cast<uint64_t>(tp.tv_sec) * 1000ull + static_cast<uint64_t>(tp.tv_usec) / 1000ull);
+    return make_shared<Date>(msSinceEpoch);
 }
 
 // Return the value 0 if the argument Date is equal to this Date; a value less
 // than 0 if this Date is before the Date argument; and a value greater than 0
 // if this Date is after the Date argument.
-int Date::compareTo(const Date& other) const
+int Date::compareTo(shared_ptr<Date> other) const
 {
-    if (*this == other) return 0;
-    if (*this < other) return -1;
+    if (*this == *other) return 0;
+    if (*this < *other) return -1;
     else return 1;
 }
 
@@ -80,7 +63,6 @@ int Date::compareTo(const Date& other) const
  */
 string Date::toString() const
 {
-    if (isNull_) return "null";
     const time_t secondsSinceEpoch = static_cast<time_t>(msSinceEpoch_ / 1000ll);
     const tm* const t = gmtime(&secondsSinceEpoch);
     string out(asctime(t));
@@ -92,6 +74,12 @@ string Date::toString() const
 ostream& operator<<(ostream &os, const Date& date)
 {
     os << date.toString();
+    return os;
+}
+
+ostream& operator<<(ostream &os, std::shared_ptr<Date> date)
+{
+    os << date->toString();
     return os;
 }
 

@@ -615,8 +615,8 @@ TEST_F(MessageInputStreamTest, oneCompatibleKeyRequestData)
 
 TEST_F(MessageInputStreamTest, expiredRenewableClientMessage)
 {
-	Date renewalWindow(Date::now().getTime() - 20000);
-	Date expiration(Date::now().getTime() - 10000);
+	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 20000);
+	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() - 10000);
 	shared_ptr<MasterToken> masterToken = make_shared<MasterToken>(trustedNetCtx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
 	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
@@ -629,8 +629,8 @@ TEST_F(MessageInputStreamTest, expiredRenewableClientMessage)
 
 TEST_F(MessageInputStreamTest, expiredRenewablePeerMessage)
 {
-	Date renewalWindow(Date::now().getTime() - 20000);
-	Date expiration(Date::now().getTime() - 10000);
+	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 20000);
+	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() - 10000);
 	shared_ptr<MasterToken> masterToken = make_shared<MasterToken>(p2pCtx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
 	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
@@ -645,8 +645,8 @@ TEST_F(MessageInputStreamTest, expiredNotRenewableClientMessage)
 {
 	// Expired messages received by a trusted network server should be
 	// rejected.
-	Date renewalWindow(Date::now().getTime() - 20000);
-	Date expiration(Date::now().getTime() - 10000);
+	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 20000);
+	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() - 10000);
 	shared_ptr<MasterToken> masterToken = make_shared<MasterToken>(trustedNetCtx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
 	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
@@ -666,8 +666,8 @@ TEST_F(MessageInputStreamTest, expiredNoKeyRequestDataClientMessage)
 {
 	// Expired renewable messages received by a trusted network server
 	// with no key request data should be rejected.
-	Date renewalWindow(Date::now().getTime() - 20000);
-	Date expiration(Date::now().getTime() - 10000);
+	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 20000);
+	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() - 10000);
 	shared_ptr<MasterToken> masterToken = make_shared<MasterToken>(trustedNetCtx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
 	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, true, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
@@ -689,8 +689,8 @@ TEST_F(MessageInputStreamTest, expiredNotRenewableServerMessage)
 
 	// Expired messages received by a trusted network client should not be
 	// rejected.
-	Date renewalWindow(Date::now().getTime() - 20000);
-	Date expiration(Date::now().getTime() - 10000);
+	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 20000);
+	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() - 10000);
 	shared_ptr<MasterToken> masterToken = make_shared<MasterToken>(ctx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
 	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
@@ -716,8 +716,8 @@ TEST_F(MessageInputStreamTest, expiredNotRenewableServerMessage)
 
 TEST_F(MessageInputStreamTest, expiredNoKeyRequestDataPeerMessage)
 {
-	Date renewalWindow(Date::now().getTime() - 20000);
-	Date expiration(Date::now().getTime() - 10000);
+	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 20000);
+	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() - 10000);
 	shared_ptr<MasterToken> masterToken = make_shared<MasterToken>(p2pCtx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
 	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, true, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
@@ -735,8 +735,8 @@ TEST_F(MessageInputStreamTest, expiredNoKeyRequestDataPeerMessage)
 
 TEST_F(MessageInputStreamTest, expiredNotRenewablePeerMessage)
 {
-	Date renewalWindow(Date::now().getTime() - 20000);
-	Date expiration(Date::now().getTime() - 10000);
+	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 20000);
+	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() - 10000);
 	shared_ptr<MasterToken> masterToken = make_shared<MasterToken>(p2pCtx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
 	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);

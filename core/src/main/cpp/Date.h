@@ -20,6 +20,7 @@
 #include <assert.h>
 #include <stdint.h>
 #include <iosfwd>
+#include <memory>
 #include <string>
 
 namespace netflix {
@@ -37,49 +38,39 @@ inline bool operator<=(const Date& a, const Date& b);
 class Date
 {
 public:
-    Date();
-    Date(int64_t msSinceEpoch, bool isNull = false) : isNull_(isNull), msSinceEpoch_(msSinceEpoch) {}
-    Date(const Date& rhs) : isNull_(rhs.isNull_), msSinceEpoch_(rhs.msSinceEpoch_) {}
-    Date& operator=(const Date& rhs);
-    static Date now();
-    static Date null();
-    bool isNull() const { return isNull_; }
+    Date(int64_t msSinceEpoch) : msSinceEpoch_(msSinceEpoch) {}
+    static std::shared_ptr<Date> now();
 
     // -- Java method equivalents --
 
     //Tests if this date is after the specified date.
-    bool after(const Date& when) const { return *this > when; }
+    bool after(std::shared_ptr<Date> when) const { return *this > *when; }
     // Tests if this date is before the specified date.
-    bool before(const Date& when) const { return *this < when; }
+    bool before(std::shared_ptr<Date> when) const { return *this < *when; }
     // Return a copy of this object.
-    Date clone() const { return *this; }
+    std::shared_ptr<Date> clone() const { return std::make_shared<Date>(*this); }
     // Compares two Dates for ordering.
-    int compareTo(const Date& anotherDate) const;
-    // Compares two dates for equality.
-    bool equals(const Date& other) const { return other == *this; }
+    int compareTo(std::shared_ptr<Date> anotherDate) const;
     // Returns the number of milliseconds since January 1, 1970, 00:00:00 GMT represented by this Date object.
     int64_t getTime() const { return msSinceEpoch_; }
     // Converts this Date object to a String of the form:
     std::string toString() const;
 
 private:
-    bool isNull_;
     int64_t msSinceEpoch_;
 };
 
 inline bool operator==(const Date& a, const Date& b)
 {
-    if (a.isNull() == b.isNull()) {
-        return a.isNull() ? true : (a.getTime() == b.getTime());
-    }
-    return false;
+    return a.getTime() == b.getTime();
 }
 inline bool operator!=(const Date& a, const Date& b) { return !(a==b); }
-inline bool operator<(const Date& a, const Date& b) { assert(!a.isNull() && !b.isNull()); return a.getTime() < b.getTime(); }
+inline bool operator<(const Date& a, const Date& b) { return a.getTime() < b.getTime(); }
 inline bool operator>=(const Date& a, const Date& b) { return !(a < b); }
-inline bool operator>(const Date& a, const Date& b) { assert(!a.isNull() && !b.isNull()); return a.getTime() > b.getTime(); }
+inline bool operator>(const Date& a, const Date& b) { return a.getTime() > b.getTime(); }
 inline bool operator<=(const Date& a, const Date& b) { return !(a > b); }
 std::ostream & operator<<(std::ostream &os, const Date& p);
+std::ostream & operator<<(std::ostream &os, std::shared_ptr<Date> p);
 
 }} // namespace netflix::msl
 

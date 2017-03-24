@@ -108,8 +108,8 @@ class MasterTokenTest : public ::testing::Test
 public:
     MasterTokenTest()
     : ENCODER_FORMAT(MslEncoderFormat::JSON)
-    , RENEWAL_WINDOW(Date(Date::now().getTime() + 60000))
-    , EXPIRATION(Date(Date::now().getTime() + 120000))
+    , RENEWAL_WINDOW(make_shared<Date>(Date::now()->getTime() + 60000))
+    , EXPIRATION(make_shared<Date>(Date::now()->getTime() + 120000))
     , ENCRYPTION_KEY(SecretKey(util::Base64::decode(PSK_KPE_B64), crypto::JcaAlgorithm::AES))
     , SIGNATURE_KEY(SecretKey(util::Base64::decode(PSK_KPH_B64), crypto::JcaAlgorithm::HMAC_SHA256))
     , NULL_KEY(SecretKey())
@@ -122,8 +122,8 @@ public:
     }
 protected:
     const MslEncoderFormat ENCODER_FORMAT;
-    const Date RENEWAL_WINDOW;
-    const Date EXPIRATION;
+    shared_ptr<Date> RENEWAL_WINDOW;
+    shared_ptr<Date> EXPIRATION;
     const SecretKey ENCRYPTION_KEY;
     const SecretKey SIGNATURE_KEY;
     const SecretKey NULL_KEY;
@@ -142,11 +142,11 @@ TEST_F(MasterTokenTest, ctors)
     EXPECT_FALSE(masterToken->isExpired());
     EXPECT_FALSE(masterToken->isNewerThan(masterToken));
     EXPECT_EQ(*ENCRYPTION_KEY.getEncoded(), *masterToken->getEncryptionKey().getEncoded());
-    EXPECT_EQ(EXPIRATION.getTime() / MILLISECONDS_PER_SECOND, masterToken->getExpiration().getTime() / MILLISECONDS_PER_SECOND);
+    EXPECT_EQ(EXPIRATION->getTime() / MILLISECONDS_PER_SECOND, masterToken->getExpiration()->getTime() / MILLISECONDS_PER_SECOND);
     EXPECT_EQ(*SIGNATURE_KEY.getEncoded(), *masterToken->getSignatureKey().getEncoded());
     EXPECT_EQ(IDENTITY, masterToken->getIdentity());
     EXPECT_EQ(ISSUER_DATA, masterToken->getIssuerData());
-    EXPECT_EQ(RENEWAL_WINDOW.getTime() / MILLISECONDS_PER_SECOND, masterToken->getRenewalWindow().getTime() / MILLISECONDS_PER_SECOND);
+    EXPECT_EQ(RENEWAL_WINDOW->getTime() / MILLISECONDS_PER_SECOND, masterToken->getRenewalWindow()->getTime() / MILLISECONDS_PER_SECOND);
     EXPECT_EQ(SEQUENCE_NUMBER, masterToken->getSequenceNumber());
     EXPECT_EQ(SERIAL_NUMBER, masterToken->getSerialNumber());
     shared_ptr<ByteArray> encode = masterToken->toMslEncoding(encoder, ENCODER_FORMAT);
@@ -161,11 +161,11 @@ TEST_F(MasterTokenTest, ctors)
     EXPECT_FALSE(moMasterToken->isNewerThan(masterToken));
     EXPECT_FALSE(masterToken->isNewerThan(moMasterToken));
     EXPECT_EQ(*masterToken->getEncryptionKey().getEncoded(), *moMasterToken->getEncryptionKey().getEncoded());
-    EXPECT_EQ(masterToken->getExpiration().getTime() / MILLISECONDS_PER_SECOND, moMasterToken->getExpiration().getTime() / MILLISECONDS_PER_SECOND);
+    EXPECT_EQ(masterToken->getExpiration()->getTime() / MILLISECONDS_PER_SECOND, moMasterToken->getExpiration()->getTime() / MILLISECONDS_PER_SECOND);
     EXPECT_EQ(*masterToken->getSignatureKey().getEncoded(), *moMasterToken->getSignatureKey().getEncoded());
     EXPECT_EQ(masterToken->getIdentity(), moMasterToken->getIdentity());
     EXPECT_EQ(*masterToken->getIssuerData(), *moMasterToken->getIssuerData());
-    EXPECT_EQ(masterToken->getRenewalWindow().getTime() / MILLISECONDS_PER_SECOND, moMasterToken->getRenewalWindow().getTime() / MILLISECONDS_PER_SECOND);
+    EXPECT_EQ(masterToken->getRenewalWindow()->getTime() / MILLISECONDS_PER_SECOND, moMasterToken->getRenewalWindow()->getTime() / MILLISECONDS_PER_SECOND);
     EXPECT_EQ(masterToken->getSequenceNumber(), moMasterToken->getSequenceNumber());
     EXPECT_EQ(masterToken->getSerialNumber(), moMasterToken->getSerialNumber());
     shared_ptr<ByteArray> moEncode = moMasterToken->toMslEncoding(encoder, ENCODER_FORMAT);
@@ -216,9 +216,9 @@ TEST_F(MasterTokenTest, tooLargeSerialNumberCtor)
 
 TEST_F(MasterTokenTest, inconsistentExpiration)
 {
-    const Date renewalWindow = Date::now();
-    const Date expiration(Date(renewalWindow.getTime() - 1));
-    EXPECT_TRUE(expiration.before(renewalWindow));
+    shared_ptr<Date> renewalWindow = Date::now();
+    shared_ptr<Date> expiration = make_shared<Date>(renewalWindow->getTime() - 1);
+    EXPECT_TRUE(expiration->before(renewalWindow));
     EXPECT_THROW(
         MasterToken(ctx, renewalWindow, expiration, SEQUENCE_NUMBER,
                 SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY),
@@ -238,8 +238,8 @@ TEST_F(MasterTokenTest, inconsistentExpirationParse)
 
     shared_ptr<ByteArray> tokendata = mo->getBytes(KEY_TOKENDATA);
     shared_ptr<MslObject> tokendataMo = encoder->parseObject(tokendata);
-    tokendataMo->put<int64_t>(KEY_EXPIRATION, Date::now().getTime() / MILLISECONDS_PER_SECOND - 1);
-    tokendataMo->put<int64_t>(KEY_RENEWAL_WINDOW, Date::now().getTime() / MILLISECONDS_PER_SECOND);
+    tokendataMo->put<int64_t>(KEY_EXPIRATION, Date::now()->getTime() / MILLISECONDS_PER_SECOND - 1);
+    tokendataMo->put<int64_t>(KEY_RENEWAL_WINDOW, Date::now()->getTime() / MILLISECONDS_PER_SECOND);
     mo->put<shared_ptr<ByteArray>>(KEY_TOKENDATA, encoder->encodeObject(tokendataMo, ENCODER_FORMAT));
 
     try {
@@ -717,11 +717,11 @@ TEST_F(MasterTokenTest, notVerified)
     EXPECT_FALSE(moMasterToken->isNewerThan(masterToken));
     EXPECT_FALSE(masterToken->isNewerThan(moMasterToken));
     EXPECT_TRUE(moMasterToken->getEncryptionKey().isNull());
-    EXPECT_EQ(masterToken->getExpiration().getTime(), moMasterToken->getExpiration().getTime());
+    EXPECT_EQ(masterToken->getExpiration()->getTime(), moMasterToken->getExpiration()->getTime());
     EXPECT_TRUE(moMasterToken->getSignatureKey().isNull());
     EXPECT_TRUE(moMasterToken->getIdentity().empty());
     EXPECT_TRUE(MslEncoderUtils::equalObjects(ISSUER_DATA, masterToken->getIssuerData()));
-    EXPECT_EQ(masterToken->getRenewalWindow().getTime(), moMasterToken->getRenewalWindow().getTime());
+    EXPECT_EQ(masterToken->getRenewalWindow()->getTime(), moMasterToken->getRenewalWindow()->getTime());
     EXPECT_EQ(masterToken->getSequenceNumber(), moMasterToken->getSequenceNumber());
     EXPECT_EQ(masterToken->getSerialNumber(), moMasterToken->getSerialNumber());
     shared_ptr<ByteArray> moEncode = moMasterToken->toMslEncoding(encoder, ENCODER_FORMAT);
@@ -1192,66 +1192,66 @@ TEST_F(MasterTokenTest, invalidHmacAndSignatureKey)
 
 TEST_F(MasterTokenTest, isRenewable)
 {
-    const Date renewalWindow;
-    const Date expiration = Date(Date().getTime() + 1000);
+    shared_ptr<Date> renewalWindow = Date::now();
+    shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 1000);
     shared_ptr<MasterToken> masterToken = make_shared<MasterToken>(ctx, renewalWindow, expiration, SEQUENCE_NUMBER,
             SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
 
-    const Date now;
+    shared_ptr<Date> now = Date::now();
     EXPECT_TRUE(masterToken->isRenewable());
     EXPECT_TRUE(masterToken->isRenewable(now));
     EXPECT_FALSE(masterToken->isExpired());
     EXPECT_FALSE(masterToken->isExpired(now));
 
-    const Date before = Date(Date().getTime() - 1000);
+    shared_ptr<Date> before = make_shared<Date>(Date::now()->getTime() - 1000);
     EXPECT_FALSE(masterToken->isRenewable(before));
     EXPECT_FALSE(masterToken->isExpired(before));
 
-    const Date after = Date(expiration.getTime() + 1000);
+    shared_ptr<Date> after = make_shared<Date>(expiration->getTime() + 1000);
     EXPECT_TRUE(masterToken->isRenewable(after));
     EXPECT_TRUE(masterToken->isExpired(after));
 }
 
 TEST_F(MasterTokenTest, isExpired)
 {
-    const Date renewalWindow(Date().getTime() - 1000);
-    const Date expiration;
+    shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 1000);
+    shared_ptr<Date> expiration = Date::now();
     shared_ptr<MasterToken> masterToken = make_shared<MasterToken>(ctx, renewalWindow, expiration, SEQUENCE_NUMBER,
             SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
 
-    const Date now = Date();
+    shared_ptr<Date> now = Date::now();
     EXPECT_TRUE(masterToken->isRenewable());
     EXPECT_TRUE(masterToken->isRenewable(now));
     EXPECT_TRUE(masterToken->isExpired());
     EXPECT_TRUE(masterToken->isExpired(now));
 
-    const Date before = Date(renewalWindow.getTime() - 1000);
+    shared_ptr<Date> before = make_shared<Date>(renewalWindow->getTime() - 1000);
     EXPECT_FALSE(masterToken->isRenewable(before));
     EXPECT_FALSE(masterToken->isExpired(before));
 
-    const Date after = Date(expiration.getTime() + 1000);
+    shared_ptr<Date> after = make_shared<Date>(expiration->getTime() + 1000);
     EXPECT_TRUE(masterToken->isRenewable(after));
     EXPECT_TRUE(masterToken->isExpired(after));
 }
 
 TEST_F(MasterTokenTest, notRenewableOrExpired)
 {
-    const Date renewalWindow = Date(Date().getTime() + 1000);
-    const Date expiration = Date(Date().getTime() + 2000);
+    shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() + 1000);
+    shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 2000);
     shared_ptr<MasterToken> masterToken = make_shared<MasterToken>(ctx, renewalWindow, expiration, SEQUENCE_NUMBER,
             SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
 
-    const Date now;
+    shared_ptr<Date> now = Date::now();
     EXPECT_FALSE(masterToken->isRenewable());
     EXPECT_FALSE(masterToken->isRenewable(now));
     EXPECT_FALSE(masterToken->isExpired());
     EXPECT_FALSE(masterToken->isExpired(now));
 
-    const Date before = Date(renewalWindow.getTime() - 1000);
+    shared_ptr<Date> before = make_shared<Date>(renewalWindow->getTime() - 1000);
     EXPECT_FALSE(masterToken->isRenewable(before));
     EXPECT_FALSE(masterToken->isExpired(before));
 
-    const Date after = Date(expiration.getTime() + 1000);
+    shared_ptr<Date> after = make_shared<Date>(expiration->getTime() + 1000);
     EXPECT_TRUE(masterToken->isRenewable(after));
     EXPECT_TRUE(masterToken->isExpired(after));
 }
@@ -1301,8 +1301,8 @@ TEST_F(MasterTokenTest, isNewerThanSequenceNumbersWrapAround)
 
 TEST_F(MasterTokenTest, isNewerThanExpiration)
 {
-    const Date expirationA(EXPIRATION.getTime());
-    const Date expirationB(EXPIRATION.getTime() + 10000);
+    shared_ptr<Date> expirationA = make_shared<Date>(EXPIRATION->getTime());
+    shared_ptr<Date> expirationB = make_shared<Date>(EXPIRATION->getTime() + 10000);
     shared_ptr<MasterToken> masterTokenA = make_shared<MasterToken>(ctx, RENEWAL_WINDOW, expirationA, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
     shared_ptr<MasterToken> masterTokenB = make_shared<MasterToken>(ctx, RENEWAL_WINDOW, expirationB, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
 
@@ -1326,8 +1326,8 @@ TEST_F(MasterTokenTest, isNewerSerialNumber)
 
 TEST_F(MasterTokenTest, equalsTrustedUntrusted)
 {
-    const Date renewalWindow(Date().getTime() + 1000);
-    const Date expiration(Date().getTime() + 2000);
+    shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() + 1000);
+    shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 2000);
     const string identity = PSK_ESN;
     const SecretKey encryptionKey = ENCRYPTION_KEY;
     const SecretKey hmacKey = SIGNATURE_KEY;
@@ -1388,8 +1388,8 @@ TEST_F(MasterTokenTest, equalsSequenceNumber)
 
 TEST_F(MasterTokenTest, equalsExpiration)
 {
-    const Date expirationA(EXPIRATION.getTime());
-    const Date expirationB(EXPIRATION.getTime() + 10000);
+    shared_ptr<Date> expirationA = make_shared<Date>(EXPIRATION->getTime());
+    shared_ptr<Date> expirationB = make_shared<Date>(EXPIRATION->getTime() + 10000);
     shared_ptr<MasterToken> masterTokenA = make_shared<MasterToken>(ctx, RENEWAL_WINDOW, expirationA, SEQUENCE_NUMBER,
              SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY);
     shared_ptr<MasterToken> masterTokenB = make_shared<MasterToken>(ctx, RENEWAL_WINDOW, expirationB, SEQUENCE_NUMBER,

@@ -181,8 +181,8 @@ shared_ptr<ByteArray> deriveWrappingKey(shared_ptr<ByteArray> encryptionKey, sha
 shared_ptr<MasterToken> getMasterToken(shared_ptr<MslContext> ctx,
         int64_t sequenceNumber, int64_t serialNumber)
 {
-    const Date renewalWindow(Date::now().getTime() + 10000);
-    const Date expiration(Date::now().getTime() + 20000);
+    shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() + 10000);
+    shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 20000);
     shared_ptr<EntityAuthenticationData> entityAuthData = ctx->getEntityAuthenticationData(MslContext::ReauthCode::ENTITYDATA_REAUTH);
     const string identity = entityAuthData->getIdentity();
     const SecretKey encryptionKey(MockPresharedAuthenticationFactory::KPE);
@@ -192,8 +192,8 @@ shared_ptr<MasterToken> getMasterToken(shared_ptr<MslContext> ctx,
 
 shared_ptr<MasterToken> getUntrustedMasterToken(shared_ptr<MslContext> ctx)
 {
-    const Date renewalWindow(Date::now().getTime() + 10000);
-    const Date expiration(Date::now().getTime() + 20000);
+    shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() + 10000);
+    shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 20000);
     shared_ptr<EntityAuthenticationData> entityAuthData = ctx->getEntityAuthenticationData(MslContext::ReauthCode::INVALID);
     const string identity = entityAuthData->getIdentity();
     const SecretKey encryptionKey = MockPresharedAuthenticationFactory::KPE;
@@ -210,8 +210,8 @@ shared_ptr<MasterToken> getUntrustedMasterToken(shared_ptr<MslContext> ctx)
 shared_ptr<UserIdToken> getUserIdToken(shared_ptr<MslContext> ctx, shared_ptr<MasterToken> masterToken,
         int64_t serialNumber, shared_ptr<MslUser> user)
 {
-    const Date renewalWindow(Date::now().getTime() + 10000);
-    const Date expiration(Date::now().getTime() + 20000);
+    shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() + 10000);
+    shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 20000);
     return make_shared<UserIdToken>(ctx, renewalWindow, expiration, masterToken, serialNumber, shared_ptr<MslObject>(), user);
 }
 
@@ -219,8 +219,8 @@ shared_ptr<UserIdToken> getUntrustedUserIdToken(shared_ptr<MslContext> ctx,
         shared_ptr<MasterToken> masterToken, int64_t serialNumber,
         shared_ptr<MslUser> user)
 {
-    const Date renewalWindow(Date::now().getTime() + 10000);
-    const Date expiration(Date::now().getTime() + 20000);
+    shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() + 10000);
+    shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 20000);
     shared_ptr<UserIdToken> userIdToken = make_shared<UserIdToken>(ctx, renewalWindow, expiration, masterToken, serialNumber, shared_ptr<MslObject>(), user);
     shared_ptr<MslEncoderFactory> encoder = ctx->getMslEncoderFactory();
     shared_ptr<MslObject> mo = toMslObject(encoder, userIdToken);

@@ -2120,8 +2120,8 @@ TEST_F(MessageBuilderTest_CreateResponse, maxRequestMessageId)
 
 TEST_F(MessageBuilderTest_CreateResponse, renewMasterToken)
 {
-	Date renewalWindow(Date::now().getTime() - 10000);
-	Date expiration(Date::now().getTime() + 10000);
+	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 10000);
+	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 10000);
 	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(trustedNetCtx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
 	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, requestMasterToken, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
 	requestBuilder->setRenewable(true);
@@ -2146,9 +2146,9 @@ TEST_F(MessageBuilderTest_CreateResponse, renewMasterToken)
 
 TEST_F(MessageBuilderTest_CreateResponse, peerRenewMasterToken)
 {
-	Date renewalWindow(Date::now().getTime() - 10000);
-	Date expirationWindow(Date::now().getTime() + 10000);
-	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(p2pCtx, renewalWindow, expirationWindow, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
+	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 10000);
+	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 10000);
+	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(p2pCtx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
 	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, requestMasterToken, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
 	requestBuilder->setRenewable(true);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
@@ -2173,9 +2173,9 @@ TEST_F(MessageBuilderTest_CreateResponse, peerRenewMasterToken)
 
 TEST_F(MessageBuilderTest_CreateResponse, renewMasterTokenMaxSequenceNumber)
 {
-	Date renewalWindow(Date::now().getTime() - 10000);
-	Date expirationWindow(Date::now().getTime() + 10000);
-	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(trustedNetCtx, renewalWindow, expirationWindow, MslConstants::MAX_LONG_VALUE, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
+	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 10000);
+	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 10000);
+	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(trustedNetCtx, renewalWindow, expiration, MslConstants::MAX_LONG_VALUE, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
 	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, requestMasterToken, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
 	requestBuilder->setRenewable(true);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
@@ -2202,9 +2202,9 @@ TEST_F(MessageBuilderTest_CreateResponse, renewMasterTokenMaxSequenceNumber)
 
 TEST_F(MessageBuilderTest_CreateResponse, renewMasterTokenFutureRenewalWindow)
 {
-	Date renewalWindow(Date::now().getTime() + 10000);
-	Date expirationWindow(Date::now().getTime() + 20000);
-	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(trustedNetCtx, renewalWindow, expirationWindow, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
+	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() + 10000);
+	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 20000);
+	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(trustedNetCtx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
 	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, requestMasterToken, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
 	requestBuilder->setRenewable(true);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
@@ -2227,9 +2227,9 @@ TEST_F(MessageBuilderTest_CreateResponse, renewMasterTokenFutureRenewalWindow)
 
 TEST_F(MessageBuilderTest_CreateResponse, expiredMasterToken)
 {
-	Date renewalWindow(Date::now().getTime() - 20000);
-	Date expirationWindow(Date::now().getTime() - 10000);
-	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(trustedNetCtx, renewalWindow, expirationWindow, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
+	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 20000);
+	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() - 10000);
+	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(trustedNetCtx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
 	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, requestMasterToken, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
 	requestBuilder->setRenewable(true);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
@@ -2253,9 +2253,9 @@ TEST_F(MessageBuilderTest_CreateResponse, expiredMasterToken)
 
 TEST_F(MessageBuilderTest_CreateResponse, nonReplayableRequest)
 {
-	Date renewalWindow(Date::now().getTime() + 10000);
-	Date expirationWindow(Date::now().getTime() + 20000);
-	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(trustedNetCtx, renewalWindow, expirationWindow, MslConstants::MAX_LONG_VALUE, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
+	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() + 10000);
+	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 20000);
+	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(trustedNetCtx, renewalWindow, expiration, MslConstants::MAX_LONG_VALUE, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
 	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, requestMasterToken, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
 	requestBuilder->setNonReplayable(true);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
@@ -2277,9 +2277,9 @@ TEST_F(MessageBuilderTest_CreateResponse, unsupportedKeyExchangeRenewMasterToken
 		ctx->removeKeyExchangeFactories(*scheme);
 	}
 
-	Date renewalWindow(Date::now().getTime() - 10000);
-	Date expirationWindow(Date::now().getTime() + 10000);
-	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(ctx, renewalWindow, expirationWindow, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
+	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 10000);
+	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 10000);
+	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(ctx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
 	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, REQUEST_MESSAGE_ID, REPLAYABLE_ID, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> request = make_shared<MessageHeader>(trustedNetCtx, NULL_ENTITYAUTH_DATA, requestMasterToken, headerData, peerData);
@@ -2305,9 +2305,9 @@ TEST_F(MessageBuilderTest_CreateResponse, oneSupportedKeyExchangeRenewMasterToke
 	}
 	ctx->addKeyExchangeFactory(make_shared<SymmetricWrappedExchange>(make_shared<MockAuthenticationUtils>()));
 
-	Date renewalWindow(Date::now().getTime() - 10000);
-	Date expirationWindow(Date::now().getTime() + 10000);
-	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(ctx, renewalWindow, expirationWindow, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
+	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 10000);
+	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 10000);
+	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(ctx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
 	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, requestMasterToken, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
 	requestBuilder->setRenewable(true);
 	// This should place the supported key exchange scheme in the
@@ -2333,9 +2333,9 @@ TEST_F(MessageBuilderTest_CreateResponse, untrustedMasterTokenRenewMasterToken)
 {
 	shared_ptr<MockMslContext> ctx = make_shared<MockMslContext>(EntityAuthenticationScheme::PSK, false);
 
-	Date renewalWindow(Date::now().getTime() - 10000);
-	Date expirationWindow(Date::now().getTime() + 10000);
-	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(ctx, renewalWindow, expirationWindow, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
+	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 10000);
+	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 10000);
+	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(ctx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
 	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, REQUEST_MESSAGE_ID, REPLAYABLE_ID, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> request = make_shared<MessageHeader>(ctx, NULL_ENTITYAUTH_DATA, requestMasterToken, headerData, peerData);
@@ -2546,8 +2546,8 @@ TEST_F(MessageBuilderTest_CreateResponse, oneSupportedKeyExchangeEntityAuthData)
 
 TEST_F(MessageBuilderTest_CreateResponse, renewUserIdToken)
 {
-	Date renewalWindow(Date::now().getTime() - 10000);
-	Date expiration(Date::now().getTime() + 10000);
+	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 10000);
+	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 10000);
 	shared_ptr<UserIdToken> requestUserIdToken = make_shared<UserIdToken>(trustedNetCtx, renewalWindow, expiration, MASTER_TOKEN, 1L, ISSUER_DATA, USER);
 	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, requestUserIdToken, NULL_RECIPIENT);
 	requestBuilder->setRenewable(true);
@@ -2566,8 +2566,8 @@ TEST_F(MessageBuilderTest_CreateResponse, renewUserIdToken)
 
 TEST_F(MessageBuilderTest_CreateResponse, renewUserIdTokenNotRenewable)
 {
-	Date renewalWindow(Date::now().getTime() - 10000);
-	Date expiration(Date::now().getTime() + 10000);
+	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 10000);
+	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 10000);
 	shared_ptr<UserIdToken> requestUserIdToken = make_shared<UserIdToken>(trustedNetCtx, renewalWindow, expiration, MASTER_TOKEN, 1L, ISSUER_DATA, USER);
 	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, requestUserIdToken, NULL_RECIPIENT);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
@@ -2580,14 +2580,14 @@ TEST_F(MessageBuilderTest_CreateResponse, renewUserIdTokenNotRenewable)
 	EXPECT_EQ(*requestUserIdToken->getUser(), *responseUserIdToken->getUser());
 	EXPECT_EQ(requestUserIdToken->getMasterTokenSerialNumber(), responseUserIdToken->getMasterTokenSerialNumber());
 	EXPECT_EQ(requestUserIdToken->getSerialNumber(), responseUserIdToken->getSerialNumber());
-	EXPECT_EQ(requestUserIdToken->getRenewalWindow(), responseUserIdToken->getRenewalWindow());
-	EXPECT_EQ(requestUserIdToken->getExpiration(), responseUserIdToken->getExpiration());
+	EXPECT_EQ(*requestUserIdToken->getRenewalWindow(), *responseUserIdToken->getRenewalWindow());
+	EXPECT_EQ(*requestUserIdToken->getExpiration(), *responseUserIdToken->getExpiration());
 }
 
 TEST_F(MessageBuilderTest_CreateResponse, peerRenewUserIdToken)
 {
-	Date renewalWindow(Date::now().getTime() - 10000);
-	Date expiration(Date::now().getTime() + 10000);
+	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 10000);
+	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 10000);
 	shared_ptr<UserIdToken> requestUserIdToken = make_shared<UserIdToken>(p2pCtx, renewalWindow, expiration, MASTER_TOKEN, 1L, ISSUER_DATA, USER);
 	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, requestUserIdToken, NULL_RECIPIENT);
 	requestBuilder->setRenewable(true);
@@ -2607,8 +2607,8 @@ TEST_F(MessageBuilderTest_CreateResponse, peerRenewUserIdToken)
 
 TEST_F(MessageBuilderTest_CreateResponse, expiredUserIdToken)
 {
-	Date renewalWindow(Date::now().getTime() - 20000);
-	Date expiration(Date::now().getTime() - 10000);
+	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 20000);
+	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() - 10000);
 	shared_ptr<UserIdToken> requestUserIdToken = make_shared<UserIdToken>(trustedNetCtx, renewalWindow, expiration, MASTER_TOKEN, 1L, ISSUER_DATA, USER);
 	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, requestUserIdToken, NULL_RECIPIENT);
 	requestBuilder->setRenewable(true);
@@ -2627,8 +2627,8 @@ TEST_F(MessageBuilderTest_CreateResponse, expiredUserIdToken)
 
 TEST_F(MessageBuilderTest_CreateResponse, expiredUserIdTokenNotRenewable)
 {
-	Date renewalWindow(Date::now().getTime() - 20000);
-	Date expiration(Date::now().getTime() - 10000);
+	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 20000);
+	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() - 10000);
 	shared_ptr<UserIdToken> requestUserIdToken = make_shared<UserIdToken>(trustedNetCtx, renewalWindow, expiration, MASTER_TOKEN, 1L, ISSUER_DATA, USER);
 	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, requestUserIdToken, NULL_RECIPIENT);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
@@ -2648,8 +2648,8 @@ TEST_F(MessageBuilderTest_CreateResponse, expiredUserIdTokenServerMessage)
 {
 	shared_ptr<MockMslContext> ctx = make_shared<MockMslContext>(EntityAuthenticationScheme::PSK, false);
 
-	Date renewalWindow(Date::now().getTime() - 20000);
-	Date expiration(Date::now().getTime() - 10000);
+	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 20000);
+	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() - 10000);
 	shared_ptr<UserIdToken> requestUserIdToken = make_shared<UserIdToken>(ctx, renewalWindow, expiration, MASTER_TOKEN, 1L, ISSUER_DATA, USER);
 
 	// Change the MSL crypto context so the master token and user ID
@@ -2676,8 +2676,8 @@ TEST_F(MessageBuilderTest_CreateResponse, expiredUserIdTokenServerMessage)
 
 TEST_F(MessageBuilderTest_CreateResponse, renewMasterTokenAndRenewUserIdToken)
 {
-	Date renewalWindow(Date::now().getTime() - 10000);
-	Date expiration(Date::now().getTime() + 10000);
+	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 10000);
+	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 10000);
 	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(trustedNetCtx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
 	shared_ptr<UserIdToken> requestUserIdToken = make_shared<UserIdToken>(trustedNetCtx, renewalWindow, expiration, requestMasterToken, 1L, ISSUER_DATA, USER);
 	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, requestMasterToken, requestUserIdToken, NULL_RECIPIENT);
@@ -2708,8 +2708,8 @@ TEST_F(MessageBuilderTest_CreateResponse, renewMasterTokenAndRenewUserIdToken)
 
 TEST_F(MessageBuilderTest_CreateResponse, renewTokensNoKeyRequestData)
 {
-	Date renewalWindow(Date::now().getTime() - 10000);
-	Date expiration(Date::now().getTime() + 10000);
+	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 10000);
+	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 10000);
 	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(trustedNetCtx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
 	shared_ptr<UserIdToken> requestUserIdToken = make_shared<UserIdToken>(trustedNetCtx, renewalWindow, expiration, requestMasterToken, 1L, ISSUER_DATA, USER);
 	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, requestMasterToken, requestUserIdToken, NULL_RECIPIENT);
@@ -2721,18 +2721,18 @@ TEST_F(MessageBuilderTest_CreateResponse, renewTokensNoKeyRequestData)
 	shared_ptr<MasterToken> responseMasterToken = response->getMasterToken();
 	shared_ptr<UserIdToken> responseUserIdToken = response->getUserIdToken();
 	EXPECT_EQ(requestMasterToken, responseMasterToken);
-	EXPECT_EQ(requestMasterToken->getRenewalWindow(), responseMasterToken->getRenewalWindow());
-	EXPECT_EQ(requestMasterToken->getExpiration(), responseMasterToken->getExpiration());
+	EXPECT_EQ(*requestMasterToken->getRenewalWindow(), *responseMasterToken->getRenewalWindow());
+	EXPECT_EQ(*requestMasterToken->getExpiration(), *responseMasterToken->getExpiration());
 	EXPECT_EQ(*requestUserIdToken, *responseUserIdToken);
-	EXPECT_FALSE(requestUserIdToken->getRenewalWindow().equals(responseUserIdToken->getRenewalWindow()));
-	EXPECT_FALSE(requestUserIdToken->getExpiration().equals(responseUserIdToken->getExpiration()));
+	EXPECT_NE(*requestUserIdToken->getRenewalWindow(), *responseUserIdToken->getRenewalWindow());
+	EXPECT_NE(*requestUserIdToken->getExpiration(), *responseUserIdToken->getExpiration());
 	EXPECT_FALSE(response->getKeyResponseData());
 }
 
 TEST_F(MessageBuilderTest_CreateResponse, peerRenewMasterTokenAndRenewUserIdToken)
 {
-	Date renewalWindow(Date::now().getTime() - 10000);
-	Date expiration(Date::now().getTime() + 10000);
+	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 10000);
+	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 10000);
 	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(p2pCtx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
 	shared_ptr<UserIdToken> requestUserIdToken = make_shared<UserIdToken>(p2pCtx, renewalWindow, expiration, requestMasterToken, 1L, ISSUER_DATA, USER);
 	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, requestMasterToken, requestUserIdToken, NULL_RECIPIENT);
@@ -3169,8 +3169,8 @@ TEST_F(MessageBuilderTest_CreateResponse, setMasterTokenHasKeyExchangeData)
 {
 	// The master token must be renewable to force a key exchange to
 	// happen.
-	Date renewalWindow(Date::now().getTime() - 1000);
-	Date expiration(Date::now().getTime() + 2000);
+	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 1000);
+	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 2000);
 	const string identity = MockPresharedAuthenticationFactory::PSK_ESN;
 	const SecretKey encryptionKey = MockPresharedAuthenticationFactory::KPE;
 	const SecretKey hmacKey = MockPresharedAuthenticationFactory::KPH;

@@ -19,6 +19,7 @@
 #include <numerics/safe_math.h>
 #include <util/StaticMslMutex.h>
 
+using namespace std;
 using base::internal::CheckedNumeric;
 
 namespace netflix {
@@ -76,21 +77,20 @@ MslContext::MslContext() : id_(nextId())
 {
 }
 
-void MslContext::updateRemoteTime(const Date& time)
+void MslContext::updateRemoteTime(shared_ptr<Date> time)
 {
     const int64_t localSeconds = getTime() / MILLISECONDS_PER_SECOND;
-    const int64_t remoteSeconds = time.getTime() / MILLISECONDS_PER_SECOND;
+    const int64_t remoteSeconds = time->getTime() / MILLISECONDS_PER_SECOND;
     offset_ = remoteSeconds - localSeconds;
     synced_ = true;
 }
 
-bool MslContext::getRemoteTime(Date& date)
+shared_ptr<Date> MslContext::getRemoteTime()
 {
-    if (!synced_) return false;
+    if (!synced_) return shared_ptr<Date>();
     const int64_t localSeconds = getTime() / MILLISECONDS_PER_SECOND;
     const int64_t remoteSeconds = localSeconds + offset_;
-    date = Date(remoteSeconds * MILLISECONDS_PER_SECOND);
-    return true;
+    return make_shared<Date>(remoteSeconds * MILLISECONDS_PER_SECOND);
 }
 
 bool MslContext::equals(std::shared_ptr<const MslContext> other) const

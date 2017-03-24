@@ -233,7 +233,7 @@ MessageInputStream::MessageInputStream(shared_ptr<MslContext> ctx,
 			}
 
 			// If the master token is expired...
-			if (masterToken->isExpired()) {
+			if (masterToken->isExpired(shared_ptr<Date>())) {
 				// If the message is not renewable or does not contain key
 				// request data then reject the message.
 				if (!messageHeader->isRenewable() || messageHeader->getKeyRequestData().empty()) {

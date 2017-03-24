@@ -150,8 +150,8 @@ public:
      * @throws MslCryptoException if there is an error encrypting or signing
      *         the token data or the crypto algorithms are not recognized.
      */
-    MasterToken(std::shared_ptr<util::MslContext> ctx, const Date& renewalWindow,
-            const Date& expiration, int64_t sequenceNumber, int64_t serialNumber,
+    MasterToken(std::shared_ptr<util::MslContext> ctx, std::shared_ptr<Date> renewalWindow,
+            std::shared_ptr<Date> expiration, int64_t sequenceNumber, int64_t serialNumber,
             std::shared_ptr<io::MslObject> issuerData, const std::string& identity,
             const crypto::SecretKey& encryptionKey,
             const crypto::SecretKey& signatureKey);
@@ -185,7 +185,7 @@ public:
     /**
      * @return the start of the renewal window.
      */
-    Date getRenewalWindow() const;
+    std::shared_ptr<Date> getRenewalWindow() const;
 
     /**
      * <p>Returns true if the master token renewal window has been entered.</p>
@@ -201,16 +201,15 @@ public:
      * issuing entity time.</li>
      * </ul>
      *
-     * @param now the time to compare against. May be omitted.
+     * @param now the time to compare against. May be {@code null}.
      * @return true if the renewal window has been entered.
      */
-    bool isRenewable(const Date& now) const;
-    bool isRenewable() const;
+    bool isRenewable(std::shared_ptr<Date> now = std::shared_ptr<Date>()) const;
 
     /**
      * @return the expiration.
      */
-    Date getExpiration() const;
+    std::shared_ptr<Date> getExpiration() const;
 
     /**
      * <p>Returns true if the master token is expired.</p>
@@ -226,11 +225,10 @@ public:
      * issuing entity time.</li>
      * </ul>
      *
-     * @param now the time to compare against. May be omitted.
+     * @param now the time to compare against. May be {@code null}.
      * @return true if expired.
      */
-    bool isExpired(const Date& now) const;
-    bool isExpired() const;
+    bool isExpired(std::shared_ptr<Date> now = std::shared_ptr<Date>()) const;
 
     /**
      * @return the sequence number.
