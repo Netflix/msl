@@ -3,6 +3,8 @@
  */
 package com.netflix.msl.util;
 
+import java.nio.charset.StandardCharsets;
+
 import com.netflix.msl.util.Base64.Base64Impl;
 
 /**
@@ -122,9 +124,12 @@ public class Base64Secure implements Base64Impl {
         // reached the end of the string prematurely.
         boolean invalid = false;
         
+        // Convert string to ISO 8859-1 bytes.
+        final byte[] sb = s.getBytes(StandardCharsets.ISO_8859_1);
+        
         // Allocate the destination buffer, which may be too large due to
         // whitespace.
-        final int strlen = s.length();
+        final int strlen = sb.length;
         final int outlen = strlen * 3 / 4;
         final byte[] out = new byte[outlen];
         int o = 0;
@@ -134,7 +139,15 @@ public class Base64Secure implements Base64Impl {
         int q = 0;
         boolean lastQuad = false;
         for (int i = 0; i < strlen; ++i) {
-            final char c = s.charAt(i);
+            final byte c = sb[i];
+            
+            // Ensure the character is not "negative".
+            if (c < 0) {
+                invalid = true;
+                continue;
+            }
+            
+            // Lookup the character in the decoder map.
             final byte b = DECODE_MAP[c];
             
             // Skip invalid characters.
