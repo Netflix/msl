@@ -52,6 +52,7 @@ import com.netflix.msl.crypto.JcaAlgorithm;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.io.DefaultMslEncoderFactory;
 import com.netflix.msl.io.MslEncoderException;
 import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.keyx.KeyExchangeFactory;
@@ -493,7 +494,7 @@ public final class SharedUtil {
         /** MSL crypto context */
         private final ICryptoContext mslCryptoContext = new ClientMslCryptoContext();
         /** MSL encoder factory. */
-        private final MslEncoderFactory encoderFactory = new MslEncoderFactory();
+        private final MslEncoderFactory encoderFactory = new DefaultMslEncoderFactory();
     }
 
     /** Base64 utilities */
