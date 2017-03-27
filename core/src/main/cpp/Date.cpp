@@ -40,7 +40,7 @@ shared_ptr<Date> Date::now()
 // if this Date is after the Date argument.
 int Date::compareTo(shared_ptr<Date> other) const
 {
-    if (*this == *other) return 0;
+    if (this == other.get() || *this == *other) return 0;
     if (*this < *other) return -1;
     else return 1;
 }
