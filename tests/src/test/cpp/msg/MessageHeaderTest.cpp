@@ -146,10 +146,10 @@ const bool HANDSHAKE = false;
  * @param timestamp the timestamp to compare.
  * @return true if the timestamp is about now.
  */
-bool isAboutNow(const Date& timestamp)
+bool isAboutNow(shared_ptr<Date> timestamp)
 {
-    const int64_t now = Date::now().getTime();
-    const int64_t time = timestamp.getTime();
+    const int64_t now = Date::now()->getTime();
+    const int64_t time = timestamp->getTime();
     return (now - 1000 <= time && time <= now + 1000);
 }
 
@@ -161,7 +161,7 @@ bool isAboutNow(const Date& timestamp)
  */
 bool isAboutNowSeconds(int64_t seconds)
 {
-    const int64_t now = Date::now().getTime() / MILLISECONDS_PER_SECOND;
+    const int64_t now = Date::now()->getTime() / MILLISECONDS_PER_SECOND;
     const int64_t time = seconds;
     return (now - 1 <= time && time <= now + 1);
 }
@@ -2530,8 +2530,8 @@ TEST_F(MessageHeaderTest, peerServiceTokenMismatchedPeerUserIdTokenParseHeader)
 
 TEST_F(MessageHeaderTest, differentMasterTokenSender)
 {
-    const Date renewalWindow(Date::now().getTime() - 10000);
-    const Date expiration(Date::now().getTime() + 10000);
+    shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 10000);
+    shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 10000);
     const SecretKey encryptionKey(make_shared<ByteArray>(16), JcaAlgorithm::AES);
     const SecretKey hmacKey(make_shared<ByteArray>(32), JcaAlgorithm::HMAC_SHA256);
     shared_ptr<MasterToken> masterToken = make_shared<MasterToken>(trustedNetCtx, renewalWindow, expiration, 1L, 1L, shared_ptr<MslObject>(), "IDENTITY", encryptionKey, hmacKey);

@@ -126,8 +126,8 @@ shared_ptr<MasterToken> MockTokenFactory::createMasterToken(
         const SecretKey& encryptionKey, const SecretKey& hmacKey,
         shared_ptr<MslObject> issuerData)
 {
-    const Date renewalWindow(ctx->getTime() + RENEWAL_OFFSET);
-    const Date expiration(ctx->getTime() + EXPIRATION_OFFSET);
+    shared_ptr<Date> renewalWindow = make_shared<Date>(ctx->getTime() + RENEWAL_OFFSET);
+    shared_ptr<Date> expiration = make_shared<Date>(ctx->getTime() + EXPIRATION_OFFSET);
     const int64_t sequenceNumber = 0;
     int64_t serialNumber = -1;
     do {
@@ -159,8 +159,8 @@ shared_ptr<MasterToken> MockTokenFactory::renewMasterToken(
     if (!masterToken->isDecrypted())
         throw MslMasterTokenException(MslError::MASTERTOKEN_UNTRUSTED, masterToken);
 
-    const Date renewalWindow(ctx->getTime() + RENEWAL_OFFSET);
-    const Date expiration(ctx->getTime() + EXPIRATION_OFFSET);
+    shared_ptr<Date> renewalWindow = make_shared<Date>(ctx->getTime() + RENEWAL_OFFSET);
+    shared_ptr<Date> expiration = make_shared<Date>(ctx->getTime() + EXPIRATION_OFFSET);
     const int64_t oldSequenceNumber = masterToken->getSequenceNumber();
     int64_t sequenceNumber;
     if (this->sequenceNumber == -1) {
@@ -200,8 +200,8 @@ shared_ptr<UserIdToken> MockTokenFactory::createUserIdToken(shared_ptr<MslContex
         shared_ptr<MslUser> user, shared_ptr<MasterToken> masterToken)
 {
     shared_ptr<MslObject> issuerData;
-    const Date renewalWindow(ctx->getTime() + RENEWAL_OFFSET);
-    const Date expiration(ctx->getTime() + EXPIRATION_OFFSET);
+    shared_ptr<Date> renewalWindow = make_shared<Date>(ctx->getTime() + RENEWAL_OFFSET);
+    shared_ptr<Date> expiration = make_shared<Date>(ctx->getTime() + EXPIRATION_OFFSET);
     int64_t serialNumber = -1;
     do {
         serialNumber = ctx->getRandom()->nextLong();
@@ -216,8 +216,8 @@ shared_ptr<UserIdToken> MockTokenFactory::renewUserIdToken(shared_ptr<MslContext
         throw MslUserIdTokenException(MslError::USERIDTOKEN_NOT_DECRYPTED, userIdToken).setMasterToken(masterToken);
 
     shared_ptr<MslObject> issuerData ;
-    const Date renewalWindow(ctx->getTime() + RENEWAL_OFFSET);
-    const Date expiration(ctx->getTime() + EXPIRATION_OFFSET);
+    shared_ptr<Date> renewalWindow = make_shared<Date>(ctx->getTime() + RENEWAL_OFFSET);
+    shared_ptr<Date> expiration = make_shared<Date>(ctx->getTime() + EXPIRATION_OFFSET);
     const int64_t serialNumber = userIdToken->getSerialNumber();
     shared_ptr<MslUser> user = userIdToken->getUser();
     return make_shared<UserIdToken>(ctx, renewalWindow, expiration, masterToken, serialNumber, issuerData, user);

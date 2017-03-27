@@ -87,8 +87,8 @@ string moErrStr(const string& msg, shared_ptr<MslObject> mo)
 } // namespace anonymous
 
 MasterToken::MasterToken(shared_ptr<util::MslContext> ctx,
-        const Date& renewalWindow,
-        const Date& expiration,
+        shared_ptr<Date> renewalWindow,
+        shared_ptr<Date> expiration,
         int64_t sequenceNumber,
         int64_t serialNumber,
         shared_ptr<MslObject> issuerData,
@@ -96,8 +96,8 @@ MasterToken::MasterToken(shared_ptr<util::MslContext> ctx,
         const crypto::SecretKey& encryptionKey,
         const crypto::SecretKey& signatureKey)
     : ctx_(ctx)
-    , renewalWindow_(renewalWindow.getTime() / MILLISECONDS_PER_SECOND)
-    , expiration_(expiration.getTime() / MILLISECONDS_PER_SECOND)
+    , renewalWindow_(renewalWindow->getTime() / MILLISECONDS_PER_SECOND)
+    , expiration_(expiration->getTime() / MILLISECONDS_PER_SECOND)
     , sequenceNumber_(sequenceNumber)
     , serialNumber_(serialNumber)
     , issuerdata_(issuerData ? issuerData : shared_ptr<MslObject>())
@@ -109,7 +109,7 @@ MasterToken::MasterToken(shared_ptr<util::MslContext> ctx,
     assert(ctx);
 
     // The expiration must appear after the renewal window.
-    if (expiration.before(renewalWindow))
+    if (expiration->before(renewalWindow))
         throw MslInternalException("Cannot construct a master token that expires before its renewal window opens.");
     // The sequence number and serial number must be within range.
     if (sequenceNumber_ < 0ll || sequenceNumber_ > MslConstants::MAX_LONG_VALUE) {
@@ -255,38 +255,32 @@ MasterToken::MasterToken(shared_ptr<util::MslContext> ctx, shared_ptr<MslObject>
     }
 }
 
-bool MasterToken::isRenewable(const Date& now) const
+bool MasterToken::isRenewable(shared_ptr<Date> now) const
 {
-	if (!now.isNull())
-		return renewalWindow_ * MILLISECONDS_PER_SECOND <= now.getTime();
+	if (now)
+		return renewalWindow_ * MILLISECONDS_PER_SECOND <= now->getTime();
 	if (isVerified())
 		return renewalWindow_ * MILLISECONDS_PER_SECOND <= ctx_->getTime();
 	return true;
 }
-bool MasterToken::isRenewable() const
+
+shared_ptr<Date> MasterToken::getRenewalWindow() const
 {
-    return isVerified() ? (renewalWindow_ * MILLISECONDS_PER_SECOND <= ctx_->getTime()) : true;
-}
-Date MasterToken::getRenewalWindow() const
-{
-    return Date(renewalWindow_ * MILLISECONDS_PER_SECOND);
+    return make_shared<Date>(renewalWindow_ * MILLISECONDS_PER_SECOND);
 }
 
-bool MasterToken::isExpired(const Date& now) const
+bool MasterToken::isExpired(shared_ptr<Date> now) const
 {
-	if (!now.isNull())
-		return expiration_ * MILLISECONDS_PER_SECOND <= now.getTime();
+	if (now)
+		return expiration_ * MILLISECONDS_PER_SECOND <= now->getTime();
 	if (isVerified())
 		return expiration_ * MILLISECONDS_PER_SECOND <= ctx_->getTime();
 	return false;
 }
-bool MasterToken::isExpired() const
+
+shared_ptr<Date> MasterToken::getExpiration() const
 {
-    return isVerified() ? (expiration_ * MILLISECONDS_PER_SECOND <= ctx_->getTime()) : false;
-}
-Date MasterToken::getExpiration() const
-{
-    return Date(expiration_ * MILLISECONDS_PER_SECOND);
+    return make_shared<Date>(expiration_ * MILLISECONDS_PER_SECOND);
 }
 
 /**

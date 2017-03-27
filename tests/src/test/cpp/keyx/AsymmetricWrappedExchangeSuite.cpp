@@ -640,8 +640,8 @@ protected:
      */
     shared_ptr<MasterToken> getUntrustedMasterToken(shared_ptr<MslContext> ctx, const SecretKey& encryptionKey, const SecretKey& hmacKey)
     {
-        const Date renewalWindow(Date::now().getTime() + 1000);
-        const Date expiration(Date::now().getTime() + 2000);
+        shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() + 1000);
+        shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 2000);
         const string identity = MockPresharedAuthenticationFactory::PSK_ESN;
         shared_ptr<MasterToken>masterToken = make_shared<MasterToken>(ctx, renewalWindow, expiration, 1L, 1L, shared_ptr<MslObject>(), identity, encryptionKey, hmacKey);
         shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, masterToken);

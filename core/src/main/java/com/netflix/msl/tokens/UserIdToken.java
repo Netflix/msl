@@ -285,7 +285,7 @@ public class UserIdToken implements MslEncodable {
      * issuing entity time.</li>
      * </ul>
      *
-     * @param now the time to compare against.
+     * @param now the time to compare against. May be {@code null}.
      * @return true if the renewal window has been entered.
      */
     public boolean isRenewable(final Date now) {

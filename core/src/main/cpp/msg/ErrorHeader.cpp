@@ -173,9 +173,9 @@ ErrorHeader::ErrorHeader(shared_ptr<MslContext> ctx, shared_ptr<ByteArray> error
     }
 }
 
-Date ErrorHeader::getTimestamp() const
+shared_ptr<Date> ErrorHeader::getTimestamp() const
 {
-    return (timestamp_ != -1) ? Date(timestamp_ * MILLISECONDS_PER_SECOND) : Date::null();
+    return (timestamp_ != -1) ? make_shared<Date>(timestamp_ * MILLISECONDS_PER_SECOND) : shared_ptr<Date>();
 }
 
 shared_ptr<ByteArray> ErrorHeader::toMslEncoding(shared_ptr<io::MslEncoderFactory> encoder, const io::MslEncoderFormat& format) const

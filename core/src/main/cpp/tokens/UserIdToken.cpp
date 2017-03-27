@@ -71,12 +71,12 @@ const string KEY_IDENTITY = "identity";
 
 } // namespace anonymous
 
-UserIdToken::UserIdToken(shared_ptr<MslContext> ctx, const Date& renewalWindow,
-        const Date& expiration, shared_ptr<MasterToken> masterToken, int64_t serialNumber,
+UserIdToken::UserIdToken(shared_ptr<MslContext> ctx, shared_ptr<Date> renewalWindow,
+        shared_ptr<Date> expiration, shared_ptr<MasterToken> masterToken, int64_t serialNumber,
         shared_ptr<MslObject> issuerData, shared_ptr<MslUser> user)
     : ctx_(ctx)
-    , renewalWindow_(renewalWindow.getTime() / MILLISECONDS_PER_SECOND)
-    , expiration_(expiration.getTime() / MILLISECONDS_PER_SECOND)
+    , renewalWindow_(renewalWindow->getTime() / MILLISECONDS_PER_SECOND)
+    , expiration_(expiration->getTime() / MILLISECONDS_PER_SECOND)
     , mtSerialNumber_(masterToken ? masterToken->getSerialNumber() : -1)
     , serialNumber_(serialNumber)
     , issuerdata_(issuerData)
@@ -87,7 +87,7 @@ UserIdToken::UserIdToken(shared_ptr<MslContext> ctx, const Date& renewalWindow,
     assert(user_);
 
     // The expiration_ must appear after the renewal window.
-    if (expiration.before(renewalWindow))
+    if (expiration->before(renewalWindow))
         throw MslInternalException("Cannot construct a user ID token that expires before its renewal window opens.");
     // A master token must be provided.
     if (!masterToken)
@@ -191,45 +191,31 @@ UserIdToken::UserIdToken(shared_ptr<MslContext> ctx, shared_ptr<MslObject> userI
     }
 }
 
-Date UserIdToken::getRenewalWindow() const
+shared_ptr<Date> UserIdToken::getRenewalWindow() const
 {
-    return Date(renewalWindow_ * MILLISECONDS_PER_SECOND);
+    return make_shared<Date>(renewalWindow_ * MILLISECONDS_PER_SECOND);
 }
 
-bool UserIdToken::isRenewable(const Date& now) const
+bool UserIdToken::isRenewable(shared_ptr<Date> now) const
 {
-	if (!now.isNull())
-		return renewalWindow_ * MILLISECONDS_PER_SECOND <= now.getTime();
+	if (now)
+		return renewalWindow_ * MILLISECONDS_PER_SECOND <= now->getTime();
 	if (isVerified())
 		return renewalWindow_ * MILLISECONDS_PER_SECOND <= ctx_->getTime();
 	return true;
 }
 
-bool UserIdToken::isRenewable() const
+shared_ptr<Date> UserIdToken::getExpiration() const
 {
-    if (isVerified())
-        return renewalWindow_ * MILLISECONDS_PER_SECOND <= ctx_->getTime();
-    return true;
+    return make_shared<Date>(expiration_ * MILLISECONDS_PER_SECOND);
 }
 
-Date UserIdToken::getExpiration() const
+bool UserIdToken::isExpired(shared_ptr<Date> now) const
 {
-    return Date(expiration_ * MILLISECONDS_PER_SECOND);
-}
-
-bool UserIdToken::isExpired(const Date& now) const
-{
-	if (!now.isNull())
-		return expiration_ * MILLISECONDS_PER_SECOND <= now.getTime();
+	if (now)
+		return expiration_ * MILLISECONDS_PER_SECOND <= now->getTime();
     if (isVerified())
     	return expiration_ * MILLISECONDS_PER_SECOND <= ctx_->getTime();
-    return false;
-}
-
-bool UserIdToken::isExpired() const
-{
-    if (isVerified())
-        return expiration_ * MILLISECONDS_PER_SECOND <= ctx_->getTime();
     return false;
 }
 

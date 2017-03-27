@@ -102,24 +102,24 @@ private:
 		DummyMslEncoderFactory() {}
 
 		/** @inheritDoc */
-		virtual MslEncoderFormat getPreferredFormat(const std::set<MslEncoderFormat>& formats = std::set<MslEncoderFormat>()) {
+		virtual MslEncoderFormat getPreferredFormat(const std::set<MslEncoderFormat>& /*formats = std::set<MslEncoderFormat>()*/) {
 			return MslEncoderFormat::JSON;
 		}
 
 	protected:
 		/** @inheritDoc */
-		virtual std::shared_ptr<MslTokenizer> generateTokenizer(std::shared_ptr<InputStream> source, const MslEncoderFormat& format) {
+		virtual std::shared_ptr<MslTokenizer> generateTokenizer(std::shared_ptr<InputStream> /*source*/, const MslEncoderFormat& /*format*/) {
 			throw new MslInternalException("DummyMslEncoderFactory.createTokenizer() not supported.");
 		}
 
 	public:
 		/** @inheritDoc */
-		virtual std::shared_ptr<MslObject> parseObject(std::shared_ptr<ByteArray> encoding) {
+		virtual std::shared_ptr<MslObject> parseObject(std::shared_ptr<ByteArray> /*encoding*/) {
             throw new MslInternalException("DummyMslEncoderFactory.parseObject() not supported.");
 		}
 
 		/** @inheritDoc */
-		virtual std::shared_ptr<ByteArray> encodeObject(std::shared_ptr<MslObject> object, const MslEncoderFormat& format) {
+		virtual std::shared_ptr<ByteArray> encodeObject(std::shared_ptr<MslObject> /*object*/, const MslEncoderFormat& /*format*/) {
             throw new MslInternalException("DummyMslEncoderFactory.encodeObject() not supported.");
 		}
 	};
@@ -563,7 +563,7 @@ void MslControl::init(int32_t numThreads)
         ctx->getRandom()->nextBytes(*keydata);
         const SecretKey encryptionKey(keydata, JcaAlgorithm::AES);
         const SecretKey hmacKey(keydata, JcaAlgorithm::HMAC_SHA256);
-        NULL_MASTER_TOKEN = make_shared<MasterToken>(ctx, Date(), Date(), 1L, 1L, dummy, "dummy", encryptionKey, hmacKey);
+        NULL_MASTER_TOKEN = make_shared<MasterToken>(ctx, Date::now(), Date::now(), 1L, 1L, dummy, "dummy", encryptionKey, hmacKey);
     } catch (const MslEncodingException& e) {
         throw MslInternalException("Unexpected exception when constructing dummy master token.", e);
     } catch (const MslCryptoException& e) {
@@ -1090,8 +1090,7 @@ shared_ptr<MslControl::SendResult> MslControl::send(shared_ptr<MslContext> ctx, 
         // Ask for key request data if we are using entity authentication
         // data or if the master token needs renewing or if the message is
         // non-replayable.
-        Date now;
-        /* bool success = */ ctx->getRemoteTime(now);  // FIXME: No one checks success, java returns null Date for error
+        shared_ptr<Date> now = ctx->getRemoteTime();
         if (!masterToken || masterToken->isRenewable(now) || msgCtx->isNonReplayable()) {
             set<shared_ptr<KeyRequestData>> msgCtxKeyRequestData = msgCtx->getKeyRequestData();
             keyRequests.insert(msgCtxKeyRequestData.begin(), msgCtxKeyRequestData.end());
@@ -1270,8 +1269,8 @@ shared_ptr<MessageInputStream> MslControl::receive(shared_ptr<MslContext> ctx,
 
         // Update the synchronized clock if we are a trusted network client
         // (there is a request) or peer-to-peer entity.
-        const Date timestamp = (responseHeader) ? responseHeader->getTimestamp() : errorHeader->getTimestamp();
-        if (!timestamp.isNull() && (request || ctx->isPeerToPeer()))
+        shared_ptr<Date> timestamp = (responseHeader) ? responseHeader->getTimestamp() : errorHeader->getTimestamp();
+        if (timestamp && (request || ctx->isPeerToPeer()))
             ctx->updateRemoteTime(timestamp);
     } catch (MslException& e) {
         e.setMasterToken(masterToken);
@@ -1387,8 +1386,7 @@ bool MslControl::acquireRenewalLock(shared_ptr<MslContext> ctx, shared_ptr<Messa
     // If the message must be marked non-replayable and we do not have a
     // master token then we must mark this message as renewable to perform
     // a handshake or receive a new master token.
-    Date startTime;
-    /* bool success = */ ctx->getRemoteTime(startTime);  // FIXME: No one checks success, java returns null Date for error
+    shared_ptr<Date> startTime = ctx->getRemoteTime();
     if ((msgCtx->isEncrypted() && !builder->willEncryptPayloads()) ||
         (msgCtx->isIntegrityProtected() && !builder->willIntegrityProtectPayloads()) ||
         builder->isRenewable() ||
@@ -1463,8 +1461,7 @@ bool MslControl::acquireRenewalLock(shared_ptr<MslContext> ctx, shared_ptr<Messa
 
             // If the new master token is still expired then try again to
             // acquire renewal ownership.
-            Date updateTime;
-            /* bool success = */ ctx->getRemoteTime(updateTime);  // FIXME: No one checks success, java returns null Date for error
+            shared_ptr<Date> updateTime = ctx->getRemoteTime();
             if (masterToken->isExpired(updateTime))
                 continue;
 
@@ -1490,8 +1487,7 @@ bool MslControl::acquireRenewalLock(shared_ptr<MslContext> ctx, shared_ptr<Messa
     // renewed, or we do not have a user ID token but the message is
     // associated with a user, or if the user ID token should be renewed,
     // then try to mark this message as renewable.
-    Date finalTime;
-    /* bool success = */ ctx->getRemoteTime(finalTime);  // FIXME: No one checks success, java returns null Date for error
+    shared_ptr<Date> finalTime = ctx->getRemoteTime();
     if ((!masterToken || masterToken->isRenewable(finalTime)) ||
         (!userIdToken && !msgCtx->getUserId().empty()) ||
         (userIdToken && userIdToken->isRenewable(finalTime)))
@@ -1716,11 +1712,11 @@ public:
 
                 // Connect. Keep track of how much time this takes to subtract
                 // that from the lock timeout timeout->
-                const int64_t start = Date::now().getTime();
+                const int64_t start = Date::now()->getTime();
                 shared_ptr<Connection> conn = remoteEntity->openConnection();
                 out = conn->getOutputStream();
                 in = conn->getInputStream();
-                lockTimeout = timeout - (Date::now().getTime() - start);
+                lockTimeout = timeout - (Date::now()->getTime() - start);
                 openedStreams = true;
             } catch (const IOException& e) {
                 // If a message builder was provided then release the

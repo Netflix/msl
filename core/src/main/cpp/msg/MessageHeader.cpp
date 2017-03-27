@@ -604,9 +604,9 @@ string MessageHeader::getRecipient() const
     return recipient;
 }
 
-Date MessageHeader::getTimestamp() const
+shared_ptr<Date> MessageHeader::getTimestamp() const
 {
-    return (timestamp != -1) ? Date(timestamp * MILLISECONDS_PER_SECOND) : Date::null();
+    return (timestamp != -1) ? make_shared<Date>(timestamp * MILLISECONDS_PER_SECOND) : shared_ptr<Date>();
 }
 
 int64_t MessageHeader::getMessageId() const

@@ -260,7 +260,7 @@ public:
      *
      * @param time remote entity time.
      */
-    void updateRemoteTime(const Date& time);
+    void updateRemoteTime(std::shared_ptr<Date> time);
 
     /**
      * <p>Return the expected remote entity time or {@code null} if the clock
@@ -271,7 +271,7 @@ public:
      *
      * @return the expected remote entity time or {@code null} if not known.
      */
-    bool getRemoteTime(Date& date);
+    std::shared_ptr<Date> getRemoteTime();
 
     bool equals(std::shared_ptr<const MslContext> other) const;
 

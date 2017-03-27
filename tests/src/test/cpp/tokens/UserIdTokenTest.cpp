@@ -94,8 +94,8 @@ class UserIdTokenTest : public ::testing::Test
 public:
     UserIdTokenTest()
     : ENCODER_FORMAT(MslEncoderFormat::JSON)
-    , RENEWAL_WINDOW(Date(Date::now().getTime() + 60000))
-    , EXPIRATION(Date(Date::now().getTime() + 120000))
+    , RENEWAL_WINDOW(make_shared<Date>(Date::now()->getTime() + 60000))
+    , EXPIRATION(make_shared<Date>(Date::now()->getTime() + 120000))
     , ctx_(make_shared<MockMslContext>(EntityAuthenticationScheme::PSK, false))
     , encoder_(ctx_->getMslEncoderFactory())
     , MASTER_TOKEN(MslTestUtils::getMasterToken(ctx_, 1ll, 1ll))
@@ -105,8 +105,8 @@ public:
     }
 protected:
     const MslEncoderFormat ENCODER_FORMAT;
-    const Date RENEWAL_WINDOW;
-    const Date EXPIRATION;
+    shared_ptr<Date> RENEWAL_WINDOW;
+    shared_ptr<Date> EXPIRATION;
     shared_ptr<MslContext> ctx_;
     shared_ptr<MslEncoderFactory> encoder_;
     shared_ptr<MasterToken> MASTER_TOKEN;
@@ -124,9 +124,9 @@ TEST_F(UserIdTokenTest, ctors)
     EXPECT_TRUE(userIdToken->isBoundTo(MASTER_TOKEN));
     EXPECT_EQ(ISSUER_DATA, userIdToken->getIssuerData());
     EXPECT_EQ(USER, userIdToken->getUser());
-    EXPECT_EQ(EXPIRATION.getTime() / MILLISECONDS_PER_SECOND, userIdToken->getExpiration().getTime() / MILLISECONDS_PER_SECOND);
+    EXPECT_EQ(EXPIRATION->getTime() / MILLISECONDS_PER_SECOND, userIdToken->getExpiration()->getTime() / MILLISECONDS_PER_SECOND);
     EXPECT_EQ(MASTER_TOKEN->getSerialNumber(), userIdToken->getMasterTokenSerialNumber());
-    EXPECT_EQ(RENEWAL_WINDOW.getTime() / MILLISECONDS_PER_SECOND, userIdToken->getRenewalWindow().getTime() / MILLISECONDS_PER_SECOND);
+    EXPECT_EQ(RENEWAL_WINDOW->getTime() / MILLISECONDS_PER_SECOND, userIdToken->getRenewalWindow()->getTime() / MILLISECONDS_PER_SECOND);
     EXPECT_EQ(SERIAL_NUMBER, userIdToken->getSerialNumber());
     shared_ptr<ByteArray> encode = userIdToken->toMslEncoding(encoder_, ENCODER_FORMAT);
     EXPECT_TRUE(encode);
@@ -140,9 +140,9 @@ TEST_F(UserIdTokenTest, ctors)
     EXPECT_TRUE(moUserIdToken->isBoundTo(MASTER_TOKEN));
     EXPECT_EQ(*userIdToken->getIssuerData(), *moUserIdToken->getIssuerData());
     EXPECT_TRUE(userIdToken->getUser()->equals(moUserIdToken->getUser()));
-    EXPECT_EQ(userIdToken->getExpiration().getTime() / MILLISECONDS_PER_SECOND, moUserIdToken->getExpiration().getTime() / MILLISECONDS_PER_SECOND);
+    EXPECT_EQ(userIdToken->getExpiration()->getTime() / MILLISECONDS_PER_SECOND, moUserIdToken->getExpiration()->getTime() / MILLISECONDS_PER_SECOND);
     EXPECT_EQ(userIdToken->getMasterTokenSerialNumber(), moUserIdToken->getMasterTokenSerialNumber());
-    EXPECT_EQ(userIdToken->getRenewalWindow().getTime() / MILLISECONDS_PER_SECOND, moUserIdToken->getRenewalWindow().getTime() / MILLISECONDS_PER_SECOND);
+    EXPECT_EQ(userIdToken->getRenewalWindow()->getTime() / MILLISECONDS_PER_SECOND, moUserIdToken->getRenewalWindow()->getTime() / MILLISECONDS_PER_SECOND);
     EXPECT_EQ(userIdToken->getSerialNumber(), moUserIdToken->getSerialNumber());
     shared_ptr<ByteArray> moEncode = moUserIdToken->toMslEncoding(encoder_, ENCODER_FORMAT);
     EXPECT_TRUE(moEncode);
@@ -187,9 +187,9 @@ TEST_F(UserIdTokenTest, masterTokenNull)
 
 TEST_F(UserIdTokenTest, inconsistentExpiration)
 {
-    const Date expiration(Date::now().getTime() - 1);
-    const Date renewalWindow = Date::now();
-    EXPECT_TRUE(expiration.before(renewalWindow));
+    shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() - 1);
+    shared_ptr<Date> renewalWindow = Date::now();
+    EXPECT_TRUE(expiration->before(renewalWindow));
     EXPECT_THROW(UserIdToken(ctx_, renewalWindow, expiration, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER), MslInternalException);
 }
 
@@ -201,8 +201,8 @@ TEST_F(UserIdTokenTest, inconsistentExpirationJson)
 
     shared_ptr<ByteArray> tokendata = mo->getBytes(KEY_TOKENDATA);
     shared_ptr<MslObject> tokendataMo = encoder_->parseObject(tokendata);
-    const int64_t now = Date::now().getTime();
-    const int64_t earlier = Date::now().getTime() - 1000;
+    const int64_t now = Date::now()->getTime();
+    const int64_t earlier = Date::now()->getTime() - 1000;
     tokendataMo->put(KEY_EXPIRATION, earlier);
     tokendataMo->put(KEY_RENEWAL_WINDOW, now);
     mo->put(KEY_TOKENDATA, encoder_->encodeObject(tokendataMo, ENCODER_FORMAT));
@@ -709,9 +709,9 @@ TEST_F(UserIdTokenTest, notVerified)
     EXPECT_FALSE(moUserIdToken->isExpired());
     EXPECT_EQ(userIdToken->isBoundTo(MASTER_TOKEN), moUserIdToken->isBoundTo(MASTER_TOKEN));
     EXPECT_FALSE(moUserIdToken->getUser());
-    EXPECT_EQ(userIdToken->getExpiration().getTime() / MILLISECONDS_PER_SECOND, moUserIdToken->getExpiration().getTime() / MILLISECONDS_PER_SECOND);
+    EXPECT_EQ(userIdToken->getExpiration()->getTime() / MILLISECONDS_PER_SECOND, moUserIdToken->getExpiration()->getTime() / MILLISECONDS_PER_SECOND);
     EXPECT_EQ(userIdToken->getMasterTokenSerialNumber(), moUserIdToken->getMasterTokenSerialNumber());
-    EXPECT_EQ(userIdToken->getRenewalWindow().getTime() / MILLISECONDS_PER_SECOND, moUserIdToken->getRenewalWindow().getTime() / MILLISECONDS_PER_SECOND);
+    EXPECT_EQ(userIdToken->getRenewalWindow()->getTime() / MILLISECONDS_PER_SECOND, moUserIdToken->getRenewalWindow()->getTime() / MILLISECONDS_PER_SECOND);
     EXPECT_EQ(userIdToken->getSerialNumber(), moUserIdToken->getSerialNumber());
     shared_ptr<ByteArray> moEncode = moUserIdToken->toMslEncoding(encoder_, ENCODER_FORMAT);
     EXPECT_TRUE(moEncode);
@@ -720,63 +720,63 @@ TEST_F(UserIdTokenTest, notVerified)
 
 TEST_F(UserIdTokenTest, isRenewable)
 {
-    const Date renewalWindow;
-    const Date expiration(Date::now().getTime() + 1000);
+    shared_ptr<Date> renewalWindow = Date::now();
+    shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 1000);
     shared_ptr<UserIdToken> userIdToken = make_shared<UserIdToken>(ctx_, renewalWindow, expiration, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
 
-    const Date now;
+    shared_ptr<Date> now = Date::now();
     EXPECT_TRUE(userIdToken->isRenewable());
     EXPECT_TRUE(userIdToken->isRenewable(now));
     EXPECT_FALSE(userIdToken->isExpired());
     EXPECT_FALSE(userIdToken->isExpired(now));
 
-    const Date before(renewalWindow.getTime() - 1000);
+    shared_ptr<Date> before = make_shared<Date>(renewalWindow->getTime() - 1000);
     EXPECT_FALSE(userIdToken->isRenewable(before));
     EXPECT_FALSE(userIdToken->isExpired(before));
 
-    const Date after(expiration.getTime() + 1000);
+    shared_ptr<Date> after = make_shared<Date>(expiration->getTime() + 1000);
     EXPECT_TRUE(userIdToken->isRenewable(after));
     EXPECT_TRUE(userIdToken->isExpired(after));
 }
 
 TEST_F(UserIdTokenTest, isExpired)
 {
-    const Date renewalWindow(Date::now().getTime() - 1000);
-    const Date expiration;
+    shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 1000);
+    shared_ptr<Date> expiration = Date::now();
     shared_ptr<UserIdToken> userIdToken = make_shared<UserIdToken>(ctx_, renewalWindow, expiration, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
 
-    const Date now;
+    shared_ptr<Date> now = Date::now();
     EXPECT_TRUE(userIdToken->isRenewable());
     EXPECT_TRUE(userIdToken->isRenewable(now));
     EXPECT_TRUE(userIdToken->isExpired());
     EXPECT_TRUE(userIdToken->isExpired(now));
 
-    const Date before(renewalWindow.getTime() - 1000);
+    shared_ptr<Date> before = make_shared<Date>(renewalWindow->getTime() - 1000);
     EXPECT_FALSE(userIdToken->isRenewable(before));
     EXPECT_FALSE(userIdToken->isExpired(before));
 
-    const Date after(expiration.getTime() + 1000);
+    shared_ptr<Date> after = make_shared<Date>(expiration->getTime() + 1000);
     EXPECT_TRUE(userIdToken->isRenewable(after));
     EXPECT_TRUE(userIdToken->isExpired(after));
 }
 
 TEST_F(UserIdTokenTest, notRenewableOrExpired)
 {
-    const Date renewalWindow(Date::now().getTime() + 1000);
-    const Date expiration(Date::now().getTime() + 2000);
+    shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() + 1000);
+    shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 2000);
     shared_ptr<UserIdToken> userIdToken = make_shared<UserIdToken>(ctx_, renewalWindow, expiration, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER);
 
-    const Date now;
+    shared_ptr<Date> now = Date::now();
     EXPECT_FALSE(userIdToken->isRenewable());
     EXPECT_FALSE(userIdToken->isRenewable(now));
     EXPECT_FALSE(userIdToken->isExpired());
     EXPECT_FALSE(userIdToken->isExpired(now));
 
-    const Date before(renewalWindow.getTime() - 1000);
+    shared_ptr<Date> before = make_shared<Date>(renewalWindow->getTime() - 1000);
     EXPECT_FALSE(userIdToken->isRenewable(before));
     EXPECT_FALSE(userIdToken->isExpired(before));
 
-    const Date after(expiration.getTime() + 1000);
+    shared_ptr<Date> after = make_shared<Date>(expiration->getTime() + 1000);
     EXPECT_TRUE(userIdToken->isRenewable(after));
     EXPECT_TRUE(userIdToken->isExpired(after));
 }

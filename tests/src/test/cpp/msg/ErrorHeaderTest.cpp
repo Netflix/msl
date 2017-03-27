@@ -86,10 +86,10 @@ const string USER_MSG = "User message.";
  * @param timestamp the timestamp to compare.
  * @return true if the timestamp is about now.
  */
-bool isAboutNow(const Date& timestamp)
+bool isAboutNow(shared_ptr<Date> timestamp)
 {
-    const int64_t now = Date::now().getTime();
-    const int64_t time = timestamp.getTime();
+    const int64_t now = Date::now()->getTime();
+    const int64_t time = timestamp->getTime();
     return (now - 1000 <= time && time <= now + 1000);
 }
 
@@ -101,7 +101,7 @@ bool isAboutNow(const Date& timestamp)
  */
 bool isAboutNowSeconds(int64_t seconds)
 {
-    const int64_t now = Date::now().getTime();
+    const int64_t now = Date::now()->getTime();
     const int64_t time = seconds * MILLISECONDS_PER_SECOND;
     return (now - 1000 <= time && time <= now + 1000);
 }
@@ -290,7 +290,7 @@ TEST_F(ErrorHeaderTest, parseHeader)
     shared_ptr<ErrorHeader> moErrorHeader = dynamic_pointer_cast<ErrorHeader>(header);
 
     EXPECT_EQ(*errorHeader->getEntityAuthenticationData(), *moErrorHeader->getEntityAuthenticationData());
-    EXPECT_EQ(errorHeader->getTimestamp(), moErrorHeader->getTimestamp());
+    EXPECT_EQ(*errorHeader->getTimestamp(), *moErrorHeader->getTimestamp());
     EXPECT_EQ(errorHeader->getErrorCode(), moErrorHeader->getErrorCode());
     EXPECT_EQ(errorHeader->getErrorMessage(), moErrorHeader->getErrorMessage());
     EXPECT_EQ(errorHeader->getInternalCode(), moErrorHeader->getInternalCode());
