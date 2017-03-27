@@ -19,10 +19,25 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MslTestUtils;
-var MslTestUtils$Algorithm;
-
-(function() {
+(function(require, module) {
+    "use strict";
+    
+    const Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
+    const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
+    const PrivateKey = require('../../../../../core/src/main/javascript/crypto/PrivateKey.js');
+    const PublicKey = require('../../../../../core/src/main/javascript/crypto/PublicKey.js');
+    const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+    const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+    const MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
+    const UserIdToken = require('../../../../../core/src/main/javascript/tokens/UserIdToken.js');
+    const NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
+    const ServiceToken = require('../../../../../core/src/main/javascript/tokens/ServiceToken.js');
+    const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
+    const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+    
+    const MockPresharedAuthenticationFactory = require('../entityauth/MockPresharedAuthenticationFactory.js');
+    const MslTestUtils = require('../util/MslTestUtils.js');
+    
 	/** Base service token name. */
     var SERVICE_TOKEN_NAME = "serviceTokenName";
     /**
@@ -33,13 +48,13 @@ var MslTestUtils$Algorithm;
     var NUM_SERVICE_TOKENS = 12;
     
     /** Wrapping key derivation algorithm salt. */
-    var SALT = base64$decode("AnYXmE9iJ1OaYwuJfAF9aQ==");
+    var SALT = Base64.decode("AnYXmE9iJ1OaYwuJfAF9aQ==");
     /** Wrapping key derivation algorithm info. */
-    var INFO = base64$decode("gJ+Cp63fVI0+qd0Gf/m7kQ==");
+    var INFO = Base64.decode("gJ+Cp63fVI0+qd0Gf/m7kQ==");
     /** Wrapping key length in bytes. */
     var WRAPPING_KEY_LENGTH = 128 / 8;
 
-    MslTestUtils = {
+    var MslTestUtils = module.exports = {
         /**
          * Parse a new {@link MslObject} from the {@link MslEncodable}.
          * 
@@ -76,20 +91,16 @@ var MslTestUtils$Algorithm;
         generateRsaKeys: function generateRsaKeys(algo, usages, length, callback) {
             AsyncExecutor(callback, function() {
                 var oncomplete = function(result) {
-                    PrivateKey$create(result.privateKey, {
+                    PrivateKey.create(result.privateKey, {
                         result: function(privateKey) {
-                            PublicKey$create(result.publicKey, {
+                            PublicKey.create(result.publicKey, {
                                 result: function(publicKey) {
                                     callback.result(publicKey, privateKey);
                                 },
-                                error: function(e) {
-                                    callback.error(e);
-                                }
+                                error: callback.error,
                             });
                         },
-                        error: function(e) {
-                            callback.error(e);
-                        }
+                        error: callback.error,
                     });
                 };
                 var onerror = function(e) {
@@ -97,7 +108,6 @@ var MslTestUtils$Algorithm;
                 };
                 mslCrypto["generateKey"]({ 'name': algo['name'], 'hash': algo['hash'], 'modulusLength': length, 'publicExponent': new Uint8Array([0x01, 0x00, 0x01]), }, false, usages)
                     .then(oncomplete, onerror);
-
             });
         },
         
@@ -151,7 +161,7 @@ var MslTestUtils$Algorithm;
 		        		var identity = entityAuthData.identity;
 				        var encryptionKey = MockPresharedAuthenticationFactory.KPE;
 				        var hmacKey = MockPresharedAuthenticationFactory.KPH;
-				        MasterToken$create(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, null, identity, encryptionKey, hmacKey, callback);
+				        MasterToken.create(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, null, identity, encryptionKey, hmacKey, callback);
 		        	},
 		        	error: callback.error,
 		        });
@@ -182,7 +192,7 @@ var MslTestUtils$Algorithm;
 			        	var identity = entityAuthData.identity;
 				        var encryptionKey = MockPresharedAuthenticationFactory.KPE;
 				        var hmacKey = MockPresharedAuthenticationFactory.KPH;
-				        MasterToken$create(ctx, renewalWindow, expiration, 1, 1, null, identity, encryptionKey, hmacKey, {
+				        MasterToken.create(ctx, renewalWindow, expiration, 1, 1, null, identity, encryptionKey, hmacKey, {
 				        	result: function(masterToken) {
 				        		AsyncExecutor(callback, function() {
 				        		    var encoder = ctx.getMslEncoderFactory();
@@ -192,7 +202,7 @@ var MslTestUtils$Algorithm;
     		                                    var signature = mo.getBytes("signature");
     		                                    ++signature[1];
     		                                    mo.put("signature", signature);
-    		                                    MasterToken$parse(ctx, mo, callback);
+    		                                    MasterToken.parse(ctx, mo, callback);
 				        		            });
 				        		        },
 				        		        error: callback.error,
@@ -227,7 +237,7 @@ var MslTestUtils$Algorithm;
 	    	AsyncExecutor(callback, function() {
 		        var renewalWindow = new Date(Date.now() + 10000);
 		        var expiration = new Date(Date.now() + 20000);
-		        UserIdToken$create(ctx, renewalWindow, expiration, masterToken, serialNumber, null, user, callback);
+		        UserIdToken.create(ctx, renewalWindow, expiration, masterToken, serialNumber, null, user, callback);
 	    	});
 	    },
 	    
@@ -253,7 +263,7 @@ var MslTestUtils$Algorithm;
 	        AsyncExecutor(callback, function() {
                 var renewalWindow = new Date(Date.now() + 10000);
                 var expiration = new Date(Date.now() + 20000);
-                UserIdToken$create(ctx, renewalWindow, expiration, masterToken, serialNumber, null, user, {
+                UserIdToken.create(ctx, renewalWindow, expiration, masterToken, serialNumber, null, user, {
                     result: function(userIdToken) {
                         AsyncExecutor(callback, function() {
                             var encoder = ctx.getMslEncoderFactory();
@@ -263,7 +273,7 @@ var MslTestUtils$Algorithm;
                                         var signature = mo.getBytes("signature");
                                         ++signature[1];
                                         mo.put("signature", signature);
-                                        UserIdToken$parse(ctx, mo, masterToken, callback);
+                                        UserIdToken.parse(ctx, mo, masterToken, callback);
                                     });
                                 },
                                 error: callback.error,
@@ -320,13 +330,13 @@ var MslTestUtils$Algorithm;
 	            	case 0:
 	            		break;
 	            }
-	            ServiceToken$create(ctx, name, data, mt, uit, false, null, cryptoContext, {
+	            ServiceToken.create(ctx, name, data, mt, uit, false, null, cryptoContext, {
 	            	result: function(token) {
 	            		serviceTokens[token.uniqueKey()] = token;
 	            		--count;
 	            		addToken();
 	            	},
-	            	error: function(err) { callback.error(err); }
+	            	error: callback.error,
 	            });
 	        }
 	        addToken();
@@ -359,13 +369,13 @@ var MslTestUtils$Algorithm;
 	    		
 	    		var data = new Uint8Array(8);
 	            random.nextBytes(data);
-	            ServiceToken$create(ctx, "masterbound" + count, data, masterToken, null, false, null, cryptoContext, {
+	            ServiceToken.create(ctx, "masterbound" + count, data, masterToken, null, false, null, cryptoContext, {
 	            	result: function(token) {
 	            		tokens.push(token);
 	            		--count;
 	            		addToken();
 	            	},
-	            	error: function(err) { callback.error(err); }
+	            	error: callback.error,
 	            });
 	    	}
 	    	addToken();
@@ -399,13 +409,13 @@ var MslTestUtils$Algorithm;
 	    		
 	    		var data = new Uint8Array(8);
 	            random.nextBytes(data);
-	            ServiceToken$create(ctx, "userbound" + count, data, masterToken, userIdToken, false, null, cryptoContext, {
+	            ServiceToken.create(ctx, "userbound" + count, data, masterToken, userIdToken, false, null, cryptoContext, {
 	            	result: function(token) {
 	            		tokens.push(token);
 	            		--count;
 	            		addToken();
 	            	},
-	            	error: function(err) { callback.error(err); }
+	            	error: callback.error,
 	            });
 	    	}
 	    	addToken();
@@ -433,7 +443,7 @@ var MslTestUtils$Algorithm;
 	                throw new MslCryptoException(MslError.INVALID_ENCRYPTION_KEY, "encryptionKey " + encryptionKey, e);
 	            }
 	            try {
-	                kh = (typeof hmacKey == 'string') ? base64$decode(hmacKey) : hmacKey;
+	                kh = (typeof hmacKey == 'string') ? Base64.decode(hmacKey) : hmacKey;
 	            } catch (e) {
 	                throw new MslCryptoException(MslError.INVALID_HMAC_KEY, "hmacKey " + hmacKey, e);
 	            }
@@ -446,7 +456,7 @@ var MslTestUtils$Algorithm;
 	        
 	        // HMAC-SHA256 the keys with the salt as the HMAC key.
 	        function saltStep(bits) {
-                SecretKey$import(SALT, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
+                SecretKey.import(SALT, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
                     result: function(saltKey) {
                         var oncomplete = function(result) {
                             infoStep(new Uint8Array(result));
@@ -463,7 +473,7 @@ var MslTestUtils$Algorithm;
             
 	        // HMAC-SHA256 the info with the intermediate key as the HMAC key.
 	        function infoStep(intermediateBits) {
-	            SecretKey$import(intermediateBits, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
+	            SecretKey.import(intermediateBits, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
 	                result: function(intermediateKey) {
 	                    AsyncExecutor(callback, function() {
                             var oncomplete = function(result) {
@@ -489,7 +499,7 @@ var MslTestUtils$Algorithm;
 	    },
     };
 
-    MslTestUtils$Algorithm = {
+    var MslTestUtils$Algorithm = {
     	/**
     	 * Returns true if two algorithms are equal.
     	 *
@@ -508,4 +518,7 @@ var MslTestUtils$Algorithm;
     		return true;
     	},
     };
-})();
+    
+    // Exports.
+    module.exports.Algorithm = MslTestUtils$Algorithm;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslTestUtils'));

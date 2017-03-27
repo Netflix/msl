@@ -23,11 +23,22 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MockMessageContext;
-var MockMessageContext$create;
-
-(function() {
+(function(require, module) {
 	"use strict";
+	
+	const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
+	const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
+	const MessageContext = require('../../../../../core/src/main/javascript/msg/MessageContext.js');
+	const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+	const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+	const UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
+	const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+	const AsymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/AsymmetricWrappedExchange.js');
+	const SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
+	const SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
+	
+	const MockEmailPasswordAuthenticationFactory = require('../userauth/MockEmailPasswordAuthenticationFactory.js');
+	const MockRsaAuthenticationFactory = require('../entityauth/MockRsaAuthenticationFactory.js');
 	
     var DH_PARAMETERS_ID = "1";
     var RSA_KEYPAIR_ID = "rsaKeypairId";
@@ -59,11 +70,11 @@ var MockMessageContext$create;
         AsyncExecutor(callback, function() {
             var keydata = new Uint8Array(Math.floor(bitlength / 8));
             ctx.getRandom().nextBytes(keydata);
-            SecretKey$import(keydata, algo, usages, callback);
+            SecretKey.import(keydata, algo, usages, callback);
         });
     }
     
-    MockMessageContext = MessageContext.extend({
+    var MockMessageContext = MessageContext.extend({
 	    /**
 	     * Create a new test message context.
 	     * 
@@ -94,16 +105,16 @@ var MockMessageContext$create;
 	                                        result: function(hmacKeyB) {
 	                                            createContext(encryptionKeyA, hmacKeyA, encryptionKeyB, hmacKeyB);
 	                                        },
-	                                        error: function(e) { callback.error(e); }
+	                                        error: callback.error,
 	                                    });
 	                                },
-	                                error: function(e) { callback.error(e); }
+	                                error: callback.error,
 	                            });
 	                        },
-	                        error: function(e) { callback.error(e); }
+	                        error: callback.error,
 	                    });
 	                },
-	                error: function(e) { callback.error(e); }
+	                error: callback.error,
 	            });
 	        }, self);
 	        
@@ -138,11 +149,11 @@ var MockMessageContext$create;
 	                {
 	                    var publicKey = MockRsaAuthenticationFactory.RSA_PUBKEY;
 	                    var privateKey = MockRsaAuthenticationFactory.RSA_PRIVKEY;
-	                    var requestData = new AsymmetricWrappedExchange$RequestData(RSA_KEYPAIR_ID, AsymmetricWrappedExchange$Mechanism.RSA, publicKey, privateKey);
+	                    var requestData = new AsymmetricWrappedExchange.RequestData(RSA_KEYPAIR_ID, AsymmetricWrappedExchange.Mechanism.RSA, publicKey, privateKey);
 	                    keyRequestData.push(requestData);
 	                }
 	                {
-	                    keyRequestData.push(new SymmetricWrappedExchange$RequestData(SymmetricWrappedExchange$KeyId.PSK));
+	                    keyRequestData.push(new SymmetricWrappedExchange.RequestData(SymmetricWrappedExchange.KeyId.PSK));
 	                }
 
 	                var cryptoContexts = {};
@@ -331,13 +342,16 @@ var MockMessageContext$create;
      *         are invalid.
      * @throws CryptoException if there is an error creating a key.
      */
-    MockMessageContext$create = function MockMessageContext$create(ctx, userId, scheme, callback) {
+    var MockMessageContext$create = function MockMessageContext$create(ctx, userId, scheme, callback) {
         new MockMessageContext(ctx, userId, scheme, callback);
     };
     
+    // Exports.
+    module.exports.create = MockMessageContext$create;
+
     // Expose public static properties.
-    MockMessageContext.DH_PARAMETERS_ID = DH_PARAMETERS_ID;
-    MockMessageContext.RSA_KEYPAIR_ID = RSA_KEYPAIR_ID;
-    MockMessageContext.SERVICE_TOKEN_NAME = SERVICE_TOKEN_NAME;
-    MockMessageContext.DEFAULT_SERVICE_TOKEN_NAME = DEFAULT_SERVICE_TOKEN_NAME;
-})();
+    module.exports.DH_PARAMETERS_ID = DH_PARAMETERS_ID;
+    module.exports.RSA_KEYPAIR_ID = RSA_KEYPAIR_ID;
+    module.exports.SERVICE_TOKEN_NAME = SERVICE_TOKEN_NAME;
+    module.exports.DEFAULT_SERVICE_TOKEN_NAME = DEFAULT_SERVICE_TOKEN_NAME;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MockMessageContext'));

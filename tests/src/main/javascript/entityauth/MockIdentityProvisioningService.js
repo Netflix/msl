@@ -23,12 +23,12 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MockIdentityProvisioningService;
-
-(function() {
+(function(require, module) {
     "use strict";
     
-    MockIdentityProvisioningService = ProvisionedAuthenticationFactory$IdentityProvisioningService.extend({
+    const ProvisionedAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/ProvisionedAuthenticationFactory.js');
+    
+    var MockIdentityProvisioningService = module.exports = ProvisionedAuthenticationFactory.IdentityProvisioningService.extend({
         /**
          * <p>Create a new test identity provisioning service using the random
          * number generator from the provided MSL context.<p>
@@ -53,4 +53,4 @@ var MockIdentityProvisioningService;
             return "" + now + ":" + suffix;
         },
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MockIdentityProvisioningService'));

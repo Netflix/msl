@@ -13,11 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var MockRsaAuthenticationFactory;
-var MockRsaAuthenticationFactory$create;
-
-(function() {
+(function(require, module) {
     "use strict";
+    
+    const ConditionVariable = require('../../../../../core/src/main/javascript/util/ConditionVariable.js');
+    const RsaAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/RsaAuthenticationFactory.js');
+    const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
+    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    const RsaAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/RsaAuthenticationData.js');
+    const RsaCryptoContext = require('../../../../../core/src/main/javascript/crypto/RsaCryptoContext.js');
+    const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+    const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+    
+    const MslTestUtils = require('../util/MslTestUtils.js');
     
 	// PKCS#1 RSA Public Key Format
 	var publicKeyData =
@@ -74,7 +82,7 @@ var MockRsaAuthenticationFactory$create;
      * 
      * @author Wesley Miaw <wmiaw@netflix.com>
      */
-    MockRsaAuthenticationFactory = RsaAuthenticationFactory.extend({
+    var MockRsaAuthenticationFactory = module.exports = RsaAuthenticationFactory.extend({
     	/**
     	 * Create a new test RSA authentication factory.
     	 * 
@@ -117,7 +125,7 @@ var MockRsaAuthenticationFactory$create;
                 var pubkeyid = authdata.publicKeyId;
                 if (RSA_PUBKEY_ID == pubkeyid) {
                     var identity = authdata.identity;
-                    return new RsaCryptoContext(ctx, identity, RSA_PRIVKEY, RSA_PUBKEY, RsaCryptoContext$Mode.SIGN_VERIFY);
+                    return new RsaCryptoContext(ctx, identity, RSA_PRIVKEY, RSA_PUBKEY, RsaCryptoContext.Mode.SIGN_VERIFY);
                 }
             }
             return getCryptoContext.base.call(this, ctx, authdata);
@@ -132,22 +140,25 @@ var MockRsaAuthenticationFactory$create;
      *        callback the callback functions that will receive the factory
      *        or any thrown exceptions.
      */
-    MockRsaAuthenticationFactory$create = function MockRsaAuthenticationFactory$create(store, callback) {
+    var MockRsaAuthenticationFactory$create = function MockRsaAuthenticationFactory$create(store, callback) {
         new MockRsaAuthenticationFactory(store, callback);
     };
     
+    // Exports.
+    module.exports.create = MockRsaAuthenticationFactory$create;
+    
     // Expose public static properties.
-    MockRsaAuthenticationFactory.RSA_ESN = RSA_ESN;
-    MockRsaAuthenticationFactory.RSA_PUBKEY_ID = RSA_PUBKEY_ID;
+    module.exports.RSA_ESN = RSA_ESN;
+    module.exports.RSA_PUBKEY_ID = RSA_PUBKEY_ID;
     // FIXME: Use the hard-coded RSA keys.
     MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSASSA, WebCryptoUsage.SIGN_VERIFY, 2048, {
         result: function(publicKey, privateKey) {
-            RSA_PUBKEY = MockRsaAuthenticationFactory.RSA_PUBKEY = publicKey;
-            RSA_PRIVKEY = MockRsaAuthenticationFactory.RSA_PRIVKEY = privateKey;
+            RSA_PUBKEY = module.exports.RSA_PUBKEY = publicKey;
+            RSA_PRIVKEY = module.exports.RSA_PRIVKEY = privateKey;
             keysDefined.signalAll();
         },
         error: function(e) {
             throw new MslInternalException("Hard-coded RSA key failure.", e);
         }
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MockRsaAuthenticationFactory'));

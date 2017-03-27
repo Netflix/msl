@@ -19,10 +19,10 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MockEmailPasswordStore;
-
-(function() {
+(function(require, module) {
     "use strict";
+    
+    const EmailPasswordStore = require('../../../../../core/src/main/javascript/userauth/EmailPasswordStore.js');
     
     /**
      * Create a new user and password pair.
@@ -35,7 +35,7 @@ var MockEmailPasswordStore;
         this.password = password;
     }
     
-    MockEmailPasswordStore = EmailPasswordStore.extend({
+    var MockEmailPasswordStore = module.exports = EmailPasswordStore.extend({
         init: function init() {
             // Map of email addresses onto user ID and password pairs.
             var credentials = {};
@@ -79,4 +79,4 @@ var MockEmailPasswordStore;
             return iap.user;
         }
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MockEmailPasswordStore'));

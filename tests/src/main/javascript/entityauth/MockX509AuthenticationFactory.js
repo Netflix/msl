@@ -13,9 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var MockX509AuthenticationFactory;
-
-(function() {
+(function(require, module) {
+    "use strict";
+    
+    const X509 = require('jsrsasign').asn1.X509;
+    
+    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    const X509AuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/X509AuthenticationFactory.js');
+    const X509AuthenticationData = require('../../../../../core/src/main/javascript/entityauth/X509AuthenticationData.js');
+    const RsaCryptoContext = require('../../../../../core/src/main/javascript/crypto/RsaCryptoContext.js');
+    const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+    
 	/** X.509 private key. */
     var X509_PRIVATE_KEY =
     	"-----BEGIN RSA PRIVATE KEY-----\n" +
@@ -96,7 +104,7 @@ var MockX509AuthenticationFactory;
      * 
      * @author Wesley Miaw <wmiaw@netflix.com>
      */
-    MockX509AuthenticationFactory = X509AuthenticationFactory.extend({
+    var MockX509AuthenticationFactory = module.exports = X509AuthenticationFactory.extend({
         /**
 	     * Create a new test X.509 authentication factory.
 	     */
@@ -111,7 +119,7 @@ var MockX509AuthenticationFactory;
 	            var identity = authdata.getIdentity();
 	            try {
 	                if (X509_CERT.getSubjectString() == identity)
-	                    return new RsaCryptoContext(ctx, identity, X509_PRIVKEY, X509_CERT.subjectPublicKeyRSA, Mode.SIGN_VERIFY);
+	                    return new RsaCryptoContext(ctx, identity, X509_PRIVKEY, X509_CERT.subjectPublicKeyRSA, RsaCryptoContext.Mode.SIGN_VERIFY);
 	            } catch (e) {
 	                throw new MslCryptoException(MslError.X509CERT_PARSE_ERROR, X509_CERT.hex, e);
 	            }
@@ -121,7 +129,7 @@ var MockX509AuthenticationFactory;
     });
     
     // Expose public static properties.
-    MockX509AuthenticationFactory.X509_ESN = X509_ESN;
-    MockX509AuthenticationFactory.X509_CERT = X509_CERT;
-    MockX509AuthenticationFactory.X509_PRIVKEY = X509_PRIVKEY;
-})();
+    module.exports.X509_ESN = X509_ESN;
+    module.exports.X509_CERT = X509_CERT;
+    module.exports.X509_PRIVKEY = X509_PRIVKEY;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MockX509AuthenticationFactory'));
