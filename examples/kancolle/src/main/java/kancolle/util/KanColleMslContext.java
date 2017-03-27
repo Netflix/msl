@@ -43,6 +43,7 @@ import kancolle.userauth.OfficerDatabase;
 import com.netflix.msl.MslConstants.CompressionAlgorithm;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.io.DefaultMslEncoderFactory;
 import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.keyx.AsymmetricWrappedExchange;
@@ -228,5 +229,5 @@ public abstract class KanColleMslContext extends MslContext {
     /** MSL store. */
     private final MslStore store = new SimpleMslStore();
     /** MSL encoder factory. */
-    private final MslEncoderFactory encoderFactory = new MslEncoderFactory();
+    private final MslEncoderFactory encoderFactory = new DefaultMslEncoderFactory();
 }

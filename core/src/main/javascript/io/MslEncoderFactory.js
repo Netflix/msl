@@ -15,8 +15,13 @@
  */
 
 /**
- * <p>A factory class for producing {@link MslTokener}, {@link MslObject},
- * and {@link MslArray} instances of various encoding formats.</p>
+ * <p>An abstract factory class for producing {@link MslTokener},
+ * {@link MslObject}, and {@link MslArray} instances of various encoder
+ * formats.</p>
+ * 
+ * <p>A concrete implementations must identify its supported and preferred
+ * encoder formats and provide implementations for encoding and decoding those
+ * formats.</p>
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
@@ -88,10 +93,7 @@
          * @return {MslEncoderFormat} the preferred format from the provided set or the default format
          *         if format set is {@code null} or empty.
          */
-        getPreferredFormat: function getPreferredFormat(formats) {
-            // We don't know about any other formats right now.
-            return MslEncoderFormat.JSON;
-        },
+        getPreferredFormat: function(formats) {},
         
         /**
          * <p>Create a new {@link MslTokenizer}.</p>
@@ -112,20 +114,23 @@
          *         stream identifier or if the encoding format is not supported.
          */
         createTokenizer: function createTokenizer(source, format, timeout, callback) {
+        	var self = this;
+        	
             AsyncExecutor(callback, function() {
                 // Identify the encoding format.
                 if (!format) {
-                    source.mark();
-                    source.read(1, timeout, {
+                	var bufferedSource = source.markSupported() ? source : new BufferedInputStream(source);
+                    bufferedSource.mark();
+                    bufferedSource.read(1, timeout, {
                         result: function(bytes) {
                             AsyncExecutor(callback, function() {
                                 if (bytes == null || bytes.length < 1)
                                     throw new new MslEncoderException("Failure reading the byte stream identifier.");
                                 var id = bytes[0];
                                 format = MslEncoderFormat.getFormat(id);
-                                source.reset();
-                                generate(format);
-                            });
+                                bufferedSource.reset();
+                                return this.generateTokenizer(bufferedSource, format);
+                            }, self);
                         },
                         timeout: callback.timeout,
                         error: function(e) {
@@ -133,21 +138,20 @@
                         }
                     });
                 } else {
-                    generate(format);
+                    return this.generateTokenizer(source, format);
                 }
-                
-                function generate(format) {
-                    AsyncExecutor(callback, function() {
-                        // JSON.
-                        if (MslEncoderFormat.JSON === format)
-                            return new JsonMslTokenizer(this, source);
-                        
-                        // Unsupported encoding format.
-                        throw new MslEncoderException("Unsupported encoder format: " + format + ".");
-                    });
-                }
-            });
+            }, self);
         },
+
+        /**
+         * Create a new {@link MslTokenizer} of the specified encoder format.
+         * 
+         * @param source the binary data to tokenize.
+         * @param format the encoder format.
+         * @return the {@link MslTokenizer}.
+         * @throws MslEncoderException if the encoder format is not supported.
+         */
+        generateTokenizer: function generateTokenizer(source, format) {},
         
         /**
          * <p>Create a new {@link MslObject}.</p>
@@ -198,17 +202,7 @@
          * @throws MslEncoderException if the encoder format is not supported or
          *         there is an error parsing the encoded data.
          */
-        parseObject: function parseObject(encoding) {
-            // Identify the encoder format.
-            var format = this.parseFormat(encoding);
-            
-            // JSON.
-            if (MslEncoderFormat.JSON == format)
-                return new JsonMslObject(this, encoding);
-            
-            // Unsupported encoder format.
-            throw new MslEncoderException("Unsupported encoder format: " + format + ".");
-        },
+        parseObject: function(encoding) {},
         
         /**
          * Encode a {@link MslObject} into the specified encoder format.
@@ -221,18 +215,7 @@
          * @throws MslEncoderException if the encoder format is not supported or
          *         there is an error encoding the object.
          */
-        encodeObject: function encodeObject(object, format, callback) {
-        	AsyncExecutor(callback, function() {
-	            // JSON.
-	            if (MslEncoderFormat.JSON == format) {
-	                JsonMslObject.encode(this, object, callback);
-	                return;
-	            }
-	            
-	            // Unsupported encoder format.
-	            throw new MslEncoderException("Unsupported encoder format: " + format + ".");
-        	}, this);
-        },
+        encodeObject: function(object, format, callback) {},
 
         /**
          * <p>Create a new {@link MslArray}.</p>

@@ -57,6 +57,7 @@ import com.netflix.msl.entityauth.UnauthenticatedAuthenticationFactory;
 import com.netflix.msl.entityauth.UnauthenticatedSuffixedAuthenticationData;
 import com.netflix.msl.entityauth.UnauthenticatedSuffixedAuthenticationFactory;
 import com.netflix.msl.entityauth.X509AuthenticationData;
+import com.netflix.msl.io.DefaultMslEncoderFactory;
 import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.keyx.AsymmetricWrappedExchange;
@@ -174,7 +175,7 @@ public class MockMslContext extends MslContext {
 
         tokenFactory = new MockTokenFactory();
         store = new SimpleMslStore();
-        encoderFactory = new MslEncoderFactory();
+        encoderFactory = new DefaultMslEncoderFactory();
 
         final MockDiffieHellmanParameters params = MockDiffieHellmanParameters.getDefaultParameters();
         final AuthenticationUtils authutils = new MockAuthenticationUtils();

@@ -267,7 +267,8 @@
 	    MESSAGE_ENTITYDATABASED_VERIFICATION_FAILED : new MslError(6038, MslConstants.ResponseCode.ENTITYDATA_REAUTH, "Message header entity-based signature verification failed."),
 	    MESSAGE_MASTERTOKENBASED_VERIFICATION_FAILED : new MslError(6039, MslConstants.ResponseCode.ENTITY_REAUTH, "Message header master token-based signature verification failed."),
 	    MESSAGE_REPLAYED_UNRECOVERABLE : new MslError(6040, MslConstants.ResponseCode.ENTITY_REAUTH, "Non-replayable message replayed with a sequence number that is too far out of sync to recover."),
-	
+	    UNEXPECTED_LOCAL_MESSAGE_SENDER : new MslError(6041, MslConstants$ResponseCode.FAIL, "Message sender is equal to the local entity."),
+
 	    // 7 Key Exchange
 	    UNIDENTIFIED_KEYX_SCHEME : new MslError(7000, MslConstants.ResponseCode.FAIL, "Unable to identify key exchange scheme."),
 	    KEYX_FACTORY_NOT_FOUND : new MslError(7001, MslConstants.ResponseCode.FAIL, "No factory registered for key exchange scheme."),

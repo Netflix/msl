@@ -218,7 +218,7 @@
 		            var store = new SimpleMslStore();
 		            
 		            // Set up the MSL encoder factory.
-		            var encoderFactory = new MslEncoderFactory();
+		            var encoderFactory = new DefaultMslEncoderFactory();
 
 		            // The properties.
 		            var props = {

@@ -19,7 +19,7 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-describe("MslEncoderFactory", function() {
+describe("DefaultMslEncoderFactory", function() {
     /** Maximum number of object fields or array elements. */
     var MAX_NUM_ELEMENTS = 20;
     /** MSL object base key name. */
@@ -28,7 +28,7 @@ describe("MslEncoderFactory", function() {
     /** MSL context. */
     var ctx;
     /** MSL encoder factory. */
-    var encoder = new MslEncoderFactory();
+    var encoder;
     /** Random. */
     var random;
     
@@ -44,7 +44,7 @@ describe("MslEncoderFactory", function() {
         	waitsFor(function() { return ctx; }, "ctx", 1200);
         	
         	runs(function() {
-        		encoder = ctx.getMslEncoderFactory();
+        		encoder = new DefaultMslEncoderFactory();
         		random = ctx.getRandom();
         		initialized = true;
         	});
@@ -532,111 +532,6 @@ describe("MslEncoderFactory", function() {
 			            					f();
 			            				},
 			            				timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
-			    	            		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
-			            			});
-			            		},
-				                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
-			            		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
-			            	});
-			            }
-			            f();
-		            });
-		            waitsFor(function() { return objects; }, "objects", 100);
-			        
-		            var nextObject;
-			        runs(function() {
-			            // +1 for the header, +1 for the EOM payload.
-			            expect(objects.length).toEqual(PAYLOADS.length + 2);
-			            tokenizer.nextObject(-1, {
-			            	result: function(object) { nextObject = object; },
-			                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
-			            	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
-			            });
-			        });
-			        waitsFor(function() { return nextObject !== undefined; }, "nextObject", 100);
-			        
-			        var header;
-			        runs(function() {
-			            expect(nextObject).toBeNull();
-			            
-			            // Pull message header.
-			            var headerO = objects[0];
-			            var cryptoContexts = [];
-			            Header$parseHeader(ctx, headerO, cryptoContexts, {
-			            	result: function(x) { header = x; },
-			            	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
-			            });
-			        });
-			        waitsFor(function() { return header; }, "header", 100);
-			        
-			        var verified = false;
-			        runs(function() {
-			            expect(header instanceof MessageHeader).toBeTruthy();
-			            var messageHeader = header;
-			            
-			            // Verify payloads.
-			            var payloadCryptoContext = messageHeader.cryptoContext;
-			            function f(i) {
-			            	if (i >= PAYLOADS.length) {
-			            		verified = true;
-			            		return;
-			            	}
-			            	var expectedPayload = PAYLOADS[i];
-			            	var payloadMo = objects[i + 1];
-			            	PayloadChunk$parse(ctx, payloadMo, payloadCryptoContext, {
-			            		result: function(payload) {
-			            			var data = payload.data;
-			    	                expect(data).toEqual(expectedPayload);
-			    	                f(i+1);
-			            		},
-			            		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
-			            	});
-			            }
-			            f(0);
-			        });
-			        waitsFor(function() { return verified; }, "verified", 100);
-	            });
-	        });
-        
-	        it("create tokenizer", function() {
-	            var tokenizer, exception;
-	            runs(function() {
-		            // Create the tokenizer.
-		            var source = new ByteArrayInputStream(messageData);
-		            encoder.createTokenizer(source, format, -1, {
-		            	result: function(x) { tokenizer = x; },
-		                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
-		            	error: function(e) { exception = e; },
-		            });
-	            });
-	            waitsFor(function() { return tokenizer || exception; }, "tokenizer or exception", 100);
-	
-	            runs(function() {
-	            	if (expectedException) {
-	            		expect(function() { throw exception; }).toThrow(expectedException);
-	            		return;
-	            	}
-	
-	            	var objects;
-	            	runs(function() {
-		            	expect(tokenizer).not.toBeNull();
-		            
-			            // Pull data off the tokenizer.
-			            var tokens = [];
-			            function f() {
-			            	tokenizer.more(-1, {
-			            		result: function(success) {
-			            			if (!success) {
-			            				objects = tokens;
-			            				return;
-			            			}
-			            			tokenizer.nextObject(-1, {
-			            				result: function(object) {
-			            					expect(object).not.toBeNull();
-			            					tokens.push(object);
-			            					f();
-			            				},
-						                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
 			    	            		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 			            			});
 			            		},

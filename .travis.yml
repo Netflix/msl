@@ -2,8 +2,11 @@ language: java
 jdk:
 - oraclejdk7
 sudo: false
-install: "./installViaTravis.sh"
-script: "./buildViaTravis.sh"
+install:
+- "./installViaTravis.sh"
+script:
+- jdk_switcher use oraclejdk8
+- "./buildViaTravis.sh"
 env:
   global:
   - secure: Zgn8jqagplC6oK5H6JgdoWmWBk8elx1Om+29JcIpsrJZsZ8xfNgwWIBcLpuWt3DScXQm/6NqIVedFSOskC0H0+CHjK10e5NYKon92EBDHgmDXox0IzW6FLVGbJqMVXUa2/dcL6mbAP50R4qFg4kMKsCjTEVETSXOmpQmpNn22qY=

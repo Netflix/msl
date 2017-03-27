@@ -30,7 +30,7 @@ describe("MslEncoderUtils", function() {
      * @return {string} a random string of random length.
      */
     function randomString(random) {
-        var raw = new Uint8Array(random.nextInt(MAX_STRING_CHARS) + 1);
+        var raw = new Uint8Array(1 + random.nextInt(MAX_STRING_CHARS - 1));
         random.nextBytes(raw);
         return base64$encode(raw);
     }
@@ -41,7 +41,7 @@ describe("MslEncoderUtils", function() {
      */
     function createFlatMslObject(random) {
         var mo = new MslObject();
-        for (var i = random.nextInt(MAX_ELEMENTS); i > 0; --i) {
+        for (var i = 1 + random.nextInt(MAX_ELEMENTS - 1); i > 0; --i) {
             switch (random.nextInt(4)) {
                 case 0:
                     mo.put(KEY_BOOLEAN + i, random.nextBoolean());
@@ -68,7 +68,7 @@ describe("MslEncoderUtils", function() {
      */
     function createDeepMslObject(random, depth) {
         var mo = new MslObject();
-        for (var i = random.nextInt(MAX_ELEMENTS); i > 0; --i) {
+        for (var i = 1 + random.nextInt(MAX_ELEMENTS - 1); i > 0; --i) {
             switch (random.nextInt(6)) {
 	            case 0:
 	                mo.put(KEY_BOOLEAN + i, random.nextBoolean());
@@ -99,7 +99,7 @@ describe("MslEncoderUtils", function() {
      */
     function createFlatMslArray(random) {
         var ma = new MslArray();
-        for (var i = random.nextInt(MAX_ELEMENTS); i > 0; --i) {
+        for (var i = 1 + random.nextInt(MAX_ELEMENTS - 1); i > 0; --i) {
             switch (random.nextInt(4)) {
                 case 0:
                     ma.put(-1, random.nextBoolean());
@@ -126,7 +126,7 @@ describe("MslEncoderUtils", function() {
      */
     function createDeepMslArray(random, depth) {
         var ma = new MslArray();
-        for (var i = random.nextInt(MAX_ELEMENTS); i > 0; --i) {
+        for (var i = 1 + random.nextInt(MAX_ELEMENTS - 1); i > 0; --i) {
             switch (random.nextInt(6)) {
                 case 0:
                     ma.put(-1, random.nextBoolean());
