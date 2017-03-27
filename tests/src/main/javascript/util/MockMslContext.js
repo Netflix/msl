@@ -49,7 +49,7 @@
     const SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
     const DiffieHellmanExchange = require('../../../../../core/src/main/javascript/keyx/DiffieHellmanExchange.js');
     const SimpleMslStore = require('../../../../../core/src/main/javascript/util/SimpleMslStore.js');
-    const MslEncoderFactory = require('../../../../../core/src/main/javascript/MslEncoderFactory.js');
+    const DefaultMslEncoderFactory = require('../../../../../core/src/main/javascript/io/DefaultMslEncoderFactory.js');
     const KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
     
     const MockAuthenticationUtils = require('../util/MockAuthenticationUtils.js');
