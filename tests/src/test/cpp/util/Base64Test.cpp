@@ -16,6 +16,7 @@
 
 #include <gtest/gtest.h>
 #include <util/Base64.h>
+#include <IllegalArgumentException.h>
 
 namespace netflix {
 namespace msl {
@@ -35,6 +36,18 @@ protected:
           "VGhlIGxvbmcgd2luZGVkIGF1dGhvciBpcyBnb2luZyBmb3IgYSB3YWxrIHdoaWxlIHRoZSBsaWdodCBicmVlemUgYmVsbG93cyBpbiBoaXMgZWFycy4=",
           "U29tZXRpbWVzIHBvcmN1cGluZXMgbmVlZCBiZWRzIHRvIHNsZWVwIG9uLg==",
           "RXZlbiB0aGUgcmVzdGxlc3MgZHJlYW1lciBlbmpveXMgaG9tZS1jb29rZWQgZm9vZHMu"
+    };
+    static const int NINVALID_EXAMPLES = 9;
+    const std::string INVALID_EXAMPLE_B64[NINVALID_EXAMPLES] = {
+            "AAAAA",
+            "AAAAAAA",
+            "%$#@=",
+            "ZZZZZZZZZZ=",
+            "ZZZZZZZZZ==",
+            "U29tZXRpbWVzIHBvcmN1cGluZX=gbmVlZCBiZWRzIHRvIHNsZWVwIG9uLg==",
+            "RXZlbiB0aGUgcmVzdGxlc3MgZHJ=YW1lciBlbmpveXMgaG9tZS1jb29rZWQgZm9vZHMu",
+            "RXZlbiB0aGUgcmVzdGxlc3MgZHJ=Y",
+            "VGhlIGxvbmcgd2luZGVkIGF1dGhvciBpcyBnb2luZyBmb3IgY幸B3YWxrIHdoaWxlIHRoZSBsaWdodCBicmVlemUgYmVsbG93cyBpbiBoaXMgZWFycy4=",
     };
 };
 
@@ -149,6 +162,129 @@ TEST_F(Base64Test, Whitespace)
         EXPECT_EQ(*base64, *encoded) << "example " << i;
         EXPECT_EQ(*data, *decoded) << "example " << i;
     }
+}
+
+TEST_F(Base64Test, InvalidPadding)
+{
+	 for (int i = 0; i < NEXAMPLES; ++i)
+	 {
+		 // Prepare.
+		 std::shared_ptr<std::string> base64 = std::make_shared<std::string>(EXAMPLE_B64[i]);
+
+		 // Modify.
+		 std::shared_ptr<std::string> modifiedBase64 = std::make_shared<std::string>(*base64 + "=");
+
+		 // Decode.
+		 bool invalid = false;
+		 try {
+			 Base64::decode(modifiedBase64);
+		 } catch (const IllegalArgumentException&) {
+			 invalid = true;
+		 }
+		 EXPECT_TRUE(invalid);
+	 }
+}
+
+TEST_F(Base64Test, InjectedPadding)
+{
+	 for (int i = 0; i < NEXAMPLES; ++i)
+	 {
+		 // Prepare.
+		 std::shared_ptr<std::string> base64 = std::make_shared<std::string>(EXAMPLE_B64[i]);
+
+		 // Modify.
+		 const size_t half = base64->length() / 2;
+		 std::shared_ptr<std::string> modifiedBase64 = std::make_shared<std::string>(base64->substr(0, half) + "=" + base64->substr(half));
+
+		 // Decode.
+		 bool invalid = false;
+		 try {
+			 Base64::decode(modifiedBase64);
+		 } catch (const IllegalArgumentException&) {
+			 invalid = true;
+		 }
+		 EXPECT_TRUE(invalid);
+	 }
+}
+
+TEST_F(Base64Test, InvalidCharacter)
+{
+	 for (int i = 0; i < NEXAMPLES; ++i)
+	 {
+		 // Prepare.
+		 std::shared_ptr<std::string> base64 = std::make_shared<std::string>(EXAMPLE_B64[i]);
+
+		 // Modify.
+		 const size_t half = base64->length() / 2;
+		 std::shared_ptr<std::string> modifiedBase64 = std::make_shared<std::string>(base64->substr(0, half) + "|" + base64->substr(half));
+
+		 // Decode.
+		 bool invalid = false;
+		 try {
+			 Base64::decode(modifiedBase64);
+		 } catch (const IllegalArgumentException&) {
+			 invalid = true;
+		 }
+		 EXPECT_TRUE(invalid);
+	 }
+}
+
+TEST_F(Base64Test, OutOfRangeCharacter)
+{
+	 for (int i = 0; i < NEXAMPLES; ++i)
+	 {
+		 // Prepare.
+		 std::shared_ptr<std::string> base64 = std::make_shared<std::string>(EXAMPLE_B64[i]);
+
+		 // Modify.
+		 const size_t half = base64->length() / 2;
+		 std::shared_ptr<std::string> modifiedBase64 = std::make_shared<std::string>(base64->substr(0, half) + static_cast<char>(128) + base64->substr(half));
+
+		 // Decode.
+		 bool invalid = false;
+		 try {
+			 Base64::decode(modifiedBase64);
+		 } catch (const IllegalArgumentException&) {
+			 invalid = true;
+		 }
+		 EXPECT_TRUE(invalid);
+	 }
+}
+
+TEST_F(Base64Test, InvalidLength)
+{
+	 for (int i = 0; i < NEXAMPLES; ++i)
+	 {
+		 // Prepare.
+		 std::shared_ptr<std::string> base64 = std::make_shared<std::string>(EXAMPLE_B64[i]);
+
+		 // Modify.
+		 std::shared_ptr<std::string> modifiedBase64 = std::make_shared<std::string>(base64->substr(1));
+
+		 // Decode.
+		 bool invalid = false;
+		 try {
+			 Base64::decode(modifiedBase64);
+		 } catch (const IllegalArgumentException&) {
+			 invalid = true;
+		 }
+		 EXPECT_TRUE(invalid);
+	 }
+}
+
+TEST_F(Base64Test, Invalid)
+{
+	 for (int i = 0; i < NINVALID_EXAMPLES; ++i)
+	 {
+		 std::shared_ptr<std::string> base64 = std::make_shared<std::string>(INVALID_EXAMPLE_B64[i]);
+		 bool invalid = false;
+		 try {
+			 Base64::decode(base64);
+		 } catch (const IllegalArgumentException&) {
+			 invalid = true;
+		 }
+		 EXPECT_TRUE(invalid);
+	 }
 }
 
 TEST_F(Base64Test, RoundTrip)
