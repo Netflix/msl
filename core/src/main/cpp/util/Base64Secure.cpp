@@ -121,8 +121,17 @@ std::shared_ptr<ByteArray> Base64Secure::decode(const std::string& s) {
     StringConstIterator p = s.begin();
     while (p != s.end()) {
     	const char c = *p++;
+
+    	// Ensure the character is not "negative".
+    	if (c & 0x80) {
+    		invalid = true;
+    		continue;
+    	}
+
+    	// Lookup the character in the decoder map.
     	const char b = DECODE_MAP[c & 0x7f];
 
+    	// Skip invalid characters.
     	if (b == -1) {
     		// Flag invalid for non-whitespace.
     		if (c != SPACE && c != TAB && c != NEWLINE && c != CARRIAGE_RETURN)
