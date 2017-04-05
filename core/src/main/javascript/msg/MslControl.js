@@ -115,7 +115,6 @@
 	const AsyncExecutor = require('../util/AsyncExecutor.js');
 	const ErrorMessageRegistry = require('../msg/ErrorMessageRegistry.js');
 	const MessageContext = require('../msg/MessageContext.js');
-	const FilterMessageContext = require('../msg/FilterMessageContext.js');
 	const InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
 	const MslInterruptedException = require('../MslInterruptedException.js');
 	const MslException = require('../MslException.js');

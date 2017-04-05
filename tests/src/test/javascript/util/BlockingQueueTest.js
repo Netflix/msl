@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+const BlockingQueueTest = require('../../../../../core/src/main/javascript/util/BlockingQueue.js');
+
 describe("BlockingQueue", function() {
     var TIMEOUT = 150;
     var DELAY = 1;

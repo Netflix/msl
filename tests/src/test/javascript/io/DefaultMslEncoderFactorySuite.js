@@ -19,6 +19,25 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+
+const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+const DefaultMslEncoderFactory = require('../../../../../core/src/main/javascript/io/DefaultMslEncoderFactory.js');
+const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+const MessageCapabilities = require('../../../../../core/src/main/javascript/msg/MessageCapabilities.js');
+const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+const ByteArrayOutputStream = require('../../../../../core/src/main/javascript/io/ByteArrayOutputStream.js');
+const MessageHeader = require('../../../../../core/src/main/javascript/msg/MessageHeader.js');
+const MessageOutputStream = require('../../../../../core/src/main/javascript/msg/MessageOutputStream.js');
+const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
+const MslEncoderException = require('../../../../../core/src/main/javascript/io/MslEncoderException.js');
+const ByteArrayInputStream = require('../../../../../core/src/main/javascript/io/ByteArrayInputStream.js');
+const PayloadChunk = require('../../../../../core/src/main/javascript/msg/PayloadChunk.js');
+const Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
+
+const textEncoding = require('../../../../../core/src/main/lib/textEncoding.js');
+
+const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+
 describe("DefaultMslEncoderFactory", function() {
     /** Maximum number of object fields or array elements. */
     var MAX_NUM_ELEMENTS = 20;
@@ -36,7 +55,7 @@ describe("DefaultMslEncoderFactory", function() {
     beforeEach(function() {
         if (!initialized) {
         	runs(function() {
-	            MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+	            MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
 	            	result: function(x) { ctx = x; },
 	            	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	            });
@@ -374,8 +393,8 @@ describe("DefaultMslEncoderFactory", function() {
     describe("Tokenizer", function() {
         /** Example payloads. */
         var PAYLOADS = [
-            textEncoding$getBytes("payload1", MslConstants$DEFAULT_CHARSET),
-            textEncoding$getBytes("payload2", MslConstants$DEFAULT_CHARSET),
+            textEncoding.getBytes("payload1", MslConstants.DEFAULT_CHARSET),
+            textEncoding.getBytes("payload2", MslConstants.DEFAULT_CHARSET),
         ];
         
         var jsonMessageData, unsupportedMessageData;
@@ -388,7 +407,7 @@ describe("DefaultMslEncoderFactory", function() {
 
     	        // Create MSL message.
     	        var destination = new ByteArrayOutputStream();
-    	        var peerData = new MessageHeader$HeaderPeerData(null, null, null);
+    	        var peerData = new MessageHeader.HeaderPeerData(null, null, null);
 	    		var entityAuthData;
 	    		runs(function() {
 	        		ctx.getEntityAuthenticationData(null, {
@@ -401,8 +420,8 @@ describe("DefaultMslEncoderFactory", function() {
 	        	var jsonMessageHeader;
 	        	runs(function() {
 	        		// Create JSON version.
-	                var jsonHeaderData = new MessageHeader$HeaderData(null, 1, null, false, false, jsonCaps, null, null, null, null, null);
-	                MessageHeader$create(ctx, entityAuthData, null, jsonHeaderData, peerData, {
+	                var jsonHeaderData = new MessageHeader.HeaderData(null, 1, null, false, false, jsonCaps, null, null, null, null, null);
+	                MessageHeader.create(ctx, entityAuthData, null, jsonHeaderData, peerData, {
 	                	result: function(x) { jsonMessageHeader = x; },
 	                	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	                });
@@ -412,7 +431,7 @@ describe("DefaultMslEncoderFactory", function() {
 	        	var jsonMos;
 	        	runs(function() {
 		        	var jsonCryptoContext = jsonMessageHeader.cryptoContext;
-		            MessageOutputStream$create(ctx, destination, jsonMessageHeader, jsonCryptoContext, null, -1, {
+		            MessageOutputStream.create(ctx, destination, jsonMessageHeader, jsonCryptoContext, null, -1, {
 		            	result: function(x) { jsonMos = x; },
 		                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
 		            	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
@@ -451,7 +470,7 @@ describe("DefaultMslEncoderFactory", function() {
 	        	                jsonMessageData = destination.toByteArray();
 	        	                
 	        	                // Unsupported.
-	        	                unsupportedMessageData = Arrays$copyOf(jsonMessageData, 0, jsonMessageData.length);
+	        	                unsupportedMessageData = Arrays.copyOf(jsonMessageData, 0, jsonMessageData.length);
 	        	                unsupportedMessageData[0] = '1';
 	        	                
 	        	                initialized = true;
@@ -583,7 +602,7 @@ describe("DefaultMslEncoderFactory", function() {
 			            	}
 			            	var expectedPayload = PAYLOADS[i];
 			            	var payloadMo = objects[i + 1];
-			            	PayloadChunk$parse(ctx, payloadMo, payloadCryptoContext, {
+			            	PayloadChunk.parse(ctx, payloadMo, payloadCryptoContext, {
 			            		result: function(payload) {
 			            			var data = payload.data;
 			    	                expect(data).toEqual(expectedPayload);
@@ -757,7 +776,7 @@ describe("DefaultMslEncoderFactory", function() {
             expect(mo.optMslObject("object", encoder)).toBeNull();
             var l = random.nextLong();
             expect(mo.optLong("long", l)).toEqual(l);
-            var s = base64$encode(b);
+            var s = Base64.encode(b);
             expect(mo.optString("string", s)).toEqual(s);
         });
 
@@ -890,7 +909,7 @@ describe("DefaultMslEncoderFactory", function() {
             expect(ma.optMslObject(0, encoder)).toBeNull();
             var l = random.nextLong();
             expect(ma.optLong(0, l)).toEqual(l);
-            var s = base64$encode(b);
+            var s = Base64.encode(b);
             expect(ma.optString(0, s)).toEqual(s);
         });
 

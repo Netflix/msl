@@ -19,6 +19,17 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+
+const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+const UnauthenticatedSuffixedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/UnauthenticatedSuffixedAuthenticationData.js');
+const EntityAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationData.js');
+const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+
+const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+
 describe("UnauthenticatedSuffixedAuthenticationData", function() {
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
@@ -48,7 +59,7 @@ describe("UnauthenticatedSuffixedAuthenticationData", function() {
     beforeEach(function() {
         if (!initialized) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.X509, false, {
+                MockMslContext.create(EntityAuthenticationScheme.X509, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -92,7 +103,7 @@ describe("UnauthenticatedSuffixedAuthenticationData", function() {
         runs(function() {
             expect(encode).not.toBeNull();
         
-            moData = UnauthenticatedSuffixedAuthenticationData$parse(authdata);
+            moData = UnauthenticatedSuffixedAuthenticationData.parse(authdata);
             expect(moData.getIdentity()).toEqual(data.getIdentity());
             expect(moData.root).toEqual(data.root);
             expect(moData.suffix).toEqual(data.suffix);
@@ -163,7 +174,7 @@ describe("UnauthenticatedSuffixedAuthenticationData", function() {
         
         var entitydata;
         runs(function() {
-            EntityAuthenticationData$parse(ctx, mo, {
+            EntityAuthenticationData.parse(ctx, mo, {
                 result: function(x) { entitydata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
@@ -227,7 +238,7 @@ describe("UnauthenticatedSuffixedAuthenticationData", function() {
         runs(function() {
             authdata.remove(KEY_ROOT);
             var f = function() {
-                UnauthenticatedSuffixedAuthenticationData$parse(authdata);
+                UnauthenticatedSuffixedAuthenticationData.parse(authdata);
             };
             expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
@@ -247,7 +258,7 @@ describe("UnauthenticatedSuffixedAuthenticationData", function() {
         runs(function() {
             authdata.remove(KEY_SUFFIX);
             var f = function() {
-                UnauthenticatedSuffixedAuthenticationData$parse(authdata);
+                UnauthenticatedSuffixedAuthenticationData.parse(authdata);
             };
             expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
@@ -260,7 +271,7 @@ describe("UnauthenticatedSuffixedAuthenticationData", function() {
             dataB = new UnauthenticatedSuffixedAuthenticationData(ROOT + "B", SUFFIX);
             MslTestUtils.toMslObject(encoder, dataA, {
                 result: function(mo) {
-                    EntityAuthenticationData$parse(ctx, mo, {
+                    EntityAuthenticationData.parse(ctx, mo, {
                         result: function(x) { dataA2 = x; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
@@ -288,7 +299,7 @@ describe("UnauthenticatedSuffixedAuthenticationData", function() {
             dataB = new UnauthenticatedSuffixedAuthenticationData(ROOT, SUFFIX + "B");
             MslTestUtils.toMslObject(encoder, dataA, {
                 result: function(mo) {
-                    EntityAuthenticationData$parse(ctx, mo, {
+                    EntityAuthenticationData.parse(ctx, mo, {
                         result: function(x) { dataA2 = x; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });

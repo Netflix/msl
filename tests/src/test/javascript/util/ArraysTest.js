@@ -13,25 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
+
 describe("Arrays", function () {
 
-    describe("Arrays$concat", function () {
+    describe("Arrays.concat", function () {
 
         it("empty", function () {
-            var result = Arrays$concat([
+            var result = Arrays.concat([
             ]);
             expect(result).toEqual(new Uint8Array([]));
         });
 
         it("one array", function () {
-            var result = Arrays$concat([
+            var result = Arrays.concat([
                 new Uint8Array([1, 2, 3])
             ]);
             expect(result).toEqual(new Uint8Array([1, 2, 3]));
         });
 
         it("multiple arrays", function () {
-            var result = Arrays$concat([
+            var result = Arrays.concat([
                 new Uint8Array([1, 2, 3]),
                 new Uint8Array([4, 5, 6, 7]),
                 new Uint8Array([11])

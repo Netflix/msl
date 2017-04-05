@@ -19,6 +19,15 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+
+const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+const MessageCapabilities = require('../../../../../core/src/main/javascript/msg/MessageCapabilities.js');
+
+const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+
 describe("MessageCapabilities", function() {
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
@@ -29,7 +38,7 @@ describe("MessageCapabilities", function() {
     var KEY_ENCODER_FORMATS = "encoderformats";
     
     // Shortcuts
-    var CompressionAlgorithm = MslConstants$CompressionAlgorithm;
+    var CompressionAlgorithm = MslConstants.CompressionAlgorithm;
     
     var ALGOS = [ CompressionAlgorithm.GZIP, CompressionAlgorithm.LZW ];
     var LANGUAGES = [ "en-US", "es" ];
@@ -43,7 +52,7 @@ describe("MessageCapabilities", function() {
         if (!initialized) {
             var ctx;
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+                MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                     result: function(x) { ctx = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
@@ -76,7 +85,7 @@ describe("MessageCapabilities", function() {
         runs(function() {
             expect(encode).not.toBeNull();
 
-            moCaps = MessageCapabilities$parse(encoder.parseObject(encode));
+            moCaps = MessageCapabilities.parse(encoder.parseObject(encode));
             expect(moCaps.compressionAlgorithms).toEqual(caps.compressionAlgorithms);
             expect(moCaps.languages).toEqual(caps.languages);
             expect(moCaps.encoderFormats).toEqual(caps.encoderFormats);
@@ -91,7 +100,7 @@ describe("MessageCapabilities", function() {
             expect(moEncode).not.toBeNull();
             // This test will not always pass since set data is unordered.
             //expect(moEncode).toEqual(encode);
-            var mo2Caps = MessageCapabilities$parse(encoder.parseObject(moEncode));
+            var mo2Caps = MessageCapabilities.parse(encoder.parseObject(moEncode));
             expect(mo2Caps).toEqual(moCaps);
         });
     });
@@ -117,7 +126,7 @@ describe("MessageCapabilities", function() {
         runs(function() {
             expect(encode).not.toBeNull();
             
-            moCaps = MessageCapabilities$parse(encoder.parseObject(encode));
+            moCaps = MessageCapabilities.parse(encoder.parseObject(encode));
             expect(moCaps.compressionAlgorithms).toEqual(caps.compressionAlgorithms);
             expect(moCaps.languages).toEqual(caps.languages);
             expect(moCaps.encoderFormats).toEqual(caps.encoderFormats);
@@ -132,7 +141,7 @@ describe("MessageCapabilities", function() {
             expect(moEncode).not.toBeNull();
             // This test will not always pass since set data is unordered.
             //expect(moEncode).toEqual(encode);
-            var mo2Caps = MessageCapabilities$parse(encoder.parseObject(moEncode));
+            var mo2Caps = MessageCapabilities.parse(encoder.parseObject(moEncode));
             expect(mo2Caps).toEqual(moCaps);
         });
     });
@@ -153,7 +162,7 @@ describe("MessageCapabilities", function() {
             ma.put(-1, "CATZ");
             mo.put(KEY_COMPRESSION_ALGOS, ma);
         
-            var moCaps = MessageCapabilities$parse(mo);
+            var moCaps = MessageCapabilities.parse(mo);
             expect(moCaps.compressionAlgorithms).toEqual(caps.compressionAlgorithms);
         });
     });
@@ -177,7 +186,7 @@ describe("MessageCapabilities", function() {
         
         var moCaps, moEncode;
         runs(function() {
-            moCaps = MessageCapabilities$parse(encoder.parseObject(encode));
+            moCaps = MessageCapabilities.parse(encoder.parseObject(encode));
             expect(moCaps.compressionAlgorithms).toEqual(caps.compressionAlgorithms);
             expect(moCaps.languages).toEqual(caps.languages);
             expect(moCaps.encoderFormats).toEqual(caps.encoderFormats);
@@ -192,7 +201,7 @@ describe("MessageCapabilities", function() {
             expect(moEncode).not.toBeNull();
             // This test will not always pass since set data is unordered.
             //expect(moEncode).toEqual(encode);
-            var mo2Caps = MessageCapabilities$parse(encoder.parseObject(moEncode));
+            var mo2Caps = MessageCapabilities.parse(encoder.parseObject(moEncode));
             expect(mo2Caps).toEqual(moCaps);
         });
     });
@@ -216,7 +225,7 @@ describe("MessageCapabilities", function() {
         
         var moCaps, moEncode;
         runs(function() {
-            moCaps = MessageCapabilities$parse(encoder.parseObject(encode));
+            moCaps = MessageCapabilities.parse(encoder.parseObject(encode));
             expect(moCaps.compressionAlgorithms).toEqual(caps.compressionAlgorithms);
             expect(moCaps.languages).toEqual(caps.languages);
             expect(moCaps.encoderFormats).toEqual(caps.encoderFormats);
@@ -231,7 +240,7 @@ describe("MessageCapabilities", function() {
             expect(moEncode).not.toBeNull();
             // This test will not always pass since set data is unordered.
             //expect(moEncode).toEqual(encode);
-            var mo2Caps = MessageCapabilities$parse(encoder.parseObject(moEncode));
+            var mo2Caps = MessageCapabilities.parse(encoder.parseObject(moEncode));
             expect(mo2Caps).toEqual(moCaps);
         });
     });
@@ -246,7 +255,7 @@ describe("MessageCapabilities", function() {
         runs(function() {
             MslTestUtils.toMslObject(encoder, capsA, {
                 result: function(mo) {
-                    capsA2 = MessageCapabilities$parse(mo);
+                    capsA2 = MessageCapabilities.parse(mo);
                 },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
@@ -277,7 +286,7 @@ describe("MessageCapabilities", function() {
         runs(function() {
             MslTestUtils.toMslObject(encoder, capsA, {
                 result: function(mo) {
-                    capsA2 = MessageCapabilities$parse(mo);
+                    capsA2 = MessageCapabilities.parse(mo);
                 },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
@@ -308,7 +317,7 @@ describe("MessageCapabilities", function() {
         runs(function() {
             MslTestUtils.toMslObject(encoder, capsA, {
                 result: function(mo) {
-                    capsA2 = MessageCapabilities$parse(mo);
+                    capsA2 = MessageCapabilities.parse(mo);
                 },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
@@ -332,7 +341,7 @@ describe("MessageCapabilities", function() {
     it("intersection with self", function() {
         var capsA = new MessageCapabilities(ALGOS, LANGUAGES, FORMATS);
         var capsB = new MessageCapabilities(ALGOS, LANGUAGES, FORMATS);
-        var intersection = MessageCapabilities$intersection(capsA, capsB);
+        var intersection = MessageCapabilities.intersection(capsA, capsB);
         
         expect(intersection).toEqual(capsA);
         expect(intersection).toEqual(capsB);
@@ -346,12 +355,12 @@ describe("MessageCapabilities", function() {
         var capsA = new MessageCapabilities(ALGOS, oneLanguage, FORMATS);
         var capsB = new MessageCapabilities(gzipOnly, LANGUAGES, FORMATS);
         var capsC = new MessageCapabilities(ALGOS, LANGUAGES, noFormats);
-        var intersectionAB = MessageCapabilities$intersection(capsA, capsB);
-        var intersectionBA = MessageCapabilities$intersection(capsB, capsA);
-        var intersectionAC = MessageCapabilities$intersection(capsA, capsC);
-        var intersectionCA = MessageCapabilities$intersection(capsC, capsA);
-        var intersectionBC = MessageCapabilities$intersection(capsB, capsC);
-        var intersectionCB = MessageCapabilities$intersection(capsC, capsB);
+        var intersectionAB = MessageCapabilities.intersection(capsA, capsB);
+        var intersectionBA = MessageCapabilities.intersection(capsB, capsA);
+        var intersectionAC = MessageCapabilities.intersection(capsA, capsC);
+        var intersectionCA = MessageCapabilities.intersection(capsC, capsA);
+        var intersectionBC = MessageCapabilities.intersection(capsB, capsC);
+        var intersectionCB = MessageCapabilities.intersection(capsC, capsB);
         
         expect(intersectionAB).toEqual(intersectionBA);
         expect(gzipOnly).toEqual(intersectionAB.compressionAlgorithms);
@@ -371,8 +380,8 @@ describe("MessageCapabilities", function() {
     
     it("intersection with null capabilities", function() {
         var caps = new MessageCapabilities(ALGOS, LANGUAGES, FORMATS);
-        var intersectionA = MessageCapabilities$intersection(null, caps);
-        var intersectionB = MessageCapabilities$intersection(caps, null);
+        var intersectionA = MessageCapabilities.intersection(null, caps);
+        var intersectionB = MessageCapabilities.intersection(caps, null);
         
         expect(intersectionA).toBeNull();
         expect(intersectionB).toBeNull();

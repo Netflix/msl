@@ -19,6 +19,18 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+
+const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+const PresharedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedAuthenticationData.js');
+const EntityAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationData.js');
+const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+
+const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+const MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
+const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+
 describe("PresharedAuthenticationData", function() {
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
@@ -39,7 +51,7 @@ describe("PresharedAuthenticationData", function() {
     beforeEach(function() {
         if (!initialized) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.X509, false, {
+                MockMslContext.create(EntityAuthenticationScheme.X509, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -81,7 +93,7 @@ describe("PresharedAuthenticationData", function() {
         runs(function() {
             expect(encode).not.toBeNull();
             
-            moData = PresharedAuthenticationData$parse(authdata);
+            moData = PresharedAuthenticationData.parse(authdata);
             expect(moData.getIdentity()).toEqual(data.getIdentity());
             expect(moData.scheme).toEqual(data.scheme);
             moData.getAuthData(encoder, ENCODER_FORMAT, {
@@ -150,7 +162,7 @@ describe("PresharedAuthenticationData", function() {
         
         var entitydata;
         runs(function() {
-            EntityAuthenticationData$parse(ctx, mo, {
+            EntityAuthenticationData.parse(ctx, mo, {
                 result: function(x) { entitydata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
@@ -212,7 +224,7 @@ describe("PresharedAuthenticationData", function() {
         runs(function() {
             authdata.remove(KEY_IDENTITY);
             var f = function() {
-                PresharedAuthenticationData$parse(authdata);
+                PresharedAuthenticationData.parse(authdata);
             };
             expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
@@ -231,7 +243,7 @@ describe("PresharedAuthenticationData", function() {
         runs(function() {
             MslTestUtils.toMslObject(encoder, dataA, {
                 result: function(mo) {
-                    EntityAuthenticationData$parse(ctx, mo, {
+                    EntityAuthenticationData.parse(ctx, mo, {
                         result: function(x) { dataA2 = x; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });

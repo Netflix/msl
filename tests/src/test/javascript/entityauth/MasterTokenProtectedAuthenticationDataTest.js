@@ -19,6 +19,20 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+
+const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+const UnauthenticatedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/UnauthenticatedAuthenticationData.js');
+const MasterTokenProtectedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/MasterTokenProtectedAuthenticationData.js');
+const EntityAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationData.js');
+const MslObject = require('../../../../../core/src/main/javascript/io/MslObject.js');
+const MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
+const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+
+const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+
 describe("MasterTokenProtectedAuthenticationData", function() {
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
@@ -70,7 +84,7 @@ describe("MasterTokenProtectedAuthenticationData", function() {
     beforeEach(function() {
         if (!initialized) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.X509, false, {
+                MockMslContext.create(EntityAuthenticationScheme.X509, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
@@ -94,7 +108,7 @@ describe("MasterTokenProtectedAuthenticationData", function() {
     it("ctors", function() {
         var data;
         runs(function() {
-            MasterTokenProtectedAuthenticationData$create(ctx, masterToken, eAuthdata, {
+            MasterTokenProtectedAuthenticationData.create(ctx, masterToken, eAuthdata, {
                 result: function(x) { data = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -127,7 +141,7 @@ describe("MasterTokenProtectedAuthenticationData", function() {
         runs(function() {
             expect(encode).not.toBeNull();
        
-            MasterTokenProtectedAuthenticationData$parse(ctx, authdata, {
+            MasterTokenProtectedAuthenticationData.parse(ctx, authdata, {
                 result: function(x) { moData = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -155,7 +169,7 @@ describe("MasterTokenProtectedAuthenticationData", function() {
     it("mslobject is correct", function() {
         var data;
         runs(function() {
-            MasterTokenProtectedAuthenticationData$create(ctx, masterToken, eAuthdata, {
+            MasterTokenProtectedAuthenticationData.create(ctx, masterToken, eAuthdata, {
                 result: function(x) { data = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -193,7 +207,7 @@ describe("MasterTokenProtectedAuthenticationData", function() {
     it("create", function() {
         var data;
         runs(function() {
-            MasterTokenProtectedAuthenticationData$create(ctx, masterToken, eAuthdata, {
+            MasterTokenProtectedAuthenticationData.create(ctx, masterToken, eAuthdata, {
                 result: function(x) { data = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -211,7 +225,7 @@ describe("MasterTokenProtectedAuthenticationData", function() {
         
         var entitydata;
         runs(function() {
-            EntityAuthenticationData$parse(ctx, mo, {
+            EntityAuthenticationData.parse(ctx, mo, {
                 result: function(x) { entitydata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -243,7 +257,7 @@ describe("MasterTokenProtectedAuthenticationData", function() {
     it("missing master token", function() {
         var data;
         runs(function() {
-            MasterTokenProtectedAuthenticationData$create(ctx, masterToken, eAuthdata, {
+            MasterTokenProtectedAuthenticationData.create(ctx, masterToken, eAuthdata, {
                 result: function(x) { data = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -262,7 +276,7 @@ describe("MasterTokenProtectedAuthenticationData", function() {
         var exception;
         runs(function() {
             authdata.remove(KEY_MASTER_TOKEN);
-            MasterTokenProtectedAuthenticationData$parse(ctx, authdata, {
+            MasterTokenProtectedAuthenticationData.parse(ctx, authdata, {
                 result: function() {},
                 error: function(e) { exception = e; },
             });
@@ -278,7 +292,7 @@ describe("MasterTokenProtectedAuthenticationData", function() {
     it("invalid master token", function() {
         var data;
         runs(function() {
-            MasterTokenProtectedAuthenticationData$create(ctx, masterToken, eAuthdata, {
+            MasterTokenProtectedAuthenticationData.create(ctx, masterToken, eAuthdata, {
                 result: function(x) { data = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -297,7 +311,7 @@ describe("MasterTokenProtectedAuthenticationData", function() {
         var exception;
         runs(function() {
             authdata.put(KEY_MASTER_TOKEN, "x");
-            MasterTokenProtectedAuthenticationData$parse(ctx, authdata, {
+            MasterTokenProtectedAuthenticationData.parse(ctx, authdata, {
                 result: function() {},
                 error: function(e) { exception = e; },
             });
@@ -313,7 +327,7 @@ describe("MasterTokenProtectedAuthenticationData", function() {
     it("corrupt master token", function() {
         var data;
         runs(function() {
-            MasterTokenProtectedAuthenticationData$create(ctx, masterToken, eAuthdata, {
+            MasterTokenProtectedAuthenticationData.create(ctx, masterToken, eAuthdata, {
                 result: function(x) { data = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -332,7 +346,7 @@ describe("MasterTokenProtectedAuthenticationData", function() {
         var exception;
         runs(function() {
             authdata.put(KEY_MASTER_TOKEN, new MslObject());
-            MasterTokenProtectedAuthenticationData$parse(ctx, authdata, {
+            MasterTokenProtectedAuthenticationData.parse(ctx, authdata, {
                 result: function() {},
                 error: function(e) { exception = e; },
             });
@@ -348,7 +362,7 @@ describe("MasterTokenProtectedAuthenticationData", function() {
     it("missing authdata", function() {
         var data;
         runs(function() {
-            MasterTokenProtectedAuthenticationData$create(ctx, masterToken, eAuthdata, {
+            MasterTokenProtectedAuthenticationData.create(ctx, masterToken, eAuthdata, {
                 result: function(x) { data = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -367,7 +381,7 @@ describe("MasterTokenProtectedAuthenticationData", function() {
         var exception;
         runs(function() {
             authdata.remove(KEY_AUTHENTICATION_DATA);
-            MasterTokenProtectedAuthenticationData$parse(ctx, authdata, {
+            MasterTokenProtectedAuthenticationData.parse(ctx, authdata, {
                 result: function() {},
                 error: function(e) { exception = e; },
             });
@@ -383,7 +397,7 @@ describe("MasterTokenProtectedAuthenticationData", function() {
     it("invalid authdata", function() {
         var data;
         runs(function() {
-            MasterTokenProtectedAuthenticationData$create(ctx, masterToken, eAuthdata, {
+            MasterTokenProtectedAuthenticationData.create(ctx, masterToken, eAuthdata, {
                 result: function(x) { data = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -402,7 +416,7 @@ describe("MasterTokenProtectedAuthenticationData", function() {
         var exception;
         runs(function() {
             authdata.put(KEY_AUTHENTICATION_DATA, true);
-            MasterTokenProtectedAuthenticationData$parse(ctx, authdata, {
+            MasterTokenProtectedAuthenticationData.parse(ctx, authdata, {
                 result: function() {},
                 error: function(e) { exception = e; },
             });
@@ -418,7 +432,7 @@ describe("MasterTokenProtectedAuthenticationData", function() {
     xit("corrupt authdata", function() {
         var data;
         runs(function() {
-            MasterTokenProtectedAuthenticationData$create(ctx, masterToken, eAuthdata, {
+            MasterTokenProtectedAuthenticationData.create(ctx, masterToken, eAuthdata, {
                 result: function(x) { data = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -437,7 +451,7 @@ describe("MasterTokenProtectedAuthenticationData", function() {
         var exception;
         runs(function() {
             authdata.put(KEY_AUTHENTICATION_DATA, "x");
-            MasterTokenProtectedAuthenticationData$parse(ctx, authdata, {
+            MasterTokenProtectedAuthenticationData.parse(ctx, authdata, {
                 result: function() {},
                 error: function(e) { exception = e; },
             });
@@ -453,7 +467,7 @@ describe("MasterTokenProtectedAuthenticationData", function() {
     it("missing signature", function() {
         var data;
         runs(function() {
-            MasterTokenProtectedAuthenticationData$create(ctx, masterToken, eAuthdata, {
+            MasterTokenProtectedAuthenticationData.create(ctx, masterToken, eAuthdata, {
                 result: function(x) { data = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -472,7 +486,7 @@ describe("MasterTokenProtectedAuthenticationData", function() {
         var exception;
         runs(function() {
             authdata.remove(KEY_SIGNATURE);
-            MasterTokenProtectedAuthenticationData$parse(ctx, authdata, {
+            MasterTokenProtectedAuthenticationData.parse(ctx, authdata, {
                 result: function() {},
                 error: function(e) { exception = e; },
             });
@@ -488,7 +502,7 @@ describe("MasterTokenProtectedAuthenticationData", function() {
     it("invalid signature", function() {
         var data;
         runs(function() {
-            MasterTokenProtectedAuthenticationData$create(ctx, masterToken, eAuthdata, {
+            MasterTokenProtectedAuthenticationData.create(ctx, masterToken, eAuthdata, {
                 result: function(x) { data = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -507,7 +521,7 @@ describe("MasterTokenProtectedAuthenticationData", function() {
         var exception;
         runs(function() {
             authdata.put(KEY_SIGNATURE, true);
-            MasterTokenProtectedAuthenticationData$parse(ctx, authdata, {
+            MasterTokenProtectedAuthenticationData.parse(ctx, authdata, {
                 result: function() {},
                 error: function(e) { exception = e; },
             });
@@ -523,7 +537,7 @@ describe("MasterTokenProtectedAuthenticationData", function() {
     xit("corrupt signature", function() {
         var data;
         runs(function() {
-            MasterTokenProtectedAuthenticationData$create(ctx, masterToken, eAuthdata, {
+            MasterTokenProtectedAuthenticationData.create(ctx, masterToken, eAuthdata, {
                 result: function(x) { data = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -542,7 +556,7 @@ describe("MasterTokenProtectedAuthenticationData", function() {
         var exception;
         runs(function() {
             authdata.put(KEY_SIGNATURE, "x");
-            MasterTokenProtectedAuthenticationData$parse(ctx, authdata, {
+            MasterTokenProtectedAuthenticationData.parse(ctx, authdata, {
                 result: function() {},
                 error: function(e) { exception = e; },
             });
@@ -567,11 +581,11 @@ describe("MasterTokenProtectedAuthenticationData", function() {
         
         var dataA, dataB;
         runs(function() {
-            MasterTokenProtectedAuthenticationData$create(ctx, masterToken, eAuthdata, {
+            MasterTokenProtectedAuthenticationData.create(ctx, masterToken, eAuthdata, {
                 result: function(x) { dataA = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            MasterTokenProtectedAuthenticationData$create(ctx, masterTokenB, eAuthdata, {
+            MasterTokenProtectedAuthenticationData.create(ctx, masterTokenB, eAuthdata, {
                 result: function(x) { dataB = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -581,7 +595,7 @@ describe("MasterTokenProtectedAuthenticationData", function() {
         runs(function() {
             MslTestUtils.toMslObject(encoder, dataA, {
                 result: function(mo) {
-                    EntityAuthenticationData$parse(ctx, mo, {
+                    EntityAuthenticationData.parse(ctx, mo, {
                         result: function(x) { dataA2 = x; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
@@ -606,11 +620,11 @@ describe("MasterTokenProtectedAuthenticationData", function() {
         var eAuthdataB = new UnauthenticatedAuthenticationData(IDENTITY + "B");
         var dataA, dataB;
         runs(function() {
-            MasterTokenProtectedAuthenticationData$create(ctx, masterToken, eAuthdata, {
+            MasterTokenProtectedAuthenticationData.create(ctx, masterToken, eAuthdata, {
                 result: function(x) { dataA = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            MasterTokenProtectedAuthenticationData$create(ctx, masterToken, eAuthdataB, {
+            MasterTokenProtectedAuthenticationData.create(ctx, masterToken, eAuthdataB, {
                 result: function(x) { dataB = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -620,7 +634,7 @@ describe("MasterTokenProtectedAuthenticationData", function() {
         runs(function() {
             MslTestUtils.toMslObject(encoder, dataA, {
                 result: function(mo) {
-                    EntityAuthenticationData$parse(ctx, mo, {
+                    EntityAuthenticationData.parse(ctx, mo, {
                         result: function(x) { dataA2 = x; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
@@ -644,7 +658,7 @@ describe("MasterTokenProtectedAuthenticationData", function() {
     it("equals object", function() {
         var data;
         runs(function() {
-            MasterTokenProtectedAuthenticationData$create(ctx, masterToken, eAuthdata, {
+            MasterTokenProtectedAuthenticationData.create(ctx, masterToken, eAuthdata, {
                 result: function(x) { data = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });

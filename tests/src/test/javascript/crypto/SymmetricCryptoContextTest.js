@@ -19,6 +19,21 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+
+const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
+const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+const SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
+const MslCiphertextEnvelope = require('../../../../../core/src/main/javascript/crypto/MslCiphertextEnvelope.js');
+const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+
+const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+const MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
+
 describe("SymmetricCryptoContext", function() {
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
@@ -54,7 +69,7 @@ describe("SymmetricCryptoContext", function() {
             runs(function() {
                 var aes128Bytes = new Uint8Array(16);
                 random.nextBytes(aes128Bytes);
-                SecretKey$import(aes128Bytes, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+                SecretKey.import(aes128Bytes, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
                     result: function(k) { AES_128_KEY = k; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -67,7 +82,7 @@ describe("SymmetricCryptoContext", function() {
                 */
                 AES_CMAC_KEY = true;
                 
-                MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+                MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -177,7 +192,7 @@ describe("SymmetricCryptoContext", function() {
             var envelope;
             runs(function() {
                 var envelopeMo = encoder.parseObject(ciphertext);
-                MslCiphertextEnvelope$parse(envelopeMo, null, {
+                MslCiphertextEnvelope.parse(envelopeMo, null, {
                     result: function(e) { envelope = e; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
@@ -189,7 +204,7 @@ describe("SymmetricCryptoContext", function() {
                 var ciphertext = envelope.ciphertext;
                 ++ciphertext[ciphertext.length / 2];
                 ++ciphertext[ciphertext.length - 1];
-                MslCiphertextEnvelope$create(envelope.keyId, envelope.iv, ciphertext, {
+                MslCiphertextEnvelope.create(envelope.keyId, envelope.iv, ciphertext, {
                     result: function(e) { shortEnvelope = e; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
@@ -236,7 +251,7 @@ describe("SymmetricCryptoContext", function() {
             var envelope;
             runs(function() {
                 var envelopeMo = encoder.parseObject(ciphertext);
-                MslCiphertextEnvelope$parse(envelopeMo, null, {
+                MslCiphertextEnvelope.parse(envelopeMo, null, {
                     result: function(x) { envelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -247,7 +262,7 @@ describe("SymmetricCryptoContext", function() {
             runs(function() {
                 var ciphertext = envelope.ciphertext;
                 ciphertext = new Uint8Array(ciphertext.buffer, 0, ciphertext.length / 2);
-                MslCiphertextEnvelope$create(envelope.keyId, envelope.iv, ciphertext, {
+                MslCiphertextEnvelope.create(envelope.keyId, envelope.iv, ciphertext, {
                     result: function(x) { shortEnvelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });

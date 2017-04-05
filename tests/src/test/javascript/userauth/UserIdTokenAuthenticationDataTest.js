@@ -19,6 +19,18 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+
+const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+const UserIdTokenAuthenticationData = require('../../../../../core/src/main/javascript/userauth/UserIdTokenAuthenticationData.js');
+const UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
+const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+const MslUserAuthException = require('../../../../../core/src/main/javascript/MslUserAuthException.js');
+
+const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+
 describe("UserIdTokenAuthenticationData", function() {
 	/** MSL encoder format. */
 	var ENCODER_FORMAT = MslEncoderFormat.JSON;
@@ -46,7 +58,7 @@ describe("UserIdTokenAuthenticationData", function() {
     beforeEach(function() {
         if (!initialized) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.X509, false, {
+                MockMslContext.create(EntityAuthenticationScheme.X509, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -111,7 +123,7 @@ describe("UserIdTokenAuthenticationData", function() {
         
         var moData;
         runs(function() {
-            UserIdTokenAuthenticationData$parse(ctx, authdata, {
+            UserIdTokenAuthenticationData.parse(ctx, authdata, {
                 result: function(x) { moData = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -236,7 +248,7 @@ describe("UserIdTokenAuthenticationData", function() {
         var exception;
         runs(function() {
             authdata.remove(KEY_MASTER_TOKEN);
-            UserIdTokenAuthenticationData$parse(ctx, authdata, {
+            UserIdTokenAuthenticationData.parse(ctx, authdata, {
                 result: function() {},
                 error: function(e) { exception = e; },
             });
@@ -262,7 +274,7 @@ describe("UserIdTokenAuthenticationData", function() {
         
         runs(function() {
             authdata.put(KEY_MASTER_TOKEN, encoder.createObject());
-            UserIdTokenAuthenticationData$parse(ctx, authdata, {
+            UserIdTokenAuthenticationData.parse(ctx, authdata, {
                 result: function() {},
                 error: function(e) { exception = e; },
             });
@@ -289,7 +301,7 @@ describe("UserIdTokenAuthenticationData", function() {
         var exception;
         runs(function() {
             authdata.remove(KEY_USER_ID_TOKEN);
-            UserIdTokenAuthenticationData$parse(ctx, authdata, {
+            UserIdTokenAuthenticationData.parse(ctx, authdata, {
                 result: function() {},
                 error: function(e) { exception = e; },
             });
@@ -316,7 +328,7 @@ describe("UserIdTokenAuthenticationData", function() {
         var exception;
         runs(function() {
             authdata.put(KEY_USER_ID_TOKEN, encoder.createObject());
-            UserIdTokenAuthenticationData$parse(ctx, authdata, {
+            UserIdTokenAuthenticationData.parse(ctx, authdata, {
                 result: function() {},
                 error: function(e) { exception = e; },
             });
@@ -352,7 +364,7 @@ describe("UserIdTokenAuthenticationData", function() {
         
         var dataA2;
         runs(function() {
-        	UserIdTokenAuthenticationData$parse(ctx, authdata, {
+        	UserIdTokenAuthenticationData.parse(ctx, authdata, {
         		result: function(x) { dataA2 = x; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
@@ -393,7 +405,7 @@ describe("UserIdTokenAuthenticationData", function() {
             
         var dataA2;
         runs(function() {
-        	UserIdTokenAuthenticationData$parse(ctx, authdata, {
+        	UserIdTokenAuthenticationData.parse(ctx, authdata, {
         		result: function(x) { dataA2 = x; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});

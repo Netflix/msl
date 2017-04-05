@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+
 /**
  * Random unit tests.
  * 

@@ -19,6 +19,18 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+
+const NullMslStore = require('../../../../../core/src/main/javascript/util/NullMslStore.js');
+const EntityAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+const NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
+const ServiceToken = require('../../../../../core/src/main/javascript/tokens/ServiceToken.js');
+const MslException = require('../../../../../core/src/main/javascript/MslException.js');
+const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+
+const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+const MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
+
 describe("NullMslStore", function() {
     var TOKEN_NAME = "name";
     
@@ -30,7 +42,7 @@ describe("NullMslStore", function() {
     beforeEach(function() {
         if (!ctx) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.NONE, false, {
+                MockMslContext.create(EntityAuthenticationScheme.NONE, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -71,7 +83,7 @@ describe("NullMslStore", function() {
 	        var cryptoContext = new NullCryptoContext();
 	        var data = new Uint8Array(8);
 	        ctx.getRandom().nextBytes(data);
-	        ServiceToken$create(ctx, TOKEN_NAME, data, null, null, false, null, cryptoContext, {
+	        ServiceToken.create(ctx, TOKEN_NAME, data, null, null, false, null, cryptoContext, {
 	        	result: function(t) { serviceToken = t; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });

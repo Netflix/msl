@@ -19,6 +19,14 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+
+const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+const NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
+
+const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+
 describe("NullCryptoContext", function() {
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
@@ -32,7 +40,7 @@ describe("NullCryptoContext", function() {
     beforeEach(function() {
         if (!initialized) {
             var ctx;
-            MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+            MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                 result: function(c) { ctx = c; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });

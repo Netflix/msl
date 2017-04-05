@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
+const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+const Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
+
 /**
  * SecretKey unit tests.
  * 
@@ -32,11 +37,11 @@ describe("SecretKey", function() {
 	beforeEach(function () {
 	    if (!initialized) {
 	        runs(function () {
-	            SecretKey$import(keydata128B64,WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+	            SecretKey.import(keydata128B64,WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
 	                result: function (key) { key128 = key; },
 	                error: function (e) { expect(function() { throw e; }).not.toThrow(); }
 	            });
-	            SecretKey$import(keydata256B64, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
+	            SecretKey.import(keydata256B64, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
 	                result: function (key) { key256 = key; },
 	                error: function (e) { expect(function() { throw e; }).not.toThrow(); }
 	            });
@@ -47,8 +52,8 @@ describe("SecretKey", function() {
 	});
 	
 	it("toByteArray", function () {
-	    expect(key128.toByteArray()).toEqual(base64$decode(keydata128B64));
-	    expect(key256.toByteArray()).toEqual(base64$decode(keydata256B64));
+	    expect(key128.toByteArray()).toEqual(Base64.decode(keydata128B64));
+	    expect(key256.toByteArray()).toEqual(Base64.decode(keydata256B64));
 	});
 	
 	it("toBase64", function () {

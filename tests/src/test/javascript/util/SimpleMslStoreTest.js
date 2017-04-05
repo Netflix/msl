@@ -19,6 +19,21 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+
+const SimpleMslStore = require('../../../../../core/src/main/javascript/util/SimpleMslStore.js');
+const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+const SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
+const NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
+const SessionCryptoContext = require('../../../../../core/src/main/javascript/crypto/SessionCryptoContext.js');
+const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+const MslException = require('../../../../../core/src/main/javascript/MslException.js');
+const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+
+const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+const MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
+
 describe("SimpleMslStore", function() {
 	/**
 	 * @param {Array.<ServiceToken>} tokensA first set of service tokens.
@@ -91,7 +106,7 @@ describe("SimpleMslStore", function() {
     beforeEach(function() {
         if (!ctx) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.NONE, false, {
+                MockMslContext.create(EntityAuthenticationScheme.NONE, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -193,7 +208,7 @@ describe("SimpleMslStore", function() {
     });
     
     it("store two crypto contexts", function() {
-        var mtA = undefined, mtB;
+        var mtA, mtB;
         runs(function() {
         	MslTestUtils.getMasterToken(ctx, 1, 1, {
         		result: function(token) { mtA = token; },
@@ -225,7 +240,7 @@ describe("SimpleMslStore", function() {
     });
     
     it("replace two crypto contexts", function() {
-        var mtA = undefined, mtB;
+        var mtA, mtB;
         runs(function() {
         	MslTestUtils.getMasterToken(ctx, 1, 1, {
         		result: function(token) { mtA = token; },
@@ -262,7 +277,7 @@ describe("SimpleMslStore", function() {
     });
     
     it("clear two crypto contexts", function() {
-        var mtA = undefined, mtB;
+        var mtA, mtB;
         runs(function() {
         	MslTestUtils.getMasterToken(ctx, 1, 1, {
         		result: function(token) { mtA = token; },
@@ -289,7 +304,7 @@ describe("SimpleMslStore", function() {
     });
     
     it("remove two crypto contexts", function() {
-        var mtA = undefined, mtB;
+        var mtA, mtB;
         runs(function() {
         	MslTestUtils.getMasterToken(ctx, 1, 1, {
         		result: function(token) { mtA = token; },
@@ -436,7 +451,7 @@ describe("SimpleMslStore", function() {
         });
         waitsFor(function() { return masterToken; }, "master token not received", 100);
 
-        var userIdTokenA = undefined, userIdTokenB;
+        var userIdTokenA, userIdTokenB;
         runs(function() {
         	MslTestUtils.getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER, {
         		result: function(token) { userIdTokenA = token; },
@@ -469,7 +484,7 @@ describe("SimpleMslStore", function() {
         });
         waitsFor(function() { return masterToken; }, "master token not received", 100);
         
-        var userIdTokenA = undefined, userIdTokenB;
+        var userIdTokenA, userIdTokenB;
         runs(function() {
         	MslTestUtils.getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER, {
         		result: function(token) { userIdTokenA = token; },
@@ -505,7 +520,7 @@ describe("SimpleMslStore", function() {
         });
         waitsFor(function() { return masterToken; }, "master token not received", 100);
         
-        var userIdTokenA = undefined, userIdTokenB = undefined, userIdTokenC;
+        var userIdTokenA, userIdTokenB, userIdTokenC;
         runs(function() {
         	MslTestUtils.getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER, {
         		result: function(token) { userIdTokenA = token; },
@@ -547,7 +562,7 @@ describe("SimpleMslStore", function() {
         });
         waitsFor(function() { return masterToken; }, "master token not received", 100);
         
-        var userIdTokenA = undefined, userIdTokenB;
+        var userIdTokenA, userIdTokenB;
         runs(function() {
         	MslTestUtils.getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER, {
         		result: function(token) { userIdTokenA = token; },
@@ -585,7 +600,7 @@ describe("SimpleMslStore", function() {
         });
         waitsFor(function() { return masterToken; }, "master token not received", 100);
         
-        var userIdTokenA = undefined, userIdTokenB;
+        var userIdTokenA, userIdTokenB;
         runs(function() {
         	MslTestUtils.getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER, {
         		result: function(token) { userIdTokenA = token; },
@@ -641,7 +656,7 @@ describe("SimpleMslStore", function() {
     });
     
     it("removing old master token does not remove user ID tokens", function() {
-        var masterTokenA = undefined, masterTokenB;
+        var masterTokenA, masterTokenB;
         runs(function() {
         	MslTestUtils.getMasterToken(ctx, 1, 1, {
         		result: function(token) { masterTokenA = token; },
@@ -654,7 +669,7 @@ describe("SimpleMslStore", function() {
         });
         waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens not received", 100);
 
-        var userIdTokenA = undefined, userIdTokenB = undefined, userIdTokenC;
+        var userIdTokenA, userIdTokenB, userIdTokenC;
         runs(function() {
         	MslTestUtils.getUserIdToken(ctx, masterTokenA, 1, MockEmailPasswordAuthenticationFactory.USER, {
         		result: function(token) { userIdTokenA = token; },
@@ -695,7 +710,7 @@ describe("SimpleMslStore", function() {
     it("removing final master token removes correct user ID tokens", function() {
         // Master token B has a new serial number, to invalidate the old master
         // token and its user ID tokens.
-    	var masterTokenA = undefined, masterTokenB;
+    	var masterTokenA, masterTokenB;
     	runs(function() {
     		MslTestUtils.getMasterToken(ctx, 1, 1, {
     			result: function(token) { masterTokenA = token; },
@@ -708,7 +723,7 @@ describe("SimpleMslStore", function() {
     	});
     	waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens not received", 100);
         
-        var userIdTokenA = undefined, userIdTokenB = undefined, userIdTokenC;
+        var userIdTokenA, userIdTokenB, userIdTokenC;
         runs(function() {
         	MslTestUtils.getUserIdToken(ctx, masterTokenA, 1, MockEmailPasswordAuthenticationFactory.USER, {
         		result: function(token) { userIdTokenA = token; },
@@ -748,7 +763,7 @@ describe("SimpleMslStore", function() {
     it("clear crypto contexts clears user ID tokens", function() {
     	// Master token B has a new serial number, to invalidate the old master
         // token and its user ID tokens.
-        var masterTokenA = undefined, masterTokenB;
+        var masterTokenA, masterTokenB;
     	runs(function() {
     		MslTestUtils.getMasterToken(ctx, 1, 1, {
     			result: function(token) { masterTokenA = token; },
@@ -761,7 +776,7 @@ describe("SimpleMslStore", function() {
     	});
     	waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens not received", 100);
         
-        var userIdTokenA = undefined, userIdTokenB;
+        var userIdTokenA, userIdTokenB;
         runs(function() {
         	MslTestUtils.getUserIdToken(ctx, masterTokenA, 1, MockEmailPasswordAuthenticationFactory.USER, {
         		result: function(token) { userIdTokenA = token; },
@@ -1039,7 +1054,7 @@ describe("SimpleMslStore", function() {
         });
         waitsFor(function() { return userIdToken; }, "user ID token not received", 100);
         
-        var masterBoundTokens = undefined, userBoundTokens = undefined, unboundTokens;
+        var masterBoundTokens, userBoundTokens, unboundTokens;
         runs(function() {
             MslTestUtils.getMasterBoundServiceTokens(ctx, masterToken, {
                 result: function(tks) { masterBoundTokens = tks; },
@@ -1102,7 +1117,7 @@ describe("SimpleMslStore", function() {
         });
         waitsFor(function() { return userIdToken; }, "user ID token not received", 100);
         
-        var masterBoundTokens = undefined, userBoundTokens = undefined, unboundTokens;
+        var masterBoundTokens, userBoundTokens, unboundTokens;
         runs(function() {
             MslTestUtils.getMasterBoundServiceTokens(ctx, masterToken, {
                 result: function(tks) { masterBoundTokens = tks; },
@@ -1176,7 +1191,7 @@ describe("SimpleMslStore", function() {
         });
         waitsFor(function() { return userIdToken; }, "user ID token not received", 100);
         
-        var masterBoundTokens = undefined, userBoundTokens = undefined, unboundTokens;
+        var masterBoundTokens, userBoundTokens, unboundTokens;
         runs(function() {
             MslTestUtils.getMasterBoundServiceTokens(ctx, masterToken, {
                 result: function(tks) { masterBoundTokens = tks; },
@@ -1263,7 +1278,7 @@ describe("SimpleMslStore", function() {
         });
         waitsFor(function() { return userIdToken; }, "user ID token not received", 100);
         
-        var masterBoundTokens = undefined, userBoundTokens = undefined, unboundTokens;
+        var masterBoundTokens, userBoundTokens, unboundTokens;
         runs(function() {
             MslTestUtils.getMasterBoundServiceTokens(ctx, masterToken, {
                 result: function(tks) { masterBoundTokens = tks; },
@@ -1347,7 +1362,7 @@ describe("SimpleMslStore", function() {
         });
         waitsFor(function() { return userIdToken; }, "user ID token not received", 100);
         
-        var masterBoundTokens = undefined, userBoundTokens = undefined, unboundTokens;
+        var masterBoundTokens, userBoundTokens, unboundTokens;
         runs(function() {
             MslTestUtils.getMasterBoundServiceTokens(ctx, masterToken, {
                 result: function(tks) { masterBoundTokens = tks; },
@@ -1490,7 +1505,7 @@ describe("SimpleMslStore", function() {
         });
         waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens not received", 100);
         
-        var userIdTokenA = undefined, userIdTokenB;
+        var userIdTokenA, userIdTokenB;
         runs(function() {
         	MslTestUtils.getUserIdToken(ctx, masterTokenA, 1, MockEmailPasswordAuthenticationFactory.USER, {
         		result: function(token) { userIdTokenA = token; },
@@ -1503,7 +1518,7 @@ describe("SimpleMslStore", function() {
         });
         waitsFor(function() { return userIdTokenA && userIdTokenB; }, "user ID tokens not received", 100);
         
-        var masterBoundServiceTokens = undefined, serviceTokensA = undefined, serviceTokensB;
+        var masterBoundServiceTokens, serviceTokensA, serviceTokensB;
         runs(function() {
             MslTestUtils.getMasterBoundServiceTokens(ctx, masterTokenA, {
                 result: function(tks) { masterBoundServiceTokens = tks; },
@@ -1579,7 +1594,7 @@ describe("SimpleMslStore", function() {
     	});
     	waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens not received", 100);
     	
-        var userIdTokenA = undefined, userIdTokenB;
+        var userIdTokenA, userIdTokenB;
         runs(function() {
         	MslTestUtils.getUserIdToken(ctx, masterTokenA, 1, MockEmailPasswordAuthenticationFactory.USER, {
         		result: function(token) { userIdTokenA = token; },
@@ -1592,7 +1607,7 @@ describe("SimpleMslStore", function() {
         });
         waitsFor(function() { return userIdTokenA && userIdTokenB; }, "user ID tokens not received", 100);
 
-        var masterBoundServiceTokens = undefined, serviceTokensA = undefined, serviceTokensB;
+        var masterBoundServiceTokens, serviceTokensA, serviceTokensB;
         runs(function() {
             MslTestUtils.getMasterBoundServiceTokens(ctx, masterTokenA, {
                 result: function(tks) { masterBoundServiceTokens = tks; },
@@ -1647,7 +1662,7 @@ describe("SimpleMslStore", function() {
     	});
     	waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens not received", 100);
         
-    	var userIdTokenA = undefined, userIdTokenB;
+    	var userIdTokenA, userIdTokenB;
         runs(function() {
         	MslTestUtils.getUserIdToken(ctx, masterTokenA, 1, MockEmailPasswordAuthenticationFactory.USER, {
         		result: function(token) { userIdTokenA = token; },
@@ -1660,7 +1675,7 @@ describe("SimpleMslStore", function() {
         });
         waitsFor(function() { return userIdTokenA && userIdTokenB; }, "user ID tokens not received", 100);
 
-        var unboundServiceTokens = undefined, serviceTokensA = undefined, serviceTokensB;
+        var unboundServiceTokens, serviceTokensA, serviceTokensB;
         runs(function() {
             MslTestUtils.getServiceTokens(ctx, null, null, {
                 result: function(tks) { unboundServiceTokens = tks; },
@@ -1709,7 +1724,7 @@ describe("SimpleMslStore", function() {
         });
         waitsFor(function() { return masterToken; }, "master token not received", 100);
         
-        var userIdTokenA = undefined, userIdTokenB;
+        var userIdTokenA, userIdTokenB;
         runs(function() {
         	MslTestUtils.getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER, {
         		result: function(token) { userIdTokenA = token; },
@@ -1722,7 +1737,7 @@ describe("SimpleMslStore", function() {
         });
         waitsFor(function() { return userIdTokenA && userIdTokenB; }, "user ID tokens not received", 100);
         
-        var masterBoundServiceTokens = undefined, serviceTokensA = undefined, serviceTokensB;
+        var masterBoundServiceTokens, serviceTokensA, serviceTokensB;
         runs(function() {
             MslTestUtils.getMasterBoundServiceTokens(ctx, masterToken, {
                 result: function(tks) { masterBoundServiceTokens = tks; },
@@ -1779,7 +1794,7 @@ describe("SimpleMslStore", function() {
         });
         waitsFor(function() { return masterToken; }, "master token not received", 100);
         
-        var userIdTokenA = undefined, userIdTokenB;
+        var userIdTokenA, userIdTokenB;
         runs(function() {
         	MslTestUtils.getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER, {
         		result: function(token) { userIdTokenA = token; },
@@ -1792,7 +1807,7 @@ describe("SimpleMslStore", function() {
         });
         waitsFor(function() { return userIdTokenA && userIdTokenB; }, "user ID tokens not received", 100);
         
-        var masterBoundServiceTokens = undefined, serviceTokensA = undefined, serviceTokensB;
+        var masterBoundServiceTokens, serviceTokensA, serviceTokensB;
         runs(function() {
             MslTestUtils.getMasterBoundServiceTokens(ctx, masterToken, {
                 result: function(tks) { masterBoundServiceTokens = tks; },

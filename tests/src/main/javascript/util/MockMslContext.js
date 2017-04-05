@@ -50,6 +50,7 @@
     const DiffieHellmanExchange = require('../../../../../core/src/main/javascript/keyx/DiffieHellmanExchange.js');
     const SimpleMslStore = require('../../../../../core/src/main/javascript/util/SimpleMslStore.js');
     const DefaultMslEncoderFactory = require('../../../../../core/src/main/javascript/io/DefaultMslEncoderFactory.js');
+    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
     const KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
     
     const MockAuthenticationUtils = require('../util/MockAuthenticationUtils.js');

@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
+const lzw = require('../../../../../core/src/main/javascript/lib/lzw.js');
+
 /**
  * LZW output stream tests.
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-describe("lzw$compress", function () {
+describe("lzw.compress", function () {
     it("one byte", function () {
         var data = new Uint8Array([0x1f]);
 
-        var compressed = lzw$compress(data);
+        var compressed = lzw.compress(data);
 
         expect(compressed).not.toBeNull();
         expect(compressed.length).toEqual(1);
@@ -34,7 +36,7 @@ describe("lzw$compress", function () {
         var data = new Uint8Array([0x66, 0x67]);
         // This compresses to 3 bytes: [ 0x66, 0x33, 0x80 ]
 
-        var compressed = lzw$compress(data);
+        var compressed = lzw.compress(data);
 
         expect(compressed).toBeNull();
     });
@@ -43,17 +45,17 @@ describe("lzw$compress", function () {
         var data = new Uint8Array([0x61, 0xd7, 0xb1]);
         // This compresses to 4 bytes: [ 0x61, 0x6b, 0xac, 0x40 ]
 
-        var compressed = lzw$compress(data);
+        var compressed = lzw.compress(data);
 
         expect(compressed).toBeNull();
     });
 });
 
-describe("lzw$uncompress", function () {
+describe("lzw.uncompress", function () {
     it("one byte", function () {
         var codes = new Uint8Array([0xf1]);
 
-        var uncompressed = lzw$uncompress(codes);
+        var uncompressed = lzw.uncompress(codes);
 
         expect(uncompressed[0]).toEqual(codes[0]);
     });
@@ -62,7 +64,7 @@ describe("lzw$uncompress", function () {
         var codes = new Uint8Array([0x66, 0x33, 0x80]);
         var data = new Uint8Array([0x66, 0x67]);
 
-        var uncompressed = lzw$uncompress(codes);
+        var uncompressed = lzw.uncompress(codes);
 
         expect(uncompressed.length).toEqual(data.length);
         expect(new Uint8Array(uncompressed)).toEqual(data);
@@ -72,7 +74,7 @@ describe("lzw$uncompress", function () {
         var codes = new Uint8Array([0x61, 0x6b, 0xac, 0x40]);
         var data = new Uint8Array([0x61, 0xd7, 0xb1]);
 
-        var uncompressed = lzw$uncompress(codes);
+        var uncompressed = lzw.uncompress(codes);
 
         expect(uncompressed.length).toEqual(data.length);
         expect(new Uint8Array(uncompressed)).toEqual(data);
@@ -104,8 +106,8 @@ describe("lzw", function () {
             0x65, 0x73, 0x74, 0x3e
         ]);
 
-        var compressed = lzw$compress(data);
-        var uncompressed = lzw$uncompress(compressed);
+        var compressed = lzw.compress(data);
+        var uncompressed = lzw.uncompress(compressed);
 
         expect(new Uint8Array(uncompressed)).toEqual(data);
     });

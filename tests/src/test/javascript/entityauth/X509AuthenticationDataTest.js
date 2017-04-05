@@ -13,6 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+const X509AuthenticationData = require('../../../../../core/src/main/javascript/entityauth/X509AuthenticationData.js');
+const Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
+
+const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+const MockX509AuthenticationFactory = require('../../../main/javascript/entityauth/MockX509AuthenticationFactory.js');
+const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+
+const X509 = require('jsrsasign').asn1.X509;
+
 describe("X509AuthenticationData", function() {
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
@@ -63,7 +75,7 @@ describe("X509AuthenticationData", function() {
     beforeEach(function() {
         if (!initialized) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.X509, false, {
+                MockMslContext.create(EntityAuthenticationScheme.X509, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -106,7 +118,7 @@ describe("X509AuthenticationData", function() {
         runs(function() {
             expect(encode).not.toBeNull();
             
-            moData = new X509AuthenticationData$parse(authdata);
+            moData = new X509AuthenticationData.parse(authdata);
             expect(moData.scheme).toEqual(data.scheme);
             expect(moData.x509cert.hex).toEqual(data.x509cert.hex);
             expect(moData.getIdentity()).toEqual(data.getIdentity());
@@ -240,7 +252,7 @@ describe("X509AuthenticationData", function() {
         runs(function() {
 			authdata.remove(KEY_X509_CERT);
 			var f = function() {
-			    X509AuthenticationData$parse(authdata);
+			    X509AuthenticationData.parse(authdata);
 			};
             expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
 		});
@@ -260,11 +272,11 @@ describe("X509AuthenticationData", function() {
         
         runs(function() {
 			var x509b64 = authdata.getString(KEY_X509_CERT);
-			var x509raw = base64$decode(x509b64);
+			var x509raw = Base64.decode(x509b64);
 			++x509raw[0];
-			authdata.put(KEY_X509_CERT, base64$encode(x509b64));
+			authdata.put(KEY_X509_CERT, Base64.encode(x509b64));
 			var f = function() {
-			    X509AuthenticationData$parse(authdata);
+			    X509AuthenticationData.parse(authdata);
 			};
 			expect(f).toThrow(new MslCryptoException(MslError.X509CERT_PARSE_ERROR));
         });

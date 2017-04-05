@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+
 describe("EntityAuthenticationScheme", function() {
     it("names", function() {
         expect(EntityAuthenticationScheme.PSK.name).toEqual("PSK");

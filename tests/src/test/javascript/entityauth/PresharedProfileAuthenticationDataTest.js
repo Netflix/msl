@@ -19,6 +19,18 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+
+const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+const PresharedProfileAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedProfileAuthenticationData.js');
+const EntityAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationData.js');
+const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+
+const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+const MockPresharedProfileAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedProfileAuthenticationFactory.js');
+const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+
 describe("PresharedProfileAuthenticationData", function() {
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
@@ -44,7 +56,7 @@ describe("PresharedProfileAuthenticationData", function() {
     beforeEach(function() {
         if (!initialized) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.X509, false, {
+                MockMslContext.create(EntityAuthenticationScheme.X509, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -88,7 +100,7 @@ describe("PresharedProfileAuthenticationData", function() {
         runs(function() {
             expect(encode).not.toBeNull();
             
-            moData = PresharedProfileAuthenticationData$parse(authdata);
+            moData = PresharedProfileAuthenticationData.parse(authdata);
             expect(moData.getIdentity()).toEqual(data.getIdentity());
             expect(moData.presharedKeysId).toEqual(data.presharedKeysId);
             expect(moData.profile).toEqual(data.profile);
@@ -224,7 +236,7 @@ describe("PresharedProfileAuthenticationData", function() {
         runs(function() {
             authdata.remove(KEY_PSKID);
             var f = function() {
-                PresharedProfileAuthenticationData$parse(authdata);
+                PresharedProfileAuthenticationData.parse(authdata);
             };
             expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
@@ -244,7 +256,7 @@ describe("PresharedProfileAuthenticationData", function() {
         runs(function() {
             authdata.remove(KEY_PROFILE);
             var f = function() {
-                PresharedProfileAuthenticationData$parse(authdata);
+                PresharedProfileAuthenticationData.parse(authdata);
             };
             expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });

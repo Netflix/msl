@@ -19,6 +19,30 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+
+const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+const EmailPasswordAuthenticationData = require('../../../../../core/src/main/javascript/userauth/EmailPasswordAuthenticationData.js');
+const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+const MessageCapabilities = require('../../../../../core/src/main/javascript/msg/MessageCapabilities.js');
+const MessageHeader = require('../../../../../core/src/main/javascript/msg/MessageHeader.js');
+const Class = require('../../../../../core/src/main/javascript/util/Class.js');
+const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
+const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+const SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
+const MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
+const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
+const Header = require('../../../../../core/src/main/javascript/msg/Header.js');
+const SessionCryptoContext = require('../../../../../core/src/main/javascript/crypto/SessionCryptoContext.js');
+const MslException = require('../../../../../core/src/main/javascript/MslException.js');
+const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+const MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
+const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+const MslMessageException = require('../../../../../core/src/main/javascript/MslMessageException.js');
+
+const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+const MockEmailPasswordAuthenticationFactory = require('../../../../../core/src/main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
+
 describe("MessageHeader", function() {
 	/** MSL encoder format. */
 	var ENCODER_FORMAT = MslEncoderFormat.JSON;
@@ -105,7 +129,7 @@ describe("MessageHeader", function() {
 	var USER_AUTH_DATA = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL, MockEmailPasswordAuthenticationFactory.PASSWORD);
 	var USER_AUTH_DATA_MO;
 	
-    var ALGOS = [ MslConstants$CompressionAlgorithm.GZIP, MslConstants$CompressionAlgorithm.LZW ];
+    var ALGOS = [ MslConstants.CompressionAlgorithm.GZIP, MslConstants.CompressionAlgorithm.LZW ];
     var LANGUAGES = [ "en-US" ];
     var FORMATS = [ MslEncoderFormat.JSON ];
     
@@ -135,13 +159,13 @@ describe("MessageHeader", function() {
 	var CRYPTO_CONTEXTS = {};
 
 	// Shortcuts
-	var HeaderData = MessageHeader$HeaderData;
-	var HeaderPeerData = MessageHeader$HeaderPeerData;
+	var HeaderData = MessageHeader.HeaderData;
+	var HeaderPeerData = MessageHeader.HeaderPeerData;
 
     /**
      * A helper class for building message header data.
      */
-	var HeaderDataBuilder = util.Class.create({
+	var HeaderDataBuilder = Class.create({
 	    /**
          * Create a new header data builder with the default constant values
          * and a random set of service tokens that may be bound to the provided
@@ -271,11 +295,11 @@ describe("MessageHeader", function() {
 	beforeEach(function() {
 		if (!initialized) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+                MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                     result: function(c) { trustedNetCtx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                MockMslContext$create(EntityAuthenticationScheme.PSK, true, {
+                MockMslContext.create(EntityAuthenticationScheme.PSK, true, {
                     result: function(c) { p2pCtx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -313,7 +337,7 @@ describe("MessageHeader", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 
-				var keyRequestData = new SymmetricWrappedExchange$RequestData(SymmetricWrappedExchange$KeyId.PSK);
+				var keyRequestData = new SymmetricWrappedExchange.RequestData(SymmetricWrappedExchange.KeyId.PSK);
 				var factory = trustedNetCtx.getKeyExchangeFactory(keyRequestData.keyExchangeScheme);
 				factory.generateResponse(trustedNetCtx, ENCODER_FORMAT, keyRequestData, MASTER_TOKEN, {
 					result: function(keyxData) {
@@ -323,7 +347,7 @@ describe("MessageHeader", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 
-				var peerKeyRequestData = new SymmetricWrappedExchange$RequestData(SymmetricWrappedExchange$KeyId.PSK);
+				var peerKeyRequestData = new SymmetricWrappedExchange.RequestData(SymmetricWrappedExchange.KeyId.PSK);
 				var peerFactory = p2pCtx.getKeyExchangeFactory(peerKeyRequestData.keyExchangeScheme);
 				peerFactory.generateResponse(p2pCtx, ENCODER_FORMAT, peerKeyRequestData, PEER_MASTER_TOKEN, {
 					result: function(peerKeyxData) {
@@ -371,7 +395,7 @@ describe("MessageHeader", function() {
 					result: function(x) { PEER_USER_ID_TOKEN_MO = x; },
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
-				MslEncoderUtils$createArray(trustedNetCtx, KEY_REQUEST_DATA, {
+				MslEncoderUtils.createArray(trustedNetCtx, KEY_REQUEST_DATA, {
 					result: function(x) { KEY_REQUEST_DATA_MA = x; },
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
@@ -379,7 +403,7 @@ describe("MessageHeader", function() {
 					result: function(x) { KEY_RESPONSE_DATA_MO = x; },
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
-				MslEncoderUtils$createArray(p2pCtx, PEER_KEY_REQUEST_DATA, {
+				MslEncoderUtils.createArray(p2pCtx, PEER_KEY_REQUEST_DATA, {
 					result: function(x) { PEER_KEY_REQUEST_DATA_MA = x; },
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
@@ -429,7 +453,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 		    var headerData = builder.build();
 			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-			MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
+			MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -445,7 +469,7 @@ describe("MessageHeader", function() {
 			expect(messageHeader.cryptoContext).not.toBeNull();
 			expect(messageHeader.entityAuthenticationData).toEqual(ENTITY_AUTH_DATA);
 			var keyRequestData = messageHeader.keyRequestData;
-			expect(Arrays$contains(keyRequestData, KEY_REQUEST_DATA)).toBeTruthy();
+			expect(Arrays.contains(keyRequestData, KEY_REQUEST_DATA)).toBeTruthy();
 			expect(messageHeader.keyResponseData).toEqual(KEY_RESPONSE_DATA);
 			expect(messageHeader.masterToken).toBeNull();
 			expect(messageHeader.sender).toBeNull();
@@ -456,7 +480,7 @@ describe("MessageHeader", function() {
 			expect(messageHeader.peerServiceTokens.length).toEqual(0);
 			expect(messageHeader.peerUserIdToken).toBeNull();
 			var serviceTokens = builder.getServiceTokens();
-			expect(Arrays$contains(messageHeader.serviceTokens, serviceTokens)).toBeTruthy();
+			expect(Arrays.contains(messageHeader.serviceTokens, serviceTokens)).toBeTruthy();
 			expect(messageHeader.userAuthenticationData).toEqual(USER_AUTH_DATA);
 			expect(messageHeader.userIdToken).toEqual(USER_ID_TOKEN);
 			expect(messageHeader.user).toEqual(USER_ID_TOKEN.user);
@@ -485,7 +509,7 @@ describe("MessageHeader", function() {
             builder.set(KEY_NON_REPLAYABLE_ID, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-            MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
+            MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
                 result: function(token) { messageHeader = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -501,7 +525,7 @@ describe("MessageHeader", function() {
             expect(messageHeader.cryptoContext).not.toBeNull();
             expect(messageHeader.entityAuthenticationData).toEqual(ENTITY_AUTH_DATA);
             var keyRequestData = messageHeader.keyRequestData;
-            expect(Arrays$contains(keyRequestData, KEY_REQUEST_DATA)).toBeTruthy();
+            expect(Arrays.contains(keyRequestData, KEY_REQUEST_DATA)).toBeTruthy();
             expect(messageHeader.keyResponseData).toEqual(KEY_RESPONSE_DATA);
             expect(messageHeader.masterToken).toBeNull();
             expect(messageHeader.sender).toBeNull();
@@ -512,7 +536,7 @@ describe("MessageHeader", function() {
             expect(messageHeader.peerServiceTokens.length).toEqual(0);
             expect(messageHeader.peerUserIdToken).toBeNull();
             var serviceTokens = builder.getServiceTokens();
-            expect(Arrays$contains(messageHeader.serviceTokens, serviceTokens)).toBeTruthy();
+            expect(Arrays.contains(messageHeader.serviceTokens, serviceTokens)).toBeTruthy();
             expect(messageHeader.userAuthenticationData).toEqual(USER_AUTH_DATA);
             expect(messageHeader.userIdToken).toEqual(USER_ID_TOKEN);
             expect(messageHeader.user).toEqual(USER_ID_TOKEN.user);
@@ -540,7 +564,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			var headerData = builder.build();
 			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-			MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
+			MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -592,7 +616,7 @@ describe("MessageHeader", function() {
 		var serviceTokensMa;
 		runs(function() {
 			serviceTokens = builder.getServiceTokens();
-			MslEncoderUtils$createArray(trustedNetCtx, serviceTokens, {
+			MslEncoderUtils.createArray(trustedNetCtx, serviceTokens, {
 				result: function(x) { serviceTokensMa = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -641,7 +665,7 @@ describe("MessageHeader", function() {
             builder.set(KEY_NON_REPLAYABLE_ID, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-            MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
+            MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
                 result: function(token) { messageHeader = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -693,7 +717,7 @@ describe("MessageHeader", function() {
 		var serviceTokensMa;
 		runs(function() {
 			var serviceTokens = builder.getServiceTokens();
-			MslEncoderUtils$createArray(trustedNetCtx, serviceTokens, {
+			MslEncoderUtils.createArray(trustedNetCtx, serviceTokens, {
 				result: function(x) { serviceTokensMa = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -743,7 +767,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			var headerData = builder.build();
 			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);    
-			MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+			MessageHeader.create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -759,7 +783,7 @@ describe("MessageHeader", function() {
             expect(messageHeader.cryptoContext).not.toBeNull();
             expect(messageHeader.entityAuthenticationData).toEqual(PEER_ENTITY_AUTH_DATA);
             var keyRequestData = messageHeader.keyRequestData;
-            expect(Arrays$contains(keyRequestData, PEER_KEY_REQUEST_DATA)).toBeTruthy();
+            expect(Arrays.contains(keyRequestData, PEER_KEY_REQUEST_DATA)).toBeTruthy();
             expect(messageHeader.keyResponseData).toEqual(PEER_KEY_RESPONSE_DATA);
             expect(messageHeader.masterToken).toBeNull();
             expect(messageHeader.sender).toBeNull();
@@ -767,10 +791,10 @@ describe("MessageHeader", function() {
             expect(isAboutNow(messageHeader.timestamp)).toBeTruthy();
             expect(messageHeader.messageId).toEqual(MESSAGE_ID);
             expect(messageHeader.peerMasterToken).toEqual(PEER_MASTER_TOKEN);
-            expect(Arrays$contains(messageHeader.peerServiceTokens, peerServiceTokens)).toBeTruthy();
+            expect(Arrays.contains(messageHeader.peerServiceTokens, peerServiceTokens)).toBeTruthy();
             expect(messageHeader.peerUserIdToken).toEqual(PEER_USER_ID_TOKEN);
             var serviceTokens = builder.getServiceTokens();
-            expect(Arrays$contains(messageHeader.serviceTokens, serviceTokens)).toBeTruthy();
+            expect(Arrays.contains(messageHeader.serviceTokens, serviceTokens)).toBeTruthy();
             expect(messageHeader.userAuthenticationData).toEqual(USER_AUTH_DATA);
             expect(messageHeader.userIdToken).toBeNull();
             expect(messageHeader.user).toBeNull();
@@ -801,7 +825,7 @@ describe("MessageHeader", function() {
             builder.set(KEY_NON_REPLAYABLE_ID, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);    
-            MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+            MessageHeader.create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
                 result: function(token) { messageHeader = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -817,7 +841,7 @@ describe("MessageHeader", function() {
             expect(messageHeader.cryptoContext).not.toBeNull();
             expect(messageHeader.entityAuthenticationData).toEqual(PEER_ENTITY_AUTH_DATA);
             var keyRequestData = messageHeader.keyRequestData;
-            expect(Arrays$contains(keyRequestData, PEER_KEY_REQUEST_DATA)).toBeTruthy();
+            expect(Arrays.contains(keyRequestData, PEER_KEY_REQUEST_DATA)).toBeTruthy();
             expect(messageHeader.keyResponseData).toEqual(PEER_KEY_RESPONSE_DATA);
             expect(messageHeader.masterToken).toBeNull();
             expect(messageHeader.sender).toBeNull();
@@ -825,10 +849,10 @@ describe("MessageHeader", function() {
             expect(isAboutNow(messageHeader.timestamp)).toBeTruthy();
             expect(messageHeader.messageId).toEqual(MESSAGE_ID);
             expect(messageHeader.peerMasterToken).toEqual(PEER_MASTER_TOKEN);
-            expect(Arrays$contains(messageHeader.peerServiceTokens, peerServiceTokens)).toBeTruthy();
+            expect(Arrays.contains(messageHeader.peerServiceTokens, peerServiceTokens)).toBeTruthy();
             expect(messageHeader.peerUserIdToken).toEqual(PEER_USER_ID_TOKEN);
             var serviceTokens = builder.getServiceTokens();
-            expect(Arrays$contains(messageHeader.serviceTokens, serviceTokens)).toBeTruthy();
+            expect(Arrays.contains(messageHeader.serviceTokens, serviceTokens)).toBeTruthy();
             expect(messageHeader.userAuthenticationData).toEqual(USER_AUTH_DATA);
             expect(messageHeader.userIdToken).toBeNull();
             expect(messageHeader.user).toBeNull();
@@ -858,7 +882,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			var headerData = builder.build();
 			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-			MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+			MessageHeader.create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -910,11 +934,11 @@ describe("MessageHeader", function() {
 		var serviceTokensMa, peerServiceTokensMa;
 		runs(function() {
 			var serviceTokens = builder.getServiceTokens();
-			MslEncoderUtils$createArray(trustedNetCtx, serviceTokens, {
+			MslEncoderUtils.createArray(trustedNetCtx, serviceTokens, {
 				result: function(x) { serviceTokensMa = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
-			MslEncoderUtils$createArray(p2pCtx, peerServiceTokens, {
+			MslEncoderUtils.createArray(p2pCtx, peerServiceTokens, {
 				result: function(x) { peerServiceTokensMa = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -965,7 +989,7 @@ describe("MessageHeader", function() {
             builder.set(KEY_NON_REPLAYABLE_ID, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-            MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+            MessageHeader.create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
                 result: function(token) { messageHeader = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1017,11 +1041,11 @@ describe("MessageHeader", function() {
 		var serviceTokensMa, peerServiceTokensMa;
 		runs(function() {
 			var serviceTokens = builder.getServiceTokens();
-			MslEncoderUtils$createArray(trustedNetCtx, serviceTokens, {
+			MslEncoderUtils.createArray(trustedNetCtx, serviceTokens, {
 				result: function(x) { serviceTokensMa = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
-			MslEncoderUtils$createArray(p2pCtx, peerServiceTokens, {
+			MslEncoderUtils.createArray(p2pCtx, peerServiceTokens, {
 				result: function(x) { peerServiceTokensMa = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -1069,7 +1093,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			var headerData = builder.build();
 			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);    
-			MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -1085,7 +1109,7 @@ describe("MessageHeader", function() {
             expect(messageHeader.cryptoContext).not.toBeNull();
             expect(messageHeader.entityAuthenticationData).toBeNull();
             var keyRequestData = messageHeader.keyRequestData;
-            expect(Arrays$contains(keyRequestData, KEY_REQUEST_DATA)).toBeTruthy();
+            expect(Arrays.contains(keyRequestData, KEY_REQUEST_DATA)).toBeTruthy();
             expect(messageHeader.keyResponseData).toEqual(KEY_RESPONSE_DATA);
             expect(messageHeader.masterToken).toEqual(MASTER_TOKEN);
             expect(messageHeader.sender).toEqual(ENTITY_AUTH_DATA.getIdentity());
@@ -1096,7 +1120,7 @@ describe("MessageHeader", function() {
             expect(messageHeader.peerServiceTokens.length).toEqual(0);
             expect(messageHeader.peerUserIdToken).toBeNull();
             var serviceTokens = builder.getServiceTokens();
-            expect(Arrays$contains(messageHeader.serviceTokens, serviceTokens)).toBeTruthy();
+            expect(Arrays.contains(messageHeader.serviceTokens, serviceTokens)).toBeTruthy();
             expect(messageHeader.userAuthenticationData).toEqual(USER_AUTH_DATA);
             expect(messageHeader.userIdToken).toEqual(USER_ID_TOKEN);
             expect(messageHeader.user).toEqual(USER_ID_TOKEN.user);
@@ -1124,7 +1148,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			var headerData = builder.build();
 			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-			MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -1169,7 +1193,7 @@ describe("MessageHeader", function() {
 		var serviceTokensMa;
 		runs(function() {
 			var serviceTokens = builder.getServiceTokens();
-			MslEncoderUtils$createArray(trustedNetCtx, serviceTokens, {
+			MslEncoderUtils.createArray(trustedNetCtx, serviceTokens, {
 				result: function(x) { serviceTokensMa = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -1221,7 +1245,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			var headerData = builder.build();
 			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);    
-			MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(p2pCtx, PEER_ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -1237,7 +1261,7 @@ describe("MessageHeader", function() {
             expect(messageHeader.cryptoContext).not.toBeNull();
             expect(messageHeader.entityAuthenticationData).toBeNull();
             var keyRequestData = messageHeader.keyRequestData;
-            expect(Arrays$contains(keyRequestData, PEER_KEY_REQUEST_DATA)).toBeTruthy();
+            expect(Arrays.contains(keyRequestData, PEER_KEY_REQUEST_DATA)).toBeTruthy();
             expect(messageHeader.keyResponseData).toEqual(PEER_KEY_RESPONSE_DATA);
             expect(messageHeader.masterToken).toEqual(MASTER_TOKEN);
             expect(messageHeader.sender).toEqual(PEER_ENTITY_AUTH_DATA.getIdentity());
@@ -1245,10 +1269,10 @@ describe("MessageHeader", function() {
             expect(isAboutNow(messageHeader.timestamp)).toBeTruthy();
             expect(messageHeader.messageId).toEqual(MESSAGE_ID);
             expect(messageHeader.peerMasterToken).toEqual(PEER_MASTER_TOKEN);
-            expect(Arrays$contains(messageHeader.peerServiceTokens, peerServiceTokens)).toBeTruthy();
+            expect(Arrays.contains(messageHeader.peerServiceTokens, peerServiceTokens)).toBeTruthy();
             expect(messageHeader.peerUserIdToken).toEqual(PEER_USER_ID_TOKEN);
             var serviceTokens = builder.getServiceTokens();
-            expect(Arrays$contains(messageHeader.serviceTokens, serviceTokens)).toBeTruthy();
+            expect(Arrays.contains(messageHeader.serviceTokens, serviceTokens)).toBeTruthy();
             expect(messageHeader.userAuthenticationData).toEqual(USER_AUTH_DATA);
             expect(messageHeader.userIdToken).toEqual(USER_ID_TOKEN);
             expect(messageHeader.user).toEqual(USER_ID_TOKEN.user);
@@ -1280,7 +1304,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			var headerData = builder.build();
 			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-			MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(p2pCtx, PEER_ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -1325,7 +1349,7 @@ describe("MessageHeader", function() {
 		var serviceTokensMa;
 		runs(function() {
 			var serviceTokens = builder.getServiceTokens();
-			MslEncoderUtils$createArray(trustedNetCtx, serviceTokens, {
+			MslEncoderUtils.createArray(trustedNetCtx, serviceTokens, {
 				result: function(x) { serviceTokensMa = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -1334,7 +1358,7 @@ describe("MessageHeader", function() {
 		
 		var peerServiceTokensMa;
 		runs(function() {
-			MslEncoderUtils$createArray(trustedNetCtx, peerServiceTokens, {
+			MslEncoderUtils.createArray(trustedNetCtx, peerServiceTokens, {
 				result: function(x) { peerServiceTokensMa = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -1381,7 +1405,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_USER_AUTHENTICATION_DATA, null);
 			var headerData = builder.build();
 			var peerData = new HeaderPeerData(null, null, null);
-			MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+			MessageHeader.create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -1436,7 +1460,7 @@ describe("MessageHeader", function() {
             var headerData = builder.build();
 			var peerServiceTokens = new Array();
 			var peerData = new HeaderPeerData(null, null, peerServiceTokens);
-			MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+			MessageHeader.create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -1487,7 +1511,7 @@ describe("MessageHeader", function() {
             builder.set(KEY_USER_AUTHENTICATION_DATA, null);
 			var headerData = builder.build();
 			var peerData = new HeaderPeerData(null, null, null);
-			MessageHeader$create(p2pCtx, null, PEER_MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(p2pCtx, null, PEER_MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -1542,7 +1566,7 @@ describe("MessageHeader", function() {
 			var headerData = builder.build();
 			var peerServiceTokens = new Array();
 			var peerData = new HeaderPeerData(null, null, peerServiceTokens);
-			MessageHeader$create(p2pCtx, null, PEER_MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(p2pCtx, null, PEER_MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -1606,7 +1630,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			var headerData = builder.build();
 			var peerData = new HeaderPeerData(null, null, null);
-			MessageHeader$create(rsaCtx, entityAuthData, null, headerData, peerData, {
+			MessageHeader.create(rsaCtx, entityAuthData, null, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -1632,7 +1656,7 @@ describe("MessageHeader", function() {
 	    runs(function() {
             var headerData = builder.build();
             var peerData = new HeaderPeerData(null, null, null);
-            MessageHeader$create(trustedNetCtx, null, null, headerData, peerData, {
+            MessageHeader.create(trustedNetCtx, null, null, headerData, peerData, {
                 result: function() {},
                 error: function(err) { exception = err; },
             });
@@ -1660,7 +1684,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
 	        var headerData = builder.build();
             var peerData = new HeaderPeerData(null, null, null);
-            MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
+            MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
                 result: function() {},
                 error: function(err) { exception = err; },
             });
@@ -1697,7 +1721,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(null, null, null);
-            MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
+            MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
                 result: function() {},
                 error: function(err) { exception = err; },
             });
@@ -1725,7 +1749,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(null, null, null);
-            MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
+            MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
                 result: function() {},
                 error: function(err) { exception = err; },
             });
@@ -1754,7 +1778,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_USER_ID_TOKEN, USER_ID_TOKEN);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(null, null, null);
-            MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
+            MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
                 result: function() {},
                 error: function(err) { exception = err; },
             });
@@ -1782,7 +1806,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_USER_ID_TOKEN, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(null, null, null);
-            MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
+            MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
                 result: function() {},
                 error: function(err) { exception = err; },
             });
@@ -1817,7 +1841,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_USER_ID_TOKEN, PEER_USER_ID_TOKEN);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(null, null, null);
-            MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
+            MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
                 result: function() {},
                 error: function(err) { exception = err; },
             });
@@ -1845,7 +1869,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(null, PEER_USER_ID_TOKEN, null);
-            MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+            MessageHeader.create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
                 result: function() {},
                 error: function(err) { exception = err; },
             });
@@ -1881,7 +1905,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, peerUserIdToken, null);
-            MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+            MessageHeader.create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
                 result: function() {},
                 error: function(err) { exception = err; },
             });
@@ -1918,7 +1942,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(null, null, peerServiceTokens);
-            MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+            MessageHeader.create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
                 result: function() {},
                 error: function(err) { exception = err; },
             });
@@ -1955,7 +1979,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, null, peerServiceTokens);
-            MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+            MessageHeader.create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
                 result: function() {},
                 error: function(err) { exception = err; },
             });
@@ -1992,7 +2016,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, null, peerServiceTokens);
-            MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+            MessageHeader.create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
                 result: function() {},
                 error: function(err) { exception = err; },
             });
@@ -2035,7 +2059,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, USER_ID_TOKEN, peerServiceTokens);
-            MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+            MessageHeader.create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
                 result: function() {},
                 error: function(err) { exception = err; },
             });
@@ -2072,7 +2096,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, null);
-            MessageHeader$create(p2pCtx, null, masterToken, headerData, peerData, {
+            MessageHeader.create(p2pCtx, null, masterToken, headerData, peerData, {
                 result: function() {},
                 error: function(err) { exception = err; },
             });
@@ -2111,7 +2135,7 @@ describe("MessageHeader", function() {
             builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(null, null, null);
-            MessageHeader$create(ctx, ENTITY_AUTH_DATA, null, headerData, peerData, {
+            MessageHeader.create(ctx, ENTITY_AUTH_DATA, null, headerData, peerData, {
                 result: function() {},
                 error: function(err) { exception = err; },
             });
@@ -2166,7 +2190,7 @@ describe("MessageHeader", function() {
 		    builder.set(KEY_USER_ID_TOKEN, userIdToken);
 			var headerData = builder.build();
 			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-			MessageHeader$create(p2pCtx, null, masterToken, headerData, peerData, {
+			MessageHeader.create(p2pCtx, null, masterToken, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -2180,15 +2204,15 @@ describe("MessageHeader", function() {
             expect(messageHeader.cryptoContext).not.toBeNull();
             expect(messageHeader.entityAuthenticationData).toBeNull();
             var keyRequestData = messageHeader.keyRequestData;
-            expect(Arrays$contains(keyRequestData, PEER_KEY_REQUEST_DATA)).toBeTruthy();
+            expect(Arrays.contains(keyRequestData, PEER_KEY_REQUEST_DATA)).toBeTruthy();
             expect(messageHeader.keyResponseData).toEqual(PEER_KEY_RESPONSE_DATA);
             expect(messageHeader.masterToken).toEqual(masterToken);
             expect(messageHeader.messageId).toEqual(MESSAGE_ID);
             expect(messageHeader.peerMasterToken).toEqual(PEER_MASTER_TOKEN);
-            expect(Arrays$contains(messageHeader.peerServiceTokens, peerServiceTokens)).toBeTruthy();
+            expect(Arrays.contains(messageHeader.peerServiceTokens, peerServiceTokens)).toBeTruthy();
             expect(messageHeader.peerUserIdToken).toEqual(PEER_USER_ID_TOKEN);
             var serviceTokens = builder.getServiceTokens();
-            expect(Arrays$contains(messageHeader.serviceTokens, serviceTokens)).toBeTruthy();
+            expect(Arrays.contains(messageHeader.serviceTokens, serviceTokens)).toBeTruthy();
             expect(messageHeader.userAuthenticationData).toEqual(USER_AUTH_DATA);
             expect(messageHeader.userIdToken).toEqual(userIdToken);
             expect(messageHeader.user).toEqual(userIdToken.user);
@@ -2216,7 +2240,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			var headerData = builder.build();
 			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-			MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
+			MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -2227,7 +2251,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			MslTestUtils.toMslObject(encoder, messageHeader, {
 				result: function(messageHeaderMo) {
-					Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 						result: function(h) { header = h; },
 						error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 					});
@@ -2248,8 +2272,8 @@ describe("MessageHeader", function() {
             expect(moMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
             var keyRequestData = messageHeader.keyRequestData;
             var moKeyRequestData = moMessageHeader.keyRequestData;
-            expect(Arrays$contains(keyRequestData, moKeyRequestData)).toBeTruthy();
-            expect(Arrays$contains(moKeyRequestData, keyRequestData)).toBeTruthy();
+            expect(Arrays.contains(keyRequestData, moKeyRequestData)).toBeTruthy();
+            expect(Arrays.contains(moKeyRequestData, keyRequestData)).toBeTruthy();
             expect(moMessageHeader.keyResponseData).toEqual(messageHeader.keyResponseData);
             expect(moMessageHeader.masterToken).toEqual(messageHeader.masterToken);
             expect(moMessageHeader.messageId).toEqual(messageHeader.messageId);
@@ -2258,8 +2282,8 @@ describe("MessageHeader", function() {
             expect(messageHeader.peerUserIdToken).toBeNull();
             var serviceTokens = messageHeader.serviceTokens;
             var moServiceTokens = moMessageHeader.serviceTokens;
-            expect(Arrays$contains(serviceTokens, moServiceTokens)).toBeTruthy();
-            expect(Arrays$contains(moServiceTokens, serviceTokens)).toBeTruthy();
+            expect(Arrays.contains(serviceTokens, moServiceTokens)).toBeTruthy();
+            expect(Arrays.contains(moServiceTokens, serviceTokens)).toBeTruthy();
             expect(moMessageHeader.userAuthenticationData).toEqual(messageHeader.userAuthenticationData);
             expect(moMessageHeader.userIdToken).toEqual(messageHeader.userIdToken);
             expect(moMessageHeader.user).toEqual(messageHeader.user);
@@ -2287,7 +2311,7 @@ describe("MessageHeader", function() {
 		runs(function() {
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-            MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+            MessageHeader.create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -2298,7 +2322,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			MslTestUtils.toMslObject(encoder, messageHeader, {
 				result: function(messageHeaderMo) {
-					Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 						result: function(h) { header = h; },
 						error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 					});
@@ -2319,20 +2343,20 @@ describe("MessageHeader", function() {
             expect(moMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
             var keyRequestData = messageHeader.keyRequestData;
             var moKeyRequestData = moMessageHeader.keyRequestData;
-            expect(Arrays$contains(keyRequestData, moKeyRequestData)).toBeTruthy();
-            expect(Arrays$contains(moKeyRequestData, keyRequestData)).toBeTruthy();
+            expect(Arrays.contains(keyRequestData, moKeyRequestData)).toBeTruthy();
+            expect(Arrays.contains(moKeyRequestData, keyRequestData)).toBeTruthy();
             expect(moMessageHeader.keyResponseData).toEqual(messageHeader.keyResponseData);
             expect(moMessageHeader.masterToken).toEqual(messageHeader.masterToken);
             expect(moMessageHeader.messageId).toEqual(messageHeader.messageId);
             expect(moMessageHeader.peerMasterToken).toEqual(messageHeader.peerMasterToken);
             var moPeerServiceTokens = moMessageHeader.peerServiceTokens;
-            expect(Arrays$contains(peerServiceTokens, moPeerServiceTokens)).toBeTruthy();
-            expect(Arrays$contains(moPeerServiceTokens, peerServiceTokens)).toBeTruthy();
+            expect(Arrays.contains(peerServiceTokens, moPeerServiceTokens)).toBeTruthy();
+            expect(Arrays.contains(moPeerServiceTokens, peerServiceTokens)).toBeTruthy();
             expect(moMessageHeader.peerUserIdToken).toEqual(messageHeader.peerUserIdToken);
             var serviceTokens = messageHeader.serviceTokens;
             var moServiceTokens = moMessageHeader.serviceTokens;
-            expect(Arrays$contains(serviceTokens, moServiceTokens)).toBeTruthy();
-            expect(Arrays$contains(moServiceTokens, serviceTokens)).toBeTruthy();
+            expect(Arrays.contains(serviceTokens, moServiceTokens)).toBeTruthy();
+            expect(Arrays.contains(moServiceTokens, serviceTokens)).toBeTruthy();
             expect(moMessageHeader.userAuthenticationData).toEqual(messageHeader.userAuthenticationData);
             expect(moMessageHeader.userIdToken).toEqual(messageHeader.userIdToken);
             expect(moMessageHeader.user).not.toBeNull();
@@ -2357,7 +2381,7 @@ describe("MessageHeader", function() {
 		runs(function() {
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-            MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
+            MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -2368,7 +2392,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			MslTestUtils.toMslObject(encoder, messageHeader, {
 				result: function(messageHeaderMo) {
-					Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 						result: function(h) { header = h; },
 						error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 					});
@@ -2389,8 +2413,8 @@ describe("MessageHeader", function() {
             expect(moMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
             var keyRequestData = messageHeader.keyRequestData;
             var moKeyRequestData = moMessageHeader.keyRequestData;
-            expect(Arrays$contains(keyRequestData, moKeyRequestData)).toBeTruthy();
-            expect(Arrays$contains(moKeyRequestData, keyRequestData)).toBeTruthy();
+            expect(Arrays.contains(keyRequestData, moKeyRequestData)).toBeTruthy();
+            expect(Arrays.contains(moKeyRequestData, keyRequestData)).toBeTruthy();
             expect(moMessageHeader.keyResponseData).toEqual(messageHeader.keyResponseData);
             expect(moMessageHeader.masterToken).toEqual(messageHeader.masterToken);
             expect(moMessageHeader.messageId).toEqual(messageHeader.messageId);
@@ -2399,8 +2423,8 @@ describe("MessageHeader", function() {
             expect(moMessageHeader.peerUserIdToken).toBeNull();
             var serviceTokens = messageHeader.serviceTokens;
             var moServiceTokens = moMessageHeader.serviceTokens;
-            expect(Arrays$contains(serviceTokens, moServiceTokens)).toBeTruthy();
-            expect(Arrays$contains(moServiceTokens, serviceTokens)).toBeTruthy();
+            expect(Arrays.contains(serviceTokens, moServiceTokens)).toBeTruthy();
+            expect(Arrays.contains(moServiceTokens, serviceTokens)).toBeTruthy();
             expect(moMessageHeader.userAuthenticationData).toEqual(messageHeader.userAuthenticationData);
             expect(moMessageHeader.userIdToken).toEqual(messageHeader.userIdToken);
             expect(moMessageHeader.user).toEqual(messageHeader.user);
@@ -2425,7 +2449,7 @@ describe("MessageHeader", function() {
 		runs(function() {
             var headerData = builder.build();
 			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-			MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(p2pCtx, PEER_ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -2436,7 +2460,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			MslTestUtils.toMslObject(encoder, messageHeader, {
 				result: function(messageHeaderMo) {
-					Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 						result: function(h) { header = h; },
 						error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 					});
@@ -2457,20 +2481,20 @@ describe("MessageHeader", function() {
             expect(moMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
             var keyRequestData = messageHeader.keyRequestData;
             var moKeyRequestData = moMessageHeader.keyRequestData;
-            expect(Arrays$contains(keyRequestData, moKeyRequestData)).toBeTruthy();
-            expect(Arrays$contains(moKeyRequestData, keyRequestData)).toBeTruthy();
+            expect(Arrays.contains(keyRequestData, moKeyRequestData)).toBeTruthy();
+            expect(Arrays.contains(moKeyRequestData, keyRequestData)).toBeTruthy();
             expect(moMessageHeader.keyResponseData).toEqual(messageHeader.keyResponseData);
             expect(moMessageHeader.masterToken).toEqual(messageHeader.masterToken);
             expect(moMessageHeader.messageId).toEqual(messageHeader.messageId);
             expect(moMessageHeader.peerMasterToken).toEqual(messageHeader.peerMasterToken);
             var moPeerServiceTokens = moMessageHeader.peerServiceTokens;
-            expect(Arrays$contains(peerServiceTokens, moPeerServiceTokens)).toBeTruthy();
-            expect(Arrays$contains(moPeerServiceTokens, peerServiceTokens)).toBeTruthy();
+            expect(Arrays.contains(peerServiceTokens, moPeerServiceTokens)).toBeTruthy();
+            expect(Arrays.contains(moPeerServiceTokens, peerServiceTokens)).toBeTruthy();
             expect(moMessageHeader.peerUserIdToken).toEqual(messageHeader.peerUserIdToken);
             var serviceTokens = messageHeader.serviceTokens;
             var moServiceTokens = moMessageHeader.serviceTokens;
-            expect(Arrays$contains(serviceTokens, moServiceTokens)).toBeTruthy();
-            expect(Arrays$contains(moServiceTokens, serviceTokens)).toBeTruthy();
+            expect(Arrays.contains(serviceTokens, moServiceTokens)).toBeTruthy();
+            expect(Arrays.contains(moServiceTokens, serviceTokens)).toBeTruthy();
             expect(moMessageHeader.userAuthenticationData).toEqual(messageHeader.userAuthenticationData);
             expect(moMessageHeader.userIdToken).toEqual(messageHeader.userIdToken);
             expect(moMessageHeader.user).toEqual(messageHeader.user);
@@ -2495,7 +2519,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			var headerData = builder.build();
 			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-			MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -2506,7 +2530,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			MslTestUtils.toMslObject(encoder, messageHeader, {
 				result: function(messageHeaderMo) {
-					Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 						result: function(h) { header = h; },
 						error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 					});
@@ -2527,8 +2551,8 @@ describe("MessageHeader", function() {
             expect(moMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
             var keyRequestData = messageHeader.keyRequestData;
             var moKeyRequestData = moMessageHeader.keyRequestData;
-            expect(Arrays$contains(keyRequestData, moKeyRequestData)).toBeTruthy();
-            expect(Arrays$contains(moKeyRequestData, keyRequestData)).toBeTruthy();
+            expect(Arrays.contains(keyRequestData, moKeyRequestData)).toBeTruthy();
+            expect(Arrays.contains(moKeyRequestData, keyRequestData)).toBeTruthy();
             expect(moMessageHeader.keyResponseData).toEqual(messageHeader.keyResponseData);
             expect(moMessageHeader.masterToken).toEqual(messageHeader.masterToken);
             expect(moMessageHeader.messageId).toEqual(messageHeader.messageId);
@@ -2537,8 +2561,8 @@ describe("MessageHeader", function() {
             expect(moMessageHeader.peerUserIdToken).toBeNull();
             var serviceTokens = messageHeader.serviceTokens;
             var moServiceTokens = moMessageHeader.serviceTokens;
-            expect(Arrays$contains(serviceTokens, moServiceTokens)).toBeTruthy();
-            expect(Arrays$contains(moServiceTokens, serviceTokens)).toBeTruthy();
+            expect(Arrays.contains(serviceTokens, moServiceTokens)).toBeTruthy();
+            expect(Arrays.contains(moServiceTokens, serviceTokens)).toBeTruthy();
             expect(moMessageHeader.userAuthenticationData).toEqual(messageHeader.userAuthenticationData);
             expect(moMessageHeader.userIdToken).toEqual(messageHeader.userIdToken);
             expect(moMessageHeader.user).not.toBeNull();
@@ -2563,7 +2587,7 @@ describe("MessageHeader", function() {
 		runs(function() {
             var headerData = builder.build();
 			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-				MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
+				MessageHeader.create(p2pCtx, PEER_ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -2574,7 +2598,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			MslTestUtils.toMslObject(encoder, messageHeader, {
 				result: function(messageHeaderMo) {
-					Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 						result: function(h) { header = h; },
 						error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 					});
@@ -2595,20 +2619,20 @@ describe("MessageHeader", function() {
             expect(moMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
             var keyRequestData = messageHeader.keyRequestData;
             var moKeyRequestData = moMessageHeader.keyRequestData;
-            expect(Arrays$contains(keyRequestData, moKeyRequestData)).toBeTruthy();
-            expect(Arrays$contains(moKeyRequestData, keyRequestData)).toBeTruthy();
+            expect(Arrays.contains(keyRequestData, moKeyRequestData)).toBeTruthy();
+            expect(Arrays.contains(moKeyRequestData, keyRequestData)).toBeTruthy();
             expect(moMessageHeader.keyResponseData).toEqual(messageHeader.keyResponseData);
             expect(moMessageHeader.masterToken).toEqual(messageHeader.masterToken);
             expect(moMessageHeader.messageId).toEqual(messageHeader.messageId);
             expect(moMessageHeader.peerMasterToken).toEqual(messageHeader.peerMasterToken);
             var moPeerServiceTokens = moMessageHeader.peerServiceTokens;
-            expect(Arrays$contains(peerServiceTokens, moPeerServiceTokens)).toBeTruthy();
-            expect(Arrays$contains(moPeerServiceTokens, peerServiceTokens)).toBeTruthy();
+            expect(Arrays.contains(peerServiceTokens, moPeerServiceTokens)).toBeTruthy();
+            expect(Arrays.contains(moPeerServiceTokens, peerServiceTokens)).toBeTruthy();
             expect(moMessageHeader.peerUserIdToken).toEqual(messageHeader.peerUserIdToken);
             var serviceTokens = messageHeader.serviceTokens;
             var moServiceTokens = moMessageHeader.serviceTokens;
-            expect(Arrays$contains(serviceTokens, moServiceTokens)).toBeTruthy();
-            expect(Arrays$contains(moServiceTokens, serviceTokens)).toBeTruthy();
+            expect(Arrays.contains(serviceTokens, moServiceTokens)).toBeTruthy();
+            expect(Arrays.contains(moServiceTokens, serviceTokens)).toBeTruthy();
             expect(moMessageHeader.userAuthenticationData).toEqual(messageHeader.userAuthenticationData);
             expect(moMessageHeader.userIdToken).toEqual(messageHeader.userIdToken);
             expect(moMessageHeader.user).not.toBeNull();
@@ -2659,7 +2683,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_USER_ID_TOKEN, userIdToken);
 			var headerData = builder.build();
 			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-				MessageHeader$create(p2pCtx, null, masterToken, headerData, peerData, {
+				MessageHeader.create(p2pCtx, null, masterToken, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -2674,7 +2698,7 @@ describe("MessageHeader", function() {
 
 			MslTestUtils.toMslObject(encoder, messageHeader, {
 				result: function(messageHeaderMo) {
-		            Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		            Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                result: function() {},
 		                error: function(err) { exception = err; },
 		            });
@@ -2725,7 +2749,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
 			var headerData = builder.build();
 			var peerData = new HeaderPeerData(null, null, null);
-			MessageHeader$create(ctx, entityAuthData, null, headerData, peerData, {
+			MessageHeader.create(ctx, entityAuthData, null, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -2740,7 +2764,7 @@ describe("MessageHeader", function() {
 
 			MslTestUtils.toMslObject(encoder, messageHeader, {
 				result: function(messageHeaderMo) {
-		            Header$parseHeader(ctx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		            Header.parseHeader(ctx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                result: function() {},
 		                error: function(err) { exception = err; },
 		            });
@@ -2782,7 +2806,7 @@ describe("MessageHeader", function() {
 		    builder.set(KEY_KEY_RESPONSE_DATA, null);
 			var headerData = builder.build();
 			var peerData = new HeaderPeerData(null, null, null);
-			MessageHeader$create(ctx, null, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(ctx, null, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -2797,7 +2821,7 @@ describe("MessageHeader", function() {
 
 			MslTestUtils.toMslObject(encoder, messageHeader, {
 				result: function(messageHeaderMo) {
-		            Header$parseHeader(ctx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		            Header.parseHeader(ctx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                result: function() {},
 		                error: function(err) { exception = err; },
 		            });
@@ -2854,7 +2878,7 @@ describe("MessageHeader", function() {
 		    builder.set(KEY_USER_ID_TOKEN, userIdToken);
 			var headerData = builder.build();
 			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-			MessageHeader$create(p2pCtx, null, masterToken, headerData, peerData, {
+			MessageHeader.create(p2pCtx, null, masterToken, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -2865,7 +2889,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			MslTestUtils.toMslObject(encoder, messageHeader, {
 				result: function(messageHeaderMo) {
-					Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 						result: function(h) { header = h; },
 						error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 					});
@@ -2886,8 +2910,8 @@ describe("MessageHeader", function() {
             expect(moMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
             var keyRequestData = messageHeader.keyRequestData;
             var moKeyRequestData = moMessageHeader.keyRequestData;
-            expect(Arrays$contains(keyRequestData, moKeyRequestData)).toBeTruthy();
-            expect(Arrays$contains(moKeyRequestData, keyRequestData)).toBeTruthy();
+            expect(Arrays.contains(keyRequestData, moKeyRequestData)).toBeTruthy();
+            expect(Arrays.contains(moKeyRequestData, keyRequestData)).toBeTruthy();
             expect(moMessageHeader.keyResponseData).toEqual(messageHeader.keyResponseData);
             // The reconstructed untrusted service token won't pass tests for
             // equality.
@@ -2895,13 +2919,13 @@ describe("MessageHeader", function() {
             expect(moMessageHeader.messageId).toEqual(messageHeader.messageId);
             expect(moMessageHeader.peerMasterToken).toEqual(messageHeader.peerMasterToken);
             var moPeerServiceTokens = moMessageHeader.peerServiceTokens;
-            expect(Arrays$contains(peerServiceTokens, moPeerServiceTokens)).toBeTruthy();
-            expect(Arrays$contains(moPeerServiceTokens, peerServiceTokens)).toBeTruthy();
+            expect(Arrays.contains(peerServiceTokens, moPeerServiceTokens)).toBeTruthy();
+            expect(Arrays.contains(moPeerServiceTokens, peerServiceTokens)).toBeTruthy();
             expect(moMessageHeader.peerUserIdToken).toEqual(messageHeader.peerUserIdToken);
             var serviceTokens = messageHeader.serviceTokens;
             var moServiceTokens = moMessageHeader.serviceTokens;
-            expect(Arrays$contains(serviceTokens, moServiceTokens)).toBeTruthy();
-            expect(Arrays$contains(moServiceTokens, serviceTokens)).toBeTruthy();
+            expect(Arrays.contains(serviceTokens, moServiceTokens)).toBeTruthy();
+            expect(Arrays.contains(moServiceTokens, serviceTokens)).toBeTruthy();
             expect(moMessageHeader.userAuthenticationData).toEqual(messageHeader.userAuthenticationData);
             expect(moMessageHeader.userIdToken).toEqual(messageHeader.userIdToken);
             expect(moMessageHeader.user).toEqual(messageHeader.user);
@@ -2922,7 +2946,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			var headerData = builder.build();
 			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, null);
-			MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
+			MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -2934,7 +2958,7 @@ describe("MessageHeader", function() {
 			MslTestUtils.toMslObject(encoder, messageHeader, {
 				result: function(messageHeaderMo) {
 		            messageHeaderMo.put(KEY_ENTITY_AUTHENTICATION_DATA, "x");
-					Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 						result: function() {},
 						error: function(err) { exception = err; },
 					});
@@ -2963,7 +2987,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			var headerData = builder.build();
 			var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, null);
-			MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -2976,7 +3000,7 @@ describe("MessageHeader", function() {
 				result: function(messageHeaderMo) {
 		            messageHeaderMo.remove(KEY_ENTITY_AUTHENTICATION_DATA);
 		            messageHeaderMo.remove(KEY_MASTER_TOKEN);
-					Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 						result: function() {},
 						error: function(err) { exception = err; },
 					});
@@ -3005,7 +3029,7 @@ describe("MessageHeader", function() {
 		runs(function() {
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, null);
-            MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
+            MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -3017,7 +3041,7 @@ describe("MessageHeader", function() {
 			MslTestUtils.toMslObject(encoder, messageHeader, {
 				result: function(messageHeaderMo) {
 		            messageHeaderMo.put(KEY_MASTER_TOKEN, "x");
-					Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 						result: function() {},
 						error: function(err) { exception = err; },
 					});
@@ -3046,7 +3070,7 @@ describe("MessageHeader", function() {
 		runs(function() {
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, null);
-            MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
+            MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -3058,7 +3082,7 @@ describe("MessageHeader", function() {
 			MslTestUtils.toMslObject(encoder, messageHeader, {
 				result: function(messageHeaderMo) {
 		            messageHeaderMo.remove(KEY_SIGNATURE);
-					Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 						result: function() {},
 						error: function(err) { exception = err; },
 					});
@@ -3087,7 +3111,7 @@ describe("MessageHeader", function() {
         runs(function() {
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, null);
-            MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
+            MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
                 result: function(token) { messageHeader = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -3099,7 +3123,7 @@ describe("MessageHeader", function() {
 			MslTestUtils.toMslObject(encoder, messageHeader, {
 				result: function(messageHeaderMo) {
 		            messageHeaderMo.put(KEY_SIGNATURE, "x");
-		            Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		            Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                result: function() {},
 		                error: function(err) { exception = err; },
 		            });
@@ -3128,7 +3152,7 @@ describe("MessageHeader", function() {
         runs(function() {
             var headerData = builder.build();
             var peerData = new HeaderPeerData(null, null, null);
-            MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
+            MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -3140,7 +3164,7 @@ describe("MessageHeader", function() {
 			MslTestUtils.toMslObject(encoder, messageHeader, {
 				result: function(messageHeaderMo) {
 		            messageHeaderMo.put(KEY_SIGNATURE, base64$decode("AAA="));
-					Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 						result: function() {},
 						error: function(err) { exception = err; },
 					});
@@ -3169,7 +3193,7 @@ describe("MessageHeader", function() {
         runs(function() {
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, null);
-            MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
+            MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -3181,7 +3205,7 @@ describe("MessageHeader", function() {
 			MslTestUtils.toMslObject(encoder, messageHeader, {
 				result: function(messageHeaderMo) {
 		            messageHeaderMo.remove(KEY_HEADERDATA);
-					Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 						result: function() {},
 						error: function(err) { exception = err; },
 					});
@@ -3210,7 +3234,7 @@ describe("MessageHeader", function() {
         runs(function() {
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, null);
-            MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
+            MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -3222,7 +3246,7 @@ describe("MessageHeader", function() {
 			MslTestUtils.toMslObject(encoder, messageHeader, {
 				result: function(messageHeaderMo) {
 					messageHeaderMo.put(KEY_HEADERDATA, "x");
-					Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 						result: function() {},
 						error: function(err) { exception = err; },
 					});
@@ -3251,7 +3275,7 @@ describe("MessageHeader", function() {
         runs(function() {
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, null);
-            MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
+            MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -3265,7 +3289,7 @@ describe("MessageHeader", function() {
 		            var ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
 		            ++ciphertext[0];
 		            messageHeaderMo.put(KEY_HEADERDATA, ciphertext);
-					Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 						result: function() {},
 						error: function(err) { exception = err; },
 					});
@@ -3297,7 +3321,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_USER_AUTHENTICATION_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(null, null, null);
-            MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+            MessageHeader.create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -3308,7 +3332,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			MslTestUtils.toMslObject(encoder, messageHeader, {
 				result: function(messageHeaderMo) {
-					Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 						result: function(h) { header = h; },
 						error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 					});
@@ -3329,21 +3353,21 @@ describe("MessageHeader", function() {
             expect(moMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
             var keyRequestData = messageHeader.keyRequestData;
             var moKeyRequestData = moMessageHeader.keyRequestData;
-            expect(Arrays$contains(keyRequestData, moKeyRequestData)).toBeTruthy();
-            expect(Arrays$contains(moKeyRequestData, keyRequestData)).toBeTruthy();
+            expect(Arrays.contains(keyRequestData, moKeyRequestData)).toBeTruthy();
+            expect(Arrays.contains(moKeyRequestData, keyRequestData)).toBeTruthy();
             expect(moMessageHeader.keyResponseData).toEqual(messageHeader.keyResponseData);
             expect(moMessageHeader.masterToken).toEqual(messageHeader.masterToken);
             expect(moMessageHeader.messageId).toEqual(messageHeader.messageId);
             expect(moMessageHeader.peerMasterToken).toEqual(messageHeader.peerMasterToken);
             var peerServiceTokens = messageHeader.peerServiceTokens;
             var moPeerServiceTokens = moMessageHeader.peerServiceTokens;
-            expect(Arrays$contains(peerServiceTokens, moPeerServiceTokens)).toBeTruthy();
-            expect(Arrays$contains(moPeerServiceTokens, peerServiceTokens)).toBeTruthy();
+            expect(Arrays.contains(peerServiceTokens, moPeerServiceTokens)).toBeTruthy();
+            expect(Arrays.contains(moPeerServiceTokens, peerServiceTokens)).toBeTruthy();
             expect(moMessageHeader.peerUserIdToken).toEqual(messageHeader.peerUserIdToken);
             var serviceTokens = messageHeader.serviceTokens;
             var moServiceTokens = moMessageHeader.serviceTokens;
-            expect(Arrays$contains(serviceTokens, moServiceTokens)).toBeTruthy();
-            expect(Arrays$contains(moServiceTokens, serviceTokens)).toBeTruthy();
+            expect(Arrays.contains(serviceTokens, moServiceTokens)).toBeTruthy();
+            expect(Arrays.contains(moServiceTokens, serviceTokens)).toBeTruthy();
             expect(moMessageHeader.userAuthenticationData).toEqual(messageHeader.userAuthenticationData);
             expect(moMessageHeader.userIdToken).toEqual(messageHeader.userIdToken);
             expect(moMessageHeader.user).toEqual(messageHeader.user);
@@ -3367,7 +3391,7 @@ describe("MessageHeader", function() {
             builder.set(KEY_USER_AUTHENTICATION_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(null, null, null);
-			MessageHeader$create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
+			MessageHeader.create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -3413,7 +3437,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function(h) { header = h; },
 		                                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 		                                    });
@@ -3443,21 +3467,21 @@ describe("MessageHeader", function() {
             expect(moMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
             var keyRequestData = messageHeader.keyRequestData;
             var moKeyRequestData = moMessageHeader.keyRequestData;
-            expect(Arrays$contains(keyRequestData, moKeyRequestData)).toBeTruthy();
-            expect(Arrays$contains(moKeyRequestData, keyRequestData)).toBeTruthy();
+            expect(Arrays.contains(keyRequestData, moKeyRequestData)).toBeTruthy();
+            expect(Arrays.contains(moKeyRequestData, keyRequestData)).toBeTruthy();
             expect(moMessageHeader.keyResponseData).toEqual(messageHeader.keyResponseData);
             expect(moMessageHeader.masterToken).toEqual(messageHeader.masterToken);
             expect(moMessageHeader.messageId).toEqual(messageHeader.messageId);
             expect(moMessageHeader.peerMasterToken).toEqual(messageHeader.peerMasterToken);
             var peerServiceTokens = messageHeader.peerServiceTokens;
             var moPeerServiceTokens = moMessageHeader.peerServiceTokens;
-            expect(Arrays$contains(peerServiceTokens, moPeerServiceTokens)).toBeTruthy();
-            expect(Arrays$contains(moPeerServiceTokens, peerServiceTokens)).toBeTruthy();
+            expect(Arrays.contains(peerServiceTokens, moPeerServiceTokens)).toBeTruthy();
+            expect(Arrays.contains(moPeerServiceTokens, peerServiceTokens)).toBeTruthy();
             expect(moMessageHeader.peerUserIdToken).toEqual(messageHeader.peerUserIdToken);
             var serviceTokens = messageHeader.serviceTokens;
             var moServiceTokens = moMessageHeader.serviceTokens;
-            expect(Arrays$contains(serviceTokens, moServiceTokens)).toBeTruthy();
-            expect(Arrays$contains(moServiceTokens, serviceTokens)).toBeTruthy();
+            expect(Arrays.contains(serviceTokens, moServiceTokens)).toBeTruthy();
+            expect(Arrays.contains(moServiceTokens, serviceTokens)).toBeTruthy();
             expect(moMessageHeader.userAuthenticationData).toEqual(messageHeader.userAuthenticationData);
             expect(moMessageHeader.userIdToken).toEqual(messageHeader.userIdToken);
             expect(moMessageHeader.user).toEqual(messageHeader.user);
@@ -3481,7 +3505,7 @@ describe("MessageHeader", function() {
             builder.set(KEY_USER_AUTHENTICATION_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(null, null, null);
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -3492,7 +3516,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			MslTestUtils.toMslObject(encoder, messageHeader, {
 				result: function(messageHeaderMo) {
-					Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 						result: function(h) { header = h; },
 						error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 					});
@@ -3513,21 +3537,21 @@ describe("MessageHeader", function() {
             expect(moMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
             var keyRequestData = messageHeader.keyRequestData;
             var moKeyRequestData = moMessageHeader.keyRequestData;
-            expect(Arrays$contains(keyRequestData, moKeyRequestData)).toBeTruthy();
-            expect(Arrays$contains(moKeyRequestData, keyRequestData)).toBeTruthy();
+            expect(Arrays.contains(keyRequestData, moKeyRequestData)).toBeTruthy();
+            expect(Arrays.contains(moKeyRequestData, keyRequestData)).toBeTruthy();
             expect(moMessageHeader.keyResponseData).toEqual(messageHeader.keyResponseData);
             expect(moMessageHeader.masterToken).toEqual(messageHeader.masterToken);
             expect(moMessageHeader.messageId).toEqual(messageHeader.messageId);
             expect(moMessageHeader.peerMasterToken).toEqual(messageHeader.peerMasterToken);
             var peerServiceTokens = messageHeader.peerServiceTokens;
             var moPeerServiceTokens = moMessageHeader.peerServiceTokens;
-            expect(Arrays$contains(peerServiceTokens, moPeerServiceTokens)).toBeTruthy();
-            expect(Arrays$contains(moPeerServiceTokens, peerServiceTokens)).toBeTruthy();
+            expect(Arrays.contains(peerServiceTokens, moPeerServiceTokens)).toBeTruthy();
+            expect(Arrays.contains(moPeerServiceTokens, peerServiceTokens)).toBeTruthy();
             expect(moMessageHeader.peerUserIdToken).toEqual(messageHeader.peerUserIdToken);
             var serviceTokens = messageHeader.serviceTokens;
             var moServiceTokens = moMessageHeader.serviceTokens;
-            expect(Arrays$contains(serviceTokens, moServiceTokens)).toBeTruthy();
-            expect(Arrays$contains(moServiceTokens, serviceTokens)).toBeTruthy();
+            expect(Arrays.contains(serviceTokens, moServiceTokens)).toBeTruthy();
+            expect(Arrays.contains(moServiceTokens, serviceTokens)).toBeTruthy();
             expect(moMessageHeader.userAuthenticationData).toEqual(messageHeader.userAuthenticationData);
             expect(moMessageHeader.userIdToken).toEqual(messageHeader.userIdToken);
             expect(moMessageHeader.user).toEqual(messageHeader.user);
@@ -3551,7 +3575,7 @@ describe("MessageHeader", function() {
             builder.set(KEY_USER_AUTHENTICATION_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(null, null, null);
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -3590,7 +3614,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function(h) { header = h; },
 		                                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 		                                    });
@@ -3620,21 +3644,21 @@ describe("MessageHeader", function() {
             expect(moMessageHeader.entityAuthenticationData).toEqual(messageHeader.entityAuthenticationData);
             var keyRequestData = messageHeader.keyRequestData;
             var moKeyRequestData = moMessageHeader.keyRequestData;
-            expect(Arrays$contains(keyRequestData, moKeyRequestData)).toBeTruthy();
-            expect(Arrays$contains(moKeyRequestData, keyRequestData)).toBeTruthy();
+            expect(Arrays.contains(keyRequestData, moKeyRequestData)).toBeTruthy();
+            expect(Arrays.contains(moKeyRequestData, keyRequestData)).toBeTruthy();
             expect(moMessageHeader.keyResponseData).toEqual(messageHeader.keyResponseData);
             expect(moMessageHeader.masterToken).toEqual(messageHeader.masterToken);
             expect(moMessageHeader.messageId).toEqual(messageHeader.messageId);
             expect(moMessageHeader.peerMasterToken).toEqual(messageHeader.peerMasterToken);
             var peerServiceTokens = messageHeader.peerServiceTokens;
             var moPeerServiceTokens = moMessageHeader.peerServiceTokens;
-            expect(Arrays$contains(peerServiceTokens, moPeerServiceTokens)).toBeTruthy();
-            expect(Arrays$contains(moPeerServiceTokens, peerServiceTokens)).toBeTruthy();
+            expect(Arrays.contains(peerServiceTokens, moPeerServiceTokens)).toBeTruthy();
+            expect(Arrays.contains(moPeerServiceTokens, peerServiceTokens)).toBeTruthy();
             expect(moMessageHeader.peerUserIdToken).toEqual(messageHeader.peerUserIdToken);
             var serviceTokens = messageHeader.serviceTokens;
             var moServiceTokens = moMessageHeader.serviceTokens;
-            expect(Arrays$contains(serviceTokens, moServiceTokens)).toBeTruthy();
-            expect(Arrays$contains(moServiceTokens, serviceTokens)).toBeTruthy();
+            expect(Arrays.contains(serviceTokens, moServiceTokens)).toBeTruthy();
+            expect(Arrays.contains(moServiceTokens, serviceTokens)).toBeTruthy();
             expect(moMessageHeader.userAuthenticationData).toEqual(messageHeader.userAuthenticationData);
             expect(moMessageHeader.userIdToken).toEqual(messageHeader.userIdToken);
             expect(moMessageHeader.user).toEqual(messageHeader.user);
@@ -3662,7 +3686,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(null, null, null);
-			MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
+			MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -3715,7 +3739,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function() {},
 		                                        error: function(err) { exception = err; },
 		                                    });
@@ -3754,7 +3778,7 @@ describe("MessageHeader", function() {
             builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(null, null, null);
-			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -3800,7 +3824,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function() {},
 		                                        error: function(err) { exception = err; },
 		                                    });
@@ -3840,7 +3864,7 @@ describe("MessageHeader", function() {
             builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(null, null, null);
-            MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
+            MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
                 result: function(token) { messageHeader = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -3887,7 +3911,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function() {},
 		                                        error: function(err) { exception = err; },
 		                                    });
@@ -3931,7 +3955,7 @@ describe("MessageHeader", function() {
 		    builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -3968,7 +3992,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function() {},
 		                                        error: function(err) { exception = err; },
 		                                    });
@@ -4012,7 +4036,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -4049,7 +4073,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function() {},
 		                                        error: function(err) { exception = err; },
 		                                    });
@@ -4093,7 +4117,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(null, null, null);
-			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -4134,7 +4158,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function() {},
 		                                        error: function(err) { exception = err; },
 		                                    });
@@ -4187,7 +4211,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(null, null, null);
-			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -4228,7 +4252,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function() {},
 		                                        error: function(err) { exception = err; },
 		                                    });
@@ -4272,7 +4296,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, null, peerServiceTokens);
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -4309,7 +4333,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function() {},
 		                                        error: function(err) { exception = err; },
 		                                    });
@@ -4353,7 +4377,7 @@ describe("MessageHeader", function() {
 		    builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, null, peerServiceTokens);
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -4390,7 +4414,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function() {},
 		                                        error: function(err) { exception = err; },
 		                                    });
@@ -4434,7 +4458,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -4480,7 +4504,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function() {},
 		                                        error: function(err) { exception = err; },
 		                                    });
@@ -4511,7 +4535,7 @@ describe("MessageHeader", function() {
             var expiration = new Date(Date.now() + 10000);
             var encryptionKey = MockPresharedAuthenticationFactory.KPE;
             var hmacKey = MockPresharedAuthenticationFactory.KPH;
-            MasterToken$create(trustedNetCtx, renewalWindow, expiration, 1, 1, null, "IDENTITY", encryptionKey, hmacKey, {
+            MasterToken.create(trustedNetCtx, renewalWindow, expiration, 1, 1, null, "IDENTITY", encryptionKey, hmacKey, {
                 result: function(x) { masterToken = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -4534,7 +4558,7 @@ describe("MessageHeader", function() {
             builder.set(KEY_USER_AUTHENTICATION_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(null, null, null);
-            MessageHeader$create(trustedNetCtx, null, masterToken, headerData, peerData, {
+            MessageHeader.create(trustedNetCtx, null, masterToken, headerData, peerData, {
                 result: function(token) { messageHeader = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -4562,7 +4586,7 @@ describe("MessageHeader", function() {
         var header;
         runs(function() {
             expect(messageHeader.sender).toEqual(ead.getIdentity());
-            Header$parseHeader(trustedNetCtx, mo, null, {
+            Header.parseHeader(trustedNetCtx, mo, null, {
                 result: function(h) { header = h; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -4594,7 +4618,7 @@ describe("MessageHeader", function() {
             builder.set(KEY_USER_AUTHENTICATION_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(null, null, null);
-            MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
+            MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
                 result: function(token) { messageHeader = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -4631,7 +4655,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function() {},
 		                                        error: function(err) { exception = err; },
 		                                    });
@@ -4672,7 +4696,7 @@ describe("MessageHeader", function() {
             builder.set(KEY_USER_AUTHENTICATION_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(null, null, null);
-            MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
+            MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
                 result: function(token) { messageHeader = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -4709,7 +4733,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function(x) { header = x; },
 		                                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		                                    });
@@ -4746,7 +4770,7 @@ describe("MessageHeader", function() {
             builder.set(KEY_USER_AUTHENTICATION_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(null, null, null);
-            MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+            MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
                 result: function(token) { messageHeader = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -4783,7 +4807,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function() {},
 		                                        error: function(e) { exception = e; },
 		                                    });
@@ -4827,7 +4851,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -4864,7 +4888,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function() {},
 		                                        error: function(err) { exception = err; },
 		                                    });
@@ -4908,7 +4932,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -4945,7 +4969,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function() {},
 		                                        error: function(err) { exception = err; },
 		                                    });
@@ -4986,7 +5010,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(null, null, null);
-            MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+            MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
                 result: function() {},
                 error: function(err) { exception = err; },
             });
@@ -5015,7 +5039,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(null, null, null);
-            MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+            MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
                 result: function() {},
                 error: function(err) { exception = err; },
             });
@@ -5047,7 +5071,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -5084,7 +5108,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function() {},
 		                                        error: function(err) { exception = err; },
 		                                    });
@@ -5128,7 +5152,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -5165,7 +5189,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function() {},
 		                                        error: function(err) { exception = err; },
 		                                    });
@@ -5209,7 +5233,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -5246,7 +5270,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function() {},
 		                                        error: function(err) { exception = err; },
 		                                    });
@@ -5290,7 +5314,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -5327,7 +5351,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function() {},
 		                                        error: function(err) { exception = err; },
 		                                    });
@@ -5371,7 +5395,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -5408,7 +5432,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function() {},
 		                                        error: function(err) { exception = err; },
 		                                    });
@@ -5453,7 +5477,7 @@ describe("MessageHeader", function() {
             builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-            MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+            MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
                 result: function(token) { messageHeader = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -5491,7 +5515,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function(x) { header = x; },
 		                                        error: function(err) { exception = err; },
 		                                    });
@@ -5538,7 +5562,7 @@ describe("MessageHeader", function() {
             builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-            MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+            MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
                 result: function(token) { messageHeader = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -5575,7 +5599,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function() {},
 		                                        error: function(err) { exception = err; },
 		                                    });
@@ -5619,7 +5643,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -5656,7 +5680,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function() {},
 		                                        error: function(err) { exception = err; },
 		                                    });
@@ -5700,7 +5724,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -5737,7 +5761,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function() {},
 		                                        error: function(err) { exception = err; },
 		                                    });
@@ -5781,7 +5805,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -5820,7 +5844,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function() {},
 		                                        error: function(err) { exception = err; },
 		                                    });
@@ -5864,7 +5888,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -5901,7 +5925,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function() {},
 		                                        error: function(err) { exception = err; },
 		                                    });
@@ -5945,7 +5969,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -5984,7 +6008,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function() {},
 		                                        error: function(err) { exception = err; },
 		                                    });
@@ -6028,7 +6052,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -6065,7 +6089,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function() {},
 		                                        error: function(err) { exception = err; },
 		                                    });
@@ -6109,7 +6133,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -6148,7 +6172,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function() {},
 		                                        error: function(err) { exception = err; },
 		                                    });
@@ -6191,7 +6215,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -6228,7 +6252,7 @@ describe("MessageHeader", function() {
                     				cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
                     					result: function(signature) {
                     						messageHeaderMo.put(KEY_SIGNATURE, signature);
-                    						Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+                    						Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
                     							result: function() {},
                     							error: function(err) { exception = err; },
                     						});
@@ -6272,7 +6296,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -6309,7 +6333,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function() {},
 		                                        error: function(err) { exception = err; },
 		                                    });
@@ -6353,7 +6377,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
             var peerData = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokens);
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -6390,7 +6414,7 @@ describe("MessageHeader", function() {
 		                            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
-		                                    Header$parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+		                                    Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function() {},
 		                                        error: function(err) { exception = err; },
 		                                    });
@@ -6441,11 +6465,11 @@ describe("MessageHeader", function() {
 		runs(function() {
             var headerData = builder.build();
             var peerData = new HeaderPeerData(null, null, null);
-			MessageHeader$create(trustedNetCtx, null, masterTokenA, headerData, peerData, {
+			MessageHeader.create(trustedNetCtx, null, masterTokenA, headerData, peerData, {
 				result: function(token) { messageHeaderA = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
-			MessageHeader$create(trustedNetCtx, null, masterTokenB, headerData, peerData, {
+			MessageHeader.create(trustedNetCtx, null, masterTokenB, headerData, peerData, {
 				result: function(token) { messageHeaderB = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -6455,7 +6479,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			MslTestUtils.toMslObject(encoder, messageHeaderA, {
 				result: function(mo) {
-					Header$parseHeader(trustedNetCtx, mo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(trustedNetCtx, mo, CRYPTO_CONTEXTS, {
 						result: function(h) { messageHeaderA2 = h; },
 						error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 					});
@@ -6495,11 +6519,11 @@ describe("MessageHeader", function() {
             var peerData = new HeaderPeerData(null, null, null);    
             var entityAuthDataA = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN);
             var entityAuthDataB = new ModelGroupAuthenticationData(MockModelGroupAuthenticationFactory.MGK_ESN);
-			MessageHeader$create(trustedNetCtx, entityAuthDataA, null, headerData, peerData, {
+			MessageHeader.create(trustedNetCtx, entityAuthDataA, null, headerData, peerData, {
 				result: function(token) { messageHeaderA = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
-			MessageHeader$create(trustedNetCtx, entityAuthDataB, null, headerData, peerData, {
+			MessageHeader.create(trustedNetCtx, entityAuthDataB, null, headerData, peerData, {
 				result: function(token) { messageHeaderB = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -6509,7 +6533,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			MslTestUtils.toMslObject(encoder, messageHeaderA, {
 				result: function(mo) {
-					Header$parseHeader(trustedNetCtx, mo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(trustedNetCtx, mo, CRYPTO_CONTEXTS, {
 						result: function(h) { messageHeaderA2 = h; },
 						error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 					});
@@ -6547,11 +6571,11 @@ describe("MessageHeader", function() {
 		runs(function() {
             var headerData = builder.build();
             var peerData = new HeaderPeerData(null, null, null);
-			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeaderA = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
-			MessageHeader$create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
+			MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
 				result: function(token) { messageHeaderB = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -6561,7 +6585,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			MslTestUtils.toMslObject(encoder, messageHeaderA, {
 				result: function(mo) {
-					Header$parseHeader(trustedNetCtx, mo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(trustedNetCtx, mo, CRYPTO_CONTEXTS, {
 						result: function(h) { messageHeaderA2 = h; },
 						error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 					});
@@ -6608,11 +6632,11 @@ describe("MessageHeader", function() {
         runs(function() {
             var headerData = builder.build();
             var peerData = new HeaderPeerData(null, null, null);
-            MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
+            MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
                 result: function(token) { messageHeaderA = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            MessageHeader$create(ctx, null, MASTER_TOKEN, headerData, peerData, {
+            MessageHeader.create(ctx, null, MASTER_TOKEN, headerData, peerData, {
                 result: function(token) { messageHeaderB = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -6622,7 +6646,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			MslTestUtils.toMslObject(encoder, messageHeaderA, {
 				result: function(mo) {
-					Header$parseHeader(trustedNetCtx, mo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(trustedNetCtx, mo, CRYPTO_CONTEXTS, {
 						result: function(h) { messageHeaderA2 = h; },
 						error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 					});
@@ -6670,11 +6694,11 @@ describe("MessageHeader", function() {
             var headerDataA = builder.set(KEY_RECIPIENT, "recipientA").build();
             var headerDataB = builder.set(KEY_RECIPIENT, "recipientB").build();
             var peerData = new HeaderPeerData(null, null, null);
-            MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
+            MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
                 result: function(token) { messageHeaderA = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
+            MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
                 result: function(token) { messageHeaderB = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -6684,7 +6708,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			MslTestUtils.toMslObject(encoder, messageHeaderA, {
 				result: function(mo) {
-					Header$parseHeader(trustedNetCtx, mo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(trustedNetCtx, mo, CRYPTO_CONTEXTS, {
 						result: function(h) { messageHeaderA2 = h; },
 						error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 					});
@@ -6722,12 +6746,12 @@ describe("MessageHeader", function() {
         runs(function() {
             var headerData = builder.build();
             var peerData = new HeaderPeerData(null, null, null);
-            MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
+            MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
                 result: function(token) { messageHeaderA = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
             setTimeout(MILLISECONDS_PER_SECOND, function() {
-                MessageHeader$create(ctx, null, MASTER_TOKEN, headerData, peerData, {
+                MessageHeader.create(ctx, null, MASTER_TOKEN, headerData, peerData, {
                     result: function(token) { messageHeaderB = token; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -6738,7 +6762,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			MslTestUtils.toMslObject(encoder, messageHeaderA, {
 				result: function(mo) {
-					Header$parseHeader(trustedNetCtx, mo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(trustedNetCtx, mo, CRYPTO_CONTEXTS, {
 						result: function(h) { messageHeaderA2 = h; },
 						error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 					});
@@ -6786,11 +6810,11 @@ describe("MessageHeader", function() {
             var headerDataA = builder.set(KEY_MESSAGE_ID, 1).build();
             var headerDataB = builder.set(KEY_MESSAGE_ID, 2).build();
             var peerData = new HeaderPeerData(null, null, null);
-			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
+			MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
 				result: function(token) { messageHeaderA = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
-			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
+			MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
 				result: function(token) { messageHeaderB = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -6800,7 +6824,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			MslTestUtils.toMslObject(encoder, messageHeaderA, {
 				result: function(mo) {
-					Header$parseHeader(trustedNetCtx, mo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(trustedNetCtx, mo, CRYPTO_CONTEXTS, {
 						result: function(h) { messageHeaderA2 = h; },
 						error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 					});
@@ -6848,11 +6872,11 @@ describe("MessageHeader", function() {
             var headerDataA = builder.set(KEY_NON_REPLAYABLE_ID, 1).build();
             var headerDataB = builder.set(KEY_NON_REPLAYABLE_ID, 2).build();
             var peerData = new HeaderPeerData(null, null, null);
-			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
+			MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
 				result: function(token) { messageHeaderA = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
-			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
+			MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
 				result: function(token) { messageHeaderB = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -6862,7 +6886,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			MslTestUtils.toMslObject(encoder, messageHeaderA, {
 				result: function(mo) {
-					Header$parseHeader(trustedNetCtx, mo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(trustedNetCtx, mo, CRYPTO_CONTEXTS, {
 						result: function(h) { messageHeaderA2 = h; },
 						error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 					});
@@ -6910,11 +6934,11 @@ describe("MessageHeader", function() {
             var headerDataA = builder.set(KEY_RENEWABLE, true).build();
             var headerDataB = builder.set(KEY_RENEWABLE, false).build();
             var peerData = new HeaderPeerData(null, null, null);
-			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
+			MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
 				result: function(token) { messageHeaderA = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
-			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
+			MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
 				result: function(token) { messageHeaderB = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -6924,7 +6948,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			MslTestUtils.toMslObject(encoder, messageHeaderA, {
 				result: function(mo) {
-					Header$parseHeader(trustedNetCtx, mo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(trustedNetCtx, mo, CRYPTO_CONTEXTS, {
 						result: function(h) { messageHeaderA2 = h; },
 						error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 					});
@@ -6972,11 +6996,11 @@ describe("MessageHeader", function() {
             var headerDataA = builder.set(KEY_HANDSHAKE, true).build();
             var headerDataB = builder.set(KEY_HANDSHAKE, false).build();
             var peerData = new HeaderPeerData(null, null, null);
-            MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
+            MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
                 result: function(token) { messageHeaderA = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
+            MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
                 result: function(token) { messageHeaderB = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -6986,7 +7010,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			MslTestUtils.toMslObject(encoder, messageHeaderA, {
 				result: function(mo) {
-					Header$parseHeader(trustedNetCtx, mo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(trustedNetCtx, mo, CRYPTO_CONTEXTS, {
 						result: function(h) { messageHeaderA2 = h; },
 						error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 					});
@@ -7036,11 +7060,11 @@ describe("MessageHeader", function() {
             var headerDataA = builder.set(KEY_CAPABILITIES, capsA).build();
             var headerDataB = builder.set(KEY_CAPABILITIES, capsB).build();
             var peerData = new HeaderPeerData(null, null, null);
-			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
+			MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
 				result: function(token) { messageHeaderA = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
-			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
+			MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
 				result: function(token) { messageHeaderB = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -7050,7 +7074,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			MslTestUtils.toMslObject(encoder, messageHeaderA, {
 				result: function(mo) {
-					Header$parseHeader(trustedNetCtx, mo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(trustedNetCtx, mo, CRYPTO_CONTEXTS, {
 						result: function(h) { messageHeaderA2 = h; },
 						error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 					});
@@ -7103,15 +7127,15 @@ describe("MessageHeader", function() {
             var headerDataB = builder.set(KEY_KEY_REQUEST_DATA, keyRequestDataB).build();
             var headerDataC = builder.set(KEY_KEY_REQUEST_DATA, null).build();
             var peerData = new HeaderPeerData(null, null, null);
-			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
+			MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
 				result: function(token) { messageHeaderA = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
-			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
+			MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
 				result: function(token) { messageHeaderB = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
-			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataC, peerData, {
+			MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerDataC, peerData, {
 				result: function(token) { messageHeaderC = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -7121,7 +7145,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			MslTestUtils.toMslObject(encoder, messageHeaderA, {
 				result: function(mo) {
-					Header$parseHeader(trustedNetCtx, mo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(trustedNetCtx, mo, CRYPTO_CONTEXTS, {
 						result: function(h) { messageHeaderA2 = h; },
 						error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 					});
@@ -7191,15 +7215,15 @@ describe("MessageHeader", function() {
             var headerDataB = builder.set(KEY_KEY_RESPONSE_DATA, keyResponseDataB).build();
             var headerDataC = builder.set(KEY_KEY_RESPONSE_DATA, null).build();
             var peerData = new HeaderPeerData(null, null, null);
-			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
+			MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
 				result: function(token) { messageHeaderA = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
-			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
+			MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
 				result: function(token) { messageHeaderB = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
-			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataC, peerData, {
+			MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerDataC, peerData, {
 				result: function(token) { messageHeaderC = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -7209,7 +7233,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			MslTestUtils.toMslObject(encoder, messageHeaderA, {
 				result: function(mo) {
-					Header$parseHeader(trustedNetCtx, mo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(trustedNetCtx, mo, CRYPTO_CONTEXTS, {
 						result: function(h) { messageHeaderA2 = h; },
 						error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 					});
@@ -7264,15 +7288,15 @@ describe("MessageHeader", function() {
             var headerDataB = builder.set(KEY_USER_AUTHENTICATION_DATA, userAuthDataB).build();
             var headerDataC = builder.set(KEY_USER_AUTHENTICATION_DATA, null).build();
             var peerData = new HeaderPeerData(null, null, null);
-			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
+			MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
 				result: function(token) { messageHeaderA = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
-			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
+			MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
 				result: function(token) { messageHeaderB = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
-			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataC, peerData, {
+			MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerDataC, peerData, {
 				result: function(token) { messageHeaderC = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -7333,15 +7357,15 @@ describe("MessageHeader", function() {
             var headerDataB = builderB.build();
             var headerDataC = builderC.build();
             var peerData = new HeaderPeerData(null, null, null);
-			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
+			MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
 				result: function(token) { messageHeaderA = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
-			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
+			MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
 				result: function(token) { messageHeaderB = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
-			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataC, peerData, {
+			MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerDataC, peerData, {
 				result: function(token) { messageHeaderC = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -7351,7 +7375,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			MslTestUtils.toMslObject(encoder, messageHeaderA, {
 				result: function(mo) {
-					Header$parseHeader(trustedNetCtx, mo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(trustedNetCtx, mo, CRYPTO_CONTEXTS, {
 						result: function(h) { messageHeaderA2 = h; },
 						error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 					});
@@ -7403,15 +7427,15 @@ describe("MessageHeader", function() {
             var headerDataB = builderB.build();
             var headerDataC = builderC.build();
             var peerData = new HeaderPeerData(null, null, null);
-			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
+			MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerDataA, peerData, {
 				result: function(token) { messageHeaderA = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
-			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
+			MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerDataB, peerData, {
 				result: function(token) { messageHeaderB = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
-			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerDataC, peerData, {
+			MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerDataC, peerData, {
 				result: function(token) { messageHeaderC = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -7421,7 +7445,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			MslTestUtils.toMslObject(encoder, messageHeaderA, {
 				result: function(mo) {
-					Header$parseHeader(trustedNetCtx, mo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(trustedNetCtx, mo, CRYPTO_CONTEXTS, {
 						result: function(h) { messageHeaderA2 = h; },
 						error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 					});
@@ -7478,15 +7502,15 @@ describe("MessageHeader", function() {
             var peerDataA = new HeaderPeerData(peerMasterTokenA, null, null);
             var peerDataB = new HeaderPeerData(peerMasterTokenB, null, null);
             var peerDataC = new HeaderPeerData(null, null, null);
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerDataA, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerDataA, {
 				result: function(token) { messageHeaderA = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerDataB, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerDataB, {
 				result: function(token) { messageHeaderB = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerDataC, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerDataC, {
 				result: function(token) { messageHeaderC = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -7496,7 +7520,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			MslTestUtils.toMslObject(encoder, messageHeaderA, {
 				result: function(mo) {
-					Header$parseHeader(p2pCtx, mo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(p2pCtx, mo, CRYPTO_CONTEXTS, {
 						result: function(h) { messageHeaderA2 = h; },
 						error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 					});
@@ -7553,15 +7577,15 @@ describe("MessageHeader", function() {
             var peerDataA = new HeaderPeerData(PEER_MASTER_TOKEN, peerUserIdTokenA, null);
             var peerDataB = new HeaderPeerData(PEER_MASTER_TOKEN, peerUserIdTokenB, null);
             var peerDataC = new HeaderPeerData(PEER_MASTER_TOKEN, null, null);
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerDataA, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerDataA, {
 				result: function(token) { messageHeaderA = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerDataB, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerDataB, {
 				result: function(token) { messageHeaderB = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerDataC, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerDataC, {
 				result: function(token) { messageHeaderC = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -7571,7 +7595,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			MslTestUtils.toMslObject(encoder, messageHeaderA, {
 				result: function(mo) {
-					Header$parseHeader(p2pCtx, mo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(p2pCtx, mo, CRYPTO_CONTEXTS, {
 						result: function(h) { messageHeaderA2 = h; },
 						error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 					});
@@ -7628,15 +7652,15 @@ describe("MessageHeader", function() {
             var peerDataA = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokensA);
             var peerDataB = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, peerServiceTokensB);
             var peerDataC = new HeaderPeerData(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, null);
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerDataA, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerDataA, {
 				result: function(token) { messageHeaderA = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerDataB, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerDataB, {
 				result: function(token) { messageHeaderB = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
-			MessageHeader$create(p2pCtx, null, MASTER_TOKEN, headerData, peerDataC, {
+			MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerDataC, {
 				result: function(token) { messageHeaderC = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -7646,7 +7670,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			MslTestUtils.toMslObject(encoder, messageHeaderA, {
 				result: function(mo) {
-					Header$parseHeader(p2pCtx, mo, CRYPTO_CONTEXTS, {
+					Header.parseHeader(p2pCtx, mo, CRYPTO_CONTEXTS, {
 						result: function(h) { messageHeaderA2 = h; },
 						error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 					});
@@ -7688,7 +7712,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			var headerData = builder.build();
 			var peerData = new HeaderPeerData(null, null, null);
-			MessageHeader$create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
+			MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});

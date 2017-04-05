@@ -13,6 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+
 describe("MslError", function() {
     var BASE = 100000;
     
@@ -20,7 +24,7 @@ describe("MslError", function() {
         expect(MslError.MSL_PARSE_ERROR).not.toBeUndefined();
         expect(MslError.MSL_PARSE_ERROR).not.toBeNull();
         expect(MslError.MSL_PARSE_ERROR.internalCode).toEqual(BASE);
-        expect(MslError.MSL_PARSE_ERROR.responseCode).toEqual(MslConstants$ResponseCode.FAIL);
+        expect(MslError.MSL_PARSE_ERROR.responseCode).toEqual(MslConstants.ResponseCode.FAIL);
         expect(MslError.MSL_PARSE_ERROR.message).toEqual("Error parsing MSL encodable.");
     });
     
@@ -29,7 +33,7 @@ describe("MslError", function() {
     	MslError.MSL_PARSE_ERROR.responseCode = "x";
     	MslError.MSL_PARSE_ERROR.message = "x";
         expect(MslError.MSL_PARSE_ERROR.internalCode).toEqual(BASE);
-        expect(MslError.MSL_PARSE_ERROR.responseCode).toEqual(MslConstants$ResponseCode.FAIL);
+        expect(MslError.MSL_PARSE_ERROR.responseCode).toEqual(MslConstants.ResponseCode.FAIL);
         expect(MslError.MSL_PARSE_ERROR.message).toEqual("Error parsing MSL encodable.");
     });
     

@@ -13,6 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+const ConditionVariable = require('../../../../../core/src/main/javascript/util/ConditionVariable.js');
+const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+
 describe("ConditionVariable", function() {
     var TIMEOUT = 150;
     var DELAY = 1;

@@ -23,6 +23,17 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+
+const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+const KeyResponseData = require('../../../../../core/src/main/javascript/keyx/KeyResponseData.js');
+const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+const MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
+const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+
+const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+
 describe("KeyResponseData", function() {
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
@@ -46,7 +57,7 @@ describe("KeyResponseData", function() {
     beforeEach(function() {
         if (!initialized) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+                MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -81,7 +92,7 @@ describe("KeyResponseData", function() {
             mo.put(KEY_MASTER_TOKEN + "x", MASTER_TOKEN_MO);
             mo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED.name);
             mo.put(KEY_KEYDATA, encoder.createObject());
-            KeyResponseData$parse(ctx, mo, {
+            KeyResponseData.parse(ctx, mo, {
                 result: function(x) {},
                 error: function(e) { exception = e; },
             });
@@ -101,7 +112,7 @@ describe("KeyResponseData", function() {
             mo.put(KEY_MASTER_TOKEN, MASTER_TOKEN_MO);
             mo.put(KEY_SCHEME + "x", KeyExchangeScheme.ASYMMETRIC_WRAPPED.name);
             mo.put(KEY_KEYDATA, encoder.createObject());
-            KeyResponseData$parse(ctx, mo, {
+            KeyResponseData.parse(ctx, mo, {
                 result: function(x) {},
                 error: function(e) { exception = e; },
             });
@@ -121,7 +132,7 @@ describe("KeyResponseData", function() {
             mo.put(KEY_MASTER_TOKEN, MASTER_TOKEN_MO);
             mo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED.name);
             mo.put(KEY_KEYDATA + "x", encoder.createObject());
-            KeyResponseData$parse(ctx, mo, {
+            KeyResponseData.parse(ctx, mo, {
                 result: function(x) {},
                 error: function(e) { exception = e; },
             });
@@ -154,7 +165,7 @@ describe("KeyResponseData", function() {
             mo.put(KEY_MASTER_TOKEN, encoder.createObject());
             mo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED.name);
             mo.put(KEY_KEYDATA, keydata);
-            KeyResponseData$parse(ctx, mo, {
+            KeyResponseData.parse(ctx, mo, {
                 result: function(x) {},
                 error: function(e) { exception = e; },
             });
@@ -174,7 +185,7 @@ describe("KeyResponseData", function() {
             mo.put(KEY_MASTER_TOKEN, MASTER_TOKEN_MO);
             mo.put(KEY_SCHEME, "x");
             mo.put(KEY_KEYDATA, encoder.createObject());
-            KeyResponseData$parse(ctx, mo, {
+            KeyResponseData.parse(ctx, mo, {
                 result: function(x) {},
                 error: function(e) { exception = e; },
             });
@@ -190,7 +201,7 @@ describe("KeyResponseData", function() {
     it("keyx factory not found", function() {
         var ctx;
         runs(function() {
-            MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+            MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                 result: function(c) { ctx = c; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -205,7 +216,7 @@ describe("KeyResponseData", function() {
             mo.put(KEY_MASTER_TOKEN, MASTER_TOKEN_MO);
             mo.put(KEY_SCHEME, KeyExchangeScheme.ASYMMETRIC_WRAPPED.name);
             mo.put(KEY_KEYDATA, encoder.createObject());
-            KeyResponseData$parse(ctx, mo, {
+            KeyResponseData.parse(ctx, mo, {
                 result: function(x) {},
                 error: function(e) { exception = e; },
             });

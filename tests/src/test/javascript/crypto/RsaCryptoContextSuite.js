@@ -19,6 +19,22 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+
+const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
+const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+const SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
+const MslCrypto = require('../../../../../core/src/main/javascript/crypto/MslCrypto.js');
+const RsaCryptoContext = require('../../../../../core/src/main/javascript/crypto/RsaCryptoContext.js');
+const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+
+const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+
 describe("RsaCryptoContext", function() {
 	/** RSA keypair A. */
 	var RSA_KEYPAIR_A = {
@@ -102,7 +118,7 @@ describe("RsaCryptoContext", function() {
     beforeEach(function() {
         if (!initialized) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+                MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -111,11 +127,11 @@ describe("RsaCryptoContext", function() {
                 random.nextBytes(aes128Bytes);
                 var hmac256Bytes = new Uint8Array(32);
                 random.nextBytes(hmac256Bytes);
-                SecretKey$import(aes128Bytes, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+                SecretKey.import(aes128Bytes, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
                     result: function(k) { AES_128_KEY = k; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                SecretKey$import(hmac256Bytes, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
+                SecretKey.import(hmac256Bytes, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
                     result: function(k) { HMAC_256_KEY = k; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -131,9 +147,9 @@ describe("RsaCryptoContext", function() {
     
     function encryptDecryptData() {
         var params = [];
-        var webCryptoVersion = MslCrypto$getWebCryptoVersion();
-        if (webCryptoVersion == MslCrypto$WebCryptoVersion.V2014_01) {
-            params.push([ WebCryptoAlgorithm.RSAES, RsaCryptoContext$Mode.ENCRYPT_DECRYPT_PKCS1, 32 ]);
+        var webCryptoVersion = MslCrypto.getWebCryptoVersion();
+        if (webCryptoVersion == MslCrypto.WebCryptoVersion.V2014_01) {
+            params.push([ WebCryptoAlgorithm.RSAES, RsaCryproContext.Mode.ENCRYPT_DECRYPT_PKCS1, 32 ]);
         }
         return params;
     }
@@ -335,7 +351,7 @@ describe("RsaCryptoContext", function() {
             runs(function() {
                 var keydataA = new Uint8Array(16);
                 random.nextBytes(keydataA);
-                SecretKey$import(keydataA, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+                SecretKey.import(keydataA, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
                     result: function(k) { keyA = k; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -484,13 +500,13 @@ describe("RsaCryptoContext", function() {
     
     function wrapUnwrapData() {
         var params = [];
-        var webCryptoVersion = MslCrypto$getWebCryptoVersion();
-        if (webCryptoVersion == MslCrypto$WebCryptoVersion.LEGACY) {
-        } else if (webCryptoVersion == MslCrypto$WebCryptoVersion.V2014_01) {
-            params.push([ WebCryptoAlgorithm.RSA_OAEP, RsaCryptoContext$Mode.WRAP_UNWRAP_OAEP ]);
-            params.push([ WebCryptoAlgorithm.RSAES, RsaCryptoContext$Mode.WRAP_UNWRAP_PKCS1 ]);
+        var webCryptoVersion = MslCrypto.getWebCryptoVersion();
+        if (webCryptoVersion == MslCrypto.WebCryptoVersion.LEGACY) {
+        } else if (webCryptoVersion == MslCrypto.WebCryptoVersion.V2014_01) {
+            params.push([ WebCryptoAlgorithm.RSA_OAEP, RsaCryproContext.Mode.WRAP_UNWRAP_OAEP ]);
+            params.push([ WebCryptoAlgorithm.RSAES, RsaCryproContext.Mode.WRAP_UNWRAP_PKCS1 ]);
         } else {
-            params.push([ WebCryptoAlgorithm.RSA_OAEP, RsaCryptoContext$Mode.WRAP_UNWRAP_OAEP ]);
+            params.push([ WebCryptoAlgorithm.RSA_OAEP, RsaCryproContext.Mode.WRAP_UNWRAP_OAEP ]);
         }
         return params;
     }
@@ -930,7 +946,7 @@ describe("RsaCryptoContext", function() {
         });
         
     	it("encrypt/decrypt", function() {
-    		var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, RsaCryptoContext$Mode.SIGN_VERIFY);
+    		var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, RsaCryproContext.Mode.SIGN_VERIFY);
     		var ciphertext;
     		runs(function() {
     			cryptoContext.encrypt(message, encoder, ENCODER_FORMAT, {
@@ -959,7 +975,7 @@ describe("RsaCryptoContext", function() {
     	});
     	
     	it("encrypt with null public key", function() {
-    		var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, null, RsaCryptoContext$Mode.SIGN_VERIFY);
+    		var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, null, RsaCryproContext.Mode.SIGN_VERIFY);
     		var ciphertext;
     		runs(function() {
     			cryptoContext.encrypt(message, encoder, ENCODER_FORMAT, {
@@ -988,7 +1004,7 @@ describe("RsaCryptoContext", function() {
     	});
     	
     	it("decrypt with null private key", function() {
-    		var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, null, publicKeyA, RsaCryptoContext$Mode.SIGN_VERIFY);
+    		var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, null, publicKeyA, RsaCryproContext.Mode.SIGN_VERIFY);
     		var ciphertext;
     		runs(function() {
     			cryptoContext.encrypt(message, encoder, ENCODER_FORMAT, {
@@ -1017,8 +1033,8 @@ describe("RsaCryptoContext", function() {
     	});
     	
     	it("encrypt/decrypt with mismatched key ID", function() {
-    		var cryptoContextA = new RsaCryptoContext(ctx, KEYPAIR_ID + 'A', privateKeyA, publicKeyA, RsaCryptoContext$Mode.SIGN_VERIFY);
-    		var cryptoContextB = new RsaCryptoContext(ctx, KEYPAIR_ID + 'B', privateKeyA, publicKeyA, RsaCryptoContext$Mode.SIGN_VERIFY);
+    		var cryptoContextA = new RsaCryptoContext(ctx, KEYPAIR_ID + 'A', privateKeyA, publicKeyA, RsaCryproContext.Mode.SIGN_VERIFY);
+    		var cryptoContextB = new RsaCryptoContext(ctx, KEYPAIR_ID + 'B', privateKeyA, publicKeyA, RsaCryproContext.Mode.SIGN_VERIFY);
     			
     		var ciphertext;
     		runs(function() {
@@ -1048,8 +1064,8 @@ describe("RsaCryptoContext", function() {
     	});
     	
     	it("encrypt/decrypt with mismatched keys", function() {
-    		var cryptoContextA = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, RsaCryptoContext$Mode.SIGN_VERIFY);
-    		var cryptoContextB = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyB, publicKeyB, RsaCryptoContext$Mode.SIGN_VERIFY);
+    		var cryptoContextA = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, RsaCryproContext.Mode.SIGN_VERIFY);
+    		var cryptoContextB = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyB, publicKeyB, RsaCryproContext.Mode.SIGN_VERIFY);
     			
     		var ciphertext;
     		runs(function() {
@@ -1079,13 +1095,13 @@ describe("RsaCryptoContext", function() {
     	});
         
         it("wrap", function() {
-            var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, RsaCryptoContext$Mode.ENCRYPT_DECRYPT);
+            var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, RsaCryproContext.Mode.ENCRYPT_DECRYPT);
             
             var keyA;
             runs(function() {
                 var keydataA = new Uint8Array(16);
                 random.nextBytes(keydataA);
-                SecretKey$import(keydataA, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+                SecretKey.import(keydataA, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
                     result: function(k) { keyA = k; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1107,7 +1123,7 @@ describe("RsaCryptoContext", function() {
         });
         
         it("unwrap", function() {
-            var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, RsaCryptoContext$Mode.ENCRYPT_DECRYPT);
+            var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, RsaCryproContext.Mode.ENCRYPT_DECRYPT);
             
             var exception;
             runs(function() {
@@ -1130,7 +1146,7 @@ describe("RsaCryptoContext", function() {
     		var messageB = new Uint8Array(32);
     		random.nextBytes(messageB);
     		
-    		var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, RsaCryptoContext$Mode.SIGN_VERIFY);
+    		var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, RsaCryproContext.Mode.SIGN_VERIFY);
     		var signatureA = undefined, signatureB;
     		runs(function() {
     			cryptoContext.sign(messageA, encoder, ENCODER_FORMAT, {
@@ -1176,8 +1192,8 @@ describe("RsaCryptoContext", function() {
     	});
     	
     	it("sign/verify with mismatched contexts", function() {
-    		var cryptoContextA = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, RsaCryptoContext$Mode.SIGN_VERIFY);
-    		var cryptoContextB = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyB, publicKeyB, RsaCryptoContext$Mode.SIGN_VERIFY);
+    		var cryptoContextA = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, RsaCryproContext.Mode.SIGN_VERIFY);
+    		var cryptoContextB = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyB, publicKeyB, RsaCryproContext.Mode.SIGN_VERIFY);
     		var signature;
     		runs(function() {
     			cryptoContextA.sign(message, encoder, ENCODER_FORMAT, {
@@ -1200,7 +1216,7 @@ describe("RsaCryptoContext", function() {
     	});
     	
     	it("sign with null private key", function() {
-    		var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, null, publicKeyA, RsaCryptoContext$Mode.SIGN_VERIFY);
+    		var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, null, publicKeyA, RsaCryproContext.Mode.SIGN_VERIFY);
 	    	var exception;
 	    	runs(function() {
 	    		cryptoContext.sign(message, encoder, ENCODER_FORMAT, {
@@ -1216,7 +1232,7 @@ describe("RsaCryptoContext", function() {
     	});
     	
     	it("verify with null public key", function() {
-    		var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, null, RsaCryptoContext$Mode.SIGN_VERIFY);
+    		var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, null, RsaCryproContext.Mode.SIGN_VERIFY);
     		
     		var signature;
     		runs(function() {

@@ -18,6 +18,21 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+
+const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+const UserIdToken = require('../../../../../core/src/main/javascript/tokens/UserIdToken.js');
+const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+const MslException = require('../../../../../core/src/main/javascript/MslException.js');
+const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+
+const MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
+const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+
 describe("UserIdToken", function() {
 	/** MSL encoder format. */
 	var ENCODER_FORMAT = MslEncoderFormat.JSON;
@@ -64,7 +79,7 @@ describe("UserIdToken", function() {
     beforeEach(function() {
     	if (!initialized) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+                MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -86,7 +101,7 @@ describe("UserIdToken", function() {
     it("ctors", function() {
         var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -116,7 +131,7 @@ describe("UserIdToken", function() {
         var moUserIdToken;
         runs(function() {
             var mo = encoder.parseObject(encode);
-            UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+            UserIdToken.parse(ctx, mo, MASTER_TOKEN, {
                 result: function(token) { moUserIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -154,7 +169,7 @@ describe("UserIdToken", function() {
     	
     	var exception;
     	runs(function() {
-    		UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, serialNumber, ISSUER_DATA, USER, {
+    		UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, serialNumber, ISSUER_DATA, USER, {
     		    result: function() {},
     		    error: function(e) { exception = e; },
     		});
@@ -167,11 +182,11 @@ describe("UserIdToken", function() {
     });
     
     it("too large serial number ctor", function() {
-    	var serialNumber = MslConstants$MAX_LONG_VALUE + 2;
+    	var serialNumber = MslConstants.MAX_LONG_VALUE + 2;
 
     	var exception;
     	runs(function() {
-    		UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, serialNumber, ISSUER_DATA, USER, {
+    		UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, serialNumber, ISSUER_DATA, USER, {
     			result: function() {},
     			error: function(e) { exception = e; },
     		});
@@ -186,7 +201,7 @@ describe("UserIdToken", function() {
     it("null master token", function() {
     	var exception;
     	runs(function() {
-    		UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, null, SERIAL_NUMBER, ISSUER_DATA, USER, {
+    		UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, null, SERIAL_NUMBER, ISSUER_DATA, USER, {
     		    result: function() {},
     		    error: function(e) { exception = e; },
     		});
@@ -199,7 +214,7 @@ describe("UserIdToken", function() {
     });
     
     it("master token mismtached", function() {
-    	var masterToken = undefined, joMasterToken;
+    	var masterToken, joMasterToken;
     	runs(function() {
     		MslTestUtils.getMasterToken(ctx, 1, 1, {
     			result: function(token) { masterToken = token; },
@@ -214,7 +229,7 @@ describe("UserIdToken", function() {
     	
     	var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, masterToken, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, masterToken, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -225,7 +240,7 @@ describe("UserIdToken", function() {
         runs(function() {
         	MslTestUtils.toMslObject(encoder, userIdToken, {
         		result: function(mo) {
-        			UserIdToken$parse(ctx, mo, joMasterToken, {
+        			UserIdToken.parse(ctx, mo, joMasterToken, {
         				result: function() {},
         				error: function(e) { exception = e; },
         			});
@@ -253,7 +268,7 @@ describe("UserIdToken", function() {
     	
     	var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, masterToken, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, masterToken, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -264,7 +279,7 @@ describe("UserIdToken", function() {
         runs(function() {
         	MslTestUtils.toMslObject(encoder, userIdToken, {
         		result: function(mo) {
-        			UserIdToken$parse(ctx, mo, null, {
+        			UserIdToken.parse(ctx, mo, null, {
         				result: function() {},
         				error: function(e) { exception = e; },
         			});
@@ -287,7 +302,7 @@ describe("UserIdToken", function() {
     	
     	var exception;
     	runs(function() {
-	        UserIdToken$create(ctx, renewalWindow, expiration, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
+	        UserIdToken.create(ctx, renewalWindow, expiration, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
 	            result: function() {},
 	            error: function(e) { exception = e; },
 	        });
@@ -303,7 +318,7 @@ describe("UserIdToken", function() {
     it("inconsistent expiration json", function() {
     	var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -336,7 +351,7 @@ describe("UserIdToken", function() {
         runs(function() {
         	mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+	        UserIdToken.parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(e) { exception = e; },
 	        });
@@ -352,7 +367,7 @@ describe("UserIdToken", function() {
     it("missing tokendata", function() {
     	var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -372,7 +387,7 @@ describe("UserIdToken", function() {
         runs(function() {
 	        mo.remove(KEY_TOKENDATA);
 	        
-	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+	        UserIdToken.parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(e) { exception = e; },
 	        });
@@ -388,7 +403,7 @@ describe("UserIdToken", function() {
     it("invalid tokendata", function() {
     	var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -410,7 +425,7 @@ describe("UserIdToken", function() {
 	        ++tokendata[0];
 	        mo.put(KEY_TOKENDATA, tokendata);
 	        
-	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+	        UserIdToken.parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(e) { exception = e; },
 	        });
@@ -426,7 +441,7 @@ describe("UserIdToken", function() {
     it("missing signature", function() {
     	var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -446,7 +461,7 @@ describe("UserIdToken", function() {
         runs(function() {
 	        mo.remove(KEY_SIGNATURE);
 	        
-	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+	        UserIdToken.parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(e) { exception = e; },
 	        });
@@ -462,7 +477,7 @@ describe("UserIdToken", function() {
     it("missing renewal window", function() {
     	var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -494,7 +509,7 @@ describe("UserIdToken", function() {
         runs(function() {
 	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+	        UserIdToken.parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(e) { exception = e; },
 	        });
@@ -510,7 +525,7 @@ describe("UserIdToken", function() {
     it("invalid renewal window", function() {
     	var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -542,7 +557,7 @@ describe("UserIdToken", function() {
         runs(function() {
 	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+	        UserIdToken.parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(e) { exception = e; },
 	        });
@@ -558,7 +573,7 @@ describe("UserIdToken", function() {
     it("missing expiration", function() {
     	var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -590,7 +605,7 @@ describe("UserIdToken", function() {
         runs(function() {
 	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+	        UserIdToken.parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(e) { exception = e; },
 	        });
@@ -606,7 +621,7 @@ describe("UserIdToken", function() {
     it("invalid expiration", function() {
     	var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -638,7 +653,7 @@ describe("UserIdToken", function() {
         runs(function() {
 	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+	        UserIdToken.parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(e) { exception = e; },
 	        });
@@ -654,7 +669,7 @@ describe("UserIdToken", function() {
     it("missing serial number", function() {
     	var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -686,7 +701,7 @@ describe("UserIdToken", function() {
         runs(function() {
 	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+	        UserIdToken.parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(e) { exception = e; },
 	        });
@@ -702,7 +717,7 @@ describe("UserIdToken", function() {
     it("invalid serial number", function() {
     	var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -734,7 +749,7 @@ describe("UserIdToken", function() {
         runs(function() {
 	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+	        UserIdToken.parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(e) { exception = e; },
 	        });
@@ -750,7 +765,7 @@ describe("UserIdToken", function() {
     it("negative serial number ctor", function() {
     	var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -782,7 +797,7 @@ describe("UserIdToken", function() {
         runs(function() {
 	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+	        UserIdToken.parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(e) { exception = e; },
 	        });
@@ -798,7 +813,7 @@ describe("UserIdToken", function() {
     it("too large serial number ctor", function() {
     	var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -818,7 +833,7 @@ describe("UserIdToken", function() {
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
-	        tokendataMo.put(KEY_SERIAL_NUMBER, MslConstants$MAX_LONG_VALUE + 2);
+	        tokendataMo.put(KEY_SERIAL_NUMBER, MslConstants.MAX_LONG_VALUE + 2);
 	        encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
 	        	result: function(x) { modifiedTokendata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -830,7 +845,7 @@ describe("UserIdToken", function() {
         runs(function() {
 	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+	        UserIdToken.parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(e) { exception = e; },
 	        });
@@ -846,7 +861,7 @@ describe("UserIdToken", function() {
     it("missing master token serial number", function() {
     	var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -878,7 +893,7 @@ describe("UserIdToken", function() {
         runs(function() {
 	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+	        UserIdToken.parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(e) { exception = e; },
 	        });
@@ -894,7 +909,7 @@ describe("UserIdToken", function() {
     it("invalid master token serial number", function() {
     	var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -926,7 +941,7 @@ describe("UserIdToken", function() {
         runs(function() {
 	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+	        UserIdToken.parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(e) { exception = e; },
 	        });
@@ -942,7 +957,7 @@ describe("UserIdToken", function() {
     it("negative master token serial number ctor", function() {
     	var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -974,7 +989,7 @@ describe("UserIdToken", function() {
         runs(function() {
 	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+	        UserIdToken.parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(e) { exception = e; },
 	        });
@@ -990,7 +1005,7 @@ describe("UserIdToken", function() {
     it("too large master token serial number ctor", function() {
     	var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1010,7 +1025,7 @@ describe("UserIdToken", function() {
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
-	        tokendataMo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, MslConstants$MAX_LONG_VALUE + 2);
+	        tokendataMo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, MslConstants.MAX_LONG_VALUE + 2);
 	        encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
 	        	result: function(x) { modifiedTokendata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1022,7 +1037,7 @@ describe("UserIdToken", function() {
         runs(function() {
 	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+	        UserIdToken.parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(e) { exception = e; },
 	        });
@@ -1038,7 +1053,7 @@ describe("UserIdToken", function() {
     it("missing userdata", function() {
     	var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1070,7 +1085,7 @@ describe("UserIdToken", function() {
         runs(function() {
 	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+	        UserIdToken.parse(ctx, mo, MASTER_TOKEN, {
 	            result: function() {},
 	            error: function(e) { exception = e; },
 	        });
@@ -1086,7 +1101,7 @@ describe("UserIdToken", function() {
     it("invalid userdata", function() {
     	var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1123,7 +1138,7 @@ describe("UserIdToken", function() {
 	        		mo.put(KEY_TOKENDATA, modifiedTokendata);
 	    	        mo.put(KEY_SIGNATURE, signature);
 	    	        
-	    	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+	    	        UserIdToken.parse(ctx, mo, MASTER_TOKEN, {
 	    	            result: function() {},
 	    	            error: function(e) { exception = e; },
 	    	        });	
@@ -1142,7 +1157,7 @@ describe("UserIdToken", function() {
     it("empty userdata", function() {
     	var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1180,7 +1195,7 @@ describe("UserIdToken", function() {
 	        		mo.put(KEY_TOKENDATA, modifiedTokendata);
 	    	        mo.put(KEY_SIGNATURE, signature);
 	    	        
-	    	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+	    	        UserIdToken.parse(ctx, mo, MASTER_TOKEN, {
 	    	            result: function() {},
 	    	            error: function(e) { exception = e; },
 	    	        });	
@@ -1199,7 +1214,7 @@ describe("UserIdToken", function() {
     it("corrupt userdata", function() {
     	var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1239,7 +1254,7 @@ describe("UserIdToken", function() {
 	        		mo.put(KEY_TOKENDATA, modifiedTokendata);
 	    	        mo.put(KEY_SIGNATURE, signature);
 	    	        
-	    	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+	    	        UserIdToken.parse(ctx, mo, MASTER_TOKEN, {
 	    	            result: function() {},
 	    	            error: function(e) { exception = e; },
 	    	        });	
@@ -1258,7 +1273,7 @@ describe("UserIdToken", function() {
     it("invalid user", function() {
     	var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1303,7 +1318,7 @@ describe("UserIdToken", function() {
 					        		        		mo.put(KEY_TOKENDATA, modifiedTokendata);
 					        		    	        mo.put(KEY_SIGNATURE, signature);
 					        		    	        
-					        		    	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+					        		    	        UserIdToken.parse(ctx, mo, MASTER_TOKEN, {
 					        		    	            result: function() {},
 					        		    	            error: function(e) { exception = e; },
 					        		    	        });	
@@ -1334,7 +1349,7 @@ describe("UserIdToken", function() {
     it("empty user", function() {
     	var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1379,7 +1394,7 @@ describe("UserIdToken", function() {
 					        		        		mo.put(KEY_TOKENDATA, modifiedTokendata);
 					        		    	        mo.put(KEY_SIGNATURE, signature);
 					        		    	        
-					        		    	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+					        		    	        UserIdToken.parse(ctx, mo, MASTER_TOKEN, {
 					        		    	            result: function() {},
 					        		    	            error: function(e) { exception = e; },
 					        		    	        });	
@@ -1410,7 +1425,7 @@ describe("UserIdToken", function() {
     it("missing user", function() {
     	var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1455,7 +1470,7 @@ describe("UserIdToken", function() {
 					        		        		mo.put(KEY_TOKENDATA, modifiedTokendata);
 					        		    	        mo.put(KEY_SIGNATURE, signature);
 					        		    	        
-					        		    	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+					        		    	        UserIdToken.parse(ctx, mo, MASTER_TOKEN, {
 					        		    	            result: function() {},
 					        		    	            error: function(e) { exception = e; },
 					        		    	        });
@@ -1486,7 +1501,7 @@ describe("UserIdToken", function() {
     it("invalid issuer data", function() {
     	var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1531,7 +1546,7 @@ describe("UserIdToken", function() {
 					        		        		mo.put(KEY_TOKENDATA, modifiedTokendata);
 					        		    	        mo.put(KEY_SIGNATURE, signature);
 					        		    	        
-					        		    	        UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+					        		    	        UserIdToken.parse(ctx, mo, MASTER_TOKEN, {
 					        		    	            result: function() {},
 					        		    	            error: function(e) { exception = e; },
 					        		    	        });	
@@ -1562,7 +1577,7 @@ describe("UserIdToken", function() {
     it("not verified", function() {
         var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1586,7 +1601,7 @@ describe("UserIdToken", function() {
             ++signature[0];
             mo.put(KEY_SIGNATURE, signature);
 
-            UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+            UserIdToken.parse(ctx, mo, MASTER_TOKEN, {
                 result: function(token) { moUserIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1622,7 +1637,7 @@ describe("UserIdToken", function() {
         var expiration = new Date(Date.now() + 10000);
         var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, renewalWindow, expiration, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, renewalWindow, expiration, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1650,7 +1665,7 @@ describe("UserIdToken", function() {
         var expiration = new Date();
         var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, renewalWindow, expiration, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, renewalWindow, expiration, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1678,7 +1693,7 @@ describe("UserIdToken", function() {
         var expiration = new Date(Date.now() + 20000);
         var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, renewalWindow, expiration, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, renewalWindow, expiration, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1717,11 +1732,11 @@ describe("UserIdToken", function() {
         
         var userIdTokenA, userIdTokenB;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, masterTokenA, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, masterTokenA, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdTokenA = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, masterTokenB, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, masterTokenB, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdTokenB = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1742,11 +1757,11 @@ describe("UserIdToken", function() {
         var serialNumberB = 2;
         var userIdTokenA, userIdTokenB;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, serialNumberA, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, serialNumberA, ISSUER_DATA, USER, {
                 result: function(token) { userIdTokenA = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, serialNumberB, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, serialNumberB, ISSUER_DATA, USER, {
                 result: function(token) { userIdTokenB = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1756,7 +1771,7 @@ describe("UserIdToken", function() {
         runs(function() {
         	MslTestUtils.toMslObject(encoder, userIdTokenA, {
         		result: function(mo) {
-        			UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+        			UserIdToken.parse(ctx, mo, MASTER_TOKEN, {
         				result: function(token) { userIdTokenA2 = token; },
         				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         			});
@@ -1795,11 +1810,11 @@ describe("UserIdToken", function() {
         
         var userIdTokenA, userIdTokenB;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, masterTokenA, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, masterTokenA, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdTokenA = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, masterTokenB, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, masterTokenB, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdTokenB = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1810,7 +1825,7 @@ describe("UserIdToken", function() {
         runs(function() {
         	MslTestUtils.toMslObject(encoder, userIdTokenA, {
         		result: function(mo) {
-        			UserIdToken$parse(ctx, mo, MASTER_TOKEN, {
+        			UserIdToken.parse(ctx, mo, MASTER_TOKEN, {
         				result: function(token) { userIdTokenA2 = token; },
         				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         			});
@@ -1836,7 +1851,7 @@ describe("UserIdToken", function() {
     it("equals object", function() {
         var userIdToken;
         runs(function() {
-            UserIdToken$create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
+            UserIdToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, MASTER_TOKEN, SERIAL_NUMBER, ISSUER_DATA, USER, {
                 result: function(token) { userIdToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });

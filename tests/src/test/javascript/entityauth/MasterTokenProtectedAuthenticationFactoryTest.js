@@ -19,6 +19,19 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+
+const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+const MasterTokenProtectedAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/MasterTokenProtectedAuthenticationFactory.js');
+const UnauthenticatedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/UnauthenticatedAuthenticationData.js');
+const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+const MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
+const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+
+const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+const MockAuthenticationUtils = require('../../../main/javascript/util/MockAuthenticationUtils.js');
+const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+
 describe("MasterTokenProtectedAuthenticationFactory", function() {
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
@@ -51,7 +64,7 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
     beforeEach(function() {
         if (!initialized) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.NONE, false, {
+                MockMslContext.create(EntityAuthenticationScheme.NONE, false, {
                     result: function(x) { ctx = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -81,7 +94,7 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
     it("create data", function() {
         var data;
         runs(function() {
-            MasterTokenProtectedAuthenticationData$create(ctx, masterToken, eAuthdata, {
+            MasterTokenProtectedAuthenticationData.create(ctx, masterToken, eAuthdata, {
                 result: function(x) { data = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -119,7 +132,7 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
     it("encode exception", function() {
         var data;
         runs(function() {
-            MasterTokenProtectedAuthenticationData$create(ctx, masterToken, eAuthdata, {
+            MasterTokenProtectedAuthenticationData.create(ctx, masterToken, eAuthdata, {
                 result: function(x) { data = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -154,7 +167,7 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
     it("crypto context", function() {
         var data;
         runs(function() {
-            MasterTokenProtectedAuthenticationData$create(ctx, masterToken, eAuthdata, {
+            MasterTokenProtectedAuthenticationData.create(ctx, masterToken, eAuthdata, {
                 result: function(x) { data = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -170,7 +183,7 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
     it("unsupported encapsulated scheme", function() {
         var ctx;
         runs(function() {
-            MockMslContext$create(EntityAuthenticationScheme.NONE, false, {
+            MockMslContext.create(EntityAuthenticationScheme.NONE, false, {
                 result: function(x) { ctx = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -181,7 +194,7 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
         runs(function() {
             ctx.removeEntityAuthenticationFactory(EntityAuthenticationScheme.NONE);
 
-            MasterTokenProtectedAuthenticationData$create(ctx, masterToken, eAuthdata, {
+            MasterTokenProtectedAuthenticationData.create(ctx, masterToken, eAuthdata, {
                 result: function(x) { data = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -200,7 +213,7 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
         var data;
         runs(function() {
             authutils.revokeEntity(IDENTITY);
-            MasterTokenProtectedAuthenticationData$create(ctx, masterToken, eAuthdata, {
+            MasterTokenProtectedAuthenticationData.create(ctx, masterToken, eAuthdata, {
                 result: function(x) { data = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -219,7 +232,7 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
         var data;
         runs(function() {
             authutils.disallowScheme(IDENTITY, EntityAuthenticationScheme.MT_PROTECTED);
-            MasterTokenProtectedAuthenticationData$create(ctx, masterToken, eAuthdata, {
+            MasterTokenProtectedAuthenticationData.create(ctx, masterToken, eAuthdata, {
                 result: function(x) { data = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });

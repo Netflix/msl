@@ -19,6 +19,30 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+
+const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+const MslCrypto = require('../../../../../core/src/main/javascript/crypto/MslCrypto.js');
+const AsymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/AsymmetricWrappedExchange.js');
+const KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
+const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+const MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
+const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+const MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
+const KeyResponseData = require('../../../../../core/src/main/javascript/keyx/KeyResponseData.js');
+const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
+const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+const PresharedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedAuthenticationData.js');
+const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+
+const MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
+const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+const MockAuthenticationUtils = require('../../../../../core/src/main/javascript/util/MockAuthenticationUtils.js');
+
 describe("AsymmetricWrappedExchangeSuite", function() {
 	/** MSL encoder format. */
 	var ENCODER_FORMAT = MslEncoderFormat.JSON;
@@ -96,7 +120,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
     beforeEach(function() {
     	if (!initialized) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+                MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -115,7 +139,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             waitsFor(function() { return RSA_OAEP_PUBLIC_KEY && RSA_OAEP_PRIVATE_KEY; }, "RSA-OAEP keys", 2500);
             
             runs(function() {
-                if (MslCrypto$getWebCryptoVersion() != MslCrypto$WebCryptoVersion.V2014_01) {
+                if (MslCrypto.getWebCryptoVersion() != MslCrypto.WebCryptoVersion.V2014_01) {
                     // These keys will not be used in the legacy unit tests.
                     RSAES_PUBLIC_KEY = true;
                     RSAES_PRIVATE_KEY = true;
@@ -149,11 +173,9 @@ describe("AsymmetricWrappedExchangeSuite", function() {
     });
     
     // Shortcuts.
-    var Mechanism = AsymmetricWrappedExchange$Mechanism;
-    var RequestData = AsymmetricWrappedExchange$RequestData;
-    var RequestData$parse = AsymmetricWrappedExchange$RequestData$parse;
-    var ResponseData = AsymmetricWrappedExchange$ResponseData;
-    var ResponseData$parse = AsymmetricWrappedExchange$ResponseData$parse;
+    var Mechanism = AsymmetricWrappedExchange.Mechanism;
+    var RequestData = AsymmetricWrappedExchange.RequestData;
+    var ResponseData = AsymmetricWrappedExchange.ResponseData;
     
     /** Request data unit tests. */
     describe("RequestData", function() {
@@ -166,12 +188,12 @@ describe("AsymmetricWrappedExchangeSuite", function() {
 
         function keyxRequestData() {
             var params = [];
-            var webCryptoVersion = MslCrypto$getWebCryptoVersion();
-            if (webCryptoVersion == MslCrypto$WebCryptoVersion.LEGACY) {
+            var webCryptoVersion = MslCrypto.getWebCryptoVersion();
+            if (webCryptoVersion == MslCrypto.WebCryptoVersion.LEGACY) {
                 params.push([ Mechanism.RSA ]);
                 params.push([ Mechanism.JWE_RSA ]);
                 params.push([ Mechanism.JWEJS_RSA ]);
-            } else if (webCryptoVersion == MslCrypto$WebCryptoVersion.V2014_01) {
+            } else if (webCryptoVersion == MslCrypto.WebCryptoVersion.V2014_01) {
                 params.push([ Mechanism.RSA ]);
                 params.push([ Mechanism.JWK_RSA ]);
                 params.push([ Mechanism.JWK_RSAES ]);
@@ -221,7 +243,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                 var moReq;
                 runs(function() {
                 	expect(keydata).not.toBeNull();
-                    RequestData$parse(keydata, {
+                    RequestData.parse(keydata, {
                         result: function(data) { moReq = data; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
@@ -317,7 +339,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                 runs(function() {
                 	keydata.remove(KEY_KEY_PAIR_ID);
 
-                	RequestData$parse(keydata, {
+                	RequestData.parse(keydata, {
                         result: function() {},
                         error: function(e) { exception = e; }
                     });
@@ -345,7 +367,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                 runs(function() {
                 	keydata.remove(KEY_MECHANISM);
 
-                	RequestData$parse(keydata, {
+                	RequestData.parse(keydata, {
                         result: function() {},
                         error: function(e) { exception = e; }
                     });
@@ -373,7 +395,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                 runs(function() {
                 	keydata.put(KEY_MECHANISM, "x");
 
-                	RequestData$parse(keydata, {
+                	RequestData.parse(keydata, {
                         result: function() {},
                         error: function(e) { exception = e; }
                     });
@@ -401,7 +423,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                 runs(function() {
                 	keydata.remove(KEY_PUBLIC_KEY);
 
-                	RequestData$parse(keydata, {
+                	RequestData.parse(keydata, {
                         result: function() {},
                         error: function(e) { exception = e; }
                     });
@@ -428,10 +450,10 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                 var exception;
                 runs(function() {
                     var encodedKey = publicKey.getEncoded();
-                    var shortKey = Arrays$copyOf(encodedKey, 0, encodedKey.length / 2);
+                    var shortKey = Arrays.copyOf(encodedKey, 0, encodedKey.length / 2);
                 	keydata.put(KEY_PUBLIC_KEY, shortKey);
 
-                	RequestData$parse(keydata, {
+                	RequestData.parse(keydata, {
                         result: function() {},
                         error: function(e) { exception = e; }
                     });
@@ -452,7 +474,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             runs(function() {
             	dataA.getKeydata(encoder, ENCODER_FORMAT, {
             		result: function(keydata) {
-		                RequestData$parse(keydata, {
+		                RequestData.parse(keydata, {
 		                    result: function(data) { dataA2 = data; },
 		                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		                });
@@ -483,7 +505,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             runs(function() {
             	dataA.getKeydata(encoder, ENCODER_FORMAT, {
             		result: function(keydata) {
-		                RequestData$parse(keydata, {
+		                RequestData.parse(keydata, {
 		                    result: function(data) { dataA2 = data; },
 		                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		                });
@@ -524,7 +546,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
         	    dataB = new RequestData(KEYPAIR_ID, Mechanism.JWE_RSA, rsaPublicKey, RSA_OAEP_PRIVATE_KEY);
         	    dataA.getKeydata(encoder, ENCODER_FORMAT, {
         	    	result: function(keydata) {
-        	    		RequestData$parse(keydata, {
+        	    		RequestData.parse(keydata, {
         	    			result: function(data) { dataA2 = data; },
         	    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	    		});
@@ -565,7 +587,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                 dataB = new RequestData(KEYPAIR_ID, Mechanism.JWE_RSA, RSA_OAEP_PUBLIC_KEY, rsaPrivateKey);
         	    dataA.getKeydata(encoder, ENCODER_FORMAT, {
         	    	result: function(keydata) {
-        	    		RequestData$parse(keydata, {
+        	    		RequestData.parse(keydata, {
         	    			result: function(data) { dataA2 = data; },
         	    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	    		});
@@ -623,7 +645,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             runs(function() {
 	            expect(keydata).not.toBeNull();
 	
-	            var moResp = ResponseData$parse(MASTER_TOKEN, keydata);
+	            var moResp = ResponseData.parse(MASTER_TOKEN, keydata);
 	            expect(moResp.encryptionKey).toEqual(resp.encryptionKey);
 	            expect(moResp.hmacKey).toEqual(resp.hmacKey);
 	            expect(moResp.keyExchangeScheme).toEqual(resp.keyExchangeScheme);
@@ -657,7 +679,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             runs(function() {
                 expect(mo.getString(KEY_SCHEME)).toEqual(KeyExchangeScheme.ASYMMETRIC_WRAPPED.name);
                 
-            	MasterToken$parse(ctx, mo.getMslObject(KEY_MASTER_TOKEN, encoder), {
+            	MasterToken.parse(ctx, mo.getMslObject(KEY_MASTER_TOKEN, encoder), {
             		result: function(token) { masterToken = token; },
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
@@ -680,7 +702,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             runs(function() {
             	MslTestUtils.toMslObject(encoder, data, {
             		result: function(mo) {
-		                KeyResponseData$parse(ctx, mo, {
+		                KeyResponseData.parse(ctx, mo, {
 		                    result: function(data) { keyResponseData = data; },
 		                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		                });
@@ -718,7 +740,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
         	runs(function() {
         		var f = function() {
             		keydata.remove(KEY_KEY_PAIR_ID);
-        			ResponseData$parse(MASTER_TOKEN, keydata);
+        			ResponseData.parse(MASTER_TOKEN, keydata);
         		};
         		expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         	});
@@ -738,7 +760,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
         	runs(function() {
         		var f = function() {
             		keydata.remove(KEY_ENCRYPTION_KEY);
-        			ResponseData$parse(MASTER_TOKEN, keydata);
+        			ResponseData.parse(MASTER_TOKEN, keydata);
         		};
         		expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         	});
@@ -758,7 +780,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
         	runs(function() {
         		var f = function() {
             		keydata.remove(KEY_HMAC_KEY);
-        			ResponseData$parse(MASTER_TOKEN, keydata);
+        			ResponseData.parse(MASTER_TOKEN, keydata);
         		};
         		expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         	});
@@ -784,7 +806,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             	dataB = new ResponseData(masterTokenB, KEYPAIR_ID, ENCRYPTION_KEY, HMAC_KEY);
             	dataA.getKeydata(encoder, ENCODER_FORMAT, {
             		result: function(keydata) {
-            			dataA2 = ResponseData$parse(masterTokenA, keydata);
+            			dataA2 = ResponseData.parse(masterTokenA, keydata);
             		},
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             	});
@@ -812,7 +834,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             runs(function() {
 	        	dataA.getKeydata(encoder, ENCODER_FORMAT, {
 	        		result: function(keydata) {
-	        			dataA2 = ResponseData$parse(MASTER_TOKEN, keydata);
+	        			dataA2 = ResponseData.parse(MASTER_TOKEN, keydata);
 	        		},
 	        		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	        	});
@@ -834,8 +856,8 @@ describe("AsymmetricWrappedExchangeSuite", function() {
         });
         
         it("equals encryption key", function() {
-            var encryptionKeyA = Arrays$copyOf(ENCRYPTION_KEY);
-            var encryptionKeyB = Arrays$copyOf(ENCRYPTION_KEY);
+            var encryptionKeyA = Arrays.copyOf(ENCRYPTION_KEY);
+            var encryptionKeyB = Arrays.copyOf(ENCRYPTION_KEY);
             ++encryptionKeyB[0];
             var dataA = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, encryptionKeyA, HMAC_KEY);
             var dataB = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, encryptionKeyB, HMAC_KEY);
@@ -843,7 +865,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             runs(function() {
 	        	dataA.getKeydata(encoder, ENCODER_FORMAT, {
 	        		result: function(keydata) {
-	        			dataA2 = ResponseData$parse(MASTER_TOKEN, keydata);
+	        			dataA2 = ResponseData.parse(MASTER_TOKEN, keydata);
 	        		},
 	        		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	        	});
@@ -865,8 +887,8 @@ describe("AsymmetricWrappedExchangeSuite", function() {
         });
         
         it("equals HMAC key", function() {
-            var hmacKeyA = Arrays$copyOf(HMAC_KEY);
-            var hmacKeyB = Arrays$copyOf(HMAC_KEY);
+            var hmacKeyA = Arrays.copyOf(HMAC_KEY);
+            var hmacKeyB = Arrays.copyOf(HMAC_KEY);
             ++hmacKeyB[0];
             var dataA = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, hmacKeyA);
             var dataB = new ResponseData(MASTER_TOKEN, KEYPAIR_ID, ENCRYPTION_KEY, hmacKeyB);
@@ -874,7 +896,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
             runs(function() {
 	        	dataA.getKeydata(encoder, ENCODER_FORMAT, {
 	        		result: function(keydata) {
-	        			dataA2 = ResponseData$parse(MASTER_TOKEN, keydata);
+	        			dataA2 = ResponseData.parse(MASTER_TOKEN, keydata);
 	        		},
 	        		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	        	});
@@ -990,12 +1012,12 @@ describe("AsymmetricWrappedExchangeSuite", function() {
         
         function keyxFactoryData() {
             var params = [];
-            var webCryptoVersion = MslCrypto$getWebCryptoVersion();
-            if (webCryptoVersion == MslCrypto$WebCryptoVersion.LEGACY) {
+            var webCryptoVersion = MslCrypto.getWebCryptoVersion();
+            if (webCryptoVersion == MslCrypto.WebCryptoVersion.LEGACY) {
                 params.push([ Mechanism.RSA ]);
                 params.push([ Mechanism.JWE_RSA ]);
                 params.push([ Mechanism.JWEJS_RSA ]);
-            } else if (webCryptoVersion == MslCrypto$WebCryptoVersion.V2014_01) {
+            } else if (webCryptoVersion == MslCrypto.WebCryptoVersion.V2014_01) {
                 params.push([ Mechanism.RSA ]);
                 params.push([ Mechanism.JWK_RSA ]);
                 params.push([ Mechanism.JWK_RSAES ]);
