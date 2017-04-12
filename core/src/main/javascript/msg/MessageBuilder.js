@@ -471,7 +471,7 @@
                             var random = ctx.getRandom();
                             do {
                                 messageId = random.nextLong();
-                            } while (messageId < 0 || messageId > MslConstants$MAX_LONG_VALUE);
+                            } while (messageId < 0 || messageId > MslConstants.MAX_LONG_VALUE);
                         }
                         var errorCode = error.responseCode;
                         var internalCode = error.internalCode;
@@ -732,7 +732,7 @@
                 } else {
                     nonReplayableId = null;
                 }
-                var headerData = new MessageHeader$HeaderData(this._recipient, this._messageId, nonReplayableId, this._renewable, this._handshake, this._capabilities, keyRequests, response, this._userAuthData, this._userIdToken, tokens);
+                var headerData = new MessageHeader.HeaderData(this._recipient, this._messageId, nonReplayableId, this._renewable, this._handshake, this._capabilities, keyRequests, response, this._userAuthData, this._userIdToken, tokens);
                 var peerTokens = new Array();
                 for (var name in this._peerServiceTokens)
                     peerTokens.push(this._peerServiceTokens[name]);
@@ -1065,7 +1065,7 @@
                 // Rebuild the original token with empty service data.
                 var masterToken = originalToken.isMasterTokenBound() ? this._masterToken : null;
                 var userIdToken = originalToken.isUserIdTokenBound() ? this._userIdToken : null;
-                ServiceToken$create(this._ctx, name, EMPTY_DATA, masterToken, userIdToken, false, null, new NullCryptoContext(), {
+                ServiceToken.create(this._ctx, name, EMPTY_DATA, masterToken, userIdToken, false, null, new NullCryptoContext(), {
                     result: function(token) {
                         AsyncExecutor(callback, function() {
                             return this.addServiceToken(token);

@@ -70,7 +70,7 @@
     var KEY_SHA256 = "sha256";
 
     /** Versions. */
-    var Version = MslCiphertextEnvelope$Version = {
+    var Version = {
         /**
          * <p>Version 1.</p>
          * 
@@ -122,7 +122,7 @@
         /**
          * <p>Create a new encryption envelope with the provided details.</p>
          *
-         * @param {string|MslConstants$CipherSpec} keyIdOrSpec the key
+         * @param {string|MslConstants.CipherSpec} keyIdOrSpec the key
          *        identifier or cipher specification.
          * @param {?Uint8Array} iv the initialization vector. May be null.
          * @param {Uint8Array} ciphertext the ciphertext.
@@ -133,8 +133,8 @@
         	var version    = Version.V1,
         		keyId      = keyIdOrSpec,
         		cipherSpec = null;
-        	for (var key in MslConstants$CipherSpec) {
-        		if (MslConstants$CipherSpec[key] == keyIdOrSpec) {
+        	for (var key in MslConstants.CipherSpec) {
+        		if (MslConstants.CipherSpec[key] == keyIdOrSpec) {
         			version = Version.V2;
         			keyId = null;
         			cipherSpec = keyIdOrSpec;
@@ -200,7 +200,7 @@
      * envelope version is provided then the MSL object is parsed accordingly.
      *
      * @param {MslObject} mo the MSL object.
-     * @param {?MslCiphertextEnvelope$Version} version the envelope version.
+     * @param {?Version} version the envelope version.
      *        May be null.
      * @param {{result: function(MslCiphertextEnvelope), error: function(Error)}}
      *        callback the callback functions that will receive the envelope
@@ -256,7 +256,7 @@
                         var v = mo.getInt(KEY_VERSION);
                         if (v != Version.V2)
                             throw new MslCryptoException(MslError.UNIDENTIFIED_CIPHERTEXT_ENVELOPE, "ciphertext envelope " + mo);
-                        keyIdOrSpec = MslConstants$CipherSpec$fromString(mo.getString(KEY_CIPHERSPEC));
+                        keyIdOrSpec = MslConstants.CipherSpec.fromString(mo.getString(KEY_CIPHERSPEC));
                         if (!keyIdOrSpec)
                             throw new MslCryptoException(MslError.UNIDENTIFIED_CIPHERSPEC, "ciphertext envelope " + mo);
                         iv = (mo.has(KEY_IV)) ? mo.getBytes(KEY_IV) : null;
@@ -279,5 +279,5 @@
     // Exports.
     module.exports.create = MslCiphertextEnvelope$create;
     module.exports.parse = MslCiphertextEnvelope$parse;
-    module.exports.Version = MslCiphertextEnvelope$Version;
+    module.exports.Version = Version;
 })(require, (typeof module !== 'undefined') ? module : mkmodule('MslCiphertextEnvelope'));

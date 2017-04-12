@@ -28,7 +28,7 @@
 	
 	const Class = require('../util/Class.js');
 	
-	var OutputStream = module.exports = util.Class.create({
+	var OutputStream = module.exports = Class.create({
 	    /**
 	     * Abort any outstanding operations.
 	     */

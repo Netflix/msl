@@ -29,7 +29,6 @@
     
     const MslTestUtils = require('../util/MslTestUtils.js');
     
-    
 	/**
 	 * PSK ESN.
 	 * @const

@@ -31,7 +31,7 @@
      * Web Crypto API version.
      * @enum {number}
      */
-    var WebCryptoVersion = MslCrypto$WebCryptoVersion = {
+    var WebCryptoVersion = {
         /** Legacy version with JWE+JWK wrap/unwrap. */
         LEGACY: 1,
         /** 2014.01 version with JWK decrypt+import wrap/unwrap. */
@@ -50,7 +50,7 @@
         /** Latest (most compatible) version. */
         LATEST: 3,
     };
-    Object.freeze(MslCrypto$WebCryptoVersion);
+    Object.freeze(WebCryptoVersion);
 
     // Default to the latest Web Crypto version.
     var mslCrypto$version = WebCryptoVersion.LATEST;
@@ -59,7 +59,7 @@
      * <p>Set the Web Crypto version that should be used by MSL. This will
      * override the default version detected.</p>
      *
-     * @param {MslCrypto$WebCryptoVersion} version Web Crypto version to use.
+     * @param {WebCryptoVersion} version Web Crypto version to use.
      */
     var MslCrypto$setWebCryptoVersion = function MslCrypto$setWebCryptoVersion(version) {
         mslCrypto$version = version;
@@ -68,7 +68,7 @@
     /**
      * <p>Return the Web Crypto version that is being used.</p>
      *
-     * @return {MslCrypto$WebCryptoVersion} the Web Crypto version in use.
+     * @return {WebCryptoVersion} the Web Crypto version in use.
      */
     var MslCrypto$getWebCryptoVersion = function MslCrypto$getWebCryptoVersion() {
     	return mslCrypto$version;
@@ -79,11 +79,11 @@
     if (typeof window !== "undefined") {
         if (window.msCrypto) {
             nfCryptoSubtle = window.msCrypto.subtle;
-            MslCrypto$setWebCryptoVersion(MslCrypto$WebCryptoVersion.LEGACY);
+            MslCrypto$setWebCryptoVersion(WebCryptoVersion.LEGACY);
         } else if (window.crypto) {
             if (window.crypto.webkitSubtle) {
                 nfCryptoSubtle = window.crypto.webkitSubtle;
-                MslCrypto$setWebCryptoVersion(MslCrypto$WebCryptoVersion.V2014_02_SAFARI);
+                MslCrypto$setWebCryptoVersion(WebCryptoVersion.V2014_02_SAFARI);
             } else if (window.crypto.subtle) {
                 nfCryptoSubtle = window.crypto.subtle;
             }
@@ -343,8 +343,8 @@
     };
 
     // Exports.
-    module.exports.WebCryptoVersion = MslCrypto$WebCryptoVersion;
+    module.exports.WebCryptoVersion = WebCryptoVersion;
     module.exports.setWebCryptoVersion = MslCrypto$setWebCryptoVersion;
-    module.exports.getWebCryptoVerison = MslCrypto$getWebCryptoVersion;
+    module.exports.getWebCryptoVersion = MslCrypto$getWebCryptoVersion;
     module.exports.setCryptoSubtle = MslCrypto$setCryptoSubtle;
 })(require, (typeof module !== 'undefined') ? module : mkmodule('MslCrypto'));

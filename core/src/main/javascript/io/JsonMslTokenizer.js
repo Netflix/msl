@@ -64,7 +64,7 @@
                 /** @type {InputStream} */
                 _source: { value: source, writable: false, enumerable: false, configurable: false },
                 /** @type {string} */
-                _charset: { value: MslConstants$DEFAULT_CHARSET, writable: false, enumerable: false, configurable: false },
+                _charset: { value: MslConstants.DEFAULT_CHARSET, writable: false, enumerable: false, configurable: false },
                 /** @type {string} */
                 _remainingData: { value: '', writable: true, enumerable: false, configurable: false },
                 /** @type {ClarinetParser} */
@@ -105,7 +105,7 @@
                         // to parse the JSON.
                         var json;
                         try {
-                        	json = this._remainingData.concat(textEncoding$getString(data, this._charset));
+                        	json = this._remainingData.concat(textEncoding.getString(data, this._charset));
                         } catch (e) {
                         	throw new MslEncoderException("Invalid JSON text encoding.");
                         }
@@ -143,7 +143,7 @@
                         // to parse the JSON.
                         var json;
                         try {
-                        	json = this._remainingData.concat(textEncoding$getString(data, this._charset));
+                        	json = this._remainingData.concat(textEncoding.getString(data, this._charset));
                         } catch (e) {
                         	throw new MslEncoderException("Invalid JSON text encoding.");
                         }

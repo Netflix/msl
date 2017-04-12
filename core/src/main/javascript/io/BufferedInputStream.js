@@ -20,12 +20,15 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var BufferedInputStream;
+(function(require, module) {
+    "use strict";
+    
+    const InputStream = require('../io/InputStream.js');
+    const ByteArrayOutputStream = require('../io/ByteArrayOutputStream.js');
+    const MslIoException = require('../MslIoException.js');
+    const InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
 
-(function() {
-	"use strict";
-
-	BufferedInputStream = InputStream.extend({
+	var BufferedInputStream = module.exports = InputStream.extend({
 		/**
 		 * Create a new buffered input stream backed by the provided input
 		 * stream.
@@ -185,4 +188,4 @@ var BufferedInputStream;
 			}, self);
 		},
 	});
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('BufferedInputStream'));

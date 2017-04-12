@@ -19,7 +19,7 @@
 (function(require, module) {
   "use strict";
   
-  var clarinet = module.exports = {};
+  var clarinet = module.exports;
   var fastlist = Array;
 
   clarinet.parser            = function (opt) { return new CParser(opt);};

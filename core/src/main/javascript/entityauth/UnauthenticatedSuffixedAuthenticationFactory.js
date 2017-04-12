@@ -29,7 +29,7 @@
     const MslInternalException = require('../MslInternalException.js');
     const NullCryptoContext = require('../crypto/NullCryptoContext.js');
 	
-	var UnauthenticatedSuffixedAuthenticationFactory = EntityAuthenticationFactory.extend({
+	var UnauthenticatedSuffixedAuthenticationFactory = module.exports = EntityAuthenticationFactory.extend({
 	    /**
 	     * Construct a new unauthenticated suffixed authentication factory instance.
 	     */

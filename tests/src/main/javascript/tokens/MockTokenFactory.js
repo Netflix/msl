@@ -105,7 +105,7 @@
             AsyncExecutor(callback, function() {
                 if (!masterToken.isDecrypted())
                     throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, masterToken);
-                if (nonReplayableId < 0 || nonReplayableId > MslConstants$MAX_LONG_VALUE)
+                if (nonReplayableId < 0 || nonReplayableId > MslConstants.MAX_LONG_VALUE)
                     throw new MslException(MslError.NONREPLAYABLE_ID_OUT_OF_RANGE, "nonReplayableId " + nonReplayableId);
 
                 // Reject if the non-replayable ID is equal or just a few messages
@@ -125,7 +125,7 @@
                 // If the non-replayable ID is smaller reject it if it is outside the
                 // wrap-around window. The sender cannot recover quickly.
                 if (nonReplayableId < this._largestNonReplayableId) {
-                    var cutoff = this._largestNonReplayableId - MslConstants$MAX_LONG_VALUE + NON_REPLAYABLE_ID_WINDOW;
+                    var cutoff = this._largestNonReplayableId - MslConstants.MAX_LONG_VALUE + NON_REPLAYABLE_ID_WINDOW;
                     if (nonReplayableId >= cutoff)
                         return MslError.MESSAGE_REPLAYED_UNRECOVERABLE;
                 }
@@ -147,7 +147,7 @@
                     serialNumber = ctx.getRandom().nextLong();
                 } while (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE);
                 var identity = entityAuthData.getIdentity();
-                MasterToken$create(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey, callback);
+                MasterToken.create(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey, callback);
             }, this);
         },
 

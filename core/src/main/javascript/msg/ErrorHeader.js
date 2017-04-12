@@ -122,7 +122,7 @@
          * @param {EntityAuthenticationData} entityAuthData the entity authentication data.
          * @param {?string} recipient the intended recipient's entity identity. May be null.
          * @param {number} messageId the message ID.
-         * @param {MslConstants$ResponseCode} errorCode the error code.
+         * @param {MslConstants.ResponseCode} errorCode the error code.
          * @param {number} internalCode the internal code. Negative to indicate no code.
          * @param {?string} errorMsg the error message. May be null.
          * @param {?string} userMsg the user message. May be null.
@@ -202,7 +202,7 @@
                 messageId: { value: messageId, writable: false, configurable: false },
                 /**
                  * Error code.
-                 * @type {MslConstants$ResponseCode}
+                 * @type {MslConstants.ResponseCode}
                  */
                 errorCode: { value: errorCode, writable: false, configurable: false },
                 /**
@@ -318,7 +318,7 @@
      * @param {EntityAuthenticationData} entityAuthData the entity authentication data.
      * @param {?string} recipient the intended recipient's entity identity. May be null.
      * @param {number} messageId the message ID.
-     * @param {MslConstants$ResponseCode} errorCode the error code.
+     * @param {MslConstants.ResponseCode} errorCode the error code.
      * @param {number} internalCode the internal code. Negative to indicate no code.
      * @param {?string} errorMsg the error message. May be null.
      * @param {?string} userMsg the user message. May be null.

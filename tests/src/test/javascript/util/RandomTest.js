@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-const Random = require('../../../../../core/src/main/javascript/util/Random.js');
-
 /**
  * Random unit tests.
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("Random", function() {
+    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    
     var ITERATIONS = 100000;
     var random = new Random();
     

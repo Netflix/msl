@@ -28,7 +28,7 @@
 
 	const Class = require('../util/Class.js');
 	
-	var WrapCryptoContextRepository = module.exports = util.Class.create({
+	var WrapCryptoContextRepository = module.exports = Class.create({
 	    /**
 	     * Add a new wrapping key crypto context and wrap data. The wrap data
 	     * should be used in key request data to request a new wrapping key

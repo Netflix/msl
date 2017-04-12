@@ -19,24 +19,23 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-
-const Random = require('../../../../../core/src/main/javascript/util/Random.js');
-const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-const UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
-const SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
-const MessageBuilder = require('../../../../../core/src/main/javascript/msg/MessageBuilder.js');
-const MessageServiceTokenBuilder = require('../../../../../core/src/main/javascript/msg/MessageServiceTokenBuilder.js');
-const ServiceToken = require('../../../../../core/src/main/javascript/tokens/ServiceToken.js');
-const NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
-const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-
-const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-const MockMessageContext = require('../../../main/javascript/msg/MockMessageContext.js');
-const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-const MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
-
 describe("MessageServiceTokenBuilder", function() {
+    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
+    const SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
+    const MessageBuilder = require('../../../../../core/src/main/javascript/msg/MessageBuilder.js');
+    const MessageServiceTokenBuilder = require('../../../../../core/src/main/javascript/msg/MessageServiceTokenBuilder.js');
+    const ServiceToken = require('../../../../../core/src/main/javascript/tokens/ServiceToken.js');
+    const NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
+    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MockMessageContext = require('../../../main/javascript/msg/MockMessageContext.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    const MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
+    
 	var random = new Random();
 	var trustedNetCtx;
 	var trustedNetMsgCtx;

@@ -19,15 +19,14 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-
-const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-const Random = require('../../../../../core/src/main/javascript/util/Random.js');
-const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-const NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
-
-const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-
 describe("NullCryptoContext", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
     

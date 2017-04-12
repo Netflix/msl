@@ -52,7 +52,7 @@
     var KEY_SIGNATURE = "signature";
 
     /** Versions. */
-    var Version = MslSignatureEnvelope$Version = {
+    var Version = {
         /**
          * <p>Version 1.</p>
          *
@@ -189,7 +189,7 @@
      * signature version is provided then the MSL object is parsed accordingly.
      *
      * @param {Uint8Array} envelope the raw envelope bytes.
-     * @param {?MslSignatureEnvelope$Version} version the envelope version.
+     * @param {?Version} version the envelope version.
      *        May be null.
      * @param {MslEncoderFactory} MSL encoder factory.
      * @param {{result: function(MslSignatureEnvelope), error: function(Error)}}
@@ -316,5 +316,5 @@
     // Exports.
     module.exports.create = MslSignatureEnvelope$create;
     module.exports.parse = MslSignatureEnvelope$parse;
-    module.exports.Version = MslSignatureEnvelope$Version;
+    module.exports.Version = Version;
 })(require, (typeof module !== 'undefined') ? module : mkmodule('MslSignatureEnvelope'));

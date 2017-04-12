@@ -19,19 +19,18 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-
-const NullMslStore = require('../../../../../core/src/main/javascript/util/NullMslStore.js');
-const EntityAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-const NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
-const ServiceToken = require('../../../../../core/src/main/javascript/tokens/ServiceToken.js');
-const MslException = require('../../../../../core/src/main/javascript/MslException.js');
-const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-
-const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-const MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
-
 describe("NullMslStore", function() {
+    const NullMslStore = require('../../../../../core/src/main/javascript/util/NullMslStore.js');
+    const EntityAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
+    const ServiceToken = require('../../../../../core/src/main/javascript/tokens/ServiceToken.js');
+    const MslException = require('../../../../../core/src/main/javascript/MslException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    const MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
+
     var TOKEN_NAME = "name";
     
     /** MSL context. */

@@ -19,43 +19,39 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-
-const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-const Random = require('../../../../../core/src/main/javascript/util/Random.js');
-const MessageHeader = require('../../../../../core/src/main/javascript/msg/MessageHeader.js');
-const NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
-const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
-const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
-const ByteArrayOutputStream = require('../../../../../core/src/main/javascript/io/ByteArrayOutputStream.js');
-const ByteArrayInputStream = require('../../../../../core/src/main/javascript/io/ByteArrayInputStream.js');
-const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-const MessageHeader = require('../../../../../core/src/main/javascript/msg/MessageHeader.js');
-const ErrorHeader = require('../../../../../core/src/main/javascript/msg/ErrorHeader.js');
-const SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
-const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
-const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
-const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
-const PayloadChunk = require('../../../../../core/src/main/javascript/msg/PayloadChunk.js');
-const MessageInputStream = require('../../../../../core/src/main/javascript/msg/MessageInputStream.js');
-const ErrorHeader = require('../../../../../core/src/main/javascript/msg/ErrorHeader.js');
-const MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
-const MslUserIdTokenException = require('../../../../../core/src/main/javascript/MslUserIdTokenException.js');
-const KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
-const MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
-const MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
-const MslMessageException = require('../../../../../core/src/main/javascript/MslMessageException.js');
-const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
-
-const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-const MockUnauthenticatedAuthenticationFactory = require('../../../main/javascript/entityauth/MockUnauthenticatedAuthenticationFactory.js');
-const MockTokenFactory = require('../../../main/javascript/tokens/MockTokenFactory.js');
-const MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
-const MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
-
 describe("MessageInputStream", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    const MessageHeader = require('../../../../../core/src/main/javascript/msg/MessageHeader.js');
+    const NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
+    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
+    const ByteArrayOutputStream = require('../../../../../core/src/main/javascript/io/ByteArrayOutputStream.js');
+    const ByteArrayInputStream = require('../../../../../core/src/main/javascript/io/ByteArrayInputStream.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const ErrorHeader = require('../../../../../core/src/main/javascript/msg/ErrorHeader.js');
+    const SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
+    const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
+    const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+    const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+    const PayloadChunk = require('../../../../../core/src/main/javascript/msg/PayloadChunk.js');
+    const MessageInputStream = require('../../../../../core/src/main/javascript/msg/MessageInputStream.js');
+    const MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
+    const MslUserIdTokenException = require('../../../../../core/src/main/javascript/MslUserIdTokenException.js');
+    const KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
+    const MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
+    const MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
+    const MslMessageException = require('../../../../../core/src/main/javascript/MslMessageException.js');
+    const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    const MockUnauthenticatedAuthenticationFactory = require('../../../main/javascript/entityauth/MockUnauthenticatedAuthenticationFactory.js');
+    const MockTokenFactory = require('../../../main/javascript/tokens/MockTokenFactory.js');
+    const MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
+    const MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
+    
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
     
@@ -509,7 +505,7 @@ describe("MessageInputStream", function() {
 		
     	var errorHeader;
 		runs(function() {
-			ErrorHeader.create(trustedNetCtx, entityAuthData, null, 1, MslConstants$ResponseCode.FAIL, 3, "errormsg", "usermsg", {
+			ErrorHeader.create(trustedNetCtx, entityAuthData, null, 1, MslConstants.ResponseCode.FAIL, 3, "errormsg", "usermsg", {
 				result: function(x) { errorHeader = x; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});

@@ -727,7 +727,7 @@
                     }
                 } catch (e) {
                     if (e instanceof MslEncoderException)
-                        throw new MslEncodingException(MslError.MASTERTOKEN_TOKENDATA_PARSE_ERROR, "mastertokendata " + base64$encode(tokendataBytes), e);
+                        throw new MslEncodingException(MslError.MASTERTOKEN_TOKENDATA_PARSE_ERROR, "mastertokendata " + Base64.encode(tokendataBytes), e);
                     throw e;
                 }
             });
@@ -754,7 +754,7 @@
                     signatureAlgo = sessiondata.optString(KEY_SIGNATURE_ALGORITHM, MslConstants.SignatureAlgo.HmacSHA256);
                 } catch (e) {
                     if (e instanceof MslEncoderException)
-                        throw new MslEncodingException(MslError.MASTERTOKEN_SESSIONDATA_PARSE_ERROR, "sessiondata " + base64$encode(plaintext), e);
+                        throw new MslEncodingException(MslError.MASTERTOKEN_SESSIONDATA_PARSE_ERROR, "sessiondata " + Base64.encode(plaintext), e);
                     throw e;
                 }
                 
@@ -765,9 +765,9 @@
                     throw new MslCryptoException(MslError.UNIDENTIFIED_ALGORITHM, "encryption algorithm: " + encryptionAlgo + "; signature algorithm: " + signatureAlgo);
                 
                 // Reconstruct keys.
-                SecretKey$import(rawEncryptionKey, wcEncryptionAlgo, WebCryptoUsage.ENCRYPT_DECRYPT, {
+                SecretKey.import(rawEncryptionKey, wcEncryptionAlgo, WebCryptoUsage.ENCRYPT_DECRYPT, {
                     result: function(encryptionKey) {
-                        SecretKey$import(rawSignatureKey, wcSignatureAlgo, WebCryptoUsage.SIGN_VERIFY, {
+                        SecretKey.import(rawSignatureKey, wcSignatureAlgo, WebCryptoUsage.SIGN_VERIFY, {
                             result: function(signatureKey) {
                                 constructToken(cryptoContext, encoder, tokendataBytes, signatureBytes, verified,
                                     renewalWindow, expiration, sequenceNumber, serialNumber,
@@ -800,4 +800,4 @@
     // Exports.
     module.exports.create = MasterToken$create;
     module.exports.parse = MasterToken$parse;
-})(require, (typeof module !== 'undefined') ? module : mkmodule('SecretMessageContext'));
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MasterToken'));

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
-
 describe("MslError", function() {
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+    
     var BASE = 100000;
     
     it("JSON parse error is correct", function() {

@@ -19,22 +19,21 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-
-const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-const PresharedProfileAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedProfileAuthenticationData.js');
-const MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
-const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-const MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
-const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-
-const MockAuthenticationUtils = require('../../../main/javascript/util/MockAuthenticationUtils.js');
-const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-const MockPresharedKeyStore = require('../../../main/javascript/entityauth/MockPresharedKeyStore.js');
-const MockPresharedProfileAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedProfileAuthenticationFactory.js');
-const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-
 describe("PresharedProfileAuthenticationFactory", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const PresharedProfileAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedProfileAuthenticationData.js');
+    const MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+
+    const MockAuthenticationUtils = require('../../../main/javascript/util/MockAuthenticationUtils.js');
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MockPresharedKeyStore = require('../../../main/javascript/entityauth/MockPresharedKeyStore.js');
+    const MockPresharedProfileAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedProfileAuthenticationFactory.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
     
@@ -112,7 +111,7 @@ describe("PresharedProfileAuthenticationFactory", function() {
         waitsFor(function() { return dataMo && authdataMo; }, "dataMo && authdataMo", 100);
 
         runs(function() {
-            expect(MslEncoderUtils$equalObjects(dataMo, authdataMo)).toBeTruthy();
+            expect(MslEncoderUtils.equalObjects(dataMo, authdataMo)).toBeTruthy();
         });
     });
     

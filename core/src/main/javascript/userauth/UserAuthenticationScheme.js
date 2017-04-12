@@ -53,7 +53,6 @@
         EMAIL_PASSWORD : new UserAuthenticationScheme("EMAIL_PASSWORD"),
         USER_ID_TOKEN : new UserAuthenticationScheme("USER_ID_TOKEN"),
     }));
-    Object.freeze(UserAuthenticationScheme);
 
     /**
      * @param {string} name the entity authentication scheme name.
@@ -65,5 +64,8 @@
     };
     
     // Exports.
-    module.exports.getScheme = UserAuthenticationScheme$getScheme;
+    Object.defineProperties(UserAuthenticationScheme, {
+        getScheme: { value: UserAuthenticationScheme$getScheme, writable: false, enumerable: false, configurable: false },
+    });
+    Object.freeze(UserAuthenticationScheme);
 })(require, (typeof module !== 'undefined') ? module : mkmodule('UserAuthenticationScheme'));

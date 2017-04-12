@@ -28,7 +28,6 @@
 	const MslConstants = require('../MslConstants.js');
 	const MslEncoderException = require('../io/MslEncoderException.js');
 	const MslException = require('../MslException.js');
-	const JsonMslArray = require('../io/JsonMslArray.js');
 	const Base64 = require('../util/Base64.js');
 	const AsyncExecutor = require('../util/AsyncExecutor.js');
     
@@ -130,6 +129,8 @@
         
         /** @inheritDoc */
         put: function put(key, value) {
+            const JsonMslArray = require('../io/JsonMslArray.js');
+            
         	var o;
         	try {
         		// Convert Object to MslObject.
@@ -211,6 +212,8 @@
 
     		function next(jo, keys, i) {
     			AsyncExecutor(callback, function() {
+    			    const JsonMslArray = require('../io/JsonMslArray.js');
+    			    
 	    			if (i >= keys.length)
 	    				return jo;
 	    			

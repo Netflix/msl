@@ -209,7 +209,7 @@
     /**
      * Container struct for message header data.
      */
-    var HeaderData = MessageHeader$HeaderData = Class.create({
+    var HeaderData = Class.create({
         /**
          * @param {?string} recipient the message recipient's entity identity. May be
          *        null.
@@ -257,7 +257,7 @@
     /**
      * Container struct for header peer data.
      */
-    var HeaderPeerData = MessageHeader$HeaderPeerData = Class.create({
+    var HeaderPeerData = Class.create({
         /**
          * @param {MasterToken} peerMasterToken peer master token. May be null.
          * @param {UserIdToken} peerUserIdToken peer user ID token. May be null if there is
@@ -864,7 +864,7 @@
     function getKeyResponseData(ctx, keyResponseDataMo, callback) {
         AsyncExecutor(callback, function() {
             if (keyResponseDataMo) {
-                KeyResponseData$parse(ctx, keyResponseDataMo, callback);
+                KeyResponseData.parse(ctx, keyResponseDataMo, callback);
             } else {
                 return null;
             }
@@ -882,7 +882,7 @@
     function getUserIdToken(ctx, userIdTokenMo, masterToken, callback) {
         AsyncExecutor(callback, function() {
             if (userIdTokenMo) {
-                UserIdToken$parse(ctx, userIdTokenMo, masterToken, callback);
+                UserIdToken.parse(ctx, userIdTokenMo, masterToken, callback);
             } else {
                 return null;
             }
@@ -1433,6 +1433,6 @@
     // Exports.
     module.exports.create = MessageHeader$create;
     module.exports.parse = MessageHeader$parse;
-    module.exports.HeaderData = MessageHeader$HeaderData;
-    module.exports.HeaderPeerData = MessageHeader$HeaderPeerData;
+    module.exports.HeaderData = HeaderData;
+    module.exports.HeaderPeerData = HeaderPeerData;
 })(require, (typeof module !== 'undefined') ? module : mkmodule('MessageHeader'));

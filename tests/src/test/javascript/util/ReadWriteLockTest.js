@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-const ReadWriteLock = require('../../../../../core/src/main/javascript/util/ReadWriteLock.js');
-
 describe("ReadWriteLock", function() {
+    const ReadWriteLock = require('../../../../../core/src/main/javascript/util/ReadWriteLock.js');
+    
     var TIMEOUT = 75;
     var DELAY = 1;
     var NAME = "name";

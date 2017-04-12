@@ -24,11 +24,16 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var DefaultMslEncoderFactory;
-
-(function() {
-
-	DefaultMslEncoderFactory = MslEncoderFactory.extend({
+(function(require, module) {
+    "use strict";
+    
+    const MslEncoderFactory = require('../io/MslEncoderFactory.js');
+    const MslEncoderFormat = require('../io/MslEncoderFormat.js');
+    const JsonMslTokenizer = require('../io/JsonMslTokenizer.js');
+    const MslEncoderException = require('../io/MslEncoderException.js');
+    const JsonMslObject = require('../io/JsonMslObject.js');
+    
+	var DefaultMslEncoderFactory = module.exports = MslEncoderFactory.extend({
 	    /** @inheritDoc */
         getPreferredFormat: function getPreferredFormat(formats) {
             // We don't know about any other formats right now.
@@ -63,7 +68,7 @@ var DefaultMslEncoderFactory;
         	AsyncExecutor(callback, function() {
 	            // JSON.
 	            if (MslEncoderFormat.JSON == format) {
-	                JsonMslObject$encode(this, object, callback);
+	                JsonMslObject.encode(this, object, callback);
 	                return;
 	            }
 	            
@@ -72,4 +77,4 @@ var DefaultMslEncoderFactory;
         	}, this);
         },
 	});
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('DefaultMslEncoderFactory'));

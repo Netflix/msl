@@ -24,7 +24,7 @@
 	
 	const InputStream = require('../io/InputStream.js');
 	const InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
-	var MslIoException = require("../MslIoException.js");
+	const MslIoException = require("../MslIoException.js");
 		
 	var ByteArrayInputStream = module.exports = InputStream.extend({
 	    /**

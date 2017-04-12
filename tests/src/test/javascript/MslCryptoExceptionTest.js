@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
-const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-
 describe("MslCryptoException", function() {
+    const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    
 	it("error as expected", function() {
 		var e = new MslCryptoException(MslError.MSL_PARSE_ERROR);
 		expect(e.error).toBe(MslError.MSL_PARSE_ERROR);

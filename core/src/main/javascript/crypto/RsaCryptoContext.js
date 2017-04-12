@@ -53,7 +53,7 @@
      * RSA crypto context mode.
      * @enum
      */
-    var Mode = RsaCryptoContext$Mode = {
+    var Mode = {
         /** RSA-OAEP encrypt/decrypt */
         ENCRYPT_DECRYPT_OAEP: 1,
         /** RSA PKCS#1 encrypt/decrypt */
@@ -335,5 +335,5 @@
     });
     
     // Exports.
-    module.exports.Mode = RsaCryptoContext$Mode;
+    module.exports.Mode = Mode;
 })(require, (typeof module !== 'undefined') ? module : mkmodule('RsaCryptoContext'));

@@ -19,19 +19,18 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-
-const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-const UserIdTokenAuthenticationData = require('../../../../../core/src/main/javascript/userauth/UserIdTokenAuthenticationData.js');
-const UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
-const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-const MslUserAuthException = require('../../../../../core/src/main/javascript/MslUserAuthException.js');
-
-const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-
 describe("UserIdTokenAuthenticationData", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const UserIdTokenAuthenticationData = require('../../../../../core/src/main/javascript/userauth/UserIdTokenAuthenticationData.js');
+    const UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    const MslUserAuthException = require('../../../../../core/src/main/javascript/MslUserAuthException.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    
 	/** MSL encoder format. */
 	var ENCODER_FORMAT = MslEncoderFormat.JSON;
 	
@@ -195,7 +194,7 @@ describe("UserIdTokenAuthenticationData", function() {
         var userdata;
         runs(function() {
         	var mo = encoder.parseObject(encode);
-            UserAuthenticationData$parse(ctx, null, mo, {
+            UserAuthenticationData.parse(ctx, null, mo, {
                 result: function(x) { userdata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });

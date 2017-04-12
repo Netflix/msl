@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-const BlockingQueueTest = require('../../../../../core/src/main/javascript/util/BlockingQueue.js');
-
 describe("BlockingQueue", function() {
+    const BlockingQueue = require('../../../../../core/src/main/javascript/util/BlockingQueue.js');
+    
     var TIMEOUT = 150;
     var DELAY = 1;
     var NAME = "name";
@@ -123,7 +122,7 @@ describe("BlockingQueue", function() {
             expect(t).toBeDefined();
             deliver(queue, items);
         });
-        waitsFor(function() { return Arrays$equal(consumer.items, items); }, "items", 200);
+        waitsFor(function() { return Arrays.equal(consumer.items, items); }, "items", 200);
     });
     
     it("add and poll", function() {
@@ -133,7 +132,7 @@ describe("BlockingQueue", function() {
             var t = queue.poll(TIMEOUT, consumer.getCallback(NAME));
             expect(t).toBeDefined();
         });
-        waitsFor(function() { return Arrays$equal(consumer.items, items); }, "items", 200);
+        waitsFor(function() { return Arrays.equal(consumer.items, items); }, "items", 200);
     });
     
     it("multiple poll and add", function() {

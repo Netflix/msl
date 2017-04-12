@@ -19,22 +19,21 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-
-const SimpleMslStore = require('../../../../../core/src/main/javascript/util/SimpleMslStore.js');
-const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-const SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
-const NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
-const SessionCryptoContext = require('../../../../../core/src/main/javascript/crypto/SessionCryptoContext.js');
-const Random = require('../../../../../core/src/main/javascript/util/Random.js');
-const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-const MslException = require('../../../../../core/src/main/javascript/MslException.js');
-const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-
-const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-const MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
-
 describe("SimpleMslStore", function() {
+    const SimpleMslStore = require('../../../../../core/src/main/javascript/util/SimpleMslStore.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
+    const NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
+    const SessionCryptoContext = require('../../../../../core/src/main/javascript/crypto/SessionCryptoContext.js');
+    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    const MslException = require('../../../../../core/src/main/javascript/MslException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    const MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
+
 	/**
 	 * @param {Array.<ServiceToken>} tokensA first set of service tokens.
 	 * @param {Array.<ServiceToken>} tokensB second set of service tokens.

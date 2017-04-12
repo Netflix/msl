@@ -25,7 +25,7 @@
 	
 	const Class = require('../util/Class.js');
 	
-	var FilterStreamFactory = Class.create({
+	var FilterStreamFactory = module.exports = Class.create({
 	    /**
 	     * Return a new input stream that has the provided input stream as its
 	     * backing source. If no filtering is desired then the original input

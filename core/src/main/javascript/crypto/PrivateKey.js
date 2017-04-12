@@ -29,7 +29,7 @@
     const KeyFormat = require('../crypto/KeyFormat.js');
     const MslError = require('../MslError.js');
 
-    var PrivateKey = module.exports = util.Class.create({
+    var PrivateKey = module.exports = Class.create({
         /**
          * Create a new private key from an original private key.
          *

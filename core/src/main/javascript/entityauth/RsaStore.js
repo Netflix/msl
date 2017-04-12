@@ -27,7 +27,7 @@
     const PrivateKey = require('../crypto/PrivateKey.js');
     const MslInternalException = require('../MslInternalException.js');
     
-	var RsaStore = module.exports = util.Class.create({
+	var RsaStore = module.exports = Class.create({
 	    /**
 	     * <p>Create a new RSA key store that contains no keys.</p>
 	     */

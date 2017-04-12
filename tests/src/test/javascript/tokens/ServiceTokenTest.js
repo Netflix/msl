@@ -19,34 +19,35 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-
-const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
-const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-const Random = require('../../../../../core/src/main/javascript/util/Random.js');
-const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
-const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
-const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
-const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
-const SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
-const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-const ServiceToken = require('../../../../../core/src/main/javascript/tokens/ServiceToken.js');
-const MslException = require('../../../../../core/src/main/javascript/MslException.js');
-const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-
-const textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
-
-const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-const MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
-
 parameterize("ServiceToken", function data() {
+    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+    
     return [
         [ null ],
         [ MslConstants.CompressionAlgorithm.LZW ],
     ];
 },
 function(encoding, compressionAlgo) {
+    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
+    const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
+    const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+    const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+    const SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const ServiceToken = require('../../../../../core/src/main/javascript/tokens/ServiceToken.js');
+    const MslException = require('../../../../../core/src/main/javascript/MslException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+
+    const textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    const MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
+    
 	/** MSL encoder format. */
 	var ENCODER_FORMAT = MslEncoderFormat.JSON;
 	
@@ -944,7 +945,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
-	        tokendataMo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, MslConstants$MAX_LONG_VALUE + 2);
+	        tokendataMo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, MslConstants.MAX_LONG_VALUE + 2);
             encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
             	result: function(x) { modifiedTokendata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1136,7 +1137,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
-	        tokendataMo.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, MslConstants$MAX_LONG_VALUE + 2);
+	        tokendataMo.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, MslConstants.MAX_LONG_VALUE + 2);
             encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
             	result: function(x) { modifiedTokendata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }

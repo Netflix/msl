@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-const Class = require('../../../../../core/src/main/javascript/util/Class.js');
-
 describe("Class", function() {
+    const Class = require('../../../../../core/src/main/javascript/util/Class.js');
+    
 	var Animal = Class.create({
 		init: function(type, name) {
 			var props = {

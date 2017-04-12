@@ -209,7 +209,7 @@
          * future payload chunks. This function will flush any buffered data iff
          * the compression algorithm is being changed.
          *
-         * @param {MslConstants$CompressionAlgorithm} compressionAlgo payload chunk
+         * @param {MslConstants.CompressionAlgorithm} compressionAlgo payload chunk
          *            compression algorithm. Null for no compression.
          * @param {number} timeout write timeout in milliseconds.
          * @param {{result: function(boolean), timeout: function(), error: function(Error)}}
@@ -438,7 +438,7 @@
                     }
 
                     // Write the payload chunk.
-                    PayloadChunk$create(this._ctx, this._payloadSequenceNumber, messageHeader.messageId, this._closed, this._compressionAlgo, data, this._cryptoContext, {
+                    PayloadChunk.create(this._ctx, this._payloadSequenceNumber, messageHeader.messageId, this._closed, this._compressionAlgo, data, this._cryptoContext, {
                         result: function(chunk) {
                             InterruptibleExecutor(callback, function() {
                                 if (this._caching) this._payloads.push(chunk);

@@ -38,6 +38,8 @@
          * @constructor
          */
         init: function init(error, details, cause) {
+            var self = this;
+            
             // Fix my stack trace.
             if (Error.captureStackTrace)
                 Error.captureStackTrace(this, this.constructor);
@@ -72,15 +74,15 @@
             function getMessageId() {
                 if (messageId)
                     return messageId;
-                if (this.cause && this.cause instanceof MslException)
-                    return this.cause.messageId;
+                if (self.cause && self.cause instanceof MslException)
+                    return self.cause.messageId;
                 return undefined;
             }
 
             // Construct a better stack trace.
             var originalStack = this.stack;
             function getStack() {
-                var trace = this.toString();
+                var trace = self.toString();
                 if (originalStack)
                     trace += "\n" + originalStack;
                 if (cause && cause.stack)

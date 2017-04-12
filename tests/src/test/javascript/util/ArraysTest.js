@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
-
 describe("Arrays", function () {
+    const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
 
     describe("Arrays.concat", function () {
 

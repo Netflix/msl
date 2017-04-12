@@ -34,7 +34,7 @@
      * An identity provisioning service returns unique entity identities.
      * @interface
      */
-    var IdentityProvisioningService = ProvisionedAuthenticationFactory$IdentityProvisioningService = Class.create({
+    var IdentityProvisioningService = Class.create({
         /**
          * @return {string} the next unique entity identity.
          */
@@ -81,5 +81,5 @@
     });
     
     // Exports.
-    module.exports.IdentityProvisioningService = ProvisionedAuthenticationFactory$IdentityProvisioningService;
+    module.exports.IdentityProvisioningService = IdentityProvisioningService;
 })(require, (typeof module !== 'undefined') ? module : mkmodule('ProvisionedAuthenticationFactory'));

@@ -61,8 +61,6 @@
 	const EntityAuthenticationData = require('../entityauth/EntityAuthenticationData.js');
 	const MasterToken = require('../tokens/MasterToken.js');
 	const MslMessageException = require('../MslMessageException.js');
-	const MessageHeader = require('../msg/MessageHeader.js');
-	const ErrorHeader = require('../msg/ErrorHeader.js');
 	
 	/**
 	 * Common header keys.
@@ -135,6 +133,9 @@
      */
     var Header$parseHeader = function Header$parseHeader(ctx, headerMo, cryptoContexts, callback) {
         AsyncExecutor(callback, function() {
+            const MessageHeader = require('../msg/MessageHeader.js');
+            const ErrorHeader = require('../msg/ErrorHeader.js');
+            
             // Pull authentication data.
             var entityAuthDataMo;
             var masterTokenMo;
@@ -214,7 +215,6 @@
     };
     
     // Exports.
-    module.exports = {};
     module.exports.KEY_ENTITY_AUTHENTICATION_DATA = Header$KEY_ENTITY_AUTHENTICATION_DATA;
     module.exports.KEY_MASTER_TOKEN = Header$KEY_MASTER_TOKEN;
     module.exports.KEY_HEADERDATA = Header$KEY_HEADERDATA;

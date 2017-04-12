@@ -33,7 +33,6 @@
     
     const EntityAuthenticationData = require('../entityauth/EntityAuthenticationData.js');
     const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
-    const PresharedAuthenticationData = require('../entityauth/PresharedAuthenticationData.js');
     const AsyncExecutor = require('../util/AsyncExecutor.js');
     const MslEncoderException = require('../io/MslEncoderException.js');
     const MslEncodingException = require('../MslEncodingException.js');
@@ -92,7 +91,7 @@
      * @throws MslEncodingException if there is an error parsing the MSL
      *         representation.
      */
-    PresharedAuthenticationData$parse = function PresharedAuthenticationData$parse(presharedAuthMo) {
+    var PresharedAuthenticationData$parse = function PresharedAuthenticationData$parse(presharedAuthMo) {
         try {
             var identity = presharedAuthMo.getString(KEY_IDENTITY);
             return new PresharedAuthenticationData(identity);

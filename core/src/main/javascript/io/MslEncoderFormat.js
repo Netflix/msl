@@ -70,22 +70,21 @@
     ({
         /** JSON. */
         JSON : new MslEncoderFormat("JSON", JSON_IDENTIFIER),
+        
+        /**
+         * @param {string|Uint8Array} f the encoding format name or identifier.
+         * @return {MslEncoderFormat} the encoding format identified by the specified name or
+         *         identifier, or {@code null} if there is none.
+         */
+        getFormat: function getFormat(f) {
+            if (typeof f === 'string' && formatsByName[f])
+                return formatsByName[f];
+            if (formatsById[f])
+                return formatsById[f];
+            return null;
+        },
     }));
     Object.freeze(MslEncoderFormat);
     
-    /**
-     * @param {string|Uint8Array} f the encoding format name or identifier.
-     * @return {MslEncoderFormat} the encoding format identified by the specified name or
-     *         identifier, or {@code null} if there is none.
-     */
-    var MslEncoderFormat$getFormat = function MslEncoderFormat$getFormat(f) {
-        if (typeof f === 'string' && formatsByName[f])
-            return formatsByName[f];
-        if (formatsById[f])
-            return formatsById[f];
-        return null;
-    };
-    
     // Exports.
-    module.exports.getFormat = MslEncoderFormat$getFormat;
 })(require, (typeof module !== 'undefined') ? module : mkmodule('MslEncoderFormat'));

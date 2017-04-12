@@ -30,7 +30,7 @@
     var g = new Uint8Array([5]);
     
     /** Default parameter ID. */
-    var DEFAULT_ID = MockDiffieHellmanParameters$DEFAULT_ID = "default1";
+    var DEFAULT_ID = "default1";
     
     var MockDiffieHellmanParameters = module.exports = DiffieHellmanParameters.extend({
         /**
@@ -86,6 +86,6 @@
     };
     
     // Exports.
-    module.exports.DEFAULT_ID = MockDiffieHellmanParameters$DEFAULT_ID;
+    module.exports.DEFAULT_ID = DEFAULT_ID;
     module.exports.getDefaultParameters = MockDiffieHellmanParameters$getDefaultParameters;
 })(require, (typeof module !== 'undefined') ? module : mkmodule('MockDiffieHellmanParameters'));

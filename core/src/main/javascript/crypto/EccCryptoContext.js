@@ -99,7 +99,7 @@
                     throw new MslCryptoException(MslError.SIGN_NOT_SUPPORTED, "no private key");
                 var oncomplete = function(hash) {
                     // Return the signature envelope byte representation.
-                    MslSignatureEnvelope$create(new Uint8Array(hash), {
+                    MslSignatureEnvelope.create(new Uint8Array(hash), {
                         result: function(envelope) {
                             envelope.getBytes(encoder, format, {
                                 result: callback.result,
@@ -129,7 +129,7 @@
                     throw new MslCryptoException(MslError.VERIFY_NOT_SUPPORTED, "no public key");
 
                 // Reconstitute the signature envelope.
-                MslSignatureEnvelope$parse(signature, MslSignatureEnvelope$Version.V1, encoder, {
+                MslSignatureEnvelope.parse(signature, MslSignatureEnvelope.Version.V1, encoder, {
                     result: function(envelope) {
                         AsyncExecutor(callback, function() {
                             var oncomplete = callback.result;

@@ -19,40 +19,41 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-
-const Random = require('../../../../../core/src/main/javascript/util/Random.js');
-const NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
-const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
-const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
-const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
-const SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
-const EmailPasswordAuthenticationData = require('../../../../../core/src/main/javascript/userauth/EmailPasswordAuthenticationData.js');
-const SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
-const MessageHeader = require('../../../../../core/src/main/javascript/msg/MessageHeader.js');
-const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
-const MessageBuilder = require('../../../../../core/src/main/javascript/msg/MessageBuilder.js');
-const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
-const ServiceToken = require('../../../../../core/src/main/javascript/tokens/ServiceToken.js');
-const MslMessageException = require('../../../../../core/src/main/javascript/MslMessageException.js');
-const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-const MslException = require('../../../../../core/src/main/javascript/MslException.js');
-const MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
-const SessionCryptoContext = require('../../../../../core/src/main/javascript/crypto/SessionCryptoContext.js');
-const MslMasterTokenException = require('../../../../../core/src/main/javascript/MslMasterTokenException.js');
-const MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
-const AsymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/AsymmetricWrappedExchange.js');
-const UserIdToken = require('../../../../../core/src/main/javascript/tokens/UserIdToken.js');
-const MessageCapabilities = require('../../../../../core/src/main/javascript/msg/MessageCapabilities.js');
-
-const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-const MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
-const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-const MockAuthenticationUtils = require('../../../main/javascript/util/MockAuthenticationUtils.js');
-const MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
-
 describe("MessageBuilder", function() {
+    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    const NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
+    const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+    const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+    const SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
+    const EmailPasswordAuthenticationData = require('../../../../../core/src/main/javascript/userauth/EmailPasswordAuthenticationData.js');
+    const SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
+    const MessageHeader = require('../../../../../core/src/main/javascript/msg/MessageHeader.js');
+    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+    const MessageBuilder = require('../../../../../core/src/main/javascript/msg/MessageBuilder.js');
+    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
+    const ServiceToken = require('../../../../../core/src/main/javascript/tokens/ServiceToken.js');
+    const MslMessageException = require('../../../../../core/src/main/javascript/MslMessageException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    const MslException = require('../../../../../core/src/main/javascript/MslException.js');
+    const MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
+    const SessionCryptoContext = require('../../../../../core/src/main/javascript/crypto/SessionCryptoContext.js');
+    const MslMasterTokenException = require('../../../../../core/src/main/javascript/MslMasterTokenException.js');
+    const MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
+    const AsymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/AsymmetricWrappedExchange.js');
+    const UserIdToken = require('../../../../../core/src/main/javascript/tokens/UserIdToken.js');
+    const MessageCapabilities = require('../../../../../core/src/main/javascript/msg/MessageCapabilities.js');
+    
+    const textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    const MockAuthenticationUtils = require('../../../main/javascript/util/MockAuthenticationUtils.js');
+    const MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
+    
     var RECIPIENT = "recipient";
 	var SERVICE_TOKEN_NAME = "serviceTokenName";
 	var USER_ID = "userid";
@@ -134,7 +135,7 @@ describe("MessageBuilder", function() {
 			        var y = params.g.modPowInt(x, params.p);
 			        var publicKey = new PublicKey(y);
 
-			        KEY_REQUEST_DATA.push(new DiffieHellmanExchange$RequestData(PARAMETERS_ID, publicKey, privateKey));
+			        KEY_REQUEST_DATA.push(new DiffieHellmanExchange.RequestData(PARAMETERS_ID, publicKey, privateKey));
 			        */
 			        KEY_REQUEST_DATA.push(new SymmetricWrappedExchange.RequestData(SymmetricWrappedExchange.KeyId.SESSION));
 			        KEY_REQUEST_DATA.push(new SymmetricWrappedExchange.RequestData(SymmetricWrappedExchange.KeyId.PSK));
@@ -2349,7 +2350,7 @@ describe("MessageBuilder", function() {
             
 		    if (!initialized) {
 		        runs(function() {
-		        	ISSUER_DATA = encoder.parseObject(textEncoding$getBytes("{ \"issuerid\" : 17 }"));
+		        	ISSUER_DATA = encoder.parseObject(textEncoding.getBytes("{ \"issuerid\" : 17 }"));
 		        	
 		            MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSA_OAEP, WebCryptoUsage.WRAP_UNWRAP, 2048, {
 		                result: function(publicKey, privateKey) {
@@ -2359,7 +2360,7 @@ describe("MessageBuilder", function() {
 		                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		            });
 		        });
-		        waitsFor(function() { return RSA_PUBLIC_KEY && RSA_PRIVATE_KEY; }, "RSA keys", 900);
+		        waitsFor(function() { return RSA_PUBLIC_KEY && RSA_PRIVATE_KEY; }, "RSA keys", 1200);
 		        runs(function() { initialized = true; });
 		    }
 		});
@@ -3277,7 +3278,7 @@ describe("MessageBuilder", function() {
 				// The service tokens will all be unbound.
 				responseBuilder.getServiceTokens().forEach(function(serviceToken) {
 					expect(serviceToken.isUnbound()).toBeTruthy();
-					expect(Arrays$contains(serviceTokens, serviceToken) || Arrays$contains(peerServiceTokens, serviceToken)).toBeTruthy();
+					expect(Arrays.contains(serviceTokens, serviceToken) || Arrays.contains(peerServiceTokens, serviceToken)).toBeTruthy();
 				}, this);
 				expect(Arrays.containEachOther(responseBuilder.getPeerServiceTokens(), updatedServiceTokens)).toBeTruthy();
 				
@@ -3292,7 +3293,7 @@ describe("MessageBuilder", function() {
 				// The service tokens will all be unbound.
 				response.serviceTokens.forEach(function(serviceToken) {
 					expect(serviceToken.isUnbound()).toBeTruthy();
-					expect(Arrays$contains(serviceTokens, serviceToken) || Arrays$contains(peerServiceTokens, serviceToken)).toBeTruthy();
+					expect(Arrays.contains(serviceTokens, serviceToken) || Arrays.contains(peerServiceTokens, serviceToken)).toBeTruthy();
 				}, this);
 				expect(Arrays.containEachOther(response.peerServiceTokens, updatedServiceTokens)).toBeTruthy();
 			});
@@ -3974,7 +3975,7 @@ describe("MessageBuilder", function() {
 			var exception;
 			runs(function() {
 			    for (var prop in KeyExchangeScheme) {
-			        var scheme = KeyExchangeScheme$getScheme(prop);
+			        var scheme = KeyExchangeScheme.getScheme(prop);
 			        if (scheme)
 			            ctx.removeKeyExchangeFactories(scheme);
 			    }
@@ -4027,9 +4028,9 @@ describe("MessageBuilder", function() {
 				// This should place the supported key exchange scheme in the
 				// middle, guaranteeing that we will have to skip one unsupported
 				// scheme.
-				requestBuilder.addKeyRequestData(new AsymmetricWrappedExchange$RequestData(KEY_PAIR_ID, AsymmetricWrappedExchange$Mechanism.JWE_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY));
+				requestBuilder.addKeyRequestData(new AsymmetricWrappedExchange.RequestData(KEY_PAIR_ID, AsymmetricWrappedExchange.Mechanism.JWE_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY));
 				requestBuilder.addKeyRequestData(new SymmetricWrappedExchange.RequestData(SymmetricWrappedExchange.KeyId.PSK));
-				requestBuilder.addKeyRequestData(new AsymmetricWrappedExchange$RequestData(KEY_PAIR_ID, AsymmetricWrappedExchange$Mechanism.JWE_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY));
+				requestBuilder.addKeyRequestData(new AsymmetricWrappedExchange.RequestData(KEY_PAIR_ID, AsymmetricWrappedExchange.Mechanism.JWE_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY));
 				
 			    requestBuilder.getHeader({
 			        result: function(x) { request = x; },
@@ -4041,7 +4042,7 @@ describe("MessageBuilder", function() {
 			var responseBuilder;
 			runs(function() {
                 for (var prop in KeyExchangeScheme) {
-                    var scheme = KeyExchangeScheme$getScheme(prop);
+                    var scheme = KeyExchangeScheme.getScheme(prop);
                     if (scheme)
                         ctx.removeKeyExchangeFactories(scheme);
                 }
@@ -4498,7 +4499,7 @@ describe("MessageBuilder", function() {
 			var exception;
 			runs(function() {
                 for (var prop in KeyExchangeScheme) {
-                    var scheme = KeyExchangeScheme$getScheme(prop);
+                    var scheme = KeyExchangeScheme.getScheme(prop);
                     if (scheme)
                         ctx.removeKeyExchangeFactories(scheme);
                 }
@@ -4540,9 +4541,9 @@ describe("MessageBuilder", function() {
 				// This should place the supported key exchange scheme in the
 				// middle, guaranteeing that we will have to skip one unsupported
 				// scheme.
-				requestBuilder.addKeyRequestData(new AsymmetricWrappedExchange.RequestData(KEY_PAIR_ID, AsymmetricWrappedExchange$Mechanism.JWEJS_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY));
+				requestBuilder.addKeyRequestData(new AsymmetricWrappedExchange.RequestData(KEY_PAIR_ID, AsymmetricWrappedExchange.Mechanism.JWEJS_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY));
 				requestBuilder.addKeyRequestData(new SymmetricWrappedExchange.RequestData(SymmetricWrappedExchange.KeyId.PSK));
-				requestBuilder.addKeyRequestData(new AsymmetricWrappedExchange.RequestData(KEY_PAIR_ID, AsymmetricWrappedExchange$Mechanism.JWE_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY));
+				requestBuilder.addKeyRequestData(new AsymmetricWrappedExchange.RequestData(KEY_PAIR_ID, AsymmetricWrappedExchange.Mechanism.JWE_RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY));
 				requestBuilder.getHeader({
 			        result: function(x) { request = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -4553,7 +4554,7 @@ describe("MessageBuilder", function() {
 			var responseBuilder;
 			runs(function() {
                 for (var prop in KeyExchangeScheme) {
-                    var scheme = KeyExchangeScheme$getScheme(prop);
+                    var scheme = KeyExchangeScheme.getScheme(prop);
                     if (scheme)
                         ctx.removeKeyExchangeFactories(scheme);
                 }
@@ -4917,7 +4918,7 @@ describe("MessageBuilder", function() {
 			
             var unverifiedUserIdToken;
             runs(function() {
-            	UserIdToken$parse(ctx, userIdTokenMo, MASTER_TOKEN, {
+            	UserIdToken.parse(ctx, userIdTokenMo, MASTER_TOKEN, {
             		result: function(x) { unverifiedUserIdToken = x; },
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
@@ -5794,7 +5795,7 @@ describe("MessageBuilder", function() {
 			var exception;
 			runs(function() {
                 for (var prop in UserAuthenticationScheme) {
-                    var scheme = UserAuthenticationScheme$getScheme(prop);
+                    var scheme = UserAuthenticationScheme.getScheme(prop);
                     if (scheme)
                         ctx.removeUserAuthenticationFactory(scheme);
                 }

@@ -124,7 +124,7 @@
 	const MslInternalException = require('../MslInternalException.js');
 	const MslConstants = require('../MslConstants.js');
 	const MessageServiceTokenBuilder = require('../msg/MessageServiceTokenBuilder.js');
-	const MslMessageException = rquire('../MslMessageException.js');
+	const MslMessageException = require('../MslMessageException.js');
 	const MslError = require('../MslError.js');
 	const BlockingQueue = require('../util/BlockingQueue.js');
 	const MessageCapabilities = require('../msg/MessageCapabilities.js');
@@ -133,7 +133,7 @@
     /**
      * Application level errors that may translate into MSL level errors.
      */
-    var MslControl$ApplicationError = {
+    var ApplicationError = {
         /** The entity identity is no longer accepted by the application. */
         ENTITY_REJECTED: "ENTITY_REJECTED",
         /** The user identity is no longer accepted by the application. */
@@ -145,7 +145,7 @@
      * representing a single MSL communication channel established between
      * the local and remote entities.
      */
-    var MslChannel = MslControl$MslChannel = function MslControl$MslChannel(input, output) {
+    var MslChannel = function MslChannel(input, output) {
         var props = {
             /** Message input stream to read from the remote entity. */
             input: { value: input, writable: false, configurable: false },
@@ -2598,7 +2598,7 @@
          *
          * @param {MslContext} ctx MSL context.
          * @param {MessageContext} msgCtx message context.
-         * @param {MslControl$ApplicationError} err error type.
+         * @param {ApplicationError} err error type.
          * @param {OutputStream} out remote entity output stream.
          * @param {MessageHeader} request request header to create the response from.
          * @param {number} timeout read/write timeout in milliseconds.
@@ -3748,7 +3748,7 @@
          * @param {MslControlImpl} ctrl parent MSL control.
          * @param {MslContext} ctx MSL context.
          * @param {MessageContext} msgCtx message context.
-         * @param {MslControl$ApplicationError} err the application error.
+         * @param {ApplicationError} err the application error.
          * @param {OutputStream} out remote entity output stream.
          * @param {MessageHeader} request request message header.
          * @param {number} timeout read/write timeout in milliseconds.
@@ -3808,11 +3808,11 @@
             InterruptibleExecutor(callback, function() {
                 // Identify the correct MSL error.
                 var err;
-                if (this._appError == MslControl$ApplicationError.ENTITY_REJECTED) {
+                if (this._appError == ApplicationError.ENTITY_REJECTED) {
                     err = (this._request.masterToken)
                         ? MslError.MASTERTOKEN_REJECTED_BY_APP
                         : MslError.ENTITY_REJECTED_BY_APP;
-                } else if (this._appError == MslControl$ApplicationError.USER_REJECTED) {
+                } else if (this._appError == ApplicationError.USER_REJECTED) {
                     err = (this._request.userIdToken)
                         ? MslError.USERIDTOKEN_REJECTED_BY_APP
                         : MslError.USER_REJECTED_BY_APP;
@@ -4514,6 +4514,6 @@
     });
     
     // Exports.
-    module.exports.ApplicationError = MslControl$ApplicationError;
-    module.exports.MslChannel = MslControl$MslChannel;
+    module.exports.ApplicationError = ApplicationError;
+    module.exports.MslChannel = MslChannel;
 })(require, (typeof module !== 'undefined') ? module : mkmodule('MslControl'));

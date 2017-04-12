@@ -41,7 +41,7 @@
      * web crypto algorithm names.
      * @enum
      */
-    var Algorithm = JsonWebEncryptionCryptoContext$Algorithm = {
+    var Algorithm = {
         /** RSAES-OAEP */
         RSA_OAEP: WebCryptoAlgorithm.RSA_OAEP['name'],
         /** AES-128 Key Wrap */
@@ -53,7 +53,7 @@
      * algorithm names.
      * @enum
      */
-    var JsonWebEncryptionCryptoContext$Encryption = {
+    var Encryption = {
         /** AES-128 GCM */
         A128GCM: "A128GCM",
         /** AES-256 GCM */
@@ -175,6 +175,6 @@
     });
     
     // Exports.
-    module.exports.Algorithm = JsonWebEncryptionCryptoContext$Algorithm;
-    module.exports.Encryption = JsonWebEncryptionCryptoContext$Encryption;
+    module.exports.Algorithm = Algorithm;
+    module.exports.Encryption = Encryption;
 })(require, (typeof module !== 'undefined') ? module : mkmodule('JsonWebEncryptionCryptoContext'));

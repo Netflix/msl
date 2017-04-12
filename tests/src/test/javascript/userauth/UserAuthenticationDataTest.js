@@ -23,17 +23,16 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-
-const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-const UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
-const UserAuthenticationData = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationData.js');
-const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-const MslUserAuthException = require('../../../../../core/src/main/javascript/MslUserAuthException.js');
-
-const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-
 describe("UserAuthenticationData", function() {
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
+    const UserAuthenticationData = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationData.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    const MslUserAuthException = require('../../../../../core/src/main/javascript/MslUserAuthException.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    
     /** Key user authentication scheme. */
     var KEY_SCHEME = "scheme";
     /** Key user authentication data. */

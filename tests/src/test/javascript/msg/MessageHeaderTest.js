@@ -19,31 +19,31 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-
-const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-const EmailPasswordAuthenticationData = require('../../../../../core/src/main/javascript/userauth/EmailPasswordAuthenticationData.js');
-const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
-const MessageCapabilities = require('../../../../../core/src/main/javascript/msg/MessageCapabilities.js');
-const MessageHeader = require('../../../../../core/src/main/javascript/msg/MessageHeader.js');
-const Class = require('../../../../../core/src/main/javascript/util/Class.js');
-const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
-const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-const SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
-const MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
-const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
-const Header = require('../../../../../core/src/main/javascript/msg/Header.js');
-const SessionCryptoContext = require('../../../../../core/src/main/javascript/crypto/SessionCryptoContext.js');
-const MslException = require('../../../../../core/src/main/javascript/MslException.js');
-const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-const MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
-const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-const MslMessageException = require('../../../../../core/src/main/javascript/MslMessageException.js');
-
-const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-const MockEmailPasswordAuthenticationFactory = require('../../../../../core/src/main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
-
 describe("MessageHeader", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const EmailPasswordAuthenticationData = require('../../../../../core/src/main/javascript/userauth/EmailPasswordAuthenticationData.js');
+    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+    const MessageCapabilities = require('../../../../../core/src/main/javascript/msg/MessageCapabilities.js');
+    const MessageHeader = require('../../../../../core/src/main/javascript/msg/MessageHeader.js');
+    const Class = require('../../../../../core/src/main/javascript/util/Class.js');
+    const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
+    const MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
+    const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
+    const Header = require('../../../../../core/src/main/javascript/msg/Header.js');
+    const SessionCryptoContext = require('../../../../../core/src/main/javascript/crypto/SessionCryptoContext.js');
+    const MslException = require('../../../../../core/src/main/javascript/MslException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    const MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslMessageException = require('../../../../../core/src/main/javascript/MslMessageException.js');
+    const Base64 = require('../../../../../core/src/main/javascript/Base64.js');
+
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
+    
 	/** MSL encoder format. */
 	var ENCODER_FORMAT = MslEncoderFormat.JSON;
 	
@@ -1601,7 +1601,7 @@ describe("MessageHeader", function() {
 	it("ctor with RSA entity authentication data is not encrypting", function() {
 		var rsaCtx;
 		runs(function() {
-		    MockMslContext$create(EntityAuthenticationScheme.RSA, false, {
+		    MockMslContext.create(EntityAuthenticationScheme.RSA, false, {
 		        result: function(c) { rsaCtx = c; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -2111,7 +2111,7 @@ describe("MessageHeader", function() {
 	it("ctor with unsupported entity authentication scheme", function() {
         var ctx;
         runs(function() {
-            MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+            MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                 result: function(c) { ctx = c; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -2718,7 +2718,7 @@ describe("MessageHeader", function() {
 		// scheme is supported.
 		var ctx;
 		runs(function() {
-		    MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+		    MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
 		        result: function(c) { ctx = c; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -2784,7 +2784,7 @@ describe("MessageHeader", function() {
 		// scheme is supported.
 		var ctx;
 		runs(function() {
-		    MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+		    MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
 		        result: function(c) { ctx = c; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -3163,7 +3163,7 @@ describe("MessageHeader", function() {
 		runs(function() {
 			MslTestUtils.toMslObject(encoder, messageHeader, {
 				result: function(messageHeaderMo) {
-		            messageHeaderMo.put(KEY_SIGNATURE, base64$decode("AAA="));
+		            messageHeaderMo.put(KEY_SIGNATURE, Base64.decode("AAA="));
 					Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 						result: function() {},
 						error: function(err) { exception = err; },
@@ -5034,7 +5034,7 @@ describe("MessageHeader", function() {
         
 	    var exception;
 	    runs(function() {
-	        builder.set(KEY_MESSAGE_ID, MslConstants$MAX_LONG_VALUE + 2);
+	        builder.set(KEY_MESSAGE_ID, MslConstants.MAX_LONG_VALUE + 2);
 	        builder.set(KEY_KEY_REQUEST_DATA, null);
 	        builder.set(KEY_KEY_RESPONSE_DATA, null);
             var headerData = builder.build();
@@ -5178,7 +5178,7 @@ describe("MessageHeader", function() {
                     var headerdataMo = encoder.parseObject(plaintext);
         
                     // After modifying the header data we need to encrypt it.
-                    headerdataMo.put(KEY_MESSAGE_ID, MslConstants$MAX_LONG_VALUE + 2);
+                    headerdataMo.put(KEY_MESSAGE_ID, MslConstants.MAX_LONG_VALUE + 2);
                     encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
                     	result: function(plaintext) {
 		                    cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
@@ -6612,7 +6612,7 @@ describe("MessageHeader", function() {
 	xit("equals sender", function() {
 	    var ctx;
 	    runs(function() {
-	        MockMslContext$create(EntityAuthenticationScheme.RSA, false, {
+	        MockMslContext.create(EntityAuthenticationScheme.RSA, false, {
 	           result: function(x) { ctx = x; },
 	           error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });

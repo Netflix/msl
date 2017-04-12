@@ -233,4 +233,4 @@
             throw new MslInternalException("Hard-coded Kpw key failure.", e);
         }
     });
-})(require, (typeof module !== 'undefined') ? module : mkmodule('MockEccAuthenticationFactory'));
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MockPresharedProfileAuthenticationFactory'));

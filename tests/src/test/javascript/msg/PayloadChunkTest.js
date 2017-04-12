@@ -19,32 +19,29 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-
-const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
-const MslException = require('../../../../../core/src/main/javascript/MslException.js');
-const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-const Random = require('../../../../../core/src/main/javascript/util/Random.js');
-const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
-const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/WebCryptoAlgorithm.js');
-const WebCryptoUsage = require('../../../../../core/src/main/javascript/WebCryptoUsage.js');
-const SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
-const PayloadChunk = require('../../../../../core/src/main/javascript/msg/PayloadChunk.js');
-const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
-const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-const MslException = require('../../../../../core/src/main/javascript/MslException.js');
-const MslMessageException = require('../../../../../core/src/main/javascript/MslMessageException.js');
-
-const lzw = require('../../../../../core/src/main/javascript/lib/lzw.js');
-const textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
-
-const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-
 describe("PayloadChunk", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+    const MslException = require('../../../../../core/src/main/javascript/MslException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
+    const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/WebCryptoAlgorithm.js');
+    const WebCryptoUsage = require('../../../../../core/src/main/javascript/WebCryptoUsage.js');
+    const SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
+    const PayloadChunk = require('../../../../../core/src/main/javascript/msg/PayloadChunk.js');
+    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslMessageException = require('../../../../../core/src/main/javascript/MslMessageException.js');
+
+    const lzw = require('../../../../../core/src/main/javascript/lib/lzw.js');
+    const textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
     
@@ -103,7 +100,7 @@ describe("PayloadChunk", function() {
     var SEQ_NO = 1;
     var MSG_ID = 42;
     var END_OF_MSG = false;
-    var DATA = textEncoding.getBytes("We have to use some data that is compressible, otherwise payloads will not always use the compression we request.", MslConstants$DEFAULT_CHARSET);
+    var DATA = textEncoding.getBytes("We have to use some data that is compressible, otherwise payloads will not always use the compression we request.", MslConstants.DEFAULT_CHARSET);
     var CRYPTO_CONTEXT;
 
     /** Raw data. */

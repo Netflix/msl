@@ -19,21 +19,20 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-
-const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-const UserIdTokenAuthenticationFactory = require('../../../../../core/src/main/javascript/userauth/UserIdTokenAuthenticationFactory.js');
-const UserIdTokenAuthenticationData = require('../../../../../core/src/main/javascript/userauth/UserIdTokenAuthenticationData.js');
-const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-const MslUserAuthException = require('../../../../../core/src/main/javascript/MslUserAuthException.js');
-
-const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-const MockAuthenticationUtils = require('../../../main/javascript/util/MockAuthenticationUtils.js');
-const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-const MockMslUser = require('../../../main/javascript/tokens/MockMslUser.js');
-
 describe("UserIdTokenAuthenticationFactory", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const UserIdTokenAuthenticationFactory = require('../../../../../core/src/main/javascript/userauth/UserIdTokenAuthenticationFactory.js');
+    const UserIdTokenAuthenticationData = require('../../../../../core/src/main/javascript/userauth/UserIdTokenAuthenticationData.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    const MslUserAuthException = require('../../../../../core/src/main/javascript/MslUserAuthException.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MockAuthenticationUtils = require('../../../main/javascript/util/MockAuthenticationUtils.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    const MockMslUser = require('../../../main/javascript/tokens/MockMslUser.js');
+    
 	/** MSL encoder format. */
 	var ENCODER_FORMAT = MslEncoderFormat.JSON;
 	

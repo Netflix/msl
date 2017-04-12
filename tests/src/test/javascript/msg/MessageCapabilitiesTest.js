@@ -19,16 +19,16 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-
-const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
-const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-const MessageCapabilities = require('../../../../../core/src/main/javascript/msg/MessageCapabilities.js');
-
-const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-
 describe("MessageCapabilities", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const MessageCapabilities = require('../../../../../core/src/main/javascript/msg/MessageCapabilities.js');
+    const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
     
@@ -246,7 +246,7 @@ describe("MessageCapabilities", function() {
     });
     
     it("equals compression algorithm", function() {
-        var algosA = Arrays$copyOf(ALGOS);
+        var algosA = Arrays.copyOf(ALGOS);
         var algosB = [];
         
         var capsA = new MessageCapabilities(algosA, LANGUAGES, FORMATS);
@@ -364,17 +364,17 @@ describe("MessageCapabilities", function() {
         
         expect(intersectionAB).toEqual(intersectionBA);
         expect(gzipOnly).toEqual(intersectionAB.compressionAlgorithms);
-        expect(Arrays$containEachOther(oneLanguage, intersectionAB.languages)).toBeTruthy();
+        expect(Arrays.containEachOther(oneLanguage, intersectionAB.languages)).toBeTruthy();
         expect(FORMATS).toEqual(intersectionAB.encoderFormats);
         
         expect(intersectionAC).toEqual(intersectionCA);
         expect(ALGOS).toEqual(intersectionAC.compressionAlgorithms);
-        expect(Arrays$containEachOther(oneLanguage, intersectionAC.languages)).toBeTruthy();
+        expect(Arrays.containEachOther(oneLanguage, intersectionAC.languages)).toBeTruthy();
         expect(noFormats).toEqual(intersectionAC.encoderFormats);
         
         expect(intersectionBC).toEqual(intersectionCB);
         expect(gzipOnly).toEqual(intersectionBC.compressionAlgorithms);
-        expect(Arrays$containEachOther(LANGUAGES, intersectionB.languages)).toBeTruthy();
+        expect(Arrays.containEachOther(LANGUAGES, intersectionB.languages)).toBeTruthy();
         expect(noFormats).toEqual(intersectionBc.encoderFormats);
     });
     

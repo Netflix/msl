@@ -49,7 +49,7 @@
      * Asymmetric key wrapped mechanism.
      * @enum {string}
      */
-    var Mechanism = AsymmetricWrappedExchange$Mechanism = {
+    var Mechanism = {
         /** RSA-OAEP encrypt/decrypt */
         RSA: "RSA",
         /** ECIES */
@@ -111,7 +111,7 @@
      * <li>{@code publickey} the public key used to wrap the session keys</li>
      * </ul></p>
      */
-    var RequestData = AsymmetricWrappedExchange$RequestData = KeyRequestData.extend({
+    var RequestData = KeyRequestData.extend({
         /**
          * Create a new asymmetric key wrapped key request data instance with
          * the specified key pair ID and public key. The private key is also
@@ -149,7 +149,7 @@
         /** @inheritDoc */
         equals: function equals(that) {
             if (that === this) return true;
-            if (!(that instanceof AsymmetricWrappedExchange$RequestData)) return false;
+            if (!(that instanceof RequestData)) return false;
             // Private keys are optional but must be considered.
             var privateKeysEqual =
                 this.privateKey === that.privateKey ||
@@ -188,7 +188,7 @@
      * @throws MslKeyExchangeException if the specified mechanism is not
      *         recognized.
      */
-    var RequestData$parse = AsymmetricWrappedExchange$RequestData$parse = function RequestData$parse(keyRequestMo, callback) {
+    var RequestData$parse = function RequestData$parse(keyRequestMo, callback) {
         AsyncExecutor(callback, function() {
             var keyPairId, mechanism, encodedKey;
             try {
@@ -268,7 +268,7 @@
      * <li>{@code hmackey} the wrapped session HMAC key</li>
      * </ul></p>
      */
-    var ResponseData = AsymmetricWrappedExchange$ResponseData = KeyResponseData.extend({
+    var ResponseData = KeyResponseData.extend({
         /**
          * Create a new asymmetric key wrapped key response data instance with
          * the provided master token, specified key pair ID, and public
@@ -305,7 +305,7 @@
         /** @inheritDoc */
         equals: function equals(that) {
             if (this === that) return true;
-            if (!(that instanceof AsymmetricWrappedExchange$ResponseData)) return false;
+            if (!(that instanceof ResponseData)) return false;
             return equals.base.call(this, that) &&
                 this.keyPairId == that.keyPairId &&
                 Arrays.equal(this.encryptionKey, that.encryptionKey) &&
@@ -329,7 +329,7 @@
      * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslCryptoException if an encoded key is invalid.
      */
-    var ResponseData$parse = AsymmetricWrappedExchange$ResponseData$parse = function ResponseData$parse(masterToken, keyDataMo) {
+    var ResponseData$parse = function ResponseData$parse(masterToken, keyDataMo) {
         var keyPairId, encryptionKey, hmacKey;
         try {
             // Pull key response data.
@@ -614,9 +614,9 @@
     });
     
     // Exports.
-    module.exports.Mechanism = AsymmetricWrappedExchange$Mechanism;
-    module.exports.RequestData = AsymmetricWrappedExchange$RequestData;
-    module.exports.RequestData.parse = AsymmetricWrappedExchange$RequestData$parse;
-    module.exports.ResponseData = AsymmetricWrappedExchange$ResponseData;
-    module.exports.ResponseData.parse = AsymmetricWrappedExchange$ResponseData$parse;
+    module.exports.Mechanism = Mechanism;
+    module.exports.RequestData = RequestData;
+    module.exports.RequestData.parse = RequestData$parse;
+    module.exports.ResponseData = ResponseData;
+    module.exports.ResponseData.parse = ResponseData$parse;
 })(require, (typeof module !== 'undefined') ? module : mkmodule('AsymmetricWrappedExchange'));

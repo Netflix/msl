@@ -23,17 +23,16 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-
-const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-const KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
-const KeyRequestData = require('../../../../../core/src/main/javascript/keyx/KeyRequestData.js');
-const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-const MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
-const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-
-const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-
 describe("KeyRequestData", function() {
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
+    const KeyRequestData = require('../../../../../core/src/main/javascript/keyx/KeyRequestData.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    
     /** Key key exchange scheme. */
     var KEY_SCHEME = "scheme";
     /** Key key request data. */

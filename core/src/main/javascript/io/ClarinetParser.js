@@ -26,7 +26,7 @@
 	const Class = require('../util/Class.js');
 	const clarinet = require('clarinet');
 		
-	var ClarinetParser = Class.create({
+	var ClarinetParser = module.exports = Class.create({
 	    /**
 	     * @param {string} json the sequence of JSON values.
 	     */

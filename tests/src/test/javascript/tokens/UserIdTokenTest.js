@@ -18,22 +18,23 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-
-const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-const UserIdToken = require('../../../../../core/src/main/javascript/tokens/UserIdToken.js');
-const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
-const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-const MslException = require('../../../../../core/src/main/javascript/MslException.js');
-const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
-
-const MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
-const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-
 describe("UserIdToken", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const UserIdToken = require('../../../../../core/src/main/javascript/tokens/UserIdToken.js');
+    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    const MslException = require('../../../../../core/src/main/javascript/MslException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+    
+    const textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
+
+    const MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    
 	/** MSL encoder format. */
 	var ENCODER_FORMAT = MslEncoderFormat.JSON;
 	
@@ -91,7 +92,7 @@ describe("UserIdToken", function() {
     				result: function(token) { MASTER_TOKEN = token; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     			});
-    			ISSUER_DATA = encoder.parseObject(textEncoding$getBytes("{ \"issuerid\" : 17 }"));
+    			ISSUER_DATA = encoder.parseObject(textEncoding.getBytes("{ \"issuerid\" : 17 }"));
     		});
     		waitsFor(function() { return MASTER_TOKEN; }, "master token", 100);
     		runs(function() { initialized = true; });

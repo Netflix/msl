@@ -43,7 +43,9 @@
     const MslEncodingException = require('../MslEncodingException.js');
     const MslCryptoException = require('../MslCryptoException.js');
     const MslError = require('../MslError.js');
-    const X509 = require('jsrassign').X509;
+    
+    const X509 = require('jsrsasign').X509;
+    const hex2b64 = require('jsrsasign').hex2b64;
     
     /**
      * Key entity X.509 certificate.
@@ -51,6 +53,11 @@
      * @type {string}
      */
     var KEY_X509_CERT = "x509certificate";
+    
+    /** X.509 PEM header. */
+    var PEM_HEADER = "-----BEGIN CERTIFICATE-----\n";
+    /** X.509 PEM footer. */
+    var PEM_FOOTER = "\n-----END CERTIFICATE-----";
 
     var X509AuthenticationData = module.exports = EntityAuthenticationData.extend({
         /**
@@ -122,6 +129,12 @@
         // Convert to X.509 certificate.
         var x509 = new X509();
         try {
+            // Add certificate header and footer if necessary.
+            certB64 = certB64.trim();
+            if (!certB64.startsWith(PEM_HEADER))
+                certB64 = PEM_HEADER + certB64;
+            if (!certB64.endsWith(PEM_FOOTER))
+                certB64 = certB64 + PEM_FOOTER;
             x509.readCertPEM(certB64);
         } catch (e) {
             throw new MslCryptoException(MslError.X509CERT_PARSE_ERROR, certB64, e);

@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-const lzw = require('../../../../../core/src/main/javascript/lib/lzw.js');
-
 /**
  * LZW output stream tests.
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("lzw.compress", function () {
+    const lzw = require('../../../../../core/src/main/javascript/lib/lzw.js');
+    
     it("one byte", function () {
         var data = new Uint8Array([0x1f]);
 

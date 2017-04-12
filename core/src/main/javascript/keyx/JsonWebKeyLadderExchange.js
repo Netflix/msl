@@ -66,7 +66,7 @@
      * Wrapping key wrap mechanism.
      * @enum {string}
      */
-    var Mechanism = JsonWebKeyLadderExchange$Mechanism = {
+    var Mechanism = {
         /** Wrapping key wrapped by PSK (AES-128 key wrap). */
         PSK: "PSK",
         /** Wrapping key wrapped by previous wrapping key (AES-128 key wrap). */
@@ -118,7 +118,7 @@
      * <li>{@code wrapdata} the wrapping data for the previous wrapping key</li>
      * </ul></p>
      */
-    var RequestData = JsonWebKeyLadderExchange$RequestData = KeyRequestData.extend({
+    var RequestData = KeyRequestData.extend({
         /**
          * <p>Create a new JSON Web Key ladder key request data instance
          * with the specified mechanism and wrapping key data.</p>
@@ -193,7 +193,7 @@
      * @throws MslKeyExchangeException if the specified mechanism is not
      *         recognized.
      */
-    var RequestData$parse = JsonWebKeyLadderExchange$RequestData$parse = function RequestData$parse(keyRequestMo) {
+    var RequestData$parse = function RequestData$parse(keyRequestMo) {
         var mechanism;
         try {
             mechanism = keyRequestMo.getString(KEY_MECHANISM);
@@ -250,7 +250,7 @@
      * <li>{@code hmackey} the session HMAC key in JWE format, wrapped with the new wrapping key</li>
      * </ul></p>
      */
-    var ResponseData = JsonWebKeyLadderExchange$ResponseData = KeyResponseData.extend({
+    var ResponseData = KeyResponseData.extend({
         /**
          * Create a new JSON Web Key ladder key response data instance
          * with the provided master token and wrapped keys.
@@ -318,7 +318,7 @@
      * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslKeyExchangeException if the mechanism is not recognized.
      */
-    var ResponseData$parse = JsonWebKeyLadderExchange$ResponseData$parse = function JsonWebKeyLadderExchange$ResponseData$parse(masterToken, keyDataMo) {
+    var ResponseData$parse = function JsonWebKeyLadderExchange$ResponseData$parse(masterToken, keyDataMo) {
         var wrapKey, wrapdata, encryptionKey, hmacKey;
         try {
             wrapKey = keyDataMo.getBytes(KEY_WRAP_KEY);
@@ -337,7 +337,7 @@
     /**
      * AES key wrap JSON web key crypto context.
      */
-    var AesKwJwkCryptoContext = JsonWebKeyLadderExchange$AesKwJwkCryptoContext = ICryptoContext.extend({
+    var AesKwJwkCryptoContext = ICryptoContext.extend({
         /**
          * Create an AES key wrap JSON web key crypto context with the provided
          * key.
@@ -474,7 +474,7 @@
         });
     }
 
-    JsonWebKeyLadderExchange = KeyExchangeFactory.extend({
+    var JsonWebKeyLadderExchange = module.exports = KeyExchangeFactory.extend({
         /**
          * Create a new JSON Web Key ladder key exchange factory.
          *
@@ -810,10 +810,10 @@
     });
     
     // Exports.
-    module.exports.Mechanism = JsonWebKeyLadderExchange$Mechanism;
-    module.exports.RequestData = JsonWebKeyLadderExchange$RequestData;
-    module.exports.RequestData.parse = JsonWebKeyLadderExchange$RequestData$parse;
-    module.exports.ResponseData = JsonWebKeyLadderExchange$ResponseData;
-    module.exports.ResponseData.parse = JsonWebKeyLadderExchange$ResponseData$parse;
-    module.exports.AesKwJwkCryptoContext = JsonWebKeyLadderExchange$AesKwJwkCryptoContext;
+    module.exports.Mechanism = Mechanism;
+    module.exports.RequestData = RequestData;
+    module.exports.RequestData.parse = RequestData$parse;
+    module.exports.ResponseData = ResponseData;
+    module.exports.ResponseData.parse = ResponseData$parse;
+    module.exports.AesKwJwkCryptoContext = AesKwJwkCryptoContext;
 })(require, (typeof module !== 'undefined') ? module : mkmodule('JsonWebKeyLadderExchange'));

@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-const Random = require('../../../../../core/src/main/javascript/util/Random.js');
-const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-const MslCiphertextEnvelope = require('../../../../../core/src/main/javascript/crypto/MslCiphertextEnvelope.js');
-const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
-const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
-const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-
-const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-
 describe("MslCiphertextEnvelope", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const MslCiphertextEnvelope = require('../../../../../core/src/main/javascript/crypto/MslCiphertextEnvelope.js');
+    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+    const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    
     /** Key version. */
     var KEY_VERSION = "version";
     /** Key key ID. */
@@ -46,7 +45,7 @@ describe("MslCiphertextEnvelope", function() {
 	var KEY_ID = "keyid";
 	
 	// Shortcuts
-	var Version = MslCiphertextEnvelope$Version;
+	var Version = MslCiphertextEnvelope.Version;
 	
 	var IV = new Uint8Array(16);
 	var CIPHERTEXT = new Uint8Array(32);

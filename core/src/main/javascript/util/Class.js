@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var util = {};
-
 (function(require, module) {
 	"use strict";
 	
@@ -23,11 +21,10 @@ var util = {};
 	 * @param obj {*}
 	 * @return {Boolean}
 	 */
-	util.isObjectLiteral = function (obj) {
-	
+	function isObjectLiteral(obj) {
 	    //If the object is not null, it's of type object
 	    //and its constructor is the Object constructor.
-	    //This will return false for an instance created via var inst = new util.Class.create();
+	    //This will return false for an instance created via var inst = new Class.create();
 	    //Since the instance's constructor will be set to its actual constructor
 	    //Also for HTML Elements since their constructor will be of type HTMLElement
 	    return obj !== null &&
@@ -36,13 +33,13 @@ var util = {};
 	};
 	
 	/**
-	 * Extend an object with other objects like util.extend but if properties are also objects in both recursively extend them as well
+	 * Extend an object with other objects like extend but if properties are also objects in both recursively extend them as well
 	 *
 	 * @param {Boolean} arg0 onlyIfNew Optional; true to copy a property only if it doesn't already exist on the target
 	 * @param {Object} arg0|arg1 Target object (arg1 if onlyIfNew passed in)
 	 * @param {Object} arg1|arg2...argN Objects to extend target object with
 	 */
-	util.extendDeep = function() {
+	function extendDeep() {
 	    var target = arguments[0],
 	        i = 1,
 	        length = arguments.length,
@@ -85,7 +82,7 @@ var util = {};
 	                        copy !== null &&
 	                        typeof src === 'object' &&
 	                        typeof copy === 'object') {
-	                        target[ name ] = util.extendDeep(onlyIfNew, {}, src, copy);
+	                        target[ name ] = extendDeep(onlyIfNew, {}, src, copy);
 	                    } else {
 	                        target[ name ] = copy;
 	                    }
@@ -96,29 +93,21 @@ var util = {};
 	
 	    // Return the modified object
 	    return target;
-	};
-	
-	// Dependencies
-	// @depend preamble.js
-	// @depend ../globals.js
-	// @depend isObjectLiteral.js
-	// @depend map/extendDeep.js
-	// depend log.js  --> Causes Circular Dependency
-	
+	}
 	
 	/**
-	 * @class util.Class Provides simple class creation and inheritance
+	 * @class Class Provides simple class creation and inheritance
 	 *
 	 * Based on work from John Resig, base2, and Prototype. Class uses namespace
-	 * safe method access allowing renaming of util.Class.
+	 * safe method access allowing renaming of Class.
 	 *
 	 * Create an empty Class:
 	 *
-	 * var MyEmptyClass = util.Class.create();
+	 * var MyEmptyClass = Class.create();
 	 *
 	 * Create a typical Class instance:
 	 *
-	 * var MyClass = util.Class.create({
+	 * var MyClass = Class.create({
 	 *     init: function () {
 	 *         // This method serves as the constructor
 	 *     },
@@ -221,11 +210,11 @@ var util = {};
                 //with bowser jr.  When a class is extended, and the derived properties contain references to
                 //class instances this gets sticky and can fail.  For now a case by case basis is the safe way.
                 else if ((extendAllObjectProperties || objectPropertiesToExtend[name]) &&
-                    util.isObjectLiteral(value) &&
-                    util.isObjectLiteral(currentValue)) {
+                    isObjectLiteral(value) &&
+                    isObjectLiteral(currentValue)) {
 
                     //extend this object into the receiver
-                    value = util.extendDeep({}, currentValue, value);
+                    value = extendDeep({}, currentValue, value);
                 }
 
                 receiver[name] = value;
@@ -331,33 +320,20 @@ var util = {};
         return Class;
     }
 
-    // Reveal _class publicly
-
-    util.Class = module.exports = {
-        create:_create,
-        mixin: mixin,
-
-        /**
-         * Create a new extendable Class instance from a super Class
-         * that wasn't created through util.Class
-         * @param {Function} superClass
-         * @param {Object} prototype Class prototype
-         * @return {Function} A Class instance
-         */
-        extend: function(superClass, prototype) {
-            var subClass = _create();
-            subClass.prototype = new superClass();
-            return subClass.extend(prototype);
-        }
-    };
-
-    //In order to reduce friction with merging into other projects this definition of util.mixin is here.
-    util.mixin = function(){
-        //Can't directly depend on util.log due to circular dependency.
-        if (util.log){
-            util.log.warn('util.mixin is deprecated.  Please change your code to use util.Class.mixin()');
-        }
-
-        mixin.apply(null, arguments);
+    // Exports.
+    module.exports.create = _create;
+    module.exports.mixin = mixin;
+    
+    /**
+     * Create a new extendable Class instance from a super Class
+     * that wasn't created through Class.
+     * @param {Function} superClass
+     * @param {Object} prototype Class prototype
+     * @return {Function} A Class instance
+     */
+    module.exports.extend = function(superClass, prototype) {
+        var subClass = _create();
+        subClass.prototype = new superClass();
+        return subClass.extend(prototype);
     };
 })(require, (typeof module !== 'undefined') ? module : mkmodule('Class'));

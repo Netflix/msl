@@ -82,6 +82,7 @@
 	const MslCryptoException = require('../MslCryptoException.js');
 	const ICryptoContext = require('../crypto/ICryptoContext.js');
 	const MslConstants = require('../MslConstants.js');
+	const Base64 = require('../util/Base64.js');
 	
     /**
      * Key token data.
@@ -200,7 +201,7 @@
          * @param {MasterToken} masterToken the master token. May be null.
          * @param {UserIdToken} userIdToken the user ID token. May be null.
          * @param {boolean} encrypted true if the token should be encrypted.
-         * @param {MslConstants$CompressionAlgorithm} compressionAlgo the compression algorithm. May be {@code null}
+         * @param {MslConstants.CompressionAlgorithm} compressionAlgo the compression algorithm. May be {@code null}
          *        for no compression.
          * @param {ICryptoContext} cryptoContext the crypto context.
          * @param {?CreationData} creationData optional creation data.
@@ -287,7 +288,7 @@
                 encrypted: { value: encrypted, writable: false, enumerable: false, configurable: false },
                 /**
                  * Compression algorithm.
-                 * @type {MslConstants$CompressionAlgorithm}
+                 * @type {MslConstants.CompressionAlgorithm}
                  */
                 compressionAlgo: { value: compressionAlgo, writable: false, configurable: false },
                 /**
@@ -570,7 +571,7 @@
      * @param {MasterToken} masterToken the master token. May be null.
      * @param {UserIdToken} userIdToken the user ID token. May be null.
      * @param {boolean} encrypted true if the token should be encrypted.
-     * @param {MslConstants$CompressionAlgorithm} compressionAlgo the compression algorithm. May be {@code null}
+     * @param {MslConstants.CompressionAlgorithm} compressionAlgo the compression algorithm. May be {@code null}
      *        for no compression.
      * @param {ICryptoContext} cryptoContext the crypto context.
      * @param {{result: function(ServiceToken), error: function(Error)}}
@@ -705,7 +706,7 @@
                     data = tokendata.getBytes(KEY_SERVICEDATA);
                 } catch (e) {
                     if (e instanceof MslEncoderException)
-                        throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "servicetokendata " + base64$encode(tokendataBytes), e).setMasterToken(masterToken).setUserIdToken(userIdToken);
+                        throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "servicetokendata " + Base64.encode(tokendataBytes), e).setMasterToken(masterToken).setUserIdToken(userIdToken);
                     throw e;
                 }
                 
@@ -737,7 +738,7 @@
                     } else {
                         var compressedServicedata = ciphertext;
                         var servicedata = (compressionAlgo)
-                            ? MslUtils$uncompress(compressionAlgo, compressedServicedata)
+                            ? MslUtils.uncompress(compressionAlgo, compressedServicedata)
                             : compressedServicedata;
                         reconstruct(encoder, tokendataBytes, signatureBytes, verified,
                             name, mtSerialNumber, uitSerialNumber, encrypted, compressionAlgo,

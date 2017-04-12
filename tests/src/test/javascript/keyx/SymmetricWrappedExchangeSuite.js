@@ -19,28 +19,27 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-
-const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-const SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/crypto/SymmetricWrappedExchange.js');
-const KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
-const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-const MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
-const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-const KeyRequestData = require('../../../../../core/src/main/javascript/keyx/KeyRequestData.js');
-const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
-const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
-const MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
-const PresharedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedAuthenticationData.js');
-const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-const MslMasterTokenException = require('../../../../../core/src/main/javascript/MslMasterTokenException.js');
-
-const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-const MockAuthenticationUtils = require('../../../main/javascript/util/MockAuthenticationUtils.js');
-const MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
-
 describe("SymmetricWrappedExchangeSuite", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/crypto/SymmetricWrappedExchange.js');
+    const KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    const KeyRequestData = require('../../../../../core/src/main/javascript/keyx/KeyRequestData.js');
+    const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
+    const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
+    const MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
+    const PresharedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedAuthenticationData.js');
+    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    const MslMasterTokenException = require('../../../../../core/src/main/javascript/MslMasterTokenException.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    const MockAuthenticationUtils = require('../../../main/javascript/util/MockAuthenticationUtils.js');
+    const MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
+    
 	/** MSL encoder format. */
 	var ENCODER_FORMAT = MslEncoderFormat.JSON;
 	
@@ -357,7 +356,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         	var masterToken;
         	runs(function() {
         		expect(mo.getString(KEY_SCHEME)).toEqual(KeyExchangeScheme.SYMMETRIC_WRAPPED.name);
-        		MasterToken$parse(pskCtx, mo.getMslObject(KEY_MASTER_TOKEN, encoder), {
+        		MasterToken.parse(pskCtx, mo.getMslObject(KEY_MASTER_TOKEN, encoder), {
         			result: function(token) { masterToken = token; },
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
@@ -387,7 +386,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
 
             var keyResponseData;
             runs(function() {
-            	KeyResponseData$parse(pskCtx, mo, {
+            	KeyResponseData.parse(pskCtx, mo, {
             		result: function(data) { keyResponseData = data; },
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});

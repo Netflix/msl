@@ -45,7 +45,7 @@
      * @param {?string} s the string. May be {@code null}.
      * @returns {string} the escaped string.
      */
-    var quote = MslEncoderFactory$quote = function MslEncoderFactory$quote(s) {
+    var MslEncoderFactory$quote = function MslEncoderFactory$quote(s) {
         var json = JSON.stringify(s);
         return json
             .replace(/[\"]/g, '\\"')
@@ -64,7 +64,7 @@
      * @param {?} value the value to convert to a string. May be {@code null}.
      * @return {string} the string.
      */
-    var stringify = MslEncoderFactory$stringify = function MslEncoderFactory$stringify(v) {
+    var MslEncoderFactory$stringify = function MslEncoderFactory$stringify(v) {
     	if (v instanceof MslObject || v instanceof MslArray) {
     		return v.toString();
     	} else if (v instanceof Uint8Array) {

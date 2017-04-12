@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-const Random = require('../../../../../core/src/main/javascript/util/Random.js');
-const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
-const PublicKey = require('../../../../../core/src/main/javascript/crypto/PublicKey.js');
-const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
-const PrivateKey = require('../../../../../core/src/main/javascript/crypto/PrivateKey.js');
-const EccCryptoContext = require('../../../../../core/src/main/javascript/crypto/EccCryptoContext.js');
-const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
-const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-
-const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-
 /**
  * ECC crypto context unit tests.
  */
 describe("EccCryptoContext", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+    const PublicKey = require('../../../../../core/src/main/javascript/crypto/PublicKey.js');
+    const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+    const PrivateKey = require('../../../../../core/src/main/javascript/crypto/PrivateKey.js');
+    const EccCryptoContext = require('../../../../../core/src/main/javascript/crypto/EccCryptoContext.js');
+    const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    
     /** ECC public key A. */
     var publicKeyA;
     /** ECC private key A. */

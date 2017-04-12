@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-const textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
-
 describe("textEncoding", function () {
+    const textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
 
     describe("textEncoding.getString", function () {
 

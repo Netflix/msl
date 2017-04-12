@@ -59,7 +59,6 @@
         /** Symmetric key wrapped. */
         SYMMETRIC_WRAPPED : new KeyExchangeScheme("SYMMETRIC_WRAPPED"),
     }));
-    Object.freeze(KeyExchangeScheme);
 
     /**
      * @param {string} name the key exchange scheme name.
@@ -71,5 +70,8 @@
     };
     
     // Exports.
-    module.exports.getScheme = KeyExchangeScheme$getScheme;
+    Object.defineProperties(KeyExchangeScheme, {
+        getScheme: { value: KeyExchangeScheme$getScheme, writable: false, enumerable: false, configurable: false },
+    });
+    Object.freeze(KeyExchangeScheme);
 })(require, (typeof module !== 'undefined') ? module : mkmodule('KeyExchangeScheme'));

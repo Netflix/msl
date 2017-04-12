@@ -39,10 +39,7 @@
 	
 	const Class = require('../util/Class.js');
 	const MslEncoderException = require('../io/MslEncoderException.js');
-	const MslEncoderFactory = require('../io/MslEncoderFactory.js');
-	const MslArray = require('../io/MslArray.js');
 	const MslEncodable = require('../io/MslEncodable.js');
-	const MslEncoderUtils = require('../io/MslEncoderUtils.js');
 
     /**
      * @interface
@@ -88,6 +85,8 @@
          *         type or the value is {@code null}.
          */
         get: function get(key) {
+            const MslArray = require('../io/MslArray.js');
+            
             if (key instanceof String)
                 key = key.valueOf();
             if (typeof key !== 'string')
@@ -183,6 +182,8 @@
          *         proper type or the value is {@code null}.
          */
         getMslArray: function getMslArray(key) {
+            const MslArray = require('../io/MslArray.js');
+            
             var o = this.get(key);
             if (o instanceof MslArray)
                 return o;
@@ -281,6 +282,8 @@
          * @throws TypeError if the key is not a string.
          */
         opt: function opt(key) {
+            const MslArray = require('../io/MslArray.js');
+            
             if (key instanceof String)
                 key = key.valueOf();
             if (typeof key !== 'string')
@@ -397,6 +400,8 @@
          * @throws TypeError if the key is not a string.
          */
         optMslArray: function optMslArray(key) {
+            const MslArray = require('../io/MslArray.js');
+            
             var o = this.opt(key);
             if (o instanceof MslArray)
                 return o;
@@ -499,6 +504,8 @@
          *         value is of an unsupported type.
          */
         put: function put(key, value) {
+            const MslArray = require('../io/MslArray.js');
+            
             if (key instanceof String)
                 key = key.valueOf();
             if (typeof key !== 'string')
@@ -734,6 +741,8 @@
          *         with the same keys and values.
          */
         equals: function equals(that) {
+            const MslEncoderUtils = require('../io/MslEncoderUtils.js');
+            
         	if (this == that) return true;
         	if (!(that instanceof MslObject)) return false;
         	try {
@@ -746,7 +755,9 @@
         
         /** @inheritDoc */
         toString: function toString() {
+            const MslEncoderFactory = require('../io/MslEncoderFactory.js');
+            
         	return MslEncoderFactory.stringify(this.map);
         },
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslObject'));

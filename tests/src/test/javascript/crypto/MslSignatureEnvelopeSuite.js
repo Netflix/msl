@@ -19,16 +19,15 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-
-const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-const MslSignatureEnvelope = require('../../../../../core/src/main/javascript/crypto/MslSignatureEnvelope.js');
-const Random = require('../../../../../core/src/main/javascript/util/Random.js');
-const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
-
-const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-
 describe("MslSignatureEnvelope", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const MslSignatureEnvelope = require('../../../../../core/src/main/javascript/crypto/MslSignatureEnvelope.js');
+    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
     
@@ -54,7 +53,7 @@ describe("MslSignatureEnvelope", function() {
             runs(function() {
                 var random = new Random();
                 random.nextBytes(SIGNATURE);
-                MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+                MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                     result: function(x) { ctx = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });

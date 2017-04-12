@@ -71,7 +71,7 @@
      * </ul></p>
      *
      */
-    var RequestData = DiffieHellmanExchange$RequestData = KeyRequestData.extend({
+    var RequestData = KeyRequestData.extend({
         /**
          * Create a new Diffie-Hellman request data repository with the specified
          * parameters ID and public key. The private key is also required but
@@ -107,7 +107,7 @@
         /** @inheritDoc */
         equals: function equals(that) {
             if (this === that) return true;
-            if (!(that instanceof DiffieHellmanExchange$RequestData)) return false;
+            if (!(that instanceof RequestData)) return false;
             var privateKeysEqual =
                 this.privateKey === that.privateKey ||
                 (this.privateKey && that.privateKey &&
@@ -138,7 +138,7 @@
      * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslKeyExchangeException if the public key is invalid.
      */
-    var RequestData$parse = DiffieHellmanExchange$RequestData$parse = function RequestData$parse(keyDataMo, callback) {
+    var RequestData$parse = function RequestData$parse(keyDataMo, callback) {
         AsyncExecutor(callback, function() {
             try {
                 var parametersId = keyDataMo.getString(KEY_PARAMETERS_ID);
@@ -176,7 +176,7 @@
      * <li>{@code publickey} the public key used to generate the shared secret</li>
      * </ul></p>
      */
-    var ResponseData = DiffieHellmanExchange$ResponseData = KeyResponseData.extend({
+    var ResponseData = KeyResponseData.extend({
         /**
          * Create a new Diffie-Hellman response data repository with the provided
          * master token, specified parameters ID and public key.
@@ -210,7 +210,7 @@
         /** @inheritDoc */
         equals: function equals(that) {
             if (this === that) return true;
-            if (!(that instanceof DiffieHellmanExchange$ResponseData)) return false;
+            if (!(that instanceof ResponseData)) return false;
             return equals.base.call(this, that) &&
                 this.parametersId == that.parametersId &&
                 Arrays.equal(this.publicKey.getEncoded(), that.publicKey.getEncoded());
@@ -232,7 +232,7 @@
      * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslKeyExchangeException if the public key is invalid.
      */
-    var ResponseData$parse = DiffieHellmanExchange$ResponseData$parse = function ResponseData$parse(masterToken, keyDataMo) {
+    var ResponseData$parse = function ResponseData$parse(masterToken, keyDataMo) {
         try {
             var parametersId = keyDataMo.getString(KEY_PARAMETERS_ID);
             var publicKeyY = keyDataMo.getBytes(KEY_PUBLIC_KEY);
@@ -532,8 +532,8 @@
     });
     
     // Exports.
-    module.exports.RequestData = DiffieHellmanExchange$RequestData;
-    module.exports.RequestData.parse = DiffieHellmanExchange$RequestData$parse;
-    module.exports.ResponseData = DiffieHellmanExchange$ResponseData;
-    module.exports.ResponseData.parse = DiffieHellmanExchange$ResponseData$parse;
+    module.exports.RequestData = RequestData;
+    module.exports.RequestData.parse = RequestData$parse;
+    module.exports.ResponseData = ResponseData;
+    module.exports.ResponseData.parse = ResponseData$parse;
 })(require, (typeof module !== 'undefined') ? module : mkmodule('DiffieHellmanExchange'));

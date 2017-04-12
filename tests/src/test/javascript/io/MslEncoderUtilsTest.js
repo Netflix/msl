@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-const Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
-const MslObject = require('../../../../../core/src/main/javascript/io/MslObject.js');
-const MslArray = require('../../../../../core/src/main/javascript/io/MslArray.js');
-const MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
-
 describe("MslEncoderUtils", function() {
+    const Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
+    const MslObject = require('../../../../../core/src/main/javascript/io/MslObject.js');
+    const MslArray = require('../../../../../core/src/main/javascript/io/MslArray.js');
+    const MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
+    
     var KEY_BOOLEAN = "boolean";
     var KEY_NUMBER = "number";
     var KEY_STRING = "string";

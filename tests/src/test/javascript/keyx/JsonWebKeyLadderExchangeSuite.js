@@ -14,29 +14,6 @@
  * limitations under the License.
  */
 
-const MslCrypto = require('../../../../../core/src/main/javascript/crypto/MslCrypto.js');
-const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-const JsonWebKeyLadderExchange = require('../../../../../core/src/main/javascript/keyx/JsonWebKeyLadderExchange.js');
-const Random = require('../../../../../core/src/main/javascript/util/Random.js');
-const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
-const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
-const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
-const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
-const PresharedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedAuthenticationData.js');
-const KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
-const SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
-const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-const MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
-const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
-const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-
-const MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
-const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-const MockCryptoContextRepository = require('../../../main/javascript/keyx/MockCryptoContextRepository.js');
-const MockAuthenticationUtils = require('../../../main/javascript/util/MockAuthenticationUtils.js');
-const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-
 /**
  * JSON Web Key ladder exchange unit tests.
  * 
@@ -46,6 +23,29 @@ const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
 xdescribe("JsonWebKeyLadderExchange", function() {
 // Do nothing if executing in the legacy Web Crypto environment.
 if (MslCrypto.getWebCryptoVersion() != MslCrypto.WebCryptoVersion.LEGACY) {
+    const MslCrypto = require('../../../../../core/src/main/javascript/crypto/MslCrypto.js');
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const JsonWebKeyLadderExchange = require('../../../../../core/src/main/javascript/keyx/JsonWebKeyLadderExchange.js');
+    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
+    const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+    const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+    const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
+    const PresharedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedAuthenticationData.js');
+    const KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
+    const SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
+    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    const MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
+    const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+
+    const MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MockCryptoContextRepository = require('../../../main/javascript/keyx/MockCryptoContextRepository.js');
+    const MockAuthenticationUtils = require('../../../main/javascript/util/MockAuthenticationUtils.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    
 	/** MSL encoder format. */
 	var ENCODER_FORMAT = MslEncoderFormat.JSON;
 	

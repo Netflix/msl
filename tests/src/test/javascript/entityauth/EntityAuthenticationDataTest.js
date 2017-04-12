@@ -23,16 +23,15 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-
-const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-const MslObject = require('../../../../../core/src/main/javascript/io/MslObject.js');
-const EntityAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationData.js');
-const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-
-const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-
 describe("EntityAuthenticationData", function() {
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const MslObject = require('../../../../../core/src/main/javascript/io/MslObject.js');
+    const EntityAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationData.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    
     /** Key entity authentication scheme. */
     var KEY_SCHEME = "scheme";
     /** Key entity authentication data. */
@@ -52,7 +51,7 @@ describe("EntityAuthenticationData", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 100);
+            waitsFor(function() { return ctx; }, "ctx", 900);
             
             runs(function() {
                 encoder = ctx.getMslEncoderFactory();
@@ -134,7 +133,7 @@ describe("EntityAuthenticationData", function() {
             var mo = encoder.createObject();
             mo.put(KEY_SCHEME, EntityAuthenticationScheme.NONE.name);
             mo.put(KEY_AUTHDATA, new MslObject());
-            EntityAuthenticationData$parse(ctx, mo, {
+            EntityAuthenticationData.parse(ctx, mo, {
                 result: function() {},
                 error: function(e) { exception = e; },
             });

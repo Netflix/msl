@@ -19,20 +19,20 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-
-const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-const ErrorHeader = require('../../../../../core/src/main/javascript/msg/ErrorHeader.js');
-const Header = require('../../../../../core/src/main/javascript/msg/Header.js');
-const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
-const MslMessageException = require('../../../../../core/src/main/javascript/MslMessageException.js');
-
-const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-
 describe("ErrorHeader", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const ErrorHeader = require('../../../../../core/src/main/javascript/msg/ErrorHeader.js');
+    const Header = require('../../../../../core/src/main/javascript/msg/Header.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+    const MslMessageException = require('../../../../../core/src/main/javascript/MslMessageException.js');
+    const Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
     
@@ -97,7 +97,7 @@ describe("ErrorHeader", function() {
     var ENTITY_AUTH_DATA_MO;
     var RECIPIENT = "recipient";
     var MESSAGE_ID = 17;
-    var ERROR_CODE = MslConstants$ResponseCode.FAIL;
+    var ERROR_CODE = MslConstants.ResponseCode.FAIL;
     var INTERNAL_CODE = 621;
     var ERROR_MSG = "Error message.";
     var USER_MSG = "User message.";
@@ -658,7 +658,7 @@ describe("ErrorHeader", function() {
 
         var exception;
         runs(function() {
-	        errorHeaderMo.put(KEY_SIGNATURE, base64$decode("AAA="));
+	        errorHeaderMo.put(KEY_SIGNATURE, Base64.decode("AAA="));
 	
 	        Header.parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS, {
 	        	result: function() {},
@@ -1132,7 +1132,7 @@ describe("ErrorHeader", function() {
     it("ctor with too large message ID", function() {
         var exception;
         runs(function() {
-        	ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MslConstants$MAX_LONG_VALUE + 2, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+        	ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MslConstants.MAX_LONG_VALUE + 2, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
         		result: function() {},
         		error: function(e) { exception = e; }
         	});
@@ -1260,7 +1260,7 @@ describe("ErrorHeader", function() {
             var errordata = encoder.parseObject(plaintext);
 
             // After modifying the error data we need to encrypt it.
-            errordata.put(KEY_MESSAGE_ID, MslConstants$MAX_LONG_VALUE + 2);
+            errordata.put(KEY_MESSAGE_ID, MslConstants.MAX_LONG_VALUE + 2);
             encoder.encodeObject(errordata, ENCODER_FORMAT, {
             	result: function(x) { modifiedPlaintext = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }

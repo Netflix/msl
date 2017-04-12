@@ -34,9 +34,7 @@
     const ServiceToken = require('../../../../../core/src/main/javascript/tokens/ServiceToken.js');
     const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
     const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
-    
-    const MockPresharedAuthenticationFactory = require('../entityauth/MockPresharedAuthenticationFactory.js');
-    const MslTestUtils = require('../util/MslTestUtils.js');
+    const MslCrypto = require('../../../../../core/src/main/javascript/crypto/MslCrypto.js');
     
 	/** Base service token name. */
     var SERVICE_TOKEN_NAME = "serviceTokenName";
@@ -106,7 +104,7 @@
                 var onerror = function(e) {
                     callback.error(new Error("error creating RSA keys"));
                 };
-                mslCrypto["generateKey"]({ 'name': algo['name'], 'hash': algo['hash'], 'modulusLength': length, 'publicExponent': new Uint8Array([0x01, 0x00, 0x01]), }, false, usages)
+                MslCrypto["generateKey"]({ 'name': algo['name'], 'hash': algo['hash'], 'modulusLength': length, 'publicExponent': new Uint8Array([0x01, 0x00, 0x01]), }, false, usages)
                     .then(oncomplete, onerror);
             });
         },
@@ -129,7 +127,7 @@
                 var onerror = function(e) {
                     callback.error(new Error("error creating Diffie-Hellman keys"));
                 };
-                mslCrypto['generateKey']({
+                MslCrypto['generateKey']({
                     'name': WebCryptoAlgorithm.DIFFIE_HELLMAN,
                     'prime': params.p,
                     'generator': params.g
@@ -154,6 +152,8 @@
 	     */
 	    getMasterToken: function getMasterToken(ctx, sequenceNumber, serialNumber, callback) {
 	    	AsyncExecutor(callback, function() {
+	    	    const MockPresharedAuthenticationFactory = require('../entityauth/MockPresharedAuthenticationFactory.js');
+	    	    
 		        var renewalWindow = new Date(Date.now() + 10000);
 		        var expiration = new Date(Date.now() + 20000);
 		        ctx.getEntityAuthenticationData(null, {
@@ -185,6 +185,8 @@
 	     */
 	    getUntrustedMasterToken: function getUntrustedMasterToken(ctx, callback) {
 	    	AsyncExecutor(callback, function() {
+	    	    const MockPresharedAuthenticationFactory = require('../entityauth/MockPresharedAuthenticationFactory.js');
+	    	    
 		        var renewalWindow = new Date(Date.now() + 10000);
 		        var expiration = new Date(Date.now() + 20000);
 		        ctx.getEntityAuthenticationData(null, {
@@ -438,7 +440,7 @@
 	        AsyncExecutor(callback, function() {
 	            var ke, kh;
 	            try {
-	                ke = (typeof encryptionKey == 'string') ? base64$decode(encryptionKey) : encryptionKey;
+	                ke = (typeof encryptionKey == 'string') ? Base64.decode(encryptionKey) : encryptionKey;
 	            } catch (e) {
 	                throw new MslCryptoException(MslError.INVALID_ENCRYPTION_KEY, "encryptionKey " + encryptionKey, e);
 	            }
@@ -464,7 +466,7 @@
                         var onerror = function(e) {
                             callback.error(new MslCryptoException(MslError.HMAC_ERROR));
                         };
-                        mslCrypto['sign'](WebCryptoAlgorithm.HMAC_SHA256, saltKey.rawKey, bits)
+                        MslCrypto['sign'](WebCryptoAlgorithm.HMAC_SHA256, saltKey.rawKey, bits)
                             .then(oncomplete, onerror);
                     },
                     error: callback.error
@@ -482,7 +484,7 @@
                             var onerror = function(e) {
     	                        callback.error(new MslCryptoException(MslError.HMAC_ERROR));
     	                    };
-                            mslCrypto['sign'](WebCryptoAlgorithm.HMAC_SHA256, intermediateKey.rawKey, INFO)
+                            MslCrypto['sign'](WebCryptoAlgorithm.HMAC_SHA256, intermediateKey.rawKey, INFO)
                                 .then(oncomplete, onerror);
 	                    });
 	                },

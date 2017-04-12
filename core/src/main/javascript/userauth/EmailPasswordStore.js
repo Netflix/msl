@@ -24,7 +24,7 @@
 	
 	const Class = require('../util/Class.js');
 		
-	var EmailPasswordStore = Class.create({    
+	var EmailPasswordStore = module.exports = Class.create({    
 	    /**
 	     * Return the user if the email/password combination is valid.
 	     * 

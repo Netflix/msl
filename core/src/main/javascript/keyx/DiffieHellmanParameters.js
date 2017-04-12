@@ -24,7 +24,7 @@
 
 	const Class = require('../util/Class.js');
 		
-	var DiffieHellmanParameters = module.exports = util.Class.create({
+	var DiffieHellmanParameters = module.exports = Class.create({
 	    /**
 	     * @return {Object.<string,DHParameterSpec>} the map of Diffie-Hellman parameters by parameter ID.
 	     * @throws MslKeyExchangeException if there is an error accessing the

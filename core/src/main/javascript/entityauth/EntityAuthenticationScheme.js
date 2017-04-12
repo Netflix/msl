@@ -38,7 +38,7 @@
      * @param {boolean} encrypts true if the scheme encrypts message data.
      * @param {boolean} protects true if the scheme protects message integrity.
      */
-    var EntityAuthenticationScheme = function EntityAuthenticationScheme(name, encrypts, protects) {
+    var EntityAuthenticationScheme = module.exports = function EntityAuthenticationScheme(name, encrypts, protects) {
         // The properties.
         var props = {
             name: { value: name, writable: false, configurable: false },
@@ -73,7 +73,6 @@
         /** Provisioned. */
         PROVISIONED : new EntityAuthenticationScheme("PROVISIONED", false, false),
     }));
-    Object.freeze(EntityAuthenticationScheme);
 
     /**
      * @param {string} name the entity authentication scheme name.
@@ -85,5 +84,8 @@
     };
     
     // Exports.
-    module.exports.getScheme = EntityAuthenticationScheme$getScheme;
+    Object.defineProperties(EntityAuthenticationScheme, {
+        getScheme: { value: EntityAuthenticationScheme$getScheme, writable: false, enumerable: false, configurable: false },
+    });
+    Object.freeze(EntityAuthenticationScheme);
 })(require, (typeof module !== 'undefined') ? module : mkmodule('EntityAuthenticationScheme'));

@@ -19,26 +19,25 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-
-const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-const DefaultMslEncoderFactory = require('../../../../../core/src/main/javascript/io/DefaultMslEncoderFactory.js');
-const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
-const MessageCapabilities = require('../../../../../core/src/main/javascript/msg/MessageCapabilities.js');
-const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-const ByteArrayOutputStream = require('../../../../../core/src/main/javascript/io/ByteArrayOutputStream.js');
-const MessageHeader = require('../../../../../core/src/main/javascript/msg/MessageHeader.js');
-const MessageOutputStream = require('../../../../../core/src/main/javascript/msg/MessageOutputStream.js');
-const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
-const MslEncoderException = require('../../../../../core/src/main/javascript/io/MslEncoderException.js');
-const ByteArrayInputStream = require('../../../../../core/src/main/javascript/io/ByteArrayInputStream.js');
-const PayloadChunk = require('../../../../../core/src/main/javascript/msg/PayloadChunk.js');
-const Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
-
-const textEncoding = require('../../../../../core/src/main/lib/textEncoding.js');
-
-const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-
 describe("DefaultMslEncoderFactory", function() {
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const DefaultMslEncoderFactory = require('../../../../../core/src/main/javascript/io/DefaultMslEncoderFactory.js');
+    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+    const MessageCapabilities = require('../../../../../core/src/main/javascript/msg/MessageCapabilities.js');
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const ByteArrayOutputStream = require('../../../../../core/src/main/javascript/io/ByteArrayOutputStream.js');
+    const MessageHeader = require('../../../../../core/src/main/javascript/msg/MessageHeader.js');
+    const MessageOutputStream = require('../../../../../core/src/main/javascript/msg/MessageOutputStream.js');
+    const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
+    const MslEncoderException = require('../../../../../core/src/main/javascript/io/MslEncoderException.js');
+    const ByteArrayInputStream = require('../../../../../core/src/main/javascript/io/ByteArrayInputStream.js');
+    const PayloadChunk = require('../../../../../core/src/main/javascript/msg/PayloadChunk.js');
+    const Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
+
+    const textEncoding = require('../../../../../core/src/main/lib/textEncoding.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    
     /** Maximum number of object fields or array elements. */
     var MAX_NUM_ELEMENTS = 20;
     /** MSL object base key name. */
@@ -581,7 +580,7 @@ describe("DefaultMslEncoderFactory", function() {
 			            // Pull message header.
 			            var headerO = objects[0];
 			            var cryptoContexts = [];
-			            Header$parseHeader(ctx, headerO, cryptoContexts, {
+			            Header.parseHeader(ctx, headerO, cryptoContexts, {
 			            	result: function(x) { header = x; },
 			            	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 			            });
@@ -1116,7 +1115,7 @@ describe("DefaultMslEncoderFactory", function() {
 	            
 	            // Parse.
 	            var parsedMo = encoder.parseObject(encode);
-	            expect(MslEncoderUtils$equalObjects(mo, parsedMo)).toBeTruthy();
+	            expect(MslEncoderUtils.equalObjects(mo, parsedMo)).toBeTruthy();
             });
         });
 

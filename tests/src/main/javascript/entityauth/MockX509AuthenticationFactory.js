@@ -16,7 +16,7 @@
 (function(require, module) {
     "use strict";
     
-    const X509 = require('jsrsasign').asn1.X509;
+    const X509 = require('jsrsasign').X509;
     
     const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
     const X509AuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/X509AuthenticationFactory.js');

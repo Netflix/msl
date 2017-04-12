@@ -73,7 +73,6 @@
     };
     
     // Exports.
-    module.exports = {};
     module.exports.compress = MslUtils$compress;
     module.exports.uncompress = MslUtils$uncompress;
 })(require, (typeof module !== 'undefined') ? module : mkmodule('MslUtils'));

@@ -26,7 +26,7 @@
 	
 	const ICryptoContext = require('../crypto/ICryptoContext.js');
 	
-	var NullCryptoContext = module.extend = ICryptoContext.extend({
+	var NullCryptoContext = module.exports = ICryptoContext.extend({
 	    /** @inheritDoc */
 	    encrypt: function encrypt(data, encoder, format, callback) {
 	        callback.result(data);
