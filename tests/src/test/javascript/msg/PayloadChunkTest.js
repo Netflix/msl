@@ -79,7 +79,7 @@ describe("PayloadChunk", function() {
     function uncompress(compressionAlgo, data) {
     	switch (compressionAlgo) {
     	case CompressionAlgorithm.LZW:
-    		return lzw.uncompress(data);
+    		return lzw.extend(data);
     	default:
     		throw new MslException(MslError.UNSUPPORTED_COMPRESSION, compressionAlgo.name());
     	}

@@ -194,7 +194,7 @@
      * @return {Uint8Array} the uncompressed data or null if there is no data
      *         to uncompress.
      */
-    var lzw$uncompress = function (data) {
+    var lzw$extend = function (data) {
         // Populate the initial dictionary by copying the initial dictionary
         var dictionary = UNCOMPRESS_DICTIONARY.slice();
 
@@ -313,5 +313,5 @@
     
     // Exports.
     module.exports.compress = lzw$compress;
-    module.exports.uncompress = lzw$uncompress;
+    module.exports.extend = lzw$extend;
 })(require, (typeof module !== 'undefined') ? module : mkmodule('lzw'));

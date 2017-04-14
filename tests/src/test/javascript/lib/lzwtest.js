@@ -51,11 +51,11 @@ describe("lzw.compress", function () {
     });
 });
 
-describe("lzw.uncompress", function () {
+describe("lzw.extend", function () {
     it("one byte", function () {
         var codes = new Uint8Array([0xf1]);
 
-        var uncompressed = lzw.uncompress(codes);
+        var uncompressed = lzw.extend(codes);
 
         expect(uncompressed[0]).toEqual(codes[0]);
     });
@@ -64,7 +64,7 @@ describe("lzw.uncompress", function () {
         var codes = new Uint8Array([0x66, 0x33, 0x80]);
         var data = new Uint8Array([0x66, 0x67]);
 
-        var uncompressed = lzw.uncompress(codes);
+        var uncompressed = lzw.extend(codes);
 
         expect(uncompressed.length).toEqual(data.length);
         expect(new Uint8Array(uncompressed)).toEqual(data);
@@ -74,7 +74,7 @@ describe("lzw.uncompress", function () {
         var codes = new Uint8Array([0x61, 0x6b, 0xac, 0x40]);
         var data = new Uint8Array([0x61, 0xd7, 0xb1]);
 
-        var uncompressed = lzw.uncompress(codes);
+        var uncompressed = lzw.extend(codes);
 
         expect(uncompressed.length).toEqual(data.length);
         expect(new Uint8Array(uncompressed)).toEqual(data);
@@ -107,7 +107,7 @@ describe("lzw", function () {
         ]);
 
         var compressed = lzw.compress(data);
-        var uncompressed = lzw.uncompress(compressed);
+        var uncompressed = lzw.extend(compressed);
 
         expect(new Uint8Array(uncompressed)).toEqual(data);
     });

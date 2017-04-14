@@ -63,7 +63,7 @@
     var MslUtils$uncompress = function MslUtils$uncompress(compressionAlgo, data, callback) {
         switch (compressionAlgo) {
         case CompressionAlgorithm.LZW:
-            return lzw.uncompress(data);
+                        return lzw.extend(data);
         case CompressionAlgorithm.GZIP:
             if (typeof gzip.uncompress === "function")
                 return gzip.uncompress(data);
