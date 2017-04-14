@@ -5,8 +5,12 @@ bin
 .classpath
 build/
 test-output/
+node_modules/
+Debug/
+Release/
+Debug Library/
+Release Library/
 *.iml
 *.ipr
 *.iws
 .idea/
-
