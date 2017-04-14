@@ -25,8 +25,10 @@
     const MslConstants = require('../MslConstants.js');
     const MslException = require('../MslException.js');
     const MslError = require('../MslError.js');
+    const Base64 = require('../util/Base64.js');
+    
     const lzw = require('lzw');
-    const gzip = require('gzip');
+    const zlib = require('zlib');
 
     // Shortcuts
     var CompressionAlgorithm = MslConstants.CompressionAlgorithm;
@@ -41,14 +43,31 @@
      * @throws MslException if there is an error compressing the data.
      */
     var MslUtils$compress = function MslUtils$compress(compressionAlgo, data) {
-        switch (compressionAlgo) {
-        case CompressionAlgorithm.LZW:
-            return lzw.compress(data);
-        case CompressionAlgorithm.GZIP:
-            if (typeof gzip.compress === "function")
-                return gzip.compress(data);
-        default:
+        try {
+            switch (compressionAlgo) {
+                case CompressionAlgorithm.LZW:
+                {
+                    if (lzw && typeof lzw.compress === 'function') {
+                        var compressed = lzw.compress(data);
+                        return (compressed && compressed.length < data.length) ? compressed : null;
+                    }
+                    break;
+                }
+                case CompressionAlgorithm.GZIP:
+                {
+                    if (zlib && typeof zlib.deflateSync === 'function') {
+                        var deflated = zlib.deflateSync(data);
+                        return (deflated && deflated.length < data.length) ? deflated : null;
+                    }
+                    break;
+                }
+            }
             throw new MslException(MslError.UNSUPPORTED_COMPRESSION, compressionAlgo);
+        } catch (e) {
+            if (e instanceof MslException)
+                throw e;
+            var dataB64 = Base64.encode(data);
+            throw new MslException(MslError.COMPRESSION_ERROR, "algo " + compressionAlgo + " data " + dataB64, e);
         }
     };
 
@@ -61,14 +80,27 @@
      * @throws MslException if there is an error uncompressing the data.
      */
     var MslUtils$uncompress = function MslUtils$uncompress(compressionAlgo, data, callback) {
-        switch (compressionAlgo) {
-        case CompressionAlgorithm.LZW:
+        try {
+            switch (compressionAlgo) {
+                case CompressionAlgorithm.LZW:
+                {
+                    if (lzw && typeof lzw.extend === 'function')
                         return lzw.extend(data);
-        case CompressionAlgorithm.GZIP:
-            if (typeof gzip.uncompress === "function")
-                return gzip.uncompress(data);
-        default:
+                    break;
+                }
+                case CompressionAlgorithm.GZIP:
+                {
+                    if (zlib && typeof zlib.inflateSync === "function")
+                        return zlib.inflateSync(data);
+                    break;
+                }
+            }
             throw new MslException(MslError.UNSUPPORTED_COMPRESSION, compressionAlgo.name());
+        } catch (e) {
+            if (e instanceof MslException)
+                throw e;
+            var dataB64 = Base64.encode(data);
+            throw new MslException(MslError.UNCOMPRESSION_ERROR, "algo " + compressionAlgo + " data " + dataB64, e);
         }
     };
     
