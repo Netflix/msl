@@ -72,7 +72,7 @@
 	
 	const MslEncodingException = require('../MslEncodingException.js');
 	const MslError = require('../MslError.js');
-	const MslEncoderException = require('../MslEncoderException.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
 	const MslEncodable = require('../io/MslEncodable.js');
 	const MslInternalException = require('../MslInternalException.js');
 	const MslUtils = require('../util/MslUtils.js');

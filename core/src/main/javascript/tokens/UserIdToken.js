@@ -79,7 +79,7 @@
 	const MslConstants = require('../MslConstants.js');
 	const AsyncExecutor = require('../util/AsyncExecutor.js');
 	const MslCryptoException = require('../MslCryptoException.js');
-	const MslEncoderException = require('../MslEncoderException.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
 	const MslException = require('../MslException.js');
 	const MslError = require('../MslError.js');
 	const Base64 = require('../util/Base64.js');

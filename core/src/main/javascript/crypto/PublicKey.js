@@ -27,7 +27,7 @@
     const MslCryptoException = require('../MslCryptoException.js');
     const MslError = require('../MslError.js');
     const KeyFormat = require('../crypto/KeyFormat.js');
-    const MslCrypto = require('../MslCrypto.js');
+    const MslCrypto = require('../crypto/MslCrypto.js');
 
     var PublicKey = module.exports = Class.create({
         /**
