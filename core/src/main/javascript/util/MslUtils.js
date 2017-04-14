@@ -36,8 +36,8 @@
      *
      * @param {CompressionAlgorithm} compressionAlgo the compression algorithm.
      * @param {Uint8Array} data the data to compress.
-     * @return {Uint8Array} the compressed data or null if the compressed data
-     *         would be larger than the uncompressed data.
+     * @return {Uint8Array} the compressed data or null if the compressed data would be larger than the
+     *         uncompressed data.
      * @throws MslException if there is an error compressing the data.
      */
     var MslUtils$compress = function MslUtils$compress(compressionAlgo, data) {

@@ -234,7 +234,7 @@
 
                     // Only use compression if the compressed data is smaller than the
                     // uncompressed data.
-                    if (compressed.length < data.length) {
+                    if (compressed && compressed.length < data.length) {
                         compressedServicedata = compressed;
                     } else {
                         compressionAlgo = null;

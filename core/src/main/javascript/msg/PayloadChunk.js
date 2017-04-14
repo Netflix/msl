@@ -164,7 +164,7 @@
 
                     // Only use compression if the compressed data is smaller than the
                     // uncompressed data.
-                    if (compressed) {
+                    if (compressed && compressed.length < data.length) {
                         payloadData = compressed;
                     } else {
                         compressionAlgo = null;
