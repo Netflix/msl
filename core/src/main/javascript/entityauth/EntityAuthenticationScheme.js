@@ -73,6 +73,8 @@ var EntityAuthenticationScheme$getScheme;
         MT_PROTECTED : new EntityAuthenticationScheme("MT_PROTECTED", false, false),
         /** Provisioned. */
         PROVISIONED : new EntityAuthenticationScheme("PROVISIONED", false, false),
+        /** ESN Migration. */
+        MIGRATION : new EntityAuthenticationScheme("MIGRATION", false, false),
     }));
     Object.freeze(EntityAuthenticationScheme);
 
