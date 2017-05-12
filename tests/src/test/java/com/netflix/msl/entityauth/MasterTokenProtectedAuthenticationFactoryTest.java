@@ -119,9 +119,9 @@ public class MasterTokenProtectedAuthenticationFactoryTest {
         thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
         final MasterTokenProtectedAuthenticationData data = new MasterTokenProtectedAuthenticationData(ctx, masterToken, eAuthdata);
-        final MslObject entityAuthJO = data.getAuthData(encoder, ENCODER_FORMAT);
-        entityAuthJO.remove(KEY_MASTER_TOKEN);
-        factory.createData(ctx, entityAuthJO);
+        final MslObject entityAuthMo = data.getAuthData(encoder, ENCODER_FORMAT);
+        entityAuthMo.remove(KEY_MASTER_TOKEN);
+        factory.createData(ctx, entityAuthMo);
     }
     
     @Test
