@@ -15,6 +15,7 @@
  */
 package com.netflix.msl.entityauth;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -129,6 +130,25 @@ public class MasterTokenProtectedAuthenticationFactoryTest {
         final MasterTokenProtectedAuthenticationData data = new MasterTokenProtectedAuthenticationData(ctx, masterToken, eAuthdata);
         final ICryptoContext cryptoContext = factory.getCryptoContext(ctx, data);
         assertNotNull(cryptoContext);
+        
+        final EntityAuthenticationFactory eFactory = ctx.getEntityAuthenticationFactory(eAuthdata.getScheme());
+        final ICryptoContext eCryptoContext = eFactory.getCryptoContext(ctx, eAuthdata);
+        assertNotNull(eCryptoContext);
+        
+        final byte[] plaintext = new byte[32];
+        ctx.getRandom().nextBytes(plaintext);
+        
+        final byte[] ciphertext = cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT);
+        final byte[] eCiphertext = eCryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT);
+        final byte[] decrypted = cryptoContext.decrypt(eCiphertext, encoder);
+        final byte[] eDecrypted = eCryptoContext.decrypt(ciphertext, encoder);
+        assertArrayEquals(plaintext, decrypted);
+        assertArrayEquals(plaintext, eDecrypted);
+        
+        final byte[] signature = cryptoContext.sign(plaintext, encoder, ENCODER_FORMAT);
+        final byte[] eSignature = eCryptoContext.sign(plaintext, encoder, ENCODER_FORMAT);
+        assertTrue(cryptoContext.verify(plaintext, eSignature, encoder));
+        assertTrue(eCryptoContext.verify(plaintext, signature, encoder));
     }
     
     @Test

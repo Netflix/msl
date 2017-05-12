@@ -161,9 +161,75 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
         });
         waitsFor(function() { return data; }, "data", 100);
         
+        var cryptoContext, eCryptoContext;
+        var plaintext, ciphertext, eCiphertext;
         runs(function() {
-            var cryptoContext = factory.getCryptoContext(ctx, data);
+            cryptoContext = factory.getCryptoContext(ctx, data);
             expect(cryptoContext).not.toBeNull();
+            
+            var eFactory = ctx.getEntityAuthenticationFactory(eAuthdata.scheme);
+            eCryptoContext = eFactory.getCryptoContext(ctx, eAuthdata);
+            expect(eCryptoContext).not.toBeNull();
+            
+            plaintext = new Uint8Array(32);
+            ctx.getRandom().nextBytes(plaintext);
+            
+            cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+                result: function(x) { ciphertext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            eCryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+                result: function(x) { eCiphertext = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ciphertext && eCiphertext; }, "ciphertext", 100);
+        
+        var decrypted, eDecrypted;
+        runs(function() {
+            cryptoContext.decrypt(eCiphertext, encoder, {
+                result: function(x) { decrypted = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            eCryptoContext.decrypt(ciphertext, encoder, {
+                result: function(x) { eDecrypted = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return decrypted && eDecrypted; }, "decrypted", 100);
+        
+        var signature, eSignature;
+        runs(function() {
+            expect(decrypted).toEqual(plaintext);
+            expect(eDecrypted).toEqual(plaintext);
+            
+            cryptoContext.sign(plaintext, encoder, ENCODER_FORMAT, {
+                result: function(x) { signature = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            eCryptoContext.sign(plaintext, encoder, ENCODER_FORMAT, {
+                result: function(x) { eSignature = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return signature && eSignature; }, "decrypted", 100);
+        
+        var verified, eVerified;
+        runs(function() {
+            cryptoContext.verify(plaintext, eSignature, encoder, {
+                result: function(x) { verified = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            eCryptoContext.verify(plaintext, signature, encoder, {
+                result: function(x) { eVerified = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return verified && eVerified; }, "decrypted", 100);
+        
+        runs(function() {
+            expect(verified).toBeTruthy();
+            expect(eVerified).toBeTruthy();
         });
     });
     
