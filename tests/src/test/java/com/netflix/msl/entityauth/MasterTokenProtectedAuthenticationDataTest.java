@@ -31,6 +31,8 @@ import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
 import com.netflix.msl.MslError;
 import com.netflix.msl.MslMasterTokenException;
+import com.netflix.msl.crypto.ICryptoContext;
+import com.netflix.msl.crypto.SessionCryptoContext;
 import com.netflix.msl.io.MslEncoderException;
 import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.io.MslEncoderFormat;
@@ -112,23 +114,37 @@ public class MasterTokenProtectedAuthenticationDataTest {
         final MslObject moAuthdata = moData.getAuthData(encoder, ENCODER_FORMAT);
         assertNotNull(moAuthdata);
         // The authdata will not be equal as it is regenerated.
+        final byte[] moEncode = moData.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
+        // The encode will not be equal as it is regenerated.
     }
     
     @Test
-    public void mslObject() throws MslMasterTokenException, MslCryptoException, MslEntityAuthException, MslEncoderException {
+    public void mslObject() throws MslMasterTokenException, MslCryptoException, MslEntityAuthException, MslEncoderException, MslEncodingException {
         final MasterTokenProtectedAuthenticationData data = new MasterTokenProtectedAuthenticationData(ctx, masterToken, eAuthdata);
         final MslObject mo = MslTestUtils.toMslObject(encoder, data);
         assertEquals(EntityAuthenticationScheme.MT_PROTECTED.toString(), mo.getString(KEY_SCHEME));
         final MslObject authdata = mo.getMslObject(KEY_AUTHDATA, encoder);
 
         final MslObject masterTokenMo = MslTestUtils.toMslObject(encoder, masterToken);
-        assertTrue(MslEncoderUtils.equalObjects(masterTokenMo, authdata.getMslObject(KEY_MASTER_TOKEN, encoder)));
+        final MslObject moMasterTokenMo = authdata.getMslObject(KEY_MASTER_TOKEN, encoder);
+        assertTrue(MslEncoderUtils.equalObjects(masterTokenMo, moMasterTokenMo));
+
+        final byte[] ciphertext = authdata.getBytes(KEY_AUTHDATA);
+        final byte[] signature = authdata.getBytes(KEY_SIGNATURE);
+        assertNotNull(signature);
         // Signature and ciphertext may not be predictable depending on the
         // master token encryption and signature algorithms.
+
+        final ICryptoContext cryptoContext = new SessionCryptoContext(ctx, masterToken);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject moEAuthdataMo = encoder.parseObject(plaintext);
+        final EntityAuthenticationData moEAuthdata = EntityAuthenticationData.create(ctx, moEAuthdataMo);
+        assertEquals(eAuthdata, moEAuthdata);
     }
     
     @Test
-    public void create() throws MslCryptoException, MslEntityAuthException, MslEncodingException, MslEncoderException {
+    public void create() throws MslCryptoException, MslEntityAuthException, MslEncodingException, MslEncoderException, MslMasterTokenException {
         final MasterTokenProtectedAuthenticationData data = new MasterTokenProtectedAuthenticationData(ctx, masterToken, eAuthdata);
         final MslObject mo = MslTestUtils.toMslObject(encoder, data);
         final EntityAuthenticationData entitydata = EntityAuthenticationData.create(ctx, mo);
@@ -143,6 +159,26 @@ public class MasterTokenProtectedAuthenticationDataTest {
         final MslObject moAuthdata = moData.getAuthData(encoder, ENCODER_FORMAT);
         assertNotNull(moAuthdata);
         // The authdata will not be equal as it is regenerated.
+
+        final MslObject masterTokenMo = MslTestUtils.toMslObject(encoder, masterToken);
+        final MslObject moMasterTokenMo = moAuthdata.getMslObject(KEY_MASTER_TOKEN, encoder);
+        assertTrue(MslEncoderUtils.equalObjects(masterTokenMo, moMasterTokenMo));
+
+        final byte[] ciphertext = moAuthdata.getBytes(KEY_AUTHDATA);
+        final byte[] signature = moAuthdata.getBytes(KEY_SIGNATURE);
+        assertNotNull(signature);
+        // Signature and ciphertext may not be predictable depending on the
+        // master token encryption and signature algorithms.
+
+        final ICryptoContext cryptoContext = new SessionCryptoContext(ctx, masterToken);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject moEAuthdataMo = encoder.parseObject(plaintext);
+        final EntityAuthenticationData moEAuthdata = EntityAuthenticationData.create(ctx, moEAuthdataMo);
+        assertEquals(eAuthdata, moEAuthdata);
+        
+        final byte[] moEncode = moData.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
+        // The encode will not be equal as it is regenerated.
     }
     
     @Test
@@ -208,7 +244,7 @@ public class MasterTokenProtectedAuthenticationDataTest {
 
         final MasterTokenProtectedAuthenticationData data = new MasterTokenProtectedAuthenticationData(ctx, masterToken, eAuthdata);
         final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
-        authdata.put(KEY_AUTHENTICATION_DATA, "x");
+        authdata.put(KEY_AUTHENTICATION_DATA, new byte[] { 'x' });
         new MasterTokenProtectedAuthenticationData(ctx, authdata);
     }
     
@@ -242,7 +278,7 @@ public class MasterTokenProtectedAuthenticationDataTest {
         
         final MasterTokenProtectedAuthenticationData data = new MasterTokenProtectedAuthenticationData(ctx, masterToken, eAuthdata);
         final MslObject authdata = data.getAuthData(encoder, ENCODER_FORMAT);
-        authdata.put(KEY_SIGNATURE, "x");
+        authdata.put(KEY_SIGNATURE, new byte[] { 'x' });
         new MasterTokenProtectedAuthenticationData(ctx, authdata);
     }
     
