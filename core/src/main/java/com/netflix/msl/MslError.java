@@ -192,6 +192,7 @@ public class MslError {
     public static final MslError USER_REJECTED_BY_APP = new MslError(5037, ResponseCode.USERDATA_REAUTH, "User is rejected by the application.");
     public static final MslError USERIDTOKEN_IDENTITY_NOT_ASSOCIATED_WITH_ENTITY = new MslError(5040, ResponseCode.USERDATA_REAUTH, "The entity is not associated with the user.");
     public static final MslError USERAUTH_ENTITYUSER_INCORRECT_DATA = new MslError(5041, ResponseCode.USERDATA_REAUTH, "Entity and user combination used incorrect user authentication data type.");
+    public static final MslError USERAUTH_VERIFICATION_FAILED = new MslError(5042, ResponseCode.USERDATA_REAUTH, "User authentication data signature verification failed.");
     
     // 6 Message
     public static final MslError UNSUPPORTED_COMPRESSION = new MslError(6000, ResponseCode.FAIL, "Unsupported compression algorithm.");
