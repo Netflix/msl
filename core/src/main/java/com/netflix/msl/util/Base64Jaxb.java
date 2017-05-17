@@ -38,8 +38,13 @@ public class Base64Jaxb implements Base64Impl {
      */
     @Override
     public byte[] decode(final String s) {
-        if (!Base64.isValidBase64(s))
+        if (s != null && s.isEmpty()) {
+            return new byte[0];
+        }
+        byte[] bytes = DatatypeConverter.parseBase64Binary(s);
+        if( bytes.length == 0) {
             throw new IllegalArgumentException("Invalid Base64 encoded string: " + s);
-        return DatatypeConverter.parseBase64Binary(s);
+        }
+        return bytes;
     }
 }
