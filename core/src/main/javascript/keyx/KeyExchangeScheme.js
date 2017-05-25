@@ -30,21 +30,28 @@ var KeyExchangeScheme$getScheme;
     /** Map of names onto schemes. */
     var schemes = {};
     
-    /**
-     * Define a key exchange scheme with the specified name.
-     * 
-     * @param {string} name the key exchange scheme name.
-     */
-    KeyExchangeScheme = function KeyExchangeScheme(name) {
-        // The properties.
-        var props = {
-            name: { value: name, writable: false, configurable: false },
-        };
-        Object.defineProperties(this, props);
+    KeyExchangeScheme = util.Class.create({
+        /**
+         * Define a key exchange scheme with the specified name.
+         * 
+         * @param {string} name the key exchange scheme name.
+         */
+        init: function init(name) {
+            // The properties.
+            var props = {
+                name: { value: name, writable: false, configurable: false },
+            };
+            Object.defineProperties(this, props);
+            
+            // Add this scheme to the map.
+            schemes[name] = this;
+        },
         
-        // Add this scheme to the map.
-        schemes[name] = this;
-    };
+        /** @inheritDoc */
+        toString: function toString() {
+            return this.name;
+        },
+    });
     
     util.Class.mixin(KeyExchangeScheme,
     /** @lends {KeyExchangeScheme} */

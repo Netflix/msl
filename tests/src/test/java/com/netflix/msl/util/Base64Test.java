@@ -198,6 +198,28 @@ public class Base64Test {
     }
     
     @Test
+    public void outOfRangeCharacter() {
+        for (int i = 0; i < EXAMPLES.length; ++i) {
+            // Prepare.
+            final Object[] example = EXAMPLES[i];
+            final String base64 = (String)example[1];
+            
+            // Modify.
+            final int half = base64.length() / 2;
+            final String modifiedBase64 = base64.substring(0, half) + new String(new byte[] {(byte)128}) + base64.substring(half);
+            
+            // Decode.
+            boolean invalid = false;
+            try {
+                Base64.decode(modifiedBase64);
+            } catch (final IllegalArgumentException e) {
+                invalid = true;
+            }
+            assertTrue(invalid);
+        }
+    }
+    
+    @Test
     public void invalidLength() {
         for (int i = 0; i < EXAMPLES.length; ++i) {
             // Prepare.

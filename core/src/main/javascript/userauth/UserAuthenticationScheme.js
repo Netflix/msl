@@ -31,21 +31,28 @@ var UserAuthenticationScheme$getScheme;
     /** Map of names onto schemes. */
     var schemes = {};
     
-    /**
-     * Define a user authentication scheme with the specified name.
-     * 
-     * @param {string} name the user authentication scheme name.
-     */
-    UserAuthenticationScheme = function UserAuthenticationScheme(name) {
-        // The properties.
-        var props = {
-            name: { value: name, writable: false, configurable: false },
-        };
-        Object.defineProperties(this, props);
+    UserAuthenticationScheme = util.Class.create({
+        /**
+         * Define a user authentication scheme with the specified name.
+         * 
+         * @param {string} name the user authentication scheme name.
+         */
+        init: function init(name) {
+            // The properties.
+            var props = {
+                name: { value: name, writable: false, configurable: false },
+            };
+            Object.defineProperties(this, props);
+            
+            // Add this scheme to the map.
+            schemes[name] = this;
+        },
         
-        // Add this scheme to the map.
-        schemes[name] = this;
-    };
+        /** @inheritDoc */
+        toString: function toString() {
+            return this.name;
+        },
+    });
     
     util.Class.mixin(UserAuthenticationScheme,
     /** @lends UserAuthenticationScheme */

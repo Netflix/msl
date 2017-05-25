@@ -31,26 +31,33 @@ var EntityAuthenticationScheme$getScheme;
     /** Map of names onto schemes. */
     var schemes = {};
     
-    /**
-     * Define an entity authentication scheme with the specified name and
-     * cryptographic properties.
-     * 
-     * @param {string} name the entity authentication scheme name.
-     * @param {boolean} encrypts true if the scheme encrypts message data.
-     * @param {boolean} protects true if the scheme protects message integrity.
-     */
-    EntityAuthenticationScheme = function EntityAuthenticationScheme(name, encrypts, protects) {
-        // The properties.
-        var props = {
-            name: { value: name, writable: false, configurable: false },
-            encrypts: { value: encrypts, writable: false, configurable: false },
-            protectsIntegrity: { value: protects, writable: false, configurable: false },
-        };
-        Object.defineProperties(this, props);
+    EntityAuthenticationScheme = util.Class.create({
+        /**
+         * Define an entity authentication scheme with the specified name and
+         * cryptographic properties.
+         * 
+         * @param {string} name the entity authentication scheme name.
+         * @param {boolean} encrypts true if the scheme encrypts message data.
+         * @param {boolean} protects true if the scheme protects message integrity.
+         */
+        init: function init(name, encrypts, protects) {
+            // The properties.
+            var props = {
+                name: { value: name, writable: false, configurable: false },
+                encrypts: { value: encrypts, writable: false, configurable: false },
+                protectsIntegrity: { value: protects, writable: false, configurable: false },
+            };
+            Object.defineProperties(this, props);
+
+            // Add this scheme to the map.
+            schemes[name] = this;
+        },
         
-        // Add this scheme to the map.
-        schemes[name] = this;
-    };
+        /** @inheritDoc */
+        toString: function toString() {
+            return this.name;
+        },
+    });
 
     util.Class.mixin(EntityAuthenticationScheme,
     /** @lends {EntityAuthenticationScheme} */
@@ -73,6 +80,8 @@ var EntityAuthenticationScheme$getScheme;
         MT_PROTECTED : new EntityAuthenticationScheme("MT_PROTECTED", false, false),
         /** Provisioned. */
         PROVISIONED : new EntityAuthenticationScheme("PROVISIONED", false, false),
+        /** ESN Migration. */
+        MIGRATION : new EntityAuthenticationScheme("MIGRATION", false, false),
     }));
     Object.freeze(EntityAuthenticationScheme);
 
