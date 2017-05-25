@@ -198,6 +198,7 @@ const MslError MslError::USERAUTH_ENTITY_INCORRECT_DATA(5033, ResponseCode::FAIL
 const MslError MslError::USER_REJECTED_BY_APP(5037, ResponseCode::USERDATA_REAUTH, "User is rejected by the application.");
 const MslError MslError::USERIDTOKEN_IDENTITY_NOT_ASSOCIATED_WITH_ENTITY(5040, ResponseCode::USERDATA_REAUTH, "The entity is not associated with the user.");
 const MslError MslError::USERAUTH_ENTITYUSER_INCORRECT_DATA(5041, ResponseCode::USERDATA_REAUTH, "Entity and user combination used incorrect user authentication data type.");
+const MslError MslError::USERAUTH_VERIFICATION_FAILED(5042, ResponseCode::USERDATA_REAUTH, "User authentication data signature verification failed.");
 
 // 6 Message
 const MslError MslError::UNSUPPORTED_COMPRESSION(6000, ResponseCode::FAIL, "Unsupported compression algorithm.");
