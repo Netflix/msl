@@ -19,6 +19,7 @@
 
 #include <Macros.h>
 #include <tokens/MslUser.h>
+#include <IllegalArgumentException.h>
 #include <string>
 #include <sstream>
 #include <memory>
@@ -32,14 +33,33 @@ class MockMslUser : public netflix::msl::tokens::MslUser
 public:
 	virtual ~MockMslUser() {}
 
+    /**
+     * Create a new MSL user with the specified user ID.
+     *
+     * @param id MSL user ID.
+     */
     MockMslUser(int64_t id) : id_(id) {}
 
+    /**
+     * Create a new MSL user from the serialized user data.
+     *
+     * @param userdata serialized user data.
+     * @throws IllegalArgumentException if the user data is invalid.
+     */
     MockMslUser(const std::string& idStr)
     {
         std::stringstream convert(idStr);
-        if ( !(convert >> id_) )
-            id_ = 0;
+        if ( !(convert >> id_) ) {
+        	std::stringstream ss;
+        	ss << "Invalid user data serialization: " << idStr;
+            throw IllegalArgumentException(ss.str());
+        }
     }
+
+    /**
+     * @return the user ID.
+     */
+    int64_t getId() { return id_; }
 
     /** @inheritDoc */
     virtual std::string getEncoded() const

@@ -28,7 +28,7 @@ var MockMslUser = MslUser.extend({
     init: function init(id) {
         // Set properties.
         var props = {
-            id: { value: id, writable: false, enumerable: false, configurable: false },
+            id: { value: id, writable: false, configurable: false },
         };
         Object.defineProperties(this, props);
     },
