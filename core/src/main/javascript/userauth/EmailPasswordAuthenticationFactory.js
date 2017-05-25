@@ -71,7 +71,7 @@ var EmailPasswordAuthenticationFactory = UserAuthenticationFactory.extend({
 
         // Verify the scheme is still permitted.
         if (!this._authutils.isSchemePermitted(identity, user, this.scheme))
-            throw new MslUserAuthException(MslError.USERAUTH_ENTITYUSER_INCORRECT_DATA, "Authentication scheme " + this.scheme + " not permitted for entity " + identity + ".").setUserAuthenticationData(data);
+            throw new MslUserAuthException(MslError.USERAUTH_ENTITYUSER_INCORRECT_DATA, "Authentication scheme " + this.scheme + " not permitted for entity " + identity + ".").setUserAuthenticationData(epad);
 
         // If a user ID token was provided validate the user identities.
         if (userIdToken) {

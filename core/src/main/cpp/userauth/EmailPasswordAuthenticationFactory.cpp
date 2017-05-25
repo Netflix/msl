@@ -89,14 +89,14 @@ shared_ptr<MslUser> EmailPasswordAuthenticationFactory::authenticate(
     // Verify the scheme is still permitted.
     if (!authutils_->isSchemePermitted(identity, user, getScheme()))
         throw MslUserAuthException(MslError::USERAUTH_ENTITYUSER_INCORRECT_DATA, string("Authentication scheme ") +
-                getScheme().name() + " not permitted for entity " + identity + ".").setUserAuthenticationData(data);
+                getScheme().name() + " not permitted for entity " + identity + ".").setUserAuthenticationData(epad);
 
     // If a user ID token was provided validate the user identities.
     if (userIdToken) {
         shared_ptr<MslUser> uitUser = userIdToken->getUser();
         if (!user->equals(uitUser))
             throw MslUserAuthException(MslError::USERIDTOKEN_USERAUTH_DATA_MISMATCH, string("uad user ") +
-                    user->getEncoded() + "; uit user " + uitUser->getEncoded());
+                    user->getEncoded() + "; uit user " + uitUser->getEncoded()).setUserAuthenticationData(epad);
     }
 
     // Return the user.
