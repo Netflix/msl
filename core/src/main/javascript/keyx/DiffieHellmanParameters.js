@@ -22,8 +22,8 @@ var DHParameterSpec = util.Class.create({
      * Create a new Diffie-Hellman parameter specification with the provided
      * prime modulus and base generator.
      * 
-     * @param {Uint8Array} p prime modulus.
-     * @param {Uint8Array} g base generator.
+     * @param {Uint8Array} p prime modulus (big-endian).
+     * @param {Uint8Array} g base generator (big-endian).
      */
     init: function init(p, g) {
         // Set properties.
