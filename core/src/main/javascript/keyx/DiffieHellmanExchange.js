@@ -20,7 +20,6 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 var DiffieHellmanExchange;
-var DiffieHellmanExchange$DhParameterSpec;
 var DiffieHellmanExchange$RequestData;
 var DiffieHellmanExchange$RequestData$parse;
 var DiffieHellmanExchange$ResponseData;
@@ -236,17 +235,6 @@ var DiffieHellmanExchange$ResponseData$parse;
             throw e;
         }
     };
-
-    /**
-     * Diffie-Hellman parameter specification.
-     *
-     * @param {BigInteger} p prime number.
-     * @param {BigInteger} g generator.
-     */
-    DiffieHellmanExchange$DhParameterSpec = function DhParameterSpec(p, g) {
-        this.p = p;
-        this.g = g;
-    };
     
     /**
      * If the provided byte array begins with one and only one null byte this
@@ -324,6 +312,7 @@ var DiffieHellmanExchange$ResponseData$parse;
             
             AsyncExecutor(callback, function() {
                 // Compute Diffie-Hellman shared secret.
+            	var bitlen = params.p.length * 8;
                 var oncomplete = computeSha384;
                 var onerror = function(e) {
                     callback.error(new MslCryptoException(MslError.DERIVEKEY_ERROR, "Error deriving Diffie-Hellman shared secret.", e));
@@ -331,7 +320,7 @@ var DiffieHellmanExchange$ResponseData$parse;
                 mslCrypto['deriveBits']({
                     'name': WebCryptoAlgorithm.DIFFIE_HELLMAN['name'],
                     'public': publicKey.getEncoded(),
-                }, privateKey, 48).then(oncomplete, onerror);
+                }, privateKey, bitlen).then(oncomplete, onerror);
             }, self);
             
             function computeSha384(sharedSecret) {
