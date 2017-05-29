@@ -210,6 +210,7 @@ var MockAuthenticationUtils = AuthenticationUtils.extend({
             var index = revokedSchemes.indexOf(scheme);
             if (index == -1)
                 revokedSchemes.push(scheme);
+            return;
         }
         
         // Form 1: entity => entity auth scheme
