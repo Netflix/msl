@@ -70,7 +70,7 @@
 	const MslEncodingException = require('../MslEncodingException.js');
 	const MslError = require('../MslError.js');
 	const MslMessageException = require('../MslMessageException.js');
-	const Base64 = require('../Base64.js');
+	const Base64 = require('../util/Base64.js');
 	
     /**
      * Key payload.

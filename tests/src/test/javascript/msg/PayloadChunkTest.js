@@ -27,8 +27,8 @@ describe("PayloadChunk", function() {
     const Random = require('../../../../../core/src/main/javascript/util/Random.js');
     const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
     const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
-    const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/WebCryptoAlgorithm.js');
-    const WebCryptoUsage = require('../../../../../core/src/main/javascript/WebCryptoUsage.js');
+    const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+    const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
     const SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
     const PayloadChunk = require('../../../../../core/src/main/javascript/msg/PayloadChunk.js');
     const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
@@ -36,7 +36,7 @@ describe("PayloadChunk", function() {
     const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
     const MslMessageException = require('../../../../../core/src/main/javascript/MslMessageException.js');
 
-    const lzw = require('../../../../../core/src/main/javascript/lib/lzw.js');
+    const lzw = require('lzw');
     const textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
 
     const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');

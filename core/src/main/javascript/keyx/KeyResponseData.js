@@ -43,7 +43,7 @@
 	const MslEncodable = require('../io/MslEncodable.js');
 	const AsyncExecutor = require('../util/AsyncExecutor.js');
 	const MasterToken = require('../tokens/MasterToken.js');
-	const MslKeyExchangeException = require('../keyx/MslKeyExchangeException.js');
+	const MslKeyExchangeException = require('../MslKeyExchangeException.js');
 	const MslError = require('../MslError.js');
 	const MslEncoderException = require('../io/MslEncoderException.js');
 	const MslEncodingException = require('../MslEncodingException.js');

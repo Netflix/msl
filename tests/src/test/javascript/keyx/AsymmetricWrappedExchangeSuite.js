@@ -43,7 +43,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
     const MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
     const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-    const MockAuthenticationUtils = require('../../../../../core/src/main/javascript/util/MockAuthenticationUtils.js');
+    const MockAuthenticationUtils = require('../../../main/javascript/util/MockAuthenticationUtils.js');
     
 	/** MSL encoder format. */
 	var ENCODER_FORMAT = MslEncoderFormat.JSON;

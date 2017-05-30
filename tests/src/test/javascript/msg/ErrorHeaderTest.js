@@ -29,6 +29,7 @@ describe("ErrorHeader", function() {
     const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
     const MslMessageException = require('../../../../../core/src/main/javascript/MslMessageException.js');
     const Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
+    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
 
     const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');

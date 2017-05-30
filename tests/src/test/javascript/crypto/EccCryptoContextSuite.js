@@ -24,6 +24,7 @@ describe("EccCryptoContext", function() {
     const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
     const PublicKey = require('../../../../../core/src/main/javascript/crypto/PublicKey.js');
     const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+    const KeyFormat = require('../../../../../core/src/main/javascript/crypto/KeyFormat.js');
     const PrivateKey = require('../../../../../core/src/main/javascript/crypto/PrivateKey.js');
     const EccCryptoContext = require('../../../../../core/src/main/javascript/crypto/EccCryptoContext.js');
     const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');

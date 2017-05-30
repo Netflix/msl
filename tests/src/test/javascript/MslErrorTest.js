@@ -15,8 +15,8 @@
  */
 
 describe("MslError", function() {
-    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+    const MslError = require('../../../../core/src/main/javascript/MslError.js');
+    const MslConstants = require('../../../../core/src/main/javascript/MslConstants.js');
     
     var BASE = 100000;
     

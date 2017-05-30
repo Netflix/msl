@@ -449,7 +449,9 @@ describe("MasterTokenProtectedAuthenticationData", function() {
 
         var exception;
         runs(function() {
-            authdata.put(KEY_AUTHENTICATION_DATA, "x");
+            var corruptAuthdata = new Uint8Array(1);
+            corruptAuthdata.set(['x']);
+            authdata.put(KEY_AUTHENTICATION_DATA, corruptAuthdata);
             MasterTokenProtectedAuthenticationData.parse(ctx, authdata, {
                 result: function() {},
                 error: function(e) { exception = e; },
@@ -554,7 +556,9 @@ describe("MasterTokenProtectedAuthenticationData", function() {
 
         var exception;
         runs(function() {
-            authdata.put(KEY_SIGNATURE, "x");
+            var corruptSignature = new Uint8Array(1);
+            corruptSignature.set(['x']);
+            authdata.put(KEY_SIGNATURE, corruptSignature);
             MasterTokenProtectedAuthenticationData.parse(ctx, authdata, {
                 result: function() {},
                 error: function(e) { exception = e; },

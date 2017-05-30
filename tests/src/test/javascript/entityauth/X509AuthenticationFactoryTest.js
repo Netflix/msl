@@ -94,7 +94,6 @@ describe("X509AuthenticationFactory", function() {
 
     /** X.509 store. */
     var caStore = new X509Store();
-    caStore.addCert(MockX509AuthenticationFactory.X509_CERT);
     
     /** Entity authentication factory. */
     var factory = new X509AuthenticationFactory(caStore);
@@ -123,6 +122,7 @@ describe("X509AuthenticationFactory", function() {
             });
             waitsFor(function() { return ctx; }, "ctx", 900);
             runs(function() {
+                caStore.addCert(MockX509AuthenticationFactory.X509_CERT);
                 encoder = ctx.getMslEncoderFactory();
                 ctx.addEntityAuthenticationFactory(factory);
                 initialized = true;

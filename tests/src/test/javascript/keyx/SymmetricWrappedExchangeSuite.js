@@ -22,7 +22,7 @@
 describe("SymmetricWrappedExchangeSuite", function() {
     const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
     const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    const SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/crypto/SymmetricWrappedExchange.js');
+    const SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
     const KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
     const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
     const MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');

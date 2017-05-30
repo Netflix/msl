@@ -23,7 +23,7 @@
     "use strict";
     
     const ConditionVariable = require('../../../../../core/src/main/javascript/util/ConditionVariable.js');
-    const PresahredProfileAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/PresharedProfileAuthenticationFactory.js');
+    const PresharedProfileAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/PresharedProfileAuthenticationFactory.js');
     const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
     const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
     const PresharedProfileAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedProfileAuthenticationData.js');

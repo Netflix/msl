@@ -56,7 +56,7 @@
 	"use strict";
 	
 	const AsyncExecutor = require('../util/AsyncExecutor.js');
-	const MslEncoderException = require('../MslEncoderException.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
 	const MslEncodingException = require('../MslEncodingException.js');
 	const EntityAuthenticationData = require('../entityauth/EntityAuthenticationData.js');
 	const MasterToken = require('../tokens/MasterToken.js');

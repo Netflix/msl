@@ -27,7 +27,7 @@
 	const AsyncExecutor = require('../util/AsyncExecutor.js');
 	const InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
 	const MslEncoderException = require('../io/MslEncoderException.js');
-	const ClarinetParser = require('../msg/ClarinetParser.js');
+	const ClarinetParser = require('../io/ClarinetParser.js');
 	const JsonMslObject = require('../io/JsonMslObject.js');
 
     /**

@@ -37,7 +37,7 @@
     const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
     const AsyncExecutor = require('../util/AsyncExecutor.js');
     const MslEncoderException = require('../io/MslEncoderException.js');
-    const MslEncodingException = require('../io/MslEncodingException.js');
+    const MslEncodingException = require('../MslEncodingException.js');
 
     /**
      * Key entity identity.

@@ -19,10 +19,10 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-describe("JsonWebEncryptionLadderExchange", function() {
+describe("JsonWebEncryptionLadderExchange", function() {    
 // Do nothing unless executing in the legacy Web Crypto environment.
+const MslCrypto = require('../../../../../core/src/main/javascript/crypto/MslCrypto.js');
 if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
-    const MslCrypto = require('../../../../../core/src/main/javascript/crypto/MslCrypto.js');
     const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
     const JsonWebEncryptionCryptoContext = require('../../../../../core/src/main/javascript/keyx/JsonWebEncryptionCryptoContext.js');
     const Random = require('../../../../../core/src/main/javascript/util/Random.js');

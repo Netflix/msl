@@ -39,9 +39,9 @@
 	
 	const MslEncodable = require('../io/MslEncodable.js');
 	const AsyncExecutor = require('../util/AsyncExecutor.js');
-	const MslUserAuthException = require('../userauth/MslUserAuthException.js');
+	const MslUserAuthException = require('../MslUserAuthException.js');
 	const MslError = require('../MslError.js');
-	const MslEncoderException = require('../MslEncoderException.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
 	const MslEncodingException = require('../MslEncodingException.js');
 	
     /**

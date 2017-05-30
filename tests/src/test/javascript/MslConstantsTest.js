@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 describe("MslConstants", function() {
-    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+    const MslConstants = require('../../../../core/src/main/javascript/MslConstants.js');
     
     describe("MslConstants.DEFAULT_CHARSET", function() {
     	it("encoding is UTF-8", function() {

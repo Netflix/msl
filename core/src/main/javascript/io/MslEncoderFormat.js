@@ -25,6 +25,8 @@
  */
 (function(require, module) {
 	"use strict";
+	
+	const Class = require('../util/Class.js');
     
     /**
      * Map of names onto formats.

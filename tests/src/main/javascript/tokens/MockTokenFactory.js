@@ -24,7 +24,7 @@
     
     const TokenFactory = require('../../../../../core/src/main/javascript/tokens/TokenFactory.js');
     const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
-    const MslMasterTokenException = require('../../../../../core/src/main/javascript/MsslMasterTokenException.js');
+    const MslMasterTokenException = require('../../../../../core/src/main/javascript/MslMasterTokenException.js');
     const MslError = require('../../../../../core/src/main/javascript/MslError.js');
     const MslException = require('../../../../../core/src/main/javascript/MslException.js');
     const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');

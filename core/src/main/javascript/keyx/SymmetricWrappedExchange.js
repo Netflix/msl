@@ -24,10 +24,12 @@
 	
 	const KeyRequestData = require('../keyx/KeyRequestData.js');
 	const KeyExchangeScheme = require('../keyx/KeyExchangeScheme.js');
+	const KeyExchangeFactory = require('../keyx/KeyExchangeFactory.js');
 	const AsyncExecutor = require('../util/AsyncExecutor.js');
 	const MslKeyExchangeException = require('../MslKeyExchangeException.js');
+	const KeyExchangeFactory = require('../keyx/KeyExchangeFactory.js');
 	const MslError = require('../MslError.js');
-	const MslEncoderException = require('../MslEncoderException.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
 	const MslEncodingException = require('../MslEncodingException.js');
 	const KeyResponseData = require('../keyx/KeyResponseData.js');
 	const Arrays = require('../util/Arrays.js');

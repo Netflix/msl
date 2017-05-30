@@ -21,7 +21,7 @@
  */
 describe("NullMslStore", function() {
     const NullMslStore = require('../../../../../core/src/main/javascript/util/NullMslStore.js');
-    const EntityAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
     const NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
     const ServiceToken = require('../../../../../core/src/main/javascript/tokens/ServiceToken.js');
     const MslException = require('../../../../../core/src/main/javascript/MslException.js');
