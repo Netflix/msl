@@ -5,8 +5,11 @@ bin
 .classpath
 build/
 test-output/
+Debug/
+Release/
+Debug Library/
+Release Library/
 *.iml
 *.ipr
 *.iws
 .idea/
-
