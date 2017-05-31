@@ -111,7 +111,6 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
     });
     
     // Shortcuts.
-    var DhParameterSpec = DiffieHellmanExchange$DhParameterSpec;
     var RequestData = DiffieHellmanExchange$RequestData;
     var RequestData$parse = DiffieHellmanExchange$RequestData$parse;
     var ResponseData = DiffieHellmanExchange$ResponseData;
@@ -681,7 +680,9 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
 
         /** Diffie-Hellman parameter specifications. */
 	    var paramSpecs = {};
-	    paramSpecs['1'] = new DhParameterSpec(new BigInteger('23', 10), new BigInteger('5', 10));
+	    var twentyThree = new Uint8Array([23]);
+	    var five = new Uint8Array([5]);
+	    paramSpecs['1'] = new DhParameterSpec(twentyThree, five);
         
         /** Key exchange factory. */
         var factory = new DiffieHellmanExchange(paramSpecs);

@@ -521,6 +521,12 @@ var ServiceToken$parse;
         },
 
         /**
+         * <p>Returns true if the other object is a service token with the same
+         * name and bound to the same tokens.</p>
+         * 
+         * <p>This function is designed for use with sets and maps to guarantee
+         * uniqueness of individual service tokens.</p>
+         * 
          * @param {?} that the reference object with which to compare.
          * @return {boolean} true if the other object is a service token with the same name
          *         and bound to the same tokens.

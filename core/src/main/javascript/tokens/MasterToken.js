@@ -589,9 +589,17 @@ var MasterToken$parse;
         },
 
         /**
+         * <p>Returns true if the other object is a master token with the same
+         * serial number, sequence number, and expiration. The expiration is
+         * considered in the event the issuer renews a master token but is unable
+         * or unwilling to increment the sequence number.</p>
+         * 
+         * <p>This function is designed for use with sets and maps to guarantee
+         * uniqueness of individual master tokens.</p>
+         * 
          * @param {?} that the reference object with which to compare.
          * @return {boolean} true if the other object is a master token with the same
-         *         serial number and sequence number.
+         *         serial number, sequence number, and expiration.
          * @see #uniqueKey()
          */
         equals: function equals(that) {
