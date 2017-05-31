@@ -293,8 +293,16 @@ public:
    std::string toString() const;
 
    /**
-    * @param rhs the reference object with which to compare.
-    * @return true if rhs has the same name and is bound to the same tokens.
+    * <p>Returns true if the other service token has the same name and bound
+    * to the same tokens.</p>
+    *
+    * <p>This function is designed for use with sets and maps to guarantee
+    * uniqueness of individual service tokens.</p>
+    *
+    * @param obj the service token with which to compare.
+    * @return true if the other service token has the same name and bound to
+    *         the same tokens.
+    * @see #uniqueKey(java.lang.Object)
     */
    bool equals(std::shared_ptr<const ServiceToken> obj) const;
 

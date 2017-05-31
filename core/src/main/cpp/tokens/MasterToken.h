@@ -293,6 +293,17 @@ public:
      */
     std::string toString() const;
 
+    /**
+     * <p>Returns true if the other master token has the same serial number,
+     * sequence number, and expiration. The expiration is considered in the
+     * event the issuer renews a master token but is unable or unwilling to
+     * increment the sequence number.</p>
+     *
+     * @param other the master token with which to compare.
+     * @return true if the other master token has the same serial number,
+     *         sequence number, and expiration.
+     * @see #uniqueKey()
+     */
     bool equals(std::shared_ptr<const MasterToken> other) const;
 
     /**

@@ -233,17 +233,23 @@ public:
     std::string toString() const;
 
     /**
+     * <p>Returns true if the other user ID token has the same serial number
+     * bound to the same master token.</p>
+     *
+     * <p>This function is designed for use with sets and maps to guarantee
+     * uniqueness of individual user ID tokens.</p>
+     *
+     * @param other the user ID token with which to compare.
+     * @return true if the other user ID token has the same serial number bound
+     *         to the same master token.
+     * @see #uniqueKey()
+     */
+    bool equals(std::shared_ptr<const UserIdToken> other) const;
+
+    /**
      * @return a unique key suitable for identifying this user ID token.
      */
     std::string uniqueKey() const;
-
-    /**
-     * @param other the reference object with which to compare.
-     * @return true if the other object is a user ID token with the same serial
-     *         number bound to the same master token.
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
-    bool equals(std::shared_ptr<const UserIdToken> other) const;
 
 private:
     /** MSL context. */
