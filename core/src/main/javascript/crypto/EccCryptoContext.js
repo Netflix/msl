@@ -114,7 +114,7 @@
                     });
                 };
                 var onerror = function(e) {
-                    callback.error(new MslCryptoException(MslError.SIGNATURE_ERROR));
+                    callback.error(new MslCryptoException(MslError.SIGNATURE_ERROR, null, e));
                 };
                 MslCrypto['sign'](WebCryptoAlgorithm.ECDSA_SHA256, this.privateKey, data)
                     .then(oncomplete, onerror);
@@ -134,7 +134,7 @@
                         AsyncExecutor(callback, function() {
                             var oncomplete = callback.result;
                             var onerror = function(e) {
-                                callback.error(new MslCryptoException(MslError.SIGNATURE_ERROR));
+                                callback.error(new MslCryptoException(MslError.SIGNATURE_ERROR, null, e));
                             };
                             MslCrypto['verify'](WebCryptoAlgorithm.ECDSA_SHA256, this.publicKey, envelope.signature, data)
                                 .then(oncomplete, onerror);

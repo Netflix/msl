@@ -119,8 +119,8 @@
                 var oncomplete = function(result) {
                     callback.result(new Uint8Array(result));
                 };
-                var onerror = function(error) {
-                    callback.error(new MslCryptoException(MslError.WRAP_ERROR));
+                var onerror = function(e) {
+                    callback.error(new MslCryptoException(MslError.WRAP_ERROR, null, e));
                 };
                 // Use the transform instead of the wrap key algorithm in case
                 // the key algorithm is missing some fields.
@@ -135,8 +135,8 @@
                 var oncomplete = function(result) {
                     constructKey(result);
                 };
-                var onerror = function() {
-                    callback.error(new MslCryptoException(MslError.UNWRAP_ERROR));
+                var onerror = function(e) {
+                    callback.error(new MslCryptoException(MslError.UNWRAP_ERROR, null, e));
                 };
                 // Use the transform instead of the wrap key algorithm in case
                 // the key algorithm is missing some fields.

@@ -56,9 +56,9 @@
                         createKey(new Uint8Array(result));
                     };
                     var onerror = function(e) {
-                        callback.error(new MslCryptoException(MslError.KEY_EXPORT_ERROR, "raw"));
+                        callback.error(new MslCryptoException(MslError.KEY_EXPORT_ERROR, KeyFormat.RAW, e));
                     };
-                    MslCrypto.exportKey("raw", rawKey)
+                    MslCrypto.exportKey(KeyFormat.RAW, rawKey)
                         .then(oncomplete, onerror);
 
                 } else {
@@ -149,7 +149,7 @@
                 new SecretKey(result, callback, keydata);
             };
             var onerror = function(e) {
-                callback.error(new MslCryptoException(MslError.INVALID_SYMMETRIC_KEY));
+                callback.error(new MslCryptoException(MslError.INVALID_SYMMETRIC_KEY, null, e));
             };
             MslCrypto.importKey("raw", keydata, algo, true, usages)
                 .then(oncomplete, onerror);

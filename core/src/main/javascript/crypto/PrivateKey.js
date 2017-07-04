@@ -56,7 +56,7 @@
                         createKey(new Uint8Array(result));
                     };
                     var onerror = function(e) {
-                        callback.error(new MslCryptoException(MslError.KEY_EXPORT_ERROR, KeyFormat.PKCS8));
+                        callback.error(new MslCryptoException(MslError.KEY_EXPORT_ERROR, KeyFormat.PKCS8, e));
                     };
                     MslCrypto['exportKey'](KeyFormat.PKCS8, rawKey)
                         .then(oncomplete, onerror);
@@ -128,7 +128,7 @@
                 new PrivateKey(result, callback, input);
             };
             var onerror = function(e) {
-                callback.error(new MslCryptoException(MslError.INVALID_PRIVATE_KEY));
+                callback.error(new MslCryptoException(MslError.INVALID_PRIVATE_KEY, null, e));
             };
             MslCrypto["importKey"](format, input, algo, true, usages)
                 .then(oncomplete, onerror);

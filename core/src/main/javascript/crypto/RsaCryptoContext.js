@@ -146,7 +146,7 @@
                                 result: callback.result,
                                 error: function(e) {
                                     if (e instanceof MslEncoderException)
-                                        e = new MslCryptoException(MslError.CIPHERTEXT_ENVELOPE_ENCODE_ERROR, e);
+                                        e = new MslCryptoException(MslError.CIPHERTEXT_ENVELOPE_ENCODE_ERROR, null, e);
                                     callback.error(e);
                                 }
                             });
@@ -159,7 +159,7 @@
                     });
                 };
                 var onerror = function(e) {
-                    callback.error(new MslCryptoException(MslError.ENCRYPT_ERROR));
+                    callback.error(new MslCryptoException(MslError.ENCRYPT_ERROR, null, e));
                 };
                 MslCrypto['encrypt'](self.transform, self.publicKey, data)
                     .then(oncomplete, onerror);
@@ -199,7 +199,7 @@
                                 callback.result(new Uint8Array(plaintext));
                             };
                             var onerror = function(e) {
-                                callback.error(new MslCryptoException(MslError.DECRYPT_ERROR));
+                                callback.error(new MslCryptoException(MslError.DECRYPT_ERROR, null, e));
                             };
                             mslCrypto['decrypt'](self.transform, self.privateKey, envelope.ciphertext)
                                 .then(oncomplete, onerror);
@@ -231,7 +231,7 @@
                     callback.result(new Uint8Array(result));
                 };
                 var onerror = function(e) {
-                    callback.error(new MslCryptoException(MslError.WRAP_ERROR));
+                    callback.error(new MslCryptoException(MslError.WRAP_ERROR, null, e));
                 };
                 // Use the transform instead of the wrap key algorithm in case
                 // the key algorithm is missing some fields.
@@ -248,7 +248,7 @@
 
                 var oncomplete = constructKey;
                 var onerror = function(e) {
-                    callback.error(new MslCryptoException(MslError.UNWRAP_ERROR));
+                    callback.error(new MslCryptoException(MslError.UNWRAP_ERROR, null, e));
                 };
                 // Use the transform instead of the wrap key algorithm in case
                 // the key algorithm is missing some fields.
@@ -291,7 +291,7 @@
                         		result: callback.result,
                         		error: function(e) {
                                     if (e instanceof MslEncoderException)
-                                        e = new MslCryptoException(MslError.SIGNATURE_ENVELOPE_ENCODE_ERROR, e);
+                                        e = new MslCryptoException(MslError.SIGNATURE_ENVELOPE_ENCODE_ERROR, null, e);
                                     callback.error(e);
                         		},
                         	});
@@ -300,7 +300,7 @@
                     });
                 };
                 var onerror = function(e) {
-                    callback.error(new MslCryptoException(MslError.SIGNATURE_ERROR));
+                    callback.error(new MslCryptoException(MslError.SIGNATURE_ERROR, null, e));
                 };
                 MslCrypto['sign'](this.algo, this.privateKey, data)
                     .then(oncomplete, onerror);
@@ -322,7 +322,7 @@
                         AsyncExecutor(callback, function() {
                             var oncomplete = callback.result;
                             var onerror = function(e) {
-                                callback.error(new MslCryptoException(MslError.SIGNATURE_ERROR));
+                                callback.error(new MslCryptoException(MslError.SIGNATURE_ERROR, null, e));
                             };
                             MslCrypto['verify'](this.algo, this.publicKey, envelope.signature, data)
                                 .then(oncomplete, onerror);

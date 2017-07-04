@@ -55,7 +55,7 @@
                         createKey(new Uint8Array(result));
                     };
                     var onerror = function(e) {
-                        callback.error(new MslCryptoException(MslError.KEY_EXPORT_ERROR, KeyFormat.SPKI));
+                        callback.error(new MslCryptoException(MslError.KEY_EXPORT_ERROR, KeyFormat.SPKI, e));
                     };
                     MslCrypto['exportKey'](KeyFormat.SPKI, rawKey)
                         .then(oncomplete, onerror);
@@ -124,7 +124,7 @@
                 new PublicKey(result, callback, input);
             };
             var onerror = function(e) {
-                callback.error(new MslCryptoException(MslError.INVALID_PUBLIC_KEY));
+                callback.error(new MslCryptoException(MslError.INVALID_PUBLIC_KEY, null, e));
             };
             MslCrypto['importKey'](format, input, algo, true, usages)
                 .then(oncomplete, onerror);
