@@ -16,8 +16,11 @@
 describe("X509AuthenticationData", function() {
     const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
     const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const EntityAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationData.js');
     const X509AuthenticationData = require('../../../../../core/src/main/javascript/entityauth/X509AuthenticationData.js');
     const Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
 
     const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     const MockX509AuthenticationFactory = require('../../../main/javascript/entityauth/MockX509AuthenticationFactory.js');

@@ -36,6 +36,7 @@
     const AsyncExecutor = require('../util/AsyncExecutor.js');
     const MslEncoderException = require('../io/MslEncoderException.js');
     const MslEncodingException = require('../MslEncodingException.js');
+    const MslError = require('../MslError.js');
     
     /**
      * Key entity identity.

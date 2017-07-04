@@ -29,6 +29,7 @@ describe("EntityAuthenticationData", function() {
     const EntityAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationData.js');
     const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
     const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    const MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
 
     const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     

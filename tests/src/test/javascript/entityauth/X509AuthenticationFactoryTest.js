@@ -23,6 +23,7 @@ describe("X509AuthenticationFactory", function() {
     const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
     const X509Store = require('../../../../../core/src/main/javascript/entityauth/X509Store.js');
     const X509AuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/X509AuthenticationFactory.js');
+    const X509AuthenticationData = require('../../../../../core/src/main/javascript/entityauth/X509AuthenticationData.js');
     const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
     const MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
     const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');

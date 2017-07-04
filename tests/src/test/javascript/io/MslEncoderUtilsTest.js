@@ -19,7 +19,6 @@ describe("MslEncoderUtils", function() {
     const MslArray = require('../../../../../core/src/main/javascript/io/MslArray.js');
     const Random = require('../../../../../core/src/main/javascript/util/Random.js');
     const MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
-    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
     
     var KEY_BOOLEAN = "boolean";
     var KEY_NUMBER = "number";

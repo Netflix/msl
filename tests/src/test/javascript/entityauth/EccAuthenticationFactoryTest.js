@@ -28,6 +28,7 @@ describe("EccAuthenticationFactory", function() {
     const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
     const MslError = require('../../../../../core/src/main/javascript/MslError.js');
     const MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
+    const EccStore = require('../../../../../core/src/main/javascript/entityauth/EccStore.js');
 
     const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     const MockEccAuthenticationFactory = require('../../../main/javascript/entityauth/MockEccAuthenticationFactory.js');

@@ -23,6 +23,7 @@
     "use strict";
     
     const UserAuthenticationFactory = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationFactory.js');
+    const UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
     const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
     const UserIdTokenAuthenticationData = require('../../../../../core/src/main/javascript/userauth/UserIdTokenAuthenticationData.js');
     const MslUserAuthException = require('../../../../../core/src/main/javascript/MslUserAuthException.js');

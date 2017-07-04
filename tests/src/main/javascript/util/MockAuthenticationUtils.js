@@ -26,6 +26,7 @@
     const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
     const UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
     const KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
+    const MslUser = require('../../../../../core/src/main/javascript/tokens/MslUser.js');
     
     var MockAuthenticationUtils = module.exports = AuthenticationUtils.extend({
         /**

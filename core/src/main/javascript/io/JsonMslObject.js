@@ -26,6 +26,8 @@
 	const MslObject = require('../io/MslObject.js');
 	const textEncoding = require('../lib/textEncoding.js');
 	const MslConstants = require('../MslConstants.js');
+	const MslEncodable = require('../io/MslEncodable.js');
+	const MslEncoderFormat = require('../io/MslEncoderFormat.js');
 	const MslEncoderException = require('../io/MslEncoderException.js');
 	const MslException = require('../MslException.js');
 	const Base64 = require('../util/Base64.js');
@@ -152,6 +154,8 @@
         
         /** @inheritDoc */
         getBytes: function getBytes(key) {
+            const MslEncoderFactory = require('../io/MslEncoderFactory.js');
+            
             // When a JsonMslObject is decoded, there's no way for us to know if a
             // value is supposed to be a String to byte[]. Therefore interpret
             // Strings as Base64-encoded data consistent with the toJSONString()

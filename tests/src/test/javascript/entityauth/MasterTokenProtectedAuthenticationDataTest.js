@@ -29,6 +29,7 @@ describe("MasterTokenProtectedAuthenticationData", function() {
     const MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
     const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
     const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    const MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
 
     const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');

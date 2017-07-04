@@ -44,7 +44,7 @@
     const MslError = require('../MslError.js');
     const MslCryptoException = require('../MslCryptoException.js');
     const MslEncoderException = require('../io/MslEncoderException.js');
-    const MslEncodingExceptoion = require('../MslEncodingException.js');
+    const MslEncodingException = require('../MslEncodingException.js');
     const MasterToken = require('../tokens/MasterToken.js');
     const MslException = require('../MslException.js');
 

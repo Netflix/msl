@@ -23,6 +23,7 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
     const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
     const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
     const MasterTokenProtectedAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/MasterTokenProtectedAuthenticationFactory.js');
+    const MasterTokenProtectedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/MasterTokenProtectedAuthenticationData.js');
     const UnauthenticatedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/UnauthenticatedAuthenticationData.js');
     const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
     const MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');

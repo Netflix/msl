@@ -34,6 +34,7 @@
     const ServiceToken = require('../../../../../core/src/main/javascript/tokens/ServiceToken.js');
     const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
     const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
     const MslCrypto = require('../../../../../core/src/main/javascript/crypto/MslCrypto.js');
     
 	/** Base service token name. */

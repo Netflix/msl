@@ -18,6 +18,7 @@
     
     const ConditionVariable = require('../../../../../core/src/main/javascript/util/ConditionVariable.js');
     const EccAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/EccAuthenticationFactory.js');
+    const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
     const EccAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/EccAuthenticationData.js');
     const EccCryptoContext = require('../../../../../core/src/main/javascript/crypto/EccCryptoContext.js');
     const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');

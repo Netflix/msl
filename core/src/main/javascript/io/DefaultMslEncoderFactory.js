@@ -31,6 +31,7 @@
     const MslEncoderFormat = require('../io/MslEncoderFormat.js');
     const JsonMslTokenizer = require('../io/JsonMslTokenizer.js');
     const MslEncoderException = require('../io/MslEncoderException.js');
+    const AsyncExecutor = require('../util/AsyncExecutor.js');
     const JsonMslObject = require('../io/JsonMslObject.js');
     
 	var DefaultMslEncoderFactory = module.exports = MslEncoderFactory.extend({

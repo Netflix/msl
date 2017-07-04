@@ -23,7 +23,8 @@
  */
 (function(require, module) {
     "use strict";
-    
+
+    const MslInternalException = require('../MslInternalException.js');
     const KeyFormat = require('../crypto/KeyFormat.js');
     const ASN1 = require('../lib/asnjwk.concat.js');
 
@@ -157,8 +158,6 @@
                 case WebCryptoVersion.V2014_01:
                 case WebCryptoVersion.V2014_02:
                 case WebCryptoVersion.V2014_02_SAFARI:
-                    // Return an ArrayBufferView instead of the ArrayBuffer as a workaround for
-                    // MSL-164.
                 	var op = nfCryptoSubtle.encrypt(algorithm, key, buffer);
                     return promisedOperation(op);
                 default:

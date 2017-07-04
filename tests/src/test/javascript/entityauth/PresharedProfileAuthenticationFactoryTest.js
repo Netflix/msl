@@ -22,6 +22,7 @@
 describe("PresharedProfileAuthenticationFactory", function() {
     const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
     const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const PresharedProfileAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/PresharedProfileAuthenticationFactory.js');
     const PresharedProfileAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedProfileAuthenticationData.js');
     const MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
     const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');

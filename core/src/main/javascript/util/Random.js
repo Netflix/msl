@@ -17,6 +17,7 @@
 	"use strict";
 	
 	const MslConstants = require('../MslConstants.js');
+    const MslInternalException = require('../MslInternalException.js');
 	const Class = require('../util/Class.js');
 
     // Shift multiplication.

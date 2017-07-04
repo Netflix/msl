@@ -16,7 +16,6 @@
 
 /**
  * <p>Key Format constants and utility methods.</p>
- *
  */
 (function(require, module) {
     "use strict";

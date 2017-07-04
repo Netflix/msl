@@ -53,7 +53,7 @@
 	     */
 		init: function init(scheme, peerToPeer, callback) {
 		    const UnauthenticatedAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/UnauthenticatedAuthenticationFactory.js');
-		    const UnauthentciatedSuffixedAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/UnauthenticatedSuffixedAuthenticationFactory.js');
+		    const UnauthenticatedSuffixedAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/UnauthenticatedSuffixedAuthenticationFactory.js');
 		    const MasterTokenProtectedAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/MasterTokenProtectedAuthenticationFactory.js');
 		    const ProvisionedAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/ProvisionedAuthenticationFactory.js');
 		    const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
@@ -79,6 +79,7 @@
 		    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
 		    
 		    const MockAuthenticationUtils = require('../util/MockAuthenticationUtils.js');
+            const MockIdentityProvisioningService = require('../entityauth/MockIdentityProvisioningService.js');
 		    const MockPresharedAuthenticationFactory = require('../entityauth/MockPresharedAuthenticationFactory.js');
 		    const MockPresharedProfileAuthenticationFactory = require('../entityauth/MockPresharedProfileAuthenticationFactory.js');
 		    const MockRsaAuthenticationFactory = require('../entityauth/MockRsaAuthenticationFactory.js');
@@ -224,6 +225,7 @@
 
 		            // The properties.
 		            var props = {
+		                _random: { value: new Random(), writable: false, enumerable: false, configurable: false },
 		                _mslCryptoContext: { value: mslCryptoContext, writable: true, enumerable: false, configurable: false },
 		                _peerToPeer: { value: peerToPeer, writable: false, enumerable: false, configurable: false },
 		                _capabilities: { value: capabilities, writable: true, enumerable: false, configurable: false },
@@ -251,7 +253,7 @@
 
 		/** @inheritDoc */
 		getRandom: function getRandom() {
-			return new Random();
+			return this._random;
 		},
 
 		/** @inheritDoc */

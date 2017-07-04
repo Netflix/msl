@@ -115,6 +115,8 @@
 	const AsyncExecutor = require('../util/AsyncExecutor.js');
 	const MslEncoderException = require('../io/MslEncoderException.js');
 	const MslEncodingException = require('../MslEncodingException.js');
+	const SecretKey = require('../crypto/SecretKey.js');
+	const WebCryptoUsage = require('../crypto/WebCryptoUsage.js');
 	
     /**
      * Milliseconds per second.

@@ -27,7 +27,6 @@
 	const KeyExchangeFactory = require('../keyx/KeyExchangeFactory.js');
 	const AsyncExecutor = require('../util/AsyncExecutor.js');
 	const MslKeyExchangeException = require('../MslKeyExchangeException.js');
-	const KeyExchangeFactory = require('../keyx/KeyExchangeFactory.js');
 	const MslError = require('../MslError.js');
 	const MslEncoderException = require('../io/MslEncoderException.js');
 	const MslEncodingException = require('../MslEncodingException.js');

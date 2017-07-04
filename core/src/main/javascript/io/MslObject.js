@@ -85,6 +85,7 @@
          *         type or the value is {@code null}.
          */
         get: function get(key) {
+            const MslEncoderFactory = require('../io/MslEncoderFactory.js');
             const MslArray = require('../io/MslArray.js');
             
             if (key instanceof String)
@@ -111,6 +112,8 @@
          *         proper type or the value is {@code null}.
          */
         getBoolean: function getBoolean(key) {
+            const MslEncoderFactory = require('../io/MslEncoderFactory.js');
+            
             var o = this.get(key);
             if (o instanceof Boolean)
                 return o.valueOf();
@@ -129,6 +132,8 @@
          *         proper type or the value is {@code null}.
          */
         getBytes: function getBytes(key) {
+            const MslEncoderFactory = require('../io/MslEncoderFactory.js');
+            
             var o = this.get(key);
             if (o instanceof Uint8Array)
                 return o;
@@ -145,6 +150,8 @@
          *         proper type or the value is {@code null}.
          */
         getDouble: function getDouble(key) {
+            const MslEncoderFactory = require('../io/MslEncoderFactory.js');
+            
             var o = this.get(key);
             if (o instanceof Number)
                 return o.valueOf();
@@ -163,6 +170,8 @@
          *         proper type or the value is {@code null}.
          */
         getInt: function getInt(key) {
+            const MslEncoderFactory = require('../io/MslEncoderFactory.js');
+            
             var o = this.get(key);
             // The << 0 operation converts to a signed 32-bit integer.
             if (o instanceof Number)
@@ -182,6 +191,7 @@
          *         proper type or the value is {@code null}.
          */
         getMslArray: function getMslArray(key) {
+            const MslEncoderFactory = require('../io/MslEncoderFactory.js');
             const MslArray = require('../io/MslArray.js');
             
             var o = this.get(key);
@@ -203,6 +213,8 @@
          *         proper type or the value is {@code null}.
          */
         getMslObject: function getMslObject(key, encoder) {
+            const MslEncoderFactory = require('../io/MslEncoderFactory.js');
+            
             var o = this.get(key);
             if (o instanceof MslObject)
                 return o;
@@ -234,6 +246,8 @@
          *         proper type or the value is {@code null}.
          */
         getLong: function getLong(key) {
+            const MslEncoderFactory = require('../io/MslEncoderFactory.js');
+            
             var o = this.get(key);
             // I don't know of a better way than using parseInt().
             if (o instanceof Number)
@@ -253,6 +267,8 @@
          *         proper type or the value is {@code null}.
          */
         getString: function getString(key) {
+            const MslEncoderFactory = require('../io/MslEncoderFactory.js');
+            
             var o = this.get(key);
             if (o instanceof String)
                 return o.valueOf();
