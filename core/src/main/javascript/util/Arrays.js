@@ -71,7 +71,7 @@
 	
 	    // Clamp the length based on the offset.
 	    if (len === undefined || len === null)
-	        len = a.length;
+	        len = a.length - off;
 	
 	    // Create the copy.
 	    if (Arrays$isUint8Array(a))
