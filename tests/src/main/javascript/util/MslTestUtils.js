@@ -86,6 +86,7 @@
          * @param {result: function(PublicKey, PrivateKey), error: function(Error)}
          *        callback the callback that will receive the RSA key pair or
          *        any thrown exceptions.
+         * @throws MslCryptoException if there is an error generating the keys.
          */
         generateRsaKeys: function generateRsaKeys(algo, usages, length, callback) {
             AsyncExecutor(callback, function() {
@@ -103,7 +104,7 @@
                     });
                 };
                 var onerror = function(e) {
-                    callback.error(new Error("error creating RSA keys"));
+                    callback.error(new MslCryptoException(MslError.GENERATEKEY_ERROR, "error generating RSA keys", e));
                 };
                 MslCrypto["generateKey"]({ 'name': algo['name'], 'hash': algo['hash'], 'modulusLength': length, 'publicExponent': new Uint8Array([0x01, 0x00, 0x01]), }, false, usages)
                     .then(oncomplete, onerror);
@@ -119,6 +120,7 @@
          * @param {result: function(PublicKey, PrivateKey), error: function(Error)}
          *        callback the callback that will receive the Diffie-Hellman key
          *        pair or any thrown exceptions.
+         * @throws MslCryptoException if there is an error generating the keys.
          */
         generateDiffieHellmanKeys: function generateDiffieHellmanKeys(params, callback) {
             AsyncExecutor(callback, function() {
@@ -126,7 +128,7 @@
                     callback.result(keyPair.publicKey, keyPair.privateKey);
                 };
                 var onerror = function(e) {
-                    callback.error(new Error("error creating Diffie-Hellman keys"));
+                    callback.error(new MslCryptoException(MslError.GENERATEKEY_ERROR, "error generating Diffie-Hellman keys", e));
                 };
                 MslCrypto['generateKey']({
                     'name': WebCryptoAlgorithm.DIFFIE_HELLMAN,
