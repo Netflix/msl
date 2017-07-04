@@ -81,8 +81,8 @@ if (isCommonJS) exports.xparameterize = xparameterize;
 /**
  * Matcher that checks that the expected exception was thrown by the actual.
  *
- * @param {Error} [expected]
- * @param {number} [messageId]
+ * @param {Error} expected expected exception.
+ * @param {number} messageId expected MSL message ID.
  */
 jasmine.Matchers.prototype.toThrow = function(expected, messageId) {
   var result = false;
@@ -131,6 +131,57 @@ jasmine.Matchers.prototype.toThrow = function(expected, messageId) {
       return "Expected function to throw an exception.";
     }
   };
+  this.stack = exception.stack;
 
   return result;
+};
+/**
+ * Override matcher function to include stack trace.
+ *
+ * @param {string} matcher name.
+ * @param {function} matcher function.
+ */
+jasmine.Matchers.matcherFn_ = function(matcherName, matcherFunction) {
+  return function() {
+    var matcherArgs = jasmine.util.argsToArray(arguments);
+    var result = matcherFunction.apply(this, arguments);
+
+    if (this.isNot) {
+      result = !result;
+    }
+
+    if (this.reportWasCalled_) return result;
+
+    var message;
+    if (!result) {
+      if (this.message) {
+        message = this.message.apply(this, arguments);
+        if (jasmine.isArray_(message)) {
+          message = message[this.isNot ? 1 : 0];
+        }
+      } else {
+        var englishyPredicate = matcherName.replace(/[A-Z]/g, function(s) { return ' ' + s.toLowerCase(); });
+        message = "Expected " + jasmine.pp(this.actual) + (this.isNot ? " not " : " ") + englishyPredicate;
+        if (matcherArgs.length > 0) {
+          for (var i = 0; i < matcherArgs.length; i++) {
+            if (i > 0) message += ",";
+            message += " " + jasmine.pp(matcherArgs[i]);
+          }
+        }
+        message += ".";
+      }
+    }
+    var expectationResult = new jasmine.ExpectationResult({
+      matcherName: matcherName,
+      passed: result,
+      expected: matcherArgs.length > 1 ? matcherArgs : matcherArgs[0],
+      actual: this.actual,
+      message: message,
+    });
+    if (this.stack) {
+      expectationResult.trace = { stack: this.stack };
+    }
+    this.spec.addMatcherResult(expectationResult);
+    return jasmine.undefined;
+  };
 };
