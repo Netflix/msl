@@ -29,6 +29,48 @@
     const KeyFormat = require('../crypto/KeyFormat.js');
     const MslCrypto = require('../crypto/MslCrypto.js');
 
+    /**
+     * Normalize public key input into expected Web Crypto API format.
+     *
+     * @param {string|Uint8Array|object} input Base64-encoded, raw or JSON key
+     *        data (SPKI|JWK).
+     * @param {KeyFormat} format provided key format (SPKI|JWK).
+     * @return {Uint8Array|object} DER-encoded SPKI or JSON Web Key object.
+     * @throws MslCryptoException if the key data is invalid.
+     */
+    function normalizePublicKey(input, format) {
+        // SPKI must either be a Base64-encoded string or the raw bytes.
+        if (format == KeyFormat.SPKI) {
+            if (typeof input === 'object')
+                throw new MslCryptoException(MslError.INVALID_PUBLIC_KEY, format + " " + JSON.stringify(input), e);
+            if (typeof input === 'string') {
+                try {
+                    return Base64.decode(input);
+                } catch (e) {
+                    throw new MslCryptoException(MslError.INVALID_PUBLIC_KEY, format + " " + input, e);
+                }
+            }
+            return input;
+        }
+        
+        // JWK must either be a JSON string or a JavaScript object.
+        if (format == KeyFormat.JWK) {
+            if (typeof input === 'string') {
+                try {
+                    input = JSON.parse(input);
+                } catch (e) {
+                    throw new MslCryptoException(MslError.INVALID_PUBLIC_KEY, format + " " + input, e);
+                }
+            }
+            if (typeof input === 'object' && input.constructor === Object)
+                return input;
+            throw new MslCryptoException(MslError.INVALID_PUBLIC_KEY, format + " " + input, e);
+        }
+
+        // Invalid format.
+        throw new MslCryptoException(MslError.INVALID_PUBLIC_KEY, "Invalid format '" + format + "'", e);
+    }
+
     var PublicKey = module.exports = Class.create({
         /**
          * Create a new public key from an original public key.
@@ -119,14 +161,14 @@
      */
     var PublicKey$import = function PublicKey$import(input, algo, usages, format, callback) {
         AsyncExecutor(callback, function() {
-            input = KeyFormat.normalizePubkeyInput(input, format);
+            var keydata = normalizePublicKey(input, format);
             var oncomplete = function(result) {
-                new PublicKey(result, callback, input);
+                new PublicKey(result, callback, keydata);
             };
             var onerror = function(e) {
                 callback.error(new MslCryptoException(MslError.INVALID_PUBLIC_KEY, null, e));
             };
-            MslCrypto['importKey'](format, input, algo, true, usages)
+            MslCrypto['importKey'](format, keydata, algo, true, usages)
                 .then(oncomplete, onerror);
         });
     };
