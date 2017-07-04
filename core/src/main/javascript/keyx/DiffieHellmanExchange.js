@@ -333,10 +333,10 @@
                 var onerror = function(e) {
                     callback.error(new MslCryptoException(MslError.DERIVEKEY_ERROR, "Error deriving Diffie-Hellman shared secret.", e));
                 };
-                mslCrypto['deriveBits']({
+                MslCrypto['deriveBits']({
                     'name': WebCryptoAlgorithm.DIFFIE_HELLMAN['name'],
                     'public': publicKey.getEncoded(),
-                }, privateKey, 48).then(oncomplete, onerror);
+                }, privateKey, 384).then(oncomplete, onerror);
             }, self);
             
             function computeSha384(sharedSecret) {
