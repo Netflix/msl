@@ -246,6 +246,19 @@
                     throw new Error("Unsupported Web Crypto version " + mslCrypto$version + ".");
             }
         },
+        
+        'deriveBits': function(algorithm, baseKey, length) {
+            switch (mslCrypto$version) {
+                case WebCryptoVersion.LEGACY:
+                case WebCryptoVersion.V2014_01:
+                case WebCryptoVersion.V2014_02:
+                case WebCryptoVersion.V2014_02_SAFARI:
+                    var op = nfCryptoSubtle.deriveBits(algorithm, baseKey, length);
+                    return promisedOperation(op);
+                default:
+                    throw new Error("Unsupported Web Crypto version " + mslCrypto$version + ".");
+            }
+        },
 
         'importKey': function(format, keyData, algorithm, extractable, keyUsage) {
             var ext = normalizeExtractable(extractable);
