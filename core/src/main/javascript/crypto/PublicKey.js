@@ -41,8 +41,8 @@
     function normalizePublicKey(input, format) {
         // SPKI must either be a Base64-encoded string or the raw bytes.
         if (format == KeyFormat.SPKI) {
-            if (typeof input === 'object')
-                throw new MslCryptoException(MslError.INVALID_PUBLIC_KEY, format + " " + JSON.stringify(input), e);
+            if (input instanceof Uint8Array)
+                return input;
             if (typeof input === 'string') {
                 try {
                     return Base64.decode(input);
@@ -50,7 +50,7 @@
                     throw new MslCryptoException(MslError.INVALID_PUBLIC_KEY, format + " " + input, e);
                 }
             }
-            return input;
+            throw new MslCryptoException(MslError.INVALID_PUBLIC_KEY, format + " " + JSON.stringify(input));
         }
         
         // JWK must either be a JSON string or a JavaScript object.

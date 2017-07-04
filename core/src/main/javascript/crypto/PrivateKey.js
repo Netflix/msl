@@ -41,8 +41,8 @@
     function normalizePrivkeyInput(input, format) {
         // PKCS#8 must be either a Base64-encoded string or the raw bytes.
         if (format == KeyFormat.PKCS8) {
-            if (typeof input === 'object')
-                throw new MslCryptoException(MslError.INVALID_PRIVATE_KEY, format + " " + JSON.stringify(input), e);
+            if (input instanceof Uint8Array)
+                return input;
             if (typeof input === 'string') {
                 try {
                     return Base64.decode(input);
@@ -50,7 +50,7 @@
                     throw new MslCryptoException(MslError.INVALID_PRIVATE_KEY, format + " " + input, e);
                 }
             }
-            return input;
+            throw new MslCryptoException(MslError.INVALID_PRIVATE_KEY, format + " " + JSON.stringify(input), e);
         }
         
         // JWK must either be a JSON string or a JavaScript object.
