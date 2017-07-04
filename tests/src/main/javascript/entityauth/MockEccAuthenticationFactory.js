@@ -154,22 +154,22 @@
         var _algo = WebCryptoAlgorithm.ECDSA_SHA256;
         _algo['namedCurve'] = ECDSA_KEYPAIR.publicKeyJSON['crv'];
                 
-        PublicKey.import(ECDSA_KEYPAIR.publicKeyJSON, WebCryptoAlgorithm.ECDSA_SHA256, WebCryptoUsage.VERIFY, KeyFormat.JWK, {
+        PublicKey.import(ECDSA_KEYPAIR.publicKeyJSON, _algo, WebCryptoUsage.VERIFY, KeyFormat.JWK, {
             result: function (pubkey) {
                 ECC_PUBKEY = MockEccAuthenticationFactory.ECC_PUBKEY = pubkey;
                 keysDefined.signalAll();
             },
             error: function(e) {
-                throw new MslInternalException("Hard-coded RSA key failure.", e);
+                throw new MslInternalException("Hard-coded ECC key failure.", e);
             }
         });
-        PrivateKey.import(ECDSA_KEYPAIR.privateKeyJSON, WebCryptoAlgorithm.ECDSA_SHA256, WebCryptoUsage.SIGN, KeyFormat.JWK, {
+        PrivateKey.import(ECDSA_KEYPAIR.privateKeyJSON, _algo, WebCryptoUsage.SIGN, KeyFormat.JWK, {
             result: function (privkey) {
                 ECC_PRIVKEY = MockEccAuthenticationFactory.ECC_PRIVKEY = privkey;
                 keysDefined.signalAll();
             },
             error: function(e) {
-                throw new MslInternalException("Hard-coded RSA key failure.", e);
+                throw new MslInternalException("Hard-coded ECC key failure.", e);
             }
         });
     })();
