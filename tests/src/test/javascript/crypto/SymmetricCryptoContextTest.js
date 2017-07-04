@@ -135,7 +135,7 @@ describe("SymmetricCryptoContext", function() {
             var messageB = new Uint8Array(32);
             random.nextBytes(messageB);
 
-            var ciphertextA = undefined, ciphertextB;
+            var ciphertextA, ciphertextB;
             runs(function() {
                 cryptoContext.encrypt(messageA, encoder, ENCODER_FORMAT, {
                     result: function(c) { ciphertextA = c; },
@@ -155,7 +155,7 @@ describe("SymmetricCryptoContext", function() {
                 expect(ciphertextA).not.toEqual(ciphertextB);
             });
 
-            var plaintextA = undefined, plaintextB;
+            var plaintextA, plaintextB;
             runs(function() {
                 cryptoContext.decrypt(ciphertextA, encoder, {
                     result: function(p) { plaintextA = p; },
@@ -387,7 +387,7 @@ describe("SymmetricCryptoContext", function() {
             var messageB = new Uint8Array(32);
             random.nextBytes(messageB);
 
-            var ciphertextA = undefined, ciphertextB;
+            var ciphertextA, ciphertextB;
             runs(function() {
                 cryptoContext.encrypt(messageA, encoder, ENCODER_FORMAT, {
                     result: function(c) { ciphertextA = c; },
@@ -407,7 +407,7 @@ describe("SymmetricCryptoContext", function() {
                 expect(ciphertextA).not.toEqual(ciphertextB);
             });
 
-            var plaintextA = undefined, plaintextB;
+            var plaintextA, plaintextB;
             runs(function() {
                 cryptoContext.decrypt(ciphertextA, encoder, {
                     result: function(p) { plaintextA = p; },
@@ -614,7 +614,7 @@ describe("SymmetricCryptoContext", function() {
             var messageB = new Uint8Array(32);
             random.nextBytes(messageB);
 
-            var signatureA = undefined, signatureB;
+            var signatureA, signatureB;
             runs(function() {
                 cryptoContext.sign(messageA, encoder, ENCODER_FORMAT, {
                     result: function(s) { signatureA = s; },
@@ -634,7 +634,7 @@ describe("SymmetricCryptoContext", function() {
                 expect(signatureB).not.toEqual(signatureA);
             });
 
-            var verifiedAA = undefined, verifiedBB = undefined, verifiedBA;
+            var verifiedAA, verifiedBB, verifiedBA;
             runs(function() {
                 cryptoContext.verify(messageA, signatureA, encoder, {
                     result: function(v) { verifiedAA = v; },
@@ -695,7 +695,7 @@ describe("SymmetricCryptoContext", function() {
             var messageB = new Uint8Array(32);
             random.nextBytes(messageB);
 
-            var signatureA = undefined, signatureB;
+            var signatureA, signatureB;
             runs(function() {
                 cryptoContext.sign(messageA, encoder, ENCODER_FORMAT, {
                     result: function(s) { signatureA = s; },
@@ -715,7 +715,7 @@ describe("SymmetricCryptoContext", function() {
                 expect(signatureB).not.toEqual(signatureA);
             });
 
-            var verifiedAA = undefined, verifiedBB = undefined, verifiedBA;
+            var verifiedAA, verifiedBB, verifiedBA;
             runs(function() {
                 cryptoContext.verify(messageA, signatureA, encoder, {
                     result: function(v) { verifiedAA = v; },
