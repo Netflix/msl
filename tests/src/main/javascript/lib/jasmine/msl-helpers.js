@@ -85,6 +85,9 @@ if (isCommonJS) exports.xparameterize = xparameterize;
  * @param {number} messageId expected MSL message ID.
  */
 jasmine.Matchers.prototype.toThrow = function(expected, messageId) {
+  const MslException = require('../../../../../../core/src/main/javascript/MslException.js');
+  const MslError = require('../../../../../../core/src/main/javascript/MslError.js');
+  
   var result = false;
   var exception;
   if (typeof this.actual != 'function') {
@@ -135,6 +138,7 @@ jasmine.Matchers.prototype.toThrow = function(expected, messageId) {
 
   return result;
 };
+
 /**
  * Override matcher function to include stack trace.
  *
