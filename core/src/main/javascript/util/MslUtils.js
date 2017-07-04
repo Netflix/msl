@@ -104,7 +104,25 @@
         }
     };
     
+    /**
+    * Safely compares two byte arrays to prevent timing attacks.
+    * 
+    * @param {Uint8Array} a first array for the comparison.
+    * @param {Uint8Array} b second array for the comparison.
+    * @return {boolean} true if the arrays are equal, false if they are not.
+    */
+   function MslUtils$safeEquals(a, b) {
+      if (a.length != b.length)
+         return false;
+      
+      var result = 0;
+      for (var i = 0; i < a.length; ++i)
+         result |= a[i] ^ b[i];
+      return result == 0;
+   }
+    
     // Exports.
     module.exports.compress = MslUtils$compress;
     module.exports.uncompress = MslUtils$uncompress;
+    module.exports.safeEquals = MslUtils$safeEquals;
 })(require, (typeof module !== 'undefined') ? module : mkmodule('MslUtils'));
