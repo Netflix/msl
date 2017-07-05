@@ -133,9 +133,6 @@
      */
     var Header$parseHeader = function Header$parseHeader(ctx, headerMo, cryptoContexts, callback) {
         AsyncExecutor(callback, function() {
-            const MessageHeader = require('../msg/MessageHeader.js');
-            const ErrorHeader = require('../msg/ErrorHeader.js');
-            
             // Pull authentication data.
             var entityAuthDataMo;
             var masterTokenMo;
@@ -184,6 +181,9 @@
         
         function processHeaders(entityAuthData, masterToken, signature) {
             AsyncExecutor(callback, function() {
+                const MessageHeader = require('../msg/MessageHeader.js');
+                const ErrorHeader = require('../msg/ErrorHeader.js');
+                
                 try {
                     // Process message headers.
                     if (headerMo.has(Header$KEY_HEADERDATA)) {

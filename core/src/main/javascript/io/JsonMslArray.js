@@ -24,6 +24,7 @@
 	
 	const MslArray = require('../io/MslArray.js');
 	const MslObject = require('../io/MslObject.js');
+	const MslEncodable = require('../io/MslEncodable.js');
 	const textEncoding = require('../lib/textEncoding.js');
 	const MslConstants = require('../MslConstants.js');
 	const MslEncoderException = require('../io/MslEncoderException.js');

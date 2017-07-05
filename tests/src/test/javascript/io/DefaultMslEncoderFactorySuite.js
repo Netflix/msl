@@ -25,16 +25,18 @@ describe("DefaultMslEncoderFactory", function() {
     const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
     const MessageCapabilities = require('../../../../../core/src/main/javascript/msg/MessageCapabilities.js');
     const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
     const ByteArrayOutputStream = require('../../../../../core/src/main/javascript/io/ByteArrayOutputStream.js');
     const MessageHeader = require('../../../../../core/src/main/javascript/msg/MessageHeader.js');
     const MessageOutputStream = require('../../../../../core/src/main/javascript/msg/MessageOutputStream.js');
     const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
     const MslEncoderException = require('../../../../../core/src/main/javascript/io/MslEncoderException.js');
     const ByteArrayInputStream = require('../../../../../core/src/main/javascript/io/ByteArrayInputStream.js');
+    const Header = require('../../../../../core/src/main/javascript/msg/Header.js');
     const PayloadChunk = require('../../../../../core/src/main/javascript/msg/PayloadChunk.js');
     const Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
 
-    const textEncoding = require('../../../../../core/src/main/lib/textEncoding.js');
+    const textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
 
     const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     

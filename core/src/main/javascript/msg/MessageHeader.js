@@ -87,6 +87,7 @@
 	const MslEncoderException = require('../io/MslEncoderException.js');
 	const MslEncodingException = require('../MslEncodingException.js');
 	const MslCryptoException = require('../MslCryptoException.js');
+	const Header = require('../msg/Header.js');
 	const UserAuthenticationData = require('../userauth/UserAuthenticationData.js');
 	const ServiceToken = require('../tokens/ServiceToken.js');
 	const MasterToken = require('../tokens/MasterToken.js');

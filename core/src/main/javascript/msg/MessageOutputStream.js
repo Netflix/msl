@@ -40,7 +40,9 @@
 	const InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
 	const MessageHeader = require('../msg/MessageHeader.js');
 	const MessageCapabilities = require('../msg/MessageCapabilities.js');
+    const PayloadChunk = require('../msg/PayloadChunk.js');
 	const MslConstants = require('../MslConstants.js');
+	const BlockingQueue = require('../util/BlockingQueue.js');
 	const MslEncoderException = require('../io/MslEncoderException.js');
 	const MslIoException = require('../MslIoException.js');
 	const MslInternalException = require('../MslInternalException.js');

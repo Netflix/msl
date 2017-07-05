@@ -29,6 +29,8 @@
 	const MslEncoderException = require('../io/MslEncoderException.js');
 	const ClarinetParser = require('../io/ClarinetParser.js');
 	const JsonMslObject = require('../io/JsonMslObject.js');
+	const MslConstants = require('../MslConstants.js');
+	const textEncoding = require('../lib/textEncoding.js');
 
     /**
      * Delay time between read attempts in milliseconds.
