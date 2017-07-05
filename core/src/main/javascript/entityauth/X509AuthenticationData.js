@@ -43,8 +43,8 @@
     const MslEncodingException = require('../MslEncodingException.js');
     const MslCryptoException = require('../MslCryptoException.js');
     const MslError = require('../MslError.js');
+    const X509 = require('../crypto/X509.js');
     
-    const X509 = require('jsrsasign').X509;
     const hex2b64 = require('jsrsasign').hex2b64;
     
     /**

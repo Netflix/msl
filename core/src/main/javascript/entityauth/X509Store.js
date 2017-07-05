@@ -22,8 +22,7 @@
     "use strict";
     
     const Class = require('../util/Class.js');
-    
-    const X509 = require('jsrsasign').X509;
+    const X509 = require('../crypto/X509.js');
     
     var X509Store = module.exports = Class.create({
         init: function init() {

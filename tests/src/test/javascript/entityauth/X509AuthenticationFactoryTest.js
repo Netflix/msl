@@ -29,12 +29,11 @@ describe("X509AuthenticationFactory", function() {
     const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
     const MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
     const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    const X509 = require('../../../../../core/src/main/javascript/crypto/X509.js');
 
     const MockX509AuthenticationFactory = require('../../../main/javascript/entityauth/MockX509AuthenticationFactory.js');
     const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-
-    const X509 = require('jsrsasign').X509;
     
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;

@@ -21,12 +21,12 @@ describe("X509AuthenticationData", function() {
     const Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
     const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
     const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    const X509 = require('../../../../../core/src/main/javascript/crypto/X509.js');
 
     const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     const MockX509AuthenticationFactory = require('../../../main/javascript/entityauth/MockX509AuthenticationFactory.js');
     const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
 
-    const X509 = require('jsrsasign').X509;
     const hex2b64 = require('jsrsasign').hex2b64;
     
     /** MSL encoder format. */
