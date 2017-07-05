@@ -1,32 +1,49 @@
-// original work copyright isaacs z schlueter, MIT licensed
+// Copyright (c) Isaac Z. Schlueter ("Author")
+// Copyright (c) 2011 nuno job <nunojob.com>
+// All rights reserved.
 //
-// copyright 2011 nuno job <nunojob.com> (oO)--',--
+// The BSD License
 //
-// licensed under the apache license, version 2.0 (the "license");
-// you may not use this file except in compliance with the license.
-// you may obtain a copy of the license at
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
 //
-// unless required by applicable law or agreed to in writing, software
-// distributed under the license is distributed on an "as is" basis,
-// without warranties or conditions of any kind, either express or implied.
-// see the license for the specific language governing permissions and
-// limitations under the license.
-
-/* global window: false, process: false, FastList: false, require: false */
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS
+// BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+// BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+// OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+// IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 (function(require, module) {
   "use strict";
   
   var clarinet = module.exports;
   var fastlist = Array;
+  var env;
+  
+  if(typeof process === 'object' && process.env) env = process.env;
+  else env = window;
 
   clarinet.parser            = function (opt) { return new CParser(opt);};
   clarinet.CParser           = CParser;
+  clarinet.CStream           = CStream;
+  clarinet.createStream      = createStream;
   clarinet.MAX_BUFFER_LENGTH = 64 * 1024;
-  clarinet.DEBUG             = false;
-  clarinet.INFO              = false;
+  clarinet.DEBUG             = (env.CDEBUG==='debug');
+  clarinet.INFO              = (env.CDEBUG==='debug' || env.CDEBUG==='info');
   clarinet.EVENTS            =
     [ "value"
     , "string"
@@ -80,23 +97,38 @@
   // switcharoo
   S = clarinet.STATE;
 
+  if (!Object.create) {
+    Object.create = function (o) {
+      function f () { this["__proto__"] = o; }
+      f.prototype = o;
+      return new f;
+    };
+  }
+
   if (!Object.getPrototypeOf) {
     Object.getPrototypeOf = function (o) {
       return o["__proto__"];
     };
   }
 
+  if (!Object.keys) {
+    Object.keys = function (o) {
+      var a = [];
+      for (var i in o) if (o.hasOwnProperty(i)) a.push(i);
+      return a;
+    };
+  }
+
   function checkBufferLength (parser) {
     var maxAllowed = Math.max(clarinet.MAX_BUFFER_LENGTH, 10)
       , maxActual = 0
-      // , closeText = function() {} // FIXME: ppissanetzky: Where does this function come from?
       ;
     for (var i = 0, l = buffers.length; i < l; i ++) {
       var len = parser[buffers[i]].length;
       if (len > maxAllowed) {
         switch (buffers[i]) {
           case "text":
-            // closeText(parser); // FIXME: ppissanetzky: Where does this function come from?
+            closeText(parser);
           break;
 
           default:
@@ -116,10 +148,7 @@
   }
 
   var stringTokenPattern = /[\\"\n]/g;
-  
-  /**
-  * @constructor
-  */
+
   function CParser (opt) {
     if (!(this instanceof CParser)) return new CParser (opt);
 
@@ -131,13 +160,14 @@
     parser.closed   = parser.closedRoot = parser.sawRoot = false;
     parser.tag      = parser.error = null;
     parser.state    = S.BEGIN;
-    parser.stack    = new fastlist();
+    parser.stack    = new Array();
     // mostly just for error reporting
-    parser.index = parser.position = parser.column = 0;
+    parser.position = parser.column = 0;
     parser.line     = 1;
     parser.slashed  = false;
     parser.unicodeI = 0;
     parser.unicodeS = null;
+    parser.depth    = 0;
     emit(parser, "onready");
   }
 
@@ -148,25 +178,148 @@
     , close  : function () { return this.write(null); }
     };
 
-  /**
-  * @param {*=} data
-  */
+  try        { Stream = require("stream").Stream; }
+  catch (ex) { Stream = function () {}; }
+
+  function createStream (opt) { return new CStream(opt); }
+
+  function CStream (opt) {
+    if (!(this instanceof CStream)) return new CStream(opt);
+
+    this._parser = new CParser(opt);
+    this.writable = true;
+    this.readable = true;
+
+    //var Buffer = this.Buffer || function Buffer () {}; // if we don't have Buffers, fake it so we can do `var instanceof Buffer` and not throw an error
+    this.bytes_remaining = 0; // number of bytes remaining in multi byte utf8 char to read after split boundary
+    this.bytes_in_sequence = 0; // bytes in multi byte utf8 char to read
+    this.temp_buffs = { "2": new Buffer(2), "3": new Buffer(3), "4": new Buffer(4) }; // for rebuilding chars split before boundary is reached
+    this.string = '';
+
+    var me = this;
+    Stream.apply(me);
+
+    this._parser.onend = function () { me.emit("end"); };
+    this._parser.onerror = function (er) {
+      me.emit("error", er);
+      me._parser.error = null;
+    };
+
+    streamWraps.forEach(function (ev) {
+      Object.defineProperty(me, "on" + ev,
+        { get          : function () { return me._parser["on" + ev]; }
+        , set          : function (h) {
+            if (!h) {
+              me.removeAllListeners(ev);
+              me._parser["on"+ev] = h;
+              return h;
+            }
+            me.on(ev, h);
+          }
+        , enumerable   : true
+        , configurable : false
+        });
+    });
+  }
+
+  CStream.prototype = Object.create(Stream.prototype,
+    { constructor: { value: CStream } });
+
+  CStream.prototype.write = function (data) {
+    data = new Buffer(data);
+    for (var i = 0; i < data.length; i++) {
+      var n = data[i];
+
+      // check for carry over of a multi byte char split between data chunks
+      // & fill temp buffer it with start of this data chunk up to the boundary limit set in the last iteration
+      if (this.bytes_remaining > 0) {
+        for (var j = 0; j < this.bytes_remaining; j++) {
+          this.temp_buffs[this.bytes_in_sequence][this.bytes_in_sequence - this.bytes_remaining + j] = data[j];
+        }
+        this.string = this.temp_buffs[this.bytes_in_sequence].toString();
+        this.bytes_in_sequence = this.bytes_remaining = 0;
+
+        // move iterator forward by number of byte read during sequencing
+        i = i + j - 1;
+
+        // pass data to parser and move forward to parse rest of data
+        this._parser.write(this.string);
+        this.emit("data", this.string);
+        continue;
+      }
+
+      // if no remainder bytes carried over, parse multi byte (>=128) chars one at a time
+      if (this.bytes_remaining === 0 && n >= 128) {
+        if ((n >= 194) && (n <= 223)) this.bytes_in_sequence = 2;
+        if ((n >= 224) && (n <= 239)) this.bytes_in_sequence = 3;
+        if ((n >= 240) && (n <= 244)) this.bytes_in_sequence = 4;
+        if ((this.bytes_in_sequence + i) > data.length) { // if bytes needed to complete char fall outside data length, we have a boundary split
+
+          for (var k = 0; k <= (data.length - 1 - i); k++) {
+            this.temp_buffs[this.bytes_in_sequence][k] = data[i + k]; // fill temp data of correct size with bytes available in this chunk
+          }
+          this.bytes_remaining = (i + this.bytes_in_sequence) - data.length;
+
+          // immediately return as we need another chunk to sequence the character
+          return true;
+        } else {
+          this.string = data.slice(i, (i + this.bytes_in_sequence)).toString();
+          i = i + this.bytes_in_sequence - 1;
+
+          this._parser.write(this.string);
+          this.emit("data", this.string);
+          continue;
+        }
+      }
+
+      // is there a range of characters that are immediately parsable?
+      for (var p = i; p < data.length; p++) {
+        if (data[p] >= 128) break;
+      }
+      this.string = data.slice(i, p).toString();
+      this._parser.write(this.string);
+      this.emit("data", this.string);
+      i = p - 1;
+
+      // handle any remaining characters using multibyte logic
+      continue;
+    }
+  };
+
+  CStream.prototype.end = function (chunk) {
+    if (chunk && chunk.length) this._parser.write(chunk.toString());
+    this._parser.end();
+    return true;
+  };
+
+  CStream.prototype.on = function (ev, handler) {
+    var me = this;
+    if (!me._parser["on"+ev] && streamWraps.indexOf(ev) !== -1) {
+      me._parser["on"+ev] = function () {
+        var args = arguments.length === 1 ? [arguments[0]]
+                 : Array.apply(null, arguments);
+        args.splice(0, 0, ev);
+        me.emit.apply(me, args);
+      };
+    }
+    return Stream.prototype.on.call(me, ev, handler);
+  };
+
+  CStream.prototype.destroy = function () {
+    clearBuffers(this._parser);
+    this.emit("close");
+  };
+
   function emit(parser, event, data) {
-    // if(clarinet.INFO) console.log('-- emit', event, data);
+    if(clarinet.INFO) console.log('-- emit', event, data);
     if (parser[event]) parser[event](data);
   }
 
-  /**
-  * @param {*=} data
-  */
   function emitNode(parser, event, data) {
     closeValue(parser);
     emit(parser, event, data);
   }
 
-  /**
-  * @param {string=} event
-  */
   function closeValue(parser, event) {
     parser.textNode = textopts(parser.opt, parser.textNode);
     if (parser.textNode) {
@@ -199,7 +352,9 @@
   }
 
   function end(parser) {
-    if (parser.state !== S.VALUE) error(parser, "Unexpected end");
+    if (parser.state !== S.VALUE || parser.depth !== 0)
+      error(parser, "Unexpected end");
+
     closeValue(parser);
     parser.c      = "";
     parser.closed = true;
@@ -214,11 +369,11 @@
     if (parser.closed) return error(parser,
       "Cannot write after close. Assign an onready handler.");
     if (chunk === null) return end(parser);
-    var c = chunk[0], p = parser.p;
-    // if (clarinet.DEBUG) console.log('write -> [' + chunk + ']');
+    var i = 0, c = chunk[0], p = parser.p;
+    if (clarinet.DEBUG) console.log('write -> [' + chunk + ']');
     while (c) {
       p = c;
-      parser.c = c = chunk.charAt(parser.index++);
+      parser.c = c = chunk.charAt(i++);
       // if chunk doesnt have next, like streaming char by char
       // this way we need to check if previous is really previous
       // if not we need to reset to what the parser says is the previous
@@ -228,7 +383,7 @@
 
       if(!c) break;
 
-      // if (clarinet.DEBUG) console.log(parser.index,c,clarinet.STATE[parser.state]);
+      if (clarinet.DEBUG) console.log(i,c,clarinet.STATE[parser.state]);
       parser.position ++;
       if (c === "\n") {
         parser.line ++;
@@ -250,7 +405,9 @@
           else {
             if(c === '}') {
               emit(parser, 'onopenobject');
+              this.depth++;
               emit(parser, 'oncloseobject');
+              this.depth--;
               parser.state = parser.stack.pop() || S.VALUE;
               continue;
             } else  parser.stack.push(S.CLOSE_OBJECT);
@@ -267,10 +424,12 @@
             if(parser.state === S.CLOSE_OBJECT) {
               parser.stack.push(S.CLOSE_OBJECT);
               closeValue(parser, 'onopenobject');
+               this.depth++;
             } else closeValue(parser, 'onkey');
             parser.state  = S.VALUE;
           } else if (c==='}') {
             emitNode(parser, 'oncloseobject');
+            this.depth--;
             parser.state = parser.stack.pop() || S.VALUE;
           } else if(c===',') {
             if(parser.state === S.CLOSE_OBJECT)
@@ -285,9 +444,11 @@
           if (c === '\r' || c === '\n' || c === ' ' || c === '\t') continue;
           if(parser.state===S.OPEN_ARRAY) {
             emit(parser, 'onopenarray');
+            this.depth++;
             parser.state = S.VALUE;
             if(c === ']') {
               emit(parser, 'onclosearray');
+              this.depth--;
               parser.state = parser.stack.pop() || S.VALUE;
               continue;
             } else {
@@ -318,6 +479,7 @@
             parser.state  = S.VALUE;
           } else if (c===']') {
             emitNode(parser, 'onclosearray');
+            this.depth--;
             parser.state = parser.stack.pop() || S.VALUE;
           } else if (c === '\r' || c === '\n' || c === ' ' || c === '\t')
               continue;
@@ -326,23 +488,24 @@
 
         case S.STRING:
           // thanks thejh, this is an about 50% performance improvement.
-          var starti              = parser.index-1
+          var starti              = i-1
             , slashed = parser.slashed
             , unicodeI = parser.unicodeI
             ;
           STRING_BIGLOOP: while (true) {
             if (clarinet.DEBUG)
-              // console.log(parser.index,c,clarinet.STATE[parser.state]
-              //           ,slashed);
+              console.log(i,c,clarinet.STATE[parser.state]
+                         ,slashed);
             // zero means "no unicode active". 1-4 mean "parse some more". end after 4.
             while (unicodeI > 0) {
               parser.unicodeS += c;
-              c = chunk.charAt(parser.index++);
+              c = chunk.charAt(i++);
+              parser.position++;
               if (unicodeI === 4) {
                 // TODO this might be slow? well, probably not used too often anyway
                 parser.textNode += String.fromCharCode(parseInt(parser.unicodeS, 16));
                 unicodeI = 0;
-                starti = parser.index-1;
+                starti = i-1;
               } else {
                 unicodeI++;
               }
@@ -351,7 +514,8 @@
             }
             if (c === '"' && !slashed) {
               parser.state = parser.stack.pop() || S.VALUE;
-              parser.textNode += chunk.substring(starti, parser.index-1);
+              parser.textNode += chunk.substring(starti, i-1);
+              parser.position += i - 1 - starti;
               if(!parser.textNode) {
                  emit(parser, "onvalue", "");
               }
@@ -359,8 +523,10 @@
             }
             if (c === '\\' && !slashed) {
               slashed = true;
-              parser.textNode += chunk.substring(starti, parser.index-1);
-              c = chunk.charAt(parser.index++);
+              parser.textNode += chunk.substring(starti, i-1);
+              parser.position += i - 1 - starti;
+              c = chunk.charAt(i++);
+              parser.position++;
               if (!c) break;
             }
             if (slashed) {
@@ -377,23 +543,26 @@
               } else {
                 parser.textNode += c;
               }
-              c = chunk.charAt(parser.index++);
-              starti = parser.index-1;
+              c = chunk.charAt(i++);
+              parser.position++;
+              starti = i-1;
               if (!c) break;
               else continue;
             }
 
-            stringTokenPattern.lastIndex = parser.index;
+            stringTokenPattern.lastIndex = i;
             var reResult = stringTokenPattern.exec(chunk);
             if (reResult === null) {
-              parser.index = chunk.length+1;
-              parser.textNode += chunk.substring(starti, parser.index-1);
+              i = chunk.length+1;
+              parser.textNode += chunk.substring(starti, i-1);
+              parser.position += i - 1 - starti;
               break;
             }
-            parser.index = reResult.index+1;
+            i = reResult.index+1;
             c = chunk.charAt(reResult.index);
             if (!c) {
-              parser.textNode += chunk.substring(starti, parser.index-1);
+              parser.textNode += chunk.substring(starti, i-1);
+              parser.position += i - 1 - starti;
               break;
             }
           }
@@ -491,7 +660,7 @@
             parser.numberNode += c;
           } else {
             closeNumber(parser);
-            parser.index--; // go back one
+            i--; // go back one
             parser.state = parser.stack.pop() || S.VALUE;
           }
         continue;

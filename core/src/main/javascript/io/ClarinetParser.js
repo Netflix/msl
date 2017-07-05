@@ -78,7 +78,7 @@
 	            var prev = stack.pop();
 	            if (!prev) {
 	                values.push(currentObject);
-	                lastIndex = parser.index;
+	                lastIndex = parser.position;
 	                currentObject = undefined;
 	            } else {
 	                if (typeof prev === 'object') {
@@ -110,7 +110,7 @@
 	            var prev = stack.pop();
 	            if (!prev) {
 	                values.push(currentArray);
-	                lastIndex = parser.index;
+	                lastIndex = parser.position;
 	                currentArray = undefined;
 	            } else {
 	                if (typeof prev === 'object') {
@@ -139,7 +139,7 @@
 	                currentArray.push(value);
 	            } else {
 	                values.push(value);
-	                lastIndex = parser.index;
+	                lastIndex = parser.position;
 	            }
 	        };
 	
