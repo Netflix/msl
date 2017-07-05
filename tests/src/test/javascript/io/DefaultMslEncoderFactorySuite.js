@@ -530,6 +530,9 @@ describe("DefaultMslEncoderFactory", function() {
 	            	if (expectedException) {
 	            		expect(function() { throw exception; }).toThrow(expectedException);
 	            		return;
+	            	} else if (exception) {
+	            	    expect(function() { throw exception; }).not.toThrow();
+	            	    return;
 	            	}
 	
 	            	var objects;
