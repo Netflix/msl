@@ -109,7 +109,7 @@
                         try {
                         	json = this._remainingData.concat(textEncoding.getString(data, this._charset));
                         } catch (e) {
-                        	throw new MslEncoderException("Invalid JSON text encoding.");
+                        	throw new MslEncoderException("Invalid JSON text encoding.", e);
                         }
                         var parser = new ClarinetParser(json);
     
