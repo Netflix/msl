@@ -24,6 +24,7 @@ describe("MessageInputStream", function() {
     const Random = require('../../../../../core/src/main/javascript/util/Random.js');
     const MessageHeader = require('../../../../../core/src/main/javascript/msg/MessageHeader.js');
     const NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
+    const SessionCryptoContext = require('../../../../../core/src/main/javascript/crypto/SessionCryptoContext.js');
     const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
     const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
     const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
@@ -32,6 +33,7 @@ describe("MessageInputStream", function() {
     const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
     const ErrorHeader = require('../../../../../core/src/main/javascript/msg/ErrorHeader.js');
     const SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
+    const SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
     const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
     const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
     const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
@@ -43,6 +45,8 @@ describe("MessageInputStream", function() {
     const MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
     const MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
     const MslMessageException = require('../../../../../core/src/main/javascript/MslMessageException.js');
+    const MslMasterTokenException = require('../../../../../core/src/main/javascript/MslMasterTokenException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
     const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
 
     const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');

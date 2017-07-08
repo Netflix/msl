@@ -31,12 +31,14 @@ describe("AsymmetricWrappedExchangeSuite", function() {
     const MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
     const MslError = require('../../../../../core/src/main/javascript/MslError.js');
     const MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
+    const KeyRequestData = require('../../../../../core/src/main/javascript/keyx/KeyRequestData.js');
     const KeyResponseData = require('../../../../../core/src/main/javascript/keyx/KeyResponseData.js');
     const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
     const Random = require('../../../../../core/src/main/javascript/util/Random.js');
     const PresharedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedAuthenticationData.js');
     const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
     const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+    const MslMasterTokenException = require('../../../../../core/src/main/javascript/MslMasterTokenException.js');
     
     const BigInteger = require('jsrsasign').BigInteger;
 

@@ -27,8 +27,11 @@ describe("MessageBuilder", function() {
     const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
     const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
     const SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
+    const UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
     const EmailPasswordAuthenticationData = require('../../../../../core/src/main/javascript/userauth/EmailPasswordAuthenticationData.js');
+    const KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
     const SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
+    const Header = require('../../../../../core/src/main/javascript/msg/Header.js');
     const MessageHeader = require('../../../../../core/src/main/javascript/msg/MessageHeader.js');
     const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
     const MessageBuilder = require('../../../../../core/src/main/javascript/msg/MessageBuilder.js');
@@ -41,6 +44,7 @@ describe("MessageBuilder", function() {
     const MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
     const SessionCryptoContext = require('../../../../../core/src/main/javascript/crypto/SessionCryptoContext.js');
     const MslMasterTokenException = require('../../../../../core/src/main/javascript/MslMasterTokenException.js');
+    const MslUserAuthException = require('../../../../../core/src/main/javascript/MslUserAuthException.js');
     const MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
     const AsymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/AsymmetricWrappedExchange.js');
     const UserIdToken = require('../../../../../core/src/main/javascript/tokens/UserIdToken.js');

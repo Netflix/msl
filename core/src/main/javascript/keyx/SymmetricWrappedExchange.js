@@ -32,9 +32,11 @@
 	const MslEncodingException = require('../MslEncodingException.js');
 	const KeyResponseData = require('../keyx/KeyResponseData.js');
 	const Arrays = require('../util/Arrays.js');
+	const MasterToken = require('../tokens/MasterToken.js');
 	const MslMasterTokenException = require('../MslMasterTokenException.js');
 	const SessionCryptoContext = require('../crypto/SessionCryptoContext.js');
 	const PresharedAuthenticationData = require('../entityauth/PresharedAuthenticationData.js');
+	const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
 	const MslInternalException = require('../MslInternalException.js');
 	const MslException = require('../MslException.js');
 	const WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');

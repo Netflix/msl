@@ -93,6 +93,7 @@
 	const MasterToken = require('../tokens/MasterToken.js');
 	const UserIdToken = require('../tokens/UserIdToken.js');
 	const KeyRequestData = require('../keyx/KeyRequestData.js');
+	const KeyResponseData = require('../keyx/KeyResponseData.js');
 	const MslMessageException = require('../MslMessageException.js');
 	const MslException = require('../MslException.js');
 	const Base64 = require('../util/Base64.js');

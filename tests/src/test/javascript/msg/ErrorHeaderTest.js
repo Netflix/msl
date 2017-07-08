@@ -25,6 +25,7 @@ describe("ErrorHeader", function() {
     const ErrorHeader = require('../../../../../core/src/main/javascript/msg/ErrorHeader.js');
     const Header = require('../../../../../core/src/main/javascript/msg/Header.js');
     const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
     const MslError = require('../../../../../core/src/main/javascript/MslError.js');
     const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
     const MslMessageException = require('../../../../../core/src/main/javascript/MslMessageException.js');

@@ -39,6 +39,10 @@ describe("MessageOutputStream", function() {
     const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
     const InterruptibleExecutor = require('../../../../../core/src/main/javascript/util/InterruptibleExecutor.js');
     const MessageBuilder = require('../../../../../core/src/main/javascript/msg/MessageBuilder.js');
+    const MessageCapabilities = require('../../../../../core/src/main/javascript/msg/MessageCapabilities.js');
+    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    const MslIoException = require('../../../../../core/src/main/javascript/MslIoException.js');
 
     const textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
 

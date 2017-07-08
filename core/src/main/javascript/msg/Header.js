@@ -61,6 +61,7 @@
 	const EntityAuthenticationData = require('../entityauth/EntityAuthenticationData.js');
 	const MasterToken = require('../tokens/MasterToken.js');
 	const MslMessageException = require('../MslMessageException.js');
+	const MslError = require('../MslError.js');
 	
 	/**
 	 * Common header keys.

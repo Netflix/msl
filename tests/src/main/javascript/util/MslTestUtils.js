@@ -36,6 +36,7 @@
     const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
     const MslError = require('../../../../../core/src/main/javascript/MslError.js');
     const MslCrypto = require('../../../../../core/src/main/javascript/crypto/MslCrypto.js');
+    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
     
 	/** Base service token name. */
     var SERVICE_TOKEN_NAME = "serviceTokenName";

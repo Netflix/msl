@@ -21,6 +21,7 @@
  */
 describe("SymmetricWrappedExchangeSuite", function() {
     const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
     const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
     const SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
     const KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
@@ -28,12 +29,15 @@ describe("SymmetricWrappedExchangeSuite", function() {
     const MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
     const MslError = require('../../../../../core/src/main/javascript/MslError.js');
     const KeyRequestData = require('../../../../../core/src/main/javascript/keyx/KeyRequestData.js');
+    const KeyResponseData = require('../../../../../core/src/main/javascript/keyx/KeyResponseData.js');
     const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
     const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
     const MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
     const PresharedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedAuthenticationData.js');
     const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
     const MslMasterTokenException = require('../../../../../core/src/main/javascript/MslMasterTokenException.js');
+    const MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
+    const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
 
     const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');

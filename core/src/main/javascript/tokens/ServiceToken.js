@@ -79,6 +79,7 @@
 	const MasterToken = require('../tokens/MasterToken.js');
 	const UserIdToken = require('../tokens/UserIdToken.js');
 	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const MslException = require('../MslException.js');
 	const MslCryptoException = require('../MslCryptoException.js');
 	const ICryptoContext = require('../crypto/ICryptoContext.js');
 	const MslConstants = require('../MslConstants.js');

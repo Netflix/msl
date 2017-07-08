@@ -35,6 +35,7 @@
 	const MslMessageException = require('../MslMessageException.js');
 	const MessageHeader = require('../msg/MessageHeader.js');
 	const ServiceToken = require('../tokens/ServiceToken.js');
+	const NullCryptoContext = require('../crypto/NullCryptoContext.js');
 	
     /**
      * Empty service token data.

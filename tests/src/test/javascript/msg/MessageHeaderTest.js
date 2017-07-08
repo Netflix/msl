@@ -38,10 +38,17 @@ describe("MessageHeader", function() {
     const MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
     const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
     const MslMessageException = require('../../../../../core/src/main/javascript/MslMessageException.js');
-    const Base64 = require('../../../../../core/src/main/javascript/Base64.js');
+    const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+    const MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
+    const MslMasterTokenException = require('../../../../../core/src/main/javascript/MslMasterTokenException.js');
+    const MslUserAuthException = require('../../../../../core/src/main/javascript/MslUserAuthException.js');
+    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    const Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
+    const NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
 
     const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
     const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
     const MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
     
 	/** MSL encoder format. */

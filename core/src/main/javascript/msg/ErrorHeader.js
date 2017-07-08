@@ -54,6 +54,7 @@
 	const Header = require('../msg/Header.js');
 	const MslException = require('../MslException.js');
 	const MslEncodingException = require('../MslEncodingException.js');
+	const Base64 = require('../util/Base64.js');
     
     /** Milliseconds per second. */
     var MILLISECONDS_PER_SECOND = 1000;
