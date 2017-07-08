@@ -36,7 +36,7 @@ describe("PayloadChunk", function() {
     const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
     const MslMessageException = require('../../../../../core/src/main/javascript/MslMessageException.js');
 
-    const lzw = require('lzw');
+    const lzw = require('../../../../../core/src/main/javascript/lib/lzw.js');
     const textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
 
     const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');

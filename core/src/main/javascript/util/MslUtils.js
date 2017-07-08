@@ -27,7 +27,7 @@
     const MslError = require('../MslError.js');
     const Base64 = require('../util/Base64.js');
     
-    const lzw = require('lzw');
+    const lzw = require('../lib/lzw.js');
     const zlib = require('zlib');
 
     // Shortcuts

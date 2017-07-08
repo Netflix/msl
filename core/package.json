@@ -24,7 +24,6 @@
   },
   "dependencies": {
     "clarinet": "^0.11.0",
-    "jsrsasign": "^7.1.5",
-    "lzw": "0.0.3"
+    "jsrsasign": "^7.1.5"
   }
 }
