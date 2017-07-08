@@ -189,3 +189,77 @@ jasmine.Matchers.matcherFn_ = function(matcherName, matcherFunction) {
     return jasmine.undefined;
   };
 };
+
+/**
+ * Override equals function to use equals methods on objects.
+ *
+ * @param {?} a first value.
+ * @param {?} b second value.
+ * @param {Array<?>} mismatchKeys out parameter that returns any mismatched
+ *        keys.
+ * @param {Array<?>} mismatchValues out parameter that returns any mismatched
+ *        values.
+ */
+jasmine.Env.prototype.equals_ = function(a, b, mismatchKeys, mismatchValues) {
+    mismatchKeys = mismatchKeys || [];
+    mismatchValues = mismatchValues || [];
+
+    for (var i = 0; i < this.equalityTesters_.length; i++) {
+      var equalityTester = this.equalityTesters_[i];
+      var result = equalityTester(a, b, this, mismatchKeys, mismatchValues);
+      if (result !== jasmine.undefined) return result;
+    }
+
+    if (a === b) return true;
+
+    if (a === jasmine.undefined || a === null || b === jasmine.undefined || b === null) {
+      return (a == jasmine.undefined && b == jasmine.undefined);
+    }
+
+    if (jasmine.isDomNode(a) && jasmine.isDomNode(b)) {
+      return a === b;
+    }
+
+    if (a instanceof Date && b instanceof Date) {
+      return a.getTime() == b.getTime();
+    }
+
+    if (a.jasmineMatches) {
+      return a.jasmineMatches(b);
+    }
+
+    if (b.jasmineMatches) {
+      return b.jasmineMatches(a);
+    }
+
+    if (a instanceof jasmine.Matchers.ObjectContaining) {
+      return a.matches(b);
+    }
+
+    if (b instanceof jasmine.Matchers.ObjectContaining) {
+      return b.matches(a);
+    }
+
+    if (jasmine.isString_(a) && jasmine.isString_(b)) {
+      return (a == b);
+    }
+
+    if (jasmine.isNumber_(a) && jasmine.isNumber_(b)) {
+      return (a == b);
+    }
+
+    if (a instanceof RegExp && b instanceof RegExp) {
+      return this.compareRegExps_(a, b, mismatchKeys, mismatchValues);
+    }
+
+    if (typeof a === "object" && typeof b === "object") {
+      if (typeof a['equals'] === 'function')
+          return a.equals(b);
+      if (typeof b['equals'] === 'function')
+          return b.equals(a);
+      return this.compareObjects_(a, b, mismatchKeys, mismatchValues);
+    }
+
+    //Straight check
+    return (a === b);
+  };
