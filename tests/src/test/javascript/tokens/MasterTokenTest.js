@@ -1686,7 +1686,7 @@ describe("MasterToken", function() {
 
     				MasterToken.parse(ctx, mo, {
     					result: function() {},
-    					error: function(err) { exception = err; }
+    					error: function(e) { exception = e; }
     				});	
     			},
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -2428,7 +2428,7 @@ describe("MasterToken", function() {
 
     				MasterToken.parse(ctx, mo, {
     					result: function() {},
-    					error: function(err) { exception = err; }
+    					error: function(e) { exception = e; }
     				});	    	        		
     			},
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
