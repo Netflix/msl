@@ -41,6 +41,8 @@ function(encoding, compressionAlgo) {
     const MslException = require('../../../../../core/src/main/javascript/MslException.js');
     const MslError = require('../../../../../core/src/main/javascript/MslError.js');
     const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
 
     const textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
 

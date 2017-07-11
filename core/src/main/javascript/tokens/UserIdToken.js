@@ -81,6 +81,7 @@
 	const MslCryptoException = require('../MslCryptoException.js');
 	const MslEncoderException = require('../io/MslEncoderException.js');
 	const MslException = require('../MslException.js');
+	const MslEncodingException = require('../MslEncodingException.js');
 	const MslError = require('../MslError.js');
 	const Base64 = require('../util/Base64.js');
 	

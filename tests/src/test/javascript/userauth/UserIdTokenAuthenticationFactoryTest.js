@@ -22,6 +22,7 @@
 describe("UserIdTokenAuthenticationFactory", function() {
     const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
     const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
     const UserIdTokenAuthenticationFactory = require('../../../../../core/src/main/javascript/userauth/UserIdTokenAuthenticationFactory.js');
     const UserIdTokenAuthenticationData = require('../../../../../core/src/main/javascript/userauth/UserIdTokenAuthenticationData.js');
     const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');

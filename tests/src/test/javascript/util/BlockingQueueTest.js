@@ -16,6 +16,7 @@
 describe("BlockingQueue", function() {
     const BlockingQueue = require('../../../../../core/src/main/javascript/util/BlockingQueue.js');
     const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
     
     var TIMEOUT = 150;
     var DELAY = 1;
