@@ -128,7 +128,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return "ctx"; }, "ctx", 900);
+            waitsFor(function() { return ctx; }, "ctx", 900);
             
             runs(function() {
                 MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSA_OAEP, WebCryptoUsage.WRAP_UNWRAP, 2048, {
