@@ -222,7 +222,7 @@
     });
   }
 
-  CStream.prototype = Object.create(Stream.prototype,
+  CStream.prototype = Object.create(null,
     { constructor: { value: CStream } });
 
   CStream.prototype.write = function (data) {
